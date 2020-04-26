@@ -5,8 +5,8 @@ import QtQuick.Layouts 1.12
 Slider {
     id: slider
     from: 0
-    value: 25
-    to: 100
+    value: 0
+    to: 0
     horizontalPadding: 0
     snapMode: Slider.SnapAlways
 

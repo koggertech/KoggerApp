@@ -17,5 +17,10 @@
         <file>AdjBox.qml</file>
         <file>CSlider.qml</file>
         <file>UpgradeBox.qml</file>
+        <file>AdjBoxBack.qml</file>
+        <file>TitleMeasurement.qml</file>
+        <file>CRButton.qml</file>
+        <file>CProgressButton.qml</file>
+        <file>TitleSetup.qml</file>
     </qresource>
 </RCC>

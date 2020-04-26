@@ -9,8 +9,8 @@ Button {
     id: control
     Layout.preferredWidth: 35
     Layout.preferredHeight: 30
+    Layout.alignment: Qt.AlignTop
     opacity: 0.8
-    anchors.top: parent.top
 
     font.family: "Roboto"; font.pointSize: 13;
 

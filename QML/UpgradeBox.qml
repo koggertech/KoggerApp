@@ -23,6 +23,10 @@ Item {
         }
     }
 
+    Settings {
+        property alias upgradeFolder: fileDialog.folder
+    }
+
     RowLayout {
         Layout.fillWidth: true
         width: control.width
@@ -60,15 +64,18 @@ Item {
             }
         }
 
-        CButton {
+        CProgressButton {
             Layout.fillWidth: false
             implicitWidth: 100
             implicitHeight: 30
             font.pointSize: 16;
             text: "UPGRADE"
+            progress: sonarDriver.upgradeFWStatus
+
             onClicked: {
                 core.upgradeFW(pathText.text)
             }
+
         }
     }
 

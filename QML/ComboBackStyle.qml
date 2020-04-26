@@ -36,13 +36,13 @@ BackStyle {
             context.lineTo(0, ticknessBase);
             context.closePath();
 
-            context.moveTo(0, height);
-            context.lineTo(width, height - 0);
-            context.lineTo(width, height - ticknessCorner);
-            context.lineTo(width*0.7, height - ticknessCorner);
-            context.lineTo(width*0.7 - ticknessCorner, height - ticknessBase);
-            context.lineTo(0, height - ticknessBase);
-            context.closePath();
+//            context.moveTo(0, height);
+//            context.lineTo(width, height - 0);
+//            context.lineTo(width, height - ticknessCorner);
+//            context.lineTo(width*0.7, height - ticknessCorner);
+//            context.lineTo(width*0.7 - ticknessCorner, height - ticknessBase);
+//            context.lineTo(0, height - ticknessBase);
+//            context.closePath();
 
             context.fillStyle = borderColor
             context.fill();

@@ -74,9 +74,16 @@ void SonarDriver::putData(const QByteArray &data) {
 }
 
 void SonarDriver::protoComplete(ProtIn &proto) {
-    if(proto.mark() == false) {
-//        idMark->setMark();
-//        requestSetup();
+    if(isUpdatingFw() == false) {
+        if(proto.mark() == false) {
+            startConnection();
+            idMark->setMark();
+        }
+
+        if(m_inited == false) {
+            m_inited = true;
+            requestSetup();
+        }
     }
 
     if(hashIDParsing.contains(proto.id())) {
@@ -86,10 +93,251 @@ void SonarDriver::protoComplete(ProtIn &proto) {
     }
 }
 
+void SonarDriver::startConnection() {
+    m_inited = true;
+    requestSetup();
+    m_bootloader = false;
+    m_upgrade_status = 0;
+}
+
 void SonarDriver::sendUpdateFW(QByteArray update_data) {
+    m_bootloader = true;
     idUpdate->setUpdate(update_data);
-    idBoot->reboot();
+    reboot();
     QTimer::singleShot(250, idUpdate, SLOT(putUpdate()));
+    QTimer::singleShot(350, idUpdate, SLOT(putUpdate()));
+}
+
+int SonarDriver::transFreq() {
+    return idTransc->freq();
+}
+
+void SonarDriver::setTransFreq(int freq) {
+    bool is_changed = transFreq() != freq;
+    idTransc->setFreq((U2)freq);
+    if(is_changed) { emit transChanged(); }
+}
+
+int SonarDriver::transPulse() {
+    return idTransc->pulse();
+}
+
+void SonarDriver::setTransPulse(int pulse) {
+    bool is_changed = transPulse() != pulse;
+    idTransc->setPulse((U1)pulse);
+    if(is_changed) { emit transChanged(); }
+}
+
+int SonarDriver::transBoost() {
+    return idTransc->boost();
+}
+
+void SonarDriver::setTransBoost(int boost) {
+    bool is_changed = transBoost() != boost;
+    idTransc->setBoost((U1)boost);
+    if(is_changed) { emit transChanged(); }
+}
+
+void SonarDriver::flashSettings() {
+    idFlash->flashing();
+}
+
+void SonarDriver::resetSettings() {
+    idFlash->erase();
+}
+
+void SonarDriver::reboot() {
+    idBoot->reboot();
+}
+
+int SonarDriver::chartSamples() {
+    return idChartSetup->count();
+}
+
+void SonarDriver::setChartSamples(int smpls) {
+    bool is_changed = smpls != chartSamples();
+    idChartSetup->setCount((U2)smpls);
+    if(is_changed) { emit chartSetupChanged(); }
+}
+
+int SonarDriver::chartResolution() {
+    return idChartSetup->resolution();
+}
+
+void SonarDriver::setChartResolution(int resol) {
+    bool is_changed = resol != chartResolution();
+    idChartSetup->setResolution((U2)resol);
+    if(is_changed) { emit chartSetupChanged(); }
+}
+
+int SonarDriver::chartOffset() {
+    return idChartSetup->offset();
+}
+
+void SonarDriver::setChartOffset(int offset) {
+    bool is_changed = offset != chartOffset();
+    idChartSetup->setOffset((U2)offset);
+    if(is_changed) { emit chartSetupChanged(); }
+}
+
+int SonarDriver::datasetDist() {
+    int ch_param = 0;
+    if(idDataset->getDist_v0(1)) {
+        ch_param |= 1;
+    }
+    if(idDataset->getDist_v0(2)) {
+        ch_param |= 2;
+    }
+    return ch_param;
+}
+
+void SonarDriver::setDatasetDist(int ch_param) {
+    bool is_changed = (ch_param != datasetDist());
+
+    switch (ch_param) {
+    case DatasetCh1:
+        idDataset->setDist_v0(1);
+        idDataset->resetDist_v0(2);
+        break;
+    case DatasetCh2:
+        idDataset->resetDist_v0(1);
+        idDataset->setDist_v0(2);
+        break;
+    default:
+        idDataset->resetDist_v0(1);
+        idDataset->resetDist_v0(2);
+        break;
+    }
+
+    if(is_changed) {
+        emit datasetChanged();
+    }
+}
+
+int SonarDriver::datasetChart() {
+    int ch_param = 0;
+    if(idDataset->getChart_v0(1)) {
+        ch_param |= 1;
+    }
+    if(idDataset->getChart_v0(2)) {
+        ch_param |= 2;
+    }
+    return ch_param;
+}
+
+void SonarDriver::setDatasetChart(int ch_param) {
+    bool is_changed = (ch_param != datasetChart());
+
+    switch (ch_param) {
+    case DatasetCh1:
+        idDataset->setChart_v0(1);
+        idDataset->resetChart_v0(2);
+        break;
+    case DatasetCh2:
+        idDataset->resetChart_v0(1);
+        idDataset->setChart_v0(2);
+        break;
+    default:
+        idDataset->resetChart_v0(1);
+        idDataset->resetChart_v0(2);
+        break;
+    }
+
+    if(is_changed) {
+        emit datasetChanged();
+    }
+}
+
+int SonarDriver::datasetTemp() {
+    int ch_param = 0;
+    if(idDataset->getTemp_v0(1)) {
+        ch_param |= 1;
+    }
+    if(idDataset->getTemp_v0(2)) {
+        ch_param |= 2;
+    }
+    return ch_param;
+}
+
+void SonarDriver::setDatasetTemp(int ch_param) {
+    bool is_changed = (ch_param != datasetTemp());
+
+    switch (ch_param) {
+    case DatasetCh1:
+        idDataset->setTemp_v0(1);
+        idDataset->resetTemp_v0(2);
+        break;
+    case DatasetCh2:
+        idDataset->resetTemp_v0(1);
+        idDataset->setTemp_v0(2);
+        break;
+    default:
+        idDataset->resetTemp_v0(1);
+        idDataset->resetTemp_v0(2);
+        break;
+    }
+
+    if(is_changed) {
+        emit datasetChanged();
+    }
+}
+
+int SonarDriver::datasetSDDBT() {
+    int ch_param = 0;
+    if(idDataset->getSDDBT(1)) {
+        ch_param |= 1;
+    }
+    if(idDataset->getSDDBT(2)) {
+        ch_param |= 2;
+    }
+    return ch_param;
+}
+
+void SonarDriver::setDatasetSDDBT(int ch_param) {
+    bool is_changed = (ch_param != datasetSDDBT());
+
+    switch (ch_param) {
+    case DatasetCh1:
+        idDataset->setSDDBT(1);
+        idDataset->resetSDDBT(2);
+        break;
+    case DatasetCh2:
+        idDataset->resetSDDBT(1);
+        idDataset->setSDDBT(2);
+        break;
+    default:
+        idDataset->resetSDDBT(1);
+        idDataset->resetSDDBT(2);
+        break;
+    }
+
+    if(is_changed) {
+        emit datasetChanged();
+    }
+}
+
+int SonarDriver::ch1Period() {
+    return (int)idDataset->period(1);
+}
+
+void SonarDriver::setCh1Period(int period) {
+    bool is_changed = (period != ch1Period());
+    idDataset->setPeriod(1, (uint)period);
+    if(is_changed) {
+        emit datasetChanged();
+    }
+}
+
+int SonarDriver::ch2Period() {
+    return (int)idDataset->period(2);
+}
+
+void SonarDriver::setCh2Period(int period) {
+    bool is_changed = (period != ch2Period());
+    idDataset->setPeriod(2, (uint)period);
+    if(is_changed) {
+        emit datasetChanged();
+    }
 }
 
 void SonarDriver::receivedTimestamp(Type type, Version ver, Resp resp) {
@@ -112,7 +360,7 @@ void SonarDriver::receivedChart(Type type, Version ver, Resp resp) {
         for(int i = 0; i < data.length(); i++) {
             data[i] = raw_data[i];
         }
-        emit chartComplete(data, 10, 0);
+        emit chartComplete(data, idChart->resolution(), idChart->offsetRange());
     }
 }
 
@@ -129,6 +377,14 @@ void SonarDriver::receivedTemp(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedDataset(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+
+    if(resp == respNone) {
+        qInfo("Data set update");
+        emit datasetChanged();
+    } else {
+//        qInfo("Data set resp %u", resp);
+        qInfo("Data set update %u", resp);
+    }
 }
 
 void SonarDriver::receivedDistSetup(Type type, Version ver, Resp resp) {
@@ -139,11 +395,18 @@ void SonarDriver::receivedDistSetup(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+
+    if(resp == respNone) {
+        emit chartSetupChanged();
+    }
 }
 
 void SonarDriver::receivedTransc(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+    if(resp == respNone) {
+        emit transChanged();
+    }
 }
 
 void SonarDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
@@ -174,10 +437,18 @@ void SonarDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 
     if(resp == respOk) {
         bool is_avail_data = idUpdate->putUpdate();
+        m_upgrade_status = idUpdate->progress();
         if(!is_avail_data) {
             idBoot->runFW();
+            m_bootloader = false;
+            m_upgrade_status = 0;
         }
+
+    } else  if(resp != respOk) {
+        m_upgrade_status = -1;
     }
+
+    emit upgradeProgressChanged();
 }
 
 void SonarDriver::receivedNav(Type type, Version ver, Resp resp) {

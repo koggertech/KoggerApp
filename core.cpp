@@ -3,11 +3,12 @@
 Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
-    dev_driver(new SonarDriver()),
+    dev_driver(new SonarDriverInterface()),
     m_plot(new PlotCash)
 {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
+    connect(m_connection, &Connection::openedEvent, dev_driver, &SonarDriver::startConnection);
     connect(m_connection, &Connection::receiveData, dev_driver, &SonarDriver::putData);
     connect(dev_driver, &SonarDriver::dataSend, m_connection, &Connection::sendData);
 

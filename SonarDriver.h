@@ -15,28 +15,66 @@ class SonarDriver : public QObject
 public:
     explicit SonarDriver(QObject *parent = nullptr);
 
-    Q_PROPERTY(int chartSamples READ chartSamples WRITE setChartSamples NOTIFY chartSamplesChanged)
-    Q_PROPERTY(double chartSamplSlider READ chartSamplesSlider WRITE setChartSamplesSlider NOTIFY chartSamplesSliderChanged)
-    Q_PROPERTY(double chartSamplSliderStep READ chartSamplSliderStep NOTIFY sliderChanged)
+    typedef enum {
+        DatasetOff = 0,
+        DatasetCh1 = 1,
+        DatasetCh2 = 2,
+        DatasetRequest = 255
+    } DatasetChannel;
+
     int chartSamples();
     void setChartSamples(int samples);
-    void setChartSamplesSlider(double pos);
-    double chartSamplesSlider();
-    double chartSamplSliderStep();
+
+    int chartResolution();
+    void setChartResolution(int resol);
+
+    int chartOffset();
+    void setChartOffset(int offset);
+
+    int datasetDist();
+    void setDatasetDist(int ch_param);
+    int datasetChart();
+    void setDatasetChart(int ch_param);
+    int datasetTemp();
+    void setDatasetTemp(int ch_param);
+    int datasetSDDBT();
+    void setDatasetSDDBT(int ch_param);
+
+    int ch1Period();
+    void setCh1Period(int period);
+
+    int ch2Period();
+    void setCh2Period(int period);
 
     void sendUpdateFW(QByteArray update_data);
+    bool isUpdatingFw() { return m_bootloader; }
+    int upgradeFWStatus() {return m_upgrade_status; }
+
+
+    int transFreq();
+    void setTransFreq(int freq);
+
+    int transPulse();
+    void setTransPulse(int pulse);
+
+    int transBoost();
+    void setTransBoost(int boost);
 
 signals:
     void dataSend(QByteArray data);
-
     void chartComplete(QVector<uint8_t> data, int resolution, int offset);
-    void chartSamplesChanged(int);
-    void chartSamplesSliderChanged(double pos);
-    void sliderChanged();
+    void chartSetupChanged();
+    void datasetChanged();
+    void transChanged();
+    void upgradeProgressChanged();
 
 public slots:
     void putData(const QByteArray &data);
     void protoComplete(ProtIn &proto);
+    void startConnection();
+    void flashSettings();
+    void resetSettings();
+    void reboot();
 
 private:
     ProtIn* m_proto;
@@ -64,13 +102,13 @@ private:
     QHash<ID, IDBin*> hashIDParsing;
     QHash<ID, IDBin*> hashIDSetup;
 
-    QByteArray updateData;
+    bool m_inited = false;
+    bool m_bootloader = false;
+    int m_upgrade_status = 0;
 
     void regID(IDBin* id_bin, void (SonarDriver::* method)(Type type, Version ver, Resp resp), bool is_setup = false);
 
     void requestSetup();
-
-    int m_chartSamplesCnt = 100;
 
 protected slots:
     void receivedTimestamp(Type type, Version ver, Resp resp);

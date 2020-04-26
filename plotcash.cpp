@@ -87,8 +87,13 @@ PlotCash::PlotCash() {
 void PlotCash::addData(QVector<uint8_t> data, int resolution, int offset) {
     nextIndex();
     Lines[getIndex()].setData(data, resolution, offset);
-
+    m_offset = offset;
+    m_range = data.length()*resolution;
     m_isDataUpdate = true;
+}
+
+void PlotCash::addDist(int dist) {
+
 }
 
 QImage PlotCash::getImage(QSize size) {

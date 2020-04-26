@@ -45,6 +45,7 @@ HEADERS += \
     IDBinnary.h \
     ProtoBinnary.h \
     SonarDriver.h \
+    SonarDriverInterface.h \
     connection.h \
     console.h \
     consolelistmodel.h \
@@ -55,6 +56,7 @@ HEADERS += \
 
 DISTFILES += \
     QML/AdjBox.qml \
+    QML/AdjBoxBack.qml \
     QML/BackStyle.qml \
     QML/ButtonBackStyle.qml \
     QML/CButton.qml \
@@ -70,4 +72,5 @@ DISTFILES += \
     QML/MenuButton.qml \
     QML/MenuViewer.qml \
     QML/TabBackStyle.qml \
+    QML/UpgradeBox.qml \
     QML/main.qml

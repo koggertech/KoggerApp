@@ -4,7 +4,7 @@
 #include <QObject>
 #include <connection.h>
 #include <console.h>
-#include <SonarDriver.h>
+#include <SonarDriverInterface.h>
 #include <QUrl>
 #include <QQmlApplicationEngine>
 #include <waterfall.h>
@@ -51,7 +51,7 @@ signals:
 public:
     Console *m_console;
     Connection *m_connection;
-    SonarDriver *dev_driver;
+    SonarDriverInterface *dev_driver;
     PlotCash* m_plot;
 
     QQmlApplicationEngine *m_engine = nullptr;

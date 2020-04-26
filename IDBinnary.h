@@ -24,9 +24,9 @@ public:
     Version lastVersion() {return m_lastVersion;}
     Resp lastResp() {return m_lastResp;}
 
-    void request(Version ver);
+    virtual void simpleRequest(Version ver);
     virtual void requestAll() {
-        request(v0);
+        simpleRequest(v0);
     }
 
 signals:
@@ -107,6 +107,9 @@ public:
         return flag_val;
     }
 
+    U2 resolution() {return m_sampleResol; }
+    U2 offsetRange() {return m_absOffset*m_sampleResol; }
+
     uint8_t* rawData() { return m_fillChart; }
 
 protected:
@@ -177,8 +180,61 @@ public:
         uint32_t mask = 0;
     } Channel;
 
+    typedef enum {
+        MASK_DIST_V0 = 0,
+        MASK_CHART_V0 = 1,
+        MASK_ATTITUDE_V0 = 2,
+        MASK_ATTITUDE_V1 = 3,
+        MASK_TEMP_V0 = 4,
+        MASK_TIMESTAMP_V0 = 5,
+        MASK_DIST_SDDBT = 6,
+    } ChannelMask;
+
+    void setChannel(uint8_t ch_id, uint32_t period, uint32_t mask);
+    uint32_t mask(U1 ch_id);
+    void setMask(U1 ch_id, uint32_t mask);
+
+    void setFlag(U1 ch_id, uint32_t flag) { setMask(ch_id, mask(ch_id) | ((U4)1 << flag)); }
+    void resetFlag(U1 ch_id, uint32_t flag) { setMask(ch_id, mask(ch_id) & (~((U4)1 << flag))); }
+    bool flag(U1 ch_id, uint32_t flag) { return (mask(ch_id) & ((U4)1 << flag)) != 0 ;}
+
+    void setDist_v0(U1 ch_id) { setFlag(ch_id, MASK_DIST_V0); }
+    void resetDist_v0(U1 ch_id) { resetFlag(ch_id, MASK_DIST_V0); }
+    bool getDist_v0(U1 ch_id) { return flag(ch_id, MASK_DIST_V0); }
+
+    void setChart_v0(U1 ch_id) { setFlag(ch_id, MASK_CHART_V0); }
+    void resetChart_v0(U1 ch_id) { resetFlag(ch_id, MASK_CHART_V0); }
+    bool getChart_v0(U1 ch_id) { return flag(ch_id, MASK_CHART_V0); }
+
+    void setAttitude_v0(U1 ch_id) { setFlag(ch_id, MASK_ATTITUDE_V0); }
+    void resetAttitude_v0(U1 ch_id) { resetFlag(ch_id, MASK_ATTITUDE_V0); }
+    bool getAttitude_v0(U1 ch_id) { return flag(ch_id, MASK_ATTITUDE_V0); }
+
+    void setAttitude_v1(U1 ch_id) { setFlag(ch_id, MASK_ATTITUDE_V1); }
+    void resetAttitude_v1(U1 ch_id) { resetFlag(ch_id, MASK_ATTITUDE_V1); }
+    bool getAttitude_v1(U1 ch_id) { return flag(ch_id, MASK_ATTITUDE_V1); }
+
+    void setTemp_v0(U1 ch_id) { setFlag(ch_id, MASK_TEMP_V0); }
+    void resetTemp_v0(U1 ch_id) { resetFlag(ch_id, MASK_TEMP_V0); }
+    bool getTemp_v0(U1 ch_id) { return flag(ch_id, MASK_TEMP_V0); }
+
+    void setTimestamp_v0(U1 ch_id) { setFlag(ch_id, MASK_TIMESTAMP_V0); }
+    void resetTimestamp_v0(U1 ch_id) { resetFlag(ch_id, MASK_TIMESTAMP_V0); }
+    bool getTimestamp_v1(U1 ch_id) { return flag(ch_id, MASK_TIMESTAMP_V0); }
+
+    void setSDDBT(U1 ch_id) { setFlag(ch_id, MASK_DIST_SDDBT); }
+    void resetSDDBT(U1 ch_id) { resetFlag(ch_id, MASK_DIST_SDDBT); }
+    bool getSDDBT(U1 ch_id) { return flag(ch_id, MASK_DIST_SDDBT); }
+
+
+    uint32_t period(U1 ch_id);
+    void setPeriod(U1 ch_id, uint32_t period);
+
 protected:
     Channel m_channel[3];
+
+    void sendChannel(U1 ch_id, uint32_t period, uint32_t mask);
+    virtual void requestSpecific(ProtOut &proto_out) override { proto_out.write<U1>(0); }
 };
 
 
@@ -192,6 +248,8 @@ public:
 
     ID id() override { return ID_DIST_SETUP; }
     Resp  parsePayload(ProtIn &proto) override;
+
+    void setRange(uint32_t start_offset, uint32_t max_dist);
 protected:
     uint32_t m_startOffset = 0;
     uint32_t m_maxDist = 0;
@@ -209,10 +267,27 @@ public:
     ID id() override { return ID_CHART_SETUP; }
     Resp  parsePayload(ProtIn &proto) override;
 
+    void setV0(U2 count, U2 resolution, U2 offset);
+
+    U2 count() { return m_sanpleCount; }
+    void setCount(U2 count) {
+        setV0(count, resolution(), offset());
+    }
+
+    U2 resolution() { return m_sanpleResolution; }
+    void setResolution(U2 resol) {
+        setV0(count(), resol, offset());
+    }
+
+    U2 offset() { return m_sanpleOffset; }
+    void setOffset(U2 offset) {
+        setV0(count(), resolution(), offset);
+    }
+
 protected:
-    uint16_t m_sanpleCount = 0;
-    uint16_t m_sanpleResolution = 0;
-    uint16_t m_sanpleOffset = 0;
+    U2 m_sanpleCount = 100;
+    U2 m_sanpleResolution = 10;
+    U2 m_sanpleOffset = 0;
 };
 
 
@@ -226,6 +301,17 @@ public:
 
     ID id() override { return ID_TRANSC; }
     Resp  parsePayload(ProtIn &proto) override;
+
+    void setTransc(U2 freq, U1 pulse, U1 boost);
+
+    U2 freq() { return m_freq; }
+    void setFreq(U2 freq) { setTransc(freq, pulse(), boost()); }
+
+    U1 pulse() { return m_pulse; }
+    void setPulse(U1 pulse) { setTransc(freq(), pulse, boost()); }
+
+    U1 boost() { return m_boost; }
+    void setBoost(U1 boost) { setTransc(freq(), pulse(), boost); }
 
 protected:
     U2 m_freq = 700;
@@ -245,6 +331,7 @@ public:
     ID id() override { return ID_SND_SPEED; }
     Resp  parsePayload(ProtIn &proto) override;
 
+    void setSoundSpeed(U4 snd_spd);
 protected:
     U4 m_soundSpeed = 1500000;
 };
@@ -267,6 +354,7 @@ public:
         U1 dev_address = 0;
     } UART;
 
+    void setBaudrate(U4 baudrate);
 protected:
     UART m_uart[3];
 };
@@ -339,6 +427,14 @@ public:
     Resp  parsePayload(ProtIn &proto) override;
 
     void setUpdate(QByteArray fw);
+    int availSend() {return _fw.length() - _fw_offset; }
+    int progress() {
+        if(_fw.length() != 0) {
+            return 100*_fw_offset / _fw.length();
+        }
+
+        return 0;
+    }
 
 public slots:
     bool putUpdate();
@@ -346,6 +442,7 @@ public slots:
 protected:
     uint16_t _nbr_packet = 0;
     QByteArray _fw;
+    int _fw_offset = 0;
 };
 
 

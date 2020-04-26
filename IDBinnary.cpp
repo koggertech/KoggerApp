@@ -21,23 +21,24 @@ Resp  IDBin::parse() {
            m_lastResp = (Resp)m_proto->read<U1>();
            resp_parse = respOk;
         } else {
-            resp_parse = respNone;
+            m_lastResp = respNone;
             resp_parse = parsePayload(*m_proto);
         }
 
         if(resp_parse == respOk) {
             m_lastType = m_proto->type();
             m_lastVersion = m_proto->ver();
+//            qInfo("Packet OK: id %u, type %u, ver %u, len %u, resp %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), m_lastResp);
             emit updateContent(m_lastType, m_lastVersion, m_lastResp);
         } else {
-            qInfo("Packet error: id %u, type %u, ver %u, len %u, resp %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), resp_parse);
+            qInfo("Packet error: id %u, type %u, ver %u, len %u, resp. parse %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), resp_parse);
         }
     }
 
     return resp_parse;
 }
 
-void IDBin::request(Version ver) {
+void IDBin::simpleRequest(Version ver) {
     ProtOut req_out;
     req_out.create(GETTING, ver, id(), 0);
     requestSpecific(req_out);
@@ -186,11 +187,9 @@ Resp IDBinNav::parsePayload(ProtIn &proto) {
 }
 
 
-
 Resp IDBinDataset::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
         uint8_t ch_id = proto.read<U1>();
-
         if(ch_id < _countof(m_channel)) {
             m_channel[ch_id].id = ch_id;
             m_channel[ch_id].period = proto.read<U4>();
@@ -203,6 +202,52 @@ Resp IDBinDataset::parsePayload(ProtIn &proto) {
     return respOk;
 }
 
+void IDBinDataset::setChannel(uint8_t ch_id, uint32_t period, uint32_t mask) {
+    sendChannel(ch_id, period, mask);
+}
+
+uint32_t IDBinDataset::mask(U1 ch_id) {
+    if(ch_id < _countof(m_channel)) {
+        return m_channel[ch_id].mask;
+    }
+    return 0;
+}
+
+void IDBinDataset::setMask(U1 ch_id, uint32_t mask) {
+
+    sendChannel(ch_id, period(ch_id), mask);
+}
+
+uint32_t IDBinDataset::period(U1 ch_id) {
+    if(ch_id < _countof(m_channel)) {
+        return m_channel[ch_id].period;
+    }
+    return 0;
+}
+
+void IDBinDataset::setPeriod(U1 ch_id, uint32_t period) {
+    sendChannel(ch_id, period, mask(ch_id));
+}
+
+void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
+    if(ch_id < _countof(m_channel)) {
+        qInfo("ch_id %u, mask %u", ch_id, mask);
+
+        m_channel[ch_id].id = ch_id;
+        m_channel[ch_id].period = period;
+        m_channel[ch_id].mask = mask;
+
+        ProtOut id_out;
+        id_out.create(SETTING, v0, id(), 0);
+        id_out.write<U1>(ch_id);
+        id_out.write<U4>(period);
+        id_out.write<U4>(mask);
+        id_out.end();
+        sendDataProcessing(id_out);
+    }
+}
+
+
 Resp IDBinDistSetup::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
         m_startOffset = proto.read<U4>();
@@ -213,6 +258,19 @@ Resp IDBinDistSetup::parsePayload(ProtIn &proto) {
 
     return respOk;
 }
+
+void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
+    m_startOffset = start_offset;
+    m_maxDist = max_dist;
+
+    ProtOut id_out;
+    id_out.create(SETTING, v0, id(), 0);
+    id_out.write<U4>(start_offset);
+    id_out.write<U4>(max_dist);
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
 
 Resp IDBinChartSetup::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
@@ -226,6 +284,24 @@ Resp IDBinChartSetup::parsePayload(ProtIn &proto) {
     return respOk;
 }
 
+void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset) {
+    m_sanpleCount = count;
+    if(count*resolution > 50000) {
+        resolution = (50000/count/10)*10;
+    }
+    m_sanpleResolution = resolution;
+    m_sanpleOffset = offset;
+
+    ProtOut id_out;
+    id_out.create(SETTING, v0, id(), 0);
+    id_out.write<U2>(count);
+    id_out.write<U2>(resolution);
+    id_out.write<U2>(offset);
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+
 Resp IDBinTransc::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
         m_freq = proto.read<U2>();
@@ -238,6 +314,21 @@ Resp IDBinTransc::parsePayload(ProtIn &proto) {
     return respOk;
 }
 
+void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
+    m_freq = freq;
+    m_pulse = pulse;
+    m_boost = boost;
+
+    ProtOut id_out;
+    id_out.create(SETTING, v0, id(), 0);
+    id_out.write<U2>(freq);
+    id_out.write<U1>(pulse);
+    id_out.write<U1>(boost);
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+
 Resp IDBinSoundSpeed::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
         m_soundSpeed = proto.read<U4>();
@@ -247,6 +338,18 @@ Resp IDBinSoundSpeed::parsePayload(ProtIn &proto) {
 
     return respOk;
 }
+
+void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
+    m_soundSpeed = snd_spd;
+
+    ProtOut id_out;
+    id_out.create(SETTING, v0, id(), 0);
+    id_out.write<U4>(snd_spd);
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+
 
 Resp IDBinUART::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
@@ -278,6 +381,17 @@ Resp IDBinUART::parsePayload(ProtIn &proto) {
     return respOk;
 }
 
+void IDBinUART::setBaudrate(U4 baudrate) {
+    ProtOut id_out;
+    id_out.create(SETTING, v0, id(), 0);
+    appendKey(id_out);
+    id_out.write<U1>(1);
+    id_out.write<U4>(baudrate);
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+
 Resp IDBinMark::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
         m_mark = proto.read<U1>();
@@ -296,6 +410,7 @@ void IDBinMark::setMark() {
 
     sendDataProcessing(id_out);
 }
+
 
 Resp IDBinFlash::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
@@ -321,16 +436,30 @@ Resp IDBinFlash::parsePayload(ProtIn &proto) {
 }
 
 void IDBinFlash::flashing() {
-
+    ProtOut id_out;
+    id_out.create(SETTING, v0, id(), 0);
+    appendKey(id_out);
+    id_out.end();
+    sendDataProcessing(id_out);
 }
 
-void IDBinFlash::restore() {
 
+void IDBinFlash::restore() {
+    ProtOut id_out;
+    id_out.create(SETTING, v1, id(), 0);
+    appendKey(id_out);
+    id_out.end();
+    sendDataProcessing(id_out);
 }
 
 void IDBinFlash::erase() {
-
+    ProtOut id_out;
+    id_out.create(SETTING, v2, id(), 0);
+    appendKey(id_out);
+    id_out.end();
+    sendDataProcessing(id_out);
 }
+
 
 Resp IDBinBoot::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
@@ -366,6 +495,7 @@ void IDBinBoot::runFW() {
     sendDataProcessing(id_out);
 }
 
+
 Resp IDBinUpdate::parsePayload(ProtIn &proto) {
     if(proto.ver() == v0) {
     } else {
@@ -377,13 +507,14 @@ Resp IDBinUpdate::parsePayload(ProtIn &proto) {
 
 void IDBinUpdate::setUpdate(QByteArray fw) {
     _fw = fw;
+    _fw_offset = 0;
     _nbr_packet = 1;
 }
 
 bool IDBinUpdate::putUpdate() {
     uint16_t len_part = 64;
-    if(len_part > _fw.length()) {
-        len_part = (uint16_t)_fw.length();
+    if(len_part > availSend()) {
+        len_part = (uint16_t)availSend();
     }
 
     if(len_part == 0) {
@@ -395,9 +526,9 @@ bool IDBinUpdate::putUpdate() {
     id_out.write<U2>(_nbr_packet);
 
     for(uint16_t i = 0; i < len_part; i++) {
-        id_out.write<U1>((U1)_fw[i]);
+        id_out.write<U1>((U1)_fw[i + _fw_offset]);
     }
-    _fw.remove(0, len_part);
+    _fw_offset += len_part;
 
     _nbr_packet++;
 

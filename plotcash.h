@@ -64,6 +64,7 @@ public:
 
 public slots:
     void addData(QVector<uint8_t> data, int resolution, int offset);
+    void addDist(int dist);
 
 private:
     bool m_isDataUpdate;
