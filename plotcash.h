@@ -25,12 +25,14 @@ public:
     class LineCash {
     public:
         LineCash();
-        void setData(QVector<uint8_t> data, int resolution, int offset);
-        QImage* getImage(QSize size, int range, int offset, QVector<QColor> colorMap, bool forceDraw = false);
+        void setData(QVector<int16_t> data, int resolution, int offset);
+        QImage* getImage(QSize size, int range, int offset, QVector<QColor> colorMap, int startLevel, int stopLevel, bool forceDraw = false);
     protected:
-        QVector<uint8_t> m_rawData;
+        QVector<int16_t> m_rawData;
         int m_dataResol;
         int m_dataOffset;
+        int m_startLevel;
+        int m_stopLevel;
 
         QImage m_cash;
         int m_cashResol;
@@ -38,7 +40,29 @@ public:
 
         bool m_isUpdated;
 
-        uint8_t rawDataRange(float start, float end);
+        inline int16_t rawDataRange(int16_t* data, int len, float start, float end) {
+            int start_index = ((start - m_dataOffset)/(float)m_dataResol);
+            int end_index = ((end - m_dataOffset)/(float)m_dataResol);
+
+            int16_t val;
+
+            if(start_index >= len || start_index < 0) {
+                val = 0;
+            } else {
+                if(end_index > len) {
+                    end_index = len;
+                }
+
+                val = data[start_index];
+                for(int i = start_index + 1; i < end_index; i++) {
+                    if(data[i] > val) {
+                        val = data[i];
+                    }
+                }
+            }
+
+            return val;
+        }
     };
 
     QVector<LineCash> Lines;
@@ -62,9 +86,13 @@ public:
         return end_index;
     }
 
+    void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
+
 public slots:
-    void addData(QVector<uint8_t> data, int resolution, int offset);
+    void addData(QVector<int16_t> data, int resolution, int offset);
     void addDist(int dist);
+    void setStartLevel(int level);
+    void setStopLevel(int level);
 
 private:
     bool m_isDataUpdate;
@@ -72,6 +100,8 @@ private:
     float m_legendMultiply = 0.001f;
     int m_range = 2000;
     int m_offset = 0;
+    int m_startLevel = 10;
+    int m_stopLevel = 100;
 };
 
 #endif // PLOT_CASH_H

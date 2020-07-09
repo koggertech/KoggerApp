@@ -9,51 +9,76 @@ Slider {
     to: 0
     horizontalPadding: 0
     snapMode: Slider.SnapAlways
+    property int lineStyle: 0
 
-    handle: Item {
-        Rectangle {
-            id: backHandle
-            x: slider.leftPadding + slider.visualPosition * (slider.availableWidth) - width/2
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            implicitWidth: 28
-            implicitHeight: 12
-            color: "#70C0F0"
-        }
+    onEnabledChanged: {
+        upCanvas.requestPaint()
+    }
 
-        Rectangle {
-            id: leftPipe
-            x: backHandle.x - 4
-            y: backHandle.y
-            width: 2
-            height: backHandle.implicitHeight
-            color: "#7090b0"
-        }
+    onValueChanged: {
+        upCanvas.requestPaint()
+    }
 
-        Rectangle {
-            id: rightPipe
-            x: backHandle.x + backHandle.width + 2
-            y: backHandle.y
-            width: 2
-            height: backHandle.implicitHeight
-            color: "#7090b0"
+    StyleSet {
+        id: styleSet
+    }
+
+
+    handle: Canvas {
+        id: upCanvas
+        x: backHandleX
+        y: backHandleY
+        opacity: 1
+        width: slider.horizontal ? 10 : 28
+        height: slider.horizontal ? 28 : 10
+        contextType: "2d"
+
+        property real backHandleX: slider.horizontal ? slider.leftPadding + slider.visualPosition * (slider.availableWidth) - width/2 : slider.leftPadding
+        property real backHandleY: slider.horizontal ? slider.topPadding + slider.availableHeight / 2 - height / 2 : -slider.topPadding / 2 + slider.visualPosition * (slider.height) - height / 2
+
+
+        property bool pressed: false
+
+        onPaint: {
+            context.reset();
+
+            var mid_height = slider.horizontal ? height/2 : height/2
+            var width_button = slider.horizontal ? height/6 : width/2
+
+            context.moveTo(0, mid_height);
+            context.lineTo(width_button, 0);
+            context.lineTo(width - width_button, 0);
+            context.lineTo(width, mid_height);
+            context.lineTo(width - width_button, height);
+            context.lineTo(width_button, height);
+
+            context.closePath();
+            context.fillStyle = enabled ? (pressed ? "#909090" : styleSet.colorControllBackActive) : "#505050"
+            context.fill();
+
+            context.lineWidth = 1
+            context.strokeStyle = enabled ? (pressed ? "#909090" : "#808080") : "#606060"
+            context.stroke()
         }
     }
 
     background: Item {
         Rectangle {
-            x: slider.leftPadding - backHandle.width
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            width: leftPipe.x - x
-            height: 2
-            color: "#7090b0"
+            visible: lineStyle == 0 || lineStyle == 1
+            x: slider.horizontal ? slider.leftPadding - upCanvas.width : slider.leftPadding + upCanvas.width/2
+            y: slider.horizontal ? slider.topPadding + slider.availableHeight / 2 - height / 2 : slider.topPadding
+            width: slider.horizontal ? upCanvas.x - x : 2
+            height: slider.horizontal ? 2 : upCanvas.y
+            color: "#808080"
         }
 
         Rectangle {
-            x: rightPipe.x
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            width: slider.width - slider.leftPadding - x + backHandle.width
-            height: 2
-            color: "#7090b0"
+            visible: lineStyle == 0 || lineStyle == 2
+            x: slider.horizontal ? upCanvas.x : slider.leftPadding + upCanvas.width/2
+            y: slider.horizontal ? slider.topPadding + slider.availableHeight / 2 - height / 2 : upCanvas.y
+            width: slider.horizontal ? slider.width - slider.leftPadding - x + upCanvas.width : 2
+            height: slider.horizontal ? 2 : slider.height - slider.bottomPadding - y
+            color: "#808080"
         }
     }
 }

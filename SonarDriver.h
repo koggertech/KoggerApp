@@ -22,6 +22,12 @@ public:
         DatasetRequest = 255
     } DatasetChannel;
 
+    int distMax();
+    void setDistMax(int dist);
+
+    int distDeadZone();
+    void setDistDeadZone(int dead_zone);
+
     int chartSamples();
     void setChartSamples(int samples);
 
@@ -39,6 +45,8 @@ public:
     void setDatasetTemp(int ch_param);
     int datasetSDDBT();
     void setDatasetSDDBT(int ch_param);
+    int datasetSDDBT_P2();
+    void setDatasetSDDBT_P2(int ch_param);
 
     int ch1Period();
     void setCh1Period(int period);
@@ -60,18 +68,27 @@ public:
     int transBoost();
     void setTransBoost(int boost);
 
+    int soundSpeed();
+    void setSoundSpeed(int speed);
+
 signals:
     void dataSend(QByteArray data);
-    void chartComplete(QVector<uint8_t> data, int resolution, int offset);
+    void chartComplete(QVector<int16_t> data, int resolution, int offset);
     void chartSetupChanged();
+    void distSetupChanged();
     void datasetChanged();
     void transChanged();
+    void soundChanged();
     void upgradeProgressChanged();
 
 public slots:
     void putData(const QByteArray &data);
     void protoComplete(ProtIn &proto);
     void startConnection();
+
+    void requestDist();
+    void requestChart();
+
     void flashSettings();
     void resetSettings();
     void reboot();

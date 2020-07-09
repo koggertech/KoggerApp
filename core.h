@@ -43,6 +43,14 @@ public slots:
 
     bool upgradeFW(const QString &name);
 
+    void setPlotStartLevel(int level) {
+        m_plot->setStartLevel(level);
+    }
+
+    void setPlotStopLevel(int level) {
+        m_plot->setStopLevel(level);
+    }
+
     void UILoad(QObject *object, const QUrl &url);
 
 signals:

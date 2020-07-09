@@ -207,15 +207,20 @@ void IDBinDataset::setChannel(uint8_t ch_id, uint32_t period, uint32_t mask) {
 }
 
 uint32_t IDBinDataset::mask(U1 ch_id) {
-    if(ch_id < _countof(m_channel)) {
-        return m_channel[ch_id].mask;
+    uint32_t mask = 0;
+    if(ch_id == 0) {
+        for(int i = 1; i < 3; i++) {
+            mask |= m_channel[i].mask;
+        }
+    } else if(ch_id < _countof(m_channel)) {
+        mask = m_channel[ch_id].mask;
     }
-    return 0;
+    return mask;
 }
 
 void IDBinDataset::setMask(U1 ch_id, uint32_t mask) {
-
-    sendChannel(ch_id, period(ch_id), mask);
+    m_channel[ch_id].id = ch_id;
+    m_channel[ch_id].mask = mask;
 }
 
 uint32_t IDBinDataset::period(U1 ch_id) {
@@ -233,9 +238,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
     if(ch_id < _countof(m_channel)) {
         qInfo("ch_id %u, mask %u", ch_id, mask);
 
-        m_channel[ch_id].id = ch_id;
         m_channel[ch_id].period = period;
-        m_channel[ch_id].mask = mask;
 
         ProtOut id_out;
         id_out.create(SETTING, v0, id(), 0);
@@ -249,7 +252,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
 
 
 Resp IDBinDistSetup::parsePayload(ProtIn &proto) {
-    if(proto.ver() == v0) {
+    if(proto.ver() == v1) {
         m_startOffset = proto.read<U4>();
         m_maxDist = proto.read<U4>();
     } else {
@@ -264,7 +267,7 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
     m_maxDist = max_dist;
 
     ProtOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v1, id(), 0);
     id_out.write<U4>(start_offset);
     id_out.write<U4>(max_dist);
     id_out.end();

@@ -1,10 +1,15 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.3
 
 ComboBox {
     id: control
 
-    font.family: "Roboto"; font.pointSize: 13
+    font.pointSize: 12
+
+    StyleSet {
+        id:styleSet
+    }
 
     delegate: ItemDelegate {
         width: control.width
@@ -12,7 +17,7 @@ ComboBox {
         contentItem: Text {
             text: modelData
             antialiasing: false
-            color: "#F07000"
+            color: styleSet.colorControllText
             font: control.font
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
@@ -21,9 +26,11 @@ ComboBox {
         highlighted: control.highlightedIndex === index
     }
 
+
+
     indicator: Canvas {
         id: canvas
-        x: control.width - width - control.rightPadding + 3
+        x: control.width - width - control.rightPadding
         y: control.topPadding + (control.availableHeight - height) / 2
         width: 12
         height: 8
@@ -54,27 +61,32 @@ ComboBox {
                 context.closePath();
             }
 
-            context.fillStyle = "#F07000"
+            context.fillStyle = control.down ? styleSet.colorControllTextActive : styleSet.colorControllText
             context.fill();
         }
     }
 
     contentItem: Text {
         antialiasing: false
-        leftPadding: 10
+        leftPadding: 15
         rightPadding: control.indicator.width + control.spacing
 
         text: control.displayText
         font: control.font
-        color: "#F07000"
+        color: control.down ? styleSet.colorControllTextActive : styleSet.colorControllText
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
 
-    background: ComboBackStyle {
-        id: backItem
+    background:  Rectangle {
+        id: backRect
         implicitWidth: 100
-        implicitHeight: 30
+        implicitHeight: styleSet.controllHeight
+        radius: 1
+        color: control.down ? styleSet.colorControllBackActive : styleSet.colorControllBack
+        opacity: styleSet.controllBackOpacity
+        border.color: control.down ? styleSet.colorControllBorderActive : styleSet.colorControllBorder
+        border.width: 1
     }
 
     popup: Popup {
@@ -94,7 +106,14 @@ ComboBox {
         }
 
         background: Rectangle {
-            color: "#104060"
+            id: popupRect
+            implicitWidth: 100
+            implicitHeight: styleSet.controllHeight
+            radius: 1
+            color: control.down ? styleSet.colorControllBackActive : styleSet.colorControllBack
+            opacity: styleSet.controllBackOpacity
+            border.color: control.down ? styleSet.colorControllBorderActive : styleSet.colorControllBorder
+            border.width: 1
         }
     }
 }

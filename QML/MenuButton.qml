@@ -7,12 +7,12 @@ Button {
     property bool active: false
 
     id: control
-    Layout.preferredWidth: 35
+    Layout.preferredWidth: 50
     Layout.preferredHeight: 30
     Layout.alignment: Qt.AlignTop
     opacity: 0.8
 
-    font.family: "Roboto"; font.pointSize: 13;
+    font.family: "Roboto"; font.pointSize: 12;
 
     background: TabBackStyle {
         active: control.active
@@ -30,11 +30,11 @@ Button {
 
     onActiveChanged: {
         if(control.active) {
-            Layout.preferredWidth = 35
-            Layout.preferredHeight = 35
+            Layout.preferredWidth = 50
+            Layout.preferredHeight = 30
             opacity = 1.0
         } else {
-            Layout.preferredWidth = 35
+            Layout.preferredWidth = 50
             Layout.preferredHeight = 30
             opacity = 0.8
         }

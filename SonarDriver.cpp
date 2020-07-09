@@ -100,6 +100,14 @@ void SonarDriver::startConnection() {
     m_upgrade_status = 0;
 }
 
+void SonarDriver::requestDist() {
+    idDist->simpleRequest(v0);
+}
+
+void SonarDriver::requestChart() {
+    idChart->simpleRequest(v0);
+}
+
 void SonarDriver::sendUpdateFW(QByteArray update_data) {
     m_bootloader = true;
     idUpdate->setUpdate(update_data);
@@ -138,6 +146,16 @@ void SonarDriver::setTransBoost(int boost) {
     if(is_changed) { emit transChanged(); }
 }
 
+int SonarDriver::soundSpeed() {
+    return idSoundSpeed->getSoundSpeed();
+}
+
+void SonarDriver::setSoundSpeed(int speed) {
+    bool is_changed = transBoost() != speed;
+    idSoundSpeed->setSoundSpeed(speed);
+    if(is_changed) { emit soundChanged(); }
+}
+
 void SonarDriver::flashSettings() {
     idFlash->flashing();
 }
@@ -148,6 +166,24 @@ void SonarDriver::resetSettings() {
 
 void SonarDriver::reboot() {
     idBoot->reboot();
+}
+
+int SonarDriver::distMax() {
+    return idDistSetup->max();
+}
+void SonarDriver::setDistMax(int dist) {
+    bool is_changed = dist != distMax();
+    idDistSetup->setMax(dist);
+    if(is_changed) { emit distSetupChanged(); }
+}
+
+int SonarDriver::distDeadZone() {
+    return idDistSetup->deadZone();
+}
+void SonarDriver::setDistDeadZone(int dead_zone) {
+    bool is_changed = dead_zone != distDeadZone();
+    idDistSetup->setDeadZone(dead_zone);
+    if(is_changed) { emit distSetupChanged(); }
 }
 
 int SonarDriver::chartSamples() {
@@ -193,22 +229,8 @@ int SonarDriver::datasetDist() {
 
 void SonarDriver::setDatasetDist(int ch_param) {
     bool is_changed = (ch_param != datasetDist());
-
-    switch (ch_param) {
-    case DatasetCh1:
-        idDataset->setDist_v0(1);
-        idDataset->resetDist_v0(2);
-        break;
-    case DatasetCh2:
-        idDataset->resetDist_v0(1);
-        idDataset->setDist_v0(2);
-        break;
-    default:
-        idDataset->resetDist_v0(1);
-        idDataset->resetDist_v0(2);
-        break;
-    }
-
+    idDataset->setDist_v0(ch_param);
+    idDataset->commit();
     if(is_changed) {
         emit datasetChanged();
     }
@@ -227,22 +249,8 @@ int SonarDriver::datasetChart() {
 
 void SonarDriver::setDatasetChart(int ch_param) {
     bool is_changed = (ch_param != datasetChart());
-
-    switch (ch_param) {
-    case DatasetCh1:
-        idDataset->setChart_v0(1);
-        idDataset->resetChart_v0(2);
-        break;
-    case DatasetCh2:
-        idDataset->resetChart_v0(1);
-        idDataset->setChart_v0(2);
-        break;
-    default:
-        idDataset->resetChart_v0(1);
-        idDataset->resetChart_v0(2);
-        break;
-    }
-
+    idDataset->setChart_v0(ch_param);
+    idDataset->commit();
     if(is_changed) {
         emit datasetChanged();
     }
@@ -261,22 +269,8 @@ int SonarDriver::datasetTemp() {
 
 void SonarDriver::setDatasetTemp(int ch_param) {
     bool is_changed = (ch_param != datasetTemp());
-
-    switch (ch_param) {
-    case DatasetCh1:
-        idDataset->setTemp_v0(1);
-        idDataset->resetTemp_v0(2);
-        break;
-    case DatasetCh2:
-        idDataset->resetTemp_v0(1);
-        idDataset->setTemp_v0(2);
-        break;
-    default:
-        idDataset->resetTemp_v0(1);
-        idDataset->resetTemp_v0(2);
-        break;
-    }
-
+    idDataset->setTemp_v0(ch_param);
+    idDataset->commit();
     if(is_changed) {
         emit datasetChanged();
     }
@@ -295,22 +289,28 @@ int SonarDriver::datasetSDDBT() {
 
 void SonarDriver::setDatasetSDDBT(int ch_param) {
     bool is_changed = (ch_param != datasetSDDBT());
-
-    switch (ch_param) {
-    case DatasetCh1:
-        idDataset->setSDDBT(1);
-        idDataset->resetSDDBT(2);
-        break;
-    case DatasetCh2:
-        idDataset->resetSDDBT(1);
-        idDataset->setSDDBT(2);
-        break;
-    default:
-        idDataset->resetSDDBT(1);
-        idDataset->resetSDDBT(2);
-        break;
+    idDataset->setSDDBT(ch_param);
+    idDataset->commit();
+    if(is_changed) {
+        emit datasetChanged();
     }
+}
 
+int SonarDriver::datasetSDDBT_P2() {
+    int ch_param = 0;
+    if(idDataset->getSDDBT_P2(1)) {
+        ch_param |= 1;
+    }
+    if(idDataset->getSDDBT_P2(2)) {
+        ch_param |= 2;
+    }
+    return ch_param;
+}
+
+void SonarDriver::setDatasetSDDBT_P2(int ch_param) {
+    bool is_changed = (ch_param != datasetSDDBT_P2());
+    idDataset->setSDDBT_P2(ch_param);
+    idDataset->commit();
     if(is_changed) {
         emit datasetChanged();
     }
@@ -349,13 +349,15 @@ void SonarDriver::receivedTimestamp(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedDist(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+
+    qInfo("Dist %u", idDist->dist_mm());
 }
 
 void SonarDriver::receivedChart(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
     if(idChart->isCompleteChart()) {
-        QVector<uint8_t> data(idChart->chartSize());
+        QVector<int16_t> data(idChart->chartSize());
         uint8_t* raw_data = idChart->rawData();
         for(int i = 0; i < data.length(); i++) {
             data[i] = raw_data[i];
@@ -390,6 +392,9 @@ void SonarDriver::receivedDataset(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedDistSetup(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+    if(resp == respNone) {
+        emit distSetupChanged();
+    }
 }
 
 void SonarDriver::receivedChartSetup(Type type, Version ver, Resp resp) {

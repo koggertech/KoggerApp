@@ -1,0 +1,247 @@
+import QtQuick 2.12
+import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.12
+import QtQuick.Dialogs 1.2
+import Qt.labs.settings 1.1
+
+
+Item {
+    id: control
+    Layout.preferredHeight: columnItem.height
+
+    MenuBlock {
+    }
+
+    ColumnLayout {
+        id: columnItem
+        width: control.width
+
+        TitleMenuBox {
+            titleText: "Distance"
+            Layout.fillWidth: true
+
+            RowLayout {
+                id: switchDatasetDist
+                property int lastDistChannel: 1
+
+                CCheck {
+                    id:switchBinnary
+                    text: "Bin"
+                    checked: sonarDriver.datasetDist > 0
+                    onCheckedChanged: {
+                        if(checked == true && sonarDriver.datasetDist == 0) {
+                            sonarDriver.datasetDist = switchDatasetDist.lastDistChannel
+                        } else if(checked == false && sonarDriver.datasetDist > 0) {
+                            switchDatasetDist.lastDistChannel = sonarDriver.datasetDist
+                            sonarDriver.datasetDist = 0
+                        }
+                    }
+                }
+
+                CCheck {
+                    id:switchNMEA
+                    text: "NMEA"
+                    checked: sonarDriver.datasetSDDBT > 0
+                    onCheckedChanged: {
+                        if(checked == true && sonarDriver.datasetSDDBT == 0) {
+                            sonarDriver.datasetSDDBT = switchDatasetDist.lastDistChannel
+                        } else if(checked == false && sonarDriver.datasetSDDBT > 0) {
+                            switchDatasetDist.lastDistChannel = sonarDriver.datasetSDDBT
+                            sonarDriver.datasetSDDBT = 0
+                        }
+                    }
+                }
+
+
+                CCheck {
+                    id:switchNMEA2
+                    text: "NMEA #2"
+                    checked: sonarDriver.datasetSDDBT_P2 > 0
+                    onCheckedChanged: {
+                        if(checked == true && sonarDriver.datasetSDDBT_P2 == 0) {
+                            sonarDriver.datasetSDDBT_P2 = switchDatasetDist.lastDistChannel
+                        } else if(checked == false && sonarDriver.datasetSDDBT_P2 > 0) {
+                            switchDatasetDist.lastDistChannel = sonarDriver.datasetSDDBT_P2
+                            sonarDriver.datasetSDDBT_P2 = 0
+                        }
+                    }
+                }
+
+                CButton {
+                    text: "Shot"
+                    Layout.preferredWidth: 48
+                    Layout.preferredHeight: 22
+                    Layout.leftMargin: 10
+
+                    onClicked: {
+                        sonarDriver.requestDist();
+                    }
+                }
+            }
+        }
+
+        GridLayout {
+            Layout.margins: 15
+            Layout.fillWidth: true
+            Layout.preferredHeight: 130
+            rowSpacing: 0
+
+            Canvas {
+                id: borderCanvas
+                x: 0
+                y: 0
+                Layout.fillWidth: true
+                height: 130
+                contextType: "2d"
+                opacity: 1
+                property real offsetRight: 5
+                property real tickness: 2
+                property real heightSliderBox: 100
+                property real heightChart: height - heightSliderBox
+                property real heightSliderSamples: 100
+                property real posSliderSamples: heightChart + heightSliderSamples - 10
+                property real heightSliderOffset: 60
+                property real posSliderOffset: heightChart + heightSliderOffset - 10
+
+//                CSlider {
+//                    x: borderCanvas.offsetRight + 25 - 2
+//                    y: borderCanvas.posSliderSamples - height/2
+//                    width: 465
+//                    horizontalPadding: 30
+//                    lineStyle: 0
+
+//                    stepSize: 1.0
+//                    value: sonarDriver.distMaxSlider
+//                    to: sonarDriver.distMaxSliderCount
+//                    onValueChanged: {
+//                        sonarDriver.distMaxSlider = value
+//                    }
+//                }
+
+                SpinBoxCustom {
+                    x: borderCanvas.width - 25 - width - 2
+                    y: borderCanvas.posSliderSamples - height/2
+                    width: 130
+                    from: 0
+                    to: 50000
+                    stepSize: 1000
+                    value: sonarDriver.distMax
+                    onValueChanged: {
+                        sonarDriver.distMax = value
+                    }
+                }
+
+                Text {
+                    x: borderCanvas.offsetRight + 370
+                    y: borderCanvas.posSliderSamples - height - 5
+                    text: "Max distance, mm"
+                    padding: 10
+                    color: "#808080"
+                    font.pixelSize: 14
+                }
+
+//                CSlider {
+//                    x: borderCanvas.offsetRight + 30 - 2
+//                    y: borderCanvas.posSliderOffset - height/2
+//                    width: 440
+//                    horizontalPadding: 30
+//                    lineStyle: 1
+
+//                    stepSize: 1.0
+//                    value: sonarDriver.distDeadZoneSlider
+//                    to: sonarDriver.distDeadZoneSliderCount
+//                    onValueChanged: {
+//                        sonarDriver.distDeadZoneSlider = value
+//                    }
+//                }
+
+                SpinBoxCustom {
+                    x: borderCanvas.offsetRight + 30 - 2
+                    y: borderCanvas.posSliderOffset - height/2
+                    width: 130
+                    from: 0
+                    to: 50000
+                    stepSize: 100
+                    value: sonarDriver.distDeadZone
+                    onValueChanged: {
+                        sonarDriver.distDeadZone = value
+                    }
+                }
+
+                Text {
+                    x: borderCanvas.offsetRight + 30
+                    y: borderCanvas.posSliderOffset - height - 5
+                    text: "Dead zone, mm"
+                    padding: 10
+                    color: "#808080"
+                    font.pixelSize: 14
+                }
+
+                onPaint: {
+                    context.reset();
+
+                    context.lineWidth = 2
+                    context.strokeStyle = "#808080"
+
+                    context.beginPath()
+                    context.arc(4, heightChart + 1, 10, -1, 1, false)
+                    context.stroke()
+
+                    context.beginPath()
+                    context.arc(4, heightChart + 1, 15, -1, 1, false)
+                    context.stroke()
+
+                    context.beginPath()
+                    context.arc(4, heightChart + 1, 20, -1, 1, false)
+                    context.stroke()
+
+                    context.beginPath()
+                    context.arc(5, heightChart + 1, 2, 0, Math.PI * 2, false)
+                    context.stroke()
+
+                    context.beginPath()
+
+                    context.fillStyle = "#808080"
+
+                    context.fillRect(offsetRight, 0, tickness, height)
+                    context.fillRect(0, heightChart, width, tickness)
+
+                    context.fillStyle = "#606060"
+                    context.fillRect(width - 5, heightChart - 10, 1.5, heightSliderSamples + 10)
+
+                    context.fillStyle = "#808080"
+                    context.fillRect(offsetRight + 2, posSliderSamples - 1, 370, 2)
+                    context.fillRect(width - 5, posSliderSamples - 1, - 35, 2)
+
+                    context.moveTo(offsetRight + 2, posSliderSamples)
+                    context.lineTo(offsetRight + 2 + 10, posSliderSamples - 4)
+                    context.lineTo(offsetRight + 2 + 10, posSliderSamples + 4)
+                    context.closePath()
+
+                    context.moveTo(width - 5, posSliderSamples)
+                    context.lineTo(width - 5 - 10, posSliderSamples - 4)
+                    context.lineTo(width  - 5 - 10, posSliderSamples + 4)
+                    context.closePath()
+
+                    context.fillStyle = "#606060"
+                    context.fillRect(30, heightChart - 10, 1.5, heightSliderOffset + 10)
+
+                    context.fillStyle = "#808080"
+                    context.fillRect(5, posSliderOffset - 1, offsetRight - 5 + 35, 2)
+
+                    context.moveTo(5, posSliderOffset)
+                    context.lineTo(5 + 1 + 10, posSliderOffset - 4)
+                    context.lineTo(5 + 1 + 10, posSliderOffset + 4)
+                    context.closePath()
+
+                    context.moveTo(30, posSliderOffset)
+                    context.lineTo(30 - 10, posSliderOffset - 4)
+                    context.lineTo(30 - 10, posSliderOffset + 4)
+                    context.closePath()
+
+                    context.fill()
+                }
+            }
+        }
+    }
+}

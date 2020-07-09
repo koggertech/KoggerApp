@@ -81,11 +81,20 @@ public:
     ~ProtoBase() {
     }
 
+    ID id() const {return _id;}
+    Type type() const {return (Type)(_mode & 0x3);}
+    Version ver() const {return (Version)((_mode >> 3) & 0x7);}
+    bool mark() const {return ((_mode >> 6) & 0x1) == 0x1;}
+    bool resp() const {return ((_mode >> 7) & 0x1) == 0x1;}
+
 protected:
     typedef enum {
         SYNC1 = 0xBB,
         SYNC2 = 0x55
     } ProtoHeader;
+
+    ID _id;
+    uint8_t _mode;
 
     uint8_t mode(Type type, Version ver, bool response) {
         return (uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7));
@@ -111,11 +120,14 @@ public:
 
     void create(Type type, Version ver, ID id, uint8_t route) {
         resetState();
+        _id = id;
+        _mode = mode(type, ver, true);
+
         write<U1>(SYNC1);
         write<U1>(SYNC2);
         write<U1>(route);
-        write<U1>(mode(type, ver, true));
-        write<U1>(id);
+        write<U1>(_mode);
+        write<U1>(_id);
         uint8_t temp_len = 0;
         write<U1>(temp_len);
     }
@@ -173,12 +185,8 @@ class ProtIn : public ProtoBase
 public:
     explicit ProtIn(QObject *parent = nullptr);
 
-    ID id() const {return _id;}
     int len() const {return _fieldLen;}
-    Type type() const {return (Type)(_mode & 0x3);}
-    Version ver() const {return (Version)((_mode >> 3) & 0x7);}
-    bool mark() const {return ((_mode >> 6) & 0x1) == 0x1;}
-    bool resp() const {return ((_mode >> 7) & 0x1) == 0x1;}
+
 
     template<typename T>
     T read() {
@@ -214,8 +222,6 @@ private:
         StateCheck2
     } State;
 
-    ID _id;
-
     uint8_t _fieldLen;
     uint8_t _fieldCheck1;
     uint8_t _fieldCheck2;
@@ -227,8 +233,6 @@ private:
     uint16_t _fillPosition;
     uint8_t _fillPayload[256];
     uint16_t _readOffset;
-
-    uint8_t _mode;
     uint16_t _checkErrorCnt;
 
     void resetState() {

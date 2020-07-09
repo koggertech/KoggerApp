@@ -22,5 +22,20 @@
         <file>CRButton.qml</file>
         <file>CProgressButton.qml</file>
         <file>TitleSetup.qml</file>
+        <file>MenuScroll.qml</file>
+        <file>MenuBlock.qml</file>
+        <file>FlashBox.qml</file>
+        <file>TitleMenuBox.qml</file>
+        <file>CProgress.qml</file>
+        <file>StyleSet.qml</file>
+        <file>ChartBox.qml</file>
+        <file>TransducerBox.qml</file>
+        <file>DistBox.qml</file>
+        <file>DatasetBox.qml</file>
+        <file>CCheck.qml</file>
+        <file>DatasetCheckBox.qml</file>
+        <file>SpinBoxCustom.qml</file>
+        <file>ChartLevel.qml</file>
+        <file>SoundSpdBox.qml</file>
     </qresource>
 </RCC>

@@ -181,28 +181,58 @@ public:
     } Channel;
 
     typedef enum {
-        MASK_DIST_V0 = 0,
-        MASK_CHART_V0 = 1,
-        MASK_ATTITUDE_V0 = 2,
-        MASK_ATTITUDE_V1 = 3,
-        MASK_TEMP_V0 = 4,
-        MASK_TIMESTAMP_V0 = 5,
-        MASK_DIST_SDDBT = 6,
+        MASK_DIST_V0 = 1,
+        MASK_CHART_V0 = 2,
+        MASK_ATTITUDE_V0 = 4,
+        MASK_ATTITUDE_V1 = 8,
+        MASK_TEMP_V0 = 16,
+        MASK_TIMESTAMP_V0 = 32,
+        MASK_DIST_SDDBT = 64,
+        MASK_DIST_SDDBT_P2 = 128,
     } ChannelMask;
 
     void setChannel(uint8_t ch_id, uint32_t period, uint32_t mask);
     uint32_t mask(U1 ch_id);
     void setMask(U1 ch_id, uint32_t mask);
 
-    void setFlag(U1 ch_id, uint32_t flag) { setMask(ch_id, mask(ch_id) | ((U4)1 << flag)); }
-    void resetFlag(U1 ch_id, uint32_t flag) { setMask(ch_id, mask(ch_id) & (~((U4)1 << flag))); }
-    bool flag(U1 ch_id, uint32_t flag) { return (mask(ch_id) & ((U4)1 << flag)) != 0 ;}
 
-    void setDist_v0(U1 ch_id) { setFlag(ch_id, MASK_DIST_V0); }
+    void setFlag(U1 ch_id, uint32_t flag) {
+        if(ch_id != 0) {
+            setMask(ch_id, mask(ch_id) | ((U4)flag));
+
+            for(int i = 1; i < 3; i++) {
+                if(ch_id != i) {
+                    resetFlag(i, flag);
+                }
+            }
+        } else {
+            for(int i = 1; i < 3; i++) {
+                resetFlag(i, flag);
+            }
+        }
+    }
+
+    void resetFlag(U1 ch_id, uint32_t flag) { setMask(ch_id, mask(ch_id) & (~((U4)flag))); }
+    void moveFlag(U1 ch_id, uint32_t flag) {
+        if(ch_id != 0) {
+            uint32_t msk = mask(0)&flag;
+            setFlag(ch_id, msk);
+        }
+    }
+    bool flag(U1 ch_id, uint32_t flag) { return (mask(ch_id) & ((U4)flag)) != 0 ;}
+
+    void setDist_v0(U1 ch_id) {
+        setFlag(ch_id, MASK_DIST_V0);
+        moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
+//        setFlag(0, MASK_DIST_SDDBT);
+    }
     void resetDist_v0(U1 ch_id) { resetFlag(ch_id, MASK_DIST_V0); }
     bool getDist_v0(U1 ch_id) { return flag(ch_id, MASK_DIST_V0); }
 
-    void setChart_v0(U1 ch_id) { setFlag(ch_id, MASK_CHART_V0); }
+    void setChart_v0(U1 ch_id) {
+        setFlag(ch_id, MASK_CHART_V0);
+        moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
+    }
     void resetChart_v0(U1 ch_id) { resetFlag(ch_id, MASK_CHART_V0); }
     bool getChart_v0(U1 ch_id) { return flag(ch_id, MASK_CHART_V0); }
 
@@ -222,10 +252,25 @@ public:
     void resetTimestamp_v0(U1 ch_id) { resetFlag(ch_id, MASK_TIMESTAMP_V0); }
     bool getTimestamp_v1(U1 ch_id) { return flag(ch_id, MASK_TIMESTAMP_V0); }
 
-    void setSDDBT(U1 ch_id) { setFlag(ch_id, MASK_DIST_SDDBT); }
+    void setSDDBT(U1 ch_id) {
+        setFlag(ch_id, MASK_DIST_SDDBT);
+        moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
+//        setFlag(0, MASK_DIST_V0);
+    }
     void resetSDDBT(U1 ch_id) { resetFlag(ch_id, MASK_DIST_SDDBT); }
     bool getSDDBT(U1 ch_id) { return flag(ch_id, MASK_DIST_SDDBT); }
 
+    void setSDDBT_P2(U1 ch_id) {
+        setFlag(ch_id, MASK_DIST_SDDBT_P2);
+        moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
+    }
+    void resetSDDBT_P2(U1 ch_id) { resetFlag(ch_id, MASK_DIST_SDDBT_P2); }
+    bool getSDDBT_P2(U1 ch_id) { return flag(ch_id, MASK_DIST_SDDBT_P2); }
+
+    void commit() {
+        sendChannel(1, period(1), mask(1));
+        sendChannel(2, period(2), mask(2));
+    }
 
     uint32_t period(U1 ch_id);
     void setPeriod(U1 ch_id, uint32_t period);
@@ -250,9 +295,15 @@ public:
     Resp  parsePayload(ProtIn &proto) override;
 
     void setRange(uint32_t start_offset, uint32_t max_dist);
+
+    int max() { return m_maxDist; }
+    void setMax(uint32_t max_dist) { setRange(deadZone(), max_dist); }
+
+    int deadZone() { return m_startOffset; }
+    void setDeadZone(uint32_t dead_zone) { setRange(dead_zone, max()); }
 protected:
-    uint32_t m_startOffset = 0;
-    uint32_t m_maxDist = 0;
+    uint32_t m_startOffset = 250;
+    uint32_t m_maxDist = 50000;
 };
 
 
@@ -332,6 +383,7 @@ public:
     Resp  parsePayload(ProtIn &proto) override;
 
     void setSoundSpeed(U4 snd_spd);
+    int getSoundSpeed() { return m_soundSpeed; }
 protected:
     U4 m_soundSpeed = 1500000;
 };

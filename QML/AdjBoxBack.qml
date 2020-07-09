@@ -70,7 +70,7 @@ BackStyle {
 //            context.lineTo(0, height - height*0.3);
 //            context.closePath();
 
-            context.fillStyle = borderColor
+            context.fillStyle = "#808080"
             context.fill();
         }
     }

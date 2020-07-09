@@ -6,12 +6,7 @@ import Qt.labs.settings 1.1
 
 MenuViewer {
     id: viewerConnection
-    width: scrollBar.width
-    height: scrollBar.height + 20
-
-    ScrollBar {
-
-    }
+    height: 400
 
     Connections {
         target: core
@@ -21,358 +16,225 @@ MenuViewer {
         }
     }
 
-
-
-    FileDialog {
-        id: fileDialog
-        title: "Please choose a file"
-        folder: shortcuts.home
-        onAccepted: {
-            console.log("You chose: " + fileDialog.fileUrls)
-            core.openConnectionAsFile(fileDialog.fileUrl)
-        }
-        onRejected: {
-            console.log("Canceled")
-        }
-    }
-
-    ScrollView {
+    MenuScroll {
         id: scrollBar
-        y:10
-        width: grid.width + 40
-        height: 500
-        clip: true
-        padding: 20
 
         ColumnLayout {
-            id: grid
+            width: parent.width
+            spacing: 20
 
-            RowLayout {
-                Layout.margins: 6
+            Item {
                 Layout.fillWidth: true
+                Layout.preferredHeight: columnConnectionItem.height
 
-                CCombo  {
-                    id: connectionTypeCombo
-                    Layout.fillWidth: true
-                    model: ["SERIAL"]
-
-                    Settings {
-                        property alias connectionType: connectionTypeCombo.currentIndex
-                    }
+                MenuBlock {
                 }
 
-                CCombo  {
-                    id: portCombo
-                    visible: connectionTypeCombo.currentText === "SERIAL"
-                    onPressedChanged: {
-                        if(pressed) {
-                            model = core.availableSerialName()
+                ColumnLayout {
+                    id: columnConnectionItem
+                    width: parent.width
+
+                    TitleMenuBox {
+                        titleText: "Connection #1"
+
+//                        CCheck {
+//                            id:checkLogging
+//                            text: "Logging"
+////                            checked: sonarDriver.datasetChart > 0
+////                            onCheckedChanged: {
+////                                if(checked == true && sonarDriver.datasetChart == 0) {
+////                                    sonarDriver.datasetChart = switchDatasetChart.lastChannel
+////                                } else if(checked == false && sonarDriver.datasetChart > 0) {
+////                                    switchDatasetChart.lastChannel = sonarDriver.datasetChart
+////                                    sonarDriver.datasetChart = 0
+////                                }
+////                            }
+//                        }
+
+//                        Text {
+////                            text: "TX: 0 byte, 0 packet, 0 error;" + "     " + "RX: 0 byte, 0 packet, 0 error;"
+//                            Layout.fillWidth: true
+//                            horizontalAlignment: Text.AlignRight
+//                            color: "#808080"
+//                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.margins: 15
+
+                        spacing: 10
+
+                        CCombo  {
+                            id: deviceTypeCombo
+                            Layout.fillWidth: true
+
+                            model: ["KOGGER"]
+
+
+                            Settings {
+                                property alias connectionType: deviceTypeCombo.currentIndex
+                            }
                         }
-                    }
 
-                    Component.onCompleted: {
-                        model = core.availableSerialName()
+                        CCombo  {
+                            id: connectionTypeCombo
+                            Layout.fillWidth: true
+                            model: ["SERIAL"]
 
-                    }
+                            Settings {
+                                property alias connectionType: connectionTypeCombo.currentIndex
+                            }
+                        }
 
-                    Settings {
-                        property alias connectionType: portCombo.currentIndex
-                    }
-                }
+                        CCombo  {
+                            id: portCombo
+                            Layout.fillWidth: true
+                            visible: connectionTypeCombo.currentText === "SERIAL"
+                            onPressedChanged: {
+                                if(pressed) {
+                                    model = core.availableSerialName()
+                                }
+                            }
 
-                CCombo  {
-                    id: baudrateCombo
-                    visible: connectionTypeCombo.currentText === "SERIAL"
-                    model: [9600, 18200, 38400, 57600, 115200, 230400, 460800, 921600]
+                            Component.onCompleted: {
+                                model = core.availableSerialName()
 
-                    Settings {
-                        property alias serialBaudrate: baudrateCombo.currentIndex
-                    }
-                }
+                            }
 
-                CButton {
-                    id: connectionButton
-                    property bool connection: false
-                    width: 30
+                            Settings {
+                                property alias connectionType: portCombo.currentIndex
+                            }
+                        }
 
+                        CCombo  {
+                            id: baudrateCombo
+                            Layout.fillWidth: true
+                            visible: connectionTypeCombo.currentText === "SERIAL"
+                            model: [9600, 18200, 38400, 57600, 115200, 230400, 460800, 921600]
+                            currentIndex: 4
 
-                    text: ""
+                            Settings {
+                                property alias serialBaudrate: baudrateCombo.currentIndex
+                            }
+                        }
 
-                    onClicked: {
-                        if(connection) {
-                            core.closeConnection()
-                        } else {
-                            if(connectionTypeCombo.currentText === "SERIAL") {
-                                core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText))
-                            } else if(connectionTypeCombo.currentText === "FILE") {
-                                fileDialog.open()
+                        CButton {
+                            id: connectionButton
+                            property bool connection: false
+                            width: 30
+                            implicitHeight: 30
+
+                            text: ""
+
+                            onClicked: {
+                                if(connection) {
+                                    core.closeConnection()
+                                } else {
+                                    if(connectionTypeCombo.currentText === "SERIAL") {
+                                        core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText))
+                                    } else if(connectionTypeCombo.currentText === "FILE") {
+                                        fileDialog.open()
+                                    }
+                                }
+                            }
+
+                            onConnectionChanged: {
+                                if(connection) {
+                                    if(connectionTypeCombo.currentText === "SERIAL") {
+                                    } else {
+                                    }
+                                } else {
+                                }
+                            }
+
+                            indicator: Canvas {
+                                id: canvas
+                                x: connectionButton.width - width - connectionButton.rightPadding
+                                y: connectionButton.topPadding + (connectionButton.availableHeight - height) / 2
+                                width: connectionButton.availableWidth
+                                height: connectionButton.availableHeight
+                                contextType: "2d"
+
+                                Connections {
+                                    target: connectionButton
+                                    onPressedChanged: canvas.requestPaint()
+                                }
+
+                                onPaint: {
+                                    context.reset();
+
+                                    if(connectionButton.connection) {
+                                        context.moveTo(0, 0);
+                                        context.lineTo(width, 0);
+                                        context.lineTo(width, height);
+                                        context.lineTo(0, height);
+                                        context.closePath();
+                                    } else {
+                                        context.moveTo(0, 0);
+                                        context.lineTo(width, height/2);
+                                        context.lineTo(0, height);
+                                        context.closePath();
+                                    }
+
+                                    context.fillStyle = connectionButton.connection ? "#E05040" : "#40E050"
+                                    context.fill();
+                                }
                             }
                         }
                     }
 
-                    onConnectionChanged: {
-                        if(connection) {
-                            if(connectionTypeCombo.currentText === "SERIAL") {
-                            } else {
-                            }
-                        } else {
-                        }
-                    }
+//                    RowLayout {
+//                        Layout.fillWidth: true
+//                        Layout.margins: 15
+//                        visible: checkLogging.checked
+//                        spacing: 10
 
-                    indicator: Canvas {
-                        id: canvas
-                        x: connectionButton.width - width - connectionButton.rightPadding
-                        y: connectionButton.topPadding + (connectionButton.availableHeight - height) / 2
-                        width: connectionButton.availableWidth
-                        height: connectionButton.availableHeight
-                        contextType: "2d"
+//                        FileDialog {
+//                            id: fileDialog
+//                            title: "Please choose a folder"
+//                            folder: shortcuts.home
+//                            selectFolder: true
+//                            onAccepted: {
+//                                pathText.text = fileDialog.fileUrl.toString()
+//                            }
+//                            onRejected: {
+//                            }
+//                        }
 
-                        Connections {
-                            target: connectionButton
-                            onPressedChanged: canvas.requestPaint()
-                        }
+//                        Settings {
+//                            property alias loggingFolder: fileDialog.folder
+//                        }
 
-                        onPaint: {
-                            context.reset();
+//                        TextField {
+//                            id: pathText
+//                            hoverEnabled: true
+//                            Layout.fillWidth: true
+//                            height: control.height
+//                            padding: 4
+//                            rightPadding: 40
+//                            font.family: "Bahnschrift"; font.pointSize: 14;
+//                            color: "#E07000"
 
-                            if(connectionButton.connection) {
-                                context.moveTo(0, 0);
-                                context.lineTo(width, 0);
-                                context.lineTo(width, height);
-                                context.lineTo(0, height);
-                                context.closePath();
-                            } else {
-                                context.moveTo(0, 0);
-                                context.lineTo(width, height/2);
-                                context.lineTo(0, height);
-                                context.closePath();
-                            }
+//                            text: ""
+//                            placeholderText: qsTr("Enter path")
 
-                            context.fillStyle = connectionButton.connection ? "#E05040" : "#40E050"
-                            context.fill();
-                        }
-                    }
+//                            background: Rectangle {
+//                                color: "#505050"
+//                            }
+//                        }
+
+//                        CButton {
+//                            text: "..."
+//                            Layout.fillWidth: false
+//                            implicitHeight: 30
+//                            onClicked: {
+//                                fileDialog.open()
+//                            }
+//                        }
+//                    }
                 }
             }
-
-            UpgradeBox {
-                Layout.margins: 6
-                Layout.fillWidth: true
-//                visible: connectionButton.connection
-            }
-
-            RowLayout {
-
-                CButton {
-                    Layout.margins: 6
-                    Layout.fillWidth: false
-                    implicitWidth: 110
-                    implicitHeight: 30
-                    font.pointSize: 16;
-                    text: "FLASH"
-
-                    onClicked: {
-                        sonarDriver.flashSettings()
-                    }
-                }
-
-                CButton {
-                    Layout.margins: 6
-                    Layout.fillWidth: false
-                    implicitWidth: 110
-                    implicitHeight: 30
-                    font.pointSize: 16;
-                    text: "RESET"
-
-                    onClicked: {
-                        sonarDriver.resetSettings()
-                    }
-                }
-
-                CButton {
-                    Layout.margins: 6
-                    Layout.fillWidth: false
-                    implicitWidth: 110
-                    implicitHeight: 30
-                    font.pointSize: 16;
-                    text: "REBOOT"
-
-                    onClicked: {
-                        sonarDriver.reboot()
-                    }
-                }
-            }
-
-
-
-            TitleMeasurement {
-                id: titleDatasetChart
-                Layout.fillWidth: true
-                Layout.topMargin: 20
-                textTitle: "CHART"
-                onPositionSwitchChanged: {
-                    sonarDriver.datasetChart = positionSwitch
-                }
-            }
-
-            AdjBox {
-                id: sliderSample
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "SAMPLES"
-                sliderStepCount: sonarDriver.chartSamplSliderCount
-                sliderValue: sonarDriver.chartSamplSlider
-                textValue: sonarDriver.chartSamples
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.chartSamplSlider = value
-                }
-            }
-
-            AdjBox {
-                id: sliderResolution
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "RESOLUTION"
-                sliderStepCount: sonarDriver.chartResolutionSliderCount
-                sliderValue: sonarDriver.chartResolutionSlider
-                textValue: sonarDriver.chartResolution
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.chartResolutionSlider = value
-                }
-            }
-
-            TitleMeasurement {
-                id: titleDatasetDist
-                //visible: connectionButton.connection
-                Layout.fillWidth: true
-                Layout.topMargin: 20
-                textTitle: "DIST"
-                onPositionSwitchChanged: {
-                    sonarDriver.datasetDist = positionSwitch
-                }
-            }
-
-            TitleMeasurement {
-                id: titleDatasetSDDBT
-                //visible: connectionButton.connection
-                Layout.fillWidth: true
-                Layout.topMargin: 20
-                textTitle: "SDDBT"
-                onPositionSwitchChanged: {
-                    sonarDriver.datasetSDDBT = positionSwitch
-                }
-            }
-
-            TitleMeasurement {
-                id: titleDatasetTemp
-//                visible: connectionButton.connection
-                Layout.fillWidth: true
-                Layout.topMargin: 20
-                textTitle: "TEMP"
-                onPositionSwitchChanged: {
-                    sonarDriver.datasetTemp = positionSwitch
-                }
-            }
-
-            Connections {
-                target: sonarDriver
-                onDatasetChanged: {
-                    titleDatasetChart.setPos(sonarDriver.datasetChart)
-                    titleDatasetDist.setPos(sonarDriver.datasetDist)
-                    titleDatasetSDDBT.setPos(sonarDriver.datasetSDDBT)
-                    titleDatasetTemp.setPos(sonarDriver.datasetTemp)
-                }
-            }
-
-            TitleSetup{
-                Layout.fillWidth: true
-                Layout.topMargin: 20
-                textTitle: "DATASET"
-            }
-
-            AdjBox {
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "PERIOD CH1"
-                sliderStepCount: sonarDriver.ch1PeriodSliderCount
-                sliderValue: sonarDriver.ch1PeriodSlider
-                textValue: sonarDriver.ch1Period
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.ch1PeriodSlider = value
-                }
-            }
-
-            AdjBox {
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "PERIOD CH2"
-                sliderStepCount: sonarDriver.ch2PeriodSliderCount
-                sliderValue: sonarDriver.ch2PeriodSlider
-                textValue: sonarDriver.ch2Period
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.ch2PeriodSlider = value
-                }
-            }
-
-            TitleSetup{
-                Layout.fillWidth: true
-                Layout.topMargin: 20
-                textTitle: "TRANSDUCER"
-            }
-
-            AdjBox {
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "FREQ"
-                sliderStepCount: sonarDriver.transFreqSliderCount
-                sliderValue: sonarDriver.transFreqSlider
-                textValue: sonarDriver.transFreq
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.transFreqSlider = value
-                }
-            }
-
-            AdjBox {
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "PULSE"
-                sliderStepCount: sonarDriver.transPulseSliderCount
-                sliderValue: sonarDriver.transPulseSlider
-                textValue: sonarDriver.transPulse
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.transPulseSlider = value
-                }
-            }
-
-            AdjBox {
-                Layout.margins: 6
-                Layout.fillWidth: true
-                //visible: connectionButton.connection
-                textTitle: "BOOST"
-                sliderStepCount: sonarDriver.transBoostSliderCount
-                sliderValue: sonarDriver.transBoostSlider
-                textValue: sonarDriver.transBoost
-
-                function onSliderValueChanged(value) {
-                    sonarDriver.transBoostSlider = value
-                }
-            }
-
-
-
         }
-
     }
 }
