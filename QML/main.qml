@@ -76,6 +76,24 @@ Window  {
         heightMenuViewer: mainview.height
     }
 
+    CSlider {
+        id: historyScroll
+        anchors.bottom: parent.bottom
+        width: mainview.width - 150
+        height: 30
+        horizontalPadding: 20
+        lineStyle: 0
+        opacity: 0.7
+
+        stepSize: 0.0001
+        from: 1
+        to: 0
+
+        onValueChanged: {
+            core.setTimelinePosition(value);
+        }
+    }
+
 
 
 }

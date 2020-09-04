@@ -2,26 +2,27 @@
 #include "QTimer"
 SonarDriver::SonarDriver(QObject *parent) :
     QObject(parent),
-    m_proto(new ProtIn()),
-    idTimestamp(new IDBinTimestamp(m_proto)),
-    idDist(new IDBinDist(m_proto)),
-    idChart(new IDBinChart(m_proto)),
-    idAtt(new IDBinAttitude(m_proto)),
-    idTemp(new IDBinTemp(m_proto)),
+    m_proto(new ProtoBinIn()),
+    idTimestamp(new IDBinTimestamp((ProtoBinIn*)m_proto)),
+    idDist(new IDBinDist((ProtoBinIn*)m_proto)),
+    idChart(new IDBinChart((ProtoBinIn*)m_proto)),
+    idAtt(new IDBinAttitude((ProtoBinIn*)m_proto)),
+    idTemp(new IDBinTemp((ProtoBinIn*)m_proto)),
 
-    idDataset(new IDBinDataset(m_proto)),
-    idDistSetup(new IDBinDistSetup(m_proto)),
-    idChartSetup(new IDBinChartSetup(m_proto)),
-    idTransc(new IDBinTransc(m_proto)),
-    idSoundSpeed(new IDBinSoundSpeed(m_proto)),
-    idUART(new IDBinUART(m_proto)),
+    idDataset(new IDBinDataset((ProtoBinIn*)m_proto)),
+    idDistSetup(new IDBinDistSetup((ProtoBinIn*)m_proto)),
+    idChartSetup(new IDBinChartSetup((ProtoBinIn*)m_proto)),
+    idTransc(new IDBinTransc((ProtoBinIn*)m_proto)),
+    idSoundSpeed(new IDBinSoundSpeed((ProtoBinIn*)m_proto)),
+    idUART(new IDBinUART((ProtoBinIn*)m_proto)),
 
-    idMark(new IDBinMark(m_proto)),
-    idFlash(new IDBinFlash(m_proto)),
-    idBoot(new IDBinBoot(m_proto)),
-    idUpdate(new IDBinUpdate(m_proto)),
+    idVersion(new IDBinVersion((ProtoBinIn*)m_proto)),
+    idMark(new IDBinMark((ProtoBinIn*)m_proto)),
+    idFlash(new IDBinFlash((ProtoBinIn*)m_proto)),
+    idBoot(new IDBinBoot((ProtoBinIn*)m_proto)),
+    idUpdate(new IDBinUpdate((ProtoBinIn*)m_proto)),
 
-    idNav(new IDBinNav(m_proto))
+    idNav(new IDBinNav((ProtoBinIn*)m_proto))
 {
     regID(idTimestamp, &SonarDriver::receivedTimestamp);
     regID(idDist, &SonarDriver::receivedDist);
@@ -35,6 +36,7 @@ SonarDriver::SonarDriver(QObject *parent) :
     regID(idTransc, &SonarDriver::receivedTransc, true);
     regID(idSoundSpeed, &SonarDriver::receivedSoundSpeed, true);
     regID(idUART, &SonarDriver::receivedUART, true);
+    regID(idVersion, &SonarDriver::receivedVersion, true);
 
     regID(idMark, &SonarDriver::receivedMark);
     regID(idFlash, &SonarDriver::receivedFlash);
@@ -42,6 +44,8 @@ SonarDriver::SonarDriver(QObject *parent) :
     regID(idUpdate, &SonarDriver::receivedUpdate);
 
     regID(idNav, &SonarDriver::receivedNav);
+
+
 }
 
 void SonarDriver::regID(IDBin* id_bin, void (SonarDriver::* method)(Type type, Version ver, Resp resp), bool is_setup) {
@@ -65,15 +69,46 @@ void SonarDriver::requestSetup() {
 }
 
 void SonarDriver::putData(const QByteArray &data) {
-    for(int i = 0; i < data.size(); i++) {
-        Resp resp = m_proto->putByte(static_cast<uint8_t>(data.at(i)));
-        if(resp == respOk) {
-            protoComplete(*m_proto);
+    uint8_t* ptr_data = (uint8_t*)(data.data());
+    m_proto->setContext(ptr_data, data.size());
+
+    while (m_proto->availContext()) {
+        m_proto->process();
+        switch (m_proto->protoFlag()) {
+        case FrameParser::ProtoNone:
+//            qInfo("bin err %u, frame err %u, data size %u, context %u", m_proto->binError(), m_proto->frameError(), data.size(), m_proto->availContext());
+            break;
+        case FrameParser::ProtoBin:
+             protoComplete(*(ProtoBinIn*)m_proto);
+            break;
+        case FrameParser::ProtoNMEA:
+            nmeaComplete(*(ProtoNMEA*)m_proto);
+            break;
         }
+    }
+
+//    qInfo("bin cnt %u, nmea cnt %u", m_proto->binComplete(), m_proto->NMEAComplete());
+
+
+//    for(int i = 0; i < data.size(); i++) {
+//        Resp resp = m_proto->putByte(static_cast<uint8_t>(data.at(i)));
+//        if(resp == respOk) {
+//            protoComplete(*m_proto);
+//        }
+    //    }
+}
+
+void SonarDriver::nmeaComplete(ProtoNMEA &proto) {
+    if(proto.isEqualId("RMC")) {
+        uint32_t time_ms = proto.readTimems();
+        proto.skip();
+        double lat = proto.readLatitude();
+        double lon = proto.readLongitude();
+        emit positionComplete(0xFFFFFFFF, time_ms, lat, lon);
     }
 }
 
-void SonarDriver::protoComplete(ProtIn &proto) {
+void SonarDriver::protoComplete(ProtoBinIn &proto) {
     if(isUpdatingFw() == false) {
         if(proto.mark() == false) {
             startConnection();
@@ -113,7 +148,7 @@ void SonarDriver::sendUpdateFW(QByteArray update_data) {
     idUpdate->setUpdate(update_data);
     reboot();
     QTimer::singleShot(250, idUpdate, SLOT(putUpdate()));
-    QTimer::singleShot(350, idUpdate, SLOT(putUpdate()));
+    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
 }
 
 int SonarDriver::transFreq() {
@@ -343,14 +378,15 @@ void SonarDriver::setCh2Period(int period) {
 void SonarDriver::receivedTimestamp(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
-    qInfo("Timestamp: %u", idTimestamp->timestamp());
+//    qInfo("Timestamp: %u", idTimestamp->timestamp());
 }
 
 void SonarDriver::receivedDist(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
 
-    qInfo("Dist %u", idDist->dist_mm());
+//    qInfo("Dist %u", idDist->dist_mm());
+    emit distComplete(idDist->dist_mm());
 }
 
 void SonarDriver::receivedChart(Type type, Version ver, Resp resp) {
@@ -392,6 +428,7 @@ void SonarDriver::receivedDataset(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedDistSetup(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+    qInfo("Dist resp %u", resp);
     if(resp == respNone) {
         emit distSetupChanged();
     }
@@ -417,11 +454,21 @@ void SonarDriver::receivedTransc(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+    if(resp == respNone) {
+        emit soundChanged();
+    }
 }
 
 void SonarDriver::receivedUART(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+}
+
+void SonarDriver::receivedVersion(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type)
+    Q_UNUSED(ver)
+//    m_devName = "2D-ENHANCED";
+    emit deviceVersionChanged();
 }
 
 void SonarDriver::receivedMark(Type type, Version ver, Resp resp) {
@@ -440,6 +487,7 @@ void SonarDriver::receivedUpdate(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
 
+//    qInfo("Upgrade resp %u", resp);
     if(resp == respOk) {
         bool is_avail_data = idUpdate->putUpdate();
         m_upgrade_status = idUpdate->progress();
@@ -449,7 +497,7 @@ void SonarDriver::receivedUpdate(Type type, Version ver, Resp resp) {
             m_upgrade_status = 0;
         }
 
-    } else  if(resp != respOk) {
+    } else {
         m_upgrade_status = -1;
     }
 

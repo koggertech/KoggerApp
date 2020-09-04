@@ -14,94 +14,157 @@ class PlotCash : public QObject {
 public:
     PlotCash();
 
-    int getLineCount();
-    void setLineCount(int line_count);
-
+    int poolSize();
     QImage getImage(QSize size);
 
-    protected:
-    QVector<QColor> m_colorMap;
-
-    class LineCash {
-    public:
-        LineCash();
-        void setData(QVector<int16_t> data, int resolution, int offset);
-        QImage* getImage(QSize size, int range, int offset, QVector<QColor> colorMap, int startLevel, int stopLevel, bool forceDraw = false);
-    protected:
-        QVector<int16_t> m_rawData;
-        int m_dataResol;
-        int m_dataOffset;
-        int m_startLevel;
-        int m_stopLevel;
-
-        QImage m_cash;
-        int m_cashResol;
-        int m_cashOffset;
-
-        bool m_isUpdated;
-
-        inline int16_t rawDataRange(int16_t* data, int len, float start, float end) {
-            int start_index = ((start - m_dataOffset)/(float)m_dataResol);
-            int end_index = ((end - m_dataOffset)/(float)m_dataResol);
-
-            int16_t val;
-
-            if(start_index >= len || start_index < 0) {
-                val = 0;
-            } else {
-                if(end_index > len) {
-                    end_index = len;
-                }
-
-                val = data[start_index];
-                for(int i = start_index + 1; i < end_index; i++) {
-                    if(data[i] > val) {
-                        val = data[i];
-                    }
-                }
-            }
-
-            return val;
-        }
-    };
-
-    QVector<LineCash> Lines;
-    int CurrentIndex;
-    QImage m_cash;
-
-    QImage* getLine(int index, QSize size);
-
-    void nextIndex() {
-        CurrentIndex++;
-        if(CurrentIndex >= getLineCount()) {
-            CurrentIndex = 0;
-        }
-    }
-
-    int getIndex(int index_offset = 0) {
-        int end_index = CurrentIndex - index_offset;
-        if(end_index < 0) {
-            end_index = getLineCount() + end_index;
-        }
-        return end_index;
-    }
-
-    void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
-
 public slots:
-    void addData(QVector<int16_t> data, int resolution, int offset);
+    void addChart(QVector<int16_t> data, int resolution, int offset);
     void addDist(int dist);
+    void addPosition(uint32_t date, uint32_t time, double lat, double lon);
     void setStartLevel(int level);
     void setStopLevel(int level);
+    void setTimelinePosition(double position);
+    void setChartVis(bool visible);
+    void setDistVis(bool visible);
+    void updateImage(bool update_value = false);
 
-private:
-    bool m_isDataUpdate;
-    int m_hGrid = 5;
+signals:
+    void updatedImage();
+
+protected:
+    int m_verticalGridNum = 5;
     float m_legendMultiply = 0.001f;
     int m_range = 2000;
     int m_offset = 0;
     int m_startLevel = 10;
     int m_stopLevel = 100;
+    int m_offsetLine = 0;
+    bool m_chartVis = true;
+    bool m_distSonarVis = true;
+    bool m_distCalcVis = true;
+
+    class PoolDataset {
+    public:
+        PoolDataset();
+        void setChart(QVector<int16_t> chartData, int resolution, int offset);
+        void setDist(int dist);
+        void setPosition(uint32_t date, uint32_t time, double lat, double lon);
+
+        QVector<int16_t> chartData() { return m_chartData; }
+        bool chartAvail() { return flags.chartAvail; }
+
+        int distData() { return m_dist; }
+        bool distAvail() { return flags.distAvail; }
+
+        void chartTo(int start, int end, int16_t* dst, int len, bool addition = false) {
+            if(dst == nullptr) {  return; }
+
+            int raw_size = m_chartData.size();
+            int16_t* src = m_chartData.data();
+
+            if(raw_size == 0) {
+                for(int i_to = 0; i_to < len; i_to++) {
+                    dst[i_to] = 0;
+                }
+            }
+
+            float raw_range_f = (float)(raw_size*m_chartResol);
+            float target_range_f = (float)(end - start);
+            float scale_factor = ((float)raw_size/(float)len)*(target_range_f/raw_range_f);
+
+            int src_start = 0;
+            for(int i_to = 0; i_to < len; i_to++) {
+                int src_end = (float)(i_to + 1)*scale_factor;
+
+                int16_t val = 0;
+                if(src_start < raw_size && src_start >= 0) {
+                    if(src_end > raw_size) {
+                        src_end = raw_size;
+                    }
+
+                    val = src[src_start];
+                    for(int i = src_start + 1; i < src_end; i++) {
+                        if(src[i] > val) {
+                            val = src[i];
+                        }
+                    }
+                }
+                src_start = src_end;
+                if(addition) {
+                    dst[i_to] += val;
+                } else {
+                    dst[i_to] = val;
+                }
+            }
+        }
+
+    protected:
+        QVector<int16_t> m_chartData;
+        int m_chartResol;
+        int m_chartOffset;
+
+        int m_dist;
+
+        struct {
+            uint32_t date;
+            uint32_t time;
+            double lat;
+            double lon;
+        } m_position;
+
+        struct {
+            bool chartAvail = false;
+            bool distAvail = false;
+            bool posAvail = false;
+        } flags;
+
+    };
+
+    QVector<PoolDataset> m_pool;
+    PoolDataset* fromPool(int index_offset = 0) {
+        int index = poolIndex(index_offset);
+        qInfo("pool index %u", index);
+        return &m_pool[index];
+    }
+
+    typedef struct {
+        QVector<int16_t> chartData;
+        int distData = -1;
+    } ValueCash;
+
+    QVector<ValueCash> m_valueCash;
+    ValueCash m_prevValueCash;
+    int m_valueIndex;
+    QVector<QColor> m_colorMap;
+    int16_t m_colorHashMap[256];
+    int16_t m_colorDist = 0xFFFF;
+    QImage m_image;
+    uint16_t m_dataImage[2600*2000];
+    int m_prevLineWidth = 30;
+
+    struct  {
+        bool needUpdateValueMap;
+        bool needUpdateImage;
+    } flags;
+
+    void updateValueMap(int width, int height);
+    void updateImage(int width, int height);
+
+    void poolAppend() {
+        m_pool.resize(m_pool.size() + 1);
+    }
+
+    int poolLastIndex() {
+        return poolSize() - 1;
+    }
+
+    int poolIndex(int index_offset = 0) {
+        int index = index_offset;
+        if(index >= poolSize()) { index = poolLastIndex(); }
+        return index;
+    }
+
+    void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
 };
 
 #endif // PLOT_CASH_H

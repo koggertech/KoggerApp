@@ -1,7 +1,7 @@
 #include "IDBinnary.h"
 #include "math.h"
 
-IDBin::IDBin(ProtIn *proto, QObject *parent) : QObject(parent) {
+IDBin::IDBin(ProtoBinIn *proto, QObject *parent) : QObject(parent) {
     setProto(proto);
 }
 
@@ -9,7 +9,7 @@ IDBin::~IDBin() {
 
 }
 
-void IDBin::setProto(ProtIn *proto) {
+void IDBin::setProto(ProtoBinIn *proto) {
     m_proto = proto;
 }
 
@@ -28,10 +28,16 @@ Resp  IDBin::parse() {
         if(resp_parse == respOk) {
             m_lastType = m_proto->type();
             m_lastVersion = m_proto->ver();
-//            qInfo("Packet OK: id %u, type %u, ver %u, len %u, resp %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), m_lastResp);
+//            if(m_proto->id() == ID_DIST_SETUP && m_lastResp != respOk) {
+//                qInfo("Packet OK: id %u, type %u, ver %u, len %u, resp %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), m_lastResp);
+//            }
+
             emit updateContent(m_lastType, m_lastVersion, m_lastResp);
         } else {
-            qInfo("Packet error: id %u, type %u, ver %u, len %u, resp. parse %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), resp_parse);
+//            if(m_proto->id() != 3) {
+//            qInfo("Packet error: id %u, type %u, ver %u, len %u, resp. parse %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), resp_parse);
+//            }
+
         }
     }
 
@@ -39,7 +45,7 @@ Resp  IDBin::parse() {
 }
 
 void IDBin::simpleRequest(Version ver) {
-    ProtOut req_out;
+    ProtoBinOut req_out;
     req_out.create(GETTING, ver, id(), 0);
     requestSpecific(req_out);
     req_out.end();
@@ -47,17 +53,17 @@ void IDBin::simpleRequest(Version ver) {
     sendDataProcessing(req_out);
 }
 
-void IDBin::appendKey(ProtOut &proto_out) {
+void IDBin::appendKey(ProtoBinOut &proto_out) {
     proto_out.write<U4>(m_key);
 }
 
-void IDBin::sendDataProcessing(ProtOut &proto_out) {
+void IDBin::sendDataProcessing(ProtoBinOut &proto_out) {
     QByteArray data((char*)proto_out.data(), proto_out.dataSize());
     dataSend(data);
 }
 
 
-Resp IDBinTimestamp::parsePayload(ProtIn &proto) {
+Resp IDBinTimestamp::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         m_timestamp = proto.read<U4>();
     } else {
@@ -68,7 +74,7 @@ Resp IDBinTimestamp::parsePayload(ProtIn &proto) {
 }
 
 
-Resp IDBinDist::parsePayload(ProtIn &proto) {
+Resp IDBinDist::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         m_dist_mm = proto.read<U4>();
     } else {
@@ -79,7 +85,7 @@ Resp IDBinDist::parsePayload(ProtIn &proto) {
 }
 
 
-Resp IDBinChart::parsePayload(ProtIn &proto) {
+Resp IDBinChart::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         U2 m_seqOffset = proto.read<U2>();
         U2 sampleResol = proto.read<U2>();
@@ -99,6 +105,8 @@ Resp IDBinChart::parsePayload(ProtIn &proto) {
 
             m_chartSizeIncr = 0;
         }
+
+//        qInfo("Chart: incr size %u, seq_off %u", m_chartSizeIncr, m_seqOffset);
 
         if(m_chartSizeIncr == m_seqOffset) {
             uint16_t part_len = proto.readAvailable();
@@ -120,7 +128,7 @@ Resp IDBinChart::parsePayload(ProtIn &proto) {
 
 
 
-Resp IDBinAttitude::parsePayload(ProtIn &proto) {
+Resp IDBinAttitude::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         const float scale_to_deg = 0.01f;
         m_yaw = static_cast<float>(proto.read<S2>())*scale_to_deg;
@@ -163,7 +171,7 @@ float IDBinAttitude::w3(Version src_ver) {
     return m_w3;
 }
 
-Resp IDBinTemp::parsePayload(ProtIn &proto) {
+Resp IDBinTemp::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         const float scale_to_cels = 0.01f;
         m_temp = static_cast<float>(proto.read<S2>())*scale_to_cels;
@@ -175,7 +183,7 @@ Resp IDBinTemp::parsePayload(ProtIn &proto) {
 }
 
 
-Resp IDBinNav::parsePayload(ProtIn &proto) {
+Resp IDBinNav::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
 
     } else {
@@ -187,7 +195,7 @@ Resp IDBinNav::parsePayload(ProtIn &proto) {
 }
 
 
-Resp IDBinDataset::parsePayload(ProtIn &proto) {
+Resp IDBinDataset::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         uint8_t ch_id = proto.read<U1>();
         if(ch_id < _countof(m_channel)) {
@@ -240,7 +248,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
 
         m_channel[ch_id].period = period;
 
-        ProtOut id_out;
+        ProtoBinOut id_out;
         id_out.create(SETTING, v0, id(), 0);
         id_out.write<U1>(ch_id);
         id_out.write<U4>(period);
@@ -251,7 +259,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
 }
 
 
-Resp IDBinDistSetup::parsePayload(ProtIn &proto) {
+Resp IDBinDistSetup::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v1) {
         m_startOffset = proto.read<U4>();
         m_maxDist = proto.read<U4>();
@@ -266,7 +274,7 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
     m_startOffset = start_offset;
     m_maxDist = max_dist;
 
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v1, id(), 0);
     id_out.write<U4>(start_offset);
     id_out.write<U4>(max_dist);
@@ -275,7 +283,7 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
 }
 
 
-Resp IDBinChartSetup::parsePayload(ProtIn &proto) {
+Resp IDBinChartSetup::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         m_sanpleCount = proto.read<U2>();
         m_sanpleResolution = proto.read<U2>();
@@ -295,7 +303,7 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
     m_sanpleResolution = resolution;
     m_sanpleOffset = offset;
 
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     id_out.write<U2>(count);
     id_out.write<U2>(resolution);
@@ -305,7 +313,7 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
 }
 
 
-Resp IDBinTransc::parsePayload(ProtIn &proto) {
+Resp IDBinTransc::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         m_freq = proto.read<U2>();
         m_pulse = proto.read<U1>();
@@ -322,7 +330,7 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
     m_pulse = pulse;
     m_boost = boost;
 
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     id_out.write<U2>(freq);
     id_out.write<U1>(pulse);
@@ -332,7 +340,7 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
 }
 
 
-Resp IDBinSoundSpeed::parsePayload(ProtIn &proto) {
+Resp IDBinSoundSpeed::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         m_soundSpeed = proto.read<U4>();
     } else {
@@ -345,7 +353,7 @@ Resp IDBinSoundSpeed::parsePayload(ProtIn &proto) {
 void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
     m_soundSpeed = snd_spd;
 
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     id_out.write<U4>(snd_spd);
     id_out.end();
@@ -354,7 +362,7 @@ void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
 
 
 
-Resp IDBinUART::parsePayload(ProtIn &proto) {
+Resp IDBinUART::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         if(checkKeyConfirm(proto.read<U4>())) {
             uint8_t uart_id = proto.read<U1>();
@@ -385,7 +393,7 @@ Resp IDBinUART::parsePayload(ProtIn &proto) {
 }
 
 void IDBinUART::setBaudrate(U4 baudrate) {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     appendKey(id_out);
     id_out.write<U1>(1);
@@ -394,8 +402,16 @@ void IDBinUART::setBaudrate(U4 baudrate) {
     sendDataProcessing(id_out);
 }
 
+Resp IDBinVersion::parsePayload(ProtoBinIn &proto) {
+    if(proto.ver() == v0) {
+    } else {
+        return respErrorVersion;
+    }
 
-Resp IDBinMark::parsePayload(ProtIn &proto) {
+    return respOk;
+}
+
+Resp IDBinMark::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         m_mark = proto.read<U1>();
     } else {
@@ -406,7 +422,7 @@ Resp IDBinMark::parsePayload(ProtIn &proto) {
 }
 
 void IDBinMark::setMark() {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     appendKey(id_out);
     id_out.end();
@@ -415,7 +431,7 @@ void IDBinMark::setMark() {
 }
 
 
-Resp IDBinFlash::parsePayload(ProtIn &proto) {
+Resp IDBinFlash::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         if(checkKeyConfirm(proto.read<U4>())) {
         } else {
@@ -439,7 +455,7 @@ Resp IDBinFlash::parsePayload(ProtIn &proto) {
 }
 
 void IDBinFlash::flashing() {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     appendKey(id_out);
     id_out.end();
@@ -448,7 +464,7 @@ void IDBinFlash::flashing() {
 
 
 void IDBinFlash::restore() {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v1, id(), 0);
     appendKey(id_out);
     id_out.end();
@@ -456,7 +472,7 @@ void IDBinFlash::restore() {
 }
 
 void IDBinFlash::erase() {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v2, id(), 0);
     appendKey(id_out);
     id_out.end();
@@ -464,7 +480,7 @@ void IDBinFlash::erase() {
 }
 
 
-Resp IDBinBoot::parsePayload(ProtIn &proto) {
+Resp IDBinBoot::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
         if(checkKeyConfirm(proto.read<U4>())) {
         } else {
@@ -483,7 +499,7 @@ Resp IDBinBoot::parsePayload(ProtIn &proto) {
 }
 
 void IDBinBoot::reboot() {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     appendKey(id_out);
     id_out.end();
@@ -491,7 +507,7 @@ void IDBinBoot::reboot() {
 }
 
 void IDBinBoot::runFW() {
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v1, id(), 0);
     appendKey(id_out);
     id_out.end();
@@ -499,7 +515,7 @@ void IDBinBoot::runFW() {
 }
 
 
-Resp IDBinUpdate::parsePayload(ProtIn &proto) {
+Resp IDBinUpdate::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
     } else {
         return respErrorVersion;
@@ -524,7 +540,7 @@ bool IDBinUpdate::putUpdate() {
         return false;
     }
 
-    ProtOut id_out;
+    ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), 0);
     id_out.write<U2>(_nbr_packet);
 

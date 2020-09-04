@@ -7,7 +7,7 @@
 #include <QHash>
 #include <QVector>
 
-using namespace KoggerBinnaryProtocol;
+using namespace Parsers;
 
 class SonarDriver : public QObject
 {
@@ -71,19 +71,25 @@ public:
     int soundSpeed();
     void setSoundSpeed(int speed);
 
+    QString devName() { return m_devName; }
+
 signals:
     void dataSend(QByteArray data);
     void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void distComplete(int dist);
+    void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
     void distSetupChanged();
     void datasetChanged();
     void transChanged();
     void soundChanged();
     void upgradeProgressChanged();
+    void deviceVersionChanged();
 
 public slots:
     void putData(const QByteArray &data);
-    void protoComplete(ProtIn &proto);
+    void nmeaComplete(ProtoNMEA &proto);
+    void protoComplete(ProtoBinIn &proto);
     void startConnection();
 
     void requestDist();
@@ -94,7 +100,8 @@ public slots:
     void reboot();
 
 private:
-    ProtIn* m_proto;
+    FrameParser* m_proto;
+//    FrameParser m_frameParser;
 
     IDBinTimestamp* idTimestamp;
     IDBinDist* idDist;
@@ -109,6 +116,7 @@ private:
     IDBinSoundSpeed* idSoundSpeed;
     IDBinUART* idUART;
 
+    IDBinVersion* idVersion;
     IDBinMark* idMark;
     IDBinFlash* idFlash;
     IDBinBoot* idBoot;
@@ -122,6 +130,8 @@ private:
     bool m_inited = false;
     bool m_bootloader = false;
     int m_upgrade_status = 0;
+
+    QString m_devName = "...";
 
     void regID(IDBin* id_bin, void (SonarDriver::* method)(Type type, Version ver, Resp resp), bool is_setup = false);
 
@@ -141,6 +151,7 @@ protected slots:
     void receivedSoundSpeed(Type type, Version ver, Resp resp);
     void receivedUART(Type type, Version ver, Resp resp);
 
+    void receivedVersion(Type type, Version ver, Resp resp);
     void receivedMark(Type type, Version ver, Resp resp);
     void receivedFlash(Type type, Version ver, Resp resp);
     void receivedBoot(Type type, Version ver, Resp resp);

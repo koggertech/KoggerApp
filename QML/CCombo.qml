@@ -26,7 +26,7 @@ ComboBox {
         highlighted: control.highlightedIndex === index
     }
 
-
+    onPressedChanged: canvas.requestPaint()
 
     indicator: Canvas {
         id: canvas
@@ -36,15 +36,15 @@ ComboBox {
         height: 8
         contextType: "2d"
 
-        Connections {
-            target: control
-            onPressedChanged: canvas.requestPaint()
-        }
+//        Connections {
+//            target: control
+//            onPressedChanged: canvas.requestPaint()
+//        }
 
-        Connections {
-            target: control.popup
-            onVisibleChanged: canvas.requestPaint()
-        }
+//        Connections {
+//            target: control.popup
+//            onVisibleChanged: canvas.requestPaint()
+//        }
 
         onPaint: {
             context.reset();
@@ -94,6 +94,8 @@ ComboBox {
         width: control.width
         implicitHeight: contentItem.implicitHeight
         padding: 1
+
+        onVisibleChanged: canvas.requestPaint()
 
         contentItem: ListView {
             clip: true

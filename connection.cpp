@@ -55,9 +55,9 @@ bool Connection::openFile(const QString &name) {
     m_type = ConnectionFile;
     qInfo("File connection open");
 
-    QByteArray data =  m_file->readAll();
-
     emit openedEvent();
+
+    QByteArray data =  m_file->readAll();
     emit receiveData(data);
     return true;
 }

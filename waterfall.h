@@ -14,12 +14,10 @@ public:
     WaterFall(QQuickItem* parent = nullptr);
     virtual void paint(QPainter *painter);
 
-    void setPlot(PlotCash* plot) {
-        m_plot = plot;
-    }
+    void setPlot(PlotCash* plot);
 private:
     PlotCash* m_plot = nullptr;
-    QTimer* m_updateTimer;
+//    QTimer* m_updateTimer;
 };
 
 #endif // WATERFALL_H

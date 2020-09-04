@@ -8,7 +8,7 @@ Item {
     id: menu
 
     property var lastItem: null
-    property real heightMenuViewer: 500
+    property real heightMenuViewer: 400
 
     function itemChangeActive(currentItem) {
         if(currentItem !== null) {
@@ -36,14 +36,20 @@ Item {
 
     ColumnLayout {
         id: menuLayout
-//        spacing: 10
 
         ColumnLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 0
+
+            MenuBlock {
+                opacity: 0.3
+                border.width: 1
+            }
 
             MenuButton {
-                Layout.topMargin: 10
+                Layout.margins: 4
                 id: menuConnection
-                text: "C"
+                text: "Con"
 
                 onPressed: {
                     itemChangeActive(menuConnection)
@@ -59,8 +65,8 @@ Item {
 
             MenuButton {
                 id: menuSettings
-                Layout.bottomMargin: 10
-                text: "S"
+                Layout.margins: 4
+                text: "Set"
 
                 onPressed: {
                     itemChangeActive(menuSettings)
@@ -76,17 +82,31 @@ Item {
             }
         }
 
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            width: 40
-            height: 2
-            color: "#404040"
-        }
-
         ColumnLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.margins: 4
+
+            MenuBlock {
+                opacity: 0.3
+                border.width: 1
+            }
+
+            CCheck {
+                id: chartEnable
+                checked: true
+                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
+
+                font.pixelSize: 14
+                text: "||||"
+                onCheckedChanged: {
+                    core.setChartVis(checked);
+                }
+                opacity: 0.8
+            }
 
             Text {
-                Layout.topMargin: 10
+                visible: chartEnable.checked
                 Layout.alignment: Qt.AlignHCenter
                 text: chartLevel.stopValue + " dB"
                 font.pixelSize: 14
@@ -95,6 +115,8 @@ Item {
 
             ChartLevel {
                 id: chartLevel
+                visible: chartEnable.checked
+                Layout.alignment: Qt.AlignHCenter
 
                 onStartValueChanged: {
                     core.setPlotStartLevel(startValue);
@@ -107,11 +129,38 @@ Item {
             }
 
             Text {
-                Layout.bottomMargin: 10
+                visible: chartEnable.checked
                 Layout.alignment: Qt.AlignHCenter
+                Layout.bottomMargin: 8
+
                 text: chartLevel.startValue + " dB"
                 font.pixelSize: 14
                 color: "#909090"
+            }
+        }
+
+        ColumnLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.margins: 4
+
+
+            MenuBlock {
+                opacity: 0.3
+                border.width: 1
+            }
+
+            CCheck {
+                id: distEnable
+                checked: true
+                Layout.alignment: Qt.AlignHCenter
+                Layout.fillWidth: true
+                font.pixelSize: 14
+                text: "\\/\\"
+
+                onCheckedChanged: {
+                    core.setDistVis(checked);
+                }
+                opacity: 0.8
             }
         }
     }

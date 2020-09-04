@@ -125,29 +125,11 @@ Item {
                     }
                 }
 
-
-
-//                CSlider {
-//                    id: sliderResol
-//                    x: borderCanvas.offsetRight + 35 - 2
-//                    y: borderCanvas.posSliderResol - height/2
-//                    width: 440
-//                    horizontalPadding: 30
-//                    lineStyle: 1
-
-//                    stepSize: 1.0
-//                    value: sonarDriver.transFreqSlider
-//                    to: sonarDriver.transFreqSliderCount
-//                    onValueChanged: {
-//                        sonarDriver.transFreqSlider = value
-//                    }
-//                }
-
                 SpinBoxCustom {
                     x: borderCanvas.offsetRight + 35 - 2
                     y: borderCanvas.posSliderResol - height/2
                     width: 130
-                    from: 150
+                    from: 100
                     to: 800
                     stepSize: 5
                     value: sonarDriver.transFreq
@@ -164,35 +146,6 @@ Item {
                     color: "#808080"
                     font.pixelSize: 16
                 }
-
-
-//                CSlider {
-//                    id: sliderBooster
-//                    x: 10
-//                    y: 15
-//                    width: 15
-//                    height: 60
-//                    horizontalPadding: 0
-//                    verticalPadding: 20
-//                    lineStyle: 3
-//                    orientation: Qt.Vertical
-
-//                    stepSize: 1.0
-//                    value: sonarDriver.transBoostSlider
-//                    to: sonarDriver.transBoostSliderCount
-//                    onValueChanged: {
-//                        sonarDriver.transBoostSlider = value
-//                    }
-//                }
-
-//                Text {
-//                    x: 0
-//                    y: -20
-//                    text: "Booster: " + (sonarDriver.transBoost ? "On" : "Off")
-//                    padding: 10
-//                    color: "#808080"
-//                    font.pixelSize: 16
-//                }
 
                 onPaint: {
                     context.reset();

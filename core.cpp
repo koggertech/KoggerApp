@@ -8,11 +8,15 @@ Core::Core() : QObject(),
 {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
+    connect(dev_driver, &SonarDriver::deviceVersionChanged, this, &Core::connectionChanged);
+
     connect(m_connection, &Connection::openedEvent, dev_driver, &SonarDriver::startConnection);
     connect(m_connection, &Connection::receiveData, dev_driver, &SonarDriver::putData);
     connect(dev_driver, &SonarDriver::dataSend, m_connection, &Connection::sendData);
 
-    connect(dev_driver, &SonarDriver::chartComplete, m_plot, &PlotCash::addData);
+    connect(dev_driver, &SonarDriver::chartComplete, m_plot, &PlotCash::addChart);
+    connect(dev_driver, &SonarDriver::distComplete, m_plot, &PlotCash::addDist);
+    connect(dev_driver, &SonarDriver::positionComplete, m_plot, &PlotCash::addPosition);
 }
 
 QList<QSerialPortInfo> Core::availableSerial(){
@@ -49,6 +53,10 @@ bool Core::closeConnection() {
     return true;
 }
 
+QString Core::deviceName() {
+    return dev_driver->devName();
+}
+
 bool Core::upgradeFW(const QString &name) {
     QUrl url(name);
     QFile m_file;
@@ -74,8 +82,8 @@ bool Core::upgradeFW(const QString &name) {
 
 void Core::UILoad(QObject *object, const QUrl &url) {
     qInfo("UI is load");
-    WaterFall* waterFall = object->findChild<WaterFall*>();
-    waterFall->setPlot(m_plot);
+    m_waterFall = object->findChild<WaterFall*>();
+    m_waterFall->setPlot(m_plot);
 }
 
 void Core::closing() {

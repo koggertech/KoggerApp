@@ -40,6 +40,7 @@ public slots:
     bool openConnectionAsFile(const QString &name);
     bool isOpenConnection();
     bool closeConnection();
+    QString deviceName();
 
     bool upgradeFW(const QString &name);
 
@@ -49,6 +50,18 @@ public slots:
 
     void setPlotStopLevel(int level) {
         m_plot->setStopLevel(level);
+    }
+
+    void setTimelinePosition(double position) {
+        m_plot->setTimelinePosition(position);
+    }
+
+    void setChartVis(bool visible) {
+        m_plot->setChartVis(visible);
+    }
+
+    void setDistVis(bool visible) {
+        m_plot->setDistVis(visible);
     }
 
     void UILoad(QObject *object, const QUrl &url);
@@ -61,6 +74,7 @@ public:
     Connection *m_connection;
     SonarDriverInterface *dev_driver;
     PlotCash* m_plot;
+    WaterFall* m_waterFall;
 
     QQmlApplicationEngine *m_engine = nullptr;
 

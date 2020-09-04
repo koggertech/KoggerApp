@@ -1,92 +1,35 @@
 #include "plotcash.h"
 
 
-PlotCash::LineCash::LineCash() {
-    m_rawData.clear();
-    m_rawData.resize(0);
-    m_dataResol = 0;
-    m_dataOffset = 0;
-    m_cashResol = 0;
-    m_cashOffset = 0;
-    m_cash = QImage(1, 1, QImage::Format_RGB555);
+PlotCash::PoolDataset::PoolDataset() {
+    m_chartData.clear();
+    m_chartData.resize(0);
+    m_chartResol = 0;
+    m_chartOffset = 0;
 }
 
-void PlotCash::LineCash::setData(QVector<int16_t> data, int resolution, int offset) {
-    m_dataResol = resolution;
-    m_dataOffset = offset;
-    m_rawData = QVector<int16_t>(data);
-    m_isUpdated = true;
+void PlotCash::PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
+    m_chartResol = resolution;
+    m_chartOffset = offset;
+    m_chartData = QVector<int16_t>(data);
+    flags.chartAvail = true;
 }
 
-QImage* PlotCash::LineCash::getImage(QSize size, int range, int offset, QVector<QColor> colorMap, int startLevel, int stopLevel, bool forceDraw) {
-    bool need_render = forceDraw | m_isUpdated;
-    m_isUpdated = false;
-
-    if(m_cash.size() != size) {
-        m_cash = QImage(size, QImage::Format_RGB555);
-        m_cash.fill(colorMap[0]);
-        need_render = true;
-    }
-
-    if(m_cashOffset != offset || m_cashResol != range) {
-        m_cashOffset = offset;
-        m_cashResol = range;
-        need_render = true;
-    }
-
-    if(m_startLevel != startLevel || m_stopLevel != stopLevel) {
-        m_startLevel = startLevel;
-        m_stopLevel = stopLevel;
-        need_render = true;
-    }
-
-    if(need_render) {
-        int cash_h = m_cash.height();
-        int cash_w = m_cash.width();
-        int raw_len = m_rawData.length();
-
-        if(raw_len > 0) {
-
-            float one_pixel_range = (float) (range) / (float) (cash_h);
-            int16_t* data_arr = m_rawData.data();
-
-            float offset_f = (float)offset;
-            float index_map_scale = 0;
-
-            int level_range = stopLevel - startLevel;
-            if(level_range > 0) {
-                index_map_scale = (colorMap.length() - 1)/(float)(stopLevel - startLevel);
-            } else {
-                index_map_scale = 10000;
-            }
-
-            for (int i = 0; i < cash_h; i++) {
-                float pixel_dist = ((float) i * one_pixel_range) + offset_f;
-                float next_pixel_dist =((float) (i + 1) * one_pixel_range) + offset_f;
-
-                int data = rawDataRange(data_arr, raw_len, pixel_dist, next_pixel_dist);
-
-                int index_map = ((float)data*0.4f - (float)startLevel)*index_map_scale;
-
-                index_map = qMin(qMax((int)index_map, 0), 255);
-
-                QColor cl = colorMap[index_map];
-
-                for(int hl = 0; hl < cash_w; hl++) {
-                    m_cash.setPixelColor(hl, i, cl);
-                }
-            }
-        }
-    }
-
-    return &m_cash;
+void PlotCash::PoolDataset::setDist(int dist) {
+    m_dist = dist;
+    flags.distAvail = true;
 }
 
+void PlotCash::PoolDataset::setPosition(uint32_t date, uint32_t time, double lat, double lon) {
+    m_position.date = date;
+    m_position.time = time;
+    m_position.lat = lat;
+    m_position.lon = lon;
+    flags.posAvail = true;
+}
 
 PlotCash::PlotCash() {
-    setLineCount(5000);
     m_colorMap.resize(256);
-
     for(int i = 0; i < 256; i++) {
         m_colorMap[i] = QColor::fromRgb(0,0,0);
     }
@@ -94,27 +37,50 @@ PlotCash::PlotCash() {
     QVector<QColor> coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(40, 0, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(220, 255, 255)};
     QVector<int> levels = {0, 30, 130, 255};
 
-    setColorScheme(coloros, levels);
+    //    QVector<QColor> coloros = {
+    //        QColor::fromRgb(0, 0, 0),
+    //        QColor::fromRgb(40, 0, 80),
+    //        QColor::fromRgb(0, 30, 150),
+    //        QColor::fromRgb(20, 230, 30),
+    //        QColor::fromRgb(255, 50, 20),
+    //        QColor::fromRgb(255, 255, 255),
+    //    };
 
-    m_cash = QImage(1, 1, QImage::Format_RGB555);
+    //    QVector<int> levels = {0, 30, 80, 120, 150, 255};
+
+    setColorScheme(coloros, levels);
 }
 
-void PlotCash::addData(QVector<int16_t> data, int resolution, int offset) {
-    nextIndex();
-    Lines[getIndex()].setData(data, resolution, offset);
+void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
+    poolAppend();
+    m_pool[poolLastIndex()].setChart(data, resolution, offset);
     m_offset = offset;
     m_range = data.length()*resolution;
-    m_isDataUpdate = true;
+    updateImage(true);
 }
 
 void PlotCash::addDist(int dist) {
+    int pool_index = poolLastIndex();
+    if(pool_index < 0 || m_pool[pool_index].chartAvail() == false || m_pool[pool_index].distAvail() == true) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
 
+    m_pool[poolLastIndex()].setDist(dist);
+    updateImage(true);
+}
+
+void PlotCash::addPosition(uint32_t date, uint32_t time, double lat, double lon) {
+    int pool_index = poolLastIndex();
+    if(pool_index < 0) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
+    m_pool[poolLastIndex()].setPosition(date, time, lat, lon);
 }
 
 void PlotCash::setColorScheme(QVector<QColor> coloros, QVector<int> levels) {
-    if(coloros.length() != levels.length()) {
-        return;
-    }
+    if(coloros.length() != levels.length()) { return; }
 
     int nbr_levels = coloros.length() - 1;
     int i_level = 0;
@@ -128,85 +94,255 @@ void PlotCash::setColorScheme(QVector<QColor> coloros, QVector<int> levels) {
             int green = qRound(coloros[i].green()*a_koef + coloros[i + 1].green()*b_koef);
             int blue = qRound(coloros[i].blue()*a_koef + coloros[i + 1].blue()*b_koef);
             m_colorMap[i_level] = QColor::fromRgb(red, green, blue);
+            m_colorHashMap[i_level] = ((red / 8) << 10) | ((green / 8) << 5) | ((blue / 8));
             i_level++;
         }
     }
 
-    m_isDataUpdate = true;
+    m_colorDist = ((220 / 8) << 10) | ((50 / 8) << 5) | ((0 / 8));
+    updateImage();
 }
 
 void PlotCash::setStartLevel(int level) {
     m_startLevel = level;
-    m_isDataUpdate = true;
+    updateImage();
 }
 
 void PlotCash::setStopLevel(int level) {
     m_stopLevel = level;
-    m_isDataUpdate = true;
+    updateImage();
+}
+
+void PlotCash::setTimelinePosition(double position) {
+    int m_lineVisibleCount = m_image.width();
+    if(m_lineVisibleCount > poolSize()) {
+        m_lineVisibleCount = poolSize();
+    }
+    m_offsetLine = (int)(position*(double)(poolSize() - m_lineVisibleCount));
+    updateImage(true);
+}
+
+void PlotCash::setChartVis(bool visible) {
+    m_chartVis = visible;
+    updateImage(true);
+}
+
+void PlotCash::setDistVis(bool visible) {
+    m_distSonarVis = visible;
+    m_distCalcVis = visible;
+    updateImage(true);
+}
+
+void PlotCash::updateImage(bool update_value) {
+    bool send_update = false;
+
+    if(update_value) {
+        flags.needUpdateValueMap = true;
+        send_update = true;
+    }
+
+    if(flags.needUpdateImage == false) {
+        flags.needUpdateImage = true;
+        send_update = true;
+    }
+
+    if(send_update) {
+        emit updatedImage();
+    }
+}
+
+
+void PlotCash::updateValueMap(int width, int height) {
+    if(m_valueCash.size() != width) {
+        m_valueCash.resize(width);
+    }
+
+    m_prevValueCash.chartData.resize(height);
+    for(int column = 0; column < width; column++) {
+        if(m_valueCash[column].chartData.size() != height) {
+            m_valueCash[column].chartData.resize(height);
+        }
+    }
+
+    int size_column = m_prevValueCash.chartData.size();
+    int16_t* data_column = m_prevValueCash.chartData.data();
+    int pool_index = poolIndex(poolLastIndex());
+    if(pool_index >= 0) {
+        if(m_pool[pool_index].chartAvail())  {
+            m_pool[poolLastIndex()].chartTo(0, m_range, data_column, size_column);
+        } else {
+            memset(data_column, 0, size_column*2);
+        }
+
+        if(m_pool[pool_index].distAvail()) {
+            m_prevValueCash.distData = m_pool[pool_index].distData();
+        }
+    }
+
+    for(int column = 0; column < width; column++) {
+        size_column = m_valueCash[column].chartData.size();
+        data_column = m_valueCash[column].chartData.data();
+        int avrg_cnt = 1;
+        for(int avrg_index = 0; avrg_index < avrg_cnt; avrg_index++) {
+            pool_index = poolIndex(poolLastIndex() - column - avrg_index - m_offsetLine);
+            if(pool_index >= 0) {
+
+                if(m_chartVis) {
+                    if(m_pool[pool_index].chartAvail()) {
+                        m_pool[pool_index].chartTo(0, m_range, data_column, size_column, avrg_index == 0 ? false : true );
+                    } else {
+                        memset(data_column, 0, size_column*2);
+                    }
+                }
+
+                if(m_distSonarVis) {
+                    if(m_pool[pool_index].distAvail()) {
+                        m_valueCash[column].distData = m_pool[pool_index].distData();
+                    } else {
+                        m_valueCash[column].distData = -1;
+                    }
+                }
+            } else {
+                memset(data_column, 0, size_column*2);
+            }
+        }
+
+        if(m_chartVis && avrg_cnt > 1) {
+            for(int i = 0; i < size_column; i++) {
+                data_column[i] /= avrg_cnt;
+            }
+        }
+    }
+}
+
+void PlotCash::updateImage(int width, int height) {
+    flags.needUpdateImage = false;
+    int waterfall_width = width - m_prevLineWidth;
+
+    if(flags.needUpdateValueMap) {
+        flags.needUpdateValueMap = false;
+        updateValueMap(waterfall_width, height);
+    }
+
+    if(m_chartVis) {
+        int level_range = m_stopLevel - m_startLevel;
+        int index_offset = (int)((float)m_startLevel*2.5f);
+        float index_map_scale = 0;
+        if(level_range > 0) {
+            index_map_scale = (float)(m_colorMap.length() - 1)/((float)(m_stopLevel - m_startLevel)*2.5f);
+        } else {
+            index_map_scale = 10000;
+        }
+
+        int16_t* raw_col = m_prevValueCash.chartData.data();
+        for (int row = 0; row < height; row++) {
+            int16_t index_map = (float)(raw_col[row] - index_offset)*index_map_scale;
+            if(index_map < 0) { index_map = 0;
+            } else if(index_map > 255) { index_map = 255; }
+
+            for(int col = 1;  col < m_prevLineWidth; col++) {
+                m_dataImage[width - col + row*width] = m_colorHashMap[index_map];
+            }
+        }
+
+        for(int col = 0;  col < waterfall_width; col++) {
+            int col_value = waterfall_width - col - 1;
+
+            int16_t* raw_col = m_valueCash[col_value].chartData.data();
+            int render_height = m_valueCash[col_value].chartData.size();
+            if(render_height > height) {
+                render_height = height;
+            }
+
+            for (int row = 0; row < render_height; row++) {
+                int32_t index_map = (float)(raw_col[row] - index_offset)*index_map_scale;
+                if(index_map < 0) { index_map = 0;
+                } else if(index_map > 255) { index_map = 255; }
+                m_dataImage[col + row*width] = m_colorHashMap[index_map];
+            }
+        }
+    } else {
+        memset(m_dataImage, 0, width*height*2);
+    }
+
+    if(m_distSonarVis) {
+        int dist = m_prevValueCash.distData;
+        if(dist >= 0) {
+            int index_dist = (int)((float)dist/(float)m_range*(float)height);
+            if(index_dist < 0) {
+                index_dist = 0;
+            } else if(index_dist > height - 2) {
+                index_dist = height - 2;
+            }
+
+            for(int col = 1;  col < m_prevLineWidth; col++) {
+                m_dataImage[width - col + index_dist*width] = m_colorDist;
+                m_dataImage[width - col + (index_dist + 1)*width] = m_colorDist;
+            }
+        }
+
+        for(int col = 0;  col < waterfall_width; col++) {
+            int col_value = waterfall_width - col - 1;
+
+            if(col > 0) {
+                int dist = m_valueCash[col_value].distData;
+                if(dist >= 0) {
+                    int index_dist = (int)((float)dist/(float)m_range*(float)height);
+                    if(index_dist < 0) {
+                        index_dist = 0;
+                    } else if(index_dist > height - 2) {
+                        index_dist = height - 2;
+                    }
+
+                    m_dataImage[col - 1 + index_dist*width] = m_colorDist;
+                    m_dataImage[col - 1 + (index_dist + 1)*width] = m_colorDist;
+                    m_dataImage[col + index_dist*width] = m_colorDist;
+                    m_dataImage[col + (index_dist + 1)*width] = m_colorDist;
+                }
+            }
+        }
+    }
+
+    m_image = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
 }
 
 QImage PlotCash::getImage(QSize size) {
-    bool need_render = m_isDataUpdate;
-    m_isDataUpdate = false;
+    if(m_image.size() != size) { flags.needUpdateValueMap = true;  }
 
-    if(m_cash.size() != size) {
-        m_cash = m_cash.scaled(size);
-        need_render = true;
-    }
+//    m_range = 25000;
+    flags.needUpdateImage |= flags.needUpdateValueMap;
+    if(flags.needUpdateImage) {
+        updateImage(size.width(), size.height());
 
-    int line_w = 4;
-    if(need_render) {
-        QPainter p(&m_cash);
-
-        int line_disp_cnt = size.width()/line_w + 1;
-        if(line_disp_cnt > getLineCount()) {
-            line_disp_cnt = getLineCount();
-            line_w = size.width() / line_disp_cnt;
-        }
-
-        int prev_line_cnt = 10;
-        for(int i = 0; i < prev_line_cnt; i++) {
-            p.drawImage(QRect(size.width() - line_w*(i + 1), 0, line_w, size.height()), *getLine(0, {line_w, size.height()}));
-        }
-
-        for(int i = 0; i < line_disp_cnt; i++) {
-            p.drawImage(QRect(size.width() - line_w*(i + 1 + prev_line_cnt), 0, line_w, size.height()), *getLine(i, {line_w, size.height()}));
-        }
-
+        QPainter p(&m_image);
         p.setPen(QColor::fromRgb(100, 100, 100));
         p.setFont(QFont("Asap", 13, QFont::Normal));
 
-        int nbr_hor_div = m_hGrid;
-
+        int nbr_hor_div = m_verticalGridNum;
         for (int i = 1; i < nbr_hor_div; i++) {
-            int offset_y = m_cash.height()*i/nbr_hor_div;
-            p.drawLine(0, offset_y, m_cash.width(), offset_y);
+            int offset_y = m_image.height()*i/nbr_hor_div;
+            p.drawLine(0, offset_y, m_image.width(), offset_y);
 
             float range_text = (float)(m_range*i/nbr_hor_div + m_offset)*m_legendMultiply;
-//            p.drawText(10, offset_y - 10, QString::number((double)range_text) + QStringLiteral(" m"));
+            p.drawText(m_image.width() - m_prevLineWidth - 70, offset_y - 10, QString::number((double)range_text) + QStringLiteral(" m"));
         }
 
-        p.drawLine(m_cash.width() - prev_line_cnt*line_w, 0, m_cash.width() - prev_line_cnt*line_w, m_cash.height());
-
+        p.drawLine(m_image.width() - m_prevLineWidth, 0, m_image.width() - m_prevLineWidth, m_image.height());
         p.setFont(QFont("Asap", 24, QFont::Normal));
-        p.drawText(10, m_cash.height() - 10, QString::number((double)((m_range + m_offset)*m_legendMultiply)) + QStringLiteral(" m"));
+        p.drawText(m_image.width() - m_prevLineWidth - 80, m_image.height() - 10, QString::number((double)((m_range + m_offset)*m_legendMultiply)) + QStringLiteral(" m"));
 
+        if(m_distSonarVis) {
+            p.setPen(QColor::fromRgb(200, 50, 0));
+            int disp_dist = m_prevValueCash.distData;
+            if(disp_dist >= 0) {
+                p.drawText(m_image.width() - m_prevLineWidth - 80, m_image.height() - 60, QString::number((double)(m_prevValueCash.distData)*0.001) + QStringLiteral(" m"));
+            }
+        }
     }
 
-    return m_cash;
+    return m_image;
 }
 
-QImage* PlotCash::getLine(int offset, QSize size) {
-    return Lines[getIndex(offset)].getImage(size, m_range, m_offset, m_colorMap, m_startLevel, m_stopLevel);
-}
-
-
-
-int PlotCash::getLineCount() {
-    return Lines.length();
-}
-
-void PlotCash::setLineCount(int line_count) {
-    Lines.resize(line_count);
-    CurrentIndex = line_count - 1;
+int PlotCash::poolSize() {
+    return m_pool.length();
 }

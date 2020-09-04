@@ -35,55 +35,46 @@ MenuViewer {
                     width: parent.width
 
                     TitleMenuBox {
-                        titleText: "Connection #1"
+                        id: titleConnection
+                        titleText: "Choose a connection..."
+                        visible: titleText != ""
 
-//                        CCheck {
-//                            id:checkLogging
-//                            text: "Logging"
-////                            checked: sonarDriver.datasetChart > 0
-////                            onCheckedChanged: {
-////                                if(checked == true && sonarDriver.datasetChart == 0) {
-////                                    sonarDriver.datasetChart = switchDatasetChart.lastChannel
-////                                } else if(checked == false && sonarDriver.datasetChart > 0) {
-////                                    switchDatasetChart.lastChannel = sonarDriver.datasetChart
-////                                    sonarDriver.datasetChart = 0
-////                                }
-////                            }
-//                        }
-
-//                        Text {
-////                            text: "TX: 0 byte, 0 packet, 0 error;" + "     " + "RX: 0 byte, 0 packet, 0 error;"
-//                            Layout.fillWidth: true
-//                            horizontalAlignment: Text.AlignRight
-//                            color: "#808080"
-//                        }
+                        Connections {
+                            target: core
+                            onConnectionChanged: {
+                                if(core.isOpenConnection()) {
+                                    titleConnection.titleText = core.deviceName()
+                                } else {
+                                    titleConnection.titleText = "Choose a connection..."
+                                }
+                            }
+                        }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.margins: 15
-
                         spacing: 10
 
                         CCombo  {
-                            id: deviceTypeCombo
-                            Layout.fillWidth: true
-
-                            model: ["KOGGER"]
-
+                            id: connectionTypeCombo
+//                            Layout.fillWidth: true
+                            model: ["SERIAL", "FILE"]
 
                             Settings {
-                                property alias connectionType: deviceTypeCombo.currentIndex
+                                property alias connectionType: connectionTypeCombo.currentIndex
                             }
                         }
 
                         CCombo  {
-                            id: connectionTypeCombo
+                            id: deviceTypeCombo
                             Layout.fillWidth: true
-                            model: ["SERIAL"]
+                            visible: connectionTypeCombo.currentText === "SERIAL"
+                            model: ["KOGGER"]
+
 
                             Settings {
-                                property alias connectionType: connectionTypeCombo.currentIndex
+                                property alias connectionTarget: deviceTypeCombo.currentIndex
                             }
                         }
 
@@ -119,6 +110,51 @@ MenuViewer {
                             }
                         }
 
+                        TextField {
+                            id: pathText
+                            hoverEnabled: true
+                            Layout.fillWidth: true
+                            visible: connectionTypeCombo.currentText === "FILE"
+                            padding: 4
+                            rightPadding: 40
+                            font.family: "Bahnschrift"; font.pointSize: 14;
+                            color: "#E07000"
+
+                            text: ""
+                            placeholderText: qsTr("Enter path")
+
+                            background: Rectangle {
+                                color: "#505050"
+                            }
+                        }
+
+                        CButton {
+                            text: "..."
+                            Layout.fillWidth: false
+                            visible: connectionTypeCombo.currentText === "FILE"
+                            implicitHeight: 30
+                            onClicked: {
+                                logFileDialog.open()
+                            }
+
+                            FileDialog {
+                                id: logFileDialog
+                                title: "Please choose a file"
+                                folder: shortcuts.home
+                                nameFilters: ["Kogger log files (*.klf)"]
+
+                                onAccepted: {
+                                    pathText.text = logFileDialog.fileUrl.toString()
+                                }
+                                onRejected: {
+                                }
+                            }
+
+                            Settings {
+                                property alias logFolder: logFileDialog.folder
+                            }
+                        }
+
                         CButton {
                             id: connectionButton
                             property bool connection: false
@@ -134,12 +170,13 @@ MenuViewer {
                                     if(connectionTypeCombo.currentText === "SERIAL") {
                                         core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText))
                                     } else if(connectionTypeCombo.currentText === "FILE") {
-                                        fileDialog.open()
+                                        core.openConnectionAsFile(pathText.text);
                                     }
                                 }
                             }
 
                             onConnectionChanged: {
+                                canvas.requestPaint()
                                 if(connection) {
                                     if(connectionTypeCombo.currentText === "SERIAL") {
                                     } else {
@@ -183,56 +220,6 @@ MenuViewer {
                             }
                         }
                     }
-
-//                    RowLayout {
-//                        Layout.fillWidth: true
-//                        Layout.margins: 15
-//                        visible: checkLogging.checked
-//                        spacing: 10
-
-//                        FileDialog {
-//                            id: fileDialog
-//                            title: "Please choose a folder"
-//                            folder: shortcuts.home
-//                            selectFolder: true
-//                            onAccepted: {
-//                                pathText.text = fileDialog.fileUrl.toString()
-//                            }
-//                            onRejected: {
-//                            }
-//                        }
-
-//                        Settings {
-//                            property alias loggingFolder: fileDialog.folder
-//                        }
-
-//                        TextField {
-//                            id: pathText
-//                            hoverEnabled: true
-//                            Layout.fillWidth: true
-//                            height: control.height
-//                            padding: 4
-//                            rightPadding: 40
-//                            font.family: "Bahnschrift"; font.pointSize: 14;
-//                            color: "#E07000"
-
-//                            text: ""
-//                            placeholderText: qsTr("Enter path")
-
-//                            background: Rectangle {
-//                                color: "#505050"
-//                            }
-//                        }
-
-//                        CButton {
-//                            text: "..."
-//                            Layout.fillWidth: false
-//                            implicitHeight: 30
-//                            onClicked: {
-//                                fileDialog.open()
-//                            }
-//                        }
-//                    }
                 }
             }
         }

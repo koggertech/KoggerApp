@@ -44,6 +44,8 @@ SpinBox {
         inputMethodHints: Qt.ImhFormattedNumbersOnly
     }
 
+    up.onPressedChanged: upCanvas.requestPaint()
+
     up.indicator: Canvas {
         id: upCanvas
         x: parent.width - width
@@ -55,10 +57,10 @@ SpinBox {
 
         property bool pressed: control.up.pressed
 
-        Connections {
-            target: control.up
-            onPressedChanged: upCanvas.requestPaint()
-        }
+//        Connections {
+//            target: control.up
+//            onPressedChanged: upCanvas.requestPaint()
+//        }
 
         onEnabledChanged: {
             upCanvas.requestPaint()
@@ -120,6 +122,8 @@ SpinBox {
 //        border.color: control.down.pressed ? styleSet.colorControllBorderActive: styleSet.colorControllBorder
 //    }
 
+    down.onPressedChanged: downCanvas.requestPaint()
+
     down.indicator: Canvas {
         id: downCanvas
         x: 0
@@ -130,10 +134,10 @@ SpinBox {
         contextType: "2d"
         property bool pressed: control.down.pressed
 
-        Connections {
-            target: control.down
-            onPressedChanged: downCanvas.requestPaint()
-        }
+//        Connections {
+//            target: control.down
+//            onPressedChanged: downCanvas.requestPaint()
+//        }
 
         onEnabledChanged: {
             downCanvas.requestPaint()

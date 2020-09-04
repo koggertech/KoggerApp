@@ -8,35 +8,34 @@ Button {
 
     id: control
     Layout.preferredWidth: 50
-    Layout.preferredHeight: 30
+    Layout.preferredHeight: 28
     Layout.alignment: Qt.AlignTop
-    opacity: 0.8
+    opacity: 0.5
 
-    font.family: "Roboto"; font.pointSize: 12;
+    font.pointSize: 12;
 
-    background: TabBackStyle {
-        active: control.active
+    background: Rectangle {
+        color: "#505050"
+
+        border.color: "#606060"
+        border.width: 1
+        radius: 2
     }
 
     contentItem: Text {
         text: control.text
         font: control.font
         opacity: 1.0
-        color: "#FF7030"
+        color: "#999999"
         horizontalAlignment: Text.AlignHCenter
-//        verticalAlignment: Text.AlignTop
         elide: Text.ElideRight
     }
 
     onActiveChanged: {
         if(control.active) {
-            Layout.preferredWidth = 50
-            Layout.preferredHeight = 30
-            opacity = 1.0
-        } else {
-            Layout.preferredWidth = 50
-            Layout.preferredHeight = 30
             opacity = 0.8
+        } else {
+            opacity = 0.5
         }
     }
 }
