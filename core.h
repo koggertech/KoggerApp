@@ -41,6 +41,7 @@ public slots:
     bool isOpenConnection();
     bool closeConnection();
     QString deviceName();
+    long deviceSerialNumber();
 
     bool upgradeFW(const QString &name);
 
@@ -67,7 +68,7 @@ public slots:
     void UILoad(QObject *object, const QUrl &url);
 
 signals:
-    void connectionChanged();
+    void connectionChanged(bool duplex = false);
 
 public:
     Console *m_console;

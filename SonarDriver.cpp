@@ -1,5 +1,6 @@
 #include "SonarDriver.h"
-#include "QTimer"
+#include <time.h>
+
 SonarDriver::SonarDriver(QObject *parent) :
     QObject(parent),
     m_proto(new ProtoBinIn()),
@@ -45,7 +46,7 @@ SonarDriver::SonarDriver(QObject *parent) :
 
     regID(idNav, &SonarDriver::receivedNav);
 
-
+    connect(&m_processTimer, &QTimer::timeout, this, &SonarDriver::process);
 }
 
 void SonarDriver::regID(IDBin* id_bin, void (SonarDriver::* method)(Type type, Version ver, Resp resp), bool is_setup) {
@@ -66,36 +67,63 @@ void SonarDriver::requestSetup() {
         i.next();
         i.value()->requestAll();
     }
+
+    m_state.conf = ConfRequest;
+}
+
+void SonarDriver::setBusAddress(int addr) {
+    m_busAddress = addr;
+    QHashIterator<ID, IDBin*> i(hashIDParsing);
+    while (i.hasNext()) {
+        i.next();
+        i.value()->setAddress(m_busAddress);
+    }
+}
+
+int SonarDriver::getBusAddress() {
+    return m_busAddress;
+}
+
+void SonarDriver::setDevAddress(int addr) {
+    idUART->setDevAddress(addr);
+}
+
+int SonarDriver::getDevAddress() {
+    return idUART->devAddress();
+}
+
+void SonarDriver::setDevDefAddress(int addr) {
+     idUART->setDevDefAddress(addr);
+}
+
+int SonarDriver::getDevDefAddress() {
+    return idUART->devDefAddress();
+}
+
+uint32_t SonarDriver::devSerialNumber() {
+    return idVersion->serialNumber();
 }
 
 void SonarDriver::putData(const QByteArray &data) {
-    uint8_t* ptr_data = (uint8_t*)(data.data());
-    m_proto->setContext(ptr_data, data.size());
+    if(m_state.connect) {
+        uint8_t* ptr_data = (uint8_t*)(data.data());
+        m_proto->setContext(ptr_data, data.size());
 
-    while (m_proto->availContext()) {
-        m_proto->process();
-        switch (m_proto->protoFlag()) {
-        case FrameParser::ProtoNone:
-//            qInfo("bin err %u, frame err %u, data size %u, context %u", m_proto->binError(), m_proto->frameError(), data.size(), m_proto->availContext());
-            break;
-        case FrameParser::ProtoBin:
-             protoComplete(*(ProtoBinIn*)m_proto);
-            break;
-        case FrameParser::ProtoNMEA:
-            nmeaComplete(*(ProtoNMEA*)m_proto);
-            break;
+        while (m_proto->availContext()) {
+            m_proto->process();
+            switch (m_proto->protoFlag()) {
+            case FrameParser::ProtoNone:
+                //            qInfo("bin err %u, frame err %u, data size %u, context %u", m_proto->binError(), m_proto->frameError(), data.size(), m_proto->availContext());
+                break;
+            case FrameParser::ProtoBin:
+                protoComplete(*(ProtoBinIn*)m_proto);
+                break;
+            case FrameParser::ProtoNMEA:
+                nmeaComplete(*(ProtoNMEA*)m_proto);
+                break;
+            }
         }
     }
-
-//    qInfo("bin cnt %u, nmea cnt %u", m_proto->binComplete(), m_proto->NMEAComplete());
-
-
-//    for(int i = 0; i < data.size(); i++) {
-//        Resp resp = m_proto->putByte(static_cast<uint8_t>(data.at(i)));
-//        if(resp == respOk) {
-//            protoComplete(*m_proto);
-//        }
-    //    }
 }
 
 void SonarDriver::nmeaComplete(ProtoNMEA &proto) {
@@ -109,28 +137,40 @@ void SonarDriver::nmeaComplete(ProtoNMEA &proto) {
 }
 
 void SonarDriver::protoComplete(ProtoBinIn &proto) {
-    if(isUpdatingFw() == false) {
-        if(proto.mark() == false) {
-            startConnection();
+    if(m_state.duplex && isUpdatingFw() == false) {
+        if(proto.mark() == false && m_state.uptime != UptimeRequest) {
             idMark->setMark();
-        }
-
-        if(m_inited == false) {
-            m_inited = true;
+            m_state.uptime = UptimeRequest;
+        } else if(m_state.uptime != UptimeFix) {
+            m_state.uptime = UptimeFix;
             requestSetup();
         }
     }
 
     if(hashIDParsing.contains(proto.id())) {
         hashIDParsing[proto.id()]->parse();
-    } else {
-        qInfo("ID is not find: %u", proto.id());
     }
+//    else {
+//        qInfo("ID is not find: %u", proto.id());
+//    }
 }
 
-void SonarDriver::startConnection() {
-    m_inited = true;
-    requestSetup();
+void SonarDriver::startConnection(bool duplex) {
+    m_devName = "...";
+    m_state.connect = true;
+    m_state.uptime = UptimeNone;
+    m_state.conf = ConfNone;
+    m_state.duplex = duplex;
+
+    idVersion->reset();
+
+    if(m_state.duplex) {
+        m_processTimer.start(100);
+        idVersion->requestAll();
+        requestSetup();
+//        requestSetup();
+    }
+
     m_bootloader = false;
     m_upgrade_status = 0;
 }
@@ -462,13 +502,33 @@ void SonarDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedUART(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+    qInfo("UART ver %u, resp %u", ver, resp);
+    if(resp == respNone) {
+        emit UARTChanged();
+    }
 }
 
 void SonarDriver::receivedVersion(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
-//    m_devName = "2D-ENHANCED";
-    emit deviceVersionChanged();
+    if(resp == respNone) {
+        switch (idVersion->boardVersion()) {
+        case IDBinVersion::BoardEnhanced:
+            m_devName = "2D-ENHANCED";
+            break;
+        case IDBinVersion::BoardChirp:
+            m_devName = "2D-CHIRP";
+            break;
+        case IDBinVersion::BoardBase:
+            m_devName = "2D-BASE";
+            break;
+        default:
+            m_devName = "None";
+        }
+        emit deviceVersionChanged();
+    }
+//
+
 }
 
 void SonarDriver::receivedMark(Type type, Version ver, Resp resp) {
@@ -507,4 +567,11 @@ void SonarDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 void SonarDriver::receivedNav(Type type, Version ver, Resp resp) {
     Q_UNUSED(type)
     Q_UNUSED(ver)
+}
+
+void SonarDriver::process() {
+    if(m_state.uptime != UptimeFix) {
+        idMark->setMark();
+        m_state.uptime = UptimeRequest;
+    }
 }

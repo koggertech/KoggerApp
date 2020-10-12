@@ -15,6 +15,11 @@ MenuViewer {
             width: parent.width
             spacing: 10
 
+            ConnectionViewer {
+                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width
+            }
+
             ChartBox {
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
@@ -44,6 +49,11 @@ MenuViewer {
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
+
+//            DevAddrBox {
+//                Layout.fillWidth: true
+//                Layout.preferredWidth: parent.width
+//            }
 
             UpgradeBox {
                 Layout.fillWidth: true

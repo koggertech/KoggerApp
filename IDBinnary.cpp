@@ -46,7 +46,7 @@ Resp  IDBin::parse() {
 
 void IDBin::simpleRequest(Version ver) {
     ProtoBinOut req_out;
-    req_out.create(GETTING, ver, id(), 0);
+    req_out.create(GETTING, ver, id(), m_address);
     requestSpecific(req_out);
     req_out.end();
 
@@ -249,7 +249,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
         m_channel[ch_id].period = period;
 
         ProtoBinOut id_out;
-        id_out.create(SETTING, v0, id(), 0);
+        id_out.create(SETTING, v0, id(), m_address);
         id_out.write<U1>(ch_id);
         id_out.write<U4>(period);
         id_out.write<U4>(mask);
@@ -275,7 +275,7 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
     m_maxDist = max_dist;
 
     ProtoBinOut id_out;
-    id_out.create(SETTING, v1, id(), 0);
+    id_out.create(SETTING, v1, id(), m_address);
     id_out.write<U4>(start_offset);
     id_out.write<U4>(max_dist);
     id_out.end();
@@ -304,7 +304,7 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
     m_sanpleOffset = offset;
 
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U2>(count);
     id_out.write<U2>(resolution);
     id_out.write<U2>(offset);
@@ -331,7 +331,7 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
     m_boost = boost;
 
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U2>(freq);
     id_out.write<U1>(pulse);
     id_out.write<U1>(boost);
@@ -354,7 +354,7 @@ void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
     m_soundSpeed = snd_spd;
 
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U4>(snd_spd);
     id_out.end();
     sendDataProcessing(id_out);
@@ -385,6 +385,12 @@ Resp IDBinUART::parsePayload(ProtoBinIn &proto) {
         } else {
             return respErrorKey;
         }
+    } else if(proto.ver() == v2) {
+        if(checkKeyConfirm(proto.read<U4>())) {
+            devDef_address = proto.read<U1>();
+        } else {
+            return respErrorKey;
+        }
     } else {
         return respErrorVersion;
     }
@@ -394,16 +400,52 @@ Resp IDBinUART::parsePayload(ProtoBinIn &proto) {
 
 void IDBinUART::setBaudrate(U4 baudrate) {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     appendKey(id_out);
+
     id_out.write<U1>(1);
-    id_out.write<U4>(baudrate);
+    m_uart[1].baudrate = baudrate;
+    id_out.write<U4>(m_uart[1].baudrate);
+
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+void IDBinUART::setDevAddress(U1 addr) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v1, id(), m_address);
+    appendKey(id_out);
+
+    id_out.write<U1>(1);
+    m_uart[1].dev_address = addr;
+    id_out.write<U1>(addr);
+
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+void IDBinUART::setDevDefAddress(U1 addr) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v2, id(), m_address);
+    appendKey(id_out);
+
+    devDef_address = addr;
+    id_out.write<U1>(addr);
+
     id_out.end();
     sendDataProcessing(id_out);
 }
 
 Resp IDBinVersion::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
+        m_boardVersionMinor = proto.read<U1>();
+        m_boardVersion = (BoardVersion)proto.read<U1>();
+        proto.read<U2>();
+        proto.read<U2>();
+        proto.read<U2>();
+        proto.read<U4>();
+        proto.read<U2>();
+        m_serialNumber = proto.read<U4>();
     } else {
         return respErrorVersion;
     }
@@ -423,7 +465,7 @@ Resp IDBinMark::parsePayload(ProtoBinIn &proto) {
 
 void IDBinMark::setMark() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     appendKey(id_out);
     id_out.end();
 
@@ -456,7 +498,7 @@ Resp IDBinFlash::parsePayload(ProtoBinIn &proto) {
 
 void IDBinFlash::flashing() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     appendKey(id_out);
     id_out.end();
     sendDataProcessing(id_out);
@@ -465,7 +507,7 @@ void IDBinFlash::flashing() {
 
 void IDBinFlash::restore() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v1, id(), 0);
+    id_out.create(SETTING, v1, id(), m_address);
     appendKey(id_out);
     id_out.end();
     sendDataProcessing(id_out);
@@ -473,7 +515,7 @@ void IDBinFlash::restore() {
 
 void IDBinFlash::erase() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v2, id(), 0);
+    id_out.create(SETTING, v2, id(), m_address);
     appendKey(id_out);
     id_out.end();
     sendDataProcessing(id_out);
@@ -500,7 +542,7 @@ Resp IDBinBoot::parsePayload(ProtoBinIn &proto) {
 
 void IDBinBoot::reboot() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     appendKey(id_out);
     id_out.end();
     sendDataProcessing(id_out);
@@ -508,7 +550,7 @@ void IDBinBoot::reboot() {
 
 void IDBinBoot::runFW() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v1, id(), 0);
+    id_out.create(SETTING, v1, id(), m_address);
     appendKey(id_out);
     id_out.end();
     sendDataProcessing(id_out);
@@ -541,7 +583,7 @@ bool IDBinUpdate::putUpdate() {
     }
 
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, id(), 0);
+    id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U2>(_nbr_packet);
 
     for(uint16_t i = 0; i < len_part; i++) {

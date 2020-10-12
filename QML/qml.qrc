@@ -37,5 +37,6 @@
         <file>SpinBoxCustom.qml</file>
         <file>ChartLevel.qml</file>
         <file>SoundSpdBox.qml</file>
+        <file>DevAddrBox.qml</file>
     </qresource>
 </RCC>

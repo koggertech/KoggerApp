@@ -34,7 +34,7 @@ bool Connection::openSerial(const QString &name, int32_t baudrate){
     m_type = ConnectionSerial;
 //    qInfo("Serial connection open");
     core.consoleInfo(QStringLiteral("Connection to ") + name + ":" + QString::number(baudrate));
-    emit openedEvent();
+    emit openedEvent(true);
     return true;
 }
 
@@ -55,7 +55,7 @@ bool Connection::openFile(const QString &name) {
     m_type = ConnectionFile;
     qInfo("File connection open");
 
-    emit openedEvent();
+    emit openedEvent(false);
 
     QByteArray data =  m_file->readAll();
     emit receiveData(data);
@@ -114,7 +114,7 @@ void Connection::sendData(const QByteArray &data){
 
 void Connection::closing() {
     m_type = ConnectionNone;
-    emit closedEvent();
+    emit closedEvent(false);
 }
 
 void Connection::handleSerialError(QSerialPort::SerialPortError error) {

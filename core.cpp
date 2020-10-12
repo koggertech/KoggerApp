@@ -8,7 +8,6 @@ Core::Core() : QObject(),
 {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
-    connect(dev_driver, &SonarDriver::deviceVersionChanged, this, &Core::connectionChanged);
 
     connect(m_connection, &Connection::openedEvent, dev_driver, &SonarDriver::startConnection);
     connect(m_connection, &Connection::receiveData, dev_driver, &SonarDriver::putData);
@@ -40,6 +39,7 @@ bool Core::openConnectionAsSerial(const QString &name, int baudrate) {
 }
 
 bool Core::openConnectionAsFile(const QString &name) {
+    m_plot->resetDataset();
     m_connection->openFile(name);
     return true;
 }
@@ -55,6 +55,10 @@ bool Core::closeConnection() {
 
 QString Core::deviceName() {
     return dev_driver->devName();
+}
+
+long Core::deviceSerialNumber() {
+     return dev_driver->devSerialNumber();
 }
 
 bool Core::upgradeFW(const QString &name) {

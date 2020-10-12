@@ -4,10 +4,10 @@
 
 WaterFall::WaterFall(QQuickItem* parent)
     : QQuickPaintedItem(parent)
-//    , m_updateTimer(new QTimer(this))
+    , m_updateTimer(new QTimer(this))
 {
-//    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
-//    m_updateTimer->start(30);
+    connect(m_updateTimer, &QTimer::timeout, this, [&] { timerUpdater(); });
+    m_updateTimer->start(30);
 }
 
 void WaterFall::paint(QPainter *painter){
@@ -21,5 +21,16 @@ void WaterFall::paint(QPainter *painter){
 void WaterFall::setPlot(PlotCash *plot) {
     if(plot == nullptr) { return; }
     m_plot = plot;
-    connect(m_plot, &PlotCash::updatedImage, this, [&] { update(); });
+    connect(m_plot, &PlotCash::updatedImage, this, [&] { updater(); });
+}
+
+void WaterFall::timerUpdater() {
+    if(m_needUpdate) {
+        m_needUpdate = false;
+       update();
+    }
+}
+
+void WaterFall::updater() {
+    m_needUpdate = true;
 }

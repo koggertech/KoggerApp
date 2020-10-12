@@ -24,7 +24,7 @@ CheckBox {
 //             radius: 6
              x: 3
              y: 3
-             color: "#7090b0"
+             color: "#A0F0F0"
              visible: control.checked
          }
      }

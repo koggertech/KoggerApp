@@ -29,6 +29,10 @@ public:
         simpleRequest(v0);
     }
 
+    void setAddress(uint8_t addr) {
+        m_address = addr;
+    }
+
 signals:
     void updateContent(Type type, Version ver, Resp resp);
     void dataSend(QByteArray data);
@@ -41,6 +45,7 @@ protected:
     Version m_lastVersion;
     Resp m_lastResp;
     QList<Version> availableVer;
+    uint8_t m_address = 0;
 
     virtual Resp  parsePayload(ProtoBinIn &proto) = 0;
     virtual void requestSpecific(ProtoBinOut &proto_out) { Q_UNUSED(proto_out) }
@@ -413,8 +418,29 @@ public:
     } UART;
 
     void setBaudrate(U4 baudrate);
+
+    void setDevAddress(U1 addr);
+    U1 devAddress() { return m_uart[1].dev_address; }
+
+    void setDevDefAddress(U1 addr);
+    U1 devDefAddress() { return devDef_address; }
+
+
+    void requestAll() override {
+        simpleRequest(v0);
+        simpleRequest(v1);
+        simpleRequest(v2);
+    }
 protected:
     UART m_uart[3];
+    U1 devDef_address = 0;
+
+    virtual void requestSpecific(ProtoBinOut &proto_out) override {
+        appendKey(proto_out);
+        if(proto_out.ver() == 0 || proto_out.ver() == 1) {
+            proto_out.write<U1>(1);
+        }
+    }
 };
 
 class IDBinVersion : public IDBin
@@ -424,11 +450,30 @@ public:
     explicit IDBinVersion(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
     }
 
+    typedef enum {
+        BoardNone,
+        BoardEnhanced = 1,
+        BoardChirp = 2,
+        BoardBase = 3
+    } BoardVersion;
+
     ID id() override { return ID_VERSION; }
     Resp  parsePayload(ProtoBinIn &proto) override;
     uint8_t productName() { return 0; }
-protected:
 
+    BoardVersion boardVersion() { return m_boardVersion; }
+    uint32_t serialNumber() { return m_serialNumber; }
+
+    void reset() {
+        m_boardVersion = BoardNone;
+        m_boardVersionMinor = 0;
+        m_serialNumber = 0;
+    }
+
+protected:
+    BoardVersion m_boardVersion = BoardNone;
+    uint8_t m_boardVersionMinor = 0;
+    uint32_t m_serialNumber = 0;
 };
 
 class IDBinMark : public IDBin

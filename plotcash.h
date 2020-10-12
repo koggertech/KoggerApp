@@ -8,7 +8,7 @@
 #include <QPoint>
 #include <QPixmap>
 #include <QPainter>
-
+#include "math.h"
 class PlotCash : public QObject {
     Q_OBJECT
 public:
@@ -27,6 +27,9 @@ public slots:
     void setChartVis(bool visible);
     void setDistVis(bool visible);
     void updateImage(bool update_value = false);
+    void renderValue();
+    void resetValue();
+    void resetDataset();
 
 signals:
     void updatedImage();
@@ -61,6 +64,32 @@ protected:
 
             int raw_size = m_chartData.size();
             int16_t* src = m_chartData.data();
+//            int16_t* procData = m_processingData.data();
+//            if(!processing) {
+//                processing = true;
+//                m_processingData.resize(raw_size);
+//                procData = m_processingData.data();
+
+//                float avrg = src[2]*3;
+//                for(int i = 0; i < raw_size; i ++) {
+//                    float val = src[i];
+
+//                    procData[i] = (val*1.2 - avrg)*(((float)(i*m_chartResol)*0.00003 + 1.0));
+//                    if(procData[i] < 0) {
+//                        procData[i] = 0;
+//                    } else if(procData[i] > 255) {
+//                        procData[i] = 255;
+//                    }
+
+//                    if(avrg > val) {
+//                        avrg = avrg*0.2f + val*0.8;
+//                    } else {
+//                        avrg = avrg*0.95f + val*0.05;
+//                    }
+//                }
+//            }
+
+//            src = procData;
 
             if(raw_size == 0) {
                 for(int i_to = 0; i_to < len; i_to++) {
@@ -105,6 +134,9 @@ protected:
 
         int m_dist;
 
+        QVector<int16_t> m_processingData;
+        bool processing = false;
+
         struct {
             uint32_t date;
             uint32_t time;
@@ -130,7 +162,10 @@ protected:
     typedef struct {
         QVector<int16_t> chartData;
         int distData = -1;
+        int poolIndex = -1;
+        bool poolIndexUpdate = true;
     } ValueCash;
+    int m_valueCashStart = 0;
 
     QVector<ValueCash> m_valueCash;
     ValueCash m_prevValueCash;
@@ -143,8 +178,9 @@ protected:
     int m_prevLineWidth = 30;
 
     struct  {
-        bool needUpdateValueMap;
-        bool needUpdateImage;
+        bool resetValue;
+        bool renderValue;
+        bool renderImage;
     } flags;
 
     void updateValueMap(int width, int height);

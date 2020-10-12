@@ -9,23 +9,6 @@ Item {
     id: control
     Layout.preferredHeight: columnItem.height
 
-//    FileDialog {
-//        id: fileDialog
-//        title: "Please choose a file"
-//        folder: shortcuts.home
-//        onAccepted: {
-//            console.log("You chose: " + fileDialog.fileUrls)
-//            pathText.text = fileDialog.fileUrl.toString()
-//        }
-//        onRejected: {
-//            console.log("Canceled")
-//        }
-//    }
-
-//    Settings {
-//        property alias upgradeFolder: fileDialog.folder
-//    }
-
     MenuBlock {
     }
 

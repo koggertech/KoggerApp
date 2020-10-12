@@ -130,7 +130,7 @@ Item {
                     y: borderCanvas.posSliderResol - height/2
                     width: 130
                     from: 100
-                    to: 800
+                    to: 6000
                     stepSize: 5
                     value: sonarDriver.transFreq
                     onValueChanged: {

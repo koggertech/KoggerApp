@@ -6,6 +6,7 @@
 #include <IDBinnary.h>
 #include <QHash>
 #include <QVector>
+#include "QTimer"
 
 using namespace Parsers;
 
@@ -71,7 +72,17 @@ public:
     int soundSpeed();
     void setSoundSpeed(int speed);
 
+    void setBusAddress(int addr);
+    int getBusAddress();
+
+    void setDevAddress(int addr);
+    int getDevAddress();
+
+    void setDevDefAddress(int addr);
+    int getDevDefAddress();
+
     QString devName() { return m_devName; }
+    uint32_t devSerialNumber();
 
 signals:
     void dataSend(QByteArray data);
@@ -83,6 +94,7 @@ signals:
     void datasetChanged();
     void transChanged();
     void soundChanged();
+    void UARTChanged();
     void upgradeProgressChanged();
     void deviceVersionChanged();
 
@@ -90,7 +102,7 @@ public slots:
     void putData(const QByteArray &data);
     void nmeaComplete(ProtoNMEA &proto);
     void protoComplete(ProtoBinIn &proto);
-    void startConnection();
+    void startConnection(bool duplex);
 
     void requestDist();
     void requestChart();
@@ -98,6 +110,7 @@ public slots:
     void flashSettings();
     void resetSettings();
     void reboot();
+    void process();
 
 private:
     FrameParser* m_proto;
@@ -127,15 +140,45 @@ private:
     QHash<ID, IDBin*> hashIDParsing;
     QHash<ID, IDBin*> hashIDSetup;
 
-    bool m_inited = false;
+    typedef enum {
+        ConfNone = 0,
+        ConfRequest,
+        ConfRx
+    } ConfStatus;
+
+    typedef enum {
+        UptimeNone,
+        UptimeRequest,
+        UptimeFix
+    } UptimeStatus;
+
+    struct {
+        bool connect = false;
+        bool duplex = false;
+        bool heartbeat = false;
+
+        ConfStatus conf = ConfNone;
+        UptimeStatus uptime = UptimeNone;
+
+    } m_state;
+
+    QTimer m_processTimer;
+
+//    bool m_inited = false;
     bool m_bootloader = false;
     int m_upgrade_status = 0;
+//    bool m_duplex = false;
+
+    int m_busAddress = 0;
+    int m_devAddress = 0;
+    int m_devDefAddress = 0;
 
     QString m_devName = "...";
 
     void regID(IDBin* id_bin, void (SonarDriver::* method)(Type type, Version ver, Resp resp), bool is_setup = false);
 
     void requestSetup();
+
 
 protected slots:
     void receivedTimestamp(Type type, Version ver, Resp resp);
@@ -158,6 +201,8 @@ protected slots:
     void receivedUpdate(Type type, Version ver, Resp resp);
 
     void receivedNav(Type type, Version ver, Resp resp);
+
+
 };
 
 #endif // SONARDRIVER_H

@@ -6,6 +6,7 @@ PlotCash::PoolDataset::PoolDataset() {
     m_chartData.resize(0);
     m_chartResol = 0;
     m_chartOffset = 0;
+    flags.distAvail = false;
 }
 
 void PlotCash::PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
@@ -29,6 +30,8 @@ void PlotCash::PoolDataset::setPosition(uint32_t date, uint32_t time, double lat
 }
 
 PlotCash::PlotCash() {
+    resetDataset();
+
     m_colorMap.resize(256);
     for(int i = 0; i < 256; i++) {
         m_colorMap[i] = QColor::fromRgb(0,0,0);
@@ -124,12 +127,14 @@ void PlotCash::setTimelinePosition(double position) {
 
 void PlotCash::setChartVis(bool visible) {
     m_chartVis = visible;
+    resetValue();
     updateImage(true);
 }
 
 void PlotCash::setDistVis(bool visible) {
     m_distSonarVis = visible;
     m_distCalcVis = visible;
+    resetValue();
     updateImage(true);
 }
 
@@ -137,12 +142,12 @@ void PlotCash::updateImage(bool update_value) {
     bool send_update = false;
 
     if(update_value) {
-        flags.needUpdateValueMap = true;
+        renderValue();
         send_update = true;
     }
 
-    if(flags.needUpdateImage == false) {
-        flags.needUpdateImage = true;
+    if(flags.renderImage == false) {
+        flags.renderImage = true;
         send_update = true;
     }
 
@@ -151,6 +156,17 @@ void PlotCash::updateImage(bool update_value) {
     }
 }
 
+void PlotCash::renderValue() {
+    flags.renderValue = true;
+}
+
+void PlotCash::resetValue() {
+    flags.resetValue = true;
+}
+
+void PlotCash::resetDataset() {
+    m_pool.clear();
+}
 
 void PlotCash::updateValueMap(int width, int height) {
     if(m_valueCash.size() != width) {
@@ -159,17 +175,22 @@ void PlotCash::updateValueMap(int width, int height) {
 
     m_prevValueCash.chartData.resize(height);
     for(int column = 0; column < width; column++) {
+        m_valueCash[column].poolIndexUpdate = false;
         if(m_valueCash[column].chartData.size() != height) {
             m_valueCash[column].chartData.resize(height);
+            m_valueCash[column].poolIndexUpdate = true;
         }
     }
 
+    int pool_last_index = poolLastIndex();
+
     int size_column = m_prevValueCash.chartData.size();
     int16_t* data_column = m_prevValueCash.chartData.data();
-    int pool_index = poolIndex(poolLastIndex());
+
+    int pool_index = poolIndex(pool_last_index);
     if(pool_index >= 0) {
         if(m_pool[pool_index].chartAvail())  {
-            m_pool[poolLastIndex()].chartTo(0, m_range, data_column, size_column);
+            m_pool[pool_last_index].chartTo(0, m_range, data_column, size_column);
         } else {
             memset(data_column, 0, size_column*2);
         }
@@ -179,52 +200,71 @@ void PlotCash::updateValueMap(int width, int height) {
         }
     }
 
+    int pool_offset_index = pool_last_index - m_offsetLine - width;
+    m_valueCashStart = qAbs(pool_offset_index % width);
+
+    bool force_reset = flags.resetValue = true;
+    flags.resetValue = false;
+
     for(int column = 0; column < width; column++) {
-        size_column = m_valueCash[column].chartData.size();
-        data_column = m_valueCash[column].chartData.data();
-        int avrg_cnt = 1;
-        for(int avrg_index = 0; avrg_index < avrg_cnt; avrg_index++) {
-            pool_index = poolIndex(poolLastIndex() - column - avrg_index - m_offsetLine);
-            if(pool_index >= 0) {
-
-                if(m_chartVis) {
-                    if(m_pool[pool_index].chartAvail()) {
-                        m_pool[pool_index].chartTo(0, m_range, data_column, size_column, avrg_index == 0 ? false : true );
-                    } else {
-                        memset(data_column, 0, size_column*2);
-                    }
-                }
-
-                if(m_distSonarVis) {
-                    if(m_pool[pool_index].distAvail()) {
-                        m_valueCash[column].distData = m_pool[pool_index].distData();
-                    } else {
-                        m_valueCash[column].distData = -1;
-                    }
-                }
-            } else {
-                memset(data_column, 0, size_column*2);
-            }
+        int val_col = (m_valueCashStart + column);
+        if(val_col >= width) {
+            val_col -= width;
         }
 
-        if(m_chartVis && avrg_cnt > 1) {
-            for(int i = 0; i < size_column; i++) {
-                data_column[i] /= avrg_cnt;
+        int pool_ind = poolIndex(pool_offset_index + column);
+        if(m_valueCash[val_col].poolIndex != pool_ind || force_reset) {
+            m_valueCash[val_col].poolIndex = pool_ind;
+            m_valueCash[val_col].poolIndexUpdate = true;
+        }
+    }
+
+    for(int column = 0; column < width; column++) {
+        if(!m_valueCash[column].poolIndexUpdate) {
+            continue;
+        }
+        m_valueCash[column].poolIndexUpdate = false;
+
+        size_column = m_valueCash[column].chartData.size();
+        data_column = m_valueCash[column].chartData.data();
+
+        int pool_index = m_valueCash[column].poolIndex;
+
+        if(pool_index >= 0) {
+            if(m_chartVis) {
+                if(m_pool[pool_index].chartAvail()) {
+                    m_pool[pool_index].chartTo(0, m_range, data_column, size_column);
+                } else {
+                    memset(data_column, 0, size_column*2);
+                }
             }
+
+            if(m_distSonarVis) {
+                if(m_pool[pool_index].distAvail()) {
+                    m_valueCash[column].distData = m_pool[pool_index].distData();
+                } else {
+                    m_valueCash[column].distData = -1;
+                }
+            }
+        } else {
+            memset(data_column, 0, size_column*2);
+            m_valueCash[column].distData = -1;
         }
     }
 }
 
 void PlotCash::updateImage(int width, int height) {
-    flags.needUpdateImage = false;
+    flags.renderImage = false;
     int waterfall_width = width - m_prevLineWidth;
 
-    if(flags.needUpdateValueMap) {
-        flags.needUpdateValueMap = false;
+    if(flags.renderValue) {
+        flags.renderValue = false;
         updateValueMap(waterfall_width, height);
     }
 
     if(m_chartVis) {
+        memset(m_dataImage, 0, width*height*2);
+
         int level_range = m_stopLevel - m_startLevel;
         int index_offset = (int)((float)m_startLevel*2.5f);
         float index_map_scale = 0;
@@ -245,11 +285,36 @@ void PlotCash::updateImage(int width, int height) {
             }
         }
 
-        for(int col = 0;  col < waterfall_width; col++) {
-            int col_value = waterfall_width - col - 1;
+        float scale_scope_w = (float)height / (float)(waterfall_width - 100);
 
-            int16_t* raw_col = m_valueCash[col_value].chartData.data();
-            int render_height = m_valueCash[col_value].chartData.size();
+        for(int col = 0;  col < waterfall_width - 104; col++) {
+
+            int raw_index = ((float)col*scale_scope_w);
+
+
+            float dist = -(raw_col[raw_index] - 127)*3;
+            int index_dist = (int)((float)dist + (float)height/2);
+
+            if(index_dist < 1) {
+                index_dist = 1;
+            } else if(index_dist > height - 2) {
+                index_dist = height - 2;
+            }
+
+            m_dataImage[col + 100 - 1 + index_dist*width] = m_colorDist;
+            m_dataImage[col + 100 - 1 + (index_dist + 1)*width] = m_colorDist;
+            m_dataImage[col + 100 + index_dist*width] = m_colorDist;
+            m_dataImage[col + 100 + (index_dist + 1)*width] = m_colorDist;
+        }
+
+        for(int col = 0;  col < waterfall_width; col++) {
+            int val_col = (m_valueCashStart + col);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
+
+            int16_t* raw_col = m_valueCash[val_col].chartData.data();
+            int render_height = m_valueCash[val_col].chartData.size();
             if(render_height > height) {
                 render_height = height;
             }
@@ -281,24 +346,25 @@ void PlotCash::updateImage(int width, int height) {
             }
         }
 
-        for(int col = 0;  col < waterfall_width; col++) {
-            int col_value = waterfall_width - col - 1;
+        for(int col = 1;  col < waterfall_width; col++) {
+            int val_col = (m_valueCashStart + col);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
 
-            if(col > 0) {
-                int dist = m_valueCash[col_value].distData;
-                if(dist >= 0) {
-                    int index_dist = (int)((float)dist/(float)m_range*(float)height);
-                    if(index_dist < 0) {
-                        index_dist = 0;
-                    } else if(index_dist > height - 2) {
-                        index_dist = height - 2;
-                    }
-
-                    m_dataImage[col - 1 + index_dist*width] = m_colorDist;
-                    m_dataImage[col - 1 + (index_dist + 1)*width] = m_colorDist;
-                    m_dataImage[col + index_dist*width] = m_colorDist;
-                    m_dataImage[col + (index_dist + 1)*width] = m_colorDist;
+            int dist = m_valueCash[val_col].distData;
+            if(dist >= 0) {
+                int index_dist = (int)((float)dist/(float)m_range*(float)height);
+                if(index_dist < 0) {
+                    index_dist = 0;
+                } else if(index_dist > height - 2) {
+                    index_dist = height - 2;
                 }
+
+                m_dataImage[col - 1 + index_dist*width] = m_colorDist;
+                m_dataImage[col - 1 + (index_dist + 1)*width] = m_colorDist;
+                m_dataImage[col + index_dist*width] = m_colorDist;
+                m_dataImage[col + (index_dist + 1)*width] = m_colorDist;
             }
         }
     }
@@ -307,11 +373,11 @@ void PlotCash::updateImage(int width, int height) {
 }
 
 QImage PlotCash::getImage(QSize size) {
-    if(m_image.size() != size) { flags.needUpdateValueMap = true;  }
+    if(m_image.size() != size) { renderValue();  }
 
 //    m_range = 25000;
-    flags.needUpdateImage |= flags.needUpdateValueMap;
-    if(flags.needUpdateImage) {
+    flags.renderImage |= flags.renderValue;
+    if(flags.renderImage) {
         updateImage(size.width(), size.height());
 
         QPainter p(&m_image);

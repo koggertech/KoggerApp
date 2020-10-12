@@ -17,7 +17,15 @@ public:
     void setPlot(PlotCash* plot);
 private:
     PlotCash* m_plot = nullptr;
-//    QTimer* m_updateTimer;
+    QTimer* m_updateTimer;
+    bool m_needUpdate = true;
+
+private slots:
+    void timerUpdater();
+
+public slots:
+    void updater();
+
 };
 
 #endif // WATERFALL_H

@@ -12,17 +12,25 @@ ComboBox {
     }
 
     delegate: ItemDelegate {
+        id: itemDelegate
         width: control.width
         implicitHeight: 30
         contentItem: Text {
             text: modelData
             antialiasing: false
             color: styleSet.colorControllText
+
             font: control.font
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
-
         }
+
+        background: Rectangle{
+            color: itemDelegate.highlighted ? styleSet.colorControllBackActive : "transparent"
+            border.color: styleSet.colorControllBorder
+            border.width: itemDelegate.highlighted ? 1 : 0
+        }
+
         highlighted: control.highlightedIndex === index
     }
 
@@ -103,16 +111,19 @@ ComboBox {
             model: control.popup.visible ? control.delegateModel : null
             currentIndex: control.highlightedIndex
 
-
+            highlightFollowsCurrentItem: false
+            focus: true
             ScrollIndicator.vertical: ScrollIndicator { }
         }
+
+
 
         background: Rectangle {
             id: popupRect
             implicitWidth: 100
             implicitHeight: styleSet.controllHeight
             radius: 1
-            color: control.down ? styleSet.colorControllBackActive : styleSet.colorControllBack
+            color: control.down ? styleSet.colorControllBack : styleSet.colorControllBack
             opacity: styleSet.controllBackOpacity
             border.color: control.down ? styleSet.colorControllBorderActive : styleSet.colorControllBorder
             border.width: 1

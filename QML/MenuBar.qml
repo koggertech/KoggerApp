@@ -46,22 +46,22 @@ Item {
                 border.width: 1
             }
 
-            MenuButton {
-                Layout.margins: 4
-                id: menuConnection
-                text: "Con"
+//            MenuButton {
+//                Layout.margins: 4
+//                id: menuConnection
+//                text: "Con"
 
-                onPressed: {
-                    itemChangeActive(menuConnection)
-                }
+//                onPressed: {
+//                    itemChangeActive(menuConnection)
+//                }
 
-                ConnectionViewer {
-                    height: heightMenuViewer
-                    width: 580
-                    x: menuConnection.width + 10
-                    y: -menuConnection.y
-                }
-            }
+//                ConnectionViewer {
+//                    height: heightMenuViewer
+//                    width: 580
+//                    x: menuConnection.width + 10
+//                    y: -menuConnection.y
+//                }
+//            }
 
             MenuButton {
                 id: menuSettings

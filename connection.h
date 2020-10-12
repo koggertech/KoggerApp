@@ -31,8 +31,8 @@ public slots:
     void sendData(const QByteArray &data);
 
 signals:
-    void closedEvent();
-    void openedEvent();
+    void closedEvent(bool duplex);
+    void openedEvent(bool duplex);
     void receiveData(const QByteArray &data);
 
 private:

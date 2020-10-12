@@ -5,7 +5,7 @@ Button {
     id: control
     text: "Ok"
     highlighted: true
-    implicitHeight: 30
+    implicitHeight: 26
 
     StyleSet {
         id: styleSet

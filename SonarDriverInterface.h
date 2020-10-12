@@ -93,6 +93,9 @@ public:
 
     Q_PROPERTY(int soundSpeed READ soundSpeed WRITE setSoundSpeed NOTIFY soundChanged)
 
+    Q_PROPERTY(int busAddress READ getBusAddress WRITE setBusAddress NOTIFY UARTChanged)
+    Q_PROPERTY(int devAddress READ getDevAddress WRITE setDevAddress NOTIFY UARTChanged)
+    Q_PROPERTY(int devDefAddress READ getDevDefAddress WRITE setDevDefAddress NOTIFY UARTChanged)
 
     Q_PROPERTY(int upgradeFWStatus READ upgradeFWStatus NOTIFY upgradeProgressChanged)
 
