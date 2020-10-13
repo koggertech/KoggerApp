@@ -156,6 +156,7 @@ private:
         bool connect = false;
         bool duplex = false;
         bool heartbeat = false;
+        bool mark = false;
 
         ConfStatus conf = ConfNone;
         UptimeStatus uptime = UptimeNone;

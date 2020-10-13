@@ -137,15 +137,7 @@ void SonarDriver::nmeaComplete(ProtoNMEA &proto) {
 }
 
 void SonarDriver::protoComplete(ProtoBinIn &proto) {
-    if(m_state.duplex && isUpdatingFw() == false) {
-        if(proto.mark() == false && m_state.uptime != UptimeRequest) {
-            idMark->setMark();
-            m_state.uptime = UptimeRequest;
-        } else if(m_state.uptime != UptimeFix) {
-            m_state.uptime = UptimeFix;
-            requestSetup();
-        }
-    }
+    m_state.mark = proto.mark();
 
     if(hashIDParsing.contains(proto.id())) {
         hashIDParsing[proto.id()]->parse();
@@ -166,9 +158,6 @@ void SonarDriver::startConnection(bool duplex) {
 
     if(m_state.duplex) {
         m_processTimer.start(100);
-        idVersion->requestAll();
-        requestSetup();
-//        requestSetup();
     }
 
     m_bootloader = false;
@@ -570,8 +559,21 @@ void SonarDriver::receivedNav(Type type, Version ver, Resp resp) {
 }
 
 void SonarDriver::process() {
-    if(m_state.uptime != UptimeFix) {
-        idMark->setMark();
-        m_state.uptime = UptimeRequest;
+    if(m_state.duplex && isUpdatingFw() == false) {
+        if(!m_state.mark) {
+            m_state.uptime = UptimeNone;
+        }
+//        qInfo("mark %u, state %u", m_state.mark, m_state.uptime);
+
+        if(m_state.uptime == UptimeNone) {
+            idMark->setMark();
+            idVersion->requestAll();
+            m_state.uptime = UptimeRequest;
+        } else if(m_state.uptime == UptimeRequest) {
+            requestSetup();
+            m_state.uptime = UptimeFix;
+        } else if(m_state.uptime == UptimeFix) {
+
+        }
     }
 }
