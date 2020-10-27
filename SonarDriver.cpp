@@ -175,6 +175,8 @@ void SonarDriver::requestChart() {
 void SonarDriver::sendUpdateFW(QByteArray update_data) {
     m_bootloader = true;
     idUpdate->setUpdate(update_data);
+//    idDataset->resetAll();
+//    idDataset->commit();
     reboot();
     QTimer::singleShot(250, idUpdate, SLOT(putUpdate()));
     QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
@@ -244,9 +246,20 @@ void SonarDriver::setDistMax(int dist) {
 int SonarDriver::distDeadZone() {
     return idDistSetup->deadZone();
 }
+
 void SonarDriver::setDistDeadZone(int dead_zone) {
     bool is_changed = dead_zone != distDeadZone();
     idDistSetup->setDeadZone(dead_zone);
+    if(is_changed) { emit distSetupChanged(); }
+}
+
+int SonarDriver::distConfidence() {
+    return idDistSetup->confidence();
+}
+
+void SonarDriver::setConfidence(int confidence) {
+    bool is_changed = confidence != distConfidence();
+    idDistSetup->setConfidence(confidence);
     if(is_changed) { emit distSetupChanged(); }
 }
 

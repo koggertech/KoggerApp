@@ -272,6 +272,11 @@ public:
     void resetSDDBT_P2(U1 ch_id) { resetFlag(ch_id, MASK_DIST_SDDBT_P2); }
     bool getSDDBT_P2(U1 ch_id) { return flag(ch_id, MASK_DIST_SDDBT_P2); }
 
+    void resetAll() {
+        setMask(1, 0);
+        setMask(2, 0);
+    }
+
     void commit() {
         sendChannel(1, period(1), mask(1));
         sendChannel(2, period(2), mask(2));
@@ -307,13 +312,17 @@ public:
     int deadZone() { return m_startOffset; }
     void setDeadZone(uint32_t dead_zone) { setRange(dead_zone, max()); }
 
+    void setConfidence(int confidence);
+    int confidence() { return m_confidence; }
+
     void requestAll() override {
         simpleRequest(v1);
+        simpleRequest(v2);
     }
 protected:
     uint32_t m_startOffset = 200;
     uint32_t m_maxDist = 50000;
-
+    U1 m_confidence;
 
 };
 

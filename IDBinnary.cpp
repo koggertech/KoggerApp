@@ -263,6 +263,8 @@ Resp IDBinDistSetup::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v1) {
         m_startOffset = proto.read<U4>();
         m_maxDist = proto.read<U4>();
+    } else if(proto.ver() == v2) {
+        m_confidence = proto.read<U1>();
     } else {
         return respErrorVersion;
     }
@@ -278,6 +280,16 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
     id_out.create(SETTING, v1, id(), m_address);
     id_out.write<U4>(start_offset);
     id_out.write<U4>(max_dist);
+    id_out.end();
+    sendDataProcessing(id_out);
+}
+
+void IDBinDistSetup::setConfidence(int confidence) {
+    m_confidence = confidence;
+
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v2, id(), m_address);
+    id_out.write<U1>(m_confidence);
     id_out.end();
     sendDataProcessing(id_out);
 }
@@ -555,7 +567,6 @@ void IDBinBoot::runFW() {
     id_out.end();
     sendDataProcessing(id_out);
 }
-
 
 Resp IDBinUpdate::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {

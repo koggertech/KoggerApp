@@ -22,7 +22,6 @@ Item {
             spacing: 10
 
             Text {
-//                Layout.leftMargin: 20
                 text: "Speed of Sound, m/s:"
                 color: "#808080"
                 font.pixelSize: 16

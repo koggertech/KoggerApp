@@ -29,6 +29,9 @@ public:
     int distDeadZone();
     void setDistDeadZone(int dead_zone);
 
+    int distConfidence();
+    void setConfidence(int confidence);
+
     int chartSamples();
     void setChartSamples(int samples);
 
@@ -83,6 +86,8 @@ public:
 
     QString devName() { return m_devName; }
     uint32_t devSerialNumber();
+
+
 
 signals:
     void dataSend(QByteArray data);
