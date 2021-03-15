@@ -321,9 +321,10 @@ protected:
     }
 };
 
-class ProtoBinIn : public FrameParser {
+class ProtoBin : public FrameParser {
 public:
-    ProtoBinIn() {}
+    ProtoBin() {}
+
     uint8_t route() const { return _frame[2]; }
     uint8_t mode() const { return _frame[3]; }
     ID id() const { return (ID)(_frame[4]); }
@@ -332,6 +333,24 @@ public:
     bool mark() const { return ((mode() >> 6) & 0x1) == 0x1;}
     bool resp() const { return ((mode() >> 7) & 0x1) == 0x1;}
     uint16_t payloadLen() { return _payloadLen; }
+
+    bool isOut() { return _isOut;}
+protected:
+    bool _isOut = false;
+
+    void setRoute(uint8_t route) {_frame[2] = route;}
+    void setMode(uint8_t mode) { _frame[3] = mode; }
+    void setMode(Type type, Version ver, bool response) {
+        setMode((uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7)));
+    }
+    void setId(ID id) { _frame[4] = id; }
+    void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
+};
+
+
+class ProtoBinIn : public ProtoBin {
+public:
+    ProtoBinIn() { _isOut = false; }
 
     template<typename T>
     T read() {
@@ -480,126 +499,52 @@ protected:
 };
 
 
-
-
-
-
-class ProtoBase {
-public:
-    ProtoBase() {
-    }
-
-    ~ProtoBase() {
-    }
-
-protected:
-
-};
-
-class ProtoBin : public ProtoBase {
-public:
-    ProtoBin() {
-    }
-
-    ~ProtoBin() {
-    }
-
-    ID id() const {return _id;}
-    Type type() const {return (Type)(_mode & 0x3);}
-    Version ver() const {return (Version)((_mode >> 3) & 0x7);}
-    bool mark() const {return ((_mode >> 6) & 0x1) == 0x1;}
-    bool resp() const {return ((_mode >> 7) & 0x1) == 0x1;}
-
-protected:
-    typedef enum {
-        SYNC1 = 0xBB,
-        SYNC2 = 0x55
-    } ProtoHeader;
-
-    ID _id;
-    uint8_t _mode;
-
-    uint8_t mode(Type type, Version ver, bool response) {
-        return (uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7));
-    }
-
-    void checkUpdate(uint8_t b, uint8_t &c1,  uint8_t &c2) {
-        c1 += b;
-        c2 += c1;
-    }
-
-    void checkReset(uint8_t &c1,  uint8_t &c2) {
-        c1 = 0;
-        c2 = 0;
-    }
-};
-
-
-
 class ProtoBinOut : public ProtoBin
 {
 public:
-    explicit ProtoBinOut();
+    explicit ProtoBinOut() {  _isOut = true;  }
 
     void create(Type type, Version ver, ID id, uint8_t route) {
-        resetState();
-        _id = id;
-        _mode = mode(type, ver, true);
+        _frame[0] = 0xbb;
+        _frame[1] = 0x55;
+        setRoute(route);
+        setMode(type, ver, true);
+        setId(id);
 
-        write<U1>(SYNC1);
-        write<U1>(SYNC2);
-        write<U1>(route);
-        write<U1>(_mode);
-        write<U1>(_id);
-        uint8_t temp_len = 0;
-        write<U1>(temp_len);
+        _frameLen = 6;
+        _frameMaxLen = 254;
     }
 
-    uint8_t writeAvail() {
-        return (uint8_t)(254) - _writeOffset;
+    int16_t frameSpaceAvail() {
+        return _frameMaxLen - _frameLen;
     }
 
     template<typename T>
     void write(T data) {
-        if(writeAvail() > sizeof (T)) {
+        if(frameSpaceAvail() > (int16_t)sizeof (T)) {
             uint8_t* ptr_data = (uint8_t*)(&data);
             for(uint8_t i = 0; i < sizeof (T); i++) {
-                _sendData[_writeOffset] = ptr_data[i];
-                _writeOffset++;
+                _frame[_frameLen] = ptr_data[i];
+                _frameLen++;
             }
         }
     }
 
     void end() {
-        uint8_t _sendCheck1, _sendCheck2;
+        setLen(_frameLen - 6);
 
-        uint8_t field_len = _writeOffset - 6;
-        _sendData[5] = field_len; // hack
-
-        checkReset(_sendCheck1, _sendCheck2);
-        for(uint16_t i = 2; i < _writeOffset; i++) {
-            checkUpdate(_sendData[i], _sendCheck1, _sendCheck2);
+        uint8_t check1 = 0, check2 = 0;
+        for(uint16_t i = 2; i < _frameLen; i++) {
+            check1 += _frame[i];
+            check2 += check1;
         }
 
-        write<U1>(_sendCheck1);
-        write<U1>(_sendCheck2);
-    }
+        _frame[_frameLen] = check1;
+        _frame[_frameLen + 1] = check2;
 
-    uint8_t* data() {
-        return _sendData;
+        _frameLen += 2;
     }
-
-    uint8_t dataSize() {
-        return _writeOffset;
-    }
-
 protected:
-    uint8_t _writeOffset;
-    uint8_t _sendData[256];
-
-    void resetState() {
-        _writeOffset = 0;
-    }
 };
 
 }

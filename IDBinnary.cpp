@@ -1,6 +1,9 @@
 #include "IDBinnary.h"
 #include "math.h"
 
+#include <core.h>
+extern Core core;
+
 IDBin::IDBin(ProtoBinIn *proto, QObject *parent) : QObject(parent) {
     setProto(proto);
 }
@@ -58,8 +61,9 @@ void IDBin::appendKey(ProtoBinOut &proto_out) {
 }
 
 void IDBin::sendDataProcessing(ProtoBinOut &proto_out) {
-    QByteArray data((char*)proto_out.data(), proto_out.dataSize());
+    QByteArray data((char*)proto_out.frame(), proto_out.frameLen());
     dataSend(data);
+    core.consoleProto(proto_out);
 }
 
 
@@ -106,8 +110,6 @@ Resp IDBinChart::parsePayload(ProtoBinIn &proto) {
             m_chartSizeIncr = 0;
         }
 
-//        qInfo("Chart: incr size %u, seq_off %u", m_chartSizeIncr, m_seqOffset);
-
         if(m_chartSizeIncr == m_seqOffset) {
             uint16_t part_len = proto.readAvailable();
 
@@ -124,8 +126,6 @@ Resp IDBinChart::parsePayload(ProtoBinIn &proto) {
 
     return respOk;
 }
-
-
 
 
 Resp IDBinAttitude::parsePayload(ProtoBinIn &proto) {
@@ -189,7 +189,6 @@ Resp IDBinNav::parsePayload(ProtoBinIn &proto) {
     } else {
         return respErrorVersion;
     }
-
 
     return respOk;
 }
@@ -371,8 +370,6 @@ void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
     id_out.end();
     sendDataProcessing(id_out);
 }
-
-
 
 Resp IDBinUART::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {

@@ -25,6 +25,7 @@ public slots:
     void setStopLevel(int level);
     void setTimelinePosition(double position);
     void setChartVis(bool visible);
+    void setOscVis(bool visible);
     void setDistVis(bool visible);
     void updateImage(bool update_value = false);
     void renderValue();
@@ -43,6 +44,7 @@ protected:
     int m_stopLevel = 100;
     int m_offsetLine = 0;
     bool m_chartVis = true;
+    bool m_oscVis = false;
     bool m_distSonarVis = true;
     bool m_distCalcVis = true;
 
@@ -64,6 +66,24 @@ protected:
 
             int raw_size = m_chartData.size();
             int16_t* src = m_chartData.data();
+
+//            int16_t w = 32;
+//            int16_t step = 4;
+//            for(int i = 0; i < raw_size - w; i ++) {
+//                for(int wi = step; wi < w; wi += step) {
+//                    src[i] += (src[i + wi]);
+//                    src[i] -= (src[i + wi - 2]);
+//                }
+
+//                 src[i] /= w/(step/2);
+//                 src[i] += 127;
+//            }
+
+
+
+
+
+
 //            int16_t* procData = m_processingData.data();
 //            if(!processing) {
 //                processing = true;

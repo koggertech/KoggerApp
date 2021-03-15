@@ -62,6 +62,7 @@ public:
     bool isUpdatingFw() { return m_bootloader; }
     int upgradeFWStatus() {return m_upgrade_status; }
 
+    void sendFactoryFW(QByteArray update_data);
 
     int transFreq();
     void setTransFreq(int freq);
@@ -86,6 +87,7 @@ public:
 
     QString devName() { return m_devName; }
     uint32_t devSerialNumber();
+    QString devPN();
 
 
 

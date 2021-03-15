@@ -23,10 +23,16 @@ public:
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
-    bool openSerial(const QString &name, int32_t baudrate);
+    bool openSerial(bool parity = false);
+    bool openSerial(const QString &name, int32_t baudrate, bool parity = false);
     bool openFile(const QString &name);
 
     bool isOpen();
+    bool isParity();
+    void setParity(bool parity);
+    void setDTR(bool val);
+    void setRTS(bool val);
+
     bool close();
     void sendData(const QByteArray &data);
 

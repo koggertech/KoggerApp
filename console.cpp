@@ -12,6 +12,6 @@ ConsoleListModel *Console::listModel() const {
 }
 
 void Console::put(QtMsgType type, const QString &msg) {
-    const QString time = QTime::currentTime().toString(QStringLiteral("[hh:mm:ss:zzz]"));
+    const QString time = QTime::currentTime().toString(QStringLiteral("hh:mm:ss:zzz"));
     m_list->appendEvent(time, type, msg);
 }

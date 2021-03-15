@@ -9,6 +9,11 @@
 #include <QQmlApplicationEngine>
 #include <waterfall.h>
 
+
+#ifdef FLASHER
+#include "flasher.h"
+#endif
+
 class Core : public QObject
 {
     Q_OBJECT
@@ -17,6 +22,7 @@ public:
     explicit Core();
 
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
+
     ConsoleListModel* consoleList() {
         return m_console->listModel();
     }
@@ -29,6 +35,12 @@ public:
         console()->put(QtMsgType::QtInfoMsg, msg);
     }
 
+    void consoleWarning(QString msg) {
+        console()->put(QtMsgType::QtWarningMsg, msg);
+    }
+
+    void consoleProto(ProtoBin &parser);
+
     void setEngine(QQmlApplicationEngine *engine) {
         m_engine = engine;
     }
@@ -36,7 +48,7 @@ public:
 public slots:
     QList<QSerialPortInfo> availableSerial();
     QStringList availableSerialName();
-    bool openConnectionAsSerial(const QString &name, int baudrate);
+    bool openConnectionAsSerial(const QString &name, int baudrate, bool mode);
     bool openConnectionAsFile(const QString &name);
     bool isOpenConnection();
     bool closeConnection();
@@ -44,6 +56,10 @@ public slots:
     long deviceSerialNumber();
 
     bool upgradeFW(const QString &name);
+
+#ifdef FLASHER
+    bool factoryFlash(const QString &name, int sn, QString pn);
+#endif
 
     void setPlotStartLevel(int level) {
         m_plot->setStartLevel(level);
@@ -59,6 +75,10 @@ public slots:
 
     void setChartVis(bool visible) {
         m_plot->setChartVis(visible);
+    }
+
+    void setOscVis(bool visible) {
+        m_plot->setOscVis(visible);
     }
 
     void setDistVis(bool visible) {
@@ -79,8 +99,20 @@ public:
 
     QQmlApplicationEngine *m_engine = nullptr;
 
+#ifdef FLASHER
+    Flasher flasher;
+#endif
+
 private slots:
     void closing();
+
+#ifdef FLASHER
+    void flasherConnectionChanged(Flasher::BootState connection_status);
+#endif
+
+protected:
+    QByteArray fw_data;
+
 };
 
 #endif // CORE_H

@@ -1,5 +1,7 @@
 #include "SonarDriver.h"
 #include <time.h>
+#include <core.h>
+extern Core core;
 
 SonarDriver::SonarDriver(QObject *parent) :
     QObject(parent),
@@ -104,6 +106,10 @@ uint32_t SonarDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }
 
+QString SonarDriver::devPN() {
+
+}
+
 void SonarDriver::putData(const QByteArray &data) {
     if(m_state.connect) {
         uint8_t* ptr_data = (uint8_t*)(data.data());
@@ -134,6 +140,10 @@ void SonarDriver::nmeaComplete(ProtoNMEA &proto) {
         double lon = proto.readLongitude();
         emit positionComplete(0xFFFFFFFF, time_ms, lat, lon);
     }
+
+
+    QString str_data = QByteArray((char*)proto.frame(),proto.frameLen() - 2);
+    core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
 }
 
 void SonarDriver::protoComplete(ProtoBinIn &proto) {
@@ -142,6 +152,9 @@ void SonarDriver::protoComplete(ProtoBinIn &proto) {
     if(hashIDParsing.contains(proto.id())) {
         hashIDParsing[proto.id()]->parse();
     }
+
+    core.consoleProto(proto);
+
 //    else {
 //        qInfo("ID is not find: %u", proto.id());
 //    }
@@ -180,6 +193,10 @@ void SonarDriver::sendUpdateFW(QByteArray update_data) {
     reboot();
     QTimer::singleShot(250, idUpdate, SLOT(putUpdate()));
     QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
+}
+
+void SonarDriver::sendFactoryFW(QByteArray update_data) {
+
 }
 
 int SonarDriver::transFreq() {
@@ -523,6 +540,9 @@ void SonarDriver::receivedVersion(Type type, Version ver, Resp resp) {
             break;
         case IDBinVersion::BoardBase:
             m_devName = "2D-BASE";
+            break;
+        case IDBinVersion::BoardNBase:
+            m_devName = "2D-NBASE";
             break;
         default:
             m_devName = "None";

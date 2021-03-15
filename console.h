@@ -4,6 +4,7 @@
 #include <QObject>
 #include <consolelistmodel.h>
 #include <QLoggingCategory>
+#include <QQuickTextDocument>
 
 class Console : public QObject
 {
@@ -13,6 +14,9 @@ public:
     ConsoleListModel* listModel() const;
 
     void put(QtMsgType type, const QString &msg);
+
+public slots:
+
 
 private:
     ConsoleListModel *m_list;

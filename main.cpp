@@ -10,14 +10,10 @@
 Core core;
 
 int main(int argc, char *argv[]) {
-
-    core.consoleInfo("Run...");
-
     QCoreApplication::setOrganizationName("KOGGER");
     QCoreApplication::setOrganizationDomain("kogger.tech");
-    QCoreApplication::setApplicationName("Sonar Viewer");
+    QCoreApplication::setApplicationName("KoggerApp");
     QCoreApplication::setApplicationVersion("1-1-1");
-
 
 #if defined(Q_OS_WIN)
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -25,27 +21,17 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
-//    WaterFall waterfall;
-//    engine.rootContext()->setContextProperty("waterfall", &waterfall);
-
     qmlRegisterType<WaterFall>("WaterFall", 1, 0, "WaterFall");
 //    qmlRegisterType<Console>("Console", 1, 0, "Console");
-//    qmlRegisterType<QSerialPortInfo>("SerialList", 1, 0, "SerialList");
-
 
     engine.rootContext()->setContextProperty("core", &core);
+#ifdef FLASHER
+    engine.rootContext()->setContextProperty("flasher", &core.flasher);
+#endif
     engine.rootContext()->setContextProperty("sonarDriver", core.dev_driver);
+    engine.rootContext()->setContextProperty("logViewer", core.console());
 
-
-
-//    PlotCash plot_cash;
-//    plot_cash.setLineCount(1000);
-//    QVector<uint8_t> data(1000);
-//    plot_cash.addData(&data, 1000, 10, 200);
-//    plot_cash.addData(&data, 1000, 10, 200);
-//    plot_cash.addData(&data, 1000, 10, 200);
-//    plot_cash.getImage({100, 100});
-
+    core.consoleInfo("Run...");
     core.setEngine(&engine);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
@@ -60,20 +46,6 @@ int main(int argc, char *argv[]) {
                      &core, &Core::UILoad, Qt::QueuedConnection);
 
     engine.load(url);
-
-
-
-//    QQmlComponent component(&engine, url);
-//    QObject *object = component.create();
-
-//    WaterFall* childObject = object->findChild<WaterFall*>();
-//    qInfo("WF, %u", childObject);
-
-
-
-//    QVector<uint8_t> data(1000);
-//    data.fill(100);
-//    childObject->Plot.addData(&data, 1000, 10, 200);
 
     return app.exec();
 }

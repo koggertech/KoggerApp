@@ -20,26 +20,45 @@ QList<QSerialPortInfo> Connection::availableSerial() {
     return  QSerialPortInfo::availablePorts();
 }
 
-bool Connection::openSerial(const QString &name, int32_t baudrate){
+bool Connection::openSerial(bool parity) {
+    if(parity) {
+        m_serial->setParity(QSerialPort::EvenParity);
+    } else {
+        m_serial->setParity(QSerialPort::NoParity);
+    }
+
+    m_serial->open(QIODevice::ReadWrite);
+    m_type = ConnectionSerial;
+
+    bool is_open = isOpen();
+
+    if(is_open) {
+        emit openedEvent(true);
+        core.consoleInfo("Connection: serial is open");
+    } else {
+        core.consoleInfo("Connection: serial isn't open");
+    }
+
+    return is_open;
+}
+
+bool Connection::openSerial(const QString &name, int32_t baudrate, bool parity){
     close();
 
     m_serial->setPortName(name);
     m_serial->setBaudRate(baudrate);
 
-    if (m_serial->open(QIODevice::ReadWrite) == false) {
-        qInfo("Serial connection failed to open");
+    if(openSerial(parity) == false) {
         return false;
     }
 
-    m_type = ConnectionSerial;
-//    qInfo("Serial connection open");
-    core.consoleInfo(QStringLiteral("Connection to ") + name + ":" + QString::number(baudrate));
-    emit openedEvent(true);
+
     return true;
 }
 
 bool Connection::openFile(const QString &name) {
     close();
+
 
     QUrl url(name);
     m_file->setFileName(url.toLocalFile());
@@ -48,12 +67,10 @@ bool Connection::openFile(const QString &name) {
     is_open = m_file->open(QIODevice::ReadOnly);
 
     if(is_open == false) {
-        qInfo("File connection failed to open");
         return false;
     }
 
     m_type = ConnectionFile;
-    qInfo("File connection open");
 
     emit openedEvent(false);
 
@@ -80,11 +97,45 @@ bool Connection::isOpen() {
     return is_open;
 }
 
+bool Connection::isParity() {
+    if(m_type == ConnectionSerial) {
+        return m_serial->parity() != QSerialPort::NoParity;
+    }
+
+    return false;
+}
+
+void Connection::setParity(bool parity) {
+    if(ConnectionSerial == m_type)  {
+        if(parity) {
+            m_serial->setParity(QSerialPort::EvenParity);
+        } else {
+            m_serial->setParity(QSerialPort::NoParity);
+        }
+    }
+}
+
+void Connection::setDTR(bool val) {
+    if(ConnectionSerial == m_type)  {
+        m_serial->setDataTerminalReady(val);
+
+    }
+}
+
+void Connection::setRTS(bool val) {
+    if(ConnectionSerial == m_type)  {
+        m_serial->setRequestToSend(val);
+    }
+}
+
 bool Connection::close() {
     switch (m_type) {
     case ConnectionSerial:
         if(m_serial->isOpen()) {
+            setRTS(false);
             m_serial->close();
+            m_serial->close();
+            core.consoleInfo("Connection: serial is close");
         }
         break;
 
@@ -103,6 +154,7 @@ bool Connection::close() {
 void Connection::sendData(const QByteArray &data){
     switch (m_type) {
     case ConnectionSerial:
+//        core.consoleInfo("send data");
         m_serial->write(data);
         break;
     case ConnectionFile:

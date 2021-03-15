@@ -7,7 +7,7 @@ import QtQuick.Controls 2.12
 
 import Qt.labs.settings 1.1
 import QtQuick.Dialogs 1.2
-
+import QtQuick.Controls 2.15
 
 import WaterFall 1.0
 
@@ -28,72 +28,81 @@ Window  {
         property alias height: mainview.height
     }
 
+    SplitView {
+        anchors.fill: parent
+        orientation: Qt.Vertical
 
-    WaterFall {
-        id: waterView
-        visible: true
-        anchors.top: parent.top
-        width: mainview.width
-        height: mainview.height
+        handle: Rectangle {
+            implicitWidth: 5
+            implicitHeight: 5
+            color: SplitHandle.pressed ? "#A0A0A0" : "#707070"
 
-    }
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: "#A0A0A0"
+            }
 
-//    TextArea {
-//        width: mainview.width
-//        anchors.bottom: parent.bottom
-//        height: 500
-//        text: "text" // core.consoleTextOut
-//        textFormat: TextEdit.RichText
-//        font.family: "Helvetica"
-//        font.pointSize: 10
-//        color: "blue"
-//        focus: false
-//        readOnly: true
-//        selectByMouse: true
+            Rectangle {
+                y: parent.height
+                width: parent.width
+                height: 1
+                color: "#A0A0A0"
+            }
+        }
 
-//        onPressAndHold: {
-//            core.consoleTextUpdate = true
-//        }
-
-//        onPressed: {
-//            core.consoleTextUpdate = false
-//        }
-
-//        onReleased: {
-//            core.consoleTextUpdate = true
-//        }
-
-//    }
+        ColumnLayout {
+            SplitView.fillHeight: true
+            SplitView.fillWidth: true
+            spacing: 0
 
 
-//    Console {
-//        visible: true
-//    }
+            WaterFall {
+                id: waterView
+                visible: true
+                anchors.top: parent.top
+                width: mainview.width
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+            }
 
-    MenuBar {
-        x: 0
-        y: 5
-        heightMenuViewer: mainview.height
-    }
+            Rectangle {
+                Layout.fillWidth: true
+                height: 2
+                color: "#707070"
+            }
 
-    CSlider {
-        id: historyScroll
-        anchors.bottom: parent.bottom
-        width: mainview.width - 150
-        height: 30
-        horizontalPadding: 20
-        lineStyle: 0
-        opacity: 0.7
+            CSlider {
+                id: historyScroll
+                width: mainview.width
+                height: 30
+                implicitHeight: 30
+                horizontalPadding: 15
+                lineStyle: 3
+                opacity: 1
 
-        stepSize: 0.0001
-        from: 1
-        to: 0
+                Layout.fillWidth: true
 
-        onValueChanged: {
-            core.setTimelinePosition(value);
+                stepSize: 0.0001
+                from: 1
+                to: 0
+
+                onValueChanged: core.setTimelinePosition(value);
+            }
+        }
+
+        Console {
+            id: console
+            visible: menuBar.isConsoleVisible
+            SplitView.minimumHeight: 100
         }
     }
 
-
+    MenuBar {
+        id: menuBar
+        x: 0
+        y: 5
+        heightMenuViewer: waterView.height - y
+    }
 
 }

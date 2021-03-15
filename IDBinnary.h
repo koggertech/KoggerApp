@@ -463,7 +463,8 @@ public:
         BoardNone,
         BoardEnhanced = 1,
         BoardChirp = 2,
-        BoardBase = 3
+        BoardBase = 3,
+        BoardNBase = 4
     } BoardVersion;
 
     ID id() override { return ID_VERSION; }
@@ -483,6 +484,7 @@ protected:
     BoardVersion m_boardVersion = BoardNone;
     uint8_t m_boardVersionMinor = 0;
     uint32_t m_serialNumber = 0;
+    QString m_pn;
 };
 
 class IDBinMark : public IDBin

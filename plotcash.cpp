@@ -131,6 +131,12 @@ void PlotCash::setChartVis(bool visible) {
     updateImage(true);
 }
 
+void PlotCash::setOscVis(bool visible) {
+    m_oscVis = visible;
+    resetValue();
+    updateImage(true);
+}
+
 void PlotCash::setDistVis(bool visible) {
     m_distSonarVis = visible;
     m_distCalcVis = visible;
@@ -285,28 +291,6 @@ void PlotCash::updateImage(int width, int height) {
             }
         }
 
-        float scale_scope_w = (float)height / (float)(waterfall_width - 100);
-
-        for(int col = 0;  col < waterfall_width - 104; col++) {
-
-            int raw_index = ((float)col*scale_scope_w);
-
-
-            float dist = -(raw_col[raw_index] - 127)*3;
-            int index_dist = (int)((float)dist + (float)height/2);
-
-            if(index_dist < 1) {
-                index_dist = 1;
-            } else if(index_dist > height - 2) {
-                index_dist = height - 2;
-            }
-
-            m_dataImage[col + 100 - 1 + index_dist*width] = m_colorDist;
-            m_dataImage[col + 100 - 1 + (index_dist + 1)*width] = m_colorDist;
-            m_dataImage[col + 100 + index_dist*width] = m_colorDist;
-            m_dataImage[col + 100 + (index_dist + 1)*width] = m_colorDist;
-        }
-
         for(int col = 0;  col < waterfall_width; col++) {
             int val_col = (m_valueCashStart + col);
             if(val_col >= waterfall_width) {
@@ -328,6 +312,37 @@ void PlotCash::updateImage(int width, int height) {
         }
     } else {
         memset(m_dataImage, 0, width*height*2);
+    }
+
+    if(m_oscVis) {
+        int16_t* raw_col = m_prevValueCash.chartData.data();
+
+        float scale_scope_w = (float)height / (float)(waterfall_width - 100);
+        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+        QPainter p(&tmp_img);
+        QPen pen;
+        pen.setWidth(2);
+        pen.setColor(QColor::fromRgb(70, 255, 0));
+        p.setPen(pen);
+
+        float scale_y = (float)height*(1.0f/256.0f);
+        float scale_x = (float)(waterfall_width - 104)/height;
+
+        int last_offset_y = (float)raw_col[0]*scale_y;
+        int last_col = 100;
+
+        for (int row = 1; row < height; row++) {
+            int offset_y = (float)raw_col[row]*scale_y;
+            int offset_x = (float)row*scale_x + 100;
+
+
+            if(last_offset_y != offset_y) {
+                p.drawLine(last_col, height - last_offset_y, offset_x, height - offset_y);
+                last_col = offset_x;
+            }
+
+            last_offset_y = offset_y;
+        }
     }
 
     if(m_distSonarVis) {
