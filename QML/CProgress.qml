@@ -8,7 +8,7 @@ ProgressBar {
     background: Rectangle {
         color: "transparent"
         radius: 2
-        border.color: control.visualPosition > 0 ? "#808080" : "transparent"
+        border.color: control.value != 0 ? control.value == 101 ? "#17a81a" : control.value == -1 ? "#a8171a" : "#808080" : "transparent"
         border.width: 2
     }
 
@@ -18,8 +18,9 @@ ProgressBar {
             x: parent.width/100
             y: parent.height/4
             height: parent.height/2
-            radius: 2
-            color: "#17a81a"
+            visible: control.value != 0
+            radius: 1
+            color: control.value > 0 ? "#17a81a" : "#a8171a"
         }
     }
 }

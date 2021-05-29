@@ -38,5 +38,12 @@
         <file>ChartLevel.qml</file>
         <file>SoundSpdBox.qml</file>
         <file>DevAddrBox.qml</file>
+        <file>FactoryBox.qml</file>
+        <file>DevSettingsBox.qml</file>
+        <file>DiplaySettingsViewer.qml</file>
+        <file>WaterfallSettings.qml</file>
+        <file>DSPSettings.qml</file>
+        <file>ExportSettings.qml</file>
+        <file>ExportDist.qml</file>
     </qresource>
 </RCC>

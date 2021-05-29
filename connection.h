@@ -8,6 +8,7 @@
 #include <QDataStream>
 #include <console.h>
 
+
 class Connection : public QObject
 {
     Q_OBJECT
@@ -23,9 +24,12 @@ public:
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
-    bool openSerial(bool parity = false);
+    bool openSerial(int32_t baudrate, bool parity = false);
     bool openSerial(const QString &name, int32_t baudrate, bool parity = false);
     bool openFile(const QString &name);
+
+    bool setBaudrate(int32_t baudrate);
+    int baudrate();
 
     bool isOpen();
     bool isParity();
@@ -40,12 +44,15 @@ signals:
     void closedEvent(bool duplex);
     void openedEvent(bool duplex);
     void receiveData(const QByteArray &data);
+    void loggingStream(const QByteArray &data);
 
 private:
     QSerialPort *m_serial = nullptr;
     QFile *m_file = nullptr;
+//    QFile *m_logFile = nullptr;
     ConnectionType m_type = ConnectionNone;
 
+    bool m_isLogWrite = false;
 
 private slots:
     void closing();

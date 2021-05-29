@@ -2,9 +2,10 @@ import QtQuick 2.12
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.12
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isAddressSupport
 
     MenuBlock {
     }
@@ -14,30 +15,34 @@ Item {
         width: control.width
 
         TitleMenuBox {
-            titleText: "Bus address"
+            id:title
+            titleText: "Bus settings"
+            closeble: false
         }
 
         ColumnLayout {
+            visible: title.isOpen
+
             RowLayout {
                 Layout.fillWidth: true
                 Layout.margins: 10
                 spacing: 10
 
                 Text {
-                    text: "Target device's address:"
+                    text: "Bus address:"
                     color: "#808080"
                     font.pixelSize: 16
                 }
 
                 SpinBoxCustom {
-                    Layout.rightMargin: 30
+                    Layout.rightMargin: 20
                     width: 120
                     from: 0
-                    to: 14
+                    to: 255
                     stepSize: 1
-                    value: sonarDriver.busAddress
+                    value: dev.busAddress
                     onValueChanged: {
-                        sonarDriver.busAddress = value
+                        dev.busAddress = value
                     }
                 }
             }
@@ -47,35 +52,50 @@ Item {
                 Layout.margins: 10
                 spacing: 10
 
-                Text {
-                    text: "Set device's address:"
-                    color: "#808080"
-                    font.pixelSize: 16
-                }
-
                 SpinBoxCustom {
                     id: spinDev
-                    width: 120
+                    width: 100
                     from: 0
-                    to: 14
+                    to: 255
                     stepSize: 1
-                    value: sonarDriver.devAddress
+                    value: dev.devAddress
                     onValueChanged: {
                     }
                 }
 
                 CButton {
-                    Layout.preferredWidth: 60
-                    text: "Set"
+                    text: "Set Device's address"
 
                     onClicked: {
-                        sonarDriver.devAddress = spinDev.value
+                        dev.devAddress = spinDev.value
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: 10
+                spacing: 10
+
+                CCombo  {
+                    id: baudrateCombo
+                    Layout.fillWidth: true
+                    model: [9600, 18200, 38400, 57600, 115200, 230400, 460800, 921600]
+                    currentIndex: 4
+                }
+
+                CButton {
+                    text: "Set baudrate"
+
+                    onClicked: {
+                        dev.baudrate = Number(baudrateCombo.currentText)
                     }
                 }
             }
 
 
             RowLayout {
+                visible: false
                 Layout.fillWidth: true
                 Layout.margins: 10
                 spacing: 10
@@ -88,11 +108,11 @@ Item {
 
                 SpinBoxCustom {
                     id: spinDevDef
-                    width: 120
+                    width: 100
                     from: 0
                     to: 14
                     stepSize: 1
-                    value: sonarDriver.devDefAddress
+                    value: dev.devDefAddress
                     onValueChanged: {
                     }
                 }
@@ -102,7 +122,7 @@ Item {
                     text: "Set"
 
                     onClicked: {
-                        sonarDriver.devDefAddress = spinDevDef.value
+                        dev.devDefAddress = spinDevDef.value
                     }
                 }
             }

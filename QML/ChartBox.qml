@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isChartSupport
 
     MenuBlock {
     }
@@ -27,13 +28,13 @@ Item {
                 CCheck {
                     id:switch_ch1
                     text: "On"
-                    checked: sonarDriver.datasetChart > 0
+                    checked: dev.datasetChart > 0
                     onCheckedChanged: {
-                        if(checked == true && sonarDriver.datasetChart == 0) {
-                            sonarDriver.datasetChart = switchDatasetChart.lastChannel
-                        } else if(checked == false && sonarDriver.datasetChart > 0) {
-                            switchDatasetChart.lastChannel = sonarDriver.datasetChart
-                            sonarDriver.datasetChart = 0
+                        if(checked == true && dev.datasetChart === 0) {
+                            dev.datasetChart = switchDatasetChart.lastChannel
+                        } else if(checked == false && dev.datasetChart > 0) {
+                            switchDatasetChart.lastChannel = dev.datasetChart
+                            dev.datasetChart = 0
                         }
                     }
                 }
@@ -45,7 +46,7 @@ Item {
                     Layout.leftMargin: 10
 
                     onClicked: {
-                        sonarDriver.requestChart();
+                        dev.requestChart();
                     }
                 }
 
@@ -56,7 +57,7 @@ Item {
         GridLayout {
             Layout.margins: 15
             Layout.fillWidth: true
-            Layout.preferredHeight: 250
+            Layout.preferredHeight: 150
             rowSpacing: 0
 
             Canvas {
@@ -64,7 +65,7 @@ Item {
                 x: 0
                 y: 0
                 Layout.fillWidth: true
-                height: 250
+                height: 150
                 contextType: "2d"
                 opacity: 1
                 property real offsetRight: 40
@@ -78,22 +79,6 @@ Item {
                 property real heightSliderOffset: 130
                 property real posSliderOffset: heightChart + heightSliderOffset - 10
 
-//                CSlider {
-//                    id: sliderResol
-//                    x: borderCanvas.offsetRight + 35 - 2
-//                    y: borderCanvas.posSliderResol - height/2
-//                    width: 440
-//                    horizontalPadding: 30
-//                    lineStyle: 1
-
-//                    stepSize: 1.0
-//                    value: sonarDriver.chartResolutionSlider
-//                    to: sonarDriver.chartResolutionSliderCount
-//                    onValueChanged: {
-//                        sonarDriver.chartResolutionSlider = value
-//                    }
-//                }
-
                 SpinBoxCustom {
                     x: borderCanvas.offsetRight + 35 - 2
                     y: borderCanvas.posSliderResol - height/2
@@ -101,9 +86,9 @@ Item {
                     from: 10
                     to: 100
                     stepSize: 10
-                    value: sonarDriver.chartResolution
+                    value: dev.chartResolution
                     onValueChanged: {
-                        sonarDriver.chartResolution = value
+                        dev.chartResolution = value
                     }
                 }
 
@@ -116,31 +101,16 @@ Item {
                     font.pixelSize: 14
                 }
 
-//                CSlider {
-//                    x: borderCanvas.offsetRight + 25 - 2
-//                    y: borderCanvas.posSliderSamples - height/2
-//                    width: 440
-//                    horizontalPadding: 30
-//                    lineStyle: 0
-
-//                    stepSize: 1.0
-//                    value: sonarDriver.chartSamplSlider
-//                    to: sonarDriver.chartSamplSliderCount
-//                    onValueChanged: {
-//                        sonarDriver.chartSamplSlider = value
-//                    }
-//                }
-
                 SpinBoxCustom {
                     x: borderCanvas.width - 25 - width - 2
                     y: borderCanvas.posSliderSamples - height/2
                     width: 110
                     from: 100
-                    to: 3000
+                    to: 5000
                     stepSize: 100
-                    value: sonarDriver.chartSamples
+                    value: dev.chartSamples
                     onValueChanged: {
-                        sonarDriver.chartSamples = value
+                        dev.chartSamples = value
                     }
                 }
 
@@ -153,21 +123,6 @@ Item {
                     font.pixelSize: 14
                 }
 
-//                CSlider {
-//                    x: borderCanvas.offsetRight + 15 - 2
-//                    y: borderCanvas.posSliderOffset - height/2
-//                    width: 460
-//                    horizontalPadding: 30
-//                    lineStyle: 1
-
-//                    stepSize: 1.0
-//                    value: sonarDriver.chartOffsetSlider
-//                    to: sonarDriver.chartOffsetSliderCount
-//                    onValueChanged: {
-//                        sonarDriver.chartOffsetSlider = value
-//                    }
-//                }
-
                 SpinBoxCustom {
                     x: borderCanvas.offsetRight + 15 - 2
                     y: borderCanvas.posSliderOffset - height/2
@@ -175,9 +130,9 @@ Item {
                     from: 0
                     to: 5000
                     stepSize: 100
-                    value: sonarDriver.chartOffset
+                    value: dev.chartOffset
                     onValueChanged: {
-                        sonarDriver.chartOffset = value
+                        dev.chartOffset = value
                     }
                 }
 
@@ -271,10 +226,6 @@ Item {
                     context.fill()
                 }
             }
-
-
-
-
         }
     }
 }

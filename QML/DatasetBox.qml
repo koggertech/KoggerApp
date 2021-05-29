@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isDatasetSupport
 
     MenuBlock {
     }
@@ -39,21 +40,6 @@ Item {
                         font.pixelSize: 16
                     }
 
-//                    CSlider {
-//                        Layout.fillWidth: true
-//                        x: 0
-//                        y: 0
-//                        horizontalPadding: 30
-//                        lineStyle: 0
-
-//                        stepSize: 1.0
-//                        value: sonarDriver.ch1PeriodSlider
-//                        to: sonarDriver.ch1PeriodSliderCount
-//                        onValueChanged: {
-//                            sonarDriver.ch1PeriodSlider = value
-//                        }
-//                    }
-
                     SpinBoxCustom {
                         x: 0
                         y: 0
@@ -61,9 +47,9 @@ Item {
                         from: 0
                         to: 2000
                         stepSize: 50
-                        value: sonarDriver.ch1Period
+                        value: dev.ch1Period
                         onValueChanged: {
-                            sonarDriver.ch1Period = value
+                            dev.ch1Period = value
                         }
                     }
                 }
@@ -71,8 +57,8 @@ Item {
                 DatasetCheckBox {
                     Layout.bottomMargin: 20
                     channelNumber: 1
+                    dev: control.dev
                 }
-
 
                 RowLayout {
 
@@ -85,22 +71,6 @@ Item {
                         font.pixelSize: 16
                     }
 
-//                    CSlider {
-//                        Layout.fillWidth: true
-//                        x: 0
-//                        y: 0
-//                        width: 440
-//                        horizontalPadding: 30
-//                        lineStyle: 0
-
-//                        stepSize: 1.0
-//                        value: sonarDriver.ch2PeriodSlider
-//                        to: sonarDriver.ch2PeriodSliderCount
-//                        onValueChanged: {
-//                            sonarDriver.ch2PeriodSlider = value
-//                        }
-//                    }
-
                     SpinBoxCustom {
                         x: 0
                         y: 0
@@ -108,16 +78,16 @@ Item {
                         from: 0
                         to: 2000
                         stepSize: 50
-                        value: sonarDriver.ch2Period
+                        value: dev.ch2Period
                         onValueChanged: {
-                            sonarDriver.ch2Period = value
+                            dev.ch2Period = value
                         }
                     }
-
                 }
 
                 DatasetCheckBox {
                     channelNumber: 2
+                    dev: control.dev
                 }
             }
         }

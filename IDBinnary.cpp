@@ -4,43 +4,31 @@
 #include <core.h>
 extern Core core;
 
-IDBin::IDBin(ProtoBinIn *proto, QObject *parent) : QObject(parent) {
-    setProto(proto);
+IDBin::IDBin(QObject *parent) : QObject(parent) {
+//    setProto(proto);
 }
 
 IDBin::~IDBin() {
 
 }
 
-void IDBin::setProto(ProtoBinIn *proto) {
-    m_proto = proto;
-}
-
-Resp  IDBin::parse() {
+Resp  IDBin::parse(ProtoBinIn &proto) {
     Resp resp_parse = respNone;
 
-    if(m_proto->type() == CONTENT || m_proto->type() == SETTING || m_proto->type() == GETTING) {
-        if(m_proto->resp()) {
-           m_lastResp = (Resp)m_proto->read<U1>();
+    if(proto.type() == CONTENT || proto.type() == SETTING || proto.type() == GETTING) {
+        if(proto.resp()) {
+           m_lastResp = (Resp)proto.read<U1>();
            resp_parse = respOk;
         } else {
             m_lastResp = respNone;
-            resp_parse = parsePayload(*m_proto);
+            resp_parse = parsePayload(proto);
         }
 
         if(resp_parse == respOk) {
-            m_lastType = m_proto->type();
-            m_lastVersion = m_proto->ver();
-//            if(m_proto->id() == ID_DIST_SETUP && m_lastResp != respOk) {
-//                qInfo("Packet OK: id %u, type %u, ver %u, len %u, resp %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), m_lastResp);
-//            }
-
+            m_lastType = proto.type();
+            m_lastVersion = proto.ver();
             emit updateContent(m_lastType, m_lastVersion, m_lastResp);
         } else {
-//            if(m_proto->id() != 3) {
-//            qInfo("Packet error: id %u, type %u, ver %u, len %u, resp. parse %u", m_proto->id(), m_proto->type(), m_proto->ver(), m_proto->len(), resp_parse);
-//            }
-
         }
     }
 
@@ -53,41 +41,31 @@ void IDBin::simpleRequest(Version ver) {
     requestSpecific(req_out);
     req_out.end();
 
-    sendDataProcessing(req_out);
+    emit binFrameOut(req_out);
 }
 
 void IDBin::appendKey(ProtoBinOut &proto_out) {
     proto_out.write<U4>(m_key);
 }
 
-void IDBin::sendDataProcessing(ProtoBinOut &proto_out) {
-    QByteArray data((char*)proto_out.frame(), proto_out.frameLen());
-    dataSend(data);
-    core.consoleProto(proto_out);
-}
+//void IDBin::sendDataProcessing(ProtoBinOut &proto_out) {
+//    QByteArray data((char*)proto_out.frame(), proto_out.frameLen());
+//    dataSend(data);
+//    if(isConsoleOut) { core.consoleProto(proto_out); }
+//}
 
 
 Resp IDBinTimestamp::parsePayload(ProtoBinIn &proto) {
-    if(proto.ver() == v0) {
-        m_timestamp = proto.read<U4>();
-    } else {
-        return respErrorVersion;
-    }
-
+    if(proto.ver() == v0) {  m_timestamp = proto.read<U4>();
+    } else {  return respErrorVersion;  }
     return respOk;
 }
-
 
 Resp IDBinDist::parsePayload(ProtoBinIn &proto) {
-    if(proto.ver() == v0) {
-        m_dist_mm = proto.read<U4>();
-    } else {
-        return respErrorVersion;
-    }
-
+    if(proto.ver() == v0) { m_dist_mm = proto.read<U4>();
+    } else {  return respErrorVersion; }
     return respOk;
 }
-
 
 Resp IDBinChart::parsePayload(ProtoBinIn &proto) {
     if(proto.ver() == v0) {
@@ -243,8 +221,6 @@ void IDBinDataset::setPeriod(U1 ch_id, uint32_t period) {
 
 void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
     if(ch_id < _countof(m_channel)) {
-        qInfo("ch_id %u, mask %u", ch_id, mask);
-
         m_channel[ch_id].period = period;
 
         ProtoBinOut id_out;
@@ -253,7 +229,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
         id_out.write<U4>(period);
         id_out.write<U4>(mask);
         id_out.end();
-        sendDataProcessing(id_out);
+        emit binFrameOut(id_out);
     }
 }
 
@@ -280,7 +256,7 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
     id_out.write<U4>(start_offset);
     id_out.write<U4>(max_dist);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 void IDBinDistSetup::setConfidence(int confidence) {
@@ -290,7 +266,7 @@ void IDBinDistSetup::setConfidence(int confidence) {
     id_out.create(SETTING, v2, id(), m_address);
     id_out.write<U1>(m_confidence);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 
@@ -320,7 +296,29 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
     id_out.write<U2>(resolution);
     id_out.write<U2>(offset);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
+}
+
+Resp IDBinDSPSetup::parsePayload(ProtoBinIn &proto) {
+    if(proto.ver() == v0) {
+        m_horSmoothFactor = proto.read<U1>();
+        qInfo("read smooth %u", m_horSmoothFactor);
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}
+
+void IDBinDSPSetup::setV0(U1 hor_smooth_factor) {
+    m_horSmoothFactor = hor_smooth_factor;
+
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U1>(horSmoothFactor());
+    id_out.end();
+    qInfo("write smooth %u", m_horSmoothFactor);
+    emit binFrameOut(id_out);
 }
 
 
@@ -347,7 +345,7 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
     id_out.write<U1>(pulse);
     id_out.write<U1>(boost);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 
@@ -368,7 +366,7 @@ void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
     id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U4>(snd_spd);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 Resp IDBinUART::parsePayload(ProtoBinIn &proto) {
@@ -413,11 +411,12 @@ void IDBinUART::setBaudrate(U4 baudrate) {
     appendKey(id_out);
 
     id_out.write<U1>(1);
+    qInfo("setBaudrate %u", baudrate);
     m_uart[1].baudrate = baudrate;
     id_out.write<U4>(m_uart[1].baudrate);
 
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 void IDBinUART::setDevAddress(U1 addr) {
@@ -430,7 +429,7 @@ void IDBinUART::setDevAddress(U1 addr) {
     id_out.write<U1>(addr);
 
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 void IDBinUART::setDevDefAddress(U1 addr) {
@@ -442,7 +441,7 @@ void IDBinUART::setDevDefAddress(U1 addr) {
     id_out.write<U1>(addr);
 
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 Resp IDBinVersion::parsePayload(ProtoBinIn &proto) {
@@ -478,7 +477,7 @@ void IDBinMark::setMark() {
     appendKey(id_out);
     id_out.end();
 
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 
@@ -510,7 +509,7 @@ void IDBinFlash::flashing() {
     id_out.create(SETTING, v0, id(), m_address);
     appendKey(id_out);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 
@@ -519,7 +518,7 @@ void IDBinFlash::restore() {
     id_out.create(SETTING, v1, id(), m_address);
     appendKey(id_out);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 void IDBinFlash::erase() {
@@ -527,7 +526,7 @@ void IDBinFlash::erase() {
     id_out.create(SETTING, v2, id(), m_address);
     appendKey(id_out);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 
@@ -554,7 +553,7 @@ void IDBinBoot::reboot() {
     id_out.create(SETTING, v0, id(), m_address);
     appendKey(id_out);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 void IDBinBoot::runFW() {
@@ -562,7 +561,7 @@ void IDBinBoot::runFW() {
     id_out.create(SETTING, v1, id(), m_address);
     appendKey(id_out);
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 }
 
 Resp IDBinUpdate::parsePayload(ProtoBinIn &proto) {
@@ -602,7 +601,8 @@ bool IDBinUpdate::putUpdate() {
     _nbr_packet++;
 
     id_out.end();
-    sendDataProcessing(id_out);
+    emit binFrameOut(id_out);
 
     return true;
 }
+

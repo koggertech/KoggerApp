@@ -27,6 +27,7 @@ typedef enum ID {
     ID_IMU = 0x06,
     ID_MAG = 0x07,
     ID_BARO = 0x08,
+    ID_ENCODER = 0x08,
 
     ID_DATASET = 0x10,
     ID_DIST_SETUP = 0x11,
@@ -50,6 +51,8 @@ typedef enum ID {
     ID_FLASH = 0x23,
     ID_BOOT = 0x24,
     ID_UPDATE = 0x25,
+
+    ID_EVENT = 0x30,
     ID_NAV = 0x64
 } ID;
 
@@ -166,11 +169,15 @@ public:
     }
 
     ProtoID proto() { return _proto; }
-    ProtoID protoFlag() {
-        ProtoID proto = _proto;
-        _proto = ProtoNone;
-        return proto;
+
+    bool completeAsKBP() {
+        return proto() == ProtoBin;
     }
+
+    bool completeAsNMEA() {
+        return proto() == ProtoNMEA;
+    }
+
     uint8_t* frame() { return _frame; }
     uint16_t frameLen() { return _frameLen; }
     uint32_t frameError() { return _counter.frameError;}

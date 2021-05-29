@@ -1,6 +1,7 @@
 #include "connection.h"
-#include "QMetaEnum"
 #include "QUrl"
+#include <QDir>
+#include <QDateTime>
 
 #include <core.h>
 extern Core core;
@@ -20,12 +21,14 @@ QList<QSerialPortInfo> Connection::availableSerial() {
     return  QSerialPortInfo::availablePorts();
 }
 
-bool Connection::openSerial(bool parity) {
+bool Connection::openSerial(int32_t baudrate, bool parity) {
     if(parity) {
         m_serial->setParity(QSerialPort::EvenParity);
     } else {
         m_serial->setParity(QSerialPort::NoParity);
     }
+
+    m_serial->setBaudRate(baudrate);
 
     m_serial->open(QIODevice::ReadWrite);
     m_type = ConnectionSerial;
@@ -44,21 +47,12 @@ bool Connection::openSerial(bool parity) {
 
 bool Connection::openSerial(const QString &name, int32_t baudrate, bool parity){
     close();
-
     m_serial->setPortName(name);
-    m_serial->setBaudRate(baudrate);
-
-    if(openSerial(parity) == false) {
-        return false;
-    }
-
-
-    return true;
+    return openSerial(baudrate, parity);
 }
 
 bool Connection::openFile(const QString &name) {
     close();
-
 
     QUrl url(name);
     m_file->setFileName(url.toLocalFile());
@@ -74,9 +68,22 @@ bool Connection::openFile(const QString &name) {
 
     emit openedEvent(false);
 
-    QByteArray data =  m_file->readAll();
+    QByteArray data = m_file->readAll();
+    m_file->close();
     emit receiveData(data);
+    data.clear();
+
     return true;
+}
+
+bool Connection::setBaudrate(int32_t baudrate) {
+//    m_serial->flush();
+    m_serial->waitForBytesWritten(500);
+    return m_serial->setBaudRate(baudrate);
+}
+
+int Connection::baudrate() {
+    return m_serial->baudRate();
 }
 
 bool Connection::isOpen() {
@@ -118,7 +125,6 @@ void Connection::setParity(bool parity) {
 void Connection::setDTR(bool val) {
     if(ConnectionSerial == m_type)  {
         m_serial->setDataTerminalReady(val);
-
     }
 }
 
@@ -154,8 +160,8 @@ bool Connection::close() {
 void Connection::sendData(const QByteArray &data){
     switch (m_type) {
     case ConnectionSerial:
-//        core.consoleInfo("send data");
         m_serial->write(data);
+        loggingStream(data);
         break;
     case ConnectionFile:
         break;
@@ -177,5 +183,6 @@ void Connection::handleSerialError(QSerialPort::SerialPortError error) {
 
 void Connection::readyReadSerial() {
     const QByteArray data = m_serial->readAll();
+    loggingStream(data);
     emit receiveData(data);
 }

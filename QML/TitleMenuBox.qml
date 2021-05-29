@@ -8,9 +8,19 @@ RowLayout {
     Layout.fillWidth: true
     Layout.leftMargin: 15
     Layout.rightMargin: 15
-    Layout.topMargin: 10
+    Layout.topMargin: 5
+    Layout.bottomMargin: 10
 
     property string titleText: "TitleBox"
+    property bool closeble: false
+    property bool isOpen: checkBoxOpen.checked || !closeble
+
+    CCheck {
+        id: checkBoxOpen
+        visible: closeble
+        checked: true
+        text: ""
+    }
 
     Text {
         Layout.fillWidth: true

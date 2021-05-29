@@ -26,13 +26,28 @@ Rectangle {
 
                 CCheck {
                     id: consScrollEnable
-                    checked: false
+                    checked: true
                     font.pixelSize: 14
                     text: "auto scroll"
                     Layout.alignment: Qt.AlignRight
 
                     Settings {
                         property alias consScrollEnable: consScrollEnable.checked
+                    }
+                }
+
+                CCheck {
+                    id: protoBinConsoled
+                    checked: false
+                    font.pixelSize: 14
+                    text: "Binnary"
+                    Layout.alignment: Qt.AlignRight
+
+                    onCheckedChanged: devs.protoBinConsoled = protoBinConsoled.checked
+                    Component.onCompleted: devs.protoBinConsoled = protoBinConsoled.checked
+
+                    Settings {
+                        property alias protoBinConsoled: protoBinConsoled.checked
                     }
                 }
             }
@@ -80,9 +95,9 @@ Rectangle {
                     TextEdit  {
                         Layout.fillWidth: true
                         text: time + "  " + payload
-                        height: 20
+                        height: 16
                         color: colorCategory.get(category).color
-                        font.pointSize: 12
+                        font.pointSize: 10
                         font.family: "Console"
                         readOnly: true
                         selectByMouse: true

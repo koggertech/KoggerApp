@@ -6,7 +6,6 @@ import Qt.labs.settings 1.1
 
 MenuViewer {
     id: viewerDeviceSettings
-    height: 500
 
     MenuScroll {
         id: scrollBar
@@ -16,54 +15,70 @@ MenuViewer {
             spacing: 10
 
             ConnectionViewer {
+                id: devConnection
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
-            DatasetBox {
-                Layout.fillWidth: true
-                Layout.preferredWidth: parent.width
-            }
+//            FactoryBox {
+//                Layout.fillWidth: true
+//                Layout.preferredWidth: parent.width
+//            }
 
             ChartBox {
+                dev: devConnection.dev
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
 
             DistBox {
+                dev: devConnection.dev
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
             TransducerBox {
+                dev: devConnection.dev
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
+            DatasetBox {
+                dev: devConnection.dev
+                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width
+            }
 
+            DSPSettings {
+                dev: devConnection.dev
+                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width
+            }
 
             SoundSpdBox {
+                dev: devConnection.dev
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
             FlashBox {
+                dev: devConnection.dev
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
             UpgradeBox {
+                dev: devConnection.dev
                 Layout.fillWidth: true
                 Layout.preferredWidth: parent.width
             }
 
-//            DevAddrBox {
-//                Layout.fillWidth: true
-//                Layout.preferredWidth: parent.width
-//            }
-
-
+            DevAddrBox {
+                dev: devConnection.dev
+                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width
+            }
         }
     }
 }

@@ -37,6 +37,4 @@ void ConsoleListModel::doAppend(const QString& time, int category, const QString
     _size++;
     const auto& indexRow = index(line);
     endInsertRows();
-//    emit dataChanged(indexRow, indexRow, _roles);
-//    emit countChanged();
 }

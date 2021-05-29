@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isDistSupport
 
     MenuBlock {
     }
@@ -27,13 +28,13 @@ Item {
                 CCheck {
                     id:switchBinnary
                     text: "Bin"
-                    checked: sonarDriver.datasetDist > 0
+                    checked: dev.datasetDist > 0
                     onCheckedChanged: {
-                        if(checked == true && sonarDriver.datasetDist == 0) {
-                            sonarDriver.datasetDist = switchDatasetDist.lastDistChannel
-                        } else if(checked == false && sonarDriver.datasetDist > 0) {
-                            switchDatasetDist.lastDistChannel = sonarDriver.datasetDist
-                            sonarDriver.datasetDist = 0
+                        if(checked == true && dev.datasetDist === 0) {
+                            dev.datasetDist = switchDatasetDist.lastDistChannel
+                        } else if(checked == false && dev.datasetDist > 0) {
+                            switchDatasetDist.lastDistChannel = dev.datasetDist
+                            dev.datasetDist = 0
                         }
                     }
                 }
@@ -41,28 +42,27 @@ Item {
                 CCheck {
                     id:switchNMEA
                     text: "NMEA"
-                    checked: sonarDriver.datasetSDDBT > 0
+                    checked: dev.datasetSDDBT > 0
                     onCheckedChanged: {
-                        if(checked == true && sonarDriver.datasetSDDBT == 0) {
-                            sonarDriver.datasetSDDBT = switchDatasetDist.lastDistChannel
-                        } else if(checked == false && sonarDriver.datasetSDDBT > 0) {
-                            switchDatasetDist.lastDistChannel = sonarDriver.datasetSDDBT
-                            sonarDriver.datasetSDDBT = 0
+                        if(checked == true && dev.datasetSDDBT === 0) {
+                            dev.datasetSDDBT = switchDatasetDist.lastDistChannel
+                        } else if(checked == false && dev.datasetSDDBT > 0) {
+                            switchDatasetDist.lastDistChannel = dev.datasetSDDBT
+                            dev.datasetSDDBT = 0
                         }
                     }
                 }
 
-
                 CCheck {
                     id:switchNMEA2
                     text: "NMEA #2"
-                    checked: sonarDriver.datasetSDDBT_P2 > 0
+                    checked: dev.datasetSDDBT_P2 > 0
                     onCheckedChanged: {
-                        if(checked == true && sonarDriver.datasetSDDBT_P2 == 0) {
-                            sonarDriver.datasetSDDBT_P2 = switchDatasetDist.lastDistChannel
-                        } else if(checked == false && sonarDriver.datasetSDDBT_P2 > 0) {
-                            switchDatasetDist.lastDistChannel = sonarDriver.datasetSDDBT_P2
-                            sonarDriver.datasetSDDBT_P2 = 0
+                        if(checked == true && dev.datasetSDDBT_P2 === 0) {
+                            dev.datasetSDDBT_P2 = switchDatasetDist.lastDistChannel
+                        } else if(checked == false && dev.datasetSDDBT_P2 > 0) {
+                            switchDatasetDist.lastDistChannel = dev.datasetSDDBT_P2
+                            dev.datasetSDDBT_P2 = 0
                         }
                     }
                 }
@@ -74,7 +74,7 @@ Item {
                     Layout.leftMargin: 10
 
                     onClicked: {
-                        sonarDriver.requestDist();
+                        dev.requestDist();
                     }
                 }
             }
@@ -90,7 +90,7 @@ Item {
                     x: 0
                     y: 0
                     Layout.fillWidth: true
-                    height: 130
+                    height: 120
                     contextType: "2d"
                     opacity: 1
                     property real offsetRight: 5
@@ -109,9 +109,9 @@ Item {
                         from: 0
                         to: 50000
                         stepSize: 1000
-                        value: sonarDriver.distMax
+                        value: dev.distMax
                         onValueChanged: {
-                            sonarDriver.distMax = value
+                            dev.distMax = value
                         }
                     }
 
@@ -131,9 +131,9 @@ Item {
                         from: 0
                         to: 50000
                         stepSize: 100
-                        value: sonarDriver.distDeadZone
+                        value: dev.distDeadZone
                         onValueChanged: {
-                            sonarDriver.distDeadZone = value
+                            dev.distDeadZone = value
                         }
                     }
 
@@ -226,9 +226,9 @@ Item {
                     from: 0
                     to: 100
                     stepSize: 1
-                    value: sonarDriver.distConfidence
+                    value: dev.distConfidence
                     onValueChanged: {
-                        sonarDriver.distConfidence = value
+                        dev.distConfidence = value
                     }
                 }
             }

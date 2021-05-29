@@ -3,80 +3,93 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.3
 
 ColumnLayout {
+    property var dev: null
+
     property int channelNumber: 0
     RowLayout {
         CCheck {
             id:switchDatasetChart1
-            checked: sonarDriver.datasetChart == channelNumber
+            checked: dev.datasetChart === channelNumber
             text: "Chart"
 
             onCheckStateChanged: {
-                if(checked == true && sonarDriver.datasetChart != channelNumber) {
-                    sonarDriver.datasetChart = channelNumber
-                } else if(checked == false && sonarDriver.datasetChart == channelNumber) {
-                    sonarDriver.datasetChart = 0
+                if(checked == true && dev.datasetChart !== channelNumber) {
+                    dev.datasetChart = channelNumber
+                } else if(checked == false && dev.datasetChart === channelNumber) {
+                    dev.datasetChart = 0
                 }
             }
         }
 
         CCheck {
             id:switchDatasetDist1
-            checked: sonarDriver.datasetDist == channelNumber
-            text: "Dist. Bin"
+            checked: dev.datasetDist === channelNumber
+            text: "Distance"
 
             onCheckStateChanged: {
-                if(checked == true && sonarDriver.datasetDist != channelNumber) {
-                    sonarDriver.datasetDist = channelNumber
-                } else if(checked == false && sonarDriver.datasetDist == channelNumber) {
-                    sonarDriver.datasetDist = 0
+                if(checked == true && dev.datasetDist !== channelNumber) {
+                    dev.datasetDist = channelNumber
+                } else if(checked == false && dev.datasetDist === channelNumber) {
+                    dev.datasetDist = 0
                 }
             }
         }
 
         CCheck {
             id:switchDatasetDistNMEA1
-            checked: sonarDriver.datasetSDDBT == channelNumber
+            checked: dev.datasetSDDBT === channelNumber
             text: "Dist. NMEA"
 
             onCheckStateChanged: {
-                if(checked == true && sonarDriver.datasetSDDBT != channelNumber) {
-                    sonarDriver.datasetSDDBT = channelNumber
-                } else if(checked == false && sonarDriver.datasetSDDBT == channelNumber) {
-                    sonarDriver.datasetSDDBT = 0
+                if(checked == true && dev.datasetSDDBT !== channelNumber) {
+                    dev.datasetSDDBT = channelNumber
+                } else if(checked == false && dev.datasetSDDBT === channelNumber) {
+                    dev.datasetSDDBT = 0
                 }
             }
         }
 
         CCheck {
             id:switchDatasetDistNMEAP1
-            checked: sonarDriver.datasetSDDBT_P2 == channelNumber
-            text: "Dist. NMEA #2"
+            checked: dev.datasetSDDBT_P2 === channelNumber
+            text: "Dist. NMEA#2"
 
             onCheckStateChanged: {
-                if(checked == true && sonarDriver.datasetSDDBT_P2 != channelNumber) {
-                    sonarDriver.datasetSDDBT_P2 = channelNumber
-                } else if(checked == false && sonarDriver.datasetSDDBT_P2 == channelNumber) {
-                    sonarDriver.datasetSDDBT_P2 = 0
+                if(checked == true && dev.datasetSDDBT_P2 !== channelNumber) {
+                    dev.datasetSDDBT_P2 = channelNumber
+                } else if(checked == false && dev.datasetSDDBT_P2 === channelNumber) {
+                    dev.datasetSDDBT_P2 = 0
                 }
             }
         }
-    }
 
-    RowLayout {
+
         CCheck {
-            id:switchDatasetTempP1
-            checked: sonarDriver.datasetTemp == channelNumber
-            text: "Temperature"
+            id:switchDatasetTimestamp
+            checked: dev.datasetTimestamp === channelNumber
+            text: "Timastamp"
 
             onCheckStateChanged: {
-                if(checked == true && sonarDriver.datasetTemp != channelNumber) {
-                    sonarDriver.datasetTemp = channelNumber
-                } else if(sonarDriver.datasetTemp == channelNumber) {
-                    sonarDriver.datasetTemp = 0
+                if(checked == true && dev.datasetTimestamp !== channelNumber) {
+                    dev.datasetTimestamp = channelNumber
+                } else if(checked == false && dev.datasetTimestamp === channelNumber) {
+                    dev.datasetTimestamp = 0
                 }
             }
         }
 
+        CCheck {
+            id:switchDatasetTemp
+            checked: dev.datasetTemp === channelNumber
+            text: "Temper."
 
+            onCheckStateChanged: {
+                if(checked == true && dev.datasetTemp !== channelNumber) {
+                    dev.datasetTemp = channelNumber
+                } else if(checked == false && dev.datasetTemp === channelNumber) {
+                    dev.datasetTemp = 0
+                }
+            }
+        }
     }
 }

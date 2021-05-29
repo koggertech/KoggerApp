@@ -1,7 +1,7 @@
 #include "plotcash.h"
 
 
-PlotCash::PoolDataset::PoolDataset() {
+PoolDataset::PoolDataset() {
     m_chartData.clear();
     m_chartData.resize(0);
     m_chartResol = 0;
@@ -9,24 +9,40 @@ PlotCash::PoolDataset::PoolDataset() {
     flags.distAvail = false;
 }
 
-void PlotCash::PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
+void PoolDataset::setEvent(int timestamp, int id) {
+    _eventTimestamp = timestamp;
+    _eventId = id;
+    flags.eventAvail = true;
+}
+
+void PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
     m_chartResol = resolution;
     m_chartOffset = offset;
-    m_chartData = QVector<int16_t>(data);
+    m_chartData = data;
     flags.chartAvail = true;
 }
 
-void PlotCash::PoolDataset::setDist(int dist) {
+void PoolDataset::setDist(int dist) {
     m_dist = dist;
     flags.distAvail = true;
 }
 
-void PlotCash::PoolDataset::setPosition(uint32_t date, uint32_t time, double lat, double lon) {
+void PoolDataset::setPosition(uint32_t date, uint32_t time, double lat, double lon) {
     m_position.date = date;
     m_position.time = time;
     m_position.lat = lat;
     m_position.lon = lon;
     flags.posAvail = true;
+}
+
+void PoolDataset::setEncoders(int16_t enc1, int16_t enc2, int16_t enc3, int16_t enc4, int16_t enc5, int16_t enc6) {
+    encoder.e1 = enc1;
+    encoder.e2 = enc2;
+    encoder.e3 = enc3;
+    encoder.e4 = enc4;
+    encoder.e5 = enc5;
+    encoder.e6 = enc6;
+    encoder.valid = true;
 }
 
 PlotCash::PlotCash() {
@@ -37,26 +53,35 @@ PlotCash::PlotCash() {
         m_colorMap[i] = QColor::fromRgb(0,0,0);
     }
 
-    QVector<QColor> coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(40, 0, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(220, 255, 255)};
-    QVector<int> levels = {0, 30, 130, 255};
+    setThemeId(0);
+}
 
-    //    QVector<QColor> coloros = {
-    //        QColor::fromRgb(0, 0, 0),
-    //        QColor::fromRgb(40, 0, 80),
-    //        QColor::fromRgb(0, 30, 150),
-    //        QColor::fromRgb(20, 230, 30),
-    //        QColor::fromRgb(255, 50, 20),
-    //        QColor::fromRgb(255, 255, 255),
-    //    };
+void PlotCash::addEvent(int timestamp, int id) {
+    lastEventTimestamp = timestamp;
+    lastEventId = id;
 
-    //    QVector<int> levels = {0, 30, 80, 120, 150, 255};
+    poolAppend();
+    m_pool[poolLastIndex()].setEvent(timestamp, id);
+}
 
-    setColorScheme(coloros, levels);
+void PlotCash::addTimestamp(int timestamp) {
 }
 
 void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
-    poolAppend();
+    int pool_index = poolLastIndex();
+
+    if(pool_index < 0 || m_pool[pool_index].eventAvail() == false || m_pool[pool_index].chartAvail() == true) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
+
+//    poolAppend();
     m_pool[poolLastIndex()].setChart(data, resolution, offset);
+
+    if(m_distProcessingVis) {
+        m_pool[poolLastIndex()].doDistProccesing();
+    }
+
     m_offset = offset;
     m_range = data.length()*resolution;
     updateImage(true);
@@ -64,7 +89,7 @@ void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
 
 void PlotCash::addDist(int dist) {
     int pool_index = poolLastIndex();
-    if(pool_index < 0 || m_pool[pool_index].chartAvail() == false || m_pool[pool_index].distAvail() == true) {
+    if(pool_index < 0 || (m_pool[pool_index].eventAvail() == false && m_pool[pool_index].chartAvail() == false) || m_pool[pool_index].distAvail() == true) {
         poolAppend();
         pool_index = poolLastIndex();
     }
@@ -139,7 +164,16 @@ void PlotCash::setOscVis(bool visible) {
 
 void PlotCash::setDistVis(bool visible) {
     m_distSonarVis = visible;
-    m_distCalcVis = visible;
+    resetValue();
+    updateImage(true);
+}
+
+void PlotCash::setDistProcVis(bool visible) {
+    m_distProcessingVis = visible;
+    if(visible) {
+        doDistProcessing(true);
+    }
+
     resetValue();
     updateImage(true);
 }
@@ -172,6 +206,53 @@ void PlotCash::resetValue() {
 
 void PlotCash::resetDataset() {
     m_pool.clear();
+    resetValue();
+    m_valueCash.clear();
+}
+
+void PlotCash::doDistProcessing(bool processing) {
+    int pool_size = poolSize();
+    for(int i = 0; i < pool_size; i++) {
+        PoolDataset* dataset = fromPool(i);
+        if(processing) {
+            dataset->doDistProccesing();
+        } else {
+            dataset->resetDistProccesing();
+        }
+    }
+}
+
+void PlotCash::setThemeId(int theme_id) {
+    QVector<QColor> coloros;
+    QVector<int> levels;
+
+    if(theme_id == ClassicTheme) {
+        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(220, 255, 255)};
+        levels = {0, 30, 130, 255};
+    } else if(theme_id == SepiaTheme) {
+        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(50, 50, 10), QColor::fromRgb(230, 200, 100), QColor::fromRgb(255, 255, 220)};
+        levels = {0, 30, 130, 255};
+    }else if(theme_id == WRGBDTheme) {
+        coloros = {
+            QColor::fromRgb(0, 0, 0),
+            QColor::fromRgb(40, 0, 80),
+            QColor::fromRgb(0, 30, 150),
+            QColor::fromRgb(20, 230, 30),
+            QColor::fromRgb(255, 50, 20),
+            QColor::fromRgb(255, 255, 255),
+        };
+
+        levels = {0, 30, 80, 120, 150, 255};
+    } else if(theme_id == WBTheme) {
+        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(190, 200, 200), QColor::fromRgb(230, 255, 255)};
+        levels = {0, 150, 255};
+    } else if(theme_id == BWTheme) {
+        coloros = {QColor::fromRgb(230, 255, 255), QColor::fromRgb(70, 70, 70), QColor::fromRgb(0, 0, 0)};
+        levels = {0, 150, 255};
+    }
+
+    setColorScheme(coloros, levels);
+    updateImage();
 }
 
 void PlotCash::updateValueMap(int width, int height) {
@@ -252,9 +333,18 @@ void PlotCash::updateValueMap(int width, int height) {
                     m_valueCash[column].distData = -1;
                 }
             }
+
+            if(m_distProcessingVis) {
+                if(m_pool[pool_index].distProccesingAvail()) {
+                    m_valueCash[column].processingDistData = m_pool[pool_index].distProccesing();
+                } else {
+                    m_valueCash[column].processingDistData = -1;
+                }
+            }
         } else {
             memset(data_column, 0, size_column*2);
             m_valueCash[column].distData = -1;
+            m_valueCash[column].processingDistData = -1;
         }
     }
 }
@@ -384,13 +474,37 @@ void PlotCash::updateImage(int width, int height) {
         }
     }
 
+    if(m_distProcessingVis) {
+
+        for(int col = 1;  col < waterfall_width; col++) {
+            int val_col = (m_valueCashStart + col);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
+
+            int dist = m_valueCash[val_col].processingDistData;
+            if(dist >= 0) {
+                int index_dist = (int)((float)dist/(float)m_range*(float)height);
+                if(index_dist < 0) {
+                    index_dist = 0;
+                } else if(index_dist > height - 2) {
+                    index_dist = height - 2;
+                }
+
+                m_dataImage[col - 1 + index_dist*width] = m_colorDistProc;
+                m_dataImage[col - 1 + (index_dist + 1)*width] = m_colorDistProc;
+                m_dataImage[col + index_dist*width] = m_colorDistProc;
+                m_dataImage[col + (index_dist + 1)*width] = m_colorDistProc;
+            }
+        }
+    }
+
     m_image = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
 }
 
 QImage PlotCash::getImage(QSize size) {
     if(m_image.size() != size) { renderValue();  }
 
-//    m_range = 25000;
     flags.renderImage |= flags.renderValue;
     if(flags.renderImage) {
         updateImage(size.width(), size.height());
@@ -423,6 +537,9 @@ QImage PlotCash::getImage(QSize size) {
 
     return m_image;
 }
+
+
+
 
 int PlotCash::poolSize() {
     return m_pool.length();

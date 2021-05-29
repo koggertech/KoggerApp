@@ -22,14 +22,16 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
 
     qmlRegisterType<WaterFall>("WaterFall", 1, 0, "WaterFall");
-//    qmlRegisterType<Console>("Console", 1, 0, "Console");
+
+    engine.rootContext()->setContextProperty("plot", core.plot());
 
     engine.rootContext()->setContextProperty("core", &core);
 #ifdef FLASHER
     engine.rootContext()->setContextProperty("flasher", &core.flasher);
 #endif
-    engine.rootContext()->setContextProperty("sonarDriver", core.dev_driver);
+
     engine.rootContext()->setContextProperty("logViewer", core.console());
+    engine.rootContext()->setContextProperty("devs", core.dev());
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);

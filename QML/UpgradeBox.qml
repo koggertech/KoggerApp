@@ -4,9 +4,10 @@ import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isUpgradeSupport
 
     FileDialog {
         id: fileDialog
@@ -39,9 +40,9 @@ Item {
                 Layout.preferredWidth: 300
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                from: 0
-                to: 100
-                value: sonarDriver.upgradeFWStatus
+                from: -1
+                to: 101
+                value: dev.upgradeFWStatus
             }
         }
 
@@ -83,8 +84,9 @@ Item {
                 Layout.leftMargin: 10
                 implicitHeight: 30
                 visible: pathText.text != ""
+
                 onClicked: {
-                    core.upgradeFW(pathText.text)
+                    core.upgradeFW(pathText.text, dev)
                 }
             }
         }

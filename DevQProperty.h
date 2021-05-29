@@ -1,14 +1,14 @@
 #ifndef SONARDRIVERINTERFACE_H
 #define SONARDRIVERINTERFACE_H
 
-#include "SonarDriver.h"
+#include "DevDriver.h"
 
-class SonarDriverInterface : public SonarDriver
+class DevQProperty : public DevDriver
 {
     Q_OBJECT
 public:
-    explicit SonarDriverInterface(QObject *parent = nullptr) :
-        SonarDriver(parent){
+    explicit DevQProperty(QObject *parent = nullptr) :
+        DevDriver(parent){
     }
 
     Q_PROPERTY(int distMax READ distMax WRITE setDistMax NOTIFY distSetupChanged)
@@ -19,6 +19,9 @@ public:
     Q_PROPERTY(int chartResolution READ chartResolution WRITE setChartResolution NOTIFY chartSetupChanged)
     Q_PROPERTY(int chartOffset READ chartOffset WRITE setChartOffset NOTIFY chartSetupChanged)
 
+    Q_PROPERTY(int dspHorSmooth READ dspSmoothFactor WRITE setDspSmoothFactor NOTIFY dspSetupChanged)
+
+    Q_PROPERTY(int datasetTimestamp READ datasetTimestamp WRITE setDatasetTimestamp NOTIFY datasetChanged)
     Q_PROPERTY(int datasetDist READ datasetDist WRITE setDatasetDist NOTIFY datasetChanged)
     Q_PROPERTY(int datasetChart READ datasetChart WRITE setDatasetChart NOTIFY datasetChanged)
     Q_PROPERTY(int datasetTemp READ datasetTemp WRITE setDatasetTemp NOTIFY datasetChanged)
@@ -34,16 +37,24 @@ public:
     Q_PROPERTY(int soundSpeed READ soundSpeed WRITE setSoundSpeed NOTIFY soundChanged)
 
     Q_PROPERTY(int busAddress READ getBusAddress WRITE setBusAddress NOTIFY UARTChanged)
+    Q_PROPERTY(int baudrate READ getBaudrate WRITE setBaudrate NOTIFY UARTChanged)
     Q_PROPERTY(int devAddress READ getDevAddress WRITE setDevAddress NOTIFY UARTChanged)
     Q_PROPERTY(int devDefAddress READ getDevDefAddress WRITE setDevDefAddress NOTIFY UARTChanged)
 
-    Q_PROPERTY(int upgradeFWStatus READ upgradeFWStatus NOTIFY upgradeProgressChanged)
+    Q_PROPERTY(int upgradeFWStatus READ upgradeFWStatus NOTIFY upgradeChanged)
 
-signals:
+    Q_PROPERTY(QString devName READ devName NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isSonar READ isSonar NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isChartSupport READ isChartSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isDistSupport READ isDistSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isDSPSupport READ isDSPSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isTransducerSupport READ isTransducerSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isDatasetSupport READ isDatasetSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isSoundSpeedSupport READ isSoundSpeedSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isAddressSupport READ isAddressSupport NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isUpgradeSupport READ isUpgradeSupport NOTIFY deviceVersionChanged)
 
-public slots:
-
-private:
 };
 
 

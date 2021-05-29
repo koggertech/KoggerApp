@@ -6,54 +6,60 @@
 
 using namespace Parsers;
 
+typedef enum {
+    BoardNone,
+    BoardEnhanced = 1,
+    BoardBase = 3,
+    BoardNBase = 4,
+    BoardChirp = 5,
+    BoardAssist = 6,
+    BoardNEnhanced = 7
+} BoardVersion;
+
 class IDBin : public QObject
 {
     Q_OBJECT
 public:
-    explicit IDBin(ProtoBinIn* proto, QObject *parent = nullptr);
+    explicit IDBin(QObject *parent = nullptr);
     ~IDBin();
-    void setProto(ProtoBinIn* proto);
-    Resp  parse();
+
+    Resp  parse(ProtoBinIn &proto);
 
     virtual ID id() = 0;
     virtual bool isSettable() { return false; }
     virtual bool isSettup() { return false; }
     virtual bool isRequestable() { return true; }
 
-    Type lastType() {return m_lastType;}
-    Version lastVersion() {return m_lastVersion;}
-    Resp lastResp() {return m_lastResp;}
+    Type lastType() { return m_lastType; }
+    Version lastVersion() { return m_lastVersion; }
+    Resp lastResp() { return m_lastResp; }
 
     virtual void simpleRequest(Version ver);
-    virtual void requestAll() {
-        simpleRequest(v0);
-    }
+    virtual void requestAll() { simpleRequest(v0); }
 
-    void setAddress(uint8_t addr) {
-        m_address = addr;
-    }
+    void setAddress(uint8_t addr) { m_address = addr; }
+    void setConsoleOut(bool is_console) { isConsoleOut = is_console; }
 
 signals:
     void updateContent(Type type, Version ver, Resp resp);
     void dataSend(QByteArray data);
+    void binFrameOut(ProtoBinOut &proto_out);
 
 protected:
     const U4 m_key = 0xC96B5D4A;
 
-    ProtoBinIn* m_proto;
     Type m_lastType;
     Version m_lastVersion;
     Resp m_lastResp;
     QList<Version> availableVer;
     uint8_t m_address = 0;
+    bool isConsoleOut = false;
 
     virtual Resp  parsePayload(ProtoBinIn &proto) = 0;
     virtual void requestSpecific(ProtoBinOut &proto_out) { Q_UNUSED(proto_out) }
 
     bool checkKeyConfirm(U4 key) { return (key == m_key); }
     void appendKey(ProtoBinOut &proto_out);
-
-    void sendDataProcessing(ProtoBinOut &proto_out);
 };
 
 
@@ -62,7 +68,7 @@ class IDBinTimestamp : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinTimestamp(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinTimestamp() : IDBin() {
     }
 
     ID id() override { return ID_TIMESTAMP; }
@@ -79,7 +85,7 @@ class IDBinDist : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinDist(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinDist() : IDBin() {
     }
 
     ID id() override { return ID_DIST; }
@@ -96,7 +102,7 @@ class IDBinChart : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinChart(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinChart() : IDBin() {
     }
 
     ID id() override { return ID_CHART; }
@@ -132,7 +138,7 @@ class IDBinAttitude : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinAttitude(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinAttitude() : IDBin() {
     }
 
     ID id() override { return ID_ATTITUDE; }
@@ -156,7 +162,7 @@ class IDBinTemp : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinTemp(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinTemp() : IDBin() {
     }
 
     ID id() override { return ID_TEMP; }
@@ -173,7 +179,7 @@ class IDBinDataset : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinDataset(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinDataset() : IDBin() {
     }
 
     ID id() override { return ID_DATASET; }
@@ -255,7 +261,7 @@ public:
 
     void setTimestamp_v0(U1 ch_id) { setFlag(ch_id, MASK_TIMESTAMP_V0); }
     void resetTimestamp_v0(U1 ch_id) { resetFlag(ch_id, MASK_TIMESTAMP_V0); }
-    bool getTimestamp_v1(U1 ch_id) { return flag(ch_id, MASK_TIMESTAMP_V0); }
+    bool getTimestamp_v0(U1 ch_id) { return flag(ch_id, MASK_TIMESTAMP_V0); }
 
     void setSDDBT(U1 ch_id) {
         setFlag(ch_id, MASK_DIST_SDDBT);
@@ -298,7 +304,7 @@ class IDBinDistSetup : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinDistSetup(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinDistSetup() : IDBin() {
     }
 
     ID id() override { return ID_DIST_SETUP; }
@@ -332,7 +338,7 @@ class IDBinChartSetup : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinChartSetup(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinChartSetup() : IDBin() {
     }
 
     ID id() override { return ID_CHART_SETUP; }
@@ -362,12 +368,33 @@ protected:
 };
 
 
+class IDBinDSPSetup : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinDSPSetup() : IDBin() {
+    }
+
+    ID id() override { return ID_DSP; }
+    Resp  parsePayload(ProtoBinIn &proto) override;
+
+    void setV0(U1 hor_smooth_factor);
+
+    U1 horSmoothFactor() { return m_horSmoothFactor; }
+    void setHorSmoothFactor(U1 hor_smooth_factor) {
+        setV0(hor_smooth_factor);
+    }
+
+protected:
+    U1 m_horSmoothFactor = 0;
+};
+
 
 class IDBinTransc : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinTransc(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinTransc() : IDBin() {
     }
 
     ID id() override { return ID_TRANSC; }
@@ -396,7 +423,7 @@ class IDBinSoundSpeed : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinSoundSpeed(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinSoundSpeed() : IDBin() {
     }
 
     ID id() override { return ID_SND_SPEED; }
@@ -414,7 +441,7 @@ class IDBinUART : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinUART(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinUART() : IDBin() {
     }
 
     ID id() override { return ID_UART; }
@@ -427,6 +454,7 @@ public:
     } UART;
 
     void setBaudrate(U4 baudrate);
+    int getBaudrate(int id = 1) { return m_uart[id].baudrate; }
 
     void setDevAddress(U1 addr);
     U1 devAddress() { return m_uart[1].dev_address; }
@@ -441,7 +469,7 @@ public:
         simpleRequest(v2);
     }
 protected:
-    UART m_uart[3];
+    UART m_uart[5];
     U1 devDef_address = 0;
 
     virtual void requestSpecific(ProtoBinOut &proto_out) override {
@@ -456,22 +484,15 @@ class IDBinVersion : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinVersion(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinVersion() : IDBin() {
     }
-
-    typedef enum {
-        BoardNone,
-        BoardEnhanced = 1,
-        BoardChirp = 2,
-        BoardBase = 3,
-        BoardNBase = 4
-    } BoardVersion;
 
     ID id() override { return ID_VERSION; }
     Resp  parsePayload(ProtoBinIn &proto) override;
     uint8_t productName() { return 0; }
 
     BoardVersion boardVersion() { return m_boardVersion; }
+    uint8_t boardVersionMinor() { return m_boardVersionMinor; }
     uint32_t serialNumber() { return m_serialNumber; }
 
     void reset() {
@@ -491,7 +512,7 @@ class IDBinMark : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinMark(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinMark() : IDBin() {
     }
 
     ID id() override { return ID_MARK; }
@@ -504,13 +525,11 @@ protected:
     U1 m_mark = 0;
 };
 
-
-
 class IDBinFlash : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinFlash(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinFlash() : IDBin() {
     }
 
     ID id() override { return ID_FLASH; }
@@ -529,7 +548,7 @@ class IDBinBoot : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinBoot(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinBoot() : IDBin() {
     }
 
     ID id() override { return ID_BOOT; }
@@ -546,7 +565,7 @@ class IDBinUpdate : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinUpdate(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinUpdate() : IDBin() {
     }
 
     ID id() override { return ID_UPDATE; }
@@ -577,7 +596,7 @@ class IDBinNav : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinNav(ProtoBinIn* proto, QObject *parent = nullptr) : IDBin(proto, parent) {
+    explicit IDBinNav() : IDBin() {
     }
 
     ID id() override { return ID_NAV; }

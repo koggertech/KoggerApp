@@ -6,11 +6,11 @@ import Qt.labs.settings 1.1
 
 Rectangle {
     id: connectionLine
-    opacity: 0.6
-    radius: 2
+    opacity: 0.9
+    radius: 1
     height: parent.height
     width: parent.width
-    color: "#454545"
-    border.color: "#707070"
-    border.width: 2
+    color: "#252525"
+    border.color: "#404040"
+    border.width: 1
 }

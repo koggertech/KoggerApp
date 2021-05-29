@@ -4,7 +4,6 @@ import QtQuick.Layouts 1.3
 
 ComboBox {
     id: control
-
     font.pointSize: 12
 
     StyleSet {
@@ -43,16 +42,6 @@ ComboBox {
         width: 12
         height: 8
         contextType: "2d"
-
-//        Connections {
-//            target: control
-//            onPressedChanged: canvas.requestPaint()
-//        }
-
-//        Connections {
-//            target: control.popup
-//            onVisibleChanged: canvas.requestPaint()
-//        }
 
         onPaint: {
             context.reset();
@@ -115,8 +104,6 @@ ComboBox {
             focus: true
             ScrollIndicator.vertical: ScrollIndicator { }
         }
-
-
 
         background: Rectangle {
             id: popupRect

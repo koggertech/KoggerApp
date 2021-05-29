@@ -18,15 +18,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+        DevDriver.cpp \
+        DevHub.cpp \
         IDBinnary.cpp \
         ProtoBinnary.cpp \
-        SonarDriver.cpp \
-        SonarDriverInterface.cpp \
         connection.cpp \
         console.cpp \
         consolelistmodel.cpp \
         core.cpp \
+        logger.cpp \
         main.cpp \
+        coreFlash.cpp \
+        flasher.cpp \
         plotcash.cpp \
         waterfall.cpp
 
@@ -44,14 +47,17 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    DevDriver.h \
+    DevHub.h \
+    DevQProperty.h \
     IDBinnary.h \
     ProtoBinnary.h \
-    SonarDriver.h \
-    SonarDriverInterface.h \
     connection.h \
     console.h \
     consolelistmodel.h \
+    flasher.h \
     core.h \
+    logger.h \
     plotcash.h \
     waterfall.h \
     waterfallproxy.h

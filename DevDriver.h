@@ -10,11 +10,11 @@
 
 using namespace Parsers;
 
-class SonarDriver : public QObject
+class DevDriver : public QObject
 {
     Q_OBJECT
 public:
-    explicit SonarDriver(QObject *parent = nullptr);
+    explicit DevDriver(QObject *parent = nullptr);
 
     typedef enum {
         DatasetOff = 0,
@@ -22,6 +22,11 @@ public:
         DatasetCh2 = 2,
         DatasetRequest = 255
     } DatasetChannel;
+
+    enum UpgradeStatus {
+        failUpgrade = -1,
+        successUpgrade = 101
+    };
 
     int distMax();
     void setDistMax(int dist);
@@ -41,6 +46,11 @@ public:
     int chartOffset();
     void setChartOffset(int offset);
 
+    int dspSmoothFactor();
+    void setDspSmoothFactor(int dsp_smooth);
+
+    int datasetTimestamp();
+    void setDatasetTimestamp(int ch_param);
     int datasetDist();
     void setDatasetDist(int ch_param);
     int datasetChart();
@@ -82,6 +92,9 @@ public:
     void setDevAddress(int addr);
     int getDevAddress();
 
+    void setBaudrate(int baudrate);
+    int getBaudrate();
+
     void setDevDefAddress(int addr);
     int getDevDefAddress();
 
@@ -89,62 +102,88 @@ public:
     uint32_t devSerialNumber();
     QString devPN();
 
+    BoardVersion boardVersion() {
+        return idVersion->boardVersion();
+    }
 
+    bool isSonar() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced;
+    }
+
+    bool isChartSupport() { return m_state.duplex && isSonar(); }
+    bool isDistSupport() { return m_state.duplex && isSonar(); }
+    bool isDSPSupport() { return m_state.duplex && isSonar(); }
+    bool isTransducerSupport() { return m_state.duplex && isSonar(); }
+    bool isDatasetSupport() { return m_state.duplex && isSonar(); }
+    bool isSoundSpeedSupport() { return m_state.duplex && isSonar(); }
+    bool isAddressSupport() { return m_state.duplex; }
+    bool isUpgradeSupport() { return m_state.duplex; }
 
 signals:
-    void dataSend(QByteArray data);
+    void binFrameOut(ProtoBinOut &proto_out);
+
     void chartComplete(QVector<int16_t> data, int resolution, int offset);
     void distComplete(int dist);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
+    void dspSetupChanged();
     void distSetupChanged();
     void datasetChanged();
     void transChanged();
     void soundChanged();
     void UARTChanged();
-    void upgradeProgressChanged();
+    void upgradeProgressChanged(int progress_status);
+    void upgradeChanged();
     void deviceVersionChanged();
+    void onReboot();
 
 public slots:
-    void putData(const QByteArray &data);
     void nmeaComplete(ProtoNMEA &proto);
     void protoComplete(ProtoBinIn &proto);
     void startConnection(bool duplex);
+    void stopConnection();
+    void restartState();
 
     void requestDist();
     void requestChart();
+
+    void setConsoleOut(bool is_console);
 
     void flashSettings();
     void resetSettings();
     void reboot();
     void process();
 
-private:
+protected:
+    typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
+
     FrameParser* m_proto;
-//    FrameParser m_frameParser;
 
-    IDBinTimestamp* idTimestamp;
-    IDBinDist* idDist;
-    IDBinChart* idChart;
-    IDBinAttitude* idAtt;
-    IDBinTemp* idTemp;
+    IDBinTimestamp* idTimestamp = NULL;
+    IDBinDist* idDist = NULL;
+    IDBinChart* idChart = NULL;
+    IDBinAttitude* idAtt = NULL;
+    IDBinTemp* idTemp = NULL;
 
-    IDBinDataset* idDataset;
-    IDBinDistSetup* idDistSetup;
-    IDBinChartSetup* idChartSetup;
-    IDBinTransc* idTransc;
-    IDBinSoundSpeed* idSoundSpeed;
-    IDBinUART* idUART;
+    IDBinDataset* idDataset = NULL;
+    IDBinDistSetup* idDistSetup = NULL;
+    IDBinChartSetup* idChartSetup = NULL;
+    IDBinDSPSetup* idDSPSetup = NULL;
+    IDBinTransc* idTransc = NULL;
+    IDBinSoundSpeed* idSoundSpeed = NULL;
+    IDBinUART* idUART = NULL;
 
-    IDBinVersion* idVersion;
-    IDBinMark* idMark;
-    IDBinFlash* idFlash;
-    IDBinBoot* idBoot;
-    IDBinUpdate* idUpdate;
+    IDBinVersion* idVersion = NULL;
+    IDBinMark* idMark = NULL;
+    IDBinFlash* idFlash = NULL;
+    IDBinBoot* idBoot = NULL;
+    IDBinUpdate* idUpdate = NULL;
 
-    IDBinNav* idNav;
+    IDBinNav* idNav = NULL;
 
     QHash<ID, IDBin*> hashIDParsing;
+    QHash<ID, ParseCallback> hashIDCallback;
     QHash<ID, IDBin*> hashIDSetup;
 
     typedef enum {
@@ -172,10 +211,9 @@ private:
 
     QTimer m_processTimer;
 
-//    bool m_inited = false;
     bool m_bootloader = false;
     int m_upgrade_status = 0;
-//    bool m_duplex = false;
+    bool m_isConsole = false;
 
     int m_busAddress = 0;
     int m_devAddress = 0;
@@ -183,10 +221,8 @@ private:
 
     QString m_devName = "...";
 
-    void regID(IDBin* id_bin, void (SonarDriver::* method)(Type type, Version ver, Resp resp), bool is_setup = false);
-
+    void regID(IDBin* id_bin, ParseCallback method, bool is_setup = false);
     void requestSetup();
-
 
 protected slots:
     void receivedTimestamp(Type type, Version ver, Resp resp);
@@ -198,6 +234,7 @@ protected slots:
     void receivedDataset(Type type, Version ver, Resp resp);
     void receivedDistSetup(Type type, Version ver, Resp resp);
     void receivedChartSetup(Type type, Version ver, Resp resp);
+    void receivedDSPSetup(Type type, Version ver, Resp resp);
     void receivedTransc(Type type, Version ver, Resp resp);
     void receivedSoundSpeed(Type type, Version ver, Resp resp);
     void receivedUART(Type type, Version ver, Resp resp);
@@ -209,7 +246,6 @@ protected slots:
     void receivedUpdate(Type type, Version ver, Resp resp);
 
     void receivedNav(Type type, Version ver, Resp resp);
-
 
 };
 

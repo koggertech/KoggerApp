@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isDSPSupport
 
     MenuBlock {
     }
@@ -22,19 +23,19 @@ Item {
             spacing: 10
 
             Text {
-                text: "Speed of Sound, m/s:"
+                text: "Horizontal smoothing factor:"
                 color: "#808080"
                 font.pixelSize: 16
             }
 
             SpinBoxCustom {
                 width: 120
-                from: 300
-                to: 6000
-                stepSize: 5
-                value: sonarDriver.soundSpeed/1000
+                from: 0
+                to: 4
+                stepSize: 1
+                value: dev.dspHorSmooth
                 onValueChanged: {
-                    sonarDriver.soundSpeed = value*1000
+                    dev.dspHorSmooth = value
                 }
             }
         }

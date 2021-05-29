@@ -29,11 +29,9 @@ public:
 
 signals:
     void appendEvent(const QString& time, int category, const QString& data);
-//    void countChanged();
 
 private:
     Q_DISABLE_COPY(ConsoleListModel)
-//    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
     int _size = 0;
     int _categories = 0;

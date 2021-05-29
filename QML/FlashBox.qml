@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isUpgradeSupport
 
     MenuBlock {
     }
@@ -15,10 +16,6 @@ Item {
     ColumnLayout {
         id: columnItem
         width: control.width
-
-        TitleMenuBox {
-            titleText: "Settings"
-        }
 
         RowLayout {
             Layout.fillWidth: true
@@ -31,7 +28,7 @@ Item {
                 text: "Write"
 
                 onClicked: {
-                    sonarDriver.flashSettings()
+                    dev.flashSettings()
                 }
             }
 
@@ -41,29 +38,19 @@ Item {
                 text: "Erase"
 
                 onClicked: {
-                    sonarDriver.resetSettings()
+                    dev.resetSettings()
                 }
             }
 
-//            CButton {
-//                Layout.fillWidth: true
-//                Layout.preferredWidth: 100
-//                text: "TO FILE"
+            CButton {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 100
+                text: "Reboot"
 
-//                onClicked: {
-//                }
-//            }
-
-//            CButton {
-//                Layout.fillWidth: true
-//                Layout.preferredWidth: 100
-//                text: "FROM FILE"
-
-//                onClicked: {
-
-//                }
-//            }
+                onClicked: {
+                    dev.reboot()
+                }
+            }
         }
     }
-
 }

@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isSoundSpeedSupport
 
     MenuBlock {
     }
@@ -32,9 +33,9 @@ Item {
                 from: 300
                 to: 6000
                 stepSize: 5
-                value: sonarDriver.soundSpeed/1000
+                value: dev.soundSpeed/1000
                 onValueChanged: {
-                    sonarDriver.soundSpeed = value*1000
+                    dev.soundSpeed = value*1000
                 }
             }
         }

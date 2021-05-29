@@ -5,9 +5,10 @@ import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
 
-Item {
+DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
+    isActive: dev.isTransducerSupport
 
     MenuBlock {
     }
@@ -48,7 +49,7 @@ Item {
                 }
 
                 Connections {
-                    target: sonarDriver
+                    target: dev
                     onTransPulseChanged: borderCanvas.requestPaint()
                 }
 
@@ -62,13 +63,12 @@ Item {
                     lineStyle: 2
 
                     stepSize: 1.0
-                    value: sonarDriver.transPulseSlider
-                    to: sonarDriver.transPulseSliderCount
+                    value: dev.transPulseSlider
+                    to: dev.transPulseSliderCount
                     onValueChanged: {
-                        sonarDriver.transPulseSlider = value
+                        dev.transPulseSlider = value
                     }
                 }
-
 
                 RowLayout {
                     Text {
@@ -82,9 +82,9 @@ Item {
                         from: 0
                         to: 30
                         stepSize: 1
-                        value: sonarDriver.transPulse
+                        value: dev.transPulse
                         onValueChanged: {
-                            sonarDriver.transPulse = value
+                            dev.transPulse = value
                         }
                     }
 
@@ -100,9 +100,9 @@ Item {
                         from: 0
                         to: 1
                         stepSize: 1
-                        value: sonarDriver.transBoost
+                        value: dev.transBoost
                         onValueChanged: {
-                            sonarDriver.transBoost = value
+                            dev.transBoost = value
                         }
 
                         property var items: ["Off", "On"]
@@ -132,9 +132,9 @@ Item {
                     from: 100
                     to: 6000
                     stepSize: 5
-                    value: sonarDriver.transFreq
+                    value: dev.transFreq
                     onValueChanged: {
-                        sonarDriver.transFreq = value
+                        dev.transFreq = value
                     }
                 }
 
@@ -176,9 +176,9 @@ Item {
                     context.fill()
 
 //                    if (sonarDriver.transPulse > 0) {
-////                        context.fillRect(offsetRight + sonarDriver.transPulse*15 + 1, 30, tickness, 50)
+////                        context.fillRect(offsetRight + dev.transPulse*15 + 1, 30, tickness, 50)
 //                        context.beginPath()
-//                        context.arc(offsetRight + sonarDriver.transPulse*15 + 2, heightChart, 2, 0, Math.PI * 2, false)
+//                        context.arc(offsetRight + dev.transPulse*15 + 2, heightChart, 2, 0, Math.PI * 2, false)
 //                        context.stroke()
 //                    }
 
@@ -197,14 +197,14 @@ Item {
 //                    context.fill()
 
                     context.beginPath()
-                    context.arc(offsetRight + sonarDriver.transPulse*15 + 2, heightChart, 4, 0, Math.PI * 2, false)
+                    context.arc(offsetRight + dev.transPulse*15 + 2, heightChart, 4, 0, Math.PI * 2, false)
                     context.fill()
 
 //                    context.fillRect(offsetRight + sonarDriver.transPulse*15, heightChart, 4, tickness)
 
-                    var height_sin = sonarDriver.transBoost ? 120 : 50
+                    var height_sin = dev.transBoost ? 120 : 50
 
-                    for (var i = 0; i < sonarDriver.transPulse; i++)  {
+                    for (var i = 0; i < dev.transPulse; i++)  {
                         var x_offset = i*15;
 
                         context.beginPath();

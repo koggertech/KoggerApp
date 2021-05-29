@@ -29,8 +29,12 @@ Window  {
     }
 
     SplitView {
+        Layout.fillHeight: true
+        Layout.fillWidth: true
         anchors.fill: parent
+
         orientation: Qt.Vertical
+        visible: true
 
         handle: Rectangle {
             implicitWidth: 5
@@ -60,7 +64,6 @@ Window  {
             WaterFall {
                 id: waterView
                 visible: true
-                anchors.top: parent.top
                 width: mainview.width
                 Layout.fillHeight: true
                 Layout.fillWidth: true
@@ -92,7 +95,7 @@ Window  {
         }
 
         Console {
-            id: console
+            id: console_vis
             visible: menuBar.isConsoleVisible
             SplitView.minimumHeight: 100
         }
@@ -100,9 +103,7 @@ Window  {
 
     MenuBar {
         id: menuBar
-        x: 0
-        y: 5
-        heightMenuViewer: waterView.height - y
+        Layout.fillHeight: true
+        height: waterView.height
     }
-
 }
