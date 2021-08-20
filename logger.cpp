@@ -41,29 +41,18 @@ void Logger::loggingStream(const QByteArray &data) {
     if(isOpen()) { m_logFile->write(data); }
 }
 
-bool Logger::creatExportStream() {
+bool Logger::creatExportStream(QString name) {
     bool is_open = false;
-    QDir dir;
-    QString str_log_path = QCoreApplication::applicationDirPath() + "/export";
-    if(dir.mkpath(str_log_path)) {
-        dir.setPath(str_log_path);
 
-        QString file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss") + ".csv";
-        file_name.replace(':', '.');
+    QUrl url(name);
+    _exportFile->setFileName(url.toLocalFile());
+    is_open = _exportFile->open(QIODevice::WriteOnly);
 
-        _exportFile->setFileName(str_log_path + "/" + file_name);
-        is_open = _exportFile->open(QIODevice::WriteOnly);
-
-        if(is_open) {
-            core.consoleInfo("Export dir: " + dir.path());
-            core.consoleInfo("Export make file: " + _exportFile->fileName());
-        } else {
-            core.consoleInfo("Export can't make file: " + _exportFile->fileName());
-        }
+    if(is_open) {
+        core.consoleInfo("Export make file: " + _exportFile->fileName());
     } else {
-        core.consoleInfo("Logger can't make dir");
+        core.consoleInfo("Export can't make file: " + _exportFile->fileName());
     }
-
 
     return is_open;
 }

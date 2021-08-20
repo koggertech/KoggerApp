@@ -6,8 +6,10 @@
 #include <connection.h>
 #include <console.h>
 #include <core.h>
+#include <Themes.h>
 
 Core core;
+Themes theme;
 
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("KOGGER");
@@ -26,6 +28,8 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("plot", core.plot());
 
     engine.rootContext()->setContextProperty("core", &core);
+    engine.rootContext()->setContextProperty("theme", &theme);
+
 #ifdef FLASHER
     engine.rootContext()->setContextProperty("flasher", &core.flasher);
 #endif

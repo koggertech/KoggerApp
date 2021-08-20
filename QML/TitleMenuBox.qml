@@ -9,7 +9,7 @@ RowLayout {
     Layout.leftMargin: 15
     Layout.rightMargin: 15
     Layout.topMargin: 5
-    Layout.bottomMargin: 10
+    Layout.bottomMargin: 5
 
     property string titleText: "TitleBox"
     property bool closeble: false

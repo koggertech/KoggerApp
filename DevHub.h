@@ -21,12 +21,16 @@ public:
     QList<DevQProperty*> getDevList() {
         _devList.clear();
 
-        for(uint16_t i = 0; i < 256; i++) {
+        for(uint16_t i = 1; i < 256; i++) {
             if(devSort[i] != NULL) {
                 _devList.append(devSort[i]);
             } else {
                 break;
             }
+        }
+
+        if(devSort[0] != NULL) {
+            _devList.append(devSort[0]);
         }
         return _devList;
     }
@@ -43,6 +47,7 @@ signals:
     void dataSend(QByteArray data);
 
     void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
@@ -100,6 +105,7 @@ protected:
 
         connect(devAddr[addr], &DevQProperty::binFrameOut, this, &Device::binFrameOut);
         connect(devAddr[addr], &DevQProperty::chartComplete, this, &Device::chartComplete);
+        connect(devAddr[addr], &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
         connect(devAddr[addr], &DevQProperty::distComplete, this, &Device::distComplete);
         connect(devAddr[addr], &DevQProperty::upgradeProgressChanged, this, &Device::upgradeProgressChanged);
 

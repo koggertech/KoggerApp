@@ -4,19 +4,17 @@ import QtQuick.Controls 2.4
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
-MenuViewer {
-    id: viewerDeviceSettings
+MenuScroll {
+    id: scrollBar
 
-    MenuScroll {
-        id: scrollBar
+    ColumnLayout {
+        width: parent.width
 
-        ColumnLayout {
-            width: parent.width
-            spacing: 10
+        spacing: 10
 
-            ExportDist {
-            }
-
+        ExportDist {
+            Layout.preferredWidth: parent.width
         }
+
     }
 }

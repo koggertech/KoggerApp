@@ -4,29 +4,20 @@ import QtQuick.Layouts 1.3
 
 ComboBox {
     id: control
-    font.pointSize: 12
-
-    StyleSet {
-        id:styleSet
-    }
 
     delegate: ItemDelegate {
         id: itemDelegate
         width: control.width
-        implicitHeight: 30
-        contentItem: Text {
+        implicitHeight: 26
+        contentItem: CText {
             text: modelData
-            antialiasing: false
-            color: styleSet.colorControllText
-
-            font: control.font
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
 
         background: Rectangle{
-            color: itemDelegate.highlighted ? styleSet.colorControllBackActive : "transparent"
-            border.color: styleSet.colorControllBorder
+            color: itemDelegate.highlighted ? theme.controlSolidBackColor : "transparent"
+            border.color: theme.controlBorderColor
             border.width: itemDelegate.highlighted ? 1 : 0
         }
 
@@ -58,19 +49,17 @@ ComboBox {
                 context.closePath();
             }
 
-            context.fillStyle = control.down ? styleSet.colorControllTextActive : styleSet.colorControllText
+            context.fillStyle = control.down ? theme.textColor : theme.textColor
             context.fill();
         }
     }
 
-    contentItem: Text {
+    contentItem: CText {
         antialiasing: false
         leftPadding: 15
         rightPadding: control.indicator.width + control.spacing
 
         text: control.displayText
-        font: control.font
-        color: control.down ? styleSet.colorControllTextActive : styleSet.colorControllText
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
@@ -78,11 +67,10 @@ ComboBox {
     background:  Rectangle {
         id: backRect
         implicitWidth: 100
-        implicitHeight: styleSet.controllHeight
+        implicitHeight: 26
         radius: 1
-        color: control.down ? styleSet.colorControllBackActive : styleSet.colorControllBack
-        opacity: styleSet.controllBackOpacity
-        border.color: control.down ? styleSet.colorControllBorderActive : styleSet.colorControllBorder
+        color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
+        border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor
         border.width: 1
     }
 
@@ -108,11 +96,10 @@ ComboBox {
         background: Rectangle {
             id: popupRect
             implicitWidth: 100
-            implicitHeight: styleSet.controllHeight
+            implicitHeight: 26
             radius: 1
-            color: control.down ? styleSet.colorControllBack : styleSet.colorControllBack
-            opacity: styleSet.controllBackOpacity
-            border.color: control.down ? styleSet.colorControllBorderActive : styleSet.colorControllBorder
+            color: theme.controlBackColor
+            border.color: theme.controlBorderColor
             border.width: 1
         }
     }

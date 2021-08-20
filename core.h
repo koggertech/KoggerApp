@@ -61,6 +61,7 @@ public slots:
     bool openConnectionAsSerial(const QString &name, int baudrate, bool mode);
     bool devsConnection();
     bool openConnectionAsFile(const QString &name);
+    bool openConnectionAsIP(const QString &address, const int port, bool is_tcp);
     bool isOpenConnection();
     bool closeConnection();
 
@@ -72,7 +73,7 @@ public slots:
     void setLogging(bool is_logging);
     bool isLogging();
 
-    bool exportPlotAsCVS();
+    bool exportPlotAsCVS(QString file_path);
 
 #ifdef FLASHER
     bool factoryFlash(const QString &name, int sn, QString pn);

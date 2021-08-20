@@ -8,6 +8,7 @@ WaterFall::WaterFall(QQuickItem* parent)
 {
     connect(m_updateTimer, &QTimer::timeout, this, [&] { timerUpdater(); });
     m_updateTimer->start(30);
+    setAcceptedMouseButtons(Qt::AllButtons);
 }
 
 void WaterFall::paint(QPainter *painter){
@@ -22,6 +23,24 @@ void WaterFall::setPlot(PlotCash *plot) {
     if(plot == nullptr) { return; }
     m_plot = plot;
     connect(m_plot, &PlotCash::updatedImage, this, [&] { updater(); });
+}
+
+void WaterFall::horScrollEvent(int delta) {
+    if(m_plot != nullptr) {
+        m_plot->scrollTimeline(delta);
+    }
+}
+
+void WaterFall::verZoomEvent(int delta) {
+    if(m_plot != nullptr) {
+        m_plot->verZoom(delta);
+    }
+}
+
+void WaterFall::verScrollEvent(int delta) {
+    if(m_plot != nullptr) {
+        m_plot->verScroll(delta);
+    }
 }
 
 void WaterFall::timerUpdater() {

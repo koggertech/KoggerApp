@@ -7,6 +7,7 @@ Core::Core() : QObject(),
 {
     connect(&_devs, &Device::chartComplete, m_plot, &PlotCash::addChart);
     connect(&_devs, &Device::distComplete, m_plot, &PlotCash::addDist);
+    connect(&_devs, &Device::attitudeComplete, m_plot, &PlotCash::addAtt);
     connect(&_devs, &Device::positionComplete, m_plot, &PlotCash::addPosition);
 
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
@@ -112,6 +113,18 @@ bool Core::openConnectionAsFile(const QString &name) {
     return true;
 }
 
+bool Core::openConnectionAsIP(const QString &address, const int port, bool is_tcp) {
+    connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
+    connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
+
+    connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
+    connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
+    connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
+    connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
+    m_connection->openIP(address, port, is_tcp);
+    return false;
+}
+
 bool Core::isOpenConnection() {
     return m_connection->isOpen();
 }
@@ -186,12 +199,16 @@ bool Core::isLogging() {
     return _isLogging;
 }
 
-bool Core::exportPlotAsCVS() {
-    _logger.creatExportStream();
+bool Core::exportPlotAsCVS(QString file_path) {
+    _logger.creatExportStream(file_path);
 
     _logger.dataExport("Meas. number, Event timestamp, Event ID, Distance, Processing distance\n");
 
     int row_cnt = m_plot->poolSize();
+
+    int prev_timestamp = 0;
+    int prev_event_id = 0;
+    int prev_dist_proc = 0;
 
     for(int i = 0; i < row_cnt; i++) {
         PoolDataset* dataset = m_plot->fromPool(i);
@@ -199,10 +216,10 @@ bool Core::exportPlotAsCVS() {
         row_data.append(QString("%1,").arg(i));
 
         if(dataset->eventAvail()) {
-            row_data.append(QString("%1,%2,").arg(dataset->eventTimestamp()).arg(dataset->eventID()));
-        } else {
-            row_data.append(",,");
+            prev_timestamp = dataset->eventTimestamp();
+            prev_event_id = dataset->eventID();
         }
+        row_data.append(QString("%1,%2,").arg(prev_timestamp).arg(prev_event_id));
 
         if(dataset->distAvail()) {
             row_data.append(QString("%1,").arg((float)dataset->distData()*0.001f));
@@ -211,10 +228,10 @@ bool Core::exportPlotAsCVS() {
         }
 
         if(dataset->distProccesingAvail()) {
-            row_data.append(QString("%1,").arg((float)dataset->distProccesing()*0.001f));
-        } else {
-            row_data.append(",");
+            prev_dist_proc = dataset->distProccesing();
         }
+
+        row_data.append(QString("%1,").arg((float)(prev_dist_proc)*0.001f));
 
         row_data.append("\n");
         _logger.dataExport(row_data);

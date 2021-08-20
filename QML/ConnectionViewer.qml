@@ -23,9 +23,7 @@ Item {
     onDevListChanged: {
         devTab0.visible = devs.isCreatedId(0)
         if(devs.isCreatedId(0)) { dev = devList[0] }
-
         devTab1.visible = devs.isCreatedId(1)
-
         devTab2.visible = devs.isCreatedId(2)
     }
 
@@ -44,7 +42,7 @@ Item {
 
             CCombo  {
                 id: connectionTypeCombo
-                model: ["Serial", "File"]
+                model: ["Serial", "File", "IP"]
 
                 Settings {
                     property alias connectionType: connectionTypeCombo.currentIndex
@@ -77,6 +75,14 @@ Item {
                 model: [9600, 18200, 38400, 57600, 115200, 230400, 460800, 921600]
                 currentIndex: 4
 
+//                onCurrentTextChanged: {
+//                    if(connectionButton.connection) {
+//                        dev.baudrate = Number(baudrateCombo.currentText)
+
+//                        core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText), false)
+//                    }
+//                }
+
                 Settings {
                     property alias serialBaudrate: baudrateCombo.currentIndex
                 }
@@ -103,6 +109,66 @@ Item {
 
                 background: Rectangle {
                     color: "#505050"
+                }
+            }
+
+            TextField {
+                id: ipAddressText
+                hoverEnabled: true
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "IP"
+                padding: 4
+                font.family: "Bahnschrift"; font.pointSize: 14;
+                color: "#E07000"
+
+                text: "192.168.4.1"
+//                inputMask: "999.999.999.999;_"
+                placeholderText: ""
+
+                Keys.onPressed: {
+                    if (event.key === 16777220) {
+//                        core.openConnectionAsFile(pathText.text);
+                        console.info(ipAddressText.text)
+                    }
+                }
+
+                background: Rectangle {
+                    color: "#505050"
+                }
+
+                Settings {
+                    property alias ipAddressText: ipAddressText.text
+                }
+            }
+
+
+
+            TextField {
+                id: ipPortText
+                hoverEnabled: true
+                Layout.fillWidth: false
+                implicitWidth: 80
+                visible: connectionTypeCombo.currentText === "IP"
+                padding: 4
+                font.family: "Bahnschrift"; font.pointSize: 14;
+                color: "#E07000"
+
+
+                text: "14444"
+                placeholderText: qsTr("Port")
+
+                Keys.onPressed: {
+                    if (event.key === 16777220) {
+//                        core.openConnectionAsFile(pathText.text);
+                    }
+                }
+
+                background: Rectangle {
+                    color: "#505050"
+                }
+
+                Settings {
+                    property alias ipPortText: ipPortText.text
                 }
             }
 
@@ -139,11 +205,29 @@ Item {
             CButton {
                 id: connectionButton
                 property bool connection: false
-                width: 30
-                implicitHeight: 30
+                implicitHeight: 26
+                implicitWidth: implicitHeight + 3
                 visible: connectionTypeCombo.currentText !== "File"
 
                 text: ""
+
+//                ToolTip {
+//                    id: control
+//                    text: qsTr("A descriptive tool tip of what the button does")
+//                    visible: connectionButton.hovered
+//                    implicitWidth: 100
+//                    implicitHeight: 100
+
+//                    contentItem: Text {
+//                        text: control.text
+//                        font: control.font
+//                        color: "#21be2b"
+//                    }
+
+//                    background: Rectangle {
+//                        border.color: "#21be2b"
+//                    }
+//                }
 
                 onClicked: {
                     if(connection) {
@@ -151,8 +235,8 @@ Item {
                     } else {
                         if(connectionTypeCombo.currentText === "Serial") {
                             core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText), false)
-                        } else if(connectionTypeCombo.currentText === "File") {
-//                            core.openConnectionAsFile(pathText.text);
+                        } else if(connectionTypeCombo.currentText === "IP") {
+                            core.openConnectionAsIP(ipAddressText.text, Number(ipPortText.text), true);
                         }
                     }
                 }
@@ -208,7 +292,7 @@ Item {
             Layout.margins: 10
             Layout.topMargin: -5
             spacing: 10
-            visible: connectionTypeCombo.currentText === "Serial"
+            visible: connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP"
 
             CCheck {
                 id: loggingCheck
@@ -224,6 +308,27 @@ Item {
             }
         }
 
+
+//        RowLayout {
+//            Layout.fillWidth: true
+//            ListView {
+//                height: 320
+//                width: 100
+//                Layout.fillWidth: true
+//                model: Qt.fontFamilies()
+
+//                delegate: Item {
+//                    height: 40;
+//                    width: ListView.view.width
+//                    Text {
+//                        anchors.centerIn: parent
+//                        text: modelData;
+//                        color: "#FFFFFF"
+//                    }
+//                }
+//            }
+//        }
+
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: 10
@@ -232,11 +337,11 @@ Item {
 
             CButton {
                 id: devTab0
-                text: devList[0].devName + "\nSN:" + devList[0].devSN
-                Layout.fillWidth: false
-                implicitHeight: 50
-
+                text: devList[0].devName + " [" + devList[0].devSN + "]"
+                Layout.fillWidth: true
+                implicitHeight: 24
                 opacity: dev === devList[0] ? 1 : 0.5
+
                 onClicked: {
                     dev = devList[0]
                 }
@@ -244,10 +349,9 @@ Item {
 
             CButton {
                 id: devTab1
-                text: devList[1].devName + "\nSN:" + devList[1].devSN
-                Layout.fillWidth: false
-                implicitHeight: 30
-
+                text: devList[1].devName + " [" + devList[1].devSN + "]"
+                Layout.fillWidth: true
+                implicitHeight: 24
                 opacity: dev === devList[1] ? 1 : 0.5
 
                 onClicked: {
@@ -257,10 +361,9 @@ Item {
 
             CButton {
                 id: devTab2
-                text: devList[2].devName + "\nSN:" + devList[2].devSN
-                Layout.fillWidth: false
-                implicitHeight: 30
-
+                text: devList[2].devName + " [" + devList[2].devSN + "]"
+                Layout.fillWidth: true
+                implicitHeight: 24
                 opacity: dev === devList[2] ? 1 : 0.5
 
                 onClicked: {

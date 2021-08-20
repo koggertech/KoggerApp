@@ -45,5 +45,13 @@
         <file>DSPSettings.qml</file>
         <file>ExportSettings.qml</file>
         <file>ExportDist.qml</file>
+        <file>SonarBox.qml</file>
+        <file>ParamSetup.qml</file>
+        <file>ParamGroup.qml</file>
+        <file>SonarDatasetBox.qml</file>
+        <file>CText.qml</file>
+        <file>code-working.svg</file>
+        <file>conn.png</file>
+        <file>CRadioDel.qml</file>
     </qresource>
 </RCC>

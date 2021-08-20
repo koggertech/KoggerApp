@@ -30,7 +30,10 @@ void Device::putData(const QByteArray &data) {
             if(prot_bin.id() == 48) {
                 int timestamp = prot_bin.read<U4>();
                 int id = prot_bin.read<U4>();
-                core.plot()->addEvent(timestamp, id);
+                if(id < 100) {
+                    core.plot()->addEvent(timestamp, id);
+                }
+//                core.plot()->addEvent(timestamp, id);
 //                core.consoleProto(prot_bin);
             }
 

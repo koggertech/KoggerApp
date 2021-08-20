@@ -61,7 +61,6 @@ DevSettingsBox {
                 }
 
                 RowLayout {
-
                     Text {
                         x: 35
                         y: height

@@ -28,79 +28,80 @@ Item {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
+            Layout.preferredWidth: 59
+            Layout.topMargin: 10
 
             ColumnLayout {
                 Layout.fillHeight: true
                 Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 10
-                spacing: 0
 
                 MenuButton {
                     id: menuSettings
-                    Layout.margins: 4
-                    text: "Set"
+                    icon.source: "./code-working.svg"
+                    Layout.fillWidth: true
 
                     onPressed: {
                         itemChangeActive(menuSettings)
                     }
                 }
 
-                MenuButton {
-                    id: menuDisplay
-                    Layout.margins: 4
-                    text: "Dsp"
+//                MenuButton {
+//                    id: menuDisplay
+//                    Layout.margins: 4
+//                    text: "Dsp"
 
-                    onPressed: {
-                        itemChangeActive(menuDisplay)
-                    }
-                }
+//                    onPressed: {
+//                        itemChangeActive(menuDisplay)
+//                    }
+//                }
 
-                MenuButton {
-                    id: menuExport
-                    Layout.margins: 4
-                    text: "Exp"
+//                MenuButton {
+//                    id: menuExport
+//                    Layout.margins: 4
+//                    text: "Exp"
 
-                    onPressed: {
-                        itemChangeActive(menuExport)
-                    }
-                }
+//                    onPressed: {
+//                        itemChangeActive(menuExport)
+//                    }
+//                }
             }
 
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.margins: 4
 
                 MenuBlock {
                 }
 
-                CCheck {
-                    id: chartEnable
-                    checked: true
-                    Layout.alignment: Qt.AlignHCenter
+//                CCheck {
+//                    id: chartEnable
+//                    checked: true
+//                    Layout.alignment: Qt.AlignHCenter
+//                    Layout.fillWidth: true
+
+//                    font.pixelSize: 14
+//                    text: "Chr"
+
+//                    Settings {
+//                        property alias chartEnable: chartEnable.checked
+//                    }
+
+//                    onCheckedChanged: {
+//                        core.setChartVis(checked);
+//                    }
+//                    opacity: 0.8
+//                }
+
+                CText {
                     Layout.fillWidth: true
-
-                    font.pixelSize: 14
-                    text: "Chr"
-
-                    Settings {
-                        property alias chartEnable: chartEnable.checked
-                    }
-
-                    onCheckedChanged: {
-                        core.setChartVis(checked);
-                    }
-                    opacity: 0.8
-                }
-
-                Text {
+                    Layout.topMargin: 10
                     visible: chartEnable.checked
-                    Layout.alignment: Qt.AlignHCenter
+                    horizontalAlignment: Text.AlignHCenter
                     text: chartLevel.stopValue + " dB"
-                    font.pixelSize: 14
-                    color: "#909090"
+                    small: true
                 }
 
                 ChartLevel {
+                    Layout.fillWidth: true
                     id: chartLevel
                     visible: chartEnable.checked
                     Layout.alignment: Qt.AlignHCenter
@@ -114,92 +115,83 @@ Item {
                     }
                 }
 
-                Text {
+                CText {
+                    Layout.fillWidth: true
+                    Layout.bottomMargin: 10
                     visible: chartEnable.checked
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.bottomMargin: 8
+                    horizontalAlignment: Text.AlignHCenter
 
                     text: chartLevel.startValue + " dB"
-                    font.pixelSize: 14
-                    color: "#909090"
+                    small: true
                 }
 
-                CCheck {
-                    id: distEnable
-                    checked: true
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.fillWidth: true
-                    font.pixelSize: 14
-                    text: "Dst"
+//                CCheck {
+//                    id: distEnable
+//                    checked: true
+//                    Layout.alignment: Qt.AlignHCenter
+//                    Layout.fillWidth: true
+//                    text: "Dst"
 
-                    Settings {
-                        property alias distEnable: distEnable.checked
-                    }
+//                    Settings {
+//                        property alias distEnable: distEnable.checked
+//                    }
 
-                    onCheckedChanged: {
-                        plot.setDistVis(checked);
-                    }
-                    opacity: 0.8
-                }
+//                    onCheckedChanged: {
+//                        plot.setDistVis(checked);
+//                    }
+//                }
 
-                CCheck {
-                    id: distProcEnable
-                    checked: true
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.fillWidth: true
-                    font.pixelSize: 14
-                    text: "Prcs"
+//                CCheck {
+//                    id: distProcEnable
+//                    checked: true
+//                    Layout.alignment: Qt.AlignHCenter
+//                    Layout.fillWidth: true
+//                    text: "Prcs"
 
-                    Settings {
-                        property alias distProcEnable: distProcEnable.checked
-                    }
+//                    Settings {
+//                        property alias distProcEnable: distProcEnable.checked
+//                    }
 
-                    onCheckedChanged: {
-                        plot.setDistProcVis(checked);
-                    }
-                    opacity: 0.8
-                }
+//                    onCheckedChanged: {
+//                        plot.setDistProcVis(checked);
+//                    }
+//                }
 
-                CCheck {
-                    id: oscilloscopeEnable
-                    checked: false
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.fillWidth: true
-                    font.pixelSize: 14
-                    text: "Osc"
+//                CCheck {
+//                    id: oscilloscopeEnable
+//                    checked: false
+//                    Layout.alignment: Qt.AlignHCenter
+//                    Layout.fillWidth: true
+//                    text: "Osc"
 
-                    Settings {
-                        property alias oscilloscopeEnable: oscilloscopeEnable.checked
-                    }
+//                    Settings {
+//                        property alias oscilloscopeEnable: oscilloscopeEnable.checked
+//                    }
 
-                    onCheckedChanged: {
-                        core.setOscVis(checked);
-                    }
+//                    onCheckedChanged: {
+//                        core.setOscVis(checked);
+//                    }
+//                }
+//            }
 
-                    opacity: 0.8
-                }
-            }
+//            ColumnLayout {
+//                Layout.alignment: Qt.AlignHCenter
+//                Layout.margins: 4
 
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.margins: 4
+//                MenuBlock {
+//                }
 
-                MenuBlock {
-                }
+//                CCheck {
+//                    id: consoleEnable
+//                    checked: false
+//                    Layout.alignment: Qt.AlignHCenter
+//                    Layout.fillWidth: true
+//                    text: "Cns"
 
-                CCheck {
-                    id: consoleEnable
-                    checked: false
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.fillWidth: true
-                    font.pixelSize: 14
-                    text: "Cns"
-                    opacity: 0.8
-
-                    Settings {
-                        property alias consoleEnable: consoleEnable.checked
-                    }
-                }
+//                    Settings {
+//                        property alias consoleEnable: consoleEnable.checked
+//                    }
+//                }
             }
         }
 
@@ -207,27 +199,27 @@ Item {
             id: devSettings
             Layout.alignment: Qt.AlignTop
             visible: menuSettings.active
-            height: menu.height
-            width: 580
+            Layout.maximumHeight: menu.height
+            width: 500
             y:0
         }
 
-        DiplaySettingsViewer {
-            id: menuDispVeawer
-            Layout.alignment: Qt.AlignTop
-            visible: menuDisplay.active
-            height: menu.height
-            width: 580
-            y:0
-        }
+//        DiplaySettingsViewer {
+//            id: menuDispVeawer
+//            Layout.alignment: Qt.AlignTop
+//            visible: menuDisplay.active
+//            Layout.maximumHeight: menu.height
+//            width: 580
+//            y:0
+//        }
 
-        ExportSettings{
-            id: menuExportVeawer
-            Layout.alignment: Qt.AlignTop
-            visible: menuExport.active
-            height: menu.height
-            width: 580
-            y:0
-        }
+//        ExportSettings{
+//            id: menuExportVeawer
+//            Layout.alignment: Qt.AlignTop
+//            visible: menuExport.active
+//            Layout.maximumHeight: menu.height
+//            width: 500
+//            y:0
+//        }
     }
 }

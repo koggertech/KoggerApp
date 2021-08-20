@@ -23,7 +23,7 @@ public slots:
     bool isOpen() { return m_logFile->isOpen();}
 
 
-    bool creatExportStream();
+    bool creatExportStream(QString str);
     bool dataExport(QString str);
     bool endExportStream();
 

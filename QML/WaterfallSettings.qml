@@ -28,24 +28,24 @@ Item {
                 font.pointSize: 12
             }
 
-            CCombo  {
-                id: waterfallTheme
-                Layout.fillWidth: true
-                model: ["Classic", "Sepia", "WRGBD", "WhiteBlack", "BlackWhite"]
-                currentIndex: 1
+//            CCombo  {
+//                id: waterfallTheme
+//                Layout.fillWidth: true
+//                model: ["Classic", "Sepia", "WRGBD", "WhiteBlack", "BlackWhite"]
+//                currentIndex: 1
 
-                onCurrentIndexChanged: {
-                    plot.themeId = currentIndex
-                }
+//                onCurrentIndexChanged: {
+//                    plot.themeId = currentIndex
+//                }
 
-                Component.onCompleted: {
-                    plot.themeId = currentIndex
-                }
+//                Component.onCompleted: {
+//                    plot.themeId = currentIndex
+//                }
 
-                Settings {
-                    property alias waterfallTheme: waterfallTheme.currentIndex
-                }
-            }
+//                Settings {
+//                    property alias waterfallTheme: waterfallTheme.currentIndex
+//                }
+//            }
         }
     }
 

@@ -18,6 +18,7 @@ public:
     void setDist(int dist);
     void setPosition(uint32_t date, uint32_t time, double lat, double lon);
     void setEncoders(int16_t enc1, int16_t enc2 = 0xFFFF, int16_t enc3 = 0xFFFF, int16_t = 0xFFFF, int16_t = 0xFFFF, int16_t enc6 = 0xFFFF);
+    void setAtt(float yaw, float pitch, float roll);
 
     bool eventAvail() { return flags.eventAvail; }
     int eventID() { return _eventId; }
@@ -33,30 +34,37 @@ public:
     int distProccesing() { return m_processingDist; }
     bool distProccesingAvail() { return flags.processDistAvail; }
 
+    bool isAttAvail() { return _attitude.is_avail; }
+
     void doDistProccesing() {
-        int raw_size = m_chartData.size();
-        int16_t* src = m_chartData.data();
+        const int raw_size = m_chartData.size();
+        const int16_t* src = m_chartData.data();
 
         if(raw_size != 0 && !distProccesingAvail()) {
             m_processingDistData.resize(raw_size);
+            m_processingDistData.fill(0);
             int16_t* procData = m_processingDistData.data();
 
-            float avrg = src[2]*3;
-            for(int i = 0; i < raw_size; i ++) {
-                float val = src[i];
 
-                procData[i] = (val*1.2 - avrg)*(((float)(i*m_chartResol)*0.00003 + 1.0));
-                if(procData[i] < 0) {
-                    procData[i] = 0;
-                } else if(procData[i] > 255) {
-                    procData[i] = 255;
-                }
+//            float avrg = src[2]*3;
+            for(int i = 6; i < raw_size - 11; i ++) {
+//                float val = src[i];
 
-                if(avrg > val) {
-                    avrg = avrg*0.2f + val*0.8;
-                } else {
-                    avrg = avrg*0.95f + val*0.05;
-                }
+//                procData[i] = (val*1.2 - avrg)*(((float)(i*m_chartResol)*0.00003 + 1.0));
+
+                procData[i] = ((src[i+2] + src[i+3]*2 + src[i+4]*3 + src[i+5]*3 + src[i+6]*4 + src[i+7]*4 + src[i+7]*3 + src[i+8]*3 + src[i+9]*2 + src[i+10]) + (((float)(i*m_chartResol)*0.001 + 1.0)) - (src[i] + src[i-1]*2 + src[i-2]*2 + src[i-3]*2 + src[i-4]*2 + src[i-5]*2 + src[i-6]))/16;
+
+//                if(procData[i] < 0) {
+//                    procData[i] = 0;
+//                } else if(procData[i] > 255) {
+//                    procData[i] = 255;
+//                }
+
+//                if(avrg > val) {
+//                    avrg = avrg*0.2f + val*0.8;
+//                } else {
+//                    avrg = avrg*0.95f + val*0.05;
+//                }
             }
 
             int index_max = 0;
@@ -66,6 +74,10 @@ public:
                     val_max = procData[i];
                     index_max = i;
                 }
+
+//                if(i*m_chartResol > 18000) {
+//                    break;
+//                }
             }
 
             flags.processDistAvail = true;
@@ -133,11 +145,11 @@ public:
 //            doEdgeProccesing();
 //        }
 
-        if(edgeProcAvail) {
-            src = m_processingEdgeData.data();
-        } else {
+//        if(distProccesingAvail()) {
+//            src = m_processingDistData.data();
+//        } else {
             src = m_chartData.data();
-        }
+//        }
 
         if(raw_size == 0) {
             for(int i_to = 0; i_to < len; i_to++) {
@@ -178,6 +190,9 @@ public:
         }
     }
 
+    QVector<int16_t> m_processingDistData;
+    QVector<int16_t> m_processingEdgeData;
+
 protected:
     QVector<int16_t> m_chartData;
     int m_chartResol;
@@ -189,8 +204,12 @@ protected:
     int _eventTimestamp = 0;
     int _eventId = 0;
 
-    QVector<int16_t> m_processingDistData;
-    QVector<int16_t> m_processingEdgeData;
+    struct {
+        float yaw = 0, pitch = 0, roll = 0;
+        bool is_avail = false;
+    } _attitude;
+
+
 
     struct {
         uint32_t date;
@@ -253,10 +272,14 @@ public slots:
     void addTimestamp(int timestamp);
     void addChart(QVector<int16_t> data, int resolution, int offset);
     void addDist(int dist);
+    void addAtt(float yaw, float pitch, float roll);
     void addPosition(uint32_t date, uint32_t time, double lat, double lon);
     void setStartLevel(int level);
     void setStopLevel(int level);
     void setTimelinePosition(double position);
+    void scrollTimeline(int delta);
+    void verZoom(int delta);
+    void verScroll(int delta);
     void setChartVis(bool visible);
     void setOscVis(bool visible);
     void setDistVis(bool visible);
@@ -285,11 +308,18 @@ protected:
     bool m_distSonarVis = true;
     bool m_distProcessingVis = true;
     bool m_distCalcVis = true;
+    bool _is_attitudeVis = false;
     bool isDistProcessing = false;
     int _themId;
     int lastEventTimestamp = 0;
     int lastEventId = 0;
 
+    enum {
+        AutoRangeNone,
+        AutoRangeLast,
+        AutoRangeMax,
+        AutoRangeMaxVis
+    } _autoRange = AutoRangeLast;
 
 
     QVector<PoolDataset> m_pool;
@@ -301,6 +331,7 @@ protected:
         int processingDistData = -1;
         int poolIndex = -1;
         bool poolIndexUpdate = true;
+
     } ValueCash;
     int m_valueCashStart = 0;
 
@@ -314,6 +345,8 @@ protected:
     QImage m_image;
     uint16_t m_dataImage[2600*2000];
     int m_prevLineWidth = 30;
+
+    float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
 
     struct  {
         bool resetValue;
@@ -335,6 +368,7 @@ protected:
     int poolIndex(int index_offset = 0) {
         int index = index_offset;
         if(index >= poolSize()) { index = poolLastIndex(); }
+        else if(index < 0) { index = -1; }
         return index;
     }
 

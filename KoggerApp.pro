@@ -1,6 +1,7 @@
 QT += quick
 QT += serialport
 QT += widgets
+QT += network
 
 CONFIG += c++11
 
@@ -52,6 +53,7 @@ HEADERS += \
     DevQProperty.h \
     IDBinnary.h \
     ProtoBinnary.h \
+    Themes.h \
     connection.h \
     console.h \
     consolelistmodel.h \

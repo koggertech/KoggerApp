@@ -57,6 +57,8 @@ public:
     void setDatasetChart(int ch_param);
     int datasetTemp();
     void setDatasetTemp(int ch_param);
+    int datasetEuler();
+    void setDatasetEuler(int ch_param);
     int datasetSDDBT();
     void setDatasetSDDBT(int ch_param);
     int datasetSDDBT_P2();
@@ -85,6 +87,10 @@ public:
 
     int soundSpeed();
     void setSoundSpeed(int speed);
+
+    float yaw();
+    float pitch();
+    float roll();
 
     void setBusAddress(int addr);
     int getBusAddress();
@@ -124,6 +130,7 @@ signals:
     void binFrameOut(ProtoBinOut &proto_out);
 
     void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();

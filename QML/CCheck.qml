@@ -5,35 +5,29 @@ CheckBox {
      id: control
      text: "Check"
 
-     StyleSet {
-         id: styleSet
-     }
-
      indicator: Rectangle {
-         implicitWidth: 18
-         implicitHeight: 18
-//         radius: 9
+         implicitWidth: 19
+         implicitHeight: 19
+         radius: 1
          x: control.leftPadding
          y: parent.height / 2 - height / 2
-         color: styleSet.colorControllBack
-         border.color: styleSet.colorControllBorder
+         color: theme.controlBackColor
+         border.color: control.checked ? "#F0F0F0" : "#C0C0C0"
+         border.width: 1
 
          Rectangle {
-             width: 12
-             height: 12
-//             radius: 6
-             x: 3
-             y: 3
-             color: "#A0F0F0"
+             width: 11
+             height: 11
+             x: 4
+             y: 4
+             radius: 1
+             color: "#D0D0D0"
              visible: control.checked
          }
      }
 
-     contentItem: Text {
+     contentItem: CText {
          text: control.text
-         font: control.font
-         opacity: 0.9
-         color: styleSet.colorControllText
          verticalAlignment: Text.AlignVCenter
          leftPadding: control.indicator.width + control.spacing
      }

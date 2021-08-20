@@ -92,4 +92,20 @@ ColumnLayout {
             }
         }
     }
+
+    RowLayout {
+        CCheck {
+            id:switchDatasetAttYPR
+            checked: dev.datasetEuler === channelNumber
+            text: "Euler"
+
+            onCheckStateChanged: {
+                if(checked == true && dev.datasetEuler !== channelNumber) {
+                    dev.datasetEuler = channelNumber
+                } else if(checked == false && dev.datasetEuler === channelNumber) {
+                    dev.datasetEuler = 0
+                }
+            }
+        }
+    }
 }

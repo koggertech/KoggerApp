@@ -6,14 +6,14 @@ import QtQuick.Layouts 1.12
 SpinBox {
     id: control
     value: 50
-    editable: true
     from: 20
     to: 30000
+    editable: true
     font.pixelSize: 16
     padding: 2
 
-    implicitHeight: styleSet.controllHeight - 6
-    implicitWidth: 110
+    implicitHeight: 22
+    implicitWidth: 150
 
     StyleSet {
         id: styleSet
@@ -25,8 +25,8 @@ SpinBox {
         id:textInput
         text: control.textFromValue(control.value, control.locale)
         width: control.width
-        font: control.font
-        color: styleSet.colorControllText
+        font: theme.textFont
+        color: theme.textColor
         selectionColor: styleSet.colorControllTextActive
         selectedTextColor: "#ffffff"
         horizontalAlignment: Qt.AlignHCenter
@@ -52,7 +52,7 @@ SpinBox {
         y: 0
         opacity: 1
         height: parent.height
-        width: parent.height
+        width: parent.height + 6
         contextType: "2d"
 
         property bool pressed: control.up.pressed
@@ -79,11 +79,11 @@ SpinBox {
             context.lineTo(width - width_button, height);
 
             context.closePath();
-            context.fillStyle = enabled ? (pressed ? "#909090" : styleSet.colorControllBackActive) : "#505050"
+            context.fillStyle = enabled ? (pressed ? "#D0D0D0" : "#A0A0A0") : "#505050"
             context.fill();
 
             context.lineWidth = 1
-            context.strokeStyle = enabled ? (pressed ? "#909090" : "#808080") : "#606060"
+            context.strokeStyle = enabled ? (pressed ? "#FFFFFF" : "#B0B0B0") : "#404040"
             context.stroke()
 
 
@@ -107,7 +107,7 @@ SpinBox {
             context.lineTo(mid_icon_x - radius_icon, mid_height + tickness_icon);
 
             context.closePath();
-            context.fillStyle = enabled ? styleSet.colorControllBack : "#505050"
+            context.fillStyle = enabled ? "#101010" : "#404040"
             context.fill();
         }
     }
@@ -130,7 +130,7 @@ SpinBox {
         y: 0
         opacity: 1
         height: parent.height
-        width: parent.height
+        width: parent.height + 6
         contextType: "2d"
         property bool pressed: control.down.pressed
 
@@ -156,11 +156,11 @@ SpinBox {
             context.lineTo(width_button, height);
 
             context.closePath();
-            context.fillStyle = enabled ? (pressed ? "#909090" : styleSet.colorControllBackActive) : "#505050"
+            context.fillStyle = enabled ? (pressed ? "#D0D0D0" : "#A0A0A0") : "#505050"
             context.fill();
 
             context.lineWidth = 1
-            context.strokeStyle = enabled ? (pressed ? "#909090" : "#808080") : "#606060"
+            context.strokeStyle = enabled ? (pressed ? "#FFFFFF" : "#B0B0B0") : "#404040"
             context.stroke()
 
 
@@ -174,20 +174,20 @@ SpinBox {
             context.lineTo(mid_icon_x + radius_icon, mid_height - tickness_icon);
             context.lineTo(mid_icon_x - radius_icon, mid_height - tickness_icon);
             context.closePath();
-            context.fillStyle =  enabled ? styleSet.colorControllBack : "#505050"
+            context.fillStyle =  enabled ? "#101010" : "#404040"
             context.fill();
 
         }
     }
 
     background: Rectangle {
-        x: down.indicator.width + 2
+        x: down.indicator.width
         y: 0
-        width: control.width - downCanvas.width - upCanvas.width - 4
+        width: control.width - downCanvas.width - upCanvas.width
         height: control.height
-        opacity: styleSet.controllBackOpacity*0.7
+        opacity: 0.3
 
-        color: styleSet.colorControllBack
+        color: "#303030"
         border.color: styleSet.colorControllBorder
     }
 

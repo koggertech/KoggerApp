@@ -15,16 +15,20 @@ public:
     virtual void paint(QPainter *painter);
 
     void setPlot(PlotCash* plot);
-private:
+
+protected:
     PlotCash* m_plot = nullptr;
     QTimer* m_updateTimer;
     bool m_needUpdate = true;
 
-private slots:
+protected slots:
     void timerUpdater();
 
 public slots:
     void updater();
+    void horScrollEvent(int delta);
+    void verZoomEvent(int delta);
+    void verScrollEvent(int delta);
 
 };
 

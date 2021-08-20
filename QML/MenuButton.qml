@@ -7,12 +7,10 @@ Button {
     property bool active: false
 
     id: control
-    Layout.preferredWidth: 58
-    Layout.preferredHeight: 28
-    Layout.alignment: Qt.AlignTop
-    opacity: 0.8
+    Layout.preferredHeight: 30
+    padding: 0
 
-    font.pointSize: 10;
+    icon.color: theme.textColor
 
     background: Rectangle {
         id: backRect
@@ -22,22 +20,18 @@ Button {
         radius: 1
     }
 
-    contentItem: Text {
-        text: control.text
-        font: control.font
-        opacity: 1.0
-        color: "#BBBBBB"
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignTop
-    }
+//    contentItem: CText {
+//        text: control.text
+//        horizontalAlignment: Text.AlignHCenter
+//        verticalAlignment: Text.AlignTop
+//        font.pointSize: 20
+//    }
 
     onActiveChanged: {
         if(control.active) {
             backRect.color =  "#606060"
-            opacity = 1
         } else {
             backRect.color =  "#303030"
-            opacity = 0.8
         }
     }
 }

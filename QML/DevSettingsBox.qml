@@ -1,6 +1,7 @@
-import QtQuick 2.0
+import QtQuick 2.12
+import QtQuick.Layouts 1.3
 
-Item {
+GridLayout {
     property var dev: null
     property bool isActive: false
     visible: dev !== null && isActive

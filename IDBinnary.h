@@ -13,7 +13,8 @@ typedef enum {
     BoardNBase = 4,
     BoardChirp = 5,
     BoardAssist = 6,
-    BoardNEnhanced = 7
+    BoardNEnhanced = 7,
+    BoardAssistMicro = 9,
 } BoardVersion;
 
 class IDBin : public QObject
@@ -234,8 +235,8 @@ public:
 
     void setDist_v0(U1 ch_id) {
         setFlag(ch_id, MASK_DIST_V0);
-        moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
-//        setFlag(0, MASK_DIST_SDDBT);
+        moveFlag(ch_id,    MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
+        setFlag(0, MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
     }
     void resetDist_v0(U1 ch_id) { resetFlag(ch_id, MASK_DIST_V0); }
     bool getDist_v0(U1 ch_id) { return flag(ch_id, MASK_DIST_V0); }
@@ -255,9 +256,16 @@ public:
     void resetAttitude_v1(U1 ch_id) { resetFlag(ch_id, MASK_ATTITUDE_V1); }
     bool getAttitude_v1(U1 ch_id) { return flag(ch_id, MASK_ATTITUDE_V1); }
 
-    void setTemp_v0(U1 ch_id) { setFlag(ch_id, MASK_TEMP_V0); }
+    void setTemp_v0(U1 ch_id) {
+        setFlag(ch_id, MASK_TEMP_V0);
+        moveFlag(ch_id,  MASK_TEMP_V0);
+    }
     void resetTemp_v0(U1 ch_id) { resetFlag(ch_id, MASK_TEMP_V0); }
     bool getTemp_v0(U1 ch_id) { return flag(ch_id, MASK_TEMP_V0); }
+
+    void setEuler(U1 ch_id) { setFlag(ch_id, MASK_ATTITUDE_V0); }
+    void resetEuler(U1 ch_id) { resetFlag(ch_id, MASK_ATTITUDE_V0); }
+    bool getEuler(U1 ch_id) { return flag(ch_id, MASK_ATTITUDE_V0); }
 
     void setTimestamp_v0(U1 ch_id) { setFlag(ch_id, MASK_TIMESTAMP_V0); }
     void resetTimestamp_v0(U1 ch_id) { resetFlag(ch_id, MASK_TIMESTAMP_V0); }
@@ -266,7 +274,7 @@ public:
     void setSDDBT(U1 ch_id) {
         setFlag(ch_id, MASK_DIST_SDDBT);
         moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
-//        setFlag(0, MASK_DIST_V0);
+        setFlag(0, MASK_DIST_V0 | MASK_DIST_SDDBT_P2);
     }
     void resetSDDBT(U1 ch_id) { resetFlag(ch_id, MASK_DIST_SDDBT); }
     bool getSDDBT(U1 ch_id) { return flag(ch_id, MASK_DIST_SDDBT); }
@@ -274,6 +282,8 @@ public:
     void setSDDBT_P2(U1 ch_id) {
         setFlag(ch_id, MASK_DIST_SDDBT_P2);
         moveFlag(ch_id,  MASK_DIST_V0 | MASK_CHART_V0 | MASK_DIST_SDDBT | MASK_DIST_SDDBT_P2);
+        setFlag(0, MASK_DIST_V0 | MASK_DIST_SDDBT);
+
     }
     void resetSDDBT_P2(U1 ch_id) { resetFlag(ch_id, MASK_DIST_SDDBT_P2); }
     bool getSDDBT_P2(U1 ch_id) { return flag(ch_id, MASK_DIST_SDDBT_P2); }

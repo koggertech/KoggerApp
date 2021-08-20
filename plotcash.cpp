@@ -1,5 +1,7 @@
 #include "plotcash.h"
 
+#include <core.h>
+extern Core core;
 
 PoolDataset::PoolDataset() {
     m_chartData.clear();
@@ -45,6 +47,13 @@ void PoolDataset::setEncoders(int16_t enc1, int16_t enc2, int16_t enc3, int16_t 
     encoder.valid = true;
 }
 
+void PoolDataset::setAtt(float yaw, float pitch, float roll) {
+    _attitude.yaw = yaw;
+    _attitude.pitch = pitch;
+    _attitude.roll = roll;
+    _attitude.is_avail = true;
+}
+
 PlotCash::PlotCash() {
     resetDataset();
 
@@ -82,8 +91,11 @@ void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
         m_pool[poolLastIndex()].doDistProccesing();
     }
 
-    m_offset = offset;
-    m_range = data.length()*resolution;
+    if(_autoRange != AutoRangeNone) {
+        m_offset = offset;
+        m_range = data.length()*resolution;
+    }
+
     updateImage(true);
 }
 
@@ -96,6 +108,21 @@ void PlotCash::addDist(int dist) {
 
     m_pool[poolLastIndex()].setDist(dist);
     updateImage(true);
+}
+
+void PlotCash::addAtt(float yaw, float pitch, float roll) {
+    int pool_index = poolLastIndex();
+    if(pool_index < 0) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
+    m_pool[poolLastIndex()].setAtt(yaw, pitch, roll);
+    _lastYaw = yaw;
+    _lastPitch = pitch;
+    _lastRoll = roll;
+
+//   qInfo("Euler: yaw %f, pitch %f, roll %f", _lastYaw, _lastPitch, _lastRoll);
+    updateImage();
 }
 
 void PlotCash::addPosition(uint32_t date, uint32_t time, double lat, double lon) {
@@ -146,7 +173,68 @@ void PlotCash::setTimelinePosition(double position) {
     if(m_lineVisibleCount > poolSize()) {
         m_lineVisibleCount = poolSize();
     }
-    m_offsetLine = (int)(position*(double)(poolSize() - m_lineVisibleCount));
+    m_offsetLine = (int)(position*(double)(poolSize() - m_lineVisibleCount/2));
+    updateImage(true);
+}
+
+void PlotCash::scrollTimeline(int delta) {
+    int new_pos = m_offsetLine + delta/2;
+    if(new_pos < 0) {
+        new_pos = 0;
+    } else if(new_pos > poolSize() - m_image.width()) {
+        new_pos = poolSize() - m_image.width();
+    }
+
+    m_offsetLine = new_pos;
+    updateImage(true);
+}
+
+void PlotCash::verZoom(int delta) {
+    if(delta == 0) return;
+
+    float zoom = delta < 0 ? -delta*0.001f : delta*0.001f;
+    int delta_range = ((int)((float)m_range*zoom)/1000)*1000;
+    int new_range = 0;
+
+    qInfo("delta %i", delta_range);
+
+    if(delta_range < 100) {
+        delta_range = 100;
+    } else if(delta_range > 5000) {
+        delta_range = 5000;
+    }
+
+    if(delta > 0) {
+        new_range = m_range + delta_range;
+    } else {
+        new_range = m_range - delta_range;
+    }
+
+    if(new_range < 1000) {
+        new_range = 1000;
+    } else if(new_range > 100000) {
+        new_range = 100000;
+    }
+    m_range = new_range;
+    updateImage(true);
+}
+
+void PlotCash::verScroll(int delta) {
+    int delta_offset = (float)m_range*(float)delta*0.0002;
+    if(delta_offset > 0 && delta_offset < 100) {
+        delta_offset = 100;
+    } else if(delta_offset < 0 && delta_offset > -100) {
+        delta_offset = -100;
+    }
+
+    int new_offset = m_offset + (delta_offset/100)*100;
+    if(new_offset < 0) {
+        new_offset = 0;
+    } else if(new_offset > 100000) {
+        new_offset = 100000;
+    }
+    m_offset = new_offset;
+
     updateImage(true);
 }
 
@@ -277,17 +365,17 @@ void PlotCash::updateValueMap(int width, int height) {
     int pool_index = poolIndex(pool_last_index);
     if(pool_index >= 0) {
         if(m_pool[pool_index].chartAvail())  {
-            m_pool[pool_last_index].chartTo(0, m_range, data_column, size_column);
+            m_pool[pool_last_index].chartTo(m_offset,m_offset + m_range, data_column, size_column);
         } else {
             memset(data_column, 0, size_column*2);
         }
 
         if(m_pool[pool_index].distAvail()) {
-            m_prevValueCash.distData = m_pool[pool_index].distData();
+            m_prevValueCash.distData = m_pool[pool_index].distData() - m_offset;
         }
     }
 
-    int pool_offset_index = pool_last_index - m_offsetLine - width;
+    int pool_offset_index = pool_last_index - m_offsetLine;
     m_valueCashStart = qAbs(pool_offset_index % width);
 
     bool force_reset = flags.resetValue = true;
@@ -299,7 +387,7 @@ void PlotCash::updateValueMap(int width, int height) {
             val_col -= width;
         }
 
-        int pool_ind = poolIndex(pool_offset_index + column);
+        int pool_ind = poolIndex(pool_offset_index + (column - width));
         if(m_valueCash[val_col].poolIndex != pool_ind || force_reset) {
             m_valueCash[val_col].poolIndex = pool_ind;
             m_valueCash[val_col].poolIndexUpdate = true;
@@ -320,7 +408,7 @@ void PlotCash::updateValueMap(int width, int height) {
         if(pool_index >= 0) {
             if(m_chartVis) {
                 if(m_pool[pool_index].chartAvail()) {
-                    m_pool[pool_index].chartTo(0, m_range, data_column, size_column);
+                    m_pool[pool_index].chartTo(m_offset, m_offset + m_range, data_column, size_column);
                 } else {
                     memset(data_column, 0, size_column*2);
                 }
@@ -328,7 +416,7 @@ void PlotCash::updateValueMap(int width, int height) {
 
             if(m_distSonarVis) {
                 if(m_pool[pool_index].distAvail()) {
-                    m_valueCash[column].distData = m_pool[pool_index].distData();
+                    m_valueCash[column].distData = m_pool[pool_index].distData() - m_offset;
                 } else {
                     m_valueCash[column].distData = -1;
                 }
@@ -336,7 +424,7 @@ void PlotCash::updateValueMap(int width, int height) {
 
             if(m_distProcessingVis) {
                 if(m_pool[pool_index].distProccesingAvail()) {
-                    m_valueCash[column].processingDistData = m_pool[pool_index].distProccesing();
+                    m_valueCash[column].processingDistData = m_pool[pool_index].distProccesing() - m_offset;
                 } else {
                     m_valueCash[column].processingDistData = -1;
                 }
@@ -372,7 +460,7 @@ void PlotCash::updateImage(int width, int height) {
 
         int16_t* raw_col = m_prevValueCash.chartData.data();
         for (int row = 0; row < height; row++) {
-            int16_t index_map = (float)(raw_col[row] - index_offset)*index_map_scale;
+            int32_t index_map = (float)(raw_col[row] - index_offset)*index_map_scale;
             if(index_map < 0) { index_map = 0;
             } else if(index_map > 255) { index_map = 255; }
 
@@ -510,28 +598,41 @@ QImage PlotCash::getImage(QSize size) {
         updateImage(size.width(), size.height());
 
         QPainter p(&m_image);
-        p.setPen(QColor::fromRgb(100, 100, 100));
-        p.setFont(QFont("Asap", 13, QFont::Normal));
+        p.setPen(QColor::fromRgb(200, 200, 200));
+        p.setFont(QFont("Asap", 14, QFont::Normal));
 
         int nbr_hor_div = m_verticalGridNum;
         for (int i = 1; i < nbr_hor_div; i++) {
             int offset_y = m_image.height()*i/nbr_hor_div;
+            p.setPen(QColor::fromRgb(100, 100, 100));
             p.drawLine(0, offset_y, m_image.width(), offset_y);
 
             float range_text = (float)(m_range*i/nbr_hor_div + m_offset)*m_legendMultiply;
+            p.setPen(QColor::fromRgb(200, 200, 200));
             p.drawText(m_image.width() - m_prevLineWidth - 70, offset_y - 10, QString::number((double)range_text) + QStringLiteral(" m"));
         }
 
         p.drawLine(m_image.width() - m_prevLineWidth, 0, m_image.width() - m_prevLineWidth, m_image.height());
-        p.setFont(QFont("Asap", 24, QFont::Normal));
-        p.drawText(m_image.width() - m_prevLineWidth - 80, m_image.height() - 10, QString::number((double)((m_range + m_offset)*m_legendMultiply)) + QStringLiteral(" m"));
+        p.setPen(QColor::fromRgb(250, 250, 250));
+        p.setFont(QFont("Asap", 26, QFont::Normal));
+        QString range_text = QString::number((double)((m_range + m_offset)*m_legendMultiply)) + QStringLiteral(" m");
+        p.drawText(m_image.width() - m_prevLineWidth - 30 - range_text.count()*15, m_image.height() - 10, range_text);
 
         if(m_distSonarVis) {
-            p.setPen(QColor::fromRgb(200, 50, 0));
+            p.setPen(QColor::fromRgb(250, 70, 0));
             int disp_dist = m_prevValueCash.distData;
             if(disp_dist >= 0) {
-                p.drawText(m_image.width() - m_prevLineWidth - 80, m_image.height() - 60, QString::number((double)(m_prevValueCash.distData)*0.001) + QStringLiteral(" m"));
+                QString rangefinder_text = QString::number((double)(m_prevValueCash.distData)*0.001) + QStringLiteral(" m");
+                p.drawText(m_image.width() - m_prevLineWidth - 30 - rangefinder_text.count()*15, m_image.height() - 60, rangefinder_text);
             }
+        }
+
+        if(_is_attitudeVis) {
+            p.setFont(QFont("Asap", 16, QFont::Normal));
+            p.setPen(QColor::fromRgb(200, 50, 200));
+            p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 70, QString("Yaw: %1").arg(_lastYaw));
+            p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 45, QString("Pitch: %1").arg(_lastPitch));
+            p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 20, QString("Roll: %1").arg(_lastRoll));
         }
     }
 

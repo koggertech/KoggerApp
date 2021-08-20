@@ -88,7 +88,7 @@ void DevDriver::setBaudrate(int baudrate) {
     if(!m_state.connect) return;
     bool is_changed = getBaudrate() != baudrate;
     idUART->setBaudrate(baudrate);
-    if(is_changed) { emit transChanged(); }
+    if(is_changed) { emit UARTChanged(); }
 }
 
 int DevDriver::getBaudrate() {
@@ -228,6 +228,18 @@ void DevDriver::setSoundSpeed(int speed) {
     bool is_changed = transBoost() != speed;
     idSoundSpeed->setSoundSpeed(speed);
     if(is_changed) { emit soundChanged(); }
+}
+
+float DevDriver::yaw() {
+    return idAtt->yaw();
+}
+
+float DevDriver::pitch() {
+    return idAtt->pitch();
+}
+
+float DevDriver::roll() {
+    return idAtt->roll();
 }
 
 void DevDriver::flashSettings() {
@@ -398,6 +410,25 @@ void DevDriver::setDatasetTemp(int ch_param) {
     if(is_changed) { emit datasetChanged();  }
 }
 
+int DevDriver::datasetEuler() {
+    int ch_param = 0;
+    if(idDataset->getEuler(1)) {
+        ch_param |= 1;
+    }
+    if(idDataset->getEuler(2)) {
+        ch_param |= 2;
+    }
+    return ch_param;
+}
+
+void DevDriver::setDatasetEuler(int ch_param) {
+    if(!m_state.connect) return;
+    bool is_changed = (ch_param != datasetEuler());
+    idDataset->setEuler(ch_param);
+    idDataset->commit();
+    if(is_changed) { emit datasetChanged();  }
+}
+
 int DevDriver::datasetSDDBT() {
     int ch_param = 0;
     if(idDataset->getSDDBT(1)) {
@@ -435,6 +466,7 @@ void DevDriver::setDatasetSDDBT_P2(int ch_param) {
     idDataset->commit();
     if(is_changed) {  emit datasetChanged(); }
 }
+
 
 int DevDriver::ch1Period() {
     return (int)idDataset->period(1);
@@ -477,6 +509,8 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
+//    qInfo("Euler: yaw %f, pitch %f, roll %f", idAtt->yaw(), idAtt->pitch(), idAtt->roll());
+    emit attitudeComplete(idAtt->yaw(), idAtt->pitch(), idAtt->roll());
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
@@ -522,25 +556,31 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
             }
             break;
         case BoardEnhanced:
-            m_devName = "Sonar Enhanced";
+            m_devName = "2D-Enhanced";
             break;
         case BoardChirp:
-            m_devName = "Sonar Chirp";
+            m_devName = "2D-Chirp";
             break;
         case BoardBase:
-            m_devName = "Sonar Base";
+            m_devName = "2D-Base";
             break;
         case BoardNBase:
-            m_devName = "Sonar Base2";
+            m_devName = "2D-Base";
             break;
+
         case BoardAssist:
+        case BoardAssistMicro:
             m_devName = "Assist";
+            break;
+
         case BoardNEnhanced:
-            m_devName = "Sonar Enhanced2";
+            m_devName = "2D-Enhanced";
             break;
         default:
             m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
         }
+
+        qInfo("board info %u", idVersion->boardVersion());
         emit deviceVersionChanged();
     }
 }
