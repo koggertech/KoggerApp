@@ -28,7 +28,7 @@ Item {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
-            Layout.preferredWidth: 59
+            Layout.preferredWidth: theme.controlHeight*2
             Layout.topMargin: 10
 
             ColumnLayout {
@@ -45,25 +45,15 @@ Item {
                     }
                 }
 
-//                MenuButton {
-//                    id: menuDisplay
-//                    Layout.margins: 4
-//                    text: "Dsp"
+                MenuButton {
+                    id: menuDisplay
+                    Layout.fillWidth: true
+                    icon.source: "./settings-outline.svg"
 
-//                    onPressed: {
-//                        itemChangeActive(menuDisplay)
-//                    }
-//                }
-
-//                MenuButton {
-//                    id: menuExport
-//                    Layout.margins: 4
-//                    text: "Exp"
-
-//                    onPressed: {
-//                        itemChangeActive(menuExport)
-//                    }
-//                }
+                    onPressed: {
+                        itemChangeActive(menuDisplay)
+                    }
+                }
             }
 
             ColumnLayout {
@@ -72,24 +62,6 @@ Item {
                 MenuBlock {
                 }
 
-//                CCheck {
-//                    id: chartEnable
-//                    checked: true
-//                    Layout.alignment: Qt.AlignHCenter
-//                    Layout.fillWidth: true
-
-//                    font.pixelSize: 14
-//                    text: "Chr"
-
-//                    Settings {
-//                        property alias chartEnable: chartEnable.checked
-//                    }
-
-//                    onCheckedChanged: {
-//                        core.setChartVis(checked);
-//                    }
-//                    opacity: 0.8
-//                }
 
                 CText {
                     Layout.fillWidth: true
@@ -124,74 +96,6 @@ Item {
                     text: chartLevel.startValue + " dB"
                     small: true
                 }
-
-//                CCheck {
-//                    id: distEnable
-//                    checked: true
-//                    Layout.alignment: Qt.AlignHCenter
-//                    Layout.fillWidth: true
-//                    text: "Dst"
-
-//                    Settings {
-//                        property alias distEnable: distEnable.checked
-//                    }
-
-//                    onCheckedChanged: {
-//                        plot.setDistVis(checked);
-//                    }
-//                }
-
-//                CCheck {
-//                    id: distProcEnable
-//                    checked: true
-//                    Layout.alignment: Qt.AlignHCenter
-//                    Layout.fillWidth: true
-//                    text: "Prcs"
-
-//                    Settings {
-//                        property alias distProcEnable: distProcEnable.checked
-//                    }
-
-//                    onCheckedChanged: {
-//                        plot.setDistProcVis(checked);
-//                    }
-//                }
-
-//                CCheck {
-//                    id: oscilloscopeEnable
-//                    checked: false
-//                    Layout.alignment: Qt.AlignHCenter
-//                    Layout.fillWidth: true
-//                    text: "Osc"
-
-//                    Settings {
-//                        property alias oscilloscopeEnable: oscilloscopeEnable.checked
-//                    }
-
-//                    onCheckedChanged: {
-//                        core.setOscVis(checked);
-//                    }
-//                }
-//            }
-
-//            ColumnLayout {
-//                Layout.alignment: Qt.AlignHCenter
-//                Layout.margins: 4
-
-//                MenuBlock {
-//                }
-
-//                CCheck {
-//                    id: consoleEnable
-//                    checked: false
-//                    Layout.alignment: Qt.AlignHCenter
-//                    Layout.fillWidth: true
-//                    text: "Cns"
-
-//                    Settings {
-//                        property alias consoleEnable: consoleEnable.checked
-//                    }
-//                }
             }
         }
 
@@ -200,26 +104,17 @@ Item {
             Layout.alignment: Qt.AlignTop
             visible: menuSettings.active
             Layout.maximumHeight: menu.height
-            width: 500
+            width: theme.controlHeight*20
             y:0
         }
 
-//        DiplaySettingsViewer {
-//            id: menuDispVeawer
-//            Layout.alignment: Qt.AlignTop
-//            visible: menuDisplay.active
-//            Layout.maximumHeight: menu.height
-//            width: 580
-//            y:0
-//        }
-
-//        ExportSettings{
-//            id: menuExportVeawer
-//            Layout.alignment: Qt.AlignTop
-//            visible: menuExport.active
-//            Layout.maximumHeight: menu.height
-//            width: 500
-//            y:0
-//        }
+        DiplaySettingsViewer {
+            id: appSettings
+            Layout.alignment: Qt.AlignTop
+            visible: menuDisplay.active
+            Layout.maximumHeight: menu.height
+            width: theme.controlHeight*20
+            y:0
+        }
     }
 }

@@ -111,17 +111,7 @@ QString DevDriver::devPN() {
 
 }
 
-void DevDriver::nmeaComplete(ProtoNMEA &proto) {
-    if(proto.isEqualId("RMC")) {
-        uint32_t time_ms = proto.readTimems();
-        proto.skip();
-        double lat = proto.readLatitude();
-        double lon = proto.readLongitude();
-        emit positionComplete(0xFFFFFFFF, time_ms, lat, lon);
-    }
-}
-
-void DevDriver::protoComplete(ProtoBinIn &proto) {
+void DevDriver::protoComplete(ProtoKP1In &proto) {
     m_state.mark = proto.mark();
 
     if(hashIDParsing.contains(proto.id())) {
@@ -570,7 +560,7 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
 
         case BoardAssist:
         case BoardAssistMicro:
-            m_devName = "Assist";
+            m_devName = "Recorder";
             break;
 
         case BoardNEnhanced:

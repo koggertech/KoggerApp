@@ -17,6 +17,12 @@ void PoolDataset::setEvent(int timestamp, int id) {
     flags.eventAvail = true;
 }
 
+void PoolDataset::setEncoder(float encoder) {
+    _encoder = encoder;
+    flags.encoderAvail = true;
+}
+
+
 void PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
     m_chartResol = resolution;
     m_chartOffset = offset;
@@ -73,6 +79,15 @@ void PlotCash::addEvent(int timestamp, int id) {
     m_pool[poolLastIndex()].setEvent(timestamp, id);
 }
 
+void PlotCash::addEncoder(float encoder) {
+    _lastEncoder = encoder;
+    if(poolLastIndex() < 0) {
+        poolAppend();
+    }
+//    poolAppend();
+    m_pool[poolLastIndex()].setEncoder(_lastEncoder);
+}
+
 void PlotCash::addTimestamp(int timestamp) {
 }
 
@@ -126,12 +141,13 @@ void PlotCash::addAtt(float yaw, float pitch, float roll) {
 }
 
 void PlotCash::addPosition(uint32_t date, uint32_t time, double lat, double lon) {
+
     int pool_index = poolLastIndex();
     if(pool_index < 0) {
         poolAppend();
         pool_index = poolLastIndex();
     }
-    m_pool[poolLastIndex()].setPosition(date, time, lat, lon);
+    m_pool[pool_index].setPosition(date, time, lat, lon);
 }
 
 void PlotCash::setColorScheme(QVector<QColor> coloros, QVector<int> levels) {
@@ -266,6 +282,22 @@ void PlotCash::setDistProcVis(bool visible) {
     updateImage(true);
 }
 
+void PlotCash::setEncoderVis(bool visible) {
+    _is_encoderVis = visible;
+    updateImage(true);
+}
+
+void PlotCash::setImageType(int image_type) {
+    _imageType = image_type;
+    resetValue();
+    updateImage(true);
+}
+
+void PlotCash::setAHRSVis(bool visible) {
+    _is_attitudeVis = visible;
+    updateImage(true);
+}
+
 void PlotCash::updateImage(bool update_value) {
     bool send_update = false;
 
@@ -365,7 +397,7 @@ void PlotCash::updateValueMap(int width, int height) {
     int pool_index = poolIndex(pool_last_index);
     if(pool_index >= 0) {
         if(m_pool[pool_index].chartAvail())  {
-            m_pool[pool_last_index].chartTo(m_offset,m_offset + m_range, data_column, size_column);
+            m_pool[pool_last_index].chartTo(m_offset,m_offset + m_range, data_column, size_column, _imageType);
         } else {
             memset(data_column, 0, size_column*2);
         }
@@ -408,7 +440,7 @@ void PlotCash::updateValueMap(int width, int height) {
         if(pool_index >= 0) {
             if(m_chartVis) {
                 if(m_pool[pool_index].chartAvail()) {
-                    m_pool[pool_index].chartTo(m_offset, m_offset + m_range, data_column, size_column);
+                    m_pool[pool_index].chartTo(m_offset, m_offset + m_range, data_column, size_column, _imageType);
                 } else {
                     memset(data_column, 0, size_column*2);
                 }
@@ -629,10 +661,16 @@ QImage PlotCash::getImage(QSize size) {
 
         if(_is_attitudeVis) {
             p.setFont(QFont("Asap", 16, QFont::Normal));
-            p.setPen(QColor::fromRgb(200, 50, 200));
+            p.setPen(QColor::fromRgb(250, 200, 50));
             p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 70, QString("Yaw: %1").arg(_lastYaw));
             p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 45, QString("Pitch: %1").arg(_lastPitch));
             p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 20, QString("Roll: %1").arg(_lastRoll));
+        }
+
+        if(_is_encoderVis) {
+            p.setFont(QFont("Asap", 16, QFont::Normal));
+            p.setPen(QColor::fromRgb(250, 200, 50));
+            p.drawText(m_image.width() - m_prevLineWidth - 250, m_image.height() - 100, QString("Encoder: %1").arg(_lastEncoder*0.000001f));
         }
     }
 

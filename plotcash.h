@@ -14,6 +14,7 @@ class PoolDataset {
 public:
     PoolDataset();
     void setEvent(int timestamp, int id);
+    void setEncoder(float encoder);
     void setChart(QVector<int16_t> chartData, int resolution, int offset);
     void setDist(int dist);
     void setPosition(uint32_t date, uint32_t time, double lat, double lon);
@@ -36,6 +37,10 @@ public:
 
     bool isAttAvail() { return _attitude.is_avail; }
 
+    double lat() { return m_position.lat; }
+    double lon() { return m_position.lon; }
+    bool isPosAvail() { return flags.posAvail; }
+
     void doDistProccesing() {
         const int raw_size = m_chartData.size();
         const int16_t* src = m_chartData.data();
@@ -45,26 +50,8 @@ public:
             m_processingDistData.fill(0);
             int16_t* procData = m_processingDistData.data();
 
-
-//            float avrg = src[2]*3;
             for(int i = 6; i < raw_size - 11; i ++) {
-//                float val = src[i];
-
-//                procData[i] = (val*1.2 - avrg)*(((float)(i*m_chartResol)*0.00003 + 1.0));
-
                 procData[i] = ((src[i+2] + src[i+3]*2 + src[i+4]*3 + src[i+5]*3 + src[i+6]*4 + src[i+7]*4 + src[i+7]*3 + src[i+8]*3 + src[i+9]*2 + src[i+10]) + (((float)(i*m_chartResol)*0.001 + 1.0)) - (src[i] + src[i-1]*2 + src[i-2]*2 + src[i-3]*2 + src[i-4]*2 + src[i-5]*2 + src[i-6]))/16;
-
-//                if(procData[i] < 0) {
-//                    procData[i] = 0;
-//                } else if(procData[i] > 255) {
-//                    procData[i] = 255;
-//                }
-
-//                if(avrg > val) {
-//                    avrg = avrg*0.2f + val*0.8;
-//                } else {
-//                    avrg = avrg*0.95f + val*0.05;
-//                }
             }
 
             int index_max = 0;
@@ -74,10 +61,6 @@ public:
                     val_max = procData[i];
                     index_max = i;
                 }
-
-//                if(i*m_chartResol > 18000) {
-//                    break;
-//                }
             }
 
             flags.processDistAvail = true;
@@ -113,12 +96,12 @@ public:
                 }
             }
 
-            float avrg = max_of_start*3.0f;
+            float avrg = max_of_start*1.f;
             for(int i = 0; i < raw_size; i ++) {
                 float val = src[i];
 
-                avrg += (val - avrg)*0.05f;
-                procData[i] = (val - avrg*0.5f)*(0.9f +float(i*m_chartResol)*0.00005f)*1.2f;
+                avrg += (val - avrg)*(0.05f + avrg*0.0006);
+                procData[i] = (val - avrg*0.55f)*(0.9f +float(i*m_chartResol)*0.000025f)*1.4f;
 
                 if(procData[i] < 0) {
                     procData[i] = 0;
@@ -135,21 +118,21 @@ public:
         flags.processDistAvail = false;
     }
 
-    void chartTo(int start, int end, int16_t* dst, int len, bool addition = false) {
+    void chartTo(int start, int end, int16_t* dst, int len, int image_type) {
         if(dst == nullptr) {  return; }
         int raw_size = m_chartData.size();
 
         int16_t* src;
 
-//        if(!edgeProcAvail) {
-//            doEdgeProccesing();
-//        }
+        if(image_type == 1 && !edgeProcAvail) {
+            doEdgeProccesing();
+        }
 
-//        if(distProccesingAvail()) {
-//            src = m_processingDistData.data();
-//        } else {
+        if(image_type == 1 && edgeProcAvail) {
+            src = m_processingEdgeData.data();
+        } else {
             src = m_chartData.data();
-//        }
+        }
 
         if(raw_size == 0) {
             for(int i_to = 0; i_to < len; i_to++) {
@@ -182,11 +165,8 @@ public:
                 val = 0;
             }
             src_start = src_end;
-            if(addition) {
-                dst[i_to] += val;
-            } else {
-                dst[i_to] = val;
-            }
+            dst[i_to] = val;
+
         }
     }
 
@@ -204,6 +184,8 @@ protected:
     int _eventTimestamp = 0;
     int _eventId = 0;
 
+    float _encoder;
+
     struct {
         float yaw = 0, pitch = 0, roll = 0;
         bool is_avail = false;
@@ -212,10 +194,10 @@ protected:
 
 
     struct {
-        uint32_t date;
-        uint32_t time;
-        double lat;
-        double lon;
+        uint32_t date = 0;
+        uint32_t time = 0;
+        double lat = 0;
+        double lon = 0;
     } m_position;
 
     struct {
@@ -229,6 +211,7 @@ protected:
     } encoder;
 
     struct {
+        bool encoderAvail = false;
         bool eventAvail = false;
         bool timestampAvail = false;
         bool chartAvail = false;
@@ -255,6 +238,7 @@ public:
     };
 
     Q_PROPERTY(int themeId WRITE setThemeId)
+    Q_PROPERTY(int imageType WRITE setImageType)
     Q_PROPERTY(int distProcessing WRITE doDistProcessing)
 
     int poolSize();
@@ -269,6 +253,7 @@ public:
 
 public slots:
     void addEvent(int timestamp, int id);
+    void addEncoder(float encoder);
     void addTimestamp(int timestamp);
     void addChart(QVector<int16_t> data, int resolution, int offset);
     void addDist(int dist);
@@ -284,6 +269,9 @@ public slots:
     void setOscVis(bool visible);
     void setDistVis(bool visible);
     void setDistProcVis(bool visible);
+    void setEncoderVis(bool visible);
+    void setImageType(int image_type);
+    void setAHRSVis(bool visible);
     void updateImage(bool update_value = false);
     void renderValue();
     void resetValue();
@@ -309,10 +297,14 @@ protected:
     bool m_distProcessingVis = true;
     bool m_distCalcVis = true;
     bool _is_attitudeVis = false;
+    bool _is_encoderVis = false;
     bool isDistProcessing = false;
     int _themId;
     int lastEventTimestamp = 0;
     int lastEventId = 0;
+    float _lastEncoder = 0;
+
+    int _imageType = 0;
 
     enum {
         AutoRangeNone,

@@ -71,6 +71,8 @@ Window  {
                 MouseArea {
                     id: mousearea
 
+
+
                     enabled: true
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -91,6 +93,8 @@ Window  {
                         }
                     }
 
+                    onPressAndHold: contextMenu.popup()
+
                     Menu {
                         id: contextMenu
                         title: "Waterfall settings"
@@ -102,8 +106,8 @@ Window  {
                             }
 
                             background: Rectangle {
-                                implicitWidth: 200
-                                height: 32
+                                implicitWidth: 300
+                                height: theme.controlHeight
                                 color: theme.menuBackColor
                                 border.color: theme.controlBorderColor
                                 border.width: 1
@@ -112,8 +116,8 @@ Window  {
 
                             arrow: Canvas {
                                 x: parent.width - width
-                                implicitWidth: 32
-                                implicitHeight: 32
+                                implicitWidth: theme.controlHeight
+                                implicitHeight: theme.controlHeight
                                 visible: menuItem.subMenu
                                 onPaint: {
                                     var ctx = getContext("2d")
@@ -128,13 +132,15 @@ Window  {
                         }
 
                         background: Rectangle {
-                            implicitWidth: 200
-                            height: 7*32
+                            implicitWidth: 300
+                            height: 9*theme.controlHeight
                             color: theme.menuBackColor
                             border.color: theme.controlBorderColor
                             border.width: 1
                             radius: 1
                         }
+
+
 
                         Menu {
                             id: popup_themes
@@ -146,10 +152,11 @@ Window  {
                             ListView {
                                 id: popupThemeList
                                 model: ["Blue", "Sepia", "WRGBD", "WhiteBlack", "BlackWhite"]
-                                height: popupThemeList.count*32
-                                width: 200
+                                height: popupThemeList.count*theme.controlHeight
+                                width: 300
                                 delegate: CRadioDel {
                                     ButtonGroup.group: buttonGroup
+                                    implicitWidth: popupThemeList.width
                                     text: modelData
                                     checked: index == popupThemeList.currentIndex
                                     onCheckedChanged: popupThemeList.currentIndex = index
@@ -168,7 +175,7 @@ Window  {
 
                             background: Rectangle {
                                 implicitWidth: popupThemeList.width
-                                height: popupThemeList.count*32
+                                height: popupThemeList.count*theme.controlHeight
                                 color: theme.menuBackColor
                                 border.color: theme.controlBorderColor
                                 border.width: 1
@@ -176,68 +183,121 @@ Window  {
                             }
                         }
 
+                        Menu {
+                            id: echogramTypes
 
-                        CCheck {
-                            id: echogramVisible
-                            text: "Echogram"
-                            onCheckedChanged: plot.setChartVis(checked)
-                            Component.onCompleted: plot.setChartVis(checked)
-                        }
-
-                        CCheck {
-                            id: rangefinderVisible
-                            text: "Rangefinder"
-                            onCheckedChanged: plot.setDistVis(checked)
-                            Component.onCompleted: plot.setDistVis(checked)
-                        }
-
-                        CCheck {
-                            id: postProcVisible
-                            text: "Post-Processing"
-                            onCheckedChanged: plot.setDistProcVis(checked)
-                            Component.onCompleted: plot.setDistProcVis(checked)
-                        }
-
-                        CCheck {
-                            id: oscilVisible
-                            text: "Oscilloscope"
-                            onCheckedChanged: plot.setOscVis(checked)
-                            Component.onCompleted: plot.setOscVis(checked)
-                        }
-
-                        CCheck {
-                            id: consoleVisible
-                            text: "Console"
-                        }
-
-                        Settings {
-                            property alias echogramVisible: echogramVisible.checked
-                            property alias rangefinderVisible: rangefinderVisible.checked
-                            property alias postProcVisible: postProcVisible.checked
-                            property alias oscilVisible: oscilVisible.checked
-                            property alias consoleVisible: consoleVisible.checked
-                        }
-
-                        CButton {
-                            text: "Export"
-                            implicitHeight: 32
+                            title: "Echogram Types"
+                            font: theme.textFont
 
 
-
-                            FileDialog {
-                                id: exportFileDialog
-                                folder: shortcuts.home
-                                selectExisting: false
-                                nameFilters: ["(*.csv)", "(*.txt)", "(*.*)"]
-
-                                onAccepted: {
-                                    core.exportPlotAsCVS(exportFileDialog.fileUrl.toString());
+                            ListView {
+                                id: echogramTypesList
+                                model: ["Default", "Optimized"]
+                                height: echogramTypesList.count*theme.controlHeight
+                                width: 300
+                                delegate: CRadioDel {
+                                    ButtonGroup.group: echogramTypesGroup
+                                    implicitWidth: popupThemeList.width
+                                    text: modelData
+                                    checked: index == echogramTypesList.currentIndex
+                                    onCheckedChanged: echogramTypesList.currentIndex = index
                                 }
 
-                                onRejected: { }
+                                ButtonGroup { id: echogramTypesGroup }
+
+                                onCurrentIndexChanged: plot.imageType = currentIndex
+                                Component.onCompleted: plot.imageType = currentIndex
+
+                                Settings {
+                                    property alias echogramTypesList: echogramTypesList.currentIndex
+                                }
                             }
 
-                            onClicked: exportFileDialog.open()
+
+                            background: Rectangle {
+                                implicitWidth: echogramTypesList.width
+                                height: echogramTypesList.count*theme.controlHeight
+                                color: theme.menuBackColor
+                                border.color: theme.controlBorderColor
+                                border.width: 1
+                                radius: 1
+                            }
+                        }
+
+                        ColumnLayout {
+                            spacing: 0
+                            CCheck {
+                                id: echogramVisible
+                                checked: true
+                                text: "Echogram"
+                                onCheckedChanged: plot.setChartVis(checked)
+                                Component.onCompleted: plot.setChartVis(checked)
+                            }
+
+                            CCheck {
+                                id: rangefinderVisible
+                                text: "Rangefinder"
+                                onCheckedChanged: plot.setDistVis(checked)
+                                Component.onCompleted: plot.setDistVis(checked)
+                            }
+
+                            CCheck {
+                                id: postProcVisible
+                                text: "Post-Processing"
+                                onCheckedChanged: plot.setDistProcVis(checked)
+                                Component.onCompleted: plot.setDistProcVis(checked)
+                            }
+
+                            CCheck {
+                                id: oscilVisible
+                                text: "Oscilloscope"
+                                onCheckedChanged: plot.setOscVis(checked)
+                                Component.onCompleted: plot.setOscVis(checked)
+                            }
+
+                            CCheck {
+                                id: ahrsVisible
+                                text: "AHRS"
+                                onCheckedChanged: plot.setAHRSVis(checked)
+                                Component.onCompleted: plot.setAHRSVis(checked)
+                            }
+
+                            CCheck {
+                                id: encoderVisible
+                                text: "Encoders"
+                                onCheckedChanged: plot.setEncoderVis(checked)
+                                Component.onCompleted: plot.setEncoderVis(checked)
+                            }
+
+                            Settings {
+                                property alias echogramVisible: echogramVisible.checked
+                                property alias rangefinderVisible: rangefinderVisible.checked
+                                property alias postProcVisible: postProcVisible.checked
+                                property alias oscilVisible: oscilVisible.checked
+                                property alias ahrsVisible: ahrsVisible.checked
+                                property alias encoderVisible: encoderVisible.checked
+                            }
+
+                            CButton {
+                                text: "Export"
+                                Layout.fillWidth: true
+
+                                FileDialog {
+                                    id: exportFileDialog
+                                    folder: shortcuts.home
+                                    selectExisting: false
+                                    nameFilters: ["(*.csv)", "(*.txt)", "(*.*)"]
+
+                                    onAccepted: {
+                                        core.exportPlotAsCVS(exportFileDialog.fileUrl.toString());
+                                    }
+
+                                    onRejected: { }
+                                }
+
+                                onClicked: exportFileDialog.open()
+                            }
+
                         }
 
                     }
@@ -246,20 +306,15 @@ Window  {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 2
-                color: "#707070"
+                height: 1
+                color: theme.controlBorderColor
             }
 
             CSlider {
                 id: historyScroll
-                width: mainview.width
-                height: 30
-                implicitHeight: 30
-                horizontalPadding: 15
-                lineStyle: 3
-                opacity: 1
-
                 Layout.fillWidth: true
+                width: mainview.width
+                implicitHeight: theme.controlHeight
 
                 stepSize: 0.0001
                 from: 1
@@ -271,7 +326,7 @@ Window  {
 
         Console {
             id: console_vis
-            visible: consoleVisible.checked
+            visible: theme.consoleVisible
             SplitView.minimumHeight: 100
         }
     }

@@ -13,7 +13,7 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 }
 
-void Core::consoleProto(ProtoBin &parser, bool is_in) {
+void Core::consoleProto(ProtoKP1 &parser, bool is_in) {
     QString str_mode;
     QString comment = "";
 
@@ -202,36 +202,86 @@ bool Core::isLogging() {
 bool Core::exportPlotAsCVS(QString file_path) {
     _logger.creatExportStream(file_path);
 
-    _logger.dataExport("Meas. number, Event timestamp, Event ID, Distance, Processing distance\n");
+    bool meas_nbr = true;
+    bool event_id = true;
+    bool rangefinder = true;
+    bool bottom_depth = true;
+    bool pos_lat_lon = true;
+
+    if(meas_nbr) {
+        _logger.dataExport("Number,");
+    }
+
+    if(event_id) {
+        _logger.dataExport("Event timestamp,");
+        _logger.dataExport("Event ID,");
+    }
+
+    if(rangefinder) {
+        _logger.dataExport("Rangefinder,");
+    }
+
+    if(bottom_depth) {
+        _logger.dataExport("Bottom depth,");
+    }
+
+    if(pos_lat_lon) {
+        _logger.dataExport("Latitude,");
+        _logger.dataExport("Longitude,");
+    }
+
+    _logger.dataExport("\n");
 
     int row_cnt = m_plot->poolSize();
 
     int prev_timestamp = 0;
     int prev_event_id = 0;
     int prev_dist_proc = 0;
+    double prev_lat = 0, prev_lon = 0;
 
     for(int i = 0; i < row_cnt; i++) {
         PoolDataset* dataset = m_plot->fromPool(i);
         QString row_data;
-        row_data.append(QString("%1,").arg(i));
 
-        if(dataset->eventAvail()) {
-            prev_timestamp = dataset->eventTimestamp();
-            prev_event_id = dataset->eventID();
+        if(meas_nbr) {
+            row_data.append(QString("%1,").arg(i));
         }
-        row_data.append(QString("%1,%2,").arg(prev_timestamp).arg(prev_event_id));
 
-        if(dataset->distAvail()) {
-            row_data.append(QString("%1,").arg((float)dataset->distData()*0.001f));
-        } else {
+        if(event_id) {
+            if(dataset->eventAvail()) {
+                prev_timestamp = dataset->eventTimestamp();
+                prev_event_id = dataset->eventID();
+            }
+            row_data.append(QString("%1,%2,").arg(prev_timestamp).arg(prev_event_id));
+        }
+
+        if(rangefinder) {
+            if(dataset->distAvail()) {
+                row_data.append(QString("%1,").arg((float)dataset->distData()*0.001f));
+            } else {
+                row_data.append("0,");
+            }
+        }
+
+        if(bottom_depth) {
+            if(dataset->distProccesingAvail()) {
+                prev_dist_proc = dataset->distProccesing();
+            }
+            row_data.append(QString("%1,").arg((float)(prev_dist_proc)*0.001f));
+        }
+
+        if(pos_lat_lon) {
+            if(dataset->isPosAvail()) {
+                prev_lat = dataset->lat();
+                prev_lon = dataset->lon();
+
+            }
+
+            row_data.append(QString::number(prev_lat, 'f'));
+            row_data.append(",");
+            row_data.append(QString::number(prev_lon, 'f'));
             row_data.append(",");
         }
-
-        if(dataset->distProccesingAvail()) {
-            prev_dist_proc = dataset->distProccesing();
-        }
-
-        row_data.append(QString("%1,").arg((float)(prev_dist_proc)*0.001f));
 
         row_data.append("\n");
         _logger.dataExport(row_data);

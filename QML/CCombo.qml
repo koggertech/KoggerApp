@@ -8,16 +8,17 @@ ComboBox {
     delegate: ItemDelegate {
         id: itemDelegate
         width: control.width
-        implicitHeight: 26
+        implicitHeight: theme.controlHeight
         contentItem: CText {
             text: modelData
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
+            color: itemDelegate.highlighted ? theme.textSolidColor :  theme.textColor
         }
 
         background: Rectangle{
-            color: itemDelegate.highlighted ? theme.controlSolidBackColor : "transparent"
-            border.color: theme.controlBorderColor
+            color: itemDelegate.highlighted ? theme.controlSolidBackColor :  theme.controlBackColor
+            border.color: itemDelegate.highlighted ? theme.controlSolidBorderColor : theme.controlBorderColor
             border.width: itemDelegate.highlighted ? 1 : 0
         }
 
@@ -30,9 +31,16 @@ ComboBox {
         id: canvas
         x: control.width - width - control.rightPadding
         y: control.topPadding + (control.availableHeight - height) / 2
-        width: 12
-        height: 8
+        width: theme.controlHeight/2
+        height: theme.controlHeight/3
         contextType: "2d"
+
+        Connections {
+            target: theme
+            onThemeIDChanged:  {
+                canvas.requestPaint()
+            }
+        }
 
         onPaint: {
             context.reset();
@@ -55,22 +63,25 @@ ComboBox {
     }
 
     contentItem: CText {
-        antialiasing: false
+        id: contentText
         leftPadding: 15
         rightPadding: control.indicator.width + control.spacing
 
         text: control.displayText
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
+
+        color: contentText.highlighted ? theme.textSolidColor :  theme.textColor
+
     }
 
     background:  Rectangle {
         id: backRect
         implicitWidth: 100
-        implicitHeight: 26
+        implicitHeight: theme.controlHeight
         radius: 1
-        color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
-        border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor
+        color: contentText.highlighted ? theme.controlSolidBackColor : theme.controlBackColor
+        border.color: contentText.highlighted ? theme.controlSolidBorderColor : theme.controlBorderColor
         border.width: 1
     }
 
@@ -96,7 +107,7 @@ ComboBox {
         background: Rectangle {
             id: popupRect
             implicitWidth: 100
-            implicitHeight: 26
+            implicitHeight: theme.controlHeight
             radius: 1
             color: theme.controlBackColor
             border.color: theme.controlBorderColor

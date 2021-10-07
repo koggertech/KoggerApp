@@ -51,28 +51,18 @@ DevSettingsBox {
             Layout.margins: 15
             width: control.width
 
-            TextField {
+            CTextField {
                 id: pathText
                 hoverEnabled: true
                 Layout.fillWidth: true
-                height: control.height
-                padding: 4
-                rightPadding: 40
-                font.family: "Bahnschrift"; font.pointSize: 14;
-                color: "#E07000"
 
                 text: ""
                 placeholderText: qsTr("Enter path")
-
-                background: Rectangle {
-                    color: "#505050"
-                }
             }
 
             CButton {
                 text: "..."
                 Layout.fillWidth: false
-                implicitHeight: 30
                 onClicked: {
                     fileDialog.open()
                 }
@@ -82,7 +72,6 @@ DevSettingsBox {
                 text: "UPGRADE"
                 Layout.fillWidth: false
                 Layout.leftMargin: 10
-                implicitHeight: 30
                 visible: pathText.text != ""
 
                 onClicked: {

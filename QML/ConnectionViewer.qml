@@ -42,6 +42,7 @@ Item {
 
             CCombo  {
                 id: connectionTypeCombo
+                Layout.fillWidth: true
                 model: ["Serial", "File", "IP"]
 
                 Settings {
@@ -88,15 +89,11 @@ Item {
                 }
             }
 
-            TextField {
+            CTextField {
                 id: pathText
                 hoverEnabled: true
                 Layout.fillWidth: true
                 visible: connectionTypeCombo.currentText === "File"
-                padding: 4
-                rightPadding: 40
-                font.family: "Bahnschrift"; font.pointSize: 14;
-                color: "#E07000"
 
                 text: ""
                 placeholderText: qsTr("Enter path")
@@ -107,33 +104,24 @@ Item {
                     }
                 }
 
-                background: Rectangle {
-                    color: "#505050"
+                Settings {
+                    property alias pathText: pathText.text
                 }
             }
 
-            TextField {
+            CTextField {
                 id: ipAddressText
                 hoverEnabled: true
                 Layout.fillWidth: true
                 visible: connectionTypeCombo.currentText === "IP"
-                padding: 4
-                font.family: "Bahnschrift"; font.pointSize: 14;
-                color: "#E07000"
 
                 text: "192.168.4.1"
-//                inputMask: "999.999.999.999;_"
                 placeholderText: ""
 
                 Keys.onPressed: {
                     if (event.key === 16777220) {
-//                        core.openConnectionAsFile(pathText.text);
                         console.info(ipAddressText.text)
                     }
-                }
-
-                background: Rectangle {
-                    color: "#505050"
                 }
 
                 Settings {
@@ -143,29 +131,15 @@ Item {
 
 
 
-            TextField {
+            CTextField {
                 id: ipPortText
                 hoverEnabled: true
                 Layout.fillWidth: false
                 implicitWidth: 80
                 visible: connectionTypeCombo.currentText === "IP"
-                padding: 4
-                font.family: "Bahnschrift"; font.pointSize: 14;
-                color: "#E07000"
-
 
                 text: "14444"
                 placeholderText: qsTr("Port")
-
-                Keys.onPressed: {
-                    if (event.key === 16777220) {
-//                        core.openConnectionAsFile(pathText.text);
-                    }
-                }
-
-                background: Rectangle {
-                    color: "#505050"
-                }
 
                 Settings {
                     property alias ipPortText: ipPortText.text
@@ -176,7 +150,8 @@ Item {
                 text: "..."
                 Layout.fillWidth: false
                 visible: connectionTypeCombo.currentText === "File"
-                implicitHeight: 30
+                implicitHeight: theme.controlHeight
+                implicitWidth: implicitHeight*1.1
                 onClicked: {
                     logFileDialog.open()
                 }
@@ -205,7 +180,6 @@ Item {
             CButton {
                 id: connectionButton
                 property bool connection: false
-                implicitHeight: 26
                 implicitWidth: implicitHeight + 3
                 visible: connectionTypeCombo.currentText !== "File"
 
@@ -339,7 +313,6 @@ Item {
                 id: devTab0
                 text: devList[0].devName + " [" + devList[0].devSN + "]"
                 Layout.fillWidth: true
-                implicitHeight: 24
                 opacity: dev === devList[0] ? 1 : 0.5
 
                 onClicked: {
@@ -351,7 +324,6 @@ Item {
                 id: devTab1
                 text: devList[1].devName + " [" + devList[1].devSN + "]"
                 Layout.fillWidth: true
-                implicitHeight: 24
                 opacity: dev === devList[1] ? 1 : 0.5
 
                 onClicked: {
@@ -363,7 +335,6 @@ Item {
                 id: devTab2
                 text: devList[2].devName + " [" + devList[2].devSN + "]"
                 Layout.fillWidth: true
-                implicitHeight: 24
                 opacity: dev === devList[2] ? 1 : 0.5
 
                 onClicked: {

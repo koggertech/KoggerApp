@@ -4,24 +4,26 @@ import QtQuick.Controls 2.12
 CheckBox {
      id: control
      text: "Check"
+     implicitHeight: theme.controlHeight
 
      indicator: Rectangle {
-         implicitWidth: 19
-         implicitHeight: 19
+         id: backRect
+         implicitHeight: control.implicitHeight*0.7
+         implicitWidth: control.implicitHeight*0.7
          radius: 1
          x: control.leftPadding
-         y: parent.height / 2 - height / 2
+         y: control.height / 2 - height / 2
          color: theme.controlBackColor
-         border.color: control.checked ? "#F0F0F0" : "#C0C0C0"
+         border.color: theme.textColor
          border.width: 1
 
          Rectangle {
-             width: 11
-             height: 11
-             x: 4
-             y: 4
+             width: backRect.width/2
+             height: backRect.height/2
+             x: backRect.width/4
+             y: backRect.height/4
              radius: 1
-             color: "#D0D0D0"
+             color: theme.textColor
              visible: control.checked
          }
      }

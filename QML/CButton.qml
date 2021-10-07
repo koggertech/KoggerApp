@@ -5,7 +5,7 @@ Button {
     id: control
     text: "Ok"
     highlighted: true
-    implicitHeight: 26
+    implicitHeight: theme.controlHeight
 
     contentItem: CText {
         text: control.text
@@ -16,8 +16,9 @@ Button {
 
     background: Rectangle {
         id: backRect
-        implicitWidth: 35
-        implicitHeight: 26
+
+        implicitHeight: control.height
+        implicitWidth: implicitHeight
         radius: 1
         color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
         border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor

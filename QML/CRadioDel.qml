@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.3
 RadioDelegate {
     id: radioDel
     Layout.fillWidth: true
-    implicitHeight: 32
+    implicitHeight: theme.controlHeight
     implicitWidth: 200
 
     contentItem: Text {

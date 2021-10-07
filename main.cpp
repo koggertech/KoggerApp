@@ -11,6 +11,21 @@
 Core core;
 Themes theme;
 
+//#if defined(Q_OS_ANDROID)
+//#include <QtAndroid>
+//bool checkAndroidWritePermission() {
+//    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+//    if(r == QtAndroid::PermissionResult::Denied) {
+//        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+//        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+//        if(r == QtAndroid::PermissionResult::Denied) {
+//             return false;
+//        }
+//   }
+//   return true;
+//}
+//#endif
+
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("KOGGER");
     QCoreApplication::setOrganizationDomain("kogger.tech");
@@ -52,6 +67,10 @@ int main(int argc, char *argv[]) {
                      &core, &Core::UILoad, Qt::QueuedConnection);
 
     engine.load(url);
+
+#if defined(Q_OS_ANDROID)
+//    checkAndroidWritePermission();
+#endif
 
     return app.exec();
 }

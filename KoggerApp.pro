@@ -85,3 +85,7 @@ DISTFILES += \
     QML/UpgradeBox.qml \
     QML/FlashBox.qml \
     QML/main.qml
+
+ANDROID_ABIS = armeabi-v7a
+
+#ANDROID_ABIS = x86

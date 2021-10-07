@@ -12,12 +12,8 @@ SpinBox {
     font.pixelSize: 16
     padding: 2
 
-    implicitHeight: 22
-    implicitWidth: 150
-
-    StyleSet {
-        id: styleSet
-    }
+    implicitHeight: theme.controlHeight
+    implicitWidth: implicitHeight*6
 
     valueFromText: function(text, locale) { return Number.fromLocaleString(locale, text); }
 
@@ -28,7 +24,7 @@ SpinBox {
         font: theme.textFont
         color: theme.textColor
         selectionColor: styleSet.colorControllTextActive
-        selectedTextColor: "#ffffff"
+        selectedTextColor: theme.textColor
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
         selectByMouse: true
@@ -50,17 +46,19 @@ SpinBox {
         id: upCanvas
         x: parent.width - width
         y: 0
-        opacity: 1
         height: parent.height
         width: parent.height + 6
         contextType: "2d"
+        opacity: 1
 
         property bool pressed: control.up.pressed
 
-//        Connections {
-//            target: control.up
-//            onPressedChanged: upCanvas.requestPaint()
-//        }
+        Connections {
+            target: theme
+            onThemeIDChanged:  {
+                upCanvas.requestPaint()
+            }
+        }
 
         onEnabledChanged: {
             upCanvas.requestPaint()
@@ -79,13 +77,12 @@ SpinBox {
             context.lineTo(width - width_button, height);
 
             context.closePath();
-            context.fillStyle = enabled ? (pressed ? "#D0D0D0" : "#A0A0A0") : "#505050"
+            context.fillStyle = enabled ? (pressed ? theme.controlSolidBackColor : theme.controlBackColor) : theme.menuBackColor
             context.fill();
 
             context.lineWidth = 1
-            context.strokeStyle = enabled ? (pressed ? "#FFFFFF" : "#B0B0B0") : "#404040"
+            context.strokeStyle = enabled ? (pressed ? theme.controlSolidBorderColor : theme.controlBorderColor) : theme.menuBackColor
             context.stroke()
-
 
             var mid_icon_x = width/2 - 1
             var radius_icon = 6
@@ -107,7 +104,7 @@ SpinBox {
             context.lineTo(mid_icon_x - radius_icon, mid_height + tickness_icon);
 
             context.closePath();
-            context.fillStyle = enabled ? "#101010" : "#404040"
+            context.fillStyle = enabled ? theme.textColor : theme.menuBackColor
             context.fill();
         }
     }
@@ -128,16 +125,18 @@ SpinBox {
         id: downCanvas
         x: 0
         y: 0
-        opacity: 1
+
         height: parent.height
         width: parent.height + 6
         contextType: "2d"
         property bool pressed: control.down.pressed
 
-//        Connections {
-//            target: control.down
-//            onPressedChanged: downCanvas.requestPaint()
-//        }
+        Connections {
+            target: theme
+            onThemeIDChanged:  {
+                downCanvas.requestPaint()
+            }
+        }
 
         onEnabledChanged: {
             downCanvas.requestPaint()
@@ -156,11 +155,11 @@ SpinBox {
             context.lineTo(width_button, height);
 
             context.closePath();
-            context.fillStyle = enabled ? (pressed ? "#D0D0D0" : "#A0A0A0") : "#505050"
+            context.fillStyle = enabled ? (pressed ? theme.controlSolidBackColor : theme.controlBackColor) : theme.menuBackColor
             context.fill();
 
             context.lineWidth = 1
-            context.strokeStyle = enabled ? (pressed ? "#FFFFFF" : "#B0B0B0") : "#404040"
+            context.strokeStyle = enabled ? (pressed ? theme.controlSolidBorderColor : theme.controlBorderColor) : theme.menuBackColor
             context.stroke()
 
 
@@ -174,7 +173,7 @@ SpinBox {
             context.lineTo(mid_icon_x + radius_icon, mid_height - tickness_icon);
             context.lineTo(mid_icon_x - radius_icon, mid_height - tickness_icon);
             context.closePath();
-            context.fillStyle =  enabled ? "#101010" : "#404040"
+            context.fillStyle =  enabled ? theme.textColor : theme.menuBackColor
             context.fill();
 
         }
@@ -185,41 +184,8 @@ SpinBox {
         y: 0
         width: control.width - downCanvas.width - upCanvas.width
         height: control.height
-        opacity: 0.3
 
-        color: "#303030"
-        border.color: styleSet.colorControllBorder
+        color: theme.controlBackColor
+        border.color: theme.controlBorderColor
     }
-
-//    background:  Canvas {
-//        id: borderCanvas
-//        x: down.indicator.width
-//        y: 0
-//        width: control.width - downCanvas.width - upCanvas.width
-//        height: control.height
-//        contextType: "2d"
-
-//        Connections {
-//            target: control
-//            onActiveChanged: borderCanvas.requestPaint()
-//        }
-
-//        onPaint: {
-//            context.reset();
-
-//            var mid_height = height/2
-//            var width_button = height/3
-
-//            context.moveTo(0, mid_height);
-//            context.lineTo(width_button, 0);
-//            context.lineTo(width - width_button, 0);
-//            context.lineTo(width, mid_height);
-//            context.lineTo(width - width_button, height);
-//            context.lineTo(width_button, height);
-
-//            context.closePath();
-//            context.fillStyle = styleSet.colorControllBorder
-//            context.fill();
-//        }
-//    }
 }

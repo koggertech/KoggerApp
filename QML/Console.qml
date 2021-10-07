@@ -8,7 +8,7 @@ Rectangle {
     id: consoleOut
     width: parent.width
     height: parent.height
-    color: "#404040"
+    color: theme.menuBackColor
 
     ColumnLayout {
         width: parent.width
@@ -18,8 +18,8 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true
-            height: 30
-            color: "#505050"
+            height: 36
+            color: theme.menuBackColor
 
             RowLayout {
                 Layout.alignment: Qt.AlignRight
@@ -27,7 +27,6 @@ Rectangle {
                 CCheck {
                     id: consScrollEnable
                     checked: true
-                    font.pixelSize: 14
                     text: "auto scroll"
                     Layout.alignment: Qt.AlignRight
 
@@ -39,7 +38,6 @@ Rectangle {
                 CCheck {
                     id: protoBinConsoled
                     checked: false
-                    font.pixelSize: 14
                     text: "Binnary"
                     Layout.alignment: Qt.AlignRight
 
@@ -96,9 +94,10 @@ Rectangle {
                         Layout.fillWidth: true
                         text: time + "  " + payload
                         height: 16
-                        color: colorCategory.get(category).color
+//                        color: colorCategory.get(category).color
                         font.pointSize: 10
                         font.family: "Console"
+                        color: theme.textColor
                         readOnly: true
                         selectByMouse: true
                     }

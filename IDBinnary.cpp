@@ -4,6 +4,11 @@
 #include <core.h>
 extern Core core;
 
+#if defined(Q_OS_ANDROID)
+template < typename T, size_t N >
+size_t _countof( T const (&array)[ N ] ) { return N; }
+#endif
+
 IDBin::IDBin(QObject *parent) : QObject(parent) {
 //    setProto(proto);
 }
@@ -12,7 +17,7 @@ IDBin::~IDBin() {
 
 }
 
-Resp  IDBin::parse(ProtoBinIn &proto) {
+Resp  IDBin::parse(ProtoKP1In &proto) {
     Resp resp_parse = respNone;
 
     if(proto.type() == CONTENT || proto.type() == SETTING || proto.type() == GETTING) {
@@ -55,19 +60,19 @@ void IDBin::appendKey(ProtoBinOut &proto_out) {
 //}
 
 
-Resp IDBinTimestamp::parsePayload(ProtoBinIn &proto) {
+Resp IDBinTimestamp::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {  m_timestamp = proto.read<U4>();
     } else {  return respErrorVersion;  }
     return respOk;
 }
 
-Resp IDBinDist::parsePayload(ProtoBinIn &proto) {
+Resp IDBinDist::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) { m_dist_mm = proto.read<U4>();
     } else {  return respErrorVersion; }
     return respOk;
 }
 
-Resp IDBinChart::parsePayload(ProtoBinIn &proto) {
+Resp IDBinChart::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         U2 m_seqOffset = proto.read<U2>();
         U2 sampleResol = proto.read<U2>();
@@ -106,7 +111,7 @@ Resp IDBinChart::parsePayload(ProtoBinIn &proto) {
 }
 
 
-Resp IDBinAttitude::parsePayload(ProtoBinIn &proto) {
+Resp IDBinAttitude::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         const float scale_to_deg = 0.01f;
         m_yaw = static_cast<float>(proto.read<S2>())*scale_to_deg;
@@ -149,7 +154,7 @@ float IDBinAttitude::w3(Version src_ver) {
     return m_w3;
 }
 
-Resp IDBinTemp::parsePayload(ProtoBinIn &proto) {
+Resp IDBinTemp::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         const float scale_to_cels = 0.01f;
         m_temp = static_cast<float>(proto.read<S2>())*scale_to_cels;
@@ -161,7 +166,7 @@ Resp IDBinTemp::parsePayload(ProtoBinIn &proto) {
 }
 
 
-Resp IDBinNav::parsePayload(ProtoBinIn &proto) {
+Resp IDBinNav::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
 
     } else {
@@ -172,7 +177,7 @@ Resp IDBinNav::parsePayload(ProtoBinIn &proto) {
 }
 
 
-Resp IDBinDataset::parsePayload(ProtoBinIn &proto) {
+Resp IDBinDataset::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         uint8_t ch_id = proto.read<U1>();
         if(ch_id < _countof(m_channel)) {
@@ -234,7 +239,7 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
 }
 
 
-Resp IDBinDistSetup::parsePayload(ProtoBinIn &proto) {
+Resp IDBinDistSetup::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v1) {
         m_startOffset = proto.read<U4>();
         m_maxDist = proto.read<U4>();
@@ -270,7 +275,7 @@ void IDBinDistSetup::setConfidence(int confidence) {
 }
 
 
-Resp IDBinChartSetup::parsePayload(ProtoBinIn &proto) {
+Resp IDBinChartSetup::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         m_sanpleCount = proto.read<U2>();
         m_sanpleResolution = proto.read<U2>();
@@ -299,7 +304,7 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
     emit binFrameOut(id_out);
 }
 
-Resp IDBinDSPSetup::parsePayload(ProtoBinIn &proto) {
+Resp IDBinDSPSetup::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         m_horSmoothFactor = proto.read<U1>();
         qInfo("read smooth %u", m_horSmoothFactor);
@@ -322,7 +327,7 @@ void IDBinDSPSetup::setV0(U1 hor_smooth_factor) {
 }
 
 
-Resp IDBinTransc::parsePayload(ProtoBinIn &proto) {
+Resp IDBinTransc::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         m_freq = proto.read<U2>();
         m_pulse = proto.read<U1>();
@@ -349,7 +354,7 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
 }
 
 
-Resp IDBinSoundSpeed::parsePayload(ProtoBinIn &proto) {
+Resp IDBinSoundSpeed::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         m_soundSpeed = proto.read<U4>();
     } else {
@@ -369,7 +374,7 @@ void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
     emit binFrameOut(id_out);
 }
 
-Resp IDBinUART::parsePayload(ProtoBinIn &proto) {
+Resp IDBinUART::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         if(checkKeyConfirm(proto.read<U4>())) {
             uint8_t uart_id = proto.read<U1>();
@@ -444,7 +449,7 @@ void IDBinUART::setDevDefAddress(U1 addr) {
     emit binFrameOut(id_out);
 }
 
-Resp IDBinVersion::parsePayload(ProtoBinIn &proto) {
+Resp IDBinVersion::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         m_boardVersionMinor = proto.read<U1>();
         m_boardVersion = (BoardVersion)proto.read<U1>();
@@ -461,7 +466,7 @@ Resp IDBinVersion::parsePayload(ProtoBinIn &proto) {
     return respOk;
 }
 
-Resp IDBinMark::parsePayload(ProtoBinIn &proto) {
+Resp IDBinMark::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         m_mark = proto.read<U1>();
     } else {
@@ -481,7 +486,7 @@ void IDBinMark::setMark() {
 }
 
 
-Resp IDBinFlash::parsePayload(ProtoBinIn &proto) {
+Resp IDBinFlash::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         if(checkKeyConfirm(proto.read<U4>())) {
         } else {
@@ -530,7 +535,7 @@ void IDBinFlash::erase() {
 }
 
 
-Resp IDBinBoot::parsePayload(ProtoBinIn &proto) {
+Resp IDBinBoot::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
         if(checkKeyConfirm(proto.read<U4>())) {
         } else {
@@ -564,7 +569,7 @@ void IDBinBoot::runFW() {
     emit binFrameOut(id_out);
 }
 
-Resp IDBinUpdate::parsePayload(ProtoBinIn &proto) {
+Resp IDBinUpdate::parsePayload(ProtoKP1In &proto) {
     if(proto.ver() == v0) {
     } else {
         return respErrorVersion;
@@ -606,3 +611,15 @@ bool IDBinUpdate::putUpdate() {
     return true;
 }
 
+
+Resp IDBinVoltage::parsePayload(ProtoKP1In &proto) {
+    if(proto.ver() == v0) {
+        uint8_t ch_id = proto.read<U1>();
+        int32_t u_v = proto.read<S4>();
+        _v[ch_id] =  float(u_v);
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}

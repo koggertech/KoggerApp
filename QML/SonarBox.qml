@@ -7,7 +7,6 @@ import Qt.labs.settings 1.1
 
 DevSettingsBox {
     id: control
-//    Layout.preferredHeight: columnItem.height
     isActive: dev.isChartSupport
 
     MenuBlock {
@@ -15,7 +14,6 @@ DevSettingsBox {
 
     ColumnLayout {
         id: columnItem
-//        width: control.width
         spacing: 24
         Layout.margins: 24
 
@@ -64,7 +62,6 @@ DevSettingsBox {
                 paramName: "Resolution, mm"
 
                 SpinBoxCustom {
-                    implicitWidth: 150
                     from: 10
                     to: 100
                     stepSize: 10

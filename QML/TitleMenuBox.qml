@@ -22,10 +22,8 @@ RowLayout {
         text: ""
     }
 
-    Text {
+    CText {
         Layout.fillWidth: true
         text: titleText
-        color: "#959595"
-        font.pointSize: 12
     }
 }

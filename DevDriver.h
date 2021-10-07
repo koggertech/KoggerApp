@@ -146,8 +146,7 @@ signals:
     void onReboot();
 
 public slots:
-    void nmeaComplete(ProtoNMEA &proto);
-    void protoComplete(ProtoBinIn &proto);
+    void protoComplete(ProtoKP1In &proto);
     void startConnection(bool duplex);
     void stopConnection();
     void restartState();

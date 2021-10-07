@@ -5,6 +5,17 @@
 #include "stddef.h"
 #include <cmath>
 
+inline void fletcher(uint8_t* buf, uint16_t len, uint8_t* ch1, uint8_t* ch2) {
+    uint8_t check1 = 0, check2 = 0;
+    for(uint16_t i = 0; i < len; i++) {
+        check1 += buf[i];
+        check2 += check1;
+    }
+
+    *ch1 = check1;
+    *ch2 = check2;
+}
+
 namespace Parsers {
 
 typedef uint8_t U1;
@@ -53,7 +64,9 @@ typedef enum ID {
     ID_UPDATE = 0x25,
 
     ID_EVENT = 0x30,
-    ID_NAV = 0x64
+    ID_VOLTAGE = 0x31,
+
+    ID_NAV = 0x64,
 } ID;
 
 typedef enum {
@@ -81,8 +94,10 @@ class FrameParser {
 public:
     typedef enum {
         ProtoNone,
-        ProtoBin,
-        ProtoNMEA
+        ProtoKP1,
+        ProtoKP2,
+        ProtoNMEA,
+        ProtoUBX
     } ProtoID;
 
     FrameParser() {
@@ -91,41 +106,102 @@ public:
         resetState();
     }
 
+    void headerSync(uint8_t b) {
+        if(b == 0xBB) { switchToKP1(); }
+        else if(b == 0xCC) { switchToKP2(); }
+        else if(b == 0xB5) { switchToUBX(); }
+        else if(b == '$') { switchToNMEA(); }
+    }
+
+    void headerReSync(uint8_t b) {
+        _counter.frameReSync++;
+        resetState();
+        headerSync(b);
+    }
+
     void process() {
+        _proto = ProtoNone;
         while (availContext() > 0) {
             uint8_t b = *_contextData;
 
             switch (_protoState) {
             case StateSync:
-                if(b == 0xBB) { switchToBin(); }
-                else if(b == '$') { switchToNMEA(); }
+                headerSync(b);
                 break;
 
-            case StateBinSync:
-                if(b == 0x55) { _protoState = StateBinHeader; }
-                else if(b == '$') { switchToNMEA(); }
-                else if(b == 0xBB) {}
-                else { resetState(); }
+            ////////////// KPv1 //////////////
+            case StateKP1Sync:
+                if(b == 0x55) { _protoState = StateKP1Header; }
+                else { headerReSync(b); }
                 break;
-            case StateBinHeader:
+            case StateKP1Header:
                 if(_frameLen == 5) {
-                    _payloadLen = b;
-                    _completeLen = _payloadLen + 5 + 2;
-                    _protoState = StateBinEnding;
+                    _completeLen = b + (5 + 2);
+                    _protoState = StateKP1Ending;
                 }
                 break;
-            case StateBinEnding:
+            case StateKP1Ending:
                 if(_frameLen == _completeLen) {
                     if(frameAppend(b)) {
-                        checkAsBin();
-                    } else {
-                    }
+                        checkAsKP1();
+                    } else { }
 
                     incContext();
                     resetState();
                     return;
                 }
                 break;
+            ////////////// KPv1 //////////////
+
+            ////////////// KPv2 //////////////
+            case StateKP2Sync:
+                if(b == 0x55) { _protoState = StateKP2Header; }
+                else { headerReSync(b); }
+                break;
+            case StateKP2Header:
+                if(_frameLen == 3) {
+                    _completeLen = *(int16_t*)(&_frame[3]) + (4 + 2);
+                    _protoState = StateKP2Ending;
+                }
+                break;
+            case StateKP2Ending:
+                if(_frameLen == _completeLen) {
+                    if(frameAppend(b)) {
+                        checkAsKP2();
+                    } else { }
+
+                    incContext();
+                    resetState();
+                    return;
+                }
+                break;
+            ////////////// KPv2 //////////////
+
+            ////////////// UBX //////////////
+            case StateUBXSync:
+                if(b == 0x62) { _protoState = StateUBXHeader; }
+                else { headerReSync(b); }
+                break;
+
+            case StateUBXHeader:
+                if(_frameLen == 4) {
+                    _completeLen = b + (5 + 2);
+                    _protoState = StateUBXEnding;
+                }
+                break;
+            case StateUBXEnding:
+                if(_frameLen == _completeLen) {
+                    if(frameAppend(b)) {
+                        checkAsUBX();
+                    } else { }
+
+                    incContext();
+                    resetState();
+                    return;
+                }
+                break;
+            ////////////// UBX //////////////
+
 
             case StateNmeaPayload:
                 if(b == '*') {
@@ -137,8 +213,7 @@ public:
                 if(_frameLen == _completeLen) {
                     if(frameAppend(b) && frameAppend('\r') && frameAppend('\n')) {
                         checkAsNMEA();
-                    } else {
-                    }
+                    } else { }
 
                     incContext();
                     resetState();
@@ -170,29 +245,47 @@ public:
 
     ProtoID proto() { return _proto; }
 
+    bool isCompleteAs(ProtoID proto_flag) {
+        return proto_flag == proto();
+    }
+
     bool completeAsKBP() {
-        return proto() == ProtoBin;
+        return proto() == ProtoKP1;
+    }
+
+    bool isCompleteAsUBX() {
+        return isCompleteAs(ProtoUBX);
     }
 
     bool completeAsNMEA() {
         return proto() == ProtoNMEA;
     }
 
+    void resetComplete() { _proto = ProtoNone; }
+
     uint8_t* frame() { return _frame; }
     uint16_t frameLen() { return _frameLen; }
     uint32_t frameError() { return _counter.frameError;}
-    uint32_t binError() { return _counter.checkErrorBin;}
+    uint32_t binError() { return _counter.checkErrorKP1;}
     uint32_t NMEAError() { return _counter.checkErrorNMEA;}
-    uint32_t binComplete() { return _counter.completeBin;}
+    uint32_t binComplete() { return _counter.completeKP1;}
     uint32_t NMEAComplete() { return _counter.completeNMEA;}
 
 protected:
     enum ProtoState {
         StateSync,
 
-        StateBinSync,
-        StateBinHeader,
-        StateBinEnding,
+        StateKP1Sync,
+        StateKP1Header,
+        StateKP1Ending,
+
+        StateKP2Sync,
+        StateKP2Header,
+        StateKP2Ending,
+
+        StateUBXSync,
+        StateUBXHeader,
+        StateUBXEnding,
 
         StateNmeaPayload,
         StateNmeaEnding,
@@ -202,7 +295,7 @@ protected:
 
     uint8_t* _contextData;
     int32_t _contextLen;
-    uint8_t _frame[272];
+    uint8_t _frame[1024];
     char* _frameChar;
     int16_t _frameLen;
     int16_t _frameMaxLen;
@@ -212,10 +305,19 @@ protected:
     int16_t _readMaxLen;
 
     struct {
-        uint32_t completeBin = 0;
-        uint32_t completeNMEA = 0;
         uint32_t frameError = 0;
-        uint32_t checkErrorBin = 0;
+        uint32_t frameReSync = 0;
+
+        uint32_t completeKP1 = 0;
+        uint32_t checkErrorKP1 = 0;
+
+        uint32_t completeKP2 = 0;
+        uint32_t checkErrorKP2 = 0;
+
+        uint32_t completeUBX = 0;
+        uint32_t checkErrorUBX = 0;
+
+        uint32_t completeNMEA = 0;
         uint32_t checkErrorNMEA = 0;
     } _counter;
 
@@ -242,8 +344,20 @@ protected:
         _frameLen = 0;
     }
 
-    void switchToBin() {
-        _protoState = StateBinSync;
+    void switchToKP1() {
+        _protoState = StateKP1Sync;
+        _frameMaxLen = 255 + 8;
+        resetFrame();
+    }
+
+    void switchToKP2() {
+        _protoState = StateKP1Sync;
+        _frameMaxLen = 255 + 8;
+        resetFrame();
+    }
+
+    void switchToUBX() {
+        _protoState = StateUBXSync;
         _frameMaxLen = 255 + 8;
         resetFrame();
     }
@@ -259,7 +373,13 @@ protected:
         _frameMaxLen = 2; // max sync len
     }
 
-    bool checkAsBin() {
+    bool checkFletcher(uint8_t* buf, uint16_t len, uint8_t ch1, uint8_t ch2) {
+            uint8_t check1 = 0, check2 = 0;
+            fletcher(buf, len, &check1, &check2);
+            return (ch1 == check1) && (ch2 == check2);
+        }
+
+    bool checkAsKP1() {
         uint8_t check1 = 0, check2 = 0;
         uint16_t check1Pos = _frameLen - 2;
         for(uint16_t i = 2; i < check1Pos; i++) {
@@ -269,17 +389,57 @@ protected:
 
         bool res = (check1 == _frame[check1Pos]) && (check2 == _frame[check1Pos + 1]);
         if(res) {
-            _proto = ProtoBin;
+            _proto = ProtoKP1;
             _readOffset = 6;
             _readMaxLen = _frameLen - 2;
-            _counter.completeBin++;
+            _payloadLen = _readMaxLen - _readOffset;
+            _counter.completeKP1++;
         } else {
-            _counter.checkErrorBin++;
+            _counter.checkErrorKP1++;
             _proto = ProtoNone;
         }
 
         return res;
     }
+
+    bool checkAsKP2() {
+        uint8_t check1 = 0, check2 = 0;
+        uint16_t check1Pos = _frameLen - 2;
+        for(uint16_t i = 2; i < check1Pos; i++) {
+            check1 += _frame[i];
+            check2 += check1;
+        }
+
+        bool res = (check1 == _frame[check1Pos]) && (check2 == _frame[check1Pos + 1]);
+        if(res) {
+            _proto = ProtoKP2;
+            _readOffset = _frame[4] + (4 + 3);
+            _readMaxLen = _frameLen - 2;
+            _payloadLen = _readMaxLen - _readOffset;
+            _counter.completeKP2++;
+        } else {
+            _counter.checkErrorKP2++;
+            _proto = ProtoNone;
+        }
+
+        return res;
+    }
+
+    bool checkAsUBX() {
+            bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
+            if(res) {
+                _proto = ProtoUBX;
+                _readOffset = 6;
+                _readMaxLen = _frameLen - 2;
+                _payloadLen = _readMaxLen - _readOffset;
+                _counter.completeUBX++;
+            } else {
+                _counter.checkErrorUBX++;
+                _proto = ProtoNone;
+            }
+
+            return res;
+        }
 
     bool checkAsNMEA() {
         uint16_t checkStopPos = _frameLen - 5;
@@ -328,9 +488,9 @@ protected:
     }
 };
 
-class ProtoBin : public FrameParser {
+class ProtoKP1 : public FrameParser {
 public:
-    ProtoBin() {}
+    ProtoKP1() {}
 
     uint8_t route() const { return _frame[2]; }
     uint8_t mode() const { return _frame[3]; }
@@ -354,10 +514,61 @@ protected:
     void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
 };
 
-
-class ProtoBinIn : public ProtoBin {
+class ProtoKP2 : public FrameParser {
 public:
-    ProtoBinIn() { _isOut = false; }
+    ProtoKP2() {}
+
+    uint8_t route() const { return _frame[2]; }
+    uint8_t mode() const { return _frame[_frame[4] + 4]; }
+    ID id() const { return (ID)(idver() >> 3); }
+    Type type() const { return (Type)(mode() & 0x3); }
+    Version ver() const { return (Version)(idver() & (uint16_t)0x3); }
+    bool mark() const { return ((mode() >> 3) & 0x1) == 0x1; }
+    bool resp() const { return ((mode() >> 2) & 0x1) == 0x1; }
+    uint16_t payloadLen() { return _payloadLen; }
+
+protected:
+    uint16_t idver() const { return *(uint16_t*)(&_frame[_frame[4] + 5]); }
+
+    void setRoute(uint8_t route) {_frame[2] = route;}
+    void setMode(uint8_t mode) { _frame[3] = mode; }
+    void setMode(Type type, Version ver, bool response) {
+        setMode((uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7)));
+    }
+    void setId(ID id) { _frame[4] = id; }
+    void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
+};
+
+
+class ProtoKP1In : public ProtoKP1 {
+public:
+    ProtoKP1In() { _isOut = false; }
+
+    template<typename T>
+    T read() {
+        T *val = (T *)(&_frame[_readOffset]);
+        _readOffset += sizeof (T);
+        return *val;
+    }
+
+    void read(uint8_t* b, uint16_t len) {
+        for(uint16_t i = 0; i < len; i++) {
+            b[i] = _frame[_readOffset];
+            _readOffset++;
+        }
+    }
+protected:
+};
+
+class ProtoUBX : public FrameParser {
+public:
+    ProtoUBX() {}
+
+    uint8_t msgId() const { return (ID)(_frame[3]); }
+    uint8_t msgClass() const { return (ID)(_frame[2]); }
+    uint16_t payloadLen() { return _payloadLen; }
+
+    void readSkip(uint16_t skip_nbr) {_readOffset += skip_nbr;}
 
     template<typename T>
     T read() {
@@ -506,7 +717,7 @@ protected:
 };
 
 
-class ProtoBinOut : public ProtoBin
+class ProtoBinOut : public ProtoKP1
 {
 public:
     explicit ProtoBinOut() {  _isOut = true;  }

@@ -4,15 +4,15 @@ import QtQuick.Layouts 1.12
 
 Item {
     id: control
-    width: 51
-    height: 250
+    width: 91
+    height: 350
 
-    property int widthSlider: 24
-    property int heightSlider: 14
+    property int widthSlider: theme.controlHeight
+    property int heightSlider: theme.controlHeight/2
     property int mouseRange: height - heightSlider*2
 
     property int from: 0
-    property int to: 100
+    property int to: 120
 
     property int startValue: 10
     property int stopValue: 100
@@ -20,6 +20,9 @@ Item {
     property int startPointY: valueToPosition(startValue)
     property int stopPointY: valueToPosition(stopValue)
     property int activeSlider: 1
+
+    property color borderColor: theme.textColor
+    property color backColor: theme.controlBackColor
 
     function valueToPosition(val) {
         return Math.round(mouseRange - val / (to - from) * mouseRange + heightSlider)
@@ -78,6 +81,13 @@ Item {
         }
     }
 
+    Connections {
+        target: theme
+        onThemeIDChanged:  {
+            canvas.requestPaint()
+        }
+    }
+
 
     Canvas {
         id: canvas
@@ -86,9 +96,9 @@ Item {
 
         onPaint: {
             context.reset();
-            context.fillStyle = "#606060"
+            context.fillStyle = parent.borderColor
             context.lineWidth = 1
-            context.strokeStyle = "#606060"
+            context.strokeStyle = parent.borderColor
 
             var startPointX = width/2
             var stopPointX = width/2
@@ -96,7 +106,7 @@ Item {
             var stopY = Math.round(stopPointY)
 
             context.beginPath()
-            context.fillStyle =  "#303030"
+            context.fillStyle =  parent.backColor
             context.moveTo(startPointX - widthSlider/2, startY);
             context.lineTo(stopPointX - widthSlider/2, stopY);
             context.moveTo(startPointX + widthSlider/2, startY);
@@ -105,7 +115,7 @@ Item {
             context.stroke()
 
 
-            context.fillStyle =  "#404040"
+            context.fillStyle =  parent.borderColor
 
             context.beginPath()
             context.moveTo(startPointX - widthSlider/2, startY);

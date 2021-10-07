@@ -64,26 +64,47 @@ bool Connection::openSerial(const QString &name, int32_t baudrate, bool parity){
 }
 
 bool Connection::openFile(const QString &name) {
+    static QByteArray data;
     close();
 
+    core.consoleInfo(QString("File path source: %1").arg(name));
+
     QUrl url(name);
-    m_file->setFileName(url.toLocalFile());
+    if(url.isLocalFile()) {
+        m_file->setFileName(url.toLocalFile());
+    } else {
+        m_file->setFileName(url.toString());
+    }
+
+    core.consoleInfo(QString("File path: %1").arg(m_file->fileName()));
 
     bool is_open = false;
     is_open = m_file->open(QIODevice::ReadOnly);
 
-    if(is_open == false) {
+    if(is_open == false)
+    {
+        data.clear();
         return false;
     }
+
+
 
     m_type = ConnectionFile;
 
     emit openedEvent(false);
 
-    QByteArray data = m_file->readAll();
-    m_file->close();
-    emit receiveData(data);
+
+    while(true) {
+        data.append(m_file->read(1024*8));
+        if(data.size() == 0) { break; }
+        emit receiveData(data);
+        data.clear();
+    }
+
     data.clear();
+
+    m_file->close();
+
 
     return true;
 }
@@ -92,9 +113,9 @@ bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
     close();
 //    m_socket->connectToHost("192.168.4.1", 23, QIODevice::ReadWrite);
 
+    _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
+    _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
     _socket->bind(QHostAddress::Any, port); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
-//    m_socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
-//    m_socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
     _socket->connectToHost(address, port, QIODevice::ReadWrite);
 
     if (_socket->waitForConnected(1000)) {
@@ -242,7 +263,9 @@ void Connection::handleSerialError(QSerialPort::SerialPortError error) {
 }
 
 void Connection::readyReadSerial() {
-    QByteArray data;
+    static QByteArray data;
+
+    data.clear();
 
     switch (m_type) {
     case ConnectionSerial:
@@ -250,30 +273,29 @@ void Connection::readyReadSerial() {
         break;
 
     case ConnectionIP:
-//        data = _socket->readAll();
+//        data.append(_socket->readAll());
 
-            while (_socket->hasPendingDatagrams())
-            {
-                QByteArray datagram;
-                datagram.resize(_socket->pendingDatagramSize());
-                QHostAddress sender;
-                quint16 senderPort;
-                // If the other end is reset then it will still report data available,
-                // but will fail on the readDatagram call
-                qint64 slen = _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                if (slen == -1) {
-                    break;
-                }
-                data.append(datagram);
+        while (_socket->hasPendingDatagrams())
+        {
+            QByteArray datagram;
+            datagram.resize(_socket->pendingDatagramSize());
+            QHostAddress sender;
+            quint16 senderPort;
+
+            qint64 slen = _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+            if (slen == -1) {
+                break;
             }
-
-
+            data.append(datagram);
+        }
 
         break;
     default:
         break;
     }
 
-    loggingStream(data);
-    emit receiveData(data);
+    if(data.size() > 0) {
+        loggingStream(data);
+        emit receiveData(data);
+    }
 }

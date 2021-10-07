@@ -27,31 +27,27 @@
         <file>FlashBox.qml</file>
         <file>TitleMenuBox.qml</file>
         <file>CProgress.qml</file>
-        <file>StyleSet.qml</file>
         <file>ChartBox.qml</file>
-        <file>TransducerBox.qml</file>
-        <file>DistBox.qml</file>
         <file>DatasetBox.qml</file>
         <file>CCheck.qml</file>
         <file>DatasetCheckBox.qml</file>
         <file>SpinBoxCustom.qml</file>
         <file>ChartLevel.qml</file>
-        <file>SoundSpdBox.qml</file>
         <file>DevAddrBox.qml</file>
         <file>FactoryBox.qml</file>
         <file>DevSettingsBox.qml</file>
         <file>DiplaySettingsViewer.qml</file>
-        <file>WaterfallSettings.qml</file>
-        <file>DSPSettings.qml</file>
+        <file>DisplaySettings.qml</file>
         <file>ExportSettings.qml</file>
         <file>ExportDist.qml</file>
         <file>SonarBox.qml</file>
         <file>ParamSetup.qml</file>
         <file>ParamGroup.qml</file>
-        <file>SonarDatasetBox.qml</file>
         <file>CText.qml</file>
         <file>code-working.svg</file>
         <file>conn.png</file>
         <file>CRadioDel.qml</file>
+        <file>CTextField.qml</file>
+        <file>settings-outline.svg</file>
     </qresource>
 </RCC>

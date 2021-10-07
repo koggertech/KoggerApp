@@ -49,7 +49,7 @@ public:
         console()->put(QtMsgType::QtWarningMsg, msg);
     }
 
-    void consoleProto(ProtoBin &parser, bool is_in = true);
+    void consoleProto(ProtoKP1 &parser, bool is_in = true);
 
     void setEngine(QQmlApplicationEngine *engine) {
         m_engine = engine;

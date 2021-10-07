@@ -11,7 +11,7 @@ MenuScroll {
         width: parent.width
         spacing: 10
 
-        WaterfallSettings {
+        DisplaySettings {
             Layout.fillWidth: true
             Layout.preferredWidth: parent.width
         }

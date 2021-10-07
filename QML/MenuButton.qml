@@ -7,17 +7,19 @@ Button {
     property bool active: false
 
     id: control
-    Layout.preferredHeight: 30
+    Layout.preferredHeight: theme.controlHeight
     padding: 0
 
     icon.color: theme.textColor
 
     background: Rectangle {
         id: backRect
-        color: "#303030"
-        border.color: "#505050"
-        border.width: 1
         radius: 1
+        height: parent.height
+        width: parent.width
+        color: control.active ? theme.controlBorderColor : theme.menuBackColor
+        border.color: theme.controlBorderColor
+        border.width: 1
     }
 
 //    contentItem: CText {
@@ -26,12 +28,4 @@ Button {
 //        verticalAlignment: Text.AlignTop
 //        font.pointSize: 20
 //    }
-
-    onActiveChanged: {
-        if(control.active) {
-            backRect.color =  "#606060"
-        } else {
-            backRect.color =  "#303030"
-        }
-    }
 }
