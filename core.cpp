@@ -5,6 +5,9 @@ Core::Core() : QObject(),
     m_connection(new Connection()),
     m_plot(new PlotCash)
 {
+//    m_connection->moveToThread(&connectionThread);
+//    connectionThread.start();
+
     connect(&_devs, &Device::chartComplete, m_plot, &PlotCash::addChart);
     connect(&_devs, &Device::distComplete, m_plot, &PlotCash::addDist);
     connect(&_devs, &Device::attitudeComplete, m_plot, &PlotCash::addAtt);
@@ -13,7 +16,7 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 }
 
-void Core::consoleProto(ProtoKP1 &parser, bool is_in) {
+void Core::consoleProto(FrameParser &parser, bool is_in) {
     QString str_mode;
     QString comment = "";
 

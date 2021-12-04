@@ -10,6 +10,7 @@
 #include <waterfall.h>
 #include <DevHub.h>
 #include <logger.h>
+#include <QThread>
 
 
 //#define FLASHER
@@ -49,7 +50,7 @@ public:
         console()->put(QtMsgType::QtWarningMsg, msg);
     }
 
-    void consoleProto(ProtoKP1 &parser, bool is_in = true);
+    void consoleProto(FrameParser &parser, bool is_in = true);
 
     void setEngine(QQmlApplicationEngine *engine) {
         m_engine = engine;
@@ -119,6 +120,8 @@ public:
     Device _devs;
 
     Logger _logger;
+
+    QThread connectionThread;
 
     QQmlApplicationEngine *m_engine = nullptr;
 

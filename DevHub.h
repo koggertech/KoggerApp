@@ -4,6 +4,10 @@
 #include <ProtoBinnary.h>
 #include <QList>
 #include <DevQProperty.h>
+#include <streamlist.h>
+#include <QVariant>
+#include <QStringListModel>
+
 
 #ifdef FLASHER
 #include <flasher.h>
@@ -17,6 +21,7 @@ public:
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
     Q_PROPERTY(bool protoBinConsoled WRITE setProtoBinConsoled)
+    Q_PROPERTY(StreamListModel*  streamsList READ streamsList NOTIFY streamChanged)
 
     QList<DevQProperty*> getDevList() {
         _devList.clear();
@@ -43,6 +48,10 @@ public slots:
     bool isCreatedId(int id) { return getDevList().size() > id; }
     void setProtoBinConsoled(bool is_consoled) { _isConsoled = is_consoled; }
 
+    StreamListModel*  streamsList() {
+        return _streamList.streamsList();
+    }
+
 signals:
     void dataSend(QByteArray data);
 
@@ -59,6 +68,7 @@ signals:
     void upgradeProgressChanged(int progress_status);
     void deviceVersionChanged();
     void devChanged();
+    void streamChanged();
 
 protected:
     FrameParser m_proto;
@@ -70,6 +80,7 @@ protected:
     uint8_t lastRoute = 0;
 
     QList<DevQProperty*> _devList;
+    StreamList _streamList;
 
     bool _isDuplex = false;
     bool _isConsoled = false;

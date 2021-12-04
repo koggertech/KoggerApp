@@ -21,12 +21,12 @@ Window  {
     color: "black"
     title: qsTr("KoggerApp, KOGGER")
 
-    Settings {
-        property alias x: mainview.x
-        property alias y: mainview.y
-        property alias width: mainview.width
-        property alias height: mainview.height
-    }
+//    Settings {
+//        property alias x: mainview.x
+//        property alias y: mainview.y
+//        property alias width: mainview.width
+//        property alias height: mainview.height
+//    }
 
     SplitView {
         Layout.fillHeight: true
@@ -139,8 +139,6 @@ Window  {
                             border.width: 1
                             radius: 1
                         }
-
-
 
                         Menu {
                             id: popup_themes

@@ -66,9 +66,7 @@ DevSettingsBox {
                     to: 100
                     stepSize: 10
                     value: dev.chartResolution
-                    onValueChanged: {
-                        dev.chartResolution = value
-                    }
+                    onValueChanged: dev.chartResolution = value
                 }
             }
 

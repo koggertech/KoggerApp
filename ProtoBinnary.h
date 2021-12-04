@@ -26,6 +26,7 @@ typedef uint32_t U4;
 typedef int32_t S4;
 typedef float F4;
 typedef double D8;
+typedef uint64_t U8;
 
 typedef enum ID {
     ID_NONE = 0,
@@ -66,7 +67,11 @@ typedef enum ID {
     ID_EVENT = 0x30,
     ID_VOLTAGE = 0x31,
 
+    ID_STREAM = 0x40,
+
     ID_NAV = 0x64,
+
+    sizer = 0xFFFF
 } ID;
 
 typedef enum {
@@ -159,17 +164,21 @@ public:
                 else { headerReSync(b); }
                 break;
             case StateKP2Header:
-                if(_frameLen == 3) {
-                    _completeLen = *(int16_t*)(&_frame[3]) + (4 + 2);
-                    _protoState = StateKP2Ending;
+                if(_frameLen == 4) {
+                    uint16_t next_frame_len = *((uint16_t*)(&_frame[2]));
+                    if(next_frame_len < sizeof(_frame)) {
+                        _completeLen = next_frame_len - 1;
+                        _protoState = StateKP2Ending;
+                    } else {
+                        headerReSync(b);
+                    }
                 }
                 break;
             case StateKP2Ending:
                 if(_frameLen == _completeLen) {
                     if(frameAppend(b)) {
                         checkAsKP2();
-                    } else { }
-
+                    }
                     incContext();
                     resetState();
                     return;
@@ -235,32 +244,17 @@ public:
         _contextLen = len;
     }
 
-    uint32_t availContext() {
-        return _contextLen;
-    }
-
-    int16_t readAvailable() {
-        return _readMaxLen - _readOffset;
-    }
+    uint32_t availContext() { return _contextLen; }
+    int16_t readAvailable() { return _readMaxPosition - _readPosition; }
 
     ProtoID proto() { return _proto; }
 
-    bool isCompleteAs(ProtoID proto_flag) {
-        return proto_flag == proto();
-    }
-
-    bool completeAsKBP() {
-        return proto() == ProtoKP1;
-    }
-
-    bool isCompleteAsUBX() {
-        return isCompleteAs(ProtoUBX);
-    }
-
-    bool completeAsNMEA() {
-        return proto() == ProtoNMEA;
-    }
-
+    bool isComplete() { return proto() != ProtoNone; }
+    bool isCompleteAs(ProtoID proto_flag) { return proto_flag == proto(); }
+    bool completeAsKBP() { return proto() == ProtoKP1; }
+    bool completeAsKBP2() { return proto() == ProtoKP2; }
+    bool isCompleteAsUBX() { return isCompleteAs(ProtoUBX); }
+    bool completeAsNMEA() { return proto() == ProtoNMEA; }
     void resetComplete() { _proto = ProtoNone; }
 
     uint8_t* frame() { return _frame; }
@@ -271,7 +265,75 @@ public:
     uint32_t binComplete() { return _counter.completeKP1;}
     uint32_t NMEAComplete() { return _counter.completeNMEA;}
 
+    template<typename T>
+    T read() {
+        T *val = (T *)(&_frame[_readPosition]);
+        _readPosition += sizeof (T);
+        return *val;
+    }
+
+    void read(uint8_t* b, uint16_t len) {
+        for(uint16_t i = 0; i < len; i++) {
+            b[i] = _frame[_readPosition];
+            _readPosition++;
+        }
+    }
+
+    char readChar() {
+        char c = _frame[_readPosition++];
+        _readPosition++;
+        return c;
+    }
+
+    void readSkip(uint16_t skip_nbr) {_readPosition += skip_nbr;}
+
+
+    template<typename T>
+    void write(T data) {
+        if(frameSpaceAvail() > (int16_t)sizeof (T)) {
+            uint8_t* ptr_data = (uint8_t*)(&data);
+            for(uint8_t i = 0; i < sizeof (T); i++) {
+                _frame[_frameLen] = ptr_data[i];
+                _frameLen++;
+            }
+        }
+    }
+
+    uint16_t payloadLen() { return _payloadLen; }
+    int16_t frameSpaceAvail() { return _frameMaxLen - _frameLen; }
+
+    uint8_t route() const { return _address; }
+    ID id() const { return _id; }
+    Type type() const { return _type; }
+    Version ver() const { return _ver;}
+    bool mark() const { return _mark; }
+    bool resp() const { return _resp; }
+
+    bool isStream() {
+        return _optionFlags.isStream;
+    }
+
+    uint16_t streamId() {
+        return _stream.id;
+    }
+
+    uint32_t streamOffset() {
+        return _stream.offset;
+    }
+
 protected:
+    typedef union {
+        struct {
+            uint16_t isProxy : 1;
+            uint16_t isAddress : 1;
+            uint16_t isStream : 1;
+            uint16_t isLTime : 1;
+            uint16_t isGTime : 2;
+            uint16_t reserved : 10;
+        };
+        uint16_t val;
+    } OP_Flags;
+
     enum ProtoState {
         StateSync,
 
@@ -301,8 +363,32 @@ protected:
     int16_t _frameMaxLen;
     int16_t _payloadLen;
     int16_t _completeLen;
-    int16_t _readOffset;
-    int16_t _readMaxLen;
+    int16_t _readPosition;
+    int16_t _readMaxPosition;
+    uint32_t _ltime;
+    uint64_t _gtime;
+
+    ID _id;
+    Version _ver;
+    Type _type;
+    uint8_t _address, _from;
+    bool _mark, _resp;
+
+    uint8_t _optionsLen;
+    OP_Flags _optionFlags;
+
+    struct {
+        uint16_t id;
+        uint32_t offset;
+        union {
+            struct {
+                uint8_t isBytes : 1;
+                uint8_t reserved : 7;
+            };
+            uint8_t val;
+        } flags;
+    } _stream;
+
 
     struct {
         uint32_t frameError = 0;
@@ -351,7 +437,7 @@ protected:
     }
 
     void switchToKP2() {
-        _protoState = StateKP1Sync;
+        _protoState = StateKP2Sync;
         _frameMaxLen = 255 + 8;
         resetFrame();
     }
@@ -374,25 +460,27 @@ protected:
     }
 
     bool checkFletcher(uint8_t* buf, uint16_t len, uint8_t ch1, uint8_t ch2) {
-            uint8_t check1 = 0, check2 = 0;
-            fletcher(buf, len, &check1, &check2);
-            return (ch1 == check1) && (ch2 == check2);
-        }
+        uint8_t check1 = 0, check2 = 0;
+        fletcher(buf, len, &check1, &check2);
+        return (ch1 == check1) && (ch2 == check2);
+    }
 
     bool checkAsKP1() {
-        uint8_t check1 = 0, check2 = 0;
-        uint16_t check1Pos = _frameLen - 2;
-        for(uint16_t i = 2; i < check1Pos; i++) {
-            check1 += _frame[i];
-            check2 += check1;
-        }
-
-        bool res = (check1 == _frame[check1Pos]) && (check2 == _frame[check1Pos + 1]);
+        bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
         if(res) {
+            _readPosition = 6;
+            _readMaxPosition = _frameLen - 2;
+            _payloadLen = _readMaxPosition - _readPosition;
+
+            _address =_frame[2];
+            uint8_t mode = _frame[3];
+            _type = (Type)(mode & 0x3);
+            _ver = (Version)((mode >> 3) & 0x7);
+            _mark = ((mode >> 6) & 0x1) == 0x1;
+            _resp = ((mode >> 7) & 0x1) == 0x1;
+            _id = (ID)(_frame[4]);
+
             _proto = ProtoKP1;
-            _readOffset = 6;
-            _readMaxLen = _frameLen - 2;
-            _payloadLen = _readMaxLen - _readOffset;
             _counter.completeKP1++;
         } else {
             _counter.checkErrorKP1++;
@@ -403,19 +491,57 @@ protected:
     }
 
     bool checkAsKP2() {
-        uint8_t check1 = 0, check2 = 0;
-        uint16_t check1Pos = _frameLen - 2;
-        for(uint16_t i = 2; i < check1Pos; i++) {
-            check1 += _frame[i];
-            check2 += check1;
-        }
-
-        bool res = (check1 == _frame[check1Pos]) && (check2 == _frame[check1Pos + 1]);
+        bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
         if(res) {
+            _readPosition = 4;
+
+            _optionsLen = read<U1>();
+
+            if(_optionsLen >= 3) {
+                _optionFlags.val = read<U2>();
+
+                if(_optionFlags.isAddress) {
+                    _address = read<U1>();
+                    _from = read<U1>();
+                }
+
+                if(_optionFlags.isStream) {
+                    _stream.flags.val = read<U1>();
+                    _stream.id = read<U2>();
+                    _stream.offset = read<U4>();
+                }
+
+                if(_optionFlags.isLTime) {
+                    _ltime = read<U4>();
+                }
+
+                if(_optionFlags.isGTime == 1) {
+                    _gtime = read<U8>();
+                } else if(_optionFlags.isGTime == 2) {
+                    uint64_t unix = read<U4>();
+                    uint32_t us = read<U4>();
+                    _gtime = unix*1000 + us;
+                } else if(_optionFlags.isGTime == 3){
+                    read<U8>();
+                }
+            }
+
+            _readPosition = _optionsLen + 4;
+
+            uint8_t pld_flags = read<U1>();
+            uint16_t id_ver = read<U2>();
+
+            _type = (Type)(pld_flags & 0x3);
+            _mark = ((pld_flags >> 3) & 0x1) == 0x1;
+            _resp = ((pld_flags >> 2) & 0x1) == 0x1;
+
+            _id = (ID)(id_ver >> 3);
+            _ver = (Version)(id_ver & 0x7);
+
+            _readMaxPosition = _frameLen - 2;
+            _payloadLen = _readMaxPosition - _readPosition;
+
             _proto = ProtoKP2;
-            _readOffset = _frame[4] + (4 + 3);
-            _readMaxLen = _frameLen - 2;
-            _payloadLen = _readMaxLen - _readOffset;
             _counter.completeKP2++;
         } else {
             _counter.checkErrorKP2++;
@@ -426,20 +552,21 @@ protected:
     }
 
     bool checkAsUBX() {
-            bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
-            if(res) {
-                _proto = ProtoUBX;
-                _readOffset = 6;
-                _readMaxLen = _frameLen - 2;
-                _payloadLen = _readMaxLen - _readOffset;
-                _counter.completeUBX++;
-            } else {
-                _counter.checkErrorUBX++;
-                _proto = ProtoNone;
-            }
+        bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
+        if(res) {
+            _readPosition = 6;
+            _readMaxPosition = _frameLen - 2;
+            _payloadLen = _readMaxPosition - _readPosition;
 
-            return res;
+            _proto = ProtoUBX;
+            _counter.completeUBX++;
+        } else {
+            _counter.checkErrorUBX++;
+            _proto = ProtoNone;
         }
+
+        return res;
+    }
 
     bool checkAsNMEA() {
         uint16_t checkStopPos = _frameLen - 5;
@@ -449,8 +576,8 @@ protected:
             checkCalck ^= _frame[i];
         }
 
-        uint8_t frameCheck1 = fromHexChar(_frame[_frameLen - 4]);
-        uint8_t frameCheck2 = fromHexChar(_frame[_frameLen - 3]);
+        uint8_t frameCheck1 = hexToInt(_frame[_frameLen - 4]);
+        uint8_t frameCheck2 = hexToInt(_frame[_frameLen - 3]);
 
         bool res = checkCalck == ((frameCheck1 << 4) + (frameCheck2));
 
@@ -461,14 +588,13 @@ protected:
                 i++;
             }
             if(i > max_id_len) { res = false; }
-            _readOffset = i + 1;
-            _payloadLen = checkStopPos - _readOffset;
+            _readPosition = i + 1;
+            _payloadLen = checkStopPos - _readPosition;
         }
 
         if(res) {
+            _readMaxPosition = checkStopPos;
             _proto = ProtoNMEA;
-
-            _readMaxLen = checkStopPos;
             _counter.completeNMEA++;
         } else {
             _counter.checkErrorNMEA++;
@@ -478,7 +604,7 @@ protected:
         return res;
     }
 
-    uint8_t fromHexChar(uint8_t hex_char) {
+    uint8_t hexToInt(uint8_t hex_char) {
          if (hex_char >= 'A' && hex_char <= 'F')
             return (hex_char + 10) - ('A');
           else if (hex_char >= 'a' && hex_char <= 'f')
@@ -488,77 +614,59 @@ protected:
     }
 };
 
-class ProtoKP1 : public FrameParser {
-public:
-    ProtoKP1() {}
+//class FrameKogger : public FrameParser {
+//public:
+//    FrameKogger() {}
 
-    uint8_t route() const { return _frame[2]; }
-    uint8_t mode() const { return _frame[3]; }
-    ID id() const { return (ID)(_frame[4]); }
-    Type type() const { return (Type)(mode() & 0x3);}
-    Version ver() const { return (Version)((mode() >> 3) & 0x7);}
-    bool mark() const { return ((mode() >> 6) & 0x1) == 0x1;}
-    bool resp() const { return ((mode() >> 7) & 0x1) == 0x1;}
-    uint16_t payloadLen() { return _payloadLen; }
+//    uint8_t route() const { return _frame[2]; }
+//    uint8_t mode() const { return _frame[3]; }
+//    ID id() const { return (ID)(_frame[4]); }
+//    Type type() const { return (Type)(mode() & 0x3);}
+//    Version ver() const { return (Version)((mode() >> 3) & 0x7);}
+//    bool mark() const { return ((mode() >> 6) & 0x1) == 0x1;}
+//    bool resp() const { return ((mode() >> 7) & 0x1) == 0x1;}
+//};
 
-    bool isOut() { return _isOut;}
-protected:
-    bool _isOut = false;
+//class ProtoKP1 : public FrameKogger {
+//public:
+//    ProtoKP1() {}
 
-    void setRoute(uint8_t route) {_frame[2] = route;}
-    void setMode(uint8_t mode) { _frame[3] = mode; }
-    void setMode(Type type, Version ver, bool response) {
-        setMode((uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7)));
-    }
-    void setId(ID id) { _frame[4] = id; }
-    void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
-};
+//    uint8_t route() const { return _frame[2]; }
+//    uint8_t mode() const { return _frame[3]; }
+//    ID id() const { return (ID)(_frame[4]); }
+//    Type type() const { return (Type)(mode() & 0x3);}
+//    Version ver() const { return (Version)((mode() >> 3) & 0x7);}
+//    bool mark() const { return ((mode() >> 6) & 0x1) == 0x1;}
+//    bool resp() const { return ((mode() >> 7) & 0x1) == 0x1;}
 
-class ProtoKP2 : public FrameParser {
-public:
-    ProtoKP2() {}
+//protected:
 
-    uint8_t route() const { return _frame[2]; }
-    uint8_t mode() const { return _frame[_frame[4] + 4]; }
-    ID id() const { return (ID)(idver() >> 3); }
-    Type type() const { return (Type)(mode() & 0x3); }
-    Version ver() const { return (Version)(idver() & (uint16_t)0x3); }
-    bool mark() const { return ((mode() >> 3) & 0x1) == 0x1; }
-    bool resp() const { return ((mode() >> 2) & 0x1) == 0x1; }
-    uint16_t payloadLen() { return _payloadLen; }
+//};
 
-protected:
-    uint16_t idver() const { return *(uint16_t*)(&_frame[_frame[4] + 5]); }
+//class ProtoKP2 : public FrameKogger {
+//public:
+//    ProtoKP2() {}
 
-    void setRoute(uint8_t route) {_frame[2] = route;}
-    void setMode(uint8_t mode) { _frame[3] = mode; }
-    void setMode(Type type, Version ver, bool response) {
-        setMode((uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7)));
-    }
-    void setId(ID id) { _frame[4] = id; }
-    void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
-};
+//    uint8_t route() const { return _frame[2]; }
+//    uint8_t mode() const { return _frame[_frame[4] + 4]; }
+//    ID id() const { return (ID)(idver() >> 3); }
+//    Type type() const { return (Type)(mode() & 0x3); }
+//    Version ver() const { return (Version)(idver() & (uint16_t)0x3); }
+//    bool mark() const { return ((mode() >> 3) & 0x1) == 0x1; }
+//    bool resp() const { return ((mode() >> 2) & 0x1) == 0x1; }
 
 
-class ProtoKP1In : public ProtoKP1 {
-public:
-    ProtoKP1In() { _isOut = false; }
+//protected:
+//    uint16_t idver() const { return *(uint16_t*)(&_frame[_frame[4] + 5]); }
 
-    template<typename T>
-    T read() {
-        T *val = (T *)(&_frame[_readOffset]);
-        _readOffset += sizeof (T);
-        return *val;
-    }
-
-    void read(uint8_t* b, uint16_t len) {
-        for(uint16_t i = 0; i < len; i++) {
-            b[i] = _frame[_readOffset];
-            _readOffset++;
-        }
-    }
-protected:
-};
+//    void setRoute(uint8_t route) {_frame[2] = route;}
+//    void setMode(uint8_t mode) { _frame[3] = mode; }
+//    void setMode(Type type, Version ver, bool response) {
+//        setMode((uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7)));
+//    }
+//    void setId(ID id) { _frame[4] = id; }
+//    void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
+//};
 
 class ProtoUBX : public FrameParser {
 public:
@@ -566,23 +674,7 @@ public:
 
     uint8_t msgId() const { return (ID)(_frame[3]); }
     uint8_t msgClass() const { return (ID)(_frame[2]); }
-    uint16_t payloadLen() { return _payloadLen; }
 
-    void readSkip(uint16_t skip_nbr) {_readOffset += skip_nbr;}
-
-    template<typename T>
-    T read() {
-        T *val = (T *)(&_frame[_readOffset]);
-        _readOffset += sizeof (T);
-        return *val;
-    }
-
-    void read(uint8_t* b, uint16_t len) {
-        for(uint16_t i = 0; i < len; i++) {
-            b[i] = _frame[_readOffset];
-            _readOffset++;
-        }
-    }
 protected:
 };
 
@@ -610,40 +702,40 @@ public:
 
     void skip() {
         int16_t i = 0;
-        while(i < _readMaxLen && _frame[_readOffset] != ',') {
-            _readOffset++;
+        while(i < _readMaxPosition && _frame[_readPosition] != ',') {
+            _readPosition++;
             i++;
         }
 
-        _readOffset++;
+        _readPosition++;
     }
 
     double readLatitude() {
-        int16_t deg_h = _frame[_readOffset++] - '0';
-        int16_t deg_l = _frame[_readOffset++] - '0';
+        int16_t deg_h = _frame[_readPosition++] - '0';
+        int16_t deg_l = _frame[_readPosition++] - '0';
 
-        int16_t min_h = _frame[_readOffset++] - '0';
-        int16_t min_l = _frame[_readOffset++] - '0';
+        int16_t min_h = _frame[_readPosition++] - '0';
+        int16_t min_l = _frame[_readPosition++] - '0';
 
-        if(_frame[_readOffset++] != '.') { return std::nan(""); }
+        if(_frame[_readPosition++] != '.') { return std::nan(""); }
 
         int16_t i = 0;
         int32_t min_part = 0;
         int32_t exp_sum = 1;
         const uint16_t max_part_len = 10;
-        while(i <= max_part_len && _frame[_readOffset] != ',') {
+        while(i <= max_part_len && _frame[_readPosition] != ',') {
             min_part *= 10;
-            min_part += _frame[_readOffset++] - '0';
+            min_part += _frame[_readPosition++] - '0';
             i++;
             exp_sum *= 10;
         }
 
         if(i > max_part_len) { return std::nan(""); }
 
-        _readOffset++;
+        _readPosition++;
 
-        int16_t q = _frame[_readOffset++];
-        _readOffset++;
+        int16_t q = _frame[_readPosition++];
+        _readPosition++;
 
         if(q != 'N' && q != 'S') { return std::nan(""); }
 
@@ -653,32 +745,32 @@ public:
     }
 
     double readLongitude() {
-        int16_t deg_h = _frame[_readOffset++] - '0';
-        int16_t deg_m = _frame[_readOffset++] - '0';
-        int16_t deg_l = _frame[_readOffset++] - '0';
+        int16_t deg_h = _frame[_readPosition++] - '0';
+        int16_t deg_m = _frame[_readPosition++] - '0';
+        int16_t deg_l = _frame[_readPosition++] - '0';
 
-        int16_t min_h = _frame[_readOffset++] - '0';
-        int16_t min_l = _frame[_readOffset++] - '0';
+        int16_t min_h = _frame[_readPosition++] - '0';
+        int16_t min_l = _frame[_readPosition++] - '0';
 
-        if(_frame[_readOffset++] != '.') { return std::nan(""); }
+        if(_frame[_readPosition++] != '.') { return std::nan(""); }
 
         int16_t i = 0;
         int32_t min_part = 0;
         int32_t exp_sum = 1;
         const uint16_t max_part_len = 10;
-        while(i <= max_part_len && _frame[_readOffset] != ',') {
+        while(i <= max_part_len && _frame[_readPosition] != ',') {
             min_part *= 10;
-            min_part += _frame[_readOffset++] - '0';
+            min_part += _frame[_readPosition++] - '0';
             i++;
             exp_sum *= 10;
         }
 
         if(i > max_part_len) { return std::nan(""); }
 
-        _readOffset++;
+        _readPosition++;
 
-        int16_t q = _frame[_readOffset++];
-        _readOffset++;
+        int16_t q = _frame[_readPosition++];
+        _readPosition++;
 
         if(q != 'W' && q != 'E') { return std::nan(""); }
 
@@ -688,39 +780,33 @@ public:
     }
 
     uint32_t readTimems() {
-        int16_t h_h = _frame[_readOffset++] - '0';
-        int16_t h_l = _frame[_readOffset++] - '0';
+        int16_t h_h = _frame[_readPosition++] - '0';
+        int16_t h_l = _frame[_readPosition++] - '0';
 
-        int16_t m_h = _frame[_readOffset++] - '0';
-        int16_t m_l = _frame[_readOffset++] - '0';
+        int16_t m_h = _frame[_readPosition++] - '0';
+        int16_t m_l = _frame[_readPosition++] - '0';
 
-        int16_t s_h = _frame[_readOffset++] - '0';
-        int16_t s_l = _frame[_readOffset++] - '0';
+        int16_t s_h = _frame[_readPosition++] - '0';
+        int16_t s_l = _frame[_readPosition++] - '0';
 
-        if(_frame[_readOffset++] != '.') { return 0xFFFFFFFF; }
+        if(_frame[_readPosition++] != '.') { return 0xFFFFFFFF; }
 
-        int16_t subs_h = _frame[_readOffset++] - '0';
-        int16_t subs_l = _frame[_readOffset++] - '0';
+        int16_t subs_h = _frame[_readPosition++] - '0';
+        int16_t subs_l = _frame[_readPosition++] - '0';
 
-        _readOffset++;
+        _readPosition++;
 
         return (uint32_t)(h_h*10 + h_l)*3600000 + (uint32_t)(m_h*10 + m_l)*60000 + (uint32_t)(s_h*10 + s_l)*1000 + subs_h*100 + subs_l*10;
-    }
-
-    char readChar() {
-        char c = _frame[_readOffset++];
-        _readOffset++;
-        return c;
     }
 
 protected:
 };
 
 
-class ProtoBinOut : public ProtoKP1
+class ProtoBinOut : public FrameParser
 {
 public:
-    explicit ProtoBinOut() {  _isOut = true;  }
+    explicit ProtoBinOut() { }
 
     void create(Type type, Version ver, ID id, uint8_t route) {
         _frame[0] = 0xbb;
@@ -731,21 +817,6 @@ public:
 
         _frameLen = 6;
         _frameMaxLen = 254;
-    }
-
-    int16_t frameSpaceAvail() {
-        return _frameMaxLen - _frameLen;
-    }
-
-    template<typename T>
-    void write(T data) {
-        if(frameSpaceAvail() > (int16_t)sizeof (T)) {
-            uint8_t* ptr_data = (uint8_t*)(&data);
-            for(uint8_t i = 0; i < sizeof (T); i++) {
-                _frame[_frameLen] = ptr_data[i];
-                _frameLen++;
-            }
-        }
     }
 
     void end() {
@@ -763,6 +834,16 @@ public:
         _frameLen += 2;
     }
 protected:
+    void setRoute(uint8_t route) { _address = route; _frame[2] = route;}
+    void setMode(uint8_t mode) { _frame[3] = mode; }
+    void setMode(Type type, Version ver, bool response) {
+        _type = type;
+        _ver =  ver;
+        _resp = response;
+        setMode((uint8_t)(((uint8_t)type & 0x3) | (((uint8_t)ver & 0x7) << 3) | (((uint8_t)response) << 7)));
+    }
+    void setId(ID id) { _id = id; _frame[4] = id; }
+    void setLen(uint8_t len) { _frame[5] = len; _payloadLen = len; }
 };
 
 }

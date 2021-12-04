@@ -23,15 +23,18 @@ SOURCES += \
         DevHub.cpp \
         IDBinnary.cpp \
         ProtoBinnary.cpp \
+        StreamListModel.cpp \
         connection.cpp \
         console.cpp \
         consolelistmodel.cpp \
         core.cpp \
+        filelist.cpp \
         logger.cpp \
         main.cpp \
         coreFlash.cpp \
         flasher.cpp \
         plotcash.cpp \
+        streamlist.cpp \
         waterfall.cpp
 
 RESOURCES += QML/qml.qrc
@@ -53,14 +56,17 @@ HEADERS += \
     DevQProperty.h \
     IDBinnary.h \
     ProtoBinnary.h \
+    StreamListModel.h \
     Themes.h \
     connection.h \
     console.h \
     consolelistmodel.h \
+    filelist.h \
     flasher.h \
     core.h \
     logger.h \
     plotcash.h \
+    streamlist.h \
     waterfall.h \
     waterfallproxy.h
 

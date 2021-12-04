@@ -14,7 +14,8 @@ typedef enum {
     BoardChirp = 5,
     BoardAssist = 6,
     BoardNEnhanced = 7,
-    BoardAssistMicro = 9,
+    BoardSideEnhanced = 8,
+    BoardRecorderMini = 9,
 } BoardVersion;
 
 class IDBin : public QObject
@@ -24,7 +25,7 @@ public:
     explicit IDBin(QObject *parent = nullptr);
     ~IDBin();
 
-    Resp  parse(ProtoKP1In &proto);
+    Resp  parse(FrameParser &proto);
 
     virtual ID id() = 0;
     virtual bool isSettable() { return false; }
@@ -56,7 +57,7 @@ protected:
     uint8_t m_address = 0;
     bool isConsoleOut = false;
 
-    virtual Resp  parsePayload(ProtoKP1In &proto) = 0;
+    virtual Resp  parsePayload(FrameParser &proto) = 0;
     virtual void requestSpecific(ProtoBinOut &proto_out) { Q_UNUSED(proto_out) }
 
     bool checkKeyConfirm(U4 key) { return (key == m_key); }
@@ -73,7 +74,7 @@ public:
     }
 
     ID id() override { return ID_TIMESTAMP; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     uint32_t timestamp() { return m_timestamp; }
 protected:
@@ -90,7 +91,7 @@ public:
     }
 
     ID id() override { return ID_DIST; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     uint32_t dist_mm() { return m_dist_mm; }
 protected:
@@ -107,7 +108,7 @@ public:
     }
 
     ID id() override { return ID_CHART; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     uint16_t sampleResol() const { return m_sampleResol; }
     uint16_t absOffset() const { return m_absOffset; }
@@ -143,7 +144,7 @@ public:
     }
 
     ID id() override { return ID_ATTITUDE; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     float yaw(Version src_ver = v0);
     float pitch(Version src_ver = v0);
@@ -167,7 +168,7 @@ public:
     }
 
     ID id() override { return ID_TEMP; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     float temp() { return m_temp; }
 protected:
@@ -184,7 +185,7 @@ public:
     }
 
     ID id() override { return ID_DATASET; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     typedef struct {
         uint8_t id = 0;
@@ -318,7 +319,7 @@ public:
     }
 
     ID id() override { return ID_DIST_SETUP; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void setRange(uint32_t start_offset, uint32_t max_dist);
 
@@ -352,7 +353,7 @@ public:
     }
 
     ID id() override { return ID_CHART_SETUP; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void setV0(U2 count, U2 resolution, U2 offset);
 
@@ -386,7 +387,7 @@ public:
     }
 
     ID id() override { return ID_DSP; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void setV0(U1 hor_smooth_factor);
 
@@ -408,7 +409,7 @@ public:
     }
 
     ID id() override { return ID_TRANSC; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void setTransc(U2 freq, U1 pulse, U1 boost);
 
@@ -437,7 +438,7 @@ public:
     }
 
     ID id() override { return ID_SND_SPEED; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void setSoundSpeed(U4 snd_spd);
     int getSoundSpeed() { return m_soundSpeed; }
@@ -455,7 +456,7 @@ public:
     }
 
     ID id() override { return ID_UART; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     typedef struct {
         U1 id = 0;
@@ -498,7 +499,7 @@ public:
     }
 
     ID id() override { return ID_VERSION; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
     uint8_t productName() { return 0; }
 
     BoardVersion boardVersion() { return m_boardVersion; }
@@ -526,7 +527,7 @@ public:
     }
 
     ID id() override { return ID_MARK; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     bool mark() { return (m_mark & 0x1) == 0x1; }
     void setMark();
@@ -543,7 +544,7 @@ public:
     }
 
     ID id() override { return ID_FLASH; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void flashing();
     void restore();
@@ -562,7 +563,7 @@ public:
     }
 
     ID id() override { return ID_BOOT; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void reboot();
     void runFW();
@@ -579,7 +580,7 @@ public:
     }
 
     ID id() override { return ID_UPDATE; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     void setUpdate(QByteArray fw);
     int availSend() {return _fw.length() - _fw_offset; }
@@ -608,12 +609,13 @@ public:
     }
 
     ID id() override { return ID_VOLTAGE; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     float voltage(int v_id) { return _v[v_id]; }
 protected:
     float _v[255];
 };
+
 
 class IDBinNav : public IDBin
 {
@@ -623,7 +625,7 @@ public:
     }
 
     ID id() override { return ID_NAV; }
-    Resp  parsePayload(ProtoKP1In &proto) override;
+    Resp  parsePayload(FrameParser &proto) override;
 
     double latitude, longitude;
     float accuracy;

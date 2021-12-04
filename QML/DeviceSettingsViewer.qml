@@ -28,54 +28,11 @@ MenuScroll {
             Layout.preferredWidth: parent.width
         }
 
-//        SonarDatasetBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-//        ChartBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-
-//        DistBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-//        TransducerBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-//        DatasetBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-//        DSPSettings {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-//        SoundSpdBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
-
-//        FlashBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
+        RecorderBox {
+            dev: devConnection.dev
+            Layout.fillWidth: true
+            Layout.preferredWidth: parent.width
+        }
 
         UpgradeBox {
             dev: devConnection.dev

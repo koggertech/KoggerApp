@@ -114,7 +114,12 @@ public:
 
     bool isSonar() {
         BoardVersion ver = boardVersion();
-        return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced;
+        return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced || ver == BoardSideEnhanced;
+    }
+
+    bool isRecorder() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardRecorderMini;
     }
 
     bool isChartSupport() { return m_state.duplex && isSonar(); }
@@ -146,13 +151,15 @@ signals:
     void onReboot();
 
 public slots:
-    void protoComplete(ProtoKP1In &proto);
+    void protoComplete(FrameParser &proto);
     void startConnection(bool duplex);
     void stopConnection();
     void restartState();
 
     void requestDist();
     void requestChart();
+
+    void requestStreamList();
 
     void setConsoleOut(bool is_console);
 

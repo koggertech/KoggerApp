@@ -19,7 +19,6 @@ public:
 
     void init();
 
-
     enum Roles {
         Visibility,
         Time,

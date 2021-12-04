@@ -111,7 +111,7 @@ QString DevDriver::devPN() {
 
 }
 
-void DevDriver::protoComplete(ProtoKP1In &proto) {
+void DevDriver::protoComplete(FrameParser &proto) {
     m_state.mark = proto.mark();
 
     if(hashIDParsing.contains(proto.id())) {
@@ -160,6 +160,14 @@ void DevDriver::requestDist() {
 void DevDriver::requestChart() {
     if(!m_state.connect) return;
     idChart->simpleRequest(v0);
+}
+
+void DevDriver::requestStreamList() {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, ID_STREAM, getDevAddress());
+    id_out.write<S4>(0xFFFF);
+    id_out.end();
+    emit binFrameOut(id_out);
 }
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
@@ -504,6 +512,7 @@ void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
+    core.plot()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {
@@ -559,12 +568,15 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
             break;
 
         case BoardAssist:
-        case BoardAssistMicro:
+        case BoardRecorderMini:
             m_devName = "Recorder";
             break;
 
         case BoardNEnhanced:
             m_devName = "2D-Enhanced";
+            break;
+        case BoardSideEnhanced:
+            m_devName = "Side-Enhanced";
             break;
         default:
             m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());

@@ -43,6 +43,12 @@ void PoolDataset::setPosition(uint32_t date, uint32_t time, double lat, double l
     flags.posAvail = true;
 }
 
+
+void PoolDataset::setTemp(float temp_c) {
+    m_temp_c = temp_c;
+    flags.tempAvail = true;
+}
+
 void PoolDataset::setEncoders(int16_t enc1, int16_t enc2, int16_t enc3, int16_t enc4, int16_t enc5, int16_t enc6) {
     encoder.e1 = enc1;
     encoder.e2 = enc2;
@@ -148,6 +154,20 @@ void PlotCash::addPosition(uint32_t date, uint32_t time, double lat, double lon)
         pool_index = poolLastIndex();
     }
     m_pool[pool_index].setPosition(date, time, lat, lon);
+}
+
+void PlotCash::addTemp(float temp_c) {
+
+    lastTemperature = temp_c;
+
+    int pool_index = poolLastIndex();
+    if(pool_index < 0) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
+    m_pool[pool_index].setTemp(temp_c);
+
+    updateImage(true);
 }
 
 void PlotCash::setColorScheme(QVector<QColor> coloros, QVector<int> levels) {
@@ -405,6 +425,10 @@ void PlotCash::updateValueMap(int width, int height) {
         if(m_pool[pool_index].distAvail()) {
             m_prevValueCash.distData = m_pool[pool_index].distData() - m_offset;
         }
+
+        if(m_pool[pool_index].temperatureAvail()) {
+            m_prevValueCash.temperature = m_pool[pool_index].temperature();
+        }
     }
 
     int pool_offset_index = pool_last_index - m_offsetLine;
@@ -459,6 +483,14 @@ void PlotCash::updateValueMap(int width, int height) {
                     m_valueCash[column].processingDistData = m_pool[pool_index].distProccesing() - m_offset;
                 } else {
                     m_valueCash[column].processingDistData = -1;
+                }
+            }
+
+            if(m_TemperatureVis) {
+                if(m_pool[pool_index].temperatureAvail()) {
+                    m_valueCash[column].temperature = m_pool[pool_index].temperature();
+                } else {
+                    m_valueCash[column].temperature = NAN;
                 }
             }
         } else {
@@ -658,6 +690,13 @@ QImage PlotCash::getImage(QSize size) {
                 p.drawText(m_image.width() - m_prevLineWidth - 30 - rangefinder_text.count()*15, m_image.height() - 60, rangefinder_text);
             }
         }
+
+//        if(m_TemperatureVis) {
+//            p.setPen(QColor::fromRgb(250, 70, 0));
+////            qInfo("Temperature %f", m_prevValueCash.temperature);
+//            QString rangefinder_text = QString::number((lastTemperature)) + QStringLiteral(" C");
+//            p.drawText(m_image.width() - m_prevLineWidth - 400, m_image.height() - 60, rangefinder_text);
+//        }
 
         if(_is_attitudeVis) {
             p.setFont(QFont("Asap", 16, QFont::Normal));

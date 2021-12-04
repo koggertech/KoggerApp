@@ -12,6 +12,7 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QTimer>
+#include <QThread>
 
 
 class Connection : public QObject
@@ -62,7 +63,7 @@ private:
 
     bool m_isLogWrite = false;
 
-
+    QThread workerThread;
 
 private slots:
     void closing();

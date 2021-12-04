@@ -18,6 +18,7 @@ public:
     void setChart(QVector<int16_t> chartData, int resolution, int offset);
     void setDist(int dist);
     void setPosition(uint32_t date, uint32_t time, double lat, double lon);
+    void setTemp(float temp_c);
     void setEncoders(int16_t enc1, int16_t enc2 = 0xFFFF, int16_t enc3 = 0xFFFF, int16_t = 0xFFFF, int16_t = 0xFFFF, int16_t enc6 = 0xFFFF);
     void setAtt(float yaw, float pitch, float roll);
 
@@ -34,6 +35,9 @@ public:
 
     int distProccesing() { return m_processingDist; }
     bool distProccesingAvail() { return flags.processDistAvail; }
+
+    float temperature() { return m_temp_c; }
+    bool temperatureAvail() { return flags.tempAvail; }
 
     bool isAttAvail() { return _attitude.is_avail; }
 
@@ -200,6 +204,8 @@ protected:
         double lon = 0;
     } m_position;
 
+    float m_temp_c = 0;
+
     struct {
         bool valid = false;
         int16_t e1 = 0;
@@ -218,6 +224,8 @@ protected:
         bool distAvail = false;
 
         bool posAvail = false;
+
+        bool tempAvail = false;
 
         bool processDistAvail = false;
         bool processChartAvail = false;
@@ -259,6 +267,7 @@ public slots:
     void addDist(int dist);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(uint32_t date, uint32_t time, double lat, double lon);
+    void addTemp(float temp_c);
     void setStartLevel(int level);
     void setStopLevel(int level);
     void setTimelinePosition(double position);
@@ -295,6 +304,7 @@ protected:
     bool m_oscVis = false;
     bool m_distSonarVis = true;
     bool m_distProcessingVis = true;
+    bool m_TemperatureVis = true;
     bool m_distCalcVis = true;
     bool _is_attitudeVis = false;
     bool _is_encoderVis = false;
@@ -322,6 +332,7 @@ protected:
         int distData = -1;
         int processingDistData = -1;
         int poolIndex = -1;
+        float temperature = 0;
         bool poolIndexUpdate = true;
 
     } ValueCash;
@@ -337,6 +348,8 @@ protected:
     QImage m_image;
     uint16_t m_dataImage[2600*2000];
     int m_prevLineWidth = 30;
+
+    float lastTemperature = 0;
 
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
 

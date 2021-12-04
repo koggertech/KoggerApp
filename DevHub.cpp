@@ -11,10 +11,22 @@ void Device::putData(const QByteArray &data) {
 
     while (m_proto.availContext()) {
         m_proto.process();
+        if(!m_proto.isComplete()) { continue; }
 
-        if(m_proto.completeAsKBP()) {
-            ProtoKP1In& prot_bin = (ProtoKP1In&)m_proto;
-            uint8_t addr = prot_bin.route();
+//        if(m_proto.completeAsKBP2() && m_proto.isStream()) {
+//            _streamList.append(&m_proto);
+//        }
+
+//        if(m_proto.id() == ID_STREAM) {
+//            _streamList.parse(&m_proto);
+//        }
+
+//        if(_streamList.isListChenged()) {
+//            emit streamChanged();
+//        }
+
+        if(m_proto.completeAsKBP() || m_proto.completeAsKBP2()) {
+            uint8_t addr = m_proto.route();
 
             if(lastRoute != addr) {
                 if(devAddr[addr] == NULL) {
@@ -25,27 +37,28 @@ void Device::putData(const QByteArray &data) {
                 }
             }
 
-            lastDevs->protoComplete(prot_bin);
+            lastDevs->protoComplete(m_proto);
 
-            if(_isConsoled && _isDuplex && !(prot_bin.id() == 32 || prot_bin.id() == 33)) { core.consoleProto(prot_bin); }
+            if(_isConsoled && _isDuplex && !(m_proto.id() == 32 || m_proto.id() == 33)) { core.consoleProto(m_proto); }
 
 #if !defined(Q_OS_ANDROID)
-            if(prot_bin.id() == ID_EVENT) {
-                int timestamp = prot_bin.read<U4>();
-                int id = prot_bin.read<U4>();
+            if(m_proto.id() == ID_EVENT) {
+                int timestamp = m_proto.read<U4>();
+                int id = m_proto.read<U4>();
                 if(id < 100) {
                     core.plot()->addEvent(timestamp, id);
                 }
             }
 
-            if(prot_bin.id() == ID_VOLTAGE) {
-                int v_id = prot_bin.read<U1>();
-                int32_t v_uv = prot_bin.read<S4>();
+            if(m_proto.id() == ID_VOLTAGE) {
+                int v_id = m_proto.read<U1>();
+                int32_t v_uv = m_proto.read<S4>();
                 if(v_id == 1) {
                     core.plot()->addEncoder(float(v_uv));
                     qInfo("Voltage %f", float(v_uv));
                 }
             }
+
 #endif
 
         } else if(m_proto.completeAsNMEA()) {

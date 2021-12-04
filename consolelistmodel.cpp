@@ -35,6 +35,5 @@ void ConsoleListModel::doAppend(const QString& time, int category, const QString
     _vectors[ConsoleListModel::Payload].append(data);
 
     _size++;
-    const auto& indexRow = index(line);
     endInsertRows();
 }

@@ -12,9 +12,14 @@ Connection::Connection():
     _socket(new QUdpSocket(this)),
     _timerReconnection(new QTimer())
 {
+    m_serial->moveToThread(&workerThread);
+    connect(&workerThread, &QThread::finished, m_serial, &QObject::deleteLater);
+
     connect(m_serial, &QSerialPort::aboutToClose, this, &Connection::closing);
     connect(m_serial, &QSerialPort::errorOccurred, this, &Connection::handleSerialError);
-    connect(m_serial, &QSerialPort::readyRead, this, &Connection::readyReadSerial);
+    connect(m_serial, &QSerialPort::readyRead, this, &Connection::readyReadSerial, Qt::QueuedConnection);
+
+    workerThread.start();
 
     connect(_socket, &QAbstractSocket::aboutToClose, this, &Connection::closing);
     connect(_socket, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);
@@ -30,6 +35,8 @@ QList<QSerialPortInfo> Connection::availableSerial() {
 
 bool Connection::reOpenSerial() {
     close();
+
+    m_serial->setReadBufferSize(8*1024 * 1024);
 
     m_serial->open(QIODevice::ReadWrite);
     bool is_open = m_serial->isOpen();
@@ -113,8 +120,8 @@ bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
     close();
 //    m_socket->connectToHost("192.168.4.1", 23, QIODevice::ReadWrite);
 
-    _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
-    _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+    _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
+    _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 256 * 1024);
     _socket->bind(QHostAddress::Any, port); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
     _socket->connectToHost(address, port, QIODevice::ReadWrite);
 
@@ -263,7 +270,7 @@ void Connection::handleSerialError(QSerialPort::SerialPortError error) {
 }
 
 void Connection::readyReadSerial() {
-    static QByteArray data;
+    QByteArray data;
 
     data.clear();
 

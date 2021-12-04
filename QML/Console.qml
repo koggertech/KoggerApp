@@ -54,31 +54,6 @@ Rectangle {
         RowLayout {
             Layout.fillWidth: true
 
-            ListModel {
-                id: colorCategory
-
-                ListElement {
-                    name: "QtDebugMsg"
-                    color: "gray"
-                }
-                ListElement {
-                    name: "QtWarningMsg"
-                    color: "orange"
-                }
-                ListElement {
-                    name: "QtCriticalMsg"
-                    color: "red"
-                }
-                ListElement {
-                    name: "QtFatalMsg"
-                    color: "red"
-                }
-                ListElement {
-                    name: "QtInfoMsg"
-                    color: "#DDDDDD"
-                }
-            }
-
             DelegateModel {
                 id: visualModel
 
@@ -94,7 +69,6 @@ Rectangle {
                         Layout.fillWidth: true
                         text: time + "  " + payload
                         height: 16
-//                        color: colorCategory.get(category).color
                         font.pointSize: 10
                         font.family: "Console"
                         color: theme.textColor

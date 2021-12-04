@@ -49,5 +49,6 @@
         <file>CRadioDel.qml</file>
         <file>CTextField.qml</file>
         <file>settings-outline.svg</file>
+        <file>RecorderBox.qml</file>
     </qresource>
 </RCC>

@@ -7,6 +7,7 @@
 #include <console.h>
 #include <core.h>
 #include <Themes.h>
+#include <QThread>
 
 Core core;
 Themes theme;
