@@ -19,7 +19,6 @@
 #include "flasher.h"
 #endif
 
-
 class Core : public QObject
 {
     Q_OBJECT
