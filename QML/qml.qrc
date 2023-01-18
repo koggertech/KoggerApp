@@ -50,5 +50,6 @@
         <file>CTextField.qml</file>
         <file>settings-outline.svg</file>
         <file>RecorderBox.qml</file>
+        <file>DopplerBox.qml</file>
     </qresource>
 </RCC>

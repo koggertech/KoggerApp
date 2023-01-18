@@ -7,8 +7,13 @@ Item {
     id: menu
     implicitWidth: menuLayout.width
 
+
     property var lastItem: menuSettings
     property bool isConsoleVisible: consoleEnable.checked
+    property bool is3DVisible: visible3dButton.checked
+    property bool is2DVisible: visible2dButton.checked
+
+    property int settingsWidth: theme.controlHeight*20
 
     function itemChangeActive(currentItem) {
         if(currentItem !== null) {
@@ -28,7 +33,7 @@ Item {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
-            Layout.preferredWidth: theme.controlHeight*2
+            Layout.preferredWidth: theme.controlHeight*1.8
             Layout.topMargin: 10
 
             ColumnLayout {
@@ -45,6 +50,16 @@ Item {
                     }
                 }
 
+//                MenuButton {
+//                    id: menuGraph
+//                    Layout.fillWidth: true
+////                    icon.source: "./settings-outline.svg"
+
+//                    onPressed: {
+//                        itemChangeActive(menuGraph)
+//                    }
+//                }
+
                 MenuButton {
                     id: menuDisplay
                     Layout.fillWidth: true
@@ -54,6 +69,8 @@ Item {
                         itemChangeActive(menuDisplay)
                     }
                 }
+
+
             }
 
             ColumnLayout {
@@ -65,10 +82,10 @@ Item {
 
                 CText {
                     Layout.fillWidth: true
-                    Layout.topMargin: 10
+                    Layout.topMargin: 4
                     visible: chartEnable.checked
                     horizontalAlignment: Text.AlignHCenter
-                    text: chartLevel.stopValue + " dB"
+                    text: chartLevel.stopValue
                     small: true
                 }
 
@@ -89,12 +106,113 @@ Item {
 
                 CText {
                     Layout.fillWidth: true
-                    Layout.bottomMargin: 10
+                    Layout.bottomMargin: 4
                     visible: chartEnable.checked
                     horizontalAlignment: Text.AlignHCenter
 
-                    text: chartLevel.startValue + " dB"
+                    text: chartLevel.startValue
                     small: true
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 0
+
+
+                MenuBlock { }
+
+                ButtonGroup { id: pencilbuttonGroup }
+
+                CButton {
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+                    Layout.bottomMargin: 1
+//                    Layout.preferredHeight: 24
+                    text: "⇔"
+                    checkable: true
+                    checked: true
+                    padding: 0
+                    onCheckedChanged: {
+                        if(checked) {  waterView.setMouseMode(1) }
+                    }
+                    ButtonGroup.group: pencilbuttonGroup
+                }
+
+                CButton {
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+                    Layout.bottomMargin: 1
+//                    Layout.preferredHeight: 24
+                    text: "⇲"
+                    checkable: true
+                    padding: 0
+                    onCheckedChanged: {
+                        if(checked) {  waterView.setMouseMode(2) }
+                    }
+                    ButtonGroup.group: pencilbuttonGroup
+                }
+
+                CButton {
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+                    Layout.bottomMargin: 1
+//                    Layout.preferredHeight: 24
+                    text: "═"
+                    checkable: true
+                    padding: 0
+                    onCheckedChanged: {
+                        if(checked) {  waterView.setMouseMode(3) }
+                    }
+                    ButtonGroup.group: pencilbuttonGroup
+                }
+
+                CButton {
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+//                    Layout.preferredHeight: 24
+                    text: "⇱"
+                    checkable: true
+                    padding: 0
+                    onCheckedChanged: {
+                        if(checked) {  waterView.setMouseMode(4) }
+                    }
+                    ButtonGroup.group: pencilbuttonGroup
+                }
+            }
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 0
+                visible: true
+
+                MenuBlock { }
+
+                CButton {
+                    id: visible3dButton
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+//                    Layout.preferredHeight: 24
+                    text: "3D"
+                    checkable: true
+                    padding: 0
+                    onClicked: {
+//                        if(checked) { core.movePoints() }
+                    }
+                }
+
+                CButton {
+                    id: visible2dButton
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+//                    Layout.preferredHeight: 24
+                    text: "2D"
+                    checkable: true
+                    checked: true
+                    padding: 0
+                    onClicked: {
+//                        if(checked) { core.movePoints() }
+                    }
                 }
             }
         }
@@ -104,7 +222,8 @@ Item {
             Layout.alignment: Qt.AlignTop
             visible: menuSettings.active
             Layout.maximumHeight: menu.height
-            width: theme.controlHeight*20
+
+            width: settingsWidth
             y:0
         }
 
@@ -113,7 +232,9 @@ Item {
             Layout.alignment: Qt.AlignTop
             visible: menuDisplay.active
             Layout.maximumHeight: menu.height
-            width: theme.controlHeight*20
+            width: settingsWidth
+            implicitWidth: settingsWidth
+
             y:0
         }
     }

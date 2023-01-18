@@ -28,6 +28,7 @@ DevDriver::DevDriver(QObject *parent) :
     regID(idUpdate = new IDBinUpdate(), &DevDriver::receivedUpdate);
 
     regID(idNav = new IDBinNav(), &DevDriver::receivedNav);
+    regID(idDVL = new IDBinDVL(), &DevDriver::receivedDVL);
 
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 }
@@ -103,6 +104,23 @@ int DevDriver::getDevDefAddress() {
     return idUART->devDefAddress();
 }
 
+int DevDriver::dopplerVeloX() {
+    return idDVL->velX();
+}
+
+int DevDriver::dopplerVeloY() {
+    return idDVL->velY();
+}
+
+int DevDriver::dopplerVeloZ() {
+    return idDVL->velZ();
+}
+
+int DevDriver::dopplerDist() {
+    return idDVL->dist();
+}
+
+
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }
@@ -112,6 +130,8 @@ QString DevDriver::devPN() {
 }
 
 void DevDriver::protoComplete(FrameParser &proto) {
+    if(!proto.isComplete()) return;
+
     m_state.mark = proto.mark();
 
     if(hashIDParsing.contains(proto.id())) {
@@ -164,14 +184,27 @@ void DevDriver::requestChart() {
 
 void DevDriver::requestStreamList() {
     ProtoBinOut id_out;
-    id_out.create(SETTING, v0, ID_STREAM, getDevAddress());
-    id_out.write<S4>(0xFFFF);
+    id_out.create(GETTING, v0, ID_STREAM, getDevAddress());
+    id_out.write<U2>(0);
+    id_out.write<U2>(0xFFFF);
+    id_out.write<U4>(0x0);
+    id_out.end();
+    emit binFrameOut(id_out);
+}
+
+void DevDriver::requestStream(int stream_id) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v1, ID_STREAM, getDevAddress());
+    id_out.write<U2>(stream_id);
+    id_out.write<U2>(0); // FLAGS
+    id_out.write<U4>(0x0);
+    id_out.write<U4>(0xFFFFFFF);
     id_out.end();
     emit binFrameOut(id_out);
 }
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
-    if(!m_state.connect) return;
+//    if(!m_state.connect) return;
     m_bootloader = true;
     idUpdate->setUpdate(update_data);
     reboot();
@@ -497,12 +530,17 @@ void DevDriver::receivedDist(Type type, Version ver, Resp resp) {
 
 void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
     if(idChart->isCompleteChart()) {
-        QVector<int16_t> data(idChart->chartSize());
-        uint8_t* raw_data = idChart->rawData();
-        for(int i = 0; i < data.length(); i++) {
-            data[i] = raw_data[i];
+        if(ver == v0) {
+            QVector<int16_t> data(idChart->chartSize());
+            uint8_t* raw_data = idChart->logData8();
+            for(int i = 0; i < data.length(); i++) {
+                data[i] = raw_data[i];
+            }
+            emit chartComplete(data, idChart->resolution(), idChart->offsetRange());
+        } else if(ver == v6) {
+            QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
+            emit iqComplete(data, idChart->rawType());
         }
-        emit chartComplete(data, idChart->resolution(), idChart->offsetRange());
     }
 }
 
@@ -546,44 +584,60 @@ void DevDriver::receivedUART(Type type, Version ver, Resp resp) {
 void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
     if(resp == respNone) {
 
-        switch (idVersion->boardVersion()) {
-        case BoardNone:
-            if(idVersion->boardVersionMinor() == BoardAssist) {
-                m_devName = "Assist";
-            } else {
+        if(ver == v0) {
+            switch (idVersion->boardVersion()) {
+            case BoardNone:
+                if(idVersion->boardVersionMinor() == BoardAssist) {
+                    m_devName = "Assist";
+                } else {
+                    m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
+                }
+                break;
+            case BoardEnhanced:
+                m_devName = "2D-Enhanced";
+                break;
+            case BoardChirp:
+                m_devName = "2D-Chirp";
+                break;
+            case BoardBase:
+                m_devName = "2D-Base";
+                break;
+            case BoardNBase:
+                m_devName = "2D-Base";
+                break;
+
+            case BoardAssist:
+            case BoardRecorderMini:
+                m_devName = "Recorder";
+                break;
+
+            case BoardNEnhanced:
+                m_devName = "2D-Enhanced";
+                break;
+            case BoardSideEnhanced:
+                m_devName = "Side-Enhanced";
+                break;
+            case BoardDVL:
+                m_devName = "DVL";
+                break;
+            default:
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
             }
-            break;
-        case BoardEnhanced:
-            m_devName = "2D-Enhanced";
-            break;
-        case BoardChirp:
-            m_devName = "2D-Chirp";
-            break;
-        case BoardBase:
-            m_devName = "2D-Base";
-            break;
-        case BoardNBase:
-            m_devName = "2D-Base";
-            break;
 
-        case BoardAssist:
-        case BoardRecorderMini:
-            m_devName = "Recorder";
-            break;
+            qInfo("board info %u", idVersion->boardVersion());
+            emit deviceVersionChanged();
+        } else if(ver == v1) {
+            emit deviceIDChanged(idVersion->uid());
+        } else if(ver == v2) {
+            if(idVersion->fwVersion() != 0) {
+                m_fwVer = QString("%1.%2").arg(idVersion->fwVersion()).arg(idVersion->fwVersionMinor());
+            }
 
-        case BoardNEnhanced:
-            m_devName = "2D-Enhanced";
-            break;
-        case BoardSideEnhanced:
-            m_devName = "Side-Enhanced";
-            break;
-        default:
-            m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
+            emit deviceVersionChanged();
         }
 
-        qInfo("board info %u", idVersion->boardVersion());
-        emit deviceVersionChanged();
+
+
     }
 }
 
@@ -610,6 +664,7 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
         }
     } else {
         if(m_bootloader) {
+            core.consoleInfo("Upgrade error");
             m_upgrade_status = failUpgrade;
             m_bootloader = false;
             restartState();
@@ -622,6 +677,18 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedNav(Type type, Version ver, Resp resp) {
+}
+
+void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
+    if(resp == respNone) {
+        if(ver == v0) {
+            emit dopplerVeloComplete();
+        } else  if(ver == v1) {
+             emit dopplerBeamComplete(idDVL->beams(), idDVL->beamsCount());
+        } else  if(ver == v2) {
+            emit dvlSolutionComplete(idDVL->dvlSolution());
+       }
+    }
 }
 
 void DevDriver::process() {

@@ -20,9 +20,10 @@ public:
         Visibility,
         ID,
         Size,
+        DoneSize,
         Time,
         RecordState,
-        UploadingState
+        UploadingState,
     };
 
     void clear() {
@@ -32,8 +33,12 @@ public:
         endResetModel();
     }
 
+    int size() {
+        return _size;
+    }
+
 signals:
-    void appendEvent(int id, uint32_t size, const QString& time, int recordState, int uploadState);
+    void appendEvent(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState);
 
 private:
     Q_DISABLE_COPY(StreamListModel)
@@ -46,14 +51,16 @@ private:
         {{StreamListModel::Visibility}, {"visibity"}},
         {{StreamListModel::ID}, {"id"}},
         {{StreamListModel::Size}, {"size"}},
+        {{StreamListModel::DoneSize}, {"doneSize"}},
         {{StreamListModel::Time}, {"time"}},
         {{StreamListModel::RecordState}, {"recordState"}},
         {{StreamListModel::UploadingState}, {"uploadState"}},
     };
     QHash<int, QVector<QVariant>> _vectors;
+    QHash<int, int> _index;
 
 
-    void doAppend(int id, uint32_t size, const QString& time, int recordState, int uploadState);
+    void doAppend(int id, uint32_t size, uint32_t doneSize, const QString& time, int recordState, int uploadState);
 };
 
 #endif // STREAMLISTMODEL_H

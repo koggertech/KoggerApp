@@ -7,15 +7,27 @@ StreamList::StreamList() {
 //    createStream(0);
 //    _lastStream = getStream(0);
 //    _lastStreamId = 0;
+
+    updater.start(100);
+    connect(&updater, &QTimer::timeout, this, &StreamList::process);
 }
 
-
-
 void StreamList::debugAddGap(uint32_t start, uint32_t size) {
-    core.consoleInfo(QString("Find a gap %1 from %2").arg(size).arg(start));
+//    core.consoleInfo(QString("Find a gap %1 from %2").arg(size).arg(start));
 }
 
 
 void StreamList::debugSearchGap(uint32_t start, uint32_t size) {
-    core.consoleInfo(QString("Search a gap %1 from %2").arg(size).arg(start));
+//    core.consoleInfo(QString("Search a gap %1 from %2").arg(size).arg(start));
+}
+
+
+void StreamList::process() {
+    if(isInserting) return;
+
+    QMapIterator<int, Stream> i(_streams);
+     while (i.hasNext()) {
+         i.next();
+        // i.key(); i.value();
+     }
 }

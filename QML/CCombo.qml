@@ -11,7 +11,8 @@ ComboBox {
         implicitHeight: theme.controlHeight
         contentItem: CText {
             text: modelData
-            elide: Text.ElideRight
+            small: false
+//            elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
             color: itemDelegate.highlighted ? theme.textSolidColor :  theme.textColor
         }
@@ -69,7 +70,9 @@ ComboBox {
 
         text: control.displayText
         verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
+        small: false
+
+//        elide: Text.ElideRight
 
         color: contentText.highlighted ? theme.textSolidColor :  theme.textColor
 

@@ -7,6 +7,7 @@ Button {
     highlighted: true
     implicitHeight: theme.controlHeight
 
+
     contentItem: CText {
         text: control.text
         horizontalAlignment: Text.AlignHCenter
@@ -17,11 +18,12 @@ Button {
     background: Rectangle {
         id: backRect
 
+
         implicitHeight: control.height
         implicitWidth: implicitHeight
         radius: 1
-        color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
-        border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor
+        color: control.down || control.checked ? theme.controlSolidBackColor : theme.controlBackColor
+        border.color: control.down || control.checked ? theme.controlSolidBorderColor : theme.controlBorderColor
         border.width: 1
     }
 }

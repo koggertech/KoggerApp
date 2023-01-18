@@ -71,6 +71,11 @@ typedef enum ID {
 
     ID_NAV = 0x64,
 
+    ID_DVL_BEAM = 120,
+    ID_DVL_VEL = 121,
+
+    ID_GFW = 200,
+
     sizer = 0xFFFF
 } ID;
 
@@ -299,6 +304,21 @@ public:
         }
     }
 
+    void write(void* ptr, uint16_t len) {
+        uint8_t* ptr_data = (uint8_t*)(ptr);
+        for(uint8_t i = 0; i < len; i++) {
+            _frame[_frameLen] = ptr_data[i];
+            _frameLen++;
+        }
+    }
+
+    void writeZero(uint16_t len) {
+        for(uint8_t i = 0; i < len; i++) {
+            _frame[_frameLen] = 0;
+            _frameLen++;
+        }
+    }
+
     uint16_t payloadLen() { return _payloadLen; }
     int16_t frameSpaceAvail() { return _frameMaxLen - _frameLen; }
 
@@ -405,6 +425,9 @@ protected:
 
         uint32_t completeNMEA = 0;
         uint32_t checkErrorNMEA = 0;
+
+        uint32_t completeProxy = 0;
+        uint32_t notCompleteProxy = 0;
     } _counter;
 
     void incContext() {
@@ -500,6 +523,10 @@ protected:
             if(_optionsLen >= 3) {
                 _optionFlags.val = read<U2>();
 
+                if(_optionFlags.isProxy) {
+
+                }
+
                 if(_optionFlags.isAddress) {
                     _address = read<U1>();
                     _from = read<U1>();
@@ -518,31 +545,54 @@ protected:
                 if(_optionFlags.isGTime == 1) {
                     _gtime = read<U8>();
                 } else if(_optionFlags.isGTime == 2) {
-                    uint64_t unix = read<U4>();
+                    uint64_t unix_time = read<U4>();
                     uint32_t us = read<U4>();
-                    _gtime = unix*1000 + us;
+                    _gtime = unix_time*1000 + us;
                 } else if(_optionFlags.isGTime == 3){
                     read<U8>();
                 }
             }
 
-            _readPosition = _optionsLen + 4;
 
-            uint8_t pld_flags = read<U1>();
-            uint16_t id_ver = read<U2>();
 
-            _type = (Type)(pld_flags & 0x3);
-            _mark = ((pld_flags >> 3) & 0x1) == 0x1;
-            _resp = ((pld_flags >> 2) & 0x1) == 0x1;
+            if(_optionFlags.isProxy) {
+                _readPosition = _optionsLen + 4;
+                uint8_t* context_data = _contextData;
+                int32_t context_len = _contextLen;
+                setContext(&_frame[_readPosition], _frameLen - _readPosition - 2);
 
-            _id = (ID)(id_ver >> 3);
-            _ver = (Version)(id_ver & 0x7);
+                resetState();
+                resetFrame();
+                process();
+                if(isComplete()) {
+                    _counter.completeProxy++;
+                } else {
+                    _counter.notCompleteProxy++;
+                }
 
-            _readMaxPosition = _frameLen - 2;
-            _payloadLen = _readMaxPosition - _readPosition;
+                setContext(context_data, context_len);
+            } else
+            {
+                _readPosition = _optionsLen + 4;
 
-            _proto = ProtoKP2;
-            _counter.completeKP2++;
+                uint8_t pld_flags = read<U1>();
+                uint16_t id_ver = read<U2>();
+
+                _type = (Type)(pld_flags & 0x3);
+                _mark = ((pld_flags >> 3) & 0x1) == 0x1;
+                _resp = ((pld_flags >> 2) & 0x1) == 0x1;
+
+                _id = (ID)(id_ver >> 3);
+                _ver = (Version)(id_ver & 0x7);
+
+                _readMaxPosition = _frameLen - 2;
+                _payloadLen = _readMaxPosition - _readPosition;
+
+                _proto = ProtoKP2;
+                _counter.completeKP2++;
+            }
+
+
         } else {
             _counter.checkErrorKP2++;
             _proto = ProtoNone;
@@ -710,6 +760,12 @@ public:
         _readPosition++;
     }
 
+    char readChar() {
+        char c = _frame[_readPosition++];
+        _readPosition++;
+        return c;
+    }
+
     double readLatitude() {
         int16_t deg_h = _frame[_readPosition++] - '0';
         int16_t deg_l = _frame[_readPosition++] - '0';
@@ -779,7 +835,11 @@ public:
         return lon;
     }
 
-    uint32_t readTimems() {
+    bool readTime(uint8_t* hh, uint8_t* mm, uint8_t* ss, uint16_t* mss) {
+        if(_frame[_readPosition] == ',') {
+            _readPosition++;
+            return false;
+        }
         int16_t h_h = _frame[_readPosition++] - '0';
         int16_t h_l = _frame[_readPosition++] - '0';
 
@@ -789,15 +849,42 @@ public:
         int16_t s_h = _frame[_readPosition++] - '0';
         int16_t s_l = _frame[_readPosition++] - '0';
 
-        if(_frame[_readPosition++] != '.') { return 0xFFFFFFFF; }
+        if(_frame[_readPosition++] != '.') { return false; }
 
         int16_t subs_h = _frame[_readPosition++] - '0';
         int16_t subs_l = _frame[_readPosition++] - '0';
 
         _readPosition++;
 
-        return (uint32_t)(h_h*10 + h_l)*3600000 + (uint32_t)(m_h*10 + m_l)*60000 + (uint32_t)(s_h*10 + s_l)*1000 + subs_h*100 + subs_l*10;
+        *hh = h_h*10 + h_l;
+        *mm = m_h*10 + m_l;
+        *ss = s_h*10 + s_l;
+        *mss = subs_h*100 + subs_l*10;
+
+        return true;
     }
+
+     bool readDate(uint16_t* year, uint8_t* mounth, uint8_t* day) {
+         if(_frame[_readPosition] == ',') {
+             _readPosition++;
+             return false;
+         }
+
+         int16_t d_h = _frame[_readPosition++] - '0';
+         int16_t d_l = _frame[_readPosition++] - '0';
+
+         int16_t m_h = _frame[_readPosition++] - '0';
+         int16_t m_l = _frame[_readPosition++] - '0';
+
+         int16_t y_h = _frame[_readPosition++] - '0';
+         int16_t y_l = _frame[_readPosition++] - '0';
+
+         *year = (y_h*10 + y_l) + 2000;
+         *mounth = m_h*10 + m_l;
+         *day = d_h*10 + d_l;
+
+         return true;
+     }
 
 protected:
 };

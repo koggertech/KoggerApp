@@ -7,6 +7,7 @@
 #include <plotcash.h>
 #include <QTimer>
 
+
 class WaterFall : public QQuickPaintedItem
 {
     Q_OBJECT
@@ -29,7 +30,8 @@ public slots:
     void horScrollEvent(int delta);
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
-
+    void setMouse(int x, int y);
+    void setMouseMode(int mode);
 };
 
 #endif // WATERFALL_H

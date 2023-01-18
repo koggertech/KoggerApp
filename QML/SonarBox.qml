@@ -4,7 +4,6 @@ import QtQuick.Controls 2.12
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
-
 DevSettingsBox {
     id: control
     isActive: dev.isChartSupport
@@ -16,44 +15,6 @@ DevSettingsBox {
         id: columnItem
         spacing: 24
         Layout.margins: 24
-
-//        TitleMenuBox {
-//            titleText: "Chart"
-//            Layout.fillWidth: true
-
-//            RowLayout {
-//                id: switchDatasetChart
-//                property int lastChannel: 1
-
-//                CCheck {
-//                    id:switch_ch1
-//                    text: "On"
-//                    checked: dev.datasetChart > 0
-//                    onCheckedChanged: {
-//                        if(checked == true && dev.datasetChart === 0) {
-//                            dev.datasetChart = switchDatasetChart.lastChannel
-//                        } else if(checked == false && dev.datasetChart > 0) {
-//                            switchDatasetChart.lastChannel = dev.datasetChart
-//                            dev.datasetChart = 0
-//                        }
-//                    }
-//                }
-
-//                CButton {
-//                    text: "Shot"
-//                    Layout.preferredWidth: 48
-//                    Layout.preferredHeight: 22
-//                    Layout.leftMargin: 10
-
-//                    onClicked: {
-//                        dev.requestChart();
-//                    }
-//                }
-//            }
-//        }
-
-
-
 
         ParamGroup {
             groupName: "Echogram"
@@ -75,8 +36,8 @@ DevSettingsBox {
 
                 SpinBoxCustom {
                     from: 100
-                    to: 5000
-                    stepSize: 100
+                    to: 10000
+                    stepSize: 500
                     value: dev.chartSamples
                     onValueChanged: dev.chartSamples = value
                 }
@@ -86,7 +47,7 @@ DevSettingsBox {
                 paramName: "Offset of Samples"
 
                 SpinBoxCustom {
-                    from: 0; to: 5000; stepSize: 100
+                    from: 0; to: 10000; stepSize: 100
                     value: dev.chartOffset
                     onValueChanged: dev.chartOffset = value
                 }
@@ -144,7 +105,7 @@ DevSettingsBox {
                 paramName: "Frequency, kHz"
 
                 SpinBoxCustom {
-                    from: 100; to: 6000; stepSize: 5
+                    from: 40; to: 6000; stepSize: 5
                     value: dev.transFreq
                     onValueChanged:  dev.transFreq = value
                 }
@@ -556,7 +517,7 @@ DevSettingsBox {
                 CCombo  {
                     id: baudrateCombo
                     Layout.fillWidth: true
-                    model: [9600, 18200, 38400, 57600, 115200, 230400, 460800, 921600]
+                    model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
                     currentIndex: 4
                 }
 

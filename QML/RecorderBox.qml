@@ -45,6 +45,92 @@ DevSettingsBox {
 //                }
 //            }
 
+
+
+            Component {
+                id: fileItem
+
+                Item {
+                    id: wrapper
+                    width: filesList.width; height: 28
+
+//                    Rectangle {
+//                        anchors.fill: parent
+//                        color: "transparent"
+//                        border.width: 1
+//                        border.color: theme.controlBorderColor
+
+//                    }
+
+                    RowLayout {
+                        id: rowItem
+                        spacing: 0
+                        anchors.fill: parent
+//                        margins: 4
+                        CTextField {
+                            text: "#" + id
+                            implicitWidth: 80
+                            background:  Rectangle {
+                                color: recordState === 3 ? "red" : "transparent"
+                                border.width: 1
+                                border.color: theme.controlBorderColor
+                            }
+                        }
+
+                        CTextField {
+                            text: "31.12.21 11:11"
+                            implicitWidth: 170
+                            background:  Rectangle {
+                                color: "transparent"
+                                border.width: 1
+                                border.color: theme.controlBorderColor
+                            }
+                        }
+
+                        CTextField {
+                            Layout.fillWidth: true
+                            text: Math.ceil(doneSize/(1024*1024)) + "MB / " + Math.ceil(size/(1024*1024)) + " MB"
+                            background:  Item {
+
+                                Rectangle {
+                                    height: parent.height
+                                    anchors.bottom: parent.bottom
+                                    color: "green"
+                                    width: (parent.width)*doneSize / (size + 1)
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: theme.controlBorderColor
+                                }
+                            }
+
+                            Timer {
+
+                            }
+                        }
+
+                        CButton {
+                            text: "D"
+                            implicitWidth: 26
+                            implicitHeight: 26
+                            Layout.leftMargin: 4
+
+//                            background: Rectangle {
+//                                color:   theme.controlBorderColor
+//                            }
+
+                            onClicked: {
+                                filesList.currentIndex = index
+                                dev.requestStream(id);
+                            }
+                        }
+                    }
+                }
+            }
+
             ListView {
                 id: filesList
                 model: devs.streamsList
@@ -55,62 +141,16 @@ DevSettingsBox {
                 Layout.fillHeight: true
                 height: 400
                 delegate: fileItem
+                focus: true
+//                flickableDirection: Flickable.AutoFlickDirection
 
-                Component {
-                    id: fileItem
+//                onCurrentIndexChanged: {
+//                    console.log(filesList.currentIndex);
+//                }
 
+//                contentWidth: 320
 
-
-                    Item {
-                        width: filesList.width; height: 26
-
-//                        Rectangle {
-//                            anchors.fill: parent
-//                            color: recordState == 3 ? "#DD2211" : "transparent"
-//                            opacity: 0.1
-//                        }
-
-                        RowLayout {
-
-                            spacing: 0
-                            anchors.fill: parent
-                            CTextField {
-//                                Layout.fillWidth: true
-                                text: "#" + id
-                                implicitWidth: 80
-                                background:  Rectangle {
-                                    color: recordState == 3 ? "#AA1111" : theme.controlBackColor
-                                    border.width: 1
-                                    border.color: theme.controlBorderColor
-                                }
-                            }
-
-                            CTextField {
-//                                Layout.fillWidth: true
-                                text: "31.12.21 11:11"
-                                implicitWidth: 170
-                                background:  Rectangle {
-                                    color: recordState == 3 ? "#AA1111" : theme.controlBackColor
-                                    border.width: 1
-                                    border.color: theme.controlBorderColor
-                                }
-                            }
-
-                            CTextField {
-                                Layout.fillWidth: true
-                                text: Math.ceil(size/(1024*1024)) + " MB"
-                                background:  Rectangle {
-                                    color: recordState == 3 ? "#AA1111" : theme.controlBackColor
-                                    border.width: 1
-                                    border.color: theme.controlBorderColor
-                                }
-                            }
-                        }
-
-
-                    }
-                }
-
+//                highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
 
 //                onCountChanged: {
 //                    if(consScrollEnable.checked) {
@@ -118,9 +158,7 @@ DevSettingsBox {
 //                    }
 //                }
 
-                ScrollBar.vertical: ScrollBar { }
-
-                focus: true
+//                ScrollBar.vertical: ScrollBar { }
 
             }
 

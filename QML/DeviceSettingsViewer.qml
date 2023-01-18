@@ -17,12 +17,19 @@ MenuScroll {
             Layout.preferredWidth: parent.width
         }
 
-        //            FactoryBox {
-        //                Layout.fillWidth: true
-        //                Layout.preferredWidth: parent.width
-        //            }
+//        FactoryBox {
+//            dev: devConnection.dev
+//            Layout.fillWidth: true
+//            Layout.preferredWidth: parent.width
+//        }
 
         SonarBox {
+            dev: devConnection.dev
+            Layout.fillWidth: true
+            Layout.preferredWidth: parent.width
+        }
+
+        DopplerBox {
             dev: devConnection.dev
             Layout.fillWidth: true
             Layout.preferredWidth: parent.width

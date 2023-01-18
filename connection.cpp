@@ -9,7 +9,8 @@ extern Core core;
 Connection::Connection():
     m_serial(new QSerialPort(this)),
     m_file(new QFile(this)),
-    _socket(new QUdpSocket(this)),
+    _socketUDP(new QUdpSocket(this)),
+    _socketTCP(new QTcpSocket(this)),
     _timerReconnection(new QTimer())
 {
     m_serial->moveToThread(&workerThread);
@@ -21,8 +22,11 @@ Connection::Connection():
 
     workerThread.start();
 
-    connect(_socket, &QAbstractSocket::aboutToClose, this, &Connection::closing);
-    connect(_socket, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);
+    connect(_socketUDP, &QAbstractSocket::aboutToClose, this, &Connection::closing);
+    connect(_socketUDP, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);
+
+    connect(_socketTCP, &QAbstractSocket::aboutToClose, this, &Connection::closing);
+    connect(_socketTCP, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);
 
     connect(m_file, &QFile::aboutToClose, this, &Connection::closing);
 
@@ -42,7 +46,7 @@ bool Connection::reOpenSerial() {
     bool is_open = m_serial->isOpen();
 
     if(is_open) {
-        m_type = ConnectionSerial;
+        setType(ConnectionSerial);
         emit openedEvent(true);
         core.consoleInfo("Connection: serial is open");
     } else {
@@ -94,15 +98,12 @@ bool Connection::openFile(const QString &name) {
         return false;
     }
 
-
-
-    m_type = ConnectionFile;
+    setType(ConnectionFile);
 
     emit openedEvent(false);
 
-
     while(true) {
-        data.append(m_file->read(1024*8));
+        data.append(m_file->read(1024*1024));
         if(data.size() == 0) { break; }
         emit receiveData(data);
         data.clear();
@@ -120,17 +121,31 @@ bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
     close();
 //    m_socket->connectToHost("192.168.4.1", 23, QIODevice::ReadWrite);
 
-    _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
-    _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 256 * 1024);
-    _socket->bind(QHostAddress::Any, port); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
-    _socket->connectToHost(address, port, QIODevice::ReadWrite);
+    if(is_tcp) {
+        _socketTCP->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
+        _socketTCP->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 256 * 1024);
+        _socketTCP->connectToHost(address, port, QIODevice::ReadWrite);
 
-    if (_socket->waitForConnected(1000)) {
-        qInfo("Socket Connected!");
-        m_type = ConnectionIP;
-     } else {
-        qInfo("Socket NOT Connected!");
+        if (_socketTCP->waitForConnected(1000)) {
+            qInfo("TCP socket is connected!");
+            setType(ConnectionTCP);
+         } else {
+            qInfo("TCP socket is not connected!");
+        }
+    } else {
+        _socketUDP->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
+        _socketUDP->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 256 * 1024);
+        _socketUDP->bind(QHostAddress::Any, port); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
+        _socketUDP->connectToHost(address, port, QIODevice::ReadWrite);
+
+        if (_socketUDP->waitForConnected(1000)) {
+            qInfo("UDP socket is connected!");
+            setType(ConnectionUDP);
+         } else {
+            qInfo("UDP socket is not connected!");
+        }
     }
+
     bool is_open = isOpen();
 
     if(is_open) {
@@ -140,7 +155,7 @@ bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
         core.consoleInfo("Connection: socket isn't open");
     }
 
-    return false;
+    return true;
 }
 
 bool Connection::setBaudrate(int32_t baudrate) {
@@ -163,8 +178,11 @@ bool Connection::isOpen() {
     case ConnectionFile:
         is_open = m_file->isOpen();
         break;
-    case ConnectionIP:
-        is_open = _socket->state() != QAbstractSocket::UnconnectedState;
+    case ConnectionUDP:
+        is_open = _socketUDP->state() != QAbstractSocket::UnconnectedState;
+        break;
+    case ConnectionTCP:
+        is_open = _socketTCP->state() != QAbstractSocket::UnconnectedState;
         break;
     default:
         break;
@@ -221,10 +239,17 @@ bool Connection::close(bool is_user) {
         }
         break;
 
-    case ConnectionIP:
-        if(_socket->isOpen()) {
-            _socket->disconnectFromHost();
-            _socket->close();
+    case ConnectionUDP:
+        if(_socketUDP->isOpen()) {
+            _socketUDP->disconnectFromHost();
+            _socketUDP->close();
+        }
+        break;
+
+    case ConnectionTCP:
+        if(_socketTCP->isOpen()) {
+            _socketTCP->disconnectFromHost();
+            _socketTCP->close();
         }
         break;
     default:
@@ -242,8 +267,11 @@ void Connection::sendData(const QByteArray &data){
         break;
     case ConnectionFile:
         break;
-    case ConnectionIP:
-        _socket->write(data);
+    case ConnectionUDP:
+        _socketUDP->write(data);
+        loggingStream(data);
+    case ConnectionTCP:
+        _socketTCP->write(data);
         loggingStream(data);
     default:
         break;
@@ -256,7 +284,7 @@ void Connection::closing() {
 //        _timerReconnection->start();
 //    }
 
-    m_type = ConnectionNone;
+    setType(ConnectionNone);
     emit closedEvent(false);
 }
 
@@ -279,23 +307,23 @@ void Connection::readyReadSerial() {
         data = m_serial->readAll();
         break;
 
-    case ConnectionIP:
-//        data.append(_socket->readAll());
-
-        while (_socket->hasPendingDatagrams())
+    case ConnectionUDP:
+        while (_socketUDP->hasPendingDatagrams())
         {
             QByteArray datagram;
-            datagram.resize(_socket->pendingDatagramSize());
+            datagram.resize(_socketUDP->pendingDatagramSize());
             QHostAddress sender;
             quint16 senderPort;
 
-            qint64 slen = _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+            qint64 slen = _socketUDP->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
             if (slen == -1) {
                 break;
             }
             data.append(datagram);
         }
 
+    case ConnectionTCP:
+        data.append(_socketTCP->readAll());
         break;
     default:
         break;

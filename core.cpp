@@ -9,9 +9,12 @@ Core::Core() : QObject(),
 //    connectionThread.start();
 
     connect(&_devs, &Device::chartComplete, m_plot, &PlotCash::addChart);
+    connect(&_devs, &Device::iqComplete, m_plot, &PlotCash::addIQ);
     connect(&_devs, &Device::distComplete, m_plot, &PlotCash::addDist);
     connect(&_devs, &Device::attitudeComplete, m_plot, &PlotCash::addAtt);
     connect(&_devs, &Device::positionComplete, m_plot, &PlotCash::addPosition);
+    connect(&_devs, &Device::dopplerBeamComlete, m_plot, &PlotCash::addDopplerBeam);
+    connect(&_devs, &Device::dvlSolutionComplete, m_plot, &PlotCash::addDVLSolution);
 
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 }
@@ -102,6 +105,7 @@ bool Core::devsConnection() {
         _logger.startNewLog();
     }
 
+
     return true;
 }
 
@@ -112,6 +116,8 @@ bool Core::openConnectionAsFile(const QString &name) {
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
+
+
 
     return true;
 }
@@ -152,6 +158,7 @@ bool Core::closeConnection() {
 
     _logger.stopLogging();
 
+
     return true;
 }
 
@@ -176,7 +183,7 @@ bool Core::upgradeFW(const QString &name, QObject* dev) {
 
     DevQProperty* dev_q = (DevQProperty*)(dev);
     dev_q->sendUpdateFW(m_file.readAll());
-    setUpgradeBaudrate();
+//    setUpgradeBaudrate();
 
     return true;
 }
@@ -203,19 +210,46 @@ bool Core::isLogging() {
 }
 
 bool Core::exportPlotAsCVS(QString file_path) {
-    _logger.creatExportStream(file_path);
+    QString export_file_name;
+    if(m_connection->lastType() == Connection::ConnectionFile) {
+        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+    } else {
+        export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+    }
+
+    _logger.creatExportStream(file_path + "/" + export_file_name + ".csv");
+
+//    int row_cnt = m_plot->poolSize();
+//    for(int i = 0; i < row_cnt; i++) {
+//        PoolDataset* dataset = m_plot->fromPool(i);
+//        QString row_data;
+//        QVector<int16_t> chart = dataset->chartData();
+
+//        if(chart.size() > 100) {
+//            for(int chart_i = 0; chart_i < chart.size(); chart_i++) {
+//                row_data.append(QString("%1,").arg(chart[chart_i]));
+//            }
+//            row_data.remove(row_data.length() - 1, 1);
+//            row_data.append("\n");
+//            _logger.dataExport(row_data);
+//        }
+//    }
+
+//    _logger.endExportStream();
 
     bool meas_nbr = true;
     bool event_id = true;
     bool rangefinder = true;
     bool bottom_depth = true;
     bool pos_lat_lon = true;
+    bool pos_time = true;
 
     if(meas_nbr) {
         _logger.dataExport("Number,");
     }
 
     if(event_id) {
+        _logger.dataExport("Event UNIX,");
         _logger.dataExport("Event timestamp,");
         _logger.dataExport("Event ID,");
     }
@@ -231,13 +265,21 @@ bool Core::exportPlotAsCVS(QString file_path) {
     if(pos_lat_lon) {
         _logger.dataExport("Latitude,");
         _logger.dataExport("Longitude,");
+
+        if(pos_time) {
+            _logger.dataExport("GNSS UTC Date,");
+            _logger.dataExport("GNSS UTC Time,");
+        }
     }
+
+
 
     _logger.dataExport("\n");
 
     int row_cnt = m_plot->poolSize();
 
     int prev_timestamp = 0;
+    int prev_unix = 0;
     int prev_event_id = 0;
     int prev_dist_proc = 0;
     double prev_lat = 0, prev_lon = 0;
@@ -254,8 +296,9 @@ bool Core::exportPlotAsCVS(QString file_path) {
             if(dataset->eventAvail()) {
                 prev_timestamp = dataset->eventTimestamp();
                 prev_event_id = dataset->eventID();
+                prev_unix = dataset->eventUnix();
             }
-            row_data.append(QString("%1,%2,").arg(prev_timestamp).arg(prev_event_id));
+            row_data.append(QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id));
         }
 
         if(rangefinder) {
@@ -277,14 +320,28 @@ bool Core::exportPlotAsCVS(QString file_path) {
             if(dataset->isPosAvail()) {
                 prev_lat = dataset->lat();
                 prev_lon = dataset->lon();
-
             }
 
             row_data.append(QString::number(prev_lat, 'f'));
             row_data.append(",");
             row_data.append(QString::number(prev_lon, 'f'));
             row_data.append(",");
+
+            if(pos_time) {
+                if(dataset->isPosAvail() && dataset->positionTimeUnix() != 0) {
+                    QDateTime dt = QDateTime::fromTime_t(dataset->positionTimeUnix(), Qt::TimeSpec::UTC).addMSecs(dataset->positionTimeNano()/1000000);
+                    row_data.append(dt.toString("yyyy-MM-dd"));
+                    row_data.append(",");
+                    row_data.append(dt.toString("hh:mm:ss.zzz"));
+                    row_data.append(",");
+                } else {
+                    row_data.append(",");
+                    row_data.append(",");
+                }
+            }
         }
+
+
 
         row_data.append("\n");
         _logger.dataExport(row_data);
@@ -305,8 +362,16 @@ void Core::setUpgradeBaudrate() {
 }
 
 void Core::UILoad(QObject *object, const QUrl &url) {
+    _render = object->findChild<FboInSGRenderer*>();
+
+    if(_render != NULL) {
+        m_plot->set3DRender(_render);
+    }
+
     m_waterFall = object->findChild<WaterFall*>();
-    m_waterFall->setPlot(m_plot);
+    if(m_waterFall != NULL) {
+        m_waterFall->setPlot(m_plot);
+    }
 }
 
 void Core::closing() {

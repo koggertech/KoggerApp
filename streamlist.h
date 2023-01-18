@@ -7,12 +7,13 @@
 #include "QMap"
 #include "ProtoBinnary.h"
 #include "StreamListModel.h"
-
+#include "QTime"
+#include "QTimer"
 
 
 using namespace Parsers;
 
-class StreamList
+class StreamList : public QObject
 {
 public:
     StreamList();
@@ -31,8 +32,17 @@ public:
         Uploading
     } UploadingState;
 
+    typedef enum {
+        FragmentNone,
+        FragmentNew,
+        FragmentWait,
+        FragmentProcessing
+    } FragmentStatus;
+
     typedef struct {
         uint32_t start, end;
+        uint64_t timestamp;
+        FragmentStatus status;
     } Fragment;
 
     typedef struct {
@@ -40,9 +50,10 @@ public:
         RecordingState recordingState = RecordingError;
         UploadingState uploadingState = UploadingError;
         uint32_t size = 0;
-        uint32_t unix = 0;
+        uint32_t unixt = 0;
         QByteArray data;
         QList<Fragment> gaps;
+        int modelIndex = -1;
     } Stream;
 
     void append(FrameParser* frame) {
@@ -58,7 +69,7 @@ public:
                     }
 
                     if(_lastStreamId != current_id) {
-                        createStream(current_id);
+                        updateStream(current_id);
                         _lastStream = getStream(current_id);
                         _lastStreamId = current_id;
                     }
@@ -81,23 +92,26 @@ public:
                 int id = frame->read<U2>();
                 uint16_t flags = frame->read<U2>();
                 uint32_t size = frame->read<U4>();
-                uint32_t unix = frame->read<U4>();
+                uint32_t unixt = frame->read<U4>();
 
-                createStream(id);
+                updateStream(id);
                 Stream* stream = getStream(id);
 
                 if(stream->size < size) { stream->size = size; }
-                stream->unix = unix;
+                stream->unixt = unixt;
 
                 stream->recordingState = (RecordingState)(flags & 0x3);
+
+                updateStream(id);
 
                 _isListChenged = true;
             }
         }
     }
 
-    void createStream(int id) {
+    void updateStream(int id) {
         _streams[id].id = id;
+        _modelList.appendEvent(_streams[id].id, _streams[id].size, _streams[id].data.size(), "", _streams[id].recordingState, _streams[id].uploadingState);
     }
 
     Stream* getStream(int id) {
@@ -113,12 +127,6 @@ public:
     }
 
     StreamListModel* streamsList() {
-        _modelList.clear();
-        QMapIterator<int, Stream> i(_streams);
-        while (i.hasNext()) {
-            i.next();
-            _modelList.appendEvent(i.value().id, i.value().size, "", i.value().recordingState, i.value().uploadingState);
-        }
         return &_modelList;
     }
 
@@ -132,18 +140,35 @@ public:
 
 protected:
     QMap<int, Stream> _streams;
-    uint16_t _lastStreamId = 0;
+    uint16_t _lastStreamId = 0xFFFF;
     Stream* _lastStream;
     bool _isListChenged = false;
     StreamListModel _modelList;
+    QTimer updater;
+    uint64_t timeLastGapsUpdate = 0;
+    uint64_t timeLastGapsInsert = 0;
+    bool isInserting = false;
 
     void insert(Stream* stream, uint8_t* frame, uint32_t offset, uint16_t size) {
         uint32_t end = offset + size;
         QList<Fragment>& gaps = stream->gaps;
         QByteArray& data = stream->data;
 
+        timeLastGapsInsert = timestamp();
+        isInserting = true;
+
+        if(stream->size < end) {
+            stream->size = end;
+        }
+
         if(data.size() < offset) {
-            gaps.append({(uint32_t)data.size(), offset});
+            Fragment new_fragment = {
+                .start = (uint32_t)data.size(),
+                .end = offset,
+                .timestamp = timestamp(),
+                .status = FragmentStatus::FragmentNew
+            };
+            gaps.append(new_fragment);
             debugAddGap(offset, offset - (uint32_t)data.size());
         } else if(data.size() > offset) {
             debugSearchGap(offset, size);
@@ -163,22 +188,41 @@ protected:
                     } else {
                         gaps[i].end = offset - 1;
                         if(g_end >= end) {
-                            gaps.insert(i, {end + 1, g_end});
+                            Fragment new_fragment = {
+                                .start = end + 1,
+                                .end = g_end,
+                                .timestamp = timestamp(),
+                                .status = FragmentStatus::FragmentNew
+                            };
+
+                            gaps.insert(i, new_fragment);
                             i+=1;
                         }
                     }
+
+                    gaps[i].timestamp = timestamp();
+                    gaps[i].status = FragmentStatus::FragmentProcessing;
                     break;
                 }
             }
-        } else {
-
         }
 
         data.replace(offset, size, (char*)frame, size);
+        updateStream(stream->id);
+
+        isInserting = false;
+//        process();
+    }
+
+    uint64_t timestamp() {
+        return QDateTime::currentMSecsSinceEpoch();
     }
 
     void debugAddGap(uint32_t start, uint32_t size);
     void debugSearchGap(uint32_t start, uint32_t size);
+
+protected slots:
+    void process();
 };
 
 #endif // STREAMLIST_H

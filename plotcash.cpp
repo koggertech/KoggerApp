@@ -1,4 +1,5 @@
 #include "plotcash.h"
+#include <QPainterPath>
 
 #include <core.h>
 extern Core core;
@@ -11,8 +12,9 @@ PoolDataset::PoolDataset() {
     flags.distAvail = false;
 }
 
-void PoolDataset::setEvent(int timestamp, int id) {
+void PoolDataset::setEvent(int timestamp, int id, int unixt) {
     _eventTimestamp = timestamp;
+    _eventUnix = unixt;
     _eventId = id;
     flags.eventAvail = true;
 }
@@ -30,17 +32,43 @@ void PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
     flags.chartAvail = true;
 }
 
+void PoolDataset::setIQ(QByteArray data, uint8_t type) {
+    _iq = data;
+    _iq_type = type;
+    flags.iqAvail = true;
+
+//    doppler.velocityX = dopplerProcessing(16*15/2, 16*36/2, 2);
+//    doppler.isAvai = true;
+}
+
 void PoolDataset::setDist(int dist) {
     m_dist = dist;
     flags.distAvail = true;
 }
 
-void PoolDataset::setPosition(uint32_t date, uint32_t time, double lat, double lon) {
-    m_position.date = date;
-    m_position.time = time;
+void PoolDataset::setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
+    for(uint16_t i = 0; i < cnt; i++) {
+        _dopplerBeams[i] = beams[i];
+    }
+//    setDist(beams[0].distance*1000.0f);
+    _dopplerBeamCount = cnt;
+}
+
+void PoolDataset::setDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
+    _dvlSolution = dvlSolution;
+    flags.isDVLSolutionAvail = true;
+}
+
+void PoolDataset::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_time, int32_t nanosec) {
+    m_position.unixTime = unix_time;
+    m_position.nanoSec = nanosec;
     m_position.lat = lat;
     m_position.lon = lon;
     flags.posAvail = true;
+
+    if(ref != NULL && ref->isInit) {
+        nedProcessing(ref);
+    }
 }
 
 
@@ -66,6 +94,183 @@ void PoolDataset::setAtt(float yaw, float pitch, float roll) {
     _attitude.is_avail = true;
 }
 
+void PoolDataset::doBottomTrack2D(bool is_update_dist) {
+    const int raw_size = m_chartData.size();
+    const int16_t* src = m_chartData.data();
+
+    int16_t* procData = NULL;
+
+    if(raw_size > 0 && (!flags.processChartAvail || is_update_dist)) {
+        m_processingDistData.resize(raw_size+(( raw_size) >> 6)*3);
+        m_processingDistData.fill(0);
+        procData = m_processingDistData.data();
+
+        int inc_offset = 0;
+        int dec_offset = 0;
+        int summ = 0;
+
+        for(int i = dec_offset; i < 4; i ++) {
+            summ += src[i];
+            inc_offset++;
+        }
+
+//        for(int i = raw_size - (( raw_size) >> 6); i < raw_size; i ++) {
+//            procData[i] = 0;
+//        }
+
+        for(dec_offset = 0; inc_offset < raw_size; dec_offset ++) {
+            summ -= src[dec_offset];
+            summ += src[inc_offset];
+            inc_offset++;
+            if(dec_offset % 128 == 0) {
+                inc_offset++;
+                summ += src[inc_offset];
+            }
+            procData[dec_offset] = summ/(inc_offset - dec_offset + 14);
+        }
+
+        for(dec_offset; dec_offset < raw_size - 8; dec_offset ++) {
+            inc_offset--;
+            summ -= src[dec_offset];
+            procData[dec_offset] = summ/(raw_size - dec_offset);
+        }
+
+        for(dec_offset; dec_offset < raw_size + (( raw_size) >> 6)*2; dec_offset ++) {
+            procData[dec_offset] = summ/(9);
+        }
+
+        for(int i = 0; i < 4; i ++) {
+            procData[i] = -1000;
+        }
+
+        int att = procData[4];
+        for(int i = 4; i < raw_size - (( raw_size) >> 6); i ++) {
+            int wsize = ((i) >> 8) + 5;
+
+            procData[i] = ((-procData[i] + procData[i+wsize]*5 + procData[i+wsize*2]*1 - procData[i+wsize*3] - procData[i+wsize*4])) - att;
+            att -= att/32;
+        }
+
+        flags.processChartAvail = true;
+    }
+
+    if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
+        procData = m_processingDistData.data();
+        int index_max = 0;
+        int16_t val_max = 0;
+        int max_index = _procMaxDist/m_chartResol;
+        int min_index = _procMinDist/m_chartResol;
+
+        if(max_index > raw_size) {
+            max_index = raw_size;
+        }
+
+        if(min_index > raw_size) {
+            min_index = raw_size;
+        }
+
+        for(int i = min_index; i < max_index; i ++) {
+            if(procData[i] > val_max) {
+                val_max = procData[i];
+                index_max = i;
+            }
+        }
+
+        int wsize = index_max/200;
+        m_processingDist = (index_max + m_chartOffset + wsize + 6)*m_chartResol;
+        flags.processDistAvail = true;
+    }
+}
+
+void PoolDataset::doBottomTrackSideScan(bool is_update_dist) {
+    int raw_size = m_chartData.size() - 50;
+    const int16_t* src = m_chartData.data();
+
+    int16_t* procData = NULL;
+
+    if(raw_size > 0 && (!flags.processChartAvail || is_update_dist)) {
+        m_processingDistData.resize(raw_size);
+        m_processingDistData.fill(0);
+        procData = m_processingDistData.data();
+
+        int inc_offset = 0;
+        int dec_offset = 0;
+        int summ = 0;
+
+        for(int i = dec_offset; i < 20; i ++) {
+            summ += src[i];
+            inc_offset++;
+        }
+
+        for(int i = raw_size - 20; i < raw_size; i ++) {
+            procData[i] = 0;
+        }
+
+        for(dec_offset = 0; inc_offset < raw_size - 70; dec_offset ++) {
+            summ -= src[dec_offset];
+            summ += src[inc_offset];
+            inc_offset++;
+//            if(dec_offset % 1024 == 0) {
+//                inc_offset++;
+//                summ += src[inc_offset];
+//            }
+            procData[dec_offset] = summ/(inc_offset - dec_offset + 14);
+        }
+
+        for(dec_offset; dec_offset < raw_size - 8; dec_offset ++) {
+            inc_offset--;
+            summ -= src[dec_offset];
+            procData[dec_offset] = summ/(raw_size - dec_offset);
+        }
+
+        for(dec_offset; dec_offset < raw_size + (( raw_size) >> 6)*2; dec_offset ++) {
+            procData[dec_offset] = summ/(9);
+        }
+
+        for(int i = 0; i < 4; i ++) {
+            procData[i] = -1000;
+        }
+
+        int att = procData[4];
+        int wsize = 0;
+        for(int i = 4; i < raw_size - 20 - wsize*6; i ++) {
+            wsize = 10;
+
+            procData[i] = ((-procData[i] - procData[i+wsize] - procData[i+wsize*2]*2 + procData[i+wsize*3]*2 + procData[i+wsize*4]*2 + procData[i+wsize*5]*2)) - att;
+            att -= att/32;
+        }
+
+        flags.processChartAvail = true;
+    }
+
+    if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
+        procData = m_processingDistData.data();
+        int index_max = 0;
+        int16_t val_max = 0;
+        int max_index = _procMaxDist/m_chartResol;
+        int min_index = _procMinDist/m_chartResol;
+
+        if(max_index > raw_size) {
+            max_index = raw_size;
+        }
+
+        if(min_index > raw_size) {
+            min_index = raw_size;
+        }
+
+        for(int i = min_index; i < max_index; i ++) {
+            if(procData[i] > val_max) {
+                val_max = procData[i];
+                index_max = i;
+            }
+        }
+
+        int wsize = 10;
+        m_processingDist = (index_max + m_chartOffset + wsize*3 + 5)*m_chartResol;
+        flags.processDistAvail = true;
+    }
+}
+
 PlotCash::PlotCash() {
     resetDataset();
 
@@ -77,12 +282,12 @@ PlotCash::PlotCash() {
     setThemeId(0);
 }
 
-void PlotCash::addEvent(int timestamp, int id) {
+void PlotCash::addEvent(int timestamp, int id, int unixt) {
     lastEventTimestamp = timestamp;
     lastEventId = id;
 
     poolAppend();
-    m_pool[poolLastIndex()].setEvent(timestamp, id);
+    m_pool[poolLastIndex()].setEvent(timestamp, id, unixt);
 }
 
 void PlotCash::addEncoder(float encoder) {
@@ -105,11 +310,13 @@ void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
         pool_index = poolLastIndex();
     }
 
-//    poolAppend();
     m_pool[poolLastIndex()].setChart(data, resolution, offset);
 
     if(m_distProcessingVis) {
-        m_pool[poolLastIndex()].doDistProccesing();
+        m_pool[poolLastIndex()].doBottomTrack(_bottomtrackType, false);
+        if(m_pool[poolLastIndex()].isPosAvail()) {
+            updateBottomTrack();
+        }
     }
 
     if(_autoRange != AutoRangeNone) {
@@ -117,6 +324,18 @@ void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
         m_range = data.length()*resolution;
     }
 
+    updateImage(true);
+}
+
+void PlotCash::addIQ(QByteArray data, uint8_t type) {
+    int pool_index = poolLastIndex();
+
+    if(pool_index < 0 || m_pool[pool_index].isIqAvail()) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
+
+    m_pool[poolLastIndex()].setIQ(data, type);
     updateImage(true);
 }
 
@@ -128,6 +347,29 @@ void PlotCash::addDist(int dist) {
     }
 
     m_pool[poolLastIndex()].setDist(dist);
+    updateImage(true);
+}
+
+void PlotCash::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
+    int pool_index = poolLastIndex();
+
+    poolAppend();
+    pool_index = poolLastIndex();
+
+    m_pool[poolLastIndex()].setDopplerBeam(beams, cnt);
+    updateImage(true);
+}
+
+void PlotCash::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
+    int pool_index = poolLastIndex();
+
+    if(pool_index < 0 || (m_pool[pool_index].isDopplerBeamAvail() == false)) {
+        poolAppend();
+        pool_index = poolLastIndex();
+    }
+
+    m_pool[poolLastIndex()].setDVLSolution(dvlSolution);
+    m_pool[poolLastIndex()].setDist(dvlSolution.distance.z*1000);
     updateImage(true);
 }
 
@@ -146,14 +388,28 @@ void PlotCash::addAtt(float yaw, float pitch, float roll) {
     updateImage();
 }
 
-void PlotCash::addPosition(uint32_t date, uint32_t time, double lat, double lon) {
+void PlotCash::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec) {
 
     int pool_index = poolLastIndex();
     if(pool_index < 0) {
         poolAppend();
         pool_index = poolLastIndex();
     }
-    m_pool[pool_index].setPosition(date, time, lat, lon);
+
+    if(!_llaRef.isInit) {
+        _llaRef.refLatRad = lat * M_DEG_TO_RAD;
+        _llaRef.refLonRad= lon * M_DEG_TO_RAD;
+        _llaRef.refLatSin = sin(_llaRef.refLatRad);
+        _llaRef.refLatCos = cos(_llaRef.refLatRad);
+        _llaRef.isInit = true;
+    }
+
+    m_pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
+    _gnssTrackIndex.append(pool_index);
+    _boatTrack.append(QVector3D(m_pool[pool_index].relPosN()*0.01, m_pool[pool_index].relPosE()*0.01, 0));
+    if(m_pool[pool_index].distProccesingAvail()) {
+        updateBottomTrack();
+    }
 }
 
 void PlotCash::addTemp(float temp_c) {
@@ -232,12 +488,12 @@ void PlotCash::verZoom(int delta) {
     int delta_range = ((int)((float)m_range*zoom)/1000)*1000;
     int new_range = 0;
 
-    qInfo("delta %i", delta_range);
+//    qInfo("delta %i", delta_range);
 
     if(delta_range < 100) {
         delta_range = 100;
-    } else if(delta_range > 5000) {
-        delta_range = 5000;
+    } else if(delta_range > 10000) {
+        delta_range = 10000;
     }
 
     if(delta > 0) {
@@ -251,6 +507,14 @@ void PlotCash::verZoom(int delta) {
     } else if(new_range > 100000) {
         new_range = 100000;
     }
+
+//    int new_offset = m_offset + (m_range - new_range)/2;
+//    if(new_offset < 0) {
+//        new_offset = 0;
+//    } else if(new_offset > 100000) {
+//        new_offset = 100000;
+//    }
+//    m_offset = new_offset;
     m_range = new_range;
     updateImage(true);
 }
@@ -274,6 +538,89 @@ void PlotCash::verScroll(int delta) {
     updateImage(true);
 }
 
+void PlotCash::setMouseMode(int mode) {
+    _mouse_mode = mode;
+}
+
+void PlotCash::setMouse(int x, int y) {
+    qInfo("LeftClick %i, %i, %i", x, y, _mouse_mode);
+    int waterfall_width = m_valueCash.size();
+    int height = m_prevValueCash.chartData.size();
+
+
+    if(x < -1) { x = -1; }
+    if(x >= waterfall_width) { x = waterfall_width - 1; }
+
+    if(y < 0) { y = 0; }
+    if(y >= height) { x = height - 1; }
+
+    if(x == -1) {
+        _mouse_x = -1;
+        return;
+    }
+
+    int x_start = 0, y_start = 0;
+    int x_length = 0;
+    float y_scale = 0.0f;
+    if(_mouse_x != -1) {
+        if(_mouse_x < x) {
+            x_length = x - _mouse_x;
+            x_start = _mouse_x;
+            y_start = _mouse_y;
+            y_scale = (float)(y - _mouse_y)/(float)x_length;
+        } else if(_mouse_x > x) {
+            x_length = _mouse_x - x;
+            x_start = x;
+            y_start = y;
+            y_scale = -(float)(y - _mouse_y)/(float)x_length;
+        } else {
+            x_length = 1;
+            x_start = x;
+            y_start = y;
+            y_scale = 0;
+        }
+    } else {
+        x_length = 1;
+        x_start = x;
+        y_start = y;
+        y_scale = 0;
+    }
+
+    _mouse_x = x;
+    _mouse_y = y;
+
+
+    if(_mouse_mode > 1) {
+        for(int x_ind = 0; x_ind < x_length; x_ind++) {
+            int val_col = (m_valueCashStart + x_start + x_ind);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
+
+//            m_valueCash[val_col].processingDistData = 0;
+
+            int pool_index = m_valueCash[val_col].poolIndex;
+            if(pool_index > 0) {
+                int dist = ((float)y_start + (float)x_ind*y_scale)*(float)(m_range)/(float)height + m_offset;
+                if(_mouse_mode == 2) {
+                    m_pool[pool_index].setMinDistProc(dist);
+                } else if(_mouse_mode == 3) {
+                    m_pool[pool_index].setDistProcessing(dist);
+                } else if(_mouse_mode == 4) {
+                    m_pool[pool_index].setMaxDistProc(dist);
+                }
+                m_valueCash[val_col].processingDistData = m_pool[pool_index].distProccesing() - m_offset;
+
+            }
+        }
+
+        updateBottomTrack(true);
+    }
+
+
+    updateImage(false);
+}
+
 void PlotCash::setChartVis(bool visible) {
     m_chartVis = visible;
     resetValue();
@@ -294,11 +641,25 @@ void PlotCash::setDistVis(bool visible) {
 
 void PlotCash::setDistProcVis(bool visible) {
     m_distProcessingVis = visible;
-    if(visible) {
+    if(m_distProcessingVis) {
         doDistProcessing(true);
     }
 
     resetValue();
+    updateImage(true);
+}
+
+void PlotCash::setBottomTrackType(int bottomtrack_type) {
+    _bottomtrackType = bottomtrack_type;
+    if(m_distProcessingVis) {
+        doDistProcessing(true);
+    }
+    resetValue();
+    updateImage(true);
+}
+
+void PlotCash::setBottomTrackTheme(int bottomTrackTheme) {
+    _bottomTrackTheme = bottomTrackTheme;
     updateImage(true);
 }
 
@@ -307,11 +668,34 @@ void PlotCash::setEncoderVis(bool visible) {
     updateImage(true);
 }
 
+void PlotCash::setVelocityVis(bool visible) {
+    _is_velocityVis = visible;
+    updateImage(true);
+}
+
+void PlotCash::setDopplerBeamVis(bool visible) {
+    _isDopplerBeamVis = visible;
+    updateImage(true);
+}
+
+void PlotCash::setDopplerInstrumentVis(bool visible) {
+    _isDopplerInstrimentVis = visible;
+    updateImage(true);
+}
+
+void PlotCash::setGridNumber(int number) {
+    m_verticalGridNum = number;
+    updateImage(true);
+}
+
+
 void PlotCash::setImageType(int image_type) {
     _imageType = image_type;
     resetValue();
     updateImage(true);
 }
+
+
 
 void PlotCash::setAHRSVis(bool visible) {
     _is_attitudeVis = visible;
@@ -348,18 +732,26 @@ void PlotCash::resetDataset() {
     m_pool.clear();
     resetValue();
     m_valueCash.clear();
+    _llaRef.isInit = false;
+    _gnssTrackIndex.clear();
+    _bottomTrack.clear();
+    _boatTrack.clear();
 }
 
 void PlotCash::doDistProcessing(bool processing) {
     int pool_size = poolSize();
+
     for(int i = 0; i < pool_size; i++) {
         PoolDataset* dataset = fromPool(i);
         if(processing) {
-            dataset->doDistProccesing();
+            dataset->doBottomTrack(_bottomtrackType, true);
+
         } else {
             dataset->resetDistProccesing();
         }
     }
+
+    updateBottomTrack(true);
 }
 
 void PlotCash::setThemeId(int theme_id) {
@@ -393,6 +785,22 @@ void PlotCash::setThemeId(int theme_id) {
 
     setColorScheme(coloros, levels);
     updateImage();
+}
+
+void PlotCash::updateBottomTrack(bool update_all) {
+    const int to_size = _gnssTrackIndex.size();
+    int from_index = _bottomTrack.size();
+
+    if(update_all) { from_index = 0; }
+
+    _bottomTrack.resize(to_size);
+    for(int i = from_index; i < to_size; i+=1) {
+        PoolDataset* dataset = fromPool(_gnssTrackIndex[i]);
+        _bottomTrack[i] = _boatTrack[i];
+        _bottomTrack[i][2] = -dataset->relPosD()*0.01;
+    }
+
+    updateRender3D();
 }
 
 void PlotCash::updateValueMap(int width, int height) {
@@ -482,7 +890,7 @@ void PlotCash::updateValueMap(int width, int height) {
                 if(m_pool[pool_index].distProccesingAvail()) {
                     m_valueCash[column].processingDistData = m_pool[pool_index].distProccesing() - m_offset;
                 } else {
-                    m_valueCash[column].processingDistData = -1;
+                    m_valueCash[column].processingDistData = INT_MIN;
                 }
             }
 
@@ -493,10 +901,19 @@ void PlotCash::updateValueMap(int width, int height) {
                     m_valueCash[column].temperature = NAN;
                 }
             }
+
+            if(m_DopplerVis) {
+                if(m_pool[pool_index].isDopplerAvail()) {
+                    m_valueCash[column].dopplerX = m_pool[pool_index].dopplerX();
+                } else {
+                    m_valueCash[column].dopplerX = NAN;
+                }
+            }
+
         } else {
             memset(data_column, 0, size_column*2);
             m_valueCash[column].distData = -1;
-            m_valueCash[column].processingDistData = -1;
+            m_valueCash[column].processingDistData = INT_MIN;
         }
     }
 }
@@ -556,36 +973,685 @@ void PlotCash::updateImage(int width, int height) {
         memset(m_dataImage, 0, width*height*2);
     }
 
-    if(m_oscVis) {
-        int16_t* raw_col = m_prevValueCash.chartData.data();
+//    if(true) {
+//        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+//        QPainter p(&tmp_img);
+//        QPen pen;
+//        pen.setWidth(2);
+//        pen.setColor(QColor::fromRgb(255, 150, 0));
+//        p.setPen(pen);
 
-        float scale_scope_w = (float)height / (float)(waterfall_width - 100);
-        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
-        QPainter p(&tmp_img);
-        QPen pen;
-        pen.setWidth(2);
-        pen.setColor(QColor::fromRgb(70, 255, 0));
-        p.setPen(pen);
+//        float scale_y = (float)height*0.5f*0.5f;
 
-        float scale_y = (float)height*(1.0f/256.0f);
-        float scale_x = (float)(waterfall_width - 104)/height;
-
-        int last_offset_y = (float)raw_col[0]*scale_y;
-        int last_col = 100;
-
-        for (int row = 1; row < height; row++) {
-            int offset_y = (float)raw_col[row]*scale_y;
-            int offset_x = (float)row*scale_x + 100;
+//        float vx_prev = NAN;
+//        for(int col = 1;  col < waterfall_width-1; col++) {
+//            int val_col = (m_valueCashStart + col);
+//            if(val_col >= waterfall_width) {
+//                val_col -= waterfall_width;
+//            }
 
 
-            if(last_offset_y != offset_y) {
-                p.drawLine(last_col, height - last_offset_y, offset_x, height - offset_y);
-                last_col = offset_x;
+//            if(isfinite(m_valueCash[val_col].dopplerX)) {
+//                float vx = (float)height*0.5f - m_valueCash[val_col].dopplerX*scale_y;
+
+//                if(isfinite(vx_prev)) {
+//                    p.drawLine(col,vx_prev, col+1, vx);
+//                }
+//                vx_prev = vx;
+//            } else {
+//                vx_prev = NAN;
+//            }
+//        }
+//    }
+
+    if(m_oscVis && _mouse_x >= 0 ) {
+        int val_col = (m_valueCashStart + _mouse_x);
+        if(val_col >= waterfall_width) {
+            val_col -= waterfall_width;
+        }
+
+        int pool_index = m_valueCash[val_col].poolIndex;
+        if(pool_index > 0 && m_pool[pool_index].chartAvail()) {
+
+
+            int16_t* raw_col = m_pool[pool_index].chartData().data();
+            int32_t data_size = m_pool[pool_index].chartData().size();
+
+
+            float scale_scope_w = (float)height / (float)(waterfall_width - 100);
+            QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+            QPainter p(&tmp_img);
+            QPen pen;
+            pen.setWidth(2);
+            pen.setColor(QColor::fromRgb(50, 150, 0));
+
+            QPen pen2;
+            pen2.setWidth(2);
+            pen2.setColor(QColor::fromRgb(50, 255, 0));
+
+
+
+            float scale_y = (float)height*(1.0f/250.0f);
+            float scale_x = (float)(waterfall_width - 104)/(m_range/10);
+
+            int last_offset_y = (float)raw_col[0]*scale_y;
+            int last_col = 100;
+
+//            for (int row = 1 + m_offset/10; row < (m_offset + m_range)/10; row++) {
+//                int offset_y = height*0.5 - (float)(raw_col[row+1] - raw_col[row])*scale_y;
+//                int offset_x = (float)(row-m_offset/10)*scale_x + 100;
+
+
+//                if(last_offset_y != offset_y) {
+//                    p.setPen(pen);
+//                    p.drawLine(last_col,last_offset_y, offset_x, offset_y);
+//                    p.setPen(pen2);
+//                    p.drawRect(last_col-1, last_offset_y-1, 3, 3);
+
+//                    last_col = offset_x;
+//                }
+
+//                last_offset_y = offset_y;
+//            }
+
+            last_offset_y = (float)raw_col[0]*scale_y;
+            last_col = 100;
+
+            pen.setColor(QColor::fromRgb(255, 40, 0));
+            p.setPen(pen);
+
+            for (int row = 1 + m_offset/10; row < (m_offset + m_range)/10; row++) {
+                int offset_y = height - (float)(raw_col[row])*scale_y;
+                int offset_x = (float)(row-m_offset/10)*scale_x + 100;
+
+
+                if(last_offset_y != offset_y) {
+                    p.drawLine(last_col,last_offset_y, offset_x, offset_y);
+                    last_col = offset_x;
+                }
+
+                last_offset_y = offset_y;
             }
 
-            last_offset_y = offset_y;
         }
     }
+
+    if(_isDopplerInstrimentVis) {
+        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+        QPainter p1(&tmp_img);
+
+        QColor vel_color[4] = {
+            QColor(255, 0, 0),
+            QColor(0, 255, 0),
+            QColor(0, 0, 255),
+            QColor(255, 255, 255)
+        };
+
+        QPen velo_pen;
+        velo_pen.setWidth(1);
+        velo_pen.setColor(QColor::fromRgb(100, 255, 0));
+
+        const float scaleY_vel = (float)height/m_veloRange;
+        float last_vel[4] = {};
+
+        int pool_index = -1;
+        for(int col = 1;  col < waterfall_width; col++) {
+            int val_col = (m_valueCashStart + col);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
+
+            pool_index = m_valueCash[val_col].poolIndex;
+            if(pool_index >= 0 && m_pool[pool_index].isDVLSolutionAvail()) {
+
+                uint32_t hscale = 1;
+                IDBinDVL::DVLSolution dvl = m_pool[pool_index].dvlSolution();
+                float vel_x = (float)height/2 - scaleY_vel*dvl.velocity.x;
+                float vel_y = (float)height/2 - scaleY_vel*dvl.velocity.y;
+                float vel_z = (float)height/2 - scaleY_vel*dvl.velocity.z;
+
+                velo_pen.setColor(vel_color[0]);
+                p1.setPen(velo_pen);
+                p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[0], (col)*hscale-waterfall_width*(hscale-1), vel_x);
+                last_vel[0] = vel_x;
+
+                velo_pen.setColor(vel_color[1]);
+                p1.setPen(velo_pen);
+                p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[1], (col)*hscale-waterfall_width*(hscale-1), vel_y);
+                last_vel[1] = vel_y;
+
+                velo_pen.setColor(vel_color[2]);
+                p1.setPen(velo_pen);
+                p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[2], (col)*hscale-waterfall_width*(hscale-1), vel_z);
+                last_vel[2] = vel_z;
+
+            }
+        }
+
+    }
+
+    if(_isDopplerBeamVis) {
+        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+        QPainter p1(&tmp_img);
+
+        QColor vel_color[4] = {
+            QColor(255, 0, 255),
+            QColor(0, 255, 255),
+            QColor(255, 255, 0),
+            QColor(255, 255, 255)
+        };
+
+        QColor amp_color[4] = {
+            QColor(155, 55, 155),
+            QColor(55, 155, 155),
+            QColor(155, 155, 55),
+            QColor(155, 155, 155)
+        };
+
+        float last_vel[4] = {};
+        float last_amp[4] = {};
+
+        QPen velo_pen;
+        velo_pen.setWidth(1);
+        velo_pen.setColor(QColor::fromRgb(100, 255, 0));
+
+        QPen pen2;
+        pen2.setWidth(2);
+        pen2.setColor(QColor::fromRgb(255, 255, 255));
+
+        QPen pen3;
+        pen3.setWidth(2);
+        pen3.setColor(QColor::fromRgb(50, 255, 50));
+
+        QPen pen4;
+        pen4.setWidth(1);
+        pen4.setColor(QColor::fromRgb(0, 100, 255));
+
+        const float scaleY_amp = (float)height/(float)1000;
+        const float scaleY_vel = (float)height/m_veloRange;
+        const float scaleY_mode = (float)height/20;
+
+        int pool_index = -1;
+        float last_unc = 0, last_mode = 0;
+        for(int col = 1;  col < waterfall_width; col++) {
+            int val_col = (m_valueCashStart + col);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
+
+            pool_index = m_valueCash[val_col].poolIndex;
+            if(pool_index >= 0 && m_pool[pool_index].isDopplerBeamAvail()) {
+                const uint16_t beam_cnt = m_pool[pool_index].dopplerBeamCount();
+
+                uint32_t hscale = 1;
+
+                for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                    IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                    float vel = (float)height/2 - scaleY_vel*beam.velocity;
+                    velo_pen.setColor(vel_color[ibeam]);
+                    p1.setPen(velo_pen);
+                    p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[ibeam], (col)*hscale-waterfall_width*(hscale-1), vel);
+                    last_vel[ibeam] = vel;
+                }
+
+                for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                    IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                    float amp = (float)height - scaleY_amp*(beam.amplitude);
+                    velo_pen.setColor(amp_color[ibeam]);
+                    p1.setPen(velo_pen);
+                    p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_amp[ibeam], (col)*hscale-waterfall_width*(hscale-1), amp);
+                    last_amp[ibeam] = amp;
+                }
+
+                for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                    IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                    float range_mode = (float)height - scaleY_mode*beam.mode;
+                    p1.setPen(pen3);
+                    p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), range_mode-5);
+                }
+
+//                IDBinDVL::BeamSolution beam1 = m_pool[pool_index].dopplerBeam(0);
+//                float range1_mode = (float)height - scaleY_mode*beam1.mode;
+//                p1.setPen(pen4);
+//                p1.drawPoint(col, range1_mode-5);
+//                last_mode = range1_mode;
+//                float amp = (float)height - scaleY_amp*(float)(beam.amplitude - 70);
+
+//                float unc = (float)height/2 - scaleY_vel*beam.uncertainty;
+
+//                }
+            }
+        }
+    }
+
+
+    if( false ) {
+        int pool_index = -1;
+
+        if(_mouse_x >= 0) {
+            int val_col = (m_valueCashStart + _mouse_x);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
+            }
+            pool_index = m_valueCash[val_col].poolIndex;
+        } else {
+            pool_index = poolLastIndex();
+        }
+
+        if(pool_index >= 0 && m_pool[pool_index].isIqAvail()) {
+            const int data_size = m_pool[pool_index].iqData().size()/4;
+//            const int data_size = 100;
+
+            float signalA[data_size+1000];
+            float signalPh[data_size+1000];
+
+            float comprA[data_size+1000];
+            float corrA[data_size+1000];
+            float corr2A[data_size+1000];
+            float corrI[data_size+1000];
+            float corrQ[data_size+1000];
+            float corr2I[data_size+1000];
+            float corr2Q[data_size+1000];
+            float speed[data_size+1000];
+            float speed2[data_size+1000];
+
+            const int16_t* iq_data = (const int16_t*)(m_pool[pool_index].iqData().constData());
+
+            const int32_t dec_f = 2;
+            const int32_t w_size = 96/dec_f;
+            const int32_t w_size2 = 2000/dec_f;
+
+//            int16_t data_ref[w_size*2];
+//            for (int row = 0; row < w_size; row+=1) {
+//                const uint32_t ref_ind = row*2;
+//                const uint32_t row_ind = row*2 + 38*4;
+////                float coef = (0.355768f + 0.397396f*cosf(float(row - w_size/2)*(2.0f*3.14/float(w_size))) - 0.144232f*cosf(float(row - w_size/2)*(4.0f*3.14/float(w_size))) + 0.012604f*cosf(float(row - w_size/2)*(6.0f*3.14/float(w_size))))/float(w_size);
+////                float coef = (0.5f + 0.6f*cosf(float(row - w_size/2)*(2.0f*3.14/float(w_size))))/float(w_size);
+//                float coef = (1.0f - abs(float(row - w_size/2)/float(w_size))*2.0f)/float(w_size);
+
+//                data_ref[ref_ind] = iq_data[row_ind]*coef;
+//                data_ref[ref_ind+1] = iq_data[row_ind+1]*coef;
+//            }
+
+            for (int row = 0; row < data_size; row+=1) {
+                const uint32_t row_ind = row*2;
+                float i1 = iq_data[row_ind], q1 = iq_data[row_ind+1];
+
+                signalA[row] = (10*log10f(i1*i1 + q1*q1 + 0.1f) - 50.0f)*10.0f;
+                signalPh[row] = atan2f(q1, i1)/3.14f*500;
+            }
+
+            int chart_size = data_size;
+
+
+//            uint32_t base = (928 + 48)/dec_f;
+//            uint32_t offset = 0;
+
+//            for(uint32_t i = 0; i < 5; i++) {
+//                for (uint32_t row = offset; row < offset + base - 64; row+=1) {
+//                    const uint32_t row_ind = row*2;
+//                    float ci = 0, cq = 0;
+
+//                    for(uint16_t i = 0; i < 48; i+=1) {
+//                        const uint32_t r_ind = row_ind + i*2;
+//                        int32_t r11i = iq_data[r_ind], r11q = iq_data[r_ind+1];
+//                        int32_t r12i = iq_data[r_ind+base*2], r12q = iq_data[r_ind+1+base*2];
+//                        ci += (int64_t)(r11i*r12i) + (int64_t)(r11q*r12q);
+//                        cq += (int64_t)(r11q*r12i) - (int64_t)(r11i*r12q);
+//                    }
+
+//                    corrI[row] = ci;
+//                    corrQ[row] = cq;
+
+//                    corrA[row] = (5*log10f(float(corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 60.0f)*10.0f;
+//                    speed[row] = atan2f(corrQ[row], corrI[row])*1500.0f/(4.0f*3.141592f*float(base*dec_f))*1000;
+//                }
+//                for (uint32_t row = offset + base - 64 ; row < offset + base; row+=1) {
+//                    corrA[row] = (5*log10f(0.1f) - 73.0f)*10.0f;
+//                }
+
+//                offset += base;
+//                base += 96/dec_f;
+
+//            }
+//            for (int row = 0; row < chart_size; row+=1) {
+//                const uint32_t row_ind = row*2;
+//                float ci = 0, cq = 0, c2i = 0, c2q = 0;
+
+//                for(uint16_t i = 0; i < w_size*2; i+=1) {
+//                    const uint32_t r_ind = row_ind + i*2;
+//                    int32_t r11i = iq_data[r_ind], r11q = iq_data[r_ind+1];
+//                    int32_t r12i = iq_data[r_ind+w_size*2], r12q = iq_data[r_ind+1+w_size*2];
+//                    int32_t r21i = iq_data[r_ind+w_size2*2], r21q = iq_data[r_ind+1+w_size2*2];
+//                    int32_t r22i = iq_data[r_ind+(w_size2+w_size)*2], r22q = iq_data[r_ind+1+(w_size2+w_size)*2];
+
+//                    ci += (int64_t)(r11i*r12i) + (int64_t)(r11q*r12q);
+//                    cq += (int64_t)(r11q*r12i) - (int64_t)(r11i*r12q);
+////                    ci += (int64_t)(r21i*r22i) + (int64_t)(r21q*r22q);
+////                    cq += (int64_t)(r21q*r22i) - (int64_t)(r21i*r22q);
+
+//                    c2i += (int64_t)(r11i*r21i) + (int64_t)(r11q*r21q);
+//                    c2q += (int64_t)(r11q*r21i) - (int64_t)(r11i*r21q);
+////                    c2i += (int64_t)(r12i*r22i) + (int64_t)(r12q*r22q);
+////                    c2q += (int64_t)(r12q*r22i) - (int64_t)(r12i*r22q);
+//                }
+
+
+
+//                corrI[row] = ci;
+//                corrQ[row] = cq;
+//                corr2I[row] = c2i;
+//                corr2Q[row] = c2q;
+
+//                speed[row] = atan2f(corrQ[row], corrI[row])*1500.0f/(4.0f*3.141592f*float(w_size*dec_f))*1000.0f;
+//                corrA[row] = (5*log10f(float(corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 73.0f)*10.0f;
+
+//                speed2[row] = atan2f(corr2Q[row], corr2I[row])*1500.0f/(4.0f*3.141592f*float(w_size2*dec_f))*1000.0f;
+//                corr2A[row] = (5*log10f(float(corr2I[row]*corr2I[row] + corr2Q[row]*corr2Q[row]) + 0.1f) - 73.0f)*10.0f;
+//            }
+
+//            for (int row = 0; row < chart_size - 14*24; row+=1) {
+//                corrA[row] = (5*log10f(float(corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 73.0f)*10.0f;
+//                corr2A[row] = (5*log10f(float(corr2I[row]*corr2I[row] + corr2Q[row]*corr2Q[row] + corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 73.0f)*10.0f;
+//                speed[row] = atan2f(corrQ[row], corrI[row])*1500.0f/(4.0f*3.141592f*float(w_size*dec_f));
+//                speed2[row] = atan2f(corr2Q[row], corr2I[row])*1500.0f/(4.0f*3.141592f*float(w_size2*dec_f));
+
+//                float speed_dif = speed[row] - speed2[row];
+//                float resolver[] = {1.30208333f, -1.822916666, -0.5208333333, 0.78125, -1.30208333f, 1.822916666, 0.5208333333, -0.78125};
+//                float corrector[] = {1.30208333f, 1.30208333f, 1.30208333f, 1.30208333f, -1.30208333f, -1.30208333f, -1.30208333f, -1.30208333f};
+
+//                float min = fabs(speed_dif);
+//                int32_t min_ind = -1;
+//                for(uint32_t i = 0; i < sizeof(resolver)/4; i++) {
+//                    float absdif = fabs(speed_dif - resolver[i]);
+//                    if(min > absdif) {
+//                        min = absdif;
+//                        min_ind = i;
+//                    }
+//                }
+
+//                if(min_ind >= 0) {
+//                    speed2[row] += corrector[min_ind];
+//                }
+
+//                speed[row] = min;
+
+//                speed[row] *= 200.0f;
+//                speed2[row] *= 200.0f;
+
+//            }
+
+            float scale_y = (float)height*(1.0f*(1.0f/1000.0f));
+            float scale_x = (float)(waterfall_width - 100)/(float)(chart_size);
+
+            float last_signal_amp_ofset = (float)signalA[0]*scale_y;
+            float last_offset_q = (float)signalPh[0]*scale_y;
+            float last_col = 100;
+
+            QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+            QPainter p(&tmp_img);
+            QPen pen_i;
+            pen_i.setWidth(2);
+            pen_i.setColor(QColor::fromRgb(70, 200, 0));
+
+            QPen pen_q;
+            pen_q.setWidth(2);
+            pen_q.setColor(QColor::fromRgb(50, 20, 250));
+
+            for (int row = 0; row < data_size; row++) {
+                float signal_amp_ofset =  height/2 - signalA[row]*scale_y;
+                float offset_q =  height/2 - signalPh[row]*scale_y;
+                float offset_x = (float)row*scale_x+100;
+
+                p.setPen(pen_i);
+                p.drawLine(last_col, last_signal_amp_ofset, offset_x, signal_amp_ofset);
+
+//                if(signalA[row]>0) {
+                    p.setPen(pen_q);
+                    p.drawLine(last_col, last_offset_q, offset_x, offset_q);
+//                }
+
+
+                last_col = offset_x;
+                last_signal_amp_ofset = signal_amp_ofset;
+                last_offset_q = offset_q;
+            }
+        }
+    }
+
+//    if(m_oscVis) {
+
+
+//        float scale_scope_w = (float)height / (float)(waterfall_width - 100);
+//        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+//        QPainter p(&tmp_img);
+//        QPen pen;
+//        pen.setWidth(2);
+
+
+
+
+//        int pool_index = poolLastIndex() - 1;
+
+//        if(pool_index >= 0) {
+//            float* raw_col = (float*)m_pool[pool_index].chartData().data();
+//            int data_size = m_pool[pool_index].chartData().size()/2;
+
+////            QVector<int32_t> dataI, dataQ, dataPH;
+////            dataI.resize(data_size);
+////            dataQ.resize(data_size);
+////            dataPH.resize(data_size);
+////            const int mul_resol = 10;
+
+////            for (int row = 0; row < data_size; row++) {
+////                float a = float(row%4)*M_PI_2;
+////                float b = float((int32_t)raw_col[row]*mul_resol);
+////                dataI[row] = int(b*cos(a));
+////                dataQ[row] = int(b*sin(a));
+
+////                dataI[row] = (int32_t)raw_col[row];
+////            }
+
+////            int wsize = 32;
+////            int fil_num = 1;
+////            for(int fil_n = 0; fil_n < fil_num; fil_n++) {
+////                int summI = 0, summQ = 0;
+
+////                for (int row = 0; row < wsize; row++) {
+////                    summI +=  dataI[row];
+////                    summQ +=  dataQ[row];
+////                }
+
+////                for (int row = 0; row < data_size - wsize; row++) {
+////                    int summ = summI;
+////                    summI -= dataI[row];
+////                    summI += dataI[row + wsize];
+////                    dataI[row] = summ;
+
+////                    summ = summQ;
+////                    summQ -= dataQ[row];
+////                    summQ += dataQ[row + wsize];
+////                    dataQ[row] = summ;
+////                }
+////            }
+
+////            wsize = 8;
+////            for(int fil_n = 0; fil_n < fil_num; fil_n++) {
+////                int summI = 0, summQ = 0;
+
+////                for (int row = 0; row < wsize; row++) {
+////                    summI +=  dataI[row];
+////                    summQ +=  dataQ[row];
+////                }
+
+////                for (int row = 0; row < data_size - wsize; row++) {
+////                    int summ = summI;
+////                    summI -= dataI[row];
+////                    summI += dataI[row + wsize];
+////                    dataI[row] = summ;
+
+////                    summ = summQ;
+////                    summQ -= dataQ[row];
+////                    summQ += dataQ[row + wsize];
+////                    dataQ[row] = summ;
+////                }
+////            }
+
+
+
+////            for (int row = 0; row < data_size; row++) {
+////                float i_val =  (float)(dataI[row])*(1.0f/(float)(mul_resol*wsize*wsize));
+////                float q_val =  (float)(dataQ[row])*(1.0f/(float)(mul_resol*wsize*wsize));
+
+////                float sq_amp = i_val*i_val + q_val*q_val;
+
+////                dataI[row] = std::atan2(i_val, q_val)*(180.0f/M_PI*1000);
+////                dataQ[row] = std::sqrt(sq_amp);
+////            }
+
+
+////            for (int row = 0; row < data_size - 6000; row++) {
+////                dataPH[row] = dataI[row] - dataI[row+6000];
+////            }
+
+//////            const int base_dif_a = 4;
+//////            int valid_cnt = 0;
+//////            for (int row = 0; row < data_size - base_dif_a; row++) {
+//////                int abs_dif = std::abs(dataI[row] - dataI[row+base_dif_a]);
+
+//////                if(abs_dif > 32000) {
+//////                    dataI[row] = -200000;
+//////                    valid_cnt = 0;
+//////                }
+
+//////                if(valid_cnt < 0) {
+//////                    dataI[row] = -200000;
+//////                }
+
+//////                valid_cnt++;
+//////            }
+
+//////            valid_cnt = 200;
+////            int32_t ph_offset = 0;
+////            for (int row = 0; row < data_size; row++) {
+
+////                dataI[row] -= ph_offset;
+
+////                if(dataI[row] < -180000) {
+////                    dataI[row] += 360000;
+////                }
+
+////                if(dataI[row] > 180000) {
+////                    dataI[row] -= 360000;
+////                }
+
+
+////                if(dataPH[row] < -180000) {
+////                    dataPH[row] += 360000;
+////                }
+
+////                if(dataPH[row] > 180000) {
+////                    dataPH[row] -= 360000;
+////                }
+
+////                if(std::abs(dataQ[row]) < 100) {
+////                    dataPH[row] = -200000;
+////                    dataI[row] = -200000;
+////                }
+
+
+////            }
+
+////            for (int row = 0; row < data_size; row+=2) {
+////                 float pow = sqrtf(sqrtf((float)raw_col[row]*(float)raw_col[row] + (float)raw_col[row+1]*(float)raw_col[row+1]));
+////                 raw_col[row] = pow*(1.0f/10);
+////                 raw_col[row+1] = 0;
+////            }
+
+
+
+//            float scale_y = (float)height*(1.0f*(1.0f/1.0f));
+//            float scale_x = (float)(waterfall_width)/(float)(data_size);
+
+//            float last_offset_y = (float)raw_col[0]*scale_y;
+//            float last_col = 0;
+
+
+//            pen.setColor(QColor::fromRgb(70, 200, 0));
+//            p.setPen(pen);
+//            for (int row = 0; row < data_size; row+=2) {
+//                float offset_y =  height/2 - (float)raw_col[row]*scale_y;
+//                float offset_x = (float)row*scale_x;
+
+//                if(raw_col[row] != 0) {
+//                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
+//                }
+
+//                last_col = offset_x;
+
+//                last_offset_y = offset_y;
+//            }
+
+//            scale_y = (float)height*(1.0f*(1.0f/250));
+//            last_offset_y =(float)raw_col[1]*scale_y;
+//            last_col = 0;
+
+//            pen.setColor(QColor::fromRgb(255, 50, 255));
+//            p.setPen(pen);
+//            for (int row = 1; row < data_size; row+=2) {
+//                float offset_y =  height - (float)raw_col[row]*scale_y;
+//                float offset_x = (float)(row-1)*scale_x;
+
+//                if(raw_col[row] != 0) {
+//                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
+//                }
+
+//                last_col = offset_x;
+
+//                last_offset_y = offset_y;
+//            }
+
+
+////            scale_y = (float)height*(1.0f/360000.0f);
+////            last_offset_y = (float)dataI[0]*scale_y;
+////            last_col = 0;
+
+////            pen.setColor(QColor::fromRgb(255, 50, 255));
+////            p.setPen(pen);
+////            for (int row = 1; row < data_size; row++) {
+////                float offset_y =  height*0.5f - (float)dataI[row]*scale_y;
+////                float offset_x = (float)row*scale_x;
+
+////                if(last_offset_y <= height && offset_y <= height) {
+////                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
+////                }
+
+////                last_col = offset_x;
+
+////                last_offset_y = offset_y;
+////            }
+
+////            last_offset_y = (float)dataPH[0]*scale_y;
+////            last_col = 0;
+
+////            pen.setColor(QColor::fromRgb(10, 50, 255));
+////            p.setPen(pen);
+////            for (int row = 1; row < data_size; row++) {
+////                float offset_y =  height*0.5f - (float)dataPH[row]*scale_y;
+////                float offset_x = (float)row*scale_x;
+
+////                if(last_offset_y <= height && offset_y <= height) {
+////                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
+////                }
+////                last_col = offset_x;
+
+////                last_offset_y = offset_y;
+////            }
+
+//        }
+
+
+//    }
 
     if(m_distSonarVis) {
         int dist = m_prevValueCash.distData;
@@ -628,6 +1694,20 @@ void PlotCash::updateImage(int width, int height) {
 
     if(m_distProcessingVis) {
 
+        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+        QPainter p1(&tmp_img);
+
+        QPen pen1;
+        pen1.setWidth(1);
+        pen1.setColor(QColor::fromRgb(100, 255, 0));
+        p1.setPen(pen1);
+
+        QPen pen2;
+        pen2.setWidth(2);
+        pen2.setColor(QColor::fromRgb(100, 255, 0));
+
+        int last_dist = (int)((float)m_valueCash[m_valueCashStart].processingDistData/(float)m_range*(float)height);
+
         for(int col = 1;  col < waterfall_width; col++) {
             int val_col = (m_valueCashStart + col);
             if(val_col >= waterfall_width) {
@@ -635,23 +1715,55 @@ void PlotCash::updateImage(int width, int height) {
             }
 
             int dist = m_valueCash[val_col].processingDistData;
-            if(dist >= 0) {
+
+            if(dist != INT_MIN) {
                 int index_dist = (int)((float)dist/(float)m_range*(float)height);
-                if(index_dist < 0) {
-                    index_dist = 0;
-                } else if(index_dist > height - 2) {
-                    index_dist = height - 2;
+                if(index_dist < 1) {
+                    index_dist = 1;
+                } else if(index_dist > height - 1) {
+                    index_dist = height - 1;
                 }
 
-                m_dataImage[col - 1 + index_dist*width] = m_colorDistProc;
-                m_dataImage[col - 1 + (index_dist + 1)*width] = m_colorDistProc;
-                m_dataImage[col + index_dist*width] = m_colorDistProc;
-                m_dataImage[col + (index_dist + 1)*width] = m_colorDistProc;
+//                p.drawLine(col - 1, last_dist, col, index_dist);
+                switch(_bottomTrackTheme) {
+                case 0:
+                    p1.setPen(pen1);
+                    p1.drawLine(col - 1, last_dist, col, index_dist);
+                    break;
+                case 1:
+                    p1.setPen(pen2);
+                    p1.drawLine(col - 1, last_dist, col, index_dist);
+                    break;
+                case 2:
+                    p1.setPen(pen1);
+                    p1.drawPoint(col, index_dist);
+                    break;
+                case 3:
+                    p1.setPen(pen2);
+                    p1.drawPoint(col, index_dist);
+                    break;
+                case 4:
+                    p1.setPen(pen1);
+                    p1.drawLine(col - 1, last_dist, col, index_dist);
+                    p1.setPen(pen2);
+                    p1.drawPoint(col, index_dist);
+                    break;
+                }
+
+                last_dist = index_dist;
+
+//                m_dataImage[col - 1 + index_dist*width] = m_colorDistProc;
+//                m_dataImage[col - 1 + (index_dist + 1)*width] = m_colorDistProc;
+//                m_dataImage[col + index_dist*width] = m_colorDistProc;
+//                m_dataImage[col + (index_dist + 1)*width] = m_colorDistProc;
             }
         }
     }
 
     m_image = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+//    QTransform tr;
+//    tr.rotate(90);
+//    m_image = m_image.transformed(tr, Qt::FastTransformation);
 }
 
 QImage PlotCash::getImage(QSize size) {
@@ -662,6 +1774,7 @@ QImage PlotCash::getImage(QSize size) {
         updateImage(size.width(), size.height());
 
         QPainter p(&m_image);
+
         p.setPen(QColor::fromRgb(200, 200, 200));
         p.setFont(QFont("Asap", 14, QFont::Normal));
 
@@ -671,9 +1784,14 @@ QImage PlotCash::getImage(QSize size) {
             p.setPen(QColor::fromRgb(100, 100, 100));
             p.drawLine(0, offset_y, m_image.width(), offset_y);
 
-            float range_text = (float)(m_range*i/nbr_hor_div + m_offset)*m_legendMultiply;
             p.setPen(QColor::fromRgb(200, 200, 200));
+
+            float range_text = (float)(m_range*i/nbr_hor_div + m_offset)*m_legendMultiply;
             p.drawText(m_image.width() - m_prevLineWidth - 70, offset_y - 10, QString::number((double)range_text) + QStringLiteral(" m"));
+            if(_is_velocityVis) {
+                float velo_text = (float)(m_veloRange*(float(nbr_hor_div)/2.0f - (float)i)/(float)nbr_hor_div);
+                p.drawText(m_image.width() - m_prevLineWidth - 170, offset_y - 10, QString::number((double)velo_text) + QStringLiteral(" m/s"));
+            }
         }
 
         p.drawLine(m_image.width() - m_prevLineWidth, 0, m_image.width() - m_prevLineWidth, m_image.height());
@@ -681,6 +1799,13 @@ QImage PlotCash::getImage(QSize size) {
         p.setFont(QFont("Asap", 26, QFont::Normal));
         QString range_text = QString::number((double)((m_range + m_offset)*m_legendMultiply)) + QStringLiteral(" m");
         p.drawText(m_image.width() - m_prevLineWidth - 30 - range_text.count()*15, m_image.height() - 10, range_text);
+
+//        QPainterPath path;
+//        path.moveTo(0, 0);
+//        path.cubicTo(80, 0, 50, 50, 500, 500);
+//        path.quadTo(350, 150, 500, 500);
+//        p.drawPoint(350, 150);
+//        p.drawPath(path);
 
         if(m_distSonarVis) {
             p.setPen(QColor::fromRgb(250, 70, 0));

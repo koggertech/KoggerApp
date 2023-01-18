@@ -7,12 +7,16 @@ import Qt.labs.settings 1.1
 MenuScroll {
     id: scrollBar
 
+
     ColumnLayout {
         width: parent.width
+        Layout.preferredWidth: parent.width
+        implicitWidth:  parent.width
         spacing: 10
 
         DisplaySettings {
-            Layout.fillWidth: true
+//            Layout.fillWidth: true
+            Layout.maximumWidth: parent.width
             Layout.preferredWidth: parent.width
         }
     }

@@ -104,9 +104,17 @@ public:
     void setDevDefAddress(int addr);
     int getDevDefAddress();
 
+    int dopplerVeloX();
+    int dopplerVeloY();
+    int dopplerVeloZ();
+    int dopplerDist();
+
+
     QString devName() { return m_devName; }
     uint32_t devSerialNumber();
     QString devPN();
+
+    QString fwVersion() { return m_fwVer; }
 
     BoardVersion boardVersion() {
         return idVersion->boardVersion();
@@ -122,6 +130,11 @@ public:
         return ver == BoardRecorderMini;
     }
 
+    bool isDoppler() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardDVL;
+    }
+
     bool isChartSupport() { return m_state.duplex && isSonar(); }
     bool isDistSupport() { return m_state.duplex && isSonar(); }
     bool isDSPSupport() { return m_state.duplex && isSonar(); }
@@ -135,6 +148,7 @@ signals:
     void binFrameOut(ProtoBinOut &proto_out);
 
     void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
@@ -148,7 +162,12 @@ signals:
     void upgradeProgressChanged(int progress_status);
     void upgradeChanged();
     void deviceVersionChanged();
+    void deviceIDChanged(QByteArray uid);
     void onReboot();
+
+    void dopplerVeloComplete();
+    void dopplerBeamComplete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
+    void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
 
 public slots:
     void protoComplete(FrameParser &proto);
@@ -160,6 +179,7 @@ public slots:
     void requestChart();
 
     void requestStreamList();
+    void requestStream(int stream_id);
 
     void setConsoleOut(bool is_console);
 
@@ -194,6 +214,7 @@ protected:
     IDBinUpdate* idUpdate = NULL;
 
     IDBinNav* idNav = NULL;
+    IDBinDVL* idDVL = NULL;
 
     QHash<ID, IDBin*> hashIDParsing;
     QHash<ID, ParseCallback> hashIDCallback;
@@ -233,6 +254,7 @@ protected:
     int m_devDefAddress = 0;
 
     QString m_devName = "...";
+    QString m_fwVer = "";
 
     void regID(IDBin* id_bin, ParseCallback method, bool is_setup = false);
     void requestSetup();
@@ -259,6 +281,7 @@ protected slots:
     void receivedUpdate(Type type, Version ver, Resp resp);
 
     void receivedNav(Type type, Version ver, Resp resp);
+    void receivedDVL(Type type, Version ver, Resp resp);
 
 };
 

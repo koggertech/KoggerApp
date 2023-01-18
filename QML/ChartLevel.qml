@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.12
 Item {
     id: control
     width: 91
-    height: 350
+    height: theme.controlHeight*8
 
     property int widthSlider: theme.controlHeight
     property int heightSlider: theme.controlHeight/2

@@ -45,8 +45,11 @@ public:
 
     void setTheme(int theme_id = 0) {
         _id = theme_id;
+//        _textFont = new QFont("PT Sans Caption", 26);
+//        _textFontS = new QFont("PT Sans Caption", 20);
+
         _textFont = new QFont("PT Sans Caption", 14);
-        _textFontS = new QFont("PT Sans Caption", 11);
+        _textFontS = new QFont("PT Sans Caption", 12);
 
         if(theme_id == 0) {
             _textColor = new QColor(250, 250, 250);
@@ -82,6 +85,7 @@ public:
             _controlSolidBorderColor = new QColor(255, 255, 255);
         }
 
+//        _controlHeight = 50; // android
         _controlHeight = 26;
 
         emit changed();

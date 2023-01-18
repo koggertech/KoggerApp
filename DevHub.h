@@ -40,6 +40,10 @@ public:
         return _devList;
     }
 
+    DevQProperty* getLastDev() {
+        return lastDevs;
+    }
+
 public slots:
     void putData(const QByteArray &data);
     void binFrameOut(ProtoBinOut &proto_out);
@@ -47,6 +51,7 @@ public slots:
     void stopConnection();
     bool isCreatedId(int id) { return getDevList().size() > id; }
     void setProtoBinConsoled(bool is_consoled) { _isConsoled = is_consoled; }
+    void upgradeLastDev(QByteArray data);
 
     StreamListModel*  streamsList() {
         return _streamList.streamsList();
@@ -56,8 +61,11 @@ signals:
     void dataSend(QByteArray data);
 
     void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
+    void dopplerBeamComlete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
+    void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
     void distSetupChanged();
@@ -116,8 +124,11 @@ protected:
 
         connect(devAddr[addr], &DevQProperty::binFrameOut, this, &Device::binFrameOut);
         connect(devAddr[addr], &DevQProperty::chartComplete, this, &Device::chartComplete);
+        connect(devAddr[addr], &DevQProperty::iqComplete, this, &Device::iqComplete);
         connect(devAddr[addr], &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
         connect(devAddr[addr], &DevQProperty::distComplete, this, &Device::distComplete);
+        connect(devAddr[addr], &DevQProperty::dopplerBeamComplete, this, &Device::dopplerBeamComlete);
+        connect(devAddr[addr], &DevQProperty::dvlSolutionComplete, this, &Device::dvlSolutionComplete);
         connect(devAddr[addr], &DevQProperty::upgradeProgressChanged, this, &Device::upgradeProgressChanged);
 
         lastDevs = devAddr[addr];

@@ -16,6 +16,7 @@ typedef enum {
     BoardNEnhanced = 7,
     BoardSideEnhanced = 8,
     BoardRecorderMini = 9,
+    BoardDVL,
 } BoardVersion;
 
 class IDBin : public QObject
@@ -123,14 +124,26 @@ public:
     U2 resolution() {return m_sampleResol; }
     U2 offsetRange() {return m_absOffset*m_sampleResol; }
 
-    uint8_t* rawData() { return m_fillChart; }
+    uint8_t* logData8() { return m_completeChart; }
+    uint8_t* rawData() { return _rawDataSave; }
+    uint32_t rawDataSize() { return _rawDataSize; }
+    uint8_t rawType() { return type; }
 
 protected:
-    uint16_t m_seqOffset, m_sampleResol, m_absOffset;
-    uint16_t m_chartSizeIncr = 0;
-    uint16_t m_chartSize = 0;
-    uint8_t m_fillChart[5000];
-    uint8_t m_completeChart[5000];
+    uint32_t m_seqOffset, m_sampleResol, m_absOffset;
+    uint32_t m_chartSizeIncr = 0;
+    uint32_t m_chartSize = 0;
+    uint8_t m_fillChart[20000];
+    uint8_t m_completeChart[20000];
+
+    uint8_t _rawData[1024*256];
+    uint8_t _rawDataSave[1024*256];
+    uint32_t _rawDataSize = 0;
+    uint32_t _rawCellCount = 0;
+    uint32_t _rawSeqPosition = 0;
+    uint32_t _lastSeqPosition = 0;
+    uint16_t channel = 0;
+    uint8_t type = 0;
     bool m_isCompleteChart;
 };
 
@@ -504,6 +517,10 @@ public:
 
     BoardVersion boardVersion() { return m_boardVersion; }
     uint8_t boardVersionMinor() { return m_boardVersionMinor; }
+
+    int fwVersion() { return _fwVersion; }
+    int fwVersionMinor() { return _fwVersionMinor; }
+
     uint32_t serialNumber() { return m_serialNumber; }
 
     void reset() {
@@ -512,11 +529,24 @@ public:
         m_serialNumber = 0;
     }
 
+    QByteArray uid() { return _uid; }
+
+    void requestAll() override {
+        simpleRequest(v0);
+        simpleRequest(v1);
+        simpleRequest(v2);
+    }
 protected:
     BoardVersion m_boardVersion = BoardNone;
     uint8_t m_boardVersionMinor = 0;
     uint32_t m_serialNumber = 0;
     QString m_pn;
+    QByteArray _uid;
+    int _fwVersion = 0;
+    int _fwVersionMinor = 0;
+    int _bootVersion = 0;
+    int _bootVersionMinor = 0;
+    int _bootMode = 0;
 };
 
 class IDBinMark : public IDBin
@@ -568,6 +598,7 @@ public:
     void reboot();
     void runFW();
 protected:
+
 };
 
 
@@ -630,7 +661,101 @@ public:
     double latitude, longitude;
     float accuracy;
 protected:
+};
 
+class IDBinDVL : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinDVL() : IDBin() {
+    }
+
+    ID id() override { return ID_DVL_VEL; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    typedef struct   __attribute__((packed)) {
+        uint8_t num;
+        uint8_t flags;
+        float velocity;
+        float uncertainty;
+        float dt;
+        float distance;
+        uint8_t amplitude;
+        uint8_t mode;
+        uint8_t coherence[4];
+        int8_t difference[4];
+    } BeamSolution;
+
+    typedef struct  __attribute__((packed)) {
+        union {
+            struct {
+                uint32_t xValid : 1;
+                uint32_t yValid : 1;
+                uint32_t zValid : 1;
+                uint32_t z1Valid : 1;
+                uint32_t z2Valid : 1;
+                uint32_t isBottomTrack : 1;
+                uint32_t beam1Valid : 1;
+                uint32_t beam2Valid : 1;
+                uint32_t beam3Valid : 1;
+                uint32_t beam4Valid : 1;
+                uint32_t beam5Valid : 1;
+                uint32_t beam6Valid : 1;
+                uint32_t beamAvailNum : 3;
+                uint32_t beamSolutionNum : 3;
+            };
+            uint32_t flags;
+        };
+
+        struct {
+            uint32_t timestamp_ms;
+            float deltaT;
+            float latency;
+        } solutionTime  __attribute__((packed));
+
+        struct {
+            float x;
+            float y;
+            float z;
+            float z1;
+            float z2;
+        } velocity  __attribute__((packed));
+
+        struct {
+            float x;
+            float y;
+            float z;
+            float z1;
+            float z2;
+        } uncertainty  __attribute__((packed));
+
+        struct {
+            float z;
+            float z1;
+            float z2;
+        } distance  __attribute__((packed));
+    } DVLSolution;
+
+    float velX() { return vel_x; }
+    float velY() { return vel_y; }
+    float velZ() { return vel_z; }
+    float dist() { return _dist; }
+
+    BeamSolution* beams() { return _beams; }
+    uint16_t beamsCount() { return _beamCount; }
+
+    DVLSolution dvlSolution() {
+        return _dvlSolution;
+    }
+
+protected:
+    float vel_x, vel_y, vel_z;
+    float _dist;
+
+    BeamSolution _beams[4] = {};
+    DVLSolution _dvlSolution;
+    uint16_t _beamCount = 0;
+    float test_bias = 0;
 };
 
 

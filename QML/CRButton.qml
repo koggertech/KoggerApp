@@ -1,40 +1,39 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.3
 
 RadioButton {
-     id: control
-     text: "RButton"
+    id: radioDel
+    Layout.fillWidth: true
+    implicitHeight: theme.controlHeight
+    implicitWidth: 200
 
-     StyleSet {
-         id: styleSet
-     }
+    contentItem: Text {
+        rightPadding: radioDel.indicator.width + radioDel.spacing
+        text: radioDel.text
+        font: theme.textFont
+        color: theme.textColor
+        elide: Text.ElideRight
+        verticalAlignment: Text.AlignVCenter
+    }
 
-     indicator: Rectangle {
-         implicitWidth: 18
-         implicitHeight: 18
-         radius: 9
-         x: control.leftPadding
-         y: parent.height / 2 - height / 2
-         color: styleSet.colorControllBack
-         border.color: styleSet.colorControllBorder
+    indicator: Rectangle {
+        implicitWidth: 18
+        implicitHeight: 18
+        radius: 9
+        x: radioDel.width - width - radioDel.rightPadding
+        y: radioDel.height / 2 - height / 2
+        color: "transparent"
+        border.color: theme.textColor
 
-         Rectangle {
-             width: 12
-             height: 12
-             radius: 6
-             x: 3
-             y: 3
-             color: "#7090b0"
-             visible: control.checked
-         }
-     }
-
-     contentItem: Text {
-         text: control.text
-         font: control.font
-         opacity: 0.9
-         color: styleSet.colorControllText
-         verticalAlignment: Text.AlignVCenter
-         leftPadding: control.indicator.width + control.spacing
-     }
+        Rectangle {
+            width: 10
+            height: 10
+            x: 4
+            y: 4
+            radius: 7
+            color: theme.textColor
+            visible: radioDel.checked
+        }
+    }
  }

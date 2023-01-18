@@ -73,7 +73,7 @@ Item {
                 id: baudrateCombo
                 Layout.fillWidth: true
                 visible: connectionTypeCombo.currentText === "Serial"
-                model: [9600, 18200, 38400, 57600, 115200, 230400, 460800, 921600]
+                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
                 currentIndex: 4
 
 //                onCurrentTextChanged: {
@@ -109,6 +109,18 @@ Item {
                 }
             }
 
+            CCombo  {
+                id: ipTypeCombo
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "IP"
+                model: ["UDP", "TCP"]
+
+
+                Settings {
+                    property alias ipTypeCombo: ipTypeCombo.currentIndex
+                }
+            }
+
             CTextField {
                 id: ipAddressText
                 hoverEnabled: true
@@ -128,8 +140,6 @@ Item {
                     property alias ipAddressText: ipAddressText.text
                 }
             }
-
-
 
             CTextField {
                 id: ipPortText
@@ -210,7 +220,7 @@ Item {
                         if(connectionTypeCombo.currentText === "Serial") {
                             core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText), false)
                         } else if(connectionTypeCombo.currentText === "IP") {
-                            core.openConnectionAsIP(ipAddressText.text, Number(ipPortText.text), true);
+                            core.openConnectionAsIP(ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === "TCP");
                         }
                     }
                 }
@@ -282,6 +292,27 @@ Item {
             }
         }
 
+//        devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]"
+
+        ColumnLayout {
+            spacing: 24
+            Layout.margins: 24
+            visible: connectionTypeCombo.currentText === "File" && dev !== null
+
+            ParamGroup {
+                visible: dev.devName !== ""
+                groupName: dev.devName
+
+                ParamSetup {
+                    paramName: "SN: " + dev.devSN
+                }
+
+                ParamSetup {
+                    visible: dev.fwVersion !== ""
+                    paramName: "FW version: "  + dev.fwVersion
+                }
+            }
+        }
 
 //        RowLayout {
 //            Layout.fillWidth: true
@@ -311,7 +342,7 @@ Item {
 
             CButton {
                 id: devTab0
-                text: devList[0].devName + " [" + devList[0].devSN + "]"
+                text: devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]"
                 Layout.fillWidth: true
                 opacity: dev === devList[0] ? 1 : 0.5
 
@@ -322,7 +353,7 @@ Item {
 
             CButton {
                 id: devTab1
-                text: devList[1].devName + " [" + devList[1].devSN + "]"
+                text: devList[1].devName + " " + devList[1].fwVersion + " [" + devList[1].devSN + "]"
                 Layout.fillWidth: true
                 opacity: dev === devList[1] ? 1 : 0.5
 
@@ -333,7 +364,7 @@ Item {
 
             CButton {
                 id: devTab2
-                text: devList[2].devName + " [" + devList[2].devSN + "]"
+                text: devList[2].devName + " " + devList[2].fwVersion + " [" + devList[2].devSN + "]"
                 Layout.fillWidth: true
                 opacity: dev === devList[2] ? 1 : 0.5
 

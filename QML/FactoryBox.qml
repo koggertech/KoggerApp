@@ -4,156 +4,244 @@ import QtQuick.Layouts 1.12
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
-Item {
+DevSettingsBox {
     id: control
-    Layout.preferredHeight: columnItem.height
+    isActive: true
 
-    FileDialog {
-        id: fileDialog
-        title: "Please choose a file"
-        folder: shortcuts.home
-        nameFilters: ["Upgrade files (*.ufw)"]
-        onAccepted: {
-            pathText.text = fileDialog.fileUrl.toString()
-        }
-        onRejected: {
-        }
-    }
+    //    FileDialog {
+    //        id: fileDialog
+    //        title: "Please choose a file"
+    //        folder: shortcuts.home
+    //        nameFilters: ["Upgrade files (*.ufw)"]
+    //        onAccepted: {
+    //            pathText.text = fileDialog.fileUrl.toString()
+    //        }
+    //        onRejected: {
+    //        }
+    //    }
 
-    Settings {
-        property alias upgradeFolder: fileDialog.folder
-    }
+    //    Settings {
+    //        property alias upgradeFolder: fileDialog.folder
+    //    }
 
     MenuBlock {
     }
 
     ColumnLayout {
         id: columnItem
-        width: control.width
+        spacing: 24
+        Layout.margins: 24
 
-        TitleMenuBox {
-            titleText: "Factory"
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.margins: 10
-            spacing: 10
+//        TitleMenuBox {
+//            titleText: "Factory"
+//        }
 
 
-            Text {
-                text: "SN"
-                color: "#808080"
-                font.pixelSize: 16
-            }
+        ParamGroup {
+            groupName: "Factory"
 
-            SpinBoxCustom {
-                id:sn_nbr
-                width: 200
-                Layout.fillWidth: true
-                from: 0
-                value: 3001001
-                to: 2000000000
-                stepSize: 1
-                onValueChanged: {
-                }
+            ParamSetup {
+                paramName: "PN"
 
-                Settings {
-                    property alias factory_sn: sn_nbr.value
-                }
-            }
+                CTextField {
+                    id:pn_nbr
+                    hoverEnabled: true
+                    Layout.fillWidth: true
 
-            TextField {
-                id:pn_nbr
-                text:"OEM0369005"
-                hoverEnabled: true
-                Layout.fillWidth: true
-                height: control.height
-                padding: 4
-                rightPadding: 40
-                font.family: "Bahnschrift"; font.pointSize: 14;
-                color: "#E07000"
+                    placeholderText: qsTr("Enter PN")
 
-                placeholderText: qsTr("Enter PN")
+                    background: Rectangle {
+                        color: "#505050"
+                    }
 
-                background: Rectangle {
-                    color: "#505050"
-                }
+                    onTextChanged: {
 
-                Settings {
-                    property alias factory_pn: pn_nbr.text
-                }
-            }
-        }
+                    }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.margins: 10
-            width: control.width
+                    Component.onCompleted: {
 
-            FileDialog {
-                id: factoryDialog
-                title: "Please choose a file"
-                folder: shortcuts.home
-                nameFilters: ["Factory file (*.kff)"]
-                onAccepted: {
-                    pathFactory.text = factoryDialog.fileUrl.toString()
-                }
-                onRejected: {
-                }
+                    }
 
-
-            }
-
-            Settings {
-                property alias factoryFolder: factoryDialog.folder
-            }
-
-            TextField {
-                id: pathFactory
-                hoverEnabled: true
-                Layout.fillWidth: true
-                height: control.height
-                padding: 4
-                rightPadding: 40
-                font.family: "Bahnschrift"; font.pointSize: 14;
-                color: "#E07000"
-
-                text: ""
-                placeholderText: qsTr("Factory FW")
-
-                background: Rectangle {
-                    color: "#505050"
+                    Settings {
+                        property alias factory_pn: pn_nbr.text
+                    }
                 }
             }
 
-            CButton {
-                text: "..."
-                Layout.fillWidth: false
-                implicitHeight: 30
-                onClicked: {
-                    factoryDialog.open()
-                }
-            }
-        }
+            //        RowLayout {
+            //            Layout.fillWidth: true
+            //            Layout.margins: 10
+            //            spacing: 10
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.margins: 10
-            spacing: 10
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Text {
-                    text: "Write progress"
-                    color: "#808080"
-                    font.pixelSize: 16
-                }
+            //            Text {
+            //                text: "SN"
+            //                color: "#808080"
+            //                font.pixelSize: 16
+            //            }
+
+            //            SpinBoxCustom {
+            //                id:sn_nbr
+            //                width: 200
+            //                Layout.fillWidth: true
+            //                from: 0
+            //                value: 3001001
+            //                to: 2000000000
+            //                stepSize: 1
+            //                onValueChanged: {
+            //                }
+
+            //                Settings {
+            //                    property alias factory_sn: sn_nbr.value
+            //                }
+            //            }
+
+            //            TextField {
+            //                id:pn_nbr
+            //                text:"OEM0369005"
+            //                hoverEnabled: true
+            //                Layout.fillWidth: true
+            //                height: control.height
+            //                padding: 4
+            //                rightPadding: 40
+            //                font.family: "Bahnschrift"; font.pointSize: 14;
+            //                color: "#E07000"
+
+            //                placeholderText: qsTr("Enter PN")
+
+            //                background: Rectangle {
+            //                    color: "#505050"
+            //                }
+
+            //                Settings {
+            //                    property alias factory_pn: pn_nbr.text
+            //                }
+            //            }
+            //        }
+
+            //        RowLayout {
+            //            Layout.fillWidth: true
+            //            Layout.margins: 10
+            //            width: control.width
+
+            //            FileDialog {
+            //                id: factoryDialog
+            //                title: "Please choose a file"
+            //                folder: shortcuts.home
+            //                nameFilters: ["Factory file (*.kff)"]
+            //                onAccepted: {
+            //                    pathFactory.text = factoryDialog.fileUrl.toString()
+            //                }
+            //                onRejected: {
+            //                }
+
+
+            //            }
+
+            //            Settings {
+            //                property alias factoryFolder: factoryDialog.folder
+            //            }
+
+            //            TextField {
+            //                id: pathFactory
+            //                hoverEnabled: true
+            //                Layout.fillWidth: true
+            //                height: control.height
+            //                padding: 4
+            //                rightPadding: 40
+            //                font.family: "Bahnschrift"; font.pointSize: 14;
+            //                color: "#E07000"
+
+            //                text: ""
+            //                placeholderText: qsTr("Factory FW")
+
+            //                background: Rectangle {
+            //                    color: "#505050"
+            //                }
+            //            }
+
+            //            CButton {
+            //                text: "..."
+            //                Layout.fillWidth: false
+            //                implicitHeight: 30
+            //                onClicked: {
+            //                    factoryDialog.open()
+            //                }
+            //            }
+            //        }
+
+            //        RowLayout {
+            //            Layout.fillWidth: true
+            //            Layout.margins: 10
+            //            spacing: 10
+
+            //            ColumnLayout {
+            //                Layout.fillWidth: true
+            //                Text {
+            //                    text: "Write progress"
+            //                    color: "#808080"
+            //                    font.pixelSize: 16
+            //                }
+
+            //                CProgress {
+            //                    Layout.leftMargin: 0
+            //                    Layout.preferredWidth: 100
+            //                    Layout.preferredHeight: 20
+            //                    Layout.fillWidth: true
+            //                    Layout.fillHeight: true
+            //                    from: 0
+            //                    to: 100
+            //                    value: flasher.writeProgress
+            //                }
+            //            }
+
+            //            ColumnLayout {
+            //                Layout.fillWidth: true
+            //                Text {
+            //                    text: "Read progress"
+            //                    color: "#808080"
+            //                    font.pixelSize: 16
+            //                }
+
+            //                CProgress {
+            //                    Layout.leftMargin: 0
+            //                    Layout.preferredWidth: 100
+            //                    Layout.preferredHeight: 20
+            //                    Layout.fillWidth: true
+            //                    Layout.fillHeight: true
+            //                    from: 0
+            //                    to: 100
+            //                    value: flasher.readProgress
+            //                }
+            //            }
+
+            //            ColumnLayout {
+            //                Layout.fillWidth: true
+            //                Text {
+            //                    text: "Check"
+            //                    color: "#808080"
+            //                    font.pixelSize: 16
+            //                }
+
+            //                CProgress {
+            //                    Layout.leftMargin: 0
+            //                    Layout.preferredWidth: 100
+            //                    Layout.preferredHeight: 20
+            //                    Layout.fillWidth: true
+            //                    Layout.fillHeight: true
+            //                    from: 0
+            //                    to: 100
+            //                    value: flasher.checkProgress
+            //                }
+            //            }
+            //        }
+
+            ParamSetup {
+                paramName: "Write"
 
                 CProgress {
                     Layout.leftMargin: 0
-                    Layout.preferredWidth: 100
-                    Layout.preferredHeight: 20
+                    Layout.preferredWidth: 300
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     from: 0
@@ -162,18 +250,12 @@ Item {
                 }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Text {
-                    text: "Read progress"
-                    color: "#808080"
-                    font.pixelSize: 16
-                }
+            ParamSetup {
+                paramName: "Read"
 
                 CProgress {
                     Layout.leftMargin: 0
-                    Layout.preferredWidth: 100
-                    Layout.preferredHeight: 20
+                    Layout.preferredWidth: 300
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     from: 0
@@ -182,18 +264,12 @@ Item {
                 }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Text {
-                    text: "Check progress"
-                    color: "#808080"
-                    font.pixelSize: 16
-                }
+            ParamSetup {
+                paramName: "Check"
 
                 CProgress {
                     Layout.leftMargin: 0
-                    Layout.preferredWidth: 100
-                    Layout.preferredHeight: 20
+                    Layout.preferredWidth: 300
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     from: 0
@@ -201,21 +277,38 @@ Item {
                     value: flasher.checkProgress
                 }
             }
-        }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.margins: 10
-            width: control.width
+            ParamSetup {
+                paramName: "Upgrade"
 
-            CButton {
-                text: "FLASH"
-                Layout.fillWidth: true
-                implicitHeight: 30
-                onClicked: {
-                    core.factoryFlash(pathFactory.text, sn_nbr.value, pn_nbr.text)
+                CProgress {
+                    Layout.leftMargin: 20
+                    Layout.preferredWidth: 300
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    from: -1
+                    to: 101
+                    value: dev.upgradeFWStatus
                 }
             }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: 10
+                width: control.width
+
+                CButton {
+                    text: "FLASH"
+                    Layout.fillWidth: true
+                    implicitHeight: 30
+                    onClicked: {
+                        core.factoryFlash("", 0, pn_nbr.text, dev)
+                    }
+                }
+            }
+
         }
+
+
     }
 }

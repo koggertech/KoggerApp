@@ -43,6 +43,18 @@ void WaterFall::verScrollEvent(int delta) {
     }
 }
 
+void WaterFall::setMouseMode(int mode) {
+    if(m_plot != nullptr) {
+        m_plot->setMouseMode(mode);
+    }
+}
+
+void WaterFall::setMouse(int x, int y) {
+    if(m_plot != nullptr) {
+        m_plot->setMouse(x, y);
+    }
+}
+
 void WaterFall::timerUpdater() {
     if(m_needUpdate) {
         m_needUpdate = false;

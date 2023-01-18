@@ -11,13 +11,14 @@
 #include <DevHub.h>
 #include <logger.h>
 #include <QThread>
-
+#include <3Plot.h>
 
 //#define FLASHER
 
 #ifdef FLASHER
 #include "flasher.h"
 #endif
+
 
 class Core : public QObject
 {
@@ -77,7 +78,7 @@ public slots:
     bool exportPlotAsCVS(QString file_path);
 
 #ifdef FLASHER
-    bool factoryFlash(const QString &name, int sn, QString pn);
+    bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
 
     void setPlotStartLevel(int level) {
@@ -115,14 +116,12 @@ public:
     Console *m_console;
     Connection *m_connection;
     PlotCash* m_plot;
-    WaterFall* m_waterFall;
+    WaterFall* m_waterFall = NULL;
+    FboInSGRenderer* _render = NULL;
 
     Device _devs;
-
     Logger _logger;
-
     QThread connectionThread;
-
     QQmlApplicationEngine *m_engine = nullptr;
 
 #ifdef FLASHER
@@ -131,19 +130,32 @@ public:
 
 private slots:
     void closing();
-
 #ifdef FLASHER
+    void updateDeviceID(QByteArray uid);
     void flasherConnectionChanged(Flasher::BootState connection_status);
+    bool reconnectForFlash();
 #endif
 
 protected:
 #ifdef FLASHER
+    QByteArray boot_data;
     QByteArray fw_data;
+
+    QTcpSocket *_socket = new QTcpSocket();
+    bool getFW(void* uid);
+    QString _pn;
+    enum  {
+        FactoryIdle,
+        FactoryTest,
+        FactoryProduct
+    } _factoryState = FactoryIdle;
+
+    QByteArray _flashUID;
 #endif
 
     bool _isLogging;
 
-    int backupBaudrate = 0;
+    int backupBaudrate = 115200;
     void restoreBaudrate();
     void setUpgradeBaudrate();
 };

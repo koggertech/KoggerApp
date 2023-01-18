@@ -25,7 +25,8 @@ public:
         ConnectionNone,
         ConnectionSerial,
         ConnectionFile,
-        ConnectionIP
+        ConnectionUDP,
+        ConnectionTCP,
     } ConnectionType;
 
 public slots:
@@ -48,6 +49,9 @@ public slots:
     bool close(bool is_user = true);
     void sendData(const QByteArray &data);
 
+    ConnectionType lastType() { return m_lastType; }
+    QString lastFileName() { return _lastFileName; }
+
 signals:
     void closedEvent(bool duplex);
     void openedEvent(bool duplex);
@@ -57,13 +61,29 @@ signals:
 private:
     QSerialPort *m_serial = nullptr;
     QFile *m_file = nullptr;
-    QUdpSocket *_socket = nullptr;
+    QUdpSocket *_socketUDP = nullptr;
+    QTcpSocket *_socketTCP = nullptr;
     QTimer* _timerReconnection = nullptr;
     ConnectionType m_type = ConnectionNone;
+    ConnectionType m_lastType = ConnectionNone;
+    QString _lastFileName = "";
 
     bool m_isLogWrite = false;
 
     QThread workerThread;
+
+    void setType(ConnectionType type) {
+        m_type = type;
+        if(m_type != ConnectionNone) {
+            m_lastType = m_type;
+
+            if(m_lastType == ConnectionFile) {
+                _lastFileName = m_file->fileName();
+            } else {
+                _lastFileName = "";
+            }
+        }
+    }
 
 private slots:
     void closing();

@@ -103,6 +103,35 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         } else {
             return respErrorPayload;
         }
+    } else if(proto.ver() == v6) {
+        uint8_t cell_byte_size = proto.read<U1>();
+        type = proto.read<U1>();
+        channel = proto.read<U2>();
+        _lastSeqPosition = proto.read<U4>();
+
+        if(_lastSeqPosition == 0 && _rawSeqPosition != 0) {
+            _rawCellCount = _rawSeqPosition;
+            _rawDataSize = _rawCellCount*cell_byte_size;
+            memcpy(_rawDataSave, _rawData, _rawDataSize);
+            m_isCompleteChart = true;
+//            qInfo("size %i", m_chartSize);
+        }
+
+        if(_lastSeqPosition == 0) {
+            _rawSeqPosition = 0;
+        }
+
+        if(_rawSeqPosition == _lastSeqPosition) {
+            uint16_t part_byte_len = proto.readAvailable();
+            uint32_t byte_offset = _rawSeqPosition*cell_byte_size;
+
+            if(byte_offset + part_byte_len < sizeof (_rawData)) {
+                proto.read((uint8_t*)&_rawData[byte_offset], part_byte_len);
+                _rawSeqPosition += part_byte_len/cell_byte_size;
+            }
+        } else {
+            return respErrorPayload;
+        }
     } else {
         return respErrorVersion;
     }
@@ -169,6 +198,38 @@ Resp IDBinTemp::parsePayload(FrameParser &proto) {
 Resp IDBinNav::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
 
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}
+
+Resp IDBinDVL::parsePayload(FrameParser &proto) {
+    if(proto.ver() == v0) {
+         vel_x = proto.read<F4>();
+         vel_y = proto.read<F4>();
+         vel_z = proto.read<F4>();
+         _dist = proto.read<F4>();
+
+//         qInfo("DVL x: %f, y: %f, z: %f, d: %f", vel_x, vel_y, vel_z, _dist);
+    } else  if(proto.ver() == v1) {
+        _beamCount = 0;
+        for(uint8_t i = 0; i < 4 && sizeof(BeamSolution) <= proto.readAvailable() ; i++) {
+            _beams[i] = proto.read<BeamSolution>();
+            _beamCount++;
+        }
+
+        if(_beams[0].mode > 0 && _beams[0].mode <= 3) {
+            test_bias += _beams[0].velocity*_beams[0].dt;
+        }
+    } else if(proto.ver() == v2) {
+        if(sizeof(DVLSolution) <= proto.readAvailable()) {
+            _dvlSolution = proto.read<DVLSolution>();
+//            qInfo("DVL x: %f, y: %f, z: %f, d: %f", _dvlSolution.velocity.x, _dvlSolution.velocity.y, _dvlSolution.velocity.z, _dvlSolution.distance.z);
+        } else {
+            return respErrorPayload;
+        }
     } else {
         return respErrorVersion;
     }
@@ -289,8 +350,8 @@ Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
 
 void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset) {
     m_sanpleCount = count;
-    if(count*resolution > 50000) {
-        resolution = (50000/count/10)*10;
+    if(count*resolution > 100000) {
+        resolution = (100000/count/10)*10;
     }
     m_sanpleResolution = resolution;
     m_sanpleOffset = offset;
@@ -459,6 +520,21 @@ Resp IDBinVersion::parsePayload(FrameParser &proto) {
         proto.read<U4>();
         proto.read<U2>();
         m_serialNumber = proto.read<U4>();
+    }  else if(proto.ver() == v1) {
+        if(proto.readAvailable() == 12) {
+            _uid.resize(12);
+            proto.read((uint8_t*)_uid.data(), 12);
+        } else {
+        }
+    } else if(proto.ver() == v2) {
+        _bootMode = proto.read<U1>();
+        m_boardVersionMinor = proto.read<U1>();
+        m_boardVersion = (BoardVersion)proto.read<U1>();
+        _bootVersionMinor = proto.read<U1>();
+        _bootVersion = proto.read<U1>();
+        proto.read<U2>();
+        _fwVersionMinor = proto.read<U1>();
+        _fwVersion = proto.read<U1>();
     } else {
         return respErrorVersion;
     }
