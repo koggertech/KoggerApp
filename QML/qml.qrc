@@ -51,5 +51,7 @@
         <file>settings-outline.svg</file>
         <file>RecorderBox.qml</file>
         <file>DopplerBox.qml</file>
+        <file>Settings3DView.qml</file>
+        <file>3dcube.svg</file>
     </qresource>
 </RCC>

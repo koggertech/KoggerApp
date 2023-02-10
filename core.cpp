@@ -1,5 +1,6 @@
 #include "core.h"
 
+
 Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
@@ -17,6 +18,31 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::dvlSolutionComplete, m_plot, &PlotCash::addDVLSolution);
 
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
+
+    createControllers();
+    createModels();
+}
+
+
+void Core::createControllers()
+{
+    mpSettings3DController = std::make_shared <Q3DSettingsController> ();
+}
+
+void Core::createModels()
+{
+    mpScene3DModel = std::make_shared <Q3DSceneModel> ();
+
+    mpSettings3DController->setModel(mpScene3DModel);
+    m_plot->set3DSceneModel(mpScene3DModel);
+}
+
+void Core::setEngine(QQmlApplicationEngine *engine)
+{
+    m_engine = engine;
+
+    m_engine->rootContext()->setContextProperty("Settings3DController", mpSettings3DController.get());
+    m_engine->rootContext()->setContextProperty("Scene3DModel", mpScene3DModel.get());
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
@@ -116,8 +142,6 @@ bool Core::openConnectionAsFile(const QString &name) {
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
-
-
 
     return true;
 }

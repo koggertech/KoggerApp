@@ -15,6 +15,11 @@ public:
         _isConsoleVisible = false;
     }
 
+
+    Q_PROPERTY(QColor disabledTextColor READ disabledTextColor NOTIFY changed)
+    Q_PROPERTY(QColor disabledBackColor READ disabledBackColor NOTIFY changed)
+    Q_PROPERTY(QColor hoveredBackColor READ hoveredBackColor NOTIFY changed)
+
     Q_PROPERTY(QColor textColor READ textColor NOTIFY changed)
     Q_PROPERTY(QColor textSolidColor READ textSolidColor NOTIFY changed)
     Q_PROPERTY(QFont textFont READ textFont NOTIFY changed)
@@ -32,6 +37,9 @@ public:
     Q_PROPERTY(bool consoleVisible READ consoleVisible WRITE setConsoleVisible NOTIFY interfaceChanged)
 
     QColor textColor() { return *_textColor; }
+    QColor disabledTextColor() { return *_disabledTextColor; }
+    QColor disabledBackColor() {return *_disabledBackColor;}
+    QColor hoveredBackColor() { return *_hoveredBackColor; }
     QColor textSolidColor() { return *_textSolidColor; }
     QFont textFont() { return *_textFont; }
     QFont textFontS() { return *_textFontS; }
@@ -59,6 +67,11 @@ public:
             _controlBorderColor = new QColor(100, 100, 100);
             _controlSolidBackColor = new QColor(100, 100, 100);
             _controlSolidBorderColor = new QColor(150, 150, 150);
+
+            _disabledTextColor = new QColor(150, 150, 150);
+            _disabledBackColor = new QColor(50, 50, 50);
+            _hoveredBackColor = new QColor(70,70,70);
+
         } else if(theme_id == 1) {
             _textColor = new QColor(255, 255, 255);
             _textSolidColor = new QColor(0, 0, 0);
@@ -67,6 +80,10 @@ public:
             _controlBorderColor = new QColor(155, 155, 155);
             _controlSolidBackColor = new QColor(255, 255, 255);
             _controlSolidBorderColor = new QColor(0, 0, 0, 0);
+
+            _disabledTextColor = new QColor(150, 150, 150);
+            _disabledBackColor = new QColor(50, 50, 50);
+
         } else if(theme_id == 2) {
             _textColor = new QColor(25, 25, 25);
             _textSolidColor = new QColor(25, 25, 25);
@@ -75,6 +92,10 @@ public:
             _controlBorderColor = new QColor(100, 100, 100);
             _controlSolidBackColor = new QColor(255, 255, 255);
             _controlSolidBorderColor = new QColor(150, 150, 150);
+
+            _disabledTextColor = new QColor(150, 150, 150);
+            _disabledBackColor = new QColor(50, 50, 50);
+
         } else if(theme_id == 3) {
             _textColor = new QColor(0, 0, 0);
             _textSolidColor = new QColor(255, 255, 255);
@@ -83,6 +104,9 @@ public:
             _controlBorderColor = new QColor(100, 100, 100);
             _controlSolidBackColor = new QColor(0, 0, 0);
             _controlSolidBorderColor = new QColor(255, 255, 255);
+
+            _disabledTextColor = new QColor(150, 150, 150);
+            _disabledBackColor = new QColor(50, 50, 50);
         }
 
 //        _controlHeight = 50; // android
@@ -109,6 +133,9 @@ protected:
 
     QColor* _textColor;
     QColor* _textSolidColor;
+    QColor* _disabledTextColor;
+    QColor* _disabledBackColor;
+    QColor* _hoveredBackColor;
     QFont* _textFont;
     QFont* _textFontS;
 

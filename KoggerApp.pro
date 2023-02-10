@@ -27,6 +27,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         3Plot.cpp \
+        Controllers/Q3DSettingsController.cpp \
+        Model/Q3DSceneModel.cpp \
         DevDriver.cpp \
         DevHub.cpp \
         IDBinnary.cpp \
@@ -43,7 +45,8 @@ SOURCES += \
         flasher.cpp \
         plotcash.cpp \
         streamlist.cpp \
-        waterfall.cpp
+        waterfall.cpp \
+
 
 RESOURCES += QML/qml.qrc
 
@@ -60,10 +63,18 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     3Plot.h \
+    Controllers/Q3DSettingsController.h \
     DevDriver.h \
     DevHub.h \
     DevQProperty.h \
     IDBinnary.h \
+    Model/Domain/Circle.h \
+    Model/Domain/DelaunayTriangulation.h \
+    Model/Domain/Edge.h \
+    Model/Domain/Equals.h \
+    Model/Domain/Point2D.h \
+    Model/Domain/Triangle.h \
+    Model/Q3DSceneModel.h \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
@@ -77,9 +88,10 @@ HEADERS += \
     plotcash.h \
     streamlist.h \
     waterfall.h \
-    waterfallproxy.h
+    waterfallproxy.h \
 
 DISTFILES += \
+    QML/Settings3DView.qml \
     QML/AdjBox.qml \
     QML/AdjBoxBack.qml \
     QML/BackStyle.qml \

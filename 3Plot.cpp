@@ -6,6 +6,8 @@
 #include <qsgsimpletexturenode.h>
 #include <QRandomGenerator>
 
+#include <iostream>
+
 class FboRenderer : public QQuickFramebufferObject::Renderer
 {
 public:
@@ -19,6 +21,10 @@ public:
         update();
     }
 
+    void setModel(const ModelPointer pModel){
+        scene.setModel(pModel);
+    }
+
     QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override {
         QOpenGLFramebufferObjectFormat format;
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -28,7 +34,8 @@ public:
 
     void synchronize(QQuickFramebufferObject *item) override {
         FboInSGRenderer *fbitem = static_cast<FboInSGRenderer *>(item);
-        scene.setLines(fbitem->lines());
+        //scene.setLines(fbitem->lines());
+
         scene.scale(fbitem->scaleDelta());
         scene.size(fbitem->size());
         scene.mouse(fbitem->mouse());
@@ -40,42 +47,73 @@ public:
 
 QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 {
-    return new FboRenderer();
+    auto renderer = new FboRenderer();
+
+    renderer->setModel(mpModel);
+
+    return renderer;
 }
 
 #include <QPainter>
 #include <QPaintEngine>
 #include <qmath.h>
-
+#include <QtOpenGL/QtOpenGL>
 Scene3D::Scene3D() {
 }
 
 Scene3D::~Scene3D() {
 }
 
+void Scene3D::setModel(const ModelPointer pModel)
+{
+    mpModel = pModel;
+
+    connect(mpModel.get(), SIGNAL(stateChanged()), this, SLOT(modelStateChanged()));
+
+    mBottomTrack = *mpModel->bottomTrack();
+    mTriangles   = *mpModel->triangles();
+
+
+}
+
+void Scene3D::modelStateChanged()
+{
+    mBottomTrack = *mpModel->bottomTrack();
+    mTriangles = *mpModel->triangles();
+}
 
 void Scene3D::paintScene()
 {
+    if (mpModel->displayedObjectType() == OBJECT_TYPE_BOTTOM_TRACK){
+        displayGPSTrack();
+    }
+
+    if (mpModel->displayedObjectType() == OBJECT_TYPE_SURFACE_POLY) {
+        displayBottomSurface();
+    }
+
+    if (mpModel->displayedObjectType() == OBJECT_TYPE_SURFACE_MESH) {
+        displayBottomSurfaceMesh();
+    }
+
+
+
 //    program1.enableAttributeArray(normalAttr1);
-    program1.enableAttributeArray(vertexAttr1);
-    program1.setAttributeArray(vertexAttr1, vLines.constData());
+    //program1.enableAttributeArray(vertexAttr1);
+    //program1.setAttributeArray(vertexAttr1, vLines.constData());
 //    program1.setAttributeArray(normalAttr1, nLines.constData());
-    glLineWidth(2.0);
+    //glLineWidth(2.0);
 //    glEnable(GL_PROGRAM_POINT_SIZE);
 //    glPointSize(2.0f);
 //    glLineWidth()
 //
 
-    glDrawArrays(GL_LINE_STRIP, 0, vLines.size());
+    //glDrawArrays(GL_LINE_STRIP, 0, vLines.size());
 //    glDrawArrays(GL_POINTS, 0, vLines.size());
 //    program1.disableAttributeArray(normalAttr1);
-    program1.disableAttributeArray(vertexAttr1);
+    //program1.disableAttributeArray(vertexAttr1);
 
-    program1.enableAttributeArray(vertexAttr2);
-    program1.setAttributeArray(vertexAttr2, _gridXY.constData());
-    glLineWidth(0.5);
-    glDrawArrays(GL_LINES, 0, _gridXY.size());
-    program1.disableAttributeArray(vertexAttr2);  
+
 
 //    program1.enableAttributeArray(vertexAttr2);
 //    for(int i = 0; i < vQuads.length(); i++) {
@@ -85,6 +123,11 @@ void Scene3D::paintScene()
 
 //    program1.disableAttributeArray(vertexAttr2);
 
+}
+
+void FboInSGRenderer::setModel(const ModelPointer pModel)
+{
+    mpModel = pModel;
 }
 
 
@@ -124,6 +167,9 @@ void Scene3D::initialize()
 
     vertexAttr1 = program1.attributeLocation("vertex");
     vertexAttr2 = program1.attributeLocation("vertex");
+    vertexAttr3 = program1.attributeLocation("vertex");
+    vertexAttr4 = program1.attributeLocation("vertex");
+
 
 //    normalAttr1 = program1.attributeLocation("normal");
     matrixUniform1 = program1.uniformLocation("matrix");
@@ -138,45 +184,76 @@ void Scene3D::initialize()
     createGeometry();
 }
 
-void Scene3D::setLines(QVector<QVector3D> p) {
-    vLines = p;
-    float max_x = -100000000, min_x=100000000, max_y=-100000000, min_y=100000000, max_z=-100000000, min_z=100000000;
+void Scene3D::displayGPSTrack() {
 
-    for(int i = 0; i < vLines.size(); i++) {
-        float x = vLines[i].x();
-        float y = vLines[i].y();
-        float z = vLines[i].z();
+    program1.enableAttributeArray(vertexAttr1);
+    program1.setAttributeArray(vertexAttr1, mBottomTrack.constData());
 
-        if(max_x < x) { max_x = x; }
-        else if (min_x > x) { min_x = x; }
+    glLineWidth(2.0);
+    //glColorMask(50.0, 0.0, 200.0, 0.0);
+    glDrawArrays(GL_LINE_STRIP, 0, mBottomTrack.size());
 
-        if(max_y < y) { max_y = y; }
-        else if (min_y > y) { min_y = y; }
-
-        if(max_z < z) { max_z = z; }
-        else if (min_z > z) { min_z = z; }
-    }
-
-    _gridXY.clear();
-    _gridXY.append(QVector3D(min_x, min_y, 0));
-    _gridXY.append(QVector3D(min_x, max_y, 0));
-//    _gridXY.append(QVector3D(max_x, min_y, min_z));
-//    _gridXY.append(QVector3D(max_x, max_y, min_z));
-
-    _gridXY.append(QVector3D(min_x, min_y, 0));
-    _gridXY.append(QVector3D(max_x, min_y, 0));
-//    _gridXY.append(QVector3D(min_x, max_y, min_z));
-//    _gridXY.append(QVector3D(max_x, max_y, min_z));
-
-    _gridXY.append(QVector3D(min_x, min_y, min_z));
-    _gridXY.append(QVector3D(min_x, min_y, max_z));
-
-//    for(float x_offset = min_x; x_offset <= max_x; x_offset+=0.1) {
-//        _gridXY.append(QVector3D(x_offset, min_y, min_z));
-//        _gridXY.append(QVector3D(x_offset, max_y, min_z));
-//    }
-
+    program1.disableAttributeArray(vertexAttr1);
 }
+
+void Scene3D::displayBottomSurface() {
+
+    program1.enableAttributeArray(vertexAttr3);
+    program1.setAttributeArray(vertexAttr3, mTriangles.constData());
+    //glColorMask(50.0, 0.0, 200.0, 0.0);
+    glDrawArrays(GL_TRIANGLES, 0, mTriangles.size());
+    program1.disableAttributeArray(vertexAttr3);
+}
+
+void Scene3D::displayBottomSurfaceMesh()
+{
+    program1.enableAttributeArray(vertexAttr4);
+    program1.setAttributeArray(vertexAttr4, mTriangles.constData());
+    //glColorMask(50.0, 0.0, 200.0, 0.0);
+    glDrawArrays(GL_LINE_STRIP, 0, mTriangles.size());
+    program1.disableAttributeArray(vertexAttr4);
+}
+
+//void Scene3D::setLines(QVector<QVector3D> p) {
+//    vLines = p;
+//    float max_x = -100000000, min_x=100000000, max_y=-100000000, min_y=100000000, max_z=-100000000, min_z=100000000;
+//
+//    for(int i = 0; i < vLines.size(); i++) {
+//        float x = vLines[i].x();
+//        float y = vLines[i].y();
+//        float z = vLines[i].z();
+//
+//        if(max_x < x) { max_x = x; }
+//        else if (min_x > x) { min_x = x; }
+//
+//        if(max_y < y) { max_y = y; }
+//        else if (min_y > y) { min_y = y; }
+//
+//        if(max_z < z) { max_z = z; }
+//        else if (min_z > z) { min_z = z; }
+//    }
+//
+//    _gridXY.clear();
+//    _gridXY.append(QVector3D(min_x, min_y, 0));
+//    _gridXY.append(QVector3D(min_x, max_y, 0));
+////    _gridXY.append(QVector3D(max_x, min_y, min_z));
+////    _gridXY.append(QVector3D(max_x, max_y, min_z));
+//
+//    _gridXY.append(QVector3D(min_x, min_y, 0));
+//    _gridXY.append(QVector3D(max_x, min_y, 0));
+////    _gridXY.append(QVector3D(min_x, max_y, min_z));
+////    _gridXY.append(QVector3D(max_x, max_y, min_z));
+//
+//    _gridXY.append(QVector3D(min_x, min_y, min_z));
+//    _gridXY.append(QVector3D(min_x, min_y, max_z));
+//
+////    for(float x_offset = min_x; x_offset <= max_x; x_offset+=0.1) {
+////        _gridXY.append(QVector3D(x_offset, min_y, min_z));
+////        _gridXY.append(QVector3D(x_offset, max_y, min_z));
+////    }
+//
+//}
+
 
 QVector3D Scene3D::acrball(QVector2D m) {
     QVector3D arc;
