@@ -12,6 +12,7 @@ Item {
     property bool isConsoleVisible: consoleEnable.checked
     property bool is3DVisible: visible3dButton.checked
     property bool is2DVisible: visible2dButton.checked
+    property bool is2DHorizontal: appSettings.is2DHorizontal
 
     property int settingsWidth: theme.controlHeight*20
 

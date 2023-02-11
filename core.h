@@ -66,6 +66,9 @@ public slots:
     bool isOpenConnection();
     bool closeConnection();
 
+    bool openProxy(const QString &address, const int port, bool is_tcp);
+    bool closeProxy();
+
     bool connectionBaudrate(int baudrate);
 
     bool upgradeFW(const QString &name, QObject* dev);
@@ -73,6 +76,8 @@ public slots:
 
     void setLogging(bool is_logging);
     bool isLogging();
+
+
 
     bool exportPlotAsCVS(QString file_path);
 

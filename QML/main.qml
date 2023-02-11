@@ -134,6 +134,7 @@ Window  {
                 Layout.fillWidth: true
                 focus: true
 
+                horizontal: menuBar.is2DHorizontal
 
                 PinchArea {
                     id: pinch2D

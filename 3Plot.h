@@ -77,11 +77,13 @@ private:
 
 
     QVector<QVector3D> vLines;
+    QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
     QVector<QVector<QVector3D>> vQuads;
     QOpenGLShaderProgram program1;
     int vertexAttr1;
     int vertexAttr2;
+    int vertexAttr3;
     int normalAttr1;
     int matrixUniform1;
     int projectionUniform1;

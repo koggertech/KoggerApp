@@ -9,12 +9,19 @@ WaterFall::WaterFall(QQuickItem* parent)
     connect(m_updateTimer, &QTimer::timeout, this, [&] { timerUpdater(); });
     m_updateTimer->start(30);
     setAcceptedMouseButtons(Qt::AllButtons);
+
+    _isHorizontal = false;
 }
 
 void WaterFall::paint(QPainter *painter){
     static QPixmap pix;
     if(m_plot != nullptr && painter != nullptr) {
-        pix = QPixmap::fromImage(m_plot->getImage({(int)width(), (int)height()}), Qt::NoFormatConversion);
+        if(_isHorizontal) {
+            pix = QPixmap::fromImage(m_plot->getImage({(int)width(), (int)height()}), Qt::NoFormatConversion);
+        } else {
+            pix = QPixmap::fromImage(m_plot->getImage({(int)height(), (int)width()}).transformed(QMatrix().rotate(-90.0), Qt::FastTransformation).mirrored(true, false), Qt::NoFormatConversion);
+        }
+
         painter->drawPixmap(0, 0, pix);
     }
 }
@@ -27,7 +34,12 @@ void WaterFall::setPlot(PlotCash *plot) {
 
 void WaterFall::horScrollEvent(int delta) {
     if(m_plot != nullptr) {
-        m_plot->scrollTimeline(delta);
+        if(_isHorizontal) {
+            m_plot->scrollTimeline(delta);
+        } else {
+            m_plot->scrollTimeline(-delta);
+        }
+
     }
 }
 
@@ -51,7 +63,16 @@ void WaterFall::setMouseMode(int mode) {
 
 void WaterFall::setMouse(int x, int y) {
     if(m_plot != nullptr) {
-        m_plot->setMouse(x, y);
+        if(_isHorizontal) {
+            m_plot->setMouse(x, y);
+        } else {
+            if(x >=0 && y >= 0) {
+                m_plot->setMouse(height() - y, width() - x);
+            } else {
+                m_plot->setMouse(-1, -1);
+            }
+
+        }
     }
 }
 

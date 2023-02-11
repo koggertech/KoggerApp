@@ -2,17 +2,24 @@
 #define CONNECTION_H
 
 #include <QObject>
-#include <QSerialPort>
-#include <QSerialPortInfo>
 #include <QFile>
 #include <QDataStream>
 #include <console.h>
 #include <QAbstractSocket>
 #include <QUdpSocket>
 #include <QTcpSocket>
+#include <QTcpServer>
 #include <QHostAddress>
 #include <QTimer>
 #include <QThread>
+
+#if defined(Q_OS_ANDROID)
+#include "qtandroidserialport/src/qserialport.h"
+#include "qtandroidserialport/src/qserialportinfo.h"
+#else
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#endif
 
 
 class Connection : public QObject
@@ -36,11 +43,15 @@ public slots:
     bool openSerial(const QString &name, int32_t baudrate, bool parity = false);
     bool openFile(const QString &name);
     bool openIP(const QString &address, const int port, bool is_tcp);
+    bool openProxy(const QString &address, const int port, bool is_tcp);
+    bool closeProxy();
 
     bool setBaudrate(int32_t baudrate);
     int baudrate();
 
     bool isOpen();
+    bool isProxyOpen();
+
     bool isParity();
     void setParity(bool parity);
     void setDTR(bool val);
@@ -62,6 +73,7 @@ private:
     QSerialPort *m_serial = nullptr;
     QFile *m_file = nullptr;
     QUdpSocket *_socketUDP = nullptr;
+    QUdpSocket *_proxyUDP = nullptr;
     QTcpSocket *_socketTCP = nullptr;
     QTimer* _timerReconnection = nullptr;
     ConnectionType m_type = ConnectionNone;
@@ -85,11 +97,14 @@ private:
         }
     }
 
+
+
 private slots:
     void closing();
     void handleSerialError(QSerialPort::SerialPortError error);
     void readyReadSerial();
-
+    void readyReadProxy();
+    void sendToProxy(const QByteArray &data);
 };
 
 #endif // CONNECTION_H

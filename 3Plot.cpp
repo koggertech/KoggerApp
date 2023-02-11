@@ -85,6 +85,11 @@ void Scene3D::paintScene()
 
 //    program1.disableAttributeArray(vertexAttr2);
 
+
+    program1.enableAttributeArray(vertexAttr3);
+    program1.setAttributeArray(vertexAttr3, vTriangle.constData());
+    glDrawArrays(GL_TRIANGLES, 0, vTriangle.length());
+    program1.disableAttributeArray(vertexAttr3);
 }
 
 
@@ -124,6 +129,7 @@ void Scene3D::initialize()
 
     vertexAttr1 = program1.attributeLocation("vertex");
     vertexAttr2 = program1.attributeLocation("vertex");
+    vertexAttr3 = program1.attributeLocation("vertex");
 
 //    normalAttr1 = program1.attributeLocation("normal");
     matrixUniform1 = program1.uniformLocation("matrix");
@@ -139,12 +145,14 @@ void Scene3D::initialize()
 }
 
 void Scene3D::setLines(QVector<QVector3D> p) {
-    vLines = p;
+    vLines.clear();
+    vLines.append(p);
     float max_x = -100000000, min_x=100000000, max_y=-100000000, min_y=100000000, max_z=-100000000, min_z=100000000;
 
     for(int i = 0; i < vLines.size(); i++) {
         float x = vLines[i].x();
         float y = vLines[i].y();
+        vLines[i].setZ(vLines[i].z()*1.0f);
         float z = vLines[i].z();
 
         if(max_x < x) { max_x = x; }
@@ -213,7 +221,7 @@ void Scene3D::render()
 //    glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    qreal zNear = 0.1, zFar = 500.0, fov = m_fScale;
+    qreal zNear = 1, zFar = 5000.0, fov = m_fScale;
 
     QMatrix4x4 persp;
     persp.perspective(fov, _size.x()/_size.y(), zNear, zFar);
@@ -227,7 +235,7 @@ void Scene3D::render()
                 _rotAngle[1] = 0;
             }
         } else {
-            QVector3D vm = QVector3D(-(_lastMouse.x() - _mouse.x())*0.1, (_lastMouse.y() - _mouse.y())*0.1, 0)*(m_fScale*0.01);
+            QVector3D vm = QVector3D(-(_lastMouse.x() - _mouse.x()), (_lastMouse.y() - _mouse.y()), 0)*(m_fScale*0.02);
 
             _posCenter[0] += (vm[1]*cosf(-_rotAngle.x())*cosf(_rotAngle.y()) - vm[0]*sinf(-_rotAngle.x()));
             _posCenter[1] += (vm[1]*sinf(-_rotAngle.x())*cosf(_rotAngle.y()) + vm[0]*cosf(-_rotAngle.x()));
@@ -250,7 +258,7 @@ void Scene3D::render()
     _lastMouse[1] = _mouse.y();
 
     QMatrix4x4 view;
-    float r = -50.0;
+    float r = -500.0;
 
     QVector3D cf;
     cf[0] = -sinf(_rotAngle.y())*cosf(-_rotAngle.x())*r;
@@ -480,8 +488,6 @@ void Scene3D::mash(QVector<qreal> z) {
             vQuads.last() << QVector3D(xn, y, _mashZ[i+1]);
             vQuads.last() << QVector3D(xm, ym, zm);
         }
-
-
     }
 
     _mashZ = z;

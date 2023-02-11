@@ -12,15 +12,20 @@ class WaterFall : public QQuickPaintedItem
 {
     Q_OBJECT
 public:
+    Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
+
     WaterFall(QQuickItem* parent = nullptr);
     virtual void paint(QPainter *painter);
 
     void setPlot(PlotCash* plot);
+    bool isHorizontal() { return _isHorizontal; }
+    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  updater(); }
 
 protected:
     PlotCash* m_plot = nullptr;
     QTimer* m_updateTimer;
     bool m_needUpdate = true;
+    bool _isHorizontal = true;
 
 protected slots:
     void timerUpdater();
