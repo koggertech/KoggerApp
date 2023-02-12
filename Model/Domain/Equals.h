@@ -3,7 +3,7 @@
 #include <limits>
 #include <type_traits>
 
-#include "Point2D.h"
+#include "Point3D.h"
 #include "Edge.h"
 
 template<class T>

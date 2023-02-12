@@ -72,7 +72,7 @@ HEADERS += \
     Model/Domain/DelaunayTriangulation.h \
     Model/Domain/Edge.h \
     Model/Domain/Equals.h \
-    Model/Domain/Point2D.h \
+    Model/Domain/Point3D.h \
     Model/Domain/Triangle.h \
     Model/Q3DSceneModel.h \
     ProtoBinnary.h \
