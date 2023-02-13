@@ -11,24 +11,12 @@
 #include <QThread>
 #include "3Plot.h"
 
-
 Core core;
 Themes theme;
 
-//#if defined(Q_OS_ANDROID)
-//#include <QtAndroid>
-//bool checkAndroidWritePermission() {
-//    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-//    if(r == QtAndroid::PermissionResult::Denied) {
-//        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
-//        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-//        if(r == QtAndroid::PermissionResult::Denied) {
-//             return false;
-//        }
-//   }
-//   return true;
-//}
-//#endif
+#if defined(Q_OS_ANDROID)
+#include "android.h"
+#endif
 
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("KOGGER");

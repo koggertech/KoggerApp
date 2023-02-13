@@ -32,7 +32,7 @@ public:
 
     void setModel(const ModelPointer pModel);
 
-    //void setLines(QVector<QVector3D> p);
+    void setLines(QVector<QVector3D> p);
 
     void scale(float sc) {
         m_fScale = sc;
@@ -100,6 +100,7 @@ private:
 
     Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
+    QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
     QVector<QVector<QVector3D>> vQuads;
     QOpenGLShaderProgram program1;

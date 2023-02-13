@@ -1,8 +1,18 @@
 QT += quick
-QT += serialport
 QT += widgets
 QT += network
 QT += qml
+
+windows {
+    QT += serialport
+}
+
+android {
+    QT += androidextras core-private
+    QT += core-private
+    CONFIG += mobility
+}
+
 
 CONFIG += c++11
 
@@ -48,6 +58,15 @@ SOURCES += \
         waterfall.cpp \
 
 
+android {
+SOURCES += \
+    android.cpp \
+    qtandroidserialport/src/qserialport.cpp \
+    qtandroidserialport/src/qserialport_android.cpp \
+    qtandroidserialport/src/qserialportinfo.cpp \
+    qtandroidserialport/src/qserialportinfo_android.cpp \
+}
+
 RESOURCES += QML/qml.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
@@ -90,6 +109,17 @@ HEADERS += \
     waterfall.h \
     waterfallproxy.h \
 
+android {
+HEADERS += \
+    android.h \
+    qtandroidserialport/src/qserialport_android_p.h \
+    qtandroidserialport/src/qserialport_p.h \
+    qtandroidserialport/src/qserialport.h \
+    qtandroidserialport/src/qserialportinfo.h \
+    qtandroidserialport/src/qserialportinfo_p.h
+}
+
+
 DISTFILES += \
     QML/Settings3DView.qml \
     QML/AdjBox.qml \
@@ -111,8 +141,26 @@ DISTFILES += \
     QML/TabBackStyle.qml \
     QML/UpgradeBox.qml \
     QML/FlashBox.qml \
-    QML/main.qml
+    QML/main.qml \
 
-ANDROID_ABIS = armeabi-v7a
+
+android {
+DISTFILES += \
+    android/AndroidManifest.xml \
+    android/build.gradle \
+    android/gradle/wrapper/gradle-wrapper.jar \
+    android/gradle/wrapper/gradle-wrapper.properties \
+    android/gradlew \
+    android/gradlew.bat \
+    android/res/values/libs.xml \
+    qtandroidserialport/src/qtandroidserialport.pri
+
+}
+
+android {
+    ANDROID_ABIS = armeabi-v7a
+}
 
 #ANDROID_ABIS = x86
+
+#ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android

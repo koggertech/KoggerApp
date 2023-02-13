@@ -6,7 +6,7 @@ import Qt.labs.settings 1.1
 
 MenuScroll {
     id: scrollBar
-
+    property bool is2DHorizontal: displaySettings.is2DHorizontal
 
     ColumnLayout {
         width: parent.width
@@ -15,7 +15,10 @@ MenuScroll {
         spacing: 10
 
         DisplaySettings {
+            id: displaySettings
+
 //            Layout.fillWidth: true
+
             Layout.maximumWidth: parent.width
             Layout.preferredWidth: parent.width
         }

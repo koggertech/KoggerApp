@@ -16,49 +16,49 @@ DevSettingsBox {
         spacing: 24
         Layout.margins: 24
 
-        ParamGroup {
-            groupName: "Doppler Bottom Tracker"
+//        ParamGroup {
+//            groupName: "Doppler Bottom Tracker"
 
-            ParamSetup {
-                paramName: "Velocity X, mm/s: " + dev.dopplerVeloX
-            }
+//            ParamSetup {
+//                paramName: "Velocity X, mm/s: " + dev.dopplerVeloX
+//            }
 
-            ParamSetup {
-                paramName: "Velocity Y, mm/s: "  + dev.dopplerVeloY
-            }
+//            ParamSetup {
+//                paramName: "Velocity Y, mm/s: "  + dev.dopplerVeloY
+//            }
 
-            ParamSetup {
-                paramName: "Velocity Z, mm/s: "  + dev.dopplerVeloZ
-            }
+//            ParamSetup {
+//                paramName: "Velocity Z, mm/s: "  + dev.dopplerVeloZ
+//            }
 
-            ParamSetup {
-                paramName: "Distance, mm: "  + dev.dopplerDist
-            }
-        }
+//            ParamSetup {
+//                paramName: "Distance, mm: "  + dev.dopplerDist
+//            }
+//        }
 
-        ParamGroup {
-            groupName: "Doppler Beam"
+//        ParamGroup {
+//            groupName: "Doppler Beam"
 
-            ParamSetup {
-                paramName: "Mode: " + dev.dopplerBeam1Mode
-            }
+//            ParamSetup {
+//                paramName: "Mode: " + dev.dopplerBeam1Mode
+//            }
 
-            ParamSetup {
-                paramName: "Distance, m: "  + dev.dopplerBeam1Distance
-            }
+//            ParamSetup {
+//                paramName: "Distance, m: "  + dev.dopplerBeam1Distance
+//            }
 
-            ParamSetup {
-                paramName: "Amplitude, dB: "  + dev.dopplerBeam1Amplitude
-            }
+//            ParamSetup {
+//                paramName: "Amplitude, dB: "  + dev.dopplerBeam1Amplitude
+//            }
 
-            ParamSetup {
-                paramName: "Velocity, mm/s: " + dev.dopplerBeam1Velo
-            }
+//            ParamSetup {
+//                paramName: "Velocity, mm/s: " + dev.dopplerBeam1Velo
+//            }
 
-            ParamSetup {
-                paramName: "Unc, mm/s: "  + dev.dopplerBeam1Unc
-            }
+//            ParamSetup {
+//                paramName: "Unc, mm/s: "  + dev.dopplerBeam1Unc
+//            }
 
-        }
+//        }
     }
 }

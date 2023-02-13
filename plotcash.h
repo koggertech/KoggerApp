@@ -49,7 +49,7 @@ public:
 
     void setMinDistProc(int dist) {
         _procMinDist = dist;
-        if(dist > _procMaxDist) {
+        if(dist + 50 > _procMaxDist) {
             _procMaxDist = dist + 50;
         }
         flags.processDistAvail = false;
@@ -58,11 +58,27 @@ public:
 
     void setMaxDistProc(int dist) {
         _procMaxDist = dist;
-        if(dist < _procMinDist) {
+        if(dist - 50 < _procMinDist) {
             _procMinDist = dist - 50;
         }
         flags.processDistAvail = false;
         doBottomTrack(-1, false);
+    }
+
+    void setMinMaxDistProc(int min, int max,  bool is_save = true) {
+        int minsave = _procMinDist;
+        int maxsave = _procMaxDist;
+
+        _procMinDist = min;
+        _procMaxDist = max;
+
+        flags.processDistAvail = false;
+        doBottomTrack(-1, false);
+
+        if(!is_save) {
+            _procMinDist = minsave;
+            _procMaxDist = maxsave;
+        }
     }
 
     bool eventAvail() { return flags.eventAvail; }
@@ -106,7 +122,7 @@ public:
 
     double relPosN() { return m_position.N; }
     double relPosE() { return m_position.E; }
-    double relPosD() { return (double)m_processingDist*0.01; }
+    double relPosD() { return (double)m_processingDist*0.001; }
 
     bool isPosAvail() { return flags.posAvail; }
 
@@ -436,9 +452,8 @@ public:
 
     Q_PROPERTY(int themeId WRITE setThemeId)
     Q_PROPERTY(int imageType WRITE setImageType)
-    Q_PROPERTY(int bottomTrackType WRITE setBottomTrackType)
     Q_PROPERTY(int bottomTrackTheme WRITE setBottomTrackTheme)
-    Q_PROPERTY(int distProcessing WRITE doDistProcessing)
+
 
     int poolSize();
 
@@ -479,18 +494,19 @@ public slots:
     void setDistProcVis(bool visible);
     void setEncoderVis(bool visible);
     void setVelocityVis(bool visible);
-    void setDopplerBeamVis(bool visible);
+    void setDopplerBeamVis(bool visible, int beamFilter, bool is_mode_visible, bool is_amp_visible);
     void setDopplerInstrumentVis(bool visible);
     void setGridNumber(int number);
     void setImageType(int image_type);
-    void setBottomTrackType(int bottomtrack_type);
     void setBottomTrackTheme(int bottomThemetrack_type);
     void setAHRSVis(bool visible);
     void updateImage(bool update_value = false);
     void renderValue();
     void resetValue();
     void resetDataset();
-    void doDistProcessing(bool processing);
+    void doDistProcessing();
+    void doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max);
+    void resetDistProcessing();
 
     void setThemeId(int theme_id);
 
@@ -517,7 +533,7 @@ protected:
     int m_verticalGridNum = 20;
     float m_legendMultiply = 0.001f;
     int m_range = 2000;
-    float m_veloRange = 1.0f;
+    float m_veloRange = 2.0f;
     int m_offset = 0;
     int m_startLevel = 10;
     int m_stopLevel = 100;
@@ -534,6 +550,9 @@ protected:
     bool _is_velocityVis = false;
     bool _isDopplerInstrimentVis = false;
     bool _isDopplerBeamVis = false;
+    int _dopplerBeamFilter = 0xF;
+    bool _isDopplerBeamAmpitudeVisible = true;
+    bool _isDopplerBeamModeVisible = true;
     bool isDistProcessing = false;
     int _themId;
     int lastEventTimestamp = 0;
@@ -544,8 +563,17 @@ protected:
     int _mouse_mode = 1;
 
     int _imageType = 0;
-    int _bottomtrackType = 0;
     int _bottomTrackTheme = 0;
+
+    int _bottomtrackType = -1;
+    QVector<int32_t> _bottomTrackWindow;
+    int _bottomTrackLastIndex = 0;
+    int _bottomTrackLastProcessing = 0;
+    int _bottomTrackWindowSize = 0;
+    float _bottomTrackVerticalGap = 0;
+    float _bottomTrackMinRange = 0;
+    float _bottomTrackMaxRange = 0;
+
 
     LLARef _llaRef;
 

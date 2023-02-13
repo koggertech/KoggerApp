@@ -98,12 +98,15 @@ QList<QSerialPortInfo> Core::availableSerial(){
 }
 
 QStringList Core::availableSerialName(){
+    consoleInfo("Scaning serial ports...");
     QStringList serialNameList;
     const QList<QSerialPortInfo> serialList = availableSerial();
+    consoleInfo((QString("Find serial ports: %1").arg(serialList.size())));
     for (const auto& serial : serialList) {
-        if (!serial.portName().startsWith(QStringLiteral("cu."), Qt::CaseInsensitive)) {
+//        if (!serial.portName().startsWith(QStringLiteral("cu."), Qt::CaseInsensitive)) {
             serialNameList.append(serial.portName());
-        }
+            consoleInfo("Find serial:" + serial.portName());
+//        }
     }
     return serialNameList;
 }
@@ -144,8 +147,8 @@ bool Core::openConnectionAsFile(const QString &name) {
     m_connection->openFile(name);
 
     return true;
-}
 
+}
 bool Core::openConnectionAsIP(const QString &address, const int port, bool is_tcp) {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
@@ -184,6 +187,14 @@ bool Core::closeConnection() {
 
 
     return true;
+}
+
+bool Core::openProxy(const QString &address, const int port, bool is_tcp) {
+    return m_connection->openProxy(address, port, is_tcp);
+}
+
+bool Core::closeProxy() {
+    return m_connection->closeProxy();
 }
 
 bool Core::connectionBaudrate(int baudrate) {

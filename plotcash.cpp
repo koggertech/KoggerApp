@@ -157,7 +157,7 @@ void PoolDataset::doBottomTrack2D(bool is_update_dist) {
     if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
         procData = m_processingDistData.data();
         int index_max = 0;
-        int16_t val_max = 0;
+        int16_t val_max = -32766;
         int max_index = _procMaxDist/m_chartResol;
         int min_index = _procMinDist/m_chartResol;
 
@@ -167,6 +167,10 @@ void PoolDataset::doBottomTrack2D(bool is_update_dist) {
 
         if(min_index > raw_size) {
             min_index = raw_size;
+        }
+
+        if(min_index < 0) {
+            min_index = 0;
         }
 
         for(int i = min_index; i < max_index; i ++) {
@@ -246,7 +250,7 @@ void PoolDataset::doBottomTrackSideScan(bool is_update_dist) {
     if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
         procData = m_processingDistData.data();
         int index_max = 0;
-        int16_t val_max = 0;
+        int16_t val_max = -32766;
         int max_index = _procMaxDist/m_chartResol;
         int min_index = _procMinDist/m_chartResol;
 
@@ -256,6 +260,10 @@ void PoolDataset::doBottomTrackSideScan(bool is_update_dist) {
 
         if(min_index > raw_size) {
             min_index = raw_size;
+        }
+
+        if(min_index < 0) {
+            min_index = 0;
         }
 
         for(int i = min_index; i < max_index; i ++) {
@@ -317,11 +325,8 @@ void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
 
     m_pool[poolLastIndex()].setChart(data, resolution, offset);
 
-    if(m_distProcessingVis) {
-        m_pool[poolLastIndex()].doBottomTrack(_bottomtrackType, false);
-        if(m_pool[poolLastIndex()].isPosAvail()) {
-            updateBottomTrack();
-        }
+    if(_bottomtrackType >= 0) {
+        doDistProcessing();
     }
 
     if(_autoRange != AutoRangeNone) {
@@ -411,7 +416,7 @@ void PlotCash::addPosition(double lat, double lon, uint32_t unix_time, int32_t n
 
     m_pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
     _gnssTrackIndex.append(pool_index);
-    _boatTrack.append(QVector3D(m_pool[pool_index].relPosN()*0.01, m_pool[pool_index].relPosE()*0.01, 0));
+    _boatTrack.append(QVector3D(m_pool[pool_index].relPosN(), m_pool[pool_index].relPosE(), 0));
     if(m_pool[pool_index].distProccesingAvail()) {
         updateBottomTrack();
     }
@@ -646,19 +651,6 @@ void PlotCash::setDistVis(bool visible) {
 
 void PlotCash::setDistProcVis(bool visible) {
     m_distProcessingVis = visible;
-    if(m_distProcessingVis) {
-        doDistProcessing(true);
-    }
-
-    resetValue();
-    updateImage(true);
-}
-
-void PlotCash::setBottomTrackType(int bottomtrack_type) {
-    _bottomtrackType = bottomtrack_type;
-    if(m_distProcessingVis) {
-        doDistProcessing(true);
-    }
     resetValue();
     updateImage(true);
 }
@@ -678,8 +670,11 @@ void PlotCash::setVelocityVis(bool visible) {
     updateImage(true);
 }
 
-void PlotCash::setDopplerBeamVis(bool visible) {
+void PlotCash::setDopplerBeamVis(bool visible, int beamFilter, bool is_mode_visible, bool is_amp_visible) {
     _isDopplerBeamVis = visible;
+    _dopplerBeamFilter = beamFilter;
+    _isDopplerBeamAmpitudeVisible = is_amp_visible;
+    _isDopplerBeamModeVisible = is_mode_visible;
     updateImage(true);
 }
 
@@ -741,22 +736,139 @@ void PlotCash::resetDataset() {
     _gnssTrackIndex.clear();
     _bottomTrack.clear();
     _boatTrack.clear();
+    resetDistProcessing();
 }
 
-void PlotCash::doDistProcessing(bool processing) {
+void PlotCash::doDistProcessing() {
+    doDistProcessing(_bottomtrackType, _bottomTrackWindowSize, _bottomTrackVerticalGap, _bottomTrackMinRange, _bottomTrackMaxRange);
+}
+
+void PlotCash::doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max) {
     int pool_size = poolSize();
 
-    for(int i = 0; i < pool_size; i++) {
-        PoolDataset* dataset = fromPool(i);
-        if(processing) {
-            dataset->doBottomTrack(_bottomtrackType, true);
+    bool is_source_update = _bottomtrackType != source_type;
+    bool is_param_update = is_source_update ||
+            _bottomTrackWindowSize != window_size ||
+            _bottomTrackVerticalGap != vertical_gap ||
+            _bottomTrackMinRange != range_min ||
+            _bottomTrackMaxRange != range_max;
+    _bottomtrackType = source_type;
+    _bottomTrackWindowSize = window_size;
+    _bottomTrackVerticalGap = vertical_gap;
+    _bottomTrackMinRange = range_min;
+    _bottomTrackMaxRange = range_max;
 
-        } else {
-            dataset->resetDistProccesing();
-        }
+    if(source_type < 0) {
+        return;
     }
 
+    const uint16_t avrg_size = window_size;
+    uint16_t start_pos = _bottomTrackLastIndex;
+
+    if(is_param_update) {
+        start_pos = 0;
+        _bottomTrackLastIndex = 0;
+        _bottomTrackWindow.clear();
+    }
+
+    if(is_source_update) {
+        _bottomTrackLastProcessing = 0;
+    }
+
+    uint16_t max_size = _bottomTrackWindow.size();
+    for(int i = _bottomTrackLastProcessing; i < pool_size; i++) {
+        PoolDataset* dataset = fromPool(i);
+        dataset->doBottomTrack(source_type, is_source_update);
+        uint16_t cur_size = dataset->m_processingDistData.size();
+        if(max_size < cur_size) {  max_size = cur_size; }
+        _bottomTrackLastProcessing = i;
+    }
+
+    if(_bottomTrackWindow.size() < max_size) {
+        _bottomTrackWindow.resize(max_size);
+    }
+
+    if(pool_size > avrg_size && max_size > 0) {
+        int32_t* avrg_data = _bottomTrackWindow.data();
+
+        if(is_param_update || _bottomTrackLastIndex == 0) {
+            for(int i = 0; i < avrg_size; i++) {
+                PoolDataset* dataset = fromPool(i);
+
+                uint16_t cur_size = dataset->m_processingDistData.size();
+                const int16_t* data = dataset->m_processingDistData.constData();
+                for(uint16_t k = 0; k < cur_size; k++) {
+                    avrg_data[k] += data[k];
+                }
+            }
+        }
+
+        for(int i = start_pos; i < pool_size - avrg_size; i++) {
+            PoolDataset* dataset = fromPool(i);
+
+            uint16_t cur_size = dataset->m_processingDistData.size();
+            const int16_t* data = dataset->m_processingDistData.data();
+
+            for(uint16_t k = 0; k < cur_size; k++) {
+                avrg_data[k] -= data[k];
+            }
+
+            PoolDataset* dataset2 = fromPool(i+avrg_size);
+            uint16_t cur_size2 = dataset2->m_processingDistData.size();
+            const int16_t* data2 = dataset2->m_processingDistData.data();
+
+            for(uint16_t k = 0; k < cur_size2; k++) {
+                avrg_data[k] += data2[k];
+            }
+
+            uint16_t start_pos = range_min*100;
+            uint16_t stop_pos = range_max*100;
+
+            if(start_pos < 0) {
+                start_pos = 0;
+            }
+
+            if(stop_pos > max_size) {
+                stop_pos = max_size;
+            }
+
+            int32_t max_val = -2000000000;
+            uint16_t max_ind = start_pos;
+            for(uint16_t k = start_pos; k < stop_pos; k++) {
+                int val = avrg_data[k];
+                if(max_val <= val) {
+                    max_val = val;
+                    max_ind = k;
+                }
+            }
+
+            float dist = float(max_ind)*0.01f;
+            float min_dist = dist*(1.0f - 0.5f*vertical_gap);
+            float max_dist = dist*(1.0f + 0.5f*vertical_gap);
+
+            if(vertical_gap == 0) {
+                m_pool[i+avrg_size/2].setDistProcessing(dist*1000);
+            } else {
+                m_pool[i+avrg_size/2].setMinMaxDistProc(min_dist*1000, max_dist*1000, false);
+            }
+        }
+
+        _bottomTrackLastIndex = pool_size - avrg_size-1;
+    }
+
+    updateImage(true);
     updateBottomTrack(true);
+}
+
+void PlotCash::resetDistProcessing() {
+    _bottomTrackWindow.clear();
+    int pool_size = poolSize();
+    for(int i = 0; i < pool_size; i++) {
+        PoolDataset* dataset = fromPool(i);
+        dataset->resetDistProccesing();
+    }
+    _bottomTrackLastIndex = 0;
+    _bottomTrackLastProcessing = 0;
 }
 
 void PlotCash::setThemeId(int theme_id) {
@@ -803,7 +915,7 @@ void PlotCash::updateBottomTrack(bool update_all) {
     for(int i = from_index; i < to_size; i+=1) {
         PoolDataset* dataset = fromPool(_gnssTrackIndex[i]);
         _bottomTrack[i] = _boatTrack[i];
-        _bottomTrack[i][2] = -dataset->relPosD()*0.01;
+        _bottomTrack[i][2] = -dataset->relPosD();
     }
 
     if (mp3DSceneModel){
@@ -1122,22 +1234,28 @@ void PlotCash::updateImage(int width, int height) {
                 uint32_t hscale = 1;
                 IDBinDVL::DVLSolution dvl = m_pool[pool_index].dvlSolution();
                 float vel_x = (float)height/2 - scaleY_vel*dvl.velocity.x;
-                float vel_y = (float)height/2 - scaleY_vel*dvl.velocity.y;
-                float vel_z = (float)height/2 - scaleY_vel*dvl.velocity.z;
 
-                velo_pen.setColor(vel_color[0]);
-                p1.setPen(velo_pen);
-                p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[0], (col)*hscale-waterfall_width*(hscale-1), vel_x);
+                if(isfinite(vel_x) && isfinite(last_vel[0])) {
+                    velo_pen.setColor(vel_color[0]);
+                    p1.setPen(velo_pen);
+                    p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[0], (col)*hscale-waterfall_width*(hscale-1), vel_x);
+                }
                 last_vel[0] = vel_x;
 
-                velo_pen.setColor(vel_color[1]);
-                p1.setPen(velo_pen);
-                p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[1], (col)*hscale-waterfall_width*(hscale-1), vel_y);
+                float vel_y = (float)height/2 - scaleY_vel*dvl.velocity.y;
+                if(isfinite(vel_y) && isfinite(last_vel[1])) {
+                    velo_pen.setColor(vel_color[1]);
+                    p1.setPen(velo_pen);
+                    p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[1], (col)*hscale-waterfall_width*(hscale-1), vel_y);
+                }
                 last_vel[1] = vel_y;
 
-                velo_pen.setColor(vel_color[2]);
-                p1.setPen(velo_pen);
-                p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[2], (col)*hscale-waterfall_width*(hscale-1), vel_z);
+                float vel_z = (float)height/2 - scaleY_vel*dvl.velocity.z;
+                if(isfinite(vel_z) && isfinite(last_vel[2])) {
+                    velo_pen.setColor(vel_color[2]);
+                    p1.setPen(velo_pen);
+                    p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[2], (col)*hscale-waterfall_width*(hscale-1), vel_z);
+                }
                 last_vel[2] = vel_z;
 
             }
@@ -1150,33 +1268,33 @@ void PlotCash::updateImage(int width, int height) {
         QPainter p1(&tmp_img);
 
         QColor vel_color[4] = {
-            QColor(255, 0, 255),
-            QColor(0, 255, 255),
-            QColor(255, 255, 0),
-            QColor(255, 255, 255)
+            QColor(255, 0, 175),
+            QColor(0, 175, 255),
+            QColor(255, 175, 0),
+            QColor(75, 205, 55)
         };
 
         QColor amp_color[4] = {
-            QColor(155, 55, 155),
-            QColor(55, 155, 155),
-            QColor(155, 155, 55),
-            QColor(155, 155, 155)
+            QColor(255, 0, 175, 100),
+            QColor(0, 175, 255, 100),
+            QColor(255, 175, 0, 100),
+            QColor(55, 205, 55, 100)
         };
 
         float last_vel[4] = {};
         float last_amp[4] = {};
 
         QPen velo_pen;
-        velo_pen.setWidth(1);
+        velo_pen.setWidth(2);
         velo_pen.setColor(QColor::fromRgb(100, 255, 0));
 
-        QPen pen2;
-        pen2.setWidth(2);
-        pen2.setColor(QColor::fromRgb(255, 255, 255));
+        QPen amp_pen;
+        amp_pen.setWidth(2);
+        amp_pen.setColor(QColor::fromRgb(255, 255, 255));
 
-        QPen pen3;
-        pen3.setWidth(2);
-        pen3.setColor(QColor::fromRgb(50, 255, 50));
+        QPen mode_pen;
+        mode_pen.setWidth(2);
+        mode_pen.setColor(QColor::fromRgb(50, 255, 50));
 
         QPen pen4;
         pen4.setWidth(1);
@@ -1184,7 +1302,7 @@ void PlotCash::updateImage(int width, int height) {
 
         const float scaleY_amp = (float)height/(float)1000;
         const float scaleY_vel = (float)height/m_veloRange;
-        const float scaleY_mode = (float)height/20;
+        const float scaleY_mode = (float)height/60;
 
         int pool_index = -1;
         float last_unc = 0, last_mode = 0;
@@ -1197,33 +1315,59 @@ void PlotCash::updateImage(int width, int height) {
             pool_index = m_valueCash[val_col].poolIndex;
             if(pool_index >= 0 && m_pool[pool_index].isDopplerBeamAvail()) {
                 const uint16_t beam_cnt = m_pool[pool_index].dopplerBeamCount();
+//                const uint16_t beam_mask = (1 << 0) | (0 << 1);
+                const uint16_t beam_mask = _dopplerBeamFilter;
+                const uint16_t mode_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3);
+//                const uint16_t mode_mask = _dopplerBeamFilter<<1;
 
                 uint32_t hscale = 1;
 
                 for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                    if(((1 << ibeam) & beam_mask) == 0) { continue; }
                     IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                    if(((1 << beam.mode) & mode_mask) == 0) { continue; }
+
                     float vel = (float)height/2 - scaleY_vel*beam.velocity;
                     velo_pen.setColor(vel_color[ibeam]);
                     p1.setPen(velo_pen);
                     p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_vel[ibeam], (col)*hscale-waterfall_width*(hscale-1), vel);
+//                    p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), vel);
                     last_vel[ibeam] = vel;
                 }
 
-                for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
-                    IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
-                    float amp = (float)height - scaleY_amp*(beam.amplitude);
-                    velo_pen.setColor(amp_color[ibeam]);
-                    p1.setPen(velo_pen);
-                    p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_amp[ibeam], (col)*hscale-waterfall_width*(hscale-1), amp);
-                    last_amp[ibeam] = amp;
+                if(_isDopplerBeamAmpitudeVisible) {
+                    for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                        if(((1 << ibeam) & beam_mask) == 0) { continue; }
+                        IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                        if(((1 << beam.mode) & mode_mask) == 0) { continue; }
+
+                        m_pool[pool_index].setDist(beam.distance*1000);
+
+                        float amp = scaleY_amp*(beam.amplitude);
+                        if(beam.mode > 0) {
+                            amp_pen.setColor(amp_color[ibeam]);
+                            p1.setPen(amp_pen);
+    //                        p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), amp);
+                            p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_amp[ibeam], (col)*hscale-waterfall_width*(hscale-1), amp);
+                        }
+                        last_amp[ibeam] = amp;
+                    }
                 }
 
-                for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
-                    IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
-                    float range_mode = (float)height - scaleY_mode*beam.mode;
-                    p1.setPen(pen3);
-                    p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), range_mode-5);
+
+                if(_isDopplerBeamModeVisible) {
+                    for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                        if(((1 << ibeam) & beam_mask) == 0) { continue; }
+                        IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                        if(((1 << beam.mode) & mode_mask) == 0) { continue; }
+
+                        float range_mode = (float)height - scaleY_mode*beam.mode;
+                        mode_pen.setColor(vel_color[ibeam]);
+                        p1.setPen(mode_pen);
+                        p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), range_mode-3-ibeam*2);
+                    }
                 }
+
 
 //                IDBinDVL::BeamSolution beam1 = m_pool[pool_index].dopplerBeam(0);
 //                float range1_mode = (float)height - scaleY_mode*beam1.mode;

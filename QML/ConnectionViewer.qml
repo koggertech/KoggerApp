@@ -290,6 +290,55 @@ Item {
                     property alias loggingCheck: loggingCheck.checked
                 }
             }
+
+            CCheck {
+                id: proxyCheck
+                text: "proxy"
+                checked: false
+
+                onCheckedChanged: {
+                    if(proxyCheck.checked) {
+                        core.openProxy(ipProxyAddressText.text, Number(ipProxyPortText.text), false)
+                    } else {
+                        core.closeProxy()
+                    }
+                }
+            }
+
+            CTextField {
+                id: ipProxyAddressText
+                hoverEnabled: true
+                Layout.fillWidth: true
+                visible: true
+
+                text: "10.0.0.3"
+                placeholderText: ""
+
+                Keys.onPressed: {
+                    if (event.key === 16777220) {
+                        console.info(ipProxyAddressText.text)
+                    }
+                }
+
+                Settings {
+                    property alias ipProxyAddressText: ipProxyAddressText.text
+                }
+            }
+
+            CTextField {
+                id: ipProxyPortText
+                hoverEnabled: true
+                Layout.fillWidth: false
+                implicitWidth: 80
+                visible: true
+
+                text: "14444"
+                placeholderText: qsTr("Port")
+
+                Settings {
+                    property alias ipProxyPortText: ipProxyPortText.text
+                }
+            }
         }
 
 //        devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]"
