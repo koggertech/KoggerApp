@@ -32,7 +32,7 @@ public:
 
     void setModel(const ModelPointer pModel);
 
-    void setLines(QVector<QVector3D> p);
+    //void setLines(QVector<QVector3D> p);
 
     void scale(float sc) {
         m_fScale = sc;
@@ -96,7 +96,9 @@ private:
     //! Draws bottom surface
     void displayBottomSurface();
     //! Draws bottom surface mesh
-    void displayBottomSurfaceMesh();
+    void displayBottomSurfaceGrid();
+    // !
+
 
     Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
@@ -122,6 +124,18 @@ private:
     Vector3 mBottomTrack;
     //! Данные треугольников поверхности
     Vector3 mTriangles;
+    //! Данные треугольников поверхности
+    Vector3 mMesh;
+
+    Vector3 mGrid;
+    Vector3 mQuads;
+
+    QMatrix4x4 mModel;
+    QMatrix4x4 mView;
+    QMatrix4x4 mProjection;
+
+    float mMaxZ = 0.0f;
+    float mMinZ = 0.0f;
 };
 
 class FboInSGRenderer : public QQuickFramebufferObject

@@ -43,10 +43,57 @@ Item {
                 CCombo  {
                     id: objectTypeCCombo
                     Layout.fillWidth: true
-                    model: ["Track", "Surface", "Mesh",]
+                    model: ["Track", "Surface with grid", "Surface", "Grid"]
+                    enabled:Scene3DModel.triangulationAvailable()
                     currentIndex: 0
 
                     onCurrentTextChanged: Settings3DController.chageDisplayedObjectType(currentText)
+
+                    contentItem: Text {
+                        font: theme.textFont
+                        text: objectTypeCCombo.currentText
+                        color: enabled ? theme.textColor : theme.disabledTextColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        color: {
+                            !objectTypeCCombo.enabled ? theme.disabledBackColor :
+                             objectTypeCCombo.hovered ? theme.hoveredBackColor  :
+                                                           theme.controlBackColor
+                        }
+                    }
+                }
+
+            }
+
+            ParamSetup {
+                paramName: "Interpolation level:"
+
+                CCombo  {
+                    id: interpLevelCCombo
+                    Layout.fillWidth: true
+                    model: ["1", "2", "3"]
+                    currentIndex: 0
+                    enabled: (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
+                    onCurrentTextChanged: Settings3DController.setInterpolationLevel(currentText)
+
+                    contentItem: Text {
+                        font: theme.textFont
+                        text: interpLevelCCombo.currentText
+                        color: enabled ? theme.textColor : theme.disabledTextColor
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        color: {
+                            !interpLevelCCombo.enabled ? theme.disabledBackColor :
+                             interpLevelCCombo.hovered ? theme.hoveredBackColor  :
+                                                         theme.controlBackColor
+                        }
+                    }
                 }
 
             }
@@ -86,6 +133,8 @@ Item {
         target: Scene3DModel
         onStateChanged: {
             updateSurfaceButton.enabled = (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
+            interpLevelCCombo.enabled   = (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
+            objectTypeCCombo.enabled    = (Scene3DModel.triangulationAvailable())
         }
     }
 }

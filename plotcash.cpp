@@ -928,6 +928,16 @@ void PlotCash::updateBottomTrack(bool update_all) {
     //    updateRender3D();
     //}
 
+    QFile file("D:\\vector_3d.dat");
+
+    if (file.open(QIODevice::WriteOnly)){
+
+         QDataStream out(&file);
+         out << _bottomTrack;
+
+         file.close();
+    }
+
 }
 
 void PlotCash::updateValueMap(int width, int height) {

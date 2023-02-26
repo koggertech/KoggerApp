@@ -91,7 +91,9 @@ HEADERS += \
     Model/Domain/DelaunayTriangulation.h \
     Model/Domain/Edge.h \
     Model/Domain/Equals.h \
+    Model/Domain/Interpolator.h \
     Model/Domain/Point3D.h \
+    Model/Domain/Quad.h \
     Model/Domain/Triangle.h \
     Model/Q3DSceneModel.h \
     ProtoBinnary.h \
@@ -160,6 +162,8 @@ DISTFILES += \
 android {
     ANDROID_ABIS = armeabi-v7a
 }
+
+LIBS += -lopengl32
 
 #ANDROID_ABIS = x86
 

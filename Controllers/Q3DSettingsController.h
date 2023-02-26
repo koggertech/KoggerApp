@@ -27,6 +27,8 @@ public slots:
     void updateDisplayedObject();
     //! Отобразить/скрыть 3D - сцену
     void changeSceneVisibility(const bool visible);
+    //! Установить уровень интерполяции поверхности
+    void setInterpolationLevel(const QString& level);
 
 private:
 
@@ -34,6 +36,11 @@ private:
     ModelPointer mpModel;
     //! Указатель на поток расчета поверхности
     QThread* mpThread;
+
+
+private slots:
+
+    void finished();
 };
 
 #endif // Q3DSETTINGSCONTROLLER_H

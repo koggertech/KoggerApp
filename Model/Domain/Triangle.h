@@ -50,6 +50,8 @@ public:
     Edge <T> AC() const { return mAC; }
     //! Returns BC - edge
     Edge <T> BC() const { return mBC; }
+    //! Returns area of the triangle
+    T area() const {return mArea;}
     //! Set the triangle wrong or not for triangulation
     void setWrong(bool wrong) { mWrong = wrong; }
     //! Returns true if triangle is wrong for triangulation
@@ -61,8 +63,14 @@ public:
         return equal(edge, mAB) || equal(edge, mAC) || equal(edge, mBC);
     }
     //! Checks whether the triangle contains some point
-    bool contains(const Point3D <T>& point) const {
-        return equal(mA, point) || equal(mB, point) || equal(mC, point);
+    bool contains(const Point3D <T>& p)  {
+        T b = vect(mA.x() - p.x(), mA.y() - p.y(), mB.x() - mA.x(), mB.y() - mA.y());
+
+        T q = vect(mB.x() - p.x(), mB.y() - p.y(), mC.x() - mB.x(), mC.y() - mB.y());
+
+        T r = vect(mC.x() - p.x(), mC.y() - p.y(), mA.x() - mC.x(), mA.y() - mC.y());
+
+        return (b <= 0.0 && q <= 0.0 && r <= 0.0) || (b >= 0.0 && q >= 0.0 && r >= 0.0);
     }
 
     //! Equal operator
@@ -92,6 +100,8 @@ private:
     bool mWrong;
     //! Circum circle of the triangle
     Circle <T> mCircumCircle;
+    //! Area of the triangle
+    T mArea;
 
     //! Creates triangle circum circle
     void createCircumCircle() {
@@ -99,9 +109,9 @@ private:
         // Calc half-perimeter of the triangle
         const T P = (mAB.length() + mBC.length() + mAC.length()) / static_cast <T> (2.0);
         // Calc area of the triangle
-        const T S = sqrt(P * (P - mAB.length()) * (P - mBC.length()) * (P - mAC.length()));
+        const T mArea = sqrt(P * (P - mAB.length()) * (P - mBC.length()) * (P - mAC.length()));
         // Now, calc radius of the triangle circum circle
-        const T R = (mAB.length() * mBC.length() * mAC.length()) / (4.0 * S);
+        const T R = (mAB.length() * mBC.length() * mAC.length()) / (4.0 * mArea);
 
         // Calc triangle circum circle center coordinates
         T A_n = (mA.x() * mA.x() + mA.y() * mA.y());
@@ -118,4 +128,10 @@ private:
         // Creating triangle circum circle
         mCircumCircle = Circle <T>(R, center);
     }
+
+    T vect(const T& x1, const T& y1, const T& x2, const T& y2)
+    {
+        return x1 * y2 - y1 * x2;
+    }
+
 };

@@ -2,9 +2,13 @@
 
 Q3DSceneModel::Q3DSceneModel(QObject *parent)
     : QObject{parent}
+    , mInterpLevel(1)
     , mDisplayedObjectType("Track")
     , mpBottomTrack(std::make_shared <Vector3> ())
     , mpTriangles(std::make_shared <Vector3> ())
+    , mpQuads(std::make_shared <Vector3> ())
+    , mpGrid(std::make_shared <Vector3> ())
+
 {
     mTriangulationAvailable.store(true);
 }
@@ -15,8 +19,9 @@ void Q3DSceneModel::setBottomTrack(const Vector3Pointer pBottomTrack)
 
     mpBottomTrack = pBottomTrack;
 
-    if (mDisplayedObjectType == "Track")
-        emit stateChanged();
+    if (!mpBottomTrack || mpBottomTrack->isEmpty()) return;
+
+    emit stateChanged();
 }
 
 void Q3DSceneModel::changeSceneVisibility(const bool visible)
@@ -33,15 +38,57 @@ void Q3DSceneModel::changeDisplayedObjectType(const QString& type)
     emit stateChanged();
 }
 
+void Q3DSceneModel::setInterpolationLevel(const uint8_t level)
+{
+    mInterpLevel = level;
+}
+
+void Q3DSceneModel::interpolate()
+{
+    mTriangulationAvailable.store(false);
+
+    //QMutexLocker trianglesMutexLocker(&mTrianglesMutex);
+
+    if (!mpRawTriangles){
+        mTriangulationAvailable.store(true);
+        return;
+    }
+
+    emit stateChanged();
+
+    mInterpolator.setInterpolationLevel(mInterpLevel);
+    auto pQuads = mInterpolator.interpolate(mpRawTriangles);
+
+    //trianglesMutexLocker.unlock();
+
+    mpGrid->clear();
+    mpQuads->clear();
+
+    for (const auto& q : *pQuads){
+        QVector3D A(q.A().x(), q.A().y(), q.A().z());
+        QVector3D B(q.B().x(), q.B().y(), q.B().z());
+        QVector3D C(q.C().x(), q.C().y(), q.C().z());
+        QVector3D D(q.D().x(), q.D().y(), q.D().z());
+
+        mpQuads->append({A,B,C,D});
+
+        mpGrid->append({A,B});
+        mpGrid->append({B,C});
+    }
+
+    emit stateChanged();
+
+    mTriangulationAvailable.store(true);
+}
+
 void Q3DSceneModel::updateSurface()
 {
     // Говорим, что процедура триангуляции недоступна
     mTriangulationAvailable.store(false);
 
-    // Обеспечиваем исключительный доступ к данным трека
-    QMutexLocker bottomTrackLocker(&mBottomTrackMutex);
+    QMutexLocker locker(&mBottomTrackMutex);
 
-    if (!mpBottomTrack){
+    if (!mpBottomTrack || mpBottomTrack->isEmpty()){
         mTriangulationAvailable.store(true);
         return;
     }
@@ -60,8 +107,7 @@ void Q3DSceneModel::updateSurface()
         set.insert(point);
     }
 
-    // Работа с данными трека окончена, отпускаем примитив синхронизации
-    bottomTrackLocker.unlock();
+    locker.unlock();
 
     // Формируем вектор точек для триангуляции
     std::vector <Point3D <double>> points;
@@ -71,23 +117,27 @@ void Q3DSceneModel::updateSurface()
     }
 
     // Выполняем триангуляцию
-    auto pTriangles = mTriangulator.trinagulate(points);
+    mpRawTriangles = mTriangulator.trinagulate(points);
 
-    // Обеспечиваем исключительный доступ к данным триангулированной поверхности
-    QMutexLocker trianglesLocker(&mTrianglesMutex);
+    mInterpolator.setInterpolationLevel(mInterpLevel);
+    auto pQuads = mInterpolator.interpolate(mpRawTriangles);
 
-    // Конвертируем в формат для отображения на сцене
-    mpTriangles->clear();
+    mpGrid->clear();
+    mpQuads->clear();
 
-    for (const auto& t : *pTriangles){
+    for (const auto& q : *pQuads){
+        QVector3D A(q.A().x(), q.A().y(), q.A().z());
+        QVector3D B(q.B().x(), q.B().y(), q.B().z());
+        QVector3D C(q.C().x(), q.C().y(), q.C().z());
+        QVector3D D(q.D().x(), q.D().y(), q.D().z());
 
-        QVector3D A(t.A().x(), t.A().y(), t.A().z());
-        QVector3D B(t.B().x(), t.B().y(), t.B().z());
-        QVector3D C(t.C().x(), t.C().y(), t.C().z());
+        mpQuads->append({A,B,C,D});
 
-        mpTriangles->append(A);
-        mpTriangles->append(B);
-        mpTriangles->append(C);
+        mpGrid->append({A,B});
+        mpGrid->append({B,C});
+        mpGrid->append({C,D});
+        mpGrid->append({A,D});
+
     }
 
     emit stateChanged();
@@ -119,9 +169,35 @@ const Vector3Pointer Q3DSceneModel::triangles()
     return mpTriangles;
 }
 
+
+const Vector3Pointer Q3DSceneModel::quads()
+{
+    QMutexLocker quadsLocker(&mQuadsMutex);
+
+    return mpQuads;
+}
+
+const Vector3Pointer Q3DSceneModel::grid()
+{
+    QMutexLocker gridLocker(&mGridMutex);
+
+    return mpGrid;
+}
+
 const Vector3Pointer Q3DSceneModel::bottomTrack()
 {
     QMutexLocker bottomTrackLocker(&mBottomTrackMutex);
 
     return mpBottomTrack;
 }
+
+double Q3DSceneModel::objectMaximumZ() const
+{
+    return mInterpolator.maximumZ();
+}
+
+double Q3DSceneModel::objectMinimumZ() const
+{
+    return mInterpolator.minimumZ();
+}
+

@@ -34,6 +34,23 @@ void Q3DSettingsController::chageDisplayedObjectType(const QString& type)
     mpModel->changeDisplayedObjectType(type);
 }
 
+void Q3DSettingsController::setInterpolationLevel(const QString& level)
+{
+    uint8_t value = static_cast <uint8_t> (level.toUInt());
+    mpModel->setInterpolationLevel(value);
+
+    if (!mpModel || !mpModel->triangulationAvailable())
+        return;
+
+    auto process = [this](){
+       mpModel->interpolate();
+    };
+
+    mpThread = QThread::create(process);
+    //connect(mpThread, SIGNAL(finished()), this, SLOT(finished()));
+    mpThread->start();
+}
+
 void Q3DSettingsController::updateDisplayedObject()
 {
     if (!mpModel || !mpModel->triangulationAvailable())
@@ -44,5 +61,11 @@ void Q3DSettingsController::updateDisplayedObject()
     };
 
     mpThread = QThread::create(process);
+    connect(mpThread, SIGNAL(finished()), this, SLOT(finished()));
     mpThread->start();
+}
+
+void Q3DSettingsController::finished()
+{
+    int a = 0;
 }

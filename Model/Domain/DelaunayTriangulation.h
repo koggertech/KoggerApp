@@ -24,26 +24,30 @@ class Delaunay
 public:
 
     Delaunay()
-    { }
+    {
+        mpTriangles = std::make_shared <std::vector <Triangle <T>>>();
+    }
 
+    //! Return - pointer to triangles vector
+    TrianglesPointer triangles() const {return mpTriangles;};
+
+    //! Triangulate input data
     TrianglesPointer trinagulate(const std::vector <Point3D <T>>& points)
     {
-        auto pTriangles = std::make_shared <std::vector <Triangle <T>>>();
-
         if (points.empty())
-            return pTriangles;
+            return mpTriangles;
 
-        pTriangles->clear();
+        mpTriangles->clear();
 
         auto super = makeSuperTriangle(points);
 
-        pTriangles->push_back(super);
+        mpTriangles->push_back(super);
 
         for (auto& point : points) {
 
             std::vector <Edge <T>> polygon;
 
-            for (auto& triangle : *pTriangles) {
+            for (auto& triangle : *mpTriangles) {
                 if (triangle.circle().contains(point)) {
                     triangle.setWrong(true);
 
@@ -62,10 +66,10 @@ public:
                 }
             }
 
-            for (auto it = pTriangles->begin(); it != pTriangles->end();)
+            for (auto it = mpTriangles->begin(); it != mpTriangles->end();)
             {
                 if (it->isWrong())
-                    it = pTriangles->erase(it);
+                    it = mpTriangles->erase(it);
                 else ++it;
             }
 
@@ -78,20 +82,20 @@ public:
 
             for (const auto& edge : polygon) {
                 Triangle <T> triangle(edge.p1(), edge.p2(), point);
-                pTriangles->push_back(triangle);
+                mpTriangles->push_back(triangle);
             }
         }
 
-        for (auto it = pTriangles->begin(); it != pTriangles->end();)
+        for (auto it = mpTriangles->begin(); it != mpTriangles->end();)
         {
             if (it->contains(super.A()) ||
                 it->contains(super.B()) ||
                 it->contains(super.C()))
-                it = pTriangles->erase(it);
+                it = mpTriangles->erase(it);
             else ++it;
         }
 
-        return pTriangles;
+        return mpTriangles;
     }
 
 private:
@@ -125,5 +129,7 @@ private:
 
         return { p1,p2,p3 };
     }
+
+    TrianglesPointer mpTriangles;
 };
 
