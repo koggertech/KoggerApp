@@ -8,6 +8,71 @@
 
 #include <iostream>
 
+
+static const char* pOverlappingTrackVertexShader = "in vec3 position;\n"
+                                                   "uniform mat4 matrix;\n"
+                                                   "out vec4 color;\n"
+                                                   "void main()\n"
+                                                   "{\n"
+                                                   " color = vec4(1.0f, 0.0f, 1.0f, 1.0f);\n"
+                                                   " gl_Position = matrix * vec4(position, 1.0);\n"
+                                                   "}\n";
+
+static const char* pOverlapingGridVertexShader = "in vec3 position;\n"
+                                                 "uniform mat4 matrix;\n"
+                                                 "out vec4 color;\n"
+                                                 "void main()\n"
+                                                 "{\n"
+                                                 " color = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n"
+                                                 " gl_Position = matrix * vec4(position, 1.0);\n"
+                                                 "}\n";
+
+// TODO - вынести шейдер в файл и реализовать загрузку
+const char *pHeightMappedVertexShader = "in vec3 position;\n"
+                                        "uniform mat4 matrix;\n"
+                                        "out vec4 color;\n"
+                                        "uniform float max_z;\n"
+                                        "uniform float min_z;\n"
+                                        "vec3 getColor(float v,float vmin, float vmax)\n"
+                                        "{\n"
+                                        "   vec3 c = vec3(1.0f, 1.0f, 1.0f);\n"
+                                        "   float dv;\n"
+                                        "\n"
+                                        "   if (v < vmin)\n"
+                                        "      v = vmin;\n"
+                                        "   if (v > vmax)\n"
+                                        "      v = vmax;\n"
+                                        "   dv = vmax - vmin;\n"
+                                        "\n"
+                                        "   if (v < (vmin + 0.25f * dv)) {\n"
+                                        "      c.r = 0.0f;\n"
+                                        "      c.g = 4.0f * (v - vmin) / dv;\n"
+                                        "   } else if (v < (vmin + 0.5f * dv)) {\n"
+                                        "      c.r = 0.0f;\n"
+                                        "      c.b = 1.0f + 4.0f * (vmin + 0.25f * dv - v) / dv;\n"
+                                        "   } else if (v < (vmin + 0.75f * dv)) {\n"
+                                        "      c.r = 4.0f * (v - vmin - 0.5f * dv) / dv;\n"
+                                        "      c.b = 0.0f;\n"
+                                        "   } else {\n"
+                                        "      c.g = 1.0f + 4.0f * (vmin + 0.75f * dv - v) / dv;\n"
+                                        "      c.b = 0.0f;\n"
+                                        "   }\n"
+                                        "\n"
+                                        "   return c;\n"
+                                        "}\n"
+                                        "void main()\n"
+                                        "{\n"
+                                        "   float norm_z = (position.z - min_z) / (abs(max_z - min_z));\n"
+                                        "   color = vec4(getColor(norm_z, 0.0f, 1.0f), 1.0f);\n"
+                                        "	gl_Position = matrix * vec4(position, 1.0);\n"
+                                        "}\n";
+
+const char *pFragmentShader = "in vec4 color;\n"
+                              "void main()\n"
+                              "{\n"
+                              "   gl_FragColor = color;\n"
+                              "}\n";
+
 class FboRenderer : public QQuickFramebufferObject::Renderer
 {
 public:
@@ -58,10 +123,23 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 #include <QPaintEngine>
 #include <qmath.h>
 #include <QtOpenGL/QtOpenGL>
-Scene3D::Scene3D() {
+Scene3D::Scene3D()
+: mpHeightMappedProgram(new QOpenGLShaderProgram)
+, mpOverlappedTrackProgram(new QOpenGLShaderProgram)
+, mpOverlappedGridProgram(new QOpenGLShaderProgram)
+{
 }
 
-Scene3D::~Scene3D() {
+Scene3D::~Scene3D()
+{
+    if (mpHeightMappedProgram)
+        delete mpHeightMappedProgram;
+
+    if (mpOverlappedTrackProgram)
+        delete mpOverlappedTrackProgram;
+
+    if (mpOverlappedGridProgram)
+        delete mpOverlappedGridProgram;
 }
 
 void Scene3D::setModel(const ModelPointer pModel)
@@ -74,91 +152,106 @@ void Scene3D::setModel(const ModelPointer pModel)
 
     mBottomTrack = *mpModel->bottomTrack();
     mTriangles   = *mpModel->triangles();
-
-    // Определяем минимальную и максимальную высоту (координата Z)
-    //findHeightDimensions();
 }
-
-
 
 void Scene3D::modelStateChanged()
 {
     mBottomTrack = *mpModel->bottomTrack();
     mTriangles = *mpModel->triangles();
+    mTriangleGrid = *mpModel->triangleGrid();
     mQuads = *mpModel->quads();
     mGrid = *mpModel->grid();
 
     mMaxZ = mpModel->objectMaximumZ();
     mMinZ = mpModel->objectMinimumZ();
+
+    qDebug() << "Maximum Z: " << mMaxZ << "\n";
+    qDebug() << "Minimum Z: " << mMinZ << "\n";
 }
 
 void Scene3D::paintScene()
 {
-    int maxZLoc = program1.uniformLocation("max_z");
-    program1.setUniformValue(maxZLoc, mMaxZ);
-
-    int minZLoc = program1.uniformLocation("min_z");
-    program1.setUniformValue(minZLoc, mMinZ);
-
-    int isGridLoc = program1.uniformLocation("isGrid");
-    program1.setUniformValue(isGridLoc, false);
-
-    if (mpModel->displayedObjectType() == OBJECT_BOTTOM_TRACK){
+    if (mpModel->bottomTrackVisible()){
         displayGPSTrack();
     }
 
-    if (mpModel->displayedObjectType() == OBJECT_SURFACE_POLY_GRID) {
+    if (mpModel->surfaceVisible()) {
 
         displayBottomSurface();
+    }
 
-        // Устанавливаем признак отрисовки сетки
-        program1.setUniformValue(isGridLoc, true);
+    if (mpModel->surfaceGridVisible()){
         displayBottomSurfaceGrid();
     }
-
-    if (mpModel->displayedObjectType() == OBJECT_SURFACE_POLY) {
-        displayBottomSurface();
-    }
-
-    if (mpModel->displayedObjectType() == OBJECT_SURFACE_GRID) {
-        displayBottomSurfaceGrid();
-    }
-
 }
 
 void Scene3D::displayGPSTrack() {
 
-    program1.enableAttributeArray(vertexAttr1);
-    program1.setAttributeArray(vertexAttr1, mBottomTrack.constData());
-    glLineWidth(2.0);
+    QOpenGLShaderProgram* pProgram = mpHeightMappedProgram;
 
+    if (mpModel->surfaceGridVisible() ||
+        mpModel->surfaceVisible()){
+        pProgram = mpOverlappedTrackProgram;
+    }
+
+    pProgram->bind();
+    int posLoc = pProgram->attributeLocation("position");
+
+    pProgram->enableAttributeArray(posLoc);
+    pProgram->setAttributeArray(posLoc, mBottomTrack.constData());
+    glLineWidth(4.0);
     glDrawArrays(GL_LINE_STRIP, 0, mBottomTrack.size());
-
-    program1.disableAttributeArray(vertexAttr1);
+    pProgram->disableAttributeArray(posLoc);
+    pProgram->release();
+    glLineWidth(1.0);
 }
 
 void Scene3D::displayBottomSurface() {
 
-    program1.enableAttributeArray(vertexAttr3);
-    program1.setAttributeArray(vertexAttr3, mQuads.constData());
-    glPolygonOffset(-1,1);
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glDrawArrays(GL_QUADS, 0, mQuads.size());
-    program1.disableAttributeArray(vertexAttr3);
+    QOpenGLShaderProgram* pProgram = mpHeightMappedProgram;
+
+    pProgram->bind();
+
+    int posLoc = pProgram->attributeLocation("position");
+
+    pProgram->enableAttributeArray(posLoc);
+
+    if (mpModel->displayedStage() == DISPLAYED_STAGE_TIN){
+        pProgram->setAttributeArray(posLoc, mTriangles.constData());
+        glDrawArrays(GL_TRIANGLES, 0, mTriangles.size());
+    }else{
+        pProgram->setAttributeArray(posLoc, mQuads.constData());
+        glDrawArrays(GL_QUADS, 0, mQuads.size());
+    }
+
+    pProgram->disableAttributeArray(posLoc);
+    pProgram->release();
 }
 
 void Scene3D::displayBottomSurfaceGrid()
 {
-    // Приподнимаем сетку над поверхностью для нормальной видимости
-    QMatrix4x4 model = mModel;
-    model.translate(QVector3D(0.0f, 0.0f, 0.04f));
+    QOpenGLShaderProgram* pProgram = mpHeightMappedProgram;
 
-    program1.setUniformValue(matrixUniform1, mProjection*mView*model);
-    program1.enableAttributeArray(vertexAttr4);
-    program1.setAttributeArray(vertexAttr4, mGrid.constData());
-    glDrawArrays(GL_LINES, 0, mGrid.size());
-    program1.disableAttributeArray(vertexAttr4);
+    if (mpModel->surfaceVisible()){
+        pProgram = mpOverlappedGridProgram;
+    }
 
+    pProgram->bind();
+
+    int posLoc = pProgram->attributeLocation("position");
+
+    pProgram->enableAttributeArray(posLoc);
+
+    if (mpModel->displayedStage() == DISPLAYED_STAGE_TIN){
+        pProgram->setAttributeArray(posLoc, mTriangleGrid.constData());
+        glDrawArrays(GL_LINES, 0, mTriangleGrid.size());
+    }else{
+        pProgram->setAttributeArray(posLoc, mGrid.constData());
+        glDrawArrays(GL_LINES, 0, mGrid.size());
+    }
+
+    pProgram->disableAttributeArray(posLoc);
+    pProgram->release();
 }
 
 void FboInSGRenderer::setModel(const ModelPointer pModel)
@@ -174,69 +267,24 @@ void Scene3D::initialize()
     glEnable(GL_DEPTH_TEST);;
     glClearColor(0.1f, 0.1f, 0.2f, 0.0f);
 
-    // TODO - вынести шейдер в файл и реализовать загрузку
-    const char *vsrc1 = "in vec3 position;\n"
-                        "uniform mat4 matrix;\n"
-                        "uniform bool isGrid;\n"
-                        "out vec4 color;\n"
-                        "uniform float max_z;\n"
-                        "uniform float min_z;\n"
-                        "vec3 getColor(float v,float vmin, float vmax)\n"
-                        "{\n"
-                        "   vec3 c = vec3(1.0f, 1.0f, 1.0f);\n"
-                        "   float dv;\n"
-                        "\n"
-                        "   if (v < vmin)\n"
-                        "      v = vmin;\n"
-                        "   if (v > vmax)\n"
-                        "      v = vmax;\n"
-                        "   dv = vmax - vmin;\n"
-                        "\n"
-                        "   if (v < (vmin + 0.25f * dv)) {\n"
-                        "      c.r = 0.0f;\n"
-                        "      c.g = 4.0f * (v - vmin) / dv;\n"
-                        "   } else if (v < (vmin + 0.5f * dv)) {\n"
-                        "      c.r = 0.0f;\n"
-                        "      c.b = 1.0f + 4.0f * (vmin + 0.25f * dv - v) / dv;\n"
-                        "   } else if (v < (vmin + 0.75f * dv)) {\n"
-                        "      c.r = 4.0f * (v - vmin - 0.5f * dv) / dv;\n"
-                        "      c.b = 0.0f;\n"
-                        "   } else {\n"
-                        "      c.g = 1.0f + 4.0f * (vmin + 0.75f * dv - v) / dv;\n"
-                        "      c.b = 0.0f;\n"
-                        "   }\n"
-                        "\n"
-                        "   return c;\n"
-                        "}\n"
-                        "void main()\n"
-                        "{\n"
-                        "   float norm_z = (position.z - min_z) / (abs(max_z - min_z));\n"
-                        "   if (!isGrid)\n"
-                        "       color = vec4(getColor(norm_z, 0.0f, 1.0f), 1.0f);\n"
-                        "   else\n"
-                        "       color = vec4(0.0f, 0.0f, 0.0f, 1.0f);\n"
-                        "	gl_Position = matrix * vec4(position, 1.0);\n"
-                        "}\n";
-
-    const char *fsrc1 = "in vec4 color;\n"
-                        "void main()\n"
-                        "{\n"
-                        "   gl_FragColor = color;\n"
-                        "}\n";
-
-    program1.addCacheableShaderFromSourceCode(QOpenGLShader::Vertex, vsrc1);
-    program1.addCacheableShaderFromSourceCode(QOpenGLShader::Fragment, fsrc1);
+    program1.addCacheableShaderFromSourceCode(QOpenGLShader::Vertex, pHeightMappedVertexShader);
+    program1.addCacheableShaderFromSourceCode(QOpenGLShader::Fragment, pFragmentShader);
     program1.link();
 
-    vertexAttr1 = program1.attributeLocation("position");
-    vertexAttr2 = program1.attributeLocation("position");
-    vertexAttr3 = program1.attributeLocation("position");
-    vertexAttr4 = program1.attributeLocation("position");
+    // Загрузка шейдеров в программу для случая, когда отсутствует наложение объектов на сцене
+    mpHeightMappedProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Vertex, pHeightMappedVertexShader);
+    mpHeightMappedProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Fragment, pFragmentShader);
+    mpHeightMappedProgram->link();
 
-    matrixUniform1 = program1.uniformLocation("matrix");
+    // Загрузка шейдеров в программу для случая, когда присутствует наложение трека на сцене
+    mpOverlappedTrackProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Vertex, pOverlappingTrackVertexShader);
+    mpOverlappedTrackProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Fragment, pFragmentShader);
+    mpOverlappedTrackProgram->link();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    // Загрузка шейдеров в программу для случая, когда присутствует наложение сетки на сцене
+    mpOverlappedGridProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Vertex, pOverlapingGridVertexShader);
+    mpOverlappedGridProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Fragment, pFragmentShader);
+    mpOverlappedGridProgram->link();
 
     m_fScale = 1;
 }
@@ -255,6 +303,7 @@ void Scene3D::render()
 //    glCullFace(GL_FRONT);
 //    glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
+
 
     qreal zNear = 1, zFar = 5000.0, fov = m_fScale;
 
@@ -298,10 +347,37 @@ void Scene3D::render()
 
     mModel = QMatrix4x4();
 
-    program1.bind();
-    program1.setUniformValue(matrixUniform1, mProjection*mView*mModel);
+    // Настройка шейдерной программы
+    mpHeightMappedProgram->bind();
+
+    int maxZLoc = mpHeightMappedProgram->uniformLocation("max_z");
+    int minZLoc = mpHeightMappedProgram->uniformLocation("min_z");
+    int matrixLoc = mpHeightMappedProgram->uniformLocation("matrix");
+
+    program1.setUniformValue(maxZLoc, mMaxZ);
+    program1.setUniformValue(minZLoc, mMinZ);
+
+    mpHeightMappedProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
+    mpHeightMappedProgram->release();
+
+    // Настройка шейдерной программы
+    mpOverlappedTrackProgram->bind();
+    QMatrix4x4 model = mModel;
+    model.translate(QVector3D(0.0f, 0.0f, 0.08f));
+    matrixLoc = mpOverlappedTrackProgram->uniformLocation("matrix");
+    mpOverlappedTrackProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
+    mpOverlappedTrackProgram->release();
+
+    // Настройка шейдерной программы
+    mpOverlappedGridProgram->bind();
+    matrixLoc = mpOverlappedGridProgram->uniformLocation("matrix");
+    // Приподнимаем сетку над поверхностью для корректной видимости
+    model = mModel;
+    model.translate(QVector3D(0.0f, 0.0f, 0.04f));
+    mpOverlappedGridProgram->setUniformValue(matrixLoc, mProjection*mView*model);
+    mpOverlappedGridProgram->release();
+
     paintScene();
-    program1.release();
 
     glDisable(GL_DEPTH_TEST);
 //    glDisable(GL_CULL_FACE);

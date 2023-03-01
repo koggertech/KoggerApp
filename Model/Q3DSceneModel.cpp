@@ -3,12 +3,16 @@
 Q3DSceneModel::Q3DSceneModel(QObject *parent)
     : QObject{parent}
     , mInterpLevel(1)
+    , mSceneVisible(false)
+    , mBottomTrackVisible(false)
+    , mSurfaceVisible(false)
+    , mSurfaceGridVisible(false)
     , mDisplayedObjectType("Track")
     , mpBottomTrack(std::make_shared <Vector3> ())
     , mpTriangles(std::make_shared <Vector3> ())
+    , mpTriangleGrid(std::make_shared <Vector3> ())
     , mpQuads(std::make_shared <Vector3> ())
     , mpGrid(std::make_shared <Vector3> ())
-
 {
     mTriangulationAvailable.store(true);
 }
@@ -21,6 +25,11 @@ void Q3DSceneModel::setBottomTrack(const Vector3Pointer pBottomTrack)
 
     if (!mpBottomTrack || mpBottomTrack->isEmpty()) return;
 
+    for (const auto& p : *mpBottomTrack){
+        mMaxZ = std::max(p.z(), mMaxZ);
+        mMinZ = std::min(p.z(), mMinZ);
+    }
+
     emit stateChanged();
 }
 
@@ -31,11 +40,45 @@ void Q3DSceneModel::changeSceneVisibility(const bool visible)
     emit stateChanged();
 }
 
+void Q3DSceneModel::changeBottomTrackVisibility(const bool visible)
+{
+    mBottomTrackVisible = visible;
+
+    emit stateChanged();
+}
+
+void Q3DSceneModel::changeSurfaceVisibility(const bool visible)
+{
+    mSurfaceVisible = visible;
+
+    emit stateChanged();
+}
+
+void Q3DSceneModel::changeSurfaceGridVisibility(const bool visible)
+{
+    mSurfaceGridVisible = visible;
+
+    emit stateChanged();
+}
+
 void Q3DSceneModel::changeDisplayedObjectType(const QString& type)
 {
     mDisplayedObjectType = type;
 
     emit stateChanged();
+}
+
+void Q3DSceneModel::chageDisplayedStage(const QString& stage)
+{
+    mDisplayedStage = stage;
+
+    emit stateChanged();
+}
+
+
+void Q3DSceneModel::changeMaxTriangulationLineLength(const int length)
+{
+    mTriEdgeLengthLimit = length;
 }
 
 void Q3DSceneModel::setInterpolationLevel(const uint8_t level)
@@ -117,13 +160,26 @@ void Q3DSceneModel::updateSurface()
     }
 
     // Выполняем триангуляцию
-    mpRawTriangles = mTriangulator.trinagulate(points);
+    mpRawTriangles = mTriangulator.trinagulate(points, mTriEdgeLengthLimit);
 
     mInterpolator.setInterpolationLevel(mInterpLevel);
     auto pQuads = mInterpolator.interpolate(mpRawTriangles);
 
+    mpTriangles->clear();
     mpGrid->clear();
     mpQuads->clear();
+
+    for (const auto& q : *mpRawTriangles){
+        QVector3D A(q.A().x(), q.A().y(), q.A().z());
+        QVector3D B(q.B().x(), q.B().y(), q.B().z());
+        QVector3D C(q.C().x(), q.C().y(), q.C().z());
+
+        mpTriangles->append({A,B,C});
+
+        mpTriangleGrid->append({A,B});
+        mpTriangleGrid->append({B,C});
+        mpTriangleGrid->append({A,C});
+    }
 
     for (const auto& q : *pQuads){
         QVector3D A(q.A().x(), q.A().y(), q.A().z());
@@ -146,10 +202,24 @@ void Q3DSceneModel::updateSurface()
     mTriangulationAvailable.store(true);
 }
 
-
 bool Q3DSceneModel::sceneVisibility()
 {
     return mSceneVisible;
+}
+
+bool Q3DSceneModel::bottomTrackVisible()
+{
+    return mBottomTrackVisible;
+}
+
+bool Q3DSceneModel::surfaceVisible()
+{
+    return mSurfaceVisible;
+}
+
+bool Q3DSceneModel::surfaceGridVisible()
+{
+    return mSurfaceGridVisible;
 }
 
 bool Q3DSceneModel::triangulationAvailable()
@@ -169,6 +239,10 @@ const Vector3Pointer Q3DSceneModel::triangles()
     return mpTriangles;
 }
 
+const Vector3Pointer Q3DSceneModel::triangleGrid()
+{
+    return mpTriangleGrid;
+}
 
 const Vector3Pointer Q3DSceneModel::quads()
 {
@@ -201,3 +275,17 @@ double Q3DSceneModel::objectMinimumZ() const
     return mInterpolator.minimumZ();
 }
 
+int Q3DSceneModel::maxTriEdgeLength()
+{
+    return mTriangulator.maxEdgeLength();
+}
+
+int Q3DSceneModel::minTriEdgeLength()
+{
+    return mTriangulator.minEdgeLength();
+}
+
+QString Q3DSceneModel::displayedStage()
+{
+    return mDisplayedStage;
+}

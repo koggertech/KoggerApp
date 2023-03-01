@@ -33,70 +33,113 @@ Item {
         }
 
         ParamGroup {
-            groupName: "Displayed object"
+            groupName: "Bottom track"
             Layout.margins: 10
             spacing: 24
 
-            ParamSetup {
-                paramName: "Type:"
 
-                CCombo  {
-                    id: objectTypeCCombo
-                    Layout.fillWidth: true
-                    model: ["Track", "Surface with grid", "Surface", "Grid"]
-                    enabled:Scene3DModel.triangulationAvailable()
-                    currentIndex: 0
+            CCheck {
+                id: displayTrackCheckBox
+                Layout.fillWidth: true
+                checked: Scene3DModel.bottomTrackVisibility()
+                text: "Display bottom track"
+                onCheckedChanged: Settings3DController.changeBottomTrackVisibility(checked)
+            }
 
-                    onCurrentTextChanged: Settings3DController.chageDisplayedObjectType(currentText)
+            ParamGroup {
+                groupName: "Surface"
+                Layout.margins: 10
+                spacing: 24
 
-                    contentItem: Text {
-                        font: theme.textFont
-                        text: objectTypeCCombo.currentText
-                        color: enabled ? theme.textColor : theme.disabledTextColor
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                ParamSetup {
+                    paramName: "Stage:"
+                    CCombo  {
+                        id: stageCCombo
+                        Layout.fillWidth: true
+                        model: ["TIN", "UGIN"]
+                        enabled:Scene3DModel.triangulationAvailable()
+                        currentIndex: 1
+                        onCurrentTextChanged: Settings3DController.chageDisplayedStage(currentText)
 
-                    background: Rectangle {
-                        color: {
-                            !objectTypeCCombo.enabled ? theme.disabledBackColor :
-                             objectTypeCCombo.hovered ? theme.hoveredBackColor  :
-                                                           theme.controlBackColor
+                        contentItem: Text {
+                            font: theme.textFont
+                            text: stageCCombo.currentText
+                            color: enabled ? theme.textColor : theme.disabledTextColor
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        background: Rectangle {
+                            color: {
+                                !stageCCombo.enabled ? theme.disabledBackColor :
+                                 stageCCombo.hovered ? theme.hoveredBackColor  :
+                                                       theme.controlBackColor
+                            }
                         }
                     }
                 }
 
-            }
-
-            ParamSetup {
-                paramName: "Interpolation level:"
-
-                CCombo  {
-                    id: interpLevelCCombo
+                CCheck {
+                    id: displaySurfaceCheckBox
                     Layout.fillWidth: true
-                    model: ["1", "2", "3"]
-                    currentIndex: 0
-                    enabled: (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
-                    onCurrentTextChanged: Settings3DController.setInterpolationLevel(currentText)
-
-                    contentItem: Text {
-                        font: theme.textFont
-                        text: interpLevelCCombo.currentText
-                        color: enabled ? theme.textColor : theme.disabledTextColor
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    background: Rectangle {
-                        color: {
-                            !interpLevelCCombo.enabled ? theme.disabledBackColor :
-                             interpLevelCCombo.hovered ? theme.hoveredBackColor  :
-                                                         theme.controlBackColor
-                        }
-                    }
+                    checked: Scene3DModel.surfaceVisibility()
+                    text: "Display surface"
+                    onCheckedChanged: Settings3DController.changeSurfaceVisibility(checked)
                 }
 
+                CCheck {
+                    id: displayGridCheckBox
+                    Layout.fillWidth: true
+                    checked: Scene3DModel.surfaceGridVisibility()
+                    text: "Display grid"
+                    onCheckedChanged: Settings3DController.changeSurfaceGridVisibility(checked)
+                }
+
+                ParamSetup {
+                    paramName: "Interpolation level:"
+
+                    CCombo  {
+                        id: interpLevelCCombo
+                        Layout.fillWidth: true
+                        model: ["1", "2", "3"]
+                        currentIndex: 0
+                        enabled: (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
+                        onCurrentTextChanged: Settings3DController.setInterpolationLevel(currentText)
+
+                        contentItem: Text {
+                            font: theme.textFont
+                            text: interpLevelCCombo.currentText
+                            color: enabled ? theme.textColor : theme.disabledTextColor
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        background: Rectangle {
+                            color: {
+                                !interpLevelCCombo.enabled ? theme.disabledBackColor :
+                                 interpLevelCCombo.hovered ? theme.hoveredBackColor  :
+                                                             theme.controlBackColor
+                            }
+                        }
+                    }
+
+                }
+
+                ParamSetup {
+                    paramName: "Triangulation edge length limit:"
+
+                    SpinBoxCustom {
+                        id: maxTriEdgeLengthSpinBox
+                        from: 0
+                        to: 100
+                        stepSize: 2
+                        value: 10
+                        onValueChanged: Settings3DController.changeMaxTriangulationLineLength(value)
+                    }
+
+                }
             }
+
 
             CButton {
                 id: updateSurfaceButton
@@ -123,7 +166,6 @@ Item {
                     }
                 }
 
-
             }
         }
 
@@ -132,9 +174,16 @@ Item {
     Connections {
         target: Scene3DModel
         onStateChanged: {
-            updateSurfaceButton.enabled = (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
-            interpLevelCCombo.enabled   = (objectTypeCCombo.currentText !== "Track") && (Scene3DModel.triangulationAvailable())
-            objectTypeCCombo.enabled    = (Scene3DModel.triangulationAvailable())
+            displayTrackCheckBox.enabled     = Scene3DModel.triangulationAvailable()
+            displaySurfaceCheckBox.enabled   = Scene3DModel.triangulationAvailable()
+            displayGridCheckBox.enabled      = Scene3DModel.triangulationAvailable()
+            interpLevelCCombo.enabled        = Scene3DModel.triangulationAvailable() && stageCCombo.currentText != "TIN"
+            updateSurfaceButton.enabled      = Scene3DModel.triangulationAvailable()
+            maxTriEdgeLengthSpinBox.enabled  = Scene3DModel.triangulationAvailable()
+            stageCCombo.enabled              = Scene3DModel.triangulationAvailable()
+            maxTriEdgeLengthSpinBox.from     = Scene3DModel.minTriEdgeLength()
+            maxTriEdgeLengthSpinBox.to       = Scene3DModel.maxTriEdgeLength()
+            maxTriEdgeLengthSpinBox.stepSize = Math.abs(maxTriEdgeLengthSpinBox.to-maxTriEdgeLengthSpinBox.from) / 20;
         }
     }
 }

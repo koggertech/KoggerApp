@@ -10,6 +10,7 @@
 #include <QtGui/qopenglfunctions.h>
 
 #include <QObject>
+#include <qdebug.h>
 
 #include <QTime>
 #include <QVector>
@@ -106,10 +107,15 @@ private:
     QVector<QVector3D> _gridXY;
     QVector<QVector<QVector3D>> vQuads;
     QOpenGLShaderProgram program1;
+
+    QOpenGLShaderProgram* mpHeightMappedProgram;
+    QOpenGLShaderProgram* mpOverlappedTrackProgram;
+    QOpenGLShaderProgram* mpOverlappedGridProgram;
+
     int vertexAttr1;
-    int vertexAttr2;
-    int vertexAttr3;
-    int vertexAttr4;
+    //int vertexAttr2;
+    //int vertexAttr3;
+    //int vertexAttr4;
     int normalAttr1;
     int matrixUniform1;
     int projectionUniform1;
@@ -120,13 +126,15 @@ private:
 
     //! Указатель на модель сцены
     ModelPointer mpModel;
+
+
+    Vector3 mMesh;
+
     //! Данные трека морского дна
     Vector3 mBottomTrack;
     //! Данные треугольников поверхности
     Vector3 mTriangles;
-    //! Данные треугольников поверхности
-    Vector3 mMesh;
-
+    Vector3 mTriangleGrid;
     Vector3 mGrid;
     Vector3 mQuads;
 

@@ -23,12 +23,22 @@ public:
 public slots:
     //! Изменить тип отображаемого объекта (GPS - трек, поверхность, меш)
     void chageDisplayedObjectType(const QString& type);
-    //! Обновить данные для отображения
-    void updateDisplayedObject();
+    //! Изменить отображаемую стадию расчитанной поверхности
+    void chageDisplayedStage(const QString& stage);
     //! Отобразить/скрыть 3D - сцену
     void changeSceneVisibility(const bool visible);
+    //! Отобразить/скрыть трек
+    void changeBottomTrackVisibility(const bool visible);
+    //! Отобразить/скрыть поверхность
+    void changeSurfaceVisibility(const bool visible);
+    //! Отобразить/скрыть сетку поверхности
+    void changeSurfaceGridVisibility(const bool visible);
+    //! Установить максимальную длину линий интерполяции
+    void changeMaxTriangulationLineLength(const int length);
     //! Установить уровень интерполяции поверхности
     void setInterpolationLevel(const QString& level);
+    //! Обновить данные для отображения
+    void updateDisplayedObject();
 
 private:
 
@@ -37,10 +47,6 @@ private:
     //! Указатель на поток расчета поверхности
     QThread* mpThread;
 
-
-private slots:
-
-    void finished();
 };
 
 #endif // Q3DSETTINGSCONTROLLER_H

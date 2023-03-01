@@ -8,6 +8,7 @@
 #include <QMutex>
 #include <QFile>
 #include <QDataStream>
+#include <qdebug.h>
 
 #include <memory>
 #include <algorithm>
@@ -23,6 +24,8 @@ static const QString OBJECT_BOTTOM_TRACK      = "Track";
 static const QString OBJECT_SURFACE_POLY_GRID = "Surface with grid";
 static const QString OBJECT_SURFACE_POLY      = "Surface";
 static const QString OBJECT_SURFACE_GRID      = "Grid";
+static const QString DISPLAYED_STAGE_TIN = "TIN";
+static const QString DISPLAYED_STAGE_UGIN = "UGIN";
 
 class Q3DSceneModel : public QObject
 {
@@ -37,10 +40,20 @@ public:
     void setBottomTrack(const Vector3Pointer pBottomTrack);
     //! Изменить признак видимости 3D - сцены
     void changeSceneVisibility(const bool visible);
+    //! Отобразить/скрыть трек
+    void changeBottomTrackVisibility(const bool visible);
+    //! Отобразить/скрыть поверхность
+    void changeSurfaceVisibility(const bool visible);
+    //! Отобразить/скрыть сетку поверхности
+    void changeSurfaceGridVisibility(const bool visible);
     //! Изменить тип отображаемого объекта (GPS - трек, поверхность, меш)
     void changeDisplayedObjectType(const QString& type);
+        //! Изменить отображаемую стадию расчитанной поверхности
+    void chageDisplayedStage(const QString& stage);
     //! Включить/отключить сглаживание 3D - объекта
     void setDisplayedObjectSmoothingEnabled(const bool enabled);
+    //! Изменить максимальную длину граней треугольников триангуляции
+    void changeMaxTriangulationLineLength(const int length);
     //! Установить уровень интерполяции поверхности
     void setInterpolationLevel(const uint8_t level);
     //! Обновить поверхность
@@ -51,35 +64,64 @@ public:
     double objectMaximumZ() const;
     double objectMinimumZ() const;
 
+    QString displayedStage() const;
+
+
 public slots:
     //! Return - признак видимости 3D - сцены
     bool sceneVisibility();
+    //! Return - признак видимости трека
+    bool bottomTrackVisible();
+    //! Return - признак видимости поверхности
+    bool surfaceVisible();
+    //! Return - признак видимости сетки поверхности
+    bool surfaceGridVisible();
     //! Return - признак доступности триангулятора
     bool triangulationAvailable();
     //! Return - тип отображаемого объекта
     QString displayedObjectType();
+    //! Return - отображаемая стадия расчитанной поверхности
+    QString displayedStage();
     //! Return - точки триангулированной поверхности
     const Vector3Pointer triangles();
+    //! Return - точки триангулированной поверхности (линии)
+    const Vector3Pointer triangleGrid();
     //! Return - точки интерполированой поверхности (квадраты)
     const Vector3Pointer quads();
     //! Return - точки интерполированой поверхности (линии)
     const Vector3Pointer grid();
-
     //! Return - трек морского дна
     const Vector3Pointer bottomTrack();
+    //! Return - максимальная длина грани треугольников триангуляции
+    int maxTriEdgeLength();
+    //! Return - минимальная длина грани треугольников триангуляции
+    int minTriEdgeLength();
 
 private:
 
-    void findHeightDimensions();
-
+    //! Максимальная длина грани треугольников интерполяции
+    uint64_t mMaxTriEdgeLength;
+    //! Минимальная длина грани треугольников интерполяции
+    uint64_t mMinTriEdgeLength;
+    //! Лимит для по длине граней треугольников интерполяции
+    int mTriEdgeLengthLimit;
     //! Уровень интерполяции
     uint8_t mInterpLevel;
     //! Признак видимости 3D - сцены
     bool mSceneVisible;
+    //! Признак видимости трека
+    bool mBottomTrackVisible;
+    //! Признак видимости поверхности
+    bool mSurfaceVisible;
+    //! Признак видимости сетки поверхности
+    bool mSurfaceGridVisible;
+
     //! Признак доступности триангулятора
     std::atomic_bool mTriangulationAvailable;
     //! Тип отображаемого объекта
     QString mDisplayedObjectType;
+    //! Отображаемая стадия расчета поверхности
+    QString mDisplayedStage;
 
     //! Указатель на вектор "сырых" треугольников, предназначенных для дальнейшей интерполяции
     RawTrianglesPointer mpRawTriangles;
@@ -88,6 +130,8 @@ private:
     Vector3Pointer mpBottomTrack;
     //! Указатель на контейнер вершин треугольников, готовых для отображения
     Vector3Pointer mpTriangles;
+    //! Указатель на контейнер вершин линий треугольной сетки, готовых для отображения
+    Vector3Pointer mpTriangleGrid;
     //! Указатель на контейнер вершин квадратов, готовых для отображения
     Vector3Pointer mpQuads;
     //! Указатель на контейнер вершин линий квадратной сетки, готовых для отображения

@@ -34,6 +34,20 @@ void Q3DSettingsController::chageDisplayedObjectType(const QString& type)
     mpModel->changeDisplayedObjectType(type);
 }
 
+void Q3DSettingsController::chageDisplayedStage(const QString& stage)
+{
+    if (!mpModel) return;
+
+    mpModel->chageDisplayedStage(stage);
+}
+
+void Q3DSettingsController::changeMaxTriangulationLineLength(const int length)
+{
+    if (!mpModel) return;
+
+    mpModel->changeMaxTriangulationLineLength(length);
+}
+
 void Q3DSettingsController::setInterpolationLevel(const QString& level)
 {
     uint8_t value = static_cast <uint8_t> (level.toUInt());
@@ -47,7 +61,6 @@ void Q3DSettingsController::setInterpolationLevel(const QString& level)
     };
 
     mpThread = QThread::create(process);
-    //connect(mpThread, SIGNAL(finished()), this, SLOT(finished()));
     mpThread->start();
 }
 
@@ -61,11 +74,20 @@ void Q3DSettingsController::updateDisplayedObject()
     };
 
     mpThread = QThread::create(process);
-    connect(mpThread, SIGNAL(finished()), this, SLOT(finished()));
     mpThread->start();
 }
 
-void Q3DSettingsController::finished()
+void Q3DSettingsController::changeBottomTrackVisibility(const bool visible)
 {
-    int a = 0;
+    mpModel->changeBottomTrackVisibility(visible);
+}
+
+void Q3DSettingsController::changeSurfaceVisibility(const bool visible)
+{
+    mpModel->changeSurfaceVisibility(visible);
+}
+
+void Q3DSettingsController::changeSurfaceGridVisibility(const bool visible)
+{
+    mpModel->changeSurfaceGridVisibility(visible);
 }

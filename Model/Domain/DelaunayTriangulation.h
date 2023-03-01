@@ -28,11 +28,15 @@ public:
         mpTriangles = std::make_shared <std::vector <Triangle <T>>>();
     }
 
+
     //! Return - pointer to triangles vector
     TrianglesPointer triangles() const {return mpTriangles;};
-
+    //! Return - maximum edge length
+    T maxEdgeLength() const {return mMaxEdgeLength;};
+    //! Return - minimum edge length
+    T minEdgeLength() const {return mMinEdgeLength;};
     //! Triangulate input data
-    TrianglesPointer trinagulate(const std::vector <Point3D <T>>& points)
+    TrianglesPointer trinagulate(const std::vector <Point3D <T>>& points, int edgeLengthLimit= -1)
     {
         if (points.empty())
             return mpTriangles;
@@ -82,6 +86,22 @@ public:
 
             for (const auto& edge : polygon) {
                 Triangle <T> triangle(edge.p1(), edge.p2(), point);
+
+                mMaxEdgeLength = std::max(mMaxEdgeLength, triangle.AB().length());
+                mMaxEdgeLength = std::max(mMaxEdgeLength, triangle.BC().length());
+                mMaxEdgeLength = std::max(mMaxEdgeLength, triangle.AC().length());
+
+                mMinEdgeLength = std::min(mMinEdgeLength, triangle.AB().length());
+                mMinEdgeLength = std::min(mMinEdgeLength, triangle.BC().length());
+                mMinEdgeLength = std::min(mMinEdgeLength, triangle.AC().length());
+
+                //if (edgeLengthLimit > -1){
+                //    if (triangle.AB().length() > edgeLengthLimit ||
+                //        triangle.BC().length() > edgeLengthLimit ||
+                //        triangle.AC().length() > edgeLengthLimit){
+                //        continue;
+                //    }
+                //}
                 mpTriangles->push_back(triangle);
             }
         }
@@ -91,8 +111,12 @@ public:
             if (it->contains(super.A()) ||
                 it->contains(super.B()) ||
                 it->contains(super.C()))
+            {
                 it = mpTriangles->erase(it);
+            }
+
             else ++it;
+
         }
 
         return mpTriangles;
@@ -131,5 +155,8 @@ private:
     }
 
     TrianglesPointer mpTriangles;
+
+    T mMaxEdgeLength = static_cast <T> (0);
+    T mMinEdgeLength = static_cast <T> (0);
 };
 
