@@ -14,9 +14,8 @@
 #include <QThread>
 #include <3Plot.h>
 
-
-#include "Controllers/Q3DSettingsController.h"
-#include "Model/Q3DSceneModel.h"
+#include <Q3DSettingsController.h>
+#include <Q3DSceneModel.h>
 
 //#define FLASHER
 

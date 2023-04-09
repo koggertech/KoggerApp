@@ -27,42 +27,32 @@ void Q3DSettingsController::changeSceneVisibility(const bool visible)
     mpModel->changeSceneVisibility(visible);
 }
 
-void Q3DSettingsController::chageDisplayedObjectType(const QString& type)
+void Q3DSettingsController::changeCalculationMethod(const QString& method)
 {
     if (!mpModel) return;
 
-    mpModel->changeDisplayedObjectType(type);
+    mpModel->changeCalculationMethod(method);
 }
 
-void Q3DSettingsController::chageDisplayedStage(const QString& stage)
+void Q3DSettingsController::changeSmoothingMethod(const QString& method)
 {
     if (!mpModel) return;
 
-    mpModel->chageDisplayedStage(stage);
+    mpModel->changeSmoothingMethod(method);
 }
 
-void Q3DSettingsController::changeMaxTriangulationLineLength(const int length)
+void Q3DSettingsController::setTriangulationEdgeLengthLimit(double length)
 {
     if (!mpModel) return;
 
-    mpModel->changeMaxTriangulationLineLength(length);
+    mpModel->setTriangulationEdgeLengthLimit(length);
 }
 
 void Q3DSettingsController::setInterpolationLevel(const QString& level)
 {
-    uint8_t value = static_cast <uint8_t> (level.toUInt());
-    mpModel->setInterpolationLevel(value);
-
-    if (!mpModel || !mpModel->triangulationAvailable())
-        return;
-
-    auto process = [this](){
-       mpModel->interpolate();
-    };
-
-    mpThread = QThread::create(process);
-    mpThread->start();
+    Q_UNUSED(level)
 }
+
 
 void Q3DSettingsController::updateDisplayedObject()
 {
@@ -70,7 +60,7 @@ void Q3DSettingsController::updateDisplayedObject()
         return;
 
     auto process = [this](){
-        mpModel->updateSurface();
+      mpModel->updateSurface();
     };
 
     mpThread = QThread::create(process);
@@ -90,4 +80,39 @@ void Q3DSettingsController::changeSurfaceVisibility(const bool visible)
 void Q3DSettingsController::changeSurfaceGridVisibility(const bool visible)
 {
     mpModel->changeSurfaceGridVisibility(visible);
+}
+
+void Q3DSettingsController::changeContourVisibility(bool visible)
+{
+    mpModel->changeContourVisibility(visible);
+}
+
+void Q3DSettingsController::changeContourColor(QColor color)
+{
+    mpModel->changeContourColor(color);
+}
+
+void Q3DSettingsController::changeContourLineWidth(float width)
+{
+    mpModel->changeContourLineWidth(width);
+}
+
+void Q3DSettingsController::changeContourKeyPointsVisibility(bool visible)
+{
+    mpModel->changeContourKeyPointsVisibility(visible);
+}
+
+void Q3DSettingsController::changeContourKeyPointsColor(QColor color)
+{
+    mpModel->changeContourKeyPointsColor(color);
+}
+
+void Q3DSettingsController::changeGridType(QString type)
+{
+    mpModel->changeGridType(type);
+}
+
+void Q3DSettingsController::changeGridCellSize(double size)
+{
+    mpModel->changeGridCellSize(size);
 }

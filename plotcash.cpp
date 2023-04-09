@@ -919,24 +919,13 @@ void PlotCash::updateBottomTrack(bool update_all) {
     }
 
     if (mp3DSceneModel){
-        auto pTrack = std::make_shared <QVector <QVector3D>> (_bottomTrack);
-        mp3DSceneModel->setBottomTrack(pTrack);
+        mp3DSceneModel->setBottomTrack(_bottomTrack);
     }
 
     //if (update_all){
 
     //    updateRender3D();
     //}
-
-    QFile file("D:\\vector_3d.dat");
-
-    if (file.open(QIODevice::WriteOnly)){
-
-         QDataStream out(&file);
-         out << _bottomTrack;
-
-         file.close();
-    }
 
 }
 

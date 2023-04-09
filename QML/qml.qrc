@@ -53,5 +53,8 @@
         <file>DopplerBox.qml</file>
         <file>Settings3DView.qml</file>
         <file>3dcube.svg</file>
+        <file>CalcMethodTINSettings.qml</file>
+        <file>SmoothMethodUGINSettings.qml</file>
+        <file>SmoothMethodTriDivideSettings.qml</file>
     </qresource>
 </RCC>

@@ -88,9 +88,14 @@ void Core::consoleProto(FrameParser &parser, bool is_in) {
     if(is_in) { str_dir = "in"; }
     else { str_dir = "out"; }
 
-    QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
+    try {
+        QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
 
-    consoleInfo(QString("%1: id %2 v%3, %4, len %5; %6 [ %7 ]").arg(str_dir).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
+        consoleInfo(QString("%1: id %2 v%3, %4, len %5; %6 [ %7 ]").arg(str_dir).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
+
+    }catch(std::bad_alloc& ex){
+        qCritical().noquote() << __func__ << " --> " << ex.what();
+    }
 }
 
 QList<QSerialPortInfo> Core::availableSerial(){
@@ -141,6 +146,7 @@ bool Core::devsConnection() {
 bool Core::openConnectionAsFile(const QString &name) {
     closeConnection();
 
+    mpScene3DModel->clear();
     m_plot->resetDataset();
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);

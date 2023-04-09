@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shaders/base.vsh</file>
+        <file>shaders/heightcolor.fsh</file>
+        <file>shaders/staticcolor.fsh</file>
+    </qresource>
+</RCC>

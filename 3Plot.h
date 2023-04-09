@@ -16,7 +16,8 @@
 #include <QVector>
 #include <memory>
 
-#include "Model/Q3DSceneModel.h"
+#include "Q3DSceneModel.h"
+#include "displayedobject.h"
 
 using ModelPointer = std::shared_ptr <Q3DSceneModel>;
 
@@ -61,12 +62,21 @@ public:
 
     void rotationFlag(bool is_rotation) { _isRotation = is_rotation; }
 
-private slots:
+public slots:
 
     void modelStateChanged();
 
+    void bottomTrackDataChanged();
+    void bottomTrackPropertiesChanged();
+
+    void surfaceDataChanged();
+    void surfacePropertiesChanged();
+
+    void contourDataChanged();
+    void contourPropertiesChanged();
+
 private:
-    qreal   m_fScale;
+    qreal   m_fScale = 1;
     QVector2D _size;
     QVector2D _rotAngle;
     QVector3D _posCenter;
@@ -93,12 +103,15 @@ private:
     void line(qreal x, qreal y, qreal z);
 
     //! Draws gps track lines
-    void displayGPSTrack();
+    void displayBottomTrack();
     //! Draws bottom surface
     void displayBottomSurface();
     //! Draws bottom surface mesh
     void displayBottomSurfaceGrid();
-    // !
+
+    void displayContour();
+
+    void displayContourKeyPoints();
 
 
     Vector3Pointer mpTriangles;
@@ -137,6 +150,17 @@ private:
     Vector3 mTriangleGrid;
     Vector3 mGrid;
     Vector3 mQuads;
+
+    QVector <QVector3D> mBasicSurface;
+    QVector <QVector3D> mSmoothedSurface;
+
+    Surface mSurfaceDisplayedObject;
+    Surface mSmoothedSurfaceDisplayedObject;
+    BottomTrack mBottomTrackDisplayedObject;
+    Contour mContourDisplayedObject;
+
+    std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
+    std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
 
     QMatrix4x4 mModel;
     QMatrix4x4 mView;

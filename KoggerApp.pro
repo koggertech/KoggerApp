@@ -37,8 +37,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         3Plot.cpp \
-        Controllers/Q3DSettingsController.cpp \
-        Model/Q3DSceneModel.cpp \
         DevDriver.cpp \
         DevHub.cpp \
         IDBinnary.cpp \
@@ -50,6 +48,7 @@ SOURCES += \
         core.cpp \
 #        coreFlash.cpp \
         filelist.cpp \
+    interpolatorbase.cpp \
         logger.cpp \
         main.cpp \
         flasher.cpp \
@@ -67,7 +66,8 @@ SOURCES += \
     qtandroidserialport/src/qserialportinfo_android.cpp \
 }
 
-RESOURCES += QML/qml.qrc
+RESOURCES += QML/qml.qrc \
+    shaders.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -82,20 +82,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     3Plot.h \
-    Controllers/Q3DSettingsController.h \
     DevDriver.h \
     DevHub.h \
     DevQProperty.h \
     IDBinnary.h \
-    Model/Domain/Circle.h \
-    Model/Domain/DelaunayTriangulation.h \
-    Model/Domain/Edge.h \
-    Model/Domain/Equals.h \
-    Model/Domain/Interpolator.h \
-    Model/Domain/Point3D.h \
-    Model/Domain/Quad.h \
-    Model/Domain/Triangle.h \
-    Model/Q3DSceneModel.h \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
@@ -105,6 +95,7 @@ HEADERS += \
     filelist.h \
     flasher.h \
     core.h \
+    interpolatorbase.h \
     logger.h \
     plotcash.h \
     streamlist.h \
@@ -144,6 +135,10 @@ DISTFILES += \
     QML/UpgradeBox.qml \
     QML/FlashBox.qml \
     QML/main.qml \
+    a.fsh \
+    base.vsh \
+    heightcolor.frag \
+    staticcolor.fsh
 
 
 android {
@@ -156,7 +151,6 @@ DISTFILES += \
     android/gradlew.bat \
     android/res/values/libs.xml \
     qtandroidserialport/src/qtandroidserialport.pri
-
 }
 
 android {
@@ -164,6 +158,13 @@ android {
 }
 
 LIBS += -lopengl32
+
+include ($$PWD/core/core.pri)
+include ($$PWD/factories/factories.pri)
+include ($$PWD/processors/processors.pri)
+include ($$PWD/domain/domain.pri)
+include ($$PWD/models/models.pri)
+include ($$PWD/controllers/controllers.pri)
 
 #ANDROID_ABIS = x86
 

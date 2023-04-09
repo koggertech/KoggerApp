@@ -1,0 +1,12 @@
+release/tst_basic.o
+release/displayedobject.o
+release/vertexobject.o
+release/tinbasicsurfaceprocessor.o
+release/tinsplitsmoothsurfaceprocessor.o
+release/tinwithbarycentriccase.o
+release/uginsmoothsurfaceprocessor.o
+release/bottomtrack.o
+release/contour.o
+release/surface.o
+release/qrc_tst_basic.o
+release/moc_tst_basic.o

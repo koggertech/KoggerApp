@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QThread>
-#include "../Model/Q3DSceneModel.h"
+#include "Q3DSceneModel.h"
 
 using ModelPointer  = std::shared_ptr <Q3DSceneModel>;
 
@@ -12,32 +12,74 @@ class Q3DSettingsController : public QObject
     Q_OBJECT
 public:
 
-    //! Конструктор
+    //! @brief Конструктор
+    //! @param[in] pParent - указатель на объект родителя
     explicit Q3DSettingsController(QObject *parent = nullptr);
-    //! Деструктор
+
+    //! @brief Деструктор
     ~Q3DSettingsController();
 
-    //! Установить модель 3D - сцены
+    //! @brief Установить модель 3D - сцены
+    //! @param[in] pModel - указатель на объект модели 3D - сцены
     void setModel(const ModelPointer pModel);
 
+    Q_INVOKABLE void changeContourVisibility(bool visible);
+
+    Q_INVOKABLE void changeContourColor(QColor color);
+
+    Q_INVOKABLE void changeContourLineWidth(float width);
+
+    Q_INVOKABLE void changeContourKeyPointsVisibility(bool visible);
+
+    Q_INVOKABLE void changeContourKeyPointsColor(QColor color);
+
+    Q_INVOKABLE void changeGridType(QString type);
+
+    Q_INVOKABLE void changeGridCellSize(double length);
+
 public slots:
-    //! Изменить тип отображаемого объекта (GPS - трек, поверхность, меш)
-    void chageDisplayedObjectType(const QString& type);
-    //! Изменить отображаемую стадию расчитанной поверхности
-    void chageDisplayedStage(const QString& stage);
-    //! Отобразить/скрыть 3D - сцену
+
+    //! @brief Изменить метод расчета поверхности
+    //! @param[in] method - метод расчета в строковом формате
+    void changeCalculationMethod(const QString& method);
+
+    //! @brief Изменить метод сглаживания поверхности
+    //! @param[in] method - метод сглаживания в строковом формате
+    void changeSmoothingMethod(const QString& method);
+
+    //! @brief Отобразить/скрыть 3D - сцену
+    //! @param[in] visible - признак необходимости отобразить
+    //! / скрыть 3D - цену
     void changeSceneVisibility(const bool visible);
-    //! Отобразить/скрыть трек
+
+    //! @brief Отобразить/скрыть трек
+    //! @param[in] visible - признак необходимости отобразить
+    //! / скрыть трек
     void changeBottomTrackVisibility(const bool visible);
-    //! Отобразить/скрыть поверхность
+
+    //! @brief Отобразить/скрыть поверхность
+    //! @param[in] visible - признак необходимости отобразить
+    //! / скрыть полигоны поверхности
     void changeSurfaceVisibility(const bool visible);
-    //! Отобразить/скрыть сетку поверхности
+
+    //! @brief Отобразить/скрыть сетку поверхности
+    //! @param[in] visible - признак необходимости
+    //! отобразить/скрыть сетку поверхности
     void changeSurfaceGridVisibility(const bool visible);
-    //! Установить максимальную длину линий интерполяции
-    void changeMaxTriangulationLineLength(const int length);
-    //! Установить уровень интерполяции поверхности
+
+
+
+    //! @brief Установить максимальную длину линий интерполяции
+    //! @param[in] length - значение ограничения длины граней треугольников
+    //! @note Параметр относится к методам расчета поверхности
+    void setTriangulationEdgeLengthLimit(double length);
+
+    //! @brief Установить уровень интерполяции поверхности
+    //! @param[in] level - текстовое значение уровня
+    //! @note Параметр относится к методу сглаживания UGIN
     void setInterpolationLevel(const QString& level);
-    //! Обновить данные для отображения
+
+    //! @brief Обновить данные для отображения
     void updateDisplayedObject();
 
 private:

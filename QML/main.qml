@@ -76,13 +76,11 @@ Window  {
 
 
                 Rectangle{
-
                     id: surfaceCalculatingRectangle
                     visible: Scene3DModel.triangulationAvailable()
                     width: 300
                     height: 100
                     color: "transparent"
-
 
                     ColumnLayout{
 
