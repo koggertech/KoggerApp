@@ -18,6 +18,11 @@ Themes theme;
 #include "android.h"
 #endif
 
+void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    core.consoleInfo(msg);
+}
+
 int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("KOGGER");
     QCoreApplication::setOrganizationDomain("kogger.tech");
@@ -31,6 +36,8 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
+
+    qInstallMessageHandler(messageHandler);
 
 //    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 
