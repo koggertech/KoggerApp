@@ -49,15 +49,15 @@ private:
     void calculateZ(Triangle <T>& t, Point3D <T>& p)
     {
         auto& c = p;
-        T w_1 = ((t.A().y() - t.C().y()) * (c.x() - t.C().x()) + (t.C().x() - t.A().x()) * (c.y() - t.C().y())) /
-                     ((t.A().y() - t.C().y()) * (t.B().x() - t.C().x()) + (t.C().x() - t.A().x())*(t.B().y() - t.C().y()));
+        T w_1 = ((t.B().y() - t.C().y()) * (c.x() - t.C().x()) + (t.C().x() - t.B().x()) * (c.y() - t.C().y())) /
+                     ((t.B().y() - t.C().y()) * (t.A().x() - t.C().x()) + (t.C().x() - t.B().x())*(t.A().y() - t.C().y()));
 
-        T w_2 = ((t.C().y() - t.B().y()) * (c.x() - t.C().x()) + (t.B().x() - t.C().x()) * (c.y() - t.C().y())) /
-                     ((t.A().y() - t.C().y()) * (t.B().x() - t.C().x()) + (t.C().x() - t.A().x())*(t.B().y() - t.C().y()));
+        T w_2 = ((t.C().y() - t.A().y()) * (c.x() - t.C().x()) + (t.A().x() - t.C().x()) * (c.y() - t.C().y())) /
+                     ((t.B().y() - t.C().y()) * (t.A().x() - t.C().x()) + (t.C().x() - t.B().x())*(t.A().y() - t.C().y()));
 
         T w_3 = static_cast <T> (1.0f) - w_1 - w_2;
 
-        T z = w_1 * t.B().z() + w_2 * t.C().z() + w_3 * t.A().z();
+        T z = w_1 * t.A().z() + w_2 * t.B().z() + w_3 * t.C().z();
 
         p.setZ(z);
     }
