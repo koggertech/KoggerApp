@@ -133,9 +133,9 @@ void DisplayedObject::makeTriangleGrid()
         QVector3D B = mData[i+1];
         QVector3D C = mData[i+2];
 
-        A.setZ(A.z() + 0.05);
-        B.setZ(B.z() + 0.05);
-        C.setZ(C.z() + 0.05);
+        A.setZ(A.z() + 0.03);
+        B.setZ(B.z() + 0.03);
+        C.setZ(C.z() + 0.03);
 
         mGrid.append({A, B,
                       B, C,
@@ -150,18 +150,16 @@ void DisplayedObject::makeQuadGrid()
     if (mData.size() < 4)
         return;
 
-
-
     for (int i = 0; i < mData.size()-4; i+=4){      
         QVector3D A = mData[i];
         QVector3D B = mData[i+1];
         QVector3D C = mData[i+2];
         QVector3D D = mData[i+3];
 
-        A.setZ(A.z() + 0.05f);
-        B.setZ(B.z() + 0.05f);
-        C.setZ(C.z() + 0.05f);
-        D.setZ(C.z() + 0.05f);
+        A.setZ(A.z() + 0.03);
+        B.setZ(B.z() + 0.03);
+        C.setZ(C.z() + 0.03);
+        D.setZ(D.z() + 0.03);
 
         mGrid.append({A, B,
                       B, C,
