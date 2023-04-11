@@ -1,5 +1,5 @@
-#version 430
-attribute vec3 position;
+#version 410
+in vec3 position;
 uniform mat4 matrix;
 out vec3 vertice;
 

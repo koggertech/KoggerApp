@@ -1,4 +1,4 @@
-#version 430
+#version 410
 uniform vec4 color;
 
 void main()
