@@ -20,7 +20,7 @@ class VertexObject
 public:
 
     //! @brief Конструктор.
-    VertexObject() = delete;
+    VertexObject() = default;
 
     //! @brief Конструктор с параметрами.
     //! @param[in] type - тип примитива для отображения в движке openGL
