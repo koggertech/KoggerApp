@@ -12,7 +12,11 @@ HEADERS += \
     $$PWD/Interpolator.h\
     $$PWD/barycentricinterpolator.h \
     $$PWD/bottomtrack.h\
+    $$PWD/boundarydetector.h \
+    $$PWD/bowyerwatsondelaunay.h \
     $$PWD/contour.h\
+    $$PWD/point2d.h \
+    $$PWD/point3dt.h \
     $$PWD/sceneparams.h \
     $$PWD/surface.h \
     $$PWD/gridgenerator.h
