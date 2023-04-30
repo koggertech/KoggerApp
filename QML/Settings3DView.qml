@@ -178,7 +178,7 @@ Item {
                 CCombo  {
                     id: gridTypeCombo
                     Layout.fillWidth: true
-                    model: ["Quad", "Triangle"]
+                    model: ["Quad"]
                     enabled:Scene3DModel.triangulationAvailable()
                     currentIndex: 0
                     onCurrentTextChanged: Settings3DController.changeGridType(currentText)
