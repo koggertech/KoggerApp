@@ -24,9 +24,7 @@ public:
         , mLength(static_cast <T> (0.0))
         , mIsWrong(false) {
 
-        const T dx = p2.x() - p1.x();
-        const T dy = p2.y() - p1.y();
-        mLength = sqrt(dx * dx + dy * dy);
+        mLength = sqrt(pow(p2.x() - p1.x(), 2) + pow(p2.y() - p1.y(), 2));
 
         mCenter.setX((p1.x() + p2.x()) / static_cast <T> (2.0));
         mCenter.setY((p1.y() + p2.y()) / static_cast <T> (2.0));
@@ -46,9 +44,32 @@ public:
     //! Returns true if edge is wrong for triangulation
     bool isWrong() const { return mIsWrong; }
 
-    bool operator<(const Edge <T>& other) const
+    //bool operator<(const Edge <T>& other) const
+    //{
+    //    return mLength < other.length();
+    //}
+
+    bool operator<(const Edge <T>& other)
     {
-        return mLength < other.length();
+        return (p1() < other.p1() && p2() < other.p2());
+    }
+
+    bool operator==(const Edge <T>& other) const{
+        //return ((p1() == other.p1() && p2() == other.p2()) /*|| (p1() == other.p2() && p2() == other.p1())*/);
+        return (equal(p1(),other.p1()) && equal(p2(),other.p2())) || (equal(p1(),other.p2()) && equal(p2(),other.p1()));
+                /*|| (p1() == other.p2() && p2() == other.p1())*/
+    }
+
+
+    bool isNeighbor(Edge <double> other) {
+        int count = 0;
+        if (p1() == other.p1() || p1() == other.p2()) {
+            count++;
+        }
+        if (p2() == other.p1() || p2() == other.p2()) {
+            count++;
+        }
+        return count == 2;
     }
 
 private:
@@ -64,4 +85,21 @@ private:
     T mLength;
 
     bool mIsWrong;
+};
+
+template <typename T>
+bool operator==(const Edge <T>& e1, const Edge <T>& e2)
+{
+    return e1.operator==(e2);
+}
+
+template <typename T>
+struct std::hash <Edge <T>>
+{
+    std::size_t operator()(const Edge <T>& edge) const noexcept
+    {
+        auto h1 = std::hash<Point3D <T>>{}(edge.p1());
+        auto h2 = std::hash<Point3D <T>>{}(edge.p2());
+        return h1 ^ h2;
+    }
 };
