@@ -68,79 +68,36 @@ VertexObject TinWithBarycentricCase::process(const QVector <QVector3D>& bottomTr
 
     std::vector <Point3D <double>> grid;
 
-    if(params.gridType() == GRID_TYPE_QUAD){
+    object.setPrimitiveType(GL_QUADS);
 
-        object.setPrimitiveType(GL_QUADS);
+    auto quads = GridGenerator <double>::generateQuadGrid(topLeft, gridW, gridH, params.gridCellSideSize());
 
-        auto quads = GridGenerator <double>::generateQuadGrid(topLeft, gridW, gridH, params.gridCellSideSize());
+    auto q = quads->begin();
+    while (q != quads->end()){
+        auto quad = *q;
 
-        auto q = quads->begin();
-        while (q != quads->end()){
-            auto quad = *q;
+        bool surfaceContainsA = false;
+        bool surfaceContainsB = false;
+        bool surfaceContainsC = false;
+        bool surfaceContainsD = false;
 
-            bool surfaceContainsA = false;
-            bool surfaceContainsB = false;
-            bool surfaceContainsC = false;
-            bool surfaceContainsD = false;
-
-            auto t = pTriangles->begin();
-            while (t != pTriangles->end() && (!surfaceContainsA || !surfaceContainsB || !surfaceContainsC || !surfaceContainsD))
-            {
-                if (!surfaceContainsA) surfaceContainsA = t->contains(quad.A());
-                if (!surfaceContainsB) surfaceContainsB = t->contains(quad.B());
-                if (!surfaceContainsC) surfaceContainsC = t->contains(quad.C());
-                if (!surfaceContainsD) surfaceContainsD = t->contains(quad.D());
-                t++;
-            }
-
-            if (t != pTriangles->end()){
-                grid.push_back(quad.A());
-                grid.push_back(quad.B());
-                grid.push_back(quad.C());
-                grid.push_back(quad.D());
-            }
-            q++;
+        auto t = pTriangles->begin();
+        while (t != pTriangles->end() && (!surfaceContainsA || !surfaceContainsB || !surfaceContainsC || !surfaceContainsD))
+        {
+            if (!surfaceContainsA) surfaceContainsA = t->contains(quad.A());
+            if (!surfaceContainsB) surfaceContainsB = t->contains(quad.B());
+            if (!surfaceContainsC) surfaceContainsC = t->contains(quad.C());
+            if (!surfaceContainsD) surfaceContainsD = t->contains(quad.D());
+            t++;
         }
 
-
-    }else if (params.gridType() == GRID_TYPE_TRIANGLE){
-
-        qDebug() << "Generating triangle grid...";
-
-        auto triangles = GridGenerator <double>::generateTriangleGrid(topLeft, gridW, gridH, params.gridCellSideSize());
-
-        qDebug() << "Filtering triangle grid...";
-
-        auto cell = triangles->begin();
-        while (cell != triangles->end()){
-            auto triangleCell = *cell;
-
-            bool surfaceContainsA = false;
-            bool surfaceContainsB = false;
-            bool surfaceContainsC = false;
-
-
-            auto t = pTriangles->begin();
-            while (t != pTriangles->end() && (!surfaceContainsA || !surfaceContainsB || !surfaceContainsC))
-            {
-                if (!surfaceContainsA) surfaceContainsA = t->contains(triangleCell.A());
-                if (!surfaceContainsB) surfaceContainsB = t->contains(triangleCell.B());
-                if (!surfaceContainsC) surfaceContainsC = t->contains(triangleCell.C());
-                t++;
-            }
-
-            if (t != pTriangles->end()){
-                grid.push_back(triangleCell.A());
-                grid.push_back(triangleCell.B());
-                grid.push_back(triangleCell.C());
-            }
-
-            //object.append(QVector3D(triangleCell.A().x(), triangleCell.A().y(), triangleCell.A().z()));
-            //object.append(QVector3D(triangleCell.B().x(), triangleCell.B().y(), triangleCell.B().z()));
-            //object.append(QVector3D(triangleCell.C().x(), triangleCell.C().y(), triangleCell.C().z()));
-
-            cell++;
+        if (t != pTriangles->end()){
+            grid.push_back(quad.A());
+            grid.push_back(quad.B());
+            grid.push_back(quad.C());
+            grid.push_back(quad.D());
         }
+        q++;
     }
 
     // Интерполируем z - координату сетки
@@ -150,10 +107,28 @@ VertexObject TinWithBarycentricCase::process(const QVector <QVector3D>& bottomTr
 
     interpolator.process(triangles, grid);
 
+    std::vector <Quad <double>> interpolatedQuads;
+    for(size_t i = 0; i < grid.size()-4; i+=4){
+        Quad <double> quad(grid[i],grid[i+1],grid[i+2],grid[i+3]);
+        interpolatedQuads.push_back(quad);
+    }
+
+    BoundaryDetector <double> boundaryDetector;
+    auto boundary = boundaryDetector.detect(interpolatedQuads);
+
+    //auto boundary = BoundaryDetector <double>::uniformGridBoundary(grid);
+
     // Формируем вершинный объект
 
     for (const auto& p : grid)
         object.append(QVector3D(p.x(), p.y(), p.z()));
+
+    mContourVertexObject.setPrimitiveType(GL_LINES);
+
+    for (const auto& edge : boundary){
+        mContourVertexObject.append({QVector3D(edge.p1().x(), edge.p1().y(), edge.p1().z()),
+                                    QVector3D(edge.p2().x(), edge.p2().y(), edge.p2().z())});
+    }
 
     return object;
 }
