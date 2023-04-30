@@ -8,6 +8,8 @@
 #include "barycentricinterpolator.h"
 #include "gridgenerator.h"
 
+#include <boundarydetector.h>
+
 #include <QDebug>
 
 class TinWithBarycentricCase : public AbstractProcessingCase
