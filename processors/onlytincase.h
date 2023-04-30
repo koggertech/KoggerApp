@@ -1,10 +1,14 @@
 #ifndef ONLYTINCASE_H
 #define ONLYTINCASE_H
 
-#include <QSet>
+#include <QDebug>
+
+#include <set>
 
 #include "abstractprocessingcase.h"
-#include "DelaunayTriangulation.h"
+#include <point2d.h>
+#include <bowyerwatsondelaunay.h>
+#include <DelaunayTriangulation.h>
 
 class OnlyTinCase : public AbstractProcessingCase
 {
