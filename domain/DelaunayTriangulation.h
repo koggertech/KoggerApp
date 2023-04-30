@@ -52,7 +52,7 @@ public:
             std::vector <Edge <T>> polygon;
 
             for (auto& triangle : *mpTriangles) {
-                if (triangle.circle().contains(point)) {
+                if (triangle.circle().contains(point.toPoint2D())) {
                     triangle.setWrong(true);
 
                     polygon.push_back(triangle.AB());
@@ -85,47 +85,60 @@ public:
             }
 
             for (const auto& edge : polygon) {
-                Triangle <T> triangle(edge.p1(), edge.p2(), point);
-
-                mMaxEdgeLength = std::max(mMaxEdgeLength, triangle.AB().length());
-                mMaxEdgeLength = std::max(mMaxEdgeLength, triangle.BC().length());
-                mMaxEdgeLength = std::max(mMaxEdgeLength, triangle.AC().length());
-
-                mMinEdgeLength = std::min(mMinEdgeLength, triangle.AB().length());
-                mMinEdgeLength = std::min(mMinEdgeLength, triangle.BC().length());
-                mMinEdgeLength = std::min(mMinEdgeLength, triangle.AC().length());
-
-
+                Triangle <T> triangle(point, edge.p1(), edge.p2());
 
                 mpTriangles->push_back(triangle);
             }
         }
 
         for (auto it = mpTriangles->begin(); it != mpTriangles->end();)
-        {
-            if (it->contains(super.A()) ||
-                it->contains(super.B()) ||
-                it->contains(super.C()))
+        {   bool comp_1 = it->contains(super.A()) || it->contains(super.B()) || it->contains(super.C());
+            bool comp_2 = it->AB().length() > edgeLengthLimit || it->BC().length() > edgeLengthLimit || it->AC().length() > edgeLengthLimit;
+
+            if(comp_1)
             {
                 it = mpTriangles->erase(it);
+            }else{
+                if (comp_2){
+                    it = mpTriangles->erase(it);
+                }else{
+                    ++it;
+                }
+
             }
-
-            if (it->AB().length() > edgeLengthLimit ||
-                it->BC().length() > edgeLengthLimit ||
-                it->AC().length() > edgeLengthLimit){
-
-                it = mpTriangles->erase(it);
-            }
-
-            else ++it;
-
         }
 
         return mpTriangles;
     }
 
+    TrianglesPointer trinagulate_2(const std::vector <Point3D <T>>& points, T edgeLengthLimit = -1.0f)
+    {
+        mpTriangles->clear();
+
+        if(points.size() < 3){
+            return nullptr;
+        }
+
+        // Сортируем точки вдоль оси x
+
+        std::sort(points.begin(), points.end(),
+                  [](const Point3D <T>& p1, const Point3D <T>& p2){
+            return p1.x() < p2.x();
+        });
+
+        // Строим стартовый треугольник по первым трем точкам
+        Triangle <T> baseTriangle{points.at(0),points.at(1),points.at(2)};
+
+        return nullptr;
+    }
+
 private:
 
+    bool isCollinear(Point3D <T>& p1, Point3D <T>& p2, Point3D <T>& p3)
+    {
+        auto s = 0.5 * abs((p2.x() - p1.x()) * (p3.y() - p1.y()) - (p3.x() - p1.x()) * (p2.y() - p1.y()));
+        return s == 0;
+    }
 
     Triangle <T> makeSuperTriangle(const std::vector <Point3D<T>>& points) {
 
@@ -146,7 +159,7 @@ private:
         const T maxDelta = std::max(dx, dy);
         const T midX = (minX + maxX) / 2.0;
         const T midY = (minY + maxY) / 2.0;
-        const T outerStep = 20.0;
+        const T outerStep = 200.0;
         const T z = 0.0;
 
         const Point3D <T> p1(midX - outerStep * maxDelta, midY - maxDelta, z);
