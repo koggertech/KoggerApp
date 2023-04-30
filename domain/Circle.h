@@ -25,7 +25,17 @@ public:
 
         const T dx = mCenter.x() - point.x();
         const T dy = mCenter.y() - point.y();
-        const T distance = sqrt(dx * dx + dy * dy);
+        const T dz = mCenter.y() - point.z();
+        const T distance = sqrt(pow(dx,2.0f) + pow(dy,2.0f) + pow(dz,2.0f));
+
+        return distance <= mRadius;
+    }
+
+    bool contains(const Point2D <T>& point) {
+
+        const T dx = mCenter.x() - point.x();
+        const T dy = mCenter.y() - point.y();
+        const T distance = sqrt(pow(dx,2.0f) + pow(dy,2.0f));
 
         return distance <= mRadius;
     }
