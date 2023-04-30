@@ -1,9 +1,8 @@
 #pragma once
 
 #include <iostream>
-#include <qhash.h>
+#include <point2d.h>
 
-//! POINT CLASS
 template <typename T>
 class Point3D
 {
@@ -12,12 +11,12 @@ public:
     //! Constructor 1
     Point3D() = default;
     //! Constructor 2
-    Point3D(const T& x, const T& y, const T& z)
-        : mX(x)
-        , mY(y)
-        , mZ(z) {
-
-    };
+    Point3D(const T& x, const T& y, const T& z, size_t index = 0)
+    :mX(x)
+    ,mY(y)
+    ,mZ(z)
+    ,mIndex(index)
+    {};
 
     //! Returns x - value
     T x() const { return mX; };
@@ -25,6 +24,9 @@ public:
     T y() const { return mY; };
 
     T z() const { return mZ; };
+
+    size_t index() const {return mIndex;};
+
     //! Set x - value
     void setX(T value) { mX = value; };
     //! Set y - value
@@ -37,14 +39,18 @@ public:
         return (mX - point.x()) ^ 2 + (mY - point.y()) ^ 2;
     }
 
+    Point2D <T> toPoint2D() const{
+        return Point2D <T>(x(), y(), mIndex);
+    }
     //! Equal operator
     bool operator==(const Point3D& other) const {
-        return mX == other.x() && mY == other.y() && mZ == other.z();
+        return mX == other.x() && mY == other.y() /*&& mZ == other.z()*/;
+        //return equal(mX,other.x()) && equal(mY,other.y()) && equal(mZ,other.z());
     };
 
     //! Equal operator
     bool operator<(const Point3D& other) const {
-        return mX < other.x() && mY < other.y() && mZ < other.z();
+        return mX < other.x() && mY < other.y() /*&& mZ < other.z()*/;
     };
 
 
@@ -66,16 +72,32 @@ protected:
     T mY;
     //! Z - value
     T mZ;
+
+    size_t mIndex = 0; ///< Point index in container.
 };
 
-template <>
-struct std::hash <Point3D <double>>
+#ifdef QT_CORE_LIB
+template <typename T>
+uint qHash(const Point3D <T> &p, uint seed = 4)
 {
-    std::size_t operator()(Point3D <double> const& p) const noexcept
+    Q_UNUSED(seed)
+
+    auto h1 = qHash(p.x());
+    auto h2 = qHash(p.y());
+    auto h3 = qHash(p.z());
+    return h1 ^ (h2 << 1) ^ (h3 << 2);
+}
+#endif
+
+template <typename T>
+struct std::hash <Point3D <T>>
+{
+    std::size_t operator()(const Point3D <T>& p) const noexcept
     {
-        std::size_t h1 = std::hash<double>{}(p.x());
-        std::size_t h2 = std::hash<double>{}(p.y());
-        std::size_t h3 = std::hash<double>{}(p.z());
+        auto h1 = std::hash<T>{}(p.x());
+        auto h2 = std::hash<T>{}(p.y());
+        auto h3 = std::hash<T>{}(p.z());
         return h1 ^ (h2 << 1) ^ (h3 << 2);
     }
 };
+
