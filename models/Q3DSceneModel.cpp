@@ -140,20 +140,22 @@ void Q3DSceneModel::updateSurface()
 
         mSurfaceDisplayedObject.setVertexObject(vobject);
 
-        createContour();
+        QMutexLocker contourLocker(&mContourMutex);
+
+        mContourDisplayedObject.setVertexObject(pCase->contourVertexObject());
     }
 
     mIsProcessingAvailable.store(true);
 
     Q_EMIT stateChanged();
     Q_EMIT surfaceDataChanged();
+    Q_EMIT contourDataChanged();
 }
 
 void Q3DSceneModel::clear()
 {
     {
         QMutexLocker surfaceLocker(&mSurfaceMutex);
-
         mSurfaceDisplayedObject.clear();
 
         QMutexLocker bottomTrackLocker(&mBottomTrackMutex);
