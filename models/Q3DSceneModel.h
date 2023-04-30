@@ -166,6 +166,8 @@ public:
 private:
 
     void createContour();
+    void createContourEx();
+    void createContourEx_2();
 
 private:
 
