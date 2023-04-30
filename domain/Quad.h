@@ -1,7 +1,10 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include "Point3D.h"
+#include <vector>
+
+#include <Point3D.h>
+#include <Edge.h>
 
 template <typename T>
 class Quad
@@ -37,6 +40,15 @@ public:
     //! Returns fourth vertice of quad
     Point3D <T> D() const { return mD; }
 
+
+    Point3D <T>& refA() { return mA; }
+
+    Point3D <T>& refB() { return mB; }
+
+    Point3D <T>& refC() { return mC; }
+
+    Point3D <T>& refD() { return mD; }
+
     std::vector <Point3D <T>> vertices()
     {
         std::vector <Point3D <T>> vertices;
@@ -47,6 +59,18 @@ public:
         vertices.push_back(mD);
 
         return vertices;
+    }
+
+    std::vector <Edge <T>> edges() const
+    {
+        std::vector <Edge <T>> edges;
+
+        edges.push_back({mA, mB});
+        edges.push_back({mB, mC});
+        edges.push_back({mC, mD});
+        edges.push_back({mD, mA});
+
+        return edges;
     }
 
 
