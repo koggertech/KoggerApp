@@ -4,3 +4,4 @@ android*
 qtandroidserialport
 android.cpp
 android.h
+*.user
