@@ -2,12 +2,13 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
-    $$PWD/abstractprocessingcase.h \
+    $$PWD/abstractdelaunayprocessor.h \
     $$PWD/displayedobject.h \
     $$PWD/vertexobject.h \
-    $$PWD/constants.h
+    $$PWD/constants.h \
+    $$PWD/abstractprocessingcase.h
 
 
 SOURCES += \
     $$PWD/displayedobject.cpp \
-    $$PWD/vertexobject.cpp \
+    $$PWD/vertexobject.cpp
