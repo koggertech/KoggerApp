@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "Point3D.h"
 #include "Edge.h"
 #include "Circle.h"
@@ -16,9 +18,9 @@ public:
         : mA(0.0, 0.0, 0.0)
         , mB(0.0, 0.0, 0.0)
         , mC(0.0, 0.0, 0.0)
-        , mAB(0.0, 0.0, 0.0)
-        , mBC(0.0, 0.0, 0.0)
-        , mAC(0.0, 0.0, 0.0)
+        , mAB({0.0f, 0.0f,0.0f}, {0.0f,0.0f,0.0f})
+        , mBC({0.0f, 0.0f,0.0f}, {0.0f,0.0f,0.0f})
+        , mAC({0.0f, 0.0f,0.0f}, {0.0f,0.0f,0.0f})
         , mWrong(false) {
     };
 
@@ -35,6 +37,7 @@ public:
         , mAC(A, C)
         , mWrong(false) {
 
+        calcArea();
         createCircumCircle();
     }
 
@@ -46,6 +49,11 @@ public:
 
     //! Returns third vertice of triangle
     Point3D <T> C() const { return mC; }
+
+
+    Point3D <T>& refA() const {return mA;}
+    Point3D <T>& refB() const {return mB;}
+    Point3D <T>& refC() const {return mC;}
 
     //! Returns AB - edge
     Edge <T> AB() const { return mAB; }
@@ -161,6 +169,28 @@ public:
         return vertices;
     }
 
+    std::vector <Point3D <T>&> verticesref() const
+    {
+        std::vector <Point3D <T>&> vertices;
+
+        vertices.push_back(&mA);
+        vertices.push_back(&mB);
+        vertices.push_back(&mC);
+
+        return vertices;
+    }
+
+    std::vector <Edge <T>> edges() const
+    {
+        std::vector <Edge <T>> edges;
+
+        edges.push_back(mAB);
+        edges.push_back(mBC);
+        edges.push_back(mAC);
+
+        return edges;
+    }
+
     //! Set the triangle wrong or not for triangulation
     void setWrong(bool wrong) { mWrong = wrong; }
 
@@ -172,7 +202,17 @@ public:
 
     //! Returns true if any edge of the triangle shared with given edge
     bool sharedWithEdge(const Edge <T>& edge) const {
-        return equal(edge, mAB) || equal(edge, mAC) || equal(edge, mBC);
+        bool sharedWithAB = (edge.p1() == mAB.p1() && edge.p2() == mAB.p2()) ||
+                            (edge.p1() == mAB.p2() && edge.p2() == mAB.p1());
+
+        bool sharedWithBC = (edge.p1() == mBC.p1() && edge.p2() == mBC.p2()) ||
+                            (edge.p1() == mBC.p2() && edge.p2() == mBC.p1());
+
+        bool sharedWithAC = (edge.p1() == mAC.p1() && edge.p2() == mAC.p2()) ||
+                            (edge.p1() == mAC.p2() && edge.p2() == mAC.p1());
+
+        return sharedWithAB || sharedWithBC || sharedWithAC;
+        //return equal(edge, mAB) || equal(edge, mAC) || equal(edge, mBC);
     }
     //! Checks whether the triangle contains some point
     bool contains(const Point3D <T>& p)  {
@@ -183,6 +223,14 @@ public:
         T r = vect(mC.x() - p.x(), mC.y() - p.y(), mA.x() - mC.x(), mA.y() - mC.y());
 
         return (b <= 0.0 && q <= 0.0 && r <= 0.0) || (b >= 0.0 && q >= 0.0 && r >= 0.0);
+
+        //T a = sqrt(pow(B().x() - A().x(), 2) + pow(B().y() - A().y(), 2));
+        //T b = sqrt(pow(C().x() - B().x(), 2) + pow(C().y() - B().y(), 2));
+        //T c = sqrt(pow(A().x() - C().x(), 2) + pow(A().y() - C().y(), 2));
+
+        //T hp = (a+b+c)/static_cast <T> (2.0f);
+        //T area = sqrt(hp * (hp - a) * (hp - b) * (hp - c));
+
     }
 
     //! Equal operator
@@ -215,13 +263,21 @@ private:
     //! Area of the triangle
     T mArea;
 
+    void calcArea()
+    {
+        T a = sqrt(pow(B().x() - A().x(), 2) + pow(B().y() - A().y(), 2));
+        T b = sqrt(pow(C().x() - B().x(), 2) + pow(C().y() - B().y(), 2));
+        T c = sqrt(pow(A().x() - C().x(), 2) + pow(A().y() - C().y(), 2));
+
+        T hp = (a+b+c)/static_cast <T> (2.0f);
+        mArea = sqrt(hp * (hp - mAB.length()) * (hp - mBC.length()) * (hp - mAC.length()));
+    }
+
     //! Creates triangle circum circle
     void createCircumCircle() {
 
         // Calc half-perimeter of the triangle
         const T P = (mAB.length() + mBC.length() + mAC.length()) / static_cast <T> (2.0);
-        // Calc area of the triangle
-        const T mArea = sqrt(P * (P - mAB.length()) * (P - mBC.length()) * (P - mAC.length()));
         // Now, calc radius of the triangle circum circle
         const T R = (mAB.length() * mBC.length() * mAC.length()) / (4.0 * mArea);
 
