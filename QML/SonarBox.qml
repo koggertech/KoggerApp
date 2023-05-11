@@ -517,7 +517,7 @@ DevSettingsBox {
                 CCombo  {
                     id: baudrateCombo
                     Layout.fillWidth: true
-                    model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
+                    model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000]
                     currentIndex: 4
                 }
 

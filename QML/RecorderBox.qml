@@ -198,5 +198,26 @@ DevSettingsBox {
             }
         }
 
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            CCombo  {
+                id: baudrateCombo
+                Layout.fillWidth: true
+                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000]
+                currentIndex: 4
+            }
+
+            CButton {
+                text: "Set baudrate"
+
+                onClicked: {
+                    dev.baudrate = Number(baudrateCombo.currentText)
+                }
+            }
+        }
+
     }
 }

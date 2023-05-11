@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "stddef.h"
 #include <cmath>
+#include "MAVLinkConf.h"
 
 inline void fletcher(uint8_t* buf, uint16_t len, uint8_t* ch1, uint8_t* ch2) {
     uint8_t check1 = 0, check2 = 0;
@@ -14,6 +15,20 @@ inline void fletcher(uint8_t* buf, uint16_t len, uint8_t* ch1, uint8_t* ch2) {
 
     *ch1 = check1;
     *ch2 = check2;
+}
+
+
+inline uint16_t CRC16_MCRF4XX(uint8_t* buf, uint16_t len, uint16_t init = 0xffff) {
+    uint16_t crc = init;
+
+    while (len--) {
+        uint8_t tmp;
+        tmp = (*buf++) ^ (uint8_t)(crc &0xff);
+        tmp ^= (tmp<<4);
+        crc = (crc>>8) ^ (tmp<<8) ^ (tmp <<3) ^ (tmp>>4);
+    }
+
+    return crc;
 }
 
 namespace Parsers {
@@ -104,10 +119,13 @@ class FrameParser {
 public:
     typedef enum {
         ProtoNone,
+        ProtoData,
         ProtoKP1,
         ProtoKP2,
         ProtoNMEA,
-        ProtoUBX
+        ProtoUBX,
+        ProtoMAVLink1,
+        ProtoMAVLink2
     } ProtoID;
 
     FrameParser() {
@@ -116,22 +134,11 @@ public:
         resetState();
     }
 
-    void headerSync(uint8_t b) {
-        if(b == 0xBB) { switchToKP1(); }
-        else if(b == 0xCC) { switchToKP2(); }
-        else if(b == 0xB5) { switchToUBX(); }
-        else if(b == '$') { switchToNMEA(); }
-    }
 
-    void headerReSync(uint8_t b) {
-        _counter.frameReSync++;
-        resetState();
-        headerSync(b);
-    }
 
     void process() {
         _proto = ProtoNone;
-        while (availContext() > 0) {
+        while (availContextPrivate() > 0) {
             uint8_t b = *_contextData;
 
             switch (_protoState) {
@@ -217,6 +224,7 @@ public:
             ////////////// UBX //////////////
 
 
+            ////////////// NMEA //////////////
             case StateNmeaPayload:
                 if(b == '*') {
                     _protoState = StateNmeaEnding;
@@ -234,6 +242,30 @@ public:
                     return;
                 }
                 break;
+                ////////////// NMEA //////////////
+
+                ////////////// MAVLink //////////////
+                case StateMAVLinkPayload:
+                    if(_frame[0] == 0xFE) { // V1
+                        _completeLen = 5 + b + 2;
+                    } else { // V2
+                        _completeLen = 9 + b + 2;
+                    }
+                    _protoState = StateMAVLinkEnding;
+                    break;
+
+                case StateMAVLinkEnding:
+                    if(_frameLen == _completeLen) {
+                        if(frameAppend(b)) {
+                            checkAsMAVLink();
+                        }
+
+                        resetState();
+                        incContext();
+                        return;
+                    }
+                    break;
+                ////////////// MAVLink //////////////
             }
 
             if(_protoState != StateSync) {
@@ -249,7 +281,23 @@ public:
         _contextLen = len;
     }
 
-    uint32_t availContext() { return _contextLen; }
+    void setProxyContext(uint8_t* data, uint32_t len) {
+        _savedContextData = _contextData + 1;
+        _savedContextLen = _contextLen - 1;
+        _contextData = data;
+        _contextLen = len;
+    }
+
+
+    uint32_t availContext() {
+        if(_contextLen == 0 && _savedContextLen != 0) {
+            _contextData = _savedContextData;
+            _contextLen = _savedContextLen;
+            _savedContextLen = 0;
+        }
+        return _contextLen;
+    }
+
     int16_t readAvailable() { return _readMaxPosition - _readPosition; }
 
     ProtoID proto() { return _proto; }
@@ -259,7 +307,9 @@ public:
     bool completeAsKBP() { return proto() == ProtoKP1; }
     bool completeAsKBP2() { return proto() == ProtoKP2; }
     bool isCompleteAsUBX() { return isCompleteAs(ProtoUBX); }
-    bool completeAsNMEA() { return proto() == ProtoNMEA; }
+    bool isCompleteAsMAVLink() { return isCompleteAs(ProtoMAVLink1) || isCompleteAs(ProtoMAVLink2); }
+    bool isCompleteAsNMEA() { return proto() == ProtoNMEA; }
+
     void resetComplete() { _proto = ProtoNone; }
 
     uint8_t* frame() { return _frame; }
@@ -341,6 +391,10 @@ public:
         return _stream.offset;
     }
 
+    bool isProxy() {
+        return _optionFlags.isProxy;
+    }
+
 protected:
     typedef union {
         struct {
@@ -371,12 +425,19 @@ protected:
 
         StateNmeaPayload,
         StateNmeaEnding,
+
+        StateMAVLinkPayload,
+        StateMAVLinkEnding,
     } _protoState;
 
     ProtoID _proto;
 
     uint8_t* _contextData;
     int32_t _contextLen;
+
+    uint8_t* _savedContextData;
+    int32_t _savedContextLen;
+
     uint8_t _frame[1024];
     char* _frameChar;
     int16_t _frameLen;
@@ -413,6 +474,7 @@ protected:
     struct {
         uint32_t frameError = 0;
         uint32_t frameReSync = 0;
+        uint32_t passByte = 0;
 
         uint32_t completeKP1 = 0;
         uint32_t checkErrorKP1 = 0;
@@ -426,13 +488,35 @@ protected:
         uint32_t completeNMEA = 0;
         uint32_t checkErrorNMEA = 0;
 
+        uint32_t completeMAVLink = 0;
+        uint32_t checkErrorMAVLink = 0;
+
         uint32_t completeProxy = 0;
         uint32_t notCompleteProxy = 0;
     } _counter;
 
+    uint32_t availContextPrivate() {
+        return _contextLen;
+    }
+
     void incContext() {
         _contextData++;
         _contextLen--;
+    }
+
+    void headerSync(uint8_t b) {
+        if(b == 0xBB) { switchToKP1(); }
+        else if(b == 0xCC) { switchToKP2(); }
+        else if(b == 0xB5) { switchToUBX(); }
+        else if(b == '$') { switchToNMEA(); }
+        else if(b == 0xFD || b == 0xFE) { switchToMAVLink(); }
+        else { _counter.passByte++; }
+    }
+
+    void headerReSync(uint8_t b) {
+        _counter.frameReSync++;
+        resetState();
+        headerSync(b);
     }
 
     bool frameAppend(uint8_t b) {
@@ -451,6 +535,8 @@ protected:
     void resetFrame() {
         _proto = ProtoNone;
         _frameLen = 0;
+        _optionsLen = 0;
+        _optionFlags.val = 0;
     }
 
     void switchToKP1() {
@@ -461,7 +547,7 @@ protected:
 
     void switchToKP2() {
         _protoState = StateKP2Sync;
-        _frameMaxLen = 255 + 8;
+        _frameMaxLen = 256+128;
         resetFrame();
     }
 
@@ -473,7 +559,13 @@ protected:
 
     void switchToNMEA() {
         _protoState = StateNmeaPayload;
-        _frameMaxLen = 82;
+        _frameMaxLen = 111;
+        resetFrame();
+    }
+
+    void switchToMAVLink() {
+        _protoState = StateMAVLinkPayload;
+        _frameMaxLen = 288;
         resetFrame();
     }
 
@@ -519,13 +611,9 @@ protected:
             _readPosition = 4;
 
             _optionsLen = read<U1>();
-
+            _optionFlags.val = 0;
             if(_optionsLen >= 3) {
                 _optionFlags.val = read<U2>();
-
-                if(_optionFlags.isProxy) {
-
-                }
 
                 if(_optionFlags.isAddress) {
                     _address = read<U1>();
@@ -553,25 +641,24 @@ protected:
                 }
             }
 
-
-
             if(_optionFlags.isProxy) {
-                _readPosition = _optionsLen + 4;
-                uint8_t* context_data = _contextData;
-                int32_t context_len = _contextLen;
-                setContext(&_frame[_readPosition], _frameLen - _readPosition - 2);
+//                _readPosition = _optionsLen + 4;
+//                uint8_t* context_data = _contextData;
+//                int32_t context_len = _contextLen;
+                setProxyContext(&_frame[_optionsLen + 3], _frameLen - _readPosition - 1);
 
-                resetState();
-                resetFrame();
-                process();
-                if(isComplete()) {
-                    _counter.completeProxy++;
-                } else {
-                    _counter.notCompleteProxy++;
-                }
+//                resetState();
+//                resetFrame();
+//                process();
+//                if(isComplete()) {
+//                    _counter.completeProxy++;
+//                } else {
+//                    _counter.notCompleteProxy++;
+//                }
 
-                setContext(context_data, context_len);
-            } else
+//                setContext(context_data, context_len);
+            }
+
             {
                 _readPosition = _optionsLen + 4;
 
@@ -654,6 +741,44 @@ protected:
         return res;
     }
 
+    bool checkMAVLink(uint8_t* buf, uint16_t len, uint8_t ch1, uint8_t ch2, uint32_t msgid) {
+        uint8_t extra = getMAVLinkExtra(msgid);
+        uint16_t crc = CRC16_MCRF4XX(buf, len, 0xFFFF);
+        crc = CRC16_MCRF4XX(&extra, 1, crc);
+        uint8_t crc1 = crc & 0xFF;
+        uint8_t crc2 = crc  >> 8;
+        return crc1 == ch1 && crc2 == ch2;
+    }
+
+    bool checkAsMAVLink() {
+        uint32_t msgid = 0;
+        if(_frame[0] == 0xFE) { // V1
+            msgid = _frame[5];
+        } else {  // V2
+            msgid = (uint32_t(_frame[7])) | (uint32_t(_frame[8]) << 8) | (uint32_t(_frame[9]) << 16);
+        }
+        bool res = checkMAVLink(&_frame[1], _frameLen - 3, _frame[_frameLen - 2], _frame[_frameLen - 1], msgid);
+        if(res) {
+            if(_frame[0] == 0xFE) { // V1
+                _readPosition = 6;
+                _proto = ProtoMAVLink1;
+            } else { // V2
+                _readPosition = 10;
+                _proto = ProtoMAVLink2;
+            }
+
+            _readMaxPosition = _frameLen - 2;
+            _payloadLen = _readMaxPosition - _readPosition;
+
+            _counter.completeMAVLink++;
+        } else {
+            _counter.checkErrorMAVLink++;
+            _proto = ProtoNone;
+        }
+
+        return res;
+    }
+
     uint8_t hexToInt(uint8_t hex_char) {
          if (hex_char >= 'A' && hex_char <= 'F')
             return (hex_char + 10) - ('A');
@@ -724,6 +849,54 @@ public:
 
     uint8_t msgId() const { return (ID)(_frame[3]); }
     uint8_t msgClass() const { return (ID)(_frame[2]); }
+
+protected:
+};
+
+class ProtoMAVLink : public FrameParser {
+public:
+    ProtoMAVLink() {}
+
+    uint8_t MAVLinkVersion() {
+        if(_proto == ProtoMAVLink1) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+
+    uint8_t sequenceNumber() const {
+        if(_proto == ProtoMAVLink1) {
+            return _frame[2];
+        } else {
+            return _frame[4];
+        }
+    }
+
+    uint8_t systemID() const {
+        if(_proto == ProtoMAVLink1) {
+            return _frame[3];
+        } else {
+            return _frame[5];
+        }
+    }
+
+    uint8_t componentID() const {
+        if(_proto == ProtoMAVLink1) {
+            return _frame[4];
+        } else {
+            return _frame[6];
+        }
+    }
+
+    uint32_t msgId() const {
+        if(_proto == ProtoMAVLink1) {
+            return _frame[5];
+        } else {
+            return (uint32_t(_frame[7])) | (uint32_t(_frame[8]) << 8) | (uint32_t(_frame[9]) << 16);
+        }
+    }
+
 
 protected:
 };

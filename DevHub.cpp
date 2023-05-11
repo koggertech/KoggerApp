@@ -8,28 +8,42 @@ void Device::putData(const QByteArray &data) {
 
     uint8_t* ptr_data = (uint8_t*)(data.data());
     if(ptr_data == NULL || data.size() < 1) { return; }
-    m_proto.setContext(ptr_data, data.size());
+    _parser.setContext(ptr_data, data.size());
 
-    while (m_proto.availContext()) {
-        m_proto.process();
-        if(!m_proto.isComplete()) { continue; }
+    while (_parser.availContext()) {
+        _parser.process();
+        if(!_parser.isComplete()) { continue; }
 
-//        qInfo("Packets: good %u, frame error %u, check error %u", m_proto.binComplete(),  m_proto.frameError(),  m_proto.binError());
-
-        if(m_proto.completeAsKBP2() && m_proto.isStream()) {
-            _streamList.append(&m_proto);
+        if(isProxyNavOpen() && (_parser.isCompleteAsNMEA() || _parser.isCompleteAsUBX() || _parser.isCompleteAsMAVLink())) {
+            emit writeProxyNav(QByteArray((char*)_parser.frame(), _parser.frameLen()));
+            continue;
         }
 
-        if(m_proto.id() == ID_STREAM) {
-            _streamList.parse(&m_proto);
+        if(isProxyOpen() && (_parser.isComplete())) {
+            emit writeProxy(QByteArray((char*)_parser.frame(), _parser.frameLen()));
+            continue;
+        }
+
+        //        qInfo("Packets: good %u, frame error %u, check error %u", m_proto.binComplete(),  m_proto.frameError(),  m_proto.binError());
+
+        if(_parser.isStream()) {
+            _streamList.append(&_parser);
+        }
+
+        if(_parser.id() == ID_STREAM) {
+            _streamList.parse(&_parser);
         }
 
         if(_streamList.isListChenged()) {
             emit streamChanged();
         }
 
-        if(m_proto.completeAsKBP() || m_proto.completeAsKBP2()) {
-            uint8_t addr = m_proto.route();
+        if(_parser.isProxy()) {
+            continue;
+        }
+
+        if(_parser.completeAsKBP() || _parser.completeAsKBP2()) {
+            uint8_t addr = _parser.route();
 
             if(lastRoute != addr) {
                 if(devAddr[addr] == NULL) {
@@ -41,26 +55,27 @@ void Device::putData(const QByteArray &data) {
             }
 
 
-            if(_isConsoled && (_isDuplex || 1) && !(m_proto.id() == 33 || m_proto.id() == 33)) { core.consoleProto(m_proto); }
+            if(_isConsoled && (_isDuplex || 1) && !(_parser.id() == 33 || _parser.id() == 33)) { core.consoleProto(_parser); }
 
 #if !defined(Q_OS_ANDROID)
-            if(m_proto.id() == ID_TIMESTAMP && m_proto.ver() == v1) {
-                int timestamp = m_proto.read<U4>();
-                int unix = m_proto.read<U4>();
+            if(_parser.id() == ID_TIMESTAMP && _parser.ver() == v1) {
+                int timestamp = _parser.read<U4>();
+                int unix = _parser.read<U4>();
                 core.plot()->addEvent(timestamp, 0, unix);
+                core.consoleInfo(QString("Event time %1.%2").arg(unix).arg(timestamp));
             }
 
-            if(m_proto.id() == ID_EVENT) {
-                int timestamp = m_proto.read<U4>();
-                int id = m_proto.read<U4>();
+            if(_parser.id() == ID_EVENT) {
+                int timestamp = _parser.read<U4>();
+                int id = _parser.read<U4>();
                 if(id < 100) {
                     core.plot()->addEvent(timestamp, id);
                 }
             }
 
-            if(m_proto.id() == ID_VOLTAGE) {
-                int v_id = m_proto.read<U1>();
-                int32_t v_uv = m_proto.read<S4>();
+            if(_parser.id() == ID_VOLTAGE) {
+                int v_id = _parser.read<U1>();
+                int32_t v_uv = _parser.read<S4>();
                 if(v_id == 1) {
                     core.plot()->addEncoder(float(v_uv));
                     qInfo("Voltage %f", float(v_uv));
@@ -68,15 +83,16 @@ void Device::putData(const QByteArray &data) {
             }
 #endif
 
-            lastDevs->protoComplete(m_proto);
+            lastDevs->protoComplete(_parser);
+        }
 
-        } else if(m_proto.completeAsNMEA()) {
-            ProtoNMEA& prot_nmea = (ProtoNMEA&)m_proto;
+        if(_parser.isCompleteAsNMEA()) {
+            ProtoNMEA& prot_nmea = (ProtoNMEA&)_parser;
 
-            if(_isConsoled) {
-                QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
-                core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
-            }
+            //            if(_isConsoled) {
+            QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
+            core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+            //            }
 
             if(prot_nmea.isEqualId("RMC")) {
                 uint8_t h = 0, m = 0, s = 0;
@@ -98,8 +114,10 @@ void Device::putData(const QByteArray &data) {
                     core.plot()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
-        } else if(m_proto.isCompleteAsUBX()) {
-            ProtoUBX& ubx_frame = (ProtoUBX&)m_proto;
+        }
+
+        if(_parser.isCompleteAsUBX()) {
+            ProtoUBX& ubx_frame = (ProtoUBX&)_parser;
 
             if(ubx_frame.msgClass() == 1 && ubx_frame.msgId() == 7) {
 
@@ -134,15 +152,20 @@ void Device::putData(const QByteArray &data) {
                 }
 
                 if(_isConsoled) {
-                    core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4").arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001));
+                    core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8").arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
                 }
             } else {
                 if(_isConsoled) {
-                    core.consoleInfo(QString(">> UBX: class %1, id %2, len %3").arg(ubx_frame.msgClass()).arg(ubx_frame.msgId()).arg(ubx_frame.frameLen()));
+                    core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
                 }
             }
+        }
 
-
+        if(_parser.isCompleteAsMAVLink()) {
+            ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)_parser;
+            if(_isConsoled) {
+                core.consoleInfo(QString(">> MAVLink v%1: msg id %2, comp id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+            }
         }
     }
 }
@@ -165,5 +188,81 @@ void Device::stopConnection() {
 void Device::upgradeLastDev(QByteArray data) {
     if(lastDevs != NULL) {
         lastDevs->sendUpdateFW(data);
+    }
+}
+
+void Device::openProxyLink(const QString &address, const int port_in, const int port_out) {
+    closeProxyLink();
+    connect(&proxyLink, &Link::readyParse, this, &Device::readyReadProxy);
+    connect(this, &Device::writeProxy, &proxyLink, &Link::write);
+    proxyLink.openAsUDP(address, port_in, port_out);
+    if(proxyLink.isOpen()) {
+        core.consoleInfo("Proxy port is open");
+    } else {
+        this->disconnect(&proxyLink);
+        proxyLink.disconnect(this);
+        core.consoleInfo("Proxy port isn't open");
+    }
+}
+
+void Device::openProxyNavLink(const QString &address, const int port_in, const int port_out) {
+    closeProxyNavLink();
+    connect(&proxyNavLink, &Link::readyParse, this, &Device::readyReadProxyNav);
+    connect(this, &Device::writeProxyNav, &proxyNavLink, &Link::write);
+    proxyNavLink.openAsUDP(address, port_in, port_out);
+    if(proxyNavLink.isOpen()) {
+        core.consoleInfo("Proxy Nav port is open");
+    } else {
+        this->disconnect(&proxyNavLink);
+        proxyNavLink.disconnect(this);
+        core.consoleInfo("Proxy Nav port isn't open");
+    }
+}
+
+void Device::closeProxyLink() {
+    proxyLink.close();
+    this->disconnect(&proxyLink);
+    proxyLink.disconnect(this);
+}
+
+void Device::closeProxyNavLink() {
+    proxyNavLink.close();
+    this->disconnect(&proxyNavLink);
+    proxyNavLink.disconnect(this);
+}
+
+void Device::gatewayKP() {
+
+}
+
+void Device::gatewayUBX() {
+
+}
+
+void Device::gatewayNMEA() {
+
+}
+
+void Device::gatewayMAVLink() {
+
+}
+
+void Device::readyReadProxy(Link* link) {
+    while(link->parse()) {
+        FrameParser* frame = link->frameParser();
+        if(frame->isComplete()) {
+            QByteArray data((char*)frame->frame(), frame->frameLen());
+            emit dataSend(data);
+        }
+    }
+}
+
+void Device::readyReadProxyNav(Link* link) {
+    while(link->parse()) {
+        FrameParser* frame = link->frameParser();
+        if(frame->isComplete()) {
+            QByteArray data((char*)frame->frame(), frame->frameLen());
+            emit dataSend(data);
+        }
     }
 }

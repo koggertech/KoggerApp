@@ -53,35 +53,34 @@ public:
         uint32_t unixt = 0;
         QByteArray data;
         QList<Fragment> gaps;
+        struct {
+            uint32_t _fragments;
+            uint32_t _lostFragments = 0;
+            uint32_t _fillFragments = 0;
+        } _counter;
         int modelIndex = -1;
     } Stream;
 
     void append(FrameParser* frame) {
-        if(frame->completeAsKBP2()) {
-            if(frame->isStream()) {
+        if(frame->isStream()) {
+            uint16_t current_id = frame->streamId();
 
-                uint16_t current_id = frame->streamId();
-
-                if(_lastStreamId != current_id) {
-                    if(_streams.contains(current_id)) {
-                        _lastStreamId = current_id;
-                        _lastStream = &_streams[current_id];
-                    }
-
-                    if(_lastStreamId != current_id) {
-                        updateStream(current_id);
-                        _lastStream = getStream(current_id);
-                        _lastStreamId = current_id;
-                    }
+            if(_lastStreamId != current_id) {
+                if(_streams.contains(current_id)) {
+                    _lastStreamId = current_id;
+                    _lastStream = &_streams[current_id];
                 }
 
-                insert(_lastStream, frame->frame(), frame->streamOffset(), frame->frameLen());
-
-            } else {
-                _streams[0].data.append((char*)frame->frame(), frame->frameLen());
+                if(_lastStreamId != current_id) {
+                    updateStream(current_id);
+                    _lastStream = getStream(current_id);
+                    _lastStreamId = current_id;
+                }
             }
-        } else if(frame->completeAsKBP()) {
-            _streams[0].data.append((char*)frame->frame(), frame->frameLen());
+
+            insert(_lastStream, frame->frame(), frame->streamOffset(), frame->frameLen());
+        } else {
+             _streams[0].data.append((char*)frame->frame(), frame->frameLen());
         }
     }
 
@@ -144,18 +143,20 @@ protected:
     Stream* _lastStream;
     bool _isListChenged = false;
     StreamListModel _modelList;
-    QTimer updater;
-    uint64_t timeLastGapsUpdate = 0;
-    uint64_t timeLastGapsInsert = 0;
-    bool isInserting = false;
+    QTimer _updater;
+    uint64_t _timeLastGapsUpdate = 0;
+    uint64_t _timeLastGapsInsert = 0;
+    bool _isInserting = false;
+
+
 
     void insert(Stream* stream, uint8_t* frame, uint32_t offset, uint16_t size) {
         uint32_t end = offset + size;
         QList<Fragment>& gaps = stream->gaps;
         QByteArray& data = stream->data;
 
-        timeLastGapsInsert = timestamp();
-        isInserting = true;
+        _timeLastGapsInsert = timestamp();
+        _isInserting = true;
 
         if(stream->size < end) {
             stream->size = end;
@@ -169,6 +170,7 @@ protected:
                 .status = FragmentStatus::FragmentNew
             };
             gaps.append(new_fragment);
+            stream->_counter._lostFragments++;
             debugAddGap(offset, offset - (uint32_t)data.size());
         } else if(data.size() > offset) {
             debugSearchGap(offset, size);
@@ -205,12 +207,16 @@ protected:
                     break;
                 }
             }
+
+            stream->_counter._fillFragments++;
+        } else {
+            stream->_counter._fragments++;
         }
 
         data.replace(offset, size, (char*)frame, size);
         updateStream(stream->id);
 
-        isInserting = false;
+        _isInserting = false;
 //        process();
     }
 

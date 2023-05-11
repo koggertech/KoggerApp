@@ -166,11 +166,11 @@ bool Core::closeConnection() {
 }
 
 bool Core::openProxy(const QString &address, const int port, bool is_tcp) {
-    return m_connection->openProxy(address, port, is_tcp);
+    return false;
 }
 
 bool Core::closeProxy() {
-    return m_connection->closeProxy();
+    return false;
 }
 
 bool Core::connectionBaudrate(int baudrate) {

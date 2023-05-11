@@ -238,14 +238,6 @@ GridLayout {
                         onCheckedChanged: plot.setGridNumber(gridNumber.value*gridVisible.checked)
                     }
 
-
-                    CCheck {
-                        id: velocityVisible
-                        text: "Velocity"
-                        onCheckedChanged: plot.setVelocityVis(checked)
-                        Component.onCompleted: plot.setVelocityVis(checked)
-                    }
-
                     SpinBoxCustom {
                         id: gridNumber
                         from: 1
@@ -255,6 +247,57 @@ GridLayout {
 
                         onValueChanged: plot.setGridNumber(gridNumber.value*gridVisible.checked)
                         Component.onCompleted: plot.setGridNumber(gridNumber.value*gridVisible.checked)
+
+                        Settings {
+                            property alias gridNumber: gridNumber.value
+                        }
+                    }
+                }
+
+                RowLayout {
+                    CCheck {
+                        id: velocityVisible
+                        Layout.fillWidth: true
+                        text: "Velocity range, m/s"
+                        onCheckedChanged: plot.setVelocityVis(checked)
+                        Component.onCompleted: plot.setVelocityVis(checked)
+
+                        Settings {
+                            property alias velocityVisible: velocityVisible.checked
+                        }
+                    }
+
+                    SpinBoxCustom {
+                        id: velocityRange
+                        from: 500
+                        to: 1000*4
+                        stepSize: 500
+                        value: 5
+
+                        onValueChanged: plot.setVelocityRange(velocityRange.realValue)
+                        Component.onCompleted: plot.setVelocityRange(velocityRange.realValue)
+
+                        property int decimals: 1
+                        property real realValue: value / 1000
+
+                        validator: DoubleValidator {
+                            bottom: Math.min(from, to)
+                            top:  Math.max(from, to)
+                        }
+
+                        textFromValue: function(value, locale) {
+                            return Number(value / 1000).toLocaleString(locale, 'f', decimals)
+                        }
+
+                        valueFromText: function(text, locale) {
+                            return Number.fromLocaleString(locale, text) * 1000
+                        }
+
+                        onRealValueChanged: plot.setVelocityRange(realValue)
+
+                        Settings {
+                            property alias velocityRange: velocityRange.value
+                        }
                     }
                 }
 
@@ -269,9 +312,9 @@ GridLayout {
                     property alias postProcVisible: bottomTrackVisible.checked
                     property alias ahrsVisible: ahrsVisible.checked
                     property alias encoderVisible: encoderVisible.checked
-                    property alias velocityVisible: velocityVisible.checked
+
                     property alias gridVisible: gridVisible.checked
-                    property alias gridNumber: gridNumber.value
+
 
                     property alias dopplerBeamVisible: dopplerBeamVisible.checked
                     property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked

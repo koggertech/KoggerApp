@@ -20,7 +20,8 @@ void PoolDataset::setEvent(int timestamp, int id, int unixt) {
 }
 
 void PoolDataset::setEncoder(float encoder) {
-    _encoder = encoder;
+    _encoder.validMask |= 1;
+    _encoder.e1 = encoder;
     flags.encoderAvail = true;
 }
 
@@ -44,6 +45,10 @@ void PoolDataset::setIQ(QByteArray data, uint8_t type) {
 void PoolDataset::setDist(int dist) {
     m_dist = dist;
     flags.distAvail = true;
+}
+
+void PoolDataset::setRangefinder(int channel, float distance) {
+    _rangeFinders.insert(channel, distance);
 }
 
 void PoolDataset::setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
@@ -78,13 +83,13 @@ void PoolDataset::setTemp(float temp_c) {
 }
 
 void PoolDataset::setEncoders(int16_t enc1, int16_t enc2, int16_t enc3, int16_t enc4, int16_t enc5, int16_t enc6) {
-    encoder.e1 = enc1;
-    encoder.e2 = enc2;
-    encoder.e3 = enc3;
-    encoder.e4 = enc4;
-    encoder.e5 = enc5;
-    encoder.e6 = enc6;
-    encoder.valid = true;
+    _encoder.e1 = enc1;
+    _encoder.e2 = enc2;
+    _encoder.e3 = enc3;
+    _encoder.e4 = enc4;
+    _encoder.e5 = enc5;
+    _encoder.e6 = enc6;
+    _encoder.validMask = (uint16_t)0x111111;
 }
 
 void PoolDataset::setAtt(float yaw, float pitch, float roll) {
@@ -295,7 +300,7 @@ void PlotCash::addEvent(int timestamp, int id, int unixt) {
     lastEventId = id;
 
     poolAppend();
-    m_pool[poolLastIndex()].setEvent(timestamp, id, unixt);
+    _pool[poolLastIndex()].setEvent(timestamp, id, unixt);
 }
 
 void PlotCash::addEncoder(float encoder) {
@@ -304,7 +309,7 @@ void PlotCash::addEncoder(float encoder) {
         poolAppend();
     }
 //    poolAppend();
-    m_pool[poolLastIndex()].setEncoder(_lastEncoder);
+    _pool[poolLastIndex()].setEncoder(_lastEncoder);
 }
 
 void PlotCash::addTimestamp(int timestamp) {
@@ -313,12 +318,12 @@ void PlotCash::addTimestamp(int timestamp) {
 void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
     int pool_index = poolLastIndex();
 
-    if(pool_index < 0 || m_pool[pool_index].eventAvail() == false || m_pool[pool_index].chartAvail() == true) {
+    if(pool_index < 0 || _pool[pool_index].eventAvail() == false || _pool[pool_index].chartAvail() == true) {
         poolAppend();
         pool_index = poolLastIndex();
     }
 
-    m_pool[poolLastIndex()].setChart(data, resolution, offset);
+    _pool[poolLastIndex()].setChart(data, resolution, offset);
 
     if(_bottomtrackType >= 0) {
         doDistProcessing();
@@ -335,23 +340,23 @@ void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
 void PlotCash::addIQ(QByteArray data, uint8_t type) {
     int pool_index = poolLastIndex();
 
-    if(pool_index < 0 || m_pool[pool_index].isIqAvail()) {
+    if(pool_index < 0 || _pool[pool_index].isIqAvail()) {
         poolAppend();
         pool_index = poolLastIndex();
     }
 
-    m_pool[poolLastIndex()].setIQ(data, type);
+    _pool[poolLastIndex()].setIQ(data, type);
     updateImage(true);
 }
 
 void PlotCash::addDist(int dist) {
     int pool_index = poolLastIndex();
-    if(pool_index < 0 || (m_pool[pool_index].eventAvail() == false && m_pool[pool_index].chartAvail() == false) || m_pool[pool_index].distAvail() == true) {
+    if(pool_index < 0 || (_pool[pool_index].eventAvail() == false && _pool[pool_index].chartAvail() == false) || _pool[pool_index].distAvail() == true) {
         poolAppend();
         pool_index = poolLastIndex();
     }
 
-    m_pool[poolLastIndex()].setDist(dist);
+    _pool[poolLastIndex()].setDist(dist);
     updateImage(true);
 }
 
@@ -361,20 +366,21 @@ void PlotCash::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
     poolAppend();
     pool_index = poolLastIndex();
 
-    m_pool[poolLastIndex()].setDopplerBeam(beams, cnt);
+    _pool[poolLastIndex()].setDopplerBeam(beams, cnt);
+//    _pool[poolLastIndex()].setDist(beams[0+pool_index%cnt].distance*1000);
     updateImage(true);
 }
 
 void PlotCash::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
     int pool_index = poolLastIndex();
 
-    if(pool_index < 0 || (m_pool[pool_index].isDopplerBeamAvail() == false)) {
+    if(pool_index < 0 || (_pool[pool_index].isDopplerBeamAvail() == false)) {
         poolAppend();
         pool_index = poolLastIndex();
     }
 
-    m_pool[poolLastIndex()].setDVLSolution(dvlSolution);
-    m_pool[poolLastIndex()].setDist(dvlSolution.distance.z*1000);
+    _pool[poolLastIndex()].setDVLSolution(dvlSolution);
+//    _pool[poolLastIndex()].setDist(dvlSolution.distance.z*1000);
     updateImage(true);
 }
 
@@ -384,7 +390,7 @@ void PlotCash::addAtt(float yaw, float pitch, float roll) {
         poolAppend();
         pool_index = poolLastIndex();
     }
-    m_pool[poolLastIndex()].setAtt(yaw, pitch, roll);
+    _pool[poolLastIndex()].setAtt(yaw, pitch, roll);
     _lastYaw = yaw;
     _lastPitch = pitch;
     _lastRoll = roll;
@@ -409,10 +415,10 @@ void PlotCash::addPosition(double lat, double lon, uint32_t unix_time, int32_t n
         _llaRef.isInit = true;
     }
 
-    m_pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
+    _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
     _gnssTrackIndex.append(pool_index);
-    _boatTrack.append(QVector3D(m_pool[pool_index].relPosN(), m_pool[pool_index].relPosE(), 0));
-    if(m_pool[pool_index].distProccesingAvail()) {
+    _boatTrack.append(QVector3D(_pool[pool_index].relPosN(), _pool[pool_index].relPosE(), 0));
+    if(_pool[pool_index].distProccesingAvail()) {
         updateBottomTrack();
     }
 }
@@ -426,7 +432,7 @@ void PlotCash::addTemp(float temp_c) {
         poolAppend();
         pool_index = poolLastIndex();
     }
-    m_pool[pool_index].setTemp(temp_c);
+    _pool[pool_index].setTemp(temp_c);
 
     updateImage(true);
 }
@@ -608,13 +614,13 @@ void PlotCash::setMouse(int x, int y) {
             if(pool_index > 0) {
                 int dist = ((float)y_start + (float)x_ind*y_scale)*(float)(m_range)/(float)height + m_offset;
                 if(_mouse_mode == 2) {
-                    m_pool[pool_index].setMinDistProc(dist);
+                    _pool[pool_index].setMinDistProc(dist);
                 } else if(_mouse_mode == 3) {
-                    m_pool[pool_index].setDistProcessing(dist);
+                    _pool[pool_index].setDistProcessing(dist);
                 } else if(_mouse_mode == 4) {
-                    m_pool[pool_index].setMaxDistProc(dist);
+                    _pool[pool_index].setMaxDistProc(dist);
                 }
-                m_valueCash[val_col].processingDistData = m_pool[pool_index].distProccesing() - m_offset;
+                m_valueCash[val_col].processingDistData = _pool[pool_index].distProccesing() - m_offset;
 
             }
         }
@@ -663,6 +669,11 @@ void PlotCash::setEncoderVis(bool visible) {
 void PlotCash::setVelocityVis(bool visible) {
     _is_velocityVis = visible;
     updateImage(true);
+}
+
+void PlotCash::setVelocityRange(float range) {
+    _velocityRange = range*2;
+    updateImage(false);
 }
 
 void PlotCash::setDopplerBeamVis(bool visible, int beamFilter, bool is_mode_visible, bool is_amp_visible) {
@@ -724,7 +735,7 @@ void PlotCash::resetValue() {
 }
 
 void PlotCash::resetDataset() {
-    m_pool.clear();
+    _pool.clear();
     resetValue();
     m_valueCash.clear();
     _llaRef.isInit = false;
@@ -771,7 +782,7 @@ void PlotCash::doDistProcessing(int source_type, int window_size, float vertical
     }
 
     uint16_t max_size = _bottomTrackWindow.size();
-    for(int i = _bottomTrackLastProcessing; i < pool_size; i++) {
+    for(int i = _bottomTrackLastProcessing+1; i < pool_size; i++) {
         PoolDataset* dataset = fromPool(i);
         dataset->doBottomTrack(source_type, is_source_update);
         uint16_t cur_size = dataset->m_processingDistData.size();
@@ -842,13 +853,13 @@ void PlotCash::doDistProcessing(int source_type, int window_size, float vertical
             float max_dist = dist*(1.0f + 0.5f*vertical_gap);
 
             if(vertical_gap == 0) {
-                m_pool[i+avrg_size/2].setDistProcessing(dist*1000);
+                _pool[i+avrg_size/2].setDistProcessing(dist*1000);
             } else {
-                m_pool[i+avrg_size/2].setMinMaxDistProc(min_dist*1000, max_dist*1000, false);
+                _pool[i+avrg_size/2].setMinMaxDistProc(min_dist*1000, max_dist*1000, false);
             }
         }
 
-        _bottomTrackLastIndex = pool_size - avrg_size-1;
+        _bottomTrackLastIndex = pool_size - avrg_size;
     }
 
     updateImage(true);
@@ -936,18 +947,18 @@ void PlotCash::updateValueMap(int width, int height) {
 
     int pool_index = poolIndex(pool_last_index);
     if(pool_index >= 0) {
-        if(m_pool[pool_index].chartAvail())  {
-            m_pool[pool_last_index].chartTo(m_offset,m_offset + m_range, data_column, size_column, _imageType);
+        if(_pool[pool_index].chartAvail())  {
+            _pool[pool_last_index].chartTo(m_offset,m_offset + m_range, data_column, size_column, _imageType);
         } else {
             memset(data_column, 0, size_column*2);
         }
 
-        if(m_pool[pool_index].distAvail()) {
-            m_prevValueCash.distData = m_pool[pool_index].distData() - m_offset;
+        if(_pool[pool_index].distAvail()) {
+            m_prevValueCash.distData = _pool[pool_index].distData() - m_offset;
         }
 
-        if(m_pool[pool_index].temperatureAvail()) {
-            m_prevValueCash.temperature = m_pool[pool_index].temperature();
+        if(_pool[pool_index].temperatureAvail()) {
+            m_prevValueCash.temperature = _pool[pool_index].temperature();
         }
     }
 
@@ -983,40 +994,40 @@ void PlotCash::updateValueMap(int width, int height) {
 
         if(pool_index >= 0) {
             if(m_chartVis) {
-                if(m_pool[pool_index].chartAvail()) {
-                    m_pool[pool_index].chartTo(m_offset, m_offset + m_range, data_column, size_column, _imageType);
+                if(_pool[pool_index].chartAvail()) {
+                    _pool[pool_index].chartTo(m_offset, m_offset + m_range, data_column, size_column, _imageType);
                 } else {
                     memset(data_column, 0, size_column*2);
                 }
             }
 
             if(m_distSonarVis) {
-                if(m_pool[pool_index].distAvail()) {
-                    m_valueCash[column].distData = m_pool[pool_index].distData() - m_offset;
+                if(_pool[pool_index].distAvail()) {
+                    m_valueCash[column].distData = _pool[pool_index].distData() - m_offset;
                 } else {
                     m_valueCash[column].distData = -1;
                 }
             }
 
             if(m_distProcessingVis) {
-                if(m_pool[pool_index].distProccesingAvail()) {
-                    m_valueCash[column].processingDistData = m_pool[pool_index].distProccesing() - m_offset;
+                if(_pool[pool_index].distProccesingAvail()) {
+                    m_valueCash[column].processingDistData = _pool[pool_index].distProccesing() - m_offset;
                 } else {
                     m_valueCash[column].processingDistData = INT_MIN;
                 }
             }
 
             if(m_TemperatureVis) {
-                if(m_pool[pool_index].temperatureAvail()) {
-                    m_valueCash[column].temperature = m_pool[pool_index].temperature();
+                if(_pool[pool_index].temperatureAvail()) {
+                    m_valueCash[column].temperature = _pool[pool_index].temperature();
                 } else {
                     m_valueCash[column].temperature = NAN;
                 }
             }
 
             if(m_DopplerVis) {
-                if(m_pool[pool_index].isDopplerAvail()) {
-                    m_valueCash[column].dopplerX = m_pool[pool_index].dopplerX();
+                if(_pool[pool_index].isDopplerAvail()) {
+                    m_valueCash[column].dopplerX = _pool[pool_index].dopplerX();
                 } else {
                     m_valueCash[column].dopplerX = NAN;
                 }
@@ -1123,11 +1134,11 @@ void PlotCash::updateImage(int width, int height) {
         }
 
         int pool_index = m_valueCash[val_col].poolIndex;
-        if(pool_index > 0 && m_pool[pool_index].chartAvail()) {
+        if(pool_index > 0 && _pool[pool_index].chartAvail()) {
 
 
-            int16_t* raw_col = m_pool[pool_index].chartData().data();
-            int32_t data_size = m_pool[pool_index].chartData().size();
+            int16_t* raw_col = _pool[pool_index].chartData().data();
+            int32_t data_size = _pool[pool_index].chartData().size();
 
 
             float scale_scope_w = (float)height / (float)(waterfall_width - 100);
@@ -1203,7 +1214,7 @@ void PlotCash::updateImage(int width, int height) {
         velo_pen.setWidth(1);
         velo_pen.setColor(QColor::fromRgb(100, 255, 0));
 
-        const float scaleY_vel = (float)height/m_veloRange;
+        const float scaleY_vel = (float)height/_velocityRange;
         float last_vel[4] = {};
 
         int pool_index = -1;
@@ -1214,10 +1225,10 @@ void PlotCash::updateImage(int width, int height) {
             }
 
             pool_index = m_valueCash[val_col].poolIndex;
-            if(pool_index >= 0 && m_pool[pool_index].isDVLSolutionAvail()) {
+            if(pool_index >= 0 && _pool[pool_index].isDVLSolutionAvail()) {
 
                 uint32_t hscale = 1;
-                IDBinDVL::DVLSolution dvl = m_pool[pool_index].dvlSolution();
+                IDBinDVL::DVLSolution dvl = _pool[pool_index].dvlSolution();
                 float vel_x = (float)height/2 - scaleY_vel*dvl.velocity.x;
 
                 if(isfinite(vel_x) && isfinite(last_vel[0])) {
@@ -1253,17 +1264,24 @@ void PlotCash::updateImage(int width, int height) {
         QPainter p1(&tmp_img);
 
         QColor vel_color[4] = {
-            QColor(255, 0, 175),
-            QColor(0, 175, 255),
+            QColor(255, 0, 150),
+            QColor(0, 155, 255),
             QColor(255, 175, 0),
             QColor(75, 205, 55)
         };
 
         QColor amp_color[4] = {
-            QColor(255, 0, 175, 100),
-            QColor(0, 175, 255, 100),
-            QColor(255, 175, 0, 100),
-            QColor(55, 205, 55, 100)
+            QColor(255, 0, 150),
+            QColor(0, 155, 255),
+            QColor(255, 175, 0),
+            QColor(75, 205, 55)
+        };
+
+        QColor dist_color[4] = {
+            QColor(255, 0, 150, 200),
+            QColor(0, 155, 255, 200),
+            QColor(255, 175, 0, 200),
+            QColor(75, 205, 55, 200)
         };
 
         float last_vel[4] = {};
@@ -1286,7 +1304,7 @@ void PlotCash::updateImage(int width, int height) {
         pen4.setColor(QColor::fromRgb(0, 100, 255));
 
         const float scaleY_amp = (float)height/(float)1000;
-        const float scaleY_vel = (float)height/m_veloRange;
+        const float scaleY_vel = (float)height/_velocityRange;
         const float scaleY_mode = (float)height/60;
 
         int pool_index = -1;
@@ -1298,8 +1316,8 @@ void PlotCash::updateImage(int width, int height) {
             }
 
             pool_index = m_valueCash[val_col].poolIndex;
-            if(pool_index >= 0 && m_pool[pool_index].isDopplerBeamAvail()) {
-                const uint16_t beam_cnt = m_pool[pool_index].dopplerBeamCount();
+            if(pool_index >= 0 && _pool[pool_index].isDopplerBeamAvail()) {
+                const uint16_t beam_cnt = _pool[pool_index].dopplerBeamCount();
 //                const uint16_t beam_mask = (1 << 0) | (0 << 1);
                 const uint16_t beam_mask = _dopplerBeamFilter;
                 const uint16_t mode_mask = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3);
@@ -1309,7 +1327,7 @@ void PlotCash::updateImage(int width, int height) {
 
                 for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
                     if(((1 << ibeam) & beam_mask) == 0) { continue; }
-                    IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                    IDBinDVL::BeamSolution beam = _pool[pool_index].dopplerBeam(ibeam);
                     if(((1 << beam.mode) & mode_mask) == 0) { continue; }
 
                     float vel = (float)height/2 - scaleY_vel*beam.velocity;
@@ -1323,10 +1341,10 @@ void PlotCash::updateImage(int width, int height) {
                 if(_isDopplerBeamAmpitudeVisible) {
                     for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
                         if(((1 << ibeam) & beam_mask) == 0) { continue; }
-                        IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                        IDBinDVL::BeamSolution beam = _pool[pool_index].dopplerBeam(ibeam);
                         if(((1 << beam.mode) & mode_mask) == 0) { continue; }
 
-                        m_pool[pool_index].setDist(beam.distance*1000);
+//                        _pool[pool_index].setDist(beam.distance*1000);
 
                         float amp = scaleY_amp*(beam.amplitude);
                         if(beam.mode > 0) {
@@ -1343,13 +1361,34 @@ void PlotCash::updateImage(int width, int height) {
                 if(_isDopplerBeamModeVisible) {
                     for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
                         if(((1 << ibeam) & beam_mask) == 0) { continue; }
-                        IDBinDVL::BeamSolution beam = m_pool[pool_index].dopplerBeam(ibeam);
+                        IDBinDVL::BeamSolution beam = _pool[pool_index].dopplerBeam(ibeam);
                         if(((1 << beam.mode) & mode_mask) == 0) { continue; }
 
                         float range_mode = (float)height - scaleY_mode*beam.mode;
                         mode_pen.setColor(vel_color[ibeam]);
                         p1.setPen(mode_pen);
                         p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), range_mode-3-ibeam*2);
+                    }
+                }
+
+                if(_isDopplerBeamDistVisible) {
+                    for(uint16_t ibeam = 0; ibeam < beam_cnt; ibeam++) {
+                        if(((1 << ibeam) & beam_mask) == 0) { continue; }
+                        IDBinDVL::BeamSolution beam = _pool[pool_index].dopplerBeam(ibeam);
+                        if(((1 << beam.mode) & mode_mask) == 0) { continue; }
+
+                        float range_mode = (float)height - scaleY_mode*beam.mode;
+
+                        int index_dist = (int)((float)beam.distance/(float)m_range*1000.0f*(float)height);
+                        if(index_dist < 0) {
+                            index_dist = 0;
+                        } else if(index_dist > height - 2) {
+                            index_dist = height - 2;
+                        }
+
+                        pen4.setColor(dist_color[ibeam]);
+                        p1.setPen(pen4);
+                        p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), index_dist);
                     }
                 }
 
@@ -1382,8 +1421,8 @@ void PlotCash::updateImage(int width, int height) {
             pool_index = poolLastIndex();
         }
 
-        if(pool_index >= 0 && m_pool[pool_index].isIqAvail()) {
-            const int data_size = m_pool[pool_index].iqData().size()/4;
+        if(pool_index >= 0 && _pool[pool_index].isIqAvail()) {
+            const int data_size = _pool[pool_index].iqData().size()/4;
 //            const int data_size = 100;
 
             float signalA[data_size+1000];
@@ -1399,7 +1438,7 @@ void PlotCash::updateImage(int width, int height) {
             float speed[data_size+1000];
             float speed2[data_size+1000];
 
-            const int16_t* iq_data = (const int16_t*)(m_pool[pool_index].iqData().constData());
+            const int16_t* iq_data = (const int16_t*)(_pool[pool_index].iqData().constData());
 
             const int32_t dec_f = 2;
             const int32_t w_size = 96/dec_f;
@@ -1933,7 +1972,7 @@ QImage PlotCash::getImage(QSize size) {
             float range_text = (float)(m_range*i/nbr_hor_div + m_offset)*m_legendMultiply;
             p.drawText(m_image.width() - m_prevLineWidth - 70, offset_y - 10, QString::number((double)range_text) + QStringLiteral(" m"));
             if(_is_velocityVis) {
-                float velo_text = (float)(m_veloRange*(float(nbr_hor_div)/2.0f - (float)i)/(float)nbr_hor_div);
+                float velo_text = (float)(_velocityRange*(float(nbr_hor_div)/2.0f - (float)i)/(float)nbr_hor_div);
                 p.drawText(m_image.width() - m_prevLineWidth - 170, offset_y - 10, QString::number((double)velo_text) + QStringLiteral(" m/s"));
             }
         }
@@ -1989,5 +2028,5 @@ QImage PlotCash::getImage(QSize size) {
 
 
 int PlotCash::poolSize() {
-    return m_pool.length();
+    return _pool.length();
 }

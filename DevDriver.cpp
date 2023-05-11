@@ -620,6 +620,9 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
             case BoardDVL:
                 m_devName = "DVL";
                 break;
+            case BoardEcho20:
+                m_devName = "ECHO20";
+                break;
             default:
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
             }

@@ -43,7 +43,7 @@ Item {
             CCombo  {
                 id: connectionTypeCombo
                 Layout.fillWidth: true
-                model: ["Serial", "File", "IP"]
+                model: ["Serial", "IP", "File"]
 
                 Settings {
                     property alias connectionType: connectionTypeCombo.currentIndex
@@ -170,7 +170,7 @@ Item {
                     id: logFileDialog
                     title: "Please choose a file"
                     folder: shortcuts.home
-                    nameFilters: ["Kogger log files (*.klf)"]
+                    nameFilters: ["Logs (*.klf *.ubx)", "Kogger log files (*.klf)", "U-blox (*.ubx)", "All (*.*)"]
 
                     onAccepted: {
                         pathText.text = logFileDialog.fileUrl.toString()
@@ -278,9 +278,13 @@ Item {
             spacing: 10
             visible: connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP"
 
+            CText {
+                text: "Options:"
+            }
+
             CCheck {
                 id: loggingCheck
-                text: "logging"
+                text: "Logging"
                 checked: false
 
                 onCheckedChanged: core.logging = loggingCheck.checked
@@ -292,55 +296,166 @@ Item {
             }
 
             CCheck {
-                id: proxyCheck
-                text: "proxy"
+                id: proxyMenuCheck
+                text: "Proxy"
                 checked: false
-
-                onCheckedChanged: {
-                    if(proxyCheck.checked) {
-                        core.openProxy(ipProxyAddressText.text, Number(ipProxyPortText.text), false)
-                    } else {
-                        core.closeProxy()
-                    }
-                }
-            }
-
-            CTextField {
-                id: ipProxyAddressText
-                hoverEnabled: true
-                Layout.fillWidth: true
-                visible: true
-
-                text: "10.0.0.3"
-                placeholderText: ""
-
-                Keys.onPressed: {
-                    if (event.key === 16777220) {
-                        console.info(ipProxyAddressText.text)
-                    }
-                }
-
-                Settings {
-                    property alias ipProxyAddressText: ipProxyAddressText.text
-                }
-            }
-
-            CTextField {
-                id: ipProxyPortText
-                hoverEnabled: true
-                Layout.fillWidth: false
-                implicitWidth: 80
-                visible: true
-
-                text: "14444"
-                placeholderText: qsTr("Port")
-
-                Settings {
-                    property alias ipProxyPortText: ipProxyPortText.text
-                }
             }
         }
 
+        ParamGroup {
+            groupName: "Proxy"
+            visible: proxyMenuCheck.checked && (connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP")
+            Layout.margins: 24
+
+            RowLayout {
+                Layout.fillWidth: true
+//                Layout.margins: 10
+                spacing: 10
+
+                CCheck {
+                    id: proxyCheck
+                    Layout.fillWidth: true
+                    text: "Kogger"
+                    checked: false
+
+                    onCheckedChanged: {
+                        if(proxyCheck.checked) {
+                            devs.openProxyLink(proxyAddressText.text, Number(proxyBindPortText.text), Number(proxyPortText.text))
+                        } else {
+                            devs.closeProxyLink()
+                        }
+                    }
+                }
+
+                CTextField {
+                    id: proxyBindPortText
+                    hoverEnabled: true
+                    Layout.fillWidth: false
+                    implicitWidth: 92
+
+                    text: "14444"
+                    placeholderText: qsTr("Port")
+
+                    Settings {
+                        property alias proxyBindPortText: proxyBindPortText.text
+                    }
+                }
+
+                CTextField {
+                    id: proxyAddressText
+                    hoverEnabled: true
+                    implicitWidth: 135
+
+                    text: "10.0.0.3"
+                    placeholderText: ""
+
+                    Keys.onPressed: {
+                        if (event.key === 16777220) {
+                            console.info(proxyAddressText.text)
+                        }
+                    }
+
+                    Settings {
+                        property alias proxyAddressText: proxyAddressText.text
+                    }
+                }
+
+                CTextField {
+                    id: proxyPortText
+                    hoverEnabled: true
+                    Layout.fillWidth: false
+                    implicitWidth: 92
+
+                    text: "14444"
+                    placeholderText: qsTr("Port")
+
+                    Settings {
+                        property alias proxyPortText: proxyPortText.text
+                    }
+                }
+
+                CCombo  {
+                    visible: false
+                    model: ["UDP"]
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+//                Layout.margins: 10
+//                Layout.topMargin: -5
+                spacing: 10
+
+                CCheck {
+                    id: proxyNavCheck
+                    Layout.fillWidth: true
+                    text: "Nav"
+                    checked: false
+
+                    onCheckedChanged: {
+                        if(proxyNavCheck.checked) {
+                            devs.openProxyNavLink(proxyNavAddressText.text, Number(proxyNavBindPortText.text), Number(proxyNavPortText.text))
+                        } else {
+                            devs.closeProxyNavLink()
+                        }
+                    }
+                }
+
+                CTextField {
+                    id: proxyNavBindPortText
+                    hoverEnabled: true
+                    Layout.fillWidth: false
+                    implicitWidth: 92
+
+                    text: "14551"
+                    placeholderText: qsTr("Port")
+
+                    Settings {
+                        property alias proxyNavBindPortText: proxyNavBindPortText.text
+                    }
+                }
+
+                CTextField {
+                    id: proxyNavAddressText
+                    hoverEnabled: true
+//                    Layout.fillWidth: true
+                    implicitWidth: 135
+
+                    text: "10.0.0.3"
+                    placeholderText: ""
+
+                    Keys.onPressed: {
+                        if (event.key === 16777220) {
+                            console.info(proxyNavAddressText.text)
+                        }
+                    }
+
+                    Settings {
+                        property alias proxyNavAddressText: proxyNavAddressText.text
+                    }
+                }
+
+                CTextField {
+                    id: proxyNavPortText
+                    hoverEnabled: true
+                    Layout.fillWidth: false
+                    implicitWidth: 92
+
+                    text: "14550"
+                    placeholderText: qsTr("Port")
+
+                    Settings {
+                        property alias proxyNavPortText: proxyNavPortText.text
+                    }
+                }
+
+                CCombo  {
+                    visible: false
+                    model: ["UDP"]
+                }
+            }
+
+        }
 //        devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]"
 
         ColumnLayout {

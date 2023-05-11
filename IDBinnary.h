@@ -16,7 +16,9 @@ typedef enum {
     BoardNEnhanced = 7,
     BoardSideEnhanced = 8,
     BoardRecorderMini = 9,
-    BoardDVL,
+    BoardDVL = 10,
+    BoardEcho20 = 12,
+
 } BoardVersion;
 
 class IDBin : public QObject

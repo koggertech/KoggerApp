@@ -10,7 +10,6 @@ Connection::Connection():
     m_serial(new QSerialPort(this)),
     m_file(new QFile(this)),
     _socketUDP(new QUdpSocket(this)),
-    _proxyUDP(new QUdpSocket(this)),
     _socketTCP(new QTcpSocket(this)),
     _timerReconnection(new QTimer())
 {
@@ -18,7 +17,12 @@ Connection::Connection():
     connect(&workerThread, &QThread::finished, m_serial, &QObject::deleteLater);
 
     connect(m_serial, &QSerialPort::aboutToClose, this, &Connection::closing);
-//    connect(m_serial, &QSerialPort::errorOccurred, this, &Connection::handleSerialError);
+#if defined(Q_OS_ANDROID)
+//    connect(m_serial, &QSerialPort::error, this, &Connection::handleSerialError);
+#else
+    connect(m_serial, &QSerialPort::errorOccurred, this, &Connection::handleSerialError);
+#endif
+
     connect(m_serial, &QSerialPort::readyRead, this, &Connection::readyReadSerial, Qt::QueuedConnection);
 
     workerThread.start();
@@ -30,8 +34,6 @@ Connection::Connection():
     connect(_socketTCP, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);
 
     connect(m_file, &QFile::aboutToClose, this, &Connection::closing);
-
-    connect(_proxyUDP, &QAbstractSocket::readyRead, this, &Connection::readyReadProxy);
 
     connect(_timerReconnection, &QTimer::timeout, this, &Connection::reOpenSerial);
 }
@@ -161,31 +163,6 @@ bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
     return true;
 }
 
-bool Connection::openProxy(const QString &address, const int port, bool is_tcp) {
-    _proxyUDP->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
-    _proxyUDP->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 256 * 1024);
-    _proxyUDP->bind(QHostAddress::Any, port); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
-    _proxyUDP->connectToHost(address, port, QIODevice::ReadWrite);
-
-    if (_proxyUDP->waitForConnected(1000)) {
-        qInfo("Proxy is connected!");
-     } else {
-        qInfo("Proxy is not connected!");
-    }
-
-    if(isProxyOpen()) {
-        core.consoleInfo("Connection: proxy is open");
-    } else {
-        core.consoleInfo("Connection: proxy isn't open");
-    }
-    return true;
-}
-
-bool Connection::closeProxy() {
-    _proxyUDP->close();
-    return true;
-}
-
 bool Connection::setBaudrate(int32_t baudrate) {
 //    m_serial->flush();
     m_serial->waitForBytesWritten(500);
@@ -217,10 +194,6 @@ bool Connection::isOpen() {
     }
 
     return is_open;
-}
-
-bool Connection::isProxyOpen() {
-    return _proxyUDP->isOpen();
 }
 
 bool Connection::isParity() {
@@ -300,8 +273,10 @@ void Connection::sendData(const QByteArray &data){
         break;
     case ConnectionUDP:
         _socketUDP->write(data);
+        break;
     case ConnectionTCP:
         _socketTCP->write(data);
+        break;
     default:
         break;
     }
@@ -353,7 +328,7 @@ void Connection::readyReadSerial() {
             }
             data.append(datagram);
         }
-
+        break;
     case ConnectionTCP:
         data.append(_socketTCP->readAll());
         break;
@@ -363,34 +338,6 @@ void Connection::readyReadSerial() {
 
     if(data.size() > 0) {
         loggingStream(data);
-        sendToProxy(data);
         emit receiveData(data);
-    }
-}
-
-void Connection::readyReadProxy() {
-    QByteArray data;
-    data.clear();
-
-    while (_proxyUDP->hasPendingDatagrams())
-    {
-        QByteArray datagram;
-        datagram.resize(_proxyUDP->pendingDatagramSize());
-        QHostAddress sender;
-        quint16 senderPort;
-
-        qint64 slen = _proxyUDP->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-        if (slen == -1) {
-            break;
-        }
-        data.append(datagram);
-    }
-
-    sendData(data);
-}
-
-void Connection::sendToProxy(const QByteArray &data) {
-    if(_proxyUDP->isOpen()) {
-        _proxyUDP->write(data);
     }
 }

@@ -8,8 +8,8 @@ StreamList::StreamList() {
 //    _lastStream = getStream(0);
 //    _lastStreamId = 0;
 
-    updater.start(100);
-    connect(&updater, &QTimer::timeout, this, &StreamList::process);
+    _updater.start(100);
+    connect(&_updater, &QTimer::timeout, this, &StreamList::process);
 }
 
 void StreamList::debugAddGap(uint32_t start, uint32_t size) {
@@ -23,7 +23,7 @@ void StreamList::debugSearchGap(uint32_t start, uint32_t size) {
 
 
 void StreamList::process() {
-    if(isInserting) return;
+    if(_isInserting) return;
 
     QMapIterator<int, Stream> i(_streams);
      while (i.hasNext()) {

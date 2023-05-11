@@ -8,7 +8,7 @@ windows {
 }
 
 android {
-    QT += androidextras core-private
+    QT += androidextras
     QT += core-private
     CONFIG += mobility
 }
@@ -40,6 +40,7 @@ SOURCES += \
         DevDriver.cpp \
         DevHub.cpp \
         IDBinnary.cpp \
+    Link.cpp \
         ProtoBinnary.cpp \
         StreamListModel.cpp \
         connection.cpp \
@@ -85,6 +86,8 @@ HEADERS += \
     DevHub.h \
     DevQProperty.h \
     IDBinnary.h \
+    Link.h \
+    MAVLinkConf.h \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
@@ -154,3 +157,8 @@ android {
 #ANDROID_ABIS = x86
 
 #ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+
+ANDROID_ABIS = armeabi-v7a
+

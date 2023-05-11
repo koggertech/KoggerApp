@@ -36,12 +36,14 @@ public:
     void setChart(QVector<int16_t> chartData, int resolution, int offset);
     void setIQ(QByteArray data, uint8_t type);
     void setDist(int dist);
+    void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setTemp(float temp_c);
     void setEncoders(int16_t enc1, int16_t enc2 = 0xFFFF, int16_t enc3 = 0xFFFF, int16_t = 0xFFFF, int16_t = 0xFFFF, int16_t enc6 = 0xFFFF);
     void setAtt(float yaw, float pitch, float roll);
+
     void setDistProcessing(int dist) {
         flags.processDistAvail = true;
         m_processingDist = dist;
@@ -365,18 +367,17 @@ protected:
     int m_chartResol;
     int m_chartOffset;
 
+    QMap<int, float> _rangeFinders;
+
     int m_dist;
     int m_processingDist = 0;
     int _procMinDist = 0;
     int _procMaxDist = INT32_MAX;
     int _procDistType = 0;
 
-
     int _eventTimestamp = 0;
     int _eventUnix = 0;
     int _eventId = 0;
-
-    float _encoder;
 
     struct {
         float yaw = 0, pitch = 0, roll = 0;
@@ -401,14 +402,14 @@ protected:
     float m_temp_c = 0;
 
     struct {
-        bool valid = false;
+        uint16_t validMask = 0;
         int16_t e1 = 0;
         int16_t e2 = 0;
         int16_t e3 = 0;
         int16_t e4 = 0;
         int16_t e5 = 0;
         int16_t e6 = 0;
-    } encoder;
+    } _encoder;
 
     struct {
         float velocityX = 0;
@@ -459,7 +460,7 @@ public:
     PoolDataset* fromPool(int index_offset = 0) {
         int index = poolIndex(index_offset);
 //        qInfo("pool index %u", index);
-        return &m_pool[index];
+        return &_pool[index];
     }
 
     QImage getImage(QSize size);
@@ -490,6 +491,7 @@ public slots:
     void setDistProcVis(bool visible);
     void setEncoderVis(bool visible);
     void setVelocityVis(bool visible);
+    void setVelocityRange(float range);
     void setDopplerBeamVis(bool visible, int beamFilter, bool is_mode_visible, bool is_amp_visible);
     void setDopplerInstrumentVis(bool visible);
     void setGridNumber(int number);
@@ -521,7 +523,7 @@ protected:
     int m_verticalGridNum = 20;
     float m_legendMultiply = 0.001f;
     int m_range = 2000;
-    float m_veloRange = 2.0f;
+    float _velocityRange = 2.0f;
     int m_offset = 0;
     int m_startLevel = 10;
     int m_stopLevel = 100;
@@ -541,6 +543,7 @@ protected:
     int _dopplerBeamFilter = 0xF;
     bool _isDopplerBeamAmpitudeVisible = true;
     bool _isDopplerBeamModeVisible = true;
+    bool _isDopplerBeamDistVisible = true;
     bool isDistProcessing = false;
     int _themId;
     int lastEventTimestamp = 0;
@@ -578,7 +581,7 @@ protected:
     } _autoRange = AutoRangeLast;
 
 
-    QVector<PoolDataset> m_pool;
+    QVector<PoolDataset> _pool;
 
 
     typedef struct {
@@ -618,7 +621,7 @@ protected:
     void updateImage(int width, int height);
 
     void poolAppend() {
-        m_pool.resize(m_pool.size() + 1);
+        _pool.resize(_pool.size() + 1);
     }
 
     int poolLastIndex() {

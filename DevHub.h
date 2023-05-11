@@ -1,13 +1,14 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 #include <QObject>
-#include <ProtoBinnary.h>
+#include <Link.h>
+//#include <ProtoBinnary.h>
 #include <QList>
 #include <DevQProperty.h>
 #include <streamlist.h>
 #include <QVariant>
 #include <QStringListModel>
-
+#include <QUdpSocket>
 
 #ifdef FLASHER
 #include <flasher.h>
@@ -53,6 +54,15 @@ public slots:
     void setProtoBinConsoled(bool is_consoled) { _isConsoled = is_consoled; }
     void upgradeLastDev(QByteArray data);
 
+    void openProxyLink(const QString &address, const int port_in,  const int port_out);
+    void openProxyNavLink(const QString &address, const int port_in,  const int port_out);
+
+    bool isProxyOpen() { return proxyLink.isOpen(); }
+    bool isProxyNavOpen() { return proxyNavLink.isOpen(); }
+
+    void closeProxyLink();
+    void closeProxyNavLink();
+
     StreamListModel*  streamsList() {
         return _streamList.streamsList();
     }
@@ -79,7 +89,7 @@ signals:
     void streamChanged();
 
 protected:
-    FrameParser m_proto;
+    FrameParser _parser;
 
     DevQProperty* devAddr[256] = {};
     DevQProperty* devSort[256] = {};
@@ -89,6 +99,9 @@ protected:
 
     QList<DevQProperty*> _devList;
     StreamList _streamList;
+
+    Link proxyLink;
+    Link proxyNavLink;
 
     bool _isDuplex = false;
     bool _isConsoled = false;
@@ -137,6 +150,21 @@ protected:
         devAddr[addr]->startConnection(duplex);
         emit devChanged();
     }
+
+    void gatewayKP();
+    void gatewayUBX();
+    void gatewayNMEA();
+    void gatewayMAVLink();
+
+signals:
+    void writeProxyFrame(FrameParser *frame);
+    void writeProxy(QByteArray data);
+    void writeProxyNavFrame(FrameParser *frame);
+    void writeProxyNav(QByteArray data);
+
+private slots:
+    void readyReadProxy(Link* link);
+    void readyReadProxyNav(Link* link);
 };
 
 #endif // DEVICE_H

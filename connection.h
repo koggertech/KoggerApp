@@ -43,14 +43,11 @@ public slots:
     bool openSerial(const QString &name, int32_t baudrate, bool parity = false);
     bool openFile(const QString &name);
     bool openIP(const QString &address, const int port, bool is_tcp);
-    bool openProxy(const QString &address, const int port, bool is_tcp);
-    bool closeProxy();
 
     bool setBaudrate(int32_t baudrate);
     int baudrate();
 
     bool isOpen();
-    bool isProxyOpen();
 
     bool isParity();
     void setParity(bool parity);
@@ -73,7 +70,6 @@ private:
     QSerialPort *m_serial = nullptr;
     QFile *m_file = nullptr;
     QUdpSocket *_socketUDP = nullptr;
-    QUdpSocket *_proxyUDP = nullptr;
     QTcpSocket *_socketTCP = nullptr;
     QTimer* _timerReconnection = nullptr;
     ConnectionType m_type = ConnectionNone;
@@ -103,8 +99,6 @@ private slots:
     void closing();
     void handleSerialError(QSerialPort::SerialPortError error);
     void readyReadSerial();
-    void readyReadProxy();
-    void sendToProxy(const QByteArray &data);
 };
 
 #endif // CONNECTION_H
