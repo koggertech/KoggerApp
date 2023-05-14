@@ -246,7 +246,10 @@ protected:
     QTimer m_processTimer;
 
     bool m_bootloader = false;
+    bool m_bootloaderLagacyMode = true;
     int m_upgrade_status = 0;
+    int64_t _lastUpgradeAnswerTime = 0;
+    int64_t _timeoutUpgradeAnswerTime = 0;
     bool m_isConsole = false;
 
     int m_busAddress = 0;
@@ -258,6 +261,8 @@ protected:
 
     void regID(IDBin* id_bin, ParseCallback method, bool is_setup = false);
     void requestSetup();
+
+    void fwUpgradeProcess();
 
 protected slots:
     void receivedTimestamp(Type type, Version ver, Resp resp);

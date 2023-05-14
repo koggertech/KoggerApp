@@ -609,6 +609,13 @@ class IDBinUpdate : public IDBin
 {
     Q_OBJECT
 public:
+    typedef struct __attribute__((packed)){
+       uint16_t lastNumMsg = 0;
+       uint32_t lastOffset = 0;
+       uint8_t type = 0;
+       uint8_t rcvNumMsg = 0;
+    } ID_UPGRADE_V0;
+
     explicit IDBinUpdate() : IDBin() {
     }
 
@@ -616,22 +623,40 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
 
     void setUpdate(QByteArray fw);
-    int availSend() {return _fw.length() - _fw_offset; }
+    int availSend() {return _fw.length() - _currentFwOffset; }
     int progress() {
         if(_fw.length() != 0) {
-            return 100*_fw_offset / _fw.length();
+            return 100*_currentFwOffset / _fw.length();
         }
 
         return 0;
     }
 
+    ID_UPGRADE_V0 getProgress() { return _progress; }
+
+    uint16_t currentNumPacket() {
+        return _currentNumPacket;
+    }
+
+    int currentFwOffset() {
+        return _currentFwOffset;
+    }
+
+    void setUpgradeNewPoint(uint16_t num_packet, int offset) {
+        _currentNumPacket = num_packet + 1;
+        _currentFwOffset = offset;
+    }
+
 public slots:
-    bool putUpdate();
+    bool putUpdate(bool is_auto_offset = true);
 
 protected:
-    uint16_t _nbr_packet = 0;
+    uint16_t _currentNumPacket = 0;
+    int _currentFwOffset = 0;
     QByteArray _fw;
-    int _fw_offset = 0;
+    const uint16_t _packetSize = 64;
+
+    ID_UPGRADE_V0 _progress;
 };
 
 class IDBinVoltage : public IDBin

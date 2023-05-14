@@ -647,6 +647,7 @@ void IDBinBoot::runFW() {
 
 Resp IDBinUpdate::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
+        _progress = proto.read<ID_UPGRADE_V0>();
     } else {
         return respErrorVersion;
     }
@@ -656,12 +657,13 @@ Resp IDBinUpdate::parsePayload(FrameParser &proto) {
 
 void IDBinUpdate::setUpdate(QByteArray fw) {
     _fw = fw;
-    _fw_offset = 0;
-    _nbr_packet = 1;
+    _currentFwOffset = 0;
+    _currentNumPacket = 1;
 }
 
-bool IDBinUpdate::putUpdate() {
-    uint16_t len_part = 64;
+bool IDBinUpdate::putUpdate(bool is_auto_offset) {
+    uint16_t len_part = _packetSize;
+
     if(len_part > availSend()) {
         len_part = (uint16_t)availSend();
     }
@@ -672,14 +674,16 @@ bool IDBinUpdate::putUpdate() {
 
     ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), m_address);
-    id_out.write<U2>(_nbr_packet);
+    id_out.write<U2>(_currentNumPacket);
 
     for(uint16_t i = 0; i < len_part; i++) {
-        id_out.write<U1>((U1)_fw[i + _fw_offset]);
+        id_out.write<U1>((U1)_fw[i + _currentFwOffset]);
     }
-    _fw_offset += len_part;
 
-    _nbr_packet++;
+    if(is_auto_offset) {
+        _currentFwOffset += len_part;
+        _currentNumPacket++;
+    }
 
     id_out.end();
     emit binFrameOut(id_out);

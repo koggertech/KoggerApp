@@ -55,6 +55,8 @@ void DevDriver::requestSetup() {
     m_state.conf = ConfRequest;
 }
 
+
+
 void DevDriver::setConsoleOut(bool is_console) {
     QHashIterator<ID, IDBin*> i(hashIDParsing);
     while (i.hasNext()) {
@@ -147,6 +149,7 @@ void DevDriver::startConnection(bool duplex) {
     m_state.duplex = duplex;
     idVersion->reset();
 
+    m_bootloaderLagacyMode = true;
     m_bootloader = false;
     m_upgrade_status = 0;
 
@@ -205,12 +208,14 @@ void DevDriver::requestStream(int stream_id) {
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
 //    if(!m_state.connect) return;
+    m_bootloaderLagacyMode = true;
     m_bootloader = true;
+    _timeoutUpgradeAnswerTime = 7000;
     idUpdate->setUpdate(update_data);
     reboot();
     restartState();
     QTimer::singleShot(300, idUpdate, SLOT(putUpdate()));
-    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
+//    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
 }
 
 void DevDriver::sendFactoryFW(QByteArray update_data) {
@@ -653,24 +658,62 @@ void DevDriver::receivedFlash(Type type, Version ver, Resp resp) {
 void DevDriver::receivedBoot(Type type, Version ver, Resp resp) {
 }
 
+void DevDriver::fwUpgradeProcess() {
+    bool is_avail_data = idUpdate->putUpdate();
+    if(is_avail_data && idUpdate->currentNumPacket() == 3) {
+        is_avail_data = idUpdate->putUpdate();
+    }
+    m_upgrade_status = idUpdate->progress();
+    if(!is_avail_data) {
+        idBoot->runFW();
+        m_bootloader = false;
+        m_upgrade_status = successUpgrade;
+        core.consoleInfo("Upgrade: done");
+        restartState();
+    }
+}
+
 void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
-    if(resp == respOk) {
-        if(m_bootloader) {
-            bool is_avail_data = idUpdate->putUpdate();
-            m_upgrade_status = idUpdate->progress();
-            if(!is_avail_data) {
-                idBoot->runFW();
-                m_bootloader = false;
-                m_upgrade_status = successUpgrade;
-                restartState();
+    if(resp == respNone) {
+        if(ver == v0) {
+            m_bootloaderLagacyMode = false;
+            _timeoutUpgradeAnswerTime = 1000;
+            IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getProgress();
+
+            if(prog.type <= 2) {
+                _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
+
+                if(prog.type == 1) {
+                    core.consoleInfo(QString("Upgrade: back offset condition error with device msg/offset %1 %2, host msg/offset %3 %4").arg(prog.lastNumMsg).arg(prog.lastOffset).arg(idUpdate->currentNumPacket()).arg(idUpdate->currentFwOffset()));
+                } else if(prog.type == 2) {
+                    core.consoleInfo(QString("Upgrade: forward offset condition error with device msg/offset %1 %2, host msg/offset %3 %4").arg(prog.lastNumMsg).arg(prog.lastOffset).arg(idUpdate->currentNumPacket()).arg(idUpdate->currentFwOffset()));
+                    idUpdate->setUpgradeNewPoint(prog.lastNumMsg, prog.lastOffset);
+                }
+
+                fwUpgradeProcess();
+            } else {
+                if(m_bootloader) {
+                    core.consoleInfo("Upgrade: critical error!");
+                    m_upgrade_status = failUpgrade;
+                    m_bootloader = false;
+                    m_bootloaderLagacyMode = true;
+                    restartState();
+                }
             }
         }
     } else {
-        if(m_bootloader) {
-            core.consoleInfo("Upgrade error");
-            m_upgrade_status = failUpgrade;
-            m_bootloader = false;
-            restartState();
+        if(resp == respOk) {
+            if(m_bootloader && m_bootloaderLagacyMode) {
+                fwUpgradeProcess();
+            }
+        } else {
+            if(m_bootloader && m_bootloaderLagacyMode) {
+                core.consoleInfo("Upgrade: lagacy mode error");
+                m_upgrade_status = failUpgrade;
+                m_bootloader = false;
+                m_bootloaderLagacyMode = true;
+                restartState();
+            }
         }
     }
 
@@ -713,6 +756,14 @@ void DevDriver::process() {
         } else if(m_state.uptime == UptimeFix) {
             if(m_state.mark) {
                 m_state.connect = true;
+            }
+
+            if(m_bootloader && !m_bootloaderLagacyMode) {
+                int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
+                if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
+                    core.consoleInfo("Upgrade: timeout error!");
+                    idUpdate->putUpdate(false);
+                }
             }
         }
     }
