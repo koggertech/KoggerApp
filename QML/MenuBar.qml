@@ -87,6 +87,7 @@ Item {
 
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
+                visible: visible2dButton.checked
 
                 MenuBlock {
                 }
@@ -130,6 +131,7 @@ Item {
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 0
+                visible: visible2dButton.checked
 
 
                 MenuBlock { }
@@ -200,19 +202,21 @@ Item {
 
                 MenuBlock { }
 
-                //CButton {
-                //    id: settings3DButton
-                //    //id: visible3dButton
-                //    Layout.fillWidth: true
-                //    Layout.margins: 4
-//              //      Layout.preferredHeight: 24
-                //    text: "3D"
-                //    checkable: true
-                //    padding: 0
-                //    onClicked: {
-                //       itemChangeActive(settings3DButton)
-                //    }
-                //}
+                CButton {
+                    id: settings3DButton
+                    //id: visible3dButton
+                    Layout.fillWidth: true
+                    Layout.margins: 4
+              //      Layout.preferredHeight: 24
+                    text: "3D"
+                    checkable: true
+                    padding: 0
+
+                    onClicked: {
+                        Settings3DController.changeSceneVisibility(checked)
+//                       itemChangeActive(settings3DButton)
+                    }
+                }
 
                 CButton {
                     id: visible2dButton

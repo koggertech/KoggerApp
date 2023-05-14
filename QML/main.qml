@@ -22,12 +22,12 @@ Window  {
     color: "black"
     title: qsTr("KoggerApp, KOGGER")
 
-//    Settings {
-//        property alias x: mainview.x
-//        property alias y: mainview.y
-//        property alias width: mainview.width
-//        property alias height: mainview.height
-//    }
+    //    Settings {
+    //        property alias x: mainview.x
+    //        property alias y: mainview.y
+    //        property alias width: mainview.width
+    //        property alias height: mainview.height
+    //    }
 
     SplitView {
         Layout.fillHeight: true
@@ -238,15 +238,20 @@ Window  {
                     }
 
                 }
+
+
+
             }
 
             Rectangle {
+                visible: menuBar.is2DVisible
                 Layout.fillWidth: true
                 height: 1
                 color: theme.controlBorderColor
             }
 
             CSlider {
+                visible: menuBar.is2DVisible
                 id: historyScroll
                 Layout.fillWidth: true
                 width: mainview.width
@@ -258,6 +263,8 @@ Window  {
 
                 onValueChanged: core.setTimelinePosition(value);
             }
+
+
         }
 
         Console {
