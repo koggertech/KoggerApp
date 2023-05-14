@@ -213,6 +213,7 @@ public:
 
         m_position.N = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
         m_position.E = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
+
     }
 
     float dopplerProcessing(const int32_t w_size, const int32_t w_size2, int decm) {
@@ -465,6 +466,9 @@ public:
 
     QImage getImage(QSize size);
 
+    //! Установить указатель на модель 3D - сцены
+    void set3DSceneModel(const ModelPointer pModel);
+
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
@@ -508,13 +512,21 @@ public slots:
 
     void setThemeId(int theme_id);
 
-    void set3DRender(FboInSGRenderer* render) { _render3D = render; }
+    void set3DRender(FboInSGRenderer* render) {
+        _render3D = render;
+        _render3D->setModel(mp3DSceneModel);
+    }
     void updateRender3D() {
         if(_render3D != NULL) {
             _render3D->updateBottomTrack(_bottomTrack);
         }
     }
     void updateBottomTrack(bool update_all = false);
+
+private:
+
+    //! Указатель на модель 3D - сцены
+    ModelPointer mp3DSceneModel;
 
 signals:
     void updatedImage();

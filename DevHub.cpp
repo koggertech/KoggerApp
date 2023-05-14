@@ -168,6 +168,8 @@ void Device::putData(const QByteArray &data) {
             }
         }
     }
+
+    int a = 0;
 }
 
 void Device::binFrameOut(ProtoBinOut &proto_out) {

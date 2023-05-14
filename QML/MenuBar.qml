@@ -10,7 +10,7 @@ Item {
 
     property var lastItem: menuSettings
     property bool isConsoleVisible: consoleEnable.checked
-    property bool is3DVisible: visible3dButton.checked
+    property bool is3DVisible: scene3DSettings.is3DVisible
     property bool is2DVisible: visible2dButton.checked
     property bool is2DHorizontal: appSettings.is2DHorizontal
 
@@ -68,6 +68,17 @@ Item {
 
                     onPressed: {
                         itemChangeActive(menuDisplay)
+                    }
+                }
+
+                MenuButton {
+                    id: menu3DSettings
+                    icon.source: "./3dcube.svg"
+
+                    Layout.fillWidth: true
+
+                    onPressed: {
+                        itemChangeActive(menu3DSettings)
                     }
                 }
 
@@ -189,18 +200,19 @@ Item {
 
                 MenuBlock { }
 
-                CButton {
-                    id: visible3dButton
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-//                    Layout.preferredHeight: 24
-                    text: "3D"
-                    checkable: true
-                    padding: 0
-                    onClicked: {
-//                        if(checked) { core.movePoints() }
-                    }
-                }
+                //CButton {
+                //    id: settings3DButton
+                //    //id: visible3dButton
+                //    Layout.fillWidth: true
+                //    Layout.margins: 4
+//              //      Layout.preferredHeight: 24
+                //    text: "3D"
+                //    checkable: true
+                //    padding: 0
+                //    onClicked: {
+                //       itemChangeActive(settings3DButton)
+                //    }
+                //}
 
                 CButton {
                     id: visible2dButton
@@ -217,6 +229,8 @@ Item {
                 }
             }
         }
+
+
 
         DeviceSettingsViewer {
             id: devSettings
@@ -238,5 +252,17 @@ Item {
 
             y:0
         }
+
+        Settings3DView {
+            id: scene3DSettings
+            Layout.alignment: Qt.AlignTop
+            visible: menu3DSettings.active
+            Layout.maximumHeight: menu.height
+            width: settingsWidth
+            implicitWidth: settingsWidth
+
+            y:0
+        }
+
     }
 }

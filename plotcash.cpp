@@ -295,6 +295,11 @@ PlotCash::PlotCash() {
     setThemeId(0);
 }
 
+void PlotCash::set3DSceneModel(const ModelPointer pModel)
+{
+    mp3DSceneModel = pModel;
+}
+
 void PlotCash::addEvent(int timestamp, int id, int unixt) {
     lastEventTimestamp = timestamp;
     lastEventId = id;
@@ -917,13 +922,22 @@ void PlotCash::updateBottomTrack(bool update_all) {
     if(update_all) { from_index = 0; }
 
     _bottomTrack.resize(to_size);
+
     for(int i = from_index; i < to_size; i+=1) {
         PoolDataset* dataset = fromPool(_gnssTrackIndex[i]);
         _bottomTrack[i] = _boatTrack[i];
         _bottomTrack[i][2] = -dataset->relPosD();
     }
 
-    updateRender3D();
+    if (mp3DSceneModel){
+        mp3DSceneModel->setBottomTrack(_bottomTrack);
+    }
+
+    //if (update_all){
+
+    //    updateRender3D();
+    //}
+
 }
 
 void PlotCash::updateValueMap(int width, int height) {

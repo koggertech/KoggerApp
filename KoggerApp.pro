@@ -49,12 +49,14 @@ SOURCES += \
         core.cpp \
 #        coreFlash.cpp \
         filelist.cpp \
+    interpolatorbase.cpp \
         logger.cpp \
         main.cpp \
         flasher.cpp \
         plotcash.cpp \
         streamlist.cpp \
         waterfall.cpp \
+
 
 android {
 SOURCES += \
@@ -65,9 +67,8 @@ SOURCES += \
     qtandroidserialport/src/qserialportinfo_android.cpp \
 }
 
-
-
-RESOURCES += QML/qml.qrc
+RESOURCES += QML/qml.qrc \
+    shaders.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -97,11 +98,12 @@ HEADERS += \
     filelist.h \
     flasher.h \
     core.h \
+    interpolatorbase.h \
     logger.h \
     plotcash.h \
     streamlist.h \
     waterfall.h \
-    waterfallproxy.h
+    waterfallproxy.h \
 
 android {
 HEADERS += \
@@ -115,6 +117,7 @@ HEADERS += \
 
 
 DISTFILES += \
+    QML/Settings3DView.qml \
     QML/AdjBox.qml \
     QML/AdjBoxBack.qml \
     QML/BackStyle.qml \
@@ -135,6 +138,10 @@ DISTFILES += \
     QML/UpgradeBox.qml \
     QML/FlashBox.qml \
     QML/main.qml \
+    a.fsh \
+    base.vsh \
+    heightcolor.frag \
+    staticcolor.fsh
 
 
 android {
@@ -147,12 +154,20 @@ DISTFILES += \
     android/gradlew.bat \
     android/res/values/libs.xml \
     qtandroidserialport/src/qtandroidserialport.pri
-
 }
 
 android {
     ANDROID_ABIS = armeabi-v7a
 }
+
+LIBS += -lopengl32
+
+include ($$PWD/core/core.pri)
+include ($$PWD/factories/factories.pri)
+include ($$PWD/processors/processors.pri)
+include ($$PWD/domain/domain.pri)
+include ($$PWD/models/models.pri)
+include ($$PWD/controllers/controllers.pri)
 
 #ANDROID_ABIS = x86
 

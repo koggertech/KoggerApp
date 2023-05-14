@@ -7,17 +7,25 @@
 #include <DevQProperty.h>
 #include <QUrl>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <waterfall.h>
 #include <DevHub.h>
 #include <logger.h>
 #include <QThread>
 #include <3Plot.h>
 
+#include <Q3DSettingsController.h>
+#include <Q3DSceneModel.h>
+
 //#define FLASHER
 
 #ifdef FLASHER
 #include "flasher.h"
 #endif
+
+using Settings3DController = std::shared_ptr <Q3DSettingsController>;
+using Scene3DModel         = std::shared_ptr <Q3DSceneModel>;
+
 
 class Core : public QObject
 {
@@ -52,9 +60,17 @@ public:
 
     void consoleProto(FrameParser &parser, bool is_in = true);
 
-    void setEngine(QQmlApplicationEngine *engine) {
-        m_engine = engine;
-    }
+    void setEngine(QQmlApplicationEngine *engine);
+
+private:
+
+    //! Метод создания контроллеров
+    void createControllers();
+    //! Метод создания моделей
+    void createModels();
+
+    Settings3DController mpSettings3DController;
+    Scene3DModel mpScene3DModel;
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
