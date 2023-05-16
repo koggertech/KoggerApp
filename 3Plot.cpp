@@ -102,6 +102,10 @@ void Scene3D::setModel(const ModelPointer pModel)
 
     mBottomTrackDisplayedObject.setData(object.cdata());
     mBottomTrackDisplayedObject.setPrimitiveType(object.primitiveType());
+
+    bottomTrackPropertiesChanged();
+    surfacePropertiesChanged();
+    contourPropertiesChanged();
 }
 
 void Scene3D::modelStateChanged()

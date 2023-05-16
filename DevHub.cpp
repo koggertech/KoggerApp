@@ -163,8 +163,29 @@ void Device::putData(const QByteArray &data) {
 
         if(_parser.isCompleteAsMAVLink()) {
             ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)_parser;
+            if(mavlink_frame.msgId() == 33) { // GLOBAL_POSITION_INT
+                MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
+                if(pos.isValid()) {
+                    core.plot()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2").arg(pos.latitude()).arg(pos.longitude()));
+                }
+            }
+
+//            if(mavlink_frame.msgId() == 1) { // SYS_STATUS
+//                MAVLink_MSG_SYS_STATUS sys_status = mavlink_frame.read<MAVLink_MSG_SYS_STATUS>();
+
+//                core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(sys_status.batteryVoltage()).arg(sys_status.batteryCurrent()));
+//            }
+
+            if(mavlink_frame.msgId() == 147) { // BATTERY_STATUS
+                 MAVLink_MSG_BATTERY_STATUS battery_status = mavlink_frame.read<MAVLink_MSG_BATTERY_STATUS>();
+                 core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(battery_status.voltage()).arg(battery_status.current()));
+            }
+
+
+
             if(_isConsoled) {
-                core.consoleInfo(QString(">> MAVLink v%1: msg id %2, comp id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
             }
         }
     }

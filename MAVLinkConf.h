@@ -471,4 +471,113 @@ inline uint8_t getMAVLinkExtra(uint32_t msgid) {
     return 0;
 }
 
+
+typedef struct   __attribute__((packed)) {
+    uint32_t time_boot_ms; // Timestamp (time since system boot), ms
+    int32_t	lat; // Latitude, expressed, degE7
+    int32_t	 lon; // Longitude, expressed, degE7
+    int32_t	alt; // mm
+    int32_t relative_alt; // mm
+    int16_t vx; // cm/s
+    int16_t vy; // cm/s
+    int16_t vz; // cm/s
+    uint16_t hdg; // cdeg
+
+    double latitude() {
+        return double(lat)/1e7;
+    }
+
+    double longitude() {
+        return double(lon)/1e7;
+    }
+
+    uint32_t time_boot_msec() {
+        return time_boot_ms;
+    }
+
+    bool isValid() {
+        return lat != 0 || lon != 0;
+    }
+
+} MAVLink_MSG_GLOBAL_POSITION_INT;
+
+
+typedef struct   __attribute__((packed)) {
+    float airspeed; // m/s
+    float groundspeed; // m/s
+    int16_t heading; // deg
+    uint16_t throttle; // %
+    uint16_t alt; // m
+    float climb; // m/s
+} MAVLink_MSG_VFR_HUD;
+
+
+typedef struct   __attribute__((packed)) {
+    uint32_t onboard_control_sensors_present; // MAV_SYS_STATUS_SENSOR	Bitmap showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present.
+    uint32_t onboard_control_sensors_enabled; // MAV_SYS_STATUS_SENSOR	Bitmap showing which onboard controllers and sensors are enabled: Value of 0: not enabled. Value of 1: enabled.
+    uint32_t onboard_control_sensors_health; // MAV_SYS_STATUS_SENSOR	Bitmap showing which onboard controllers and sensors have an error (or are operational). Value of 0: error. Value of 1: healthy.
+    uint16_t load; // d%		Maximum usage in percent of the mainloop time. Values: [0-1000] - should always be below 1000
+    uint16_t voltage_battery; // mV		Battery voltage, UINT16_MAX: Voltage not sent by autopilot
+    int16_t current_battery; // cA		Battery current, -1: Current not sent by autopilot
+    int8_t battery_remaining; // %		Battery energy remaining, -1: Battery remaining energy not sent by autopilot
+    uint16_t drop_rate_comm; // c%		Communication drop rate, (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+    uint16_t errors_comm; //				Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+
+    float batteryVoltage() {
+        if(voltage_battery == UINT16_MAX) {
+            return 0;
+        } else {
+            return 0.001f*voltage_battery;
+        }
+    }
+
+    float batteryCurrent() {
+        if(current_battery == -1) {
+            return 0;
+        } else {
+            return 0.001f*current_battery;
+        }
+    }
+} MAVLink_MSG_SYS_STATUS;
+
+typedef struct   __attribute__((packed)) {
+    int32_t current_consumed; /*< [mAh] Consumed charge, -1: autopilot does not provide consumption estimate*/
+     int32_t energy_consumed; /*< [hJ] Consumed energy, -1: autopilot does not provide energy consumption estimate*/
+     int16_t temperature; /*< [cdegC] Temperature of the battery. INT16_MAX for unknown temperature.*/
+     uint16_t voltages[10]; /*< [mV] Battery voltage of cells 1 to 10 (see voltages_ext for cells 11-14). Cells in this field above the valid cell count for this battery should have the UINT16_MAX value. If individual cell voltages are unknown or not measured for this battery, then the overall battery voltage should be filled in cell 0, with all others set to UINT16_MAX. If the voltage of the battery is greater than (UINT16_MAX - 1), then cell 0 should be set to (UINT16_MAX - 1), and cell 1 to the remaining voltage. This can be extended to multiple cells if the total voltage is greater than 2 * (UINT16_MAX - 1).*/
+     int16_t current_battery; /*< [cA] Battery current, -1: autopilot does not measure the current*/
+     uint8_t id; /*<  Battery ID*/
+     uint8_t battery_function; /*<  Function of the battery*/
+     uint8_t type; /*<  Type (chemistry) of the battery*/
+     int8_t battery_remaining; /*< [%] Remaining battery energy. Values: [0-100], -1: autopilot does not estimate the remaining battery.*/
+     int32_t time_remaining; /*< [s] Remaining battery time, 0: autopilot does not provide remaining battery time estimate*/
+     uint8_t charge_state; /*<  State for extent of discharge, provided by autopilot for warning or external reactions*/
+     uint16_t voltages_ext[4]; /*< [mV] Battery voltages for cells 11 to 14. Cells above the valid cell count for this battery should have a value of 0, where zero indicates not supported (note, this is different than for the voltages field and allows empty byte truncation). If the measured value is 0 then 1 should be sent instead.*/
+     uint8_t mode; /*<  Battery mode. Default (0) is that battery mode reporting is not supported or battery is in normal-use mode.*/
+     uint32_t fault_bitmask; /*<  Fault/health indications. These should be set when charge_state is MAV_BATTERY_CHARGE_STATE_FAILED or MAV_BATTERY_CHARGE_STATE_UNHEALTHY (if not, fault reporting is not supported).*/
+
+    float voltage() {
+        float voltage = 0;
+        for(uint16_t i = 0; i < 10; i++) {
+            if(voltages[i] != UINT16_MAX) {
+                voltage += voltages[i];
+            } else {
+                break;
+            }
+        }
+        if(voltages[0] == UINT16_MAX) {
+            return 0;
+        } else {
+            return 0.001f*voltage;
+        }
+    }
+
+    float current() {
+        if(current_battery == -1) {
+            return 0;
+        } else {
+            return 0.01f*current_battery;
+        }
+    }
+} MAVLink_MSG_BATTERY_STATUS;
 #endif // MAVLINKCONF_H
