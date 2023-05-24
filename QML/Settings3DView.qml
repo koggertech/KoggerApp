@@ -166,6 +166,93 @@ MenuScroll {
                 }
 
                 ParamGroup {
+                    groupName: "Bottom track processing"
+
+                    ParamSetup {
+                        paramName: "Filtration method:"
+
+                        CCombo  {
+                            id: btFiltrationMethodCCombo
+                            Layout.fillWidth: true
+                            model: ["None","Nearest point", "Max points"]
+                            enabled:Scene3DModel.triangulationAvailable()
+                            currentIndex: 0
+                            onCurrentTextChanged: Settings3DController.changeBottomTrackFiltrationMethod(currentText)
+                            Component.onCompleted: Settings3DController.changeBottomTrackFiltrationMethod(currentText)
+
+                            contentItem: Text {
+                                font: theme.textFont
+                                text: btFiltrationMethodCCombo.currentText
+                                color: enabled ? theme.textColor : theme.disabledTextColor
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                color: {
+                                    !btFiltrationMethodCCombo.enabled ? theme.disabledBackColor :
+                                                                btFiltrationMethodCCombo.hovered ? theme.hoveredBackColor  :
+                                                                                           theme.controlBackColor
+                                }
+                            }
+                        }
+                    }
+
+                    ParamSetup {
+                        paramName: "Range, m:"
+
+                        visible: btFiltrationMethodCCombo.currentText == "Nearest point"
+
+                        SpinBoxCustom {
+                            id: nearestPointRangeSpinBox
+                            from: 0
+                            to: 1000000
+                            stepSize: 100
+                            value: 40000
+
+                            property int decimals: 2
+                            property real realValue: value / 1000
+
+                            validator: DoubleValidator {
+                                bottom: Math.min(from, to)
+                                top:  Math.max(from, to)
+                            }
+
+                            textFromValue: function(value, locale) {
+                                return Number(value / 1000).toLocaleString(locale, 'f', decimals)
+                            }
+
+                            valueFromText: function(text, locale) {
+                                return Number.fromLocaleString(locale, text) * 1000
+                            }
+
+                            onRealValueChanged: Settings3DController.changeNearestPointFiltrationRange(value / 1000)
+                            Component.onCompleted: Settings3DController.changeNearestPointFiltrationRange(value / 1000)
+
+                            Settings {
+                                property alias nearestPointRangeSpinBox: nearestPointRangeSpinBox.value
+                            }
+                        }
+                    }
+
+
+                    ParamSetup {
+                        paramName: "Count"
+
+                        visible: btFiltrationMethodCCombo.currentText == "Max points"
+
+                        SpinBoxCustom {
+                            from: 2
+                            to: 1000000
+                            stepSize: 1
+                            value: 1
+                            onValueChanged: Settings3DController.changeMaxPointsFiltrationCount(value)
+                        }
+                    }
+
+                }
+
+                ParamGroup {
                     groupName: "Surface processing"
 
                     ParamSetup {
