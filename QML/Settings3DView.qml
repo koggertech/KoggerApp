@@ -176,7 +176,7 @@ MenuScroll {
                             Layout.fillWidth: true
                             model: ["None","Nearest point", "Max points"]
                             enabled:Scene3DModel.triangulationAvailable()
-                            currentIndex: 0
+                            currentIndex: 2
                             onCurrentTextChanged: Settings3DController.changeBottomTrackFiltrationMethod(currentText)
                             Component.onCompleted: Settings3DController.changeBottomTrackFiltrationMethod(currentText)
 
@@ -194,6 +194,10 @@ MenuScroll {
                                                                 btFiltrationMethodCCombo.hovered ? theme.hoveredBackColor  :
                                                                                            theme.controlBackColor
                                 }
+                            }
+
+                            Settings {
+                                property alias btFiltrationMethodCCombo: btFiltrationMethodCCombo.currentIndex
                             }
                         }
                     }
@@ -245,7 +249,7 @@ MenuScroll {
                             from: 2
                             to: 1000000
                             stepSize: 1
-                            value: 1
+                            value: 400
                             onValueChanged: Settings3DController.changeMaxPointsFiltrationCount(value)
                         }
                     }
