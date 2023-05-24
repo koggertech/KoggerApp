@@ -31,10 +31,13 @@ void Core::createControllers()
 
 void Core::createModels()
 {
-    mpScene3DModel = std::make_shared <Q3DSceneModel> ();
+
+    auto bottomTrackProvider = std::make_shared <BottomTrackProvider>();
+    mpScene3DModel = std::make_shared <Q3DSceneModel> (bottomTrackProvider);
 
     mpSettings3DController->setModel(mpScene3DModel);
     m_plot->set3DSceneModel(mpScene3DModel);
+    m_plot->setBottomTrackProvider(bottomTrackProvider);
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)
