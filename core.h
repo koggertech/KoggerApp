@@ -16,6 +16,7 @@
 
 #include <Q3DSettingsController.h>
 #include <Q3DSceneModel.h>
+#include <bottomtrackprovider.h>
 
 //#define FLASHER
 
