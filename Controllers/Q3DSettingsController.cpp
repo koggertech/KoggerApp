@@ -116,3 +116,52 @@ void Q3DSettingsController::changeGridCellSize(double size)
 {
     mpModel->changeGridCellSize(size);
 }
+
+void Q3DSettingsController::changeBottomTrackFiltrationMethod(QString method)
+{
+    if (mBottomTrackFiltrationMethod == method)
+        return;
+
+    mBottomTrackFiltrationMethod = method;
+
+    updateBottomTrackFilter();
+}
+
+void Q3DSettingsController::changeNearestPointFiltrationRange(float range)
+{
+    if (mNearestPointFiltrationRange == range)
+        return;
+
+    mNearestPointFiltrationRange = range;
+
+    updateBottomTrackFilter();
+}
+
+void Q3DSettingsController::changeMaxPointsFiltrationCount(int count)
+{
+    if (mMaxPointsFiltrationCount == count)
+        return;
+
+    mMaxPointsFiltrationCount = count;
+
+    updateBottomTrackFilter();
+}
+
+void Q3DSettingsController::updateBottomTrackFilter()
+{
+    std::shared_ptr <AbstractBottomTrackFilter> filter = nullptr;
+
+    if (mBottomTrackFiltrationMethod == BT_FILTRATION_METHOD_NEAREST_POINT){
+        auto temp = std::make_shared <NearestPointFilter>();
+        temp->setRange(mNearestPointFiltrationRange);
+        filter = temp;
+    }
+
+    if (mBottomTrackFiltrationMethod == BT_FILTRATION_METHOD_MAX_POINTS){
+        auto temp = std::make_shared <MaxPointsFilter>();
+        temp->setMaxPointsCount(mMaxPointsFiltrationCount);
+        filter = temp;
+    }
+
+    mpModel->setBottomTrackFilter(filter);
+}

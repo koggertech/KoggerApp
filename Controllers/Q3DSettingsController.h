@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QThread>
 #include "Q3DSceneModel.h"
+#include <nearestpointfilter.h>
+#include <maxpointsfilter.h>
 
 using ModelPointer  = std::shared_ptr <Q3DSceneModel>;
 
@@ -36,6 +38,12 @@ public:
     Q_INVOKABLE void changeGridType(QString type);
 
     Q_INVOKABLE void changeGridCellSize(double length);
+
+    Q_INVOKABLE void changeBottomTrackFiltrationMethod(QString method);
+
+    Q_INVOKABLE void changeNearestPointFiltrationRange(float range);
+
+    Q_INVOKABLE void changeMaxPointsFiltrationCount(int count);
 
 public slots:
 
@@ -84,10 +92,18 @@ public slots:
 
 private:
 
+    void updateBottomTrackFilter();
+
+private:
+
     //! Указатель на модель 3D - сцены
     ModelPointer mpModel;
     //! Указатель на поток расчета поверхности
     QThread* mpThread;
+
+    QString mBottomTrackFiltrationMethod = BT_FILTRATION_METHOD_NEAREST_POINT;
+    float mNearestPointFiltrationRange = 1.0f;
+    int mMaxPointsFiltrationCount = 1;
 
 };
 
