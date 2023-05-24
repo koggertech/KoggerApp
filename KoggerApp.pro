@@ -43,6 +43,7 @@ SOURCES += \
     Link.cpp \
         ProtoBinnary.cpp \
         StreamListModel.cpp \
+    bottomtrackprovider.cpp \
         connection.cpp \
         console.cpp \
         consolelistmodel.cpp \
@@ -53,6 +54,8 @@ SOURCES += \
         logger.cpp \
         main.cpp \
         flasher.cpp \
+    maxpointsfilter.cpp \
+    nearestpointfilter.cpp \
         plotcash.cpp \
         streamlist.cpp \
         waterfall.cpp \
@@ -92,6 +95,8 @@ HEADERS += \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
+    abstractbottomtrackfilter.h \
+    bottomtrackprovider.h \
     connection.h \
     console.h \
     consolelistmodel.h \
@@ -100,6 +105,8 @@ HEADERS += \
     core.h \
     interpolatorbase.h \
     logger.h \
+    maxpointsfilter.h \
+    nearestpointfilter.h \
     plotcash.h \
     streamlist.h \
     waterfall.h \
