@@ -12,4 +12,7 @@ static const QString SMOOTHING_METHOD_BARYCENTRIC  = "Barycentric";
 static const QString GRID_TYPE_QUAD = "Quad";
 static const QString GRID_TYPE_TRIANGLE = "Triangle";
 
+static const QString BT_FILTRATION_METHOD_NEAREST_POINT = "Nearest point";
+static const QString BT_FILTRATION_METHOD_MAX_POINTS = "Max points";
+
 #endif // CONSTANTS_H
