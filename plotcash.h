@@ -468,6 +468,7 @@ public:
 
     //! Установить указатель на модель 3D - сцены
     void set3DSceneModel(const ModelPointer pModel);
+    void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
@@ -527,6 +528,7 @@ private:
 
     //! Указатель на модель 3D - сцены
     ModelPointer mp3DSceneModel;
+    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
 
 signals:
     void updatedImage();

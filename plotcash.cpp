@@ -300,6 +300,11 @@ void PlotCash::set3DSceneModel(const ModelPointer pModel)
     mp3DSceneModel = pModel;
 }
 
+void PlotCash::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
+{
+    mpBottomTrackProvider = bottomTrackProvider;
+}
+
 void PlotCash::addEvent(int timestamp, int id, int unixt) {
     lastEventTimestamp = timestamp;
     lastEventId = id;
@@ -933,6 +938,9 @@ void PlotCash::updateBottomTrack(bool update_all) {
         mp3DSceneModel->setBottomTrack(_bottomTrack);
     }
 
+    if (mpBottomTrackProvider){
+        mpBottomTrackProvider->setBottomTrack(_bottomTrack);
+    }
     //if (update_all){
 
     //    updateRender3D();
