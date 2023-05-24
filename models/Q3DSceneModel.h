@@ -24,6 +24,8 @@
 #include "contour.h"
 #include "sceneparams.h"
 #include "processingcasefactory.h"
+#include <abstractbottomtrackfilter.h>
+#include <bottomtrackprovider.h>
 
 using Vector3             = QVector <QVector3D>;
 using Vector3Pointer      = std::shared_ptr <Vector3>;
@@ -37,11 +39,14 @@ public:
 
     //! @brief Конструктор
     //! @param[in] pParent - указатель на объект родителя
-    explicit Q3DSceneModel(QObject *pParent = nullptr);
+    explicit Q3DSceneModel(std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
+                           QObject *pParent = nullptr);
 
     //! @brief Передать указатель на данные трека
     //! @param[in] указатель на данные трека
     void setBottomTrack(const QVector <QVector3D>& pBottomTrack);
+
+    void setBottomTrackFilter(std::shared_ptr <AbstractBottomTrackFilter> filter);
 
     //! @brief Отобразить/скрыть 3D - сцену
     //! @param[in]  - признак необходимости отобразить
@@ -180,6 +185,8 @@ private:
     Surface mSurfaceDisplayedObject;         //< Отображаемый объект "Поверхность"
     Contour mContourDisplayedObject;         //< Отображаемый объект "Контур поверхности"
     SceneParams mParams;                     //< Объект параметров обработки и расчета
+    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
+    std::shared_ptr <AbstractBottomTrackFilter> mpBottomTrackFilter;
 
 signals:
 

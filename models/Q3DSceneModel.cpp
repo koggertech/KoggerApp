@@ -1,7 +1,9 @@
 #include "Q3DSceneModel.h"
 
-Q3DSceneModel::Q3DSceneModel(QObject *parent)
-    : QObject{parent}
+Q3DSceneModel::Q3DSceneModel(std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
+                             QObject *parent)
+    :QObject(parent),
+     mpBottomTrackProvider(bottomTrackProvider)
 {
     mIsProcessingAvailable.store(true);
 }
@@ -10,9 +12,24 @@ void Q3DSceneModel::setBottomTrack(const QVector <QVector3D>& bottomTrack)
 {
     QMutexLocker locker(&mBottomTrackMutex);
 
-    mBottomTrackDisplayedObject.setData(bottomTrack);
+    if (mpBottomTrackFilter){
+        QVector <QVector3D> filtered;
+        mpBottomTrackFilter->apply(bottomTrack, filtered);
+        mBottomTrackDisplayedObject.setData(filtered);
+    }else{
+        mBottomTrackDisplayedObject.setData(bottomTrack);
+    }
 
     Q_EMIT bottomTrackDataChanged();
+}
+
+void Q3DSceneModel::setBottomTrackFilter(std::shared_ptr<AbstractBottomTrackFilter> filter)
+{
+    mpBottomTrackFilter = filter;
+
+    auto track = mpBottomTrackProvider->getBottomTrack();
+
+    setBottomTrack(track);
 }
 
 void Q3DSceneModel::changeSceneVisibility(const bool visible)
