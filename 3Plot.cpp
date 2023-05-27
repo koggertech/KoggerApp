@@ -221,8 +221,8 @@ void Scene3D::displayBottomTrack() {
     int colorLoc = pProgram->uniformLocation("color");
 
     pProgram->setUniformValue(colorLoc,color);
-    pProgram->setUniformValue(maxZLoc, mBottomTrackDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mBottomTrackDisplayedObject.minimumZ());
+    pProgram->setUniformValue(maxZLoc, mBottomTrackDisplayedObject.bounds().maximumZ());
+    pProgram->setUniformValue(minZLoc, mBottomTrackDisplayedObject.bounds().minimumZ());
     pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
     pProgram->enableAttributeArray(posLoc);
     pProgram->setAttributeArray(posLoc, mBottomTrackDisplayedObject.cdata().constData());
@@ -249,8 +249,8 @@ void Scene3D::displayBottomSurface()
     int minZLoc   = pProgram->uniformLocation("min_z");
     int matrixLoc = pProgram->uniformLocation("matrix");
 
-    pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.minimumZ());
+    pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.bounds().maximumZ());
+    pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.bounds().minimumZ());
     pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
 
     pProgram->enableAttributeArray(posLoc);
@@ -286,8 +286,8 @@ void Scene3D::displayBottomSurfaceGrid()
         pProgram->setUniformValue(colorLoc, color);
     }
 
-    pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.minimumZ());
+    pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.bounds().maximumZ());
+    pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.bounds().minimumZ());
     pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
 
     pProgram->enableAttributeArray(posLoc);
