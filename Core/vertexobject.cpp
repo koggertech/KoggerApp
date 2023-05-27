@@ -58,16 +58,6 @@ const QVector<QVector3D> &VertexObject::cdata() const
     return mData;
 }
 
-float VertexObject::maximumZ() const
-{
-    return mMaximumZ;
-}
-
-float VertexObject::minimumZ() const
-{
-    return mMinimumZ;
-}
-
 Cube VertexObject::bounds() const
 {
     return mBounds;

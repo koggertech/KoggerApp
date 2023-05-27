@@ -109,41 +109,9 @@ public:
     const QVector <QVector3D>& cdata() const;
 
     /**
-     * @brief Возвращает максимальное значение вершины по оси z.
-     * @return Максимальное значение вершины по оси z.
+     * @brief Возвращает границы объекта в виде куба.
+     * @return Границы объекта в виде куба.
      */
-    float maximumZ() const;
-
-    /**
-     * @brief Возвращает минимальное значение вершины по оси z.
-     * @return Минимальное значение вершины по оси z.
-     */
-    float minimumZ() const;
-
-    /**
-     * @brief Возвращает минимальное значение вершины по оси x.
-     * @return Минимальное значение вершины по оси x.
-     */
-    float maximumX() const;
-
-    /**
-     * @brief Возвращает минимальное значение вершины по оси x.
-     * @return Минимальное значение вершины по оси x.
-     */
-    float minimumX() const;
-
-    /**
-     * @brief Возвращает минимальное значение вершины по оси y.
-     * @return Минимальное значение вершины по оси y.
-     */
-    float maximumY() const;
-
-    /**
-     * @brief Возвращает минимальное значение вершины по оси y.
-     * @return Минимальное значение вершины по оси y.
-     */
-    float minimumY() const;
-
     Cube bounds() const;
 
 protected:
@@ -155,11 +123,4 @@ protected:
     int mPrimitiveType;        //< Тип примитива для отображения в движке openGL (из набора дефайнов gl.h).
     QVector <QVector3D> mData; //< Набор вершин объекта.
     Cube mBounds = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
-    float mMaximumZ = 0.0f;
-    float mMinimumZ = 0.0f;;
-    float mMaximumX = 0.0f;
-    float mMinimumX = 0.0f;;
-    float mMaximumY = 0.0f;
-    float mMinimumY = 0.0f;;
-
 };
