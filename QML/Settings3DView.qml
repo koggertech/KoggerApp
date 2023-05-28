@@ -149,19 +149,33 @@ MenuScroll {
                         }
                     }
 
-                    //            ParamSetup {
-                    //                paramName: "Line width: "
+                    ParamSetup {
+                        paramName: "Line width: "
 
-                    //                Slider {
-                    //                    id: lineWidthSlider
-                    //                    Layout.fillWidth: true
-                    //                    stepSize: 1.0
-                    //                    from: 1.0
-                    //                    value: 6.0
-                    //                    to: 10.0
-                    //                    onValueChanged: Settings3DController.changeContourLineWidth(value)
-                    //                }
-                    //            }
+                        Slider {
+                            id: lineWidthSlider
+                            Layout.fillWidth: true
+                            stepSize: 1.0
+                            from: 1.0
+                            value: 6.0
+                            to: 10.0
+                            onValueChanged: Settings3DController.changeContourLineWidth(value)
+                        }
+                    }
+
+                    ParamSetup {
+                        paramName: "Grid step, m: "
+
+                        Slider {
+                            id: gridStepSpinBox
+                            Layout.fillWidth: true
+                            stepSize: 1.0
+                            from: 0.1
+                            value: 2.0
+                            to: 10.0
+                            onValueChanged: Settings3DController.changeMarkupGridCellSize(value)
+                        }
+                    }
 
                 }
 
