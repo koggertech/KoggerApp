@@ -147,6 +147,11 @@ void Q3DSettingsController::changeMaxPointsFiltrationCount(int count)
     updateBottomTrackFilter();
 }
 
+void Q3DSettingsController::changeMarkupGridCellSize(float size)
+{
+    mpModel->changeMarkupGridCellSize(size);
+}
+
 void Q3DSettingsController::updateBottomTrackFilter()
 {
     std::shared_ptr <AbstractBottomTrackFilter> filter = nullptr;

@@ -45,6 +45,8 @@ public:
 
     Q_INVOKABLE void changeMaxPointsFiltrationCount(int count);
 
+    Q_INVOKABLE void changeMarkupGridCellSize(float size);
+
 public slots:
 
     //! @brief Изменить метод расчета поверхности
