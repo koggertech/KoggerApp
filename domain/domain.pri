@@ -19,6 +19,7 @@ HEADERS += \
     $$PWD/markupgrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
+    $$PWD/sceneboundary.h \
     $$PWD/sceneparams.h \
     $$PWD/surface.h \
     $$PWD/gridgenerator.h
@@ -27,6 +28,7 @@ SOURCES += \
     $$PWD/bottomtrack.cpp\
     $$PWD/contour.cpp\
     $$PWD/markupgrid.cpp \
+    $$PWD/sceneboundary.cpp \
     $$PWD/surface.cpp
 
 	
