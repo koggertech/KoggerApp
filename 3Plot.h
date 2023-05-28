@@ -75,6 +75,8 @@ public slots:
     void contourDataChanged();
     void contourPropertiesChanged();
 
+    void markupGridDataChanged();
+
 private:
     qreal   m_fScale = 1;
     QVector2D _size;
@@ -113,6 +115,11 @@ private:
 
     void displayContourKeyPoints();
 
+    void displayBounds();
+
+    void displayMarkupGrid();
+
+    void displayAxis();
 
     Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
@@ -155,9 +162,9 @@ private:
     QVector <QVector3D> mSmoothedSurface;
 
     Surface mSurfaceDisplayedObject;
-    Surface mSmoothedSurfaceDisplayedObject;
     BottomTrack mBottomTrackDisplayedObject;
     Contour mContourDisplayedObject;
+    MarkupGrid mMarkupGridDisplayedObject;
 
     std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
     std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
