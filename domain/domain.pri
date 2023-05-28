@@ -15,6 +15,8 @@ HEADERS += \
     $$PWD/boundarydetector.h \
     $$PWD/bowyerwatsondelaunay.h \
     $$PWD/contour.h\
+    $$PWD/cube.h \
+    $$PWD/markupgrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
     $$PWD/sceneparams.h \
@@ -24,6 +26,7 @@ HEADERS += \
 SOURCES += \
     $$PWD/bottomtrack.cpp\
     $$PWD/contour.cpp\
+    $$PWD/markupgrid.cpp \
     $$PWD/surface.cpp
 
 	
