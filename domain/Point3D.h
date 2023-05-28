@@ -3,6 +3,10 @@
 #include <iostream>
 #include <point2d.h>
 
+#ifdef QT_CORE_LIB
+#include <QVector3D>
+#endif
+
 template <typename T>
 class Point3D
 {
@@ -64,6 +68,16 @@ public:
         out << "X: " << point.x() << ", Y: " << point.y() << ", Z: " << point.z() << std::endl;
         return out;
     }
+
+#ifdef QT_CORE_LIB
+    QVector3D toQVector3D() const{
+        return {
+            static_cast <float>(mX),
+            static_cast <float>(mY),
+            static_cast <float>(mZ),
+        };
+    };
+#endif
 
 protected:
     //! X - value
