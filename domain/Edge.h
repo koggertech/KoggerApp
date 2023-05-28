@@ -103,3 +103,15 @@ struct std::hash <Edge <T>>
         return h1 ^ h2;
     }
 };
+
+#ifdef QT_CORE_LIB
+template <typename T>
+uint qHash(const Edge <T> &e, uint seed = 4)
+{
+    Q_UNUSED(seed)
+
+    auto h1 = qHash(e.p1());
+    auto h2 = qHash(e.p2());
+    return h1 ^ h2;
+}
+#endif
