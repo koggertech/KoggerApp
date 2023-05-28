@@ -62,7 +62,7 @@ public:
      * @brief Устанавливает набор вершин объекта.
      * @param[in] data - ссылка на набор вершин.
      */
-    void setData(const QVector <QVector3D>& data) override;
+    virtual void setData(const QVector <QVector3D>& data) override;
 
     /**
      *  @brief Устанавливает признак видимости сетки объекта.
