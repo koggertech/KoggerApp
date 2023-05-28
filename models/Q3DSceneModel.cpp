@@ -2,8 +2,8 @@
 
 Q3DSceneModel::Q3DSceneModel(std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
                              QObject *parent)
-    :QObject(parent),
-     mpBottomTrackProvider(bottomTrackProvider)
+:QObject(parent),
+ mpBottomTrackProvider(bottomTrackProvider)
 {
     mIsProcessingAvailable.store(true);
 }
@@ -127,6 +127,26 @@ void Q3DSceneModel::changeGridCellSize(double size)
     mParams.setGridCellSideSize(size);
 }
 
+void Q3DSceneModel::changeMarkupGridCellSize(float size)
+{
+    QMutexLocker surfaceLocker(&mSurfaceMutex);
+
+    auto bounds = mSurfaceDisplayedObject.bounds();
+
+    QMutexLocker markupGridLocker(&mMarkupGridMutex);
+
+    mMarkupGrid.setSize({
+                            bounds.minimumX(),
+                            bounds.minimumY(),
+                            bounds.minimumZ()
+                        },
+                        bounds.width(),
+                        bounds.length(),
+                        size);
+
+    Q_EMIT markupGridDataChanged();
+}
+
 void Q3DSceneModel::updateSurface()
 {
     mIsProcessingAvailable.store(false);
@@ -154,12 +174,23 @@ void Q3DSceneModel::updateSurface()
 
     {
         QMutexLocker surfaceLocker(&mSurfaceMutex);
-
         mSurfaceDisplayedObject.setVertexObject(vobject);
 
         QMutexLocker contourLocker(&mContourMutex);
-
         mContourDisplayedObject.setVertexObject(pCase->contourVertexObject());
+
+        QMutexLocker boundsLocker(&mBoundsMutex);
+        mBounds = mSurfaceDisplayedObject.bounds();
+
+        QMutexLocker markupGridLocker(&mMarkupGridMutex);
+        mMarkupGrid.setSize({
+                                mBounds.minimumX(),
+                                mBounds.minimumY(),
+                                mBounds.minimumZ()
+                            },
+                            mBounds.width(),
+                            mBounds.length(),
+                            2.0f);
     }
 
     mIsProcessingAvailable.store(true);
@@ -167,6 +198,7 @@ void Q3DSceneModel::updateSurface()
     Q_EMIT stateChanged();
     Q_EMIT surfaceDataChanged();
     Q_EMIT contourDataChanged();
+    Q_EMIT markupGridDataChanged();
 }
 
 void Q3DSceneModel::clear()
@@ -180,11 +212,18 @@ void Q3DSceneModel::clear()
 
         QMutexLocker contourLocker(&mContourMutex);
         mContourDisplayedObject.clear();
+
+        QMutexLocker markupGridLocker(&mMarkupGridMutex);
+        mMarkupGrid.clear();
+
+        QMutexLocker boundsLocker(&mBoundsMutex);
+        mBounds = Cube(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     Q_EMIT surfaceDataChanged();
     Q_EMIT contourDataChanged();
     Q_EMIT bottomTrackDataChanged();
+    Q_EMIT markupGridDataChanged();
 }
 
 bool Q3DSceneModel::sceneVisibility()
@@ -245,6 +284,20 @@ Contour Q3DSceneModel::contourDisplayedObject()
     QMutexLocker locker(&mContourMutex);
 
     return mContourDisplayedObject;
+}
+
+MarkupGrid Q3DSceneModel::markupGridDisplayedObject()
+{
+    QMutexLocker locker(&mMarkupGridMutex);
+
+    return mMarkupGrid;
+}
+
+Cube Q3DSceneModel::bounds()
+{
+    QMutexLocker locker(&mBoundsMutex);
+
+    return mBounds;
 }
 
 QColor Q3DSceneModel::contourColor() const

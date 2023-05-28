@@ -19,13 +19,16 @@
 #include <numeric>
 #include <stack>
 
+
 #include "surface.h"
 #include "bottomtrack.h"
 #include "contour.h"
+#include <markupgrid.h>
 #include "sceneparams.h"
 #include "processingcasefactory.h"
 #include <abstractbottomtrackfilter.h>
 #include <bottomtrackprovider.h>
+#include <gridgenerator.h>
 
 using Vector3             = QVector <QVector3D>;
 using Vector3Pointer      = std::shared_ptr <Vector3>;
@@ -111,6 +114,8 @@ public:
 
     void changeGridCellSize(double size);
 
+    void changeMarkupGridCellSize(float size);
+
     //! @brief Обновить данные для отображения
     void updateSurface();
 
@@ -132,6 +137,14 @@ public:
     Surface surfaceDisplayedObject();
 
     Contour contourDisplayedObject();
+
+    MarkupGrid markupGridDisplayedObject();
+
+    /**
+     * @brief Возвращает куб, описывающий все объекты на сцене.
+     * @return Куб, описывающий все объекты на сцене.
+     */
+    Cube bounds();
 
     Q_INVOKABLE QColor contourColor() const;
 
@@ -181,9 +194,13 @@ private:
     QMutex mBottomTrackMutex;                //< Мьютекс для синхронизации доступа к данным трека из разных потоков
     QMutex mSurfaceMutex;                    //< Мьютекс для синхронизации доступа к данным поверхности
     QMutex mContourMutex;                    //< Мьютекс для синхронизации доступа к данным контура
+    QMutex mMarkupGridMutex;                 //< Мьютекс для синхронизации доступа к данным разметочной сетки.
+    QMutex mBoundsMutex;                     //< Мьютекс для синхронизации доступа к данным границ всей сцены.
     BottomTrack mBottomTrackDisplayedObject; //< Отображаемый объект "Трек"
     Surface mSurfaceDisplayedObject;         //< Отображаемый объект "Поверхность"
     Contour mContourDisplayedObject;         //< Отображаемый объект "Контур поверхности"
+    MarkupGrid mMarkupGrid;                 //< Сетка разметки сцены
+    Cube mBounds;
     SceneParams mParams;                     //< Объект параметров обработки и расчета
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
     std::shared_ptr <AbstractBottomTrackFilter> mpBottomTrackFilter;
@@ -234,6 +251,8 @@ signals:
      *  @brief Сигнал - оповещение об изменении свойств контура.
      */
     void contourPropertiesChanged();
+
+    void markupGridDataChanged();
 
 };
 
