@@ -18,9 +18,6 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::dvlSolutionComplete, m_plot, &PlotCash::addDVLSolution);
 
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
-
-    createControllers();
-    createModels();
 }
 
 
@@ -41,8 +38,17 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     m_engine = engine;
 
-    m_engine->rootContext()->setContextProperty("Settings3DController", mpSettings3DController.get());
-    m_engine->rootContext()->setContextProperty("Scene3DModel", mpScene3DModel.get());
+    createControllers();
+    createModels();
+
+    if(mpSettings3DController) {
+        m_engine->rootContext()->setContextProperty("Settings3DController", mpSettings3DController.get());
+    }
+
+    if(mpScene3DModel) {
+        m_engine->rootContext()->setContextProperty("Scene3DModel", mpScene3DModel.get());
+    }
+
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
@@ -145,7 +151,10 @@ bool Core::devsConnection() {
 
 bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
     closeConnection();
-    mpScene3DModel->clear();
+//    if(mpScene3DModel){
+//        mpScene3DModel->clear();
+//    }
+
     if(!is_append) {
         m_plot->resetDataset();
     }
