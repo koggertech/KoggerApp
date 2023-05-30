@@ -632,7 +632,7 @@ public:
         return 0;
     }
 
-    ID_UPGRADE_V0 getProgress() { return _progress; }
+    ID_UPGRADE_V0 getDeviceProgress() { return _progress; }
 
     uint16_t currentNumPacket() {
         return _currentNumPacket;
@@ -654,7 +654,7 @@ protected:
     uint16_t _currentNumPacket = 0;
     int _currentFwOffset = 0;
     QByteArray _fw;
-    const uint16_t _packetSize = 64;
+    const uint16_t _packetSize = 32*3;
 
     ID_UPGRADE_V0 _progress;
 };

@@ -75,10 +75,11 @@ private:
 public slots:
     QList<QSerialPortInfo> availableSerial();
     QStringList availableSerialName();
-    bool openConnectionAsSerial(const QString &name, int baudrate, bool mode);
+    bool openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode);
+    bool openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp);
+    bool openConnectionAsFile(const int id, const QString &name, bool is_append = false);
     bool devsConnection();
-    bool openConnectionAsFile(const QString &name);
-    bool openConnectionAsIP(const QString &address, const int port, bool is_tcp);
+
     bool isOpenConnection();
     bool closeConnection();
 

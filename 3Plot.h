@@ -40,6 +40,10 @@ public:
         m_fScale = sc;
     }
 
+    void modelScale(float scale) {
+        _modelScaleZ = scale;
+    }
+
     void size(QVector2D sz) {
         _size = sz;
     }
@@ -76,6 +80,7 @@ public slots:
     void contourPropertiesChanged();
 
 private:
+    float _modelScaleZ = 1.0f;
     qreal   m_fScale = 1;
     QVector2D _size;
     QVector2D _rotAngle;
@@ -89,6 +94,8 @@ private:
     QVector3D _camup;
     QMatrix4x4 _view;
 
+    QVector<QVector3D> _testPonts;
+
     bool _isRotation;
 
     void updateView() {
@@ -101,6 +108,8 @@ private:
     void mash(QVector<qreal> z);
     void mashAlign();
     void line(qreal x, qreal y, qreal z);
+
+    void displayTestPoints();
 
     //! Draws gps track lines
     void displayBottomTrack();
@@ -223,6 +232,12 @@ public slots:
 
     float scaleDelta() { return _scale; }
 
+    void setModelScaleZ(float scale) {
+        _modelScaleZ = scale;
+        update();
+    }
+    float modelScaleZ() { return _modelScaleZ; }
+
     QVector2D size() { return QVector2D(width(), height()); }
 
     void mouse(int x, int y, bool rotation_flag) {
@@ -241,6 +256,7 @@ private:
     Vector3Pointer mpTriangles;
 
     float _scale = 30.0;
+    float _modelScaleZ = 1.0f;
     int _lastMouseX = -1, _lastMouseY = -1;
     bool _rotationFlag = false;
 

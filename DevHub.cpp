@@ -167,7 +167,10 @@ void Device::putData(const QByteArray &data) {
                 MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
                 if(pos.isValid()) {
                     core.plot()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
-                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2").arg(pos.latitude()).arg(pos.longitude()));
+
+                    _vru.velocityH = sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY());
+                    emit vruChanged();
+//                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2, velocity %3 m/s").arg(pos.latitude()).arg(pos.longitude()).arg(velocityH, 4));
                 }
             }
 
@@ -179,7 +182,10 @@ void Device::putData(const QByteArray &data) {
 
             if(mavlink_frame.msgId() == 147) { // BATTERY_STATUS
                  MAVLink_MSG_BATTERY_STATUS battery_status = mavlink_frame.read<MAVLink_MSG_BATTERY_STATUS>();
-                 core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(battery_status.voltage()).arg(battery_status.current()));
+                 _vru.voltage = battery_status.voltage();
+                 _vru.current = battery_status.current();
+                 emit vruChanged();
+//                 core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(battery_status.voltage()).arg(battery_status.current()));
             }
 
 

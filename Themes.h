@@ -31,6 +31,7 @@ public:
     Q_PROPERTY(QColor controlSolidBackColor READ controlSolidBackColor NOTIFY changed)
     Q_PROPERTY(QColor controlSolidBorderColor READ controlSolidBorderColor NOTIFY changed)
     Q_PROPERTY(int controlHeight READ controlHeight NOTIFY changed)
+    Q_PROPERTY(int menuWidth READ menuWidth NOTIFY changed)
 
     Q_PROPERTY(int themeID READ themeId WRITE setTheme NOTIFY changed)
 
@@ -50,14 +51,18 @@ public:
     QColor controlSolidBackColor() { return *_controlSolidBackColor; }
     QColor controlSolidBorderColor() { return *_controlSolidBorderColor; }
     int controlHeight() { return _controlHeight; }
+    int menuWidth() { return _menuWidth; }
 
     void setTheme(int theme_id = 0) {
         _id = theme_id;
-//        _textFont = new QFont("PT Sans Caption", 26);
-//        _textFontS = new QFont("PT Sans Caption", 20);
 
+#if defined(Q_OS_ANDROID)
+        _textFont = new QFont("PT Sans Caption", 26);
+        _textFontS = new QFont("PT Sans Caption", 20);
+#else
         _textFont = new QFont("PT Sans Caption", 14);
         _textFontS = new QFont("PT Sans Caption", 12);
+#endif
 
         if(theme_id == 0) {
             _textColor = new QColor(250, 250, 250);
@@ -108,10 +113,11 @@ public:
             _disabledTextColor = new QColor(150, 150, 150);
             _disabledBackColor = new QColor(50, 50, 50);
         }
-
-//        _controlHeight = 50; // android
+#if defined(Q_OS_ANDROID)
+        _controlHeight = 50;
+#else
         _controlHeight = 26;
-
+#endif
         emit changed();
     }
 
@@ -145,6 +151,7 @@ protected:
     QColor* _controlSolidBackColor;
     QColor* _controlSolidBorderColor;
     int32_t _controlHeight;
+    int32_t _menuWidth;
 
     bool _isConsoleVisible;
 };

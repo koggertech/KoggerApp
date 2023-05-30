@@ -10,8 +10,13 @@
 #include <QVector>
 #include <QVector3D>
 
+#if !defined(Q_OS_ANDROID)
 #include <GL/gl.h>
-
+#else
+#include <GLES3/gl3.h>
+#include <GLES3/gl31.h>
+#include <GLES3/gl32.h>
+#endif
 /**
  * @brief Класс объекта, представленного набором вершин
  */

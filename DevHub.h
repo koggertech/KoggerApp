@@ -24,6 +24,14 @@ public:
     Q_PROPERTY(bool protoBinConsoled WRITE setProtoBinConsoled)
     Q_PROPERTY(StreamListModel*  streamsList READ streamsList NOTIFY streamChanged)
 
+    Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
+    Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
+    Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
+
+    float vruVoltage() { return _vru.voltage; }
+    float vruCurrent() { return _vru.current; }
+    float vruVelocityH() { return _vru.velocityH; }
+
     QList<DevQProperty*> getDevList() {
         _devList.clear();
 
@@ -87,6 +95,7 @@ signals:
     void deviceVersionChanged();
     void devChanged();
     void streamChanged();
+    void vruChanged();
 
 protected:
     FrameParser _parser;
@@ -105,6 +114,12 @@ protected:
 
     bool _isDuplex = false;
     bool _isConsoled = false;
+
+    struct {
+        float voltage = NAN;
+        float current = NAN;
+        float velocityH = NAN;
+    } _vru;
 
     void delAllDev() {
         lastRoute = 0;

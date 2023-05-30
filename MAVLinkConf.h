@@ -484,11 +484,11 @@ typedef struct   __attribute__((packed)) {
     uint16_t hdg; // cdeg
 
     double latitude() {
-        return double(lat)/1e7;
+        return double(lat)/1.0e7;
     }
 
     double longitude() {
-        return double(lon)/1e7;
+        return double(lon)/1.0e7;
     }
 
     uint32_t time_boot_msec() {
@@ -497,6 +497,18 @@ typedef struct   __attribute__((packed)) {
 
     bool isValid() {
         return lat != 0 || lon != 0;
+    }
+
+    float velocityX() {
+        return float(vx)*0.01f;
+    }
+
+    float velocityY() {
+        return float(vx)*0.01f;
+    }
+
+    float velocityZ() {
+        return float(vx)*0.01f;
     }
 
 } MAVLink_MSG_GLOBAL_POSITION_INT;

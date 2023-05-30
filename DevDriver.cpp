@@ -210,11 +210,11 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
 //    if(!m_state.connect) return;
     m_bootloaderLagacyMode = true;
     m_bootloader = true;
-    _timeoutUpgradeAnswerTime = 7000;
+    _timeoutUpgradeAnswerTime = 5000;
     idUpdate->setUpdate(update_data);
     reboot();
     restartState();
-    QTimer::singleShot(300, idUpdate, SLOT(putUpdate()));
+    QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 //    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
 }
 
@@ -677,8 +677,8 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
     if(resp == respNone) {
         if(ver == v0) {
             m_bootloaderLagacyMode = false;
-            _timeoutUpgradeAnswerTime = 1000;
-            IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getProgress();
+            _timeoutUpgradeAnswerTime = 2000;
+            IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getDeviceProgress();
 
             if(prog.type <= 2) {
                 _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();

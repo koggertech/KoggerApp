@@ -51,7 +51,7 @@ void Core::consoleProto(FrameParser &parser, bool is_in) {
 
     switch (parser.type()) {
     case CONTENT:
-        str_mode = "data";
+        str_mode = "DATA";
         if(parser.resp()) {
             switch(parser.frame()[6]) {
             case respNone: comment = "[respNone]"; break;
@@ -74,24 +74,24 @@ void Core::consoleProto(FrameParser &parser, bool is_in) {
         }
         break;
     case SETTING:
-        str_mode = "set";
+        str_mode = "SET";
         break;
     case GETTING:
-        str_mode = "get";
+        str_mode = "GET";
         break;
     default:
-        str_mode = "none";
+        str_mode = "NAN";
         break;
     }
 
     QString str_dir;
-    if(is_in) { str_dir = "in"; }
-    else { str_dir = "out"; }
+    if(is_in) { str_dir = "-->> "; }
+    else { str_dir = "<<-- "; }
 
     try {
         QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
 
-        consoleInfo(QString("%1: id %2 v%3, %4, len %5; %6 [ %7 ]").arg(str_dir).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
+        consoleInfo(QString("%1KG[%2]: id %3 v%4, %5, len %6; %7 [ %8 ]").arg(str_dir).arg(parser.route()).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
 
     }catch(std::bad_alloc& ex){
         qCritical().noquote() << __func__ << " --> " << ex.what();
@@ -116,7 +116,7 @@ QStringList Core::availableSerialName(){
     return serialNameList;
 }
 
-bool Core::openConnectionAsSerial(const QString &name, int baudrate, bool mode) {
+bool Core::openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode) {
     closeConnection();
     devsConnection();
 
@@ -143,11 +143,13 @@ bool Core::devsConnection() {
     return true;
 }
 
-bool Core::openConnectionAsFile(const QString &name) {
+bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
     closeConnection();
-
     mpScene3DModel->clear();
-    m_plot->resetDataset();
+    if(!is_append) {
+        m_plot->resetDataset();
+    }
+
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
@@ -155,7 +157,7 @@ bool Core::openConnectionAsFile(const QString &name) {
     return true;
 
 }
-bool Core::openConnectionAsIP(const QString &address, const int port, bool is_tcp) {
+bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
 

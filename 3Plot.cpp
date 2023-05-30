@@ -37,9 +37,11 @@ public:
         //scene.setLines(fbitem->lines());
 
         scene.scale(fbitem->scaleDelta());
+        scene.modelScale(fbitem->modelScaleZ());
         scene.size(fbitem->size());
         scene.mouse(fbitem->mouse());
         scene.rotationFlag(fbitem->isRotation());
+
     }
 
     Scene3D scene;
@@ -200,6 +202,50 @@ void Scene3D::paintScene()
     if (mContourDisplayedObject.keyPointsVisible()){
         displayContourKeyPoints();
     }
+
+    displayTestPoints();
+}
+
+void Scene3D::displayTestPoints() {
+
+    auto pProgram = mpHeightColorShaderProgram.get();
+
+    if (mSurfaceDisplayedObject.isVisible() ||
+        mSurfaceDisplayedObject.isGridVisible()){
+        pProgram = mpStaticColorShaderProgram.get();
+    }
+
+    if (!pProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = pProgram->attributeLocation("position");
+    int maxZLoc   = pProgram->uniformLocation("max_z");
+    int minZLoc   = pProgram->uniformLocation("min_z");
+    int matrixLoc = pProgram->uniformLocation("matrix");
+
+    QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
+    int colorLoc = pProgram->uniformLocation("color");
+
+
+    pProgram->setUniformValue(colorLoc,color);
+    pProgram->setUniformValue(maxZLoc, mBottomTrackDisplayedObject.maximumZ());
+    pProgram->setUniformValue(minZLoc, mBottomTrackDisplayedObject.minimumZ());
+    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
+    pProgram->enableAttributeArray(posLoc);
+    pProgram->setAttributeArray(posLoc, _testPonts.constData());
+#if !defined(Q_OS_ANDROID)
+    glPointSize(10);
+#endif
+    glDrawArrays(GL_POINTS, 0, _testPonts.size());
+    pProgram->disableAttributeArray(posLoc);
+    pProgram->release();
+#if !defined(Q_OS_ANDROID)
+    glPointSize(1);
+#endif
+
+    pProgram->release();
 }
 
 void Scene3D::displayBottomTrack() {
@@ -351,10 +397,13 @@ void Scene3D::displayContourKeyPoints()
     pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
     pProgram->enableAttributeArray(posLoc);
     pProgram->setAttributeArray(posLoc, mContourDisplayedObject.cdata().constData());
-
+#if !defined(Q_OS_ANDROID)
     glPointSize(mContourDisplayedObject.lineWidth());
+#endif
     glDrawArrays(GL_POINTS, 0, mContourDisplayedObject.cdata().size());
+#if !defined(Q_OS_ANDROID)
     glPointSize(1.0);
+#endif
 
     pProgram->disableAttributeArray(posLoc);
     pProgram->release();
@@ -404,7 +453,6 @@ void Scene3D::initialize()
 void Scene3D::render()
 {
     glDepthMask(true);
-
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -439,8 +487,7 @@ void Scene3D::render()
         }
     }
 
-    _lastMouse[0] = _mouse.x();
-    _lastMouse[1] = _mouse.y();
+
 
     mView = QMatrix4x4();
     float r = -500.0;
@@ -458,6 +505,27 @@ void Scene3D::render()
     mView.lookAt(cf + _posCenter, _posCenter, cu.normalized());
 
     mModel = QMatrix4x4();
+    mModel.scale(1.0, 1.0, _modelScaleZ);
+
+    if(_mouse.x() >= 0) {
+        QVector3D zero(0, 0, 0);
+        zero = zero.project(mView, mProjection, QRect(0, 0, _size.x(), _size.y()));
+        QVector3D screenCoordinates(_mouse.x(), _mouse.y(), zero.z());
+        QVector3D screenCoordinates0(_mouse.x(), _mouse.y(), 0);
+
+        QVector3D unprj = screenCoordinates.unproject(mView, mProjection, QRect(0, 0, _size.x(), _size.y()));
+//        QVector3D unprj0 = screenCoordinates0.unproject(mView, mProjection, QRect(0, 0, _size.x(), _size.y()));
+//        QVector3D dir = (-unprj + unprj0);
+        QVector3D ray = (-unprj + cf + _posCenter);
+
+        float t = QVector3D::dotProduct(unprj - QVector3D(0,0,0), QVector3D(0,0,1))/QVector3D::dotProduct(ray, QVector3D(0,0,1));
+        QVector3D p = unprj - t*ray;
+
+//        _testPonts.append(p);
+    }
+
+    _lastMouse[0] = _mouse.x();
+    _lastMouse[1] = _mouse.y();
 
     //auto pProgram = mBottomTrackDisplayedObject.shaderProgram();
 
@@ -486,6 +554,8 @@ void Scene3D::render()
     //mpOverlappedGridProgram->release();
 
     paintScene();
+
+
 
     glDisable(GL_DEPTH_TEST);
 //    glDisable(GL_CULL_FACE);

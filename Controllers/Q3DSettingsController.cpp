@@ -62,9 +62,10 @@ void Q3DSettingsController::updateDisplayedObject()
     auto process = [this](){
       mpModel->updateSurface();
     };
-
+#if !defined(Q_OS_ANDROID)
     mpThread = QThread::create(process);
     mpThread->start();
+#endif
 }
 
 void Q3DSettingsController::changeBottomTrackVisibility(const bool visible)

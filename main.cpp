@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
 
 
-    qInstallMessageHandler(messageHandler);
+//    qInstallMessageHandler(messageHandler);
 
 //    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 

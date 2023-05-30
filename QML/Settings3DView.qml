@@ -163,6 +163,22 @@ MenuScroll {
                     //                }
                     //            }
 
+
+                    ParamSetup {
+                        paramName: "Vertical scale: "
+
+                        Slider {
+                            id: verticalScaleSlider
+                            Layout.fillWidth: true
+                            stepSize: 0.1
+                            from: 1.0
+                            value: 1.0
+                            to: 10.0
+                            onValueChanged: renderer.setModelScaleZ(value)
+                            Component.onCompleted: renderer.setModelScaleZ(value)
+                        }
+                    }
+
                 }
 
                 ParamGroup {

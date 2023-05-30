@@ -13,7 +13,6 @@ android {
     CONFIG += mobility
 }
 
-
 CONFIG += c++11
 
 
@@ -156,11 +155,11 @@ DISTFILES += \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
-android {
-    ANDROID_ABIS = armeabi-v7a
-}
 
-LIBS += -lopengl32
+
+windows {
+    LIBS += -lopengl32
+}
 
 include ($$PWD/core/core.pri)
 include ($$PWD/factories/factories.pri)
@@ -169,11 +168,13 @@ include ($$PWD/domain/domain.pri)
 include ($$PWD/models/models.pri)
 include ($$PWD/controllers/controllers.pri)
 
-#ANDROID_ABIS = x86
 
-#ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
-
-ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+android {
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+    ANDROID_ABIS = arm64-v8a
+#    ANDROID_ABIS = x86
+}
 
 ANDROID_ABIS = armeabi-v7a
+
 

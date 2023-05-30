@@ -65,7 +65,7 @@ Item {
                 }
 
                 Settings {
-                    property alias connectionPort: portCombo.currentIndex
+                    property alias connectionPortText: portCombo.currentText
                 }
             }
 
@@ -86,6 +86,7 @@ Item {
 
                 Settings {
                     property alias serialBaudrate: baudrateCombo.currentIndex
+                    property alias serialBaudrateText: baudrateCombo.currentText
                 }
             }
 
@@ -100,7 +101,7 @@ Item {
 
                 Keys.onPressed: {
                     if (event.key === 16777220) {
-                        core.openConnectionAsFile(pathText.text);
+                        core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
                     }
                 }
 
@@ -170,11 +171,13 @@ Item {
                     id: logFileDialog
                     title: "Please choose a file"
                     folder: shortcuts.home
+//                    fileMode: FileDialog.OpenFiles
+
                     nameFilters: ["Logs (*.klf *.ubx)", "Kogger log files (*.klf)", "U-blox (*.ubx)", "All (*.*)"]
 
                     onAccepted: {
                         pathText.text = logFileDialog.fileUrl.toString()
-                        core.openConnectionAsFile(pathText.text);
+                        core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
                     }
                     onRejected: {
                     }
@@ -192,6 +195,14 @@ Item {
                 property bool connection: false
                 implicitWidth: implicitHeight + 3
                 visible: connectionTypeCombo.currentText !== "File"
+
+                function openConnection() {
+                    if(connectionTypeCombo.currentText === "Serial") {
+                        core.openConnectionAsSerial(1, autoconnectionCheck.checked, portCombo.currentText, Number(baudrateCombo.currentText), false)
+                    } else if(connectionTypeCombo.currentText === "IP") {
+                        core.openConnectionAsIP(1, autoconnectionCheck.checked, ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === "TCP");
+                    }
+                }
 
                 text: ""
 
@@ -217,22 +228,16 @@ Item {
                     if(connection) {
                         core.closeConnection()
                     } else {
-                        if(connectionTypeCombo.currentText === "Serial") {
-                            core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText), false)
-                        } else if(connectionTypeCombo.currentText === "IP") {
-                            core.openConnectionAsIP(ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === "TCP");
-                        }
+                        connectionButton.openConnection()
                     }
+                }
+
+                Component.onCompleted: {
+
                 }
 
                 onConnectionChanged: {
                     canvas.requestPaint()
-                    if(connection) {
-                        if(connectionTypeCombo.currentText === "Serial") {
-                        } else {
-                        }
-                    } else {
-                    }
                 }
 
                 indicator: Canvas {
@@ -275,8 +280,8 @@ Item {
             Layout.fillWidth: true
             Layout.margins: 10
             Layout.topMargin: -5
-            spacing: 10
-            visible: connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP"
+            spacing: 5
+            visible: true
 
             CText {
                 text: "Options:"
@@ -284,6 +289,7 @@ Item {
 
             CCheck {
                 id: loggingCheck
+                visible: connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP"
                 text: "Logging"
                 checked: false
 
@@ -293,10 +299,42 @@ Item {
                 Settings {
                     property alias loggingCheck: loggingCheck.checked
                 }
+
+            }
+
+            CCheck {
+                id: autoconnectionCheck
+                visible: connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP"
+                text: "Auto"
+                checked: false
+
+                onCheckedChanged: {
+                    if(checked) {
+                        connectionButton.openConnection()
+                    }
+                }
+
+                Component.onCompleted: {
+                    if(checked) {
+                        connectionButton.openConnection()
+                    }
+                }
+
+                Settings {
+                    property alias autoconnectionCheck: autoconnectionCheck.checked
+                }
+            }
+
+            CCheck {
+                id: appendCheck
+                visible: connectionTypeCombo.currentText === "File"
+                text: "Append"
+                checked: false
             }
 
             CCheck {
                 id: proxyMenuCheck
+                visible: connectionTypeCombo.currentText === "Serial" || connectionTypeCombo.currentText === "IP"
                 text: "Proxy"
                 checked: false
             }
