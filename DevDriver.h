@@ -147,7 +147,7 @@ public:
 signals:
     void binFrameOut(ProtoBinOut &proto_out);
 
-    void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void chartComplete(int16_t channel, QVector<int16_t> data, int resolution, int offset);
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
@@ -242,6 +242,8 @@ protected:
         UptimeStatus uptime = UptimeNone;
 
     } m_state;
+
+    uint8_t _lastAddres = 0;
 
     QTimer m_processTimer;
 

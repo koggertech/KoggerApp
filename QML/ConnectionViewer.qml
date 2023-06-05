@@ -173,7 +173,7 @@ Item {
                     folder: shortcuts.home
 //                    fileMode: FileDialog.OpenFiles
 
-                    nameFilters: ["Logs (*.klf *.ubx)", "Kogger log files (*.klf)", "U-blox (*.ubx)", "All (*.*)"]
+                    nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)", "All (*.*)"]
 
                     onAccepted: {
                         pathText.text = logFileDialog.fileUrl.toString()

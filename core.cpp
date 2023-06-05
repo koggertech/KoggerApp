@@ -1,5 +1,5 @@
 #include "core.h"
-
+#include "XTFConf.h"
 
 Core::Core() : QObject(),
     m_console(new Console()),
@@ -151,12 +151,33 @@ bool Core::devsConnection() {
 
 bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
     closeConnection();
-//    if(mpScene3DModel){
-//        mpScene3DModel->clear();
-//    }
+    if(mpScene3DModel){
+        mpScene3DModel->clear();
+    }
 
     if(!is_append) {
         m_plot->resetDataset();
+    }
+
+    QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
+    if(splitname.size() > 1) {
+        QString format = splitname.last();
+        if(format.contains("xtf", Qt::CaseInsensitive)) {
+
+            QFile file;
+            QUrl url(name);
+            if(url.isLocalFile()) {
+                file.setFileName(url.toLocalFile());
+            } else {
+                file.setFileName(url.toString());
+            }
+
+            if(file.open(QIODevice::ReadOnly)) {
+                return openXTF(file.readAll());
+            }
+
+            return false;
+        }
     }
 
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
@@ -362,8 +383,8 @@ bool Core::exportPlotAsCVS(QString file_path) {
         }
 
         if(bottom_depth) {
-            if(dataset->distProccesingAvail()) {
-                prev_dist_proc = dataset->distProccesing();
+            if(dataset->distProccesingAvail(0)) {
+                prev_dist_proc = dataset->distProccesing(0);
             }
             row_data.append(QString("%1,").arg((float)(prev_dist_proc)*0.001f));
         }
@@ -400,6 +421,77 @@ bool Core::exportPlotAsCVS(QString file_path) {
     }
 
     _logger.endExportStream();
+
+    return true;
+}
+
+bool Core::openXTF(QByteArray data) {
+    uint8_t* cdata = (uint8_t*)data.constData();
+    uint8_t* cdata_end = cdata + data.size();
+
+    XTFFILEHEADER* fileheader = (XTFFILEHEADER*)cdata;
+    if(fileheader->FileFormat != 123) {
+        consoleInfo("XTF is not valid");
+        return false;
+    }
+
+    cdata += sizeof (XTFFILEHEADER);
+
+
+    while(cdata < cdata_end) {
+        XTFPINGHEADER* pingheader = (XTFPINGHEADER*)(cdata);
+        if(pingheader->MagicNumber != 0xFACE) {
+            consoleInfo("XTF packet is not valid");
+            return false;
+        }
+
+        cdata += sizeof (XTFPINGHEADER);
+
+        if(pingheader->HeaderType == 0) {
+            uint16_t ch_count = pingheader->NumChansToFollow;
+            double lat = pingheader->ShipYcoordinate;
+            double lon = pingheader->ShipXcoordinate;
+            if(lat != 0 || lat != 0) {
+                plot()->addPosition(lat, lon);
+            }
+
+            for(uint16_t chi = 0; chi < ch_count; chi++) {
+                XTFPINGCHANHEADER* pingch = (XTFPINGCHANHEADER*)(cdata);
+
+
+
+                uint16_t sample_count = pingch->NumSamples/2;
+                float range = pingch->SlantRange;
+                uint32_t sample_bytes = 2;
+
+                if(sample_count == 0 || sample_bytes == 0) {
+                    consoleInfo("XTF samples count is zero");
+                    return false;
+                }
+
+                cdata += sizeof (XTFPINGCHANHEADER);
+                QVector<int16_t> data;
+                data.resize(sample_count);
+                for(uint16_t i = 0; i < sample_count; i++) {
+                    data[sample_count-i-1] = *((uint16_t*)cdata) / 128;
+                    cdata += sample_bytes;
+                }
+
+                plot()->addChart(chi, data, (1000.0f*range/sample_count), 0);
+            }
+        } else  if(pingheader->HeaderType == 3) {
+            cdata += 64;
+        } else {
+            consoleInfo("XTF header type is unknown");
+            return false;
+        }
+
+        if((uint8_t*)pingheader + pingheader->NumBytesThisRecord != cdata) {
+            consoleInfo("XTF pingchannel offset error");
+            return false;
+        }
+    }
+
 
     return true;
 }

@@ -91,6 +91,7 @@ HEADERS += \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
+    XTFConf.h \
     connection.h \
     console.h \
     consolelistmodel.h \

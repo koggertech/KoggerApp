@@ -28,12 +28,67 @@ typedef struct  {
 } LLARef;
 
 
+typedef struct {
+    enum {
+        invisible = 0,
+        forward,
+        reverse
+    } direction;
+} VisualChannelSetup;
+
 class PoolDataset {
 public:
+    typedef struct {
+        typedef enum {
+            DistanceSourceNone = 0,
+            DistanceSourceProcessing,
+            DistanceSourceHand,
+            DistanceSourceLoad
+        } DistanceSource;
+
+        QVector<int16_t> data;
+        float distance = NAN;
+        float min = NAN;
+        float max = NAN;
+        DistanceSource source = DistanceSourceNone;
+
+        bool isData() const { return data.size() > 0; }
+        bool isDist() { return isfinite(distance); }
+        void setDistance(float dist, DistanceSource src = DistanceSourceNone) { distance = dist; source = src; }
+        void resetDistance() { distance = NAN; source = DistanceSourceNone; }
+        float getDistance() { return distance; }
+
+        void setMin(float val) {
+            min = val;
+            if(max != NAN && val + 0.05 > max) {
+                max = val + 0.05;
+            }
+        }
+        void setMax(float val) {
+            max = val;
+            if(min != NAN && val - 0.05 < min) {
+                min = val - 0.05;
+            }
+        }
+
+        float getMax() { return max; }
+        float getMin() { return min; }
+    } DistProcessing;
+
+    typedef struct {
+        QVector<int16_t> data;
+        int resolution = 0;
+        int offset = 0;
+        int type = 0;
+        QVector<int16_t> visual;
+
+        DistProcessing bottomProcessing;
+    } DataChart;
+
     PoolDataset();
     void setEvent(int timestamp, int id, int unixt);
     void setEncoder(float encoder);
-    void setChart(QVector<int16_t> chartData, int resolution, int offset);
+    void setChart(int16_t channel, QVector<int16_t> chartData, int resolution, int offset);
     void setIQ(QByteArray data, uint8_t type);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
@@ -44,42 +99,41 @@ public:
     void setEncoders(int16_t enc1, int16_t enc2 = 0xFFFF, int16_t enc3 = 0xFFFF, int16_t = 0xFFFF, int16_t = 0xFFFF, int16_t enc6 = 0xFFFF);
     void setAtt(float yaw, float pitch, float roll);
 
-    void setDistProcessing(int dist) {
-        flags.processDistAvail = true;
-        m_processingDist = dist;
-    }
-
-    void setMinDistProc(int dist) {
-        _procMinDist = dist;
-        if(dist + 50 > _procMaxDist) {
-            _procMaxDist = dist + 50;
+    void setDistProcessing(int16_t channel, float dist) {
+        if(_charts.contains(channel)) {
+            _charts[channel].bottomProcessing.setDistance(dist, DistProcessing::DistanceSourceHand);
         }
-        flags.processDistAvail = false;
-        doBottomTrack(-1, false);
     }
 
-    void setMaxDistProc(int dist) {
-        _procMaxDist = dist;
-        if(dist - 50 < _procMinDist) {
-            _procMinDist = dist - 50;
+    void setMinDistProc(int16_t channel, int dist) {
+        if(_charts.contains(channel)) {
+            _charts[channel].bottomProcessing.setMin(dist);
         }
-        flags.processDistAvail = false;
         doBottomTrack(-1, false);
     }
 
-    void setMinMaxDistProc(int min, int max,  bool is_save = true) {
-        int minsave = _procMinDist;
-        int maxsave = _procMaxDist;
-
-        _procMinDist = min;
-        _procMaxDist = max;
-
-        flags.processDistAvail = false;
+    void setMaxDistProc(int16_t channel, int dist) {
+        if(_charts.contains(channel)) {
+            _charts[channel].bottomProcessing.setMax(dist);
+        }
         doBottomTrack(-1, false);
+    }
 
-        if(!is_save) {
-            _procMinDist = minsave;
-            _procMaxDist = maxsave;
+    void setMinMaxDistProc(int16_t channel, int min, int max,  bool is_save = true) {
+        if(_charts.contains(channel)) {
+            float minsave = _charts[channel].bottomProcessing.getMin();
+            float maxsave = _charts[channel].bottomProcessing.getMax();
+
+            _charts[channel].bottomProcessing.setMin(min);
+            _charts[channel].bottomProcessing.setMax(max);
+            _charts[channel].bottomProcessing.resetDistance();
+
+            doBottomTrack(-1, false);
+
+            if(!is_save) {
+                _charts[channel].bottomProcessing.setMin(minsave);
+                _charts[channel].bottomProcessing.setMax(maxsave);
+            }
         }
     }
 
@@ -88,8 +142,24 @@ public:
     int eventTimestamp() {return _eventTimestamp; }
     int eventUnix() { return _eventUnix; }
 
-    QVector<int16_t> chartData() { return m_chartData; }
-    bool chartAvail() { return flags.chartAvail; }
+    QVector<int16_t> chartData(int16_t channel = 0) {
+        if(chartAvail(channel)) {
+            return _charts[channel].data;
+        }
+        return QVector<int16_t>();
+    }
+    bool chartAvail() { return _charts.size() > 0; }
+    bool chartAvail(int16_t channel) {
+        if(_charts.contains(channel)) {
+            return _charts[channel].data.size() > 0;
+        }
+
+        return false;
+    }
+
+    QList<int16_t> chartChannels() {
+        return _charts.keys();
+    }
 
     QByteArray iqData() { return _iq;}
     bool isIqAvail() { return flags.iqAvail; }
@@ -98,8 +168,20 @@ public:
     int distData() { return m_dist; }
     bool distAvail() { return flags.distAvail; }
 
-    int distProccesing() { return m_processingDist; }
-    bool distProccesingAvail() { return flags.processDistAvail; }
+    float distProccesing(int16_t channel) {
+        if(_charts.contains(channel)) {
+            return _charts[channel].bottomProcessing.getDistance();
+        }
+
+        return NAN;
+    }
+    bool distProccesingAvail(int16_t channel) {
+        if(_charts.contains(channel)) {
+            return _charts[channel].bottomProcessing.isData();
+        }
+
+        return false;
+    }
 
     float temperature() { return m_temp_c; }
     bool temperatureAvail() { return flags.tempAvail; }
@@ -124,71 +206,80 @@ public:
 
     double relPosN() { return m_position.N; }
     double relPosE() { return m_position.E; }
-    double relPosD() { return (double)m_processingDist*0.001; }
+    double relPosD() { return (double)0*0.001; } //!ERROR add dist
 
     bool isPosAvail() { return flags.posAvail; }
 
 
     void doBottomTrack(int track_type, bool is_update_dist) {
-        if(track_type >= 0) {
-            _procDistType = track_type;
-        }
-        if(_procDistType == 0) {
-            doBottomTrack2D(is_update_dist);
-        } else if(_procDistType == 1) {
-            doBottomTrackSideScan(is_update_dist);
-        }
+//        if(track_type >= 0) {
+//            _procDistType = track_type;
+//        }
+
+//        QMutableHashIterator<int16_t, DataChart> i(_charts);
+//        while (i.hasNext()) {
+//            i.next();
+
+//            if(_procDistType == 0) {
+//                doBottomTrack2D(i.value(), is_update_dist);
+//            } else if(_procDistType == 1) {
+//                doBottomTrackSideScan(i.value(), is_update_dist);
+//            }
+//        }
+
     }
-    void doBottomTrack2D(bool is_update_dist = false);
-    void doBottomTrackSideScan(bool is_update_dist = false);
+
+
+    void doBottomTrack2D(DataChart &chart, bool is_update_dist = false);
+    void doBottomTrackSideScan(DataChart &chart, bool is_update_dist = false);
 
     bool edgeProcAvail = false;
 
-    void doEdgeProccesing() {
-        int raw_size = m_chartData.size();
-        int16_t* src = m_chartData.data();
+    void doEdgeProccesing(DataChart &chart) {
+//        int raw_size = _chartData.size();
+//        int16_t* src = _chartData.data();
 
-        if(raw_size != 0 && !edgeProcAvail) {
-            m_processingEdgeData.resize(raw_size);
-            int16_t* procData = m_processingEdgeData.data();
+//        if(raw_size != 0 && !edgeProcAvail) {
+//            m_processingEdgeData.resize(raw_size);
+//            int16_t* procData = m_processingEdgeData.data();
 
-            float max_of_start = 0;
-            for(int i = 0; i < 10; i ++) {
-                float val = src[i];
+//            float max_of_start = 0;
+//            for(int i = 0; i < 10; i ++) {
+//                float val = src[i];
 
-                if(val > max_of_start) {
-                    max_of_start = val;
-                }
+//                if(val > max_of_start) {
+//                    max_of_start = val;
+//                }
 
-                procData[i] = val;
+//                procData[i] = val;
 
-                if(procData[i] < 0) {
-                    procData[i] = 0;
-                } else if(procData[i] > 255) {
-                    procData[i] = 255;
-                }
-            }
+//                if(procData[i] < 0) {
+//                    procData[i] = 0;
+//                } else if(procData[i] > 255) {
+//                    procData[i] = 255;
+//                }
+//            }
 
-            float avrg = max_of_start*1.f;
-            for(int i = 0; i < raw_size; i ++) {
-                float val = src[i];
+//            float avrg = max_of_start*1.f;
+//            for(int i = 0; i < raw_size; i ++) {
+//                float val = src[i];
 
-                avrg += (val - avrg)*(0.05f + avrg*0.0006);
-                procData[i] = (val - avrg*0.55f)*(0.9f +float(i*m_chartResol)*0.000025f)*1.4f;
+//                avrg += (val - avrg)*(0.05f + avrg*0.0006);
+//                procData[i] = (val - avrg*0.55f)*(0.9f +float(i*_chartResol)*0.000025f)*1.4f;
 
-                if(procData[i] < 0) {
-                    procData[i] = 0;
-                } else if(procData[i] > 255) {
-                    procData[i] = 255;
-                }
-            }
+//                if(procData[i] < 0) {
+//                    procData[i] = 0;
+//                } else if(procData[i] > 255) {
+//                    procData[i] = 255;
+//                }
+//            }
 
-            edgeProcAvail = true;
-        }
+//            edgeProcAvail = true;
+//        }
     }
 
     void resetDistProccesing() {
-        flags.processDistAvail = false;
+//        flags.processDistAvail = false;
     }
 
     void nedProcessing(LLARef* ref) {
@@ -213,96 +304,25 @@ public:
 
         m_position.N = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
         m_position.E = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
-
     }
 
-    float dopplerProcessing(const int32_t w_size, const int32_t w_size2, int decm) {
-        const int data_size = iqData().size()/4;
-        const int16_t* iq_data = (const int16_t*)(iqData().constData());
-
-        const int chart_size = data_size - w_size2*2;
-
-        float amp_max = 0;
-        float ci_max = 0, cq_max = 0, c2q_max = 0, c2i_max = 0;
-
-        for (int row = w_size2*2; row < chart_size; row+=1) {
-            const uint32_t row_ind = row*2;
-            float ci = 0, cq = 0, c2i = 0, c2q = 0;
-
-            for(uint16_t i = 0; i < w_size-16; i+=1) {
-                const uint32_t r_ind = row_ind + i*2;
-                int32_t r11i = iq_data[r_ind], r11q = iq_data[r_ind+1];
-                int32_t r12i = iq_data[r_ind+w_size*2], r12q = iq_data[r_ind+1+w_size*2];
-                int32_t r21i = iq_data[r_ind+w_size2*2], r21q = iq_data[r_ind+1+w_size2*2];
-                int32_t r22i = iq_data[r_ind+(w_size2+w_size)*2], r22q = iq_data[r_ind+1+(w_size2+w_size)*2];
-
-                ci += (int64_t)(r11i*r12i) + (int64_t)(r11q*r12q);
-                cq += (int64_t)(r11q*r12i) - (int64_t)(r11i*r12q);
-                ci += (int64_t)(r21i*r22i) + (int64_t)(r21q*r22q);
-                cq += (int64_t)(r21q*r22i) - (int64_t)(r21i*r22q);
-
-                c2i += (int64_t)(r11i*r21i) + (int64_t)(r11q*r21q);
-                c2q += (int64_t)(r11q*r21i) - (int64_t)(r11i*r21q);
-                c2i += (int64_t)(r12i*r22i) + (int64_t)(r12q*r22q);
-                c2q += (int64_t)(r12q*r22i) - (int64_t)(r12i*r22q);
-            }
-
-            float amp = ci*ci+cq*cq + c2i*c2i+c2q*c2q;
-
-            if(amp_max < amp) {
-                amp_max = amp;
-                ci_max = ci;
-                cq_max = cq;
-                c2i_max = c2i;
-                c2q_max = c2q;
-            }
-        }
-
-        float velocity = NAN;
-        if(amp_max > 10000000000) {
-            float speed = atan2f(cq_max, ci_max)*1500.0f/(4.0f*3.141592f*float(w_size*decm));
-            float speed2 = atan2f(c2q_max, c2i_max)*1500.0f/(4.0f*3.141592f*float(w_size2*decm));
-
-            float speed_dif = speed - speed2;
-            const float resolver[] = {1.30208333f, -1.822916666, -0.5208333333, 0.78125, -1.30208333f, 1.822916666, 0.5208333333, -0.78125};
-            const float corrector[] = {1.30208333f, 1.30208333f, 1.30208333f, 1.30208333f, -1.30208333f, -1.30208333f, -1.30208333f, -1.30208333f};
-
-            float min = fabs(speed_dif);
-            int32_t min_ind = -1;
-            for(uint32_t i = 0; i < sizeof(resolver)/4; i++) {
-                float absdif = fabs(speed_dif - resolver[i]);
-                if(min > absdif) {
-                    min = absdif;
-                    min_ind = i;
-                }
-            }
-
-            if(min_ind >= 0) {
-                speed2 += corrector[min_ind];
-            }
-
-            velocity = speed2;
-        }
-
-        return velocity;
-    }
-
-    void chartTo(int start, int end, int16_t* dst, int len, int image_type) {
+    void chartTo(int16_t channel, int start, int end, int16_t* dst, int len, int image_type, bool reverse = false) {
         if(dst == nullptr) {  return; }
-        if(m_chartResol == 0) { return; }
-        int raw_size = m_chartData.size();
+        if(!_charts.contains(channel)) { return;}
+        if(_charts[channel].resolution == 0) { return; }
+
+        int raw_size = _charts[channel].data.size();
 
         int16_t* src;
 
         if(image_type == 1 && !edgeProcAvail) {
-            doEdgeProccesing();
+//            doEdgeProccesing();
         }
 
-        if(image_type == 1 && edgeProcAvail) {
-            src = m_processingEdgeData.data();
+        if(image_type == 1 && _charts[channel].visual.size() > 0) {
+            src = _charts[channel].visual.data();
         } else {
-            src = m_chartData.data();
-//            src = m_processingDistData.data();
+            src = _charts[channel].data.data();
         }
 
         if(raw_size == 0) {
@@ -313,13 +333,14 @@ public:
 
 //        if(m_chartResol == 0) { m_chartResol = 1; }
 
-        float raw_range_f = (float)(raw_size*m_chartResol);
+        float raw_range_f = (float)(raw_size*_charts[channel].resolution);
         float target_range_f = (float)(end - start);
         float scale_factor = ((float)raw_size/(float)len)*(target_range_f/raw_range_f);
-        int offset = start/m_chartResol;
+        int offset = start/_charts[channel].resolution;
 
         int src_start = offset;
-
+        int dir = reverse ? -1 : 1;
+        int off = reverse ? (len-1) : 0;
         if(scale_factor >= 0.8f) {
             for(int i_to = 0; i_to < len; i_to++) {
                 int src_end = (float)(i_to + 1)*scale_factor + offset;
@@ -336,7 +357,7 @@ public:
                 }
 
                 src_start = src_end;
-                dst[i_to] = val;
+                dst[off + dir*i_to] = val;
 
             }
         } else {
@@ -353,29 +374,21 @@ public:
                     val = (float)src[src_start]*(1 - coef) + (float)src[src_end]*coef;
                 }
 
-                dst[i_to] = val;
-
+                dst[off + dir*i_to] = val;
             }
         }
 
     }
 
-    QVector<int16_t> m_processingDistData;
-    QVector<int16_t> m_processingEdgeData;
-
 protected:
-    QVector<int16_t> m_chartData;
-    int m_chartResol;
-    int m_chartOffset;
 
-    QMap<int, float> _rangeFinders;
+
+
+
+    QHash<int16_t, DataChart> _charts;
+    QHash<int16_t, float> _rangeFinders;
 
     int m_dist;
-    int m_processingDist = 0;
-    int _procMinDist = 0;
-    int _procMaxDist = INT32_MAX;
-    int _procDistType = 0;
-
     int _eventTimestamp = 0;
     int _eventUnix = 0;
     int _eventId = 0;
@@ -423,15 +436,11 @@ protected:
         bool encoderAvail = false;
         bool eventAvail = false;
         bool timestampAvail = false;
-        bool chartAvail = false;
         bool distAvail = false;
 
         bool posAvail = false;
 
         bool tempAvail = false;
-
-        bool processDistAvail = false;
-        bool processChartAvail = false;
         bool iqAvail;
         bool isDVLSolutionAvail = false;
 
@@ -473,7 +482,7 @@ public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
     void addTimestamp(int timestamp);
-    void addChart(QVector<int16_t> data, int resolution, int offset);
+    void addChart(int16_t channel, QVector<int16_t> data, int resolution, int offset);
     void addIQ(QByteArray data, uint8_t type);
     void addDist(int dist);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -578,6 +587,9 @@ protected:
     float _bottomTrackMaxRange = 0;
 
 
+
+    QList<VisualChannelSetup> _channelsSetup;
+
     LLARef _llaRef;
 
     QVector<uint32_t> _gnssTrackIndex;
@@ -601,8 +613,6 @@ protected:
         int distData = -1;
         int processingDistData = -1;
         int poolIndex = -1;
-        float temperature = 0;
-        float dopplerX = NAN;
         bool poolIndexUpdate = true;
 
     } ValueCash;

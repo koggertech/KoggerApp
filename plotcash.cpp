@@ -5,10 +5,7 @@
 extern Core core;
 
 PoolDataset::PoolDataset() {
-    m_chartData.clear();
-    m_chartData.resize(0);
-    m_chartResol = 0;
-    m_chartOffset = 0;
+    _charts.clear();
     flags.distAvail = false;
 }
 
@@ -26,11 +23,11 @@ void PoolDataset::setEncoder(float encoder) {
 }
 
 
-void PoolDataset::setChart(QVector<int16_t> data, int resolution, int offset) {
-    m_chartResol = resolution;
-    m_chartOffset = offset;
-    m_chartData = data;
-    flags.chartAvail = true;
+void PoolDataset::setChart(int16_t channel, QVector<int16_t> data, int resolution, int offset) {
+    _charts[channel].data = data;
+    _charts[channel].resolution = resolution;
+    _charts[channel].offset = offset;
+    _charts[channel].type = 1;
 }
 
 void PoolDataset::setIQ(QByteArray data, uint8_t type) {
@@ -48,7 +45,7 @@ void PoolDataset::setDist(int dist) {
 }
 
 void PoolDataset::setRangefinder(int channel, float distance) {
-    _rangeFinders.insert(channel, distance);
+    _rangeFinders[channel] = distance;
 }
 
 void PoolDataset::setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
@@ -99,16 +96,16 @@ void PoolDataset::setAtt(float yaw, float pitch, float roll) {
     _attitude.is_avail = true;
 }
 
-void PoolDataset::doBottomTrack2D(bool is_update_dist) {
-    const int raw_size = m_chartData.size();
-    const int16_t* src = m_chartData.data();
+void PoolDataset::doBottomTrack2D(DataChart &chart, bool is_update_dist) {
+    const int raw_size = chart.data.size();
+    const int16_t* src = chart.data.data();
 
     int16_t* procData = NULL;
 
-    if(raw_size > 0 && (!flags.processChartAvail || is_update_dist)) {
-        m_processingDistData.resize(raw_size+(( raw_size) >> 6)*3);
-        m_processingDistData.fill(0);
-        procData = m_processingDistData.data();
+    if(raw_size > 0 && (!chart.bottomProcessing.isData() || is_update_dist)) {
+        chart.bottomProcessing.data.resize(raw_size+(( raw_size) >> 6)*3);
+        chart.bottomProcessing.data.fill(0);
+        procData = chart.bottomProcessing.data.data();
 
         int inc_offset = 0;
         int dec_offset = 0;
@@ -155,16 +152,14 @@ void PoolDataset::doBottomTrack2D(bool is_update_dist) {
             procData[i] = ((-procData[i] + procData[i+wsize]*5 + procData[i+wsize*2]*1 - procData[i+wsize*3] - procData[i+wsize*4])) - att;
             att -= att/32;
         }
-
-        flags.processChartAvail = true;
     }
 
-    if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
-        procData = m_processingDistData.data();
+    if(chart.bottomProcessing.isData() && (!chart.bottomProcessing.isDist() || is_update_dist)) {
+        procData = chart.bottomProcessing.data.data();
         int index_max = 0;
         int16_t val_max = -32766;
-        int max_index = _procMaxDist/m_chartResol;
-        int min_index = _procMinDist/m_chartResol;
+        int max_index = chart.bottomProcessing.max/chart.resolution;
+        int min_index = chart.bottomProcessing.min/chart.resolution;
 
         if(max_index > raw_size) {
             max_index = raw_size;
@@ -186,102 +181,101 @@ void PoolDataset::doBottomTrack2D(bool is_update_dist) {
         }
 
         int wsize = index_max/200;
-        m_processingDist = (index_max + m_chartOffset + wsize + 6)*m_chartResol;
-        flags.processDistAvail = true;
+        chart.bottomProcessing.setDistance((index_max + chart.offset + wsize + 6)*chart.resolution, DistProcessing::DistanceSourceProcessing);
     }
 }
 
-void PoolDataset::doBottomTrackSideScan(bool is_update_dist) {
-    int raw_size = m_chartData.size() - 50;
-    const int16_t* src = m_chartData.data();
+void PoolDataset::doBottomTrackSideScan(DataChart &chart, bool is_update_dist) {
+//    int raw_size = _chartData.size() - 50;
+//    const int16_t* src = _chartData.data();
 
-    int16_t* procData = NULL;
+//    int16_t* procData = NULL;
 
-    if(raw_size > 0 && (!flags.processChartAvail || is_update_dist)) {
-        m_processingDistData.resize(raw_size);
-        m_processingDistData.fill(0);
-        procData = m_processingDistData.data();
+//    if(raw_size > 0 && (!flags.processChartAvail || is_update_dist)) {
+//        m_processingDistData.resize(raw_size);
+//        m_processingDistData.fill(0);
+//        procData = m_processingDistData.data();
 
-        int inc_offset = 0;
-        int dec_offset = 0;
-        int summ = 0;
+//        int inc_offset = 0;
+//        int dec_offset = 0;
+//        int summ = 0;
 
-        for(int i = dec_offset; i < 20; i ++) {
-            summ += src[i];
-            inc_offset++;
-        }
+//        for(int i = dec_offset; i < 20; i ++) {
+//            summ += src[i];
+//            inc_offset++;
+//        }
 
-        for(int i = raw_size - 20; i < raw_size; i ++) {
-            procData[i] = 0;
-        }
+//        for(int i = raw_size - 20; i < raw_size; i ++) {
+//            procData[i] = 0;
+//        }
 
-        for(dec_offset = 0; inc_offset < raw_size - 70; dec_offset ++) {
-            summ -= src[dec_offset];
-            summ += src[inc_offset];
-            inc_offset++;
-//            if(dec_offset % 1024 == 0) {
-//                inc_offset++;
-//                summ += src[inc_offset];
+//        for(dec_offset = 0; inc_offset < raw_size - 70; dec_offset ++) {
+//            summ -= src[dec_offset];
+//            summ += src[inc_offset];
+//            inc_offset++;
+////            if(dec_offset % 1024 == 0) {
+////                inc_offset++;
+////                summ += src[inc_offset];
+////            }
+//            procData[dec_offset] = summ/(inc_offset - dec_offset + 14);
+//        }
+
+//        for(dec_offset; dec_offset < raw_size - 8; dec_offset ++) {
+//            inc_offset--;
+//            summ -= src[dec_offset];
+//            procData[dec_offset] = summ/(raw_size - dec_offset);
+//        }
+
+//        for(dec_offset; dec_offset < raw_size + (( raw_size) >> 6)*2; dec_offset ++) {
+//            procData[dec_offset] = summ/(9);
+//        }
+
+//        for(int i = 0; i < 4; i ++) {
+//            procData[i] = -1000;
+//        }
+
+//        int att = procData[4];
+//        int wsize = 0;
+//        for(int i = 4; i < raw_size - 20 - wsize*6; i ++) {
+//            wsize = 10;
+
+//            procData[i] = ((-procData[i] - procData[i+wsize] - procData[i+wsize*2]*2 + procData[i+wsize*3]*2 + procData[i+wsize*4]*2 + procData[i+wsize*5]*2)) - att;
+//            att -= att/32;
+//        }
+
+//        flags.processChartAvail = true;
+//    }
+
+//    if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
+//        procData = m_processingDistData.data();
+//        int index_max = 0;
+//        int16_t val_max = -32766;
+//        int max_index = _procMaxDist/_chartResol;
+//        int min_index = _procMinDist/_chartResol;
+
+//        if(max_index > raw_size) {
+//            max_index = raw_size;
+//        }
+
+//        if(min_index > raw_size) {
+//            min_index = raw_size;
+//        }
+
+//        if(min_index < 0) {
+//            min_index = 0;
+//        }
+
+//        for(int i = min_index; i < max_index; i ++) {
+//            if(procData[i] > val_max) {
+//                val_max = procData[i];
+//                index_max = i;
 //            }
-            procData[dec_offset] = summ/(inc_offset - dec_offset + 14);
-        }
+//        }
 
-        for(dec_offset; dec_offset < raw_size - 8; dec_offset ++) {
-            inc_offset--;
-            summ -= src[dec_offset];
-            procData[dec_offset] = summ/(raw_size - dec_offset);
-        }
-
-        for(dec_offset; dec_offset < raw_size + (( raw_size) >> 6)*2; dec_offset ++) {
-            procData[dec_offset] = summ/(9);
-        }
-
-        for(int i = 0; i < 4; i ++) {
-            procData[i] = -1000;
-        }
-
-        int att = procData[4];
-        int wsize = 0;
-        for(int i = 4; i < raw_size - 20 - wsize*6; i ++) {
-            wsize = 10;
-
-            procData[i] = ((-procData[i] - procData[i+wsize] - procData[i+wsize*2]*2 + procData[i+wsize*3]*2 + procData[i+wsize*4]*2 + procData[i+wsize*5]*2)) - att;
-            att -= att/32;
-        }
-
-        flags.processChartAvail = true;
-    }
-
-    if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
-        procData = m_processingDistData.data();
-        int index_max = 0;
-        int16_t val_max = -32766;
-        int max_index = _procMaxDist/m_chartResol;
-        int min_index = _procMinDist/m_chartResol;
-
-        if(max_index > raw_size) {
-            max_index = raw_size;
-        }
-
-        if(min_index > raw_size) {
-            min_index = raw_size;
-        }
-
-        if(min_index < 0) {
-            min_index = 0;
-        }
-
-        for(int i = min_index; i < max_index; i ++) {
-            if(procData[i] > val_max) {
-                val_max = procData[i];
-                index_max = i;
-            }
-        }
-
-        int wsize = 10;
-        m_processingDist = (index_max + m_chartOffset + wsize*3 + 5)*m_chartResol;
-        flags.processDistAvail = true;
-    }
+//        int wsize = 10;
+//        m_processingDist = (index_max + _chartOffset + wsize*3 + 5)*_chartResol;
+//        flags.processDistAvail = true;
+//    }
 }
 
 PlotCash::PlotCash() {
@@ -304,7 +298,10 @@ void PlotCash::addEvent(int timestamp, int id, int unixt) {
     lastEventTimestamp = timestamp;
     lastEventId = id;
 
-    poolAppend();
+//    if(poolLastIndex() < 0) {
+        poolAppend();
+//    }
+
     _pool[poolLastIndex()].setEvent(timestamp, id, unixt);
 }
 
@@ -320,15 +317,17 @@ void PlotCash::addEncoder(float encoder) {
 void PlotCash::addTimestamp(int timestamp) {
 }
 
-void PlotCash::addChart(QVector<int16_t> data, int resolution, int offset) {
+void PlotCash::addChart(int16_t channel, QVector<int16_t> data, int resolution, int offset) {
     int pool_index = poolLastIndex();
 
-    if(pool_index < 0 || _pool[pool_index].eventAvail() == false || _pool[pool_index].chartAvail() == true) {
+    if(pool_index < 0
+//             || _pool[pool_index].eventAvail() == false
+            || _pool[pool_index].chartAvail(channel)) {
         poolAppend();
         pool_index = poolLastIndex();
     }
 
-    _pool[poolLastIndex()].setChart(data, resolution, offset);
+    _pool[poolLastIndex()].setChart(channel, data, resolution, offset);
 
     if(_bottomtrackType >= 0) {
         doDistProcessing();
@@ -423,7 +422,7 @@ void PlotCash::addPosition(double lat, double lon, uint32_t unix_time, int32_t n
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
     _gnssTrackIndex.append(pool_index);
     _boatTrack.append(QVector3D(_pool[pool_index].relPosN(), _pool[pool_index].relPosE(), 0));
-    if(_pool[pool_index].distProccesingAvail()) {
+    if(_pool[pool_index].distProccesingAvail(0)) {
         updateBottomTrack();
     }
 }
@@ -619,14 +618,14 @@ void PlotCash::setMouse(int x, int y) {
             if(pool_index > 0) {
                 int dist = ((float)y_start + (float)x_ind*y_scale)*(float)(m_range)/(float)height + m_offset;
                 if(_mouse_mode == 2) {
-                    _pool[pool_index].setMinDistProc(dist);
+                    _pool[pool_index].setMinDistProc(0, dist);
                 } else if(_mouse_mode == 3) {
-                    _pool[pool_index].setDistProcessing(dist);
+                    _pool[pool_index].setDistProcessing(0, dist);
                 } else if(_mouse_mode == 4) {
-                    _pool[pool_index].setMaxDistProc(dist);
+                    _pool[pool_index].setMaxDistProc(0, dist);
                 }
-                m_valueCash[val_col].processingDistData = _pool[pool_index].distProccesing() - m_offset;
-
+                m_valueCash[val_col].processingDistData = _pool[pool_index].distProccesing(0) - m_offset;
+//                core.consoleInfo(QString("lat, lon: %1, %2").arg(_pool[pool_index].lat()).arg(_pool[pool_index].lon()));
             }
         }
 
@@ -755,120 +754,120 @@ void PlotCash::doDistProcessing() {
 }
 
 void PlotCash::doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max) {
-    int pool_size = poolSize();
+//    int pool_size = poolSize();
 
-    bool is_source_update = _bottomtrackType != source_type;
-    bool is_param_update = is_source_update ||
-            _bottomTrackWindowSize != window_size ||
-            _bottomTrackVerticalGap != vertical_gap ||
-            _bottomTrackMinRange != range_min ||
-            _bottomTrackMaxRange != range_max;
-    _bottomtrackType = source_type;
-    _bottomTrackWindowSize = window_size;
-    _bottomTrackVerticalGap = vertical_gap;
-    _bottomTrackMinRange = range_min;
-    _bottomTrackMaxRange = range_max;
+//    bool is_source_update = _bottomtrackType != source_type;
+//    bool is_param_update = is_source_update ||
+//            _bottomTrackWindowSize != window_size ||
+//            _bottomTrackVerticalGap != vertical_gap ||
+//            _bottomTrackMinRange != range_min ||
+//            _bottomTrackMaxRange != range_max;
+//    _bottomtrackType = source_type;
+//    _bottomTrackWindowSize = window_size;
+//    _bottomTrackVerticalGap = vertical_gap;
+//    _bottomTrackMinRange = range_min;
+//    _bottomTrackMaxRange = range_max;
 
-    if(source_type < 0) {
-        return;
-    }
+//    if(source_type < 0) {
+//        return;
+//    }
 
-    const uint16_t avrg_size = window_size;
-    uint16_t start_pos = _bottomTrackLastIndex;
+//    const uint16_t avrg_size = window_size;
+//    uint16_t start_pos = _bottomTrackLastIndex;
 
-    if(is_param_update) {
-        start_pos = 0;
-        _bottomTrackLastIndex = 0;
-        _bottomTrackWindow.clear();
-    }
+//    if(is_param_update) {
+//        start_pos = 0;
+//        _bottomTrackLastIndex = 0;
+//        _bottomTrackWindow.clear();
+//    }
 
-    if(is_source_update) {
-        _bottomTrackLastProcessing = 0;
-    }
+//    if(is_source_update) {
+//        _bottomTrackLastProcessing = 0;
+//    }
 
-    uint16_t max_size = _bottomTrackWindow.size();
-    for(int i = _bottomTrackLastProcessing+1; i < pool_size; i++) {
-        PoolDataset* dataset = fromPool(i);
-        dataset->doBottomTrack(source_type, is_source_update);
-        uint16_t cur_size = dataset->m_processingDistData.size();
-        if(max_size < cur_size) {  max_size = cur_size; }
-        _bottomTrackLastProcessing = i;
-    }
+//    uint16_t max_size = _bottomTrackWindow.size();
+//    for(int i = _bottomTrackLastProcessing+1; i < pool_size; i++) {
+//        PoolDataset* dataset = fromPool(i);
+//        dataset->doBottomTrack(source_type, is_source_update);
+//        uint16_t cur_size = dataset->m_processingDistData.size();
+//        if(max_size < cur_size) {  max_size = cur_size; }
+//        _bottomTrackLastProcessing = i;
+//    }
 
-    if(_bottomTrackWindow.size() < max_size) {
-        _bottomTrackWindow.resize(max_size);
-    }
+//    if(_bottomTrackWindow.size() < max_size) {
+//        _bottomTrackWindow.resize(max_size);
+//    }
 
-    if(pool_size > avrg_size && max_size > 0) {
-        int32_t* avrg_data = _bottomTrackWindow.data();
+//    if(pool_size > avrg_size && max_size > 0) {
+//        int32_t* avrg_data = _bottomTrackWindow.data();
 
-        if(is_param_update || _bottomTrackLastIndex == 0) {
-            for(int i = 0; i < avrg_size; i++) {
-                PoolDataset* dataset = fromPool(i);
+//        if(is_param_update || _bottomTrackLastIndex == 0) {
+//            for(int i = 0; i < avrg_size; i++) {
+//                PoolDataset* dataset = fromPool(i);
 
-                uint16_t cur_size = dataset->m_processingDistData.size();
-                const int16_t* data = dataset->m_processingDistData.constData();
-                for(uint16_t k = 0; k < cur_size; k++) {
-                    avrg_data[k] += data[k];
-                }
-            }
-        }
+//                uint16_t cur_size = dataset->m_processingDistData.size();
+//                const int16_t* data = dataset->m_processingDistData.constData();
+//                for(uint16_t k = 0; k < cur_size; k++) {
+//                    avrg_data[k] += data[k];
+//                }
+//            }
+//        }
 
-        for(int i = start_pos; i < pool_size - avrg_size; i++) {
-            PoolDataset* dataset = fromPool(i);
+//        for(int i = start_pos; i < pool_size - avrg_size; i++) {
+//            PoolDataset* dataset = fromPool(i);
 
-            uint16_t cur_size = dataset->m_processingDistData.size();
-            const int16_t* data = dataset->m_processingDistData.data();
+//            uint16_t cur_size = dataset->m_processingDistData.size();
+//            const int16_t* data = dataset->m_processingDistData.data();
 
-            for(uint16_t k = 0; k < cur_size; k++) {
-                avrg_data[k] -= data[k];
-            }
+//            for(uint16_t k = 0; k < cur_size; k++) {
+//                avrg_data[k] -= data[k];
+//            }
 
-            PoolDataset* dataset2 = fromPool(i+avrg_size);
-            uint16_t cur_size2 = dataset2->m_processingDistData.size();
-            const int16_t* data2 = dataset2->m_processingDistData.data();
+//            PoolDataset* dataset2 = fromPool(i+avrg_size);
+//            uint16_t cur_size2 = dataset2->m_processingDistData.size();
+//            const int16_t* data2 = dataset2->m_processingDistData.data();
 
-            for(uint16_t k = 0; k < cur_size2; k++) {
-                avrg_data[k] += data2[k];
-            }
+//            for(uint16_t k = 0; k < cur_size2; k++) {
+//                avrg_data[k] += data2[k];
+//            }
 
-            uint16_t start_pos = range_min*100;
-            uint16_t stop_pos = range_max*100;
+//            uint16_t start_pos = range_min*100;
+//            uint16_t stop_pos = range_max*100;
 
-            if(start_pos < 0) {
-                start_pos = 0;
-            }
+//            if(start_pos < 0) {
+//                start_pos = 0;
+//            }
 
-            if(stop_pos > max_size) {
-                stop_pos = max_size;
-            }
+//            if(stop_pos > max_size) {
+//                stop_pos = max_size;
+//            }
 
-            int32_t max_val = -2000000000;
-            uint16_t max_ind = start_pos;
-            for(uint16_t k = start_pos; k < stop_pos; k++) {
-                int val = avrg_data[k];
-                if(max_val <= val) {
-                    max_val = val;
-                    max_ind = k;
-                }
-            }
+//            int32_t max_val = -2000000000;
+//            uint16_t max_ind = start_pos;
+//            for(uint16_t k = start_pos; k < stop_pos; k++) {
+//                int val = avrg_data[k];
+//                if(max_val <= val) {
+//                    max_val = val;
+//                    max_ind = k;
+//                }
+//            }
 
-            float dist = float(max_ind)*0.01f;
-            float min_dist = dist*(1.0f - 0.5f*vertical_gap);
-            float max_dist = dist*(1.0f + 0.5f*vertical_gap);
+//            float dist = float(max_ind)*0.01f;
+//            float min_dist = dist*(1.0f - 0.5f*vertical_gap);
+//            float max_dist = dist*(1.0f + 0.5f*vertical_gap);
 
-            if(vertical_gap == 0) {
-                _pool[i+avrg_size/2].setDistProcessing(dist*1000);
-            } else {
-                _pool[i+avrg_size/2].setMinMaxDistProc(min_dist*1000, max_dist*1000, false);
-            }
-        }
+//            if(vertical_gap == 0) {
+//                _pool[i+avrg_size/2].setDistProcessing(dist*1000);
+//            } else {
+//                _pool[i+avrg_size/2].setMinMaxDistProc(min_dist*1000, max_dist*1000, false);
+//            }
+//        }
 
-        _bottomTrackLastIndex = pool_size - avrg_size;
-    }
+//        _bottomTrackLastIndex = pool_size - avrg_size;
+//    }
 
-    updateImage(true);
-    updateBottomTrack(true);
+//    updateImage(true);
+//    updateBottomTrack(true);
 }
 
 void PlotCash::resetDistProcessing() {
@@ -962,7 +961,7 @@ void PlotCash::updateValueMap(int width, int height) {
     int pool_index = poolIndex(pool_last_index);
     if(pool_index >= 0) {
         if(_pool[pool_index].chartAvail())  {
-            _pool[pool_last_index].chartTo(m_offset,m_offset + m_range, data_column, size_column, _imageType);
+            _pool[pool_last_index].chartTo(0, m_offset,m_offset + m_range, data_column, size_column, _imageType);
         } else {
             memset(data_column, 0, size_column*2);
         }
@@ -971,9 +970,9 @@ void PlotCash::updateValueMap(int width, int height) {
             m_prevValueCash.distData = _pool[pool_index].distData() - m_offset;
         }
 
-        if(_pool[pool_index].temperatureAvail()) {
-            m_prevValueCash.temperature = _pool[pool_index].temperature();
-        }
+//        if(_pool[pool_index].temperatureAvail()) {
+//            m_prevValueCash.temperature = _pool[pool_index].temperature();
+//        }
     }
 
     int pool_offset_index = pool_last_index - m_offsetLine;
@@ -1001,17 +1000,27 @@ void PlotCash::updateValueMap(int width, int height) {
         }
         m_valueCash[column].poolIndexUpdate = false;
 
-        size_column = m_valueCash[column].chartData.size();
-        data_column = m_valueCash[column].chartData.data();
+        const uint16_t datacashsize = m_valueCash[column].chartData.size();
+        int16_t* const datacash = m_valueCash[column].chartData.data();
 
         int pool_index = m_valueCash[column].poolIndex;
 
         if(pool_index >= 0) {
             if(m_chartVis) {
-                if(_pool[pool_index].chartAvail()) {
-                    _pool[pool_index].chartTo(m_offset, m_offset + m_range, data_column, size_column, _imageType);
-                } else {
-                    memset(data_column, 0, size_column*2);
+                QList<int16_t> charts_channels = _pool[pool_index].chartChannels();
+//                memset(datacash, (int16_t(-65534) << 16) | int16_t(-65534), size_column*2);
+
+                for(uint16_t i = 0; i < datacashsize; i++) {
+                    datacash[i] = -32767;
+                }
+
+                for(uint16_t ch = 0; ch < charts_channels.size(); ch++) {
+                    int16_t channel = charts_channels[ch];
+                    if(channel == 1) {
+                        _pool[pool_index].chartTo(channel, m_offset, m_offset + m_range, datacash, datacashsize/2, _imageType, true);
+                    } else if(channel == 2) {
+                        _pool[pool_index].chartTo(channel, m_offset, m_offset + m_range, &datacash[datacashsize/2], datacashsize/2, _imageType);
+                    }
                 }
             }
 
@@ -1024,31 +1033,15 @@ void PlotCash::updateValueMap(int width, int height) {
             }
 
             if(m_distProcessingVis) {
-                if(_pool[pool_index].distProccesingAvail()) {
-                    m_valueCash[column].processingDistData = _pool[pool_index].distProccesing() - m_offset;
+                if(_pool[pool_index].distProccesingAvail(0)) {
+                    m_valueCash[column].processingDistData = _pool[pool_index].distProccesing(0) - m_offset;
                 } else {
                     m_valueCash[column].processingDistData = INT_MIN;
                 }
             }
 
-            if(m_TemperatureVis) {
-                if(_pool[pool_index].temperatureAvail()) {
-                    m_valueCash[column].temperature = _pool[pool_index].temperature();
-                } else {
-                    m_valueCash[column].temperature = NAN;
-                }
-            }
-
-            if(m_DopplerVis) {
-                if(_pool[pool_index].isDopplerAvail()) {
-                    m_valueCash[column].dopplerX = _pool[pool_index].dopplerX();
-                } else {
-                    m_valueCash[column].dopplerX = NAN;
-                }
-            }
-
         } else {
-            memset(data_column, 0, size_column*2);
+            memset(datacash, 0, datacashsize*2);
             m_valueCash[column].distData = -1;
             m_valueCash[column].processingDistData = INT_MIN;
         }

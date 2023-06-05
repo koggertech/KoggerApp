@@ -32,7 +32,8 @@ Resp  IDBin::parse(FrameParser &proto) {
         if(resp_parse == respOk) {
             m_lastType = proto.type();
             m_lastVersion = proto.ver();
-            emit updateContent(m_lastType, m_lastVersion, m_lastResp);
+            _lastAddress = proto.route();
+            emit updateContent(m_lastType, m_lastVersion, m_lastResp, _lastAddress);
         } else {
         }
     }

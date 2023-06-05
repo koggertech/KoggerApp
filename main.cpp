@@ -153,7 +153,9 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
 
 
-    qInstallMessageHandler(messageHandler);
+
+
+//    qInstallMessageHandler(messageHandler);
 
 //    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 
@@ -186,6 +188,8 @@ int main(int argc, char *argv[]) {
                      &core, &Core::UILoad, Qt::QueuedConnection);
 
     engine.load(url);
+
+    qCritical() << "App is created";
 
 #if defined(Q_OS_ANDROID)
 //    checkAndroidWritePermission();

@@ -140,6 +140,7 @@ void DevDriver::protoComplete(FrameParser &proto) {
         IDBin* parse_instance = hashIDParsing[proto.id()];
         ParseCallback callback = hashIDCallback[proto.id()];
         parse_instance->parse(proto);
+        _lastAddres = proto.route();
         (this->*callback)(parse_instance->lastType(), parse_instance->lastVersion(), parse_instance->lastResp());
     }
 }
@@ -536,12 +537,15 @@ void DevDriver::receivedDist(Type type, Version ver, Resp resp) {
 void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
     if(idChart->isCompleteChart()) {
         if(ver == v0) {
+
             QVector<int16_t> data(idChart->chartSize());
             uint8_t* raw_data = idChart->logData8();
             for(int i = 0; i < data.length(); i++) {
                 data[i] = raw_data[i];
             }
-            emit chartComplete(data, idChart->resolution(), idChart->offsetRange());
+            emit chartComplete(_lastAddres, data, idChart->resolution(), idChart->offsetRange());
+
+
         } else if(ver == v6) {
             QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
             emit iqComplete(data, idChart->rawType());

@@ -98,6 +98,8 @@ public slots:
 
     bool exportPlotAsCVS(QString file_path);
 
+    bool openXTF(QByteArray data);
+
 #ifdef FLASHER
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif

@@ -46,7 +46,7 @@ public:
     void setConsoleOut(bool is_console) { isConsoleOut = is_console; }
 
 signals:
-    void updateContent(Type type, Version ver, Resp resp);
+    void updateContent(Type type, Version ver, Resp resp, uint8_t address);
     void dataSend(QByteArray data);
     void binFrameOut(ProtoBinOut &proto_out);
 
@@ -56,6 +56,7 @@ protected:
     Type m_lastType;
     Version m_lastVersion;
     Resp m_lastResp;
+    uint8_t _lastAddress = 0;
     QList<Version> availableVer;
     uint8_t m_address = 0;
     bool isConsoleOut = false;

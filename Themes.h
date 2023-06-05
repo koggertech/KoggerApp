@@ -57,8 +57,10 @@ public:
         _id = theme_id;
 
 #if defined(Q_OS_ANDROID)
-        _textFont = new QFont("PT Sans Caption", 26);
-        _textFontS = new QFont("PT Sans Caption", 20);
+        _textFont = new QFont("Times", 30);
+        _textFont->setPixelSize(30);
+        _textFontS = new QFont("Times", 24);
+        _textFontS->setPixelSize(24);
 #else
         _textFont = new QFont("PT Sans Caption", 14);
         _textFontS = new QFont("PT Sans Caption", 12);
@@ -114,7 +116,7 @@ public:
             _disabledBackColor = new QColor(50, 50, 50);
         }
 #if defined(Q_OS_ANDROID)
-        _controlHeight = 50;
+        _controlHeight = 48;
 #else
         _controlHeight = 26;
 #endif
