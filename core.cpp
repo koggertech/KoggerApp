@@ -19,25 +19,28 @@ Core::Core() : QObject(),
 
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
-    createControllers();
     createModels();
-}
+    createControllers();
 
-
-void Core::createControllers()
-{
-    mpSettings3DController = std::make_shared <Q3DSettingsController> ();
 }
 
 void Core::createModels()
 {
-
     auto bottomTrackProvider = std::make_shared <BottomTrackProvider>();
     mpScene3DModel = std::make_shared <Q3DSceneModel> (bottomTrackProvider);
 
-    mpSettings3DController->setModel(mpScene3DModel);
     m_plot->set3DSceneModel(mpScene3DModel);
     m_plot->setBottomTrackProvider(bottomTrackProvider);
+}
+
+void Core::createControllers()
+{
+    mpSettings3DController = std::make_shared <Q3DSettingsController> ();
+    mpSettings3DController->setModel(mpScene3DModel);
+
+    mpSceneController = std::make_shared <SceneController> (mpScene3DModel);
+
+    m_plot->set3DSceneController(mpSceneController);
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)

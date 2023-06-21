@@ -11,12 +11,14 @@
 
 #include <QObject>
 #include <qdebug.h>
+#include <Qt3DRender/QRayCaster>
 
 #include <QTime>
 #include <QVector>
 #include <memory>
 
-#include "Q3DSceneModel.h"
+#include <scenecontroller.h>
+#include <Q3DSceneModel.h>
 #include "displayedobject.h"
 
 using ModelPointer = std::shared_ptr <Q3DSceneModel>;
@@ -33,8 +35,8 @@ public:
     void initialize();
 
     void setModel(const ModelPointer pModel);
+    void setController(std::shared_ptr <SceneController> controller);
 
-    //void setLines(QVector<QVector3D> p);
 
     void scale(float sc) {
         m_fScale = sc;
@@ -42,6 +44,26 @@ public:
 
     void size(QVector2D sz) {
         _size = sz;
+    }
+
+    void setSize(const QSize& size){
+        //mSceneSize = size;
+
+        mpController->viewportRectChanged(QRect(0,0,size.width(), size.height()));
+    }
+
+    void setRightMouseButtonPressed(bool pressed){
+        mIsRightMouseButtonPressed = pressed;
+    }
+
+    void setMousePos(const QVector2D& pos){
+        //mMousePos = pos;
+
+        //if (mIsRightMouseButtonPressed){
+        //    selectObjects();
+        //}
+
+        mpController->cursorPosChanged(pos.toVector3D(), mView, mModel, mProjection);
     }
 
     void mouse(QVector2D m) {
@@ -64,18 +86,14 @@ public:
 
 public slots:
 
-    void modelStateChanged();
-
     void bottomTrackDataChanged();
     void bottomTrackPropertiesChanged();
-
     void surfaceDataChanged();
     void surfacePropertiesChanged();
-
     void contourDataChanged();
     void contourPropertiesChanged();
-
     void markupGridDataChanged();
+    void pickedObjectsDataChanged();
 
 private:
     qreal   m_fScale = 1;
@@ -121,6 +139,25 @@ private:
 
     void displayAxis();
 
+    void selectObjects();
+
+    void displayNormals();
+
+    void displayPickedObjects();
+
+    struct Ray{
+        QVector3D origin;
+        QVector3D direction;
+    };
+
+    struct Sphere{
+        QVector3D center;
+        float radius = 0.0f;
+    };
+
+    QVector4D unproject(const QVector3D& mouse);
+    void intersects(const QVector3D& origin, const QVector3D& direction);
+
     Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
     QVector<QVector3D> vTriangle;
@@ -146,6 +183,7 @@ private:
 
     //! Указатель на модель сцены
     ModelPointer mpModel;
+    std::shared_ptr <SceneController> mpController;
 
 
     Vector3 mMesh;
@@ -165,6 +203,7 @@ private:
     BottomTrack mBottomTrackDisplayedObject;
     Contour mContourDisplayedObject;
     MarkupGrid mMarkupGridDisplayedObject;
+    VertexObject mPickedObject;
 
     std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
     std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
@@ -175,6 +214,20 @@ private:
 
     float mMaxZ = 0.0f;
     float mMinZ = 0.0f;
+
+    QVector <QVector3D> test;
+    QVector <QVector3D> rays;
+    QVector <QVector3D> normals;
+
+
+    void displayTest();
+    void displayRays();
+    void displayPoint(const QVector3D& p);
+
+    bool mIsRightMouseButtonPressed = false;
+
+    QVector2D mMousePos;
+    QSize mSceneSize;
 };
 
 class FboInSGRenderer : public QQuickFramebufferObject
@@ -192,10 +245,24 @@ public:
     //! Передать указатель на модель 3D - сцены
     void setModel(const ModelPointer pModel);
 
+    void setController(std::shared_ptr <SceneController> controller);
+
     void updateBottomTrack(QVector<QVector3D> p) {
         _bottomTrack = p;
 
         update();
+    }
+
+    bool isRightMouseButtonPressed() const {
+        return mIsRightMouseButtonPressed;
+    };
+
+    bool isLeftMouseButtonPressed() const {
+        return mIsLeftMouseButtonPressed;
+    }
+
+    QVector2D mousePos() const {
+        return mMousePos;
     }
 
 public slots:
@@ -239,6 +306,37 @@ public slots:
         update();
     }
 
+    void mousePressed(int modifier){
+        switch(modifier){
+        case Qt::LeftButton:
+            mIsLeftMouseButtonPressed = true;
+            break;
+        case Qt::RightButton:
+            mIsRightMouseButtonPressed = true;
+            break;
+        }
+
+        update();
+    };
+
+    void mouseReleased(int modifier){
+        switch(modifier){
+        case Qt::LeftButton:
+            mIsLeftMouseButtonPressed = false;
+            break;
+        case Qt::RightButton:
+            mIsRightMouseButtonPressed = false;
+            break;
+        }
+
+        update();
+    };
+
+    void mouseMoved(int x, int y){
+        mMousePos = QVector2D(x,y);
+        update();
+    };
+
     QVector2D mouse() { return QVector2D(_lastMouseX, _lastMouseY); }
 
     bool isRotation() { return _rotationFlag; }
@@ -253,6 +351,12 @@ private:
 
     Renderer* mpRenderer;
     ModelPointer mpModel;
+    std::shared_ptr <SceneController> mpSceneController;
+
+    bool mIsRightMouseButtonPressed = false;
+    bool mIsLeftMouseButtonPressed = false;
+
+    QVector2D mMousePos = {0.0f, 0.0f};
 };
 
 #endif // H3PLOT_H

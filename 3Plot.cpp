@@ -25,6 +25,10 @@ public:
         scene.setModel(pModel);
     }
 
+    void setController(std::shared_ptr <SceneController> controller){
+        scene.setController(controller);
+    }
+
     QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override {
         QOpenGLFramebufferObjectFormat format;
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -40,6 +44,9 @@ public:
         scene.size(fbitem->size());
         scene.mouse(fbitem->mouse());
         scene.rotationFlag(fbitem->isRotation());
+        scene.setRightMouseButtonPressed(fbitem->isRightMouseButtonPressed());
+        scene.setMousePos(fbitem->mousePos());
+        scene.setSize(QSize(fbitem->width(), fbitem->height()));
     }
 
     Scene3D scene;
@@ -50,6 +57,7 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
     auto renderer = new FboRenderer();
 
     renderer->setModel(mpModel);
+    renderer->setController(mpSceneController);
 
     return renderer;
 }
@@ -77,9 +85,6 @@ void Scene3D::setModel(const ModelPointer pModel)
 
     if (!mpModel) return;
 
-    connect(mpModel.get(), &Q3DSceneModel::stateChanged,
-            this         , &Scene3D::modelStateChanged);
-
     connect(mpModel.get(), &Q3DSceneModel::bottomTrackDataChanged,
             this         , &Scene3D::bottomTrackDataChanged);
 
@@ -101,31 +106,18 @@ void Scene3D::setModel(const ModelPointer pModel)
     connect(mpModel.get(), &Q3DSceneModel::markupGridDataChanged,
             this         , &Scene3D::markupGridDataChanged);
 
+    connect(mpModel.get(), &Q3DSceneModel::pickedObjectsDataChanged,
+            this         , &Scene3D::pickedObjectsDataChanged);
+
     auto object = mpModel->bottomTrackDisplayedObject();
 
     mBottomTrackDisplayedObject.setData(object.cdata());
     mBottomTrackDisplayedObject.setPrimitiveType(object.primitiveType());
 }
 
-void Scene3D::modelStateChanged()
+void Scene3D::setController(std::shared_ptr <SceneController> controller)
 {
-    //mpBottomTrackDisplayedObject = mpModel->bottomTrack();
-   // mpSurfaceDisplayedObject = mpModel->surface();
-    //mBottomTrack = mpModel->bottomTrack();
-
-    //if (mBottomTrack.isEmpty())
-    //    return;
-
-    //mMaxZ = mBottomTrack.first().z();
-    //mMinZ = mMaxZ;
-
-    //for (const auto& p : mBottomTrack){
-    //    mMaxZ = std::max(mMaxZ, p.z());
-    //    mMinZ = std::min(mMinZ, p.z());
-    //}
-
-    //mBasicSurface = mpModel->basicSurface();
-    //mSmoothedSurface = mpModel->smoothedSurface();
+    mpController = controller;
 }
 
 void Scene3D::bottomTrackDataChanged()
@@ -184,6 +176,11 @@ void Scene3D::markupGridDataChanged()
     mMarkupGridDisplayedObject = mpModel->markupGridDisplayedObject();
 }
 
+void Scene3D::pickedObjectsDataChanged()
+{
+    mPickedObject = mpModel->pickedObject();
+}
+
 void Scene3D::paintScene()
 {
     if (mBottomTrackDisplayedObject.isVisible()){
@@ -206,8 +203,12 @@ void Scene3D::paintScene()
         displayContourKeyPoints();
     }
 
-    displayMarkupGrid();
-    displayAxis();
+    if (mpModel->pickingMethod() != PICKING_METHOD_NONE){
+        displayPickedObjects();
+    }
+
+    //displayMarkupGrid();
+    //displayAxis();
 }
 
 void Scene3D::displayBottomTrack() {
@@ -507,7 +508,6 @@ void Scene3D::displayAxis()
 
     pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.bounds().maximumZ());
     pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.bounds().minimumZ());
-
     pProgram->setAttributeArray(posLoc, z_axis.constData());
 
     glDrawArrays(GL_LINES, 0, z_axis.size());
@@ -515,8 +515,35 @@ void Scene3D::displayAxis()
     glLineWidth(1.0f);
 
     pProgram->disableAttributeArray(posLoc);
+}
 
+void Scene3D::displayPickedObjects()
+{
+    auto pProgram = mpStaticColorShaderProgram.get();
 
+    if (!pProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc = pProgram->attributeLocation("position");
+    int matrixLoc = pProgram->uniformLocation("matrix");
+
+    QVector4D color{0.0f, 0.0f, 1.0f, 1.0f};
+
+    int colorLoc = pProgram->uniformLocation("color");
+
+    pProgram->setUniformValue(colorLoc, color);
+    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
+    pProgram->enableAttributeArray(posLoc);
+    pProgram->setAttributeArray(posLoc, mPickedObject.cdata().constData());
+
+    glPointSize(16.0f);
+    glDrawArrays(mPickedObject.primitiveType(), 0, mPickedObject.cdata().size());
+    glPointSize(1.0f);
+
+    pProgram->disableAttributeArray(posLoc);
+    pProgram->release();
 }
 
 void FboInSGRenderer::setModel(const ModelPointer pModel)
@@ -524,6 +551,10 @@ void FboInSGRenderer::setModel(const ModelPointer pModel)
     mpModel = pModel;
 }
 
+void FboInSGRenderer::setController(std::shared_ptr<SceneController> controller)
+{
+    mpSceneController = controller;
+}
 
 void Scene3D::initialize()
 {

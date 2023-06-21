@@ -468,6 +468,7 @@ public:
 
     //! Установить указатель на модель 3D - сцены
     void set3DSceneModel(const ModelPointer pModel);
+    void set3DSceneController(std::shared_ptr <SceneController> controller);
     void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
 
 public slots:
@@ -516,6 +517,7 @@ public slots:
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
         _render3D->setModel(mp3DSceneModel);
+        _render3D->setController(mp3DSceneController);
     }
     void updateRender3D() {
         if(_render3D != NULL) {
@@ -528,6 +530,7 @@ private:
 
     //! Указатель на модель 3D - сцены
     ModelPointer mp3DSceneModel;
+    std::shared_ptr <SceneController> mp3DSceneController;
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
 
 signals:

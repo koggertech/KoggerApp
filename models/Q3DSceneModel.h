@@ -27,6 +27,7 @@
 #include "sceneparams.h"
 #include "processingcasefactory.h"
 #include <abstractbottomtrackfilter.h>
+#include <abstractpicker.h>
 #include <bottomtrackprovider.h>
 #include <gridgenerator.h>
 
@@ -50,6 +51,8 @@ public:
     void setBottomTrack(const QVector <QVector3D>& pBottomTrack);
 
     void setBottomTrackFilter(std::shared_ptr <AbstractBottomTrackFilter> filter);
+
+    void setObjectsPicker(std::shared_ptr <AbstractPicker> picker);
 
     //! @brief Отобразить/скрыть 3D - сцену
     //! @param[in]  - признак необходимости отобразить
@@ -116,6 +119,8 @@ public:
 
     void changeMarkupGridCellSize(float size);
 
+    void pickObjects();
+
     //! @brief Обновить данные для отображения
     void updateSurface();
 
@@ -139,6 +144,10 @@ public:
     Contour contourDisplayedObject();
 
     MarkupGrid markupGridDisplayedObject();
+
+    VertexObject pickedObject();
+
+    QString pickingMethod() const;
 
     /**
      * @brief Возвращает куб, описывающий все объекты на сцене.
@@ -199,11 +208,13 @@ private:
     BottomTrack mBottomTrackDisplayedObject; //< Отображаемый объект "Трек"
     Surface mSurfaceDisplayedObject;         //< Отображаемый объект "Поверхность"
     Contour mContourDisplayedObject;         //< Отображаемый объект "Контур поверхности"
-    MarkupGrid mMarkupGrid;                 //< Сетка разметки сцены
-    Cube mBounds;
+    MarkupGrid mMarkupGrid;                  //< Сетка разметки сцены
+    VertexObject mPickedObject;   //< Вектор выбранных объектов
+    Cube mBounds;                            //< Объект границ сцены
     SceneParams mParams;                     //< Объект параметров обработки и расчета
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
     std::shared_ptr <AbstractBottomTrackFilter> mpBottomTrackFilter;
+    std::shared_ptr <AbstractPicker> mpObjectsPicker;
 
 signals:
 
@@ -252,7 +263,15 @@ signals:
      */
     void contourPropertiesChanged();
 
+    /**
+     *  @brief Сигнал - оповещение об изменении свойств сетки.
+     */
     void markupGridDataChanged();
+
+    /**
+     *  @brief Сигнал - оповещение об изменении свойств выбранных на сцене объектов.
+     */
+    void pickedObjectsDataChanged();
 
 };
 

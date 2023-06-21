@@ -15,4 +15,8 @@ static const QString GRID_TYPE_TRIANGLE = "Triangle";
 static const QString BT_FILTRATION_METHOD_NEAREST_POINT = "Nearest point";
 static const QString BT_FILTRATION_METHOD_MAX_POINTS = "Max points";
 
+static const QString PICKING_METHOD_NONE = "None";
+static const QString PICKING_METHOD_POINT = "Point";
+static const QString PICKING_METHOD_POLYGON = "Polygon";
+
 #endif // CONSTANTS_H

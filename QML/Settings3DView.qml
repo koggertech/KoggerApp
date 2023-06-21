@@ -177,6 +177,41 @@ MenuScroll {
                         }
                     }
 
+                    ParamSetup {
+                        paramName: "Picking method: "
+
+                        CCombo  {
+                            id: pickingMethodCCombo
+                            Layout.fillWidth: true
+                            model: ["None","Point", "Polygon"]
+                            enabled:Scene3DModel.triangulationAvailable()
+                            currentIndex: 0
+                            onCurrentTextChanged: Settings3DController.changePickingMethod(currentText)
+                            Component.onCompleted: Settings3DController.changePickingMethod(currentText)
+
+                            contentItem: Text {
+                                font: theme.textFont
+                                text: pickingMethodCCombo.currentText
+                                color: enabled ? theme.textColor : theme.disabledTextColor
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                color: {
+                                    !pickingMethodCCombo.enabled ? theme.disabledBackColor :
+                                                                pickingMethodCCombo.hovered ? theme.hoveredBackColor  :
+                                                                                              theme.controlBackColor
+                                }
+                            }
+
+                            Settings {
+                                property alias pickingMethodCCombo: pickingMethodCCombo.currentIndex
+                            }
+                        }
+                    }
+
+
                 }
 
                 ParamGroup {

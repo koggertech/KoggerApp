@@ -63,6 +63,11 @@ Cube VertexObject::bounds() const
     return mBounds;
 }
 
+void VertexObject::clearData()
+{
+    mData.clear();
+}
+
 void VertexObject::createBounds()
 {
     if (mData.isEmpty()){

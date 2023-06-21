@@ -32,6 +32,25 @@ void Q3DSceneModel::setBottomTrackFilter(std::shared_ptr<AbstractBottomTrackFilt
     setBottomTrack(track);
 }
 
+void Q3DSceneModel::setObjectsPicker(std::shared_ptr<AbstractPicker> picker)
+{
+    mpObjectsPicker = picker;
+
+    mPickedObject.clearData();
+
+    bool needPicking =   mpObjectsPicker != nullptr
+                     && (mSurfaceDisplayedObject.isVisible()
+                     ||  mSurfaceDisplayedObject.isGridVisible());
+
+    if (needPicking){
+        auto surface = dynamic_cast <VertexObject*>(&mSurfaceDisplayedObject);
+
+        mPickedObject = mpObjectsPicker->pick(*surface);
+    }
+
+    Q_EMIT pickedObjectsDataChanged();
+}
+
 void Q3DSceneModel::changeSceneVisibility(const bool visible)
 {
     mSceneVisible = visible;
@@ -145,6 +164,19 @@ void Q3DSceneModel::changeMarkupGridCellSize(float size)
                         size);
 
     Q_EMIT markupGridDataChanged();
+}
+
+VertexObject Q3DSceneModel::pickedObject()
+{
+    return mPickedObject;
+}
+
+QString Q3DSceneModel::pickingMethod() const
+{
+    if (!mpObjectsPicker)
+        return PICKING_METHOD_NONE;
+
+    return mpObjectsPicker->pickingMethod();
 }
 
 void Q3DSceneModel::updateSurface()

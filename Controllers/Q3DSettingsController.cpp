@@ -152,6 +152,16 @@ void Q3DSettingsController::changeMarkupGridCellSize(float size)
     mpModel->changeMarkupGridCellSize(size);
 }
 
+void Q3DSettingsController::changePickingMethod(QString method)
+{
+    if (mPickingMethod == method)
+        return;
+
+    mPickingMethod = method;
+
+    updatePicker();
+}
+
 void Q3DSettingsController::updateBottomTrackFilter()
 {
     std::shared_ptr <AbstractBottomTrackFilter> filter = nullptr;
@@ -169,4 +179,24 @@ void Q3DSettingsController::updateBottomTrackFilter()
     }
 
     mpModel->setBottomTrackFilter(filter);
+}
+
+void Q3DSettingsController::updatePicker()
+{
+    QVector3D origin(0.0f,0.0f,0.0f);
+    QVector3D dir(0.0f,0.0f,0.0f);
+
+    auto pickerFactory = std::make_shared <RayCastPickerFactory>(origin, dir);
+
+    std::shared_ptr <AbstractPicker> pPicker = nullptr;
+
+    if (mPickingMethod == PICKING_METHOD_POLYGON){
+         pPicker = pickerFactory->createPolygonPicker();
+    }
+
+    if (mPickingMethod == PICKING_METHOD_POINT){
+         pPicker = pickerFactory->createPointPicker();
+    }
+
+    mpModel->setObjectsPicker(pPicker);
 }

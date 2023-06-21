@@ -77,6 +77,14 @@ public:
             static_cast <float>(mZ),
         };
     };
+
+    static Point3D <T> fromQVector3D(const QVector3D& v){
+        return Point3D <T> (
+                                static_cast <T> (v.x()),
+                                static_cast <T> (v.y()),
+                                static_cast <T> (v.z())
+                                );
+    }
 #endif
 
 protected:

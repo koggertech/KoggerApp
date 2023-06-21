@@ -138,12 +138,15 @@ Window  {
                         enabled: true
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        hoverEnabled: true
 
                         onWheel: {
                             renderer.scaleDelta(wheel.angleDelta.y)
                         }
 
                         onPositionChanged: {
+                            renderer.mouseMoved(mouse.x, mouse.y)
+
                             if((mousearea3D.pressedButtons & Qt.MiddleButton) || ((mousearea3D.pressedButtons & Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier))) {
                                 renderer.mouse(mouse.x, mouse.y, false)
                             } else  if(mousearea3D.pressedButtons & Qt.LeftButton) {
@@ -154,10 +157,12 @@ Window  {
 
                         onPressed: {
                             renderer.mouse(mouse.x, mouse.y, false)
+                            renderer.mousePressed(mouse.button)
                         }
 
                         onReleased: {
                             renderer.mouse(-1, -1, false)
+                            renderer.mouseReleased(mouse.button)
                         }
 
                     }

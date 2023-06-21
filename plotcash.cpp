@@ -300,6 +300,11 @@ void PlotCash::set3DSceneModel(const ModelPointer pModel)
     mp3DSceneModel = pModel;
 }
 
+void PlotCash::set3DSceneController(std::shared_ptr<SceneController> controller)
+{
+    mp3DSceneController = controller;
+}
+
 void PlotCash::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
 {
     mpBottomTrackProvider = bottomTrackProvider;

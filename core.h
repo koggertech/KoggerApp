@@ -15,6 +15,7 @@
 #include <3Plot.h>
 
 #include <Q3DSettingsController.h>
+#include <scenecontroller.h>
 #include <Q3DSceneModel.h>
 #include <bottomtrackprovider.h>
 
@@ -25,6 +26,7 @@
 #endif
 
 using Settings3DController = std::shared_ptr <Q3DSettingsController>;
+using Scene3DController    = std::shared_ptr <SceneController>;
 using Scene3DModel         = std::shared_ptr <Q3DSceneModel>;
 
 
@@ -71,6 +73,8 @@ private:
     void createModels();
 
     Settings3DController mpSettings3DController;
+    Scene3DController mpSceneController;
+
     Scene3DModel mpScene3DModel;
 
 public slots:

@@ -75,6 +75,11 @@ public:
      */
     Cube bounds() const;
 
+    /**
+     * @brief Удаляет данные вершинного объекта.
+     */
+    void clearData();
+
 protected:
 
     void createBounds();

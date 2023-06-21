@@ -3,6 +3,8 @@ DEPENDPATH *= $$PWD
 
 HEADERS += \
     $$PWD/abstractdelaunayprocessor.h \
+    $$PWD/abstractpicker.h \
+    $$PWD/abstractpickerfactory.h \
     $$PWD/displayedobject.h \
     $$PWD/vertexobject.h \
     $$PWD/constants.h \

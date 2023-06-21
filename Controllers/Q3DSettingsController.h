@@ -3,9 +3,12 @@
 
 #include <QObject>
 #include <QThread>
-#include "Q3DSceneModel.h"
+
+
+#include <Q3DSceneModel.h>
 #include <nearestpointfilter.h>
 #include <maxpointsfilter.h>
+#include <raycastpickerfactory.h>
 
 using ModelPointer  = std::shared_ptr <Q3DSceneModel>;
 
@@ -47,6 +50,8 @@ public:
 
     Q_INVOKABLE void changeMarkupGridCellSize(float size);
 
+    Q_INVOKABLE void changePickingMethod(QString method);
+
 public slots:
 
     //! @brief Изменить метод расчета поверхности
@@ -77,8 +82,6 @@ public slots:
     //! отобразить/скрыть сетку поверхности
     void changeSurfaceGridVisibility(const bool visible);
 
-
-
     //! @brief Установить максимальную длину линий интерполяции
     //! @param[in] length - значение ограничения длины граней треугольников
     //! @note Параметр относится к методам расчета поверхности
@@ -96,6 +99,8 @@ private:
 
     void updateBottomTrackFilter();
 
+    void updatePicker();
+
 private:
 
     //! Указатель на модель 3D - сцены
@@ -104,8 +109,10 @@ private:
     QThread* mpThread;
 
     QString mBottomTrackFiltrationMethod = BT_FILTRATION_METHOD_NEAREST_POINT;
+    QString mPickingMethod               = PICKING_METHOD_NONE;
+
     float mNearestPointFiltrationRange = 1.0f;
-    int mMaxPointsFiltrationCount = 1;
+    int mMaxPointsFiltrationCount      = 1;
 
 };
 
