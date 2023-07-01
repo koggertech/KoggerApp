@@ -785,5 +785,30 @@ protected:
     float test_bias = 0;
 };
 
+class IDBinDVLMode : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinDVLMode() : IDBin() {
+    }
+
+    ID id() override { return ID_DVL_MODE; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    typedef struct  __attribute__((packed)) {
+        uint8_t id = 0;
+        uint8_t selection = 1; // 0 - not select, 1 - always
+        int8_t gain = 0;
+        int8_t curve = 0;
+        uint16_t reserved = 0;
+        float start = 0, stop = 0; // 0 - ignore
+    } DVLModeSetup;
+
+    void setModes(bool ismode1, bool ismode2, bool ismode3);
+
+protected:
+
+};
+
 
 #endif // IDBINNARY_H

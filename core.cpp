@@ -242,7 +242,7 @@ bool Core::upgradeFW(const QString &name, QObject* dev) {
 
 void Core::upgradeChanged(int progress_status) {
     if(progress_status == DevDriver::successUpgrade) {
-        restoreBaudrate();
+//        restoreBaudrate();
     }
 }
 

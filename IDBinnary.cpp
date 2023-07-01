@@ -703,3 +703,36 @@ Resp IDBinVoltage::parsePayload(FrameParser &proto) {
 
     return respOk;
 }
+
+Resp IDBinDVLMode::parsePayload(FrameParser &proto) {
+    if(proto.ver() == v0) {
+
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}
+
+void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U1>(1);
+    id_out.write<U1>(0);
+    id_out.write<U1>(0);
+    id_out.write<U1>(0);
+
+    DVLModeSetup mode1, mode2, mode3;
+    mode1.id = 1;
+    mode2.id = 2;
+    mode3.id = 3;
+    mode1.selection = ismode1;
+    mode2.selection = ismode2;
+    mode3.selection = ismode3;
+    id_out.write<DVLModeSetup>(mode1);
+    id_out.write<DVLModeSetup>(mode2);
+    id_out.write<DVLModeSetup>(mode3);
+
+    id_out.end();
+    emit binFrameOut(id_out);
+}

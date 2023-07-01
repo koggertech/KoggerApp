@@ -30,6 +30,7 @@ MenuScroll {
         }
 
         DopplerBox {
+//            dev: devConnection.dev
             dev: devConnection.dev
             Layout.fillWidth: true
             Layout.preferredWidth: parent.width

@@ -191,6 +191,83 @@ void PoolDataset::doBottomTrack2D(bool is_update_dist) {
     }
 }
 
+//void PoolDataset::doBottomTrack2D(bool is_update_dist) {
+//    const int raw_size = m_chartData.size();
+//    const int16_t* src = m_chartData.data();
+
+//    int16_t* procData = NULL;
+
+//    if(raw_size > 0 && (!flags.processChartAvail || is_update_dist)) {
+//        m_processingDistData.resize(raw_size+(( raw_size) >> 6)*3);
+//        m_processingDistData.fill(0);
+//        procData = m_processingDistData.data();
+
+//        float a = 0.91;
+//        float b = 1.0 - a;
+//        float z = -100;
+//        float y = -100;
+//        float dif2 = 0;
+//        float dif_avr = 0;
+
+//        for(uint16_t i = 0; i < raw_size-1; i++) {
+
+//            y = a*y + b*z;
+//            z = a*z + b*(src[i])*((sqrtf(i+40))*0.01);
+
+
+//            float resp = ((i+20)*2.72f)*0.001f;
+//            float dif = (z - y);
+//            if(dif >= 0)
+//                dif2 = (1.0f-1.0f/((resp*dif+1.0f)));
+//            else
+//                dif2 = (1.0f-1.0f/((-0.2*resp*dif+1.0f)));
+
+//            a = abs(dif2);
+//            b = 1.0f - a;
+
+
+
+//            int index = i - resp*6.0f;
+//            if(index >= 0) {
+//                procData[index] = y*5;
+//            }
+
+//        }
+
+//        flags.processChartAvail = true;
+//    }
+
+//    if(flags.processChartAvail && (!flags.processDistAvail || is_update_dist)) {
+//        procData = m_processingDistData.data();
+//        int index_max = 0;
+//        int16_t val_max = -32766;
+//        int max_index = _procMaxDist/m_chartResol;
+//        int min_index = _procMinDist/m_chartResol;
+
+//        if(max_index > raw_size) {
+//            max_index = raw_size;
+//        }
+
+//        if(min_index > raw_size) {
+//            min_index = raw_size;
+//        }
+
+//        if(min_index < 0) {
+//            min_index = 0;
+//        }
+
+//        for(int i = min_index; i < max_index; i ++) {
+//            if(procData[i] > val_max) {
+//                val_max = procData[i];
+//                index_max = i;
+//            }
+//        }
+
+//        m_processingDist = (index_max + m_chartOffset)*m_chartResol;
+//        flags.processDistAvail = true;
+//    }
+//}
+
 void PoolDataset::doBottomTrackSideScan(bool is_update_dist) {
     int raw_size = m_chartData.size() - 50;
     const int16_t* src = m_chartData.data();

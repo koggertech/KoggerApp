@@ -299,10 +299,13 @@ public:
         }
 
         if(image_type == 1 && edgeProcAvail) {
-            src = m_processingEdgeData.data();
+//            src = m_processingEdgeData.data();
+            src = m_processingDistData.data();
+            raw_size = m_processingDistData.size();
         } else {
             src = m_chartData.data();
-//            src = m_processingDistData.data();
+            raw_size = m_chartData.size();
+
         }
 
         if(raw_size == 0) {
