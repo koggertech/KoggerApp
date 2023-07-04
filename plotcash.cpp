@@ -327,7 +327,10 @@ void PlotCash::addChart(int16_t channel, QVector<int16_t> data, int resolution, 
         pool_index = poolLastIndex();
     }
 
-    _pool[poolLastIndex()].setChart(channel, data, resolution, offset);
+//    if(channel == 2) {
+         _pool[poolLastIndex()].setChart(channel, data, resolution, offset);
+//    }
+
 
     if(_bottomtrackType >= 0) {
         doDistProcessing();
