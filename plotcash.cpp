@@ -1512,420 +1512,89 @@ void PlotCash::updateImage(int width, int height) {
             pool_index = poolLastIndex();
         }
 
-        if(pool_index >= 0 && _pool[pool_index].isIqAvail()) {
-            const int data_size = _pool[pool_index].iqData().size()/4;
-//            const int data_size = 100;
 
-            float signalA[data_size+1000];
-            float signalPh[data_size+1000];
+    }
 
-            float comprA[data_size+1000];
-            float corrA[data_size+1000];
-            float corr2A[data_size+1000];
-            float corrI[data_size+1000];
-            float corrQ[data_size+1000];
-            float corr2I[data_size+1000];
-            float corr2Q[data_size+1000];
-            float speed[data_size+1000];
-            float speed2[data_size+1000];
+    if(_isAttitudeVis) {
+        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
+        QPainter p1(&tmp_img);
 
-            const int16_t* iq_data = (const int16_t*)(_pool[pool_index].iqData().constData());
+        const float scaleAngle = (float)height/20.0;
+        float last_angle[3] = {};
 
-            const int32_t dec_f = 2;
-            const int32_t w_size = 96/dec_f;
-            const int32_t w_size2 = 2000/dec_f;
+        QColor angle_color[4] = {
+            QColor(255, 0, 0),
+            QColor(0, 255, 0),
+            QColor(0, 0, 255),
+        };
 
-//            int16_t data_ref[w_size*2];
-//            for (int row = 0; row < w_size; row+=1) {
-//                const uint32_t ref_ind = row*2;
-//                const uint32_t row_ind = row*2 + 38*4;
-////                float coef = (0.355768f + 0.397396f*cosf(float(row - w_size/2)*(2.0f*3.14/float(w_size))) - 0.144232f*cosf(float(row - w_size/2)*(4.0f*3.14/float(w_size))) + 0.012604f*cosf(float(row - w_size/2)*(6.0f*3.14/float(w_size))))/float(w_size);
-////                float coef = (0.5f + 0.6f*cosf(float(row - w_size/2)*(2.0f*3.14/float(w_size))))/float(w_size);
-//                float coef = (1.0f - abs(float(row - w_size/2)/float(w_size))*2.0f)/float(w_size);
+        QPen velo_pen;
+        velo_pen.setWidth(2);
+        velo_pen.setColor(QColor::fromRgb(100, 255, 0));
 
-//                data_ref[ref_ind] = iq_data[row_ind]*coef;
-//                data_ref[ref_ind+1] = iq_data[row_ind+1]*coef;
-//            }
 
-            for (int row = 0; row < data_size; row+=1) {
-                const uint32_t row_ind = row*2;
-                float i1 = iq_data[row_ind], q1 = iq_data[row_ind+1];
-
-                signalA[row] = (10*log10f(i1*i1 + q1*q1 + 0.1f) - 50.0f)*10.0f;
-                signalPh[row] = atan2f(q1, i1)/3.14f*500;
+        int pool_index = -1;
+        for(int col = 1;  col < waterfall_width; col++) {
+            int val_col = (m_valueCashStart + col);
+            if(val_col >= waterfall_width) {
+                val_col -= waterfall_width;
             }
 
-            int chart_size = data_size;
+            pool_index = m_valueCash[val_col].poolIndex;
+            if(pool_index >= 0) {
 
+                uint32_t hscale = 1;
+                {
+                    float yaw = (float)height/2 -scaleAngle*_pool[pool_index].yaw();
 
-//            uint32_t base = (928 + 48)/dec_f;
-//            uint32_t offset = 0;
+                    if(isfinite(yaw)) {
+                        velo_pen.setColor(angle_color[0]);
+                        p1.setPen(velo_pen);
+                        if(isfinite(last_angle[0])) {
+                            p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_angle[0], (col)*hscale-waterfall_width*(hscale-1), yaw);
+                        } else {
+                            p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), yaw);
+                        }
 
-//            for(uint32_t i = 0; i < 5; i++) {
-//                for (uint32_t row = offset; row < offset + base - 64; row+=1) {
-//                    const uint32_t row_ind = row*2;
-//                    float ci = 0, cq = 0;
+                    }
 
-//                    for(uint16_t i = 0; i < 48; i+=1) {
-//                        const uint32_t r_ind = row_ind + i*2;
-//                        int32_t r11i = iq_data[r_ind], r11q = iq_data[r_ind+1];
-//                        int32_t r12i = iq_data[r_ind+base*2], r12q = iq_data[r_ind+1+base*2];
-//                        ci += (int64_t)(r11i*r12i) + (int64_t)(r11q*r12q);
-//                        cq += (int64_t)(r11q*r12i) - (int64_t)(r11i*r12q);
-//                    }
+                    last_angle[0] = yaw;
+                }
 
-//                    corrI[row] = ci;
-//                    corrQ[row] = cq;
+                {
+                    float pitch = (float)height/2 - scaleAngle*_pool[pool_index].pitch();
 
-//                    corrA[row] = (5*log10f(float(corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 60.0f)*10.0f;
-//                    speed[row] = atan2f(corrQ[row], corrI[row])*1500.0f/(4.0f*3.141592f*float(base*dec_f))*1000;
-//                }
-//                for (uint32_t row = offset + base - 64 ; row < offset + base; row+=1) {
-//                    corrA[row] = (5*log10f(0.1f) - 73.0f)*10.0f;
-//                }
+                    if(isfinite(pitch)) {
+                        velo_pen.setColor(angle_color[1]);
+                        p1.setPen(velo_pen);
+                        if(isfinite(last_angle[1])) {
+                            p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_angle[1], (col)*hscale-waterfall_width*(hscale-1), pitch);
+                        } else {
+                            p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), pitch);
+                        }
+                    }
 
-//                offset += base;
-//                base += 96/dec_f;
+                    last_angle[1] = pitch;
+                }
 
-//            }
-//            for (int row = 0; row < chart_size; row+=1) {
-//                const uint32_t row_ind = row*2;
-//                float ci = 0, cq = 0, c2i = 0, c2q = 0;
+                {
+                    float roll = (float)height/2 - scaleAngle*_pool[pool_index].roll();
 
-//                for(uint16_t i = 0; i < w_size*2; i+=1) {
-//                    const uint32_t r_ind = row_ind + i*2;
-//                    int32_t r11i = iq_data[r_ind], r11q = iq_data[r_ind+1];
-//                    int32_t r12i = iq_data[r_ind+w_size*2], r12q = iq_data[r_ind+1+w_size*2];
-//                    int32_t r21i = iq_data[r_ind+w_size2*2], r21q = iq_data[r_ind+1+w_size2*2];
-//                    int32_t r22i = iq_data[r_ind+(w_size2+w_size)*2], r22q = iq_data[r_ind+1+(w_size2+w_size)*2];
+                    if(isfinite(roll)) {
+                        velo_pen.setColor(angle_color[2]);
+                        p1.setPen(velo_pen);
+                        if(isfinite(last_angle[2])) {
+                            p1.drawLine((col - 1)*hscale-waterfall_width*(hscale-1), last_angle[2], (col)*hscale-waterfall_width*(hscale-1), roll);
+                        } else {
+                            p1.drawPoint((col)*hscale-waterfall_width*(hscale-1), roll);
+                        }
+                    }
 
-//                    ci += (int64_t)(r11i*r12i) + (int64_t)(r11q*r12q);
-//                    cq += (int64_t)(r11q*r12i) - (int64_t)(r11i*r12q);
-////                    ci += (int64_t)(r21i*r22i) + (int64_t)(r21q*r22q);
-////                    cq += (int64_t)(r21q*r22i) - (int64_t)(r21i*r22q);
-
-//                    c2i += (int64_t)(r11i*r21i) + (int64_t)(r11q*r21q);
-//                    c2q += (int64_t)(r11q*r21i) - (int64_t)(r11i*r21q);
-////                    c2i += (int64_t)(r12i*r22i) + (int64_t)(r12q*r22q);
-////                    c2q += (int64_t)(r12q*r22i) - (int64_t)(r12i*r22q);
-//                }
-
-
-
-//                corrI[row] = ci;
-//                corrQ[row] = cq;
-//                corr2I[row] = c2i;
-//                corr2Q[row] = c2q;
-
-//                speed[row] = atan2f(corrQ[row], corrI[row])*1500.0f/(4.0f*3.141592f*float(w_size*dec_f))*1000.0f;
-//                corrA[row] = (5*log10f(float(corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 73.0f)*10.0f;
-
-//                speed2[row] = atan2f(corr2Q[row], corr2I[row])*1500.0f/(4.0f*3.141592f*float(w_size2*dec_f))*1000.0f;
-//                corr2A[row] = (5*log10f(float(corr2I[row]*corr2I[row] + corr2Q[row]*corr2Q[row]) + 0.1f) - 73.0f)*10.0f;
-//            }
-
-//            for (int row = 0; row < chart_size - 14*24; row+=1) {
-//                corrA[row] = (5*log10f(float(corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 73.0f)*10.0f;
-//                corr2A[row] = (5*log10f(float(corr2I[row]*corr2I[row] + corr2Q[row]*corr2Q[row] + corrI[row]*corrI[row] + corrQ[row]*corrQ[row]) + 0.1f) - 73.0f)*10.0f;
-//                speed[row] = atan2f(corrQ[row], corrI[row])*1500.0f/(4.0f*3.141592f*float(w_size*dec_f));
-//                speed2[row] = atan2f(corr2Q[row], corr2I[row])*1500.0f/(4.0f*3.141592f*float(w_size2*dec_f));
-
-//                float speed_dif = speed[row] - speed2[row];
-//                float resolver[] = {1.30208333f, -1.822916666, -0.5208333333, 0.78125, -1.30208333f, 1.822916666, 0.5208333333, -0.78125};
-//                float corrector[] = {1.30208333f, 1.30208333f, 1.30208333f, 1.30208333f, -1.30208333f, -1.30208333f, -1.30208333f, -1.30208333f};
-
-//                float min = fabs(speed_dif);
-//                int32_t min_ind = -1;
-//                for(uint32_t i = 0; i < sizeof(resolver)/4; i++) {
-//                    float absdif = fabs(speed_dif - resolver[i]);
-//                    if(min > absdif) {
-//                        min = absdif;
-//                        min_ind = i;
-//                    }
-//                }
-
-//                if(min_ind >= 0) {
-//                    speed2[row] += corrector[min_ind];
-//                }
-
-//                speed[row] = min;
-
-//                speed[row] *= 200.0f;
-//                speed2[row] *= 200.0f;
-
-//            }
-
-            float scale_y = (float)height*(1.0f*(1.0f/1000.0f));
-            float scale_x = (float)(waterfall_width - 100)/(float)(chart_size);
-
-            float last_signal_amp_ofset = (float)signalA[0]*scale_y;
-            float last_offset_q = (float)signalPh[0]*scale_y;
-            float last_col = 100;
-
-            QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
-            QPainter p(&tmp_img);
-            QPen pen_i;
-            pen_i.setWidth(2);
-            pen_i.setColor(QColor::fromRgb(70, 200, 0));
-
-            QPen pen_q;
-            pen_q.setWidth(2);
-            pen_q.setColor(QColor::fromRgb(50, 20, 250));
-
-            for (int row = 0; row < data_size; row++) {
-                float signal_amp_ofset =  height/2 - signalA[row]*scale_y;
-                float offset_q =  height/2 - signalPh[row]*scale_y;
-                float offset_x = (float)row*scale_x+100;
-
-                p.setPen(pen_i);
-                p.drawLine(last_col, last_signal_amp_ofset, offset_x, signal_amp_ofset);
-
-//                if(signalA[row]>0) {
-                    p.setPen(pen_q);
-                    p.drawLine(last_col, last_offset_q, offset_x, offset_q);
-//                }
-
-
-                last_col = offset_x;
-                last_signal_amp_ofset = signal_amp_ofset;
-                last_offset_q = offset_q;
+                    last_angle[2] = roll;
+                }
             }
         }
     }
-
-//    if(m_oscVis) {
-
-
-//        float scale_scope_w = (float)height / (float)(waterfall_width - 100);
-//        QImage tmp_img = QImage((uint8_t*)m_dataImage, width, height, width*2, QImage::Format_RGB555);
-//        QPainter p(&tmp_img);
-//        QPen pen;
-//        pen.setWidth(2);
-
-
-
-
-//        int pool_index = poolLastIndex() - 1;
-
-//        if(pool_index >= 0) {
-//            float* raw_col = (float*)m_pool[pool_index].chartData().data();
-//            int data_size = m_pool[pool_index].chartData().size()/2;
-
-////            QVector<int32_t> dataI, dataQ, dataPH;
-////            dataI.resize(data_size);
-////            dataQ.resize(data_size);
-////            dataPH.resize(data_size);
-////            const int mul_resol = 10;
-
-////            for (int row = 0; row < data_size; row++) {
-////                float a = float(row%4)*M_PI_2;
-////                float b = float((int32_t)raw_col[row]*mul_resol);
-////                dataI[row] = int(b*cos(a));
-////                dataQ[row] = int(b*sin(a));
-
-////                dataI[row] = (int32_t)raw_col[row];
-////            }
-
-////            int wsize = 32;
-////            int fil_num = 1;
-////            for(int fil_n = 0; fil_n < fil_num; fil_n++) {
-////                int summI = 0, summQ = 0;
-
-////                for (int row = 0; row < wsize; row++) {
-////                    summI +=  dataI[row];
-////                    summQ +=  dataQ[row];
-////                }
-
-////                for (int row = 0; row < data_size - wsize; row++) {
-////                    int summ = summI;
-////                    summI -= dataI[row];
-////                    summI += dataI[row + wsize];
-////                    dataI[row] = summ;
-
-////                    summ = summQ;
-////                    summQ -= dataQ[row];
-////                    summQ += dataQ[row + wsize];
-////                    dataQ[row] = summ;
-////                }
-////            }
-
-////            wsize = 8;
-////            for(int fil_n = 0; fil_n < fil_num; fil_n++) {
-////                int summI = 0, summQ = 0;
-
-////                for (int row = 0; row < wsize; row++) {
-////                    summI +=  dataI[row];
-////                    summQ +=  dataQ[row];
-////                }
-
-////                for (int row = 0; row < data_size - wsize; row++) {
-////                    int summ = summI;
-////                    summI -= dataI[row];
-////                    summI += dataI[row + wsize];
-////                    dataI[row] = summ;
-
-////                    summ = summQ;
-////                    summQ -= dataQ[row];
-////                    summQ += dataQ[row + wsize];
-////                    dataQ[row] = summ;
-////                }
-////            }
-
-
-
-////            for (int row = 0; row < data_size; row++) {
-////                float i_val =  (float)(dataI[row])*(1.0f/(float)(mul_resol*wsize*wsize));
-////                float q_val =  (float)(dataQ[row])*(1.0f/(float)(mul_resol*wsize*wsize));
-
-////                float sq_amp = i_val*i_val + q_val*q_val;
-
-////                dataI[row] = std::atan2(i_val, q_val)*(180.0f/M_PI*1000);
-////                dataQ[row] = std::sqrt(sq_amp);
-////            }
-
-
-////            for (int row = 0; row < data_size - 6000; row++) {
-////                dataPH[row] = dataI[row] - dataI[row+6000];
-////            }
-
-//////            const int base_dif_a = 4;
-//////            int valid_cnt = 0;
-//////            for (int row = 0; row < data_size - base_dif_a; row++) {
-//////                int abs_dif = std::abs(dataI[row] - dataI[row+base_dif_a]);
-
-//////                if(abs_dif > 32000) {
-//////                    dataI[row] = -200000;
-//////                    valid_cnt = 0;
-//////                }
-
-//////                if(valid_cnt < 0) {
-//////                    dataI[row] = -200000;
-//////                }
-
-//////                valid_cnt++;
-//////            }
-
-//////            valid_cnt = 200;
-////            int32_t ph_offset = 0;
-////            for (int row = 0; row < data_size; row++) {
-
-////                dataI[row] -= ph_offset;
-
-////                if(dataI[row] < -180000) {
-////                    dataI[row] += 360000;
-////                }
-
-////                if(dataI[row] > 180000) {
-////                    dataI[row] -= 360000;
-////                }
-
-
-////                if(dataPH[row] < -180000) {
-////                    dataPH[row] += 360000;
-////                }
-
-////                if(dataPH[row] > 180000) {
-////                    dataPH[row] -= 360000;
-////                }
-
-////                if(std::abs(dataQ[row]) < 100) {
-////                    dataPH[row] = -200000;
-////                    dataI[row] = -200000;
-////                }
-
-
-////            }
-
-////            for (int row = 0; row < data_size; row+=2) {
-////                 float pow = sqrtf(sqrtf((float)raw_col[row]*(float)raw_col[row] + (float)raw_col[row+1]*(float)raw_col[row+1]));
-////                 raw_col[row] = pow*(1.0f/10);
-////                 raw_col[row+1] = 0;
-////            }
-
-
-
-//            float scale_y = (float)height*(1.0f*(1.0f/1.0f));
-//            float scale_x = (float)(waterfall_width)/(float)(data_size);
-
-//            float last_offset_y = (float)raw_col[0]*scale_y;
-//            float last_col = 0;
-
-
-//            pen.setColor(QColor::fromRgb(70, 200, 0));
-//            p.setPen(pen);
-//            for (int row = 0; row < data_size; row+=2) {
-//                float offset_y =  height/2 - (float)raw_col[row]*scale_y;
-//                float offset_x = (float)row*scale_x;
-
-//                if(raw_col[row] != 0) {
-//                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
-//                }
-
-//                last_col = offset_x;
-
-//                last_offset_y = offset_y;
-//            }
-
-//            scale_y = (float)height*(1.0f*(1.0f/250));
-//            last_offset_y =(float)raw_col[1]*scale_y;
-//            last_col = 0;
-
-//            pen.setColor(QColor::fromRgb(255, 50, 255));
-//            p.setPen(pen);
-//            for (int row = 1; row < data_size; row+=2) {
-//                float offset_y =  height - (float)raw_col[row]*scale_y;
-//                float offset_x = (float)(row-1)*scale_x;
-
-//                if(raw_col[row] != 0) {
-//                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
-//                }
-
-//                last_col = offset_x;
-
-//                last_offset_y = offset_y;
-//            }
-
-
-////            scale_y = (float)height*(1.0f/360000.0f);
-////            last_offset_y = (float)dataI[0]*scale_y;
-////            last_col = 0;
-
-////            pen.setColor(QColor::fromRgb(255, 50, 255));
-////            p.setPen(pen);
-////            for (int row = 1; row < data_size; row++) {
-////                float offset_y =  height*0.5f - (float)dataI[row]*scale_y;
-////                float offset_x = (float)row*scale_x;
-
-////                if(last_offset_y <= height && offset_y <= height) {
-////                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
-////                }
-
-////                last_col = offset_x;
-
-////                last_offset_y = offset_y;
-////            }
-
-////            last_offset_y = (float)dataPH[0]*scale_y;
-////            last_col = 0;
-
-////            pen.setColor(QColor::fromRgb(10, 50, 255));
-////            p.setPen(pen);
-////            for (int row = 1; row < data_size; row++) {
-////                float offset_y =  height*0.5f - (float)dataPH[row]*scale_y;
-////                float offset_x = (float)row*scale_x;
-
-////                if(last_offset_y <= height && offset_y <= height) {
-////                    p.drawLine(last_col, last_offset_y, offset_x, offset_y);
-////                }
-////                last_col = offset_x;
-
-////                last_offset_y = offset_y;
-////            }
-
-//        }
-
-
-//    }
 
     if(m_distSonarVis) {
         int dist = m_prevValueCash.distData;

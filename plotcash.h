@@ -105,6 +105,9 @@ public:
     bool temperatureAvail() { return flags.tempAvail; }
 
     bool isAttAvail() { return _attitude.is_avail; }
+    float yaw() { return _attitude.yaw; }
+    float pitch() { return _attitude.pitch; }
+    float roll() { return _attitude.roll; }
 
     bool isDopplerAvail() { return doppler.isAvai; }
     float dopplerX() { return doppler.velocityX; }
@@ -384,7 +387,7 @@ protected:
     int _eventId = 0;
 
     struct {
-        float yaw = 0, pitch = 0, roll = 0;
+        float yaw = NAN, pitch = NAN, roll = NAN;
         bool is_avail = false;
     } _attitude;
 
@@ -555,6 +558,7 @@ protected:
     bool _is_velocityVis = false;
     bool _isDopplerInstrimentVis = false;
     bool _isDopplerBeamVis = false;
+    bool _isAttitudeVis = true;
     int _dopplerBeamFilter = 0xF;
     bool _isDopplerBeamAmpitudeVisible = true;
     bool _isDopplerBeamModeVisible = true;
