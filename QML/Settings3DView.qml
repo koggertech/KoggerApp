@@ -14,14 +14,12 @@ MenuScroll {
     property color contourColor: Scene3DModel.contourColor()
     property color contourKeyPointsColor: Scene3DModel.contourKeyPointsColor()
 
-
     ColumnLayout {
         id: settings3DLayout
         width: parent.width
         Layout.preferredWidth: parent.width
         Layout.maximumWidth: parent.width
         implicitWidth:  parent.width
-
 
         ColumnLayout {
             Layout.maximumWidth: parent.width
@@ -511,10 +509,8 @@ MenuScroll {
 //                            }
 //                        }
                     }
-
                 }
             }
-
         }
     }
 
