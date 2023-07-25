@@ -18,8 +18,8 @@ public:
 
 protected:
 
-    virtual VertexObject pickAsTriangle(const VertexObject& object) override;
-    virtual VertexObject pickAsQuad(const VertexObject& object) override;
+    virtual VertexObject pickAsTriangle(const VertexObject& object);
+    virtual VertexObject pickAsQuad(const VertexObject& object);
 
 private:
 
