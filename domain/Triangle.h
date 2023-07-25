@@ -296,7 +296,8 @@ public:
         auto norm = normal();
 
         auto w = mA.toQVector3D() - origin;
-        auto k = QVector3D::dotProduct(w, norm) / QVector3D::dotProduct(direction, norm);
+        auto k = QVector3D::dotProduct(w, norm) /
+                 QVector3D::dotProduct(direction, norm);
 
         QVector3D p = origin + k * dir;
 
