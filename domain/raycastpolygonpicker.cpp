@@ -25,7 +25,10 @@ QString RayCastPolygonPicker::pickingMethod()
 
 VertexObject RayCastPolygonPicker::pickAsTriangle(const VertexObject& object)
 {
-    QVector <QPair <Triangle <float>, QVector3D>> candidates;
+    using CandidateTriangle = Triangle <float>;
+    using IntersectionPoint = QVector3D;
+
+    QVector <QPair <CandidateTriangle, IntersectionPoint>> candidates;
 
     auto size = object.cdata().size();
 
@@ -51,7 +54,7 @@ VertexObject RayCastPolygonPicker::pickAsTriangle(const VertexObject& object)
     if (candidates.isEmpty())
         return {GL_TRIANGLES, {}};
 
-    // Choosing nearest to origin point triangle
+    // Choosing nearest triangle to origin point
 
     QVector <QVector3D> resultTriangleVertices;
 
