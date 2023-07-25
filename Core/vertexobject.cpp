@@ -1,20 +1,31 @@
 #include "vertexobject.h"
 
+VertexObject::VertexObject()
+{
+    mUuid = QUuid::createUuid();
+}
+
 VertexObject::VertexObject(const int type)
 : mPrimitiveType(type)
 {
-
+    mUuid = QUuid::createUuid();
 }
 
 VertexObject::VertexObject(const int type, const QVector<QVector3D> &data)
 : mPrimitiveType(type)
 , mData(data)
 {  
+    mUuid = QUuid::createUuid();
 }
 
 VertexObject::~VertexObject()
 {
 
+}
+
+QString VertexObject::id() const
+{
+    return mUuid.toString();
 }
 
 void VertexObject::setPrimitiveType(const int type)
