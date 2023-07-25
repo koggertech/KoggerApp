@@ -37,21 +37,14 @@ void SceneController::updateObjectsPicker()
 {
     auto origin = QVector3D(mMousePos.toVector2D(), -1.0f).unproject(mModel * mView, mProjection, mViewportRect);
     auto end = QVector3D(mMousePos.toVector2D(), 1.0f).unproject(mModel * mView, mProjection, mViewportRect);
-    auto dir = (end - origin).normalized();
-
-    //qDebug() << "o: " << origin << ", end: " << end << ", dir: " << dir;
+    //auto dir = (end - origin).normalized();
+    auto dir = end - origin;
 
     auto pickerFactory = std::make_shared <RayCastPickerFactory>(origin, dir);
 
     std::shared_ptr <AbstractPicker> pPicker = nullptr;
 
-    if (mpSceneModel->pickingMethod() == PICKING_METHOD_POLYGON){
-         pPicker = pickerFactory->createPolygonPicker();
-    }
-
-    if (mpSceneModel->pickingMethod() == PICKING_METHOD_POINT){
-         pPicker = pickerFactory->createPointPicker();
-    }
+    pPicker = pickerFactory->createPointPicker();
 
     mpSceneModel->setObjectsPicker(pPicker);
 }
