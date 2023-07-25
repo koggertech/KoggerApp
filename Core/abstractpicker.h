@@ -10,12 +10,12 @@ class AbstractPicker
 public:
 
     virtual VertexObject pick(const VertexObject& object) = 0;
+
     virtual QString pickingMethod() = 0;
 
-protected:
-
-    virtual VertexObject pickAsTriangle(const VertexObject& object) = 0;
-    virtual VertexObject pickAsQuad(const VertexObject& object) = 0;
+    QVector3D lastIntersectionPoint() const {
+        return mLastIntersectionPoint;
+    };
 
 protected:
 
