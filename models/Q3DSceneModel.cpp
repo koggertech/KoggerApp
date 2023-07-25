@@ -43,7 +43,7 @@ void Q3DSceneModel::setObjectsPicker(std::shared_ptr<AbstractPicker> picker)
                      ||  mSurfaceDisplayedObject.isGridVisible());
 
     if (needPicking){
-        auto surface = dynamic_cast <VertexObject*>(&mSurfaceDisplayedObject);
+        auto surface = dynamic_cast <VertexObject*>(&mBottomTrackDisplayedObject);
 
         mPickedObject = mpObjectsPicker->pick(*surface);
     }
@@ -179,6 +179,13 @@ QString Q3DSceneModel::pickingMethod() const
     return mpObjectsPicker->pickingMethod();
 }
 
+void Q3DSceneModel::createObject(QString type)
+{
+    // TODO! ObjectsFactory->create(type);
+
+    //Q_EMIT dataChanged();
+}
+
 void Q3DSceneModel::updateSurface()
 {
     mIsProcessingAvailable.store(false);
@@ -297,6 +304,24 @@ QString Q3DSceneModel::smoothingMethod() const
     return mParams.smoothingMethod();
 }
 
+QStringList Q3DSceneModel::objectsList() const
+{
+    QStringList result;
+
+    auto it = mObjectsList.begin();
+
+    while(it != mObjectsList.end()){
+
+        auto object = *it;
+
+        result.append(object->id());
+
+        it++;
+    }
+
+    return result;
+}
+
 BottomTrack Q3DSceneModel::bottomTrackDisplayedObject()
 {
     QMutexLocker locker(&mBottomTrackMutex);
@@ -370,85 +395,4 @@ double distance(const QVector3D& p1, const QVector3D& p2)
 {
     return (static_cast <double> (p1.x()) - static_cast <double> (p2.x()))*(static_cast <double> (p1.x()) - static_cast <double> (p2.x())) +
            (static_cast <double> (p1.y()) - static_cast <double> (p2.y()))*(static_cast <double> (p1.y()) - static_cast <double> (p2.y()));
-}
-
-void Q3DSceneModel::createContour()
-{
-    auto points = mSurfaceDisplayedObject.data();
-
-    if (points.size() < 3)
-        return;
-
-    // Ищем крайнюю левую нижнюю точку
-    float ymin = points.first().y(), min = 0;
-
-    for (int i = 1; i < points.size(); i++)
-    {
-      int y = points[i].y();
-
-      if ((y < ymin) || (ymin == y &&
-          points[i].x() < points[min].x())){
-         ymin = points[i].y(), min = i;
-      }
-    }
-
-#if defined QT_DEBUG
-    qDebug() << "Bottom left point -> " << points[min];
-#endif
-
-    // Перемещаем найденную точку в начало контейнера
-    std::swap(points[0], points[min]);
-
-    // Сортируем точки по наименьшему векторному произведению
-    auto comparator = [&points](const QVector3D& p1, const QVector3D& p2){
-        int o = orientation(points[0],p1,p2);
-        if (o == 0)
-            return (distance(points[0], p2) >= distance(points[0], p1)) ? false : true;
-        return (o == 2) ? false : true;
-    };
-
-    std::sort(points.begin()+1, points.end(), comparator);
-
-#if defined QT_DEBUG
-    qDebug() << "Points count after sort -> " << points.size();
-#endif
-
-    int m = 1;
-    for (int i=1; i<points.size(); i++)
-    {
-        while (i < points.size()-1 && orientation(points[0], points[i],
-                                     points[i+1]) == 0)
-           i++;
-
-        points[m] = points[i];
-        m++;
-    }
-
-#if defined QT_DEBUG
-    qDebug() << "Points count after decimation -> " << m;
-#endif
-
-    if (m < 3) return;
-
-    // Формируем выпуклую оболочку
-    QVector <QVector3D> ch;
-
-    ch.append({points[0], points[1],points[2]});
-
-    for(int i = 2; i < m; i++){
-
-        while ((ch.size() >= 2) && (orientation(ch[ch.size()-2], points[i], ch[ch.size()-1])!= 2)) {
-            ch.pop_back();
-        }
-        ch.append(points[i]);
-    }
-
-#if defined QT_DEBUG
-    qDebug() << "Convex hull size -> " << ch.size();
-#endif
-
-    mContourDisplayedObject.setPrimitiveType(GL_LINE_LOOP);
-    mContourDisplayedObject.setData(ch);
-
-    Q_EMIT contourDataChanged();
 }

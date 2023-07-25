@@ -19,7 +19,6 @@
 #include <numeric>
 #include <stack>
 
-
 #include "surface.h"
 #include "bottomtrack.h"
 #include "contour.h"
@@ -190,32 +189,6 @@ public:
     //! @return Текущий установленный метод сглаживания поверхности в строковом формате
     Q_INVOKABLE QString smoothingMethod() const;
 
-private:
-
-    void createContour();
-    void createContourEx();
-    void createContourEx_2();
-
-private:
-
-    bool mSceneVisible = false;              //! Признак видимости 3D - сцены
-    std::atomic_bool mIsProcessingAvailable; //< Признак доступности процедуры расчета поверхности
-    QMutex mBottomTrackMutex;                //< Мьютекс для синхронизации доступа к данным трека из разных потоков
-    QMutex mSurfaceMutex;                    //< Мьютекс для синхронизации доступа к данным поверхности
-    QMutex mContourMutex;                    //< Мьютекс для синхронизации доступа к данным контура
-    QMutex mMarkupGridMutex;                 //< Мьютекс для синхронизации доступа к данным разметочной сетки.
-    QMutex mBoundsMutex;                     //< Мьютекс для синхронизации доступа к данным границ всей сцены.
-    BottomTrack mBottomTrackDisplayedObject; //< Отображаемый объект "Трек"
-    Surface mSurfaceDisplayedObject;         //< Отображаемый объект "Поверхность"
-    Contour mContourDisplayedObject;         //< Отображаемый объект "Контур поверхности"
-    MarkupGrid mMarkupGrid;                  //< Сетка разметки сцены
-    VertexObject mPickedObject;   //< Вектор выбранных объектов
-    Cube mBounds;                            //< Объект границ сцены
-    SceneParams mParams;                     //< Объект параметров обработки и расчета
-    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
-    std::shared_ptr <AbstractBottomTrackFilter> mpBottomTrackFilter;
-    std::shared_ptr <AbstractPicker> mpObjectsPicker;
-
 signals:
 
     /**
@@ -272,6 +245,31 @@ signals:
      *  @brief Сигнал - оповещение об изменении свойств выбранных на сцене объектов.
      */
     void pickedObjectsDataChanged();
+
+
+private:
+
+    bool mSceneVisible = false;              //! Признак видимости 3D - сцены
+    std::atomic_bool mIsProcessingAvailable; //< Признак доступности процедуры расчета поверхности
+    QMutex mBottomTrackMutex;                //< Мьютекс для синхронизации доступа к данным трека из разных потоков
+    QMutex mSurfaceMutex;                    //< Мьютекс для синхронизации доступа к данным поверхности
+    QMutex mContourMutex;                    //< Мьютекс для синхронизации доступа к данным контура
+    QMutex mMarkupGridMutex;                 //< Мьютекс для синхронизации доступа к данным разметочной сетки.
+    QMutex mBoundsMutex;                     //< Мьютекс для синхронизации доступа к данным границ всей сцены.
+    BottomTrack mBottomTrackDisplayedObject; //< Отображаемый объект "Трек"
+    Surface mSurfaceDisplayedObject;         //< Отображаемый объект "Поверхность"
+    Contour mContourDisplayedObject;         //< Отображаемый объект "Контур поверхности"
+    MarkupGrid mMarkupGrid;                  //< Сетка разметки сцены
+    VertexObject mPickedObject;   //< Вектор выбранных объектов
+    Cube mBounds;                            //< Объект границ сцены
+    SceneParams mParams;                     //< Объект параметров обработки и расчета
+    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
+    std::shared_ptr <AbstractBottomTrackFilter> mpBottomTrackFilter;
+    std::shared_ptr <AbstractPicker> mpObjectsPicker;
+
+
+    std::list <std::shared_ptr <VertexObject>> mObjectsList; //< Хранилище объектов сцены
+
 
 };
 
