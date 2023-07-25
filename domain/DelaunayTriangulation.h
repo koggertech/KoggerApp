@@ -113,6 +113,9 @@ public:
 
     TrianglesPointer trinagulate_2(const std::vector <Point3D <T>>& points, T edgeLengthLimit = -1.0f)
     {
+
+        Q_UNUSED(edgeLengthLimit)
+
         mpTriangles->clear();
 
         if(points.size() < 3){
