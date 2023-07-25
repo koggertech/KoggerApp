@@ -9,6 +9,7 @@
 
 #include <QVector>
 #include <QVector3D>
+#include <QUuid>
 
 #include <GL/gl.h>
 
@@ -21,7 +22,7 @@ class VertexObject
 public:
 
     //! @brief Конструктор.
-    VertexObject() = default;
+    VertexObject();
 
     //! @brief Конструктор с параметрами.
     //! @param[in] type - тип примитива для отображения в движке openGL
@@ -36,6 +37,12 @@ public:
 
     //! @brief Деструктор.
     ~VertexObject();
+
+    /**
+     * @brief Возвращает уникальный идентификатор объекта
+     * @return Уникальный идентификатор объекта
+     */
+    QString id() const;
 
     //! @brief Устанавливает тип примитива для отображения в движке openGL
     //! (из набора дефайнов gl.h).
@@ -86,6 +93,7 @@ protected:
 
 protected:
 
+    QUuid mUuid;               //< Уникальный идентификатор объекта
     int mPrimitiveType;        //< Тип примитива для отображения в движке openGL (из набора дефайнов gl.h).
     QVector <QVector3D> mData; //< Набор вершин объекта.
     Cube mBounds = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
