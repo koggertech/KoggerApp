@@ -56,5 +56,6 @@
         <file>CalcMethodTINSettings.qml</file>
         <file>SmoothMethodUGINSettings.qml</file>
         <file>SmoothMethodTriDivideSettings.qml</file>
+        <file>Plot2D.qml</file>
     </qresource>
 </RCC>

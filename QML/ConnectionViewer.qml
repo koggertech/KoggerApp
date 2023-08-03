@@ -173,10 +173,13 @@ Item {
                     folder: shortcuts.home
 //                    fileMode: FileDialog.OpenFiles
 
-                    nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)", "All (*.*)"]
+                    nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
 
                     onAccepted: {
                         pathText.text = logFileDialog.fileUrl.toString()
+
+                        var name_parts = logFileDialog.fileUrl.toString().split('.')
+
                         core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
                     }
                     onRejected: {
@@ -338,6 +341,15 @@ Item {
                 text: "Proxy"
                 checked: false
             }
+
+            CCheck {
+                id: importCheck
+                visible: connectionTypeCombo.currentText === "File"
+                text: "Import"
+                checked: false
+            }
+
+
         }
 
         ParamGroup {
@@ -494,6 +506,255 @@ Item {
             }
 
         }
+
+        ParamGroup {
+            groupName: "CSV import"
+            visible: importCheck.checked
+            Layout.margins: 24
+
+            RowLayout {
+                ParamSetup {
+                    paramName: "Separator: "
+                    Layout.fillWidth: true
+
+                    CCombo  {
+                        id: separatorCombo
+    //                    Layout.fillWidth: true
+                        model: ["Comma", "Tab", "Space", "SemiColon"]
+
+                        Settings {
+                            property alias separatorCombo: separatorCombo.currentIndex
+                        }
+                    }
+                }
+
+                ParamSetup {
+                    paramName: "Row: "
+                    Layout.fillWidth: true
+
+                    SpinBoxCustom {
+                        id:firstRow
+                        implicitWidth: 100
+                        from: 1
+                        to: 100
+                        stepSize: 1
+                        value: 1
+
+                        Settings {
+                            property alias importCSVfirstRow: firstRow.value
+                        }
+                    }
+                }
+            }
+
+
+            RowLayout {
+                CCheck {
+                    id: timeEnable
+                    Layout.fillWidth: true
+                    //                        Layout.preferredWidth: 150
+                    checked: true
+                    text: "Time"
+
+                    Settings {
+                        property alias importCSVtimeEnable: timeEnable.checked
+                    }
+                }
+
+                CTextField {
+                    id: timeFormater
+                    text: "yyyy-MM-dd hh:mm:ss,zzz"
+                    Settings {
+                        property alias importCSVtimeFormater: timeFormater.text
+                    }
+                }
+
+                SpinBoxCustom {
+                    id:timeColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 6
+
+                    Settings {
+                        property alias importCSVtimeColumn: timeColumn.value
+                    }
+                }
+            }
+
+
+
+            RowLayout {
+                CCheck {
+                    id: latLonEnable
+                    Layout.fillWidth: true
+                    //                        Layout.preferredWidth: 150
+                    checked: true
+                    text: "Lat/Lon/Alt"
+
+                    Settings {
+                        property alias importCSVlatLonEnable: latLonEnable.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: latColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 2
+
+                    Settings {
+                        property alias importCSVlatColumn: latColumn.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: lonColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 3
+
+                    Settings {
+                        property alias importCSVlonColumn: lonColumn.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: altColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 4
+
+                    Settings {
+                        property alias importCSValtColumn: altColumn.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: xyzEnable
+                    Layout.fillWidth: true
+                    //                        Layout.preferredWidth: 150
+                    checked: true
+                    text: "NEU"
+
+                    Settings {
+                        property alias importCSVxyzEnable: xyzEnable.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: northColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 2
+
+                    Settings {
+                        property alias importCSVnorthColumn: northColumn.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: eastColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 3
+
+                    Settings {
+                        property alias importCSVeastColumn: eastColumn.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: upColumn
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 4
+
+                    Settings {
+                        property alias importCSVupColumn: upColumn.value
+                    }
+                }
+            }
+
+
+
+            RowLayout {
+                CTextField {
+                    id: importPathText
+                    hoverEnabled: true
+                    Layout.fillWidth: true
+//                    visible: connectionTypeCombo.currentText === "File"
+
+                    text: ""
+                    placeholderText: qsTr("Enter path")
+
+                    Keys.onPressed: {
+                        if (event.key === 16777220) {
+
+                            core.openCSV(importPathText.text, separatorCombo.currentIndex, timeFormater.text, firstRow.value, timeColumn.value,
+                                         latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
+                                         northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                        }
+                    }
+
+                    Settings {
+                        property alias importPathText: importPathText.text
+                    }
+                }
+
+                CButton {
+                    text: "..."
+                    Layout.fillWidth: false
+                    visible: connectionTypeCombo.currentText === "File"
+                    implicitHeight: theme.controlHeight
+                    implicitWidth: implicitHeight*1.1
+                    onClicked: {
+                        importTrackFileDialog.open()
+                    }
+
+                    FileDialog {
+                        id: importTrackFileDialog
+                        title: "Please choose a file"
+                        folder: shortcuts.home
+                        //                    fileMode: FileDialog.OpenFiles
+
+                        nameFilters: ["Logs (*.csv *.txt)"]
+
+                        onAccepted: {
+                            importPathText.text = importTrackFileDialog.fileUrl.toString()
+
+                            core.openCSV(importPathText.text, separatorCombo.currentIndex, timeFormater.text, firstRow.value, timeColumn.value,
+                                         latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
+                                         northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                        }
+                        onRejected: {
+                        }
+                    }
+
+                    Settings {
+                        property alias importFolder: importTrackFileDialog.folder
+                    }
+                }
+            }
+
+
+        }
+
 //        devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]"
 
         ColumnLayout {

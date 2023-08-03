@@ -64,6 +64,13 @@ bool Logger::dataExport(QString str) {
     return true;
 }
 
+bool Logger::dataByteExport(QByteArray data) {
+    if(_exportFile->isOpen()) {
+        _exportFile->write(data);
+    }
+    return true;
+}
+
 bool Logger::endExportStream() {
     _exportFile->close();
     return true;

@@ -6,7 +6,7 @@
 typedef uint8_t XTFBYTE;
 typedef uint16_t XTFWORD;
 typedef uint32_t XTFDWORD;
-typedef int8_t XTFCHAR;
+typedef char XTFCHAR;
 typedef int16_t XTFSHORT;
 typedef int32_t XTFINT;
 typedef int32_t XTFLONG;
@@ -15,10 +15,10 @@ typedef struct   __attribute__((packed)) {
     XTFBYTE TypeOfChannel = 1; // SUBBOTTOM=0, PORT=1, STBD=2, BATHYMETRY=3
     XTFBYTE SubChannelNumber = 0; // Index for which CHANINFO structure this is.
     XTFWORD CorrectionFlags = 1; // 1=sonar imagery stored as slant-range, 2=sonar imagery stored as ground range (corrected)
-    XTFWORD UniPolar = 1; // 0=data is polar, 1=data is unipolar
+    XTFWORD UniPolar = 0; // 0=data is polar, 1=data is unipolar
     XTFWORD BytesPerSample = 1; // 1 (8-bit data) or 2 (16-bit data) or 4 (32-bit)
     XTFDWORD Reserved = 0;
-    XTFCHAR ChannelName[16] = "ChannelTest";
+    XTFCHAR ChannelName[16] = {};
     float VoltScale = 5.0f;
     float Frequency = 350;
     float HorizBeamAngle = 1;
@@ -31,7 +31,7 @@ typedef struct   __attribute__((packed)) {
     float OffsetPitch = 0;
     float OffsetRoll = 0;
     XTFWORD BeamsPerArray = 0;
-    XTFBYTE SampleFormat; // 0 = Legacy, 1 = 4-byte IBM float, 2 = 4-byte integer, 3 = 2-byte integer4 = unused, 5 = 4-byte IEEE float, 6 = unused, 7 = unused, 8 = 1-byte integer
+    XTFBYTE SampleFormat = 0; // 0 = Legacy, 1 = 4-byte IBM float, 2 = 4-byte integer, 3 = 2-byte integer4 = unused, 5 = 4-byte IEEE float, 6 = unused, 7 = unused, 8 = 1-byte integer
     XTFCHAR ReservedArea2[53] = {};
 
 } XTFCHANINFO;
@@ -39,14 +39,14 @@ typedef struct   __attribute__((packed)) {
 typedef struct   __attribute__((packed)) {
     XTFBYTE FileFormat = 123;
     XTFBYTE SystemType = 1;
-    XTFCHAR RecordingProgramName[8] = "RNAME";
-    XTFCHAR RecordingProgramVersion[8] = "000";
-    XTFCHAR SonarName[16] = "KSS100";
+    XTFCHAR RecordingProgramName[8] = {};
+    XTFCHAR RecordingProgramVersion[8] = {};
+    XTFCHAR SonarName[16] = {};
     XTFWORD SonarType = 44; // 44 = NONE_SIDESCAN
 
-    XTFCHAR NoteString[64] = "";
-    XTFCHAR ThisFileName[64] = "";
-    XTFWORD NavUnits; // 0=Meters (i.e., UTM) or 3=Lat/Long
+    XTFCHAR NoteString[64] = {};
+    XTFCHAR ThisFileName[64] = {};
+    XTFWORD NavUnits = 3; // 0=Meters (i.e., UTM) or 3=Lat/Long
     XTFWORD NumberOfSonarChannels = 2;
     XTFWORD NumberOfBathymetryChannels = 0;
     XTFBYTE NumberOfSnippetChannels = 0;
@@ -96,7 +96,7 @@ typedef struct   __attribute__((packed)) {
     XTFWORD JulianDay = 0;
     XTFDWORD EventNumber = 0;
     XTFDWORD PingNumber = 0; // Counts consecutively (usually from 0) and increments for each update.
-    float SoundVelocity = 0; // m/s in one or two way form.
+    float SoundVelocity = 750; // m/s in one or two way form.
     float OceanTide = 0; // Altitude above Geoide (from RTK), if present;
     XTFDWORD Reserved2 = 0;
     float ConductivityFreq = 0;
@@ -168,7 +168,7 @@ typedef struct   __attribute__((packed)) {
 
 typedef struct   __attribute__((packed)) {
     XTFWORD ChannelNumber = 0; // 0=port (low frequency), 1=stbd (low frequency), 2=port (high frequency), 3=stbd (high frequency)
-    XTFWORD DownsampleMethod = 2; // 2 = MAX; 4 = RMS
+    XTFWORD DownsampleMethod = 0; // 2 = MAX; 4 = RMS
     float SlantRange = 0; // Slant range of the data in meters
     float GroundRange = 0; // Ground range of the data; in meters
     float TimeDelay = 0; // Amount of time, in seconds, to the start of recorded data. (almost always 0.0).

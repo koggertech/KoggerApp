@@ -38,8 +38,12 @@ SOURCES += \
         3Plot.cpp \
         DevDriver.cpp \
         DevHub.cpp \
+    EchogramProcessing.cpp \
         IDBinnary.cpp \
     Link.cpp \
+    Plot2D.cpp \
+    Plot2DEchogram.cpp \
+    Plot2DGrid.cpp \
         ProtoBinnary.cpp \
         StreamListModel.cpp \
         connection.cpp \
@@ -82,12 +86,15 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     3Plot.h \
+    ConverterXTF.h \
     DevDriver.h \
     DevHub.h \
     DevQProperty.h \
+    EchogramProcessing.h \
     IDBinnary.h \
     Link.h \
     MAVLinkConf.h \
+    Plot2D.h \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \

@@ -704,10 +704,10 @@ public:
     typedef struct   __attribute__((packed)) {
         uint8_t num;
         uint8_t flags;
-        float velocity;
-        float uncertainty;
-        float dt;
-        float distance;
+        float velocity = NAN;
+        float uncertainty = NAN;
+        float dt = NAN;
+        float distance = NAN;
         uint8_t amplitude;
         uint8_t mode;
         uint8_t coherence[4];

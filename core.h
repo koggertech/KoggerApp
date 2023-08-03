@@ -13,6 +13,10 @@
 #include <logger.h>
 #include <QThread>
 #include <3Plot.h>
+#include <Plot2D.h>
+
+#include "XTFConf.h"
+#include "ConverterXTF.h"
 
 #include <Q3DSettingsController.h>
 #include <Q3DSceneModel.h>
@@ -46,8 +50,8 @@ public:
         return m_console;
     }
 
-    PlotCash* plot() {
-        return m_plot;
+    Dataset* dataset() {
+        return _dataset;
     }
 
     void consoleInfo(QString msg) {
@@ -78,6 +82,8 @@ public slots:
     bool openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode);
     bool openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp);
     bool openConnectionAsFile(const int id, const QString &name, bool is_append = false);
+    bool openXTF(QByteArray data);
+    bool openCSV(QString name, int separator_type, QString time_format, int row = -1, int col_time = -1, int col_lat = -1, int col_lon = -1, int col_north = -1, int col_east = -1, int altitude = -1, int distance = -1);
     bool devsConnection();
 
     bool isOpenConnection();
@@ -96,37 +102,54 @@ public slots:
 
 
 
-    bool exportPlotAsCVS(QString file_path);
+    bool exportPlotAsCVS(QString file_path, int channel);
+    bool exportPlotAsXTF(QString file_path);
 
-    bool openXTF(QByteArray data);
 
 #ifdef FLASHER
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
 
     void setPlotStartLevel(int level) {
-        m_plot->setStartLevel(level);
+//        m_plot->setStartLevel(level);
+        for(int i = 0; i < _plots2d.size(); i++) {
+            if(_plots2d.at(i) != NULL) {
+                _plots2d.at(i)->setEchogramLowLevel(level);
+            }
+        }
     }
 
     void setPlotStopLevel(int level) {
-        m_plot->setStopLevel(level);
+//        m_plot->setStopLevel(level);
+//        m_waterFall->setEchogramHightLevel(level);
+        for(int i = 0; i < _plots2d.size(); i++) {
+            if(_plots2d.at(i) != NULL) {
+                _plots2d.at(i)->setEchogramHightLevel(level);
+            }
+        }
     }
 
     void setTimelinePosition(double position) {
-        m_plot->setTimelinePosition(position);
+//        m_plot->setTimelinePosition(position);
+//        m_waterFall->setDataPosition(position);
+        for(int i = 0; i < _plots2d.size(); i++) {
+            if(_plots2d.at(i) != NULL) {
+                _plots2d.at(i)->setDataPosition(position);
+            }
+        }
     }
 
-    void setChartVis(bool visible) {
-        m_plot->setChartVis(visible);
-    }
+//    void setChartVis(bool visible) {
+//        m_plot->setChartVis(visible);
+//    }
 
-    void setOscVis(bool visible) {
-        m_plot->setOscVis(visible);
-    }
+//    void setOscVis(bool visible) {
+//        m_plot->setOscVis(visible);
+//    }
 
-    void setDistVis(bool visible) {
-        m_plot->setDistVis(visible);
-    }
+//    void setDistVis(bool visible) {
+//        m_plot->setDistVis(visible);
+//    }
 
     Device* dev() { return &_devs; }
 
@@ -138,12 +161,14 @@ signals:
 public:
     Console *m_console;
     Connection *m_connection;
-    PlotCash* m_plot;
-    WaterFall* m_waterFall = NULL;
+    Dataset* _dataset;
+    QList<qPlot2D*> _plots2d;
+//    QPlot2D* _plot1 = NULL;
     FboInSGRenderer* _render = NULL;
 
     Device _devs;
     Logger _logger;
+    ConverterXTF _converterXTF;
     QThread connectionThread;
     QQmlApplicationEngine *m_engine = nullptr;
 

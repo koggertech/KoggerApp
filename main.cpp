@@ -10,6 +10,7 @@
 #include <Themes.h>
 #include <QThread>
 #include "3Plot.h"
+#include "Plot2D.h"
 
 Core core;
 Themes theme;
@@ -155,13 +156,15 @@ int main(int argc, char *argv[]) {
 
 
 
+
+
 //    qInstallMessageHandler(messageHandler);
 
 //    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 
-    qmlRegisterType<WaterFall>("WaterFall", 1, 0, "WaterFall");
+    qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
 
-    engine.rootContext()->setContextProperty("plot", core.plot());
+    engine.rootContext()->setContextProperty("dataset", core.dataset());
 
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);

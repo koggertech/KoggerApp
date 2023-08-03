@@ -166,84 +166,68 @@ Window  {
                 }
             }
 
-            WaterFall {
-                id: waterView
-                visible: menuBar.is2DVisible
-                width: mainview.width
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                focus: true
 
-                horizontal: menuBar.is2DHorizontal
 
-                PinchArea {
-                    id: pinch2D
-                    anchors.fill: parent
+            GridLayout {
+                rows    : 10
+                columns : 10
+                Plot2D {
+                    id: waterView
+                    visible: menuBar.is2DVisible
+                    width: mainview.width
+                    Layout.fillHeight: true
+//                    Layout.fillWidth: true
+                    Layout.preferredWidth: mainview.width
+                    Layout.rowSpan   : 10
+                    Layout.columnSpan: 10
+                    focus: true
 
-                    enabled: true
-                    onPinchUpdated: {
-                        waterView.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
-                        waterView.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
-                        waterView.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
-                    }
-
-                    onPinchStarted: {
-                        mousearea.enabled = false
-                        waterView.setMouse(-1, -1)
-                    }
-
-                    onPinchFinished: {
-                        mousearea.enabled = true
-                        waterView.setMouse(-1, -1)
-                    }
-
-                    MouseArea {
-                        id: mousearea
-
-                        enabled: true
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onWheel: {
-                            if (wheel.modifiers & Qt.ControlModifier) {
-                                waterView.verZoomEvent(-wheel.angleDelta.y)
-                            } else if (wheel.modifiers & Qt.ShiftModifier) {
-                                waterView.verScrollEvent(-wheel.angleDelta.y)
-                            } else {
-                                waterView.horScrollEvent(wheel.angleDelta.y)
-                            }
-                        }
-
-                        onClicked: {
-                            waterView.focus = true
-                            if (mouse.button === Qt.RightButton) {
-                            }
-                        }
-
-                        onReleased: {
-                            if (mouse.button === Qt.LeftButton) {
-                                waterView.setMouse(-1, -1)
-                            }
-                        }
-
-                        onPressed: {
-                            if (mouse.button === Qt.LeftButton) {
-                                waterView.setMouse(mouse.x, mouse.y)
-                            }
-                        }
-
-                        onPositionChanged: {
-                            if(mousearea.pressedButtons & Qt.LeftButton) {
-                                waterView.setMouse(mouse.x, mouse.y)
-                            }
-                        }
-
-                    }
-
+                    horizontal: menuBar.is2DHorizontal
                 }
 
+//                Plot2D {
+//                    id: waterView2
+//                    visible: true
+//                    width: mainview.width/2
+//                    Layout.fillHeight: true
+////                    Layout.fillWidth: true
+//                    Layout.preferredWidth: mainview.width/2
+//                    Layout.rowSpan   : 5
+//                    Layout.columnSpan: 5
+//                    focus: true
 
+//                    horizontal: menuBar.is2DHorizontal
+//                }
 
+//                Plot2D {
+//                    id: waterView3
+//                    visible: true
+//                    width: mainview.width
+//                    Layout.fillHeight: true
+////                    Layout.fillWidth: true
+//                    Layout.preferredWidth: mainview.width
+//                    Layout.rowSpan   : 5
+//                    Layout.columnSpan: 10
+//                    focus: true
+
+//                    horizontal: menuBar.is2DHorizontal
+//                }
             }
+
+
+
+//            Plot2D {
+//                id: waterView2
+//                visible: menuBar.is2DVisible
+//                width: mainview.width
+//                Layout.fillHeight: true
+//                Layout.fillWidth: true
+//                focus: true
+
+//                horizontal: menuBar.is2DHorizontal
+//            }
+
+
 
             Rectangle {
                 visible: menuBar.is2DVisible
@@ -260,8 +244,8 @@ Window  {
                 implicitHeight: theme.controlHeight
 
                 stepSize: 0.0001
-                from: 1
-                to: 0
+                from: 0
+                to: 1
 
                 onValueChanged: core.setTimelinePosition(value);
             }
@@ -300,6 +284,8 @@ Window  {
         Layout.fillHeight: true
         height: visualisationLayout.height
         //settingsWidth: theme.controlHeight*20 < 800 ? theme.controlHeight*20 : 800
+
+        targetPlot: waterView
     }
 
     Connections {

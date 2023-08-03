@@ -61,15 +61,15 @@ void Device::putData(const QByteArray &data) {
             if(_parser.id() == ID_TIMESTAMP && _parser.ver() == v1) {
                 int timestamp = _parser.read<U4>();
                 int unix = _parser.read<U4>();
-                core.plot()->addEvent(timestamp, 0, unix);
-                core.consoleInfo(QString("Event time %1.%2").arg(unix).arg(timestamp));
+                core.dataset()->addEvent(timestamp, 0, unix);
+//                core.consoleInfo(QString("Event time %1.%2").arg(unix).arg(timestamp));
             }
 
             if(_parser.id() == ID_EVENT) {
                 int timestamp = _parser.read<U4>();
                 int id = _parser.read<U4>();
                 if(id < 100) {
-                    core.plot()->addEvent(timestamp, id);
+                    core.dataset()->addEvent(timestamp, id);
                 }
             }
 
@@ -77,7 +77,7 @@ void Device::putData(const QByteArray &data) {
                 int v_id = _parser.read<U1>();
                 int32_t v_uv = _parser.read<S4>();
                 if(v_id == 1) {
-                    core.plot()->addEncoder(float(v_uv));
+                    core.dataset()->addEncoder(float(v_uv));
                     qInfo("Voltage %f", float(v_uv));
                 }
             }
@@ -111,7 +111,7 @@ void Device::putData(const QByteArray &data) {
                     prot_nmea.readDate(&year, &mounth, & day);
 
                     uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toTime_t();
-                    core.plot()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
         }
@@ -148,7 +148,7 @@ void Device::putData(const QByteArray &data) {
                 uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toTime_t();
 
                 if(fix_type > 1 && fix_type < 5) {
-                    core.plot()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                    core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                 }
 
                 if(_isConsoled) {
@@ -166,7 +166,7 @@ void Device::putData(const QByteArray &data) {
             if(mavlink_frame.msgId() == 33) { // GLOBAL_POSITION_INT
                 MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
                 if(pos.isValid()) {
-                    core.plot()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
 
                     _vru.velocityH = sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY());
                     emit vruChanged();

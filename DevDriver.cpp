@@ -543,8 +543,7 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
             for(int i = 0; i < data.length(); i++) {
                 data[i] = raw_data[i];
             }
-            emit chartComplete(_lastAddres, data, idChart->resolution(), idChart->offsetRange());
-
+            emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
 
         } else if(ver == v6) {
             QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
@@ -559,7 +558,7 @@ void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
-    core.plot()->addTemp(idTemp->temp());
+    core.dataset()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {

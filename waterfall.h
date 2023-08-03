@@ -6,26 +6,30 @@
 #include <QObject>
 #include <plotcash.h>
 #include <QTimer>
+#include "Plot2D.h"
 
 
-class WaterFall : public QQuickPaintedItem
+class qPlot2D : public QQuickPaintedItem, public Plot2D
 {
     Q_OBJECT
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
 
-    WaterFall(QQuickItem* parent = nullptr);
+    qPlot2D(QQuickItem* parent = nullptr);
     virtual void paint(QPainter *painter);
 
-    void setPlot(PlotCash* plot);
+    void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  updater(); }
 
+    void plotUpdate();
+
 protected:
-    PlotCash* m_plot = nullptr;
+    Dataset* m_plot = nullptr;
     QTimer* m_updateTimer;
     bool m_needUpdate = true;
     bool _isHorizontal = true;
+
 
 protected slots:
     void timerUpdater();
@@ -35,8 +39,29 @@ public slots:
     void horScrollEvent(int delta);
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
-    void setMouse(int x, int y);
-    void setMouseMode(int mode);
+    void plotMousePosition(int x, int y);
+    void plotMouseTool(int mode);
+
+    void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
+    int plotDatasetChannel() { return _cursor.channel1; }
+
+    void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
+    void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
+    void plotBottomTrackVisible(bool visible) { setBottomTrackVisible(visible); }
+    void plotBottomTrackTheme(int theme_id) { setBottomTrackTheme(theme_id); }
+
+    void plotRangefinderVisible(bool visible) { setRangefinderVisible(visible); }
+    void plotAttitudeVisible(bool visible) { setAttitudeVisible(visible); }
+
+    void plotDopplerBeamVisible(bool visible, int beam_filter) { setDopplerBeamVisible(visible, beam_filter); }
+    void plotDopplerInstrumentVisible(bool visible) { setDopplerInstrumentVisible(visible); }
+
+    void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
+    void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }
+    void plotVelocityRange(float velocity) { setVelocityRange(velocity); }
+
+    void doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold);
+
 };
 
 #endif // WATERFALL_H
