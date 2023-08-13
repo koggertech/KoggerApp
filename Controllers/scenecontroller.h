@@ -1,18 +1,17 @@
 #ifndef SCENECONTROLLER_H
 #define SCENECONTROLLER_H
 
+#include <QMatrix4x4>
 #include <QVector2D>
 #include <QRect>
 
-#include <Q3DSceneModel.h>
 #include <raycastpickerfactory.h>
 
 class SceneController
 {
 public:
-    SceneController(std::shared_ptr <Q3DSceneModel> model);
+    SceneController();
 
-    void setModel(std::shared_ptr <Q3DSceneModel> model);
     void cursorPosChanged(const QVector3D& pos,
                           const QMatrix4x4& view,
                           const QMatrix4x4& model,
@@ -26,8 +25,6 @@ private:
     void updateSceneTransform();
 
 private:
-
-    std::shared_ptr <Q3DSceneModel> mpSceneModel;
 
     QMatrix4x4 mView;
     QMatrix4x4 mModel;

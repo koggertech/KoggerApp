@@ -1,14 +1,8 @@
 #include "scenecontroller.h"
 #include "raycastpickerfactory.h"
 
-SceneController::SceneController(std::shared_ptr<Q3DSceneModel> model)
-: mpSceneModel(model)
+SceneController::SceneController()
 {}
-
-void SceneController::setModel(std::shared_ptr<Q3DSceneModel> model)
-{
-    mpSceneModel = model;
-}
 
 void SceneController::cursorPosChanged(const QVector3D& pos,
                                        const QMatrix4x4& view,
@@ -20,10 +14,10 @@ void SceneController::cursorPosChanged(const QVector3D& pos,
     mProjection = projection;
     mMousePos = pos;
 
-    if (mpSceneModel->pickingMethod() != PICKING_METHOD_NONE){
-        updateObjectsPicker();
-        return;
-    }
+    //if (mpSceneModel->pickingMethod() != PICKING_METHOD_NONE){
+    //    updateObjectsPicker();
+    //    return;
+    //}
 
     updateSceneTransform();
 }
@@ -46,7 +40,7 @@ void SceneController::updateObjectsPicker()
 
     pPicker = pickerFactory->createPointPicker();
 
-    mpSceneModel->setObjectsPicker(pPicker);
+    //mpSceneModel->setObjectsPicker(pPicker);
 }
 
 void SceneController::updateSceneTransform()
