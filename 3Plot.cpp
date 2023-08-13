@@ -1,5 +1,7 @@
 #include "3Plot.h"
-#include "pointset.h"
+#include <pointset.h>
+#include <bottomtrack.h>
+#include <surface.h>
 
 #include <QtGui/QOpenGLFramebufferObject>
 
@@ -20,10 +22,6 @@ public:
     void render() override {
         scene.render();
         update();
-    }
-
-    void setModel(const ModelPointer pModel){
-        scene.setModel(pModel);
     }
 
     void setController(std::shared_ptr <SceneController> controller){
@@ -61,7 +59,6 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 {
     auto renderer = new FboRenderer();
 
-    renderer->setModel(mpModel);
     renderer->setController(mpSceneController);
     renderer->setSceneObjectsListModel(mpSceneObjectsListModel);
 
@@ -83,11 +80,6 @@ Scene3D::Scene3D()
 
 Scene3D::~Scene3D()
 {
-}
-
-void Scene3D::setModel(const ModelPointer pModel)
-{
-    mpModel = pModel;
 }
 
 void Scene3D::setController(std::shared_ptr <SceneController> controller)
@@ -388,11 +380,6 @@ void Scene3D::displayPointSetObjects()
 
         pProgram->release();
     }
-}
-
-void FboInSGRenderer::setModel(const ModelPointer pModel)
-{
-    mpModel = pModel;
 }
 
 void FboInSGRenderer::setController(std::shared_ptr<SceneController> controller)

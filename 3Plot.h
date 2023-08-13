@@ -16,12 +16,9 @@
 
 #include <memory>
 
-#include <Q3DSceneModel.h>
 #include <sceneobjectslistmodel.h>
 #include <scenecontroller.h>
 #include "displayedobject.h"
-
-using ModelPointer = std::shared_ptr <Q3DSceneModel>;
 
 class Scene3D : public QObject, protected QOpenGLFunctions
 {
@@ -34,7 +31,6 @@ public:
     void render();
     void initialize();
 
-    void setModel(const ModelPointer pModel);
     void setController(std::shared_ptr <SceneController> controller);
     void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
@@ -138,8 +134,6 @@ private:
 
     void displayPointSetObjects();
 
-
-    Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
     QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
@@ -159,8 +153,6 @@ private:
 
     QQuaternion q;
 
-    //! Указатель на модель сцены
-    ModelPointer mpModel;
     std::shared_ptr <SceneController> mpController;
     std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
@@ -195,9 +187,6 @@ public:
     QVector<QVector3D> lines() {
         return _bottomTrack;
     }
-
-    //! Передать указатель на модель 3D - сцены
-    void setModel(const ModelPointer pModel);
 
     void setController(std::shared_ptr <SceneController> controller);
 
@@ -299,14 +288,12 @@ public slots:
 
 private:
     QVector<QVector3D> _bottomTrack;
-    Vector3Pointer mpTriangles;
 
     float _scale = 30.0;
     int _lastMouseX = -1, _lastMouseY = -1;
     bool _rotationFlag = false;
 
     Renderer* mpRenderer;
-    ModelPointer mpModel;
     std::shared_ptr <SceneController> mpSceneController;
     std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
