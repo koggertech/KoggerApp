@@ -1,0 +1,6 @@
+module ActiveObjectParamsMenu
+
+ActiveObjectParamsMenuLoader 1.0 ActiveObjectParamsMenuLoader.qml
+BottomTrackParamsMenu        1.0 BottomTrackParamsMenu.qml
+SurfaceParamsMenu            1.0 SurfaceParamsMenu.qml
+PointSetParamsMenu           1.0 PointSetParamsMenu.qml
