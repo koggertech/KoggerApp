@@ -11,14 +11,14 @@
 
 #include <QObject>
 #include <qdebug.h>
-#include <Qt3DRender/QRayCaster>
-
 #include <QTime>
 #include <QVector>
+
 #include <memory>
 
-#include <scenecontroller.h>
 #include <Q3DSceneModel.h>
+#include <sceneobjectslistmodel.h>
+#include <scenecontroller.h>
 #include "displayedobject.h"
 
 using ModelPointer = std::shared_ptr <Q3DSceneModel>;
@@ -36,7 +36,7 @@ public:
 
     void setModel(const ModelPointer pModel);
     void setController(std::shared_ptr <SceneController> controller);
-
+    void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
     void scale(float sc) {
         m_fScale = sc;
@@ -47,8 +47,6 @@ public:
     }
 
     void setSize(const QSize& size){
-        //mSceneSize = size;
-
         mpController->viewportRectChanged(QRect(0,0,size.width(), size.height()));
     }
 
@@ -57,12 +55,6 @@ public:
     }
 
     void setMousePos(const QVector2D& pos){
-        //mMousePos = pos;
-
-        //if (mIsRightMouseButtonPressed){
-        //    selectObjects();
-        //}
-
         mpController->cursorPosChanged(pos.toVector3D(), mView, mModel, mProjection);
     }
 
@@ -83,17 +75,6 @@ public:
     QVector3D getRight() const { return QVector3D(_view.column(0)[0],_view.column(0)[1],_view.column(0)[2]); }
 
     void rotationFlag(bool is_rotation) { _isRotation = is_rotation; }
-
-public slots:
-
-    void bottomTrackDataChanged();
-    void bottomTrackPropertiesChanged();
-    void surfaceDataChanged();
-    void surfacePropertiesChanged();
-    void contourDataChanged();
-    void contourPropertiesChanged();
-    void markupGridDataChanged();
-    void pickedObjectsDataChanged();
 
 private:
     qreal   m_fScale = 1;
@@ -139,24 +120,24 @@ private:
 
     void displayAxis();
 
-    void selectObjects();
-
-    void displayNormals();
-
     void displayPickedObjects();
 
-    struct Ray{
-        QVector3D origin;
-        QVector3D direction;
-    };
+    void displayToolUsingResult();
 
-    struct Sphere{
-        QVector3D center;
-        float radius = 0.0f;
-    };
+    //-------------------
 
-    QVector4D unproject(const QVector3D& mouse);
-    void intersects(const QVector3D& origin, const QVector3D& direction);
+    void displayBottomTrackObjects();
+
+    void displaySurfaceObjects();
+
+    void displaySurfaceContours();
+
+    void displaySurfaceGrids();
+
+    void displayObjectBounds();
+
+    void displayPointSetObjects();
+
 
     Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
@@ -170,9 +151,6 @@ private:
     QOpenGLShaderProgram* mpOverlappedGridProgram;
 
     int vertexAttr1;
-    //int vertexAttr2;
-    //int vertexAttr3;
-    //int vertexAttr4;
     int normalAttr1;
     int matrixUniform1;
     int projectionUniform1;
@@ -184,26 +162,7 @@ private:
     //! Указатель на модель сцены
     ModelPointer mpModel;
     std::shared_ptr <SceneController> mpController;
-
-
-    Vector3 mMesh;
-
-    //! Данные трека морского дна
-    Vector3 mBottomTrack;
-    //! Данные треугольников поверхности
-    Vector3 mTriangles;
-    Vector3 mTriangleGrid;
-    Vector3 mGrid;
-    Vector3 mQuads;
-
-    QVector <QVector3D> mBasicSurface;
-    QVector <QVector3D> mSmoothedSurface;
-
-    Surface mSurfaceDisplayedObject;
-    BottomTrack mBottomTrackDisplayedObject;
-    Contour mContourDisplayedObject;
-    MarkupGrid mMarkupGridDisplayedObject;
-    VertexObject mPickedObject;
+    std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
     std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
     std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
@@ -214,11 +173,6 @@ private:
 
     float mMaxZ = 0.0f;
     float mMinZ = 0.0f;
-
-    QVector <QVector3D> test;
-    QVector <QVector3D> rays;
-    QVector <QVector3D> normals;
-
 
     void displayTest();
     void displayRays();
@@ -246,6 +200,8 @@ public:
     void setModel(const ModelPointer pModel);
 
     void setController(std::shared_ptr <SceneController> controller);
+
+    void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
     void updateBottomTrack(QVector<QVector3D> p) {
         _bottomTrack = p;
@@ -352,6 +308,7 @@ private:
     Renderer* mpRenderer;
     ModelPointer mpModel;
     std::shared_ptr <SceneController> mpSceneController;
+    std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
     bool mIsRightMouseButtonPressed = false;
     bool mIsLeftMouseButtonPressed = false;
