@@ -74,10 +74,10 @@ RESOURCES += QML/qml.qrc \
     shaders.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
+QML_IMPORT_PATH = $$PWD\QML
 
 # Additional import path used to resolve QML modules just for Qt Quick Designer
-QML_DESIGNER_IMPORT_PATH =
+QML_DESIGNER_IMPORT_PATH = $$PWD\QML
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -124,7 +124,15 @@ HEADERS += \
 
 
 DISTFILES += \
-    QML/Settings3DView.qml \
+    QML/Common/MenuBlockEx.qml \
+    QML/Scene3DToolbar.qml \
+    QML/SceneObjectsControlBar/ActiveObjectParams.qml \
+    QML/SceneObjectsControlBar/BottomTrackParams.qml \
+    QML/SceneObjectsControlBar/SceneObjectsControlBar.qml \
+    QML/SceneObjectsControlBar/SceneObjectsList.qml \
+    QML/SceneObjectsControlBar/SceneObjectsListDelegate.qml \
+    QML/SceneObjectsList.qml \
+    QML/SceneObjectsListDelegate.qml \
     QML/AdjBox.qml \
     QML/AdjBoxBack.qml \
     QML/BackStyle.qml \
@@ -148,7 +156,9 @@ DISTFILES += \
     a.fsh \
     base.vsh \
     heightcolor.frag \
-    staticcolor.fsh
+    staticcolor.fsh \
+    tools/models.pri \
+    tools/tools.pri
 
 
 android {
@@ -175,6 +185,7 @@ include ($$PWD/processors/processors.pri)
 include ($$PWD/domain/domain.pri)
 include ($$PWD/models/models.pri)
 include ($$PWD/controllers/controllers.pri)
+include ($$PWD/tools/tools.pri)
 
 #ANDROID_ABIS = x86
 

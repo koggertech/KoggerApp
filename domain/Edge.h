@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Point3D.h"
 #include <math.h>
+
+#include "Point3D.h"
+#include <Equals.h>
 
 template <typename T>
 class Edge
@@ -67,9 +69,8 @@ public:
     }
 
     bool operator==(const Edge <T>& other) const {
-        //return ((p1() == other.p1() && p2() == other.p2()) /*|| (p1() == other.p2() && p2() == other.p1())*/);
-        return (equal(p1(),other.p1()) && equal(p2(),other.p2())) || (equal(p1(),other.p2()) && equal(p2(),other.p1()));
-                /*|| (p1() == other.p2() && p2() == other.p1())*/
+        return (p1().equal(other.p1()) && p2().equal(other.p2())) ||
+               (p1().equal(other.p2()) && p2().equal(other.p1()));
     }
 
 

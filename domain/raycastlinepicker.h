@@ -10,7 +10,7 @@ class RayCastLinePicker : public AbstractPicker
 public:
     RayCastLinePicker(const QVector3D& origin, const QVector3D& dir);
 
-    virtual VertexObject pick(const VertexObject& object) override;
+    virtual std::shared_ptr <VertexObject> pick(std::shared_ptr <VertexObject> sourceObject) override;
     virtual QString pickingMethod() override;
 
 private:

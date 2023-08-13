@@ -1,6 +1,12 @@
 #include "contour.h"
 
-Contour::Contour()
+Contour::Contour(QObject* parent)
+    : DisplayedObject(parent)
+{
+    mPrimitiveType = GL_LINES;
+}
+
+Contour::~Contour()
 {
 
 }

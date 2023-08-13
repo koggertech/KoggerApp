@@ -1,21 +1,38 @@
 #ifndef MAXPOINTSFILTER_H
 #define MAXPOINTSFILTER_H
 
+#include <QVariantMap>
+
 #include <cmath>
 
-#include "abstractbottomtrackfilter.h"
+#include <constants.h>
+#include <abstractbottomtrackfilter.h>
 
 class MaxPointsFilter : public AbstractBottomTrackFilter
 {
-public:
-    MaxPointsFilter();
+    Q_OBJECT
 
-    void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
+public:
+
+    explicit MaxPointsFilter(QObject* parent = nullptr);
+
+    Q_INVOKABLE virtual AbstractBottomTrackFilter::FilterType type() const override;
+    Q_INVOKABLE int maxPointsCount() const;
+
+public:
+
+    virtual void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
+
+public:
     void setMaxPointsCount(int count);
+
+signals:
+
+    void maxPointsCountChanged(int count);
 
 private:
 
-    int mMaxPointsCount = 1.0f;
+    int mMaxPointsCount = 10000.0f;
 };
 
 #endif // MAXPOINTSFILTER_H

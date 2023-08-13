@@ -295,9 +295,9 @@ PlotCash::PlotCash() {
     setThemeId(0);
 }
 
-void PlotCash::set3DSceneModel(const ModelPointer pModel)
+void PlotCash::setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel)
 {
-    mp3DSceneModel = pModel;
+    mpSceneObjectsListModel = sceneObjectsListModel;
 }
 
 void PlotCash::set3DSceneController(std::shared_ptr<SceneController> controller)
@@ -937,10 +937,6 @@ void PlotCash::updateBottomTrack(bool update_all) {
         PoolDataset* dataset = fromPool(_gnssTrackIndex[i]);
         _bottomTrack[i] = _boatTrack[i];
         _bottomTrack[i][2] = -dataset->relPosD();
-    }
-
-    if (mp3DSceneModel){
-        mp3DSceneModel->setBottomTrack(_bottomTrack);
     }
 
     if (mpBottomTrackProvider){

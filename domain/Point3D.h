@@ -1,7 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <point2d.h>
+#include <Equals.h>
 
 #ifdef QT_CORE_LIB
 #include <QVector3D>
@@ -46,6 +46,11 @@ public:
     Point2D <T> toPoint2D() const{
         return Point2D <T>(x(), y(), mIndex);
     }
+
+    bool equal(const Point3D <T>& other) const {
+        return Equals::equal(mX, other.x()) && Equals::equal(mY, other.y());
+    }
+
     //! Equal operator
     bool operator==(const Point3D& other) const {
         return mX == other.x() && mY == other.y() /*&& mZ == other.z()*/;

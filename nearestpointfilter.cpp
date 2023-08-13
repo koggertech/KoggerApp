@@ -1,18 +1,35 @@
 #include "nearestpointfilter.h"
 
+#include <constants.h>
+
 NearestPointFilter::NearestPointFilter()
 {
 
 }
 
-void NearestPointFilter::setRange(float range)
+AbstractBottomTrackFilter::FilterType NearestPointFilter::type() const
 {
-    mRange = range;
+    return FilterType::NearestPointDistance;
+}
+
+float NearestPointFilter::distance() const
+{
+    return mDistance;
+}
+
+void NearestPointFilter::setDistance(float distance)
+{
+    if (mDistance == distance)
+        return;
+
+    mDistance = distance;
+
+    Q_EMIT distanceChanged(mDistance);
 }
 
 void NearestPointFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D> &filtered)
 {
-    if (mRange <= 0)
+    if (mDistance <= 0)
         return;
 
     float trackLength = 0.0f;
@@ -63,6 +80,6 @@ void NearestPointFilter::apply(const QVector<QVector3D> &origin, QVector<QVector
             }
         }
 
-        currentLength += mRange;
+        currentLength += mDistance;
     }
 }

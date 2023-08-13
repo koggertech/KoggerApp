@@ -5,14 +5,14 @@ RayCastPolygonPicker::RayCastPolygonPicker(const QVector3D& origin, const QVecto
 , mDir(dir)
 {}
 
-VertexObject RayCastPolygonPicker::pick(const VertexObject& object)
+std::shared_ptr <VertexObject> RayCastPolygonPicker::pick(std::shared_ptr <VertexObject> sourceObject)
 {
-    VertexObject result;
+    std::shared_ptr <VertexObject> result;
 
-    if (object.primitiveType() == GL_TRIANGLES){
-        result = pickAsTriangle(object);
-    }else if (object.primitiveType() == GL_QUADS){
-        result = pickAsQuad(object);
+    if (sourceObject->primitiveType() == GL_TRIANGLES){
+        result = pickAsTriangle(sourceObject);
+    }else if (sourceObject->primitiveType() == GL_QUADS){
+        result = pickAsQuad(sourceObject);
     }
 
     return result;
@@ -23,21 +23,22 @@ QString RayCastPolygonPicker::pickingMethod()
     return PICKING_METHOD_POLYGON;
 }
 
-VertexObject RayCastPolygonPicker::pickAsTriangle(const VertexObject& object)
+std::shared_ptr <VertexObject> RayCastPolygonPicker::pickAsTriangle(std::shared_ptr <VertexObject> sourceObject)
 {
     using CandidateTriangle = Triangle <float>;
     using IntersectionPoint = QVector3D;
 
     QVector <QPair <CandidateTriangle, IntersectionPoint>> candidates;
+    QVector <QVector3D> result;
 
-    auto size = object.cdata().size();
+    auto size = sourceObject->cdata().size();
 
     for (int i = 0; i < size; i+=3){
 
         Triangle <float> triangle(
-                                  object.cdata().at(i),
-                                  object.cdata().at(i+1),
-                                  object.cdata().at(i+2)
+                                  sourceObject->cdata().at(i),
+                                  sourceObject->cdata().at(i+1),
+                                  sourceObject->cdata().at(i+2)
                                 );
 
         QVector3D intersectionPoint;
@@ -52,11 +53,9 @@ VertexObject RayCastPolygonPicker::pickAsTriangle(const VertexObject& object)
     }
 
     if (candidates.isEmpty())
-        return {GL_TRIANGLES, {}};
+        return std::make_shared <VertexObject>(GL_TRIANGLES, result);
 
     // Choosing nearest triangle to origin point
-
-    QVector <QVector3D> resultTriangleVertices;
 
     auto distToLastCandidate = candidates.first().first.distanceToPoint(mOrigin);
 
@@ -68,7 +67,7 @@ VertexObject RayCastPolygonPicker::pickAsTriangle(const VertexObject& object)
 
         if (distToCurrentCandidate <= distToLastCandidate){
 
-            resultTriangleVertices = {
+            result = {
                                         candidateTriangle.A().toQVector3D(),
                                         candidateTriangle.B().toQVector3D(),
                                         candidateTriangle.C().toQVector3D()
@@ -80,22 +79,23 @@ VertexObject RayCastPolygonPicker::pickAsTriangle(const VertexObject& object)
         }
     }
 
-    return {GL_TRIANGLES,resultTriangleVertices};
+    return std::make_shared <VertexObject>(GL_TRIANGLES, result);
 }
 
-VertexObject RayCastPolygonPicker::pickAsQuad(const VertexObject& object)
+std::shared_ptr <VertexObject> RayCastPolygonPicker::pickAsQuad(std::shared_ptr <VertexObject> sourceObject)
 {
     QVector <QPair <Quad <float>, QVector3D>> candidates;
+    QVector <QVector3D> result;
 
-    auto size = object.cdata().size();
+    auto size = sourceObject->cdata().size();
 
     for (int i = 0; i < size; i+=4){
 
         Quad <float> quad(
-                        object.cdata().at(i),
-                        object.cdata().at(i+1),
-                        object.cdata().at(i+2),
-                        object.cdata().at(i+3)
+                        sourceObject->cdata().at(i),
+                        sourceObject->cdata().at(i+1),
+                        sourceObject->cdata().at(i+2),
+                        sourceObject->cdata().at(i+3)
                     );
 
         QVector3D intersectionPoint;
@@ -110,11 +110,9 @@ VertexObject RayCastPolygonPicker::pickAsQuad(const VertexObject& object)
     }
 
     if (candidates.isEmpty())
-        return {GL_QUADS, {}};
+        return std::make_shared <VertexObject>(GL_QUADS, result);
 
     // Choosing nearest to origin point triangle
-
-    QVector <QVector3D> resultQuadVertices;
 
     auto distToLastCandidate = candidates.first().first.distanceToPoint(mOrigin);
 
@@ -126,12 +124,12 @@ VertexObject RayCastPolygonPicker::pickAsQuad(const VertexObject& object)
 
         if (distToCurrentCandidate <= distToLastCandidate){
 
-            resultQuadVertices = {
-                                    candidateQuad.A().toQVector3D(),
-                                    candidateQuad.B().toQVector3D(),
-                                    candidateQuad.C().toQVector3D(),
-                                    candidateQuad.D().toQVector3D()
-                                };
+            result = {
+                        candidateQuad.A().toQVector3D(),
+                        candidateQuad.B().toQVector3D(),
+                        candidateQuad.C().toQVector3D(),
+                        candidateQuad.D().toQVector3D()
+                    };
 
             mLastIntersectionPoint = candidate.second;
 
@@ -139,5 +137,5 @@ VertexObject RayCastPolygonPicker::pickAsQuad(const VertexObject& object)
         }
     }
 
-    return {GL_QUADS, resultQuadVertices};
+    return std::make_shared <VertexObject>(GL_QUADS, result);
 }

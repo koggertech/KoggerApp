@@ -1,8 +1,29 @@
 #include "maxpointsfilter.h"
 
-MaxPointsFilter::MaxPointsFilter()
+MaxPointsFilter::MaxPointsFilter(QObject *parent)
+    : AbstractBottomTrackFilter(parent)
 {
 
+}
+
+AbstractBottomTrackFilter::FilterType MaxPointsFilter::type() const
+{
+    return FilterType::MaxPointsCount;
+}
+
+int MaxPointsFilter::maxPointsCount() const
+{
+    return mMaxPointsCount;
+}
+
+void MaxPointsFilter::setMaxPointsCount(int count)
+{
+    if (mMaxPointsCount == count)
+        return;
+
+    mMaxPointsCount = count;
+
+    Q_EMIT maxPointsCountChanged(mMaxPointsCount);
 }
 
 void MaxPointsFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D> &filtered)
@@ -64,9 +85,4 @@ void MaxPointsFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D>
 
         currentLength += range;
     }
-}
-
-void MaxPointsFilter::setMaxPointsCount(int count)
-{
-    mMaxPointsCount = count;
 }

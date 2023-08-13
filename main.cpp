@@ -11,6 +11,10 @@
 #include <QThread>
 #include "3Plot.h"
 
+#include <sceneobjectslistmodel.h>
+#include <sceneobjectslistcontroller.h>
+#include <abstractbottomtrackfilter.h>
+
 Core core;
 Themes theme;
 
@@ -152,15 +156,19 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
+    engine.addImportPath("qrc:/");
 
-    qInstallMessageHandler(messageHandler);
+    //qInstallMessageHandler(messageHandler);
 
 //    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 
+
     qmlRegisterType<WaterFall>("WaterFall", 1, 0, "WaterFall");
+    //qmlRegisterUncreatableType <AbstractBottomTrackFilter> ("AbstractBottomTrackFilter", 1, 0, "AbstractBottomTrackFilter", "");
+
+    //qmlRegisterUncreatableType <AbstractBottomTrackFilter>("AbstractBottomTrackFilter", 1, 0, "AbstractBottomTrackFilter", "");
 
     engine.rootContext()->setContextProperty("plot", core.plot());
-
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
 

@@ -5,8 +5,12 @@
 
 class Contour : public DisplayedObject
 {
+    Q_OBJECT
+
 public:
-    Contour();
+    explicit Contour(QObject* parent = nullptr);
+
+    virtual ~Contour();
 
     float lineWidth() const;
 
@@ -24,8 +28,8 @@ public:
 
 protected:
 
-    float mLineWidth = 1.0f;
-    bool mKeyPointsVisible = false;
+    float  mLineWidth = 1.0f;
+    bool   mKeyPointsVisible = false;
     QColor mKeyPointsColor = QColor(255.0f, 255.0f, 255.0f, 255.0f);
 };
 

@@ -6,35 +6,37 @@ RayCastPointPicker::RayCastPointPicker(const QVector3D& origin, const QVector3D&
     mpLinePicker = std::make_shared <RayCastLinePicker>(origin,dir);
 }
 
-VertexObject RayCastPointPicker::pick(const VertexObject& object)
+std::shared_ptr <VertexObject> RayCastPointPicker::pick(std::shared_ptr <VertexObject> sourceObject)
 {
-    VertexObject pickedObject(GL_POINTS, {});
+    std::shared_ptr <VertexObject> pickedObject;
     QVector3D lastIntersectionPoint;
+    QVector <QVector3D> result;
 
-    if (object.primitiveType() == GL_LINES ||
-        object.primitiveType() == GL_LINE_STRIP){
-        pickedObject = mpLinePicker->pick(object);
+    if (sourceObject->primitiveType() == GL_LINES ||
+        sourceObject->primitiveType() == GL_LINE_STRIP){
+        pickedObject = mpLinePicker->pick(sourceObject);
         lastIntersectionPoint = mpLinePicker->lastIntersectionPoint();
 
+        result.append(lastIntersectionPoint);
 
-        return {GL_POINTS, {lastIntersectionPoint}};
+        return std::make_shared <VertexObject>(GL_POINTS, result);
     }
 
-    if (object.primitiveType() == GL_TRIANGLES ||
-        object.primitiveType() == GL_QUADS)
+    if (sourceObject->primitiveType() == GL_TRIANGLES ||
+        sourceObject->primitiveType() == GL_QUADS)
     {
-        pickedObject = mpPolygonPicker->pick(object);
+        pickedObject = mpPolygonPicker->pick(sourceObject);
         lastIntersectionPoint = mpPolygonPicker->lastIntersectionPoint();
     }
 
-    if (pickedObject.cdata().isEmpty()){
-        return {GL_POINTS, {}};
+    if (pickedObject->cdata().isEmpty()){
+        return std::make_shared <VertexObject>(GL_POINTS, QVector <QVector3D>());
     }
 
-    auto pickedPoint = pickedObject.cdata().first();
+    auto pickedPoint = pickedObject->cdata().first();
     auto distToLastPoint = pickedPoint.distanceToPoint(lastIntersectionPoint);
 
-    for (const auto& point : pickedObject.cdata()){
+    for (const auto& point : pickedObject->cdata()){
         auto distToCurrentPoint = point.distanceToPoint(lastIntersectionPoint);
 
         if (distToCurrentPoint <= distToLastPoint){
@@ -43,7 +45,9 @@ VertexObject RayCastPointPicker::pick(const VertexObject& object)
         }
     }
 
-    return {GL_POINTS, {pickedPoint}};
+    result.append(pickedPoint);
+
+    return std::make_shared <VertexObject>(GL_POINTS, result);
 }
 
 QString RayCastPointPicker::pickingMethod()

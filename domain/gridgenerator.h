@@ -64,7 +64,6 @@ public:
             }
 
         } catch (std::bad_alloc& ex) {
-            std::cout << "Size: " << queue->size();
         }
 
 

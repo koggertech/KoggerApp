@@ -256,17 +256,5 @@ Item {
 
             y:0
         }
-
-        Settings3DView {
-            id: scene3DSettings
-            Layout.alignment: Qt.AlignTop
-            visible: menu3DSettings.active
-            Layout.maximumHeight: menu.height
-            width: settingsWidth
-            implicitWidth: settingsWidth
-
-            y:0
-        }
-
     }
 }

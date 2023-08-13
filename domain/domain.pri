@@ -19,23 +19,27 @@ HEADERS += \
     $$PWD/markupgrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
+    $$PWD/pointset.h \
     $$PWD/raycastlinepicker.h \
     $$PWD/raycastpointpicker.h \
     $$PWD/raycastpolygonpicker.h \
     $$PWD/sceneboundary.h \
     $$PWD/sceneparams.h \
     $$PWD/surface.h \
-    $$PWD/gridgenerator.h
+    $$PWD/gridgenerator.h \
+    $$PWD/surfacegrid.h
 
 SOURCES += \
     $$PWD/bottomtrack.cpp\
     $$PWD/contour.cpp\
     $$PWD/markupgrid.cpp \
+    $$PWD/pointset.cpp \
     $$PWD/raycastlinepicker.cpp \
     $$PWD/raycastpointpicker.cpp \
     $$PWD/raycastpolygonpicker.cpp \
     $$PWD/sceneboundary.cpp \
-    $$PWD/surface.cpp
+    $$PWD/surface.cpp \
+    $$PWD/surfacegrid.cpp
 
 	
 

@@ -2,9 +2,7 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
-    $$PWD/onlytincase.h \
-    $$PWD/tinwithbarycentriccase.h \
+    $$PWD/surfaceprocessor.h \
 
 SOURCES += \
-    $$PWD/onlytincase.cpp \
-    $$PWD/tinwithbarycentriccase.cpp \
+    $$PWD/surfaceprocessor.cpp \

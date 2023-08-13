@@ -1,0 +1,4 @@
+module SceneObjectsList
+
+SceneObjectsList 	 1.0 SceneObjectsList.qml
+SceneObjectsListDelegate 1.0 SceneObjectsListDelegate.qml

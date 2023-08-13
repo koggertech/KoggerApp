@@ -8,17 +8,18 @@ RayCastLinePicker::RayCastLinePicker(const QVector3D& origin, const QVector3D& d
 {
 }
 
-VertexObject RayCastLinePicker::pick(const VertexObject &object)
+std::shared_ptr <VertexObject> RayCastLinePicker::pick(std::shared_ptr <VertexObject> sourceObject)
 {
     using CandidateLine = Edge <float>;
     using IntersectionPoint = QVector3D;
 
     QVector <QPair <CandidateLine, IntersectionPoint>> candidates;
+    QVector <QVector3D> result;
 
-    for (int i = 0; i < object.cdata().size()-1; i+=2){
+    for (int i = 0; i < sourceObject->cdata().size()-1; i+=2){
 
-        auto line = CandidateLine(object.cdata().at(i),
-                                  object.cdata().at(i+1));
+        auto line = CandidateLine(sourceObject->cdata().at(i),
+                                  sourceObject->cdata().at(i+1));
 
         IntersectionPoint intersectionPoint;
 
@@ -32,15 +33,11 @@ VertexObject RayCastLinePicker::pick(const VertexObject &object)
                         );
         }
 
-        qDebug() << "Inters: " << intersectionPoint;
+       // qDebug() << "Inters: " << intersectionPoint;
     }
 
     if (candidates.isEmpty())
-        return {GL_LINES, {}};
-
-    qDebug() << "Candidates count: " << candidates.size();
-
-    QVector <QVector3D> result;
+        return std::make_shared <VertexObject>(GL_LINES, result);
 
     auto distToLastCandidate = mOrigin.distanceToPoint(candidates.first().second);
 
@@ -57,8 +54,7 @@ VertexObject RayCastLinePicker::pick(const VertexObject &object)
         }
     }
 
-    return {GL_LINES, result};
-    //return {GL_LINES, {}};
+    return std::make_shared <VertexObject>(GL_LINES, result);
 }
 
 QString RayCastLinePicker::pickingMethod()

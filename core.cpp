@@ -1,6 +1,5 @@
 #include "core.h"
 
-
 Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
@@ -26,19 +25,53 @@ Core::Core() : QObject(),
 
 void Core::createModels()
 {
-    auto bottomTrackProvider = std::make_shared <BottomTrackProvider>();
-    mpScene3DModel = std::make_shared <Q3DSceneModel> (bottomTrackProvider);
+    mpBottomTrackProvider   = std::make_shared <BottomTrackProvider>();
+    mpSceneObjectsListModel = std::make_shared <SceneObjectsListModel>();
+    mpActiveObjectProvider  = std::make_shared <ActiveObjectProvider>();
+    mpTool3dWorker          = std::make_shared <Tool3dWorker>();
 
-    m_plot->set3DSceneModel(mpScene3DModel);
-    m_plot->setBottomTrackProvider(bottomTrackProvider);
+    m_plot->setBottomTrackProvider(mpBottomTrackProvider);
+    m_plot->setSceneObjectsListModel(mpSceneObjectsListModel);
 }
 
 void Core::createControllers()
 {
-    mpSettings3DController = std::make_shared <Q3DSettingsController> ();
-    mpSettings3DController->setModel(mpScene3DModel);
+    mpSceneController     = std::make_shared <SceneController> ();
+    mpToolbar3dController = std::make_shared <Toolbar3dController>(
+                                                                    mpActiveObjectProvider,
+                                                                    mpTool3dWorker
+                                                                );
 
-    mpSceneController = std::make_shared <SceneController> (mpScene3DModel);
+    mpSceneObjectsListController = std::make_shared <SceneObjectsListController>(
+                                                                                    mpActiveObjectProvider,
+                                                                                    mpSceneObjectsListModel,
+                                                                                    mpBottomTrackProvider
+                                                                                );
+
+    mpBottomTrackParamsController = std::make_shared <BottomTrackParamsController>(
+                                                                                    mpActiveObjectProvider,
+                                                                                    mpBottomTrackProvider
+                                                                                );
+
+    mpMPCFilterParamsController = std::make_shared <MPCFilterParamsController>(
+                                                                                    mpActiveObjectProvider,
+                                                                                    mpBottomTrackProvider
+                                                                                );
+
+    mpNPDFilterParamsController = std::make_shared <NPDFilterParamsController>(
+                                                                                    mpActiveObjectProvider,
+                                                                                    mpBottomTrackProvider
+                                                                                );
+
+    mpSurfaceParamsController = std::make_shared <SurfaceParamsController>(
+                                                                               mpActiveObjectProvider,
+                                                                               mpSceneObjectsListModel
+                                                                           );
+
+    mpPointSetParamsController = std::make_shared <PointSetParamsController>(
+                                                                               mpActiveObjectProvider,
+                                                                               mpSceneObjectsListModel
+                                                                           );
 
     m_plot->set3DSceneController(mpSceneController);
 }
@@ -47,8 +80,15 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     m_engine = engine;
 
-    m_engine->rootContext()->setContextProperty("Settings3DController", mpSettings3DController.get());
-    m_engine->rootContext()->setContextProperty("Scene3DModel", mpScene3DModel.get());
+    m_engine->rootContext()->setContextProperty("Toolbar3dController",         mpToolbar3dController.get());
+    m_engine->rootContext()->setContextProperty("SceneObjectsListController" , mpSceneObjectsListController.get());
+    m_engine->rootContext()->setContextProperty("BottomTrackParamsController", mpBottomTrackParamsController.get());
+    m_engine->rootContext()->setContextProperty("SceneObjectListModel",        mpSceneObjectsListModel.get());
+    m_engine->rootContext()->setContextProperty("ActiveObjectProvider",        mpActiveObjectProvider.get());
+    m_engine->rootContext()->setContextProperty("MPCFilterParamsController",   mpMPCFilterParamsController.get());
+    m_engine->rootContext()->setContextProperty("NPDFilterParamsController",   mpNPDFilterParamsController.get());
+    m_engine->rootContext()->setContextProperty("SurfaceParamsController",     mpSurfaceParamsController.get());
+    m_engine->rootContext()->setContextProperty("PointSetParamsController",    mpPointSetParamsController.get());
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
@@ -152,7 +192,8 @@ bool Core::devsConnection() {
 bool Core::openConnectionAsFile(const QString &name) {
     closeConnection();
 
-    mpScene3DModel->clear();
+    mpSceneObjectsListModel->clear();
+
     m_plot->resetDataset();
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);

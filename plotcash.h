@@ -10,8 +10,10 @@
 #include <QPainter>
 #include "math.h"
 #include <qvector3d.h>
+
 #include <3Plot.h>
 #include <IDBinnary.h>
+#include <bottomtrackprovider.h>
 
 #define CONSTANTS_RADIUS_OF_EARTH			6371000			/* meters (m)		*/
 #define M_TWOPI_F 6.28318530717958647692f
@@ -466,10 +468,9 @@ public:
 
     QImage getImage(QSize size);
 
-    //! Установить указатель на модель 3D - сцены
-    void set3DSceneModel(const ModelPointer pModel);
     void set3DSceneController(std::shared_ptr <SceneController> controller);
     void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
+    void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
@@ -516,8 +517,8 @@ public slots:
 
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
-        _render3D->setModel(mp3DSceneModel);
         _render3D->setController(mp3DSceneController);
+        _render3D->setSceneObjectsListModel(mpSceneObjectsListModel);
     }
     void updateRender3D() {
         if(_render3D != NULL) {
@@ -528,10 +529,9 @@ public slots:
 
 private:
 
-    //! Указатель на модель 3D - сцены
-    ModelPointer mp3DSceneModel;
     std::shared_ptr <SceneController> mp3DSceneController;
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
+    std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
 signals:
     void updatedImage();

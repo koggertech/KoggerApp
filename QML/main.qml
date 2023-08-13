@@ -12,6 +12,10 @@ import QtQuick.Controls 2.15
 
 import WaterFall 1.0
 
+import KoggerCommon 1.0
+import ActiveObjectParamsMenu 1.0
+import SceneObjectsList 1.0
+
 Window  {
     id: mainview
     visible: true
@@ -21,6 +25,10 @@ Window  {
     minimumHeight: 256
     color: "black"
     title: qsTr("KoggerApp, KOGGER")
+
+    readonly property int _rightBarWidth:                360
+    readonly property int _activeObjectParamsMenuHeight: 400
+    readonly property int _sceneObjectsListHeight:       400
 
     //    Settings {
     //        property alias x: mainview.x
@@ -75,43 +83,43 @@ Window  {
                 }
 
 
-                Rectangle{
-                    id: surfaceCalculatingRectangle
-                    visible: Scene3DModel.triangulationAvailable()
-                    width: 300
-                    height: 100
-                    color: "transparent"
+                //Rectangle{
+                //    id: surfaceCalculatingRectangle
+                //    visible: Scene3DModel.triangulationAvailable()
+                //    width: 300
+                //    height: 100
+                //    color: "transparent"
 
-                    ColumnLayout{
+                //    ColumnLayout{
 
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignCenter
-                        width: 100
-                        height: 50
-                        spacing: 10
+                //        Layout.fillHeight: true
+                //        Layout.fillWidth: true
+                //        Layout.alignment: Qt.AlignCenter
+                //        width: 100
+                //        height: 50
+                //        spacing: 10
 
 
-                        Text{
-                            text: "Calculating surface.\nPlease wait..."
-                            color: "white"
-                            horizontalAlignment: Text.AlignHCenter
-                        }
+                //        Text{
+                //            text: "Calculating surface.\nPlease wait..."
+                //            color: "white"
+                //            horizontalAlignment: Text.AlignHCenter
+                //        }
 
-                        ProgressBar{
-                            id: surfaceProcessingProgressBar
-                            value: 0.0
-                            indeterminate: true
-                            Layout.fillWidth: true
-                        }
+                //        ProgressBar{
+                //            id: surfaceProcessingProgressBar
+                //            value: 0.0
+                //            indeterminate: true
+                //            Layout.fillWidth: true
+                //        }
 
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
+                //        anchors.bottom: parent.bottom
+                //        anchors.horizontalCenter: parent.horizontalCenter
+                //    }
 
-                    anchors.verticalCenter: parent.verticalCenter;
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
+                //    anchors.verticalCenter: parent.verticalCenter;
+                //    anchors.horizontalCenter: parent.horizontalCenter
+                //}
 
                 PinchArea {
                     id: pinch3D
@@ -268,8 +276,6 @@ Window  {
 
                 onValueChanged: core.setTimelinePosition(value);
             }
-
-
         }
 
         Console {
@@ -286,6 +292,44 @@ Window  {
         //settingsWidth: theme.controlHeight*20 < 800 ? theme.controlHeight*20 : 800
     }
 
+    Scene3DToolbar{
+        //visible: menuBar.is3DVisible
+        id: scene3DToolbar
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.rightMargin: 20
+    }
+
+    ColumnLayout {
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.rightMargin:    40
+
+        ActiveObjectParamsMenuLoader {
+            id:     activeObjectParamsMenuLoader
+            width:  _rightBarWidth
+            height: _activeObjectParamsMenuHeight
+        }
+
+        SceneObjectsList {
+            width:  _rightBarWidth
+            height: _sceneObjectsListHeight
+
+            onCountChanged: {
+                if(count === 0){
+                    activeObjectParamsMenuLoader.reset()
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: ActiveObjectProvider
+        onActiveObjectChanged: {
+            activeObjectParamsMenuLoader.setActiveObject(ActiveObjectProvider.activeObject)
+        }
+    }
+
     Connections {
         target: Scene3DModel
         onStateChanged: {
@@ -293,5 +337,4 @@ Window  {
             surfaceCalculatingRectangle.visible = !Scene3DModel.triangulationAvailable()
         }
     }
-
 }

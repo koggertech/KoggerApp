@@ -51,10 +51,39 @@
         <file>settings-outline.svg</file>
         <file>RecorderBox.qml</file>
         <file>DopplerBox.qml</file>
-        <file>Settings3DView.qml</file>
         <file>3dcube.svg</file>
         <file>CalcMethodTINSettings.qml</file>
         <file>SmoothMethodUGINSettings.qml</file>
         <file>SmoothMethodTriDivideSettings.qml</file>
+        <file>Scene3DToolbar.qml</file>
+        <file>one-finger.svg</file>
+        <file>tool.svg</file>
+        <file>KoggerCommon/MenuBlockEx.qml</file>
+        <file>KoggerCommon/qmldir</file>
+        <file>ActiveObjectParamsMenu/ActiveObjectParamsMenuLoader.qml</file>
+        <file>ActiveObjectParamsMenu/BottomTrackParamsMenu.qml</file>
+        <file>ActiveObjectParamsMenu/qmldir</file>
+        <file>ActiveObjectParamsMenu/SurfaceParamsMenu.qml</file>
+        <file>SceneObjectsList/qmldir</file>
+        <file>SceneObjectsList/SceneObjectsList.qml</file>
+        <file>SceneObjectsList/SceneObjectsListDelegate.qml</file>
+        <file>ActiveObjectParamsMenu/MenuPlaceholder.qml</file>
+        <file>KoggerCommon/KButton.qml</file>
+        <file>KoggerCommon/KCheck.qml</file>
+        <file>KoggerCommon/KCombo.qml</file>
+        <file>KoggerCommon/KComboBox.qml</file>
+        <file>KoggerCommon/KParamGroup.qml</file>
+        <file>KoggerCommon/KParamSetup.qml</file>
+        <file>KoggerCommon/KProgress.qml</file>
+        <file>KoggerCommon/KProgressButton.qml</file>
+        <file>KoggerCommon/KRadioDel.qml</file>
+        <file>KoggerCommon/KRButton.qml</file>
+        <file>KoggerCommon/KSlider.qml</file>
+        <file>KoggerCommon/KText.qml</file>
+        <file>KoggerCommon/KTextField.qml</file>
+        <file>ActiveObjectParamsMenu/MaxPointsCountFilterParams.qml</file>
+        <file>ActiveObjectParamsMenu/NearestPointDistanceFilterParams.qml</file>
+        <file>KoggerCommon/KSpinBox.qml</file>
+        <file>ActiveObjectParamsMenu/PointSetParamsMenu.qml</file>
     </qresource>
 </RCC>

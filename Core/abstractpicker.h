@@ -1,6 +1,8 @@
 #ifndef ABSTRACTPICKER_H
 #define ABSTRACTPICKER_H
 
+#include <memory>
+
 #include <QVector>
 
 #include "vertexobject.h"
@@ -9,7 +11,7 @@ class AbstractPicker
 {
 public:
 
-    virtual VertexObject pick(const VertexObject& object) = 0;
+    virtual std::shared_ptr <VertexObject> pick(std::shared_ptr <VertexObject> object) = 0;
 
     virtual QString pickingMethod() = 0;
 

@@ -14,9 +14,17 @@
 #include <QThread>
 #include <3Plot.h>
 
-#include <Q3DSettingsController.h>
+#include <sceneobjectslistcontroller.h>
+#include <bottomtrackparamscontroller.h>
+#include <mpcfilterparamscontroller.h>
+#include <npdfilterparamscontroller.h>
+#include <pointsetparamscontroller.h>
+#include <surfaceparamscontroller.h>
+#include <toolbar3dcontroller.h>
 #include <scenecontroller.h>
-#include <Q3DSceneModel.h>
+#include <sceneobjectslistmodel.h>
+#include <tool3dworker.h>
+#include <activeobjectprovider.h>
 #include <bottomtrackprovider.h>
 
 //#define FLASHER
@@ -25,10 +33,7 @@
 #include "flasher.h"
 #endif
 
-using Settings3DController = std::shared_ptr <Q3DSettingsController>;
 using Scene3DController    = std::shared_ptr <SceneController>;
-using Scene3DModel         = std::shared_ptr <Q3DSceneModel>;
-
 
 class Core : public QObject
 {
@@ -71,11 +76,22 @@ private:
     void createControllers();
     //! Метод создания моделей
     void createModels();
+\
+    // View controllers
+    Scene3DController                             mpSceneController;
+    std::shared_ptr <Toolbar3dController>         mpToolbar3dController;
+    std::shared_ptr <SceneObjectsListController>  mpSceneObjectsListController;
+    std::shared_ptr <BottomTrackParamsController> mpBottomTrackParamsController;
+    std::shared_ptr <SurfaceParamsController>     mpSurfaceParamsController;
+    std::shared_ptr <MPCFilterParamsController>   mpMPCFilterParamsController;
+    std::shared_ptr <NPDFilterParamsController>   mpNPDFilterParamsController;
 
-    Settings3DController mpSettings3DController;
-    Scene3DController mpSceneController;
-
-    Scene3DModel mpScene3DModel;
+    // App models
+    std::shared_ptr <ActiveObjectProvider>     mpActiveObjectProvider;
+    std::shared_ptr <Tool3dWorker>             mpTool3dWorker;
+    std::shared_ptr <SceneObjectsListModel>    mpSceneObjectsListModel;
+    std::shared_ptr <BottomTrackProvider>      mpBottomTrackProvider;
+    std::shared_ptr <PointSetParamsController> mpPointSetParamsController;
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
