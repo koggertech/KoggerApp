@@ -1,19 +1,23 @@
 #include "vertexobject.h"
 
-VertexObject::VertexObject()
+VertexObject::VertexObject(QObject* parent)
+    : QObject(parent)
+    , mPrimitiveType(GL_TRIANGLES)
 {
     mUuid = QUuid::createUuid();
 }
 
-VertexObject::VertexObject(const int type)
-: mPrimitiveType(type)
+VertexObject::VertexObject(const int type, QObject* parent)
+    : QObject(parent)
+    , mPrimitiveType(type)
 {
     mUuid = QUuid::createUuid();
 }
 
-VertexObject::VertexObject(const int type, const QVector<QVector3D> &data)
-: mPrimitiveType(type)
-, mData(data)
+VertexObject::VertexObject(const int type, const QVector<QVector3D> &data, QObject* parent)
+    : QObject(parent)
+    , mPrimitiveType(type)
+    , mData(data)
 {  
     mUuid = QUuid::createUuid();
 }
@@ -28,30 +32,77 @@ QString VertexObject::id() const
     return mUuid.toString();
 }
 
-void VertexObject::setPrimitiveType(const int type)
+QString VertexObject::name() const
 {
-    mPrimitiveType = type;
+    return mName;
+}
+
+QString VertexObject::type() const
+{
+    return mType;
+}
+
+void VertexObject::setPrimitiveType(int primitiveType)
+{
+    if (mPrimitiveType == primitiveType)
+        return;
+
+    mPrimitiveType = primitiveType;
+
+    Q_EMIT primitiveTypeChanged(primitiveType);
 }
 
 void VertexObject::setData(const QVector<QVector3D> &data)
 {
     mData = data;
 
+    Q_EMIT dataChanged();
+
     createBounds();
+
+    Q_EMIT boundsChanged();
+}
+
+void VertexObject::setName(QString name)
+{
+    if(mName == name)
+        return;
+
+    mName = name;
+
+    Q_EMIT nameChanged(mName);
+}
+
+void VertexObject::setType(QString type)
+{
+    if (mType == type)
+        return;
+
+    mType = type;
+
+    Q_EMIT typeChanged(mType);
 }
 
 void VertexObject::append(const QVector3D &vertex)
 {
     mData.append(vertex);
 
+    Q_EMIT dataChanged();
+
     createBounds();
+
+    Q_EMIT boundsChanged();
 }
 
 void VertexObject::append(const QVector<QVector3D> &vertexVector)
 {
     mData.append(vertexVector);
 
+    Q_EMIT dataChanged();
+
     createBounds();
+
+    Q_EMIT boundsChanged();
 }
 
 int VertexObject::primitiveType() const
@@ -76,7 +127,12 @@ Cube VertexObject::bounds() const
 
 void VertexObject::clearData()
 {
+    if(mData.isEmpty())
+        return;
+
     mData.clear();
+
+    Q_EMIT dataChanged();
 }
 
 void VertexObject::createBounds()
@@ -107,5 +163,6 @@ void VertexObject::createBounds()
     }
 
     mBounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);
-}
 
+    Q_EMIT boundsChanged();
+}

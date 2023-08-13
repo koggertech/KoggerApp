@@ -17,19 +17,24 @@
  */
 class DisplayedObject : public VertexObject
 {
+    Q_OBJECT
+
+    Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibilityChanged)
+    Q_PROPERTY(QColor color READ color     WRITE setColor   NOTIFY colorChanged)
+
 public:
 
     /**
      * @brief Конструктор.
      */
-    DisplayedObject();
+    explicit DisplayedObject(QObject* parent = nullptr);
 
     /**
      *  @brief Конструктор с параметрами.
      *  @param[in] type - тип примитива для отображения в движке openGL
      *  (из набора дефайнов gl.h).
      */
-    DisplayedObject(const int type);
+    DisplayedObject(const int type, QObject* parent = nullptr);
 
     /**
      *  @brief Конструктор с параметрами.
@@ -37,12 +42,18 @@ public:
      *  (из набора дефайнов gl.h).
      *  @param[in] data - ссылка на набор вершин объекта.
      */
-    DisplayedObject(const int type, const QVector <QVector3D>& data);
+    DisplayedObject(const int type, const QVector <QVector3D>& data, QObject* parent = nullptr);
 
     /**
      *  @brief Деструктор.
      */
-    ~DisplayedObject();
+    virtual ~DisplayedObject();
+
+    /**
+     *  @brief Возвращает признак видимости объекта.
+     *  @return Признак видимости объекта.
+     */
+    Q_INVOKABLE bool isVisible() const;
 
     /**
      *  @brief Устанавливает признак видимости объекта.
@@ -51,42 +62,10 @@ public:
     void setVisible(bool isVisible);
 
     /**
-     * @brief Устанавливает тип примитива для отображения в движке openGL
-     * (из набора дефайнов gl.h).
-     * @param[in] type - тип примитива для отображения в движке openGL
-     * (из набора дефайнов gl.h).
-     */
-    void setPrimitiveType(const int type) override;
-
-    /**
-     * @brief Устанавливает набор вершин объекта.
-     * @param[in] data - ссылка на набор вершин.
-     */
-    virtual void setData(const QVector <QVector3D>& data) override;
-
-    /**
-     *  @brief Устанавливает признак видимости сетки объекта.
-     *  @param[in] isVisible Признак видимости сетки объекта.
-     */
-    void setGridVisible(bool isGridVisible);
-
-    /**
      *  @brief Устанавливает цвет объекта.
      *  @param[in] color Цвет объекта.
      */
-    void setColor(QColor color);
-
-    /**
-     *  @brief Возвращает признак видимости объекта.
-     *  @return Признак видимости объекта.
-     */
-    bool isVisible() const;
-
-    /**
-     *  @brief Возвращает признак видимости сетки объекта.
-     *  @return Признак видимости сетки объекта.
-     */
-    bool isGridVisible() const;
+    Q_INVOKABLE void setColor(QColor color);
 
     /**
      *  @brief Возвращает цвет объекта.
@@ -95,46 +74,24 @@ public:
     QColor rgbColor() const;
 
     /**
-     *  @brief Возвращает цвет объекта.
+     *  @brief Возвращает цвет объекта в виде четырехкомпонентного вектора.
      *  @return Цвет объекта.
      */
-    QVector4D color() const;
+    QVector4D color4d() const;
 
-    /**
-     * @brief Возвращает копию набора вершин сетки объекта.
-     * @return Копия набора вершин сетки объекта.
-     */
-    QVector <QVector3D> grid() const;
+    QColor color();
 
-    /**
-     * @brief Возвращает константную ссылку на набор вершин сетки объекта.
-     * @return Константная ссылка на набор вершин сетки объекта.
-     */
-    const QVector <QVector3D>& cgrid() const;
+    float width() const;
 
-    /**
-     * @brief Устанавливает вершинный объект.
-     * @param vertexObject Экземпляр вершинного объекта.
-     */
-    void setVertexObject(const VertexObject& vertexObject);
+signals:
 
-    /**
-     * @brief Удаляет данные вершин поверхности
-     */
-    void clear();
+    void visibilityChanged(bool isVisible);
 
-private:
-
-    void updateGrid();
-    void makeTriangleGrid();
-    void makeQuadGrid();
+    void colorChanged(QColor color);
 
 protected:
 
-    bool mIsOverlapping = false;                            //< Признак того, что объект перекрывается при отрисовке с другим объектом.
-    bool mIsVisible = false;                                 //< Признак видимости объекта на 3D - сцене.
-    bool mIsGridVisible = false;                            //< Признак видимости сетки объекта на 3D - сцене.
-    QColor mColor = QColor(255.0f, 255.0f, 255.0f, 255.0f); //< Цвет объекта.
-    QVector <QVector3D> mGrid;                              //< Набор вершин сетки объекта.
-
+    bool mIsVisible     = true;                                 //< Признак видимости объекта на 3D - сцене.                         //< Признак видимости сетки объекта на 3D - сцене.
+    QColor mColor       = QColor(255.0f, 255.0f, 255.0f, 255.0f); //< Цвет объекта.                            //< Набор вершин сетки объекта.
+    float mWidth          = 10.0f;
 };
