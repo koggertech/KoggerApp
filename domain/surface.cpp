@@ -1,8 +1,9 @@
 #include "surface.h"
 #include <boundarydetector.h>
+#include <Triangle.h>
 
-Surface::Surface(QObject* parent)
-: DisplayedObject(parent)
+Surface::Surface(int primitiveType, QObject* parent)
+: DisplayedObject(primitiveType, parent)
 , mContour(std::make_shared <Contour>())
 , mGrid(std::make_shared <SurfaceGrid>())
 {
@@ -12,6 +13,11 @@ Surface::Surface(QObject* parent)
 Surface::~Surface()
 {
 
+}
+
+SceneObject::SceneObjectType Surface::type() const
+{
+    return SceneObjectType::Surface;
 }
 
 Contour *Surface::contour() const
@@ -133,10 +139,10 @@ void Surface::makeContourFromTriangles()
 {
     BoundaryDetector <float> boundaryDetector;
 
-    std::vector <Triangle <float>> temp;
+    std::vector <::Triangle <float>> temp;
 
     for(int i = 0; i < mData.size()-3; i+=3){
-        temp.push_back(Triangle <float>(
+        temp.push_back(::Triangle <float>(
                             Point3D <float>(mData[i].x(),   mData[i].y(),   mData[i].z()),
                             Point3D <float>(mData[i+1].x(), mData[i+1].y(), mData[i+1].z()),
                             Point3D <float>(mData[i+2].x(), mData[i+2].y(), mData[i+2].z())
@@ -156,10 +162,10 @@ void Surface::makeContourFromQuads()
 {
     BoundaryDetector <float> boundaryDetector;
 
-    std::vector <Quad <float>> temp;
+    std::vector <::Quad <float>> temp;
 
     for(int i = 0; i < mData.size()-4; i+=4){
-        temp.push_back(Quad <float>(
+        temp.push_back(::Quad <float>(
                             Point3D <float>(mData[i].x(),   mData[i].y(),   mData[i].z()),
                             Point3D <float>(mData[i+1].x(), mData[i+1].y(), mData[i+1].z()),
                             Point3D <float>(mData[i+2].x(), mData[i+2].y(), mData[i+2].z()),

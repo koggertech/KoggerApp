@@ -1,12 +1,12 @@
 #ifndef SURFACE_H
 #define SURFACE_H
 
+#include <memory>
+
 #include <displayedobject.h>
-#include <bottomtrack.h>
 #include <contour.h>
 #include <surfacegrid.h>
 #include <constants.h>
-#include <Edge.h>
 
 class Surface : public DisplayedObject
 {
@@ -18,17 +18,18 @@ class Surface : public DisplayedObject
 
 public:
 
-    explicit Surface(QObject* parent = nullptr);
+    explicit Surface(int primitiveType = GL_TRIANGLES,
+                     QObject* parent = nullptr);
 
     virtual ~Surface();
 
-    Q_INVOKABLE Contour* contour() const;
+    Contour* contour() const;
 
     /**
      * @brief Returns pointer to surface grid object
      * @return Pointer to surface grid object
      */
-    Q_INVOKABLE SurfaceGrid* grid() const;
+    SurfaceGrid* grid() const;
 
 public:
 
@@ -43,6 +44,8 @@ public:
     //! @brief Добавляет входящий набор вершин в конец набора вершин объекта
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other) override;
+
+    virtual SceneObjectType type() const override;
 
     /**
      * @brief  Returns id of source bottom track object
@@ -79,15 +82,9 @@ signals:
     void contourChanged();
 
 private:
-
-    QString mBasicCalculationMethod = "TIN";
-    QString mSmoothingMethod = "None";
     QString mBottomTrackId = "";
-
     std::shared_ptr <Contour> mContour;
-
     std::shared_ptr <SurfaceGrid> mGrid;
-
 };
 
 #endif // SURFACE_H
