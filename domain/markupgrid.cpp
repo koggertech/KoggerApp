@@ -1,8 +1,9 @@
 #include "markupgrid.h"
 
-MarkupGrid::MarkupGrid()
+MarkupGrid::MarkupGrid(QObject* parent)
+    : DisplayedObject(GL_LINES, parent)
 {
-    setPrimitiveType(GL_LINES);
+
 }
 
 void MarkupGrid::setSize(QVector3D topLeft, float width, float height, float dist)
