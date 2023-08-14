@@ -33,8 +33,6 @@ void SceneObjectsListController::addObject(QString name, QString type)
     }
 
     object->setName(name);
-    object->setType(type);
-
 
     mpModel->append(object);
 }
