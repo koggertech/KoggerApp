@@ -371,7 +371,7 @@ void Scene3D::displayPointSetObjects()
         pProgram->enableAttributeArray(posLoc);
         pProgram->setAttributeArray(posLoc, pointSet->cdata().constData());
         glLineWidth(4.0);
-        glPointSize(pointSet->width());
+        glPointSize(pointSet->lineWidth());
         glDrawArrays(pointSet->primitiveType(), 0, pointSet->cdata().size());
         pProgram->disableAttributeArray(posLoc);
         pProgram->release();
