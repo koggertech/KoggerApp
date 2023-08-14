@@ -90,12 +90,12 @@ void SceneObjectsListModel::clear()
     emit endResetModel();
 }
 
-QStringList SceneObjectsListModel::names(QString filter) const
+QStringList SceneObjectsListModel::names(SceneObject::SceneObjectType objectType) const
 {
     QStringList nameList;
 
     for (const auto& object : mData){
-        if (filter == object->type()){
+        if (objectType == object->type()){
             nameList.append(object->name());
         }
     }
@@ -103,11 +103,21 @@ QStringList SceneObjectsListModel::names(QString filter) const
     return nameList;
 }
 
-int SceneObjectsListModel::objectIndex(QString id) const
+int SceneObjectsListModel::objectIndex(QString id, SceneObject::SceneObjectType objectType) const
 {
-    for(int i = 0; i < mData.size(); i++){
-        if (mData.at(i)->id() == id)
-            return i;
+    if(objectType != SceneObject::SceneObjectType::Unknown){
+        auto data = dataByType(objectType);
+        for(int i = 0; i < data.size(); i++){
+            if (data.at(i)->id() == id)
+                return i;
+        }
+    }else{
+        for(int i = 0; i < mData.size(); i++){
+             if(objectType != mData.at(i)->type()){
+                 if (mData.at(i)->id() == id)
+                     return i;
+            }
+        }
     }
 
     return -1;
@@ -152,7 +162,7 @@ void SceneObjectsListModel::replace(int index, std::shared_ptr<VertexObject> obj
 
 }
 
-QList <std::shared_ptr<VertexObject> > SceneObjectsListModel::dataByType(QString type) const
+QList <std::shared_ptr<VertexObject> > SceneObjectsListModel::dataByType(SceneObject::SceneObjectType type) const
 {
     QList <std::shared_ptr <VertexObject>> data;
 

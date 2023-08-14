@@ -33,9 +33,9 @@ public:
 
     Q_INVOKABLE void clear();
 
-    Q_INVOKABLE QStringList names(QString filter = "") const;
+    Q_INVOKABLE QStringList names(SceneObject::SceneObjectType objectType) const;
 
-    Q_INVOKABLE int objectIndex(QString id) const;
+    Q_INVOKABLE int objectIndex(QString id, SceneObject::SceneObjectType objectType = SceneObject::SceneObjectType::Unknown) const;
 
 public:
 
@@ -51,10 +51,7 @@ public:
 
     void replace(int index, std::shared_ptr <VertexObject> object);
 
-    QList <std::shared_ptr <VertexObject>> dataByType(QString type) const;
-
-
-
+    QList <std::shared_ptr <VertexObject>> dataByType(SceneObject::SceneObjectType type) const;
 
     int count() const;
 
