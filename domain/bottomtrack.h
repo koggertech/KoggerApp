@@ -31,6 +31,8 @@ public:
     //! @param[in] data - ссылка на набор вершин.
     virtual void setData(const QVector <QVector3D>& data) override;
 
+    virtual SceneObjectType type() const override;
+
 signals:
 
     void filterChanged(AbstractBottomTrackFilter* filter);

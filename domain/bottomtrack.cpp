@@ -45,3 +45,8 @@ void BottomTrack::setData(const QVector<QVector3D> &data)
 
     DisplayedObject::setData(data);
 }
+
+SceneObject::SceneObjectType BottomTrack::type() const
+{
+    return SceneObjectType::BottomTrack;
+}
