@@ -34,6 +34,12 @@ QString SceneObject::name() const
     return mName;
 }
 
+void SceneObject::qmlDeclare()
+{
+    qmlRegisterUncreatableType <SceneObject> ("SceneObject", 1, 0, "SceneObject", "");
+    qRegisterMetaType<SceneObject::SceneObjectType>("SceneObjectType");
+}
+
 SceneObject::SceneObjectType SceneObject::type() const
 {
     return SceneObjectType::Unknown;

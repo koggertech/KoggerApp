@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QUuid.h>
 #include <QColor>
+#include <QQmlEngine>
 
 class SceneObject : public QObject
 {
@@ -21,13 +22,13 @@ public:
 
     virtual ~SceneObject();
 
-    enum SceneObjectType {
-        BottomTrack,
-        Surface,
-        Polygon,
-        PointSet,
-        PolygonSet,
-        Unknown
+    enum SceneObjectType{
+        BottomTrack = 0,
+        Surface     = 1,
+        Polygon     = 2,
+        PointSet    = 3,
+        PolygonSet  = 4,
+        Unknown     = 5
     };
 
     Q_ENUM(SceneObjectType)
@@ -55,6 +56,8 @@ public:
      * @return name of the object
      */
     QString name() const;
+
+    static void qmlDeclare();
 
 signals:
 
