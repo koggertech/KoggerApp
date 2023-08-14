@@ -47,8 +47,6 @@ void SurfaceParamsController::changeSurfaceContourColor(QColor color)
         return;
 
     surface->contour()->setColor(color);
-
-    qDebug() << color;
 }
 
 void SurfaceParamsController::changeSurfaceGridColor(QColor color)
