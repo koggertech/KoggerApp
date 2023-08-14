@@ -13,6 +13,9 @@ class SceneObject : public QObject
     Q_PROPERTY(SceneObjectType type READ type               CONSTANT)
 
 public:
+
+    explicit SceneObject(QObject *parent = nullptr);
+
     SceneObject(QString name = QStringLiteral("Scene object"),
                 QObject *parent = nullptr);
 

@@ -1,5 +1,11 @@
 #include "sceneobject.h"
 
+SceneObject::SceneObject(QObject *parent)
+    : QObject(parent)
+{
+
+}
+
 SceneObject::SceneObject(QString name, QObject *parent)
     : QObject(parent)
     , mName(name)
