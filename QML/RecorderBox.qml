@@ -219,5 +219,40 @@ DevSettingsBox {
             }
         }
 
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            CButton {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 100
+                text: "Flash settings"
+
+                onClicked: {
+                    dev.flashSettings()
+                }
+            }
+
+            CButton {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 100
+                text: "Erase settings"
+
+                onClicked: {
+                    dev.resetSettings()
+                }
+            }
+
+            CButton {
+                Layout.fillWidth: true
+                Layout.preferredWidth: 60
+                text: "Reboot"
+
+                onClicked: {
+                    dev.reboot()
+                }
+            }
+        }
+
     }
 }

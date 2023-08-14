@@ -14,6 +14,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
     Q_OBJECT
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
+    Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     virtual void paint(QPainter *painter);
@@ -30,6 +31,8 @@ protected:
     bool m_needUpdate = true;
     bool _isHorizontal = true;
 
+signals:
+    void timelinePositionChanged();
 
 protected slots:
     void timerUpdater();
@@ -44,6 +47,7 @@ public slots:
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }
+    int plotDatasetChannel2() { return _cursor.channel2; }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
@@ -60,7 +64,7 @@ public slots:
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }
     void plotVelocityRange(float velocity) { setVelocityRange(velocity); }
 
-    void doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold);
+    void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz);
 
 };
 

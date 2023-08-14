@@ -169,11 +169,12 @@ Window  {
 
 
             GridLayout {
+                visible: menuBar.is2DVisible
                 rows    : 10
                 columns : 10
                 Plot2D {
                     id: waterView
-                    visible: menuBar.is2DVisible
+
                     width: mainview.width
                     Layout.fillHeight: true
 //                    Layout.fillWidth: true
@@ -227,8 +228,6 @@ Window  {
 //                horizontal: menuBar.is2DHorizontal
 //            }
 
-
-
             Rectangle {
                 visible: menuBar.is2DVisible
                 Layout.fillWidth: true
@@ -242,6 +241,8 @@ Window  {
                 Layout.fillWidth: true
                 width: mainview.width
                 implicitHeight: theme.controlHeight
+
+                value: waterView.timelinePosition
 
                 stepSize: 0.0001
                 from: 0

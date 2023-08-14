@@ -5,6 +5,9 @@ import QtQuick.Layouts 1.12
 
 SpinBox {
     id: control
+
+    property bool spinner: true
+
     value: 50
     from: 20
     to: 30000
@@ -44,10 +47,11 @@ SpinBox {
 
     up.indicator: Canvas {
         id: upCanvas
+        visible: control.spinner
         x: parent.width - width
         y: 0
         height: parent.height
-        width: parent.height + 6
+        width: control.spinner ? parent.height + 6 : 0
         contextType: "2d"
         opacity: 1
 
@@ -123,11 +127,12 @@ SpinBox {
 
     down.indicator: Canvas {
         id: downCanvas
+        visible: control.spinner
         x: 0
         y: 0
 
         height: parent.height
-        width: parent.height + 6
+        width: control.spinner ? parent.height + 6 : 0
         contextType: "2d"
         property bool pressed: control.down.pressed
 
@@ -180,9 +185,9 @@ SpinBox {
     }
 
     background: Rectangle {
-        x: down.indicator.width
+        x: control.spinner ? down.indicator.width : 0
         y: 0
-        width: control.width - downCanvas.width - upCanvas.width
+        width: control.spinner ? control.width - downCanvas.width - upCanvas.width : control.width
         height: control.height
 
         color: theme.controlBackColor

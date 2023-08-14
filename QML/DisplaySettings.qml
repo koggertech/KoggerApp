@@ -394,6 +394,9 @@ GridLayout {
                                             bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
                                             bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
                                             bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX*0.001 : 0,
+                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY*0.001 : 0,
+                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ*0.001 : 0
                                             );
             }
 
@@ -631,6 +634,63 @@ GridLayout {
             }
 
             RowLayout {
+                CCheck {
+                    id: bottomTrackSensorOffset
+                    Layout.fillWidth: true
+                    text: "Sonar offset XYZ, mm:"
+//                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+                    Settings {
+                        property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackSensorOffsetValueX
+                    spinner: false
+                    implicitWidth: 65
+                    from: 0
+                    to: 9999
+                    stepSize: 50
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    Settings {
+                        property alias bottomTrackSensorOffsetValueX: bottomTrackSensorOffsetValueX.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackSensorOffsetValueY
+                    spinner: false
+                    implicitWidth: 65
+                    from: 0
+                    to: 9999
+                    stepSize: 50
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    Settings {
+                        property alias bottomTrackSensorOffsetValueY: bottomTrackSensorOffsetValueY.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: bottomTrackSensorOffsetValueZ
+                    spinner: false
+                    implicitWidth: 65
+                    from: 0
+                    to: 9999
+                    stepSize: 50
+
+//                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    Settings {
+                        property alias bottomTrackSensorOffsetValueZ: bottomTrackSensorOffsetValueZ.value
+                    }
+                }
+            }
+
+            RowLayout {
                 CButton {
                     text: "Processing"
                     Layout.fillWidth: true
@@ -686,12 +746,37 @@ GridLayout {
                 }
 
                 RowLayout {
+                    CCheck {
+                        id: exportDecimation
+                        Layout.fillWidth: true
+                        text: "Decimation, m:"
+    //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+                        Settings {
+                            property alias exportDecimation: exportDecimation.checked
+                        }
+                    }
+
+                    SpinBoxCustom {
+                        id: exportDecimationValue
+                        implicitWidth: 100
+                        from: 0
+                        to: 100
+                        stepSize: 1
+                        value: 10
+    //                    onValueChanged: bottomTrackProcessingGroup.updateProcessing()
+                        Settings {
+                            property alias exportDecimationValue: exportDecimationValue.value
+                        }
+                    }
+
                     CButton {
                         text: "Export to CSV"
                         Layout.fillWidth: true
-                        onClicked: core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel());
+                        onClicked: core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
                     }
+                }
 
+                RowLayout {
                     CButton {
                         text: "Export to XTF"
                         Layout.fillWidth: true

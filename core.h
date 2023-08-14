@@ -102,7 +102,7 @@ public slots:
 
 
 
-    bool exportPlotAsCVS(QString file_path, int channel);
+    bool exportPlotAsCVS(QString file_path, int channel, float decimation = 0);
     bool exportPlotAsXTF(QString file_path);
 
 
@@ -134,7 +134,7 @@ public slots:
 //        m_waterFall->setDataPosition(position);
         for(int i = 0; i < _plots2d.size(); i++) {
             if(_plots2d.at(i) != NULL) {
-                _plots2d.at(i)->setDataPosition(position);
+                _plots2d.at(i)->setTimelinePosition(position);
             }
         }
     }

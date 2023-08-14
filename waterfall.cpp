@@ -34,17 +34,15 @@ void qPlot2D::setPlot(Dataset *plot) {
 }
 
 void qPlot2D::plotUpdate() {
+    emit timelinePositionChanged();
     update();
 }
 
 void qPlot2D::horScrollEvent(int delta) {
-    if(m_plot != nullptr) {
-        if(_isHorizontal) {
-//            m_plot->scrollTimeline(delta);
-        } else {
-//            m_plot->scrollTimeline(-delta);
-        }
-
+    if(_isHorizontal) {
+        scrollPosition(-delta);
+    } else {
+        scrollPosition(delta);
     }
 }
 
@@ -64,8 +62,9 @@ void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
 
-void qPlot2D::doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold) {
+void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
     if(_dataset != nullptr) {
+        _bottomTrackParam.preset = (BottomTrackPreset)preset;
         _bottomTrackParam.gainSlope = gain_slope;
         _bottomTrackParam.threshold = threshold;
         _bottomTrackParam.windowSize = window_size;
@@ -74,7 +73,10 @@ void qPlot2D::doDistProcessing(int source_type, int window_size, float vertical_
         _bottomTrackParam.maxDistance = range_max;
         _bottomTrackParam.indexFrom = 0;
         _bottomTrackParam.indexTo = _dataset->size();
-        _dataset->bottomTrackSidescan(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
+        _bottomTrackParam.offset.x = offsetx;
+        _bottomTrackParam.offset.y = offsety;
+        _bottomTrackParam.offset.z = offsetz;
+        _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
     }
     plotUpdate();
 }

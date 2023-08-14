@@ -21,18 +21,35 @@
 #define M_RAD_TO_DEG 57.29577951308232087679f
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
-typedef struct  {
-    double refLatSin;
-    double refLatCos;
-    double refLatRad;
-    double refLonRad;
-    bool isInit = false;
-} LLARef;
 
 typedef struct {
     double latitude = NAN, longitude = NAN;
     double altitude = NAN;
+    bool isValid() {
+        return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
+    }
+    bool isCoordinatesValid() {
+        return isfinite(latitude) && isfinite(longitude);
+    }
 } LLA;
+
+typedef struct  LLARef {
+    double refLatSin = NAN;
+    double refLatCos = NAN;
+    double refLatRad = NAN;
+    double refLonRad = NAN;
+    bool isInit = false;
+
+    LLARef() {}
+
+    LLARef(LLA lla) {
+        refLatRad = lla.latitude * M_DEG_TO_RAD;
+        refLonRad= lla.longitude * M_DEG_TO_RAD;
+        refLatSin = sin(refLatRad);
+        refLatCos = cos(refLatRad);
+        isInit = true;
+    }
+} LLARef;
 
 typedef struct NED {
     double n = NAN, e = NAN, d = NAN;
@@ -61,6 +78,14 @@ typedef struct NED {
         n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
         e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
     }
+
+    bool isValid() {
+        return isfinite(n) && isfinite(e) && isfinite(d);
+    }
+
+    bool isCoordinatesValid() {
+        return isfinite(n) && isfinite(e);
+    }
 } NED;
 
 typedef struct DateTime{
@@ -86,6 +111,19 @@ typedef struct DateTime{
         unix = _mkgmtime64(&t);
         nanoSec = nanosec;
     }
+
+    tm getDateTime() {
+        return *_gmtime64(&unix);
+    }
+
+    int32_t get_us_frac() {
+        return nanoSec/1000;
+    }
+
+    int32_t get_ms_frac() {
+        return nanoSec/1000000;
+    }
+
 
 
 } DateTime;
@@ -114,6 +152,10 @@ typedef struct DatasetChannel {
     }
 } DatasetChannel;
 
+typedef enum BottomTrackPreset {
+    BottomTrackOneBeam,
+    BottomTrackSideScan
+} BottomTrackPreset;
 
 typedef struct {
     float gainSlope = 1.0;
@@ -125,6 +167,12 @@ typedef struct {
     int indexFrom = 0;
     int indexTo = 0;
     int windowSize = 1;
+
+    BottomTrackPreset preset = BottomTrackOneBeam;
+
+    struct {
+        float x = 0, y = 0, z = 0;
+    } offset;
 } BottomTrackParam;
 
 class Epoch {
@@ -343,7 +391,7 @@ public:
 
     double relPosN() { return _positionGNSS.ned.n; }
     double relPosE() { return _positionGNSS.ned.e; }
-    double relPosD() { return (double)0*0.001; } //!ERROR add dist
+    double relPosD() { return _positionGNSS.ned.d; }
 
     bool isPosAvail() { return flags.posAvail; }
 
@@ -605,9 +653,6 @@ public:
         return _channelsSetup;
     }
 
-//    QImage getImage(QSize size);
-
-
     //! Установить указатель на модель 3D - сцены
     void set3DSceneModel(const ModelPointer pModel);
 
@@ -628,11 +673,9 @@ public slots:
     void mergeGnssTrack(QList<Position> track);
 
     void resetDataset();
-    void doDistProcessing();
-    void doDistProcessing(int source_type, int window_size, float vertical_gap, float range_min, float range_max);
     void resetDistProcessing();
 
-    void bottomTrackSidescan(int channel1, int channel2, BottomTrackParam param);
+    void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
 
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
@@ -643,7 +686,9 @@ public slots:
             _render3D->updateBottomTrack(_bottomTrack);
         }
     }
-    void updateBottomTrack(bool update_all = false);
+
+    void clearTrack();
+    void updateTrack(bool update_all = false);
 
     QStringList channelsNameList();
 
@@ -680,9 +725,13 @@ protected:
 
     LLARef _llaRef;
 
-    QVector<uint32_t> _gnssTrackIndex;
+//    QVector<uint32_t> _gnssTrackIndex;
+
+    int _lastTrackEpoch = 0;
     QVector<QVector3D> _bottomTrack;
     QVector<QVector3D> _boatTrack;
+
+
     FboInSGRenderer* _render3D;
 
     enum {

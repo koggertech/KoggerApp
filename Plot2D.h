@@ -422,7 +422,10 @@ public:
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
-    void setDataPosition(float position);
+    void setTimelinePosition(float position);
+    float timelinePosition() { return _cursor.position;}
+    void scrollPosition(int columns);
+
     void setDataChannel(int channel, int channel2 = CHANNEL_NONE);
 
 
@@ -449,6 +452,8 @@ public:
 
     void setMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
+
+    void resetCash();
 
     virtual void plotUpdate() {}
 

@@ -302,7 +302,7 @@ bool Core::isLogging() {
     return _isLogging;
 }
 
-bool Core::exportPlotAsCVS(QString file_path, int channel) {
+bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     QString export_file_name;
     if(m_connection->lastType() == Connection::ConnectionFile) {
         export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
@@ -392,8 +392,50 @@ bool Core::exportPlotAsCVS(QString file_path, int channel) {
     float prev_dist_proc = 0;
     double prev_lat = 0, prev_lon = 0;
 
+    float decimation_m = decimation;
+    float decimation_path = 0;
+    LLARef lla_ref;
+    NED last_pos_ned;
+
+
     for(int i = 0; i < row_cnt; i++) {
         Epoch* epoch = _dataset->fromIndex(i);
+
+        if(decimation_m > 0) {
+            if(!epoch->isPosAvail()) { continue; }
+
+            Position pos = epoch->getPositionGNSS();
+
+            if(pos.lla.isCoordinatesValid()) {
+                if(!lla_ref.isInit) {
+                    lla_ref = LLARef(pos.lla);
+                    pos.LLA2NED(&lla_ref);
+                    last_pos_ned = pos.ned;
+                } else {
+                    pos.LLA2NED(&lla_ref);
+
+                    float dif_n = pos.ned.n - last_pos_ned.n;
+                    float dif_e = pos.ned.e - last_pos_ned.e;
+
+                    last_pos_ned = pos.ned;
+
+                    decimation_path += sqrtf(dif_n*dif_n + dif_e*dif_e);
+
+                    if(decimation_path < decimation_m) {
+                        continue;
+                    }
+
+                    decimation_path -= decimation_m;
+                }
+
+
+            } else {
+                continue;
+            }
+        }
+
+
+
         QString row_data;
 
         if(meas_nbr) {
@@ -489,11 +531,9 @@ bool Core::exportPlotAsXTF(QString file_path) {
 
 
     QList<DatasetChannel> chs = _dataset->channelsList();
-    QByteArray data_export = _converterXTF.toXTF(dataset(), chs[0].channel, chs[1].channel);
+    QByteArray data_export = _converterXTF.toXTF(dataset(), _plots2d[0]->plotDatasetChannel(), _plots2d[0]->plotDatasetChannel2());
 
     _logger.dataByteExport(data_export);
-
-//    _logger.dataByteExport(_converterXTF._lastData);
 
     _logger.endExportStream();
     return true;

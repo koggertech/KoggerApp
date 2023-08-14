@@ -29,8 +29,20 @@ QImage Plot2D::getImage(int width, int height) {
     return _canvas.getQImage();
 }
 
-void Plot2D::setDataPosition(float position) {
-    _cursor.position = position;
+void Plot2D::setTimelinePosition(float position) {
+    if(position > 1.0f) { position = 1.0f; }
+    if(position < 0) { position = 0; }
+
+    if(_cursor.position != position) {
+        _cursor.position = position;
+        plotUpdate();
+    }
+}
+
+void Plot2D::scrollPosition(int columns) {
+    float new_position = timelinePosition() + (1.0f/_dataset->size())*columns;
+    setTimelinePosition(new_position);
+
     plotUpdate();
 }
 
@@ -47,6 +59,8 @@ void Plot2D::setDataChannel(int channel, int channel2) {
             _cursor.distance.set(from, to);
         }
     }
+
+    resetCash();
 
     plotUpdate();
 }
@@ -263,7 +277,7 @@ void Plot2D::setMousePosition(int x, int y) {
         if(_mouse.tool == MouseToolDistanceMin || _mouse.tool == MouseToolDistanceMax) {
             _bottomTrackParam.indexFrom = _cursor.getIndex(x_start);
             _bottomTrackParam.indexTo = _cursor.getIndex(x_start + x_length);
-            _dataset->bottomTrackSidescan(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
+            _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
         }
 
 
@@ -275,6 +289,10 @@ void Plot2D::setMousePosition(int x, int y) {
 
 void Plot2D::setMouseTool(MouseTool tool) {
     _mouse.tool = tool;
+}
+
+void Plot2D::resetCash() {
+    _echogram.resetCash();
 }
 
 void Plot2D::reindexingCursor() {

@@ -37,6 +37,8 @@ public:
         int dataset_size = dataset->size();
         int ping_numb = 0;
 
+        int fix_h = 0, fix_m = 0, fix_s = 0, fix_hs = 0;
+        int64_t fix_timetag_ms = 0;
         for(int i = 0; i < dataset_size; i++) {
             Epoch* epoch = dataset->fromIndex(i);
 
@@ -46,8 +48,50 @@ public:
                 pingheader.NumBytesThisRecord += sizeof (XTFPINGHEADER);
                 pingheader.PingNumber = ping_numb;
 
-                pingheader.ShipYcoordinate = epoch->lat();
-                pingheader.ShipXcoordinate = epoch->lon();
+                Position ext_pos = epoch->getExternalPosition();
+                Position int_pos = epoch->getPositionGNSS();
+
+                Position pos;
+                if(ext_pos.lla.isCoordinatesValid()) {
+                    pos = ext_pos;
+                } else if(int_pos.lla.isCoordinatesValid()){
+                    pos = int_pos;
+                } else {
+                    pos.lla.latitude = 0;
+                    pos.lla.longitude = 0;
+                }
+
+                if(pos.time.unix > 0) {
+                    fix_timetag_ms = (pos.time.unix*1e9 + pos.time.nanoSec)/1e6;
+                }
+
+                pingheader.ShipYcoordinate = pos.lla.latitude;
+                pingheader.ShipXcoordinate = pos.lla.longitude;
+
+                tm date_time = pos.time.getDateTime();
+
+                pingheader.Year = date_time.tm_year+1900;
+                pingheader.Month = date_time.tm_mon+1;
+                pingheader.JulianDay = date_time.tm_yday;
+                pingheader.Day = date_time.tm_mday;
+                pingheader.Hour = date_time.tm_hour;
+                pingheader.Minute = date_time.tm_min;
+                pingheader.Second = date_time.tm_sec;
+                pingheader.HSeconds = pos.time.get_ms_frac()/10;
+
+                if(pos.lla.isCoordinatesValid()) {
+                    fix_h = pingheader.Hour;
+                    fix_m = pingheader.Minute;
+                    fix_s = pingheader.Second;
+                    fix_hs = pingheader.HSeconds;
+                    pingheader.FixTimeHour = fix_h;
+                    pingheader.FixTimeMinute = fix_m;
+                    pingheader.FixTimeSecond = fix_s;
+                    pingheader.FixTimeHsecond = fix_hs;
+                }
+
+                pingheader.AttitudeTimeTag = fix_timetag_ms;
+                pingheader.NavFixMilliseconds = fix_timetag_ms;
 
                 pingheader.SensorYcoordinate = pingheader.ShipYcoordinate;
                 pingheader.SensorXcoordinate = pingheader.ShipXcoordinate;
@@ -89,7 +133,7 @@ public:
                     pingch1.NumSamples = raw1.size();
                     pingch1.SlantRange = chart1->resolution*raw1.size();
                     pingch1.TimeDuration = pingch1.SlantRange/750;
-                    pingch1.SecondsPerPing = pingch1.TimeDuration;
+                    pingch1.SecondsPerPing = 0.1;
                 }
 
                 if(raw2.size() > 0) {
@@ -100,7 +144,7 @@ public:
                     pingch2.NumSamples = raw2.size();
                     pingch2.SlantRange = chart2->resolution*raw2.size();
                     pingch2.TimeDuration = pingch2.SlantRange/750;
-                    pingch1.SecondsPerPing = pingch1.TimeDuration;
+                    pingch2.SecondsPerPing = 0.1;
                 }
 
                 if(pingheader.NumChansToFollow == 2) {
@@ -115,16 +159,10 @@ public:
 
                         ping_numb++;
                     }
-
-//                    if(raw2.size() > 0) {
-//                        xtfdata.append((char*)&pingch2, sizeof (pingch2));
-//                        xtfdata.append((char*)raw2.constData(), raw2.size()*2);
-//                    }
                 }
 
             }
         }
-
 
         return xtfdata;
     }
@@ -162,8 +200,8 @@ public:
 
             if(pingheader->HeaderType == 0) {
                 uint16_t ch_count = pingheader->NumChansToFollow;
-                double lat = pingheader->ShipYcoordinate;
-                double lon = pingheader->ShipXcoordinate;
+                double lat = pingheader->SensorYcoordinate;
+                double lon = pingheader->SensorXcoordinate;
                 if(lat != 0 || lat != 0) {
                     dataset->addPosition(lat, lon);
                 }
