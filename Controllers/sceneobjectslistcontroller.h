@@ -20,7 +20,7 @@ public:
                 QObject *parent = nullptr
             );
 
-    Q_INVOKABLE void addObject(QString name, QString type);
+    Q_INVOKABLE void addObject(QString name, SceneObject::SceneObjectType type);
 
     Q_INVOKABLE void removeObject(int index);
 

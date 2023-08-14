@@ -15,18 +15,18 @@ SceneObjectsListController::SceneObjectsListController(
 , mpBottomTrackProvider(bottomTrackProvider)
 {}
 
-void SceneObjectsListController::addObject(QString name, QString type)
+void SceneObjectsListController::addObject(QString name, SceneObject::SceneObjectType type)
 {
     std::shared_ptr <VertexObject> object;
 
-    if(type == "Bottom track"){
+    if(type == SceneObject::SceneObjectType::BottomTrack){
         object = std::make_shared <BottomTrack>();
         object->setData(
                     mpBottomTrackProvider->getBottomTrack()
                 );
-    }else if (type == "Surface"){
+    }else if (type == SceneObject::SceneObjectType::Surface){
         object = std::make_shared <Surface>();
-    }else if(type == "Point set"){
+    }else if(type == SceneObject::SceneObjectType::PointSet){
         object = std::make_shared <PointSet>();
     }else{
         return;
