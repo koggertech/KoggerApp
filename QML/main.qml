@@ -329,12 +329,4 @@ Window  {
             activeObjectParamsMenuLoader.setActiveObject(ActiveObjectProvider.activeObject)
         }
     }
-
-    Connections {
-        target: Scene3DModel
-        onStateChanged: {
-            renderer.visible = Scene3DModel.sceneVisibility()
-            surfaceCalculatingRectangle.visible = !Scene3DModel.triangulationAvailable()
-        }
-    }
 }
