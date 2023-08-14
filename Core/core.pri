@@ -7,6 +7,7 @@ HEADERS += \
     $$PWD/abstractpickerfactory.h \
     $$PWD/abstracttool3d.h \
     $$PWD/displayedobject.h \
+    $$PWD/sceneobject.h \
     $$PWD/vertexobject.h \
     $$PWD/constants.h \
     $$PWD/abstractprocessingcase.h
@@ -14,4 +15,5 @@ HEADERS += \
 
 SOURCES += \
     $$PWD/displayedobject.cpp \
+    $$PWD/sceneobject.cpp \
     $$PWD/vertexobject.cpp
