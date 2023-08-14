@@ -63,7 +63,9 @@ void SurfaceParamsController::updateSurface(int  bottomTrackObjectIndex,
                                             bool interpolateWithGrid,
                                             int  gridCellSize)
 {
-    auto bottomTrackVertexObject = mSceneObjectsListModel->get(bottomTrackObjectIndex);
+    auto objects = mSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::BottomTrack);
+
+    auto bottomTrackVertexObject = objects.at(bottomTrackObjectIndex);
 
     if (!bottomTrackVertexObject)
         return;
@@ -80,7 +82,7 @@ void SurfaceParamsController::updateSurface(int  bottomTrackObjectIndex,
                              interpolateWithGrid,
                              gridCellSize);
 
-    auto surface = takeSurface();
+    auto surface = dynamic_cast <Surface*>(surfaceVertexObject.get());
 
     if (!surface)
         return;
