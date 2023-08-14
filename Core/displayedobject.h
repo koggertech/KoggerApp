@@ -25,11 +25,6 @@ class DisplayedObject : public VertexObject
 public:
 
     /**
-     * @brief Конструктор.
-     */
-    explicit DisplayedObject(QObject* parent = nullptr);
-
-    /**
      *  @brief Конструктор с параметрами.
      *  @param[in] type - тип примитива для отображения в движке openGL
      *  (из набора дефайнов gl.h).
@@ -53,7 +48,7 @@ public:
      *  @brief Возвращает признак видимости объекта.
      *  @return Признак видимости объекта.
      */
-    Q_INVOKABLE bool isVisible() const;
+    bool isVisible() const;
 
     /**
      *  @brief Устанавливает признак видимости объекта.
@@ -65,13 +60,7 @@ public:
      *  @brief Устанавливает цвет объекта.
      *  @param[in] color Цвет объекта.
      */
-    Q_INVOKABLE void setColor(QColor color);
-
-    /**
-     *  @brief Возвращает цвет объекта.
-     *  @return Цвет объекта.
-     */
-    QColor rgbColor() const;
+    void setColor(QColor color);
 
     /**
      *  @brief Возвращает цвет объекта в виде четырехкомпонентного вектора.
@@ -81,17 +70,18 @@ public:
 
     QColor color();
 
-    float width() const;
+    float lineWidth() const;
+
+    void setLineWidth(float lineWidth);
 
 signals:
-
     void visibilityChanged(bool isVisible);
 
     void colorChanged(QColor color);
 
 protected:
 
-    bool mIsVisible     = true;                                 //< Признак видимости объекта на 3D - сцене.                         //< Признак видимости сетки объекта на 3D - сцене.
-    QColor mColor       = QColor(255.0f, 255.0f, 255.0f, 255.0f); //< Цвет объекта.                            //< Набор вершин сетки объекта.
-    float mWidth          = 10.0f;
+    bool mIsVisible  = true;                                   ///< Признак видимости объекта
+    QColor mColor    = QColor(255.0f, 255.0f, 255.0f, 255.0f); ///< Цвет объекта
+    float mLineWidth = 1.0f;                                   ///< Толщина линии (если тип примитива GL_LINES)
 };

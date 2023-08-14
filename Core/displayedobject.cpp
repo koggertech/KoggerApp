@@ -1,25 +1,15 @@
 #include "displayedobject.h"
 
-DisplayedObject::DisplayedObject(QObject* parent)
-: VertexObject(parent)
-{
-
-}
-
 DisplayedObject::DisplayedObject(const int type, QObject* parent)
 : VertexObject(type, parent)
-{
-}
+{}
 
 DisplayedObject::DisplayedObject(const int type, const QVector<QVector3D> &data, QObject* parent)
 : VertexObject(type, data, parent)
-{
-
-}
+{}
 
 DisplayedObject::~DisplayedObject()
-{
-}
+{}
 
 void DisplayedObject::setVisible(bool isVisible)
 {
@@ -46,11 +36,6 @@ bool DisplayedObject::isVisible() const
     return mIsVisible;
 }
 
-QColor DisplayedObject::rgbColor() const
-{
-    return mColor;
-}
-
 QVector4D DisplayedObject::color4d() const
 {
     float rgb_max = 255.0f;
@@ -73,8 +58,19 @@ QColor DisplayedObject::color()
     return mColor;
 }
 
-float DisplayedObject::width() const
+float DisplayedObject::lineWidth() const
 {
-    return mWidth;
+    return mLineWidth;
+}
+
+void DisplayedObject::setLineWidth(float lineWidth)
+{
+    if(mLineWidth == lineWidth)
+        return;
+
+    if (lineWidth < 1.0f)
+        lineWidth = 1.0f;
+
+    mLineWidth = lineWidth;
 }
 
