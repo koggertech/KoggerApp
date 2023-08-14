@@ -1,20 +1,11 @@
 #include "contour.h"
 
 Contour::Contour(QObject* parent)
-    : DisplayedObject(parent)
-{
-    mPrimitiveType = GL_LINES;
-}
+    : DisplayedObject(GL_LINES, parent)
+{}
 
 Contour::~Contour()
-{
-
-}
-
-float Contour::lineWidth() const
-{
-    return mLineWidth;
-}
+{}
 
 bool Contour::keyPointsVisible() const
 {
@@ -41,15 +32,6 @@ QVector4D Contour::keyPointsColor() const
                  ,static_cast <float>(a) / rgb_max};
 
     return vec;
-}
-
-void Contour::setLineWidth(float width)
-{
-    if (width < 1.0f){
-        mLineWidth = 1.0f;
-    }
-
-    mLineWidth = width;
 }
 
 void Contour::setKeyPointsVisible(bool visible)

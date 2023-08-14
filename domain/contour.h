@@ -12,15 +12,11 @@ public:
 
     virtual ~Contour();
 
-    float lineWidth() const;
-
     bool keyPointsVisible() const;
 
     QColor keyPointsRgbColor() const;
 
     QVector4D keyPointsColor() const;
-
-    void setLineWidth(float width);
 
     void setKeyPointsVisible(bool visible);
 
@@ -28,7 +24,6 @@ public:
 
 protected:
 
-    float  mLineWidth = 1.0f;
     bool   mKeyPointsVisible = false;
     QColor mKeyPointsColor = QColor(255.0f, 255.0f, 255.0f, 255.0f);
 };
