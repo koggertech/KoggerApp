@@ -27,10 +27,14 @@ public:
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other) override;
 
+    virtual SceneObjectType type() const override;
+
 
     void changePointCoord(int index, QVector3D coord);
 
     void removePoint(int index);
+
+
 
 private:
 

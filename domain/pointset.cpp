@@ -37,6 +37,11 @@ void PointSet::append(const QVector<QVector3D> &other)
         mPointListModel->append(vertice);
 }
 
+SceneObject::SceneObjectType PointSet::type() const
+{
+    return SceneObjectType::PointSet;
+}
+
 void PointSet::changePointCoord(int index, QVector3D coord)
 {
     if(index < 0 || index >= mData.size())
