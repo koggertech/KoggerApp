@@ -112,7 +112,7 @@ void Scene3D::displayBottomTrackObjects()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType("Bottom track");
+    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::BottomTrack);
 
     for(const auto& object : objects)
     {
@@ -165,7 +165,7 @@ void Scene3D::displaySurfaceObjects()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType("Surface");
+    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Surface);
 
     for(const auto& object : objects)
     {
@@ -218,7 +218,7 @@ void Scene3D::displaySurfaceContours()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType("Surface");
+    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Surface);
 
     for(const auto& object : objects)
     {
@@ -260,7 +260,7 @@ void Scene3D::displaySurfaceGrids()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType("Surface");
+    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Surface);
 
     for(const auto& object : objects)
     {
@@ -342,7 +342,7 @@ void Scene3D::displayPointSetObjects()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType("Point set");
+    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::PointSet);
 
     for(const auto& object : objects)
     {
