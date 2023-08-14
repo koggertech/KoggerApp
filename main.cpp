@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
 
 
     qmlRegisterType<WaterFall>("WaterFall", 1, 0, "WaterFall");
-    //qmlRegisterUncreatableType <AbstractBottomTrackFilter> ("AbstractBottomTrackFilter", 1, 0, "AbstractBottomTrackFilter", "");
+    qmlRegisterUncreatableType <SceneObject> ("SceneObject", 1, 0, "SceneObject", "");
 
     //qmlRegisterUncreatableType <AbstractBottomTrackFilter>("AbstractBottomTrackFilter", 1, 0, "AbstractBottomTrackFilter", "");
 
