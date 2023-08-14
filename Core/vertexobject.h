@@ -14,23 +14,28 @@
 
 #include <GL/gl.h>
 
+#include "sceneobject.h"
 #include <cube.h>
+
 /**
  * @brief Класс объекта, представленного набором вершин
  */
-class VertexObject : public QObject
+class VertexObject : public SceneObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString name      READ name          WRITE setName          NOTIFY nameChanged)
-    Q_PROPERTY(int primitiveType READ primitiveType WRITE setPrimitiveType NOTIFY primitiveTypeChanged)
-    Q_PROPERTY(QString type      READ type          CONSTANT)
-    Q_PROPERTY(QString id        READ id            CONSTANT)
+    Q_PROPERTY(int primitiveType READ primitiveType CONSTANT)
 
 public:
+    enum PrimitiveType {
+        Point,
+        Line,
+        Triangle,
+        Quad,
+        Polygon
+    };
 
-    //! @brief Конструктор.
-    explicit VertexObject(QObject* parent = nullptr);
+    Q_ENUM(PrimitiveType)
 
     //! @brief Конструктор с параметрами.
     //! @param[in] type - тип примитива для отображения в движке openGL
@@ -45,7 +50,6 @@ public:
 
     //! @brief Деструктор.
     virtual ~VertexObject();
-
 
     //! @brief Устанавливает тип примитива для отображения в движке openGL
     //! (из набора дефайнов gl.h).
@@ -64,19 +68,6 @@ public:
     //! @brief Добавляет входящий набор вершин в конец набора вершин объекта
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other);
-
-    void setName(QString name);
-
-    void setType(QString type);
-    /**
-     * @brief Возвращает уникальный идентификатор объекта
-     * @return Уникальный идентификатор объекта
-     */
-    QString id() const;
-
-    QString name() const;
-
-    QString type() const;
 
     //! @brief Возвращает тип примитива для отображения в движке openGL
     //! (из набора дефайнов gl.h).
@@ -104,16 +95,11 @@ public:
     void clearData();
 
 protected:
-
     void createBounds();
 
 signals:
 
-    void nameChanged(QString name);
-
     void primitiveTypeChanged(int primitiveType);
-
-    void typeChanged(QString type);
 
     void dataChanged();
 
@@ -121,10 +107,8 @@ signals:
 
 protected:
 
-    QString mName = "Object";             ///< Имя объекта
-    QString mType = "";             ///< Тип объекта
-    QUuid mUuid;               ///< Уникальный идентификатор объекта
-    int mPrimitiveType;        ///< Тип примитива для отображения в движке openGL (из набора дефайнов gl.h).
-    QVector <QVector3D> mData; ///< Набор вершин объекта.
-    Cube mBounds = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
+    QUuid mUuid        = QUuid::createUuid(); ///< Уникальный идентификатор объекта
+    int mPrimitiveType = GL_POINTS;           ///< Тип примитива для отображения в движке openGL (из набора дефайнов gl.h).
+    QVector <QVector3D> mData;                ///< Набор вершин объекта.
+    Cube mBounds;                             ///< Bounding cube of the object
 };

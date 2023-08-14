@@ -1,46 +1,18 @@
 #include "vertexobject.h"
 
-VertexObject::VertexObject(QObject* parent)
-    : QObject(parent)
-    , mPrimitiveType(GL_TRIANGLES)
-{
-    mUuid = QUuid::createUuid();
-}
-
 VertexObject::VertexObject(const int type, QObject* parent)
-    : QObject(parent)
+    : SceneObject(parent)
     , mPrimitiveType(type)
-{
-    mUuid = QUuid::createUuid();
-}
+{}
 
 VertexObject::VertexObject(const int type, const QVector<QVector3D> &data, QObject* parent)
-    : QObject(parent)
+    : SceneObject(parent)
     , mPrimitiveType(type)
     , mData(data)
-{  
-    mUuid = QUuid::createUuid();
-}
+{}
 
 VertexObject::~VertexObject()
-{
-
-}
-
-QString VertexObject::id() const
-{
-    return mUuid.toString();
-}
-
-QString VertexObject::name() const
-{
-    return mName;
-}
-
-QString VertexObject::type() const
-{
-    return mType;
-}
+{}
 
 void VertexObject::setPrimitiveType(int primitiveType)
 {
@@ -61,26 +33,6 @@ void VertexObject::setData(const QVector<QVector3D> &data)
     createBounds();
 
     Q_EMIT boundsChanged();
-}
-
-void VertexObject::setName(QString name)
-{
-    if(mName == name)
-        return;
-
-    mName = name;
-
-    Q_EMIT nameChanged(mName);
-}
-
-void VertexObject::setType(QString type)
-{
-    if (mType == type)
-        return;
-
-    mType = type;
-
-    Q_EMIT typeChanged(mType);
 }
 
 void VertexObject::append(const QVector3D &vertex)
