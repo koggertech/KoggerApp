@@ -11,9 +11,6 @@ class SurfaceGrid : public DisplayedObject
 
 public:
     explicit SurfaceGrid(QObject *parent = nullptr);
-
-signals:
-
 };
 
 #endif // SURFACEGRID_H
