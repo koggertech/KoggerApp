@@ -58,6 +58,18 @@ public:
         _mouse = m;
     }
 
+    QMatrix4x4 modelMatrix() const {
+        return mModel;
+    }
+
+    QMatrix4x4 projectionMatrix() const {
+        return mProjection;
+    }
+
+    QMatrix4x4 viewMatrix() const {
+        return mView;
+    }
+
     QVector3D acrball(QVector2D m);
 
     void setCameraView(QVector3D eye, QVector3D lookat, QVector3D camup) {
@@ -134,6 +146,8 @@ private:
 
     void displayPointSetObjects();
 
+    void displayPolygonObjects();
+
     QVector<QVector3D> vLines;
     QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
@@ -158,6 +172,8 @@ private:
 
     std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
     std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
+
+    QMap <QString, QOpenGLShaderProgram*> mShaderProgramMap;
 
     QMatrix4x4 mModel;
     QMatrix4x4 mView;

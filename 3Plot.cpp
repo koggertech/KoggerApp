@@ -11,6 +11,8 @@
 
 #include <iostream>
 
+#include <polygonobject.h>
+
 class FboRenderer : public QQuickFramebufferObject::Renderer
 {
 public:
@@ -75,7 +77,8 @@ Scene3D::Scene3D()
 :mpStaticColorShaderProgram(new QOpenGLShaderProgram)
 ,mpHeightColorShaderProgram(new QOpenGLShaderProgram)
 {
-
+    mShaderProgramMap["height"] = mpHeightColorShaderProgram.get();
+    mShaderProgramMap["static"] = mpStaticColorShaderProgram.get();
 }
 
 Scene3D::~Scene3D()
@@ -98,13 +101,15 @@ void Scene3D::paintScene()
 
     displaySurfaceObjects();
 
-    displaySurfaceContours();
+    //displaySurfaceContours();
 
-    displaySurfaceGrids();
+    //displaySurfaceGrids();
 
-    displayObjectBounds();
+    //displayObjectBounds();
 
-    displayPointSetObjects();
+    //displayPointSetObjects();
+
+    //displayPolygonObjects();
 }
 
 void Scene3D::displayBottomTrackObjects()
@@ -112,51 +117,12 @@ void Scene3D::displayBottomTrackObjects()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::BottomTrack);
+    auto objects = mpSceneObjectsListModel->data();
 
     for(const auto& object : objects)
     {
-        auto bottomTrack = dynamic_cast <BottomTrack*>(object.get());
-
-        if (!bottomTrack)
-            continue;
-
-        if (!bottomTrack->isVisible())
-            continue;
-
-        auto pProgram = mpHeightColorShaderProgram.get();
-
-        //if (mSurfaceDisplayedObject.isVisible() ||
-        //    mSurfaceDisplayedObject.isGridVisible()){
-        //    pProgram = mpStaticColorShaderProgram.get();
-        //}
-
-        if (!pProgram->bind()){
-            qCritical() << "Error binding shader program.";
-            return;
-        }
-
-        int posLoc    = pProgram->attributeLocation("position");
-        int maxZLoc   = pProgram->uniformLocation("max_z");
-        int minZLoc   = pProgram->uniformLocation("min_z");
-        int matrixLoc = pProgram->uniformLocation("matrix");
-
-        QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
-        int colorLoc = pProgram->uniformLocation("color");
-
-        pProgram->setUniformValue(colorLoc,color);
-        pProgram->setUniformValue(maxZLoc, bottomTrack->bounds().maximumZ());
-        pProgram->setUniformValue(minZLoc, bottomTrack->bounds().minimumZ());
-        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-        pProgram->enableAttributeArray(posLoc);
-        pProgram->setAttributeArray(posLoc, bottomTrack->cdata().constData());
-        glLineWidth(4.0);
-        glDrawArrays(bottomTrack->primitiveType(), 0, bottomTrack->cdata().size());
-        pProgram->disableAttributeArray(posLoc);
-        pProgram->release();
-        glLineWidth(1.0);
-
-        pProgram->release();
+        if(object->type() == SceneObject::SceneObjectType::BottomTrack)
+            object->draw(this, mModel*mProjection*mView, mShaderProgramMap);
     }
 }
 
@@ -165,51 +131,12 @@ void Scene3D::displaySurfaceObjects()
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Surface);
+    auto objects = mpSceneObjectsListModel->data();
 
     for(const auto& object : objects)
     {
-        auto surface = dynamic_cast <Surface*>(object.get());
-
-        if (!surface)
-            continue;
-
-        if (!surface->isVisible())
-            continue;
-
-        auto pProgram = mpHeightColorShaderProgram.get();
-
-        //if (mSurfaceDisplayedObject.isVisible() ||
-        //    mSurfaceDisplayedObject.isGridVisible()){
-        //    pProgram = mpStaticColorShaderProgram.get();
-        //}
-
-        if (!pProgram->bind()){
-            qCritical() << "Error binding shader program.";
-            return;
-        }
-
-        int posLoc    = pProgram->attributeLocation("position");
-        int maxZLoc   = pProgram->uniformLocation("max_z");
-        int minZLoc   = pProgram->uniformLocation("min_z");
-        int matrixLoc = pProgram->uniformLocation("matrix");
-
-        QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
-        int colorLoc = pProgram->uniformLocation("color");
-
-        pProgram->setUniformValue(colorLoc,color);
-        pProgram->setUniformValue(maxZLoc, surface->bounds().maximumZ());
-        pProgram->setUniformValue(minZLoc, surface->bounds().minimumZ());
-        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-        pProgram->enableAttributeArray(posLoc);
-        pProgram->setAttributeArray(posLoc, surface->cdata().constData());
-        glLineWidth(4.0);
-        glDrawArrays(surface->primitiveType(), 0, surface->cdata().size());
-        pProgram->disableAttributeArray(posLoc);
-        pProgram->release();
-        glLineWidth(1.0);
-
-        pProgram->release();
+        if(object->type() == SceneObject::SceneObjectType::Surface)
+            object->draw(this, mModel*mProjection*mView, mShaderProgramMap);
     }
 }
 
@@ -376,6 +303,50 @@ void Scene3D::displayPointSetObjects()
         pProgram->disableAttributeArray(posLoc);
         pProgram->release();
         glLineWidth(1.0);
+        glPointSize(1.0);
+
+        pProgram->release();
+    }
+}
+
+void Scene3D::displayPolygonObjects()
+{
+    if(!mpSceneObjectsListModel)
+        return;
+
+    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Polygon);
+
+    for(const auto& object : objects)
+    {
+        auto polygon = dynamic_cast <PolygonObject*>(object.get());
+
+        if (!polygon)
+            continue;
+
+        if (!polygon->isVisible())
+            continue;
+
+        auto pProgram = mpStaticColorShaderProgram.get();
+
+        if (!pProgram->bind()){
+            qCritical() << "Error binding shader program.";
+            return;
+        }
+
+        int posLoc    = pProgram->attributeLocation("position");
+        int matrixLoc = pProgram->uniformLocation("matrix");
+        int colorLoc  = pProgram->uniformLocation("color");
+
+        pProgram->setUniformValue(colorLoc, polygon->color4d());
+        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
+        pProgram->enableAttributeArray(posLoc);
+        pProgram->setAttributeArray(posLoc, polygon->cdata().constData());
+        glLineWidth(4.0);
+        glPointSize(polygon->lineWidth());
+        glDrawArrays(polygon->primitiveType(), 0, polygon->cdata().size());
+        pProgram->disableAttributeArray(posLoc);
+        pProgram->release();
+        glLineWidth(polygon->lineWidth());
         glPointSize(1.0);
 
         pProgram->release();
