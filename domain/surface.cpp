@@ -6,18 +6,112 @@ Surface::Surface(int primitiveType, QObject* parent)
 : DisplayedObject(primitiveType, parent)
 , mContour(std::make_shared <Contour>())
 , mGrid(std::make_shared <SurfaceGrid>())
-{
-
-}
+{}
 
 Surface::~Surface()
-{
-
-}
+{}
 
 SceneObject::SceneObjectType Surface::type() const
 {
     return SceneObjectType::Surface;
+}
+
+void Surface::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap)
+{
+
+    if(!shaderProgramMap.contains("height"))
+        return;
+
+    drawSurface(ctx, mvp, shaderProgramMap["height"]);
+
+    if(!shaderProgramMap.contains("static"))
+        return;
+
+    drawContour(ctx, mvp, shaderProgramMap["static"]);
+    drawGrid(ctx, mvp, shaderProgramMap["static"]);
+}
+
+void Surface::drawSurface(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram)
+{
+    if(!mIsVisible)
+        return;
+
+    if (!shaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = shaderProgram->attributeLocation("position");
+    int maxZLoc   = shaderProgram->uniformLocation("max_z");
+    int minZLoc   = shaderProgram->uniformLocation("min_z");
+    int matrixLoc = shaderProgram->uniformLocation("matrix");
+
+    shaderProgram->setUniformValue(maxZLoc, mBounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, mBounds.minimumZ());
+    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, mData.constData());
+
+    ctx->glLineWidth(4.0);
+    ctx->glDrawArrays(mPrimitiveType, 0, mData.size());
+    ctx->glLineWidth(1.0);
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
+}
+
+void Surface::drawContour(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram)
+{
+    if(!mContour->isVisible())
+        return;
+
+    if (!shaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = shaderProgram->attributeLocation("position");
+    int matrixLoc = shaderProgram->uniformLocation("matrix");
+    int colorLoc  = shaderProgram->uniformLocation("color");
+
+    shaderProgram->setUniformValue(colorLoc, mContour->color4d());
+    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, mContour->cdata().constData());
+
+    ctx->glLineWidth(4.0);
+    ctx->glDrawArrays(mContour->primitiveType(), 0, mContour->cdata().size());
+    ctx->glLineWidth(1.0);
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
+}
+
+void Surface::drawGrid(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram)
+{
+    if(!mGrid->isVisible())
+        return;
+
+    if (!shaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = shaderProgram->attributeLocation("position");
+    int matrixLoc = shaderProgram->uniformLocation("matrix");
+    int colorLoc  = shaderProgram->uniformLocation("color");
+
+    shaderProgram->setUniformValue(colorLoc, mGrid->color4d());
+    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, mGrid->cdata().constData());
+
+    ctx->glLineWidth(4.0);
+    ctx->glDrawArrays(mGrid->primitiveType(), 0, mGrid->cdata().size());
+    ctx->glLineWidth(1.0);
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
 }
 
 Contour *Surface::contour() const

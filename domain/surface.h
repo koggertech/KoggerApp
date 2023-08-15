@@ -31,8 +31,6 @@ public:
      */
     SurfaceGrid* grid() const;
 
-public:
-
     //! @brief Устанавливает набор вершин объекта.
     //! @param[in] data - ссылка на набор вершин.
     virtual void setData(const QVector <QVector3D>& data) override;
@@ -44,6 +42,8 @@ public:
     //! @brief Добавляет входящий набор вершин в конец набора вершин объекта
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other) override;
+
+    virtual void draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) override;
 
     virtual SceneObjectType type() const override;
 
@@ -72,6 +72,12 @@ private:
     void makeContourFromTriangles();
 
     void makeContourFromQuads();
+
+    void drawSurface(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram);
+
+    void drawContour(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram);
+
+    void drawGrid(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram);
 
 signals:
 
