@@ -33,6 +33,8 @@ public:
 
     virtual SceneObjectType type() const override;
 
+    virtual void draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) override;
+
 signals:
 
     void filterChanged(AbstractBottomTrackFilter* filter);

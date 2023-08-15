@@ -50,3 +50,42 @@ SceneObject::SceneObjectType BottomTrack::type() const
 {
     return SceneObjectType::BottomTrack;
 }
+
+void BottomTrack::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap)
+{
+    if(!mIsVisible)
+        return;
+
+    if(!shaderProgramMap.contains("height"))
+        return;
+
+    auto shaderProgram = shaderProgramMap["height"];
+
+    if (!shaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = shaderProgram->attributeLocation("position");
+    int maxZLoc   = shaderProgram->uniformLocation("max_z");
+    int minZLoc   = shaderProgram->uniformLocation("min_z");
+    int matrixLoc = shaderProgram->uniformLocation("matrix");
+
+    QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
+    int colorLoc = shaderProgram->uniformLocation("color");
+
+    shaderProgram->setUniformValue(colorLoc,color);
+    shaderProgram->setUniformValue(maxZLoc, mBounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, mBounds.minimumZ());
+    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, mData.constData());
+
+    ctx->glLineWidth(4.0);
+    ctx->glDrawArrays(mPrimitiveType, 0, mData.size());
+    ctx->glLineWidth(1.0);
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
+    shaderProgram->release();
+}
