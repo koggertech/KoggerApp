@@ -14,6 +14,13 @@ SceneObject::SceneObject(QString name, QObject *parent)
 SceneObject::~SceneObject()
 {}
 
+void SceneObject::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,  QMap <QString, QOpenGLShaderProgram*> shaderProgramMap)
+{
+    Q_UNUSED(ctx)
+    Q_UNUSED(mvp)
+    Q_UNUSED(shaderProgramMap)
+}
+
 void SceneObject::setName(QString name)
 {
     if(mName == name)

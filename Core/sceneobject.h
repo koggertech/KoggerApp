@@ -5,6 +5,8 @@
 #include <QUuid.h>
 #include <QColor>
 #include <QQmlEngine>
+#include <QOpenGLFunctions>
+#include <QOpenGLShaderProgram>
 
 class SceneObject : public QObject
 {
@@ -25,13 +27,18 @@ public:
     enum SceneObjectType{
         BottomTrack = 0,
         Surface     = 1,
-        Polygon     = 2,
-        PointSet    = 3,
-        PolygonSet  = 4,
-        Unknown     = 5
+        Point       = 2,
+        Polygon     = 3,
+        PointSet    = 4,
+        PolygonSet  = 5,
+        Unknown     = 6
     };
 
     Q_ENUM(SceneObjectType)
+
+    virtual void draw(QOpenGLFunctions* ctx,
+                      const QMatrix4x4& mvp,
+                       QMap <QString, QOpenGLShaderProgram*> shaderProgramMap);
 
     /**
      * @brief Returns type of the object
