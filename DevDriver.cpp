@@ -29,6 +29,7 @@ DevDriver::DevDriver(QObject *parent) :
 
     regID(idNav = new IDBinNav(), &DevDriver::receivedNav);
     regID(idDVL = new IDBinDVL(), &DevDriver::receivedDVL);
+    regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 }
@@ -120,6 +121,10 @@ int DevDriver::dopplerVeloZ() {
 
 int DevDriver::dopplerDist() {
     return idDVL->dist();
+}
+
+void DevDriver::dvlChangeMode(bool ismode1, bool ismode2, bool ismode3) {
+    idDVLMode->setModes(ismode1, ismode2, ismode3);
 }
 
 
@@ -738,6 +743,10 @@ void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
             emit dvlSolutionComplete(idDVL->dvlSolution());
        }
     }
+}
+
+void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
+
 }
 
 void DevDriver::process() {

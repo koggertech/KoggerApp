@@ -110,6 +110,8 @@ public:
     int dopplerDist();
 
 
+
+
     QString devName() { return m_devName; }
     uint32_t devSerialNumber();
     QString devPN();
@@ -188,6 +190,8 @@ public slots:
     void reboot();
     void process();
 
+    void dvlChangeMode(bool ismode1, bool ismode2, bool ismode3);
+
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
 
@@ -215,6 +219,7 @@ protected:
 
     IDBinNav* idNav = NULL;
     IDBinDVL* idDVL = NULL;
+    IDBinDVLMode* idDVLMode = NULL;
 
     QHash<ID, IDBin*> hashIDParsing;
     QHash<ID, ParseCallback> hashIDCallback;
@@ -289,7 +294,9 @@ protected slots:
 
     void receivedNav(Type type, Version ver, Resp resp);
     void receivedDVL(Type type, Version ver, Resp resp);
+    void receivedDVLMode(Type type, Version ver, Resp resp);
 
 };
+
 
 #endif // SONARDRIVER_H
