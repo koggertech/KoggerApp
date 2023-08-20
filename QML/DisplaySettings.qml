@@ -394,9 +394,9 @@ GridLayout {
                                             bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
                                             bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
                                             bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX*0.001 : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY*0.001 : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ*0.001 : 0
+                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
+                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
+                                            bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0
                                             );
             }
 
@@ -648,7 +648,7 @@ GridLayout {
                     id: bottomTrackSensorOffsetValueX
                     spinner: false
                     implicitWidth: 65
-                    from: 0
+                    from: -9999
                     to: 9999
                     stepSize: 50
 
@@ -663,7 +663,7 @@ GridLayout {
                     id: bottomTrackSensorOffsetValueY
                     spinner: false
                     implicitWidth: 65
-                    from: 0
+                    from: -9999
                     to: 9999
                     stepSize: 50
 
@@ -678,7 +678,7 @@ GridLayout {
                     id: bottomTrackSensorOffsetValueZ
                     spinner: false
                     implicitWidth: 65
-                    from: 0
+                    from: -9999
                     to: 9999
                     stepSize: 50
 

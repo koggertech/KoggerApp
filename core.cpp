@@ -186,7 +186,7 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     m_connection->openFile(name);
 
 
-    QList<DatasetChannel> chs = _dataset->channelsList();
+    QList<DatasetChannel> chs = _dataset->channelsList().values();
 
 
     for(int i = 0; i < _plots2d.size(); i++) {
@@ -199,9 +199,6 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
                 _plots2d.at(i)->setDataChannel(chs[0].channel);
             }
         }
-//        if(_plots2d.at(i) != NULL && i < chs.size()) {
-//            _plots2d.at(i)->setDataChannel(chs[i].channel);
-//        }
     }
 
     return true;
@@ -312,33 +309,30 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
     _logger.creatExportStream(file_path + "/" + export_file_name + ".csv");
 
-//    int row_cnt = m_plot->poolSize();
-//    for(int i = 0; i < row_cnt; i++) {
-//        PoolDataset* dataset = m_plot->fromPool(i);
-//        QString row_data;
-//        QVector<int16_t> chart = dataset->chartData();
-
-//        if(chart.size() > 100) {
-//            for(int chart_i = 0; chart_i < chart.size(); chart_i++) {
-//                row_data.append(QString("%1,").arg(chart[chart_i]));
-//            }
-//            row_data.remove(row_data.length() - 1, 1);
-//            row_data.append("\n");
-//            _logger.dataExport(row_data);
-//        }
-//    }
-
-//    _logger.endExportStream();
-
     bool meas_nbr = true;
     bool event_id = true;
-    bool rangefinder = true;
+    bool rangefinder = false;
     bool bottom_depth = true;
     bool pos_lat_lon = true;
     bool pos_time = true;
 
     bool external_pos_lla = true;
     bool external_pos_neu = true;
+    bool sonar_height = true;
+    bool bottom_height = true;
+
+    bool ext_pos_lla_find = false;
+    bool ext_pos_ned_find = false;
+
+    int row_cnt = _dataset->size();
+    for(int i = 0; i < row_cnt; i++) {
+        Epoch* epoch = _dataset->fromIndex(i);
+
+        Position position = epoch->getExternalPosition();
+        ext_pos_lla_find |= position.lla.isValid();
+        ext_pos_ned_find |= position.ned.isValid();
+    }
+
 
     if(meas_nbr) {
         _logger.dataExport("Number,");
@@ -355,7 +349,7 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     }
 
     if(bottom_depth) {
-        _logger.dataExport("Bottom depth,");
+        _logger.dataExport("Beam distance,");
     }
 
     if(pos_lat_lon) {
@@ -368,23 +362,31 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
         }
     }
 
-    if(external_pos_lla) {
+    if(external_pos_lla && ext_pos_lla_find) {
         _logger.dataExport("ExtLatitude,");
         _logger.dataExport("ExtLongitude,");
         _logger.dataExport("ExtAltitude,");
     }
 
-    if(external_pos_neu) {
+    if(external_pos_neu && ext_pos_ned_find) {
         _logger.dataExport("ExtNorth,");
         _logger.dataExport("ExtEast,");
         _logger.dataExport("ExtHeight,");
+    }
+
+    if(sonar_height) {
+        _logger.dataExport("SonarHeight,");
+    }
+
+    if(bottom_height) {
+        _logger.dataExport("BottomHeight,");
     }
 
 
 
     _logger.dataExport("\n");
 
-    int row_cnt = _dataset->size();
+
 
     int prev_timestamp = 0;
     int prev_unix = 0;
@@ -396,6 +398,8 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     float decimation_path = 0;
     LLARef lla_ref;
     NED last_pos_ned;
+
+
 
 
     for(int i = 0; i < row_cnt; i++) {
@@ -491,21 +495,42 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
         Position position = epoch->getExternalPosition();
 
-        if(external_pos_lla) {
+        if(external_pos_lla && ext_pos_lla_find) {
             row_data.append(QString::number(position.lla.latitude, 'f', 10));
             row_data.append(",");
             row_data.append(QString::number(position.lla.longitude, 'f', 10));
             row_data.append(",");
-            row_data.append(QString::number(position.lla.altitude, 'f', 10));
+            row_data.append(QString::number(position.lla.altitude, 'f', 3));
             row_data.append(",");
         }
 
-        if(external_pos_neu) {
+        if(external_pos_neu && ext_pos_ned_find) {
             row_data.append(QString::number(position.ned.n, 'f', 10));
             row_data.append(",");
             row_data.append(QString::number(position.ned.e, 'f', 10));
             row_data.append(",");
-            row_data.append(QString::number(-position.ned.d, 'f', 10));
+            row_data.append(QString::number(-position.ned.d, 'f', 3));
+            row_data.append(",");
+        }
+
+        Epoch::DataChart* sensor = epoch->chart(channel);
+
+        if(sonar_height) {
+            if(sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
+                row_data.append(QString::number(-sensor->sensorPosition.ned.d, 'f', 3));
+            } else  if(sensor != NULL && isfinite(sensor->sensorPosition.lla.altitude)) {
+                row_data.append(QString::number(sensor->sensorPosition.lla.altitude, 'f', 3));
+            }
+
+            row_data.append(",");
+        }
+
+        if(bottom_height) {
+            if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
+                row_data.append(QString::number(-sensor->bottomProcessing.bottomPoint.ned.d, 'f', 3));
+            } else if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
+                row_data.append(QString::number(sensor->bottomProcessing.bottomPoint.lla.altitude, 'f', 3));
+            }
             row_data.append(",");
         }
 
@@ -530,7 +555,7 @@ bool Core::exportPlotAsXTF(QString file_path) {
     _logger.creatExportStream(file_path + "/_" + export_file_name + ".xtf");
 
 
-    QList<DatasetChannel> chs = _dataset->channelsList();
+    QMap<int, DatasetChannel> chs = _dataset->channelsList();
     QByteArray data_export = _converterXTF.toXTF(dataset(), _plots2d[0]->plotDatasetChannel(), _plots2d[0]->plotDatasetChannel2());
 
     _logger.dataByteExport(data_export);
@@ -548,19 +573,13 @@ bool Core::openXTF(QByteArray data) {
     consoleInfo("XTF programm name:" + QString(_converterXTF.header.RecordingProgramName));
     consoleInfo("XTF sonar name:" + QString(_converterXTF.header.SonarName));
 
-    QList<DatasetChannel> chs = _dataset->channelsList();
+    QMap<int, DatasetChannel> chs = _dataset->channelsList();
 
     for(int i = 0; i < _plots2d.size(); i++) {
         if(_plots2d.at(i) != NULL && i < chs.size()) {
             if(i == 0) {
-                _plots2d.at(i)->setDistance(-300, 300);
                 _plots2d.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
             }
-
-//            if(i == 1) {
-//                _plots2d.at(i)->setDistance(0, 100);
-//            }
-//            _plots2d.at(i)->setDataChannel(chs[i].channel);
         }
     }
 

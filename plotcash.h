@@ -88,6 +88,10 @@ typedef struct NED {
     }
 } NED;
 
+typedef struct XYZ {
+    double x = 0, y = 0, z = 0;
+} XYZ;
+
 typedef struct DateTime{
     time_t unix = 0;
     int nanoSec = 0;
@@ -144,6 +148,14 @@ const int CHANNEL_NONE = 0x8000;
 typedef struct DatasetChannel {
     int channel = -1;
     int count = 0;
+    double distance_from = NAN;
+    double distance_to = NAN;
+
+    XYZ localPosition;
+
+    DatasetChannel() {
+    }
+
     DatasetChannel(int ch) {
         channel = ch;
     }
@@ -191,6 +203,8 @@ public:
         float max = NAN;
         DistanceSource source = DistanceSourceNone;
 
+        Position bottomPoint;
+
         bool isDist() { return isfinite(distance); }
         void setDistance(float dist, DistanceSource src = DistanceSourceNone) { distance = dist; source = src; }
         void clearDistance(DistanceSource src = DistanceSourceNone) { distance = NAN; source = src; }
@@ -225,6 +239,7 @@ public:
         QVector<int16_t> visual;
 
         DistProcessing bottomProcessing;
+        Position sensorPosition;
 
         float range() {
             return amplitude.size()*(resolution);
@@ -286,14 +301,13 @@ public:
             _charts[channel].bottomProcessing.setMax(max);
             _charts[channel].bottomProcessing.resetDistance();
 
-            doBottomTrack(-1, false);
-
             if(!is_save) {
                 _charts[channel].bottomProcessing.setMin(minsave);
                 _charts[channel].bottomProcessing.setMax(maxsave);
             }
         }
     }
+
 
     bool eventAvail() { return flags.eventAvail; }
     int eventID() { return _eventId; }
@@ -353,13 +367,8 @@ public:
 
         return NAN;
     }
-//    bool distProccesingAvail(int16_t channel) {
-//        if(_charts.contains(channel)) {
-//            return _charts[channel].bottomProcessing.isData();
-//        }
 
-//        return false;
-//    }
+
 
     float temperature() { return m_temp_c; }
     bool temperatureAvail() { return flags.tempAvail; }
@@ -396,77 +405,8 @@ public:
     bool isPosAvail() { return flags.posAvail; }
 
 
-    void doBottomTrack(int track_type, bool is_update_dist) {
-//        if(track_type >= 0) {
-//            _procDistType = track_type;
-//        }
-
-//        QMutableHashIterator<int16_t, DataChart> i(_charts);
-//        while (i.hasNext()) {
-//            i.next();
-
-//            if(_procDistType == 0) {
-//                doBottomTrack2D(i.value(), is_update_dist);
-//            } else if(_procDistType == 1) {
-//                doBottomTrackSideScan(i.value(), is_update_dist);
-//            }
-//        }
-
-    }
-
-
     void doBottomTrack2D(DataChart &chart, bool is_update_dist = false);
     void doBottomTrackSideScan(DataChart &chart, bool is_update_dist = false);
-
-    bool edgeProcAvail = false;
-
-    void doEdgeProccesing(DataChart &chart) {
-//        int raw_size = _chartData.size();
-//        int16_t* src = _chartData.data();
-
-//        if(raw_size != 0 && !edgeProcAvail) {
-//            m_processingEdgeData.resize(raw_size);
-//            int16_t* procData = m_processingEdgeData.data();
-
-//            float max_of_start = 0;
-//            for(int i = 0; i < 10; i ++) {
-//                float val = src[i];
-
-//                if(val > max_of_start) {
-//                    max_of_start = val;
-//                }
-
-//                procData[i] = val;
-
-//                if(procData[i] < 0) {
-//                    procData[i] = 0;
-//                } else if(procData[i] > 255) {
-//                    procData[i] = 255;
-//                }
-//            }
-
-//            float avrg = max_of_start*1.f;
-//            for(int i = 0; i < raw_size; i ++) {
-//                float val = src[i];
-
-//                avrg += (val - avrg)*(0.05f + avrg*0.0006);
-//                procData[i] = (val - avrg*0.55f)*(0.9f +float(i*_chartResol)*0.000025f)*1.4f;
-
-//                if(procData[i] < 0) {
-//                    procData[i] = 0;
-//                } else if(procData[i] > 255) {
-//                    procData[i] = 255;
-//                }
-//            }
-
-//            edgeProcAvail = true;
-//        }
-    }
-
-    void resetDistProccesing() {
-//        flags.processDistAvail = false;
-    }
-
 
 
     bool chartTo(int16_t channel, float start, float end, int16_t* dst, int len, int image_type, bool reverse = false) {
@@ -490,10 +430,6 @@ public:
         }
 
         int16_t* src;
-
-        if(image_type == 1 && !edgeProcAvail) {
-//            doEdgeProccesing();
-        }
 
         if(image_type == 1 && _charts[channel].visual.size() > 0) {
             src = _charts[channel].visual.data();
@@ -649,7 +585,7 @@ public:
 
     void getMaxDistanceRange(float* from, float* to, int channel1, int channel2 = CHANNEL_NONE);
 
-    QList<DatasetChannel> channelsList() {
+    QMap<int, DatasetChannel> channelsList() {
         return _channelsSetup;
     }
 
@@ -675,7 +611,16 @@ public slots:
     void resetDataset();
     void resetDistProcessing();
 
+    void setChannelOffset(int channal, float x, float y, float z) {
+        if(_channelsSetup.contains(channal)) {
+            _channelsSetup[channal].localPosition.x = x;
+            _channelsSetup[channal].localPosition.y = y;
+            _channelsSetup[channal].localPosition.z = z;
+        }
+    }
+
     void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
+    void spatialProcessing();
 
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
@@ -705,22 +650,11 @@ protected:
     int lastEventId = 0;
     float _lastEncoder = 0;
 
-    QList<DatasetChannel> _channelsSetup;
+    QMap<int, DatasetChannel> _channelsSetup;
 
     void validateChannelList(int ch) {
-        if(_channelsSetup.size() == 0) {
-            _channelsSetup.append(DatasetChannel(ch));
-            emit channelsListUpdates(_channelsSetup);
-        } else {
-            for (int i = 0; i < _channelsSetup.size(); ++i) {
-                if (_channelsSetup.at(i).channel == ch) {
-//                    _channelsSetup.at(i).counter();
-                    return;
-                }
-            }
-            _channelsSetup.append(DatasetChannel(ch));
-            emit channelsListUpdates(_channelsSetup);
-        }
+        _channelsSetup[ch].channel = ch;
+        _channelsSetup[ch].counter();
     }
 
     LLARef _llaRef;

@@ -321,8 +321,8 @@ void Dataset::resetDataset() {
 void Dataset::resetDistProcessing() {
     int pool_size = size();
     for(int i = 0; i < pool_size; i++) {
-        Epoch* dataset = fromIndex(i);
-        dataset->resetDistProccesing();
+//        Epoch* dataset = fromIndex(i);
+//        dataset->resetDistProccesing();
     }
 }
 
@@ -558,9 +558,51 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         }
     }
 
+    setChannelOffset(channel1, param.offset.x, param.offset.y, param.offset.z);
+    spatialProcessing();
 
     updateTrack(true);
     updateRender3D();
+}
+
+void Dataset::spatialProcessing() {
+    QList<DatasetChannel> ch_list = channelsList().values();
+    for (const auto& channel : ch_list) {
+        int ich = channel.channel;
+
+        for(int iepoch = 0; iepoch < size(); iepoch++) {
+            Epoch* epoch = fromIndex(iepoch);
+            if(epoch == NULL) { continue; }
+
+            Position ext_pos = epoch->getExternalPosition();
+
+            if(epoch->chartAvail(ich)) {
+                Epoch::DataChart* data = epoch->chart(ich);
+
+                if(data == NULL) { continue; }
+
+                if(ext_pos.ned.isValid()) {
+                    ext_pos.ned.d += channel.localPosition.z;
+                }
+
+                if(ext_pos.lla.isValid()) {
+                    ext_pos.lla.altitude -= channel.localPosition.z;
+                }
+
+                data->sensorPosition = ext_pos;
+
+                if(ext_pos.ned.isValid()) {
+                    ext_pos.ned.d += data->bottomProcessing.getDistance();
+                }
+
+                if(ext_pos.lla.isValid()) {
+                    ext_pos.lla.altitude -= data->bottomProcessing.getDistance();
+                }
+
+                data->bottomProcessing.bottomPoint = ext_pos;
+            }
+        }
+    }
 }
 
 void Dataset::clearTrack() {
@@ -604,7 +646,7 @@ void Dataset::updateTrack(bool update_all) {
 
 QStringList Dataset::channelsNameList() {
     QStringList ch_names;
-    QList<DatasetChannel> ch_list = channelsList();
+    QList<DatasetChannel> ch_list = channelsList().values();
     ch_names.append(QString("None"));
     for (const auto& channel : ch_list) {
         ch_names.append(QString("%1").arg(channel.channel));

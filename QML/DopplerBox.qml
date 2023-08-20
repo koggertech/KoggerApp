@@ -16,49 +16,47 @@ DevSettingsBox {
         spacing: 24
         Layout.margins: 24
 
-//        ParamGroup {
-//            groupName: "Doppler Bottom Tracker"
+        ParamGroup {
+            id: modeChanger
+            groupName: "Range Modes"
 
-//            ParamSetup {
-//                paramName: "Velocity X, mm/s: " + dev.dopplerVeloX
-//            }
+            function changeMode() {
+                dev.dvlChangeMode(mode1Check.checked, mode2Check.checked, mode3Check.checked)
+            }
 
-//            ParamSetup {
-//                paramName: "Velocity Y, mm/s: "  + dev.dopplerVeloY
-//            }
+            RowLayout {
+                CCheck {
+                    id: mode1Check
+                    text: "Mode1"
 
-//            ParamSetup {
-//                paramName: "Velocity Z, mm/s: "  + dev.dopplerVeloZ
-//            }
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
+            }
 
-//            ParamSetup {
-//                paramName: "Distance, mm: "  + dev.dopplerDist
-//            }
-//        }
+            RowLayout {
+                CCheck {
+                    id: mode2Check
+                    text: "Mode2"
 
-//        ParamGroup {
-//            groupName: "Doppler Beam"
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
+            }
 
-//            ParamSetup {
-//                paramName: "Mode: " + dev.dopplerBeam1Mode
-//            }
+            RowLayout {
+                CCheck {
+                    id: mode3Check
+                    text: "Mode3"
 
-//            ParamSetup {
-//                paramName: "Distance, m: "  + dev.dopplerBeam1Distance
-//            }
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
+            }
+        }
 
-//            ParamSetup {
-//                paramName: "Amplitude, dB: "  + dev.dopplerBeam1Amplitude
-//            }
-
-//            ParamSetup {
-//                paramName: "Velocity, mm/s: " + dev.dopplerBeam1Velo
-//            }
-
-//            ParamSetup {
-//                paramName: "Unc, mm/s: "  + dev.dopplerBeam1Unc
-//            }
-
-//        }
     }
 }
