@@ -8,6 +8,11 @@ Toolbar3dController::Toolbar3dController(std::shared_ptr <ActiveObjectProvider> 
 , mpToolWorker(toolWorker)
 {}
 
+Toolbar3dController::~Toolbar3dController()
+{
+
+}
+
 void Toolbar3dController::setSelectionToolState(bool enabled)
 {
     if(!enabled){
@@ -19,9 +24,9 @@ void Toolbar3dController::setSelectionToolState(bool enabled)
                     std::make_shared <PointSelectionTool>()
                 );
 
-    mpToolWorker->setWorkingObject(
-                    mpActiveObjectProvider->activeObject()
-                );
+    //mpToolWorker->setWorkingObject(
+    //                mpActiveObjectProvider->activeObject()
+    //            );
 
-    mpToolWorker->useTool();
+    //mpToolWorker->useTool();
 }

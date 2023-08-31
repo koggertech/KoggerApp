@@ -1,4 +1,5 @@
 #include "surfaceparamscontroller.h"
+#include <bottomtrack.h>
 #include <surfaceprocessor.h>
 
 SurfaceParamsController::SurfaceParamsController(std::shared_ptr<ActiveObjectProvider> activeObjectProvider,
@@ -8,6 +9,11 @@ SurfaceParamsController::SurfaceParamsController(std::shared_ptr<ActiveObjectPro
     , mActiveObjectProvider(activeObjectProvider)
     , mSceneObjectsListModel(sceneObjectsListModel)
 {}
+
+SurfaceParamsController::~SurfaceParamsController()
+{
+
+}
 
 void SurfaceParamsController::changeSurfaceVisibility(bool visible)
 {
@@ -65,29 +71,34 @@ void SurfaceParamsController::updateSurface(int  bottomTrackObjectIndex,
 {
     auto objects = mSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::BottomTrack);
 
-    auto bottomTrackVertexObject = objects.at(bottomTrackObjectIndex);
+    if(bottomTrackObjectIndex < 0 ||
+       bottomTrackObjectIndex >= objects.count())
+    {
+        return;
+    }
 
-    if (!bottomTrackVertexObject)
+    auto bottomTrackSceneObject = objects.at(bottomTrackObjectIndex);
+
+    auto bottomTrack = qobject_cast <BottomTrack*>(bottomTrackSceneObject.get());
+
+    if (!bottomTrack)
         return;
 
-    auto surfaceVertexObject = mActiveObjectProvider->activeObject();
+    auto surfaceSceneObject = mActiveObjectProvider->activeObject();
 
-    if (!surfaceVertexObject)
-        return;
-
-    SurfaceProcessor surfaceProcessor;
-
-    surfaceProcessor.process(bottomTrackVertexObject->cdata(),
-                             surfaceVertexObject,
-                             interpolateWithGrid,
-                             gridCellSize);
-
-    auto surface = dynamic_cast <Surface*>(surfaceVertexObject.get());
+    auto surface = qobject_cast <Surface*>(surfaceSceneObject.get());
 
     if (!surface)
         return;
 
-    surface->setBottomTrackId(bottomTrackVertexObject->id());
+    SurfaceProcessor surfaceProcessor;
+
+    surfaceProcessor.process(bottomTrack->cdata(),
+                             surface,
+                             interpolateWithGrid,
+                             gridCellSize);
+
+    surface->setBottomTrackId(bottomTrack->id());
 }
 
 Surface *SurfaceParamsController::takeSurface()
@@ -97,7 +108,7 @@ Surface *SurfaceParamsController::takeSurface()
     if(!object)
         return nullptr;
 
-    auto surface = dynamic_cast <Surface*>(object.get());
+    auto surface = qobject_cast <Surface*>(object.get());
 
     return surface;
 }

@@ -6,6 +6,11 @@
 
 #include <memory>
 
+#include <pointobject.h>
+
+using PointList    = QList <std::shared_ptr <PointObject>>;
+using PointListPtr = std::shared_ptr <PointList>;
+
 class PointListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -27,11 +32,9 @@ public:
 
     QVariant data(const QModelIndex& index, int role) const override;
 
-    void insert(int index, const QVector3D& point);
+    void insert(int index, std::shared_ptr <PointObject> point);
 
-    void append(const QVector3D& point);
-
-    void changePoint(int index, const QVector3D& point);
+    void append(std::shared_ptr <PointObject> point);
 
     void clear();
 
@@ -41,7 +44,7 @@ protected:
 
 private:
 
-    QList <QVector3D> mData;
+    PointListPtr mPointList;
     QHash <int, QByteArray> mRoleNames;
 };
 

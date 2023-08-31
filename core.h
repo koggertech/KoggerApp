@@ -7,6 +7,7 @@
 #include <DevQProperty.h>
 #include <QUrl>
 #include <QQmlApplicationEngine>
+#include <QStandardItemModel>
 #include <QQmlContext>
 #include <waterfall.h>
 #include <DevHub.h>
@@ -14,11 +15,12 @@
 #include <QThread>
 #include <3Plot.h>
 
+#include <sceneobjectslistmodel.h>
 #include <sceneobjectslistcontroller.h>
 #include <bottomtrackparamscontroller.h>
 #include <mpcfilterparamscontroller.h>
 #include <npdfilterparamscontroller.h>
-#include <pointsetparamscontroller.h>
+#include <polygongroupparamscontroller.h>
 #include <surfaceparamscontroller.h>
 #include <toolbar3dcontroller.h>
 #include <scenecontroller.h>
@@ -43,6 +45,7 @@ public:
     explicit Core();
 
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
+    Q_PROPERTY(QStandardItemModel* sceneItemListModel READ sceneItemListModel CONSTANT)
 
     Q_PROPERTY(bool logging WRITE setLogging)
 
@@ -72,26 +75,7 @@ public:
 
 private:
 
-    //! Метод создания контроллеров
-    void createControllers();
-    //! Метод создания моделей
-    void createModels();
-\
-    // View controllers
-    Scene3DController                             mpSceneController;
-    std::shared_ptr <Toolbar3dController>         mpToolbar3dController;
-    std::shared_ptr <SceneObjectsListController>  mpSceneObjectsListController;
-    std::shared_ptr <BottomTrackParamsController> mpBottomTrackParamsController;
-    std::shared_ptr <SurfaceParamsController>     mpSurfaceParamsController;
-    std::shared_ptr <MPCFilterParamsController>   mpMPCFilterParamsController;
-    std::shared_ptr <NPDFilterParamsController>   mpNPDFilterParamsController;
-
-    // App models
-    std::shared_ptr <ActiveObjectProvider>     mpActiveObjectProvider;
-    std::shared_ptr <Tool3dWorker>             mpTool3dWorker;
-    std::shared_ptr <SceneObjectsListModel>    mpSceneObjectsListModel;
-    std::shared_ptr <BottomTrackProvider>      mpBottomTrackProvider;
-    std::shared_ptr <PointSetParamsController> mpPointSetParamsController;
+    QStandardItemModel* sceneItemListModel() const;
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
@@ -199,6 +183,34 @@ protected:
     int backupBaudrate = 115200;
     void restoreBaudrate();
     void setUpgradeBaudrate();
+
+
+private:
+
+    //! Метод создания контроллеров
+    void createControllers();
+    //! Метод создания моделей
+    void createModels();
+\
+
+private:
+
+    // View controllers
+    Scene3DController                              mpSceneController;
+    std::shared_ptr <Toolbar3dController>          mpToolbar3dController;
+    std::shared_ptr <SceneObjectsListController>   mpSceneObjectsListController;
+    std::shared_ptr <BottomTrackParamsController>  mpBottomTrackParamsController;
+    std::shared_ptr <PolygonGroupParamsController> mpPolygonGroupParamsController;
+    std::shared_ptr <SurfaceParamsController>      mpSurfaceParamsController;
+    std::shared_ptr <MPCFilterParamsController>    mpMPCFilterParamsController;
+    std::shared_ptr <NPDFilterParamsController>    mpNPDFilterParamsController;
+
+    // App models
+    std::shared_ptr <ActiveObjectProvider>     mpActiveObjectProvider;
+    std::shared_ptr <Tool3dWorker>             mpTool3dWorker;
+    std::shared_ptr <BottomTrackProvider>      mpBottomTrackProvider;
+
+    std::unique_ptr <QStandardItemModel> m_sceneItemListModel;
 };
 
 #endif // CORE_H

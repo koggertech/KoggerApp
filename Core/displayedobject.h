@@ -39,6 +39,7 @@ public:
      */
     DisplayedObject(const int type, const QVector <QVector3D>& data, QObject* parent = nullptr);
 
+
     /**
      *  @brief Деструктор.
      */

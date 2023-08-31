@@ -4,6 +4,8 @@ import QtQuick.Controls 2.12
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
+import SceneObject 1.0
+
 Item {
     id: root
     Layout.minimumWidth:  160
@@ -12,12 +14,14 @@ Item {
     property var activeObject: null
 
     function setActiveObject(object){
-        if(object.type === "Bottom track"){
+        if(object.type === SceneObject.BottomTrack){
             loader.setSource("BottomTrackParamsMenu.qml")
-        }else if(object.type === "Surface"){
+        }else if(object.type === SceneObject.Surface){
             loader.setSource("SurfaceParamsMenu.qml")
-        }else if(object.type === "Point set"){
-            loader.setSource("PointSetParamsMenu.qml")
+        }else if(object.type === SceneObject.PointGroup){
+            loader.setSource("PointGroupParamsMenu.qml")
+        }else if(object.type === SceneObject.PolygonGroup){
+            loader.setSource("PolygonGroupParamsMenu.qml")
         }else{
             loader.setSource("MenuPlaceholder.qml")
         }

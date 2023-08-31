@@ -9,6 +9,9 @@ MPCFilterParamsController::MPCFilterParamsController(std::shared_ptr <ActiveObje
     : QObject(parent)
     , mActiveObjectProvider(activeObjectProvider)
     , mBottomTrackProvider(bottomTrackProvider)
+{}
+
+MPCFilterParamsController::~MPCFilterParamsController()
 {
 
 }
@@ -17,12 +20,12 @@ void MPCFilterParamsController::setMaxPointsCount(int count)
 {
     auto object = mActiveObjectProvider->activeObject();
 
-    auto bottomTrack = dynamic_cast <BottomTrack*>(object.get());
+    auto bottomTrack = qobject_cast <BottomTrack*>(object.get());
 
     if (!bottomTrack)
         return;
 
-    auto filter = dynamic_cast <MaxPointsFilter*>(bottomTrack->filter());
+    auto filter = qobject_cast <MaxPointsFilter*>(bottomTrack->filter());
 
     if(filter)
         filter->setMaxPointsCount(count);

@@ -85,5 +85,7 @@
         <file>ActiveObjectParamsMenu/NearestPointDistanceFilterParams.qml</file>
         <file>KoggerCommon/KSpinBox.qml</file>
         <file>ActiveObjectParamsMenu/PointSetParamsMenu.qml</file>
+        <file>ActiveObjectParamsMenu/PolygonGroupParamsMenu.qml</file>
+        <file>ActiveObjectParamsMenu/PointGroupParamsMenu.qml</file>
     </qresource>
 </RCC>

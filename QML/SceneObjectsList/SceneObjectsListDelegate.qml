@@ -31,14 +31,14 @@ Component{
 
                 Text {
                     font.pixelSize: 14
-                    text:           '<b>Name:</b> ' + model.name
+                    text:           '<b>Name:</b> ' + model.display
                     color:          theme.textColor
                 }
-                Text {
-                    font.pixelSize: 12
-                    text:           '<b>Type:</b> ' + model.type
-                    color:          theme.textColor
-                }
+                //Text {
+                //    font.pixelSize: 12
+                //    text:           '<b>Type:</b> ' + model.type
+                //    color:          theme.textColor
+                //}
             }
 
             MouseArea{

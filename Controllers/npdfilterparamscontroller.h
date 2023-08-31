@@ -14,6 +14,8 @@ public:
                                        std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
                                        QObject *parent = nullptr);
 
+    virtual ~NPDFilterParamsController();
+
     Q_INVOKABLE void setDistance(float distance);
 
 private:

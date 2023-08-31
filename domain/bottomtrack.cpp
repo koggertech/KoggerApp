@@ -51,7 +51,7 @@ SceneObject::SceneObjectType BottomTrack::type() const
     return SceneObjectType::BottomTrack;
 }
 
-void BottomTrack::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap)
+void BottomTrack::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const
 {
     if(!mIsVisible)
         return;

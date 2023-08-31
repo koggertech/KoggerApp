@@ -4,6 +4,11 @@
 SceneController::SceneController()
 {}
 
+SceneController::~SceneController()
+{
+
+}
+
 void SceneController::cursorPosChanged(const QVector3D& pos,
                                        const QMatrix4x4& view,
                                        const QMatrix4x4& model,

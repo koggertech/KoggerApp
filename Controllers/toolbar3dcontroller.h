@@ -16,6 +16,8 @@ public:
                         std::shared_ptr <Tool3dWorker> toolWorker,
                         QObject* parent = nullptr);
 
+    virtual ~Toolbar3dController();
+
     Q_INVOKABLE void setSelectionToolState(bool enabled);
 
 private:

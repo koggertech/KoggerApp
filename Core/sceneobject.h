@@ -24,21 +24,22 @@ public:
 
     virtual ~SceneObject();
 
-    enum SceneObjectType{
-        BottomTrack = 0,
-        Surface     = 1,
-        Point       = 2,
-        Polygon     = 3,
-        PointSet    = 4,
-        PolygonSet  = 5,
-        Unknown     = 6
+    enum class SceneObjectType{
+        BottomTrack  = 0,
+        Surface      = 1,
+        Point        = 2,
+        Polygon      = 3,
+        ObjectsGroup = 4,
+        PointGroup   = 5,
+        PolygonGroup = 6,
+        Unknown      = 7
     };
 
     Q_ENUM(SceneObjectType)
 
     virtual void draw(QOpenGLFunctions* ctx,
                       const QMatrix4x4& mvp,
-                       QMap <QString, QOpenGLShaderProgram*> shaderProgramMap);
+                       QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const;
 
     /**
      * @brief Returns type of the object

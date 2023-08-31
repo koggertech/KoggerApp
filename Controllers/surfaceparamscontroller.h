@@ -15,6 +15,8 @@ public:
                                      std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel,
                                      QObject *parent = nullptr);
 
+    virtual ~SurfaceParamsController();
+
     Q_INVOKABLE void changeSurfaceVisibility(bool visible);
 
     Q_INVOKABLE void changeSurfaceContourVisibility(bool visible);

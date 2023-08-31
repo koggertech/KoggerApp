@@ -5,7 +5,7 @@ HEADERS += \
     $$PWD/bottomtrackparamscontroller.h \
     $$PWD/mpcfilterparamscontroller.h \
     $$PWD/npdfilterparamscontroller.h \
-    $$PWD/pointsetparamscontroller.h \
+    $$PWD/polygongroupparamscontroller.h \
     $$PWD/scenecontroller.h \
     $$PWD/sceneobjectslistcontroller.h \
     $$PWD/surfaceparamscontroller.h \
@@ -16,7 +16,7 @@ SOURCES += \
     $$PWD/bottomtrackparamscontroller.cpp \
     $$PWD/mpcfilterparamscontroller.cpp \
     $$PWD/npdfilterparamscontroller.cpp \
-    $$PWD/pointsetparamscontroller.cpp \
+    $$PWD/polygongroupparamscontroller.cpp \
     $$PWD/scenecontroller.cpp \
     $$PWD/sceneobjectslistcontroller.cpp \
     $$PWD/surfaceparamscontroller.cpp \

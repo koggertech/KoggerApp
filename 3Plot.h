@@ -148,6 +148,8 @@ private:
 
     void displayPolygonObjects();
 
+    void displayObjectGroups();
+
     QVector<QVector3D> vLines;
     QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;

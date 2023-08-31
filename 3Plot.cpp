@@ -1,5 +1,4 @@
 #include "3Plot.h"
-#include <pointset.h>
 #include <bottomtrack.h>
 #include <surface.h>
 
@@ -140,218 +139,45 @@ void Scene3D::displaySurfaceObjects()
     }
 }
 
-void Scene3D::displaySurfaceContours()
+void Scene3D::displayObjectGroups()
 {
     if(!mpSceneObjectsListModel)
         return;
 
-    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Surface);
+    auto objects = mpSceneObjectsListModel->data();
 
     for(const auto& object : objects)
     {
-        auto surface = dynamic_cast <Surface*>(object.get());
-
-        if (!surface)
-            continue;
-
-        if (!surface->contour()->isVisible())
-            continue;
-
-        auto pProgram = mpStaticColorShaderProgram.get();
-
-        if (!pProgram->bind()){
-            qCritical() << "Error binding shader program.";
-            return;
-        }
-
-        int posLoc    = pProgram->attributeLocation("position");
-        int matrixLoc = pProgram->uniformLocation("matrix");
-        int colorLoc  = pProgram->uniformLocation("color");
-
-        pProgram->setUniformValue(colorLoc, surface->contour()->color4d());
-        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-        pProgram->enableAttributeArray(posLoc);
-        pProgram->setAttributeArray(posLoc, surface->contour()->cdata().constData());
-        glLineWidth(4.0);
-        glDrawArrays(surface->contour()->primitiveType(), 0, surface->contour()->cdata().size());
-        pProgram->disableAttributeArray(posLoc);
-        pProgram->release();
-        glLineWidth(1.0);
-
-        pProgram->release();
+        if(object->type() == SceneObject::SceneObjectType::ObjectsGroup)
+            object->draw(this, mModel*mProjection*mView, mShaderProgramMap);
     }
+}
+
+void Scene3D::displaySurfaceContours()
+{
+
 }
 
 void Scene3D::displaySurfaceGrids()
 {
-    if(!mpSceneObjectsListModel)
-        return;
 
-    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Surface);
-
-    for(const auto& object : objects)
-    {
-        auto surface = dynamic_cast <Surface*>(object.get());
-
-        if (!surface)
-            continue;
-
-        if (!surface->grid()->isVisible())
-            continue;
-
-        auto pProgram = mpStaticColorShaderProgram.get();
-
-        if (!pProgram->bind()){
-            qCritical() << "Error binding shader program.";
-            return;
-        }
-
-        int posLoc    = pProgram->attributeLocation("position");
-        int matrixLoc = pProgram->uniformLocation("matrix");
-        int colorLoc  = pProgram->uniformLocation("color");
-
-        pProgram->setUniformValue(colorLoc, surface->grid()->color4d());
-        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-        pProgram->enableAttributeArray(posLoc);
-        pProgram->setAttributeArray(posLoc, surface->grid()->cdata().constData());
-        glLineWidth(4.0);
-        glDrawArrays(surface->grid()->primitiveType(), 0, surface->grid()->cdata().size());
-        pProgram->disableAttributeArray(posLoc);
-        pProgram->release();
-        glLineWidth(1.0);
-
-        pProgram->release();
-    }
 }
 
 void Scene3D::displayObjectBounds()
 {
-    //if(!mpSceneObjectsListModel)
-    //    return;
 
-    //auto objects = mpSceneObjectsListModel->data();
-
-    //for(const auto& object : objects)
-    //{
-    //    if (!object)
-    //        continue;
-
-    //    auto pProgram = mpStaticColorShaderProgram.get();
-
-    //    if (!pProgram->bind()){
-    //        qCritical() << "Error binding shader program.";
-    //        return;
-    //    }
-
-    //    auto bounds = std::unique_ptr <VertexObject>(new VertexObject(GL_LINES));
-
-
-    //    int posLoc    = pProgram->attributeLocation("position");
-    //    int matrixLoc = pProgram->uniformLocation("matrix");
-    //    int colorLoc  = pProgram->uniformLocation("color");
-
-    //    pProgram->setUniformValue(colorLoc, QVector4D(1.0f, 1.0f, 1.0f, 0.0f));
-    //    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-    //    pProgram->enableAttributeArray(posLoc);
-    //    pProgram->setAttributeArray(posLoc, bounds->cdata().constData());
-    //    glLineWidth(4.0);
-    //    glDrawArrays(bounds->primitiveType(), 0, bounds->cdata().size());
-    //    pProgram->disableAttributeArray(posLoc);
-    //    pProgram->release();
-    //    glLineWidth(1.0);
-
-    //    pProgram->release();
-    //}
 }
 
 void Scene3D::displayPointSetObjects()
 {
-    if(!mpSceneObjectsListModel)
-        return;
 
-    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::PointSet);
-
-    for(const auto& object : objects)
-    {
-        auto pointSet = dynamic_cast <PointSet*>(object.get());
-
-        if (!pointSet)
-            continue;
-
-        if (!pointSet->isVisible())
-            continue;
-
-        auto pProgram = mpStaticColorShaderProgram.get();
-
-        if (!pProgram->bind()){
-            qCritical() << "Error binding shader program.";
-            return;
-        }
-
-        int posLoc    = pProgram->attributeLocation("position");
-        int matrixLoc = pProgram->uniformLocation("matrix");
-        int colorLoc  = pProgram->uniformLocation("color");
-
-
-        pProgram->setUniformValue(colorLoc, pointSet->color4d());
-        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-        pProgram->enableAttributeArray(posLoc);
-        pProgram->setAttributeArray(posLoc, pointSet->cdata().constData());
-        glLineWidth(4.0);
-        glPointSize(pointSet->lineWidth());
-        glDrawArrays(pointSet->primitiveType(), 0, pointSet->cdata().size());
-        pProgram->disableAttributeArray(posLoc);
-        pProgram->release();
-        glLineWidth(1.0);
-        glPointSize(1.0);
-
-        pProgram->release();
-    }
 }
 
 void Scene3D::displayPolygonObjects()
 {
-    if(!mpSceneObjectsListModel)
-        return;
 
-    auto objects = mpSceneObjectsListModel->dataByType(SceneObject::SceneObjectType::Polygon);
-
-    for(const auto& object : objects)
-    {
-        auto polygon = dynamic_cast <PolygonObject*>(object.get());
-
-        if (!polygon)
-            continue;
-
-        if (!polygon->isVisible())
-            continue;
-
-        auto pProgram = mpStaticColorShaderProgram.get();
-
-        if (!pProgram->bind()){
-            qCritical() << "Error binding shader program.";
-            return;
-        }
-
-        int posLoc    = pProgram->attributeLocation("position");
-        int matrixLoc = pProgram->uniformLocation("matrix");
-        int colorLoc  = pProgram->uniformLocation("color");
-
-        pProgram->setUniformValue(colorLoc, polygon->color4d());
-        pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-        pProgram->enableAttributeArray(posLoc);
-        pProgram->setAttributeArray(posLoc, polygon->cdata().constData());
-        glLineWidth(4.0);
-        glPointSize(polygon->lineWidth());
-        glDrawArrays(polygon->primitiveType(), 0, polygon->cdata().size());
-        pProgram->disableAttributeArray(posLoc);
-        pProgram->release();
-        glLineWidth(polygon->lineWidth());
-        glPointSize(1.0);
-
-        pProgram->release();
-    }
 }
+
 
 void FboInSGRenderer::setController(std::shared_ptr<SceneController> controller)
 {

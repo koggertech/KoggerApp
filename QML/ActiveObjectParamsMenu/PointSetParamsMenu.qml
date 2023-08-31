@@ -51,7 +51,7 @@ Item {
                 ListView {
                     id:           pointListView
                     anchors.fill: parent
-                    model:        activeObject.pointListModel
+                    model:        activeObject.model
 
                     delegate: Rectangle {
                         anchors.left:     parent.left

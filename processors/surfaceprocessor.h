@@ -5,7 +5,7 @@
 
 #include <QObject>
 
-#include <vertexobject.h>
+#include <surface.h>
 
 class SurfaceProcessor : public QObject
 {
@@ -14,7 +14,7 @@ public:
     explicit SurfaceProcessor(QObject *parent = nullptr);
 
     void process(QVector <QVector3D> sourceData,
-                 std::shared_ptr <VertexObject> surface,
+                 Surface* surface,
                  bool needSmoothing = false,
                  float cellSize = 5.0);
 

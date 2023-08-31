@@ -2,23 +2,27 @@
 #define SCENEOBJECTSLISTCONTROLLER_H
 
 #include <QObject>
+#include <QStandardItemModel>
 
 #include <sceneobjectslistmodel.h>
 #include <activeobjectprovider.h>
 #include <bottomtrackprovider.h>
+
+class Scene3D;
 
 class SceneObjectsListController : public QObject
 {
     Q_OBJECT
 
 public:
-
     explicit SceneObjectsListController(
-                std::shared_ptr <ActiveObjectProvider> selectedObjectModel,
-                std::shared_ptr <SceneObjectsListModel> model,
+                std::shared_ptr <QStandardItemModel> sceneItemListModel,
                 std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
+
                 QObject *parent = nullptr
             );
+
+    virtual ~SceneObjectsListController();
 
     Q_INVOKABLE void addObject(QString name, SceneObject::SceneObjectType type);
 

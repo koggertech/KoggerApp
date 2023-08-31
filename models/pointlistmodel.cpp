@@ -2,6 +2,7 @@
 
 PointListModel::PointListModel(QObject *parent)
     : QAbstractListModel{parent}
+    , mPointList(std::make_shared<PointList>())
 {
     mRoleNames[XValueRole] = "x";
     mRoleNames[YValueRole] = "y";
@@ -12,22 +13,22 @@ int PointListModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
 
-    return mData.count();
+    return mPointList->count();
 }
 
 bool PointListModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     int row = index.row();
 
-    if (row < 0 || row >= mData.count())
+    if (row < 0 || row >= mPointList->count())
         return false;
 
-    auto point = mData.at(row);
+    auto point = mPointList->at(row);
 
     switch(role){
-        case XValueRole: point.setX(value.toFloat());
-        case YValueRole: point.setY(value.toFloat());
-        case ZValueRole: point.setZ(value.toFloat());
+        case XValueRole: point->setX(value.toFloat());
+        case YValueRole: point->setY(value.toFloat());
+        case ZValueRole: point->setZ(value.toFloat());
     }
 
     Q_EMIT dataChanged(index, index, { Qt::EditRole, Qt::DisplayRole });
@@ -39,54 +40,44 @@ QVariant PointListModel::data(const QModelIndex &index, int role) const
 {
     int row = index.row();
 
-    if (row < 0 || row >= mData.count())
+    if (row < 0 || row >= mPointList->count())
         return QVariant();
 
-    const auto point = mData.at(row);
+    const auto point = mPointList->at(row);
 
     switch(role){
-        case XValueRole: return point.x();
-        case YValueRole: return point.y();
-        case ZValueRole: return point.z();
+        case XValueRole: return point->x();
+        case YValueRole: return point->y();
+        case ZValueRole: return point->z();
     }
 
     return QVariant();
 }
 
-void PointListModel::insert(int index, const QVector3D &point)
+void PointListModel::insert(int index, std::shared_ptr <PointObject> point)
 {
-    if (index < 0 || index > mData.count())
+    if (index < 0 || index > mPointList->count())
         return;
 
     Q_EMIT beginInsertRows(QModelIndex(), index, index);
 
-    mData.insert(index, point);
+    mPointList->insert(index, point);
 
     Q_EMIT endInsertRows();
 }
 
-void PointListModel::append(const QVector3D &point)
+void PointListModel::append(std::shared_ptr <PointObject> point)
 {
-    insert(mData.count(), point);
+    insert(mPointList->count(), point);
 }
 
 void PointListModel::clear()
 {
     Q_EMIT beginResetModel();
 
-    mData.clear();
+    mPointList->clear();
 
     Q_EMIT endResetModel();
-}
-
-void PointListModel::changePoint(int index, const QVector3D &point)
-{
-    if (index < 0 || index >= mData.count())
-        return;
-
-    mData.replace(index, point);
-
-    Q_EMIT dataChanged(createIndex(0, 0), createIndex(mData.count(), 0), { Qt::EditRole, Qt::DisplayRole });
 }
 
 QHash <int, QByteArray> PointListModel::roleNames() const

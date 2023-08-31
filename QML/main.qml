@@ -27,8 +27,8 @@ Window  {
     title: qsTr("KoggerApp, KOGGER")
 
     readonly property int _rightBarWidth:                360
-    readonly property int _activeObjectParamsMenuHeight: 400
-    readonly property int _sceneObjectsListHeight:       400
+    readonly property int _activeObjectParamsMenuHeight: 500
+    readonly property int _sceneObjectsListHeight:       300
 
     //    Settings {
     //        property alias x: mainview.x
@@ -300,33 +300,9 @@ Window  {
         anchors.rightMargin: 20
     }
 
-    ColumnLayout {
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.rightMargin:    40
 
-        ActiveObjectParamsMenuLoader {
-            id:     activeObjectParamsMenuLoader
-            width:  _rightBarWidth
-            height: _activeObjectParamsMenuHeight
-        }
 
-        SceneObjectsList {
-            width:  _rightBarWidth
-            height: _sceneObjectsListHeight
 
-            onCountChanged: {
-                if(count === 0){
-                    activeObjectParamsMenuLoader.reset()
-                }
-            }
-        }
-    }
 
-    Connections {
-        target: ActiveObjectProvider
-        onActiveObjectChanged: {
-            activeObjectParamsMenuLoader.setActiveObject(ActiveObjectProvider.activeObject)
-        }
-    }
+
 }

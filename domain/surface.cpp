@@ -16,7 +16,7 @@ SceneObject::SceneObjectType Surface::type() const
     return SceneObjectType::Surface;
 }
 
-void Surface::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap)
+void Surface::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const
 {
 
     if(!shaderProgramMap.contains("height"))
@@ -31,7 +31,7 @@ void Surface::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QMap <QString, 
     drawGrid(ctx, mvp, shaderProgramMap["static"]);
 }
 
-void Surface::drawSurface(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram)
+void Surface::drawSurface(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram) const
 {
     if(!mIsVisible)
         return;
@@ -60,7 +60,7 @@ void Surface::drawSurface(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLS
     shaderProgram->release();
 }
 
-void Surface::drawContour(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram)
+void Surface::drawContour(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram) const
 {
     if(!mContour->isVisible())
         return;
@@ -87,7 +87,7 @@ void Surface::drawContour(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLS
     shaderProgram->release();
 }
 
-void Surface::drawGrid(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram)
+void Surface::drawGrid(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QOpenGLShaderProgram *shaderProgram) const
 {
     if(!mGrid->isVisible())
         return;

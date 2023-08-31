@@ -69,6 +69,8 @@ public:
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other);
 
+    virtual void remove(int index);
+
     //! @brief Возвращает тип примитива для отображения в движке openGL
     //! (из набора дефайнов gl.h).
     //! @return[in] Тип примитива для отображения в движке openGL

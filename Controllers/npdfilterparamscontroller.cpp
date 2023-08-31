@@ -13,16 +13,21 @@ NPDFilterParamsController::NPDFilterParamsController(std::shared_ptr<ActiveObjec
 
 }
 
+NPDFilterParamsController::~NPDFilterParamsController()
+{
+
+}
+
 void NPDFilterParamsController::setDistance(float distance)
 {
     auto object = mActiveObjectProvider->activeObject();
 
-    auto bottomTrack = dynamic_cast <BottomTrack*>(object.get());
+    auto bottomTrack = qobject_cast <BottomTrack*>(object.get());
 
     if (!bottomTrack)
         return;
 
-    auto filter = dynamic_cast <NearestPointFilter*>(bottomTrack->filter());
+    auto filter = qobject_cast <NearestPointFilter*>(bottomTrack->filter());
 
     if(filter)
         filter->setDistance(distance);

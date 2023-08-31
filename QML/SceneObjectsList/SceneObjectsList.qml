@@ -3,6 +3,8 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import Qt3D.Render 2.15
 
+import SceneObject 1.0
+
 Rectangle{
 
     signal currentItemChanged(name: string, type: string, index: int)
@@ -24,7 +26,7 @@ Rectangle{
             id:                   sceneObjectsListView
             Layout.fillWidth:     true
             Layout.fillHeight:    true
-            model:                SceneObjectListModel
+            model:                core.sceneItemListModel
             delegate:             SceneObjectsListDelegate{}
             focus:                true
             onCurrentItemChanged: {
@@ -43,7 +45,20 @@ Rectangle{
                 id:                     addObjectOnSceneButton
                 Layout.preferredHeight: controlsHeight
                 Layout.preferredWidth:  controlsHeight
-                onClicked:              SceneObjectsListController.addObject("Scene object", objectTypeComboBox.currentText)
+                onClicked:              {
+                    var objectType = SceneObject.Unknown
+
+                    if(objectTypeComboBox.currentText === "Bottom track")
+                        objectType = SceneObject.BottomTrack
+                    if(objectTypeComboBox.currentText === "Surface")
+                        objectType = SceneObject.Surface
+                    else if(objectTypeComboBox.currentText === "Point group")
+                        objectType = SceneObject.PointGroup
+                    else if(objectTypeComboBox.currentText === "Polygon group")
+                        objectType = SceneObject.PolygonGroup
+
+                    SceneObjectsListController.addObject("Scene object", objectType)
+                }
 
                 background: Rectangle {
                     radius:       1
@@ -67,7 +82,7 @@ Rectangle{
                 id:               objectTypeComboBox
                 Layout.fillWidth: true
                 height:           controlsHeight
-                model:            ["Bottom track", "Surface", "Point set", "Polygon set", "Bottom track extended"]
+                model:            ["Bottom track", "Surface", "Point group", "Polygon group", "Bottom track extended"]
                 font.pixelSize:   16
                 font.bold:        true
 

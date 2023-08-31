@@ -6,34 +6,35 @@
 
 #include <memory>
 
-#include <vertexobject.h>
+#include <sceneobject.h>
 
 class ActiveObjectProvider : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(VertexObject* activeObject READ rawActiveObject NOTIFY activeObjectChanged)
+    Q_PROPERTY(SceneObject* activeObject READ rawActiveObject NOTIFY activeObjectChanged)
 
 public:
 
-    ActiveObjectProvider(std::shared_ptr <VertexObject> object,
+    ActiveObjectProvider(std::shared_ptr <SceneObject> object,
                         QObject *parent = nullptr);
 
     explicit ActiveObjectProvider(QObject *parent = nullptr);
 
-    void setObject(std::shared_ptr <VertexObject> object);
+    void setObject(std::shared_ptr <SceneObject> object);
 
-    std::shared_ptr <VertexObject> activeObject() const;
+    std::shared_ptr <SceneObject> activeObject() const;
 
-    Q_INVOKABLE VertexObject* rawActiveObject() const;
+private:
+    Q_INVOKABLE SceneObject* rawActiveObject() const;
 
 Q_SIGNALS:
 
-    void activeObjectChanged(VertexObject* object);
+    void activeObjectChanged(SceneObject* object);
 
 private:
 
-    std::shared_ptr <VertexObject> mp_object;
+    std::shared_ptr <SceneObject> mp_object;
 };
 
 #endif // ACTIVEOBJECTPROVIDER_H

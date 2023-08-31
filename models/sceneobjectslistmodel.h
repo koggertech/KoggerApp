@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include <vertexobject.h>
+#include <sceneobject.h>
 
 class SceneObjectsListModel : public QAbstractListModel
 {
@@ -25,9 +25,9 @@ public:
 
     explicit SceneObjectsListModel(QObject *parent = nullptr);
 
-    Q_INVOKABLE void insert(int index, const std::shared_ptr <VertexObject> object);
+    Q_INVOKABLE void insert(int index, const std::shared_ptr <SceneObject> object);
 
-    Q_INVOKABLE void append(const std::shared_ptr <VertexObject> object);
+    Q_INVOKABLE void append(const std::shared_ptr <SceneObject> object);
 
     Q_INVOKABLE void remove(int index);
 
@@ -43,15 +43,15 @@ public:
 
     virtual QVariant data(const QModelIndex& index, int role) const override;
 
-    QList <std::shared_ptr <VertexObject>> data() const;
+    QList <std::shared_ptr <SceneObject>> data() const;
 
-    std::shared_ptr <VertexObject> get(QString id) const;
+    std::shared_ptr <SceneObject> get(QString id) const;
 
-    std::shared_ptr <VertexObject> get(int index) const;
+    std::shared_ptr <SceneObject> get(int index) const;
 
-    void replace(int index, std::shared_ptr <VertexObject> object);
+    void replace(int index, std::shared_ptr <SceneObject> object);
 
-    QList <std::shared_ptr <VertexObject>> dataByType(SceneObject::SceneObjectType type) const;
+    QList <std::shared_ptr <SceneObject>> dataByType(SceneObject::SceneObjectType type) const;
 
     int count() const;
 
@@ -65,7 +65,7 @@ signals:
 
 private:
 
-    QList <std::shared_ptr <VertexObject>> mData;
+    QList <std::shared_ptr <SceneObject>> mData;
     QHash <int, QByteArray> mRoleNames;
 };
 

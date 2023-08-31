@@ -57,6 +57,20 @@ void VertexObject::append(const QVector<QVector3D> &vertexVector)
     Q_EMIT boundsChanged();
 }
 
+void VertexObject::remove(int index)
+{
+    if(index < 0 || index >= mData.count())
+        return;
+
+    mData.removeAt(index);
+
+    createBounds();
+
+    Q_EMIT dataChanged();
+
+    Q_EMIT boundsChanged();
+}
+
 int VertexObject::primitiveType() const
 {
     return mPrimitiveType;

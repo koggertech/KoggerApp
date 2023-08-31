@@ -14,6 +14,8 @@ public:
                                        std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
                                        QObject *parent = nullptr);
 
+    virtual ~MPCFilterParamsController();
+
     Q_INVOKABLE void setMaxPointsCount(int count);
 
 private:

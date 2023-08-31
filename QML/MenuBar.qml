@@ -2,6 +2,8 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.4
 import Qt.labs.settings 1.1
+import ActiveObjectParamsMenu 1.0
+import SceneObjectsList 1.0
 
 Item {
     id: menu
@@ -10,18 +12,18 @@ Item {
 
     property var lastItem: menuSettings
     property bool isConsoleVisible: consoleEnable.checked
-    property bool is3DVisible: scene3DSettings.is3DVisible
+    property bool is3DVisible: settings3DButton.checked
     property bool is2DVisible: visible2dButton.checked
     property bool is2DHorizontal: appSettings.is2DHorizontal
 
     property int settingsWidth: theme.controlHeight*20
 
     function itemChangeActive(currentItem) {
-        if(currentItem !== null) {
+        if(currentItem) {
             currentItem.active = !(currentItem.active)
         }
 
-        if(lastItem !== null && lastItem !== currentItem) {
+        if(lastItem && lastItem !== currentItem) {
             lastItem.active = false
         }
 
@@ -255,6 +257,39 @@ Item {
             implicitWidth: settingsWidth
 
             y:0
+        }
+
+        ColumnLayout {
+            Layout.topMargin: 10
+            anchors.top:        menuBar.top
+            anchors.left:       menuBar.right
+            anchors.leftMargin: 40
+            spacing:            0
+            visible:            menu3DSettings.active
+
+            ActiveObjectParamsMenuLoader {
+                id:     activeObjectParamsMenuLoader
+                width:  _rightBarWidth
+                height: _activeObjectParamsMenuHeight
+            }
+
+            SceneObjectsList {
+                width:        _rightBarWidth
+                height:       _sceneObjectsListHeight
+
+                onCountChanged: {
+                    if(count === 0){
+                        activeObjectParamsMenuLoader.reset()
+                    }
+                }
+            }
+
+            Connections {
+                target: ActiveObjectProvider
+                onActiveObjectChanged: {
+                    activeObjectParamsMenuLoader.setActiveObject(ActiveObjectProvider.activeObject)
+                }
+            }
         }
     }
 }

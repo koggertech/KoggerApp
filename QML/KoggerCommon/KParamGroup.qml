@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.12
 
 ColumnLayout {
-    spacing: 5
+    spacing: 2
 
     property string groupName: "Group"
 

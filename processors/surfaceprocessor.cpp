@@ -14,12 +14,10 @@ SurfaceProcessor::SurfaceProcessor(QObject *parent)
 }
 
 void SurfaceProcessor::process(QVector <QVector3D> sourceData,
-                               std::shared_ptr<VertexObject> surface,
+                               Surface* surface,
                                bool needSmoothing,
                                float cellSize)
 {
-    Q_UNUSED(cellSize)
-
     Q_EMIT processingStarted();
 
     std::set <Point2D <double>> set;

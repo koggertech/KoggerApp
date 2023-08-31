@@ -43,7 +43,7 @@ public:
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other) override;
 
-    virtual void draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) override;
+    virtual void draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const override;
 
     virtual SceneObjectType type() const override;
 
@@ -73,11 +73,11 @@ private:
 
     void makeContourFromQuads();
 
-    void drawSurface(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram);
+    void drawSurface(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram) const;
 
-    void drawContour(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram);
+    void drawContour(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram) const;
 
-    void drawGrid(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram);
+    void drawGrid(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram) const;
 
 signals:
 

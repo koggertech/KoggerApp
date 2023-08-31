@@ -12,6 +12,8 @@ class SceneController
 public:
     SceneController();
 
+    virtual ~SceneController();
+
     void cursorPosChanged(const QVector3D& pos,
                           const QMatrix4x4& view,
                           const QMatrix4x4& model,

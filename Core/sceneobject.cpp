@@ -14,7 +14,7 @@ SceneObject::SceneObject(QString name, QObject *parent)
 SceneObject::~SceneObject()
 {}
 
-void SceneObject::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,  QMap <QString, QOpenGLShaderProgram*> shaderProgramMap)
+void SceneObject::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,  QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const
 {
     Q_UNUSED(ctx)
     Q_UNUSED(mvp)

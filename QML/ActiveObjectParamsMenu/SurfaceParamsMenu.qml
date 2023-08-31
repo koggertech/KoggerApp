@@ -4,6 +4,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 import KoggerCommon 1.0
+import SceneObject 1.0
 
 Item {
     id: root
@@ -30,7 +31,7 @@ Item {
     }
 
     function initSourceBottomTrackParams(){
-        var bottomTrackIndex = SceneObjectListModel.objectIndex(activeObject.bottomTrackId);
+        var bottomTrackIndex = SceneObjectListModel.objectIndex(activeObject.bottomTrackId, SceneObject.BottomTrack);
 
         messageItem.visible = bottomTrackIndex === -1
 
@@ -134,12 +135,12 @@ Item {
                 KCombo {
                     id:               surfaceSourceCombo
                     Layout.fillWidth: true
-                    model:            SceneObjectListModel.names("Bottom track")
+                    model:            SceneObjectListModel.names(SceneObject.BottomTrack)
 
                     Connections {
                         target:         SceneObjectListModel
                         onCountChanged: {
-                            surfaceSourceCombo.model = SceneObjectListModel.names("Bottom track")
+                            surfaceSourceCombo.model = SceneObjectListModel.names(SceneObject.BottomTrack)
 
                             //initSourceBottomTrackParams()
                         }

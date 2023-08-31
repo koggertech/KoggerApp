@@ -26,16 +26,16 @@ QVariant SceneObjectsListModel::data(const QModelIndex &index, int role) const
 
     switch(role){
         case NameRole: return object->name();
-        case TypeRole: return object->type();
-        case IdRole: return object->id();
+        case TypeRole: return QVariant::fromValue <SceneObject::SceneObjectType>(object->type());
+        case IdRole:   return object->id();
     }
 
     return QVariant();
 }
 
-QList<std::shared_ptr<VertexObject> > SceneObjectsListModel::data() const
+QList<std::shared_ptr<SceneObject> > SceneObjectsListModel::data() const
 {
-    QList <std::shared_ptr <VertexObject>> objects;
+    QList <std::shared_ptr <SceneObject>> objects;
 
     auto it = mData.begin();
 
@@ -48,7 +48,7 @@ QList<std::shared_ptr<VertexObject> > SceneObjectsListModel::data() const
     return objects;
 }
 
-void SceneObjectsListModel::insert(int index, const std::shared_ptr<VertexObject> object)
+void SceneObjectsListModel::insert(int index, const std::shared_ptr<SceneObject> object)
 {
     if (index < 0 || index > mData.count())
         return;
@@ -62,7 +62,7 @@ void SceneObjectsListModel::insert(int index, const std::shared_ptr<VertexObject
     Q_EMIT countChanged(mData.count());
 }
 
-void SceneObjectsListModel::append(const std::shared_ptr<VertexObject> object)
+void SceneObjectsListModel::append(const std::shared_ptr<SceneObject> object)
 {
     insert(count(), object);
 }
@@ -123,7 +123,7 @@ int SceneObjectsListModel::objectIndex(QString id, SceneObject::SceneObjectType 
     return -1;
 }
 
-std::shared_ptr<VertexObject> SceneObjectsListModel::get(QString id) const
+std::shared_ptr<SceneObject> SceneObjectsListModel::get(QString id) const
 {
     for(const auto& object : mData){
         if(object->id() == id)
@@ -133,7 +133,7 @@ std::shared_ptr<VertexObject> SceneObjectsListModel::get(QString id) const
     return nullptr;
 }
 
-std::shared_ptr<VertexObject> SceneObjectsListModel::get(int index) const
+std::shared_ptr<SceneObject> SceneObjectsListModel::get(int index) const
 {
     if (index < 0 || index >= mData.count())
         return nullptr;
@@ -141,7 +141,7 @@ std::shared_ptr<VertexObject> SceneObjectsListModel::get(int index) const
     return mData.at(index);
 }
 
-void SceneObjectsListModel::replace(int index, std::shared_ptr<VertexObject> object)
+void SceneObjectsListModel::replace(int index, std::shared_ptr<SceneObject> object)
 {
     if (index < 0 || index >= mData.count())
         return;
@@ -162,9 +162,9 @@ void SceneObjectsListModel::replace(int index, std::shared_ptr<VertexObject> obj
 
 }
 
-QList <std::shared_ptr<VertexObject> > SceneObjectsListModel::dataByType(SceneObject::SceneObjectType type) const
+QList <std::shared_ptr<SceneObject> > SceneObjectsListModel::dataByType(SceneObject::SceneObjectType type) const
 {
-    QList <std::shared_ptr <VertexObject>> data;
+    QList <std::shared_ptr <SceneObject>> data;
 
     auto it = mData.begin();
 

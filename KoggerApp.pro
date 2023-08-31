@@ -50,6 +50,7 @@ SOURCES += \
         core.cpp \
 #        coreFlash.cpp \
         filelist.cpp \
+    graphicsscene3d.cpp \
     interpolatorbase.cpp \
         logger.cpp \
         main.cpp \
@@ -103,6 +104,7 @@ HEADERS += \
     filelist.h \
     flasher.h \
     core.h \
+    graphicsscene3d.h \
     interpolatorbase.h \
     logger.h \
     maxpointsfilter.h \

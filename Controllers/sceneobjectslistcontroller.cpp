@@ -2,7 +2,9 @@
 
 #include <bottomtrack.h>
 #include <surface.h>
-#include <pointset.h>
+#include <polygonobject.h>
+#include <polygongroup.h>
+#include <pointgroup.h>
 
 SceneObjectsListController::SceneObjectsListController(
         std::shared_ptr <ActiveObjectProvider> selectedObjectModel,
@@ -15,19 +17,31 @@ SceneObjectsListController::SceneObjectsListController(
 , mpBottomTrackProvider(bottomTrackProvider)
 {}
 
+SceneObjectsListController::~SceneObjectsListController()
+{
+
+}
+
 void SceneObjectsListController::addObject(QString name, SceneObject::SceneObjectType type)
 {
-    std::shared_ptr <VertexObject> object;
+    std::shared_ptr <SceneObject> object;
 
     if(type == SceneObject::SceneObjectType::BottomTrack){
         object = std::make_shared <BottomTrack>();
-        object->setData(
-                    mpBottomTrackProvider->getBottomTrack()
-                );
+
+        auto bottomTrack = qobject_cast <BottomTrack*>(object.get());
+
+        if(bottomTrack){
+            bottomTrack->setData(
+                            mpBottomTrackProvider->getBottomTrack()
+                        );
+        }
     }else if (type == SceneObject::SceneObjectType::Surface){
         object = std::make_shared <Surface>();
-    }else if(type == SceneObject::SceneObjectType::PointSet){
-        object = std::make_shared <PointSet>();
+    }else if (type == SceneObject::SceneObjectType::PolygonGroup){
+        object = std::make_shared <PolygonGroup>();
+    }else if (type == SceneObject::SceneObjectType::PointGroup){
+        object = std::make_shared <PointGroup>();
     }else{
         return;
     }

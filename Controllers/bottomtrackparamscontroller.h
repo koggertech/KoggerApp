@@ -13,6 +13,8 @@ class BottomTrackParamsController : public QObject
 public:
     BottomTrackParamsController() = delete;
 
+    virtual ~BottomTrackParamsController();
+
     BottomTrackParamsController(
             std::shared_ptr <ActiveObjectProvider> selectedObjectModel,
             std::shared_ptr <BottomTrackProvider> bottomTrackProvider,
@@ -20,8 +22,6 @@ public:
         );
 
     Q_INVOKABLE void changeBottomTrackVisibility(bool visible);
-
-    Q_INVOKABLE void changeBottomTrackFilter(QString filterType);
 
     Q_INVOKABLE void changeBottomTrackFilter(int type);
 

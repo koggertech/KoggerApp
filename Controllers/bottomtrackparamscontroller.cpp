@@ -16,24 +16,25 @@ BottomTrackParamsController::BottomTrackParamsController(
 , mpBottomTrackProvider(bottomTrackProvider)
 {}
 
+BottomTrackParamsController::~BottomTrackParamsController()
+{
+
+}
+
 void BottomTrackParamsController::changeBottomTrackVisibility(bool visible)
 {
     auto object = mpActiveObjectProvider->activeObject();
 
-    auto bottomTrack = dynamic_cast <BottomTrack*>(object.get());
+    auto bottomTrack = qobject_cast <BottomTrack*>(object.get());
 
     bottomTrack->setVisible(visible);
-}
-
-void BottomTrackParamsController::changeBottomTrackFilter(QString filterType)
-{
 }
 
 void BottomTrackParamsController::changeBottomTrackFilter(int filterType)
 {
     auto activeObject = mpActiveObjectProvider->activeObject();
 
-    auto bottomTrack = dynamic_cast <BottomTrack*> (activeObject.get());
+    auto bottomTrack = qobject_cast <BottomTrack*> (activeObject.get());
 
     if (!bottomTrack)
         return;
