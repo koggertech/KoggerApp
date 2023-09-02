@@ -155,9 +155,6 @@ void GraphicsScene3d::draw()
     glFrontFace(GL_CW);
     glEnable(GL_DEPTH_TEST);
 
-    //view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-
     qreal sphereRadius = -500;
 
     QVector3D cameraTarget(0.0f, 0.0f, 0.0f);
@@ -173,12 +170,6 @@ void GraphicsScene3d::draw()
                     -sinf(m_pitch),
                     cosf(m_pitch)*sinf(-m_yaw)
                 );
-
-    //QVector3D cameraPosition(0.0f, 0.0f, 163.0f);
-
-    //QVector3D cameraDirection = (cameraPosition-cameraTarget).normalized();
-    //QVector3D cameraRight = QVector3D::crossProduct({0.0f, 1.0f, 0.0f}, cameraDirection);
-    //QVector3D cameraUp    = QVector3D::crossProduct(cameraDirection, //);
 
     QMatrix4x4 model, view, projection;
 
