@@ -196,43 +196,6 @@ void GraphicsScene3d::draw()
 
 void GraphicsScene3d::drawObjects()
 {
-    //for(const auto& object : m_objectList)
-    //    object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
-
-    if(!m_shaderProgramMap.contains("static"))
-        return;
-
-    auto shaderProgram = m_shaderProgramMap["static"];
-
-    if (!shaderProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc    = shaderProgram->attributeLocation("position");
-    int matrixLoc = shaderProgram->uniformLocation("matrix");
-    int colorLoc  = shaderProgram->uniformLocation("color");
-
-    QVector4D color(1.0f, 1.0f, 0.0f, 0.0f);
-
-    QVector <QVector3D> data{
-        {0.0f, 2.0f, 12.0f},
-        {10.0f, 2.0f, 12.0f},
-        {18.0f, 12.0f, 22.0f},
-        {15.0f, 62.0f, 12.0f},
-    };
-
-    //qDebug() << "p: " << m_projection <<", v: " << m_view << ", m: " << m_model;
-
-    shaderProgram->setUniformValue(colorLoc, color);
-    shaderProgram->setUniformValue(matrixLoc, m_projection * m_view * m_model);
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, data.constData());
-
-    glDrawArrays(GL_POLYGON, 0, data.size());
-
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
-
-    qDebug() << "Rendering...";
+    for(const auto& object : m_objectList)
+        object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
 }
