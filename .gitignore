@@ -4,4 +4,5 @@ android*
 qtandroidserialport
 android.cpp
 android.h
+coreFlash.cpp
 *.user

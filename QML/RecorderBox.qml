@@ -54,14 +54,6 @@ DevSettingsBox {
                     id: wrapper
                     width: filesList.width; height: 28
 
-//                    Rectangle {
-//                        anchors.fill: parent
-//                        color: "transparent"
-//                        border.width: 1
-//                        border.color: theme.controlBorderColor
-
-//                    }
-
                     RowLayout {
                         id: rowItem
                         spacing: 0
@@ -69,7 +61,7 @@ DevSettingsBox {
 //                        margins: 4
                         CTextField {
                             text: "#" + id
-                            implicitWidth: 80
+                            implicitWidth: 70
                             background:  Rectangle {
                                 color: recordState === 3 ? "red" : "transparent"
                                 border.width: 1

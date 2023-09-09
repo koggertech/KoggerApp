@@ -36,6 +36,7 @@ signals:
 
 protected slots:
     void timerUpdater();
+    void dataUpdate() { plotUpdate(); }
 
 public slots:
     void updater();

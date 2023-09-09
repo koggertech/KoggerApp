@@ -18,6 +18,10 @@ typedef struct DatasetCursor {
     int channel1 = CHANNEL_NONE;
     int channel2 = CHANNEL_NONE;
 
+    bool isChannelDoubled() {
+        return (CHANNEL_NONE == channel1 && CHANNEL_NONE == channel2);
+    }
+
     std::vector<int> indexes;
 
     inline int getIndex(int col) {
@@ -27,7 +31,8 @@ typedef struct DatasetCursor {
         return -1;
     }
 
-    float position = 0;
+    float position = 1;
+    int last_dataset_size = 0;
 
     struct {
         float from = NAN;
@@ -142,7 +147,7 @@ public:
     }
 
 
-    void drawLineY(QVector<float> y, PlotPen pen) {
+    void drawY(QVector<float> y, PlotPen pen) {
         QPen qpen;
         qpen.setWidth(pen.width);
         qpen.setColor(QColor(pen.color.r, pen.color.g, pen.color.b, pen.color.a));
@@ -152,12 +157,24 @@ public:
         p.setPen(qpen);
 
 
-        QVector<QLineF> lines(y.size()-1);
-        for(int i = 0; i < lines.size(); i++) {
-            lines[i] = QLineF(i, y[i], i+1, y[i+1]);
+
+
+        if(pen.lineStyle == PlotPen::LineStyleSolid) {
+            QVector<QLineF> lines(y.size()-1);
+            for(int i = 0; i < lines.size(); i++) {
+                lines[i] = QLineF(i, y[i], i+1, y[i+1]);
+            }
+           p.drawLines(lines);
         }
 
-        p.drawLines(lines);
+        if(pen.lineStyle == PlotPen::LineStylePoint) {
+            QVector<QPointF> lines(y.size());
+            for(int i = 0; i < lines.size(); i++) {
+                lines[i] = QPointF(i, y[i]);
+            }
+           p.drawPoints(lines);
+        }
+
     }
 
     uint16_t* data() {
@@ -244,7 +261,7 @@ public:
     Plot2DLine() {}
 
 protected:
-    bool drawLineY(Canvas& canvas, QVector<float> data, float value_from, float value_to, PlotPen pen) {
+    bool drawY(Canvas& canvas, QVector<float> data, float value_from, float value_to, PlotPen pen) {
         if(canvas.width() != data.size()) { return false; }
 
         QVector<float> data_maped(data.size());
@@ -260,7 +277,7 @@ protected:
             data_maped[i] = y;
         }
 
-        canvas.drawLineY(data_maped, pen);
+        canvas.drawY(data_maped, pen);
 
         return true;
     }
@@ -274,23 +291,43 @@ public:
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
         if(!isVisible() || !cursor.velocity.isValid()) { return false; }
 
-        QVector<float> beam(canvas.width());
+        QVector<float> beam_velocity(canvas.width());
+        beam_velocity.fill(NAN);
+        QVector<float> beam_amp(canvas.width());
+        beam_amp.fill(NAN);
+        QVector<float> beam_mode(canvas.width());
+        beam_mode.fill(NAN);
+        QVector<float> beam_coh(canvas.width());
+        beam_coh.fill(NAN);
+        QVector<float> beam_dist(canvas.width());
+        beam_dist.fill(NAN);
 
         for(int ibeam = 0; ibeam < 4; ibeam++) {
+            if(((_beamFilter >> ibeam)&1) == 0) { continue; }
 
             for(int i = 0; i < canvas.width(); i++) {
                 int pool_index = cursor.getIndex(i);
                 Epoch* data = dataset->fromIndex(pool_index);
 
-                if(data != NULL && data->isDopplerBeamAvail(ibeam)) {
-                    beam[i] = data->dopplerBeam(ibeam).velocity;
-                } else {
-                    beam[i] = NAN;
+                if(data != NULL &&  data->isDopplerBeamAvail(ibeam)) {
+                    IDBinDVL::BeamSolution beam = data->dopplerBeam(ibeam);
+                    beam_velocity[i] = beam.velocity;
+                    beam_amp[i] = beam.amplitude*0.1f;
+                    beam_mode[i] = (beam.mode*6+ibeam)*2;
+                    beam_coh[i] = beam.coherence[0];
+                    beam_dist[i] = beam.distance;
                 }
             }
 
-            drawLineY(canvas, beam, cursor.velocity.from, cursor.velocity.to, _penBeam[ibeam]);
+
+            drawY(canvas, beam_velocity, cursor.velocity.from, cursor.velocity.to, _penBeam[ibeam]);
+//            drawY(canvas, beam_amp, 0, 100, _penAmp[ibeam]);
+            drawY(canvas, beam_coh, 0, 1000, _penAmp[ibeam]);
+            drawY(canvas, beam_mode, canvas.height(), 0, _penMode[ibeam]);
+            drawY(canvas, beam_dist, cursor.distance.from, cursor.distance.to, _penAmp[ibeam]);
         }
+
+
         return true;
     }
 
@@ -298,10 +335,23 @@ public:
 
 protected:
     int _beamFilter = 15;
-    PlotPen _penBeam[4] = {PlotPen(PlotColor(255, 0, 150), 2, PlotPen::LineStyleSolid),
-    PlotPen(PlotColor(0, 155, 255), 2, PlotPen::LineStyleSolid),
-    PlotPen(PlotColor(255, 175, 0), 2, PlotPen::LineStyleSolid),
-    PlotPen(PlotColor(75, 205, 55), 2, PlotPen::LineStyleSolid)};
+    PlotPen _penBeam[4] = {
+        PlotPen(PlotColor(255, 0, 150), 2, PlotPen::LineStyleSolid),
+        PlotPen(PlotColor(0, 155, 255), 2, PlotPen::LineStyleSolid),
+        PlotPen(PlotColor(255, 175, 0), 2, PlotPen::LineStyleSolid),
+        PlotPen(PlotColor(75, 205, 55), 2, PlotPen::LineStyleSolid)};
+
+    PlotPen _penMode[4] = {
+        PlotPen(PlotColor(255, 0, 150), 2, PlotPen::LineStylePoint),
+        PlotPen(PlotColor(0, 155, 255), 2, PlotPen::LineStylePoint),
+        PlotPen(PlotColor(255, 175, 0), 2, PlotPen::LineStylePoint),
+        PlotPen(PlotColor(75, 205, 55), 2, PlotPen::LineStylePoint)};
+
+    PlotPen _penAmp[4] = {
+        PlotPen(PlotColor(255, 0, 150), 2, PlotPen::LineStyleSolid),
+        PlotPen(PlotColor(0, 155, 255), 2, PlotPen::LineStyleSolid),
+        PlotPen(PlotColor(255, 175, 0), 2, PlotPen::LineStyleSolid),
+        PlotPen(PlotColor(75, 205, 55), 2, PlotPen::LineStyleSolid)};
 };
 
 class Plot2DAttitude : public Plot2DLine {
@@ -332,9 +382,9 @@ public:
             }
         }
 
-        drawLineY(canvas, yaw, cursor.attitude.from, cursor.attitude.to, _penYaw);
-        drawLineY(canvas, pitch, cursor.attitude.from, cursor.attitude.to, _penPitch);
-        drawLineY(canvas, roll, cursor.attitude.from, cursor.attitude.to, _penRoll);
+        drawY(canvas, yaw, cursor.attitude.from, cursor.attitude.to, _penYaw);
+        drawY(canvas, pitch, cursor.attitude.from, cursor.attitude.to, _penPitch);
+        drawY(canvas, roll, cursor.attitude.from, cursor.attitude.to, _penRoll);
 
         return true;
     }
@@ -378,9 +428,9 @@ public:
             }
         }
 
-        drawLineY(canvas, distance1, cursor.distance.from, cursor.distance.to, _penLine);
+        drawY(canvas, distance1, cursor.distance.from, cursor.distance.to, _penLine);
         if(cursor.channel2 != CHANNEL_NONE) {
-            drawLineY(canvas, distance2, cursor.distance.from, cursor.distance.to, _penLine2);
+            drawY(canvas, distance2, cursor.distance.from, cursor.distance.to, _penLine2);
         }
 
         return true;
@@ -483,6 +533,7 @@ protected:
     Canvas image(int width, int height);
 
     void reindexingCursor();
+    void reRangeDistance();
 };
 
 

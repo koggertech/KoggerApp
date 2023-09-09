@@ -61,8 +61,8 @@ public:
                     pos.lla.longitude = 0;
                 }
 
-                if(pos.time.unix > 0) {
-                    fix_timetag_ms = (pos.time.unix*1e9 + pos.time.nanoSec)/1e6;
+                if(pos.time.sec > 0) {
+                    fix_timetag_ms = (pos.time.sec*1e9 + pos.time.nanoSec)/1e6;
                 }
 
                 pingheader.ShipYcoordinate = pos.lla.latitude;

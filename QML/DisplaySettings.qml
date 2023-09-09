@@ -325,7 +325,7 @@ GridLayout {
                 SpinBoxCustom {
                     id: velocityRange
                     from: 500
-                    to: 1000*4
+                    to: 1000*8
                     stepSize: 500
                     value: 5
 

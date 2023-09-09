@@ -19,6 +19,7 @@ QImage Plot2D::getImage(int width, int height) {
     _canvas.setSize(width, height);
     _canvas.clear();
     reindexingCursor();
+//    reRangeDistance();
 
     _echogram.draw(_canvas, _dataset, _cursor);
     _attitude.draw(_canvas, _dataset, _cursor);
@@ -180,11 +181,24 @@ void Plot2D::scrollDistance(float ratio)    {
     float to = _cursor.distance.to;
     float absrange = abs(to - from);
 
-    float delta_offset = (float)absrange*(float)ratio*0.001f;
+    float delta_offset = ((float)absrange*(float)ratio*0.001f);
 
     if(from < to) {
-        _cursor.distance.from = (from + delta_offset);
-        _cursor.distance.to = (to + delta_offset);
+        float round_cef = 10.0f;
+
+        float from_n = (round((from + delta_offset)*round_cef)/round_cef);
+        float to_n = (round((to + delta_offset)*round_cef)/round_cef);
+
+        if(!_cursor.isChannelDoubled()) {
+            if(from_n < 0) {
+                to_n -= from_n;
+                from_n = 0;
+            }
+        }
+
+        _cursor.distance.from = from_n;
+        _cursor.distance.to = to_n;
+
     } else if(from > to) {
         _cursor.distance.from = (from - delta_offset);
         _cursor.distance.to = (to - delta_offset);
@@ -298,24 +312,59 @@ void Plot2D::resetCash() {
 void Plot2D::reindexingCursor() {
     if(_dataset == nullptr) { return; }
 
-    int image_width = _canvas.width();
-    int data_width = _dataset->size();
+    const int image_width = _canvas.width();
+    const int data_width = _dataset->size();
+    const int last_indexes_size = _cursor.indexes.size();
 
-    if(image_width > data_width) {
-        image_width = data_width;
+    if(image_width != last_indexes_size) {
+        _cursor.indexes.resize(image_width);
     }
 
-    float hor_ration = 1.0f;
+    if(_cursor.last_dataset_size > 0) {
+        float position = timelinePosition();
 
-    int data_offset = (int)(_cursor.position*(double)(data_width - image_width*hor_ration));
+        float last_head = round(position*_cursor.last_dataset_size);
+        float last_offset_head = float(_cursor.last_dataset_size) - last_head;
+        float new_head = data_width - last_offset_head;
 
-    _cursor.indexes.resize(image_width);
+        position = float(new_head)/float(data_width);
+
+        setTimelinePosition(position);
+    }
+    _cursor.last_dataset_size = data_width;
+
+    float hor_ratio = 1.0f;
+
+    float position = timelinePosition();
+
+    int head_data_index = round(position*float(data_width));
 
     for(int i = 0; i < image_width; i++) {
-        if(data_offset > 0 || data_offset < data_width) {
-            _cursor.indexes[i] = data_offset + i*hor_ration;
+        int data_index = head_data_index + round((i - image_width)/hor_ratio) - 1;
+        if(data_index >= 0 && data_index < data_width) {
+             _cursor.indexes[i] = data_index;
         } else {
-            _cursor.indexes[i] = -1;
+             _cursor.indexes[i] = -1;
         }
+    }
+}
+
+void Plot2D::reRangeDistance() {
+    if(_dataset == NULL) { return; }
+    float max_range = NAN;
+
+    for(int i = 0; i < _cursor.indexes.size(); i++) {
+        Epoch* epoch = _dataset->fromIndex(_cursor.getIndex(i));
+        if(epoch != NULL) {
+            float epoch_range = epoch->getMaxRnage(_cursor.channel1);
+            if(!isfinite(max_range) || max_range < epoch_range) {
+                max_range = epoch_range;
+            }
+        }
+    }
+
+    if(isfinite(max_range)) {
+        _cursor.distance.from = 0;
+        _cursor.distance.to = max_range;
     }
 }

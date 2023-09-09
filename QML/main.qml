@@ -261,24 +261,24 @@ Window  {
         }
     }
 
-//    Rectangle {
-//        anchors.top: parent
-//        width: fcTextBatt.width
-//        height: 30
-//        x: parent.width/2-width/2
-//        color: "#222222"
-//        opacity: 1
-//        border.color: "#AAAAAA"
-//        border.width: 1
+    Rectangle {
+        visible: isFinite(devs.vruVoltage)
+        anchors.top: parent
+        width: fcTextBatt.width
+        height: 30
+        x: parent.width/2-width/2
+        color: "#222222"
+        opacity: 1
+        border.color: "#AAAAAA"
+        border.width: 1
 
-//        CText {
-//            id: fcTextBatt
-////            anchors.fill: parent
-//            rightPadding: 20
-//            leftPadding: 20
-//            text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
-//        }
-//    }
+        CText {
+            id: fcTextBatt
+            rightPadding: 20
+            leftPadding: 20
+            text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
+        }
+    }
 
     MenuBar {
         id: menuBar

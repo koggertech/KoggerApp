@@ -13,8 +13,7 @@ Connection::Connection():
     _socketTCP(new QTcpSocket(this)),
     _timerReconnection(new QTimer())
 {
-    m_serial->moveToThread(&workerThread);
-    connect(&workerThread, &QThread::finished, m_serial, &QObject::deleteLater);
+
 
     connect(m_serial, &QSerialPort::aboutToClose, this, &Connection::closing);
 #if defined(Q_OS_ANDROID)
@@ -25,7 +24,9 @@ Connection::Connection():
 
     connect(m_serial, &QSerialPort::readyRead, this, &Connection::readyReadSerial, Qt::QueuedConnection);
 
-    workerThread.start();
+//    m_serial->moveToThread(&workerThread);
+//    connect(&workerThread, &QThread::finished, m_serial, &QObject::deleteLater);
+//    workerThread.start();
 
     connect(_socketUDP, &QAbstractSocket::aboutToClose, this, &Connection::closing);
     connect(_socketUDP, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);

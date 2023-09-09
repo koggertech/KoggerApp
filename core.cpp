@@ -628,7 +628,7 @@ bool Core::openCSV(QString name, int separator_type, QString time_format, int fi
             if(time.isValid()) {
                 time.setTimeSpec(Qt::UTC);
                 int64_t unix_msec = time.toMSecsSinceEpoch();
-                track.last().time.unix = unix_msec/1000;
+                track.last().time.sec = unix_msec/1000;
                 track.last().time.nanoSec = (unix_msec%1000)*1e6;
             }
         }

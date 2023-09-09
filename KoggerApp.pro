@@ -3,6 +3,8 @@ QT += widgets
 QT += network
 QT += qml
 
+CONFIG += FLASHER
+
 windows {
     QT += serialport
 }
@@ -50,7 +52,6 @@ SOURCES += \
         console.cpp \
         consolelistmodel.cpp \
         core.cpp \
-#        coreFlash.cpp \
         filelist.cpp \
     interpolatorbase.cpp \
         logger.cpp \
@@ -60,6 +61,10 @@ SOURCES += \
         streamlist.cpp \
         waterfall.cpp \
 
+FLASHER {
+DEFINES += FLASHER
+SOURCES += coreFlash.cpp
+}
 
 android {
 SOURCES += \

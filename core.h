@@ -38,6 +38,8 @@ class Core : public QObject
 public:
     explicit Core();
 
+    Q_PROPERTY(bool isFactoryMode READ isFactoryMode)
+
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
 
     Q_PROPERTY(bool logging WRITE setLogging)
@@ -206,6 +208,15 @@ protected:
     int backupBaudrate = 115200;
     void restoreBaudrate();
     void setUpgradeBaudrate();
+
+
+    bool isFactoryMode() {
+#ifdef FLASHER
+        return true;
+#else
+        return false;
+#endif
+    }
 };
 
 #endif // CORE_H

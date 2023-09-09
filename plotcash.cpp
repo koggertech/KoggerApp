@@ -62,7 +62,7 @@ void Epoch::setDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 }
 
 void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_time, int32_t nanosec) {
-    _positionGNSS.time.unix = unix_time;
+    _positionGNSS.time.sec = unix_time;
     _positionGNSS.time.nanoSec = nanosec;
     _positionGNSS.lla.latitude = lat;
     _positionGNSS.lla.longitude = lon;
@@ -165,6 +165,7 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
     //    }
 
     _pool[endIndex()].setEvent(timestamp, id, unixt);
+    emit dataUpdate();
 }
 
 void Dataset::addEncoder(float encoder) {
@@ -174,6 +175,7 @@ void Dataset::addEncoder(float encoder) {
     }
     //    poolAppend();
     _pool[endIndex()].setEncoder(_lastEncoder);
+    emit dataUpdate();
 }
 
 void Dataset::addTimestamp(int timestamp) {
@@ -194,6 +196,7 @@ void Dataset::addChart(int16_t channel, QVector<int16_t> data, float resolution,
     _pool[endIndex()].setChart(channel, data, resolution, offset);
 
     validateChannelList(channel);
+    emit dataUpdate();
 }
 
 void Dataset::addIQ(QByteArray data, uint8_t type) {
@@ -206,6 +209,7 @@ void Dataset::addIQ(QByteArray data, uint8_t type) {
 
     _pool[endIndex()].setIQ(data, type);
     //    updateImage(true);
+    emit dataUpdate();
 }
 
 void Dataset::addDist(int dist) {
@@ -216,6 +220,7 @@ void Dataset::addDist(int dist) {
     }
 
     _pool[endIndex()].setDist(dist);
+    emit dataUpdate();
 }
 
 void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
@@ -225,6 +230,7 @@ void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
     pool_index = endIndex();
 
     _pool[endIndex()].setDopplerBeam(beams, cnt);
+    emit dataUpdate();
 }
 
 void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
@@ -236,6 +242,7 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
     }
 
     _pool[endIndex()].setDVLSolution(dvlSolution);
+    emit dataUpdate();
 }
 
 void Dataset::addAtt(float yaw, float pitch, float roll) {
@@ -248,6 +255,7 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     _lastYaw = yaw;
     _lastPitch = pitch;
     _lastRoll = roll;
+    emit dataUpdate();
 }
 
 void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec) {
@@ -259,6 +267,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     }
 
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
+    emit dataUpdate();
 }
 
 void Dataset::addTemp(float temp_c) {
@@ -271,6 +280,7 @@ void Dataset::addTemp(float temp_c) {
         pool_index = endIndex();
     }
     _pool[pool_index].setTemp(temp_c);
+    emit dataUpdate();
 }
 
 void Dataset::mergeGnssTrack(QList<Position> track) {
@@ -282,13 +292,13 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
     for(int iepoch = 0; iepoch < psize; iepoch++) {
         Epoch* epoch =  fromIndex(iepoch);
         Position p_internal = epoch->getPositionGNSS();
-        int64_t internal_ns  = p_internal.time.unix*1e9+p_internal.time.nanoSec;
+        int64_t internal_ns  = p_internal.time.sec*1e9+p_internal.time.nanoSec;
 
         if(internal_ns > 0) {
             int64_t min_dif_ns = max_difference_ns;
             int min_ind = -1;
             for(int track_pos = track_pos_save; track_pos < tsize;track_pos++) {
-                int64_t track_ns  = track[track_pos].time.unix*1e9+track[track_pos].time.nanoSec;
+                int64_t track_ns  = track[track_pos].time.sec*1e9+track[track_pos].time.nanoSec;
                 if(track_ns > 0) {
                     int64_t dif_ns = track_ns - internal_ns;
                     if(min_dif_ns > abs(dif_ns)) {
@@ -306,6 +316,7 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
             }
         }
     }
+    emit dataUpdate();
 }
 
 
@@ -316,6 +327,7 @@ void Dataset::resetDataset() {
     resetDistProcessing();
 
     clearTrack();
+    emit dataUpdate();
 }
 
 void Dataset::resetDistProcessing() {
@@ -563,6 +575,8 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
 
     updateTrack(true);
     updateRender3D();
+
+    emit dataUpdate();
 }
 
 void Dataset::spatialProcessing() {
@@ -603,11 +617,14 @@ void Dataset::spatialProcessing() {
             }
         }
     }
+
+    emit dataUpdate();
 }
 
 void Dataset::clearTrack() {
     _lastTrackEpoch = 0;
     _bottomTrack.clear();
+    emit dataUpdate();
 }
 
 void Dataset::updateTrack(bool update_all) {

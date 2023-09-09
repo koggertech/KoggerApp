@@ -17,11 +17,12 @@ MenuScroll {
             Layout.preferredWidth: parent.width
         }
 
-//        FactoryBox {
-//            dev: devConnection.dev
-//            Layout.fillWidth: true
-//            Layout.preferredWidth: parent.width
-//        }
+        FactoryBox {
+            dev: devConnection.dev
+            visible: core.isFactoryMode
+            Layout.fillWidth: true
+            Layout.preferredWidth: parent.width
+        }
 
         SonarBox {
             dev: devConnection.dev
@@ -30,7 +31,6 @@ MenuScroll {
         }
 
         DopplerBox {
-//            dev: devConnection.dev
             dev: devConnection.dev
             Layout.fillWidth: true
             Layout.preferredWidth: parent.width

@@ -10,10 +10,6 @@
 #include <QStringListModel>
 #include <QUdpSocket>
 
-#ifdef FLASHER
-#include <flasher.h>
-#endif
-
 class Device : public QObject {
     Q_OBJECT
 public:
@@ -27,6 +23,9 @@ public:
     Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
     Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
     Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
+
+
+
 
     float vruVoltage() { return _vru.voltage; }
     float vruCurrent() { return _vru.current; }

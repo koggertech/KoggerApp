@@ -15,6 +15,16 @@
 
 #include "time.h"
 
+#if defined(Q_OS_ANDROID)
+#define MAKETIME(t) mktime(t)
+#define GMTIME(t) gmtime(t)
+#else
+#define MAKETIME(t) _mkgmtime64(t)
+#define GMTIME(t) _gmtime64(&sec);
+
+#endif
+
+
 #define CONSTANTS_RADIUS_OF_EARTH			6371000			/* meters (m)		*/
 #define M_TWOPI_F 6.28318530717958647692f
 #define M_PI_2_F  1.57079632679489661923f
@@ -93,13 +103,13 @@ typedef struct XYZ {
 } XYZ;
 
 typedef struct DateTime{
-    time_t unix = 0;
+    time_t sec = 0;
     int nanoSec = 0;
 
     DateTime() {}
 
     DateTime(int64_t unix_sec, int32_t nonosec = 0) {
-        unix = unix_sec;
+        sec = unix_sec;
         nanoSec = nonosec;
     }
 
@@ -112,12 +122,12 @@ typedef struct DateTime{
         t.tm_min = min;
         t.tm_sec = sec;
 
-        unix = _mkgmtime64(&t);
+        sec = MAKETIME(&t);
         nanoSec = nanosec;
     }
 
     tm getDateTime() {
-        return *_gmtime64(&unix);
+        return *GMTIME(&sec);
     }
 
     int32_t get_us_frac() {
@@ -353,6 +363,16 @@ public:
         return full_range;
     }
 
+    float getMaxRnage(int16_t channel = -1) {
+        float range = NAN;
+
+        if(_charts.contains(channel)) {
+            range = _charts[channel].range();
+        }
+
+        return range;
+    }
+
     QByteArray iqData() { return _iq;}
     bool isIqAvail() { return flags.iqAvail; }
 
@@ -395,7 +415,7 @@ public:
     Position getPositionGNSS() { return _positionGNSS; }
     Position getExternalPosition() { return _positionExternal; }
 
-    uint32_t positionTimeUnix() { return _positionGNSS.time.unix; }
+    uint32_t positionTimeUnix() { return _positionGNSS.time.sec; }
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
 
     double relPosN() { return _positionGNSS.ned.n; }
@@ -491,6 +511,9 @@ public:
 
         return true;
     }
+
+
+
 
 protected:
 
@@ -644,6 +667,7 @@ private:
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
+    void dataUpdate();
 
 protected:
     int lastEventTimestamp = 0;

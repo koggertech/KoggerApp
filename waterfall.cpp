@@ -26,10 +26,11 @@ void qPlot2D::paint(QPainter *painter){
     }
 }
 
-void qPlot2D::setPlot(Dataset *plot) {
-    if(plot == nullptr) { return; }
-    m_plot = plot;
-    setDataset(plot);
+void qPlot2D::setPlot(Dataset *dataset) {
+    if(dataset == nullptr) { return; }
+    m_plot = dataset;
+    setDataset(dataset);
+    connect(dataset, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate);
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
 }
 
