@@ -51,6 +51,7 @@ SOURCES += \
 #        coreFlash.cpp \
         filelist.cpp \
     graphicsscene3d.cpp \
+    graphicsscene3dview.cpp \
     interpolatorbase.cpp \
         logger.cpp \
         main.cpp \
@@ -96,7 +97,7 @@ HEADERS += \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
-    abstractbottomtrackfilter.h \
+    abstractentitydatafilter.h \
     bottomtrackprovider.h \
     connection.h \
     console.h \
@@ -105,6 +106,7 @@ HEADERS += \
     flasher.h \
     core.h \
     graphicsscene3d.h \
+    graphicsscene3dview.h \
     interpolatorbase.h \
     logger.h \
     maxpointsfilter.h \
