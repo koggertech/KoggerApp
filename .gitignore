@@ -5,3 +5,4 @@ qtandroidserialport
 android.cpp
 android.h
 *.user
+*.bkp
