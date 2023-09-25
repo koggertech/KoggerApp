@@ -1,38 +1,38 @@
 #include "maxpointsfilter.h"
+#include <QDebug>
 
 MaxPointsFilter::MaxPointsFilter(QObject *parent)
-    : AbstractBottomTrackFilter(parent)
-{
+: AbstractEntityDataFilter(parent)
+{}
 
-}
+MaxPointsFilter::~MaxPointsFilter()
+{}
 
-AbstractBottomTrackFilter::FilterType MaxPointsFilter::type() const
+AbstractEntityDataFilter::FilterType MaxPointsFilter::type() const
 {
     return FilterType::MaxPointsCount;
 }
 
 int MaxPointsFilter::maxPointsCount() const
 {
-    return mMaxPointsCount;
+    return m_maxPointsCount;
 }
 
 void MaxPointsFilter::setMaxPointsCount(int count)
 {
-    if (mMaxPointsCount == count)
+    if (m_maxPointsCount == count)
         return;
 
-    mMaxPointsCount = count;
-
-    Q_EMIT maxPointsCountChanged(mMaxPointsCount);
+    m_maxPointsCount = count;
 }
 
 void MaxPointsFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D> &filtered)
 {
-    if (mMaxPointsCount <= 1)
+    if (m_maxPointsCount <= 1)
         return;
 
-    if (mMaxPointsCount > origin.size())
-        mMaxPointsCount = origin.size();
+    if (m_maxPointsCount > origin.size())
+        m_maxPointsCount = origin.size();
 
     float trackLength = 0.0f;
 
@@ -56,7 +56,7 @@ void MaxPointsFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D>
     }
 
     float currentLength = 0.0f;
-    float range = trackLength / static_cast <float>(mMaxPointsCount);
+    float range = trackLength / static_cast <float>(m_maxPointsCount);
 
     while(currentLength < trackLength){
         for (const auto& section : sections){

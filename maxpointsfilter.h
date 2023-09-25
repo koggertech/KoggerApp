@@ -6,33 +6,24 @@
 #include <cmath>
 
 #include <constants.h>
-#include <abstractbottomtrackfilter.h>
+#include <abstractentitydatafilter.h>
 
-class MaxPointsFilter : public AbstractBottomTrackFilter
+class MaxPointsFilter : public AbstractEntityDataFilter
 {
     Q_OBJECT
+    Q_PROPERTY(int maxPointsCount READ maxPointsCount WRITE setMaxPointsCount)
 
 public:
-
     explicit MaxPointsFilter(QObject* parent = nullptr);
+    virtual ~MaxPointsFilter();
 
-    Q_INVOKABLE virtual AbstractBottomTrackFilter::FilterType type() const override;
-    Q_INVOKABLE int maxPointsCount() const;
-
-public:
-
+    virtual AbstractEntityDataFilter::FilterType type() const override;
     virtual void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
-
-public:
+    int maxPointsCount() const;
     void setMaxPointsCount(int count);
 
-signals:
-
-    void maxPointsCountChanged(int count);
-
 private:
-
-    int mMaxPointsCount = 10000.0f;
+    int m_maxPointsCount = 10000.0f;
 };
 
 #endif // MAXPOINTSFILTER_H

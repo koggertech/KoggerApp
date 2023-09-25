@@ -1,7 +1,6 @@
 #ifndef GRAPHICSSCENE3DVIEW_H
 #define GRAPHICSSCENE3DVIEW_H
 
-#include "3Plot.h"
 #include <QQuickFramebufferObject>
 
 #include <graphicsscene3d.h>
@@ -26,7 +25,6 @@ public:
 
     protected:
         std::shared_ptr <GraphicsScene3d> m_scene;
-        Scene3D _scene;
     };
 
     /**
@@ -64,6 +62,10 @@ public:
     Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
 
     Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta);
+
+Q_SIGNALS:
+    void sceneChanged(std::shared_ptr<GraphicsScene3d> oldScene,
+                      std::shared_ptr<GraphicsScene3d> newScene);
 
 protected:
     /**

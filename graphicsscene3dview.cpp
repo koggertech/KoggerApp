@@ -1,6 +1,7 @@
 #include "graphicsscene3dview.h"
 
 #include <QOpenGLFramebufferObject>
+#include <QVector2D>
 
 GraphicsScene3dView::GraphicsScene3dView()
 : QQuickFramebufferObject()
@@ -29,9 +30,13 @@ void GraphicsScene3dView::setScene(std::shared_ptr<GraphicsScene3d> scene)
     if(m_scene == scene)
         return;
 
+    auto old = m_scene;
+
     m_scene = scene;
     m_scene->setView(this);
     m_scene->setRect(boundingRect());
+
+    Q_EMIT sceneChanged(old, m_scene);
 
     update();
 }
@@ -48,7 +53,17 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
             qreal yaw = (x - m_lastMousePos.x()) * 0.002f;
             qreal pitch = (m_lastMousePos.y() - y) * 0.002f;
 
+            QVector2D lastMouse(m_lastMousePos.x(), m_lastMousePos.y());
+            QVector2D mouse(x,y);
+
+            m_scene->setRotationAngle((lastMouse - mouse)*0.002);
             m_scene->rotateCamera(pitch, yaw);
+        }
+
+        if(buttons.testFlag(Qt::MiddleButton)){
+            //auto dragOffset = QVector3D(-(m_lastMousePos.x() - x), (m_lastMousePos.y() - y), 0)*(m_scene->fov()*0.02);
+
+            //m_scene->setDragOffset(dragOffset);
         }
     }
 
@@ -85,9 +100,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
 
 GraphicsScene3dView::GraphicsScene3dRenderer::GraphicsScene3dRenderer()
     :QQuickFramebufferObject::Renderer()
-{
-    _scene.initialize();
-}
+{}
 
 GraphicsScene3dView::GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
 {}
