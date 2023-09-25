@@ -1,28 +1,19 @@
 #include "polygongroup.h"
+#include <polygonobject.h>
 
 PolygonGroup::PolygonGroup(QObject *parent)
-    : SceneObject(parent)
-    , mModel(new QStandardItemModel)
+: SceneGraphicsObject(parent)
 {}
 
-QStringList PolygonGroup::visualItems() const
+PolygonGroup::~PolygonGroup()
+{}
+
+void PolygonGroup::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-    QStringList result;
+    if(!m_isVisible)
+        return;
 
-    for(const auto& polygon : mPolygonList)
-        result.append(polygon->name());
-
-    return result;
-}
-
-PolygonObject *PolygonGroup::polygonAt(int index) const
-{
-    return at(index).get();
-}
-
-void PolygonGroup::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, QMap<QString, QOpenGLShaderProgram *> shaderProgramMap) const
-{
-    for(auto polygon : mPolygonList)
+    for(const auto& polygon : m_polygonList)
         polygon->draw(ctx, mvp, shaderProgramMap);
 }
 
@@ -31,59 +22,70 @@ SceneObject::SceneObjectType PolygonGroup::type() const
     return SceneObject::SceneObjectType::PolygonGroup;
 }
 
-void PolygonGroup::addPolygon(std::shared_ptr <PolygonObject> polygon)
+std::shared_ptr<PolygonObject> PolygonGroup::at(int index) const
 {
-    mPolygonList.append(polygon);
-
-    auto item = new QStandardItem();
-    item->setData(polygon->name(), Qt::DisplayRole);
-
-    mModel->invisibleRootItem()->appendRow(item);
-
-    Q_EMIT countChanged(mPolygonList.count());
-}
-
-void PolygonGroup::removePolygon(int index)
-{
-    if(index < 0 && index >= mPolygonList.count())
-        return;
-
-    mPolygonList.removeAt(index);
-
-    Q_EMIT countChanged(mPolygonList.count());
-
-    mModel->invisibleRootItem()->removeRow(index);
-}
-
-PolygonPtr PolygonGroup::at(int index) const
-{
-    if(index < 0 || index >= mPolygonList.count())
+    if(index < 0 || index >= m_polygonList.count())
         return nullptr;
 
-    for(int i = 0; i < mPolygonList.count(); i++){
-        if(i == index)
-            return mPolygonList[i];
-    }
-
-    return nullptr;
+    return m_polygonList.at(index);
 }
 
-int PolygonGroup::polygonsCount() const
+PolygonObject *PolygonGroup::polygonAt(int index)
 {
-    return mPolygonList.count();
+    return at(index).get();
 }
 
-int PolygonGroup::indexOf(std::shared_ptr<PolygonObject> polygon) const
+void PolygonGroup::addPolygon(std::shared_ptr<PolygonObject> polygon)
 {
-    if(polygon)
-        return mPolygonList.indexOf(polygon);
+    if(m_polygonList.contains(polygon))
+        return;
 
-    return 0;
+    polygon->setParent(this);
+    m_polygonList.append(polygon);
 }
 
-
-QStandardItemModel *PolygonGroup::model() const
+std::shared_ptr<PolygonObject> PolygonGroup::addPolygon()
 {
-    return mModel.get();
+    auto polygon = std::make_shared<PolygonObject>(this);
+    m_polygonList.append(polygon);
+    return m_polygonList.back();
 }
 
+void PolygonGroup::removePolygon(std::shared_ptr<PolygonObject> polygon)
+{
+    if(!m_polygonList.contains(polygon))
+        return;
+
+    m_polygonList.removeOne(polygon);
+}
+
+void PolygonGroup::removePolygonAt(int index)
+{
+    if(index < 0 && index >= m_polygonList.count())
+        return;
+
+    m_polygonList.removeAt(index);
+}
+
+void PolygonGroup::setData(const QVector<QVector3D> &data)
+{
+    Q_UNUSED(data)
+}
+
+void PolygonGroup::clearData()
+{}
+
+void PolygonGroup::append(const QVector3D &vertex)
+{
+    Q_UNUSED(vertex)
+}
+
+void PolygonGroup::append(const QVector<QVector3D> &other)
+{
+    Q_UNUSED(other)
+}
+
+void PolygonGroup::setPrimitiveType(int primitiveType)
+{
+    Q_UNUSED(primitiveType)
+}

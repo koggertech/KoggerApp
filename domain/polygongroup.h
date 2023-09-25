@@ -3,42 +3,39 @@
 
 #include <QStandardItemModel>
 
-#include <sceneobject.h>
-#include <polygonlistmodel.h>
+#include <scenegraphicsobject.h>
 
-using PolygonPtr     = std::shared_ptr <PolygonObject>;
-
-class PolygonGroup : public SceneObject
+class PolygonObject;
+class PolygonGroup : public SceneGraphicsObject
 {
     Q_OBJECT
-    Q_PROPERTY(QStandardItemModel* model READ model CONSTANT)
+    QML_NAMED_ELEMENT("PolygonGroup")
 
 public:
     explicit PolygonGroup(QObject *parent = nullptr);
+    virtual ~PolygonGroup();
 
-    Q_INVOKABLE QStringList visualItems() const;
-    Q_INVOKABLE PolygonObject *polygonAt(int index) const;
-
-    virtual void draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const override;
+    virtual void draw(QOpenGLFunctions* ctx,
+                      const QMatrix4x4& mvp,
+                      const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
     virtual SceneObject::SceneObjectType type() const override;
+    std::shared_ptr <PolygonObject> at(int index) const;
+    Q_INVOKABLE PolygonObject* polygonAt(int index);
 
+public Q_SLOTS:
+    std::shared_ptr <PolygonObject> addPolygon();
     void addPolygon(std::shared_ptr <PolygonObject> polygon);
-    void removePolygon(int index);
-    PolygonPtr at(int index) const;
-    int polygonsCount() const;
-    int indexOf(std::shared_ptr <PolygonObject> polygon) const;
+    void removePolygon(std::shared_ptr <PolygonObject> polygon);
+    void removePolygonAt(int index);
+    void setData(const QVector <QVector3D>& data) override;
+    void clearData() override;
+    void append(const QVector3D& vertex) override;
+    void append(const QVector<QVector3D>& other) override;
+    void setPrimitiveType(int primitiveType) override;
 
 private:
-    PolygonListModel *polygonListModel() const;
-    QStandardItemModel* model() const;
-
-signals:
-    void countChanged(int count);
-
-private:
-    QList <std::shared_ptr <PolygonObject>> mPolygonList;
-    std::unique_ptr <QStandardItemModel> mModel;
+    QList <std::shared_ptr <PolygonObject>> m_polygonList;
 };
 
 #endif // POLYGONGROUP_H
