@@ -3,47 +3,30 @@
 #include <constants.h>
 
 BottomTrack::BottomTrack(QObject* parent)
-    : DisplayedObject(GL_LINE_STRIP, parent)
+    : SceneGraphicsObject(parent)
 {
-
+    setPrimitiveType(GL_LINE_STRIP);
 }
 
 BottomTrack::~BottomTrack()
-{
-
-}
-
-void BottomTrack::setFilter(std::shared_ptr<AbstractBottomTrackFilter> filter)
-{
-    if(mpFilter == filter)
-        return;
-
-    mpFilter = filter;
-
-    Q_EMIT filterChanged(mpFilter.get());
-}
+{}
 
 float BottomTrack::routeLength() const
 {
     return 0.0f;
 }
 
-AbstractBottomTrackFilter *BottomTrack::filter() const
-{
-    return mpFilter.get();
-}
-
 void BottomTrack::setData(const QVector<QVector3D> &data)
 {
     QVector <QVector3D> filtered;
 
-    if (mpFilter){
-        mpFilter->apply(data,filtered);
-        DisplayedObject::setData(filtered);
+    if (m_filter){
+        m_filter->apply(data,filtered);
+        SceneGraphicsObject::setData(filtered);
         return;
     }
 
-    DisplayedObject::setData(data);
+    SceneGraphicsObject::setData(data);
 }
 
 SceneObject::SceneObjectType BottomTrack::type() const
@@ -51,9 +34,11 @@ SceneObject::SceneObjectType BottomTrack::type() const
     return SceneObjectType::BottomTrack;
 }
 
-void BottomTrack::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const
+void BottomTrack::draw(QOpenGLFunctions* ctx,
+                       const QMatrix4x4& mvp,
+                       const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const
 {
-    if(!mIsVisible)
+    if(!m_isVisible)
         return;
 
     if(!shaderProgramMap.contains("height"))
@@ -75,17 +60,16 @@ void BottomTrack::draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QStri
     int colorLoc = shaderProgram->uniformLocation("color");
 
     shaderProgram->setUniformValue(colorLoc,color);
-    shaderProgram->setUniformValue(maxZLoc, mBounds.maximumZ());
-    shaderProgram->setUniformValue(minZLoc, mBounds.minimumZ());
+    shaderProgram->setUniformValue(maxZLoc, m_boundingBox.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, m_boundingBox.minimumZ());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, mData.constData());
+    shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
     ctx->glLineWidth(4.0);
-    ctx->glDrawArrays(mPrimitiveType, 0, mData.size());
+    ctx->glDrawArrays(primitiveType(), 0, m_data.size());
     ctx->glLineWidth(1.0);
 
     shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
     shaderProgram->release();
 }
