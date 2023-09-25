@@ -13,8 +13,6 @@ import QtQuick.Controls 2.15
 import WaterFall 1.0
 
 import KoggerCommon 1.0
-import ActiveObjectParamsMenu 1.0
-import SceneObjectsList 1.0
 
 Window  {
     id: mainview
@@ -70,18 +68,12 @@ Window  {
             SplitView.fillWidth: true
             spacing: 0
 
-            Renderer {
+            GraphicsScene3dView {
                 id: renderer
-                visible: Scene3DModel.sceneVisibility()
                 width: mainview.width
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 focus: true
-
-                onVisibleChanged: {
-                    if(visible) { core.movePoints() }
-                }
-
 
                 //Rectangle{
                 //    id: surfaceCalculatingRectangle
@@ -149,11 +141,15 @@ Window  {
                         hoverEnabled: true
 
                         onWheel: {
-                            renderer.scaleDelta(wheel.angleDelta.y)
+                            //renderer.scaleDelta(wheel.angleDelta.y)
+                            renderer.mouseWheelTrigger(wheel.buttons,
+                                                       wheel.x,
+                                                       wheel.y,
+                                                       wheel.angleDelta)
                         }
 
                         onPositionChanged: {
-                            renderer.mouseMoved(mouse.x, mouse.y)
+                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y)
 
                             if((mousearea3D.pressedButtons & Qt.MiddleButton) || ((mousearea3D.pressedButtons & Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier))) {
                                 renderer.mouse(mouse.x, mouse.y, false)
@@ -164,11 +160,13 @@ Window  {
                         }
 
                         onPressed: {
+                            renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y)
                             renderer.mouse(mouse.x, mouse.y, false)
                             renderer.mousePressed(mouse.button)
                         }
 
                         onReleased: {
+                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y)
                             renderer.mouse(-1, -1, false)
                             renderer.mouseReleased(mouse.button)
                         }
