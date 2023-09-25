@@ -7,25 +7,88 @@
 #include <gridgenerator.h>
 #include <barycentricinterpolator.h>
 
+const QString UnderlyingThreadName = "SurfaceProcessorThread";
+
 SurfaceProcessor::SurfaceProcessor(QObject *parent)
     : QObject{parent}
-{
+{}
 
+SurfaceProcessor::~SurfaceProcessor()
+{
+    stopInThread();
 }
 
-void SurfaceProcessor::process(QVector <QVector3D> sourceData,
-                               Surface* surface,
-                               bool needSmoothing,
-                               float cellSize)
+bool SurfaceProcessor::setTask(const Task& task)
 {
-    Q_EMIT processingStarted();
+    if(m_isBusy.load())
+        return false;
+
+    m_task = task;
+
+    return true;
+}
+
+bool SurfaceProcessor::startInThread()
+{
+    if(m_isBusy.load())
+        return false;
+
+    if (parent())
+        return false;
+
+    auto currentThread = thread();
+
+    if((currentThread && currentThread->objectName() != UnderlyingThreadName) || !currentThread){
+        currentThread = new QThread(this);
+        currentThread->setObjectName(UnderlyingThreadName);
+        QObject::connect(currentThread, &QThread::started, this, &SurfaceProcessor::process);
+        moveToThread(currentThread);
+    }
+
+    currentThread->start();
+    return true;
+}
+
+bool SurfaceProcessor::startInThread(const Task &task)
+{
+    if(!setTask(task))
+        return false;
+
+    return startInThread();
+}
+
+bool SurfaceProcessor::stopInThread(unsigned long time)
+{
+    auto currentThread = thread();
+
+    if(parent() || !(currentThread && currentThread->objectName() == UnderlyingThreadName))
+        return true;
+
+    currentThread->quit();
+
+    return currentThread->wait(time);
+}
+
+void SurfaceProcessor::process()
+{
+    if(m_isBusy.load())
+        return;
+
+    if(m_task.source.isEmpty())
+        return;
+
+    m_isBusy.store(true);
+
+    m_result.data.clear();
+
+    Q_EMIT taskStarted();
 
     std::set <Point2D <double>> set;
     std::vector <Point3D <double>> input;
 
-    for (size_t i = 0; i < sourceData.size(); i++){
-        Point2D <double> point(static_cast <double> (sourceData.at(i).x()),
-                               static_cast <double> (sourceData.at(i).y()),
+    for (size_t i = 0; i < m_task.source.size(); i++){
+        Point2D <double> point(static_cast <double> (m_task.source.at(i).x()),
+                               static_cast <double> (m_task.source.at(i).y()),
                                static_cast <double> (i));
 
         set.insert(point);
@@ -34,7 +97,7 @@ void SurfaceProcessor::process(QVector <QVector3D> sourceData,
     for (const auto& p : set){
         Point3D <double> point(p.x(),
                                p.y(),
-                               static_cast <double> (sourceData.at(p.index()).z()),
+                               static_cast <double> (m_task.source.at(p.index()).z()),
                                p.index());
         input.push_back(point);
     }
@@ -42,23 +105,22 @@ void SurfaceProcessor::process(QVector <QVector3D> sourceData,
     Delaunay <double> delaunay;
     auto triangles = delaunay.trinagulate(input);
 
-    surface->clearData();
-
-    if(needSmoothing){
-        surface->setPrimitiveType(GL_QUADS);
+    if(m_task.needSmoothing){
+        m_result.primitiveType = GL_QUADS;
 
         std::vector <Point3D <double>> trimmedGrid;
 
         auto fullGrid = GridGenerator <double>::generateQuadGrid(Point3D <double>(
-                                                                surface->bounds().minimumX(),
-                                                                surface->bounds().minimumY(),
-                                                                surface->bounds().minimumZ()
+                                                                m_task.bounds.minimumX(),
+                                                                m_task.bounds.minimumY(),
+                                                                m_task.bounds.minimumZ()
                                                             ),
-                                                            surface->bounds().width(),
-                                                            surface->bounds().length(),
-                                                            cellSize);
+                                                            m_task.bounds.width(),
+                                                            m_task.bounds.length(),
+                                                            m_task.cellSize);
 
         auto q = fullGrid->begin();
+
         while (q != fullGrid->end()){
             auto quad = *q;
 
@@ -95,26 +157,25 @@ void SurfaceProcessor::process(QVector <QVector3D> sourceData,
 
         interpolator.process(trianglesTemp, trimmedGrid);
 
-        for(const auto& point : trimmedGrid){
-          surface->append(point.toQVector3D());
-        }
-
-        //for(const auto& quad : *fullGrid){
-        //    surface->append(quad.A().toQVector3D());
-        //    surface->append(quad.B().toQVector3D());
-        //    surface->append(quad.C().toQVector3D());
-        //    surface->append(quad.D().toQVector3D());
-        //}
+        for(const auto& point : trimmedGrid)
+            m_result.data.append(point.toQVector3D());
 
     }else {
-        surface->setPrimitiveType(GL_TRIANGLES);
-
         for (const auto& t : *triangles){
-           surface->append(QVector3D(t.A().x(), t.A().y(), t.A().z()));
-           surface->append(QVector3D(t.B().x(), t.B().y(), t.B().z()));
-           surface->append(QVector3D(t.C().x(), t.C().y(), t.C().z()));
+            m_result.data.append(t.A().toQVector3D());
+            m_result.data.append(t.B().toQVector3D());
+            m_result.data.append(t.C().toQVector3D());
         }
     }
 
-    Q_EMIT processingFinished();
+    m_isBusy.store(false);
+
+    Q_EMIT taskFinished(m_result);
+
+    stopInThread();
+}
+
+bool SurfaceProcessor::isBusy() const
+{
+    return m_isBusy.load();
 }
