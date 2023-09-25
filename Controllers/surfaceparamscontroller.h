@@ -3,42 +3,51 @@
 
 #include <QObject>
 
+#include <activeobjectparamsmenucontroller.h>
 #include <activeobjectprovider.h>
 #include <sceneobjectslistmodel.h>
 #include <surface.h>
 
-class SurfaceParamsController : public QObject
+class SurfaceParamsController : public ActiveObjectParamsMenuController
 {
     Q_OBJECT
+    Q_PROPERTY(QColor contourColor   READ contourColor     WRITE setContourColor)
+    Q_PROPERTY(QColor gridColor      READ gridColor        WRITE setGridColor)
+    Q_PROPERTY(bool   contourVisible READ isContourVisible WRITE setContourVisible)
+    Q_PROPERTY(bool   gridVisible    READ isGridVisible    WRITE setGridVisible)
+
 public:
     explicit SurfaceParamsController(std::shared_ptr <ActiveObjectProvider> activeObjectProvider,
-                                     std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel,
                                      QObject *parent = nullptr);
 
     virtual ~SurfaceParamsController();
 
-    Q_INVOKABLE void changeSurfaceVisibility(bool visible);
-
-    Q_INVOKABLE void changeSurfaceContourVisibility(bool visible);
-
-    Q_INVOKABLE void changeSurfaceGridVisibility(bool visible);
-
-    Q_INVOKABLE void changeSurfaceContourColor(QColor color);
-
-    Q_INVOKABLE void changeSurfaceGridColor(QColor color);
-
-    Q_INVOKABLE void updateSurface(int  bottomTrackObjectIndex,
-                                   bool interpolateWithGrid,
-                                   int  gridCellSize);
-
 private:
+    void setContourVisible(bool visible);
+
+    void setGridVisible(bool visible);
+
+    void setContourColor(QColor color);
+
+    void setGridColor(QColor color);
+
+    void updateSurface(int  bottomTrackObjectIndex,
+                       bool interpolateWithGrid,
+                       int  gridCellSize);
+
+    bool isGridVisible() const;
+
+    bool isContourVisible() const;
+
+    QColor gridColor() const;
+
+    QColor contourColor() const;
 
     Surface* takeSurface();
 
 private:
-
-    std::shared_ptr <ActiveObjectProvider> mActiveObjectProvider;
-    std::shared_ptr <SceneObjectsListModel> mSceneObjectsListModel;
+    std::shared_ptr <ActiveObjectProvider> m_activeObjectProvider;
+    std::shared_ptr <SceneObjectsListModel> m_sceneObjectsListModel;
 
 };
 
