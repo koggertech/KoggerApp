@@ -60,14 +60,6 @@
         <file>tool.svg</file>
         <file>KoggerCommon/MenuBlockEx.qml</file>
         <file>KoggerCommon/qmldir</file>
-        <file>ActiveObjectParamsMenu/ActiveObjectParamsMenuLoader.qml</file>
-        <file>ActiveObjectParamsMenu/BottomTrackParamsMenu.qml</file>
-        <file>ActiveObjectParamsMenu/qmldir</file>
-        <file>ActiveObjectParamsMenu/SurfaceParamsMenu.qml</file>
-        <file>SceneObjectsList/qmldir</file>
-        <file>SceneObjectsList/SceneObjectsList.qml</file>
-        <file>SceneObjectsList/SceneObjectsListDelegate.qml</file>
-        <file>ActiveObjectParamsMenu/MenuPlaceholder.qml</file>
         <file>KoggerCommon/KButton.qml</file>
         <file>KoggerCommon/KCheck.qml</file>
         <file>KoggerCommon/KCombo.qml</file>
@@ -81,11 +73,13 @@
         <file>KoggerCommon/KSlider.qml</file>
         <file>KoggerCommon/KText.qml</file>
         <file>KoggerCommon/KTextField.qml</file>
-        <file>ActiveObjectParamsMenu/MaxPointsCountFilterParams.qml</file>
-        <file>ActiveObjectParamsMenu/NearestPointDistanceFilterParams.qml</file>
         <file>KoggerCommon/KSpinBox.qml</file>
-        <file>ActiveObjectParamsMenu/PointSetParamsMenu.qml</file>
-        <file>ActiveObjectParamsMenu/PolygonGroupParamsMenu.qml</file>
-        <file>ActiveObjectParamsMenu/PointGroupParamsMenu.qml</file>
+        <file>SceneControlMenu.qml</file>
+        <file>BottomTrackControlMenu.qml</file>
+        <file>MpcFilterControlMenu.qml</file>
+        <file>NpdFilterControlMenu.qml</file>
+        <file>SurfaceControlMenu.qml</file>
+        <file>PointGroupControlMenu.qml</file>
+        <file>PolygonGroupControlMenu.qml</file>
     </qresource>
 </RCC>
