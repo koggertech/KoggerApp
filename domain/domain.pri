@@ -16,7 +16,6 @@ HEADERS += \
     $$PWD/bowyerwatsondelaunay.h \
     $$PWD/contour.h\
     $$PWD/cube.h \
-    $$PWD/markupgrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
     $$PWD/pointgroup.h \
@@ -26,7 +25,6 @@ HEADERS += \
     $$PWD/raycastlinepicker.h \
     $$PWD/raycastpointpicker.h \
     $$PWD/raycastpolygonpicker.h \
-    $$PWD/sceneobjectgroup.h \
     $$PWD/sceneparams.h \
     $$PWD/surface.h \
     $$PWD/gridgenerator.h \
@@ -35,7 +33,6 @@ HEADERS += \
 SOURCES += \
     $$PWD/bottomtrack.cpp\
     $$PWD/contour.cpp\
-    $$PWD/markupgrid.cpp \
     $$PWD/pointgroup.cpp \
     $$PWD/pointobject.cpp \
     $$PWD/polygongroup.cpp \
@@ -43,7 +40,6 @@ SOURCES += \
     $$PWD/raycastlinepicker.cpp \
     $$PWD/raycastpointpicker.cpp \
     $$PWD/raycastpolygonpicker.cpp \
-    $$PWD/sceneobjectgroup.cpp \
     $$PWD/surface.cpp \
     $$PWD/surfacegrid.cpp
 
