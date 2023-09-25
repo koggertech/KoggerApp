@@ -2,34 +2,34 @@
 
 #include <constants.h>
 
-NearestPointFilter::NearestPointFilter()
-{
+NearestPointFilter::NearestPointFilter(QObject* parent)
+    : AbstractEntityDataFilter(parent)
+{}
 
-}
+NearestPointFilter::~NearestPointFilter()
+{}
 
-AbstractBottomTrackFilter::FilterType NearestPointFilter::type() const
+AbstractEntityDataFilter::FilterType NearestPointFilter::type() const
 {
     return FilterType::NearestPointDistance;
 }
 
 float NearestPointFilter::distance() const
 {
-    return mDistance;
+    return m_distance;
 }
 
 void NearestPointFilter::setDistance(float distance)
 {
-    if (mDistance == distance)
+    if (m_distance == distance)
         return;
 
-    mDistance = distance;
-
-    Q_EMIT distanceChanged(mDistance);
+    m_distance = distance;
 }
 
 void NearestPointFilter::apply(const QVector<QVector3D> &origin, QVector<QVector3D> &filtered)
 {
-    if (mDistance <= 0)
+    if (m_distance <= 0)
         return;
 
     float trackLength = 0.0f;
@@ -80,6 +80,6 @@ void NearestPointFilter::apply(const QVector<QVector3D> &origin, QVector<QVector
             }
         }
 
-        currentLength += mDistance;
+        currentLength += m_distance;
     }
 }

@@ -6,28 +6,27 @@
 
 #include <cmath>
 
-#include <abstractbottomtrackfilter.h>
+#include <abstractentitydatafilter.h>
 #include <Edge.h>
 
-class NearestPointFilter : public AbstractBottomTrackFilter
+class NearestPointFilter : public AbstractEntityDataFilter
 {
     Q_OBJECT
+    Q_PROPERTY(float distance READ distance WRITE setDistance)
 
 public:
-    NearestPointFilter();
+    NearestPointFilter(QObject* parent = nullptr);
+    virtual ~NearestPointFilter();
 
-    Q_INVOKABLE AbstractBottomTrackFilter::FilterType type() const override;
-    Q_INVOKABLE float distance() const;
-public:
+    AbstractEntityDataFilter::FilterType type() const override;
+    float distance() const;
 
+public Q_SLOTS:
     void apply(const QVector <QVector3D>& origin, QVector <QVector3D>& filtered) override;
     void setDistance(float distance);
-signals:
-
-    void distanceChanged(int dist);
 
 private:
-    float mDistance = 1.0f;
+    float m_distance = 1.0f;
 };
 
 #endif // NEARESTPOINTFILTER_H
