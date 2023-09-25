@@ -26,12 +26,12 @@ public:
     }
 
     void setController(std::shared_ptr <SceneController> controller){
-        scene.setController(controller);
+        //scene.setController(controller);
     }
 
-    void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel){
-        scene.setSceneObjectsListModel(sceneObjectsListModel);
-    }
+    //void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel){
+    //    //scene.setSceneObjectsListModel(sceneObjectsListModel);
+    //}
 
     QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override {
         QOpenGLFramebufferObjectFormat format;
@@ -45,12 +45,13 @@ public:
         //scene.setLines(fbitem->lines());
 
         scene.scale(fbitem->scaleDelta());
-        scene.size(fbitem->size());
+        //scene.size(fbitem->size());
         scene.mouse(fbitem->mouse());
         scene.rotationFlag(fbitem->isRotation());
-        scene.setRightMouseButtonPressed(fbitem->isRightMouseButtonPressed());
-        scene.setMousePos(fbitem->mousePos());
-        scene.setSize(QSize(fbitem->width(), fbitem->height()));
+        //scene.setRightMouseButtonPressed(fbitem->isRightMouseButtonPressed());
+        //scene.setMousePos(fbitem->mousePos());
+        //scene.setSize(QSize(fbitem->width(), fbitem->height()));
+
     }
 
     Scene3D scene;
@@ -61,7 +62,7 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
     auto renderer = new FboRenderer();
 
     renderer->setController(mpSceneController);
-    renderer->setSceneObjectsListModel(mpSceneObjectsListModel);
+   // renderer->setSceneObjectsListModel(mpSceneObjectsListModel);
 
     return renderer;
 }
@@ -89,93 +90,45 @@ void Scene3D::setController(std::shared_ptr <SceneController> controller)
     mpController = controller;
 }
 
-void Scene3D::setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel)
-{
-    mpSceneObjectsListModel = sceneObjectsListModel;
-}
+//void Scene3D::setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel)
+//{
+//    mpSceneObjectsListModel = sceneObjectsListModel;
+//}
 
 void Scene3D::paintScene()
 {
-    displayBottomTrackObjects();
+    //for(const auto& object : m_objectList)
+    //    object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
 
-    displaySurfaceObjects();
-
-    //displaySurfaceContours();
-
-    //displaySurfaceGrids();
-
-    //displayObjectBounds();
-
-    //displayPointSetObjects();
-
-    //displayPolygonObjects();
-}
-
-void Scene3D::displayBottomTrackObjects()
-{
-    if(!mpSceneObjectsListModel)
+    if (!mpStaticColorShaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
         return;
-
-    auto objects = mpSceneObjectsListModel->data();
-
-    for(const auto& object : objects)
-    {
-        if(object->type() == SceneObject::SceneObjectType::BottomTrack)
-            object->draw(this, mModel*mProjection*mView, mShaderProgramMap);
     }
-}
 
-void Scene3D::displaySurfaceObjects()
-{
-    if(!mpSceneObjectsListModel)
-        return;
+    int posLoc    = mpStaticColorShaderProgram->attributeLocation("position");
+    int matrixLoc = mpStaticColorShaderProgram->uniformLocation("matrix");
+    int colorLoc  = mpStaticColorShaderProgram->uniformLocation("color");
 
-    auto objects = mpSceneObjectsListModel->data();
+    QVector4D color(0.8f, 1.0f, 0.7f, 0.0f);
 
-    for(const auto& object : objects)
-    {
-        if(object->type() == SceneObject::SceneObjectType::Surface)
-            object->draw(this, mModel*mProjection*mView, mShaderProgramMap);
-    }
-}
+    QVector <QVector3D> data{
+        {0.0f, 2.0f, 12.0f},
+        {10.0f, 2.0f, 12.0f},
+        {18.0f, 12.0f, 22.0f},
+        {15.0f, 62.0f, 12.0f},
+    };
 
-void Scene3D::displayObjectGroups()
-{
-    if(!mpSceneObjectsListModel)
-        return;
+    //qDebug() << "p: " << m_projection <<", v: " << m_view << ", m: " << m_model;
 
-    auto objects = mpSceneObjectsListModel->data();
+    mpStaticColorShaderProgram->setUniformValue(colorLoc,color);
+    mpStaticColorShaderProgram->setUniformValue(matrixLoc, mProjection * mView * mModel);
+    mpStaticColorShaderProgram->enableAttributeArray(posLoc);
+    mpStaticColorShaderProgram->setAttributeArray(posLoc, data.constData());
 
-    for(const auto& object : objects)
-    {
-        if(object->type() == SceneObject::SceneObjectType::ObjectsGroup)
-            object->draw(this, mModel*mProjection*mView, mShaderProgramMap);
-    }
-}
+    glDrawArrays(GL_POLYGON, 0, data.size());
 
-void Scene3D::displaySurfaceContours()
-{
-
-}
-
-void Scene3D::displaySurfaceGrids()
-{
-
-}
-
-void Scene3D::displayObjectBounds()
-{
-
-}
-
-void Scene3D::displayPointSetObjects()
-{
-
-}
-
-void Scene3D::displayPolygonObjects()
-{
-
+    mpStaticColorShaderProgram->disableAttributeArray(posLoc);
+    mpStaticColorShaderProgram->release();
 }
 
 
@@ -184,10 +137,10 @@ void FboInSGRenderer::setController(std::shared_ptr<SceneController> controller)
     mpSceneController = controller;
 }
 
-void FboInSGRenderer::setSceneObjectsListModel(std::shared_ptr<SceneObjectsListModel> sceneObjectsListModel)
-{
-    mpSceneObjectsListModel = sceneObjectsListModel;
-}
+//void FboInSGRenderer::setSceneObjectsListModel(std::shared_ptr<SceneObjectsListModel> sceneObjectsListModel)
+//{
+//    mpSceneObjectsListModel = sceneObjectsListModel;
+//}
 
 void Scene3D::initialize()
 {

@@ -16,9 +16,8 @@
 
 #include <memory>
 
-#include <sceneobjectslistmodel.h>
+#include <graphicsscene3d.h>
 #include <scenecontroller.h>
-#include "displayedobject.h"
 
 class Scene3D : public QObject, protected QOpenGLFunctions
 {
@@ -32,7 +31,6 @@ public:
     void initialize();
 
     void setController(std::shared_ptr <SceneController> controller);
-    void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
     void scale(float sc) {
         m_fScale = sc;
@@ -111,45 +109,6 @@ private:
     void mashAlign();
     void line(qreal x, qreal y, qreal z);
 
-    //! Draws gps track lines
-    void displayBottomTrack();
-    //! Draws bottom surface
-    void displayBottomSurface();
-    //! Draws bottom surface mesh
-    void displayBottomSurfaceGrid();
-
-    void displayContour();
-
-    void displayContourKeyPoints();
-
-    void displayBounds();
-
-    void displayMarkupGrid();
-
-    void displayAxis();
-
-    void displayPickedObjects();
-
-    void displayToolUsingResult();
-
-    //-------------------
-
-    void displayBottomTrackObjects();
-
-    void displaySurfaceObjects();
-
-    void displaySurfaceContours();
-
-    void displaySurfaceGrids();
-
-    void displayObjectBounds();
-
-    void displayPointSetObjects();
-
-    void displayPolygonObjects();
-
-    void displayObjectGroups();
-
     QVector<QVector3D> vLines;
     QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
@@ -159,6 +118,7 @@ private:
     QOpenGLShaderProgram* mpHeightMappedProgram;
     QOpenGLShaderProgram* mpOverlappedTrackProgram;
     QOpenGLShaderProgram* mpOverlappedGridProgram;
+    QOpenGLShaderProgram* m_shaderProgram;
 
     int vertexAttr1;
     int normalAttr1;
@@ -170,8 +130,6 @@ private:
     QQuaternion q;
 
     std::shared_ptr <SceneController> mpController;
-    std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
-
     std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
     std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
 
@@ -199,6 +157,7 @@ class FboInSGRenderer : public QQuickFramebufferObject
     Q_OBJECT
     QML_NAMED_ELEMENT(Renderer)
 
+
 public:
     Renderer *createRenderer() const;
 
@@ -206,14 +165,27 @@ public:
         return _bottomTrack;
     }
 
+    void setScene(std::shared_ptr <GraphicsScene3d> scene){
+        if(m_scene == scene)
+            return;
+
+        m_scene = scene;
+        //m_scene->setRect(boundingRect());
+
+        //update();
+    }
+    std::shared_ptr <GraphicsScene3d> scene() const  {
+        return m_scene;
+    }
+
     void setController(std::shared_ptr <SceneController> controller);
 
-    void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
+    //void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
     void updateBottomTrack(QVector<QVector3D> p) {
         _bottomTrack = p;
 
-        update();
+       // update();
     }
 
     bool isRightMouseButtonPressed() const {
@@ -230,6 +202,8 @@ public:
 
 public slots:
     void scaleDelta(float delta) {
+
+        qDebug() << "delta: " << delta;
 
         if(delta > 100.0f) {
             delta = 100.0f;
@@ -250,23 +224,23 @@ public slots:
                 _scale = 0.1;
             }
         }
-        update();
+       // update();
     }
 
     void scale(float scale) {
         _scale = scale;
-        update();
+       // update();
     }
 
     float scaleDelta() { return _scale; }
 
-    QVector2D size() { return QVector2D(width(), height()); }
+    //QVector2D size() { return QVector2D(width(), height()); }
 
     void mouse(int x, int y, bool rotation_flag) {
         _lastMouseX = x;
         _lastMouseY = y;
         _rotationFlag = rotation_flag;
-        update();
+       // update();
     }
 
     void mousePressed(int modifier){
@@ -279,7 +253,7 @@ public slots:
             break;
         }
 
-        update();
+      //  update();
     };
 
     void mouseReleased(int modifier){
@@ -292,12 +266,12 @@ public slots:
             break;
         }
 
-        update();
+     //   update();
     };
 
     void mouseMoved(int x, int y){
         mMousePos = QVector2D(x,y);
-        update();
+    //    update();
     };
 
     QVector2D mouse() { return QVector2D(_lastMouseX, _lastMouseY); }
@@ -305,6 +279,7 @@ public slots:
     bool isRotation() { return _rotationFlag; }
 
 private:
+    std::shared_ptr <GraphicsScene3d> m_scene;
     QVector<QVector3D> _bottomTrack;
 
     float _scale = 30.0;
@@ -313,7 +288,7 @@ private:
 
     Renderer* mpRenderer;
     std::shared_ptr <SceneController> mpSceneController;
-    std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
+    //std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
     bool mIsRightMouseButtonPressed = false;
     bool mIsLeftMouseButtonPressed = false;
