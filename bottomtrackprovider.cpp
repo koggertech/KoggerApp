@@ -2,12 +2,12 @@
 
 void BottomTrackProvider::setBottomTrack(QVector<QVector3D> &bottomTrack)
 {
-    mBottomTrack = bottomTrack;
+    m_bottomTrack = bottomTrack;
 
-    Q_EMIT bottomTrackChanged();
+    Q_EMIT bottomTrackChanged(m_bottomTrack);
 }
 
 QVector<QVector3D> BottomTrackProvider::getBottomTrack() const
 {
-    return mBottomTrack;
+    return m_bottomTrack;
 }

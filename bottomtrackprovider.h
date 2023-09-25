@@ -13,13 +13,11 @@ public:
     void setBottomTrack(QVector <QVector3D>& bottomTrack);
     QVector <QVector3D> getBottomTrack() const;
 
-private:
-
-    QVector <QVector3D> mBottomTrack;
-
 signals:
+    void bottomTrackChanged(QVector <QVector3D>& bottomTrack);
 
-    void bottomTrackChanged();
+private:
+    QVector <QVector3D> m_bottomTrack;
 
 };
 
