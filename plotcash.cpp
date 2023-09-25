@@ -295,11 +295,6 @@ PlotCash::PlotCash() {
     setThemeId(0);
 }
 
-void PlotCash::setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel)
-{
-    mpSceneObjectsListModel = sceneObjectsListModel;
-}
-
 void PlotCash::set3DSceneController(std::shared_ptr<SceneController> controller)
 {
     mp3DSceneController = controller;
