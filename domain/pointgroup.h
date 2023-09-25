@@ -3,13 +3,13 @@
 
 #include <QStandardItemModel>
 
-#include <sceneobject.h>
-#include <pointobject.h>
+#include <scenegraphicsobject.h>
 
-class PointGroup : public SceneObject
+class PointObject;
+class PointGroup : public SceneGraphicsObject
 {
     Q_OBJECT
-    Q_PROPERTY(QStandardItemModel* model READ model CONSTANT)
+    QML_NAMED_ELEMENT("PointGroup")
 
 public:
     explicit PointGroup(QObject *parent = nullptr);
@@ -18,25 +18,23 @@ public:
 
     virtual SceneObject::SceneObjectType type() const override;
 
-    void addPoint(std::shared_ptr <PointObject> point);
-
-    void removePoint(int index);
+    virtual void draw(QOpenGLFunctions* ctx,
+                      const QMatrix4x4& mvp,
+                      const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
     std::shared_ptr <PointObject> at(int index) const;
 
-    QObject* pointAt(int index) const;
+public Q_SLOTS:
+    virtual void append(std::shared_ptr <PointObject> point);
+    virtual void setData(const QVector <QVector3D>& data) override;
+    virtual void clearData() override;
+    virtual void append(const QVector3D& vertex) override;
+    virtual void append(const QVector<QVector3D>& other) override;
 
-private:
-    QStandardItemModel *model() const;
+    void removeAt(int index);
 
-Q_SIGNALS:
-    void countChanged(int count);
-
-private:
-    std::unique_ptr <QStandardItemModel> mModel;
-    QList <std::shared_ptr <PointObject>> mPointList;
+protected:
+    QList <std::shared_ptr <PointObject>> m_pointList;
 };
-
-Q_DECLARE_METATYPE(PointGroup*)
 
 #endif // POINTGROUP_H

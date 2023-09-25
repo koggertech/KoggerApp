@@ -1,67 +1,72 @@
 #include "pointgroup.h"
+#include <drawutils.h>
+#include <pointobject.h>
 
 PointGroup::PointGroup(QObject *parent)
-    : SceneObject(parent)
-    , mModel(new QStandardItemModel)
+: SceneGraphicsObject(parent)
 {
+    setPrimitiveType(GL_POINTS);
 }
 
 PointGroup::~PointGroup()
-{
-
-}
+{}
 
 SceneObject::SceneObjectType PointGroup::type() const
 {
     return SceneObject::SceneObjectType::PointGroup;
 }
 
-void PointGroup::addPoint(std::shared_ptr<PointObject> point)
+void PointGroup::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-    mPointList.append(point);
-
-    auto item = new QStandardItem();
-    item->setData(point->name(), Qt::DisplayRole);
-
-    mModel->invisibleRootItem()->appendRow(item);
-
-    Q_EMIT countChanged(mPointList.count());
-}
-
-void PointGroup::removePoint(int index)
-{
-    if(index < 0 && index >= mPointList.count())
+    if(!m_isVisible)
         return;
 
-    mPointList.removeAt(index);
+    for(const auto& point : m_pointList)
+        point->draw(ctx, mvp, shaderProgramMap);
+}
 
-    mModel->invisibleRootItem()->removeRow(index);
+void PointGroup::removeAt(int index)
+{
+    if(index < 0 && index >= m_pointList.count())
+        return;
 
-    Q_EMIT countChanged(mPointList.count());
+    m_pointList.removeAt(index);
 }
 
 std::shared_ptr<PointObject> PointGroup::at(int index) const
 {
-    if(index < 0 || index >= mPointList.count())
+    if(index < 0 || index >= m_pointList.count())
         return nullptr;
 
-    for(int i = 0; i < mPointList.count(); i++){
-        if(i == index)
-            return mPointList[i];
-    }
-
-    return nullptr;
+    return m_pointList.at(index);
 }
 
-QObject *PointGroup::pointAt(int index) const
+void PointGroup::append(std::shared_ptr <PointObject> point)
 {
-    if(index < 0 && index >= mPointList.count())
-        return nullptr;
+    if(m_pointList.contains(point))
+        return;
 
-    return static_cast <QObject*>(at(index).get());
+    point->setParent(this);
+
+    m_pointList.append(point);
 }
 
-QStandardItemModel *PointGroup::model() const
+void PointGroup::setData(const QVector<QVector3D> &data)
 {
-    return mModel.get();
+    Q_UNUSED(data)
+}
+
+void PointGroup::clearData()
+{
+    m_pointList.clear();
+}
+
+void PointGroup::append(const QVector3D &vertex)
+{
+    Q_UNUSED(vertex)
+}
+
+void PointGroup::append(const QVector<QVector3D> &other)
+{
+    Q_UNUSED(other)
 }
