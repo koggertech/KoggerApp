@@ -2,8 +2,6 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.4
 import Qt.labs.settings 1.1
-import ActiveObjectParamsMenu 1.0
-import SceneObjectsList 1.0
 
 Item {
     id: menu
@@ -259,37 +257,41 @@ Item {
             y:0
         }
 
-        ColumnLayout {
-            Layout.topMargin: 10
+        SceneControlMenu {
+            id: sceneControlMenu
+            Layout.topMargin:   10
             anchors.top:        menuBar.top
             anchors.left:       menuBar.right
             anchors.leftMargin: 40
-            spacing:            0
             visible:            menu3DSettings.active
-
-            ActiveObjectParamsMenuLoader {
-                id:     activeObjectParamsMenuLoader
-                width:  _rightBarWidth
-                height: _activeObjectParamsMenuHeight
-            }
-
-            SceneObjectsList {
-                width:        _rightBarWidth
-                height:       _sceneObjectsListHeight
-
-                onCountChanged: {
-                    if(count === 0){
-                        activeObjectParamsMenuLoader.reset()
-                    }
-                }
-            }
-
-            Connections {
-                target: ActiveObjectProvider
-                onActiveObjectChanged: {
-                    activeObjectParamsMenuLoader.setActiveObject(ActiveObjectProvider.activeObject)
-                }
-            }
         }
+
+
+        //ColumnLayout {
+        //    Layout.topMargin: 10
+        //    anchors.top:        menuBar.top
+        //    anchors.left:       menuBar.right
+        //    anchors.leftMargin: 40
+        //    spacing:            0
+        //    visible:            menu3DSettings.active
+
+        //    ActiveObjectParamsMenuLoader {
+        //        id:     activeObjectParamsMenuLoader
+        //        width:  _rightBarWidth
+        //        height: _activeObjectParamsMenuHeight
+        //        initialComponent: "MenuPlaceholder.qml"
+        //    }
+
+        //    SceneObjectsList {
+        //        width:        _rightBarWidth
+        //        height:       _sceneObjectsListHeight
+
+        //        onCountChanged: {
+        //            if(count === 0){
+        //                activeObjectParamsMenuLoader.reset()
+        //            }
+        //        }
+        //    }
+        //}
     }
 }
