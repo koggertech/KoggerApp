@@ -5,44 +5,22 @@
 
 #include <memory>
 
-#include <displayedobject.h>
-#include <pointobject.h>
+#include <pointgroup.h>
 
-class PolygonGroup;
-
-class PolygonObject : public DisplayedObject
+class PolygonObject : public PointGroup
 {
     Q_OBJECT
-    Q_PROPERTY(QStandardItemModel* model READ model CONSTANT)
+    QML_NAMED_ELEMENT("PolygonObject")
 
 public:
     explicit PolygonObject(QObject *parent = nullptr);
-
     virtual ~PolygonObject();
 
+    virtual void draw(QOpenGLFunctions* ctx,
+                      const QMatrix4x4& mvp,
+                      const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+
     virtual SceneObject::SceneObjectType type() const override;
-
-    virtual void setData(const QVector <QVector3D>& data) override;
-
-    virtual void append(const QVector <QVector3D>& data) override;
-
-    virtual void append(const QVector3D& point) override;
-
-    virtual void remove(int index) override;
-
-    int pointCount() const;
-
-    const QVector3D& pointAt(int index) const;
-
-    void replacePoint(int index, const QVector3D& point);
-
-private:
-    QStandardItemModel* model() const;
-
-private:
-    QList <std::shared_ptr <PointObject>> mPointList;
-
-    std::unique_ptr <QStandardItemModel> mModel;
 };
 
 #endif // POLYGONOBJECT_H
