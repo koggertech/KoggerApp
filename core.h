@@ -15,19 +15,15 @@
 #include <QThread>
 #include <3Plot.h>
 
-#include <sceneobjectslistmodel.h>
-#include <sceneobjectslistcontroller.h>
-#include <bottomtrackparamscontroller.h>
-#include <mpcfilterparamscontroller.h>
-#include <npdfilterparamscontroller.h>
-#include <polygongroupparamscontroller.h>
-#include <surfaceparamscontroller.h>
-#include <toolbar3dcontroller.h>
+#include <graphicsscene3dview.h>
 #include <scenecontroller.h>
-#include <sceneobjectslistmodel.h>
-#include <tool3dworker.h>
-#include <activeobjectprovider.h>
 #include <bottomtrackprovider.h>
+#include <bottomtrackcontrolmenucontroller.h>
+#include <surfacecontrolmenucontroller.h>
+#include <pointgroupcontrolmenucontroller.h>
+#include <polygongroupcontrolmenucontroller.h>
+#include <mpcfiltercontrolmenucontroller.h>
+#include <npdfiltercontrolmenucontroller.h>
 
 //#define FLASHER
 
@@ -74,8 +70,10 @@ public:
     void setEngine(QQmlApplicationEngine *engine);
 
 private:
-
     QStandardItemModel* sceneItemListModel() const;
+
+private Q_SLOTS:
+    void updateObjectListModel();
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
@@ -143,6 +141,8 @@ public:
     PlotCash* m_plot;
     WaterFall* m_waterFall = NULL;
     FboInSGRenderer* _render = NULL;
+    GraphicsScene3dView* m_scene3dView = nullptr;
+
 
     Device _devs;
     Logger _logger;
@@ -196,21 +196,16 @@ private:
 private:
 
     // View controllers
-    Scene3DController                              mpSceneController;
-    std::shared_ptr <Toolbar3dController>          mpToolbar3dController;
-    std::shared_ptr <SceneObjectsListController>   mpSceneObjectsListController;
-    std::shared_ptr <BottomTrackParamsController>  mpBottomTrackParamsController;
-    std::shared_ptr <PolygonGroupParamsController> mpPolygonGroupParamsController;
-    std::shared_ptr <SurfaceParamsController>      mpSurfaceParamsController;
-    std::shared_ptr <MPCFilterParamsController>    mpMPCFilterParamsController;
-    std::shared_ptr <NPDFilterParamsController>    mpNPDFilterParamsController;
+    Scene3DController                                   mpSceneController;
+    std::shared_ptr <BottomTrackControlMenuController>  m_bottomTrackControlMenuController;
+    std::shared_ptr <MpcFilterControlMenuController>    m_mpcFilterControlMenuController;
+    std::shared_ptr <NpdFilterControlMenuController>    m_npdFilterControlMenuController;
+    std::shared_ptr <SurfaceControlMenuController>      m_surfaceControlMenuController;
+    std::shared_ptr <PointGroupControlMenuController>   m_pointGroupControlMenuController;
+    std::shared_ptr <PolygonGroupControlMenuController> m_polygonGroupControlMenuController;
 
-    // App models
-    std::shared_ptr <ActiveObjectProvider>     mpActiveObjectProvider;
-    std::shared_ptr <Tool3dWorker>             mpTool3dWorker;
-    std::shared_ptr <BottomTrackProvider>      mpBottomTrackProvider;
-
-    std::unique_ptr <QStandardItemModel> m_sceneItemListModel;
+    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
+    std::unique_ptr <QStandardItemModel>  m_sceneObjectListModel; ///< graphics object list model
 };
 
 #endif // CORE_H

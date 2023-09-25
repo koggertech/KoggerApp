@@ -1,10 +1,12 @@
 #include "core.h"
+#include <QmlObjectNames.h>
+#include <bottomtrack.h>
 
 Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
     m_plot(new PlotCash),
-    m_sceneItemListModel(new QStandardItemModel)
+    m_sceneObjectListModel(new QStandardItemModel)
 {
 //    m_connection->moveToThread(&connectionThread);
 //    connectionThread.start();
@@ -26,47 +28,20 @@ Core::Core() : QObject(),
 void Core::createModels()
 {
     mpBottomTrackProvider   = std::make_shared <BottomTrackProvider>();
-    mpActiveObjectProvider  = std::make_shared <ActiveObjectProvider>();
-    mpTool3dWorker          = std::make_shared <Tool3dWorker>();
 
     m_plot->setBottomTrackProvider(mpBottomTrackProvider);
 }
 
 void Core::createControllers()
 {
-    mpSceneController     = std::make_shared <SceneController> ();
-    mpToolbar3dController = std::make_shared <Toolbar3dController>(
-                                                                    mpActiveObjectProvider,
-                                                                    mpTool3dWorker
-                                                                );
+    mpSceneController = std::make_shared <SceneController> ();
 
-    mpSceneObjectsListController = std::make_shared <SceneObjectsListController>(
-                                                                                    mpActiveObjectProvider,
-                                                                                    mpSceneObjectsListModel,
-                                                                                    mpBottomTrackProvider
-                                                                                );
-
-    mpBottomTrackParamsController = std::make_shared <BottomTrackParamsController>(
-                                                                                    mpActiveObjectProvider,
-                                                                                    mpBottomTrackProvider
-                                                                                );
-
-    mpMPCFilterParamsController = std::make_shared <MPCFilterParamsController>(
-                                                                                    mpActiveObjectProvider,
-                                                                                    mpBottomTrackProvider
-                                                                                );
-
-    mpNPDFilterParamsController = std::make_shared <NPDFilterParamsController>(
-                                                                                    mpActiveObjectProvider,
-                                                                                    mpBottomTrackProvider
-                                                                                );
-
-    mpSurfaceParamsController = std::make_shared <SurfaceParamsController>(
-                                                                               mpActiveObjectProvider,
-                                                                               mpSceneObjectsListModel
-                                                                           );
-
-    mpPolygonGroupParamsController = std::make_shared <PolygonGroupParamsController>(mpActiveObjectProvider);
+    m_bottomTrackControlMenuController  = std::make_shared <BottomTrackControlMenuController>();
+    m_mpcFilterControlMenuController    = std::make_shared <MpcFilterControlMenuController>();
+    m_npdFilterControlMenuController    = std::make_shared <NpdFilterControlMenuController>();
+    m_surfaceControlMenuController      = std::make_shared <SurfaceControlMenuController>();
+    m_pointGroupControlMenuController   = std::make_shared <PointGroupControlMenuController>();
+    m_polygonGroupControlMenuController = std::make_shared <PolygonGroupControlMenuController>();
 
     m_plot->set3DSceneController(mpSceneController);
 }
@@ -75,20 +50,20 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     m_engine = engine;
 
-    m_engine->rootContext()->setContextProperty("Toolbar3dController",          mpToolbar3dController.get());
-    m_engine->rootContext()->setContextProperty("SceneObjectsListController" ,  mpSceneObjectsListController.get());
-    m_engine->rootContext()->setContextProperty("BottomTrackParamsController",  mpBottomTrackParamsController.get());
-    m_engine->rootContext()->setContextProperty("SceneObjectListModel",         mpSceneObjectsListModel.get());
-    m_engine->rootContext()->setContextProperty("ActiveObjectProvider",         mpActiveObjectProvider.get());
-    m_engine->rootContext()->setContextProperty("MPCFilterParamsController",    mpMPCFilterParamsController.get());
-    m_engine->rootContext()->setContextProperty("NPDFilterParamsController",    mpNPDFilterParamsController.get());
-    m_engine->rootContext()->setContextProperty("SurfaceParamsController",      mpSurfaceParamsController.get());
-    m_engine->rootContext()->setContextProperty("PolygonGroupParamsController", mpPolygonGroupParamsController.get());
+    QObject::connect(m_engine, &QQmlApplicationEngine::objectCreated,
+                     this,      &Core::UILoad, Qt::QueuedConnection);
+
+    m_engine->rootContext()->setContextProperty("BottomTrackControlMenuController",  m_bottomTrackControlMenuController.get());
+    m_engine->rootContext()->setContextProperty("SurfaceControlMenuController",      m_surfaceControlMenuController.get());
+    m_engine->rootContext()->setContextProperty("PointGroupControlMenuController",   m_pointGroupControlMenuController.get());
+    m_engine->rootContext()->setContextProperty("PolygonGroupControlMenuController", m_polygonGroupControlMenuController.get());
+    m_engine->rootContext()->setContextProperty("MpcFilterControlMenuController",    m_mpcFilterControlMenuController.get());
+    m_engine->rootContext()->setContextProperty("NpdFilterControlMenuController",    m_npdFilterControlMenuController.get());
 }
 
 QStandardItemModel *Core::sceneItemListModel() const
 {
-    return m_sceneItemListModel.get();
+    return m_sceneObjectListModel.get();
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
@@ -192,7 +167,7 @@ bool Core::devsConnection() {
 bool Core::openConnectionAsFile(const QString &name) {
     closeConnection();
 
-    mpSceneObjectsListModel->clear();
+    //mpSceneObjectsListModel->clear();
 
     m_plot->resetDataset();
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
@@ -450,17 +425,65 @@ void Core::setUpgradeBaudrate() {
 }
 
 void Core::UILoad(QObject *object, const QUrl &url) {
-    _render = object->findChild<FboInSGRenderer*>();
+    Q_UNUSED(url)
 
-    if(_render != NULL) {
-        m_plot->set3DRender(_render);
+    m_scene3dView = object->findChild<GraphicsScene3dView*>();
+
+    if(m_scene3dView){
+        auto scene = std::make_shared<GraphicsScene3d>();
+        m_scene3dView->setScene(scene);
+
+        QObject::connect(mpBottomTrackProvider.get(), &BottomTrackProvider::bottomTrackChanged,
+                         scene->bottomTrack().get(),  &BottomTrack::setData);
     }
 
+
+    m_bottomTrackControlMenuController->setQmlEngine(object);
+    m_bottomTrackControlMenuController->setGraphicsSceneView(m_scene3dView);
+    m_bottomTrackControlMenuController->setBottomTrackProvider(mpBottomTrackProvider);
+
+    m_surfaceControlMenuController->setQmlEngine(object);
+    m_surfaceControlMenuController->setGraphicsSceneView(m_scene3dView);
+
+    m_npdFilterControlMenuController->setQmlEngine(object);
+    m_npdFilterControlMenuController->setGraphicsSceneView(m_scene3dView);
+    m_npdFilterControlMenuController->setBottomTrackProvider(mpBottomTrackProvider);
+
+    m_mpcFilterControlMenuController->setQmlEngine(object);
+    m_mpcFilterControlMenuController->setGraphicsSceneView(m_scene3dView);
+    m_mpcFilterControlMenuController->setBottomTrackProvider(mpBottomTrackProvider);
+
+    m_pointGroupControlMenuController->setQmlEngine(object);
+    m_pointGroupControlMenuController->setGraphicsSceneView(m_scene3dView);
+
+    m_polygonGroupControlMenuController->setQmlEngine(object);
+    m_polygonGroupControlMenuController->setGraphicsSceneView(m_scene3dView);
+
     m_waterFall = object->findChild<WaterFall*>();
+
     if(m_waterFall != NULL) {
         m_waterFall->setPlot(m_plot);
     }
 }
 
-void Core::closing() {
+
+void Core::updateObjectListModel()
+{
+    m_sceneObjectListModel->clear();
+
+    if(!m_scene3dView)
+        return;
+
+    auto scene = m_scene3dView->scene();
+
+    if(!scene)
+        return;
+
+    for(const auto& object : scene->objects())
+        this->m_sceneObjectListModel->appendRow(new QStandardItem(object->name()));
+}
+
+void Core::closing()
+{
+
 }
