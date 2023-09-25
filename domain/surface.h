@@ -3,23 +3,21 @@
 
 #include <memory>
 
-#include <displayedobject.h>
+#include <scenegraphicsobject.h>
 #include <contour.h>
 #include <surfacegrid.h>
 #include <constants.h>
 
-class Surface : public DisplayedObject
+class Surface : public SceneGraphicsObject
 {
     Q_OBJECT
-
-    Q_PROPERTY(QString bottomTrackId READ bottomTrackId WRITE setBottomTrackId NOTIFY bottomTrackIdChanged)
-    Q_PROPERTY(Contour* contour      READ contour                              NOTIFY contourChanged)
-    Q_PROPERTY(SurfaceGrid* grid     READ grid                                 NOTIFY gridChanged)
+    QML_NAMED_ELEMENT("Surface")
+    Q_PROPERTY(Contour* contour  READ contour CONSTANT)
+    Q_PROPERTY(SurfaceGrid* grid READ grid    CONSTANT)
 
 public:
 
-    explicit Surface(int primitiveType = GL_TRIANGLES,
-                     QObject* parent = nullptr);
+    explicit Surface(QObject* parent = nullptr);
 
     virtual ~Surface();
 
@@ -35,6 +33,14 @@ public:
     //! @param[in] data - ссылка на набор вершин.
     virtual void setData(const QVector <QVector3D>& data) override;
 
+    virtual void clearData() override;
+
+    virtual void draw(QOpenGLFunctions* ctx,
+                      const QMatrix4x4& mvp,
+                      const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+
+    virtual SceneObjectType type() const override;
+
     //! @brief Добавляет вершину в конец набора вершин.
     //! @param[in] vertex - ссылка на вершину
     virtual void append(const QVector3D& vertex) override;
@@ -42,22 +48,6 @@ public:
     //! @brief Добавляет входящий набор вершин в конец набора вершин объекта
     //! @param[in] other - ссылка на набор вершин
     virtual void append(const QVector<QVector3D>& other) override;
-
-    virtual void draw(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QMap <QString, QOpenGLShaderProgram*> shaderProgramMap) const override;
-
-    virtual SceneObjectType type() const override;
-
-    /**
-     * @brief  Returns id of source bottom track object
-     * @return Id of source bottom track object
-     */
-    QString bottomTrackId() const;
-
-    /**
-     * @brief Sets id of source bottom track object
-     * @param id Id of source bottom track object
-     */
-    void setBottomTrackId(QString id);
 
 private:
 
@@ -81,16 +71,14 @@ private:
 
 signals:
 
-    void bottomTrackIdChanged(QString id);
-
     void gridChanged();
 
     void contourChanged();
 
 private:
-    QString mBottomTrackId = "";
-    std::shared_ptr <Contour> mContour;
-    std::shared_ptr <SurfaceGrid> mGrid;
+    QString m_bottomTrackId = "";
+    std::shared_ptr <Contour> m_contour;
+    std::shared_ptr <SurfaceGrid> m_grid;
 };
 
 #endif // SURFACE_H
