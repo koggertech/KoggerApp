@@ -2,15 +2,36 @@
 
 #include <QtMath>
 
-GraphicsScene3d::GraphicsScene3d()
+#include <bottomtrack.h>
+#include <surface.h>
+#include <pointgroup.h>
+#include <polygongroup.h>
+#include <scenegraphicsobject.h>
+
+static const qreal sphereRadius = -500.0f;
+
+GraphicsScene3d::GraphicsScene3d(QObject* parent)
+    : QObject(parent)
+    , m_bottomTrack(std::make_shared<BottomTrack>())
+    , m_surface(std::make_shared<Surface>())
+    , m_pointGroup(std::make_shared<PointGroup>())
+    , m_polygonGroup(std::make_shared<PolygonGroup>())
 {
     m_shaderProgramMap["height"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static"] = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3d::~GraphicsScene3d()
-{
+{}
 
+void GraphicsScene3d::setBottomTrack(std::shared_ptr<BottomTrack> bottomTrack)
+{
+    m_bottomTrack = bottomTrack;
+}
+
+void GraphicsScene3d::setSurface(std::shared_ptr<Surface> surface)
+{
+    m_surface = surface;
 }
 
 void GraphicsScene3d::addGraphicsObject(std::shared_ptr<SceneGraphicsObject> object)
@@ -18,9 +39,11 @@ void GraphicsScene3d::addGraphicsObject(std::shared_ptr<SceneGraphicsObject> obj
     if(m_objectList.contains(object))
         return;
 
-    object->setScene(std::shared_ptr <GraphicsScene3d>(this));
+    object->setScene(this);
 
     m_objectList.append(object);
+
+    Q_EMIT objectsCountChanged(m_objectList);
 }
 
 void GraphicsScene3d::removeGraphicsObject(std::shared_ptr<SceneGraphicsObject> object)
@@ -29,6 +52,8 @@ void GraphicsScene3d::removeGraphicsObject(std::shared_ptr<SceneGraphicsObject> 
         return;
 
     m_objectList.removeOne(object);
+
+    Q_EMIT objectsCountChanged(m_objectList);
 }
 
 GraphicsScene3dView *GraphicsScene3d::view() const
@@ -89,6 +114,16 @@ void GraphicsScene3d::setWidth(qreal width)
 void GraphicsScene3d::setHeight(qreal height)
 {
     m_rect.setHeight(height);
+}
+
+void GraphicsScene3d::setDragOffset(QVector3D offset)
+{
+    m_dragOffset = offset;
+}
+
+void GraphicsScene3d::setRotationAngle(QVector2D angle)
+{
+    m_rotationAngle = angle;
 }
 
 QRectF GraphicsScene3d::rect() const
@@ -155,9 +190,9 @@ void GraphicsScene3d::draw()
     glFrontFace(GL_CW);
     glEnable(GL_DEPTH_TEST);
 
-    qreal sphereRadius = -500;
-
-    QVector3D cameraTarget(0.0f, 0.0f, 0.0f);
+    m_center[0] += (m_dragOffset[1]*cosf(-m_yaw)*cosf(m_rotationAngle.y()) - m_dragOffset[0]*sinf(-m_yaw));
+    m_center[1] += (m_dragOffset[1]*sinf(-m_yaw)*cosf(m_rotationAngle.y()) + m_dragOffset[0]*cosf(-m_yaw));
+    m_center[2] += -m_dragOffset[1]*sinf(m_pitch)*sinf(m_pitch);
 
     QVector3D cameraPosition(
                         -sinf(m_pitch)*cosf(-m_yaw)*sphereRadius,
@@ -170,6 +205,8 @@ void GraphicsScene3d::draw()
                     -sinf(m_pitch),
                     cosf(m_pitch)*sinf(-m_yaw)
                 );
+
+    auto cameraTarget = m_center;
 
     QMatrix4x4 model, view, projection;
 
@@ -185,8 +222,35 @@ void GraphicsScene3d::draw()
     glDisable(GL_DEPTH_TEST);
 }
 
+std::shared_ptr<BottomTrack> GraphicsScene3d::bottomTrack() const
+{
+    return m_bottomTrack;
+}
+
+std::shared_ptr<Surface> GraphicsScene3d::surface() const
+{
+    return m_surface;
+}
+
+std::shared_ptr<PointGroup> GraphicsScene3d::pointGroup() const
+{
+    return m_pointGroup;
+}
+
+std::shared_ptr<PolygonGroup> GraphicsScene3d::polygonGroup() const
+{
+    return m_polygonGroup;
+}
+
+QList<std::shared_ptr<SceneGraphicsObject> > GraphicsScene3d::objects() const
+{
+    return m_objectList;
+}
+
 void GraphicsScene3d::drawObjects()
 {
-    for(const auto& object : m_objectList)
-        object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+    m_bottomTrack->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+    m_surface->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+    m_pointGroup->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+    m_polygonGroup->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
 }
