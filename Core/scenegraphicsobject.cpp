@@ -1,5 +1,7 @@
 #include "scenegraphicsobject.h"
 
+#include <drawutils.h>
+
 SceneGraphicsObject::SceneGraphicsObject(QObject *parent)
 : SceneObject(parent)
 {}
@@ -11,9 +13,32 @@ void SceneGraphicsObject::draw(QOpenGLFunctions *ctx,
                                const QMatrix4x4 &mvp,
                                const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const
 {
-    Q_UNUSED(ctx)
-    Q_UNUSED(mvp)
-    Q_UNUSED(shaderProgramMap)
+    if(!m_isVisible)
+        return;
+
+    if(!shaderProgramMap.contains("static"))
+        return;
+
+    auto shaderProgram = shaderProgramMap["static"];
+
+    if (!shaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = shaderProgram->attributeLocation("position");
+    int colorLoc  = shaderProgram->uniformLocation("color");
+    int matrixLoc = shaderProgram->uniformLocation("matrix");
+
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(m_color));
+    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, m_data.constData());
+
+    ctx->glDrawArrays(m_primitiveType, 0, m_data.count());
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
 }
 
 bool SceneGraphicsObject::isVisible() const
