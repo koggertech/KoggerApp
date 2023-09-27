@@ -167,7 +167,9 @@ bool Core::devsConnection() {
 bool Core::openConnectionAsFile(const QString &name) {
     closeConnection();
 
-    //mpSceneObjectsListModel->clear();
+    auto scene = m_scene3dView->scene();
+    if(scene)
+        scene->clear();
 
     m_plot->resetDataset();
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
