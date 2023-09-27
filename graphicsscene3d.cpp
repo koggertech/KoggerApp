@@ -70,6 +70,15 @@ void GraphicsScene3d::setGraphicsObjects(const QList<std::shared_ptr<SceneGraphi
         Q_EMIT objectsCountChanged(m_objectList);
 }
 
+void GraphicsScene3d::clear()
+{
+    m_bottomTrack->clearData();
+    m_surface->clearData();
+    m_pointGroup->clearData();
+    m_polygonGroup->clearData();
+    m_objectList.clear();
+}
+
 void GraphicsScene3d::clearGraphicsObjects()
 {
     auto count = m_objectList.count();

@@ -40,6 +40,7 @@ public:
 public Q_SLOTS:
     void addGraphicsObject(std::shared_ptr <SceneGraphicsObject> object);
     void setGraphicsObjects(const QList<std::shared_ptr<SceneGraphicsObject>>& objects);
+    void clear();
     void clearGraphicsObjects();
     void removeGraphicsObject(std::shared_ptr <SceneGraphicsObject> object);
     void setView(GraphicsScene3dView* view);
