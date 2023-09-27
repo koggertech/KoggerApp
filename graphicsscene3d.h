@@ -6,6 +6,7 @@
 #include <QMatrix4x4>
 #include <QOpenGLFunctions>
 #include <QVector2D>
+#include <QMutex>
 
 class BottomTrack;
 class Surface;
@@ -22,6 +23,8 @@ public:
     GraphicsScene3d(QObject* parent = nullptr);
     virtual ~GraphicsScene3d();
 
+    void lock();
+    void unlock();
     std::shared_ptr <BottomTrack> bottomTrack() const;
     std::shared_ptr <Surface> surface() const;
     std::shared_ptr <PointGroup> pointGroup() const;
@@ -30,12 +33,14 @@ public:
     QRectF rect() const;
     qreal width() const;
     qreal height() const;
-    GraphicsScene3dView* view() const;
+    //GraphicsScene3dView* view() const;
     bool isInitialized() const;
     qreal fov() const;
 
 public Q_SLOTS:
     void addGraphicsObject(std::shared_ptr <SceneGraphicsObject> object);
+    void setGraphicsObjects(const QList<std::shared_ptr<SceneGraphicsObject>>& objects);
+    void clearGraphicsObjects();
     void removeGraphicsObject(std::shared_ptr <SceneGraphicsObject> object);
     void setView(GraphicsScene3dView* view);
     void draw();
@@ -55,6 +60,9 @@ Q_SIGNALS:
 private:
     void initialize();
     void drawObjects();
+    QMatrix4x4 model() const;
+    QMatrix4x4 view() const;
+    QMatrix4x4 projection() const;
 
 protected:
     QMatrix4x4 m_model;
@@ -78,6 +86,7 @@ private:
     qreal m_fov = 45.0f;
     qreal m_pitch = 0.0f;
     qreal m_yaw = -90.0f;
+    QMutex m_mutex;
 };
 
 #endif // GRAPHICSSCENE3D_H

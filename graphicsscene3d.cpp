@@ -8,14 +8,17 @@
 #include <polygongroup.h>
 #include <scenegraphicsobject.h>
 
+#include <QThread>
+#include <QDebug>
+
 static const qreal sphereRadius = -500.0f;
 
 GraphicsScene3d::GraphicsScene3d(QObject* parent)
     : QObject(parent)
-    , m_bottomTrack(std::make_shared<BottomTrack>())
-    , m_surface(std::make_shared<Surface>())
-    , m_pointGroup(std::make_shared<PointGroup>())
-    , m_polygonGroup(std::make_shared<PolygonGroup>())
+    , m_bottomTrack(std::make_shared<BottomTrack>(this))
+    , m_surface(std::make_shared<Surface>(this))
+    , m_pointGroup(std::make_shared<PointGroup>(this))
+    , m_polygonGroup(std::make_shared<PolygonGroup>(this))
 {
     m_shaderProgramMap["height"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static"] = std::make_shared<QOpenGLShaderProgram>();
@@ -23,6 +26,16 @@ GraphicsScene3d::GraphicsScene3d(QObject* parent)
 
 GraphicsScene3d::~GraphicsScene3d()
 {}
+
+void GraphicsScene3d::lock()
+{
+    m_mutex.lock();
+}
+
+void GraphicsScene3d::unlock()
+{
+    m_mutex.unlock();
+}
 
 void GraphicsScene3d::setBottomTrack(std::shared_ptr<BottomTrack> bottomTrack)
 {
@@ -40,10 +53,31 @@ void GraphicsScene3d::addGraphicsObject(std::shared_ptr<SceneGraphicsObject> obj
         return;
 
     object->setScene(this);
+    object->setParent(this);
 
     m_objectList.append(object);
 
     Q_EMIT objectsCountChanged(m_objectList);
+}
+
+void GraphicsScene3d::setGraphicsObjects(const QList<std::shared_ptr<SceneGraphicsObject>> &objects)
+{
+    auto size = m_objectList.size();
+
+    m_objectList = objects;
+
+    if(size != m_objectList.size())
+        Q_EMIT objectsCountChanged(m_objectList);
+}
+
+void GraphicsScene3d::clearGraphicsObjects()
+{
+    auto count = m_objectList.count();
+
+    m_objectList.clear();
+
+    if(count != m_objectList.size())
+        Q_EMIT objectsCountChanged(m_objectList);
 }
 
 void GraphicsScene3d::removeGraphicsObject(std::shared_ptr<SceneGraphicsObject> object)
@@ -56,10 +90,10 @@ void GraphicsScene3d::removeGraphicsObject(std::shared_ptr<SceneGraphicsObject> 
     Q_EMIT objectsCountChanged(m_objectList);
 }
 
-GraphicsScene3dView *GraphicsScene3d::view() const
-{
-    return mp_view;
-}
+//GraphicsScene3dView *GraphicsScene3d::view() const
+//{
+//    return mp_view;
+//}
 
 bool GraphicsScene3d::isInitialized() const
 {
@@ -249,8 +283,30 @@ QList<std::shared_ptr<SceneGraphicsObject> > GraphicsScene3d::objects() const
 
 void GraphicsScene3d::drawObjects()
 {
+    lock();
+
     m_bottomTrack->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
     m_surface->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
     m_pointGroup->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
     m_polygonGroup->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+
+    for(const auto& object : qAsConst(m_objectList))
+        object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+
+    unlock();
+}
+
+QMatrix4x4 GraphicsScene3d::model() const
+{
+    return m_model;
+}
+
+QMatrix4x4 GraphicsScene3d::view() const
+{
+    return m_view;
+}
+
+QMatrix4x4 GraphicsScene3d::projection() const
+{
+    return m_projection;
 }
