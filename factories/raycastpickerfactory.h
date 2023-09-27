@@ -8,7 +8,7 @@ class RayCastPickerFactory : AbstractPickerFactory
 {
 public:
 
-    RayCastPickerFactory() = delete;
+    RayCastPickerFactory();
     RayCastPickerFactory(const QVector3D& origin, const QVector3D& dir);
 
     std::shared_ptr <AbstractPicker> createPolygonPicker() override;

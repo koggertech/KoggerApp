@@ -9,7 +9,7 @@ class RayCastPointPicker : public AbstractPicker
 public:
     RayCastPointPicker(const QVector3D& origin, const QVector3D& dir);
 
-    std::shared_ptr <VertexObject> pick(std::shared_ptr <VertexObject> sourceObject) override;
+    //std::shared_ptr <VertexObject> pick(std::shared_ptr <VertexObject> sourceObject) override;
 
     QString pickingMethod() override;
 

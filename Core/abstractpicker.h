@@ -3,15 +3,13 @@
 
 #include <memory>
 
-#include <QVector>
-
-#include "vertexobject.h"
+#include <QVector3D>
 
 class AbstractPicker
 {
 public:
 
-    virtual std::shared_ptr <VertexObject> pick(std::shared_ptr <VertexObject> object) = 0;
+    //virtual std::shared_ptr <VertexObject> pick(std::shared_ptr <VertexObject> object) = 0;
 
     virtual QString pickingMethod() = 0;
 
