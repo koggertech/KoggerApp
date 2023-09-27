@@ -1,10 +1,14 @@
 #include "graphicsscene3dview.h"
 
+#include <memory.h>
+
 #include <QOpenGLFramebufferObject>
-#include <QVector2D>
+#include <QVector3D>
+#include <surface.h>
 
 GraphicsScene3dView::GraphicsScene3dView()
 : QQuickFramebufferObject()
+, m_rayCaster(std::make_shared<RayCaster>())
 {
     setAcceptedMouseButtons(Qt::AllButtons);
 }
@@ -35,6 +39,10 @@ void GraphicsScene3dView::setScene(std::shared_ptr<GraphicsScene3d> scene)
     m_scene = scene;
     m_scene->setView(this);
     m_scene->setRect(boundingRect());
+
+    m_rayCaster->addObject(
+                    std::static_pointer_cast<SceneObject>(scene->surface())
+                );
 
     Q_EMIT sceneChanged(old, m_scene);
 
@@ -68,6 +76,35 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
     }
 
     m_lastMousePos = {x,y};
+
+    auto origin = QVector3D(m_lastMousePos.x(), m_lastMousePos.y(), -1.0f)
+            .unproject(m_scene->model() * m_scene->view(),
+                       m_scene->projection(),
+                       m_scene->rect().toRect());
+
+    auto end = QVector3D(m_lastMousePos.x(), m_lastMousePos.y(), 1.0f)
+            .unproject(m_scene->model() * m_scene->view(),
+                       m_scene->projection(),
+                       m_scene->rect().toRect());
+
+    auto direction = (end - origin).normalized();
+
+    m_scene->lock();
+    m_rayCaster->trigger(origin, direction);
+
+    QList <std::shared_ptr <SceneGraphicsObject>> pickedObjects;
+
+    for(const auto& hit : m_rayCaster->hits()){
+        auto object = std::make_shared<SceneGraphicsObject>();
+
+        object->setPrimitiveType(hit.sourcePrimitive().second);
+        object->setData(hit.sourcePrimitive().first);
+
+        pickedObjects.append(object);
+    }
+
+    m_scene->setGraphicsObjects(pickedObjects);
+    m_scene->unlock();
 }
 
 void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
