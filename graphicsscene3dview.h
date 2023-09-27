@@ -4,6 +4,7 @@
 #include <QQuickFramebufferObject>
 
 #include <graphicsscene3d.h>
+#include <raycaster.h>
 
 class GraphicsScene3dView : public QQuickFramebufferObject
 {
@@ -79,6 +80,7 @@ private:
     friend class GraphicsScene3dView;
     std::shared_ptr <GraphicsScene3d> m_scene;
     QPointF m_lastMousePos = {0.0f, 0.0f};
+    std::shared_ptr <RayCaster> m_rayCaster;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
