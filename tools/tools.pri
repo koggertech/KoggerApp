@@ -1,8 +1,6 @@
 INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
-HEADERS += \
-    $$PWD/pointselectiontool.h
+HEADERS +=
 
-SOURCES += \
-    $$PWD/pointselectiontool.cpp
+SOURCES +=
