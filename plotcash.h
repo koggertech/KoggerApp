@@ -255,7 +255,7 @@ public:
             return amplitude.size()*(resolution);
         }
 
-    } DataChart;
+    } Echogram;
 
 
 
@@ -339,7 +339,7 @@ public:
         return false;
     }
 
-    DataChart* chart(int16_t channel = 0) {
+    Echogram* chart(int16_t channel = 0) {
         if(_charts.contains(channel)) {
             return &_charts[channel];
         }
@@ -370,6 +370,13 @@ public:
             range = _charts[channel].range();
         }
 
+        if(_rangeFinders.size() > 0) {
+            float r1 = _rangeFinders.first();
+            if(isfinite(r1) && (r1 > range || !isfinite(range))) {
+                range = r1;
+            }
+        }
+
         return range;
     }
 
@@ -377,7 +384,6 @@ public:
     bool isIqAvail() { return flags.iqAvail; }
 
 
-    int distData() { return m_dist; }
     bool distAvail() { return flags.distAvail; }
 
     float distProccesing(int16_t channel) {
@@ -389,6 +395,13 @@ public:
     }
 
 
+    float rangeFinder() {
+        if(_rangeFinders.size() > 0) {
+            return _rangeFinders.first();
+        }
+
+        return NAN;
+    }
 
     float temperature() { return m_temp_c; }
     bool temperatureAvail() { return flags.tempAvail; }
@@ -425,8 +438,8 @@ public:
     bool isPosAvail() { return flags.posAvail; }
 
 
-    void doBottomTrack2D(DataChart &chart, bool is_update_dist = false);
-    void doBottomTrackSideScan(DataChart &chart, bool is_update_dist = false);
+    void doBottomTrack2D(Echogram &chart, bool is_update_dist = false);
+    void doBottomTrackSideScan(Echogram &chart, bool is_update_dist = false);
 
 
     bool chartTo(int16_t channel, float start, float end, int16_t* dst, int len, int image_type, bool reverse = false) {
@@ -517,10 +530,9 @@ public:
 
 protected:
 
-    QHash<int16_t, DataChart> _charts;
-    QHash<int16_t, float> _rangeFinders;
+    QHash<int16_t, Echogram> _charts;
+    QMap<int16_t, float> _rangeFinders;
 
-    int m_dist;
     int _eventTimestamp_us = 0;
     int _eventUnix = 0;
     int _eventId = 0;
@@ -592,6 +604,20 @@ public:
             return &_pool[index];
         }
 
+        return NULL;
+    }
+
+    Epoch* last() {
+        if(size() > 0) {
+            return fromIndex(endIndex());
+        }
+        return NULL;
+    }
+
+    Epoch* lastlast() {
+        if(size() > 1) {
+            return fromIndex(endIndex()-1);
+        }
         return NULL;
     }
 

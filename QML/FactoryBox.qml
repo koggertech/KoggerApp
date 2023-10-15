@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
@@ -8,21 +8,21 @@ DevSettingsBox {
     id: control
     isActive: true
 
-    //    FileDialog {
-    //        id: fileDialog
-    //        title: "Please choose a file"
-    //        folder: shortcuts.home
-    //        nameFilters: ["Upgrade files (*.ufw)"]
-    //        onAccepted: {
-    //            pathText.text = fileDialog.fileUrl.toString()
-    //        }
-    //        onRejected: {
-    //        }
-    //    }
+        FileDialog {
+            id: fileDialog
+            title: "Please choose a file"
+            folder: shortcuts.home
+            nameFilters: ["Upgrade files (*.bin)"]
+            onAccepted: {
+                pathText.text = fileDialog.fileUrl.toString()
+            }
+            onRejected: {
+            }
+        }
 
-    //    Settings {
-    //        property alias upgradeFolder: fileDialog.folder
-    //    }
+        Settings {
+            property alias upgradeFolder: fileDialog.folder
+        }
 
     MenuBlock {
     }
@@ -303,6 +303,30 @@ DevSettingsBox {
                     implicitHeight: 30
                     onClicked: {
                         core.factoryFlash("", 0, pn_nbr.text, dev)
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: 10
+                width: control.width
+
+                CButton {
+                    text: "Simple FLASH"
+                    Layout.fillWidth: true
+                    implicitHeight: 30
+                    onClicked: {
+                        core.simpleFlash(fileDialog.fileUrl.toString())
+                    }
+                }
+
+                CButton {
+                    text: "..."
+//                    Layout.fillWidth: true
+                    implicitHeight: 30
+                    onClicked: {
+                        fileDialog.open()
                     }
                 }
             }

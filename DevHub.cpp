@@ -26,6 +26,7 @@ void Device::putData(const QByteArray &data) {
 
         //        qInfo("Packets: good %u, frame error %u, check error %u", m_proto.binComplete(),  m_proto.frameError(),  m_proto.binError());
 
+#if !defined(Q_OS_ANDROID)
         if(_parser.isStream()) {
             _streamList.append(&_parser);
         }
@@ -37,6 +38,7 @@ void Device::putData(const QByteArray &data) {
         if(_streamList.isListChenged()) {
             emit streamChanged();
         }
+#endif
 
         if(_parser.isProxy()) {
             continue;
@@ -110,7 +112,7 @@ void Device::putData(const QByteArray &data) {
                     uint8_t mounth = 0, day = 0;
                     prot_nmea.readDate(&year, &mounth, & day);
 
-                    uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toTime_t();
+                    uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
                     core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
@@ -145,7 +147,7 @@ void Device::putData(const QByteArray &data) {
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
 
-                uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toTime_t();
+                uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
 
                 if(fix_type > 1 && fix_type < 5) {
                     core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
@@ -195,8 +197,6 @@ void Device::putData(const QByteArray &data) {
             }
         }
     }
-
-    int a = 0;
 }
 
 void Device::binFrameOut(ProtoBinOut &proto_out) {

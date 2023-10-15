@@ -3,7 +3,7 @@ QT += widgets
 QT += network
 QT += qml
 
-CONFIG += FLASHER
+#CONFIG += FLASHER
 
 windows {
     QT += serialport
@@ -151,6 +151,14 @@ DISTFILES += \
     QML/FlashBox.qml \
     QML/main.qml \
     a.fsh \
+    android_build/AndroidManifest.xml \
+    android_build/build.gradle \
+    android_build/gradle.properties \
+    android_build/gradle/wrapper/gradle-wrapper.jar \
+    android_build/gradle/wrapper/gradle-wrapper.properties \
+    android_build/gradlew \
+    android_build/gradlew.bat \
+    android_build/res/values/libs.xml \
     base.vsh \
     heightcolor.frag \
     staticcolor.fsh
@@ -158,13 +166,13 @@ DISTFILES += \
 
 android {
 DISTFILES += \
-    android/AndroidManifest.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew \
-    android/gradlew.bat \
-    android/res/values/libs.xml \
+    android_build/AndroidManifest.xml \
+    android_build/build.gradle \
+    android_build/gradle/wrapper/gradle-wrapper.jar \
+    android_build/gradle/wrapper/gradle-wrapper.properties \
+    android_build/gradlew \
+    android_build/gradlew.bat \
+    android_build/res/values/libs.xml \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
@@ -183,11 +191,12 @@ include ($$PWD/controllers/controllers.pri)
 
 
 android {
-    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
-    ANDROID_ABIS = arm64-v8a
-#    ANDROID_ABIS = x86
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android_build
+#    ANDROID_ABIS = arm64-v8a
+##    ANDROID_ABIS = x86
 }
 
 ANDROID_ABIS = armeabi-v7a
 
 
+android: include(C:/Users/aproo/AppData/Local/Android/Sdk/android_openssl/openssl.pri)

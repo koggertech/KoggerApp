@@ -6,7 +6,7 @@
 
 #include <QtGui/qvector3d.h>
 #include <QtGui/qmatrix4x4.h>
-#include <QtGui/qopenglshaderprogram.h>
+//#include <QtGui/qopenglshaderprogram.h>
 #include <QtGui/qopenglfunctions.h>
 
 #include <QObject>

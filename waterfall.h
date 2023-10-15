@@ -8,6 +8,8 @@
 #include <QTimer>
 #include "Plot2D.h"
 
+//#define USE_PIXMAP
+
 
 class qPlot2D : public QQuickPaintedItem, public Plot2D
 {
@@ -17,13 +19,14 @@ public:
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
-    virtual void paint(QPainter *painter);
+    void paint(QPainter *painter) override;
+//    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
     void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  updater(); }
 
-    void plotUpdate();
+    void plotUpdate() override;
 
 protected:
     Dataset* m_plot = nullptr;
@@ -64,6 +67,13 @@ public slots:
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }
     void plotVelocityRange(float velocity) { setVelocityRange(velocity); }
+
+    void plotDistanceAutoRange(int auto_range_type) { setDistanceAutoRange(auto_range_type); }
+
+    void plotEchogramSetLevels(float low, float hight) {
+        setEchogramLowLevel(low);
+        setEchogramHightLevel(hight);
+    }
 
     void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz);
 

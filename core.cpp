@@ -325,6 +325,8 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     bool ext_pos_ned_find = false;
 
     int row_cnt = _dataset->size();
+    _dataset->spatialProcessing();
+
     for(int i = 0; i < row_cnt; i++) {
         Epoch* epoch = _dataset->fromIndex(i);
 
@@ -457,7 +459,7 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
         if(rangefinder) {
             if(epoch->distAvail()) {
-                row_data.append(QString("%1,").arg((float)epoch->distData()*0.001f));
+                row_data.append(QString("%1,").arg((float)epoch->rangeFinder()));
             } else {
                 row_data.append("0,");
             }
@@ -481,7 +483,7 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
             if(pos_time) {
                 if(epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
-                    QDateTime dt = QDateTime::fromTime_t(epoch->positionTimeUnix(), Qt::TimeSpec::UTC).addMSecs(epoch->positionTimeNano()/1000000);
+                    QDateTime dt = QDateTime::fromMSecsSinceEpoch(epoch->positionTimeUnix(), Qt::TimeSpec::UTC).addMSecs(epoch->positionTimeNano()/1000000);
                     row_data.append(dt.toString("yyyy-MM-dd"));
                     row_data.append(",");
                     row_data.append(dt.toString("hh:mm:ss.zzz"));
@@ -513,7 +515,7 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
             row_data.append(",");
         }
 
-        Epoch::DataChart* sensor = epoch->chart(channel);
+        Epoch::Echogram* sensor = epoch->chart(channel);
 
         if(sonar_height) {
             if(sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
@@ -607,7 +609,7 @@ bool Core::openCSV(QString name, int separator_type, QString time_format, int fi
         case 1: separator = "	"; break;
         case 2: separator = " "; break;
         case 3: separator = ";"; break;
-    default: separator = QString(separator_type);
+    default: separator = QString((char)separator_type);
     }
 
     QList<Position> track;

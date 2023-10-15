@@ -78,6 +78,9 @@ private:
 
     bool m_isLogWrite = false;
 
+    uint32_t _port = 0;
+    QHostAddress _addr;
+
     QThread workerThread;
 
     void setType(ConnectionType type) {

@@ -5,6 +5,7 @@ Plot2D::Plot2D() {
     _attitude.setVisible(true);
     _DVLBeamVelocity.setVisible(true);
     _bottomProcessing.setVisible(true);
+    _rangeFinder.setVisible(true);
     _grid.setVisible(true);
 
     setDataChannel(0);
@@ -19,15 +20,16 @@ QImage Plot2D::getImage(int width, int height) {
     _canvas.setSize(width, height);
     _canvas.clear();
     reindexingCursor();
-//    reRangeDistance();
+    reRangeDistance();
 
     _echogram.draw(_canvas, _dataset, _cursor);
     _attitude.draw(_canvas, _dataset, _cursor);
     _DVLBeamVelocity.draw(_canvas, _dataset, _cursor);
     _bottomProcessing.draw(_canvas, _dataset, _cursor);
+    _rangeFinder.draw(_canvas, _dataset, _cursor);
     _grid.draw(_canvas, _dataset, _cursor);
 
-    return _canvas.getQImage();
+    return _canvas.getQImageConst();
 }
 
 void Plot2D::setTimelinePosition(float position) {
@@ -97,7 +99,9 @@ void Plot2D::setBottomTrackTheme(int theme_id) {
 }
 
 void Plot2D::setRangefinderVisible(bool visible) {
-
+    _rangeFinder.setVisible(visible);
+    _grid.setRangeFinderVisible(visible);
+    plotUpdate();
 }
 
 void Plot2D::setAttitudeVisible(bool visible) {
@@ -131,6 +135,10 @@ void Plot2D::setVelocityRange(float velocity) {
     _cursor.velocity.from = -velocity;
     _cursor.velocity.to = velocity;
     plotUpdate();
+}
+
+void Plot2D::setDistanceAutoRange(int auto_range_type) {
+    _cursor.distance.mode = AutoRangeMode(auto_range_type);
 }
 
 void Plot2D::setDistance(float from, float to) {
@@ -353,18 +361,45 @@ void Plot2D::reRangeDistance() {
     if(_dataset == NULL) { return; }
     float max_range = NAN;
 
-    for(int i = 0; i < _cursor.indexes.size(); i++) {
-        Epoch* epoch = _dataset->fromIndex(_cursor.getIndex(i));
-        if(epoch != NULL) {
-            float epoch_range = epoch->getMaxRnage(_cursor.channel1);
-            if(!isfinite(max_range) || max_range < epoch_range) {
-                max_range = epoch_range;
+    if(_cursor.distance.mode == AutoRangeLastData) {
+        for(int i = _dataset->endIndex() - 3; i < _dataset->endIndex(); i++) {
+            Epoch* epoch = _dataset->fromIndex(i);
+            if(epoch != NULL) {
+                float epoch_range = epoch->getMaxRnage(_cursor.channel1);
+                if(!isfinite(max_range) || max_range < epoch_range) {
+                    max_range = epoch_range;
+                }
             }
         }
     }
 
+    if(_cursor.distance.mode == AutoRangeLastOnScreen) {
+        for(int i = _cursor.indexes.size() - 3; i < _cursor.indexes.size(); i++) {
+            Epoch* epoch = _dataset->fromIndex(_cursor.getIndex(i));
+            if(epoch != NULL) {
+                float epoch_range = epoch->getMaxRnage(_cursor.channel1);
+                if(!isfinite(max_range) || max_range < epoch_range) {
+                    max_range = epoch_range;
+                }
+            }
+        }
+    }
+
+    if(_cursor.distance.mode == AutoRangeMaxOnScreen) {
+        for(int i = 0; i < _cursor.indexes.size(); i++) {
+            Epoch* epoch = _dataset->fromIndex(_cursor.getIndex(i));
+            if(epoch != NULL) {
+                float epoch_range = epoch->getMaxRnage(_cursor.channel1);
+                if(!isfinite(max_range) || max_range < epoch_range) {
+                    max_range = epoch_range;
+                }
+            }
+        }
+    }
+
+
     if(isfinite(max_range)) {
         _cursor.distance.from = 0;
-        _cursor.distance.to = max_range;
+        _cursor.distance.to = ceil(max_range);
     }
 }

@@ -1,13 +1,12 @@
-import QtQuick 2.12
+import QtQuick 2.15
 import SceneGraphRendering 1.0
-import QtQuick.Window 2.12
+import QtQuick.Window 2.15
 
-import QtQuick.Layouts 1.12
-
-import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.15
 
 import Qt.labs.settings 1.1
 import QtQuick.Dialogs 1.2
+
 import QtQuick.Controls 2.15
 
 import WaterFall 1.0

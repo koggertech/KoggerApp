@@ -1,9 +1,9 @@
-import QtQuick 2.12
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.12
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
-import QtQml.Models 2.12
+import QtQml.Models 2.15
 
 
 DevSettingsBox {
@@ -198,7 +198,7 @@ DevSettingsBox {
             CCombo  {
                 id: baudrateCombo
                 Layout.fillWidth: true
-                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000]
+                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000]
                 currentIndex: 4
             }
 

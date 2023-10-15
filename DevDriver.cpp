@@ -640,7 +640,7 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
             }
 
-            qInfo("board info %u", idVersion->boardVersion());
+//            qInfo("board info %u", idVersion->boardVersion());
             emit deviceVersionChanged();
         } else if(ver == v1) {
             emit deviceIDChanged(idVersion->uid());

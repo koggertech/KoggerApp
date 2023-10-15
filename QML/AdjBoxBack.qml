@@ -1,6 +1,4 @@
-import QtQuick 2.0
-
-import QtQuick 2.12
+import QtQuick 2.15
 
 BackStyle {
     id: control

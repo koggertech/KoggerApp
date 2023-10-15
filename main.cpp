@@ -120,16 +120,16 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_VERSION_1_6;
 }
 
-#include <QtAndroid>
+//#include <QtAndroid>
 bool checkAndroidWritePermission() {
-    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-    if(r == QtAndroid::PermissionResult::Denied) {
-        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
-        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-        if(r == QtAndroid::PermissionResult::Denied) {
-             return false;
-        }
-   }
+//    QCoreApplication::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+//    if(r == QtAndroid::PermissionResult::Denied) {
+//        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+//        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+//        if(r == QtAndroid::PermissionResult::Denied) {
+//             return false;
+//        }
+//   }
    return true;
 }
 #endif
@@ -152,10 +152,6 @@ int main(int argc, char *argv[]) {
 
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
-
-
-
-
 
 
 //    qInstallMessageHandler(messageHandler);

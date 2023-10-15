@@ -1,30 +1,66 @@
 #include "waterfall.h"
 #include <QPixmap>
 #include <QPainter>
+#include <QSGSimpleTextureNode>
+
+#include <QMutex>
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
     , m_updateTimer(new QTimer(this))
 {
+    setRenderTarget(QQuickPaintedItem::FramebufferObject);
     connect(m_updateTimer, &QTimer::timeout, this, [&] { timerUpdater(); });
     m_updateTimer->start(30);
     setAcceptedMouseButtons(Qt::AllButtons);
+//    setFillColor(QColor(255, 255, 255));
 
     _isHorizontal = false;
 }
 
 void qPlot2D::paint(QPainter *painter){
+    static QMutex mutex;
+    if(!mutex.tryLock()) { return; }
+#ifdef USE_PIXMAP
     static QPixmap pix;
+#endif
     if(m_plot != nullptr && painter != nullptr) {
+#ifdef USE_PIXMAP
+
         if(_isHorizontal) {
             pix = QPixmap::fromImage(getImage((int)width(), (int)height()), Qt::NoFormatConversion);
         } else {
-            pix = QPixmap::fromImage(getImage((int)height(), (int)width()).transformed(QMatrix().rotate(-90.0), Qt::FastTransformation).mirrored(true, false), Qt::NoFormatConversion);
+            pix = QPixmap::fromImage(getImage((int)width(), (int)height()), Qt::NoFormatConversion);
+//            pix = QPixmap::fromImage(getImage((int)height(), (int)width()).transformed(QMatrix().rotate(-90.0), Qt::FastTransformation).mirrored(true, false), Qt::NoFormatConversion);
         }
-
         painter->drawPixmap(0, 0, pix);
+#else
+        painter->drawImage(0, 0, getImage((int)width(), (int)height()),0,0, -1, -1, Qt::NoFormatConversion);
+#endif
     }
+
+    mutex.unlock();
 }
+
+//QSGNode *qPlot2D::updatePaintNode( QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *updatePaintNodeData) {
+
+//    auto node = dynamic_cast<QSGSimpleTextureNode *>(oldNode);
+
+//    if (!node) {
+//        node = new QSGSimpleTextureNode();
+//    }
+
+
+//    QQuickWindow* w = window();
+
+//    QSGTexture *texture = window()->createTextureFromImag;
+
+//    node->setOwnsTexture(true);
+//    node->setRect(boundingRect());
+//    node->markDirty(QSGNode::DirtyForceUpdate);
+//    node->setTexture(texture);
+//    return node;
+//}
 
 void qPlot2D::setPlot(Dataset *dataset) {
     if(dataset == nullptr) { return; }

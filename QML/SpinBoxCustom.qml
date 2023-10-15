@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 
 SpinBox {
@@ -26,7 +26,7 @@ SpinBox {
         width: control.width
         font: theme.textFont
         color: theme.textColor
-        selectionColor: styleSet.colorControllTextActive
+//        selectionColor: styleSet.colorControllTextActive
         selectedTextColor: theme.textColor
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
@@ -53,6 +53,7 @@ SpinBox {
         height: parent.height
         width: control.spinner ? parent.height + 6 : 0
         contextType: "2d"
+        renderTarget: Canvas.FramebufferObject
         opacity: 1
 
         property bool pressed: control.up.pressed
@@ -134,6 +135,7 @@ SpinBox {
         height: parent.height
         width: control.spinner ? parent.height + 6 : 0
         contextType: "2d"
+        renderTarget: Canvas.FramebufferObject
         property bool pressed: control.down.pressed
 
         Connections {

@@ -13,6 +13,12 @@
 
 #include <vector>
 
+typedef enum {
+    AutoRangeNone = -1,
+    AutoRangeLastData,
+    AutoRangeLastOnScreen,
+    AutoRangeMaxOnScreen
+} AutoRangeMode;
 
 typedef struct DatasetCursor {
     int channel1 = CHANNEL_NONE;
@@ -37,6 +43,8 @@ typedef struct DatasetCursor {
     struct {
         float from = NAN;
         float to = NAN;
+        AutoRangeMode mode = AutoRangeNone;
+
 
         void set(float f, float t) {from = f; to = t;}
 
@@ -123,7 +131,7 @@ typedef struct PlotPen {
 class Canvas {
 public:
     Canvas() {
-        _data.resize(10000000);
+//        _data.resize(10000000);
     }
 
     void setSize(int width, int height) {
@@ -143,7 +151,11 @@ public:
     int height() { return _height; }
 
     QImage getQImage() {
-        return QImage((uint8_t*)_data.data(), _width, _height, _width*2, QImage::Format_RGB555);
+        return QImage(( uchar*)_data.data(), _width, _height, _width*2, QImage::Format_RGB555);
+    }
+
+    QImage getQImageConst() {
+        return QImage((const uchar*)_data.data(), _width, _height, _width*2, QImage::Format_RGB555);
     }
 
 
@@ -231,11 +243,13 @@ protected:
         int poolIndex = -1;
         CashState state = CashStateNotValid;
         QVector<int16_t> data;
+
+        CashState stateColor = CashStateNotValid;
+        QVector<uint16_t> color;
     } CashLine;
 
-    uint16_t _colorHashMap[65536];
+    uint16_t _colorHashMap[256];
     QVector<CashLine> _cash;
-    int _cashPosition = 0;
 
     struct {
         bool resetCash = true;
@@ -244,6 +258,10 @@ protected:
     struct {
        float low = 100, high = 10;
     } _levels;
+
+    struct {
+       float low = NAN, high = NAN;
+    } _lastLevels;
 
     DatasetCursor _lastCursor;
     int _lastWidth = -1;
@@ -321,8 +339,8 @@ public:
 
 
             drawY(canvas, beam_velocity, cursor.velocity.from, cursor.velocity.to, _penBeam[ibeam]);
-//            drawY(canvas, beam_amp, 0, 100, _penAmp[ibeam]);
-            drawY(canvas, beam_coh, 0, 1000, _penAmp[ibeam]);
+            drawY(canvas, beam_amp, 0, 100, _penAmp[ibeam]);
+//            drawY(canvas, beam_coh, 0, 1000, _penAmp[ibeam]);
             drawY(canvas, beam_mode, canvas.height(), 0, _penMode[ibeam]);
             drawY(canvas, beam_dist, cursor.distance.from, cursor.distance.to, _penAmp[ibeam]);
         }
@@ -442,6 +460,35 @@ protected:
 };
 
 
+class Plot2DRangefinder : public Plot2DLine {
+public:
+    Plot2DRangefinder() {}
+
+
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
+        if(!isVisible() || !cursor.distance.isValid()) { return false; }
+
+        QVector<float> distance(canvas.width());
+
+        distance.fill(NAN);
+
+        for(int i = 0; i < canvas.width(); i++) {
+            int pool_index = cursor.getIndex(i);
+            Epoch* data = dataset->fromIndex(pool_index);
+            if(data != NULL) {
+                distance[i] = data->rangeFinder();
+            }
+        }
+
+        drawY(canvas, distance, cursor.distance.from, cursor.distance.to, _penLine);
+
+        return true;
+    }
+
+protected:
+    PlotPen _penLine = PlotPen(PlotColor(250, 100, 0), 2, PlotPen::LineStyleSolid);
+};
+
 
 class Plot2DGrid : public PlotLayer {
 public:
@@ -450,8 +497,10 @@ public:
 
     void setVetricalNumber(int grids) { _lines = grids; }
     void setVelocityVisible(bool visible) { _velocityVisible = visible; }
+    void setRangeFinderVisible(bool visible) { _rangeFinderLastVisible = visible; }
 protected:
     bool _velocityVisible = true;
+    bool _rangeFinderLastVisible = true;
     int _lines = 20;
     int _lineWidth = 1;
     QColor _lineColor = QColor(255, 255, 255, 150);
@@ -495,6 +544,7 @@ public:
     void setGridVetricalNumber(int grids);
     void setVelocityVisible(bool visible);
     void setVelocityRange(float velocity);
+    void setDistanceAutoRange(int auto_range_type);
 
     void setDistance(float from, float to);
     void zoomDistance(float ratio);
@@ -527,6 +577,7 @@ protected:
     Plot2DEchogram _echogram;
     Plot2DAttitude _attitude;
     Plot2DDVLBeamVelocity _DVLBeamVelocity;
+    Plot2DRangefinder _rangeFinder;
     Plot2DBottomProcessing _bottomProcessing;
     Plot2DGrid _grid;
 

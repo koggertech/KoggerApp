@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
@@ -8,6 +8,7 @@ GridLayout {
     id: control
 
     property bool is2DHorizontal: horisontalVertical.checked
+    property int instruments:  instrumentsGradeList.currentIndex
 
     property var targetPlot: null
 
@@ -24,6 +25,7 @@ GridLayout {
 
             RowLayout {
                 id:rowDataset
+                visible: instruments > 1
                 CCombo  {
                     id: datasetCombo
                     Layout.fillWidth: true
@@ -100,7 +102,7 @@ GridLayout {
                     Component.onCompleted: targetPlot.plotEchogramTheme(currentIndex)
 
                     Settings {
-                        property alias waterfallThemeId: appTheme.currentIndex
+                        property alias waterfallThemeId: echoTheme.currentIndex
                     }
                 }
 
@@ -121,6 +123,7 @@ GridLayout {
             }
 
             RowLayout {
+                visible: instruments > 0
                 CCheck {
                     id: bottomTrackVisible
                     Layout.fillWidth: true
@@ -153,20 +156,15 @@ GridLayout {
             }
 
             CCheck {
+                visible: instruments > 1
                 id: ahrsVisible
                 text: "Attitude"
                 onCheckedChanged: targetPlot.plotAttitudeVisible(checked)
                 Component.onCompleted: targetPlot.plotAttitudeVisible(checked)
             }
 
-//            CCheck {
-//                id: encoderVisible
-//                text: "Encoders"
-//                onCheckedChanged: targetPlot.setEncoderVis(checked)
-//                Component.onCompleted: targetPlot.setEncoderVis(checked)
-//            }
-
             RowLayout {
+                visible: instruments > 1
                 id: dopplerBeamVisibleGroup
                 spacing: 0
                 function updateDopplerBeamVisible() {
@@ -238,6 +236,7 @@ GridLayout {
             }
 
             RowLayout {
+                visible: instruments > 1
                 spacing: 0
                 CCheck {
                     id: dopplerInstrumentVisible
@@ -276,6 +275,7 @@ GridLayout {
             }
 
             RowLayout {
+                visible: instruments > 1
                 CCheck {
                     id: adcpVisible
                     enabled: false
@@ -310,6 +310,7 @@ GridLayout {
             }
 
             RowLayout {
+                visible: instruments > 1
                 CCheck {
                     id: velocityVisible
                     Layout.fillWidth: true
@@ -356,8 +357,44 @@ GridLayout {
                 }
             }
 
+            RowLayout {
+                id: distanceAutoRangeRow
+                function distanceAutorangeMode() {
+                    targetPlot.plotDistanceAutoRange(distanceAutoRange.checked ? distanceAutoRangeList.currentIndex : -1)
+                }
+
+                CCheck {
+                    id: distanceAutoRange
+                    checked: true
+                    Layout.fillWidth: true
+                    text: "Distance auto range"
+
+                    onCheckedChanged: {
+                        distanceAutoRangeRow.distanceAutorangeMode()
+                    }
+                    Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
+
+                    Settings {
+                        property alias distanceAutoRange: distanceAutoRange.checked
+                    }
+                }
+
+                CCombo  {
+                    id: distanceAutoRangeList
+                    model: ["Last data       ", "Last on screen", "Max on screen"]
+                    currentIndex: 0
+                    onCurrentIndexChanged: distanceAutoRangeRow.distanceAutorangeMode()
+                    Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
+
+                    Settings {
+                        property alias distanceAutoRangeList: distanceAutoRangeList.currentIndex
+                    }
+                }
+            }
+
             CCheck {
                 id: horisontalVertical
+                checked: true
                 text: "Horisontal"
             }
 
@@ -366,7 +403,6 @@ GridLayout {
                 property alias rangefinderVisible: rangefinderVisible.checked
                 property alias postProcVisible: bottomTrackVisible.checked
                 property alias ahrsVisible: ahrsVisible.checked
-//                property alias encoderVisible: encoderVisible.checked
 
                 property alias gridVisible: gridVisible.checked
 
@@ -381,6 +417,7 @@ GridLayout {
         }
 
         ParamGroup {
+            visible: instruments > 0
             id: bottomTrackProcessingGroup
             groupName: "Bottom-Track processing"
 
@@ -700,6 +737,7 @@ GridLayout {
         }
 
         ParamGroup {
+            visible: instruments > 0
             groupName: "Export"
 
             ColumnLayout {
@@ -807,9 +845,25 @@ GridLayout {
                     }
                 }
             }
+
+            ParamSetup {
+                paramName: "Instrumets grade:"
+
+                CCombo  {
+                    id: instrumentsGradeList
+                    Layout.fillWidth: true
+                    model: ["Fish Finders", "Bottom Tracking", "Maximum"]
+                    currentIndex: 0
+
+                    Settings {
+                        property alias instrumentsGradeList: instrumentsGradeList.currentIndex
+                    }
+                }
+            }
         }
 
         ParamGroup {
+            visible: instruments > 1
             groupName: "Interface"
 
             CCheck {

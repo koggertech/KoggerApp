@@ -32,13 +32,11 @@ public:
 
     bool parse() {
         if(_frame.availContext() == 0) {
-//            _mutex.lock();
             if(_buffer.size() > 0) {
                 _context = _buffer;
                 _buffer.resize(0);
                 _frame.setContext((uint8_t*)_context.data(), _context.size());
             }
-//            _mutex.unlock();
         }
 
         _frame.process();

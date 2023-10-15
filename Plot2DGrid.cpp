@@ -46,6 +46,30 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
             text_offset -= 140;
         }
 
+        if(_rangeFinderLastVisible && cursor.distance.isValid()) {
+            Epoch* last_epoch = dataset->last();
+            Epoch* lastlast_epoch = dataset->lastlast();
+
+            float distance = NAN;
+
+            if(last_epoch != NULL && isfinite(last_epoch->rangeFinder())) {
+                distance = last_epoch->rangeFinder();
+            } else if(lastlast_epoch != NULL && isfinite(lastlast_epoch->rangeFinder())) {
+                distance = lastlast_epoch->rangeFinder();
+            }
+
+            if(isfinite(distance)) {
+                pen.setColor(QColor(250, 100, 0));
+                p.setPen(pen);
+
+                p.setFont(QFont("Asap", 36, QFont::Normal));
+                QString range_text = QString::number(distance) + QStringLiteral(" m");
+                p.drawText(image_width - 30 - range_text.count()*15 - 140, image_height - 10, range_text);
+
+                text_offset -= 140;
+            }
+        }
+
 
 
         if(cursor.attitude.isValid()) {

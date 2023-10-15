@@ -109,6 +109,7 @@ public slots:
 
 
 #ifdef FLASHER
+    bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
 
@@ -197,7 +198,8 @@ protected:
     enum  {
         FactoryIdle,
         FactoryTest,
-        FactoryProduct
+        FactoryProduct,
+        FactorySimple
     } _factoryState = FactoryIdle;
 
     QByteArray _flashUID;

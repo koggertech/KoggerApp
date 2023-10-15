@@ -40,7 +40,7 @@ void Epoch::setIQ(QByteArray data, uint8_t type) {
 }
 
 void Epoch::setDist(int dist) {
-    m_dist = dist;
+    _rangeFinders[0] = dist*0.001;
     flags.distAvail = true;
 }
 
@@ -103,10 +103,10 @@ void Epoch::setAtt(float yaw, float pitch, float roll) {
     _attitude.roll = roll;
 }
 
-void Epoch::doBottomTrack2D(DataChart &chart, bool is_update_dist) {
+void Epoch::doBottomTrack2D(Echogram &chart, bool is_update_dist) {
 }
 
-void Epoch::doBottomTrackSideScan(DataChart &chart, bool is_update_dist) {
+void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
 }
 
 Dataset::Dataset() {
@@ -214,7 +214,7 @@ void Dataset::addIQ(QByteArray data, uint8_t type) {
 
 void Dataset::addDist(int dist) {
     int pool_index = endIndex();
-    if(pool_index < 0 || (_pool[pool_index].eventAvail() == false && _pool[pool_index].chartAvail() == false) || _pool[pool_index].distAvail() == true) {
+    if(pool_index < 0 || _pool[pool_index].distAvail() == true) {
         makeNewEpoch();
         pool_index = endIndex();
     }
@@ -226,7 +226,10 @@ void Dataset::addDist(int dist) {
 void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
     int pool_index = endIndex();
 
-    makeNewEpoch();
+    if(pool_index < 0 || (_pool[pool_index].isDopplerBeamAvail() == true)) { //
+        makeNewEpoch();
+    }
+
     pool_index = endIndex();
 
     _pool[endIndex()].setDopplerBeam(beams, cnt);
@@ -236,7 +239,7 @@ void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
 void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
     int pool_index = endIndex();
 
-    if(pool_index < 0 || (_pool[pool_index].isDopplerBeamAvail() == false)) {
+    if(pool_index < 0 || (_pool[pool_index].isDopplerBeamAvail() == false)) { //
         makeNewEpoch();
         pool_index = endIndex();
     }
@@ -396,7 +399,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
 
         epoch_counter++;
 
-        Epoch::DataChart* chart = epoch->chart(channel1);
+        Epoch::Echogram* chart = epoch->chart(channel1);
 
         int16_t* data = (int16_t*)chart->amplitude.constData();
         const int data_size = chart->amplitude.size();
@@ -554,7 +557,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         if(epoch == NULL) { continue; }
 
         if(epoch->chartAvail(channel1)) {
-            Epoch::DataChart* chart = epoch->chart(channel1);
+            Epoch::Echogram* chart = epoch->chart(channel1);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
                 chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
@@ -562,7 +565,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         }
 
         if(epoch->chartAvail(channel2)) {
-            Epoch::DataChart* chart = epoch->chart(channel2);
+            Epoch::Echogram* chart = epoch->chart(channel2);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
                 chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
@@ -591,7 +594,7 @@ void Dataset::spatialProcessing() {
             Position ext_pos = epoch->getExternalPosition();
 
             if(epoch->chartAvail(ich)) {
-                Epoch::DataChart* data = epoch->chart(ich);
+                Epoch::Echogram* data = epoch->chart(ich);
 
                 if(data == NULL) { continue; }
 

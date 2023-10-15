@@ -1,6 +1,6 @@
-import QtQuick 2.0
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.4
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import Qt.labs.settings 1.1
 
 Item {
@@ -14,7 +14,7 @@ Item {
     property bool is3DVisible: scene3DSettings.is3DVisible
     property bool is2DVisible: visible2dButton.checked
     property bool is2DHorizontal: appSettings.is2DHorizontal
-
+    property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
 
     function itemChangeActive(currentItem) {
@@ -74,6 +74,7 @@ Item {
 
                 MenuButton {
                     id: menu3DSettings
+                    visible: instruments > 0
                     icon.source: "./3dcube.svg"
 
                     Layout.fillWidth: true
@@ -99,22 +100,31 @@ Item {
                     Layout.topMargin: 4
                     visible: chartEnable.checked
                     horizontalAlignment: Text.AlignHCenter
-                    text: chartLevel.stopValue
+                    text: echogramLevelsSlider.stopValue
                     small: true
                 }
 
                 ChartLevel {
                     Layout.fillWidth: true
-                    id: chartLevel
+                    id: echogramLevelsSlider
                     visible: chartEnable.checked
                     Layout.alignment: Qt.AlignHCenter
 
                     onStartValueChanged: {
-                        core.setPlotStartLevel(startValue);
+                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
                     }
 
                     onStopValueChanged: {
-                        core.setPlotStopLevel(stopValue);
+                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
+                    }
+
+                    Component.onCompleted: {
+                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
+                    }
+
+                    Settings {
+                        property alias echogramLevelsStart: echogramLevelsSlider.startValue
+                        property alias echogramLevelsStop: echogramLevelsSlider.stopValue
                     }
                 }
 
@@ -124,7 +134,7 @@ Item {
                     visible: chartEnable.checked
                     horizontalAlignment: Text.AlignHCenter
 
-                    text: chartLevel.startValue
+                    text: echogramLevelsSlider.startValue
                     small: true
                 }
             }
@@ -199,7 +209,7 @@ Item {
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 0
-                visible: true
+                visible: instruments > 0
 
                 MenuBlock { }
 

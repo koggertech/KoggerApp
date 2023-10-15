@@ -96,8 +96,8 @@ public:
                 pingheader.SensorYcoordinate = pingheader.ShipYcoordinate;
                 pingheader.SensorXcoordinate = pingheader.ShipXcoordinate;
 
-                Epoch::DataChart* chart1 = epoch->chart(channel1);
-                Epoch::DataChart* chart2 = epoch->chart(channel2);
+                Epoch::Echogram* chart1 = epoch->chart(channel1);
+                Epoch::Echogram* chart2 = epoch->chart(channel2);
                 QVector<uint8_t> raw1;
                 QVector<uint8_t> raw2;
 

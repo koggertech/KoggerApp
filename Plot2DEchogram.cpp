@@ -113,14 +113,25 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
         to1 = -from;
     }
 
+    int cash_validate = 0;
 
     int wrap_start_pos = qAbs(cursor.getIndex(0) % width);
-    _cashPosition = wrap_start_pos;
+
+    for(int i = 0; i < cursor.indexes.size(); i++) {
+        if(cursor.indexes[i] > 0) {
+            wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
+            break;
+        }
+    }
+
+
+//    _cashPosition = wrap_start_pos;
     for(int column = 0; column < width; column++) {
         if(_cash[column].data.size() != height) {
+            _cash[column].stateColor = CashLine::CashStateNotValid;
             _cash[column].state = CashLine::CashStateNotValid;
             _cash[column].data.resize(height);
-            _cash[column].data.fill(0);
+//            _cash[column].data.fill(0);
             _cash[column].poolIndex = -1;
             _cash[column].state = CashLine::CashStateEraced;
         }
@@ -135,11 +146,11 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
         if(pool_index_safe >= 0) {
             const int cash_index = _cash[column].poolIndex;
             if(is_cash_notvalid || pool_index_safe != cash_index) {
-                _cash[column].state = CashLine::CashStateNotValid;
                 _cash[column].poolIndex = pool_index_safe;
 
                 Epoch* datasource = dataset->fromIndex(pool_index_safe);
                 if(datasource != NULL) {
+                    _cash[column].state = CashLine::CashStateNotValid;
                     int16_t* cash_data = _cash[column].data.data();
                     int16_t cash_data_size = _cash[column].data.size();
 
@@ -162,20 +173,33 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
                         }
                     }
 
+                    cash_validate++;
+
                     _cash[column].state = CashLine::CashStateValid;
+                    _cash[column].stateColor = CashLine::CashStateNotValid;
                 } else {
-                    _cash[column].data.fill(0);
-                    _cash[column].poolIndex = -1;
-                    _cash[column].state = CashLine::CashStateEraced;
+                    if(_cash[column].state != CashLine::CashStateEraced) {
+                        _cash[column].stateColor = CashLine::CashStateNotValid;
+                        _cash[column].state = CashLine::CashStateNotValid;
+                        _cash[column].data.fill(0);
+                        _cash[column].poolIndex = -1;
+                        _cash[column].state = CashLine::CashStateEraced;
+                    }
                 }
             }
         } else {
-            _cash[column].state = CashLine::CashStateNotValid;
-            _cash[column].data.fill(0);
-            _cash[column].poolIndex = -1;
-            _cash[column].state = CashLine::CashStateEraced;
+            if(_cash[column].state != CashLine::CashStateEraced) {
+                _cash[column].stateColor = CashLine::CashStateNotValid;
+                _cash[column].state = CashLine::CashStateNotValid;
+                _cash[column].data.fill(0);
+                _cash[column].poolIndex = -1;
+                _cash[column].state = CashLine::CashStateEraced;
+            }
+
         }
     }
+
+//    qInfo("Cash validate %u", cash_validate);
 
     _lastCursor = cursor;
     _lastWidth = width;
@@ -193,16 +217,25 @@ bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor
         const int lowLevel = _levels.low;
         const int hightLevel = _levels.high;
 
+        bool is_levels_changed = false;
+        if(_levels.low != _lastLevels.low || _levels.high != _lastLevels.high) {
+            is_levels_changed = true;
+            _lastLevels.low = _levels.low;
+            _lastLevels.high = _levels.high;
+        }
+
         const int cash_position = updateCash(dataset, cursor, cash_width, image_height);
 
         int level_range = hightLevel - lowLevel;
         int index_offset = (int)((float)lowLevel*2.5f);
         float index_map_scale = 0;
         if(level_range > 0) {
-            index_map_scale = (float)(256 - 1)/((float)(hightLevel - lowLevel)*2.5f);
+            index_map_scale = (float)(256 - 1)/((float)(hightLevel - lowLevel)*2.55f);
         } else {
             index_map_scale = 10000;
         }
+
+        int cnt_color_update = 0;
 
         for(int image_col = 0;  image_col < cash_width; image_col++) {
             int cash_col = cash_position + image_col;
@@ -211,14 +244,36 @@ bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor
             }
 
             int16_t* cashdata = _cash[cash_col].data.data();
-            for (int image_row = 0; image_row < image_height; image_row++) {
-                int index_map = ((float)(cashdata[image_row] - index_offset)*index_map_scale);
-                if(index_map < 0) { index_map = 0; }
-                else if(index_map > 255) { index_map = 255; }
+            const int cash_size = _cash[cash_col].data.size();
 
-                image_data[image_row*image_width + image_col] = _colorHashMap[index_map];
+            bool is_redraw = is_levels_changed || (_cash[cash_col].stateColor != CashLine::CashStateValid);
+            if(cash_size != _cash[cash_col].color.size()) {
+                _cash[cash_col].color.resize(cash_size);
+                is_redraw = true;
+            }
+
+            uint16_t* cashcolor = _cash[cash_col].color.data();
+
+            if(is_redraw) {
+                for (int image_row = 0; image_row < image_height; image_row++) {
+                    int index_map = ((float)(cashdata[image_row] - index_offset)*index_map_scale);
+                    if(index_map < 0) { index_map = 0; }
+                    else if(index_map > 255) { index_map = 255; }
+                    uint16_t color = _colorHashMap[index_map];
+                    cashcolor[image_row] = color;
+
+                    image_data[image_row*image_width + image_col] = color;
+                }
+                _cash[cash_col].stateColor = CashLine::CashStateValid;
+                cnt_color_update++;
+            } else {
+                for (int image_row = 0; image_row < image_height; image_row++) {
+                    image_data[image_row*image_width + image_col] = cashcolor[image_row];
+                }
             }
         }
+
+//        qInfo("Color updated %u", cnt_color_update);
     }
 
     return true;
