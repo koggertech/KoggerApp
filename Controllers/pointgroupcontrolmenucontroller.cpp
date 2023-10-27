@@ -26,10 +26,10 @@ QStandardItemModel *PointGroupControlMenuController::pointListModel() const
 
 void PointGroupControlMenuController::onVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
 
     QMetaObject::invokeMethod(reinterpret_cast <QObject*>(pointGroup.get()), "setVisible", Q_ARG(bool, checked));
 }
@@ -39,12 +39,12 @@ void PointGroupControlMenuController::onPointListItemRemoveButtonClicked(int ind
     if(index < 0)
         return;
 
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
     m_pointListModel->invisibleRootItem()->removeRow(index);
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
 
     QMetaObject::invokeMethod(pointGroup.get(), "removeAt", Q_ARG(int, index));
 }
@@ -54,10 +54,10 @@ void PointGroupControlMenuController::onCoordSpinBoxValueChanged(QVector3D coord
     if(row < 0)
         return;
 
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
     auto point = pointGroup->at(row);
 
     m_pointListModel->item(row)->setData(QString("x: %1, y: %2, z: %3")
@@ -71,13 +71,13 @@ void PointGroupControlMenuController::onCoordSpinBoxValueChanged(QVector3D coord
 
 void PointGroupControlMenuController::onPointColorDialogAccepted(QColor color, int row)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
     if(row < 0)
         return;
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
     auto point = pointGroup->at(row);
 
     auto item = m_pointListModel->item(row);
@@ -88,13 +88,13 @@ void PointGroupControlMenuController::onPointColorDialogAccepted(QColor color, i
 
 void PointGroupControlMenuController::onPointWidthSpinBoxValueChanged(int width, int row)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
     if(row < 0)
         return;
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
     auto point = pointGroup->at(row);
 
     QMetaObject::invokeMethod(point.get(), "setWidth", Q_ARG(qreal, static_cast <qreal>(width)));
@@ -102,10 +102,10 @@ void PointGroupControlMenuController::onPointWidthSpinBoxValueChanged(int width,
 
 void PointGroupControlMenuController::onAddPointButtonClicked()
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
     auto point = std::make_shared<PointObject>();
 
     m_pointListModel->invisibleRootItem()->appendRow(new QStandardItem(QString("x: %1, y: %2, z: %3")
@@ -118,23 +118,23 @@ void PointGroupControlMenuController::onAddPointButtonClicked()
 
 PointObject *PointGroupControlMenuController::pointAt(int row)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return nullptr;
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
 
     return pointGroup->at(row).get();
 }
 
 QVector3D PointGroupControlMenuController::pointCoord(int row) const
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return {};
 
     if(row < 0)
         return {};
 
-    auto pointGroup = m_graphicsSceneView->scene()->pointGroup();
+    auto pointGroup = m_graphicsSceneView->pointGroup();
     auto point = pointGroup->at(row);
 
     return {point->x(), point->y(), point->z()};
@@ -147,8 +147,8 @@ void PointGroupControlMenuController::findComponent()
 
 PointGroup *PointGroupControlMenuController::pointGroup() const
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return nullptr;
 
-    return m_graphicsSceneView->scene()->pointGroup().get();
+    return m_graphicsSceneView->pointGroup().get();
 }

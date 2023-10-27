@@ -1,53 +1,39 @@
 #ifndef CUBE_H
 #define CUBE_H
 
+#include <QVector3D>
+
 #include <cmath>
 
 class Cube{
 
 public:
 
-    Cube()
-    :mXMin(0.0f), mXMax(0.0f)
-    ,mYMin(0.0f), mYMax(0.0f)
-    ,mZMin(0.0f), mZMax(0.0f)
-    {}
-
+    Cube();
     Cube(float x_1, float x_2,
-             float y_1, float y_2,
-             float z_1, float z_2)
-    :mXMin(x_1), mXMax(x_2)
-    ,mYMin(y_1), mYMax(y_2)
-    ,mZMin(z_1), mZMax(z_2)
-    {}
+         float y_1, float y_2,
+         float z_1, float z_2);
 
-    float minimumX() const {return mXMin;}
-    float maximumX() const {return mXMax;}
-    float minimumY() const {return mYMin;}
-    float maximumY() const {return mYMax;}
-    float minimumZ() const {return mZMin;}
-    float maximumZ() const {return mZMax;}
-
-    float length() const{
-        return std::abs(mXMax - mXMin);
-    }
-
-    float width() const{
-        return std::abs(mYMax - mYMin);
-    }
-
-    float height() const{
-        return std::abs(mZMax - mZMin);
-    }
-
+    float minimumX() const;
+    float maximumX() const;
+    float minimumY() const;
+    float maximumY() const;
+    float minimumZ() const;
+    float maximumZ() const;
+    QVector3D center() const;
+    QVector3D bottomPos() const;
+    float length() const;
+    float width() const;
+    float height() const;
+    Cube merge(const Cube& other);
 
 private:
-    float mXMin = 0.0f;
-    float mXMax = 0.0f;
-    float mYMin = 0.0f;
-    float mYMax = 0.0f;
-    float mZMin = 0.0f;
-    float mZMax = 0.0f;
+    float m_xMin = 0.0f;
+    float m_xMax = 0.0f;
+    float m_yMin = 0.0f;
+    float m_yMax = 0.0f;
+    float m_zMin = 0.0f;
+    float m_zMax = 0.0f;
 };
 
 

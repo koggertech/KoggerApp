@@ -11,6 +11,26 @@ Item{
             id: row
 
             Button{
+                id: fitAllinViewButton
+                width: 40
+                height: 40
+                icon.source: "./3dcube.svg"
+
+                icon.color: theme.textColor
+
+                background: Rectangle {
+                    radius: 1
+                    height: parent.height
+                    width: parent.width
+                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
+                    border.color: theme.controlBorderColor
+                    border.width: 1
+                }
+
+                onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
+            }
+
+            Button{
                 id: selectionToolButton
                 width: 40
                 height: 40
@@ -125,11 +145,11 @@ Item{
 
         }
 
-        ButtonGroup{
-            id: buttonGroup
-            buttons: row.children
-            exclusive: true
-        }
+        //ButtonGroup{
+        //    id: buttonGroup
+        //    buttons: row.children
+        //    exclusive: true
+        //}
     }
 
 

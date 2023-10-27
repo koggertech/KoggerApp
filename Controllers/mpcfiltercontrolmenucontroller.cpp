@@ -7,14 +7,15 @@
 
 MpcFilterControlMenuController::MpcFilterControlMenuController(GraphicsScene3dView *sceneView, QObject *parent)
     : QmlComponentController(parent)
+    , m_graphicsSceneView(sceneView)
 {}
 
 void MpcFilterControlMenuController::onPointsCountSpinBoxValueChanged(qreal value)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto bottomTrack = m_graphicsSceneView->scene()->bottomTrack();
+    auto bottomTrack = m_graphicsSceneView->bottomTrack();
 
     if(!bottomTrack)
         return;
@@ -29,7 +30,10 @@ void MpcFilterControlMenuController::onPointsCountSpinBoxValueChanged(qreal valu
     if(!m_bottomTrackProvider)
         return;
 
-    QMetaObject::invokeMethod(bottomTrack.get(), "setData", Q_ARG(QVector <QVector3D>, m_bottomTrackProvider->getBottomTrack()));
+    QMetaObject::invokeMethod(bottomTrack.get(),
+                              "setData",
+                              Q_ARG(QVector <QVector3D>, m_bottomTrackProvider->getBottomTrack()),
+                              Q_ARG(int, GL_LINE_STRIP));
 }
 
 void MpcFilterControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)

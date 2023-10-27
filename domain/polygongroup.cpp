@@ -2,20 +2,11 @@
 #include <polygonobject.h>
 
 PolygonGroup::PolygonGroup(QObject *parent)
-: SceneGraphicsObject(parent)
+    : SceneObject(new PolygonGroupRenderImplementation, parent)
 {}
 
 PolygonGroup::~PolygonGroup()
 {}
-
-void PolygonGroup::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
-{
-    if(!m_isVisible)
-        return;
-
-    for(const auto& polygon : m_polygonList)
-        polygon->draw(ctx, mvp, shaderProgramMap);
-}
 
 SceneObject::SceneObjectType PolygonGroup::type() const
 {
@@ -40,15 +31,16 @@ void PolygonGroup::addPolygon(std::shared_ptr<PolygonObject> polygon)
     if(m_polygonList.contains(polygon))
         return;
 
-    polygon->setParent(this);
-    m_polygonList.append(polygon);
-}
+    QObject::connect(polygon.get(), &PolygonObject::changed, this, &PolygonGroup::polygonObjectChanged);
 
-std::shared_ptr<PolygonObject> PolygonGroup::addPolygon()
-{
-    auto polygon = std::make_shared<PolygonObject>(this);
+    polygon->setParent(this);
+    polygon->m_indexInGroup = RENDER_IMPL(PolygonGroup)->m_polygonRenderImplList.size();
     m_polygonList.append(polygon);
-    return m_polygonList.back();
+
+    RENDER_IMPL(PolygonGroup)->appendPolygonRenderImpl(
+                (dynamic_cast<PolygonObject::PolygonObjectRenderImplementation*>(polygon->m_renderImpl)));
+
+    Q_EMIT changed();
 }
 
 void PolygonGroup::removePolygon(std::shared_ptr<PolygonObject> polygon)
@@ -57,6 +49,10 @@ void PolygonGroup::removePolygon(std::shared_ptr<PolygonObject> polygon)
         return;
 
     m_polygonList.removeOne(polygon);
+
+    RENDER_IMPL(PolygonGroup)->removeAt(polygon->m_indexInGroup);
+
+    Q_EMIT changed();
 }
 
 void PolygonGroup::removePolygonAt(int index)
@@ -65,27 +61,56 @@ void PolygonGroup::removePolygonAt(int index)
         return;
 
     m_polygonList.removeAt(index);
+
+    RENDER_IMPL(PolygonGroup)->removeAt(index);
+
+    Q_EMIT changed();
 }
 
-void PolygonGroup::setData(const QVector<QVector3D> &data)
+void PolygonGroup::setData(const QVector<QVector3D>& data, int primitiveType)
 {
     Q_UNUSED(data)
+    Q_UNUSED(primitiveType)
 }
 
 void PolygonGroup::clearData()
 {}
 
-void PolygonGroup::append(const QVector3D &vertex)
+void PolygonGroup::polygonObjectChanged()
 {
-    Q_UNUSED(vertex)
+    auto polygon = reinterpret_cast<PolygonObject*>(QObject::sender());
+    RENDER_IMPL(PolygonGroup)->m_polygonRenderImplList.replace(polygon->m_indexInGroup,
+                                                           *(dynamic_cast<PolygonObject::PolygonObjectRenderImplementation*>(polygon->m_renderImpl)));
+    Q_EMIT changed();
 }
 
-void PolygonGroup::append(const QVector<QVector3D> &other)
+//-----------------------RenderImplementation-----------------------------//
+PolygonGroup::PolygonGroupRenderImplementation::PolygonGroupRenderImplementation()
+{}
+
+PolygonGroup::PolygonGroupRenderImplementation::~PolygonGroupRenderImplementation()
+{}
+
+void PolygonGroup::PolygonGroupRenderImplementation::render(QOpenGLFunctions *ctx,
+                                                            const QMatrix4x4 &mvp,
+                                                            const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-    Q_UNUSED(other)
+    if(!m_isVisible)
+        return;
+
+    for(const auto& renderImpl : m_polygonRenderImplList)
+        renderImpl.render(ctx, mvp, shaderProgramMap);
 }
 
-void PolygonGroup::setPrimitiveType(int primitiveType)
+void PolygonGroup::PolygonGroupRenderImplementation::appendPolygonRenderImpl(PolygonObject::PolygonObjectRenderImplementation *impl)
 {
-    Q_UNUSED(primitiveType)
+    m_polygonRenderImplList.append(*impl);
+}
+
+void PolygonGroup::PolygonGroupRenderImplementation::removeAt(int index)
+{
+    if(index < 0 && index >= m_polygonRenderImplList.count())
+        return;
+
+    m_polygonRenderImplList.removeAt(index);
 }

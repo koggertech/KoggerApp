@@ -2,13 +2,69 @@
 #include <drawutils.h>
 
 PointObject::PointObject(QObject *parent)
-    : SceneGraphicsObject{parent}
+    : SceneObject(new PointObjectRenderImplementation, parent)
 {
-    setPrimitiveType(GL_POINTS);
-    m_data.append({0.0f, 0.0f, 0.0f});
+    RENDER_IMPL(PointObject)->setData({{0.0f, 0.0f, 0.0f}}, GL_POINTS);
 }
 
-void PointObject::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+SceneObject::SceneObjectType PointObject::type() const
+{
+    return SceneObject::SceneObjectType::Point;
+}
+
+float PointObject::x() const
+{
+    return RENDER_IMPL(PointObject)->x();
+}
+
+float PointObject::y() const
+{
+    return RENDER_IMPL(PointObject)->y();
+}
+
+float PointObject::z() const
+{
+    return RENDER_IMPL(PointObject)->z();
+}
+
+QVector3D PointObject::position() const
+{
+    return RENDER_IMPL(PointObject)->position();
+}
+
+void PointObject::setPosition(float x, float y, float z)
+{
+    RENDER_IMPL(PointObject)->setPosition(x,y,z);
+
+    Q_EMIT changed();
+}
+
+void PointObject::setPosition(const QVector3D& pos)
+{
+    RENDER_IMPL(PointObject)->setPosition(pos);
+
+    Q_EMIT changed();
+}
+
+void PointObject::setData(const QVector <QVector3D>& data, int primitiveType)
+{
+    Q_UNUSED(data);
+    Q_UNUSED(primitiveType);
+}
+
+//-----------------------RenderImplementation-----------------------------//
+
+PointObject::PointObjectRenderImplementation::PointObjectRenderImplementation()
+    : SceneObject::RenderImplementation()
+{}
+
+PointObject::PointObjectRenderImplementation::~PointObjectRenderImplementation()
+{}
+
+void PointObject::PointObjectRenderImplementation::render(QOpenGLFunctions *ctx,
+                                                          const QMatrix4x4 &mvp,
+                                                          const QMap<QString
+                                                          , std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
     if(!m_isVisible)
         return;
@@ -43,56 +99,36 @@ void PointObject::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<
     shaderProgram->release();
 }
 
-SceneObject::SceneObjectType PointObject::type() const
-{
-    return SceneObject::SceneObjectType::Point;
-}
-
-float PointObject::x() const
-{
-    return m_data.first().x();
-}
-
-float PointObject::y() const
-{
-    return m_data.first().y();
-}
-
-float PointObject::z() const
-{
-    return m_data.first().z();
-}
-
-QVector3D PointObject::position() const
-{
-    return m_data.at(0);
-}
-
-void PointObject::setPosition(float x, float y, float z)
+void PointObject::PointObjectRenderImplementation::setPosition(float x, float y, float z)
 {
     m_data[0].setX(x);
     m_data[0].setY(y);
     m_data[0].setZ(z);
 }
 
-void PointObject::setPosition(QVector3D pos)
+void PointObject::PointObjectRenderImplementation::setPosition(const QVector3D& pos)
 {
     m_data[0].setX(pos.x());
     m_data[0].setY(pos.y());
     m_data[0].setZ(pos.z());
 }
 
-void PointObject::append(const QVector3D &vertex)
+QVector3D PointObject::PointObjectRenderImplementation::position() const
 {
-    Q_UNUSED(vertex);
+    return m_data.at(0);
 }
 
-void PointObject::append(const QVector<QVector3D> &other)
+float PointObject::PointObjectRenderImplementation::x() const
 {
-    Q_UNUSED(other);
+    return m_data.first().x();
 }
 
-void PointObject::setData(const QVector<QVector3D> &data)
+float PointObject::PointObjectRenderImplementation::y() const
 {
-    Q_UNUSED(data);
+    return m_data.first().y();
+}
+
+float PointObject::PointObjectRenderImplementation::z() const
+{
+    return m_data.first().z();
 }

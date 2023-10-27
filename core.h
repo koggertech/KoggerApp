@@ -24,6 +24,7 @@
 #include <polygongroupcontrolmenucontroller.h>
 #include <mpcfiltercontrolmenucontroller.h>
 #include <npdfiltercontrolmenucontroller.h>
+#include <scene3dtoolbarcontroller.h>
 
 //#define FLASHER
 
@@ -71,9 +72,6 @@ public:
 
 private:
     QStandardItemModel* sceneItemListModel() const;
-
-private Q_SLOTS:
-    void updateObjectListModel();
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
@@ -203,6 +201,7 @@ private:
     std::shared_ptr <SurfaceControlMenuController>      m_surfaceControlMenuController;
     std::shared_ptr <PointGroupControlMenuController>   m_pointGroupControlMenuController;
     std::shared_ptr <PolygonGroupControlMenuController> m_polygonGroupControlMenuController;
+    std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
 
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
     std::unique_ptr <QStandardItemModel>  m_sceneObjectListModel; ///< graphics object list model

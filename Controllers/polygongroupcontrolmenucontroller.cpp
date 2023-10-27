@@ -18,10 +18,10 @@ PolygonGroupControlMenuController::PolygonGroupControlMenuController(QObject *pa
 
 void PolygonGroupControlMenuController::onVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
 
     QMetaObject::invokeMethod(reinterpret_cast <QObject*>(polygonGroup.get()), "setVisible", Q_ARG(bool, checked));
 }
@@ -31,10 +31,10 @@ void PolygonGroupControlMenuController::onPolygonListItemRemoveButtonClicked(con
     if(!index.isValid())
         return;
 
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
 
     if(index.parent() == m_polygonListModel->invisibleRootItem()->index()){
         QMetaObject::invokeMethod(reinterpret_cast <QObject*>(polygonGroup.get()), "removePolygonAt", Q_ARG(int, index.row()));
@@ -48,13 +48,13 @@ void PolygonGroupControlMenuController::onPolygonListItemRemoveButtonClicked(con
 
 void PolygonGroupControlMenuController::onPointCoordSpinBoxValueChanged(QVector3D coord, const QModelIndex &index)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
     if(!index.isValid() || !index.parent().isValid())
         return;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
     auto polygon = polygonGroup->at(index.parent().row());
     auto point = polygon->at(index.row());
 
@@ -73,10 +73,10 @@ void PolygonGroupControlMenuController::onPointCoordSpinBoxValueChanged(QVector3
 
 void PolygonGroupControlMenuController::onAddPolygonButtonClicked()
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
     auto polygon = std::make_shared<PolygonObject>();
 
     auto item = new QStandardItem("Polygon");
@@ -89,13 +89,13 @@ void PolygonGroupControlMenuController::onAddPolygonButtonClicked()
 
 void PolygonGroupControlMenuController::onAddPointButtonClicked(const QModelIndex &index)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
     if(!index.isValid() || index.parent().isValid())
         return;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
     auto polygon      = polygonGroup->at(index.row());
 
     auto point = std::make_shared<PointObject>();
@@ -111,13 +111,13 @@ void PolygonGroupControlMenuController::onAddPointButtonClicked(const QModelInde
 
 void PolygonGroupControlMenuController::onPolygonColorDialogAccepted(QColor color, const QModelIndex& index)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
     if(!index.isValid() || index.parent().isValid())
         return;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
     auto polygon      = polygonGroup->at(index.row());
 
     auto item = m_polygonListModel->itemFromIndex(index);
@@ -133,13 +133,13 @@ void PolygonGroupControlMenuController::setGraphicsSceneView(GraphicsScene3dView
 
 QVector3D PolygonGroupControlMenuController::getPointCoord(const QModelIndex &pointIndex)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return {};
 
     if(!pointIndex.isValid() || !pointIndex.parent().isValid())
         return {};
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
     auto polygon      = polygonGroup->at(pointIndex.parent().row());
 
     return {}/*polygon->at(pointIndex.row())*/;
@@ -147,13 +147,13 @@ QVector3D PolygonGroupControlMenuController::getPointCoord(const QModelIndex &po
 
 PointObject *PolygonGroupControlMenuController::pointAt(const QModelIndex &pointIndex) const
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return nullptr;
 
     if(!pointIndex.isValid() || !pointIndex.parent().isValid())
         return nullptr;
 
-    auto polygonGroup = m_graphicsSceneView->scene()->polygonGroup();
+    auto polygonGroup = m_graphicsSceneView->polygonGroup();
     auto polygon      = polygonGroup->at(pointIndex.parent().row());
 
     return polygon->at(pointIndex.row()).get();
@@ -166,10 +166,10 @@ QStandardItemModel *PolygonGroupControlMenuController::polygonListModel() const
 
 PolygonGroup *PolygonGroupControlMenuController::polygonGroup() const
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return nullptr;
 
-    return m_graphicsSceneView->scene()->polygonGroup().get();
+    return m_graphicsSceneView->polygonGroup().get();
 }
 
 void PolygonGroupControlMenuController::findComponent()

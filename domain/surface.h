@@ -3,77 +3,45 @@
 
 #include <memory>
 
-#include <scenegraphicsobject.h>
+#include <sceneobject.h>
 #include <contour.h>
 #include <surfacegrid.h>
-#include <constants.h>
 
-class Surface : public SceneGraphicsObject
+class Surface : public SceneObject
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT("Surface")
+    QML_NAMED_ELEMENT(Surface)
     Q_PROPERTY(Contour* contour  READ contour CONSTANT)
     Q_PROPERTY(SurfaceGrid* grid READ grid    CONSTANT)
 
 public:
+    class SurfaceRenderImplementation : public SceneObject::RenderImplementation
+    {
+    public:
+        virtual void render(QOpenGLFunctions* ctx,
+                          const QMatrix4x4& mvp,
+                          const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+    private:
+        friend class Surface;
+        SceneObject::RenderImplementation m_gridRenderImpl;
+        SceneObject::RenderImplementation m_contourRenderImpl;
+    };
 
     explicit Surface(QObject* parent = nullptr);
-
     virtual ~Surface();
-
+    virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
+    virtual void clearData() override;
+    virtual SceneObjectType type() const override;
     Contour* contour() const;
-
-    /**
-     * @brief Returns pointer to surface grid object
-     * @return Pointer to surface grid object
-     */
     SurfaceGrid* grid() const;
 
-    //! @brief Устанавливает набор вершин объекта.
-    //! @param[in] data - ссылка на набор вершин.
-    virtual void setData(const QVector <QVector3D>& data) override;
-
-    virtual void clearData() override;
-
-    virtual void draw(QOpenGLFunctions* ctx,
-                      const QMatrix4x4& mvp,
-                      const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
-
-    virtual SceneObjectType type() const override;
-
-    //! @brief Добавляет вершину в конец набора вершин.
-    //! @param[in] vertex - ссылка на вершину
-    virtual void append(const QVector3D& vertex) override;
-
-    //! @brief Добавляет входящий набор вершин в конец набора вершин объекта
-    //! @param[in] other - ссылка на набор вершин
-    virtual void append(const QVector<QVector3D>& other) override;
-
 private:
-
     void updateContour();
-
     void updateGrid();
-
     void makeTriangleGrid();
-
     void makeQuadGrid();
-
     void makeContourFromTriangles();
-
     void makeContourFromQuads();
-
-    void drawSurface(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram) const;
-
-    void drawContour(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram) const;
-
-    void drawGrid(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, QOpenGLShaderProgram* shaderProgram) const;
-
-signals:
-
-    void gridChanged();
-
-    void contourChanged();
 
 private:
     QString m_bottomTrackId = "";

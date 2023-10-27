@@ -16,7 +16,6 @@
 
 #include <memory>
 
-#include <graphicsscene3d.h>
 #include <scenecontroller.h>
 
 class Scene3D : public QObject, protected QOpenGLFunctions
@@ -165,19 +164,6 @@ public:
         return _bottomTrack;
     }
 
-    void setScene(std::shared_ptr <GraphicsScene3d> scene){
-        if(m_scene == scene)
-            return;
-
-        m_scene = scene;
-        //m_scene->setRect(boundingRect());
-
-        //update();
-    }
-    std::shared_ptr <GraphicsScene3d> scene() const  {
-        return m_scene;
-    }
-
     void setController(std::shared_ptr <SceneController> controller);
 
     //void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
@@ -279,7 +265,6 @@ public slots:
     bool isRotation() { return _rotationFlag; }
 
 private:
-    std::shared_ptr <GraphicsScene3d> m_scene;
     QVector<QVector3D> _bottomTrack;
 
     float _scale = 30.0;

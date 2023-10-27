@@ -1,42 +1,41 @@
 #include "bottomtrack.h"
 
-#include <constants.h>
-
 BottomTrack::BottomTrack(QObject* parent)
-    : SceneGraphicsObject(parent)
-{
-    setPrimitiveType(GL_LINE_STRIP);
-}
+    : SceneObject(new BottomTrackRenderImplementation, parent)
+{}
 
 BottomTrack::~BottomTrack()
 {}
 
-float BottomTrack::routeLength() const
+SceneObject::SceneObjectType BottomTrack::type() const
 {
-    return 0.0f;
+    return SceneObject::SceneObjectType::BottomTrack;
 }
 
-void BottomTrack::setData(const QVector<QVector3D> &data)
+void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 {
-    QVector <QVector3D> filtered;
-
-    if (m_filter){
-        m_filter->apply(data,filtered);
-        SceneGraphicsObject::setData(filtered);
+    if(m_filter){
+        QVector <QVector3D> filteredData;
+        m_filter->apply(data, filteredData);
+        SceneObject::setData(filteredData, primitiveType);
         return;
     }
 
-    SceneGraphicsObject::setData(data);
+    SceneObject::setData(data, primitiveType);
 }
 
-SceneObject::SceneObjectType BottomTrack::type() const
-{
-    return SceneObjectType::BottomTrack;
-}
+//-----------------------RenderImplementation-----------------------------//
 
-void BottomTrack::draw(QOpenGLFunctions* ctx,
-                       const QMatrix4x4& mvp,
-                       const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const
+BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation()
+{}
+
+BottomTrack::BottomTrackRenderImplementation::~BottomTrackRenderImplementation()
+{}
+
+void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
+                                                          const QMatrix4x4 &mvp,
+                                                          const QMap<QString,
+                                                          std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
     if(!m_isVisible)
         return;
@@ -60,14 +59,14 @@ void BottomTrack::draw(QOpenGLFunctions* ctx,
     int colorLoc = shaderProgram->uniformLocation("color");
 
     shaderProgram->setUniformValue(colorLoc,color);
-    shaderProgram->setUniformValue(maxZLoc, m_boundingBox.maximumZ());
-    shaderProgram->setUniformValue(minZLoc, m_boundingBox.minimumZ());
+    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
     ctx->glLineWidth(4.0);
-    ctx->glDrawArrays(primitiveType(), 0, m_data.size());
+    ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
     ctx->glLineWidth(1.0);
 
     shaderProgram->disableAttributeArray(posLoc);

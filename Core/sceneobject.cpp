@@ -1,15 +1,15 @@
 #include "sceneobject.h"
+#include <drawutils.h>
 
 SceneObject::SceneObject(QObject *parent)
 : QObject(parent)
+, m_renderImpl(new RenderImplementation)
 {}
 
-SceneObject::SceneObject(QString name,
-                         int primitiveType,
-                         QObject *parent)
+SceneObject::SceneObject(RenderImplementation *impl, QObject *parent, QString name)
 : QObject(parent)
 , m_name(name)
-, m_primitiveType(primitiveType)
+, m_renderImpl(impl)
 {}
 
 SceneObject::~SceneObject()
@@ -19,19 +19,8 @@ void SceneObject::setName(QString name)
 {
     if(m_name != name)
         m_name = name;
-}
 
-void SceneObject::setScene(GraphicsScene3d* scene)
-{
-    if(mp_scene == scene)
-        return;
-
-    mp_scene = scene;
-}
-
-GraphicsScene3d* SceneObject::scene() const
-{
-    return mp_scene;
+    Q_EMIT changed();
 }
 
 QString SceneObject::id() const
@@ -44,14 +33,39 @@ QString SceneObject::name() const
     return m_name;
 }
 
+SceneObject::SceneObjectType SceneObject::type() const
+{
+    return SceneObjectType::Unknown;
+}
+
 QVector<QVector3D> SceneObject::data() const
 {
-    return m_data;
+    return m_renderImpl->data();
 }
 
 const QVector<QVector3D> &SceneObject::cdata() const
 {
-    return m_data;
+    return m_renderImpl->cdata();
+}
+
+bool SceneObject::isVisible() const
+{
+    return m_renderImpl->isVisible();
+}
+
+QColor SceneObject::color() const
+{
+    return m_renderImpl->color();
+}
+
+float SceneObject::width() const
+{
+    return m_renderImpl->width();
+}
+
+Cube SceneObject::bounds() const
+{
+    return m_renderImpl->bounds();
 }
 
 AbstractEntityDataFilter *SceneObject::filter() const
@@ -59,18 +73,22 @@ AbstractEntityDataFilter *SceneObject::filter() const
     return m_filter.get();
 }
 
-void SceneObject::setData(const QVector<QVector3D> &data)
+int SceneObject::primitiveType() const
 {
-    if(m_filter){
-        QVector <QVector3D> filteredData;
-        m_filter->apply(data, filteredData);
-        m_data = filteredData;
-        return;
-    }
+    return m_renderImpl->primitiveType();
+}
 
-    m_data = data;
+QVector3D SceneObject::position() const
+{
+    return m_renderImpl->bounds().center();
+}
 
-    createBoundingBox();
+void SceneObject::setData(const QVector<QVector3D> &data, int primitiveType)
+{
+    m_renderImpl->setData(data, primitiveType);
+
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
@@ -79,49 +97,36 @@ void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
         return;
 
     m_filter = filter;
+
+    Q_EMIT changed();
 }
 
 void SceneObject::clearData()
 {
-    m_data.clear();
+    m_renderImpl->clearData();
+
+    Q_EMIT changed();
 }
 
-void SceneObject::setPrimitiveType(int primitiveType)
+void SceneObject::setVisible(bool isVisible)
 {
-    if(m_primitiveType != primitiveType)
-        m_primitiveType = primitiveType;
+    m_renderImpl->setVisible(isVisible);
+
+    Q_EMIT changed();
 }
 
-void SceneObject::append(const QVector3D &vertex)
+void SceneObject::setColor(QColor color)
 {
-    m_data.append(vertex);
+    m_renderImpl->setColor(color);
 
-    Q_EMIT dataChanged();
-
-    createBoundingBox();
-
-    Q_EMIT boundsChanged();
+    Q_EMIT changed();
 }
 
-void SceneObject::append(const QVector<QVector3D> &other)
+void SceneObject::setWidth(qreal width)
 {
-    m_data.append(other);
+    m_renderImpl->setWidth(width);
 
-    Q_EMIT dataChanged();
-
-    createBoundingBox();
-
-    Q_EMIT boundsChanged();
-}
-
-int SceneObject::primitiveType() const
-{
-    return m_primitiveType;
-}
-
-Cube SceneObject::boundingBox() const
-{
-    return m_boundingBox;
+    Q_EMIT changed();
 }
 
 void SceneObject::qmlDeclare()
@@ -131,10 +136,120 @@ void SceneObject::qmlDeclare()
     qRegisterMetaType<AbstractEntityDataFilter::FilterType>("FilterType");
 }
 
-void SceneObject::createBoundingBox()
+//-----------------------RenderImplementation-----------------------------//
+SceneObject::RenderImplementation::RenderImplementation()
+{}
+
+SceneObject::RenderImplementation::~RenderImplementation()
+{}
+
+void SceneObject::RenderImplementation::render(QOpenGLFunctions *ctx,
+                                               const QMatrix4x4 &mvp,
+                                               const QMap<QString,
+                                               std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+{
+    if(!m_isVisible)
+        return;
+
+    if(!shaderProgramMap.contains("static"))
+        return;
+
+    auto shaderProgram = shaderProgramMap["static"];
+
+    if (!shaderProgram->bind()){
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    int posLoc    = shaderProgram->attributeLocation("position");
+    int colorLoc  = shaderProgram->uniformLocation("color");
+    int matrixLoc = shaderProgram->uniformLocation("matrix");
+
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(m_color));
+    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, m_data.constData());
+
+    ctx->glLineWidth(m_width);
+    ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
+    ctx->glLineWidth(1.0f);
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
+}
+
+void SceneObject::RenderImplementation::setData(const QVector<QVector3D> &data, int primitiveType)
+{
+    if(m_primitiveType != primitiveType)
+        m_primitiveType = primitiveType;
+
+    m_data = data;
+
+    createBounds();
+}
+
+void SceneObject::RenderImplementation::setColor(QColor color)
+{
+    if(m_color != color)
+        m_color = color;
+}
+
+void SceneObject::RenderImplementation::setWidth(qreal width)
+{
+    if(m_width != width)
+        m_width = width;
+}
+
+void SceneObject::RenderImplementation::setVisible(bool isVisible)
+{
+    if(m_isVisible != isVisible)
+        m_isVisible = isVisible;
+}
+
+void SceneObject::RenderImplementation::clearData()
+{
+    m_data.clear();
+}
+
+QVector<QVector3D> SceneObject::RenderImplementation::data() const
+{
+    return m_data;
+}
+
+const QVector<QVector3D> &SceneObject::RenderImplementation::cdata() const
+{
+    return m_data;
+}
+
+QColor SceneObject::RenderImplementation::color() const
+{
+    return m_color;
+}
+
+qreal SceneObject::RenderImplementation::width() const
+{
+    return m_width;
+}
+
+bool SceneObject::RenderImplementation::isVisible() const
+{
+    return m_isVisible;
+}
+
+Cube SceneObject::RenderImplementation::bounds() const
+{
+    return m_bounds;
+}
+
+int SceneObject::RenderImplementation::primitiveType() const
+{
+    return m_primitiveType;
+}
+
+void SceneObject::RenderImplementation::createBounds()
 {
     if (m_data.isEmpty()){
-        m_boundingBox = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
+        m_bounds = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
         return;
     }
 
@@ -147,7 +262,7 @@ void SceneObject::createBoundingBox()
     float y_max = m_data.first().y();
     float y_min = y_max;
 
-    for (const auto& v: m_data){
+    for (const auto& v: qAsConst(m_data)){
         z_min = std::min(z_min, v.z());
         z_max = std::max(z_max, v.z());
 
@@ -158,10 +273,5 @@ void SceneObject::createBoundingBox()
         y_max = std::max(y_max, v.y());
     }
 
-    m_boundingBox = Cube(x_min, x_max, y_min, y_max, z_min, z_max);
-}
-
-SceneObject::SceneObjectType SceneObject::type() const
-{
-    return SceneObjectType::Unknown;
+    m_bounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);
 }

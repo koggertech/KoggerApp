@@ -150,25 +150,14 @@ Window  {
 
                         onPositionChanged: {
                             renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y)
-
-                            if((mousearea3D.pressedButtons & Qt.MiddleButton) || ((mousearea3D.pressedButtons & Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier))) {
-                                renderer.mouse(mouse.x, mouse.y, false)
-                            } else  if(mousearea3D.pressedButtons & Qt.LeftButton) {
-                                renderer.mouse(mouse.x, mouse.y, true)
-
-                            }
                         }
 
                         onPressed: {
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y)
-                            renderer.mouse(mouse.x, mouse.y, false)
-                            renderer.mousePressed(mouse.button)
                         }
 
                         onReleased: {
                             renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y)
-                            renderer.mouse(-1, -1, false)
-                            renderer.mouseReleased(mouse.button)
                         }
 
                     }

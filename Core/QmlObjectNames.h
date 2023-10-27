@@ -11,6 +11,7 @@ namespace QmlObjectNames{
     static const QString mpcFilterControlMenu             = "mpcFilterControlMenu";
     static const QString bottomTrackParamsMenu            = "bottomTrackParamsMenu";
     static const QString surfaceParamsMenu                = "surfaceParamsMenu";
+    static const QString scene3dToolBar                   = "scene3dToolBar";
 }
 
 #endif // QMLOBJECTNAMES_H

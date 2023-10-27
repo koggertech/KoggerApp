@@ -50,7 +50,7 @@ SOURCES += \
         core.cpp \
 #        coreFlash.cpp \
         filelist.cpp \
-    graphicsscene3d.cpp \
+    graphicsscene3drenderer.cpp \
     graphicsscene3dview.cpp \
     interpolatorbase.cpp \
         logger.cpp \
@@ -106,7 +106,7 @@ HEADERS += \
     filelist.h \
     flasher.h \
     core.h \
-    graphicsscene3d.h \
+    graphicsscene3drenderer.h \
     graphicsscene3dview.h \
     interpolatorbase.h \
     logger.h \

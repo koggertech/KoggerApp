@@ -15,10 +15,10 @@ BottomTrackControlMenuController::~BottomTrackControlMenuController()
 
 void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto bottomTrack = m_graphicsSceneView->scene()->bottomTrack();
+    auto bottomTrack = m_graphicsSceneView->bottomTrack();
 
     QMetaObject::invokeMethod(reinterpret_cast <QObject*>(bottomTrack.get()), "setVisible", Q_ARG(bool, checked));
 }
@@ -28,10 +28,10 @@ void BottomTrackControlMenuController::onFilterTypeComboBoxIndexChanged(int inde
     if(!m_bottomTrackProvider)
         return;
 
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return;
 
-    auto bottomTrack = m_graphicsSceneView->scene()->bottomTrack();
+    auto bottomTrack = m_graphicsSceneView->bottomTrack();
 
     const auto filter = bottomTrack->filter();
 
@@ -53,7 +53,7 @@ void BottomTrackControlMenuController::onFilterTypeComboBoxIndexChanged(int inde
     }
 
     bottomTrack->setFilter(newFilter);
-    bottomTrack->setData(m_bottomTrackProvider->getBottomTrack());
+    bottomTrack->setData(m_bottomTrackProvider->getBottomTrack(), GL_LINE_STRIP);
 }
 
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
@@ -68,10 +68,10 @@ void BottomTrackControlMenuController::setBottomTrackProvider(std::shared_ptr<Bo
 
 BottomTrack *BottomTrackControlMenuController::bottomTrack() const
 {
-    if(!m_graphicsSceneView || !m_graphicsSceneView->scene())
+    if(!m_graphicsSceneView)
         return nullptr;
 
-    return m_graphicsSceneView->scene()->bottomTrack().get();
+    return m_graphicsSceneView->bottomTrack().get();
 }
 
 void BottomTrackControlMenuController::findComponent()

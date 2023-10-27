@@ -3,9 +3,9 @@
 
 #include <QObject>
 
-#include <scenegraphicsobject.h>
+#include <sceneobject.h>
 
-class SurfaceGrid : public SceneGraphicsObject
+class SurfaceGrid : public SceneObject
 {
     Q_OBJECT
     Q_PROPERTY(bool isTriangle READ isTriangle CONSTANT)
@@ -13,9 +13,13 @@ class SurfaceGrid : public SceneGraphicsObject
 
 public:
     explicit SurfaceGrid(QObject *parent = nullptr);
+    virtual ~SurfaceGrid();
 
     bool isTriangle() const;
     bool isQuad() const;
+
+private:
+    friend class Surface;
 };
 
 #endif // SURFACEGRID_H

@@ -1,6 +1,9 @@
 #ifndef SCENEOBJECT_H
 #define SCENEOBJECT_H
 
+#include <abstractentitydatafilter.h>
+#include <cube.h>
+
 #include <QObject>
 #include <QUuid.h>
 #include <QColor>
@@ -8,23 +11,58 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 
-#include <abstractentitydatafilter.h>
-#include <cube.h>
+#define RENDER_IMPL(Class) ({dynamic_cast<Class##RenderImplementation*>(m_renderImpl);})
 
-class GraphicsScene3d;
 class SceneObject : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(AbstractEntityDataFilter* filter READ filter                 CONSTANT)
-    Q_PROPERTY(QString                   name   READ name   WRITE setName   NOTIFY nameChanged)
-    Q_PROPERTY(SceneObjectType           type   READ type                   CONSTANT)
+    Q_PROPERTY(AbstractEntityDataFilter* filter   READ filter                       CONSTANT)
+    Q_PROPERTY(QString                   name     READ name       WRITE setName     CONSTANT)
+    Q_PROPERTY(SceneObjectType           type     READ type                         CONSTANT)
+    Q_PROPERTY(bool                      visible  READ isVisible  WRITE setVisible  CONSTANT)
+    Q_PROPERTY(QColor                    color    READ color                        CONSTANT)
+    Q_PROPERTY(qreal                     width    READ width                        CONSTANT)
 
 public:
-    SceneObject(QObject *parent = nullptr);
+    class RenderImplementation
+    {
+    public:
+        RenderImplementation();
+        virtual ~RenderImplementation();
 
-    SceneObject(QString name = QStringLiteral("Scene object"),
-                int primitiveType = GL_POINTS,
-                QObject *parent = nullptr);
+        virtual void render(QOpenGLFunctions *ctx,
+                            const QMatrix4x4 &mvp,
+                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const;
+
+        virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS);
+        virtual void setColor(QColor color);
+        virtual void setWidth(qreal width);
+        virtual void setVisible(bool isVisible);
+        virtual void clearData();
+        QVector<QVector3D> data() const;
+        const QVector<QVector3D>& cdata() const;
+        QColor color() const;
+        qreal width() const;
+        bool isVisible() const;
+        Cube bounds() const;
+        int primitiveType() const;
+
+    protected:
+        QVector<QVector3D> m_data;
+        QColor m_color = QColor(0.0f, 0.0f, 0.0f);
+        float m_width = 1.0f;
+        bool m_isVisible = true;
+        Cube m_bounds;
+        int m_primitiveType = GL_POINTS;
+
+    private:
+        virtual void createBounds();
+
+    private:
+        friend class SceneObject;
+    };
+
+    SceneObject(QObject *parent = nullptr);
 
     virtual ~SceneObject();
 
@@ -40,48 +78,24 @@ public:
 
     Q_ENUM(SceneObjectType)
 
-    GraphicsScene3d* scene() const;
-
-    /**
-     * @brief Returns unique id of the object
-     * @return unique id of the object
-     */
     QString id() const;
-
-    /**
-     * @brief Returns type of the object
-     * @return type of the object
-     */
     virtual SceneObjectType type() const;
-
-    /**
-     * @brief Returns name of the object
-     * @return name of the object
-     */
     QString name() const;
-
-    //! @brief Возвращает копию набора вершин объекта.
-    //! @return Копмя набора вершин объекта.
     QVector <QVector3D> data() const;
-
-    //! @brief Возвращает копию набора вершин объекта.
-    //! @return Копмя набора вершин объекта.
     const QVector <QVector3D>& cdata() const;
-
-    //! @brief Возвращает тип примитива для отображения в движке openGL
-    //! (из набора дефайнов gl.h).
-    //! @return[in] Тип примитива для отображения в движке openGL
-    //! (из набора дефайнов gl.h).
-    int primitiveType() const;
-
-    Cube boundingBox() const;
-
+    bool isVisible() const;
+    QColor color() const;
+    float width() const;
+    Cube bounds() const;
     AbstractEntityDataFilter* filter() const;
-
+    int primitiveType() const;
+    QVector3D position() const;
     static void qmlDeclare();
 
 protected:
-    void createBoundingBox();
+    SceneObject(RenderImplementation* impl,
+                QObject *parent = nullptr,
+                QString name = QStringLiteral("Scene object"));
 
 public Q_SLOTS:
     /**
@@ -90,25 +104,19 @@ public Q_SLOTS:
      */
     void setName(QString name);
 
-    void setScene(GraphicsScene3d* scene);
-
     //! @brief Устанавливает набор вершин объекта.
     //! @param[in] data - ссылка на набор вершин.
-    virtual void setData(const QVector <QVector3D>& data);
+    virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS);
 
     virtual void clearData();
 
-    virtual void setPrimitiveType(int primitiveType);
+    void setVisible(bool isVisible);
+
+    void setColor(QColor color);
+
+    void setWidth(qreal width);
 
     void setFilter(std::shared_ptr <AbstractEntityDataFilter> filter);
-
-    //! @brief Добавляет вершину в конец набора вершин.
-    //! @param[in] vertex - ссылка на вершину
-    virtual void append(const QVector3D& vertex);
-
-    //! @brief Добавляет входящий набор вершин в конец набора вершин объекта
-    //! @param[in] other - ссылка на набор вершин
-    virtual void append(const QVector<QVector3D>& other);
 
 Q_SIGNALS:
     void dataChanged();
@@ -119,14 +127,18 @@ Q_SIGNALS:
 
     void filterChanged(AbstractEntityDataFilter* filter);
 
+    void changed();
+
+private:
+    friend class GraphicsScene3dView;
+    friend class GraphicsScene3dRenderer;
+    friend class RenderImplementation;
+
 protected:
-    GraphicsScene3d* mp_scene;
-    QString m_name = QStringLiteral("Scene object"); ///< Object name
-    QUuid m_uuid   = QUuid::createUuid();            ///< Object unique id
-    QVector <QVector3D> m_data;
-    Cube m_boundingBox;                             ///< Bounding cube of the object
-    int m_primitiveType = GL_POINTS;
+    QString m_name = QStringLiteral("Scene object");
+    QUuid m_uuid   = QUuid::createUuid();
     std::shared_ptr <AbstractEntityDataFilter> m_filter;
+    RenderImplementation* m_renderImpl;
 };
 
 #endif // SCENEOBJECT_H

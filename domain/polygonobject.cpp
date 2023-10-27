@@ -6,15 +6,27 @@
 #include <pointobject.h>
 
 PolygonObject::PolygonObject(QObject *parent)
-    : PointGroup(parent)
-{
-    setPrimitiveType(GL_POLYGON);
-}
+    : PointGroup(new PolygonObjectRenderImplementation, parent)
+{}
 
 PolygonObject::~PolygonObject()
 {}
 
-void PolygonObject::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+SceneObject::SceneObjectType PolygonObject::type() const
+{
+    return SceneObject::SceneObjectType::Polygon;
+}
+
+//-----------------------RenderImplementation-----------------------------//
+PolygonObject::PolygonObjectRenderImplementation::PolygonObjectRenderImplementation()
+{}
+
+PolygonObject::PolygonObjectRenderImplementation::~PolygonObjectRenderImplementation()
+{}
+
+void PolygonObject::PolygonObjectRenderImplementation::render(QOpenGLFunctions *ctx,
+                                                              const QMatrix4x4 &mvp,
+                                                              const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
     if(!m_isVisible)
         return;
@@ -39,8 +51,8 @@ void PolygonObject::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMa
 
     QVector <QVector3D> data;
 
-    for(const auto& point : m_pointList)
-        data.append(point->position());
+    for(const auto& renderImpl : m_pointRenderImplList)
+        data.append(renderImpl.cdata().at(0));
 
     shaderProgram->setAttributeArray(posLoc, data.constData());
 
@@ -48,9 +60,4 @@ void PolygonObject::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMa
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
-}
-
-SceneObject::SceneObjectType PolygonObject::type() const
-{
-    return SceneObject::SceneObjectType::Polygon;
 }

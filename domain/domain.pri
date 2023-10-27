@@ -15,7 +15,9 @@ HEADERS += \
     $$PWD/boundarydetector.h \
     $$PWD/bowyerwatsondelaunay.h \
     $$PWD/contour.h\
+    $$PWD/coordinateaxes.h \
     $$PWD/cube.h \
+    $$PWD/planegrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
     $$PWD/pointgroup.h \
@@ -33,6 +35,9 @@ HEADERS += \
 SOURCES += \
     $$PWD/bottomtrack.cpp\
     $$PWD/contour.cpp\
+    $$PWD/coordinateaxes.cpp \
+    $$PWD/cube.cpp \
+    $$PWD/planegrid.cpp \
     $$PWD/pointgroup.cpp \
     $$PWD/pointobject.cpp \
     $$PWD/polygongroup.cpp \

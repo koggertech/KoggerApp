@@ -1,12 +1,13 @@
 #include "pointgroup.h"
 #include <drawutils.h>
-#include <pointobject.h>
 
 PointGroup::PointGroup(QObject *parent)
-: SceneGraphicsObject(parent)
-{
-    setPrimitiveType(GL_POINTS);
-}
+    : SceneObject(new PointGroupRenderImplementation, parent)
+{}
+
+PointGroup::PointGroup(RenderImplementation *impl, QObject *parent)
+    : SceneObject(impl, parent)
+{}
 
 PointGroup::~PointGroup()
 {}
@@ -16,21 +17,23 @@ SceneObject::SceneObjectType PointGroup::type() const
     return SceneObject::SceneObjectType::PointGroup;
 }
 
-void PointGroup::draw(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
-{
-    if(!m_isVisible)
-        return;
-
-    for(const auto& point : m_pointList)
-        point->draw(ctx, mvp, shaderProgramMap);
-}
-
 void PointGroup::removeAt(int index)
 {
     if(index < 0 && index >= m_pointList.count())
         return;
 
     m_pointList.removeAt(index);
+    RENDER_IMPL(PointGroup)->removeRenderAt(index);
+
+    Q_EMIT changed();
+}
+
+void PointGroup::pointObjectChanged()
+{
+    auto point = reinterpret_cast<PointObject*>(QObject::sender());
+    RENDER_IMPL(PointGroup)->m_pointRenderImplList.replace(point->m_indexInGroup,
+                                                           *(dynamic_cast<PointObject::PointObjectRenderImplementation*>(point->m_renderImpl)));
+    Q_EMIT changed();
 }
 
 std::shared_ptr<PointObject> PointGroup::at(int index) const
@@ -46,27 +49,71 @@ void PointGroup::append(std::shared_ptr <PointObject> point)
     if(m_pointList.contains(point))
         return;
 
+    QObject::connect(point.get(), &PointObject::changed, this, &PointGroup::pointObjectChanged);
+
     point->setParent(this);
+    point->m_indexInGroup = RENDER_IMPL(PointGroup)->m_pointRenderImplList.size();
 
     m_pointList.append(point);
+
+    RENDER_IMPL(PointGroup)->appendPointRenderImpl(
+                dynamic_cast<PointObject::PointObjectRenderImplementation*>(point->m_renderImpl)
+            );
+
+    Q_EMIT changed();
 }
 
-void PointGroup::setData(const QVector<QVector3D> &data)
+void PointGroup::setData(const QVector <QVector3D>& data, int primitiveType)
 {
     Q_UNUSED(data)
+    Q_UNUSED(primitiveType)
 }
 
 void PointGroup::clearData()
 {
     m_pointList.clear();
+    RENDER_IMPL(PointGroup)->clearData();
+
+    Q_EMIT changed();
 }
 
-void PointGroup::append(const QVector3D &vertex)
+//-----------------------RenderImplementation-----------------------------//
+
+PointGroup::PointGroupRenderImplementation::PointGroupRenderImplementation()
+    : SceneObject::RenderImplementation()
+{}
+
+PointGroup::PointGroupRenderImplementation::~PointGroupRenderImplementation()
+{}
+
+void PointGroup::PointGroupRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-    Q_UNUSED(vertex)
+    if(!m_isVisible)
+        return;
+
+    for(const auto& renderImpl : m_pointRenderImplList)
+        renderImpl.render(ctx, mvp, shaderProgramMap);
 }
 
-void PointGroup::append(const QVector<QVector3D> &other)
+void PointGroup::PointGroupRenderImplementation::clearData()
 {
-    Q_UNUSED(other)
+    m_pointRenderImplList.clear();
+}
+
+void PointGroup::PointGroupRenderImplementation::appendPointRenderImpl(PointObject::PointObjectRenderImplementation *impl)
+{
+    m_pointRenderImplList.append(*impl);
+}
+
+void PointGroup::PointGroupRenderImplementation::removeRenderAt(int index)
+{
+    if(index < 0 && index >= m_pointRenderImplList.count())
+        return;
+
+    m_pointRenderImplList.removeAt(index);
+}
+
+void PointGroup::PointGroupRenderImplementation::createBounds()
+{
+    //TODO! Bounds detection algorithm
 }

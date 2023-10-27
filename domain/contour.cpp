@@ -1,10 +1,8 @@
 #include "contour.h"
 
 Contour::Contour(QObject* parent)
-: SceneGraphicsObject(parent)
-{
-    setPrimitiveType(GL_LINES);
-}
+: SceneObject(parent)
+{}
 
 Contour::~Contour()
 {}

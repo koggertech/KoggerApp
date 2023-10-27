@@ -1,33 +1,48 @@
 #ifndef POINTOBJECT_H
 #define POINTOBJECT_H
 
-#include <scenegraphicsobject.h>
+#include <sceneobject.h>
 
-class PointObject : public SceneGraphicsObject
+class PointObject : public SceneObject
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT("PointObject")
+    QML_NAMED_ELEMENT(PointObject)
     Q_PROPERTY(QVector3D position READ position CONSTANT)
 
 public:
+    class PointObjectRenderImplementation : public SceneObject::RenderImplementation
+    {
+    public:
+        PointObjectRenderImplementation();
+        virtual ~PointObjectRenderImplementation();
+        virtual void render(QOpenGLFunctions* ctx,
+                          const QMatrix4x4& mvp,
+                          const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+
+        void setPosition(float x, float y, float z);
+        void setPosition(const QVector3D& pos);
+        QVector3D position() const;
+        float x() const;
+        float y() const;
+        float z() const;
+    };
+
     explicit PointObject(QObject *parent = nullptr);
 
-    virtual void draw(QOpenGLFunctions* ctx,
-                      const QMatrix4x4& mvp,
-                      const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
-
-    virtual SceneObjectType type() const override;
+    SceneObjectType type() const override;
     float x() const;
     float y() const;
     float z() const;
     QVector3D position() const;
 
 public Q_SLOTS:
+    virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS) override;
     void setPosition(float x, float y, float z);
-    void setPosition(QVector3D pos);
-    virtual void append(const QVector3D& vertex) override;
-    virtual void append(const QVector<QVector3D>& other) override;
-    virtual void setData(const QVector <QVector3D>& data) override;
+    void setPosition(const QVector3D& pos);
+
+private:
+    friend class PointGroup;
+    int m_indexInGroup = 0;
 };
 
 #endif // POINTOBJECT_H
