@@ -52,8 +52,9 @@ public:
         QVector3D m_eye = {-0.45f, -0.45f, 0.75f};
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
         QVector3D m_lookAt = {0.0f, 0.0f, 0.0f};
-        QVector3D m_relativeOrbitPos = {0.0f, 0.0f ,0.0f};
+        QVector3D m_relativeOrbitPos = {-0.45f, -0.45f, 0.75f};
         QPointF m_startDragPos = {0.0f, 0.0f};
+        bool m_useFocusPoint = true;
 
         QMatrix4x4 m_view;
 

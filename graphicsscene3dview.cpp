@@ -282,12 +282,14 @@ void GraphicsScene3dView::Camera::rotate(qreal yaw, qreal pitch)
     QMatrix4x4 rotationMatrixX;
     rotationMatrixX.setToIdentity();
     rotationMatrixX.rotate(yaw, m_up);
-    m_eye = (rotationMatrixX * (m_eye - m_lookAt)) + m_lookAt;
+    //m_eye = (rotationMatrixX * (m_eye - m_lookAt)) + m_lookAt;
+    m_relativeOrbitPos = (rotationMatrixX * QVector4D(m_relativeOrbitPos, 1.0f)).toVector3D();
 
     QMatrix4x4 rotationMatrixY;
     rotationMatrixY.setToIdentity();
     rotationMatrixY.rotate(pitch, right);
-    m_eye = (rotationMatrixY * (m_eye - m_lookAt)) + m_lookAt;
+    //m_eye = (rotationMatrixY * (m_eye - m_lookAt)) + m_lookAt;
+    m_relativeOrbitPos = (rotationMatrixY * QVector4D(m_relativeOrbitPos, 1.0f)).toVector3D();
 
     updateViewMatrix();
 }
@@ -300,6 +302,8 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
     QVector4D verticalAxis = inverted * QVector4D(0, -1, 0, 0);
 
     m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) + verticalAxis * (float)(endPos.y() - startPos.y())) * m_sensivity * 0.05f).toVector3D();
+
+    m_useFocusPoint = false;
 
     updateViewMatrix();
 }
@@ -327,7 +331,11 @@ void GraphicsScene3dView::Camera::focusOnObject(std::weak_ptr<SceneObject> objec
 
 void GraphicsScene3dView::Camera::focusOnPosition(const QVector3D &point)
 {
-    auto position = point + m_lookAt * m_distToFocusPoint;
+    m_lookAt = point;
+    m_offset = QVector3D();
+    m_deltaOffset = QVector3D();
+
+    m_useFocusPoint = true;
 
     updateViewMatrix();
 }
@@ -354,8 +362,14 @@ void GraphicsScene3dView::Camera::reset()
 
 void GraphicsScene3dView::Camera::updateViewMatrix()
 {
+    if(!m_useFocusPoint)
+        m_lookAt = QVector3D() + m_offset + m_deltaOffset;
+
+    m_eye = m_lookAt + m_relativeOrbitPos * m_distToFocusPoint;
+
     QMatrix4x4 view;
-    view.lookAt(m_eye*m_distToFocusPoint + m_offset + m_deltaOffset, m_lookAt + m_offset + m_deltaOffset, m_up);
+    //view.lookAt(m_eye*m_distToFocusPoint + m_offset + m_deltaOffset, m_lookAt + m_offset + m_deltaOffset, m_up);
+    view.lookAt(m_eye, m_lookAt, m_up);
     m_view = std::move(view);
 }
 
