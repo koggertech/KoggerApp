@@ -152,7 +152,9 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
 
     if(m_camera->distToFocusPoint() < 65)
         m_planeGrid->setCellSize(1);
-    if(m_camera->distToFocusPoint() >= 65 && m_camera->distToFocusPoint() <= 230)
+    if(m_camera->distToFocusPoint() >= 65 && m_camera->distToFocusPoint() <= 130)
+        m_planeGrid->setCellSize(3);
+    if(m_camera->distToFocusPoint() >= 130 && m_camera->distToFocusPoint() <= 230)
         m_planeGrid->setCellSize(5);
     if(m_camera->distToFocusPoint() > 230)
         m_planeGrid->setCellSize(10);
