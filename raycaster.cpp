@@ -57,7 +57,7 @@ void RayCaster::trigger()
 {
     m_hits.clear();
 
-    for(const auto& object : m_objects){
+    for(const auto& object : qAsConst(m_objects)){
         auto _object = object.lock();
 
         if(!_object)
