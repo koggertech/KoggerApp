@@ -56,7 +56,9 @@ private:
     QVector3D m_center;
     qreal m_fov = 45.0f;
     qreal m_pitch = 0.0f;
-    qreal m_yaw = -90.0f;
+    qreal m_yaw = 0.0f;
+    QMatrix4x4 m_model;
+    QMatrix4x4 m_projection;
 };
 
 #endif // GRAPHICSSCENE3D_H
