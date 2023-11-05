@@ -63,11 +63,11 @@ void RayCaster::trigger()
         if(!_object)
             continue;
 
-        switch(_object->primitiveType()){
-        case GL_TRIANGLES:
+        switch(m_mode){
+        case RayCastMode::Triangle:
             pickAsTriangles(_object);
             break;
-        case GL_QUADS:
+        case RayCastMode::Quad:
             pickAsQuads(_object);
             break;
         }

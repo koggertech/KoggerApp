@@ -31,6 +31,14 @@ class RayCaster : public QObject
     Q_OBJECT
 
 public:
+    enum class RayCastMode
+    {
+        Vertex = 0,
+        Segment = 1,
+        Triangle = 2,
+        Quad = 3
+    };
+
     explicit RayCaster(QObject *parent = nullptr);
 
     /**
@@ -100,6 +108,7 @@ private:
     void pickAsQuads(std::shared_ptr <SceneObject> object);
 
 private:
+    RayCastMode m_mode = RayCastMode::Vertex;
     QVector3D m_origin;
     QVector3D m_direction;
     float m_length = 1000.0f;
