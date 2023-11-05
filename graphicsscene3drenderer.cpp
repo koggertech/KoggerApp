@@ -77,15 +77,25 @@ void GraphicsScene3dRenderer::render()
 
 void GraphicsScene3dRenderer::drawObjects()
 {
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
     QMatrix4x4 model, view, projection;
 
     view = m_camera.m_view;
-    model.rotate(90.0f, QVector3D(1.0f, 0.0f, 0.0f));
     projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 5000.0f);
 
+    m_model = std::move(model);
+    m_projection = std::move(projection);
+
+    glEnable(GL_DEPTH_TEST);
+    //m_coordAxesRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_planeGridRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_bottomTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
+    //-----------Draw axes-------------
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
     glViewport(viewport[2]-100,0,100,100);
     glDisable(GL_DEPTH_TEST);
 
@@ -98,15 +108,5 @@ void GraphicsScene3dRenderer::drawObjects()
     m_coordAxesRenderImpl.render(this, axesProjection * axesView * model, m_shaderProgramMap);
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-    glEnable(GL_DEPTH_TEST);
-    //m_coordAxesRenderImpl.render(this, projection * view * model, m_shaderProgramMap);
-    m_planeGridRenderImpl.render(this, projection * view * model, m_shaderProgramMap);
-    m_bottomTrackRenderImpl.render(this, projection * view * model, m_shaderProgramMap);
-    m_surfaceRenderImpl.render(this, projection * view * model, m_shaderProgramMap);
-    m_pointGroupRenderImpl.render(this, projection * view * model, m_shaderProgramMap);
-    m_polygonGroupRenderImpl.render(this, projection * view * model, m_shaderProgramMap);
-
-    //for(const auto& object : qAsConst(m_objectList))
-    //    object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
+    //---------------------------------
 }
