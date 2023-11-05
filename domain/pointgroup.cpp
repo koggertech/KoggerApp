@@ -26,6 +26,7 @@ void PointGroup::removeAt(int index)
     RENDER_IMPL(PointGroup)->removeRenderAt(index);
 
     Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void PointGroup::pointObjectChanged()
@@ -33,7 +34,11 @@ void PointGroup::pointObjectChanged()
     auto point = reinterpret_cast<PointObject*>(QObject::sender());
     RENDER_IMPL(PointGroup)->m_pointRenderImplList.replace(point->m_indexInGroup,
                                                            *(dynamic_cast<PointObject::PointObjectRenderImplementation*>(point->m_renderImpl)));
+
+    //TODO: Looks like bad
+    RENDER_IMPL(PointGroup)->createBounds();
     Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 std::shared_ptr<PointObject> PointGroup::at(int index) const
@@ -61,6 +66,7 @@ void PointGroup::append(std::shared_ptr <PointObject> point)
             );
 
     Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void PointGroup::setData(const QVector <QVector3D>& data, int primitiveType)
@@ -103,6 +109,8 @@ void PointGroup::PointGroupRenderImplementation::clearData()
 void PointGroup::PointGroupRenderImplementation::appendPointRenderImpl(PointObject::PointObjectRenderImplementation *impl)
 {
     m_pointRenderImplList.append(*impl);
+
+    createBounds();
 }
 
 void PointGroup::PointGroupRenderImplementation::removeRenderAt(int index)
@@ -111,9 +119,16 @@ void PointGroup::PointGroupRenderImplementation::removeRenderAt(int index)
         return;
 
     m_pointRenderImplList.removeAt(index);
+
+    createBounds();
 }
 
 void PointGroup::PointGroupRenderImplementation::createBounds()
 {
-    //TODO! Bounds detection algorithm
+    Cube bounds;
+
+    for(const auto& pointRenderImpl : m_pointRenderImplList)
+        bounds.merge(pointRenderImpl.bounds());
+
+    m_bounds = std::move(bounds);
 }
