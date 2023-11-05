@@ -41,6 +41,7 @@ public:
         void commitMovement();
         void focusOnObject(std::weak_ptr<SceneObject> object);
         void focusOnPosition(const QVector3D& pos);
+        void setIsometricView();
         void reset();
 
     private:
@@ -49,10 +50,10 @@ public:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
 
-        QVector3D m_eye = {-0.45f, -0.45f, 0.75f};
+        QVector3D m_eye = {0.0f, 0.0f, 0.0f};
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
         QVector3D m_lookAt = {0.0f, 0.0f, 0.0f};
-        QVector3D m_relativeOrbitPos = {-0.45f, -0.45f, 0.75f};
+        QVector3D m_relativeOrbitPos = {0.0f, 0.0f, 0.0f};
         QPointF m_startDragPos = {0.0f, 0.0f};
         bool m_useFocusPoint = true;
 
@@ -66,7 +67,7 @@ public:
         qreal m_pitch = 0.0f;
         qreal m_yaw = 0.0f;
         qreal m_fov = 45.0f;
-        qreal m_distToFocusPoint = 32.0f;
+        qreal m_distToFocusPoint = 25.0f;
         qreal m_sensivity = 0.5f;
     };
 
@@ -136,7 +137,6 @@ private:
     std::shared_ptr <PlaneGrid> m_planeGrid;
     std::shared_ptr <SceneObject> m_sceneBoundsPlane;
     QMatrix4x4 m_model;
-    QMatrix4x4 m_view;
     QMatrix4x4 m_projection;
     Cube m_bounds;
 };
