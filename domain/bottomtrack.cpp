@@ -51,16 +51,16 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     }
 
     int posLoc    = shaderProgram->attributeLocation("position");
-    int maxZLoc   = shaderProgram->uniformLocation("max_z");
-    int minZLoc   = shaderProgram->uniformLocation("min_z");
+    int maxYLoc   = shaderProgram->uniformLocation("max_y");
+    int minYLoc   = shaderProgram->uniformLocation("min_y");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
 
     QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
     int colorLoc = shaderProgram->uniformLocation("color");
 
     shaderProgram->setUniformValue(colorLoc,color);
-    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
-    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
+    shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
+    shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
