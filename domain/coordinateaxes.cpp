@@ -37,13 +37,12 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     int colorLoc  = shaderProgram->uniformLocation("color");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
 
-
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
 
-    QVector<QVector3D> axis_x{{m_position.x()-10.0f,m_position.y(),m_position.z()},{m_position.x()+10.0f,m_position.y(),m_position.z()}};
-    QVector<QVector3D> axis_y{{m_position.x(),m_position.y()-10.0f,m_position.z()},{m_position.x(),m_position.y()+10.0f,m_position.z()}};
-    QVector<QVector3D> axis_z{{m_position.x(),m_position.y(),m_position.z()-10.0f},{m_position.x(),m_position.y(),m_position.z()+10.0f}};
+    QVector<QVector3D> axis_x{{0.0f, 0.0f, 0.0f},       {m_position.x()+10.0f, m_position.y(),       m_position.z()}};
+    QVector<QVector3D> axis_y{{0.0f, 0.0f, 0.0f},       {m_position.x(),       m_position.y()+10.0f, m_position.z()}};
+    QVector<QVector3D> axis_z{{0.0f, 0.0f, 0.0f},       {m_position.x(),       m_position.y(),       m_position.z()+10.0f}};
 
     ctx->glLineWidth(5.0f);
     shaderProgram->setAttributeArray(posLoc, axis_x.constData());
