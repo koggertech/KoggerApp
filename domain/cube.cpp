@@ -14,16 +14,16 @@ Cube::Cube(float x_1, float x_2,
 QVector3D Cube::center() const{
     return {
         m_xMin + length()/2.0f,
-        m_yMin + width()/2.0f,
-        m_zMin + height()/2.0f
+        m_yMin + height()/2.0f,
+        m_zMin + width()/2.0f
     };
 };
 
 QVector3D Cube::bottomPos() const {
     return {
         m_xMin + length()/2.0f,
-        m_yMin + width()/2.0f,
-        m_zMin
+        m_yMin,
+        m_zMin + width()/2.0f
     };
 }
 
@@ -33,11 +33,11 @@ float Cube::length() const{
 
 float Cube::width() const
 {
-    return std::abs(m_yMax - m_yMin);
+    return std::abs(m_zMax - m_zMin);
 }
 
 float Cube::height() const{
-    return std::abs(m_zMax - m_zMin);
+    return std::abs(m_yMax - m_yMin);
 }
 
 Cube Cube::merge(const Cube &other)
