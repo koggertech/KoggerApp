@@ -13,14 +13,17 @@ public:
     std::weak_ptr <SceneObject> sourceObject() const;
     std::pair <QVector <QVector3D>, int> sourcePrimitive() const;
     QVector3D worldIntersection() const;
+    QPair<int, int> indices() const;
     void setSourceObject(std::weak_ptr <SceneObject> object);
     void setSourcePrimitive(std::pair <QVector <QVector3D>, int> primitive);
     void setWorldIntersection(const QVector3D& intersection);
+    void setIndices(int begin, int end);
 
 private:
     std::weak_ptr <SceneObject> m_sourceObject;
     std::pair <QVector <QVector3D>, int> m_sourcePrimitive;
     QVector3D m_worldIntersection;
+    QPair <int, int> m_indices = {-1, -1};
 };
 
 class RayCaster : public QObject

@@ -106,6 +106,7 @@ void RayCaster::pickAsTriangles(std::shared_ptr<SceneObject> object)
 
         if (intersects){
             RayCasterHit hit;
+            hit.setIndices(i, i+3);
             hit.setWorldIntersection(intersectionPoint);
             hit.setSourceObject(object);
             hit.setSourcePrimitive({
@@ -115,6 +116,7 @@ void RayCaster::pickAsTriangles(std::shared_ptr<SceneObject> object)
                                 },
                                 GL_TRIANGLES
                                 });
+
 
             m_hits.append(hit);
         }
@@ -140,6 +142,7 @@ void RayCaster::pickAsQuads(std::shared_ptr<SceneObject> object)
 
         if (intersects){
             RayCasterHit hit;
+            hit.setIndices(i, i+4);
             hit.setWorldIntersection(intersectionPoint);
             hit.setSourceObject(object);
             hit.setSourcePrimitive({
@@ -150,7 +153,6 @@ void RayCaster::pickAsQuads(std::shared_ptr<SceneObject> object)
                                 },
                                 GL_QUADS
                                 });
-
             m_hits.append(hit);
         }
     }
@@ -171,6 +173,11 @@ QVector3D RayCasterHit::worldIntersection() const
     return m_worldIntersection;
 }
 
+QPair<int, int> RayCasterHit::indices() const
+{
+    return m_indices;
+}
+
 void RayCasterHit::setSourceObject(std::weak_ptr<SceneObject> object)
 {
     m_sourceObject = object;
@@ -186,4 +193,9 @@ void RayCasterHit::setWorldIntersection(const QVector3D &intersection)
 {
     if(m_worldIntersection != intersection)
         m_worldIntersection = intersection;
+}
+
+void RayCasterHit::setIndices(int begin, int end)
+{
+    m_indices = {begin, end};
 }
