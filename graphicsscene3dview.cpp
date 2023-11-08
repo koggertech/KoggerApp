@@ -19,6 +19,7 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_coordAxes(std::make_shared<CoordinateAxes>())
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_sceneBoundsPlane(std::make_shared<SceneObject>())
+, m_vertexEditingDecorator(new VertexEditingDecorator)
 {
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -37,7 +38,8 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_planeGrid.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
-    m_rayCaster->addObject(m_surface);
+    m_rayCaster->setMode(RayCaster::RayCastMode::Vertex);
+    m_rayCaster->addObject(m_bottomTrack);
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
@@ -68,6 +70,11 @@ std::shared_ptr<PolygonGroup> GraphicsScene3dView::polygonGroup() const
     return m_polygonGroup;
 }
 
+std::weak_ptr<GraphicsScene3dView::Camera> GraphicsScene3dView::camera() const
+{
+    return m_camera;
+}
+
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
@@ -77,6 +84,17 @@ void GraphicsScene3dView::clear()
 
     m_camera->setIsometricView();
     m_axesThumbnailCamera->setIsometricView();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setBottomTrackVertexEditingModeEnabled(bool enabled)
+{
+    m_vertexEditingToolEnabled = enabled;
+    m_vertexEditingDecorator->clearData();
+
+    m_rayCaster->reset();
+    m_rayCaster->addObject(m_bottomTrack);
 
     QQuickFramebufferObject::update();
 }
@@ -114,12 +132,16 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
 
     auto direction = (end - origin).normalized();
 
-    m_rayCaster->trigger(origin, direction);
+    //----Bottom track vertex editing tool----->
+    if(m_vertexEditingToolEnabled){
+        m_rayCaster->trigger(origin, direction);
 
-    QList <std::shared_ptr <SceneObject>> pickedObjects;
+        auto hits = m_rayCaster->hits();
 
-    for(const auto& hit : m_rayCaster->hits())
-        hit.sourceObject().lock()->setSelectedIndices(hit.indices().first, hit.indices().second);
+        if(!hits.isEmpty())
+            m_vertexEditingDecorator->setDecorated(hits.first().sourceObject(), hits.first().indices().first);
+    }
+    //-----------------------------------------<
 
     QQuickFramebufferObject::update();
 }
@@ -148,21 +170,44 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
 
     m_camera->zoom(angleDelta.y());
 
-    if(m_camera->distToFocusPoint() < 65)
-        m_planeGrid->setCellSize(1);
-    if(m_camera->distToFocusPoint() >= 65 && m_camera->distToFocusPoint() <= 130)
-        m_planeGrid->setCellSize(3);
-    if(m_camera->distToFocusPoint() >= 130 && m_camera->distToFocusPoint() <= 230)
-        m_planeGrid->setCellSize(5);
-    if(m_camera->distToFocusPoint() > 230)
-        m_planeGrid->setCellSize(10);
+    updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
+{
+    if(key == Qt::Key_Delete){
+        if(m_vertexEditingToolEnabled)
+            m_vertexEditingDecorator->removeVertex();
+    }
 
     QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::fitAllInView()
 {
+    auto maxSize = std::max(m_bounds.width(),
+                            std::max(m_bounds.height(),
+                                     m_bounds.length()));
+
+    auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
+
     m_camera->focusOnPosition(m_bounds.center());
+
+    if(d>0) m_camera->setDistance(d);
+
+    updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setIsometricView()
+{
+    m_camera->setIsometricView();
+    m_axesThumbnailCamera->setIsometricView();
+
+    updatePlaneGrid();
 
     QQuickFramebufferObject::update();
 }
@@ -177,10 +222,24 @@ void GraphicsScene3dView::updateBounds()
 
     m_bounds = std::move(bounds);
 
+    updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::updatePlaneGrid()
+{
     m_planeGrid->setSize(QSize(m_bounds.length(), m_bounds.width()));
     m_planeGrid->setPosition(m_bounds.bottomPos());
 
-    QQuickFramebufferObject::update();
+    if(m_camera->distToFocusPoint() < 65)
+        m_planeGrid->setCellSize(1);
+    if(m_camera->distToFocusPoint() >= 65 && m_camera->distToFocusPoint() <= 130)
+        m_planeGrid->setCellSize(3);
+    if(m_camera->distToFocusPoint() >= 130 && m_camera->distToFocusPoint() <= 230)
+        m_planeGrid->setCellSize(5);
+    if(m_camera->distToFocusPoint() > 230)
+        m_planeGrid->setCellSize(10);
 }
 
 //---------------------Renderer---------------------------//
@@ -218,6 +277,11 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_camera                 = *view->m_camera;
     m_renderer->m_axesThumbnailCamera    = *view->m_axesThumbnailCamera;
 
+    if(view->m_vertexEditingDecorator){
+        m_renderer->m_vertexEditingDecorator =  *(dynamic_cast<VertexEditingDecorator::VertexEditingDecoratorRenderImplementation*>(
+                                                              view->m_vertexEditingDecorator->m_renderImpl));
+    }
+
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
@@ -236,14 +300,12 @@ GraphicsScene3dView::Camera::Camera()
     setIsometricView();
 }
 
-GraphicsScene3dView::Camera::Camera(const QVector3D &offset,
-                                    qreal pitch,
+GraphicsScene3dView::Camera::Camera(qreal pitch,
                                     qreal yaw,
                                     qreal distToFocusPoint,
                                     qreal fov,
                                     qreal sensivity)
-    :m_offset(std::move(offset))
-    ,m_pitch(std::move(pitch))
+    :m_pitch(std::move(pitch))
     ,m_yaw(std::move(yaw))
     ,m_fov(std::move(fov))
     ,m_distToFocusPoint(std::move(distToFocusPoint))
@@ -306,7 +368,8 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
     m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) + verticalAxis * (float)(endPos.y() - startPos.y())) * m_sensivity * 0.05f).toVector3D();
     m_useFocusPoint = false;
 
-    updateViewMatrix();
+    auto lookAt = m_lookAt + m_deltaOffset;
+    updateViewMatrix(&lookAt);
 }
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
@@ -319,7 +382,7 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
 
 void GraphicsScene3dView::Camera::commitMovement()
 {
-    m_offset += m_deltaOffset;
+    m_lookAt += m_deltaOffset;
     m_deltaOffset = QVector3D();
 
     updateViewMatrix();
@@ -333,10 +396,14 @@ void GraphicsScene3dView::Camera::focusOnObject(std::weak_ptr<SceneObject> objec
 void GraphicsScene3dView::Camera::focusOnPosition(const QVector3D &point)
 {
     m_lookAt = point;
-    m_offset = QVector3D();
-    m_deltaOffset = QVector3D();
-
     m_useFocusPoint = true;
+
+    updateViewMatrix();
+}
+
+void GraphicsScene3dView::Camera::setDistance(qreal distance)
+{
+    m_distToFocusPoint = distance;
 
     updateViewMatrix();
 }
@@ -356,11 +423,9 @@ void GraphicsScene3dView::Camera::reset()
     m_eye = {0.0f, 0.0f, 20.0f};
     m_up = {0.0f, 1.0f, 0.0f};
     m_lookAt = {0.0f, 0.0f, 0.0f};
-    m_startDragPos = {0.0f, 0.0f};
     m_relativeOrbitPos = m_eye;
 
     m_focusedObject.lock() = nullptr;
-    m_offset = {0.0f, 0.0f, 0.0f};
     m_deltaOffset = {0.0f, 0.0f, 0.0f};
     m_focusPoint = {0.0f, 0.0f, 0.0f};
 
@@ -369,18 +434,19 @@ void GraphicsScene3dView::Camera::reset()
     m_fov = 45.0f;
     m_distToFocusPoint = 25.0f;
 
+    m_useFocusPoint = false;
+
     updateViewMatrix();
 }
 
-void GraphicsScene3dView::Camera::updateViewMatrix()
+void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
 {
-    if(!m_useFocusPoint)
-        m_lookAt = QVector3D() + m_offset + m_deltaOffset;
+    auto _lookAt = lookAt ? *lookAt : m_lookAt;
 
-    m_eye = m_lookAt + m_relativeOrbitPos * m_distToFocusPoint;
+    m_eye = _lookAt + m_relativeOrbitPos * m_distToFocusPoint;
 
     QMatrix4x4 view;
-    view.lookAt(m_eye, m_lookAt, m_up);
+    view.lookAt(m_eye, _lookAt, m_up);
 
     m_view = std::move(view);
 }

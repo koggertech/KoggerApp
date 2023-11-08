@@ -8,6 +8,7 @@
 #include <bottomtrack.h>
 #include <polygongroup.h>
 #include <pointgroup.h>
+#include <vertexeditingdecorator.h>
 
 #include <QQuickFramebufferObject>
 #include <QtMath>
@@ -24,8 +25,7 @@ public:
     {
     public:
         Camera();
-        Camera(const QVector3D& offset,
-               qreal pitch,
+        Camera(qreal pitch,
                qreal yaw,
                qreal distToFocusPoint,
                qreal fov,
@@ -41,11 +41,12 @@ public:
         void commitMovement();
         void focusOnObject(std::weak_ptr<SceneObject> object);
         void focusOnPosition(const QVector3D& pos);
+        void setDistance(qreal distance);
         void setIsometricView();
         void reset();
 
     private:
-        void updateViewMatrix();
+        void updateViewMatrix(QVector3D* lookAt = nullptr);
     private:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
@@ -107,21 +108,23 @@ public:
     std::shared_ptr <Surface> surface() const;
     std::shared_ptr <PointGroup> pointGroup() const;
     std::shared_ptr <PolygonGroup> polygonGroup() const;
+    std::weak_ptr <Camera> camera() const;
     void clear();
+    void setBottomTrackVertexEditingModeEnabled(bool enabled);
 
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
-
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
-
     Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
-
     Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta);
+    Q_INVOKABLE void keyPressTrigger(Qt::Key key);
 
 public Q_SLOTS:
     void fitAllInView();
+    void setIsometricView();
 
 private:
     void updateBounds();
+    void updatePlaneGrid();
 
 private:
     std::shared_ptr <Camera> m_camera;
@@ -136,9 +139,11 @@ private:
     std::shared_ptr <CoordinateAxes> m_coordAxes;
     std::shared_ptr <PlaneGrid> m_planeGrid;
     std::shared_ptr <SceneObject> m_sceneBoundsPlane;
+    std::unique_ptr <VertexEditingDecorator> m_vertexEditingDecorator;
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
+    bool m_vertexEditingToolEnabled = false;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
