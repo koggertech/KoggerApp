@@ -11,6 +11,16 @@ void Scene3dToolBarController::onFitAllInViewButtonClicked()
     m_graphicsSceneView->fitAllInView();
 }
 
+void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
+{
+    m_graphicsSceneView->setIsometricView();
+}
+
+void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool checked)
+{
+    m_graphicsSceneView->setBottomTrackVertexEditingModeEnabled(checked);
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;

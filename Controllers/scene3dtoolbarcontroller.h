@@ -10,6 +10,9 @@ class Scene3dToolBarController : public QmlComponentController
 public:
     explicit Scene3dToolBarController(QObject *parent = nullptr);
     Q_INVOKABLE void onFitAllInViewButtonClicked();
+    Q_INVOKABLE void onSetCameraIsometricViewButtonClicked();
+    Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
+
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 protected:
     virtual void findComponent() override;
