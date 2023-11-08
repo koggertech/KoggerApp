@@ -8,9 +8,6 @@
 
 #include <QThread>
 #include <QDebug>
-#include <QtMath>
-
-//static const qreal sphereRadius = -500.0f;
 
 GraphicsScene3dRenderer::GraphicsScene3dRenderer()
 {
@@ -68,11 +65,8 @@ void GraphicsScene3dRenderer::render()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
     glFrontFace(GL_CW);
-    glEnable(GL_DEPTH_TEST);
 
     drawObjects();
-
-    glDisable(GL_DEPTH_TEST);
 }
 
 void GraphicsScene3dRenderer::drawObjects()
@@ -86,12 +80,17 @@ void GraphicsScene3dRenderer::drawObjects()
     m_projection = std::move(projection);
 
     glEnable(GL_DEPTH_TEST);
-    //m_coordAxesRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
     m_planeGridRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
+    if(!m_vertexEditingDecorator.cdata().isEmpty())
+        m_vertexEditingDecorator.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
+    glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
     GLint viewport[4];

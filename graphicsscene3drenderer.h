@@ -49,6 +49,7 @@ private:
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
+    VertexEditingDecorator::VertexEditingDecoratorRenderImplementation m_vertexEditingDecorator;
 
     QRectF m_rect;
     QVector3D m_dragOffset;
