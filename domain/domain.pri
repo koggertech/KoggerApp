@@ -24,7 +24,6 @@ HEADERS += \
     $$PWD/pointobject.h \
     $$PWD/polygongroup.h \
     $$PWD/polygonobject.h \
-    $$PWD/sceneparams.h \
     $$PWD/surface.h \
     $$PWD/gridgenerator.h \
     $$PWD/surfacegrid.h \
