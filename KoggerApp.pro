@@ -186,12 +186,9 @@ android {
 LIBS += -lopengl32
 
 include ($$PWD/core/core.pri)
-include ($$PWD/factories/factories.pri)
 include ($$PWD/processors/processors.pri)
 include ($$PWD/domain/domain.pri)
-include ($$PWD/models/models.pri)
 include ($$PWD/controllers/controllers.pri)
-include ($$PWD/tools/tools.pri)
 
 #ANDROID_ABIS = x86
 
