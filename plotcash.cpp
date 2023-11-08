@@ -295,11 +295,6 @@ PlotCash::PlotCash() {
     setThemeId(0);
 }
 
-void PlotCash::set3DSceneController(std::shared_ptr<SceneController> controller)
-{
-    mp3DSceneController = controller;
-}
-
 void PlotCash::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
 {
     mpBottomTrackProvider = bottomTrackProvider;

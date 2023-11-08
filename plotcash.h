@@ -468,7 +468,6 @@ public:
 
     QImage getImage(QSize size);
 
-    void set3DSceneController(std::shared_ptr <SceneController> controller);
     void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
 
 public slots:
@@ -516,7 +515,6 @@ public slots:
 
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
-        _render3D->setController(mp3DSceneController);
     }
     void updateRender3D() {
         if(_render3D != NULL) {
@@ -526,8 +524,6 @@ public slots:
     void updateBottomTrack(bool update_all = false);
 
 private:
-
-    std::shared_ptr <SceneController> mp3DSceneController;
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
 
 signals:
