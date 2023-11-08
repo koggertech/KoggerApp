@@ -15,14 +15,14 @@ import WaterFall 1.0
 import KoggerCommon 1.0
 
 Window  {
-    id: mainview
-    visible: true
-    width: 1024
-    minimumWidth: 512
-    height: 512
+    id:            mainview
+    visible:       true
+    width:         1024
+    minimumWidth:  512
+    height:        512
     minimumHeight: 256
-    color: "black"
-    title: qsTr("KoggerApp, KOGGER")
+    color:         "black"
+    title:         qsTr("KoggerApp, KOGGER")
 
     readonly property int _rightBarWidth:                360
     readonly property int _activeObjectParamsMenuHeight: 500
@@ -37,42 +37,42 @@ Window  {
 
     SplitView {
         Layout.fillHeight: true
-        Layout.fillWidth: true
-        anchors.fill: parent
-        orientation: Qt.Vertical
-        visible: true
+        Layout.fillWidth:  true
+        anchors.fill:      parent
+        orientation:       Qt.Vertical
+        visible:           true
 
         handle: Rectangle {
-            implicitWidth: 5
+            implicitWidth:  5
             implicitHeight: 5
-            color: SplitHandle.pressed ? "#A0A0A0" : "#707070"
+            color:          SplitHandle.pressed ? "#A0A0A0" : "#707070"
 
             Rectangle {
-                width: parent.width
+                width:  parent.width
                 height: 1
-                color: "#A0A0A0"
+                color:  "#A0A0A0"
             }
 
             Rectangle {
-                y: parent.height
-                width: parent.width
+                y:      parent.height
+                width:  parent.width
                 height: 1
-                color: "#A0A0A0"
+                color:  "#A0A0A0"
             }
         }
 
         ColumnLayout {
-            id: visualisationLayout
+            id:                   visualisationLayout
             SplitView.fillHeight: true
-            SplitView.fillWidth: true
-            spacing: 0
+            SplitView.fillWidth:  true
+            spacing:              0
 
             GraphicsScene3dView {
-                id: renderer
-                width: mainview.width
+                id:                renderer
+                width:             mainview.width
                 Layout.fillHeight: true
-                Layout.fillWidth: true
-                focus: true
+                Layout.fillWidth:  true
+                focus:             true
 
                 //Rectangle{
                 //    id: surfaceCalculatingRectangle
@@ -113,9 +113,9 @@ Window  {
                 //}
 
                 PinchArea {
-                    id: pinch3D
+                    id:           pinch3D
                     anchors.fill: parent
-                    enabled: true
+                    enabled:      true
 
                     onPinchUpdated: {
                         renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
@@ -134,18 +134,15 @@ Window  {
 
                     MouseArea {
                         id: mousearea3D
-                        enabled: true
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                        focus: true
-                        hoverEnabled: true
-                        Keys.enabled: true
-
+                        enabled:              true
+                        anchors.fill:         parent
+                        acceptedButtons:      Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        focus:                true
+                        hoverEnabled:         true
+                        Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
-
                         onWheel: {
-                            //renderer.scaleDelta(wheel.angleDelta.y)
                             renderer.mouseWheelTrigger(wheel.buttons,
                                                        wheel.x,
                                                        wheel.y,
@@ -169,20 +166,19 @@ Window  {
             }
 
             WaterFall {
-                id: waterView
-                visible: menuBar.is2DVisible
-                width: mainview.width
+                id:                waterView
+                visible:           menuBar.is2DVisible
+                width:             mainview.width
                 Layout.fillHeight: true
-                Layout.fillWidth: true
-                focus: true
-
-                horizontal: menuBar.is2DHorizontal
+                Layout.fillWidth:  true
+                focus:             true
+                horizontal:        menuBar.is2DHorizontal
 
                 PinchArea {
-                    id: pinch2D
+                    id:           pinch2D
                     anchors.fill: parent
+                    enabled:      true
 
-                    enabled: true
                     onPinchUpdated: {
                         waterView.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
                         waterView.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
@@ -200,9 +196,9 @@ Window  {
                     }
 
                     MouseArea {
-                        id: mousearea
-                        enabled: true
-                        anchors.fill: parent
+                        id:              mousearea
+                        enabled:         true
+                        anchors.fill:    parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         onWheel: {
                             if (wheel.modifiers & Qt.ControlModifier) {
@@ -247,53 +243,46 @@ Window  {
             }
 
             Rectangle {
-                visible: menuBar.is2DVisible
+                visible:          menuBar.is2DVisible
                 Layout.fillWidth: true
-                height: 1
-                color: theme.controlBorderColor
+                height:           1
+                color:            theme.controlBorderColor
             }
 
             CSlider {
-                visible: menuBar.is2DVisible
-                id: historyScroll
+                visible:          menuBar.is2DVisible
+                id:               historyScroll
                 Layout.fillWidth: true
-                width: mainview.width
-                implicitHeight: theme.controlHeight
+                width:            mainview.width
+                implicitHeight:   theme.controlHeight
 
-                stepSize: 0.0001
-                from: 1
-                to: 0
-
+                stepSize:       0.0001
+                from:           1
+                to:             0
                 onValueChanged: core.setTimelinePosition(value);
             }
         }
 
         Console {
-            id: console_vis
-            visible: theme.consoleVisible
+            id:                      console_vis
+            visible:                 theme.consoleVisible
             SplitView.minimumHeight: 100
         }
     }
 
     MenuBar {
-        id: menuBar
+        id:                menuBar
         Layout.fillHeight: true
-        height: visualisationLayout.height
-        Keys.forwardTo: [mousearea3D]
+        height:            visualisationLayout.height
+        Keys.forwardTo:    [mousearea3D]
     }
 
     Scene3DToolbar{
         //visible: menuBar.is3DVisible
-        id: scene3DToolbar
-        anchors.top: parent.top
+        id:                       scene3DToolbar
+        anchors.top:              parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.rightMargin: 20
-        Keys.forwardTo: [mousearea3D]
+        anchors.rightMargin:      20
+        Keys.forwardTo:           [mousearea3D]
     }
-
-
-
-
-
-
 }
