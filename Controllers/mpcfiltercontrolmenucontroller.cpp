@@ -25,15 +25,12 @@ void MpcFilterControlMenuController::onPointsCountSpinBoxValueChanged(qreal valu
     if(!mpcFilter)
         return;
 
-    QMetaObject::invokeMethod(mpcFilter, "setDistance", Q_ARG(float, value));
+    mpcFilter->setMaxPointsCount(value);
 
     if(!m_bottomTrackProvider)
         return;
 
-    QMetaObject::invokeMethod(bottomTrack.get(),
-                              "setData",
-                              Q_ARG(QVector <QVector3D>, m_bottomTrackProvider->getBottomTrack()),
-                              Q_ARG(int, GL_LINE_STRIP));
+    bottomTrack->setData(m_bottomTrackProvider->getBottomTrack(), GL_LINE_STRIP);
 }
 
 void MpcFilterControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
