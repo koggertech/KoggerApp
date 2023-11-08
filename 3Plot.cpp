@@ -25,10 +25,6 @@ public:
         update();
     }
 
-    void setController(std::shared_ptr <SceneController> controller){
-        //scene.setController(controller);
-    }
-
     //void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel){
     //    //scene.setSceneObjectsListModel(sceneObjectsListModel);
     //}
@@ -61,9 +57,6 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 {
     auto renderer = new FboRenderer();
 
-    renderer->setController(mpSceneController);
-   // renderer->setSceneObjectsListModel(mpSceneObjectsListModel);
-
     return renderer;
 }
 
@@ -83,11 +76,6 @@ Scene3D::Scene3D()
 
 Scene3D::~Scene3D()
 {
-}
-
-void Scene3D::setController(std::shared_ptr <SceneController> controller)
-{
-    mpController = controller;
 }
 
 //void Scene3D::setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel)
@@ -130,17 +118,6 @@ void Scene3D::paintScene()
     mpStaticColorShaderProgram->disableAttributeArray(posLoc);
     mpStaticColorShaderProgram->release();
 }
-
-
-void FboInSGRenderer::setController(std::shared_ptr<SceneController> controller)
-{
-    mpSceneController = controller;
-}
-
-//void FboInSGRenderer::setSceneObjectsListModel(std::shared_ptr<SceneObjectsListModel> sceneObjectsListModel)
-//{
-//    mpSceneObjectsListModel = sceneObjectsListModel;
-//}
 
 void Scene3D::initialize()
 {
