@@ -1,8 +1,6 @@
 INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
-HEADERS += \
-    $$PWD/raycastpickerfactory.h
+HEADERS +=
 
-SOURCES += \
-    $$PWD/raycastpickerfactory.cpp
+SOURCES +=
