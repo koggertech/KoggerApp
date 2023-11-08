@@ -45,7 +45,6 @@ private Q_SLOTS:
 
 Q_SIGNALS:
     void taskStarted();
-
     void taskFinished(Result result);
 
 private:

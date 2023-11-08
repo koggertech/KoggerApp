@@ -80,13 +80,14 @@ void SurfaceProcessor::process()
     m_isBusy.store(true);
 
     m_result.data.clear();
+    m_result.primitiveType = GL_TRIANGLES;
 
     Q_EMIT taskStarted();
 
     std::set <Point2D <double>> set;
     std::vector <Point3D <double>> input;
 
-    for (size_t i = 0; i < m_task.source.size(); i++){
+    for (int i = 0; i < m_task.source.size(); i++){
         Point2D <double> point(static_cast <double> (m_task.source.at(i).x()),
                                static_cast <double> (m_task.source.at(i).y()),
                                static_cast <double> (i));
@@ -112,8 +113,8 @@ void SurfaceProcessor::process()
 
         auto fullGrid = GridGenerator <double>::generateQuadGrid(Point3D <double>(
                                                                 m_task.bounds.minimumX(),
-                                                                m_task.bounds.minimumY(),
-                                                                m_task.bounds.minimumZ()
+                                                                m_task.bounds.minimumZ(),
+                                                                m_task.bounds.minimumY()
                                                             ),
                                                             m_task.bounds.width(),
                                                             m_task.bounds.length(),
