@@ -24,13 +24,11 @@ HEADERS += \
     $$PWD/pointobject.h \
     $$PWD/polygongroup.h \
     $$PWD/polygonobject.h \
-    $$PWD/raycastlinepicker.h \
-    $$PWD/raycastpointpicker.h \
-    $$PWD/raycastpolygonpicker.h \
     $$PWD/sceneparams.h \
     $$PWD/surface.h \
     $$PWD/gridgenerator.h \
-    $$PWD/surfacegrid.h
+    $$PWD/surfacegrid.h \
+    $$PWD/vertexeditingdecorator.h
 
 SOURCES += \
     $$PWD/bottomtrack.cpp\
@@ -42,11 +40,9 @@ SOURCES += \
     $$PWD/pointobject.cpp \
     $$PWD/polygongroup.cpp \
     $$PWD/polygonobject.cpp \
-    $$PWD/raycastlinepicker.cpp \
-    $$PWD/raycastpointpicker.cpp \
-    $$PWD/raycastpolygonpicker.cpp \
     $$PWD/surface.cpp \
-    $$PWD/surfacegrid.cpp
+    $$PWD/surfacegrid.cpp \
+    $$PWD/vertexeditingdecorator.cpp
 
 	
 
