@@ -34,8 +34,6 @@ void Core::createModels()
 
 void Core::createControllers()
 {
-    mpSceneController = std::make_shared <SceneController> ();
-
     m_bottomTrackControlMenuController  = std::make_shared <BottomTrackControlMenuController>();
     m_mpcFilterControlMenuController    = std::make_shared <MpcFilterControlMenuController>();
     m_npdFilterControlMenuController    = std::make_shared <NpdFilterControlMenuController>();
@@ -43,8 +41,6 @@ void Core::createControllers()
     m_pointGroupControlMenuController   = std::make_shared <PointGroupControlMenuController>();
     m_polygonGroupControlMenuController = std::make_shared <PolygonGroupControlMenuController>();
     m_scene3dToolBarController          = std::make_shared <Scene3dToolBarController>();
-
-    m_plot->set3DSceneController(mpSceneController);
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)

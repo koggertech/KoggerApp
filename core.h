@@ -16,7 +16,6 @@
 #include <3Plot.h>
 
 #include <graphicsscene3dview.h>
-#include <scenecontroller.h>
 #include <bottomtrackprovider.h>
 #include <bottomtrackcontrolmenucontroller.h>
 #include <surfacecontrolmenucontroller.h>
@@ -31,8 +30,6 @@
 #ifdef FLASHER
 #include "flasher.h"
 #endif
-
-using Scene3DController    = std::shared_ptr <SceneController>;
 
 class Core : public QObject
 {
@@ -194,7 +191,6 @@ private:
 private:
 
     // View controllers
-    Scene3DController                                   mpSceneController;
     std::shared_ptr <BottomTrackControlMenuController>  m_bottomTrackControlMenuController;
     std::shared_ptr <MpcFilterControlMenuController>    m_mpcFilterControlMenuController;
     std::shared_ptr <NpdFilterControlMenuController>    m_npdFilterControlMenuController;
