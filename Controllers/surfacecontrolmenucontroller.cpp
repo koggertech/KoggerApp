@@ -12,7 +12,7 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
             return;
 
         QVector<QVector3D> data;
-        for(const auto& v : result.data)
+        for(const auto& v : qAsConst(result.data))
             data.append({v.x(), v.z(), v.y()});
 
         QMetaObject::invokeMethod(m_graphicsSceneView->surface().get(),
@@ -34,6 +34,9 @@ void SurfaceControlMenuController::findComponent()
 
 Surface *SurfaceControlMenuController::surface() const
 {
+    if(!m_graphicsSceneView)
+        return nullptr;
+
     return m_graphicsSceneView->surface().get();
 }
 
@@ -92,7 +95,7 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(bool gridInterpE
     task.needSmoothing = gridInterpEnabled;
     task.cellSize      = cellSize;
     task.source        = std::move(data);
-    task.bounds        = surface->bounds();
+    task.bounds        = bottomTrack->bounds();
 
     m_surfaceProcessor.startInThread(task);
 }
