@@ -39,7 +39,6 @@ Window  {
         Layout.fillHeight: true
         Layout.fillWidth: true
         anchors.fill: parent
-
         orientation: Qt.Vertical
         visible: true
 
@@ -116,8 +115,8 @@ Window  {
                 PinchArea {
                     id: pinch3D
                     anchors.fill: parent
-
                     enabled: true
+
                     onPinchUpdated: {
                         renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
                         renderer.mouse(pinch.center.x, pinch.center.y, false)
@@ -138,7 +137,12 @@ Window  {
                         enabled: true
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        focus: true
                         hoverEnabled: true
+                        Keys.enabled: true
+
+                        Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
+
 
                         onWheel: {
                             //renderer.scaleDelta(wheel.angleDelta.y)
@@ -197,7 +201,6 @@ Window  {
 
                     MouseArea {
                         id: mousearea
-
                         enabled: true
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -276,7 +279,7 @@ Window  {
         id: menuBar
         Layout.fillHeight: true
         height: visualisationLayout.height
-        //settingsWidth: theme.controlHeight*20 < 800 ? theme.controlHeight*20 : 800
+        Keys.forwardTo: [mousearea3D]
     }
 
     Scene3DToolbar{
@@ -285,6 +288,7 @@ Window  {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.rightMargin: 20
+        Keys.forwardTo: [mousearea3D]
     }
 
 
