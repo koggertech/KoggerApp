@@ -52,7 +52,6 @@ SOURCES += \
         filelist.cpp \
     graphicsscene3drenderer.cpp \
     graphicsscene3dview.cpp \
-    interpolatorbase.cpp \
         logger.cpp \
         main.cpp \
         flasher.cpp \
@@ -108,7 +107,6 @@ HEADERS += \
     core.h \
     graphicsscene3drenderer.h \
     graphicsscene3dview.h \
-    interpolatorbase.h \
     logger.h \
     maxpointsfilter.h \
     nearestpointfilter.h \
