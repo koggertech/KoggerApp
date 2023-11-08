@@ -16,8 +16,6 @@
 
 #include <memory>
 
-#include <scenecontroller.h>
-
 class Scene3D : public QObject, protected QOpenGLFunctions
 {
     Q_OBJECT
@@ -29,8 +27,6 @@ public:
     void render();
     void initialize();
 
-    void setController(std::shared_ptr <SceneController> controller);
-
     void scale(float sc) {
         m_fScale = sc;
     }
@@ -39,16 +35,8 @@ public:
         _size = sz;
     }
 
-    void setSize(const QSize& size){
-        mpController->viewportRectChanged(QRect(0,0,size.width(), size.height()));
-    }
-
     void setRightMouseButtonPressed(bool pressed){
         mIsRightMouseButtonPressed = pressed;
-    }
-
-    void setMousePos(const QVector2D& pos){
-        mpController->cursorPosChanged(pos.toVector3D(), mView, mModel, mProjection);
     }
 
     void mouse(QVector2D m) {
@@ -128,7 +116,6 @@ private:
 
     QQuaternion q;
 
-    std::shared_ptr <SceneController> mpController;
     std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
     std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
 
@@ -163,8 +150,6 @@ public:
     QVector<QVector3D> lines() {
         return _bottomTrack;
     }
-
-    void setController(std::shared_ptr <SceneController> controller);
 
     //void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel);
 
@@ -272,7 +257,6 @@ private:
     bool _rotationFlag = false;
 
     Renderer* mpRenderer;
-    std::shared_ptr <SceneController> mpSceneController;
     //std::shared_ptr <SceneObjectsListModel> mpSceneObjectsListModel;
 
     bool mIsRightMouseButtonPressed = false;
