@@ -47,9 +47,6 @@ void BottomTrackControlMenuController::onFilterTypeComboBoxIndexChanged(int inde
     case AbstractEntityDataFilter::NearestPointDistance:
         newFilter = std::make_shared<NearestPointFilter>();
         break;
-    default:
-        bottomTrack->setFilter(nullptr);
-        return;
     }
 
     bottomTrack->setFilter(newFilter);
