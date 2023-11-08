@@ -4,7 +4,6 @@
 #include <surface.h>
 #include <pointgroup.h>
 #include <polygongroup.h>
-#include <scenegraphicsobject.h>
 
 #include <QThread>
 #include <QDebug>

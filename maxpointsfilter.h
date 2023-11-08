@@ -5,7 +5,6 @@
 
 #include <cmath>
 
-#include <constants.h>
 #include <abstractentitydatafilter.h>
 
 class MaxPointsFilter : public AbstractEntityDataFilter

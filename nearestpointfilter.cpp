@@ -1,7 +1,5 @@
 #include "nearestpointfilter.h"
 
-#include <constants.h>
-
 NearestPointFilter::NearestPointFilter(QObject* parent)
     : AbstractEntityDataFilter(parent)
 {}
