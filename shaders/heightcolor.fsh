@@ -1,7 +1,10 @@
-#version 410
+#version 140
 in vec3 vertice;
-uniform float max_z;
-uniform float min_z;
+//flat in highp int verticeId;
+uniform float max_y;
+uniform float min_y;
+uniform int selectedPrimitiveFirstIndex;
+uniform int selectedPrimitiveLastIndex;
 
 vec3 getColor(float v,float vmin, float vmax)
 {
@@ -34,7 +37,11 @@ vec3 getColor(float v,float vmin, float vmax)
 
 void main()
 {
-    float norm_z = (vertice.z - min_z) / (abs(max_z - min_z));
-    vec4 color = vec4(getColor(norm_z, 0.0f, 1.0f), 1.0f);
-    gl_FragColor = color;
+    //if(verticeId >= selectedPrimitiveFirstIndex && verticeId <= selectedPrimitiveLastIndex){
+    //    gl_FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);
+    //}else{
+        float norm_y = (vertice.y - min_y) / (abs(max_y - min_y));
+        vec4 color = vec4(getColor(norm_y, 0.0f, 1.0f), 1.0f);
+        gl_FragColor = color;
+    //}
 };
