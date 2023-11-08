@@ -53,6 +53,9 @@ public:
         void removeVertex(int index);
 
     protected:
+        virtual void createBounds();
+
+    protected:
         QVector<QVector3D> m_data;
         QColor m_color = QColor(0.0f, 0.0f, 0.0f);
         float m_width = 1.0f;
@@ -60,9 +63,6 @@ public:
         Cube m_bounds;
         int m_primitiveType = GL_POINTS;
         QPair <int,int> m_selectedIndices = {-1, -1};
-
-    private:
-        virtual void createBounds();
 
     private:
         friend class SceneObject;
