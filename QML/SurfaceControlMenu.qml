@@ -12,15 +12,17 @@ Item {
     id: root
 
     Component.onCompleted: {
-        visibilityCheckBox.checkState        = root.controller.surface.visible ? Qt.Checked : Qt.Unchecked
-        contourVisibilityCheckBox.checkState = root.controller.surface.contour.visible ? Qt.Checked : Qt.Unchecked
-        gridVisibilityCheckBox.checkState    = root.controller.surface.grid.visible ? Qt.Checked : Qt.Unchecked
-        gridInterpolationCheckBox.checkState = root.controller.surface.isQuad ? Qt.Checked : Qt.Unchecked
+        var surface = root.controller.surface;
 
-        contourColorDialog.setCurrentColor(root.controller.surface.contour.color)
-        gridColorDialog.setCurrentColor(root.controller.surface.grid.color)
-        contourColorPickRect.color = root.controller.surface.contour.color
-        gridColorPickRect.color    = root.controller.surface.grid.color
+        visibilityCheckBox.checkState        = surface.visible ? Qt.Checked : Qt.Unchecked
+        contourVisibilityCheckBox.checkState = surface.contour.visible ? Qt.Checked : Qt.Unchecked
+        gridVisibilityCheckBox.checkState    = surface.grid.visible ? Qt.Checked : Qt.Unchecked
+        gridInterpolationCheckBox.checkState = surface.isQuad ? Qt.Checked : Qt.Unchecked
+        contourColorPickRect.color           = surface.contour.color
+        gridColorPickRect.color              = surface.grid.color
+        contourColorDialog.setCurrentColor(surface.contour.color)
+        gridColorDialog.setCurrentColor(surface.grid.color)
+
 
     }
 
