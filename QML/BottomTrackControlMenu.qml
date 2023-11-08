@@ -10,18 +10,19 @@ Item {
 
     id:                   root
     objectName:           "bottomTrackControlMenu"
-    Layout.minimumWidth:  160
-    Layout.minimumHeight: 240
+    //Layout.minimumWidth:  160
+    //Layout.minimumHeight: 240
 
     MenuBlockEx {
         id:           menuBlock
         anchors.fill: parent
 
         Component.onCompleted: {
-            var bottomTrack = root.controller.bottomTrack
-
-            if(!bottomTrack)
-                return
+            var bottomTrack = controller.bottomTrack
+            if(!bottomTrack){
+                visibilityCheckBox.checkState = Qt.Checked
+                return;
+            }
 
             visibilityCheckBox.checkState = bottomTrack.visible ? Qt.Checked : Qt.Unchecked
             filterTypeCombo.currentIndex  = bottomTrack.filter.type
