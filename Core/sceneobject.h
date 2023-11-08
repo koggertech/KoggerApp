@@ -4,8 +4,9 @@
 #include <abstractentitydatafilter.h>
 #include <cube.h>
 
+#include <QPair>
 #include <QObject>
-#include <QUuid.h>
+#include <QUuid>
 #include <QColor>
 #include <QQmlEngine>
 #include <QOpenGLFunctions>
@@ -39,6 +40,9 @@ public:
         virtual void setWidth(qreal width);
         virtual void setVisible(bool isVisible);
         virtual void clearData();
+        void setSelectedIndices(int begin, int end);
+        void setSelectedIndices(QPair<int,int> indices);
+        void resetSelectedIndices();
         QVector<QVector3D> data() const;
         const QVector<QVector3D>& cdata() const;
         QColor color() const;
@@ -46,6 +50,7 @@ public:
         bool isVisible() const;
         Cube bounds() const;
         int primitiveType() const;
+        void removeVertex(int index);
 
     protected:
         QVector<QVector3D> m_data;
@@ -54,6 +59,7 @@ public:
         bool m_isVisible = true;
         Cube m_bounds;
         int m_primitiveType = GL_POINTS;
+        QPair <int,int> m_selectedIndices = {-1, -1};
 
     private:
         virtual void createBounds();
@@ -107,16 +113,15 @@ public Q_SLOTS:
     //! @brief Устанавливает набор вершин объекта.
     //! @param[in] data - ссылка на набор вершин.
     virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS);
-
     virtual void clearData();
-
     void setVisible(bool isVisible);
-
     void setColor(QColor color);
-
     void setWidth(qreal width);
-
     void setFilter(std::shared_ptr <AbstractEntityDataFilter> filter);
+    void setSelectedIndices(int begin, int end);
+    void setSelectedIndices(QPair<int,int> indices);
+    void resetSelectedIndices();
+    void removeVertex(int index);
 
 Q_SIGNALS:
     void dataChanged();
