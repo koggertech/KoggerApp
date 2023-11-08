@@ -67,6 +67,12 @@ public:
 
 public Q_SLOTS:
     /**
+     * @brief Set's mode of ray cast tests
+     * @param mode - mode of ray cast tests
+     */
+    void setMode(RayCaster::RayCastMode mode);
+
+    /**
      * @brief Appends object for ray cast test
      * @param object - object for ray cast test
      */
@@ -103,7 +109,13 @@ public Q_SLOTS:
      */
     void trigger(const QVector3D& origin, const QVector3D& direction, float length = 1000.0f);
 
+    /**
+     * @brief Reset's raycaster (removes all objects, hits and set current ray to (0,0,0))
+     */
+    void reset();
+
 private:
+    void pickAsVertex(std::shared_ptr <SceneObject> object);
     void pickAsTriangles(std::shared_ptr <SceneObject> object);
     void pickAsQuads(std::shared_ptr <SceneObject> object);
 

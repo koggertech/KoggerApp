@@ -1,10 +1,10 @@
 #include "raycaster.h"
+#include <Quad.h>
 
 #include <QVector3D>
 #include <GL/gl.h>
 
 #include <sceneobject.h>
-#include <raycastpickerfactory.h>
 
 RayCaster::RayCaster(QObject *parent)
     : QObject{parent}
@@ -28,6 +28,11 @@ QVector3D RayCaster::origin() const
 QList<RayCasterHit> RayCaster::hits() const
 {
     return m_hits;
+}
+
+void RayCaster::setMode(RayCastMode mode)
+{
+    m_mode = mode;
 }
 
 void RayCaster::addObject(std::weak_ptr<SceneObject> object)
@@ -64,6 +69,9 @@ void RayCaster::trigger()
             continue;
 
         switch(m_mode){
+        case RayCastMode::Vertex:
+            pickAsVertex(_object);
+            break;
         case RayCastMode::Triangle:
             pickAsTriangles(_object);
             break;
@@ -86,6 +94,41 @@ void RayCaster::trigger(const QVector3D &origin, const QVector3D &direction, flo
         m_length = length;
 
     trigger();
+}
+
+void RayCaster::reset()
+{
+    m_objects.clear();
+    m_hits.clear();
+    m_origin = {0.0f, 0.0f, 0.0f};
+    m_direction = {0.0f, 0.0f, 0.0f};
+}
+
+void RayCaster::pickAsVertex(std::shared_ptr<SceneObject> object)
+{
+    auto size = object->cdata().size();
+
+    if(size <= 0)
+        return;
+
+    RayCasterHit hit;
+    hit.setSourceObject(object);
+
+    auto d = object->cdata().first().distanceToLine(m_origin, m_direction);
+
+    for (int i = 0; i < size; i++){
+        auto p = object->cdata().at(i);
+        auto _d = p.distanceToLine(m_origin, m_direction);
+        if(_d < d){
+            d = _d;
+            hit.setIndices(i,i);
+            hit.setWorldIntersection(p);
+            hit.setSourcePrimitive({{p}, GL_TRIANGLES});
+        }
+    }
+
+    m_hits.clear();
+    m_hits.append(hit);
 }
 
 void RayCaster::pickAsTriangles(std::shared_ptr<SceneObject> object)
