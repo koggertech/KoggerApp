@@ -11,10 +11,30 @@ Item{
             id: row
 
             Button{
-                id: fitAllinViewButton
+                id: setCameraIsometricView
                 width: 40
                 height: 40
                 icon.source: "./3dcube.svg"
+
+                icon.color: theme.textColor
+
+                background: Rectangle {
+                    radius: 1
+                    height: parent.height
+                    width: parent.width
+                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
+                    border.color: theme.controlBorderColor
+                    border.width: 1
+                }
+
+                onClicked: Scene3dToolBarController.onSetCameraIsometricViewButtonClicked()
+            }
+
+            Button{
+                id: fitAllinViewButton
+                width: 40
+                height: 40
+                icon.source: "./fit-in-view.svg"
 
                 icon.color: theme.textColor
 
@@ -48,101 +68,28 @@ Item{
                     border.width: 1
                 }
 
-                onClicked:{
-
-                    if(checked){
-                        buttonGroup.exclusive = false;
-                        checked = false
-                        buttonGroup.exclusive = true;
-                    }else{
-                        checked = true
-                    }
-
-
-                    Toolbar3dController.setSelectionToolState(checked)
-                }
+                onClicked: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
             }
 
-            Button{
-                width: 40
-                height: 40
-                checkable: true
-                icon.source: "./tool.svg"
+            //Button{
+            //    width: 40
+            //    height: 40
+            //    checkable: true
+            //    icon.source: "./tool.svg"
 
-                icon.color: theme.textColor
+            //    icon.color: theme.textColor
 
-                background: Rectangle {
-                    radius: 1
-                    height: parent.height
-                    width: parent.width
-                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-                    border.color: theme.controlBorderColor
-                    border.width: 1
-                }
+            //    background: Rectangle {
+            //        radius: 1
+            //        height: parent.height
+            //        width: parent.width
+            //        color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
+            //        border.color: theme.controlBorderColor
+            //        border.width: 1
+            //    }
 
-                //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
-            }
-
-            Button{
-                width: 40
-                height: 40
-                checkable: true
-                icon.source: "./tool.svg"
-
-                icon.color: theme.textColor
-
-                background: Rectangle {
-                    radius: 1
-                    height: parent.height
-                    width: parent.width
-                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-                    border.color: theme.controlBorderColor
-                    border.width: 1
-                }
-
-                //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
-            }
-
-            Button{
-                width: 40
-                height: 40
-                checkable: true
-                icon.source: "./tool.svg"
-
-                icon.color: theme.textColor
-
-                background: Rectangle {
-                    radius: 1
-                    height: parent.height
-                    width: parent.width
-                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-                    border.color: theme.controlBorderColor
-                    border.width: 1
-                }
-
-                //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
-            }
-
-            Button{
-                width: 40
-                height: 40
-                checkable: true
-                icon.source: "./tool.svg"
-
-                icon.color: theme.textColor
-
-                background: Rectangle {
-                    radius: 1
-                    height: parent.height
-                    width: parent.width
-                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-                    border.color: theme.controlBorderColor
-                    border.width: 1
-                }
-
-                //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
-            }
-
+            //    //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
+            //}
         }
 
         //ButtonGroup{
