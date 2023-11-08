@@ -289,6 +289,8 @@ void SceneObject::RenderImplementation::removeVertex(int index)
         return;
 
     m_data.removeAt(index);
+
+    createBounds();
 }
 
 void SceneObject::RenderImplementation::createBounds()
