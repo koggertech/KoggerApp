@@ -22,8 +22,6 @@ Item {
         gridColorPickRect.color              = surface.grid.color
         contourColorDialog.setCurrentColor(surface.contour.color)
         gridColorDialog.setCurrentColor(surface.grid.color)
-
-
     }
 
     Layout.minimumWidth:  160
@@ -138,15 +136,6 @@ Item {
                 text:             qsTr("Update surface")
                 onClicked:        root.controller.onUpdateSurfaceButtonClicked(gridInterpolationCheckBox.checked,
                                                                              gridCellSizeSpinBox.value)
-            }
-
-            Text {
-                id:               messageItem
-                Layout.fillWidth: true
-                color:            theme.textColor
-                text:             qsTr("Surface source data is not available. " +
-                                  "Please, choose bottom track\nsource" +
-                                  "from list and press 'Update' button")
             }
         }
     }
