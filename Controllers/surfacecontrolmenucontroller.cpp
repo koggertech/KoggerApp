@@ -7,6 +7,9 @@
 SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
     : QmlComponentController(parent)
 {
+    QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskStarted,
+                     this               , &SurfaceControlMenuController::surfaceProcessorTaskStarted);
+
     QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskFinished, [this](SurfaceProcessor::Result result){
         if(!m_graphicsSceneView)
             return;
@@ -19,6 +22,8 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
                                   "setData",
                                   Q_ARG(QVector<QVector3D>, data),
                                   Q_ARG(int, result.primitiveType));
+
+        Q_EMIT surfaceProcessorTaskFinished();
     });
 }
 

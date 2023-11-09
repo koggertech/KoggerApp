@@ -33,6 +33,10 @@ public:
 
     Q_INVOKABLE void onUpdateSurfaceButtonClicked(bool gridInterpEnabled, qreal cellSize);
 
+Q_SIGNALS:
+    void surfaceProcessorTaskStarted();
+    void surfaceProcessorTaskFinished();
+
 protected:
     virtual void findComponent() override;
 
