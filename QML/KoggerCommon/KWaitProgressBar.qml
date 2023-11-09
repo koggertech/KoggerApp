@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 
 Rectangle{
     property string text : "Please, wait..."
+    property string textColor : "black"
 
     id:      root
     objectName: ""
@@ -22,7 +23,7 @@ Rectangle{
 
         Text{
             text:                root.text
-            color:               "white"
+            color:               textColor
             horizontalAlignment: Text.AlignHCenter
         }
 
