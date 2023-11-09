@@ -75,9 +75,10 @@ Window  {
                 focus:             true
 
                 KWaitProgressBar{
-                    id:      surfaceProcessingProgressBar
-                    text:    "Calculating surface.\nPlease wait..."
-                    visible: false
+                    id:        surfaceProcessingProgressBar
+                    text:      "Calculating surface.\nPlease wait..."
+                    textColor: "black"
+                    visible:   false
                 }
 
                 PinchArea {
