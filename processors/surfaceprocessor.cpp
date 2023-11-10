@@ -104,7 +104,7 @@ void SurfaceProcessor::process()
     }
 
     Delaunay <double> delaunay;
-    auto triangles = delaunay.trinagulate(input);
+    auto triangles = delaunay.trinagulate(input, m_task.edgeLengthLimit);
 
     if(m_task.needSmoothing){
         m_result.primitiveType = GL_QUADS;

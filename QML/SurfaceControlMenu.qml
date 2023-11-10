@@ -111,6 +111,18 @@ Item {
                 }
             }
 
+            KParamSetup {
+                id: triangleEdgeLengthLimit
+                paramName: qsTr("Triangle edge length limit: ")
+
+                KSpinBox {
+                    id: triangleEdgeLengthLimitSpinBox
+                    from: 0
+                    to: 100000
+
+                }
+            }
+
             KCheck {
                 id:               gridInterpolationCheckBox
                 text:             qsTr("Enable grid interpolation")
@@ -126,7 +138,7 @@ Item {
                 KSpinBox {
                     id: gridCellSizeSpinBox
                     from: 1
-                    to: 100
+                    to: 1000
                 }
             }
 
@@ -134,8 +146,9 @@ Item {
                 id:               updateSurfaceButton
                 Layout.fillWidth: true
                 text:             qsTr("Update surface")
-                onClicked:        root.controller.onUpdateSurfaceButtonClicked(gridInterpolationCheckBox.checked,
-                                                                             gridCellSizeSpinBox.value)
+                onClicked:        root.controller.onUpdateSurfaceButtonClicked(triangleEdgeLengthLimitSpinBox.value,
+                                                                               gridInterpolationCheckBox.checked,
+                                                                               gridCellSizeSpinBox.value)
             }
         }
     }

@@ -31,7 +31,9 @@ public:
 
     Q_INVOKABLE void onGridInterpolationCheckBoxCheckedChanged(bool checked);
 
-    Q_INVOKABLE void onUpdateSurfaceButtonClicked(bool gridInterpEnabled, qreal cellSize);
+    Q_INVOKABLE void onUpdateSurfaceButtonClicked(int edgeLengthLimit,
+                                                  bool gridInterpEnabled,
+                                                  qreal cellSize);
 
 Q_SIGNALS:
     void surfaceProcessorTaskStarted();

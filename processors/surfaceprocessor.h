@@ -22,6 +22,7 @@ public:
         Cube bounds;
         bool needSmoothing = false;
         qreal cellSize = 5.0f;
+        qreal edgeLengthLimit = -1.0f;
     };
 
     struct Result{

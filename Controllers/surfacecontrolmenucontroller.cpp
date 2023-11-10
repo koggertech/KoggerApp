@@ -78,7 +78,9 @@ void SurfaceControlMenuController::onGridInterpolationCheckBoxCheckedChanged(boo
     Q_UNUSED(checked)
 }
 
-void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(bool gridInterpEnabled, qreal cellSize)
+void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int edgeLengthLimit,
+                                                                bool gridInterpEnabled,
+                                                                qreal cellSize)
 {
     if(m_surfaceProcessor.isBusy()){
         qDebug().noquote() << "Surface processor is busy!";
@@ -97,10 +99,11 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(bool gridInterpE
 
     SurfaceProcessor::Task task;
 
-    task.needSmoothing = gridInterpEnabled;
-    task.cellSize      = cellSize;
-    task.source        = std::move(data);
-    task.bounds        = bottomTrack->bounds();
+    task.needSmoothing   = gridInterpEnabled;
+    task.cellSize        = cellSize;
+    task.source          = std::move(data);
+    task.bounds          = bottomTrack->bounds();
+    task.edgeLengthLimit = edgeLengthLimit;
 
     m_surfaceProcessor.startInThread(task);
 }
