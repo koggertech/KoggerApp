@@ -9,6 +9,8 @@
 #include <polygongroup.h>
 #include <pointgroup.h>
 #include <vertexeditingdecorator.h>
+#include <sceneentity.h>
+#include <ray.h>
 
 #include <QQuickFramebufferObject>
 #include <QtMath>
@@ -35,6 +37,7 @@ public:
         qreal fov() const;
         qreal pitch() const;
         qreal yaw() const;
+        QMatrix4x4 viewMatrix() const;
         void rotate(qreal yaw, qreal pitch);
         void move(const QVector2D& startPos, const QVector2D& endPos);
         void zoom(qreal delta);
@@ -89,6 +92,18 @@ public:
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
 
+    enum ActiveMode{
+        Idle                                = 0,
+        BottomTrackVertexSelectionMode      = 1,
+        BottomTrackVertexComboSelectionMode = 2,
+        PolygonCreationMode                 = 3,
+        MarkCreationMode                    = 4,
+        PolygonEditingMode                  = 5,
+        BottomTrackSyncPointCreationMode    = 6,
+        ShoreCreationMode                   = 7,
+        MeasuringRouteCreationMode          = 8
+    };
+
     /**
      * @brief Constructor
      */
@@ -121,12 +136,20 @@ public:
 public Q_SLOTS:
     void fitAllInView();
     void setIsometricView();
+    void setIdleMode();
+    void setBottomTrackVertexSelectionMode();
+    void setBottomTrackVertexComboSelectionMode();
+    void setPolygonCreationMode();
+    void setPolygonEditingMode();
 
 private:
     void updateBounds();
     void updatePlaneGrid();
 
 private:
+    friend class SceneEntity;
+    friend class BottomTrack;
+
     std::shared_ptr <Camera> m_camera;
     std::shared_ptr <Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
@@ -144,6 +167,9 @@ private:
     QMatrix4x4 m_projection;
     Cube m_bounds;
     bool m_vertexEditingToolEnabled = false;
+    SceneEntity* m_entity = nullptr;
+    ActiveMode m_mode = Idle;
+    Ray m_ray;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

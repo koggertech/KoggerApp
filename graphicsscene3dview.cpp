@@ -13,13 +13,15 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_axesThumbnailCamera(std::make_shared<Camera>())
 , m_rayCaster(std::make_shared<RayCaster>())
 , m_surface(std::make_shared<Surface>())
-, m_bottomTrack(std::make_shared<BottomTrack>())
+, m_bottomTrack(std::make_shared<BottomTrack>(this, this))
 , m_polygonGroup(std::make_shared<PolygonGroup>())
 , m_pointGroup(std::make_shared<PointGroup>())
 , m_coordAxes(std::make_shared<CoordinateAxes>())
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_sceneBoundsPlane(std::make_shared<SceneObject>())
 , m_vertexEditingDecorator(new VertexEditingDecorator)
+
+, m_entity(new SceneEntity(this))
 {
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -37,9 +39,6 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_planeGrid.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-
-    m_rayCaster->setMode(RayCaster::RayCastMode::Vertex);
-    m_rayCaster->addObject(m_bottomTrack);
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
@@ -99,16 +98,27 @@ void GraphicsScene3dView::setBottomTrackVertexEditingModeEnabled(bool enabled)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+
+    m_startMousePos = {x,y};
+
+    m_entity->mousePressEvent(buttons,x,y);
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
 {
-    if(buttons.testFlag(Qt::RightButton)){
+    if(buttons.testFlag(Qt::MiddleButton)){
         m_camera->move(QVector2D(m_startMousePos.x(),m_startMousePos.y()),
                        QVector2D(x,y));
     }else{
         m_camera->commitMovement();
     }
 
-    if(buttons.testFlag(Qt::LeftButton)){
+    if(buttons.testFlag(Qt::RightButton)){
         float deltaAngleX = (2 * M_PI / size().width());
         float deltaAngleY = (2 * M_PI / size().height());
         float yaw = (m_lastMousePos.x() - x) * deltaAngleX;
@@ -117,8 +127,6 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
         m_camera->rotate(yaw, -pitch);
         m_axesThumbnailCamera->rotate(yaw, -pitch);
     }
-
-    m_lastMousePos = {x,y};
 
     auto origin = QVector3D(x, height() - y, -1.0f)
             .unproject(m_model * m_camera->m_view,
@@ -130,28 +138,13 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
                        m_projection,
                        boundingRect().toRect());
 
-    auto direction = (end - origin).normalized();
+    auto direction = (end-origin).normalized();
 
-    //----Bottom track vertex editing tool----->
-    if(m_vertexEditingToolEnabled){
-        m_rayCaster->trigger(origin, direction);
+    m_ray.setOrigin(origin);
+    m_ray.setDirection(direction);
 
-        auto hits = m_rayCaster->hits();
-
-        if(!hits.isEmpty())
-            m_vertexEditingDecorator->setDecorated(hits.first().sourceObject(), hits.first().indices().first);
-    }
-    //-----------------------------------------<
-
-    QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
-{
-    Q_UNUSED(buttons)
-
-    m_startMousePos = {x,y};
-
+    m_bottomTrack->mouseMoveEvent(buttons,x,y);
+    m_lastMousePos = {x,y};
     QQuickFramebufferObject::update();
 }
 
@@ -177,10 +170,7 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
 
 void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
-    if(key == Qt::Key_Delete){
-        if(m_vertexEditingToolEnabled)
-            m_vertexEditingDecorator->removeVertex();
-    }
+    m_bottomTrack->keyPressEvent(key);
 
     QQuickFramebufferObject::update();
 }
@@ -208,6 +198,43 @@ void GraphicsScene3dView::setIsometricView()
     m_axesThumbnailCamera->setIsometricView();
 
     updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setIdleMode()
+{
+    m_mode = Idle;
+
+    m_bottomTrack->resetVertexSelection();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
+{
+    m_mode = BottomTrackVertexSelectionMode;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setBottomTrackVertexComboSelectionMode()
+{
+    m_mode = BottomTrackVertexComboSelectionMode;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPolygonCreationMode()
+{
+    m_mode = PolygonCreationMode;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPolygonEditingMode()
+{
+    m_mode = PolygonEditingMode;
 
     QQuickFramebufferObject::update();
 }
@@ -327,6 +354,11 @@ qreal GraphicsScene3dView::Camera::pitch() const
 qreal GraphicsScene3dView::Camera::yaw() const
 {
     return m_yaw;
+}
+
+QMatrix4x4 GraphicsScene3dView::Camera::viewMatrix() const
+{
+    return m_view;
 }
 
 void GraphicsScene3dView::Camera::rotate(qreal yaw, qreal pitch)
