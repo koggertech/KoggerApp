@@ -20,8 +20,6 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_sceneBoundsPlane(std::make_shared<SceneObject>())
 , m_vertexEditingDecorator(new VertexEditingDecorator)
-
-, m_entity(new SceneEntity(this))
 {
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -103,8 +101,6 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, q
     Q_UNUSED(buttons)
 
     m_startMousePos = {x,y};
-
-    m_entity->mousePressEvent(buttons,x,y);
 
     QQuickFramebufferObject::update();
 }

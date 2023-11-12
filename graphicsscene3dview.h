@@ -9,7 +9,6 @@
 #include <polygongroup.h>
 #include <pointgroup.h>
 #include <vertexeditingdecorator.h>
-#include <sceneentity.h>
 #include <ray.h>
 
 #include <QQuickFramebufferObject>
@@ -167,7 +166,6 @@ private:
     QMatrix4x4 m_projection;
     Cube m_bounds;
     bool m_vertexEditingToolEnabled = false;
-    SceneEntity* m_entity = nullptr;
     ActiveMode m_mode = Idle;
     Ray m_ray;
 };
