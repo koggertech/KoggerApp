@@ -12,6 +12,46 @@ SceneObject::SceneObject(RenderImplementation *impl, QObject *parent, QString na
 , m_renderImpl(impl)
 {}
 
+SceneObject::SceneObject(RenderImplementation *impl, GraphicsScene3dView *view, QObject *parent, QString name)
+: QObject(parent)
+, m_renderImpl(impl)
+, m_view(view)
+{}
+
+void SceneObject::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+}
+
+void SceneObject::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+}
+
+void SceneObject::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+}
+
+void SceneObject::mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+    Q_UNUSED(angleDelta)
+}
+
+void SceneObject::keyPressEvent(Qt::Key key)
+{
+    Q_UNUSED(key)
+}
+
 SceneObject::~SceneObject()
 {}
 
