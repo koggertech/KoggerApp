@@ -18,7 +18,10 @@ void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
 
 void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool checked)
 {
-    m_graphicsSceneView->setBottomTrackVertexEditingModeEnabled(checked);
+    if(checked)
+        m_graphicsSceneView->setBottomTrackVertexSelectionMode();
+    else
+        m_graphicsSceneView->setIdleMode();
 }
 
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
