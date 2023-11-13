@@ -32,6 +32,10 @@ void BottomTrack::resetVertexSelection()
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+
     if(!m_view) return;
 
     if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
@@ -57,11 +61,19 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
 void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+
     if(!m_view) return;
 }
 
 void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+
     if(!m_view) return;
 }
 
