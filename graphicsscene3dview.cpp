@@ -19,7 +19,6 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_coordAxes(std::make_shared<CoordinateAxes>())
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_sceneBoundsPlane(std::make_shared<SceneObject>())
-, m_vertexEditingDecorator(new VertexEditingDecorator)
 {
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -85,20 +84,17 @@ void GraphicsScene3dView::clear()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::setBottomTrackVertexEditingModeEnabled(bool enabled)
-{
-    m_vertexEditingToolEnabled = enabled;
-    m_vertexEditingDecorator->clearData();
-
-    m_rayCaster->reset();
-    m_rayCaster->addObject(m_bottomTrack);
-
-    QQuickFramebufferObject::update();
-}
-
 void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     Q_UNUSED(buttons)
+
+    if(m_mode == BottomTrackVertexComboSelectionMode){
+        if(buttons & Qt::LeftButton){
+            m_bottomTrack->resetVertexSelection();
+            m_comboSelectionRect.setTopLeft({static_cast<int>(x),static_cast<int>(height()-y)});
+            m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
+        }
+    }
 
     m_startMousePos = {x,y};
 
@@ -108,13 +104,14 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, q
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     if(buttons.testFlag(Qt::MiddleButton)){
+        m_comboSelectionRect = {0,0,0,0};
         m_camera->move(QVector2D(m_startMousePos.x(),m_startMousePos.y()),
                        QVector2D(x,y));
-    }else{
-        m_camera->commitMovement();
+        QQuickFramebufferObject::update();
     }
 
     if(buttons.testFlag(Qt::RightButton)){
+        m_comboSelectionRect = {0,0,0,0};
         float deltaAngleX = (2 * M_PI / size().width());
         float deltaAngleY = (2 * M_PI / size().height());
         float yaw = (m_lastMousePos.x() - x) * deltaAngleX;
@@ -122,8 +119,16 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
 
         m_camera->rotate(yaw, -pitch);
         m_axesThumbnailCamera->rotate(yaw, -pitch);
+        QQuickFramebufferObject::update();
     }
 
+    if(m_mode == BottomTrackVertexComboSelectionMode){
+        if(buttons & Qt::LeftButton)
+            m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
+        QQuickFramebufferObject::update();
+    }
+
+    //---------->Calculate ray in 3d space<---------//
     auto origin = QVector3D(x, height() - y, -1.0f)
             .unproject(m_model * m_camera->m_view,
                        m_projection,
@@ -138,6 +143,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
 
     m_ray.setOrigin(origin);
     m_ray.setDirection(direction);
+    //---------------------------------------------//
 
     m_bottomTrack->mouseMoveEvent(buttons,x,y);
     m_lastMousePos = {x,y};
@@ -149,6 +155,11 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons buttons, qreal x,
     Q_UNUSED(x)
     Q_UNUSED(y)
     Q_UNUSED(buttons)
+
+    //TODO: Commit only if camera in movement state
+    m_camera->commitMovement();
+
+    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta)
@@ -202,6 +213,7 @@ void GraphicsScene3dView::setIdleMode()
 {
     m_mode = Idle;
 
+    m_comboSelectionRect = {0,0,0,0};
     m_bottomTrack->resetVertexSelection();
 
     QQuickFramebufferObject::update();
@@ -209,6 +221,8 @@ void GraphicsScene3dView::setIdleMode()
 
 void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
 {
+    setIdleMode();
+
     m_mode = BottomTrackVertexSelectionMode;
 
     QQuickFramebufferObject::update();
@@ -216,6 +230,8 @@ void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
 
 void GraphicsScene3dView::setBottomTrackVertexComboSelectionMode()
 {
+    setIdleMode();
+
     m_mode = BottomTrackVertexComboSelectionMode;
 
     QQuickFramebufferObject::update();
@@ -223,6 +239,8 @@ void GraphicsScene3dView::setBottomTrackVertexComboSelectionMode()
 
 void GraphicsScene3dView::setPolygonCreationMode()
 {
+    setIdleMode();
+
     m_mode = PolygonCreationMode;
 
     QQuickFramebufferObject::update();
@@ -230,6 +248,8 @@ void GraphicsScene3dView::setPolygonCreationMode()
 
 void GraphicsScene3dView::setPolygonEditingMode()
 {
+    setIdleMode();
+
     m_mode = PolygonEditingMode;
 
     QQuickFramebufferObject::update();
@@ -299,11 +319,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_viewSize               = view->size();
     m_renderer->m_camera                 = *view->m_camera;
     m_renderer->m_axesThumbnailCamera    = *view->m_axesThumbnailCamera;
-
-    if(view->m_vertexEditingDecorator){
-        m_renderer->m_vertexEditingDecorator =  *(dynamic_cast<VertexEditingDecorator::VertexEditingDecoratorRenderImplementation*>(
-                                                              view->m_vertexEditingDecorator->m_renderImpl));
-    }
+    m_renderer->m_comboSelectionRect          = view->m_comboSelectionRect;
 
     //read from renderer
     view->m_model = m_renderer->m_model;

@@ -1,4 +1,5 @@
 #include "graphicsscene3drenderer.h"
+#include <drawutils.h>
 
 #include <bottomtrack.h>
 #include <surface.h>
@@ -86,9 +87,6 @@ void GraphicsScene3dRenderer::drawObjects()
     m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
 
-    if(!m_vertexEditingDecorator.cdata().isEmpty())
-        m_vertexEditingDecorator.render(this, m_projection * view * m_model, m_shaderProgramMap);
-
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
@@ -107,4 +105,17 @@ void GraphicsScene3dRenderer::drawObjects()
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     //---------------------------------
+
+    //----------->Draw selection rect<-----------//
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0,viewport[2],0,viewport[3],-1,1);
+    glBegin(GL_LINE_LOOP);
+    auto color = DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f));
+    glColor3f(color.x(), color.y(), color.z());
+    glVertex2f(m_comboSelectionRect.topLeft().x(),m_comboSelectionRect.topLeft().y());
+    glVertex2f(m_comboSelectionRect.topRight().x(),m_comboSelectionRect.topRight().y());
+    glVertex2f(m_comboSelectionRect.bottomRight().x(),m_comboSelectionRect.bottomRight().y());
+    glVertex2f(m_comboSelectionRect.bottomLeft().x(),m_comboSelectionRect.bottomLeft().y());
+    glEnd();
 }

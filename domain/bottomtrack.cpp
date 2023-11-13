@@ -34,27 +34,24 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     if(!m_view) return;
 
-    switch(m_view->m_mode){
-    case GraphicsScene3dView::BottomTrackVertexSelectionMode:{
+    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
         auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
         if(!hits.isEmpty())
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
     }
-    break;
-    case GraphicsScene3dView::BottomTrackVertexComboSelectionMode:
-    {
 
-    }
-    break;
-    case GraphicsScene3dView::BottomTrackSyncPointCreationMode:
+    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode)
     {
-
-    }
-    break;
-    default:
-        qDebug() << "Nothing to do for bottom track ((";
         RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
-        break;
+        for(int i = 0; i < RENDER_IMPL(BottomTrack)->m_data.size(); i++){
+            auto p = RENDER_IMPL(BottomTrack)->m_data.at(i);
+            auto p_screen = p.project(m_view->m_model * m_view->camera().lock()->viewMatrix(),
+                            m_view->m_projection,
+                            m_view->boundingRect().toRect());
+
+            if(m_view->m_comboSelectionRect.contains(p_screen.x(), p_screen.y()))
+                RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.append(i);
+        }
     }
 }
 
@@ -72,18 +69,30 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 {
     if(!m_view) return;
 
-    switch(m_view->m_mode){
-    case GraphicsScene3dView::BottomTrackVertexSelectionMode:
+    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode)
     {
         if(key == Qt::Key_Delete){
             auto indices = RENDER_IMPL(BottomTrack)->m_selectedVertexIndices;
             for(const auto& i : indices)
                 removeVertex(i);
+            RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
         }
     }
-    break;
-    default:
-        break;
+
+    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode)
+    {
+        if(key == Qt::Key_Delete){
+            QVector<QVector3D> newData;
+            auto indices = RENDER_IMPL(BottomTrack)->m_selectedVertexIndices;
+            auto currentData = RENDER_IMPL(BottomTrack)->cdata();
+            for(int i = 0; i < currentData.size(); i++){
+                if(!indices.contains(i))
+                    newData.append(currentData.at(i));
+            }
+            RENDER_IMPL(BottomTrack)->setData(newData, GL_LINE_STRIP);
+            RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+            m_view->m_comboSelectionRect = {0,0,0,0};
+        }
     }
 }
 

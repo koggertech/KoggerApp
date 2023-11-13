@@ -49,17 +49,10 @@ private:
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
-    VertexEditingDecorator::VertexEditingDecoratorRenderImplementation m_vertexEditingDecorator;
 
-    QRectF m_rect;
-    QVector3D m_dragOffset;
-    QVector3D m_rotationAngle;
-    QVector3D m_center;
-    qreal m_fov = 45.0f;
-    qreal m_pitch = 0.0f;
-    qreal m_yaw = 0.0f;
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
+    QRect m_comboSelectionRect;
 };
 
 #endif // GRAPHICSSCENE3D_H

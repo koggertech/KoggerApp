@@ -124,7 +124,6 @@ public:
     std::shared_ptr <PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
     void clear();
-    void setBottomTrackVertexEditingModeEnabled(bool enabled);
 
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
@@ -161,12 +160,11 @@ private:
     std::shared_ptr <CoordinateAxes> m_coordAxes;
     std::shared_ptr <PlaneGrid> m_planeGrid;
     std::shared_ptr <SceneObject> m_sceneBoundsPlane;
-    std::unique_ptr <VertexEditingDecorator> m_vertexEditingDecorator;
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
-    bool m_vertexEditingToolEnabled = false;
     ActiveMode m_mode = Idle;
+    QRect m_comboSelectionRect = {0,0,0,0};
     Ray m_ray;
 };
 

@@ -71,25 +71,25 @@ Item{
                 onClicked: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
             }
 
-            //Button{
-            //    width: 40
-            //    height: 40
-            //    checkable: true
-            //    icon.source: "./tool.svg"
+            Button{
+                id: bottomTrackVertexComboSelectionToolButton
+                width: 40
+                height: 40
+                checkable: true
+                icon.source: "./combo-selection.svg"
+                icon.color: theme.textColor
 
-            //    icon.color: theme.textColor
+                background: Rectangle {
+                    radius: 1
+                    height: parent.height
+                    width: parent.width
+                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
+                    border.color: theme.controlBorderColor
+                    border.width: 1
+                }
 
-            //    background: Rectangle {
-            //        radius: 1
-            //        height: parent.height
-            //        width: parent.width
-            //        color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-            //        border.color: theme.controlBorderColor
-            //        border.width: 1
-            //    }
-
-            //    //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
-            //}
+                onClicked: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
+            }
         }
 
         //ButtonGroup{
