@@ -42,9 +42,6 @@ public:
         virtual void setWidth(qreal width);
         virtual void setVisible(bool isVisible);
         virtual void clearData();
-        void setSelectedIndices(int begin, int end);
-        void setSelectedIndices(QPair<int,int> indices);
-        void resetSelectedIndices();
         QVector<QVector3D> data() const;
         const QVector<QVector3D>& cdata() const;
         QColor color() const;
@@ -64,7 +61,6 @@ public:
         bool m_isVisible = true;
         Cube m_bounds;
         int m_primitiveType = GL_POINTS;
-        QPair <int,int> m_selectedIndices = {-1, -1};
 
     private:
         friend class SceneObject;
@@ -131,9 +127,6 @@ public Q_SLOTS:
     void setColor(QColor color);
     void setWidth(qreal width);
     void setFilter(std::shared_ptr <AbstractEntityDataFilter> filter);
-    void setSelectedIndices(int begin, int end);
-    void setSelectedIndices(QPair<int,int> indices);
-    void resetSelectedIndices();
     void removeVertex(int index);
 
 Q_SIGNALS:

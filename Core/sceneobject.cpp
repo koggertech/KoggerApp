@@ -141,21 +141,6 @@ void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
     Q_EMIT changed();
 }
 
-void SceneObject::setSelectedIndices(int begin, int end)
-{
-    m_renderImpl->setSelectedIndices(begin, end);
-}
-
-void SceneObject::setSelectedIndices(QPair<int, int> indices)
-{
-    m_renderImpl->setSelectedIndices(indices);
-}
-
-void SceneObject::resetSelectedIndices()
-{
-    m_renderImpl->resetSelectedIndices();
-}
-
 void SceneObject::removeVertex(int index)
 {
     m_renderImpl->removeVertex(index);
@@ -271,21 +256,6 @@ void SceneObject::RenderImplementation::setVisible(bool isVisible)
 void SceneObject::RenderImplementation::clearData()
 {
     m_data.clear();
-}
-
-void SceneObject::RenderImplementation::setSelectedIndices(int begin, int end)
-{
-    m_selectedIndices = {begin, end};
-}
-
-void SceneObject::RenderImplementation::setSelectedIndices(QPair<int, int> indices)
-{
-    m_selectedIndices = indices;
-}
-
-void SceneObject::RenderImplementation::resetSelectedIndices()
-{
-    m_selectedIndices = {-1, -1};
 }
 
 QVector<QVector3D> SceneObject::RenderImplementation::data() const

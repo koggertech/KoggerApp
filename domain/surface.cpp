@@ -233,13 +233,9 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
     int maxYLoc   = shaderProgram->uniformLocation("max_y");
     int minYLoc   = shaderProgram->uniformLocation("min_y");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
-    int selectedPrimitiveFirstIndex = shaderProgram->uniformLocation("selectedPrimitiveFirstIndex");
-    int selectedPrimitiveLastIndex = shaderProgram->uniformLocation("selectedPrimitiveLastIndex");
 
     shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
     shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
-    shaderProgram->setUniformValue(selectedPrimitiveFirstIndex, m_selectedIndices.first);
-    shaderProgram->setUniformValue(selectedPrimitiveLastIndex, m_selectedIndices.second);
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());

@@ -73,8 +73,10 @@ void BottomTrack::keyPressEvent(Qt::Key key)
     {
         if(key == Qt::Key_Delete){
             auto indices = RENDER_IMPL(BottomTrack)->m_selectedVertexIndices;
+
             for(const auto& i : indices)
                 removeVertex(i);
+
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
         }
     }
@@ -83,14 +85,17 @@ void BottomTrack::keyPressEvent(Qt::Key key)
     {
         if(key == Qt::Key_Delete){
             QVector<QVector3D> newData;
+
             auto indices = RENDER_IMPL(BottomTrack)->m_selectedVertexIndices;
             auto currentData = RENDER_IMPL(BottomTrack)->cdata();
+
             for(int i = 0; i < currentData.size(); i++){
                 if(!indices.contains(i))
                     newData.append(currentData.at(i));
             }
             RENDER_IMPL(BottomTrack)->setData(newData, GL_LINE_STRIP);
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+
             m_view->m_comboSelectionRect = {0,0,0,0};
         }
     }
