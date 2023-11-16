@@ -2,7 +2,12 @@
 #include <QDebug>
 
 MaxPointsFilter::MaxPointsFilter(QObject *parent)
+    : AbstractEntityDataFilter(parent)
+{}
+
+MaxPointsFilter::MaxPointsFilter(int maxPointsCount, QObject *parent)
 : AbstractEntityDataFilter(parent)
+, m_maxPointsCount(maxPointsCount)
 {}
 
 MaxPointsFilter::~MaxPointsFilter()

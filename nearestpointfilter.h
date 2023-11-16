@@ -16,6 +16,7 @@ class NearestPointFilter : public AbstractEntityDataFilter
 
 public:
     NearestPointFilter(QObject* parent = nullptr);
+    NearestPointFilter(float distance, QObject* parent = nullptr);
     virtual ~NearestPointFilter();
 
     AbstractEntityDataFilter::FilterType type() const override;

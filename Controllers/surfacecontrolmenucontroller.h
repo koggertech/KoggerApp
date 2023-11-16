@@ -13,6 +13,7 @@ class SurfaceControlMenuController : public QmlComponentController
 {
     Q_OBJECT
     Q_PROPERTY(Surface* surface READ surface CONSTANT)
+    Q_PROPERTY(AbstractEntityDataFilter* inputDataFilter READ inputDataFilter CONSTANT)
 
 public:
     explicit SurfaceControlMenuController(QObject *parent = nullptr);
@@ -31,9 +32,9 @@ public:
 
     Q_INVOKABLE void onGridInterpolationCheckBoxCheckedChanged(bool checked);
 
-    Q_INVOKABLE void onUpdateSurfaceButtonClicked(int edgeLengthLimit,
-                                                  bool gridInterpEnabled,
-                                                  qreal cellSize);
+    Q_INVOKABLE void onUpdateSurfaceButtonClicked();
+
+    Q_INVOKABLE void onFilterTypeComboBoxIndexChanged(int index);
 
 Q_SIGNALS:
     void surfaceProcessorTaskStarted();
@@ -44,8 +45,10 @@ protected:
 
 private:
     Surface* surface() const;
+    AbstractEntityDataFilter* inputDataFilter() const;
 
 private:
+    std::shared_ptr<AbstractEntityDataFilter> m_inputDataFilter;
     GraphicsScene3dView* m_graphicsSceneView = nullptr;
     SurfaceProcessor m_surfaceProcessor;
     QThread m_thread;

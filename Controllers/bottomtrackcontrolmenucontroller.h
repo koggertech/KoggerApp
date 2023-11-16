@@ -20,8 +20,6 @@ public:
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
 
-    Q_INVOKABLE void onFilterTypeComboBoxIndexChanged(int index);
-
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
     void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> provider);

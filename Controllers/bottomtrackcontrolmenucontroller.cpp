@@ -23,36 +23,6 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
     QMetaObject::invokeMethod(reinterpret_cast <QObject*>(bottomTrack.get()), "setVisible", Q_ARG(bool, checked));
 }
 
-void BottomTrackControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
-{
-    if(!m_bottomTrackProvider)
-        return;
-
-    if(!m_graphicsSceneView)
-        return;
-
-    auto bottomTrack = m_graphicsSceneView->bottomTrack();
-
-    const auto filter = bottomTrack->filter();
-
-    if(filter && filter->type() == static_cast <AbstractEntityDataFilter::FilterType>(index))
-        return;
-
-    std::shared_ptr <AbstractEntityDataFilter> newFilter;
-
-    switch(index){
-    case AbstractEntityDataFilter::MaxPointsCount:
-        newFilter = std::make_shared<MaxPointsFilter>();
-        break;
-    case AbstractEntityDataFilter::NearestPointDistance:
-        newFilter = std::make_shared<NearestPointFilter>();
-        break;
-    }
-
-    bottomTrack->setFilter(newFilter);
-    bottomTrack->setData(m_bottomTrackProvider->getBottomTrack(), GL_LINE_STRIP);
-}
-
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;

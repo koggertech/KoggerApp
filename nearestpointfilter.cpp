@@ -4,6 +4,11 @@ NearestPointFilter::NearestPointFilter(QObject* parent)
     : AbstractEntityDataFilter(parent)
 {}
 
+NearestPointFilter::NearestPointFilter(float distance, QObject *parent)
+: AbstractEntityDataFilter(parent)
+, m_distance(distance)
+{}
+
 NearestPointFilter::~NearestPointFilter()
 {}
 

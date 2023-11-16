@@ -14,6 +14,7 @@ class MaxPointsFilter : public AbstractEntityDataFilter
 
 public:
     explicit MaxPointsFilter(QObject* parent = nullptr);
+    explicit MaxPointsFilter(int maxPointsCount, QObject* parent = nullptr);
     virtual ~MaxPointsFilter();
 
     virtual AbstractEntityDataFilter::FilterType type() const override;

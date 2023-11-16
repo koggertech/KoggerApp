@@ -424,9 +424,10 @@ void Core::setUpgradeBaudrate() {
 }
 
 void Core::UILoad(QObject *object, const QUrl &url) {
+
     Q_UNUSED(url)
 
-    m_scene3dView = object->findChild<GraphicsScene3dView*>();
+    m_scene3dView = object->findChild<GraphicsScene3dView*> ();
 
     if(m_scene3dView){
         QObject::connect(mpBottomTrackProvider.get(), &BottomTrackProvider::bottomTrackChanged,

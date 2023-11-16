@@ -1,11 +1,13 @@
 #include "surfaceprocessor.h"
 
 #include <set>
+#include <memory>
 
 #include <Point3D.h>
 #include <DelaunayTriangulation.h>
 #include <gridgenerator.h>
 #include <barycentricinterpolator.h>
+#include <bottomtrack.h>
 
 const QString UnderlyingThreadName = "SurfaceProcessorThread";
 
@@ -18,7 +20,7 @@ SurfaceProcessor::~SurfaceProcessor()
     stopInThread();
 }
 
-bool SurfaceProcessor::setTask(const Task& task)
+bool SurfaceProcessor::setTask(const SurfaceProcessorTask& task)
 {
     if(m_isBusy.load())
         return false;
@@ -49,7 +51,7 @@ bool SurfaceProcessor::startInThread()
     return true;
 }
 
-bool SurfaceProcessor::startInThread(const Task &task)
+bool SurfaceProcessor::startInThread(const SurfaceProcessorTask &task)
 {
     if(!setTask(task))
         return false;
@@ -69,13 +71,25 @@ bool SurfaceProcessor::stopInThread(unsigned long time)
     return currentThread->wait(time);
 }
 
+SurfaceProcessorTask SurfaceProcessor::task() const
+{
+    return m_task;
+}
+
+const SurfaceProcessorTask &SurfaceProcessor::ctask() const
+{
+    return m_task;
+}
+
 void SurfaceProcessor::process()
 {
     if(m_isBusy.load())
         return;
 
-    if(m_task.source.isEmpty())
+    if(m_task.bottomTrack()->cdata().isEmpty()){
+        stopInThread();
         return;
+    }
 
     m_isBusy.store(true);
 
@@ -87,9 +101,18 @@ void SurfaceProcessor::process()
     std::set <Point2D <double>> set;
     std::vector <Point3D <double>> input;
 
-    for (int i = 0; i < m_task.source.size(); i++){
-        Point2D <double> point(static_cast <double> (m_task.source.at(i).x()),
-                               static_cast <double> (m_task.source.at(i).y()),
+
+    QVector<QVector3D> data = m_task.bottomTrack()->data();
+
+    if(m_task.m_bottomTrackDataFilter){
+        QVector<QVector3D> filtered;
+        m_task.m_bottomTrackDataFilter->apply(data, filtered);
+        data = filtered;
+    }
+
+    for (int i = 0; i < data.size(); i++){
+        Point2D <double> point(static_cast <double> (data.at(i).x()),
+                               static_cast <double> (data.at(i).z()),
                                static_cast <double> (i));
 
         set.insert(point);
@@ -98,27 +121,28 @@ void SurfaceProcessor::process()
     for (const auto& p : set){
         Point3D <double> point(p.x(),
                                p.y(),
-                               static_cast <double> (m_task.source.at(p.index()).z()),
+                               static_cast <double> (data.at(p.index()).z()),
                                p.index());
         input.push_back(point);
     }
 
     Delaunay <double> delaunay;
-    auto triangles = delaunay.trinagulate(input, m_task.edgeLengthLimit);
+    auto triangles = delaunay.trinagulate(input, m_task.m_edgeLengthLimit);
 
-    if(m_task.needSmoothing){
+    if(m_task.m_gridInterpEnabled){
         m_result.primitiveType = GL_QUADS;
 
         std::vector <Point3D <double>> trimmedGrid;
 
+        Cube bounds = m_task.m_bottomTrack.lock()->bounds();
         auto fullGrid = GridGenerator <double>::generateQuadGrid(Point3D <double>(
-                                                                m_task.bounds.minimumX(),
-                                                                m_task.bounds.minimumZ(),
-                                                                m_task.bounds.minimumY()
+                                                                bounds.minimumX(),
+                                                                bounds.minimumZ(),
+                                                                bounds.minimumY()
                                                             ),
-                                                            m_task.bounds.width(),
-                                                            m_task.bounds.length(),
-                                                            m_task.cellSize);
+                                                            bounds.width(),
+                                                            bounds.length(),
+                                                            m_task.m_interpGridCellSize);
 
         auto q = fullGrid->begin();
 
@@ -179,4 +203,59 @@ void SurfaceProcessor::process()
 bool SurfaceProcessor::isBusy() const
 {
     return m_isBusy.load();
+}
+
+void SurfaceProcessorTask::setBottomTrack(std::weak_ptr<BottomTrack> bottomTrack)
+{
+    if(m_bottomTrack.lock() != bottomTrack.lock())
+        m_bottomTrack = bottomTrack;
+}
+
+void SurfaceProcessorTask::setGridInterpEnabled(bool enabled)
+{
+    if(m_gridInterpEnabled != enabled)
+        m_gridInterpEnabled = enabled;
+}
+
+void SurfaceProcessorTask::setInterpGridCellSize(qreal size)
+{
+    if(m_interpGridCellSize != size)
+        m_interpGridCellSize = size;
+}
+
+void SurfaceProcessorTask::setEdgeLengthLimit(qreal limit)
+{
+    if(m_edgeLengthLimit != limit)
+        m_edgeLengthLimit = limit;
+}
+
+void SurfaceProcessorTask::setBottomTrackDataFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
+{
+    if(m_bottomTrackDataFilter != filter)
+        m_bottomTrackDataFilter = filter;
+}
+
+BottomTrack *SurfaceProcessorTask::bottomTrack() const
+{
+    return m_bottomTrack.lock().get();
+}
+
+bool SurfaceProcessorTask::gridInterpEnabled() const
+{
+    return m_gridInterpEnabled;
+}
+
+qreal SurfaceProcessorTask::interpGridCellSize() const
+{
+    return m_interpGridCellSize;
+}
+
+qreal SurfaceProcessorTask::edgeLengthLimit() const
+{
+    return m_edgeLengthLimit;
+}
+
+AbstractEntityDataFilter *SurfaceProcessorTask::bottomTrackDataFilter() const
+{
+    return m_bottomTrackDataFilter.get();
 }

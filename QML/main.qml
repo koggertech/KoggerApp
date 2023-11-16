@@ -69,6 +69,7 @@ Window  {
 
             GraphicsScene3dView {
                 id:                renderer
+                objectName: "GraphicsScene3dView"
                 width:             mainview.width
                 Layout.fillHeight: true
                 Layout.fillWidth:  true
@@ -76,6 +77,7 @@ Window  {
 
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
+                    objectName: "surfaceProcessingProgressBar"
                     text:      "Calculating surface.\nPlease wait..."
                     textColor: "black"
                     visible:   false
@@ -241,6 +243,7 @@ Window  {
 
     MenuBar {
         id:                menuBar
+        objectName:        "menuBar"
         Layout.fillHeight: true
         height:            visualisationLayout.height
         Keys.forwardTo:    [mousearea3D]

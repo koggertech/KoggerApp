@@ -3,6 +3,8 @@
 #include <graphicsscene3dview.h>
 #include <surface.h>
 #include <bottomtrack.h>
+#include <nearestpointfilter.h>
+#include <maxpointsfilter.h>
 
 SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
     : QmlComponentController(parent)
@@ -14,14 +16,16 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
         if(!m_graphicsSceneView)
             return;
 
-        QVector<QVector3D> data;
-        for(const auto& v : qAsConst(result.data))
-            data.append({v.x(), v.z(), v.y()});
+        //QVector<QVector3D> data;
+        //for(const auto& v : qAsConst(result.data))
+        //    data.append({v.x(), v.z(), v.y()});
+
 
         QMetaObject::invokeMethod(m_graphicsSceneView->surface().get(),
                                   "setData",
-                                  Q_ARG(QVector<QVector3D>, data),
+                                  Q_ARG(QVector<QVector3D>, result.data),
                                   Q_ARG(int, result.primitiveType));
+        m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
 
         Q_EMIT surfaceProcessorTaskFinished();
     });
@@ -34,7 +38,7 @@ void SurfaceControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sce
 
 void SurfaceControlMenuController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);
+    m_component = m_engine->findChild<QObject*>("activeObjectParamsMenuLoader");
 }
 
 Surface *SurfaceControlMenuController::surface() const
@@ -43,6 +47,13 @@ Surface *SurfaceControlMenuController::surface() const
         return nullptr;
 
     return m_graphicsSceneView->surface().get();
+}
+
+AbstractEntityDataFilter *SurfaceControlMenuController::inputDataFilter() const
+{
+    auto task = m_graphicsSceneView->surface()->processingTask();
+
+    return nullptr;
 }
 
 void SurfaceControlMenuController::onSurfaceVisibilityCheckBoxCheckedChanged(bool checked)
@@ -78,10 +89,35 @@ void SurfaceControlMenuController::onGridInterpolationCheckBoxCheckedChanged(boo
     Q_UNUSED(checked)
 }
 
-void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int edgeLengthLimit,
-                                                                bool gridInterpEnabled,
-                                                                qreal cellSize)
+void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 {
+    if(!m_graphicsSceneView)
+        return;
+
+    auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);
+
+    if(!menu)
+        return;
+
+    auto filterMenuLoader = menu->findChild<QObject*>("filterParamsLoader");
+
+    if(!filterMenuLoader)
+        return;
+
+
+}
+
+void SurfaceControlMenuController::onUpdateSurfaceButtonClicked()
+{
+    auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);
+
+    if(!menu)
+        return;
+
+    auto triangleEdgeLengthSpinBox = menu->findChild<QObject*>("triangleEdgeLengthLimitSpinBox");
+    auto gridCellSizeSpinBox = menu->findChild<QObject*>("gridCellSizeSpinBox");
+    auto gridInterpSpinBox = menu->findChild<QObject*>("gridInterpolationCheckBox");
+
     if(m_surfaceProcessor.isBusy()){
         qDebug().noquote() << "Surface processor is busy!";
         return;
@@ -90,20 +126,32 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int edgeLengthLi
     if(!m_graphicsSceneView)
         return;
 
-    auto bottomTrack = m_graphicsSceneView->bottomTrack();
-    auto surface     = m_graphicsSceneView->surface();
+    SurfaceProcessorTask task;
 
-    QVector<QVector3D> data;
-    for(const auto& v : qAsConst(bottomTrack->cdata()))
-        data.append({v.x(), v.z(), v.y()});
+    task.setGridInterpEnabled(gridInterpSpinBox->property("checked").toBool());
+    task.setInterpGridCellSize(gridCellSizeSpinBox->property("value").toInt());
+    task.setBottomTrack(m_graphicsSceneView->bottomTrack());
+    task.setEdgeLengthLimit(triangleEdgeLengthSpinBox->property("value").toInt());
 
-    SurfaceProcessor::Task task;
+    std::shared_ptr<AbstractEntityDataFilter> filter;
 
-    task.needSmoothing   = gridInterpEnabled;
-    task.cellSize        = cellSize;
-    task.source          = std::move(data);
-    task.bounds          = bottomTrack->bounds();
-    task.edgeLengthLimit = edgeLengthLimit;
+    auto filterTypeComboBox = menu->findChild<QObject*>("filterTypeCombo");
+    auto filterParamsMenuLoader = menu->findChild<QObject*>("filterParamsLoader");
+
+    if(filterTypeComboBox->property("currentIndex") == AbstractEntityDataFilter::FilterType::MaxPointsCount){
+        auto mpcFilterMenu = filterParamsMenuLoader->findChild<QObject*>("mpcFilterControlMenu");
+        auto pointsCountSpinBox = mpcFilterMenu->findChild<QObject*>("pointsCountSpinBox");
+        int v = pointsCountSpinBox->property("value").toInt();
+        filter = std::make_shared<MaxPointsFilter>(pointsCountSpinBox->property("value").toInt());
+    }
+
+    if(filterTypeComboBox->property("currentIndex") == AbstractEntityDataFilter::FilterType::NearestPointDistance){
+        auto npdFilterMenu = filterParamsMenuLoader->findChild<QObject*>("npdFilterControlMenu");
+        auto distanceSpinBox = npdFilterMenu->findChild<QObject*>("distanceValueSpinBox");
+        filter = std::make_shared<NearestPointFilter>(distanceSpinBox->property("value").toFloat());
+    }
+
+    task.setBottomTrackDataFilter(filter);
 
     m_surfaceProcessor.startInThread(task);
 }

@@ -22,6 +22,11 @@ Surface::Surface(QObject* parent)
 Surface::~Surface()
 {}
 
+void Surface::setProcessingTask(const SurfaceProcessorTask& task)
+{
+    m_processingTask = task;
+}
+
 SceneObject::SceneObjectType Surface::type() const
 {
     return SceneObjectType::Surface;
@@ -35,6 +40,11 @@ Contour *Surface::contour() const
 SurfaceGrid *Surface::grid() const
 {
     return m_grid.get();
+}
+
+SurfaceProcessorTask Surface::processingTask() const
+{
+    return m_processingTask;
 }
 
 void Surface::setData(const QVector<QVector3D>& data, int primitiveType)
