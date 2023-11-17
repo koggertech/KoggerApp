@@ -425,8 +425,10 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
-    m_distToFocusPoint -= delta * m_sensivity;
-    m_distToFocusPoint = std::fmaxf(static_cast<float>(m_distToFocusPoint), 2.0f);
+    if(delta > 0.0f)
+        m_distToFocusPoint = m_distToFocusPoint / 1.15f;
+    else
+        m_distToFocusPoint = m_distToFocusPoint * 1.15f;
 
     updateViewMatrix();
 }
