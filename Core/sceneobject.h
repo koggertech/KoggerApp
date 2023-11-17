@@ -130,6 +130,7 @@ public Q_SLOTS:
     void removeVertex(int index);
 
 Q_SIGNALS:
+    void visibilityChanged(bool isVisible);
     void dataChanged();
     void nameChanged(QString name);
     void boundsChanged();

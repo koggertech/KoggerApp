@@ -159,6 +159,7 @@ void SceneObject::setVisible(bool isVisible)
 {
     m_renderImpl->setVisible(isVisible);
 
+    Q_EMIT visibilityChanged(m_renderImpl->m_isVisible);
     Q_EMIT changed();
 }
 

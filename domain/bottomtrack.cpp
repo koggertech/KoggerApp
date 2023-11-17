@@ -30,6 +30,11 @@ void BottomTrack::resetVertexSelection()
     RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
 }
 
+void BottomTrack::setDisplayingWithSurface(bool displaying)
+{
+    RENDER_IMPL(BottomTrack)->m_isDisplayingWithSurface = displaying;
+}
+
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     Q_UNUSED(buttons)
@@ -132,27 +137,31 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     if(!shaderProgramMap.contains("height"))
         return;
 
-    auto shaderProgram = shaderProgramMap["height"];
+    QOpenGLShaderProgram* shaderProgram = nullptr;
+    int colorLoc = -1, posLoc = -1, maxYLoc = -1, minYLoc = -1, matrixLoc = -1;
 
-    if (!shaderProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
+    if(m_isDisplayingWithSurface){
+        shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
+        colorLoc = shaderProgram->uniformLocation("color");
+        shaderProgram->setUniformValue(colorLoc,QVector4D(0.0f, 1.0f, 0.4f, 1.0f));
+    }else{
+        shaderProgram = shaderProgramMap["height"].get();
+        shaderProgram->bind();
+        maxYLoc = shaderProgram->uniformLocation("max_y");
+        minYLoc = shaderProgram->uniformLocation("min_y");
+        shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
+        shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
     }
 
-    int posLoc    = shaderProgram->attributeLocation("position");
-    int maxYLoc   = shaderProgram->uniformLocation("max_y");
-    int minYLoc   = shaderProgram->uniformLocation("min_y");
-    int matrixLoc = shaderProgram->uniformLocation("matrix");
+    posLoc = shaderProgram->attributeLocation("position");
+    matrixLoc = shaderProgram->uniformLocation("matrix");
 
-    QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
-    int colorLoc = shaderProgram->uniformLocation("color");
-
-    shaderProgram->setUniformValue(colorLoc,color);
-    shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
-    shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
+
+
 
     ctx->glLineWidth(4.0);
     ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
@@ -162,7 +171,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->release();
 
     //------------->Drawing selected vertices<<---------------//
-    shaderProgram = shaderProgramMap["static"];
+    shaderProgram = shaderProgramMap["static"].get();
     shaderProgram->bind();
 
     colorLoc  = shaderProgram->uniformLocation("color");
@@ -171,6 +180,8 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     int widthLoc  = shaderProgram->uniformLocation("width");
 
     QVector4D vertexColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+    //TODO: Needs to optimize data preparing
     QVector<QVector3D> selectedVertices;
     for(const auto& i : m_selectedVertexIndices)
         selectedVertices.append(m_data.at(i));

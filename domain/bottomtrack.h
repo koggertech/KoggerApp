@@ -5,6 +5,7 @@
 #include <sceneobject.h>
 
 class GraphicsScene3dView;
+class Surface;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
@@ -22,6 +23,7 @@ public:
     private:
         friend class BottomTrack;
         QVector<int> m_selectedVertexIndices;
+        bool m_isDisplayingWithSurface = true;
     };
 
     explicit BottomTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
@@ -31,6 +33,7 @@ public:
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     void resetVertexSelection();
+    void setDisplayingWithSurface(bool displaying);
 
 protected:
     friend class GraphicsScene3dView;
