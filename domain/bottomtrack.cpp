@@ -144,7 +144,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram = shaderProgramMap["static"].get();
         shaderProgram->bind();
         colorLoc = shaderProgram->uniformLocation("color");
-        shaderProgram->setUniformValue(colorLoc,QVector4D(0.0f, 1.0f, 0.4f, 1.0f));
+        shaderProgram->setUniformValue(colorLoc,QVector4D(1.0f, 0.2f, 0.2f, 1.0f));
     }else{
         shaderProgram = shaderProgramMap["height"].get();
         shaderProgram->bind();
