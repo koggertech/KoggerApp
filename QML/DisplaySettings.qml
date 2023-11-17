@@ -42,6 +42,7 @@ GridLayout {
                 CCombo  {
                     id: channel1Combo
 //                    Layout.fillWidth: true
+                    currentIndex: 1
                     Layout.preferredWidth: rowDataset.width/3
                     visible: true
                     onPressedChanged: {
@@ -52,16 +53,21 @@ GridLayout {
 
                     Component.onCompleted: {
                         model = dataset.channelsNameList()
+                        channel1Combo.currentIndex = 1
                     }
 
                     onCurrentTextChanged: {
-                        targetPlot.plotDatasetChannel(parseInt(channel1Combo.currentText), parseInt(channel2Combo.currentText != "None" ? channel2Combo.currentText : 32768))
+                        var ch1 = channel1Combo.currentText != "None" ? channel1Combo.currentText != "First" ? channel1Combo.currentText : 32767 : 32768
+                        var ch2 = channel2Combo.currentText != "None" ? channel2Combo.currentText != "First" ? channel2Combo.currentText : 32767 : 32768
+
+                        targetPlot.plotDatasetChannel(ch1, ch2)
                     }
                 }
 
                 CCombo  {
                     id: channel2Combo
 //                    Layout.fillWidth: true
+                    currentIndex: 0
                     Layout.preferredWidth: rowDataset.width/3
                     visible: true
                     onPressedChanged: {
@@ -75,7 +81,10 @@ GridLayout {
                     }
 
                     onCurrentTextChanged: {
-                        targetPlot.plotDatasetChannel(parseInt(channel1Combo.currentText), parseInt(channel2Combo.currentText != "None" ? channel2Combo.currentText : 32768))
+                        var ch1 = channel1Combo.currentText != "None" ? channel1Combo.currentText != "First" ? channel1Combo.currentText : 32767 : 32768
+                        var ch2 = channel2Combo.currentText != "None" ? channel2Combo.currentText != "First" ? channel2Combo.currentText : 32767 : 32768
+
+                        targetPlot.plotDatasetChannel(ch1, ch2)
                     }
                 }
             }
@@ -148,12 +157,29 @@ GridLayout {
                 }
             }
 
-            CCheck {
-                id: rangefinderVisible
-                text: "Rangefinder"
-                onCheckedChanged: targetPlot.plotRangefinderVisible(checked)
-                Component.onCompleted: targetPlot.plotRangefinderVisible(checked)
+            RowLayout {
+                CCheck {
+                    id: rangefinderVisible
+                    Layout.fillWidth: true
+                    text: "Rangefinder"
+                    onCheckedChanged: targetPlot.plotRangefinderVisible(checked)
+                    Component.onCompleted: targetPlot.plotRangefinderVisible(checked)
+                }
+
+                CCombo  {
+                    id: rangefinderThemeList
+                    model: ["Text", "Line", "Dot"]
+                    currentIndex: 1
+
+                    onCurrentIndexChanged: targetPlot.plotRangefinderTheme(currentIndex)
+                    Component.onCompleted: targetPlot.plotRangefinderTheme(currentIndex)
+
+                    Settings {
+                        property alias rangefinderThemeList: rangefinderThemeList.currentIndex
+                    }
+                }
             }
+
 
             CCheck {
                 visible: instruments > 1
@@ -283,6 +309,28 @@ GridLayout {
                     text: "Doppler Profiler"
                 }
             }
+
+            RowLayout {
+                visible: instruments > 1
+                CCheck {
+                    id: gnssVisible
+                    checked: true
+                    Layout.fillWidth: true
+                    text: "GNSS data"
+
+                    onCheckedChanged: targetPlot.plotGNSSVisible(checked, 1)
+                    Component.onCompleted: targetPlot.plotGNSSVisible(checked, 1)
+                }
+
+//                CCheck {
+//                    id: gnssHSpeedVisible
+//                    checked: true
+//                    text: "Hor. Speed"
+//                    //                        onCheckedChanged: targetPlot.setDopplerInstrumentVis(checked)
+//                    //                        Component.onCompleted: targetPlot.setDopplerInstrumentVis(checked)
+//                }
+            }
+
 
 
             RowLayout {
@@ -445,7 +493,7 @@ GridLayout {
                         id: bottomTrackList
                         //                        Layout.fillWidth: true
                         Layout.preferredWidth: 250
-                        model: ["Echogram 2D", "Echogram Side-Scan"]
+                        model: ["Normal 2D", "Narrow 2D", "Echogram Side-Scan"]
                         currentIndex: 0
 
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()

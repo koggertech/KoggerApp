@@ -80,9 +80,10 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         U2 absOffset = proto.read<U2>();
 
         if(m_seqOffset == 0 && m_chartSizeIncr != 0) {
-            for(uint16_t i = 0; i < m_chartSizeIncr; i++) {
-                m_completeChart[i] = m_fillChart[i];
-            }
+//            for(uint16_t i = 0; i < m_chartSizeIncr; i++) {
+//                m_completeChart[i] = m_fillChart[i];
+//            }
+            memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
             m_chartSize = m_chartSizeIncr;
             m_isCompleteChart = true;
         }
@@ -715,7 +716,7 @@ Resp IDBinDVLMode::parsePayload(FrameParser &proto) {
     return respOk;
 }
 
-void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3) {
+void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, float range_mode3) {
     ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U1>(1);
@@ -730,6 +731,7 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3) {
     mode1.selection = ismode1;
     mode2.selection = ismode2;
     mode3.selection = ismode3;
+    mode3.stop = range_mode3;
     id_out.write<DVLModeSetup>(mode1);
     id_out.write<DVLModeSetup>(mode2);
     id_out.write<DVLModeSetup>(mode3);

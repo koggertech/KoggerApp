@@ -4,11 +4,13 @@ Plot2D::Plot2D() {
     _echogram.setVisible(true);
     _attitude.setVisible(true);
     _DVLBeamVelocity.setVisible(true);
+    _DVLSolution.setVisible(true);
     _bottomProcessing.setVisible(true);
     _rangeFinder.setVisible(true);
     _grid.setVisible(true);
+    _aim.setVisible(true);
 
-    setDataChannel(0);
+    setDataChannel(CHANNEL_FIRST);
 //    _cursor.attitude.from = -10;
 //    _cursor.attitude.to = 10;
 
@@ -16,20 +18,28 @@ Plot2D::Plot2D() {
 //    _cursor.velocity.set(-1, 1);
 }
 
-QImage Plot2D::getImage(int width, int height) {
-    _canvas.setSize(width, height);
-    _canvas.clear();
+bool Plot2D::getImage(int width, int height, QPainter* painter) {
+    _canvas.setSize(width, height, painter);
+//    _canvas.clear();
     reindexingCursor();
     reRangeDistance();
 
+
+//    painter->setCompositionMode(QPainter::RasterOp_SourceXorDestination);
     _echogram.draw(_canvas, _dataset, _cursor);
+
     _attitude.draw(_canvas, _dataset, _cursor);
     _DVLBeamVelocity.draw(_canvas, _dataset, _cursor);
+    _DVLSolution.draw(_canvas, _dataset, _cursor);
     _bottomProcessing.draw(_canvas, _dataset, _cursor);
     _rangeFinder.draw(_canvas, _dataset, _cursor);
-    _grid.draw(_canvas, _dataset, _cursor);
+    _GNSS.draw(_canvas, _dataset, _cursor);
 
-    return _canvas.getQImageConst();
+    painter->setCompositionMode(QPainter::CompositionMode_Exclusion);
+    _grid.draw(_canvas, _dataset, _cursor);
+    _aim.draw(_canvas, _dataset, _cursor);
+
+    return true;
 }
 
 void Plot2D::setTimelinePosition(float position) {
@@ -45,8 +55,6 @@ void Plot2D::setTimelinePosition(float position) {
 void Plot2D::scrollPosition(int columns) {
     float new_position = timelinePosition() + (1.0f/_dataset->size())*columns;
     setTimelinePosition(new_position);
-
-    plotUpdate();
 }
 
 void Plot2D::setDataChannel(int channel, int channel2) {
@@ -104,6 +112,11 @@ void Plot2D::setRangefinderVisible(bool visible) {
     plotUpdate();
 }
 
+void Plot2D::setRangefinderTheme(int theme_id) {
+    _rangeFinder.setTheme(theme_id);
+    plotUpdate();
+}
+
 void Plot2D::setAttitudeVisible(bool visible) {
     _attitude.setVisible(visible);
     plotUpdate();
@@ -116,7 +129,12 @@ void Plot2D::setDopplerBeamVisible(bool visible, int beam_filter) {
 }
 
 void Plot2D::setDopplerInstrumentVisible(bool visible) {
+    _DVLSolution.setVisible(visible);
+    plotUpdate();
+}
 
+void Plot2D::setGNSSVisible(bool visible, int flags) {
+    _GNSS.setVisible(visible);
     plotUpdate();
 }
 
@@ -225,6 +243,9 @@ void Plot2D::setMousePosition(int x, int y) {
     const float image_distance_ratio = distance_range/(float)image_height;
 
 
+    _cursor.setMouse(x, y);
+
+
     if(x < -1) { x = -1; }
     if(x >= image_width) { x = image_width - 1; }
 
@@ -233,6 +254,7 @@ void Plot2D::setMousePosition(int x, int y) {
 
     if(x == -1) {
         _mouse.x = -1;
+        plotUpdate();
         return;
     }
 
@@ -303,10 +325,10 @@ void Plot2D::setMousePosition(int x, int y) {
         }
 
 
-        plotUpdate();
 
-//        updateBottomTrack(true);
     }
+
+    plotUpdate();
 }
 
 void Plot2D::setMouseTool(MouseTool tool) {
@@ -374,7 +396,7 @@ void Plot2D::reRangeDistance() {
     }
 
     if(_cursor.distance.mode == AutoRangeLastOnScreen) {
-        for(int i = _cursor.indexes.size() - 3; i < _cursor.indexes.size(); i++) {
+        for(unsigned int i = _cursor.indexes.size() - 3; i < _cursor.indexes.size(); i++) {
             Epoch* epoch = _dataset->fromIndex(_cursor.getIndex(i));
             if(epoch != NULL) {
                 float epoch_range = epoch->getMaxRnage(_cursor.channel1);
@@ -386,7 +408,7 @@ void Plot2D::reRangeDistance() {
     }
 
     if(_cursor.distance.mode == AutoRangeMaxOnScreen) {
-        for(int i = 0; i < _cursor.indexes.size(); i++) {
+        for(unsigned int i = 0; i < _cursor.indexes.size(); i++) {
             Epoch* epoch = _dataset->fromIndex(_cursor.getIndex(i));
             if(epoch != NULL) {
                 float epoch_range = epoch->getMaxRnage(_cursor.channel1);

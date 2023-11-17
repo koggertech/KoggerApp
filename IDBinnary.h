@@ -805,7 +805,7 @@ public:
         float start = 0, stop = 0; // 0 - ignore
     } DVLModeSetup;
 
-    void setModes(bool ismode1, bool ismode2, bool ismode3);
+    void setModes(bool ismode1, bool ismode2, bool ismode3, float range_mode3);
 
 protected:
 

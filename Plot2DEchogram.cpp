@@ -7,20 +7,24 @@ Plot2DEchogram::Plot2DEchogram() {
 }
 
 void Plot2DEchogram::setLowLevel(float low) {
-    _levels.low = low;
+    setLevels(low, _levels.high);
 }
 
 void Plot2DEchogram::setHightLevel(float high) {
-    _levels.high = high;
+    setLevels(_levels.low, high);
 }
 
 void Plot2DEchogram::setLevels(float low, float high) {
     _levels.low = low;
     _levels.high = high;
+    updateColors();
 }
 
 void Plot2DEchogram::setColorScheme(QVector<QColor> coloros, QVector<int> levels) {
     if(coloros.length() != levels.length()) { return; }
+
+    _colorTable.resize(256);
+    _colorLevels.resize(256);
 
     int nbr_levels = coloros.length() - 1;
     int i_level = 0;
@@ -34,9 +38,13 @@ void Plot2DEchogram::setColorScheme(QVector<QColor> coloros, QVector<int> levels
             int green = qRound(coloros[i].green()*a_koef + coloros[i + 1].green()*b_koef);
             int blue = qRound(coloros[i].blue()*a_koef + coloros[i + 1].blue()*b_koef);
             _colorHashMap[i_level] = ((red / 8) << 10) | ((green / 8) << 5) | ((blue / 8));
+
+            _colorTable[i_level] = qRgb(red, green, blue);
             i_level++;
         }
     }
+
+    updateColors();
 }
 
 void Plot2DEchogram::setThemeId(int theme_id) {
@@ -44,8 +52,8 @@ void Plot2DEchogram::setThemeId(int theme_id) {
     QVector<int> levels;
 
     if(theme_id == ClassicTheme) {
-        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(220, 255, 255)};
-        levels = {0, 30, 130, 255};
+        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(190, 240, 250), QColor::fromRgb(255, 255, 255)};
+        levels = {0, 30, 130, 220, 255};
     } else if(theme_id == SepiaTheme) {
         coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(50, 50, 10), QColor::fromRgb(230, 200, 100), QColor::fromRgb(255, 255, 220)};
         levels = {0, 30, 130, 255};
@@ -71,6 +79,30 @@ void Plot2DEchogram::setThemeId(int theme_id) {
     setColorScheme(coloros, levels);
 }
 
+void Plot2DEchogram::updateColors() {
+    float low = _levels.low;
+    float high = _levels.high;
+
+    int level_range = high - low;
+    int index_offset = (int)((float)low*2.5f);
+    float index_map_scale = 0;
+    if(level_range > 0) {
+        index_map_scale = (float)(256 - 1)/((float)(high - low)*2.55f);
+    } else {
+        index_map_scale = 10000;
+    }
+
+    for(int i = 0; i < _colorTable.size(); i++) {
+        int index_map = ((float)(i - index_offset)*index_map_scale);
+        if(index_map < 0) { index_map = 0; }
+        else if(index_map > 255) { index_map = 255; }
+        _colorLevels[i] = _colorTable[index_map];
+    }
+
+    _flagColorChanged = true;
+    _image.setColorTable(_colorLevels);
+}
+
 void Plot2DEchogram::resetCash() {
     _cashFlags.resetCash = true;
 }
@@ -80,6 +112,10 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
         _cash.resize(width);
         resetCash();
     }
+
+    uint8_t* image_data = (uint8_t*)_image.constBits();
+    const int b_scanline = _image.bytesPerLine();
+
 
     bool is_cash_notvalid = getTriggerCashReset();
     is_cash_notvalid |= !_lastCursor.isChannelsEqual(cursor);
@@ -117,7 +153,7 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
 
     int wrap_start_pos = qAbs(cursor.getIndex(0) % width);
 
-    for(int i = 0; i < cursor.indexes.size(); i++) {
+    for(unsigned int i = 0; i < cursor.indexes.size(); i++) {
         if(cursor.indexes[i] > 0) {
             wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
             break;
@@ -128,12 +164,22 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
 //    _cashPosition = wrap_start_pos;
     for(int column = 0; column < width; column++) {
         if(_cash[column].data.size() != height) {
-            _cash[column].stateColor = CashLine::CashStateNotValid;
+//            _cash[column].stateColor = CashLine::CashStateNotValid;
             _cash[column].state = CashLine::CashStateNotValid;
             _cash[column].data.resize(height);
 //            _cash[column].data.fill(0);
             _cash[column].poolIndex = -1;
             _cash[column].state = CashLine::CashStateEraced;
+            _cash[column].isNeedUpdate = true;
+
+            int16_t cash_data_size = _cash[column].data.size();
+            int16_t* cash_data = _cash[column].data.data();
+            uint8_t * img_data = image_data + column;
+            for (int image_row = 0; image_row < cash_data_size; image_row++) {
+                *img_data = *cash_data;
+                img_data += b_scanline;
+                cash_data++;
+            }
         }
 
         int cursor_pos = column - wrap_start_pos;
@@ -176,30 +222,57 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
                     cash_validate++;
 
                     _cash[column].state = CashLine::CashStateValid;
-                    _cash[column].stateColor = CashLine::CashStateNotValid;
+                    _cash[column].isNeedUpdate = true;
+                    uint8_t * img_data = image_data + column;
+                    for (int image_row = 0; image_row < cash_data_size; image_row++) {
+                        *img_data = *cash_data;
+                        img_data += b_scanline;
+                        cash_data++;
+                    }
+//                    _cash[column].stateColor = CashLine::CashStateNotValid;
                 } else {
                     if(_cash[column].state != CashLine::CashStateEraced) {
-                        _cash[column].stateColor = CashLine::CashStateNotValid;
+//                        _cash[column].stateColor = CashLine::CashStateNotValid;
                         _cash[column].state = CashLine::CashStateNotValid;
                         _cash[column].data.fill(0);
                         _cash[column].poolIndex = -1;
                         _cash[column].state = CashLine::CashStateEraced;
+                        _cash[column].isNeedUpdate = true;
+
+                        int16_t cash_data_size = _cash[column].data.size();
+                        int16_t* cash_data = _cash[column].data.data();
+                        uint8_t * img_data = image_data + column;
+                        for (int image_row = 0; image_row < cash_data_size; image_row++) {
+                            *img_data = *cash_data;
+                            img_data += b_scanline;
+                            cash_data++;
+                        }
                     }
                 }
             }
         } else {
             if(_cash[column].state != CashLine::CashStateEraced) {
-                _cash[column].stateColor = CashLine::CashStateNotValid;
+//                _cash[column].stateColor = CashLine::CashStateNotValid;
                 _cash[column].state = CashLine::CashStateNotValid;
                 _cash[column].data.fill(0);
                 _cash[column].poolIndex = -1;
                 _cash[column].state = CashLine::CashStateEraced;
+                _cash[column].isNeedUpdate = true;
+
+                int16_t* cash_data = _cash[column].data.data();
+                int16_t cash_data_size = _cash[column].data.size();
+                uint8_t * img_data = image_data + column;
+                for (int image_row = 0; image_row < cash_data_size; image_row++) {
+                    *img_data = *cash_data;
+                    img_data += b_scanline;
+                    cash_data++;
+                }
             }
 
         }
     }
 
-//    qInfo("Cash validate %u", cash_validate);
+    qInfo("Cash validate %u", cash_validate);
 
     _lastCursor = cursor;
     _lastWidth = width;
@@ -210,70 +283,43 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
 
 bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
     if(isVisible() && dataset != nullptr && cursor.distance.isValid()) {
-        uint16_t* image_data = canvas.data();
-        const int cash_width = canvas.width();
         const int image_width = canvas.width();
         const int image_height = canvas.height();
-        const int lowLevel = _levels.low;
-        const int hightLevel = _levels.high;
 
-        bool is_levels_changed = false;
-        if(_levels.low != _lastLevels.low || _levels.high != _lastLevels.high) {
-            is_levels_changed = true;
-            _lastLevels.low = _levels.low;
-            _lastLevels.high = _levels.high;
+        if(_image.width() != image_width || _image.height() != image_height) {
+            _image = QImage(image_width, image_height, QImage::Format_Indexed8);
+            _image.setColorTable(_colorLevels);
+            _pixmap = QPixmap(image_width, image_height);
         }
+
+        const int cash_width = canvas.width();
 
         const int cash_position = updateCash(dataset, cursor, cash_width, image_height);
 
-        int level_range = hightLevel - lowLevel;
-        int index_offset = (int)((float)lowLevel*2.5f);
-        float index_map_scale = 0;
-        if(level_range > 0) {
-            index_map_scale = (float)(256 - 1)/((float)(hightLevel - lowLevel)*2.55f);
-        } else {
-            index_map_scale = 10000;
-        }
+        QPainter p(&_pixmap);
 
-        int cnt_color_update = 0;
-
-        for(int image_col = 0;  image_col < cash_width; image_col++) {
-            int cash_col = cash_position + image_col;
-            if(cash_col >= cash_width) {
-                cash_col -= cash_width;
+        int cash_col = 0;
+        while(cash_col < cash_width) {
+            int cash_col_1 = cash_col;
+            while(cash_col < cash_width && (_cash[cash_col].isNeedUpdate || _flagColorChanged)) {
+                _cash[cash_col].isNeedUpdate = false;
+                cash_col++;
             }
 
-            int16_t* cashdata = _cash[cash_col].data.data();
-            const int cash_size = _cash[cash_col].data.size();
+            int cash_update_width = cash_col - cash_col_1;
 
-            bool is_redraw = is_levels_changed || (_cash[cash_col].stateColor != CashLine::CashStateValid);
-            if(cash_size != _cash[cash_col].color.size()) {
-                _cash[cash_col].color.resize(cash_size);
-                is_redraw = true;
-            }
-
-            uint16_t* cashcolor = _cash[cash_col].color.data();
-
-            if(is_redraw) {
-                for (int image_row = 0; image_row < image_height; image_row++) {
-                    int index_map = ((float)(cashdata[image_row] - index_offset)*index_map_scale);
-                    if(index_map < 0) { index_map = 0; }
-                    else if(index_map > 255) { index_map = 255; }
-                    uint16_t color = _colorHashMap[index_map];
-                    cashcolor[image_row] = color;
-
-                    image_data[image_row*image_width + image_col] = color;
-                }
-                _cash[cash_col].stateColor = CashLine::CashStateValid;
-                cnt_color_update++;
+            if(cash_update_width > 0) {
+                 p.drawImage(cash_col_1, 0, _image, cash_col_1, 0 , cash_update_width, 0, Qt::ThresholdDither); // Qt::NoOpaqueDetection |
             } else {
-                for (int image_row = 0; image_row < image_height; image_row++) {
-                    image_data[image_row*image_width + image_col] = cashcolor[image_row];
-                }
+                cash_col++;
             }
         }
 
-//        qInfo("Color updated %u", cnt_color_update);
+        _flagColorChanged = false;
+
+        canvas.painter()->drawPixmap(0, 0, _pixmap, cash_position, 0, cash_width - cash_position, 0);
+        canvas.painter()->drawPixmap(cash_width - cash_position, 0, _pixmap, 0, 0, cash_position, 0);
+    } else {
     }
 
     return true;

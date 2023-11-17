@@ -11,10 +11,9 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
         pen.setWidth(_lineWidth);
         pen.setColor(_lineColor);
 
-        QImage qimage = canvas.getQImage();
-        QPainter p(&qimage);
-        p.setPen(pen);
-        p.setFont(QFont("Asap", 14, QFont::Normal));
+        QPainter* p = canvas.painter();
+        p->setPen(pen);
+        p->setFont(QFont("Asap", 14, QFont::Normal));
 
         const int image_height = canvas.height();
         const int image_width = canvas.width();
@@ -22,7 +21,7 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
         for (int i = 1; i < lines_count; i++) {
             int pos_y = i*image_height/lines_count;
 
-            p.drawLine(0, pos_y, image_width, pos_y);
+            p->drawLine(0, pos_y, image_width, pos_y);
         }
 
         int text_offset = 10;
@@ -36,12 +35,12 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
                 float range_text = distance_range*i/lines_count + distance_from;
                 int pos_y = i*image_height/lines_count;
 
-                p.drawText(image_width - 70, pos_y - text_offset, QString::number(range_text) + QStringLiteral(" m"));
+                p->drawText(image_width - 100, pos_y - text_offset, QString::number(range_text) + QStringLiteral(" m"));
             }
 
-            p.setFont(QFont("Asap", 26, QFont::Normal));
+            p->setFont(QFont("Asap", 26, QFont::Normal));
             QString range_text = QString::number(cursor.distance.to) + QStringLiteral(" m");
-            p.drawText(image_width - 30 - range_text.count()*15, image_height - 10, range_text);
+            p->drawText(image_width - 50 - range_text.count()*25, image_height - 10, range_text);
 
             text_offset -= 140;
         }
@@ -60,11 +59,11 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
 
             if(isfinite(distance)) {
                 pen.setColor(QColor(250, 100, 0));
-                p.setPen(pen);
+                p->setPen(pen);
 
-                p.setFont(QFont("Asap", 36, QFont::Normal));
-                QString range_text = QString::number(distance) + QStringLiteral(" m");
-                p.drawText(image_width - 30 - range_text.count()*15 - 140, image_height - 10, range_text);
+                p->setFont(QFont("Asap", 40, QFont::Normal));
+                QString range_text = QString::number(round(distance*100.0)/100.0) + QStringLiteral(" m");
+                p->drawText(image_width/2 - range_text.count()*32, image_height - 15, range_text);
 
                 text_offset -= 140;
             }
@@ -77,13 +76,13 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
             const float attitude_to = cursor.attitude.to;
             const float attitude_range = attitude_to - attitude_from;
 
-            p.setFont(QFont("Asap", 14, QFont::Normal));
+            p->setFont(QFont("Asap", 14, QFont::Normal));
 
             for (int i = 1; i < lines_count; i++) {
                 float attitude_text = attitude_range*i/lines_count + attitude_from;
                 int pos_y = i*image_height/lines_count;
 
-                p.drawText(image_width - 150, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" °"));
+                p->drawText(image_width - 150, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" °"));
             }
 
             text_offset -= 140;
@@ -94,13 +93,13 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
             const float velocity_to = cursor.velocity.to;
             const float velocity_range = velocity_to - velocity_from;
 
-            p.setFont(QFont("Asap", 14, QFont::Normal));
+            p->setFont(QFont("Asap", 14, QFont::Normal));
 
             for (int i = 1; i < lines_count; i++) {
                 float attitude_text = velocity_range*i/lines_count + velocity_from;
                 int pos_y = i*image_height/lines_count;
 
-                p.drawText(image_width - 150, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" m/s"));
+                p->drawText(image_width - 150, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" m/s"));
             }
         }
 

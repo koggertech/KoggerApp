@@ -260,24 +260,90 @@ Window  {
         }
     }
 
-    Rectangle {
-        visible: isFinite(devs.vruVoltage)
-        anchors.top: parent
-        width: fcTextBatt.width
-        height: 30
-        x: parent.width/2-width/2
-        color: "#222222"
-        opacity: 1
-        border.color: "#AAAAAA"
-        border.width: 1
 
-        CText {
-            id: fcTextBatt
-            rightPadding: 20
-            leftPadding: 20
-            text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
+
+
+    ColumnLayout {
+        anchors.top: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        RowLayout {
+            MenuBlock {
+            }
+            CCombo  {
+                id: pilotArmedState
+                Layout.margins: 4
+                visible: devs.pilotArmState >= 0
+                Layout.fillWidth: true
+                model: ["Disarmed", "Armed"]
+                currentIndex: devs.pilotArmState
+
+                onCurrentIndexChanged: {
+                    if(currentIndex != devs.pilotArmState) {
+                        currentIndex = devs.pilotArmState
+                    }
+                }
+            }
+
+            CCombo  {
+                id: pilotModeState
+                Layout.margins: 4
+                visible: devs.pilotModeState >= 0
+                Layout.fillWidth: true
+                model: [
+                    "Manual",
+                    "Acro",
+                    "Steering",
+                    "Hold",
+                    "Loiter",
+                    "Follow",
+                    "Simple",
+                    "Dock",
+                    "Circle",
+                    "Auto",
+                    "RTL",
+                    "SmartRTL",
+                    "Guided",
+                    "Mode16",
+                    "Mode17"
+                ]
+                currentIndex: devs.pilotModeState
+
+                onCurrentIndexChanged: {
+                    if(currentIndex != devs.pilotModeState) {
+                        currentIndex = devs.pilotModeState
+                    }
+                }
+            }
         }
+
+        RowLayout {
+            MenuBlock {
+
+            }
+            CText {
+                id: fcTextBatt
+                Layout.margins: 4
+                visible: isFinite(devs.vruVoltage)
+                rightPadding: 20
+                leftPadding: 20
+                text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
+            }
+        }
+
+
+
+//        CText {
+//            id: fcTextMode
+//            rightPadding: 20
+//            leftPadding: 20
+//            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
+//            text: devs.pilotArmed ? "Armed" : "Disarmed"
+//        }
+
+
     }
+
 
     MenuBar {
         id: menuBar

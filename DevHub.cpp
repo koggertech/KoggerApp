@@ -5,6 +5,8 @@ extern Core core;
 #include <QDateTime>
 
 void Device::putData(const QByteArray &data) {
+    static int _cnter_echo = 0;
+
 
     uint8_t* ptr_data = (uint8_t*)(data.data());
     if(ptr_data == NULL || data.size() < 1) { return; }
@@ -14,9 +16,11 @@ void Device::putData(const QByteArray &data) {
         _parser.process();
         if(!_parser.isComplete()) { continue; }
 
+
+
         if(isProxyNavOpen() && (_parser.isCompleteAsNMEA() || _parser.isCompleteAsUBX() || _parser.isCompleteAsMAVLink())) {
             emit writeProxyNav(QByteArray((char*)_parser.frame(), _parser.frameLen()));
-            continue;
+//            continue;
         }
 
         if(isProxyOpen() && (_parser.isComplete())) {
@@ -46,6 +50,10 @@ void Device::putData(const QByteArray &data) {
 
         if(_parser.completeAsKBP() || _parser.completeAsKBP2()) {
             uint8_t addr = _parser.route();
+            _cnter_echo++;
+            if(_cnter_echo > 20000) {
+                _isSupressParser = true;
+            }
 
             if(lastRoute != addr) {
                 if(devAddr[addr] == NULL) {
@@ -85,6 +93,9 @@ void Device::putData(const QByteArray &data) {
             }
 #endif
 
+//            if(_isSupressParser == true) {
+//                return;
+//            }
             lastDevs->protoComplete(_parser);
         }
 
@@ -165,15 +176,41 @@ void Device::putData(const QByteArray &data) {
 
         if(_parser.isCompleteAsMAVLink()) {
             ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)_parser;
-            if(mavlink_frame.msgId() == 33) { // GLOBAL_POSITION_INT
-                MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
+//            if(mavlink_frame.msgId() == 33) { // GLOBAL_POSITION_INT
+//                MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
+//                if(pos.isValid()) {
+//                    core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+////                    core.dataset()->addGnssVelocity(sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY()), 0);
+
+//                    _vru.velocityH = sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY());
+//                    emit vruChanged();
+////                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2, velocity %3 m/s").arg(pos.latitude()).arg(pos.longitude()).arg(velocityH, 4));
+//                }
+//            }
+
+            if(mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
+                MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
                 if(pos.isValid()) {
                     core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    core.dataset()->addGnssVelocity(pos.velocityH(), 0);
 
-                    _vru.velocityH = sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY());
+                    _vru.velocityH = sqrtf(pos.velocityH());
                     emit vruChanged();
 //                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2, velocity %3 m/s").arg(pos.latitude()).arg(pos.longitude()).arg(velocityH, 4));
                 }
+            }
+
+            if(mavlink_frame.msgId() == 0) { // SYS_STATUS
+                MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
+                _vru.armState = (int)heartbeat.isArmed();
+                _vru.flight_mode = (int)heartbeat.customMode();
+                emit vruChanged();
+//                core.consoleInfo(QString(">> FC: Custom mode %1, arm %2, man %3, custom %4, mode %5").
+//                                 arg(heartbeat.custom_mode).
+//                                 arg((heartbeat.base_mode >> 7) & 1).
+//                                 arg((heartbeat.base_mode >> 6) & 1).
+//                                 arg(heartbeat.base_mode & 1).
+//                                 arg(heartbeat.base_mode));
             }
 
 //            if(mavlink_frame.msgId() == 1) { // SYS_STATUS

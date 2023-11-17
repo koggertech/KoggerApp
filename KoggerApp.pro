@@ -13,6 +13,10 @@ android {
     QT += androidextras
     QT += core-private
     CONFIG += mobility
+
+    QMAKE_CXXFLAGS_DEBUG -= -O2
+    QMAKE_CXXFLAGS_DEBUG -= -O3
+    QMAKE_CXXFLAGS_DEBUG += -O0
 }
 
 CONFIG += c++11

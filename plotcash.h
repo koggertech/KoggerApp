@@ -154,6 +154,7 @@ typedef struct {
 
 
 const int CHANNEL_NONE = 0x8000;
+const int CHANNEL_FIRST = 0x8000-1;
 
 typedef struct DatasetChannel {
     int channel = -1;
@@ -176,6 +177,7 @@ typedef struct DatasetChannel {
 
 typedef enum BottomTrackPreset {
     BottomTrackOneBeam,
+    BottomTrackOneBeamNarrow,
     BottomTrackSideScan
 } BottomTrackPreset;
 
@@ -219,7 +221,7 @@ public:
         void setDistance(float dist, DistanceSource src = DistanceSourceNone) { distance = dist; source = src; }
         void clearDistance(DistanceSource src = DistanceSourceNone) { distance = NAN; source = src; }
         void resetDistance() { distance = NAN; source = DistanceSourceNone; }
-        float getDistance() { return distance; }
+        float getDistance() const { return distance; }
 
         void setMin(float val, DistanceSource src = DistanceSourceNone) {
             min = val;
@@ -241,7 +243,7 @@ public:
     } DistProcessing;
 
     typedef struct {
-        QVector<int16_t> amplitude;
+        QVector<uint8_t> amplitude;
         float resolution = 0; // m
         float offset = 0; // m
         int type = 0;
@@ -262,7 +264,7 @@ public:
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
     void setEncoder(float encoder);
-    void setChart(int16_t channel, QVector<int16_t> chartData, float resolution, int offset);
+    void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, int offset);
     void setIQ(QByteArray data, uint8_t type);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
@@ -270,6 +272,8 @@ public:
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setExternalPosition(Position position);
+
+    void setGnssVelocity(double h_speed, double course);
 
     void setTime(DateTime time);
     void setTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0);
@@ -324,11 +328,11 @@ public:
     int eventTimestamp() {return _eventTimestamp_us; }
     int eventUnix() { return _eventUnix; }
 
-    QVector<int16_t> chartData(int16_t channel = 0) {
+    QVector<uint8_t> chartData(int16_t channel = 0) {
         if(chartAvail(channel)) {
             return _charts[channel].amplitude;
         }
-        return QVector<int16_t>();
+        return QVector<uint8_t>();
     }
     bool chartAvail() { return _charts.size() > 0; }
     bool chartAvail(int16_t channel) {
@@ -366,7 +370,9 @@ public:
     float getMaxRnage(int16_t channel = -1) {
         float range = NAN;
 
-        if(_charts.contains(channel)) {
+        if(_charts.size() > 0 && channel == CHANNEL_FIRST) {
+            range = _charts.first().range();
+        } else if(_charts.contains(channel)) {
             range = _charts[channel].range();
         }
 
@@ -386,8 +392,17 @@ public:
 
     bool distAvail() { return flags.distAvail; }
 
-    float distProccesing(int16_t channel) {
-        if(_charts.contains(channel)) {
+    double  distProccesing(int16_t channel) {
+        if(channel == CHANNEL_FIRST) {
+            QMapIterator<int16_t, Echogram> i(_charts);
+             while (i.hasNext()) {
+                 i.next();
+                 double distance = i.value().bottomProcessing.getDistance();
+                 if(isfinite(distance)) {
+                     return distance;
+                 }
+             }
+        } else if(_charts.contains(channel)) {
             return _charts[channel].bottomProcessing.getDistance();
         }
 
@@ -437,6 +452,8 @@ public:
 
     bool isPosAvail() { return flags.posAvail; }
 
+    double gnssHSpeed() { return _GnssData.hspeed; }
+
 
     void doBottomTrack2D(Echogram &chart, bool is_update_dist = false);
     void doBottomTrackSideScan(Echogram &chart, bool is_update_dist = false);
@@ -445,7 +462,9 @@ public:
     bool chartTo(int16_t channel, float start, float end, int16_t* dst, int len, int image_type, bool reverse = false) {
         if(dst == nullptr) {  return false; }
 
-        if(!_charts.contains(channel)) {
+        if(channel == CHANNEL_FIRST && _charts.size() > 0) {
+            channel =  _charts.firstKey();
+        } else if(!_charts.contains(channel)) {
             memset(dst, 0, len*2);
             return false;
         }
@@ -462,10 +481,11 @@ public:
             return false;
         }
 
-        int16_t* src;
+        uint8_t* src = NULL;
 
         if(image_type == 1 && _charts[channel].visual.size() > 0) {
-            src = _charts[channel].visual.data();
+//            src = _charts[channel].visual.data();
+            src = _charts[channel].amplitude.data();
         } else {
             src = _charts[channel].amplitude.data();
         }
@@ -530,7 +550,7 @@ public:
 
 protected:
 
-    QHash<int16_t, Echogram> _charts;
+    QMap<int16_t, Echogram> _charts;
     QMap<int16_t, float> _rangeFinders;
 
     int _eventTimestamp_us = 0;
@@ -554,6 +574,11 @@ protected:
 
     Position _positionGNSS;
     Position _positionExternal;
+
+    struct {
+        double hspeed = NAN;
+        double course = NAN;
+    } _GnssData;
 
     DateTime _time;
 
@@ -645,13 +670,16 @@ public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
     void addTimestamp(int timestamp);
-    void addChart(int16_t channel, QVector<int16_t> data, float resolution, float offset);
+    void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void addIQ(QByteArray data, uint8_t type);
     void addDist(int dist);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
+
+    void addGnssVelocity(double h_speed, double course);
+
 //    void addDateTime(int year, );
     void addTemp(float temp_c);
 

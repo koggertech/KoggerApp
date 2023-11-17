@@ -23,7 +23,7 @@ void Epoch::setEncoder(float encoder) {
 }
 
 
-void Epoch::setChart(int16_t channel, QVector<int16_t> data, float resolution, int offset) {
+void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, int offset) {
     _charts[channel].amplitude = data;
     _charts[channel].resolution = resolution;
     _charts[channel].offset = offset;
@@ -71,6 +71,11 @@ void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_ti
 
 void Epoch::setExternalPosition(Position position) {
     _positionExternal = position;
+}
+
+void Epoch::setGnssVelocity(double h_speed, double course) {
+    _GnssData.hspeed = h_speed;
+    _GnssData.course = course;
 }
 
 void Epoch::setTime(DateTime time) {
@@ -181,7 +186,7 @@ void Dataset::addEncoder(float encoder) {
 void Dataset::addTimestamp(int timestamp) {
 }
 
-void Dataset::addChart(int16_t channel, QVector<int16_t> data, float resolution, float offset) {
+void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset) {
     if(data.size() <= 0 || resolution == 0) { return; }
 
     int pool_index = endIndex();
@@ -196,6 +201,7 @@ void Dataset::addChart(int16_t channel, QVector<int16_t> data, float resolution,
     _pool[endIndex()].setChart(channel, data, resolution, offset);
 
     validateChannelList(channel);
+
     emit dataUpdate();
 }
 
@@ -270,6 +276,23 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     }
 
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
+    emit dataUpdate();
+}
+
+void Dataset::addGnssVelocity(double h_speed, double course) {
+    int pool_index = endIndex();
+    if(pool_index < 0) {
+        makeNewEpoch();
+        pool_index = endIndex();
+    }
+
+    if(isfinite(_pool[pool_index].gnssHSpeed())) {
+        makeNewEpoch();
+        pool_index = endIndex();
+    }
+
+
+    _pool[pool_index].setGnssVelocity(h_speed, course);
     emit dataUpdate();
 }
 
@@ -368,6 +391,19 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
     float s2 = 1.04f, s3 = 1.06f, s4 = 1.10f, s5 = 1.15f;
     float t1 = 1.07;
 
+
+
+    if(param.preset == BottomTrackOneBeamNarrow) {
+        istart = 4;
+        init_win = 6;
+        scale_win = 35;
+
+        c1 = -3, c2 = 8, c3 = 5, c4 = -1, c5 = -1;
+        s2 = 1.015f, s3 = 1.035f, s4 = 1.08f, s5 = 1.12f;
+        t1 = 1.04;
+    }
+
+
     if(param.preset == BottomTrackSideScan) {
         istart = 4;
         init_win = 6;
@@ -401,7 +437,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
 
         Epoch::Echogram* chart = epoch->chart(channel1);
 
-        int16_t* data = (int16_t*)chart->amplitude.constData();
+        uint8_t* data = (uint8_t*)chart->amplitude.constData();
         const int data_size = chart->amplitude.size();
 
         int cash_ind = (epoch_counter-1)%param.windowSize;
@@ -423,8 +459,8 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         int32_t* cash_data = (int32_t*)cash[cash_ind].constData();
 
 
-        int16_t* data_from = &data[istart];
-        int16_t* data_to = &data[(istart+init_win)];
+        uint8_t* data_from = &data[istart];
+        uint8_t* data_to = &data[(istart+init_win)];
 
         int data_acc = 0;
         for(int idata = istart; idata < (istart+init_win); idata++) {
@@ -651,7 +687,9 @@ void Dataset::updateTrack(bool update_all) {
             pos.LLA2NED(&_llaRef);
         }
 
-        float distance = epoch->distProccesing(1);
+        float distance = epoch->distProccesing(CHANNEL_FIRST);
+
+
         if(pos.ned.isCoordinatesValid() && isfinite(distance)) {
             _bottomTrack.append(QVector3D(pos.ned.n,pos.ned.e, -distance));
         }
@@ -668,6 +706,7 @@ QStringList Dataset::channelsNameList() {
     QStringList ch_names;
     QList<DatasetChannel> ch_list = channelsList().values();
     ch_names.append(QString("None"));
+    ch_names.append(QString("First"));
     for (const auto& channel : ch_list) {
         ch_names.append(QString("%1").arg(channel.channel));
     }

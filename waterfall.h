@@ -59,10 +59,13 @@ public slots:
     void plotBottomTrackTheme(int theme_id) { setBottomTrackTheme(theme_id); }
 
     void plotRangefinderVisible(bool visible) { setRangefinderVisible(visible); }
+    void plotRangefinderTheme(int theme_id) { setRangefinderTheme(theme_id); }
     void plotAttitudeVisible(bool visible) { setAttitudeVisible(visible); }
 
     void plotDopplerBeamVisible(bool visible, int beam_filter) { setDopplerBeamVisible(visible, beam_filter); }
     void plotDopplerInstrumentVisible(bool visible) { setDopplerInstrumentVisible(visible); }
+
+    void plotGNSSVisible(bool visible, int flags) { setGNSSVisible(visible, flags);}
 
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }

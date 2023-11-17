@@ -626,6 +626,8 @@ bool Core::openCSV(QString name, int separator_type, QString time_format, int fi
         track.append(Position());
 
         if(col_time > 0 && col_time-1 < columns.size()) {
+//            int y = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0, nsec = 0;
+//            sscanf(columns[col_time-1], time_format, &y, &month, &day, &hour, );
             QDateTime time = QDateTime::fromString(columns[col_time-1], time_format);
             if(time.isValid()) {
                 time.setTimeSpec(Qt::UTC);

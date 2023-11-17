@@ -2,45 +2,54 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QSGSimpleTextureNode>
+#include <QQuickWindow>
 
 #include <QMutex>
+#include <core.h>
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
     , m_updateTimer(new QTimer(this))
 {
-    setRenderTarget(QQuickPaintedItem::FramebufferObject);
-    connect(m_updateTimer, &QTimer::timeout, this, [&] { timerUpdater(); });
+//    setRenderTarget(QQuickPaintedItem::FramebufferObject);
+//    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
     m_updateTimer->start(30);
+    setFlag(ItemHasContents);
     setAcceptedMouseButtons(Qt::AllButtons);
 //    setFillColor(QColor(255, 255, 255));
 
     _isHorizontal = false;
 }
 
-void qPlot2D::paint(QPainter *painter){
-    static QMutex mutex;
-    if(!mutex.tryLock()) { return; }
-#ifdef USE_PIXMAP
-    static QPixmap pix;
-#endif
-    if(m_plot != nullptr && painter != nullptr) {
-#ifdef USE_PIXMAP
+#include <time.h>
 
-        if(_isHorizontal) {
-            pix = QPixmap::fromImage(getImage((int)width(), (int)height()), Qt::NoFormatConversion);
-        } else {
-            pix = QPixmap::fromImage(getImage((int)width(), (int)height()), Qt::NoFormatConversion);
-//            pix = QPixmap::fromImage(getImage((int)height(), (int)width()).transformed(QMatrix().rotate(-90.0), Qt::FastTransformation).mirrored(true, false), Qt::NoFormatConversion);
-        }
-        painter->drawPixmap(0, 0, pix);
-#else
-        painter->drawImage(0, 0, getImage((int)width(), (int)height()),0,0, -1, -1, Qt::NoFormatConversion);
-#endif
+void qPlot2D::paint(QPainter *painter) {
+    clock_t start = clock();
+
+    if(m_plot != nullptr && painter != nullptr) {
+         getImage((int)width(), (int)height(), painter);
     }
 
-    mutex.unlock();
+    clock_t end = clock();
+    int cpu_time_used = ((end-start));
+
+//    qInfo("r time %d", cpu_time_used);
 }
+
+//QSGNode *qPlot2D::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
+//{
+//    QSGSimpleTextureNode *node = static_cast<QSGSimpleTextureNode *>(oldNode);
+//    if (!node) {
+//        node = new QSGSimpleTextureNode();
+
+//    }
+
+//    QSGTexture *texture = window()->createTextureFromImage(getImage((int)width(), (int)height()));
+////    node->markDirty(QSGNode::DirtyForceUpdate);
+//    node->setTexture(texture);
+//    node->setRect(boundingRect());
+//    return node;
+//}
 
 //QSGNode *qPlot2D::updatePaintNode( QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *updatePaintNodeData) {
 
@@ -71,8 +80,16 @@ void qPlot2D::setPlot(Dataset *dataset) {
 }
 
 void qPlot2D::plotUpdate() {
-    emit timelinePositionChanged();
+    static QMutex mutex;
+    if(!mutex.tryLock()) {
+//        qInfo("HHHHHHHHHHHHHHHHHHHHHHHHHH==================HHHHHHHHHHHHHHHHHHHHHHHHHH");
+        return;
+    }
+//    emit timelinePositionChanged();
+
     update();
+
+    mutex.unlock();
 }
 
 void qPlot2D::horScrollEvent(int delta) {
@@ -98,6 +115,7 @@ void qPlot2D::verScrollEvent(int delta) {
 void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
+
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
     if(_dataset != nullptr) {

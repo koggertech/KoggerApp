@@ -108,7 +108,7 @@ public:
                 pingch2.ChannelNumber = 1;
 
                 if(chart1 != NULL) {
-                    QVector<int16_t> raw = chart1->amplitude;
+                    QVector<uint8_t> raw = chart1->amplitude;
                     int constr_size = raw.size();
                     raw1.resize(constr_size);
                     for(int ri = 0; ri < constr_size; ri++) {
@@ -117,7 +117,7 @@ public:
                 }
 
                 if(chart2 != NULL) {
-                    QVector<int16_t> raw = chart2->amplitude;
+                    QVector<uint8_t> raw = chart2->amplitude;
                     int constr_size = raw.size();
                     raw2.resize(constr_size);
                     for(int ri = 0; ri < constr_size; ri++) {
@@ -221,7 +221,7 @@ public:
                     }
 
                     cdata += sizeof (XTFPINGCHANHEADER);
-                    QVector<int16_t> data;
+                    QVector<uint8_t> data;
                     data.resize(sample_count);
 
                     if((sample_format == 0 && sample_bytes == 1) || sample_format == 8) {

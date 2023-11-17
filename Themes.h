@@ -22,6 +22,7 @@ public:
 
     Q_PROPERTY(QColor textColor READ textColor NOTIFY changed)
     Q_PROPERTY(QColor textSolidColor READ textSolidColor NOTIFY changed)
+    Q_PROPERTY(QColor textErrorColor READ textErrorColor NOTIFY changed)
     Q_PROPERTY(QFont textFont READ textFont NOTIFY changed)
     Q_PROPERTY(QFont textFontS READ textFontS NOTIFY changed)
 
@@ -38,6 +39,7 @@ public:
     Q_PROPERTY(bool consoleVisible READ consoleVisible WRITE setConsoleVisible NOTIFY interfaceChanged)
 
     QColor textColor() { return *_textColor; }
+    QColor textErrorColor() { return *_textErrorColor; }
     QColor disabledTextColor() { return *_disabledTextColor; }
     QColor disabledBackColor() {return *_disabledBackColor;}
     QColor hoveredBackColor() { return *_hoveredBackColor; }
@@ -65,6 +67,7 @@ public:
         _textFont = new QFont("PT Sans Caption", 14);
         _textFontS = new QFont("PT Sans Caption", 12);
 #endif
+        _textErrorColor = new QColor(250, 0, 0);
 
         if(theme_id == 0) {
             _textColor = new QColor(250, 250, 250);
@@ -141,6 +144,7 @@ protected:
 
     QColor* _textColor;
     QColor* _textSolidColor;
+    QColor* _textErrorColor;
     QColor* _disabledTextColor;
     QColor* _disabledBackColor;
     QColor* _hoveredBackColor;

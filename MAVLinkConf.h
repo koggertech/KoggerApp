@@ -1,6 +1,8 @@
 #ifndef MAVLINKCONF_H
 #define MAVLINKCONF_H
 #include "stdint.h"
+#include "math.h"
+
 const uint8_t MAVLinkCRCExtra[] = {50, 124, 137, 0, 237, // keep lines, lines are indexes
 217,
 104,
@@ -513,6 +515,42 @@ typedef struct   __attribute__((packed)) {
 
 } MAVLink_MSG_GLOBAL_POSITION_INT;
 
+typedef struct   __attribute__((packed)) {
+    uint64_t time_usec; // Timestamp (UNIX Epoch time or time since system boot).
+
+    int32_t	lat; // Latitude, expressed, degE7
+    int32_t	 lon; // Longitude, expressed, degE7
+    int32_t	alt; // mm // Altitude (MSL). Positive for up. Note that virtually all GPS modules provide the MSL altitude in addition to the WGS84 altitude.
+    uint16_t eph = UINT16_MAX; // GPS HDOP horizontal dilution of position (unitless * 100). If unknown, set to: UINT16_MAX
+    uint16_t epv = UINT16_MAX; // GPS VDOP vertical dilution of position (unitless * 100). If unknown, set to: UINT16_MAX
+    uint16_t vel = UINT16_MAX; // cm/s // GPS ground speed. If unknown, set to: UINT16_MAX
+    uint16_t cog = UINT16_MAX; // Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+    uint8_t fix_type;
+    uint8_t satellites_visible = UINT8_MAX; // Number of satellites visible. If unknown, set to UINT8_MAX
+
+    double latitude() {
+        return double(lat)/1.0e7;
+    }
+
+    double longitude() {
+        return double(lon)/1.0e7;
+    }
+
+    uint32_t time_boot_msec() {
+        return time_usec;
+    }
+
+    bool isValid() {
+        return lat != 0 || lon != 0;
+    }
+
+    float velocityH() {
+        if(vel == UINT16_MAX) { return NAN; }
+        return float(vel)*0.01f;
+    }
+
+} MAVLink_MSG_GPS_RAW_INT;
+
 
 typedef struct   __attribute__((packed)) {
     float airspeed; // m/s
@@ -523,6 +561,36 @@ typedef struct   __attribute__((packed)) {
     float climb; // m/s
 } MAVLink_MSG_VFR_HUD;
 
+//typedef enum {
+//    Manual,
+//    Acro,
+//    Steering,
+//    Hold,
+//    Loiter,
+//    Follow,
+//    Simple,
+//    Dock,
+//    Circle,
+//    Auto,
+//    RTL,
+//    SmartRTL,
+//    Guided
+//} MAVLink_CustomMode;
+
+typedef struct   __attribute__((packed)) {
+    uint32_t custom_mode;
+    uint8_t type;
+    uint8_t autopilot;
+    uint8_t base_mode;
+    uint8_t system_status;
+    uint8_t mavlink_version;
+
+    bool isArmed() { return (base_mode & 128) != 0; }
+    bool isRemoteControl() { return (base_mode & 64) != 0; }
+    bool isCustomMode() { return (base_mode & 1) != 0; }
+    uint32_t customMode() { return custom_mode; }
+
+} MAVLink_MSG_HEARTBEAT;
 
 typedef struct   __attribute__((packed)) {
     uint32_t onboard_control_sensors_present; // MAV_SYS_STATUS_SENSOR	Bitmap showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present.
