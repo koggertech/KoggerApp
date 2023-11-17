@@ -170,6 +170,11 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
     Q_UNUSED(x)
     Q_UNUSED(y)
 
+    if(m_mode == BottomTrackVertexComboSelectionMode){
+        m_comboSelectionRect = {0,0,0,0};
+        m_bottomTrack->resetVertexSelection();
+    }
+
     m_camera->zoom(angleDelta.y());
 
     updatePlaneGrid();
