@@ -138,7 +138,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
 
     QOpenGLShaderProgram* shaderProgram = nullptr;
-    int colorLoc = -1, posLoc = -1, maxYLoc = -1, minYLoc = -1, matrixLoc = -1;
+    int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
     if(m_isDisplayingWithSurface){
         shaderProgram = shaderProgramMap["static"].get();
@@ -148,10 +148,10 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     }else{
         shaderProgram = shaderProgramMap["height"].get();
         shaderProgram->bind();
-        maxYLoc = shaderProgram->uniformLocation("max_y");
-        minYLoc = shaderProgram->uniformLocation("min_y");
-        shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
-        shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
+        maxZLoc = shaderProgram->uniformLocation("max_z");
+        minZLoc = shaderProgram->uniformLocation("min_z");
+        shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+        shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
     }
 
     posLoc = shaderProgram->attributeLocation("position");

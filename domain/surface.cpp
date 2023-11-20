@@ -240,12 +240,12 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
     }
 
     int posLoc    = shaderProgram->attributeLocation("position");
-    int maxYLoc   = shaderProgram->uniformLocation("max_y");
-    int minYLoc   = shaderProgram->uniformLocation("min_y");
+    int maxZLoc   = shaderProgram->uniformLocation("max_z");
+    int minZLoc   = shaderProgram->uniformLocation("min_z");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
 
-    shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
-    shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
+    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
