@@ -147,6 +147,29 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
     m_ray.setDirection(direction);
     //---------------------------------------------//
 
+    //m_rayCaster->reset();
+    //m_rayCaster->setMode(RayCaster::RayCastMode::Triangle);
+    //m_rayCaster->addObject(m_surface);
+    //m_rayCaster->trigger(m_ray.origin(), m_ray.direction());
+    //auto hits = m_rayCaster->hits();
+    //
+    //m_polygonGroup->clearData();
+    //if(!hits.isEmpty()){
+    //    auto polygon = std::make_shared<PolygonObject>();
+    //    auto hit = hits.first();
+    //    for(int i = hit.indices().first; i <= hit.indices().second; i++){
+    //        auto vertex = hit.sourceObject().lock()->cdata().at(i);
+    //        auto point = std::make_shared<PointObject>();
+    //        point->setPosition(vertex.x(), vertex.y(), vertex.z());
+    //        polygon->append(point);
+    //    }
+    //    m_polygonGroup->addPolygon(polygon);
+    //}
+    //
+    //qDebug() << "Surface triangle raycast test. Size is " << hits.size();
+
+    //--------------------------------------------
+
     m_bottomTrack->mouseMoveEvent(buttons,x,y);
     m_lastMousePos = {x,y};
     QQuickFramebufferObject::update();
@@ -357,7 +380,7 @@ GraphicsScene3dView::Camera::Camera(qreal pitch,
     ,m_distToFocusPoint(std::move(distToFocusPoint))
     ,m_sensivity(std::move(sensivity))
 {
-    setIsometricView();
+   setIsometricView();
 }
 
 qreal GraphicsScene3dView::Camera::fov() const
@@ -383,9 +406,10 @@ QMatrix4x4 GraphicsScene3dView::Camera::viewMatrix() const
 void GraphicsScene3dView::Camera::rotate(qreal yaw, qreal pitch)
 {
     QVector3D viewDir = (m_eye-m_lookAt).normalized();
-    QVector3D right = QVector3D::crossProduct(viewDir,QVector3D(0.0f, 1.0f, 0.0f)).normalized();
+    QVector3D right = QVector3D::crossProduct(viewDir,m_up).normalized();
 
     float cosAngle = QVector3D::dotProduct(viewDir, m_up);
+
     auto sgn = [](float val){
         return (float(0) < val) - (val < float(0));
     };
@@ -416,7 +440,12 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
     QVector4D horizontalAxis = inverted * QVector4D(-1.0f, 0.0f, 0.0f, 0.0f);
     QVector4D verticalAxis = inverted * QVector4D(0.0f, 1.0f, 0.0f, 0.0f);
 
-    m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) + verticalAxis * (float)(endPos.y() - startPos.y())) * m_sensivity * 0.05f).toVector3D();
+    m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) +
+                      verticalAxis * (float)(endPos.y() - startPos.y())) *
+                      m_sensivity *
+                      0.05f)
+            .toVector3D();
+
     m_useFocusPoint = false;
 
     auto lookAt = m_lookAt + m_deltaOffset;
@@ -474,7 +503,6 @@ void GraphicsScene3dView::Camera::setIsometricView()
 void GraphicsScene3dView::Camera::reset()
 {
     m_eye = {0.0f, 0.0f, 20.0f};
-    m_up = {0.0f, 1.0f, 0.0f};
     m_lookAt = {0.0f, 0.0f, 0.0f};
     m_relativeOrbitPos = m_eye;
 

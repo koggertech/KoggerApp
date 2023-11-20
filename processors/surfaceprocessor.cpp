@@ -112,7 +112,7 @@ void SurfaceProcessor::process()
 
     for (int i = 0; i < data.size(); i++){
         Point2D <double> point(static_cast <double> (data.at(i).x()),
-                               static_cast <double> (data.at(i).z()),
+                               static_cast <double> (data.at(i).y()),
                                static_cast <double> (i));
 
         set.insert(point);
@@ -137,8 +137,8 @@ void SurfaceProcessor::process()
         Cube bounds = m_task.m_bottomTrack.lock()->bounds();
         auto fullGrid = GridGenerator <double>::generateQuadGrid(Point3D <double>(
                                                                 bounds.minimumX(),
-                                                                bounds.minimumZ(),
-                                                                bounds.minimumY()
+                                                                bounds.minimumY(),
+                                                                bounds.minimumZ()
                                                             ),
                                                             bounds.width(),
                                                             bounds.length(),
