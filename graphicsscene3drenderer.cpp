@@ -76,6 +76,13 @@ void GraphicsScene3dRenderer::drawObjects()
     view = m_camera.m_view;
     projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 5000.0f);
 
+    model.rotate(-90.0f, {1.0f,0.0f,0.0f});
+    auto inv_y = QMatrix4x4();
+    auto c = inv_y.column(1);
+    c.setY(-c.y());
+    inv_y.setColumn(1,c);
+    model *= inv_y;
+
     m_model = std::move(model);
     m_projection = std::move(projection);
 

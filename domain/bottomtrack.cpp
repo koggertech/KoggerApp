@@ -54,7 +54,7 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
         RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
         for(int i = 0; i < RENDER_IMPL(BottomTrack)->m_data.size(); i++){
             auto p = RENDER_IMPL(BottomTrack)->m_data.at(i);
-            auto p_screen = p.project(m_view->m_model * m_view->camera().lock()->viewMatrix(),
+            auto p_screen = p.project(m_view->camera().lock()->viewMatrix()*m_view->m_model,
                             m_view->m_projection,
                             m_view->boundingRect().toRect());
 

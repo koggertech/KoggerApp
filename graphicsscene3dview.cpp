@@ -132,12 +132,12 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
 
     //---------->Calculate ray in 3d space<---------//
     auto origin = QVector3D(x, height() - y, -1.0f)
-            .unproject(m_model * m_camera->m_view,
+            .unproject(m_camera->m_view*m_model,
                        m_projection,
                        boundingRect().toRect());
 
     auto end = QVector3D(x, height() - y, 1.0f)
-            .unproject(m_model * m_camera->m_view,
+            .unproject(m_camera->m_view*m_model,
                        m_projection,
                        boundingRect().toRect());
 
