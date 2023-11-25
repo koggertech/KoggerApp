@@ -47,6 +47,29 @@ SurfaceProcessorTask Surface::processingTask() const
     return m_processingTask;
 }
 
+void Surface::setVerticalScale(float scale)
+{
+    auto d = RENDER_IMPL(Surface);
+
+    if(d->m_verticalScale == scale)
+        return;
+    else if(d->m_verticalScale < 1.0f)
+        d->m_verticalScale = 1.0f;
+    else if(d->m_verticalScale > 10.0f)
+        d->m_verticalScale = 10.0f;
+    else
+        d->m_verticalScale = scale;
+
+    //TODO! Calculate bounds with scale factor
+
+    Q_EMIT changed();
+}
+
+float Surface::verticalScale() const
+{
+    return RENDER_IMPL(Surface)->m_verticalScale;
+}
+
 void Surface::setData(const QVector<QVector3D>& data, int primitiveType)
 {
     blockSignals(true);
@@ -254,4 +277,11 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
+}
+
+void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+{
+    auto m = model;
+    m.scale(1.0f,1.0f,m_verticalScale);
+    render(ctx,projection*view*m,shaderProgramMap);
 }

@@ -107,6 +107,14 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 
 }
 
+void SurfaceControlMenuController::onVerticalScaleSliderValueChanged(float value)
+{
+    if(!m_graphicsSceneView)
+        return;
+
+    m_graphicsSceneView->surface()->setVerticalScale(value);
+}
+
 void SurfaceControlMenuController::onUpdateSurfaceButtonClicked()
 {
     auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);

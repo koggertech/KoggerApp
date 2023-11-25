@@ -143,6 +143,13 @@ Item {
                 }
             }
 
+            KSlider{
+                from: 1
+                to: 10
+                Layout.fillWidth: true
+                onValueChanged: root.controller.onVerticalScaleSliderValueChanged(value)
+            }
+
             KParamSetup {
                 id: triangleEdgeLengthLimit
                 objectName: "triangleEdgeLengthLimit"

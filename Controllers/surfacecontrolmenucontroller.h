@@ -36,6 +36,8 @@ public:
 
     Q_INVOKABLE void onFilterTypeComboBoxIndexChanged(int index);
 
+    Q_INVOKABLE void onVerticalScaleSliderValueChanged(float value);
+
 Q_SIGNALS:
     void surfaceProcessorTaskStarted();
     void surfaceProcessorTaskFinished();

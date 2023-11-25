@@ -90,7 +90,8 @@ void GraphicsScene3dRenderer::drawObjects()
 
     m_planeGridRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    //m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_surfaceRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
 
