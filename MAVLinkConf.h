@@ -561,24 +561,31 @@ typedef struct   __attribute__((packed)) {
     float climb; // m/s
 } MAVLink_MSG_VFR_HUD;
 
-//typedef enum {
-//    Manual,
-//    Acro,
-//    Steering,
-//    Hold,
-//    Loiter,
-//    Follow,
-//    Simple,
-//    Dock,
-//    Circle,
-//    Auto,
-//    RTL,
-//    SmartRTL,
-//    Guided
-//} MAVLink_CustomMode;
+
 
 typedef struct   __attribute__((packed)) {
+    typedef enum {
+        Manual = 0,
+        Acro,
+        Steering,
+        Hold,
+        Loiter,
+        Follow,
+        Simple,
+        Dock,
+        Circle,
+        Auto,
+        RTL,
+        SmartRTL,
+        Guided
+    } MAVLink_CustomMode;
+
+//    union {
+//        MAVLink_CustomMode custom_mode_enum;
+//        uint32_t custom_mode;
+//    };
     uint32_t custom_mode;
+
     uint8_t type;
     uint8_t autopilot;
     uint8_t base_mode;
@@ -660,4 +667,28 @@ typedef struct   __attribute__((packed)) {
         }
     }
 } MAVLink_MSG_BATTERY_STATUS;
+
+
+typedef struct __attribute__((packed)) {
+ uint32_t time_boot_ms; /*< [ms] Timestamp (time since system boot).*/
+ float roll; /*< [rad] Roll angle (-pi..+pi)*/
+ float pitch; /*< [rad] Pitch angle (-pi..+pi)*/
+ float yaw; /*< [rad] Yaw angle (-pi..+pi)*/
+ float rollspeed; /*< [rad/s] Roll angular speed*/
+ float pitchspeed; /*< [rad/s] Pitch angular speed*/
+ float yawspeed; /*< [rad/s] Yaw angular speed*/
+
+ float yawDeg() { return yaw*57.2957795;}
+ float pitchDeg() { return pitch*57.2957795;}
+ float rollDeg() { return roll*57.2957795;}
+
+} MAVLink_MSG_ATTITUDE;
+
+
+
+
+
+
+
+
 #endif // MAVLINKCONF_H

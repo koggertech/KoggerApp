@@ -85,7 +85,7 @@ public slots:
     bool openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp);
     bool openConnectionAsFile(const int id, const QString &name, bool is_append = false);
     bool openXTF(QByteArray data);
-    bool openCSV(QString name, int separator_type, QString time_format, int row = -1, int col_time = -1, int col_lat = -1, int col_lon = -1, int col_north = -1, int col_east = -1, int altitude = -1, int distance = -1);
+    bool openCSV(QString name, int separator_type, int row = -1, int col_time = -1, bool is_utc_time = true, int col_lat = -1, int col_lon = -1, int col_north = -1, int col_east = -1, int altitude = -1, int distance = -1);
     bool devsConnection();
 
     bool isOpenConnection();

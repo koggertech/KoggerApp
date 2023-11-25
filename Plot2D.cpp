@@ -11,8 +11,8 @@ Plot2D::Plot2D() {
     _aim.setVisible(true);
 
     setDataChannel(CHANNEL_FIRST);
-//    _cursor.attitude.from = -10;
-//    _cursor.attitude.to = 10;
+//    _cursor.attitude.from = -180;
+//    _cursor.attitude.to = 180;
 
     _cursor.distance.set(0, 20);
 //    _cursor.velocity.set(-1, 1);
@@ -189,14 +189,19 @@ void Plot2D::zoomDistance(float ratio) {
 
     if(new_range < 1) {
         new_range = 1;
-    } else if(new_range > 200) {
-        new_range = 200;
+    } else if(new_range > 500) {
+        new_range = 500;
     }
 
-    if(from < to) {
-       _cursor.distance.to = ceil(_cursor.distance.from + new_range);
-    } else if(from > to) {
-        _cursor.distance.from = ceil(_cursor.distance.to + new_range);
+    if(_cursor.channel2 == CHANNEL_NONE) {
+        if(from < to) {
+            _cursor.distance.to = ceil(_cursor.distance.from + new_range);
+        } else if(from > to) {
+            _cursor.distance.from = ceil(_cursor.distance.to + new_range);
+        }
+    } else if(_cursor.channel2 != CHANNEL_NONE) {
+        _cursor.distance.from = -ceil( new_range/2);
+        _cursor.distance.to = ceil( new_range/2);
     }
 
     plotUpdate();

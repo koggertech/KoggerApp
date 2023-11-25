@@ -102,27 +102,49 @@ typedef struct XYZ {
     double x = 0, y = 0, z = 0;
 } XYZ;
 
-typedef struct DateTime{
+typedef struct DateTime {
     time_t sec = 0;
     int nanoSec = 0;
 
     DateTime() {}
 
-    DateTime(int64_t unix_sec, int32_t nonosec = 0) {
+    DateTime(int64_t unix_sec, int32_t nanosec = 0) {
+
         sec = unix_sec;
-        nanoSec = nonosec;
+        int s_dif = nanosec/1e9;
+        nanosec = nanosec - s_dif*1e9;
+        if(nanosec < 0) {
+            s_dif--;
+            nanosec += 1e9;
+        }
+
+        sec += s_dif;
+        nanoSec = nanosec;
     }
 
-    DateTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0) {
+    DateTime(int year, int month, int day, int hour, int min, int s, int nanosec = 0) {
+//        if(year >= 2000) {
+//            year -= 2000;
+//        }
+
         tm  t = {};
-        t.tm_year = year;
-        t.tm_mon = month;
+        t.tm_year = year - 1900;
+        t.tm_mon = month - 1;
         t.tm_mday = day;
         t.tm_hour = hour;
         t.tm_min = min;
-        t.tm_sec = sec;
+        t.tm_sec = s;
 
         sec = MAKETIME(&t);
+
+        int s_dif = nanosec/1e9;
+        nanosec = nanosec - s_dif*1e9;
+        if(nanosec < 0) {
+            s_dif--;
+            nanosec += 1e9;
+        }
+
+        sec += s_dif;
         nanoSec = nanosec;
     }
 
@@ -136,6 +158,10 @@ typedef struct DateTime{
 
     int32_t get_ms_frac() {
         return nanoSec/1000000;
+    }
+
+    void addSecs(int add_secs) {
+        sec += add_secs;
     }
 
 
@@ -328,6 +354,8 @@ public:
     int eventTimestamp() {return _eventTimestamp_us; }
     int eventUnix() { return _eventUnix; }
 
+    DateTime* time() { return &_time; }
+
     QVector<uint8_t> chartData(int16_t channel = 0) {
         if(chartAvail(channel)) {
             return _charts[channel].amplitude;
@@ -445,6 +473,7 @@ public:
 
     uint32_t positionTimeUnix() { return _positionGNSS.time.sec; }
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
+    DateTime* positionTime() {return &_positionGNSS.time; }
 
     double relPosN() { return _positionGNSS.ned.n; }
     double relPosE() { return _positionGNSS.ned.e; }
@@ -557,6 +586,8 @@ protected:
     int _eventUnix = 0;
     int _eventId = 0;
 
+    DateTime _time;
+
     struct {
         float yaw = NAN, pitch = NAN, roll = NAN;
         bool isAvail() {
@@ -579,8 +610,6 @@ protected:
         double hspeed = NAN;
         double course = NAN;
     } _GnssData;
-
-    DateTime _time;
 
     float m_temp_c = 0;
 

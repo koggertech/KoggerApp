@@ -1,6 +1,8 @@
 #include "core.h"
 #include <iomanip>
 #include <ctime>
+#include <chrono>
+
 
 Core::Core() : QObject(),
     m_console(new Console()),
@@ -476,17 +478,28 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
                 prev_lon = epoch->lon();
             }
 
-            row_data.append(QString::number(prev_lat, 'f'));
+            row_data.append(QString::number(prev_lat, 'f', 8));
             row_data.append(",");
-            row_data.append(QString::number(prev_lon, 'f'));
+            row_data.append(QString::number(prev_lon, 'f', 8));
             row_data.append(",");
 
             if(pos_time) {
                 if(epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
-                    QDateTime dt = QDateTime::fromMSecsSinceEpoch(epoch->positionTimeUnix(), Qt::TimeSpec::UTC).addMSecs(epoch->positionTimeNano()/1000000);
-                    row_data.append(dt.toString("yyyy-MM-dd"));
+                    DateTime time_epoch = *epoch->time();
+
+                    DateTime* dt = epoch->time();
+                    if(time_epoch.sec > 0) {
+                      time_epoch.sec -= 18;
+                      dt = &time_epoch;
+                    }
+//                    DateTime* dt = epoch->positionTime();
+                    volatile tm t_sep = dt->getDateTime();
+                    t_sep.tm_year += 1900;
+                    t_sep.tm_mon += 1;
+
+                    row_data.append(QString("%1-%2-%3").arg(t_sep.tm_year).arg(t_sep.tm_mon).arg(t_sep.tm_mday));
                     row_data.append(",");
-                    row_data.append(dt.toString("hh:mm:ss.zzz"));
+                    row_data.append(QString("%1:%2:%3").arg(t_sep.tm_hour).arg(t_sep.tm_min).arg((double)t_sep.tm_sec+(double)dt->nanoSec/1e9));
                     row_data.append(",");
                 } else {
                     row_data.append(",");
@@ -588,7 +601,7 @@ bool Core::openXTF(QByteArray data) {
     return true;
 }
 
-bool Core::openCSV(QString name, int separator_type, QString time_format, int first_row, int col_time, int col_lat, int col_lon, int col_altitude, int col_north, int col_east, int col_up) {
+bool Core::openCSV(QString name, int separator_type, int first_row, int col_time, bool is_utc_time, int col_lat, int col_lon, int col_altitude, int col_north, int col_east, int col_up) {
 
     QFile file;
     QUrl url(name);
@@ -615,8 +628,14 @@ bool Core::openCSV(QString name, int separator_type, QString time_format, int fi
     QList<Position> track;
 
     QTextStream in(&file);
+    int skip_rows = first_row - 1;
     while (!in.atEnd()) {
         QString row = in.readLine();
+        if(skip_rows > 0) {
+            skip_rows--;
+            continue;
+        }
+
         if(row[0] == '%' || row[0] == '#') {
             continue;
         }
@@ -625,15 +644,71 @@ bool Core::openCSV(QString name, int separator_type, QString time_format, int fi
 
         track.append(Position());
 
-        if(col_time > 0 && col_time-1 < columns.size()) {
+//        bool is_glue_date_time = datetime_format.contains(separator) && (col_time < columns.size());
+
+
+
+
+        if(col_time > 0 && (col_time-1 < columns.size()) ) {
 //            int y = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0, nsec = 0;
 //            sscanf(columns[col_time-1], time_format, &y, &month, &day, &hour, );
-            QDateTime time = QDateTime::fromString(columns[col_time-1], time_format);
-            if(time.isValid()) {
-                time.setTimeSpec(Qt::UTC);
-                int64_t unix_msec = time.toMSecsSinceEpoch();
-                track.last().time.sec = unix_msec/1000;
-                track.last().time.nanoSec = (unix_msec%1000)*1e6;
+
+            int year = -1, month = -1, day = -1, hour = -1, minute = -1;
+            double sec = -1;
+
+            columns[col_time-1].replace(QLatin1Char('/'), QLatin1Char('-'));
+
+            QStringList date_time = columns[col_time-1].split(' ');
+            QString date, time;
+
+            if(date_time.size() > 0) {
+                if(date_time[0].contains('-')) {
+                    date = date_time[0];
+                }
+            }
+
+            if(date_time.size() == 2) {
+                if(date_time[1].contains(':')) {
+                    time = date_time[1];
+                }
+            } else if(date_time.size() == 1) {
+                if(col_time < columns.size()) {
+                    if(columns[col_time].contains(':')) {
+                        time = columns[col_time];
+                    }
+                }
+            }
+
+            QStringList data_sep = date.split('-');
+            if(data_sep.size() >= 3) {
+                year = data_sep[0].toInt();
+                month = data_sep[1].toInt();
+                day = data_sep[2].toInt();
+            }
+
+            QStringList time_sep = time.split(':');
+            if(time_sep.size() >= 3) {
+                hour = time_sep[0].toInt();
+                minute = time_sep[1].toInt();
+                sec = time_sep[2].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+            }
+
+            if(year >= 0 && month >= 0 && day >= 0 && hour >= 0 && minute >= 0 && sec >= 0) {
+                int sec_int = (int)sec;
+                double nano_sec = (sec - sec_int)*1e9;
+                track.last().time = DateTime(year, month, day, hour, minute, sec_int, round(nano_sec));
+                if(!is_utc_time) {
+                    track.last().time.addSecs(-18);
+                }
+
+
+//                QDateTime time;
+//                time.setTimeSpec(Qt::UTC);
+//                time.setTime(QTime(hour, minute, sec_int, nano_sec/1e6));
+//                time.setDate(QDate(year, month, day));
+//                int64_t unix_msec = time.toMSecsSinceEpoch();
+//                track.last().time.sec = unix_msec/1000;
+//                track.last().time.nanoSec = (unix_msec%1000)*1e6;
             }
         }
 

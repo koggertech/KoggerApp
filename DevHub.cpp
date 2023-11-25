@@ -203,7 +203,11 @@ void Device::putData(const QByteArray &data) {
             if(mavlink_frame.msgId() == 0) { // SYS_STATUS
                 MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
                 _vru.armState = (int)heartbeat.isArmed();
-                _vru.flight_mode = (int)heartbeat.customMode();
+                int flight_mode = (int)heartbeat.customMode();
+                if(flight_mode != _vru.flight_mode) {
+                    core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
+                }
+                _vru.flight_mode = flight_mode;
                 emit vruChanged();
 //                core.consoleInfo(QString(">> FC: Custom mode %1, arm %2, man %3, custom %4, mode %5").
 //                                 arg(heartbeat.custom_mode).
@@ -227,11 +231,17 @@ void Device::putData(const QByteArray &data) {
 //                 core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(battery_status.voltage()).arg(battery_status.current()));
             }
 
+            if(mavlink_frame.msgId() == 30) {
+                MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
+                core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
 
-
-            if(_isConsoled) {
-                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
             }
+
+
+
+//            if(_isConsoled) {
+                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+//            }
         }
     }
 }

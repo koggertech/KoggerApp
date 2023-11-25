@@ -36,7 +36,7 @@ DevSettingsBox {
 
                 SpinBoxCustom {
                     from: 100
-                    to: 10000
+                    to: 15000
                     stepSize: 100
                     value: dev.chartSamples
                     onValueChanged: dev.chartSamples = value

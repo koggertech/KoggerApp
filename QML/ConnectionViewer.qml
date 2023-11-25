@@ -551,7 +551,7 @@ Item {
             RowLayout {
                 CCheck {
                     id: timeEnable
-                    Layout.fillWidth: true
+//                    Layout.fillWidth: true
                     //                        Layout.preferredWidth: 150
                     checked: true
                     text: "Time"
@@ -561,13 +561,13 @@ Item {
                     }
                 }
 
-                CTextField {
-                    id: timeFormater
-                    text: "yyyy-MM-dd hh:mm:ss,zzz"
-                    Settings {
-                        property alias importCSVtimeFormater: timeFormater.text
-                    }
-                }
+//                CTextField {
+//                    id: timeFormater
+//                    text: "yyyy-MM-dd hh:mm:ss,zzz"
+//                    Settings {
+//                        property alias importCSVtimeFormater: timeFormater.text
+//                    }
+//                }
 
                 SpinBoxCustom {
                     id:timeColumn
@@ -581,8 +581,31 @@ Item {
                         property alias importCSVtimeColumn: timeColumn.value
                     }
                 }
+
+                CCombo  {
+                    id: utcGpsCombo
+//                    Layout.fillWidth: true
+                    model: ["UTC time", "GPS time"]
+
+                    Settings {
+                        property alias utcGpsCombo: utcGpsCombo.currentIndex
+                    }
+                }
             }
 
+//            RowLayout {
+//                CCheck {
+//                    id: utcTime
+//                    Layout.fillWidth: true
+//                    checked: true
+//                    text: "UTC time"
+
+//                    Settings {
+//                        property alias utcTime: utcTime.checked
+//                    }
+//                }
+
+//            }
 
 
             RowLayout {
@@ -637,6 +660,8 @@ Item {
                     }
                 }
             }
+
+
 
             RowLayout {
                 CCheck {
@@ -705,10 +730,7 @@ Item {
 
                     Keys.onPressed: {
                         if (event.key === 16777220) {
-
-                            core.openCSV(importPathText.text, separatorCombo.currentIndex, timeFormater.text, firstRow.value, timeColumn.value,
-                                         latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
-                                         northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                            importTrackFileDialog.openCSV();
                         }
                     }
 
@@ -735,12 +757,16 @@ Item {
 
                         nameFilters: ["Logs (*.csv *.txt)"]
 
+                        function openCSV() {
+                            core.openCSV(importPathText.text, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex == 0,
+                                         latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
+                                         northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                        }
+
                         onAccepted: {
                             importPathText.text = importTrackFileDialog.fileUrl.toString()
 
-                            core.openCSV(importPathText.text, separatorCombo.currentIndex, timeFormater.text, firstRow.value, timeColumn.value,
-                                         latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
-                                         northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                            openCSV();
                         }
                         onRejected: {
                         }

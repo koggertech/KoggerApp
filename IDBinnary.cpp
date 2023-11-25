@@ -352,8 +352,8 @@ Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
 
 void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset) {
     m_sanpleCount = count;
-    if(count*resolution > 100000) {
-        resolution = (100000/count/10)*10;
+    if(count*resolution > 200000) {
+        resolution = (200000/count/10)*10;
     }
     m_sanpleResolution = resolution;
     m_sanpleOffset = offset;

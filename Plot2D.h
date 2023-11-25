@@ -135,15 +135,15 @@ typedef struct PlotPen {
 
 class Canvas {
 public:
-    QImage _image;
+//    QImage _image;
 
     Canvas() {
     }
 
     void setSize(int width, int height, QPainter* painter) {
-        if(_width != width || _height != height) {
-            _image = QImage(width, height, QImage::Format_RGB555);
-        }
+//        if(_width != width || _height != height) {
+//            _image = QImage(width, height, QImage::Format_RGB555);
+//        }
 
         _width = width;
         _height = height;
@@ -151,15 +151,11 @@ public:
     }
 
     void clear() {
-        _image.fill(0);
+//        _image.fill(0);
     }
 
     int width() { return _width; }
     int height() { return _height; }
-
-    QImage* getQImage() {
-        return &_image;
-    }
 
     void drawY(QVector<float> y, PlotPen pen) {
         if(_painter == NULL) { return; }
@@ -173,7 +169,6 @@ public:
 
         if(pen.lineStyle == PlotPen::LineStyleSolid) {
             QVector<QLineF> lines(y.size()-1);
-//            QVector<QPointF> pointes(y.size()-1);
             for(int i = 0; i < lines.size(); i++) {
 
                 lines[i] = QLineF(i, y[i], i+1, y[i+1]);
@@ -182,17 +177,8 @@ public:
                 } else {
                     lines[i] = QLineF(i, y[i], i+pen.width, y[i]);
                 }
-//                pointes[i] = QPointF(i, y[i]);
-//                if(!isfinite(y[i+1])) {
-//                    pointes[i] = QPointF(i, y[i]);
-//                } else {
-//                    pointes[i] = QPointF(i, NAN);
-//                }
-
             }
            _painter->drawLines(lines);
-//            _painter->drawPolyline(pointes);
-//           _painter->drawPoints(pointes);
         }
 
         if(pen.lineStyle == PlotPen::LineStylePoint) {
@@ -209,9 +195,6 @@ public:
         return _painter;
     }
 
-    uint16_t* data() {
-        return (uint16_t*)_image.bits();
-    }
 protected:
     int _width = 0;
     int _height = 0;
@@ -671,6 +654,14 @@ public:
 
         p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
         p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
+
+
+
+        const float canvas_height = canvas.height();
+        float value_range = cursor.distance.to - cursor.distance.from;
+        float value_scale = canvas_height/value_range;
+
+        p->drawText(cursor.mouseX+20, cursor.mouseY-20, QString("%1 m").arg(cursor.mouseY/value_scale, 0, 'g', 4));
 
         return true;
     }

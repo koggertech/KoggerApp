@@ -13,6 +13,7 @@ void Epoch::setEvent(int timestamp, int id, int unixt) {
     _eventTimestamp_us = timestamp;
     _eventUnix = unixt;
     _eventId = id;
+    _time = DateTime(unixt, timestamp*1000);
     flags.eventAvail = true;
 }
 
@@ -62,8 +63,7 @@ void Epoch::setDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 }
 
 void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_time, int32_t nanosec) {
-    _positionGNSS.time.sec = unix_time;
-    _positionGNSS.time.nanoSec = nanosec;
+    _positionGNSS.time = DateTime(unix_time, nanosec);
     _positionGNSS.lla.latitude = lat;
     _positionGNSS.lla.longitude = lon;
     flags.posAvail = true;
@@ -286,10 +286,10 @@ void Dataset::addGnssVelocity(double h_speed, double course) {
         pool_index = endIndex();
     }
 
-    if(isfinite(_pool[pool_index].gnssHSpeed())) {
-        makeNewEpoch();
-        pool_index = endIndex();
-    }
+//    if(isfinite(_pool[pool_index].gnssHSpeed())) {
+//        makeNewEpoch();
+//        pool_index = endIndex();
+//    }
 
 
     _pool[pool_index].setGnssVelocity(h_speed, course);
@@ -314,11 +314,20 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
     const int psize = size();
     const int tsize = track.size();
     int track_pos_save = 0;
+    volatile int sync_count = 0;
 
     for(int iepoch = 0; iepoch < psize; iepoch++) {
         Epoch* epoch =  fromIndex(iepoch);
         Position p_internal = epoch->getPositionGNSS();
+
+        DateTime time_epoch = *epoch->time();
+        if(time_epoch.sec > 0) {
+            p_internal.time = *epoch->time();
+            p_internal.time.sec -= 18;
+        }
+
         int64_t internal_ns  = p_internal.time.sec*1e9+p_internal.time.nanoSec;
+
 
         if(internal_ns > 0) {
             int64_t min_dif_ns = max_difference_ns;
@@ -339,6 +348,7 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
             if(min_ind > 0) {
                 track_pos_save = min_ind;
                 epoch->setExternalPosition(track[min_ind]);
+                sync_count++;
             }
         }
     }
