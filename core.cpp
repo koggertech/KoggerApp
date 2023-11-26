@@ -1,22 +1,57 @@
 #include "core.h"
+#include <iomanip>
+#include <ctime>
+#include <chrono>
+
 
 Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
-    m_plot(new PlotCash)
+    _dataset(new Dataset)
 {
 //    m_connection->moveToThread(&connectionThread);
 //    connectionThread.start();
 
-    connect(&_devs, &Device::chartComplete, m_plot, &PlotCash::addChart);
-    connect(&_devs, &Device::iqComplete, m_plot, &PlotCash::addIQ);
-    connect(&_devs, &Device::distComplete, m_plot, &PlotCash::addDist);
-    connect(&_devs, &Device::attitudeComplete, m_plot, &PlotCash::addAtt);
-    connect(&_devs, &Device::positionComplete, m_plot, &PlotCash::addPosition);
-    connect(&_devs, &Device::dopplerBeamComlete, m_plot, &PlotCash::addDopplerBeam);
-    connect(&_devs, &Device::dvlSolutionComplete, m_plot, &PlotCash::addDVLSolution);
+    connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
+    connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addIQ);
+    connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
+    connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
+    connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
+    connect(&_devs, &Device::dopplerBeamComlete, _dataset, &Dataset::addDopplerBeam);
+    connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
 
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
+}
+
+
+void Core::createControllers()
+{
+    mpSettings3DController = std::make_shared <Q3DSettingsController> ();
+}
+
+void Core::createModels()
+{
+    mpScene3DModel = std::make_shared <Q3DSceneModel> ();
+
+    mpSettings3DController->setModel(mpScene3DModel);
+    _dataset->set3DSceneModel(mpScene3DModel);
+}
+
+void Core::setEngine(QQmlApplicationEngine *engine)
+{
+    m_engine = engine;
+
+    createControllers();
+    createModels();
+
+    if(mpSettings3DController) {
+        m_engine->rootContext()->setContextProperty("Settings3DController", mpSettings3DController.get());
+    }
+
+    if(mpScene3DModel) {
+        m_engine->rootContext()->setContextProperty("Scene3DModel", mpScene3DModel.get());
+    }
+
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
@@ -25,7 +60,7 @@ void Core::consoleProto(FrameParser &parser, bool is_in) {
 
     switch (parser.type()) {
     case CONTENT:
-        str_mode = "data";
+        str_mode = "DATA";
         if(parser.resp()) {
             switch(parser.frame()[6]) {
             case respNone: comment = "[respNone]"; break;
@@ -48,23 +83,28 @@ void Core::consoleProto(FrameParser &parser, bool is_in) {
         }
         break;
     case SETTING:
-        str_mode = "set";
+        str_mode = "SET";
         break;
     case GETTING:
-        str_mode = "get";
+        str_mode = "GET";
         break;
     default:
-        str_mode = "none";
+        str_mode = "NAN";
         break;
     }
 
     QString str_dir;
-    if(is_in) { str_dir = "in"; }
-    else { str_dir = "out"; }
+    if(is_in) { str_dir = "-->> "; }
+    else { str_dir = "<<-- "; }
 
-    QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
+    try {
+        QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
 
-    consoleInfo(QString("%1: id %2 v%3, %4, len %5; %6 [ %7 ]").arg(str_dir).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
+        consoleInfo(QString("%1KG[%2]: id %3 v%4, %5, len %6; %7 [ %8 ]").arg(str_dir).arg(parser.route()).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
+
+    }catch(std::bad_alloc& ex){
+        qCritical().noquote() << __func__ << " --> " << ex.what();
+    }
 }
 
 QList<QSerialPortInfo> Core::availableSerial(){
@@ -85,7 +125,7 @@ QStringList Core::availableSerialName(){
     return serialNameList;
 }
 
-bool Core::openConnectionAsSerial(const QString &name, int baudrate, bool mode) {
+bool Core::openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode) {
     closeConnection();
     devsConnection();
 
@@ -112,20 +152,61 @@ bool Core::devsConnection() {
     return true;
 }
 
-bool Core::openConnectionAsFile(const QString &name) {
+bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
     closeConnection();
+    if(mpScene3DModel){
+        mpScene3DModel->clear();
+    }
 
-    m_plot->resetDataset();
+    if(!is_append) {
+        _dataset->resetDataset();
+    }
+
+    QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
+    if(splitname.size() > 1) {
+        QString format = splitname.last();
+        if(format.contains("xtf", Qt::CaseInsensitive)) {
+
+            QFile file;
+            QUrl url(name);
+            if(url.isLocalFile()) {
+                file.setFileName(url.toLocalFile());
+            } else {
+                file.setFileName(url.toString());
+            }
+
+            if(file.open(QIODevice::ReadOnly)) {
+                return openXTF(file.readAll());
+            }
+
+            return false;
+        }
+    }
+
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
 
 
+    QList<DatasetChannel> chs = _dataset->channelsList().values();
+
+
+    for(int i = 0; i < _plots2d.size(); i++) {
+        if(i == 0 &&_plots2d.at(i) != NULL) {
+            if(chs.size() >= 2) {
+                _plots2d.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+            }
+
+            if(chs.size() == 1) {
+                _plots2d.at(i)->setDataChannel(chs[0].channel);
+            }
+        }
+    }
 
     return true;
 
 }
-bool Core::openConnectionAsIP(const QString &address, const int port, bool is_tcp) {
+bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
 
@@ -201,7 +282,7 @@ bool Core::upgradeFW(const QString &name, QObject* dev) {
 
 void Core::upgradeChanged(int progress_status) {
     if(progress_status == DevDriver::successUpgrade) {
-        restoreBaudrate();
+//        restoreBaudrate();
     }
 }
 
@@ -220,7 +301,7 @@ bool Core::isLogging() {
     return _isLogging;
 }
 
-bool Core::exportPlotAsCVS(QString file_path) {
+bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     QString export_file_name;
     if(m_connection->lastType() == Connection::ConnectionFile) {
         export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
@@ -230,30 +311,32 @@ bool Core::exportPlotAsCVS(QString file_path) {
 
     _logger.creatExportStream(file_path + "/" + export_file_name + ".csv");
 
-//    int row_cnt = m_plot->poolSize();
-//    for(int i = 0; i < row_cnt; i++) {
-//        PoolDataset* dataset = m_plot->fromPool(i);
-//        QString row_data;
-//        QVector<int16_t> chart = dataset->chartData();
-
-//        if(chart.size() > 100) {
-//            for(int chart_i = 0; chart_i < chart.size(); chart_i++) {
-//                row_data.append(QString("%1,").arg(chart[chart_i]));
-//            }
-//            row_data.remove(row_data.length() - 1, 1);
-//            row_data.append("\n");
-//            _logger.dataExport(row_data);
-//        }
-//    }
-
-//    _logger.endExportStream();
-
     bool meas_nbr = true;
     bool event_id = true;
-    bool rangefinder = true;
+    bool rangefinder = false;
     bool bottom_depth = true;
     bool pos_lat_lon = true;
     bool pos_time = true;
+
+    bool external_pos_lla = true;
+    bool external_pos_neu = true;
+    bool sonar_height = true;
+    bool bottom_height = true;
+
+    bool ext_pos_lla_find = false;
+    bool ext_pos_ned_find = false;
+
+    int row_cnt = _dataset->size();
+    _dataset->spatialProcessing();
+
+    for(int i = 0; i < row_cnt; i++) {
+        Epoch* epoch = _dataset->fromIndex(i);
+
+        Position position = epoch->getExternalPosition();
+        ext_pos_lla_find |= position.lla.isValid();
+        ext_pos_ned_find |= position.ned.isValid();
+    }
+
 
     if(meas_nbr) {
         _logger.dataExport("Number,");
@@ -270,7 +353,7 @@ bool Core::exportPlotAsCVS(QString file_path) {
     }
 
     if(bottom_depth) {
-        _logger.dataExport("Bottom depth,");
+        _logger.dataExport("Beam distance,");
     }
 
     if(pos_lat_lon) {
@@ -283,20 +366,84 @@ bool Core::exportPlotAsCVS(QString file_path) {
         }
     }
 
+    if(external_pos_lla && ext_pos_lla_find) {
+        _logger.dataExport("ExtLatitude,");
+        _logger.dataExport("ExtLongitude,");
+        _logger.dataExport("ExtAltitude,");
+    }
+
+    if(external_pos_neu && ext_pos_ned_find) {
+        _logger.dataExport("ExtNorth,");
+        _logger.dataExport("ExtEast,");
+        _logger.dataExport("ExtHeight,");
+    }
+
+    if(sonar_height) {
+        _logger.dataExport("SonarHeight,");
+    }
+
+    if(bottom_height) {
+        _logger.dataExport("BottomHeight,");
+    }
+
 
 
     _logger.dataExport("\n");
 
-    int row_cnt = m_plot->poolSize();
+
 
     int prev_timestamp = 0;
     int prev_unix = 0;
     int prev_event_id = 0;
-    int prev_dist_proc = 0;
+    float prev_dist_proc = 0;
     double prev_lat = 0, prev_lon = 0;
 
+    float decimation_m = decimation;
+    float decimation_path = 0;
+    LLARef lla_ref;
+    NED last_pos_ned;
+
+
+
+
     for(int i = 0; i < row_cnt; i++) {
-        PoolDataset* dataset = m_plot->fromPool(i);
+        Epoch* epoch = _dataset->fromIndex(i);
+
+        if(decimation_m > 0) {
+            if(!epoch->isPosAvail()) { continue; }
+
+            Position pos = epoch->getPositionGNSS();
+
+            if(pos.lla.isCoordinatesValid()) {
+                if(!lla_ref.isInit) {
+                    lla_ref = LLARef(pos.lla);
+                    pos.LLA2NED(&lla_ref);
+                    last_pos_ned = pos.ned;
+                } else {
+                    pos.LLA2NED(&lla_ref);
+
+                    float dif_n = pos.ned.n - last_pos_ned.n;
+                    float dif_e = pos.ned.e - last_pos_ned.e;
+
+                    last_pos_ned = pos.ned;
+
+                    decimation_path += sqrtf(dif_n*dif_n + dif_e*dif_e);
+
+                    if(decimation_path < decimation_m) {
+                        continue;
+                    }
+
+                    decimation_path -= decimation_m;
+                }
+
+
+            } else {
+                continue;
+            }
+        }
+
+
+
         QString row_data;
 
         if(meas_nbr) {
@@ -304,46 +451,55 @@ bool Core::exportPlotAsCVS(QString file_path) {
         }
 
         if(event_id) {
-            if(dataset->eventAvail()) {
-                prev_timestamp = dataset->eventTimestamp();
-                prev_event_id = dataset->eventID();
-                prev_unix = dataset->eventUnix();
+            if(epoch->eventAvail()) {
+                prev_timestamp = epoch->eventTimestamp();
+                prev_event_id = epoch->eventID();
+                prev_unix = epoch->eventUnix();
             }
             row_data.append(QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id));
         }
 
         if(rangefinder) {
-            if(dataset->distAvail()) {
-                row_data.append(QString("%1,").arg((float)dataset->distData()*0.001f));
+            if(epoch->distAvail()) {
+                row_data.append(QString("%1,").arg((float)epoch->rangeFinder()));
             } else {
                 row_data.append("0,");
             }
         }
 
         if(bottom_depth) {
-            if(dataset->distProccesingAvail()) {
-                prev_dist_proc = dataset->distProccesing();
-            }
-            row_data.append(QString("%1,").arg((float)(prev_dist_proc)*0.001f));
+            prev_dist_proc = epoch->distProccesing(channel);
+            row_data.append(QString("%1,").arg((float)(prev_dist_proc)));
         }
 
         if(pos_lat_lon) {
-            if(dataset->isPosAvail()) {
-                prev_lat = dataset->lat();
-                prev_lon = dataset->lon();
+            if(epoch->isPosAvail()) {
+                prev_lat = epoch->lat();
+                prev_lon = epoch->lon();
             }
 
-            row_data.append(QString::number(prev_lat, 'f'));
+            row_data.append(QString::number(prev_lat, 'f', 8));
             row_data.append(",");
-            row_data.append(QString::number(prev_lon, 'f'));
+            row_data.append(QString::number(prev_lon, 'f', 8));
             row_data.append(",");
 
             if(pos_time) {
-                if(dataset->isPosAvail() && dataset->positionTimeUnix() != 0) {
-                    QDateTime dt = QDateTime::fromTime_t(dataset->positionTimeUnix(), Qt::TimeSpec::UTC).addMSecs(dataset->positionTimeNano()/1000000);
-                    row_data.append(dt.toString("yyyy-MM-dd"));
+                if(epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
+                    DateTime time_epoch = *epoch->time();
+
+                    DateTime* dt = epoch->time();
+                    if(time_epoch.sec > 0) {
+                      time_epoch.sec -= 18;
+                      dt = &time_epoch;
+                    }
+//                    DateTime* dt = epoch->positionTime();
+                    volatile tm t_sep = dt->getDateTime();
+                    t_sep.tm_year += 1900;
+                    t_sep.tm_mon += 1;
+
+                    row_data.append(QString("%1-%2-%3").arg(t_sep.tm_year).arg(t_sep.tm_mon).arg(t_sep.tm_mday));
                     row_data.append(",");
-                    row_data.append(dt.toString("hh:mm:ss.zzz"));
+                    row_data.append(QString("%1:%2:%3").arg(t_sep.tm_hour).arg(t_sep.tm_min).arg((double)t_sep.tm_sec+(double)dt->nanoSec/1e9));
                     row_data.append(",");
                 } else {
                     row_data.append(",");
@@ -352,6 +508,46 @@ bool Core::exportPlotAsCVS(QString file_path) {
             }
         }
 
+        Position position = epoch->getExternalPosition();
+
+        if(external_pos_lla && ext_pos_lla_find) {
+            row_data.append(QString::number(position.lla.latitude, 'f', 10));
+            row_data.append(",");
+            row_data.append(QString::number(position.lla.longitude, 'f', 10));
+            row_data.append(",");
+            row_data.append(QString::number(position.lla.altitude, 'f', 3));
+            row_data.append(",");
+        }
+
+        if(external_pos_neu && ext_pos_ned_find) {
+            row_data.append(QString::number(position.ned.n, 'f', 10));
+            row_data.append(",");
+            row_data.append(QString::number(position.ned.e, 'f', 10));
+            row_data.append(",");
+            row_data.append(QString::number(-position.ned.d, 'f', 3));
+            row_data.append(",");
+        }
+
+        Epoch::Echogram* sensor = epoch->chart(channel);
+
+        if(sonar_height) {
+            if(sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
+                row_data.append(QString::number(-sensor->sensorPosition.ned.d, 'f', 3));
+            } else  if(sensor != NULL && isfinite(sensor->sensorPosition.lla.altitude)) {
+                row_data.append(QString::number(sensor->sensorPosition.lla.altitude, 'f', 3));
+            }
+
+            row_data.append(",");
+        }
+
+        if(bottom_height) {
+            if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
+                row_data.append(QString::number(-sensor->bottomProcessing.bottomPoint.ned.d, 'f', 3));
+            } else if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
+                row_data.append(QString::number(sensor->bottomProcessing.bottomPoint.lla.altitude, 'f', 3));
+            }
+            row_data.append(",");
+        }
 
 
         row_data.append("\n");
@@ -361,6 +557,190 @@ bool Core::exportPlotAsCVS(QString file_path) {
     _logger.endExportStream();
 
     return true;
+}
+
+bool Core::exportPlotAsXTF(QString file_path) {
+    QString export_file_name;
+    if(m_connection->lastType() == Connection::ConnectionFile) {
+        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+    } else {
+        export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+    }
+
+    _logger.creatExportStream(file_path + "/_" + export_file_name + ".xtf");
+
+
+    QMap<int, DatasetChannel> chs = _dataset->channelsList();
+    QByteArray data_export = _converterXTF.toXTF(dataset(), _plots2d[0]->plotDatasetChannel(), _plots2d[0]->plotDatasetChannel2());
+
+    _logger.dataByteExport(data_export);
+
+    _logger.endExportStream();
+    return true;
+}
+
+bool Core::openXTF(QByteArray data) {
+    _dataset->resetDataset();
+
+    _converterXTF.toDataset(data, dataset());
+
+    consoleInfo("XTF note:" + QString(_converterXTF.header.NoteString));
+    consoleInfo("XTF programm name:" + QString(_converterXTF.header.RecordingProgramName));
+    consoleInfo("XTF sonar name:" + QString(_converterXTF.header.SonarName));
+
+    QMap<int, DatasetChannel> chs = _dataset->channelsList();
+
+    for(int i = 0; i < _plots2d.size(); i++) {
+        if(_plots2d.at(i) != NULL && i < chs.size()) {
+            if(i == 0) {
+                _plots2d.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Core::openCSV(QString name, int separator_type, int first_row, int col_time, bool is_utc_time, int col_lat, int col_lon, int col_altitude, int col_north, int col_east, int col_up) {
+
+    QFile file;
+    QUrl url(name);
+    if(url.isLocalFile()) {
+        file.setFileName(url.toLocalFile());
+    } else {
+        file.setFileName(url.toString());
+    }
+
+    if(!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+
+    QString separator("");
+    switch(separator_type) {
+        case 0: separator = ","; break;
+        case 1: separator = "	"; break;
+        case 2: separator = " "; break;
+        case 3: separator = ";"; break;
+    default: separator = QString((char)separator_type);
+    }
+
+    QList<Position> track;
+
+    QTextStream in(&file);
+    int skip_rows = first_row - 1;
+    while (!in.atEnd()) {
+        QString row = in.readLine();
+        if(skip_rows > 0) {
+            skip_rows--;
+            continue;
+        }
+
+        if(row[0] == '%' || row[0] == '#') {
+            continue;
+        }
+
+        QStringList columns = row.split(separator);
+
+        track.append(Position());
+
+//        bool is_glue_date_time = datetime_format.contains(separator) && (col_time < columns.size());
+
+
+
+
+        if(col_time > 0 && (col_time-1 < columns.size()) ) {
+//            int y = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0, nsec = 0;
+//            sscanf(columns[col_time-1], time_format, &y, &month, &day, &hour, );
+
+            int year = -1, month = -1, day = -1, hour = -1, minute = -1;
+            double sec = -1;
+
+            columns[col_time-1].replace(QLatin1Char('/'), QLatin1Char('-'));
+
+            QStringList date_time = columns[col_time-1].split(' ');
+            QString date, time;
+
+            if(date_time.size() > 0) {
+                if(date_time[0].contains('-')) {
+                    date = date_time[0];
+                }
+            }
+
+            if(date_time.size() == 2) {
+                if(date_time[1].contains(':')) {
+                    time = date_time[1];
+                }
+            } else if(date_time.size() == 1) {
+                if(col_time < columns.size()) {
+                    if(columns[col_time].contains(':')) {
+                        time = columns[col_time];
+                    }
+                }
+            }
+
+            QStringList data_sep = date.split('-');
+            if(data_sep.size() >= 3) {
+                year = data_sep[0].toInt();
+                month = data_sep[1].toInt();
+                day = data_sep[2].toInt();
+            }
+
+            QStringList time_sep = time.split(':');
+            if(time_sep.size() >= 3) {
+                hour = time_sep[0].toInt();
+                minute = time_sep[1].toInt();
+                sec = time_sep[2].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+            }
+
+            if(year >= 0 && month >= 0 && day >= 0 && hour >= 0 && minute >= 0 && sec >= 0) {
+                int sec_int = (int)sec;
+                double nano_sec = (sec - sec_int)*1e9;
+                track.last().time = DateTime(year, month, day, hour, minute, sec_int, round(nano_sec));
+                if(!is_utc_time) {
+                    track.last().time.addSecs(-18);
+                }
+
+
+//                QDateTime time;
+//                time.setTimeSpec(Qt::UTC);
+//                time.setTime(QTime(hour, minute, sec_int, nano_sec/1e6));
+//                time.setDate(QDate(year, month, day));
+//                int64_t unix_msec = time.toMSecsSinceEpoch();
+//                track.last().time.sec = unix_msec/1000;
+//                track.last().time.nanoSec = (unix_msec%1000)*1e6;
+            }
+        }
+
+        if(col_lat > 0 && col_lat-1 < columns.size()) {
+            track.last().lla.latitude = columns[col_lat-1].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+        }
+
+        if(col_lon > 0 && col_lon-1 < columns.size()) {
+            track.last().lla.longitude = columns[col_lon-1].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+        }
+
+        if(col_altitude > 0 && col_altitude-1 < columns.size()) {
+            track.last().lla.altitude = columns[col_altitude-1].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+        }
+
+        if(col_north > 0 && col_north-1 < columns.size()) {
+            track.last().ned.n = columns[col_north-1].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+        }
+
+        if(col_east > 0 && col_east-1 < columns.size()) {
+            track.last().ned.e = columns[col_east-1].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();
+        }
+
+        if(col_up > 0 && col_up-1 < columns.size()) {
+            track.last().ned.d = -columns[col_up-1].replace(QLatin1Char(','), QLatin1Char('.')).toDouble();;
+        }
+    }
+
+    _dataset->mergeGnssTrack(track);
+
+    return true;
+
 }
 
 void Core::restoreBaudrate() {
@@ -376,12 +756,20 @@ void Core::UILoad(QObject *object, const QUrl &url) {
     _render = object->findChild<FboInSGRenderer*>();
 
     if(_render != NULL) {
-        m_plot->set3DRender(_render);
+        _dataset->set3DRender(_render);
     }
 
-    m_waterFall = object->findChild<WaterFall*>();
-    if(m_waterFall != NULL) {
-        m_waterFall->setPlot(m_plot);
+//    m_waterFall = object->findChild<WaterFall*>();
+//    if(m_waterFall != NULL) {
+//        m_waterFall->setPlot(m_plot);
+//    }
+
+    _plots2d = object->findChildren<qPlot2D*>();
+
+    for(int i = 0; i < _plots2d.size(); i++) {
+        if(_plots2d.at(i) != NULL) {
+            _plots2d.at(i)->setPlot(_dataset);
+        }
     }
 }
 

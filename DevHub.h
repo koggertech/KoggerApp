@@ -10,10 +10,6 @@
 #include <QStringListModel>
 #include <QUdpSocket>
 
-#ifdef FLASHER
-#include <flasher.h>
-#endif
-
 class Device : public QObject {
     Q_OBJECT
 public:
@@ -23,6 +19,20 @@ public:
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
     Q_PROPERTY(bool protoBinConsoled WRITE setProtoBinConsoled)
     Q_PROPERTY(StreamListModel*  streamsList READ streamsList NOTIFY streamChanged)
+
+    Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
+    Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
+    Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
+    Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
+    Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
+
+
+
+    float vruVoltage() { return _vru.voltage; }
+    float vruCurrent() { return _vru.current; }
+    float vruVelocityH() { return _vru.velocityH; }
+    int pilotArmState() { return _vru.armState; }
+    int pilotModeState() { return _vru.flight_mode; }
 
     QList<DevQProperty*> getDevList() {
         _devList.clear();
@@ -70,7 +80,7 @@ public slots:
 signals:
     void dataSend(QByteArray data);
 
-    void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
@@ -87,9 +97,12 @@ signals:
     void deviceVersionChanged();
     void devChanged();
     void streamChanged();
+    void vruChanged();
 
 protected:
     FrameParser _parser;
+
+    bool _isSupressParser = false;
 
     DevQProperty* devAddr[256] = {};
     DevQProperty* devSort[256] = {};
@@ -105,6 +118,14 @@ protected:
 
     bool _isDuplex = false;
     bool _isConsoled = false;
+
+    struct {
+        float voltage = NAN;
+        float current = NAN;
+        float velocityH = NAN;
+        int armState = -1;
+        int flight_mode = -1;
+    } _vru;
 
     void delAllDev() {
         lastRoute = 0;

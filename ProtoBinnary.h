@@ -88,6 +88,7 @@ typedef enum ID {
 
     ID_DVL_BEAM = 120,
     ID_DVL_VEL = 121,
+    ID_DVL_MODE = 122,
 
     ID_GFW = 200,
 

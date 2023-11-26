@@ -7,11 +7,19 @@
 #include <DevQProperty.h>
 #include <QUrl>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <waterfall.h>
 #include <DevHub.h>
 #include <logger.h>
 #include <QThread>
 #include <3Plot.h>
+#include <Plot2D.h>
+
+#include "XTFConf.h"
+#include "ConverterXTF.h"
+
+#include <Q3DSettingsController.h>
+#include <Q3DSceneModel.h>
 
 //#define FLASHER
 
@@ -19,12 +27,18 @@
 #include "flasher.h"
 #endif
 
+using Settings3DController = std::shared_ptr <Q3DSettingsController>;
+using Scene3DModel         = std::shared_ptr <Q3DSceneModel>;
+
+
 class Core : public QObject
 {
     Q_OBJECT
 
 public:
     explicit Core();
+
+    Q_PROPERTY(bool isFactoryMode READ isFactoryMode)
 
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
 
@@ -38,8 +52,8 @@ public:
         return m_console;
     }
 
-    PlotCash* plot() {
-        return m_plot;
+    Dataset* dataset() {
+        return _dataset;
     }
 
     void consoleInfo(QString msg) {
@@ -52,17 +66,28 @@ public:
 
     void consoleProto(FrameParser &parser, bool is_in = true);
 
-    void setEngine(QQmlApplicationEngine *engine) {
-        m_engine = engine;
-    }
+    void setEngine(QQmlApplicationEngine *engine);
+
+private:
+
+    //! Метод создания контроллеров
+    void createControllers();
+    //! Метод создания моделей
+    void createModels();
+
+    Settings3DController mpSettings3DController;
+    Scene3DModel mpScene3DModel;
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
     QStringList availableSerialName();
-    bool openConnectionAsSerial(const QString &name, int baudrate, bool mode);
+    bool openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode);
+    bool openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp);
+    bool openConnectionAsFile(const int id, const QString &name, bool is_append = false);
+    bool openXTF(QByteArray data);
+    bool openCSV(QString name, int separator_type, int row = -1, int col_time = -1, bool is_utc_time = true, int col_lat = -1, int col_lon = -1, int col_north = -1, int col_east = -1, int altitude = -1, int distance = -1);
     bool devsConnection();
-    bool openConnectionAsFile(const QString &name);
-    bool openConnectionAsIP(const QString &address, const int port, bool is_tcp);
+
     bool isOpenConnection();
     bool closeConnection();
 
@@ -79,35 +104,55 @@ public slots:
 
 
 
-    bool exportPlotAsCVS(QString file_path);
+    bool exportPlotAsCVS(QString file_path, int channel, float decimation = 0);
+    bool exportPlotAsXTF(QString file_path);
+
 
 #ifdef FLASHER
+    bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
 
     void setPlotStartLevel(int level) {
-        m_plot->setStartLevel(level);
+//        m_plot->setStartLevel(level);
+        for(int i = 0; i < _plots2d.size(); i++) {
+            if(_plots2d.at(i) != NULL) {
+                _plots2d.at(i)->setEchogramLowLevel(level);
+            }
+        }
     }
 
     void setPlotStopLevel(int level) {
-        m_plot->setStopLevel(level);
+//        m_plot->setStopLevel(level);
+//        m_waterFall->setEchogramHightLevel(level);
+        for(int i = 0; i < _plots2d.size(); i++) {
+            if(_plots2d.at(i) != NULL) {
+                _plots2d.at(i)->setEchogramHightLevel(level);
+            }
+        }
     }
 
     void setTimelinePosition(double position) {
-        m_plot->setTimelinePosition(position);
+//        m_plot->setTimelinePosition(position);
+//        m_waterFall->setDataPosition(position);
+        for(int i = 0; i < _plots2d.size(); i++) {
+            if(_plots2d.at(i) != NULL) {
+                _plots2d.at(i)->setTimelinePosition(position);
+            }
+        }
     }
 
-    void setChartVis(bool visible) {
-        m_plot->setChartVis(visible);
-    }
+//    void setChartVis(bool visible) {
+//        m_plot->setChartVis(visible);
+//    }
 
-    void setOscVis(bool visible) {
-        m_plot->setOscVis(visible);
-    }
+//    void setOscVis(bool visible) {
+//        m_plot->setOscVis(visible);
+//    }
 
-    void setDistVis(bool visible) {
-        m_plot->setDistVis(visible);
-    }
+//    void setDistVis(bool visible) {
+//        m_plot->setDistVis(visible);
+//    }
 
     Device* dev() { return &_devs; }
 
@@ -119,12 +164,14 @@ signals:
 public:
     Console *m_console;
     Connection *m_connection;
-    PlotCash* m_plot;
-    WaterFall* m_waterFall = NULL;
+    Dataset* _dataset;
+    QList<qPlot2D*> _plots2d;
+//    QPlot2D* _plot1 = NULL;
     FboInSGRenderer* _render = NULL;
 
     Device _devs;
     Logger _logger;
+    ConverterXTF _converterXTF;
     QThread connectionThread;
     QQmlApplicationEngine *m_engine = nullptr;
 
@@ -151,7 +198,8 @@ protected:
     enum  {
         FactoryIdle,
         FactoryTest,
-        FactoryProduct
+        FactoryProduct,
+        FactorySimple
     } _factoryState = FactoryIdle;
 
     QByteArray _flashUID;
@@ -162,6 +210,15 @@ protected:
     int backupBaudrate = 115200;
     void restoreBaudrate();
     void setUpgradeBaudrate();
+
+
+    bool isFactoryMode() {
+#ifdef FLASHER
+        return true;
+#else
+        return false;
+#endif
+    }
 };
 
 #endif // CORE_H

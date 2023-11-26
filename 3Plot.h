@@ -6,14 +6,25 @@
 
 #include <QtGui/qvector3d.h>
 #include <QtGui/qmatrix4x4.h>
-#include <QtGui/qopenglshaderprogram.h>
+//#include <QtGui/qopenglshaderprogram.h>
 #include <QtGui/qopenglfunctions.h>
+
+#include <QObject>
+#include <qdebug.h>
 
 #include <QTime>
 #include <QVector>
+#include <memory>
 
-class Scene3D : protected QOpenGLFunctions
+#include "Q3DSceneModel.h"
+#include "displayedobject.h"
+
+using ModelPointer = std::shared_ptr <Q3DSceneModel>;
+
+class Scene3D : public QObject, protected QOpenGLFunctions
 {
+    Q_OBJECT
+
 public:
     Scene3D();
     ~Scene3D();
@@ -21,9 +32,16 @@ public:
     void render();
     void initialize();
 
-    void setLines(QVector<QVector3D> p);
+    void setModel(const ModelPointer pModel);
+
+    //void setLines(QVector<QVector3D> p);
+
     void scale(float sc) {
         m_fScale = sc;
+    }
+
+    void modelScale(float scale) {
+        _modelScaleZ = scale;
     }
 
     void size(QVector2D sz) {
@@ -48,8 +66,22 @@ public:
 
     void rotationFlag(bool is_rotation) { _isRotation = is_rotation; }
 
+public slots:
+
+    void modelStateChanged();
+
+    void bottomTrackDataChanged();
+    void bottomTrackPropertiesChanged();
+
+    void surfaceDataChanged();
+    void surfacePropertiesChanged();
+
+    void contourDataChanged();
+    void contourPropertiesChanged();
+
 private:
-    qreal   m_fScale;
+    float _modelScaleZ = 1.0f;
+    qreal   m_fScale = 1;
     QVector2D _size;
     QVector2D _rotAngle;
     QVector3D _posCenter;
@@ -61,6 +93,8 @@ private:
     QVector3D _lookat;
     QVector3D _camup;
     QMatrix4x4 _view;
+
+    QVector<QVector3D> _testPonts;
 
     bool _isRotation;
 
@@ -75,15 +109,35 @@ private:
     void mashAlign();
     void line(qreal x, qreal y, qreal z);
 
+    void displayTestPoints();
 
+    //! Draws gps track lines
+    void displayBottomTrack();
+    //! Draws bottom surface
+    void displayBottomSurface();
+    //! Draws bottom surface mesh
+    void displayBottomSurfaceGrid();
+
+    void displayContour();
+
+    void displayContourKeyPoints();
+
+
+    Vector3Pointer mpTriangles;
     QVector<QVector3D> vLines;
     QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
     QVector<QVector<QVector3D>> vQuads;
     QOpenGLShaderProgram program1;
+
+    QOpenGLShaderProgram* mpHeightMappedProgram;
+    QOpenGLShaderProgram* mpOverlappedTrackProgram;
+    QOpenGLShaderProgram* mpOverlappedGridProgram;
+
     int vertexAttr1;
-    int vertexAttr2;
-    int vertexAttr3;
+    //int vertexAttr2;
+    //int vertexAttr3;
+    //int vertexAttr4;
     int normalAttr1;
     int matrixUniform1;
     int projectionUniform1;
@@ -91,6 +145,38 @@ private:
     qreal _mashStep = 0.05;
 
     QQuaternion q;
+
+    //! Указатель на модель сцены
+    ModelPointer mpModel;
+
+
+    Vector3 mMesh;
+
+    //! Данные трека морского дна
+    Vector3 mBottomTrack;
+    //! Данные треугольников поверхности
+    Vector3 mTriangles;
+    Vector3 mTriangleGrid;
+    Vector3 mGrid;
+    Vector3 mQuads;
+
+    QVector <QVector3D> mBasicSurface;
+    QVector <QVector3D> mSmoothedSurface;
+
+    Surface mSurfaceDisplayedObject;
+    Surface mSmoothedSurfaceDisplayedObject;
+    BottomTrack mBottomTrackDisplayedObject;
+    Contour mContourDisplayedObject;
+
+    std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
+    std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
+
+    QMatrix4x4 mModel;
+    QMatrix4x4 mView;
+    QMatrix4x4 mProjection;
+
+    float mMaxZ = 0.0f;
+    float mMinZ = 0.0f;
 };
 
 class FboInSGRenderer : public QQuickFramebufferObject
@@ -105,8 +191,12 @@ public:
         return _bottomTrack;
     }
 
+    //! Передать указатель на модель 3D - сцены
+    void setModel(const ModelPointer pModel);
+
     void updateBottomTrack(QVector<QVector3D> p) {
         _bottomTrack = p;
+
         update();
     }
 
@@ -142,6 +232,12 @@ public slots:
 
     float scaleDelta() { return _scale; }
 
+    void setModelScaleZ(float scale) {
+        _modelScaleZ = scale;
+        update();
+    }
+    float modelScaleZ() { return _modelScaleZ; }
+
     QVector2D size() { return QVector2D(width(), height()); }
 
     void mouse(int x, int y, bool rotation_flag) {
@@ -157,9 +253,15 @@ public slots:
 
 private:
     QVector<QVector3D> _bottomTrack;
+    Vector3Pointer mpTriangles;
+
     float _scale = 30.0;
+    float _modelScaleZ = 1.0f;
     int _lastMouseX = -1, _lastMouseY = -1;
     bool _rotationFlag = false;
+
+    Renderer* mpRenderer;
+    ModelPointer mpModel;
 };
 
 #endif // H3PLOT_H

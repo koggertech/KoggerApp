@@ -25,6 +25,7 @@ public slots:
 
     bool creatExportStream(QString str);
     bool dataExport(QString str);
+    bool dataByteExport(QByteArray data);
     bool endExportStream();
 
 protected:

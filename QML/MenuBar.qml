@@ -1,19 +1,20 @@
-import QtQuick 2.0
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.4
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import Qt.labs.settings 1.1
 
 Item {
     id: menu
     implicitWidth: menuLayout.width
 
+    property var targetPlot: null
 
     property var lastItem: menuSettings
     property bool isConsoleVisible: consoleEnable.checked
-    property bool is3DVisible: visible3dButton.checked
+    property bool is3DVisible: scene3DSettings.is3DVisible
     property bool is2DVisible: visible2dButton.checked
     property bool is2DHorizontal: appSettings.is2DHorizontal
-
+    property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
 
     function itemChangeActive(currentItem) {
@@ -71,11 +72,24 @@ Item {
                     }
                 }
 
+                MenuButton {
+                    id: menu3DSettings
+                    visible: instruments > 0
+                    icon.source: "./3dcube.svg"
+
+                    Layout.fillWidth: true
+
+                    onPressed: {
+                        itemChangeActive(menu3DSettings)
+                    }
+                }
+
 
             }
 
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
+                visible: visible2dButton.checked
 
                 MenuBlock {
                 }
@@ -86,22 +100,31 @@ Item {
                     Layout.topMargin: 4
                     visible: chartEnable.checked
                     horizontalAlignment: Text.AlignHCenter
-                    text: chartLevel.stopValue
+                    text: echogramLevelsSlider.stopValue
                     small: true
                 }
 
                 ChartLevel {
                     Layout.fillWidth: true
-                    id: chartLevel
+                    id: echogramLevelsSlider
                     visible: chartEnable.checked
                     Layout.alignment: Qt.AlignHCenter
 
                     onStartValueChanged: {
-                        core.setPlotStartLevel(startValue);
+                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
                     }
 
                     onStopValueChanged: {
-                        core.setPlotStopLevel(stopValue);
+                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
+                    }
+
+                    Component.onCompleted: {
+                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
+                    }
+
+                    Settings {
+                        property alias echogramLevelsStart: echogramLevelsSlider.startValue
+                        property alias echogramLevelsStop: echogramLevelsSlider.stopValue
                     }
                 }
 
@@ -111,94 +134,98 @@ Item {
                     visible: chartEnable.checked
                     horizontalAlignment: Text.AlignHCenter
 
-                    text: chartLevel.startValue
+                    text: echogramLevelsSlider.startValue
                     small: true
                 }
             }
 
+//            ColumnLayout {
+//                Layout.alignment: Qt.AlignHCenter
+//                spacing: 0
+//                visible: visible2dButton.checked
+
+
+//                MenuBlock { }
+
+//                ButtonGroup { id: pencilbuttonGroup }
+
+//                CButton {
+//                    Layout.fillWidth: true
+//                    Layout.margins: 4
+//                    Layout.bottomMargin: 1
+////                    Layout.preferredHeight: 24
+//                    text: "⇔"
+//                    checkable: true
+//                    checked: true
+//                    padding: 0
+//                    onCheckedChanged: {
+//                        if(checked) {  waterView.setMouseMode(1) }
+//                    }
+//                    ButtonGroup.group: pencilbuttonGroup
+//                }
+
+//                CButton {
+//                    Layout.fillWidth: true
+//                    Layout.margins: 4
+//                    Layout.bottomMargin: 1
+////                    Layout.preferredHeight: 24
+//                    text: "⇲"
+//                    checkable: true
+//                    padding: 0
+//                    onCheckedChanged: {
+//                        if(checked) {  waterView.setMouseMode(2) }
+//                    }
+//                    ButtonGroup.group: pencilbuttonGroup
+//                }
+
+//                CButton {
+//                    Layout.fillWidth: true
+//                    Layout.margins: 4
+//                    Layout.bottomMargin: 1
+////                    Layout.preferredHeight: 24
+//                    text: "═"
+//                    checkable: true
+//                    padding: 0
+//                    onCheckedChanged: {
+//                        if(checked) {  waterView.setMouseMode(3) }
+//                    }
+//                    ButtonGroup.group: pencilbuttonGroup
+//                }
+
+//                CButton {
+//                    Layout.fillWidth: true
+//                    Layout.margins: 4
+////                    Layout.preferredHeight: 24
+//                    text: "⇱"
+//                    checkable: true
+//                    padding: 0
+//                    onCheckedChanged: {
+//                        if(checked) {  waterView.setMouseMode(4) }
+//                    }
+//                    ButtonGroup.group: pencilbuttonGroup
+//                }
+//            }
+
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 0
-
-
-                MenuBlock { }
-
-                ButtonGroup { id: pencilbuttonGroup }
-
-                CButton {
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-                    Layout.bottomMargin: 1
-//                    Layout.preferredHeight: 24
-                    text: "⇔"
-                    checkable: true
-                    checked: true
-                    padding: 0
-                    onCheckedChanged: {
-                        if(checked) {  waterView.setMouseMode(1) }
-                    }
-                    ButtonGroup.group: pencilbuttonGroup
-                }
-
-                CButton {
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-                    Layout.bottomMargin: 1
-//                    Layout.preferredHeight: 24
-                    text: "⇲"
-                    checkable: true
-                    padding: 0
-                    onCheckedChanged: {
-                        if(checked) {  waterView.setMouseMode(2) }
-                    }
-                    ButtonGroup.group: pencilbuttonGroup
-                }
-
-                CButton {
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-                    Layout.bottomMargin: 1
-//                    Layout.preferredHeight: 24
-                    text: "═"
-                    checkable: true
-                    padding: 0
-                    onCheckedChanged: {
-                        if(checked) {  waterView.setMouseMode(3) }
-                    }
-                    ButtonGroup.group: pencilbuttonGroup
-                }
-
-                CButton {
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-//                    Layout.preferredHeight: 24
-                    text: "⇱"
-                    checkable: true
-                    padding: 0
-                    onCheckedChanged: {
-                        if(checked) {  waterView.setMouseMode(4) }
-                    }
-                    ButtonGroup.group: pencilbuttonGroup
-                }
-            }
-
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 0
-                visible: true
+                visible: instruments > 0
 
                 MenuBlock { }
 
                 CButton {
-                    id: visible3dButton
+                    id: settings3DButton
+                    //id: visible3dButton
                     Layout.fillWidth: true
                     Layout.margins: 4
-//                    Layout.preferredHeight: 24
+              //      Layout.preferredHeight: 24
                     text: "3D"
                     checkable: true
                     padding: 0
+
                     onClicked: {
-//                        if(checked) { core.movePoints() }
+                        Settings3DController.changeSceneVisibility(checked)
+//                       itemChangeActive(settings3DButton)
                     }
                 }
 
@@ -217,6 +244,8 @@ Item {
                 }
             }
         }
+
+
 
         DeviceSettingsViewer {
             id: devSettings
@@ -237,6 +266,20 @@ Item {
             implicitWidth: settingsWidth
 
             y:0
+
+            targetPlot: menu.targetPlot
         }
+
+        Settings3DView {
+            id: scene3DSettings
+            Layout.alignment: Qt.AlignTop
+            visible: menu3DSettings.active
+            Layout.maximumHeight: menu.height
+            width: settingsWidth
+            implicitWidth: settingsWidth
+
+            y:0
+        }
+
     }
 }
