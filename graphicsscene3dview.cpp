@@ -73,6 +73,11 @@ std::weak_ptr<GraphicsScene3dView::Camera> GraphicsScene3dView::camera() const
     return m_camera;
 }
 
+float GraphicsScene3dView::verticalScale() const
+{
+    return m_verticalScale;
+}
+
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();

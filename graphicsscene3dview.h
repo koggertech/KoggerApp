@@ -123,7 +123,9 @@ public:
     std::shared_ptr <PointGroup> pointGroup() const;
     std::shared_ptr <PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
+    float verticalScale() const;
     void clear();
+
 
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y);

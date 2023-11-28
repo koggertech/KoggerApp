@@ -84,5 +84,6 @@
         <file>fit-in-view.svg</file>
         <file>KoggerCommon/KWaitProgressBar.qml</file>
         <file>combo-selection.svg</file>
+        <file>Scene3DControlMenu.qml</file>
     </qresource>
 </RCC>

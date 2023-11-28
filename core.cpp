@@ -34,13 +34,14 @@ void Core::createModels()
 
 void Core::createControllers()
 {
-    m_bottomTrackControlMenuController  = std::make_shared <BottomTrackControlMenuController>();
-    m_mpcFilterControlMenuController    = std::make_shared <MpcFilterControlMenuController>();
-    m_npdFilterControlMenuController    = std::make_shared <NpdFilterControlMenuController>();
-    m_surfaceControlMenuController      = std::make_shared <SurfaceControlMenuController>();
-    m_pointGroupControlMenuController   = std::make_shared <PointGroupControlMenuController>();
-    m_polygonGroupControlMenuController = std::make_shared <PolygonGroupControlMenuController>();
-    m_scene3dToolBarController          = std::make_shared <Scene3dToolBarController>();
+    m_bottomTrackControlMenuController  = std::make_shared<BottomTrackControlMenuController>();
+    m_mpcFilterControlMenuController    = std::make_shared<MpcFilterControlMenuController>();
+    m_npdFilterControlMenuController    = std::make_shared<NpdFilterControlMenuController>();
+    m_surfaceControlMenuController      = std::make_shared<SurfaceControlMenuController>();
+    m_pointGroupControlMenuController   = std::make_shared<PointGroupControlMenuController>();
+    m_polygonGroupControlMenuController = std::make_shared<PolygonGroupControlMenuController>();
+    m_scene3dControlMenuController      = std::make_shared<Scene3DControlMenuController>();
+    m_scene3dToolBarController          = std::make_shared<Scene3dToolBarController>();
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)
@@ -56,6 +57,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     m_engine->rootContext()->setContextProperty("PolygonGroupControlMenuController", m_polygonGroupControlMenuController.get());
     m_engine->rootContext()->setContextProperty("MpcFilterControlMenuController",    m_mpcFilterControlMenuController.get());
     m_engine->rootContext()->setContextProperty("NpdFilterControlMenuController",    m_npdFilterControlMenuController.get());
+    m_engine->rootContext()->setContextProperty("Scene3DControlMenuController",      m_scene3dControlMenuController.get());
     m_engine->rootContext()->setContextProperty("Scene3dToolBarController",          m_scene3dToolBarController.get());
 }
 
@@ -459,6 +461,9 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
     m_scene3dToolBarController->setQmlEngine(object);
     m_scene3dToolBarController->setGraphicsSceneView(m_scene3dView);
+
+    m_scene3dControlMenuController->setQmlEngine(object);
+    m_scene3dControlMenuController->setGraphicsSceneView(m_scene3dView);
 
     m_waterFall = object->findChild<WaterFall*>();
 
