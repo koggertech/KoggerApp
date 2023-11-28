@@ -103,8 +103,6 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 
     if(!filterMenuLoader)
         return;
-
-
 }
 
 void SurfaceControlMenuController::onVerticalScaleSliderValueChanged(float value)
@@ -112,7 +110,7 @@ void SurfaceControlMenuController::onVerticalScaleSliderValueChanged(float value
     if(!m_graphicsSceneView)
         return;
 
-    m_graphicsSceneView->surface()->setVerticalScale(value);
+    m_graphicsSceneView->setVerticalScale(value);
 }
 
 void SurfaceControlMenuController::onUpdateSurfaceButtonClicked()

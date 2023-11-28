@@ -110,7 +110,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
                 if(!indices.contains(i))
                     newData.append(currentData.at(i));
             }
-            RENDER_IMPL(BottomTrack)->setData(newData, GL_LINE_STRIP);
+            setData(newData, GL_LINE_STRIP);
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
 
             m_view->m_comboSelectionRect = {0,0,0,0};

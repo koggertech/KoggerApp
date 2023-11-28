@@ -144,8 +144,10 @@ void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
 void SceneObject::removeVertex(int index)
 {
     m_renderImpl->removeVertex(index);
+    m_renderImpl->createBounds();
 
     Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void SceneObject::clearData()
@@ -193,8 +195,7 @@ SceneObject::RenderImplementation::~RenderImplementation()
 
 void SceneObject::RenderImplementation::render(QOpenGLFunctions *ctx,
                                                const QMatrix4x4 &mvp,
-                                               const QMap<QString,
-                                               std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+                                               const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     if(!m_isVisible)
         return;

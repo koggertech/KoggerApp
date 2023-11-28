@@ -135,6 +135,7 @@ public Q_SLOTS:
     void fitAllInView();
     void setIsometricView();
     void setIdleMode();
+    void setVerticalScale(float scale);
     void setBottomTrackVertexSelectionMode();
     void setBottomTrackVertexComboSelectionMode();
     void setPolygonCreationMode();
@@ -145,7 +146,6 @@ private:
     void updatePlaneGrid();
 
 private:
-    friend class SceneEntity;
     friend class BottomTrack;
 
     std::shared_ptr <Camera> m_camera;
@@ -166,6 +166,7 @@ private:
     ActiveMode m_mode = Idle;
     QRect m_comboSelectionRect = {0,0,0,0};
     Ray m_ray;
+    float m_verticalScale = 1.0f;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

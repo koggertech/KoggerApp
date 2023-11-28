@@ -215,7 +215,7 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 void GraphicsScene3dView::fitAllInView()
 {
     auto maxSize = std::max(m_bounds.width(),
-                            std::max(m_bounds.height(),
+                            std::max(m_bounds.height() * m_verticalScale,
                                      m_bounds.length()));
 
     auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
@@ -245,6 +245,24 @@ void GraphicsScene3dView::setIdleMode()
 
     m_comboSelectionRect = {0,0,0,0};
     m_bottomTrack->resetVertexSelection();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setVerticalScale(float scale)
+{
+    if(m_verticalScale == scale)
+        return;
+    else if(m_verticalScale < 1.0f)
+        m_verticalScale = 1.0f;
+    else if(m_verticalScale > 10.0f)
+        m_verticalScale = 10.0f;
+    else
+        m_verticalScale = scale;
+
+    //m_model.translate(0.0f,0.0f,m_verticalScale*0.5);
+    //m_model.scale(1.0f, 1.0f, m_verticalScale);
+
 
     QQuickFramebufferObject::update();
 }
@@ -349,7 +367,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_viewSize               = view->size();
     m_renderer->m_camera                 = *view->m_camera;
     m_renderer->m_axesThumbnailCamera    = *view->m_axesThumbnailCamera;
-    m_renderer->m_comboSelectionRect          = view->m_comboSelectionRect;
+    m_renderer->m_comboSelectionRect     = view->m_comboSelectionRect;
+    m_renderer->m_verticalScale          = view->m_verticalScale;
 
     //read from renderer
     view->m_model = m_renderer->m_model;

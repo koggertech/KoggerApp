@@ -53,6 +53,7 @@ private:
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     QRect m_comboSelectionRect;
+    float m_verticalScale = 1.0f;
 };
 
 #endif // GRAPHICSSCENE3D_H
