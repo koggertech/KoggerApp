@@ -258,6 +258,8 @@ void SceneObject::RenderImplementation::setVisible(bool isVisible)
 void SceneObject::RenderImplementation::clearData()
 {
     m_data.clear();
+
+    createBounds();
 }
 
 QVector<QVector3D> SceneObject::RenderImplementation::data() const
@@ -308,7 +310,7 @@ void SceneObject::RenderImplementation::removeVertex(int index)
 void SceneObject::RenderImplementation::createBounds()
 {
     if (m_data.isEmpty()){
-        m_bounds = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
+        m_bounds = Cube();
         return;
     }
 

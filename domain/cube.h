@@ -34,6 +34,7 @@ private:
     float m_yMax = 0.0f;
     float m_zMin = 0.0f;
     float m_zMax = 0.0f;
+    bool m_isValid = false;
 };
 
 

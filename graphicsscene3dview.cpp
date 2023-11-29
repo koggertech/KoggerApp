@@ -38,6 +38,8 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_planeGrid.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     QObject::connect(m_surface.get(), &Surface::visibilityChanged, m_bottomTrack.get(), &BottomTrack::setDisplayingWithSurface);
+
+    m_bounds = Cube(-5.0f,5.0f,-5.0f,5.0f,-5.0f,5.0f);
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
@@ -220,14 +222,19 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 void GraphicsScene3dView::fitAllInView()
 {
     auto maxSize = std::max(m_bounds.width(),
-                            std::max(m_bounds.height() * m_verticalScale,
+                            std::max(m_bounds.height(),
                                      m_bounds.length()));
 
-    auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
+    auto sphereRadius = maxSize/2.0f;
+    auto sphereCenter = m_bounds.center();
 
-    m_camera->focusOnPosition(m_bounds.center());
+    //auto d = 2 * std::tan(m_camera->fov()/2.0f);
+    //auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
+    auto d = sphereRadius / std::tan(m_camera->fov()/2.0f);
 
-    if(d>0) m_camera->setDistance(d);
+    m_camera->focusOnPosition(sphereCenter);
+
+    if(d>0) m_camera->setDistance(sphereRadius);
 
     updatePlaneGrid();
 
@@ -310,13 +317,10 @@ void GraphicsScene3dView::setPolygonEditingMode()
 
 void GraphicsScene3dView::updateBounds()
 {
-    Cube bounds;
-    bounds.merge(m_bottomTrack->bounds())
-          .merge(m_surface->bounds())
-          .merge(m_polygonGroup->bounds())
-          .merge(m_pointGroup->bounds());
-
-    m_bounds = std::move(bounds);
+    m_bounds = m_bottomTrack->bounds()
+        .merge(m_surface->bounds())
+        .merge(m_polygonGroup->bounds())
+        .merge(m_pointGroup->bounds());
 
     updatePlaneGrid();
 
@@ -374,6 +378,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_axesThumbnailCamera    = *view->m_axesThumbnailCamera;
     m_renderer->m_comboSelectionRect     = view->m_comboSelectionRect;
     m_renderer->m_verticalScale          = view->m_verticalScale;
+    m_renderer->m_boundingBox            = view->m_bounds;
 
     //read from renderer
     view->m_model = m_renderer->m_model;

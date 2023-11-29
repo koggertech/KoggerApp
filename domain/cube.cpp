@@ -9,7 +9,9 @@ Cube::Cube(float x_1, float x_2,
 :m_xMin(x_1), m_xMax(x_2)
 ,m_yMin(y_1), m_yMax(y_2)
 ,m_zMin(z_1), m_zMax(z_2)
-{}
+{
+    m_isValid = true;
+}
 
 QVector3D Cube::center() const{
     return {
@@ -42,6 +44,13 @@ float Cube::height() const{
 
 Cube Cube::merge(const Cube &other)
 {
+    if(!m_isValid && other.m_isValid)
+        return other;
+    else if(m_isValid && !other.m_isValid)
+        return *this;
+    else if(!m_isValid && !other.m_isValid)
+        return {};
+
     m_xMin = std::fminf(m_xMin, other.m_xMin);
     m_xMax = std::fmaxf(m_xMax, other.m_xMax);
 

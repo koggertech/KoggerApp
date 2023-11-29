@@ -49,9 +49,7 @@ SurfaceProcessorTask Surface::processingTask() const
 
 void Surface::setData(const QVector<QVector3D>& data, int primitiveType)
 {
-    blockSignals(true);
     SceneObject::setData(data, primitiveType);
-    blockSignals(false);
 
     updateGrid();
     updateContour();
