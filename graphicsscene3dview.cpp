@@ -40,6 +40,7 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_surface.get(), &Surface::visibilityChanged, m_bottomTrack.get(), &BottomTrack::setDisplayingWithSurface);
 
     m_bounds = Cube(-5.0f,5.0f,-5.0f,5.0f,-5.0f,5.0f);
+    updatePlaneGrid();
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
