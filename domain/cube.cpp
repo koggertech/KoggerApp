@@ -63,6 +63,38 @@ Cube Cube::merge(const Cube &other)
     return *this;
 }
 
+Plane Cube::front()
+{
+
+}
+
+Plane Cube::right()
+{
+
+}
+
+Plane Cube::back()
+{
+
+}
+
+Plane Cube::left()
+{
+
+}
+
+Plane Cube::bottom()
+{
+    return Plane({m_xMin,m_yMin,m_zMin},
+                 {m_xMax,m_yMax,m_zMin});
+}
+
+Plane Cube::top()
+{
+    return Plane({m_xMin,m_yMin,m_zMax},
+                 {m_xMax,m_yMax,m_zMax});
+}
+
 float Cube::minimumX() const
 {
     return m_xMin;

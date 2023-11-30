@@ -1,6 +1,8 @@
 #ifndef CUBE_H
 #define CUBE_H
 
+#include <plane.h>
+
 #include <QVector3D>
 
 #include <cmath>
@@ -26,6 +28,13 @@ public:
     float width() const;
     float height() const;
     Cube merge(const Cube& other);
+
+    Plane front();
+    Plane right();
+    Plane back();
+    Plane left();
+    Plane bottom();
+    Plane top();
 
 private:
     float m_xMin = 0.0f;

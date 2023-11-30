@@ -329,8 +329,10 @@ void GraphicsScene3dView::updateBounds()
 
 void GraphicsScene3dView::updatePlaneGrid()
 {
-    m_planeGrid->setSize(QSize(m_bounds.length(), m_bounds.width()));
-    m_planeGrid->setPosition(m_bounds.bottomPos());
+    m_planeGrid->setPlane(m_bounds.bottom());
+
+    //m_planeGrid->setSize(QSize(m_bounds.length(), m_bounds.width()));
+    //m_planeGrid->setPosition(m_bounds.bottomPos());
 
     if(m_camera->distToFocusPoint() < 65)
         m_planeGrid->setCellSize(1);

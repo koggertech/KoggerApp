@@ -2,6 +2,7 @@
 #define PLANEGRID_H
 
 #include <sceneobject.h>
+#include <plane.h>
 
 class PlaneGrid : public SceneObject
 {
@@ -17,12 +18,13 @@ public:
                           const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     private:
         friend class PlaneGrid;
-        QSize m_size = {10,10};
+        QSizeF m_size = {10,10};
         int m_cellSize = 1.0f;
         QVector3D m_position = {0.0f, 0.0f, 0.0f};
     };
 
-    void setSize(const QSize& size);
+    void setPlane(const Plane& plane);
+    void setSize(const QSizeF& size);
     void setPosition(const QVector3D& pos);
     void setCellSize(int size);
 
@@ -32,7 +34,7 @@ public Q_SLOTS:
     virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS) override;
 
 private:
-    QSize m_size = {10,10};
+    QSizeF m_size = {10,10};
     int m_cellSize = 1.0f;
     QVector3D m_position = {0.0f, 0.0f, 0.0f};
 };
