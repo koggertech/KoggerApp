@@ -23,6 +23,14 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
     QMetaObject::invokeMethod(reinterpret_cast <QObject*>(bottomTrack.get()), "setVisible", Q_ARG(bool, checked));
 }
 
+void BottomTrackControlMenuController::onRestoreBottomTrackButtonClicked()
+{
+    if(!m_graphicsSceneView || !m_bottomTrackProvider)
+        return;
+
+    m_graphicsSceneView->bottomTrack()->setData(m_bottomTrackProvider->getBottomTrack(), GL_LINE_STRIP);
+}
+
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;

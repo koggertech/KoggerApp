@@ -34,6 +34,13 @@ Item {
                         checkState = controller.bottomTrack.visible ? Qt.Checked : Qt.Unchecked
                 }
             }
+
+            KButton {
+                id:               restoreBottomTrack
+                Layout.fillWidth: true
+                text:             qsTr("Restore")
+                onClicked:        root.controller.onRestoreBottomTrackButtonClicked()
+            }
         }
     }
 }
