@@ -225,16 +225,11 @@ void GraphicsScene3dView::fitAllInView()
                             std::max(m_bounds.height(),
                                      m_bounds.length()));
 
-    auto sphereRadius = maxSize/2.0f;
-    auto sphereCenter = m_bounds.center();
+    auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
 
-    //auto d = 2 * std::tan(m_camera->fov()/2.0f);
-    //auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
-    auto d = sphereRadius / std::tan(m_camera->fov()/2.0f);
+    m_camera->focusOnPosition(m_bounds.center());
 
-    m_camera->focusOnPosition(sphereCenter);
-
-    if(d>0) m_camera->setDistance(sphereRadius);
+    if(d>0) m_camera->setDistance(d);
 
     updatePlaneGrid();
 
