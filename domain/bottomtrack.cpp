@@ -113,7 +113,8 @@ void BottomTrack::keyPressEvent(Qt::Key key)
             setData(newData, GL_LINE_STRIP);
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
 
-            m_view->m_comboSelectionRect = {0,0,0,0};
+            m_view->m_comboSelectionRect = {m_view->m_comboSelectionRect.bottomRight(),
+                                            m_view->m_comboSelectionRect.bottomRight()};;
         }
     }
 }
