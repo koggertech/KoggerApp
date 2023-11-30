@@ -55,6 +55,7 @@ private:
     QRect m_comboSelectionRect;
     Cube m_boundingBox;
     float m_verticalScale = 1.0f;
+    bool m_isSceneBoundingBoxVisible = true;
 };
 
 #endif // GRAPHICSSCENE3D_H

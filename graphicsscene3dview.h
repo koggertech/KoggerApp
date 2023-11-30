@@ -124,6 +124,7 @@ public:
     std::shared_ptr <PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
+    bool sceneBoundingBoxVisible() const;
     void clear();
 
 
@@ -134,6 +135,7 @@ public:
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
 
 public Q_SLOTS:
+    void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
     void setIsometricView();
     void setIdleMode();
@@ -169,6 +171,7 @@ private:
     QRect m_comboSelectionRect = {0,0,0,0};
     Ray m_ray;
     float m_verticalScale = 1.0f;
+    bool m_isSceneBoundingBoxVisible = true;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

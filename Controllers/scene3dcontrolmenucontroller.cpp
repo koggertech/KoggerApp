@@ -18,6 +18,14 @@ void Scene3DControlMenuController::onVerticalScaleSliderValueChanged(float value
     m_graphicsSceneView->setVerticalScale(value);
 }
 
+void Scene3DControlMenuController::onShowSceneBoundingBoxCheckBoxChecked(bool checked)
+{
+    if(!m_graphicsSceneView)
+        return;
+
+    m_graphicsSceneView->setSceneBoundingBoxVisible(checked);
+}
+
 void Scene3DControlMenuController::findComponent()
 {
 
@@ -29,4 +37,12 @@ float Scene3DControlMenuController::verticalScale() const
         return 1.0f;
 
     return m_graphicsSceneView->verticalScale();
+}
+
+float Scene3DControlMenuController::sceneBoundingBoxVisible() const
+{
+    if(!m_graphicsSceneView)
+        return 1.0f;
+
+    return m_graphicsSceneView->sceneBoundingBoxVisible();
 }

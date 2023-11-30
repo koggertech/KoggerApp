@@ -22,6 +22,15 @@ Item {
             spacing:         24
             groupName:       "Scene controls"
 
+            KCheck {
+                id:               showSceneBoundingBoxCheckBox
+                objectName:       "showSceneBoundingBoxCheckBox"
+                text:             qsTr("Show scene bounding box")
+                Layout.fillWidth: true
+                checked:          root.controller.sceneBoundingBoxVisible
+                onCheckedChanged: root.controller.onShowSceneBoundingBoxCheckBoxChecked(checked)
+            }
+
             KParamSetup {
                 id: sceneVertialScale
                 paramName: qsTr("Vertical scale: ")

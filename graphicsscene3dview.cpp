@@ -81,6 +81,11 @@ float GraphicsScene3dView::verticalScale() const
     return m_verticalScale;
 }
 
+bool GraphicsScene3dView::sceneBoundingBoxVisible() const
+{
+    return m_isSceneBoundingBoxVisible;
+}
+
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
@@ -215,6 +220,13 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
 void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
     m_bottomTrack->keyPressEvent(key);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
+{
+    m_isSceneBoundingBoxVisible = visible;
 
     QQuickFramebufferObject::update();
 }
@@ -365,18 +377,19 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
         return;
 
     // write to renderer
-    m_renderer->m_coordAxesRenderImpl    = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
-    m_renderer->m_planeGridRenderImpl    = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
-    m_renderer->m_bottomTrackRenderImpl  = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
-    m_renderer->m_surfaceRenderImpl      = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
-    m_renderer->m_polygonGroupRenderImpl = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
-    m_renderer->m_pointGroupRenderImpl   = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
-    m_renderer->m_viewSize               = view->size();
-    m_renderer->m_camera                 = *view->m_camera;
-    m_renderer->m_axesThumbnailCamera    = *view->m_axesThumbnailCamera;
-    m_renderer->m_comboSelectionRect     = view->m_comboSelectionRect;
-    m_renderer->m_verticalScale          = view->m_verticalScale;
-    m_renderer->m_boundingBox            = view->m_bounds;
+    m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
+    m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
+    m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
+    m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
+    m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
+    m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
+    m_renderer->m_viewSize                  = view->size();
+    m_renderer->m_camera                    = *view->m_camera;
+    m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;
+    m_renderer->m_comboSelectionRect        = view->m_comboSelectionRect;
+    m_renderer->m_verticalScale             = view->m_verticalScale;
+    m_renderer->m_boundingBox               = view->m_bounds;
+    m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
 
     //read from renderer
     view->m_model = m_renderer->m_model;
