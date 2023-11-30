@@ -123,8 +123,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
         m_comboSelectionRect = {0,0,0,0};
         float deltaAngleX = (2 * M_PI / size().width());
         float deltaAngleY = (2 * M_PI / size().height());
-        float yaw = (m_lastMousePos.x() - x) * deltaAngleX;
-        float pitch = (m_lastMousePos.y() - y) * deltaAngleY;
+        float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
+        float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
 
         m_camera->rotate(yaw, -pitch);
         m_axesThumbnailCamera->rotate(yaw, -pitch);
