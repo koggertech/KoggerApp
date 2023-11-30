@@ -88,8 +88,7 @@ void GraphicsScene3dView::clear()
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
 
-    m_camera->setIsometricView();
-    m_axesThumbnailCamera->setIsometricView();
+    setIsometricView();
 
     QQuickFramebufferObject::update();
 }
@@ -242,6 +241,7 @@ void GraphicsScene3dView::setIsometricView()
     m_camera->setIsometricView();
     m_axesThumbnailCamera->setIsometricView();
 
+    fitAllInView();
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
