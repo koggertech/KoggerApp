@@ -37,8 +37,13 @@ public:
         qreal pitch() const;
         qreal yaw() const;
         QMatrix4x4 viewMatrix() const;
-        void rotate(qreal yaw, qreal pitch);
-        void move(const QVector2D& startPos, const QVector2D& endPos);
+
+        //TODO! Process this method later
+        //void rotate(qreal yaw, qreal pitch);
+        void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
+
+        //void move(const QVector2D& startPos, const QVector2D& endPos);
+        void move(const QVector2D &lastMouse, const QVector2D &mousePos);
         void zoom(qreal delta);
         void commitMovement();
         void focusOnObject(std::weak_ptr<SceneObject> object);
@@ -57,8 +62,6 @@ public:
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
         QVector3D m_lookAt = {0.0f, 0.0f, 0.0f};
         QVector3D m_relativeOrbitPos = {0.0f, 0.0f, 0.0f};
-        QPointF m_startDragPos = {0.0f, 0.0f};
-        bool m_useFocusPoint = true;
 
         QMatrix4x4 m_view;
 
@@ -70,8 +73,10 @@ public:
         qreal m_pitch = 0.0f;
         qreal m_yaw = 0.0f;
         qreal m_fov = 45.0f;
-        qreal m_distToFocusPoint = 25.0f;
+        float m_distToFocusPoint = 25.0f;
         qreal m_sensivity = 0.5f;
+
+        QVector2D m_rotAngle;
     };
 
     //Renderer

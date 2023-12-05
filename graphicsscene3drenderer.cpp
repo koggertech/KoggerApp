@@ -75,30 +75,17 @@ void GraphicsScene3dRenderer::drawObjects()
 
     view = m_camera.m_view;
     projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 5000.0f);
-
-    // Make NEU coordinate system
-    model.rotate(-90.0f, {1.0f,0.0f,0.0f});
-    auto inv_y = QMatrix4x4();
-    auto c = inv_y.column(1);
-    c.setY(-c.y());
-    inv_y.setColumn(1,c);
-    model *= inv_y;
-
-    // Scaling scene objects
     model.scale(1.0f, 1.0f, m_verticalScale);
 
     m_model = std::move(model);
     m_projection = std::move(projection);
 
     glEnable(GL_DEPTH_TEST);
-
     m_planeGridRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    //m_surfaceRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
@@ -111,16 +98,12 @@ void GraphicsScene3dRenderer::drawObjects()
     QMatrix4x4 axesProjection;
     QMatrix4x4 axesModel;
 
-    axesModel.rotate(-90.0f, {1.0f,0.0f,0.0f});
-    axesModel *= inv_y;
-
     axesView = m_axesThumbnailCamera.m_view;
     axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 5000.0f);
 
     m_coordAxesRenderImpl.render(this, axesProjection * axesView * axesModel, m_shaderProgramMap);
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    //---------------------------------
 
     //----------->Draw selection rect<-----------//
     glMatrixMode(GL_PROJECTION);
@@ -188,9 +171,11 @@ void GraphicsScene3dRenderer::drawObjects()
         shaderProgram->enableAttributeArray(posLoc);
         shaderProgram->setAttributeArray(posLoc, boundingBox.constData());
 
+        glEnable(GL_DEPTH_TEST);
         glLineWidth(2.0f);
         glDrawArrays(GL_LINES, 0, boundingBox.size());
         glLineWidth(1.0f);
+        glDisable(GL_DEPTH_TEST);
 
         shaderProgram->disableAttributeArray(posLoc);
         shaderProgram->release();

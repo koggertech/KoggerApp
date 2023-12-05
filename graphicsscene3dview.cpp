@@ -3,6 +3,7 @@
 #include <surface.h>
 
 #include <memory.h>
+#include <math.h>
 
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
@@ -131,8 +132,12 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
         float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
         float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
 
-        m_camera->rotate(yaw, -pitch);
-        m_axesThumbnailCamera->rotate(yaw, -pitch);
+        //m_camera->rotate(yaw, -pitch);
+        //m_axesThumbnailCamera->rotate(yaw, -pitch);
+
+        m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
+        m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
+
         QQuickFramebufferObject::update();
     }
 
@@ -239,9 +244,10 @@ void GraphicsScene3dView::fitAllInView()
 
     auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
 
-    m_camera->focusOnPosition(m_bounds.center());
+    if(d>0)
+        m_camera->setDistance(d);
 
-    if(d>0) m_camera->setDistance(d);
+    m_camera->focusOnPosition(m_bounds.center());
 
     updatePlaneGrid();
 
@@ -279,10 +285,6 @@ void GraphicsScene3dView::setVerticalScale(float scale)
         m_verticalScale = 10.0f;
     else
         m_verticalScale = scale;
-
-    //m_model.translate(0.0f,0.0f,m_verticalScale*0.5);
-    //m_model.scale(1.0f, 1.0f, m_verticalScale);
-
 
     QQuickFramebufferObject::update();
 }
@@ -338,9 +340,6 @@ void GraphicsScene3dView::updateBounds()
 void GraphicsScene3dView::updatePlaneGrid()
 {
     m_planeGrid->setPlane(m_bounds.bottom());
-
-    //m_planeGrid->setSize(QSize(m_bounds.length(), m_bounds.width()));
-    //m_planeGrid->setPosition(m_bounds.bottomPos());
 
     if(m_camera->distToFocusPoint() < 65)
         m_planeGrid->setCellSize(1);
@@ -443,32 +442,49 @@ QMatrix4x4 GraphicsScene3dView::Camera::viewMatrix() const
     return m_view;
 }
 
-void GraphicsScene3dView::Camera::rotate(qreal yaw, qreal pitch)
+//void GraphicsScene3dView::Camera::rotate(qreal yaw, qreal pitch)
+//{
+//    QVector3D viewDir = (m_eye-m_lookAt).normalized();
+//    QVector3D right = QVector3D::crossProduct(viewDir,m_up).normalized();
+//
+//    float cosAngle = QVector3D::dotProduct(viewDir,m_up);
+//
+//    auto sgn = [](float val){
+//        return (float(0) < val) - (val < float(0));
+//    };
+//
+//    if(cosAngle * sgn(pitch) > 0.99f)
+//        pitch = 0.0f;
+//
+//    yaw *= m_sensivity * 65.0f;
+//    pitch *= m_sensivity * 65.0f;
+//
+//    QMatrix4x4 rotationMatrixX;
+//    rotationMatrixX.setToIdentity();
+//    rotationMatrixX.rotate(yaw,m_up);
+//    m_relativeOrbitPos = (rotationMatrixX * QVector4D(m_relativeOrbitPos, 1.0f)).toVector3D();
+//
+//    QMatrix4x4 rotationMatrixY;
+//    rotationMatrixY.setToIdentity();
+//    rotationMatrixY.rotate(pitch, right);
+//    m_relativeOrbitPos = (rotationMatrixY * QVector4D(m_relativeOrbitPos, 1.0f)).toVector3D();
+//
+//    updateViewMatrix();
+//}
+
+void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVector2D& mousePos)
 {
-    QVector3D viewDir = (m_eye-m_lookAt).normalized();
-    QVector3D right = QVector3D::crossProduct(viewDir,m_up).normalized();
+    auto r = (lastMouse - mousePos)*0.2;
+    r.setX(qDegreesToRadians(r.x()));
+    r.setY(qDegreesToRadians(r.y()));
 
-    float cosAngle = QVector3D::dotProduct(viewDir, m_up);
+    m_rotAngle += r;
 
-    auto sgn = [](float val){
-        return (float(0) < val) - (val < float(0));
-    };
-
-    if(cosAngle * sgn(pitch) > 0.99f)
-        pitch = 0.0f;
-
-    yaw *= m_sensivity * 65.0f;
-    pitch *= m_sensivity * 65.0f;
-
-    QMatrix4x4 rotationMatrixX;
-    rotationMatrixX.setToIdentity();
-    rotationMatrixX.rotate(yaw, m_up);
-    m_relativeOrbitPos = (rotationMatrixX * QVector4D(m_relativeOrbitPos, 1.0f)).toVector3D();
-
-    QMatrix4x4 rotationMatrixY;
-    rotationMatrixY.setToIdentity();
-    rotationMatrixY.rotate(pitch, right);
-    m_relativeOrbitPos = (rotationMatrixY * QVector4D(m_relativeOrbitPos, 1.0f)).toVector3D();
+    if(m_rotAngle[1] > M_PI_2 ) {
+        m_rotAngle[1] = M_PI_2;
+    } else if(m_rotAngle[1] < 0) {
+        m_rotAngle[1] = 0;
+    }
 
     updateViewMatrix();
 }
@@ -486,11 +502,21 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
                       0.05f)
             .toVector3D();
 
-    m_useFocusPoint = false;
-
     auto lookAt = m_lookAt + m_deltaOffset;
+
     updateViewMatrix(&lookAt);
 }
+
+//void GraphicsScene3dView::Camera::move(const QVector2D &lastMouse, const QVector2D &mousePos)
+//{
+//    QVector3D vm = QVector3D(-(qDegreesToRadians(lastMouse.x()) - qDegreesToRadians(mousePos.x())), (qDegreesToRadians(lastMouse.y()) - qDegreesToRadians(mousePos.y())), 0)*(m_fov*0.002);
+//
+//    m_focusPosition[0] += (vm[1]*cosf(-m_rotAngle.x())*cosf(m_rotAngle.y()) - vm[0]*sinf(-m_rotAngle.x()));
+//    m_focusPosition[1] += (vm[1]*sinf(-m_rotAngle.x())*cosf(m_rotAngle.y()) + vm[0]*cosf(-m_rotAngle.x()));
+//    m_focusPosition[2] += -vm[1]*sinf(m_rotAngle.y())*sinf(m_rotAngle.y());
+//
+//    updateViewMatrix();
+//}
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
@@ -518,7 +544,6 @@ void GraphicsScene3dView::Camera::focusOnObject(std::weak_ptr<SceneObject> objec
 void GraphicsScene3dView::Camera::focusOnPosition(const QVector3D &point)
 {
     m_lookAt = point;
-    m_useFocusPoint = true;
 
     updateViewMatrix();
 }
@@ -533,9 +558,9 @@ void GraphicsScene3dView::Camera::setDistance(qreal distance)
 void GraphicsScene3dView::Camera::setIsometricView()
 {
     reset();
-    m_relativeOrbitPos = {static_cast<float>(sqrt(1.0f / 3.0f)),
-                          static_cast<float>(sqrt(1.0f / 3.0f)),
-                          static_cast<float>(sqrt(1.0f / 3.0f))};
+
+    m_rotAngle.setX(qDegreesToRadians(135.0f));
+    m_rotAngle.setY(qDegreesToRadians(45.0f));
 
     updateViewMatrix();
 }
@@ -555,19 +580,27 @@ void GraphicsScene3dView::Camera::reset()
     m_fov = 45.0f;
     m_distToFocusPoint = 25.0f;
 
-    m_useFocusPoint = false;
-
     updateViewMatrix();
 }
 
 void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
 {
     auto _lookAt = lookAt ? *lookAt : m_lookAt;
+    _lookAt.setZ(-_lookAt.z());
 
-    m_eye = _lookAt + m_relativeOrbitPos * m_distToFocusPoint;
+    QVector3D cf;
+    cf[0] = -sinf(m_rotAngle.y())*cosf(-m_rotAngle.x())*m_distToFocusPoint;
+    cf[1] = -sinf(m_rotAngle.y())*sinf(-m_rotAngle.x())*m_distToFocusPoint;
+    cf[2] = -cosf(m_rotAngle.y())*m_distToFocusPoint;
+
+    QVector3D cu;
+    cu[0] = cosf(m_rotAngle.y())*cosf(-m_rotAngle.x());
+    cu[1] = cosf(m_rotAngle.y())*sinf(-m_rotAngle.x());
+    cu[2] = -sinf(m_rotAngle.y());
 
     QMatrix4x4 view;
-    view.lookAt(m_eye, _lookAt, m_up);
+    view.lookAt(cf + _lookAt, _lookAt, cu.normalized());
+    view.scale(1.0f,1.0f,-1.0f);
 
     m_view = std::move(view);
 }
