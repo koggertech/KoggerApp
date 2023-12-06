@@ -6,3 +6,5 @@ android.cpp
 android.h
 *.user
 *.bkp
+coreFlash.cpp
+*.user

@@ -29,27 +29,33 @@ DevDriver::DevDriver(QObject *parent) :
 
     regID(idNav = new IDBinNav(), &DevDriver::receivedNav);
     regID(idDVL = new IDBinDVL(), &DevDriver::receivedDVL);
+    regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 }
 
 void DevDriver::regID(IDBin* id_bin, ParseCallback method, bool is_setup) {
-    hashIDParsing[id_bin->id()] = id_bin;
-    hashIDCallback[id_bin->id()] = method;
+//    hashIDParsing[id_bin->id()] = id_bin;
+//    hashIDCallback[id_bin->id()] = method;
 
-    if(is_setup) {
-        hashIDSetup[id_bin->id()] = id_bin;
-    }
+    _hashID[id_bin->id()] = ID_Instance(id_bin, method, is_setup);
+
+
+//    if(is_setup) {
+//        hashIDSetup[id_bin->id()] = id_bin;
+//    }
 
     connect(id_bin, &IDBin::binFrameOut, this, &DevDriver::binFrameOut);
 }
 
 
 void DevDriver::requestSetup() {
-    QHashIterator<ID, IDBin*> i(hashIDSetup);
+    QHashIterator<ID, ID_Instance> i(_hashID);
     while (i.hasNext()) {
         i.next();
-        i.value()->requestAll();
+        if(i.value().isSetup) {
+            i.value().instance->requestAll();
+        }
     }
 
     m_state.conf = ConfRequest;
@@ -58,20 +64,20 @@ void DevDriver::requestSetup() {
 
 
 void DevDriver::setConsoleOut(bool is_console) {
-    QHashIterator<ID, IDBin*> i(hashIDParsing);
+    QHashIterator<ID, ID_Instance> i(_hashID);
     while (i.hasNext()) {
         i.next();
-        i.value()->setConsoleOut(is_console);
+        i.value().instance->setConsoleOut(is_console);
     }
     m_isConsole = is_console;
 }
 
 void DevDriver::setBusAddress(int addr) {
     m_busAddress = addr;
-    QHashIterator<ID, IDBin*> i(hashIDParsing);
+    QHashIterator<ID, ID_Instance> i(_hashID);
     while (i.hasNext()) {
         i.next();
-        i.value()->setAddress(m_busAddress);
+        i.value().instance->setAddress(m_busAddress);
     }
 }
 
@@ -122,13 +128,17 @@ int DevDriver::dopplerDist() {
     return idDVL->dist();
 }
 
+void DevDriver::dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, float range_mode3) {
+    idDVLMode->setModes(ismode1, ismode2, ismode3, range_mode3);
+}
+
 
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }
 
 QString DevDriver::devPN() {
-
+    return QString();
 }
 
 void DevDriver::protoComplete(FrameParser &proto) {
@@ -136,11 +146,17 @@ void DevDriver::protoComplete(FrameParser &proto) {
 
     m_state.mark = proto.mark();
 
-    if(hashIDParsing.contains(proto.id())) {
-        IDBin* parse_instance = hashIDParsing[proto.id()];
-        ParseCallback callback = hashIDCallback[proto.id()];
-        parse_instance->parse(proto);
-        (this->*callback)(parse_instance->lastType(), parse_instance->lastVersion(), parse_instance->lastResp());
+    if(_hashID.contains(proto.id())) {
+        if(_hashID[proto.id()].instance != NULL) {
+            IDBin* parse_instance = _hashID[proto.id()].instance;
+            parse_instance->parse(proto);
+            _lastAddres = proto.route();
+
+            if(_hashID[proto.id()].callback != NULL) {
+                ParseCallback callback = _hashID[proto.id()].callback;
+                (this->*callback)(parse_instance->lastType(), parse_instance->lastVersion(), parse_instance->lastResp());
+            }
+        }
     }
 }
 
@@ -210,11 +226,11 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
 //    if(!m_state.connect) return;
     m_bootloaderLagacyMode = true;
     m_bootloader = true;
-    _timeoutUpgradeAnswerTime = 7000;
+    _timeoutUpgradeAnswerTime = 5000;
     idUpdate->setUpdate(update_data);
     reboot();
     restartState();
-    QTimer::singleShot(300, idUpdate, SLOT(putUpdate()));
+    QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 //    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
 }
 
@@ -536,12 +552,11 @@ void DevDriver::receivedDist(Type type, Version ver, Resp resp) {
 void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
     if(idChart->isCompleteChart()) {
         if(ver == v0) {
-            QVector<int16_t> data(idChart->chartSize());
-            uint8_t* raw_data = idChart->logData8();
-            for(int i = 0; i < data.length(); i++) {
-                data[i] = raw_data[i];
-            }
-            emit chartComplete(data, idChart->resolution(), idChart->offsetRange());
+            QVector<uint8_t> data(idChart->chartSize());
+            memcpy(data.data(), idChart->logData8(), idChart->chartSize());
+
+            emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+
         } else if(ver == v6) {
             QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
             emit iqComplete(data, idChart->rawType());
@@ -555,7 +570,7 @@ void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
-    core.plot()->addTemp(idTemp->temp());
+    core.dataset()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {
@@ -632,7 +647,7 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
             }
 
-            qInfo("board info %u", idVersion->boardVersion());
+//            qInfo("board info %u", idVersion->boardVersion());
             emit deviceVersionChanged();
         } else if(ver == v1) {
             emit deviceIDChanged(idVersion->uid());
@@ -677,8 +692,8 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
     if(resp == respNone) {
         if(ver == v0) {
             m_bootloaderLagacyMode = false;
-            _timeoutUpgradeAnswerTime = 1000;
-            IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getProgress();
+            _timeoutUpgradeAnswerTime = 2000;
+            IDBinUpdate::ID_UPGRADE_V0 prog = idUpdate->getDeviceProgress();
 
             if(prog.type <= 2) {
                 _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
@@ -737,6 +752,10 @@ void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
     }
 }
 
+void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
+
+}
+
 void DevDriver::process() {
     if(m_state.duplex) {
         if(!m_state.mark) {
@@ -763,6 +782,7 @@ void DevDriver::process() {
                 if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
                     core.consoleInfo("Upgrade: timeout error!");
                     idUpdate->putUpdate(false);
+//                    idUpdate->putUpdate();
                 }
             }
         }

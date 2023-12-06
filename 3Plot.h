@@ -6,7 +6,7 @@
 
 #include <QtGui/qvector3d.h>
 #include <QtGui/qmatrix4x4.h>
-#include <QtGui/qopenglshaderprogram.h>
+//#include <QtGui/qopenglshaderprogram.h>
 #include <QtGui/qopenglfunctions.h>
 
 #include <QObject>
@@ -29,6 +29,10 @@ public:
 
     void scale(float sc) {
         m_fScale = sc;
+    }
+
+    void modelScale(float scale) {
+        _modelScaleZ = scale;
     }
 
     void size(QVector2D sz) {
@@ -70,6 +74,7 @@ public:
     void rotationFlag(bool is_rotation) { _isRotation = is_rotation; }
 
 private:
+    float _modelScaleZ = 1.0f;
     qreal   m_fScale = 1;
     QVector2D _size;
     QVector2D _rotAngle;
@@ -82,6 +87,8 @@ private:
     QVector3D _lookat;
     QVector3D _camup;
     QMatrix4x4 _view;
+
+    QVector<QVector3D> _testPonts;
 
     bool _isRotation;
 
@@ -100,12 +107,6 @@ private:
     QVector<QVector3D> vTriangle;
     QVector<QVector3D> _gridXY;
     QVector<QVector<QVector3D>> vQuads;
-    QOpenGLShaderProgram program1;
-
-    QOpenGLShaderProgram* mpHeightMappedProgram;
-    QOpenGLShaderProgram* mpOverlappedTrackProgram;
-    QOpenGLShaderProgram* mpOverlappedGridProgram;
-    QOpenGLShaderProgram* m_shaderProgram;
 
     int vertexAttr1;
     int normalAttr1;
@@ -115,11 +116,6 @@ private:
     qreal _mashStep = 0.05;
 
     QQuaternion q;
-
-    std::unique_ptr <QOpenGLShaderProgram> mpStaticColorShaderProgram;
-    std::unique_ptr <QOpenGLShaderProgram> mpHeightColorShaderProgram;
-
-    QMap <QString, QOpenGLShaderProgram*> mShaderProgramMap;
 
     QMatrix4x4 mModel;
     QMatrix4x4 mView;
@@ -205,8 +201,6 @@ public slots:
 
     float scaleDelta() { return _scale; }
 
-    //QVector2D size() { return QVector2D(width(), height()); }
-
     void mouse(int x, int y, bool rotation_flag) {
         _lastMouseX = x;
         _lastMouseY = y;
@@ -253,6 +247,7 @@ private:
     QVector<QVector3D> _bottomTrack;
 
     float _scale = 30.0;
+    float _modelScaleZ = 1.0f;
     int _lastMouseX = -1, _lastMouseY = -1;
     bool _rotationFlag = false;
 

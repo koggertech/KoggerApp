@@ -13,8 +13,7 @@ Connection::Connection():
     _socketTCP(new QTcpSocket(this)),
     _timerReconnection(new QTimer())
 {
-    m_serial->moveToThread(&workerThread);
-    connect(&workerThread, &QThread::finished, m_serial, &QObject::deleteLater);
+
 
     connect(m_serial, &QSerialPort::aboutToClose, this, &Connection::closing);
 #if defined(Q_OS_ANDROID)
@@ -23,9 +22,13 @@ Connection::Connection():
     connect(m_serial, &QSerialPort::errorOccurred, this, &Connection::handleSerialError);
 #endif
 
-    connect(m_serial, &QSerialPort::readyRead, this, &Connection::readyReadSerial, Qt::QueuedConnection);
+    connect(m_serial, &QSerialPort::readyRead, this, &Connection::readyReadSerial); // , Qt::QueuedConnection
 
+    _socketUDP->moveToThread(&workerThread);
+    connect(&workerThread, &QThread::finished, _socketUDP, &QObject::deleteLater);
     workerThread.start();
+
+//    moveToThread(this);
 
     connect(_socketUDP, &QAbstractSocket::aboutToClose, this, &Connection::closing);
     connect(_socketUDP, &QAbstractSocket::readyRead, this, &Connection::readyReadSerial);
@@ -124,7 +127,6 @@ bool Connection::openFile(const QString &name) {
 
 bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
     close();
-//    m_socket->connectToHost("192.168.4.1", 23, QIODevice::ReadWrite);
 
     if(is_tcp) {
         _socketTCP->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
@@ -138,17 +140,24 @@ bool Connection::openIP(const QString &address, const int port, bool is_tcp) {
             qInfo("TCP socket is not connected!");
         }
     } else {
-        _socketUDP->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     128 * 1024);
-        _socketUDP->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 256 * 1024);
-        _socketUDP->bind(QHostAddress::Any, port); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
-        _socketUDP->connectToHost(address, port, QIODevice::ReadWrite);
+//        _socketUDP->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     32 * 1024);
+//        _socketUDP->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 32 * 1024);
+        bool is_connected = _socketUDP->bind(QHostAddress::AnyIPv4, port, QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress); // ,
+        _port = port;
+        _addr.setAddress(address);
+//        _socketUDP->connectToHost(address, 50429, QIODevice::ReadWrite);
 
-        if (_socketUDP->waitForConnected(1000)) {
-            qInfo("UDP socket is connected!");
+
+        if(is_connected) {
             setType(ConnectionUDP);
-         } else {
-            qInfo("UDP socket is not connected!");
         }
+
+//        if (_socketUDP->waitForConnected(1000)) {
+//            qInfo("UDP socket is connected!");
+//            setType(ConnectionUDP);
+//         } else {
+//            qInfo("UDP socket is not connected!");
+//        }
     }
 
     bool is_open = isOpen();
@@ -245,10 +254,9 @@ bool Connection::close(bool is_user) {
         break;
 
     case ConnectionUDP:
-        if(_socketUDP->isOpen()) {
-            _socketUDP->disconnectFromHost();
-            _socketUDP->close();
-        }
+        _socketUDP->close();
+        setType(ConnectionNone);
+        emit closedEvent(false);
         break;
 
     case ConnectionTCP:
@@ -272,7 +280,7 @@ void Connection::sendData(const QByteArray &data){
     case ConnectionFile:
         break;
     case ConnectionUDP:
-        _socketUDP->write(data);
+        _socketUDP->writeDatagram(data, _addr, _port);
         break;
     case ConnectionTCP:
         _socketTCP->write(data);

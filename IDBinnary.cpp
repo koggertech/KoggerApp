@@ -32,7 +32,8 @@ Resp  IDBin::parse(FrameParser &proto) {
         if(resp_parse == respOk) {
             m_lastType = proto.type();
             m_lastVersion = proto.ver();
-            emit updateContent(m_lastType, m_lastVersion, m_lastResp);
+            _lastAddress = proto.route();
+            emit updateContent(m_lastType, m_lastVersion, m_lastResp, _lastAddress);
         } else {
         }
     }
@@ -79,9 +80,10 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         U2 absOffset = proto.read<U2>();
 
         if(m_seqOffset == 0 && m_chartSizeIncr != 0) {
-            for(uint16_t i = 0; i < m_chartSizeIncr; i++) {
-                m_completeChart[i] = m_fillChart[i];
-            }
+//            for(uint16_t i = 0; i < m_chartSizeIncr; i++) {
+//                m_completeChart[i] = m_fillChart[i];
+//            }
+            memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
             m_chartSize = m_chartSizeIncr;
             m_isCompleteChart = true;
         }
@@ -350,8 +352,8 @@ Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
 
 void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset) {
     m_sanpleCount = count;
-    if(count*resolution > 100000) {
-        resolution = (100000/count/10)*10;
+    if(count*resolution > 200000) {
+        resolution = (200000/count/10)*10;
     }
     m_sanpleResolution = resolution;
     m_sanpleOffset = offset;
@@ -702,4 +704,38 @@ Resp IDBinVoltage::parsePayload(FrameParser &proto) {
     }
 
     return respOk;
+}
+
+Resp IDBinDVLMode::parsePayload(FrameParser &proto) {
+    if(proto.ver() == v0) {
+
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}
+
+void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, float range_mode3) {
+    ProtoBinOut id_out;
+    id_out.create(SETTING, v0, id(), m_address);
+    id_out.write<U1>(1);
+    id_out.write<U1>(0);
+    id_out.write<U1>(0);
+    id_out.write<U1>(0);
+
+    DVLModeSetup mode1, mode2, mode3;
+    mode1.id = 1;
+    mode2.id = 2;
+    mode3.id = 3;
+    mode1.selection = ismode1;
+    mode2.selection = ismode2;
+    mode3.selection = ismode3;
+    mode3.stop = range_mode3;
+    id_out.write<DVLModeSetup>(mode1);
+    id_out.write<DVLModeSetup>(mode2);
+    id_out.write<DVLModeSetup>(mode3);
+
+    id_out.end();
+    emit binFrameOut(id_out);
 }

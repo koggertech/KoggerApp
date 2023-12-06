@@ -1,13 +1,12 @@
-import QtQuick 2.12
+import QtQuick 2.15
 import SceneGraphRendering 1.0
-import QtQuick.Window 2.12
+import QtQuick.Window 2.15
 
-import QtQuick.Layouts 1.12
-
-import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.15
 
 import Qt.labs.settings 1.1
 import QtQuick.Dialogs 1.2
+
 import QtQuick.Controls 2.15
 
 import WaterFall 1.0
@@ -34,6 +33,8 @@ Window  {
     //        property alias width: mainview.width
     //        property alias height: mainview.height
     //    }
+
+
 
     SplitView {
         Layout.fillHeight: true
@@ -165,82 +166,65 @@ Window  {
                 }
             }
 
-            WaterFall {
-                id:                waterView
-                visible:           menuBar.is2DVisible
-                width:             mainview.width
-                Layout.fillHeight: true
-                Layout.fillWidth:  true
-                focus:             true
-                horizontal:        menuBar.is2DHorizontal
 
-                PinchArea {
-                    id:           pinch2D
-                    anchors.fill: parent
-                    enabled:      true
+            GridLayout {
+                visible: menuBar.is2DVisible
+                rows    : 10
+                columns : 10
+                Plot2D {
+                    id: waterView
 
-                    onPinchUpdated: {
-                        waterView.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
-                        waterView.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
-                        waterView.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
-                    }
-
-                    onPinchStarted: {
-                        mousearea.enabled = false
-                        waterView.setMouse(-1, -1)
-                    }
-
-                    onPinchFinished: {
-                        mousearea.enabled = true
-                        waterView.setMouse(-1, -1)
-                    }
-
-                    MouseArea {
-                        id:              mousearea
-                        enabled:         true
-                        anchors.fill:    parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onWheel: {
-                            if (wheel.modifiers & Qt.ControlModifier) {
-                                waterView.verZoomEvent(-wheel.angleDelta.y)
-                            } else if (wheel.modifiers & Qt.ShiftModifier) {
-                                waterView.verScrollEvent(-wheel.angleDelta.y)
-                            } else {
-                                waterView.horScrollEvent(wheel.angleDelta.y)
-                            }
-                        }
-
-                        onClicked: {
-                            waterView.focus = true
-                            if (mouse.button === Qt.RightButton) {
-                            }
-                        }
-
-                        onReleased: {
-                            if (mouse.button === Qt.LeftButton) {
-                                waterView.setMouse(-1, -1)
-                            }
-                        }
-
-                        onPressed: {
-                            if (mouse.button === Qt.LeftButton) {
-                                waterView.setMouse(mouse.x, mouse.y)
-                            }
-                        }
-
-                        onPositionChanged: {
-                            if(mousearea.pressedButtons & Qt.LeftButton) {
-                                waterView.setMouse(mouse.x, mouse.y)
-                            }
-                        }
-
-                    }
-
+                    width: mainview.width
+                    Layout.fillHeight: true
+//                    Layout.fillWidth: true
+                    Layout.preferredWidth: mainview.width
+                    Layout.rowSpan   : 10
+                    Layout.columnSpan: 10
+                    focus: true
+                    horizontal: menuBar.is2DHorizontal
                 }
 
+//                Plot2D {
+//                    id: waterView2
+//                    visible: true
+//                    width: mainview.width/2
+//                    Layout.fillHeight: true
+////                    Layout.fillWidth: true
+//                    Layout.preferredWidth: mainview.width/2
+//                    Layout.rowSpan   : 5
+//                    Layout.columnSpan: 5
+//                    focus: true
 
+//                    horizontal: menuBar.is2DHorizontal
+//                }
 
+//                Plot2D {
+//                    id: waterView3
+//                    visible: true
+//                    width: mainview.width
+//                    Layout.fillHeight: true
+////                    Layout.fillWidth: true
+//                    Layout.preferredWidth: mainview.width
+//                    Layout.rowSpan   : 5
+//                    Layout.columnSpan: 10
+//                    focus: true
+
+//                    horizontal: menuBar.is2DHorizontal
+//                }
             }
+
+
+
+//            Plot2D {
+//                id: waterView2
+//                visible: menuBar.is2DVisible
+//                width: mainview.width
+//                Layout.fillHeight: true
+//                Layout.fillWidth: true
+//                focus: true
+
+//                horizontal: menuBar.is2DHorizontal
+//            }
 
             Rectangle {
                 visible:          menuBar.is2DVisible
@@ -253,12 +237,12 @@ Window  {
                 visible:          menuBar.is2DVisible
                 id:               historyScroll
                 Layout.fillWidth: true
-                width:            mainview.width
-                implicitHeight:   theme.controlHeight
-
-                stepSize:       0.0001
-                from:           1
-                to:             0
+                width: mainview.width
+                implicitHeight: theme.controlHeight
+                value: waterView.timelinePosition
+                stepSize: 0.0001
+                from: 0
+                to: 1
                 onValueChanged: core.setTimelinePosition(value);
             }
         }
@@ -270,11 +254,98 @@ Window  {
         }
     }
 
+
+
+
+    ColumnLayout {
+        anchors.top: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        RowLayout {
+            MenuBlock {
+            }
+            CCombo  {
+                id: pilotArmedState
+                Layout.margins: 4
+                visible: devs.pilotArmState >= 0
+                Layout.fillWidth: true
+                model: ["Disarmed", "Armed"]
+                currentIndex: devs.pilotArmState
+
+                onCurrentIndexChanged: {
+                    if(currentIndex != devs.pilotArmState) {
+                        currentIndex = devs.pilotArmState
+                    }
+                }
+            }
+
+            CCombo  {
+                id: pilotModeState
+                Layout.margins: 4
+                visible: devs.pilotModeState >= 0
+                Layout.fillWidth: true
+                model: [
+                    "Manual",
+                    "Acro",
+                    "Steering",
+                    "Hold",
+                    "Loiter",
+                    "Follow",
+                    "Simple",
+                    "Dock",
+                    "Circle",
+                    "Auto",
+                    "RTL",
+                    "SmartRTL",
+                    "Guided",
+                    "Mode16",
+                    "Mode17"
+                ]
+                currentIndex: devs.pilotModeState
+
+                onCurrentIndexChanged: {
+                    if(currentIndex != devs.pilotModeState) {
+                        currentIndex = devs.pilotModeState
+                    }
+                }
+            }
+        }
+
+        RowLayout {
+            MenuBlock {
+
+            }
+            CText {
+                id: fcTextBatt
+                Layout.margins: 4
+                visible: isFinite(devs.vruVoltage)
+                rightPadding: 20
+                leftPadding: 20
+                text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
+            }
+        }
+
+
+
+//        CText {
+//            id: fcTextMode
+//            rightPadding: 20
+//            leftPadding: 20
+//            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
+//            text: devs.pilotArmed ? "Armed" : "Disarmed"
+//        }
+
+
+    }
+
+
     MenuBar {
         id:                menuBar
         Layout.fillHeight: true
-        height:            visualisationLayout.height
         Keys.forwardTo:    [mousearea3D]
+        height: visualisationLayout.height
+        targetPlot: waterView
+
     }
 
     Scene3DToolbar{

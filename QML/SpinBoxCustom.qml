@@ -1,10 +1,13 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 
 
 SpinBox {
     id: control
+
+    property bool spinner: true
+
     value: 50
     from: 20
     to: 30000
@@ -23,7 +26,7 @@ SpinBox {
         width: control.width
         font: theme.textFont
         color: theme.textColor
-        selectionColor: styleSet.colorControllTextActive
+//        selectionColor: styleSet.colorControllTextActive
         selectedTextColor: theme.textColor
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
@@ -44,11 +47,13 @@ SpinBox {
 
     up.indicator: Canvas {
         id: upCanvas
+        visible: control.spinner
         x: parent.width - width
         y: 0
         height: parent.height
-        width: parent.height + 6
+        width: control.spinner ? parent.height + 6 : 0
         contextType: "2d"
+        renderTarget: Canvas.FramebufferObject
         opacity: 1
 
         property bool pressed: control.up.pressed
@@ -123,12 +128,14 @@ SpinBox {
 
     down.indicator: Canvas {
         id: downCanvas
+        visible: control.spinner
         x: 0
         y: 0
 
         height: parent.height
-        width: parent.height + 6
+        width: control.spinner ? parent.height + 6 : 0
         contextType: "2d"
+        renderTarget: Canvas.FramebufferObject
         property bool pressed: control.down.pressed
 
         Connections {
@@ -180,9 +187,9 @@ SpinBox {
     }
 
     background: Rectangle {
-        x: down.indicator.width
+        x: control.spinner ? down.indicator.width : 0
         y: 0
-        width: control.width - downCanvas.width - upCanvas.width
+        width: control.spinner ? control.width - downCanvas.width - upCanvas.width : control.width
         height: control.height
 
         color: theme.controlBackColor

@@ -46,7 +46,7 @@ public:
     void setConsoleOut(bool is_console) { isConsoleOut = is_console; }
 
 signals:
-    void updateContent(Type type, Version ver, Resp resp);
+    void updateContent(Type type, Version ver, Resp resp, uint8_t address);
     void dataSend(QByteArray data);
     void binFrameOut(ProtoBinOut &proto_out);
 
@@ -56,6 +56,7 @@ protected:
     Type m_lastType;
     Version m_lastVersion;
     Resp m_lastResp;
+    uint8_t _lastAddress = 0;
     QList<Version> availableVer;
     uint8_t m_address = 0;
     bool isConsoleOut = false;
@@ -632,7 +633,7 @@ public:
         return 0;
     }
 
-    ID_UPGRADE_V0 getProgress() { return _progress; }
+    ID_UPGRADE_V0 getDeviceProgress() { return _progress; }
 
     uint16_t currentNumPacket() {
         return _currentNumPacket;
@@ -654,7 +655,7 @@ protected:
     uint16_t _currentNumPacket = 0;
     int _currentFwOffset = 0;
     QByteArray _fw;
-    const uint16_t _packetSize = 64;
+    const uint16_t _packetSize = 32*3;
 
     ID_UPGRADE_V0 _progress;
 };
@@ -703,10 +704,10 @@ public:
     typedef struct   __attribute__((packed)) {
         uint8_t num;
         uint8_t flags;
-        float velocity;
-        float uncertainty;
-        float dt;
-        float distance;
+        float velocity = NAN;
+        float uncertainty = NAN;
+        float dt = NAN;
+        float distance = NAN;
         uint8_t amplitude;
         uint8_t mode;
         uint8_t coherence[4];
@@ -783,6 +784,31 @@ protected:
     DVLSolution _dvlSolution;
     uint16_t _beamCount = 0;
     float test_bias = 0;
+};
+
+class IDBinDVLMode : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinDVLMode() : IDBin() {
+    }
+
+    ID id() override { return ID_DVL_MODE; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    typedef struct  __attribute__((packed)) {
+        uint8_t id = 0;
+        uint8_t selection = 1; // 0 - not select, 1 - always
+        int8_t gain = 0;
+        int8_t curve = 0;
+        uint16_t reserved = 0;
+        float start = 0, stop = 0; // 0 - ignore
+    } DVLModeSetup;
+
+    void setModes(bool ismode1, bool ismode2, bool ismode3, float range_mode3);
+
+protected:
+
 };
 
 

@@ -82,5 +82,6 @@
         <file>PointGroupControlMenu.qml</file>
         <file>PolygonGroupControlMenu.qml</file>
         <file>fit-in-view.svg</file>
+        <file>Plot2D.qml</file>
     </qresource>
 </RCC>

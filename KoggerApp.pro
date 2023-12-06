@@ -3,6 +3,8 @@ QT += widgets
 QT += network
 QT += qml
 
+#CONFIG += FLASHER
+
 windows {
     QT += serialport
 }
@@ -11,8 +13,11 @@ android {
     QT += androidextras
     QT += core-private
     CONFIG += mobility
-}
 
+    QMAKE_CXXFLAGS_DEBUG -= -O2
+    QMAKE_CXXFLAGS_DEBUG -= -O3
+    QMAKE_CXXFLAGS_DEBUG += -O0
+}
 
 CONFIG += c++11
 
@@ -39,8 +44,12 @@ SOURCES += \
         3Plot.cpp \
         DevDriver.cpp \
         DevHub.cpp \
+    EchogramProcessing.cpp \
         IDBinnary.cpp \
     Link.cpp \
+    Plot2D.cpp \
+    Plot2DEchogram.cpp \
+    Plot2DGrid.cpp \
         ProtoBinnary.cpp \
         StreamListModel.cpp \
     bottomtrackprovider.cpp \
@@ -48,7 +57,6 @@ SOURCES += \
         console.cpp \
         consolelistmodel.cpp \
         core.cpp \
-#        coreFlash.cpp \
         filelist.cpp \
     graphicsscene3drenderer.cpp \
     graphicsscene3dview.cpp \
@@ -62,6 +70,10 @@ SOURCES += \
         streamlist.cpp \
         waterfall.cpp \
 
+FLASHER {
+DEFINES += FLASHER
+SOURCES += coreFlash.cpp
+}
 
 android {
 SOURCES += \
@@ -88,17 +100,21 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     3Plot.h \
+    ConverterXTF.h \
     DevDriver.h \
     DevHub.h \
     DevQProperty.h \
+    EchogramProcessing.h \
     IDBinnary.h \
     Link.h \
     MAVLinkConf.h \
+    Plot2D.h \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
     abstractentitydatafilter.h \
     bottomtrackprovider.h \
+    XTFConf.h \
     connection.h \
     console.h \
     consolelistmodel.h \
@@ -158,6 +174,14 @@ DISTFILES += \
     QML/FlashBox.qml \
     QML/main.qml \
     a.fsh \
+    android_build/AndroidManifest.xml \
+    android_build/build.gradle \
+    android_build/gradle.properties \
+    android_build/gradle/wrapper/gradle-wrapper.jar \
+    android_build/gradle/wrapper/gradle-wrapper.properties \
+    android_build/gradlew \
+    android_build/gradlew.bat \
+    android_build/res/values/libs.xml \
     base.vsh \
     heightcolor.frag \
     staticcolor.fsh \
@@ -167,32 +191,35 @@ DISTFILES += \
 
 android {
 DISTFILES += \
-    android/AndroidManifest.xml \
-    android/build.gradle \
-    android/gradle/wrapper/gradle-wrapper.jar \
-    android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew \
-    android/gradlew.bat \
-    android/res/values/libs.xml \
+    android_build/AndroidManifest.xml \
+    android_build/build.gradle \
+    android_build/gradle/wrapper/gradle-wrapper.jar \
+    android_build/gradle/wrapper/gradle-wrapper.properties \
+    android_build/gradlew \
+    android_build/gradlew.bat \
+    android_build/res/values/libs.xml \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
-android {
-    ANDROID_ABIS = armeabi-v7a
-}
 
-LIBS += -lopengl32
+
+windows {
+    LIBS += -lopengl32
+}
 
 include ($$PWD/core/core.pri)
 include ($$PWD/processors/processors.pri)
 include ($$PWD/domain/domain.pri)
 include ($$PWD/controllers/controllers.pri)
 
-#ANDROID_ABIS = x86
 
-#ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
-
-ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
+android {
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android_build
+#    ANDROID_ABIS = arm64-v8a
+##    ANDROID_ABIS = x86
+}
 
 ANDROID_ABIS = armeabi-v7a
 
+
+android: include(C:/Users/aproo/AppData/Local/Android/Sdk/android_openssl/openssl.pri)

@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.12
+import QtQuick 2.15
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
@@ -16,49 +16,62 @@ DevSettingsBox {
         spacing: 24
         Layout.margins: 24
 
-//        ParamGroup {
-//            groupName: "Doppler Bottom Tracker"
+        ParamGroup {
+            id: modeChanger
+            groupName: "Range Modes"
 
-//            ParamSetup {
-//                paramName: "Velocity X, mm/s: " + dev.dopplerVeloX
-//            }
+            function changeMode() {
+                dev.dvlChangeMode(mode1Check.checked, mode2Check.checked, mode3Check.checked, mode3Range.value)
+            }
 
-//            ParamSetup {
-//                paramName: "Velocity Y, mm/s: "  + dev.dopplerVeloY
-//            }
+            RowLayout {
+                CCheck {
+                    id: mode1Check
+                    text: "Mode1"
+                    checked: true
 
-//            ParamSetup {
-//                paramName: "Velocity Z, mm/s: "  + dev.dopplerVeloZ
-//            }
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
+            }
 
-//            ParamSetup {
-//                paramName: "Distance, mm: "  + dev.dopplerDist
-//            }
-//        }
+            RowLayout {
+                CCheck {
+                    id: mode2Check
+                    text: "Mode2"
+                    checked: true
 
-//        ParamGroup {
-//            groupName: "Doppler Beam"
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
+            }
 
-//            ParamSetup {
-//                paramName: "Mode: " + dev.dopplerBeam1Mode
-//            }
+            RowLayout {
+                CCheck {
+                    id: mode3Check
+                    text: "Mode3 range, m"
+                    checked: true
 
-//            ParamSetup {
-//                paramName: "Distance, m: "  + dev.dopplerBeam1Distance
-//            }
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
 
-//            ParamSetup {
-//                paramName: "Amplitude, dB: "  + dev.dopplerBeam1Amplitude
-//            }
+                SpinBoxCustom {
+                    id: mode3Range
+                    from: 30
+                    to: 100
+                    stepSize: 5
+                    value: 100
+                    onValueChanged: {
+                        modeChanger.changeMode()
+                    }
 
-//            ParamSetup {
-//                paramName: "Velocity, mm/s: " + dev.dopplerBeam1Velo
-//            }
+                }
+            }
+        }
 
-//            ParamSetup {
-//                paramName: "Unc, mm/s: "  + dev.dopplerBeam1Unc
-//            }
-
-//        }
     }
 }

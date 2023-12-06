@@ -110,6 +110,8 @@ public:
     int dopplerDist();
 
 
+
+
     QString devName() { return m_devName; }
     uint32_t devSerialNumber();
     QString devPN();
@@ -147,7 +149,7 @@ public:
 signals:
     void binFrameOut(ProtoBinOut &proto_out);
 
-    void chartComplete(QVector<int16_t> data, int resolution, int offset);
+    void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
@@ -188,6 +190,8 @@ public slots:
     void reboot();
     void process();
 
+    void dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, float range_mode3);
+
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
 
@@ -215,10 +219,30 @@ protected:
 
     IDBinNav* idNav = NULL;
     IDBinDVL* idDVL = NULL;
+    IDBinDVLMode* idDVLMode = NULL;
 
-    QHash<ID, IDBin*> hashIDParsing;
-    QHash<ID, ParseCallback> hashIDCallback;
-    QHash<ID, IDBin*> hashIDSetup;
+//    QHash<ID, IDBin*> hashIDParsing;
+//    QHash<ID, ParseCallback> hashIDCallback;
+//    QHash<ID, IDBin*> hashIDSetup;
+
+    typedef struct ID_Instance {
+        ID_Instance() {
+            instance = NULL;
+            callback = NULL;
+            isSetup = false;
+        }
+
+        ID_Instance(IDBin* inst, ParseCallback call, bool is_setup = false) {
+            instance = inst;
+            callback = call;
+            isSetup = is_setup;
+        }
+        IDBin* instance = NULL;
+        ParseCallback callback = NULL;
+        bool isSetup = false;
+    } ID_Instance;
+
+    QHash<ID, ID_Instance> _hashID;
 
     typedef enum {
         ConfNone = 0,
@@ -242,6 +266,8 @@ protected:
         UptimeStatus uptime = UptimeNone;
 
     } m_state;
+
+    uint8_t _lastAddres = 0;
 
     QTimer m_processTimer;
 
@@ -287,7 +313,9 @@ protected slots:
 
     void receivedNav(Type type, Version ver, Resp resp);
     void receivedDVL(Type type, Version ver, Resp resp);
+    void receivedDVLMode(Type type, Version ver, Resp resp);
 
 };
+
 
 #endif // SONARDRIVER_H

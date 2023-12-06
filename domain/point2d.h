@@ -1,7 +1,7 @@
 #ifndef POINT2D_H
 #define POINT2D_H
 
-#include <hash_map>
+//#include <hash_map>
 
 #ifdef QT_CORE_LIB
 #include <QHash>

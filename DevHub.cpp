@@ -5,6 +5,8 @@ extern Core core;
 #include <QDateTime>
 
 void Device::putData(const QByteArray &data) {
+    static int _cnter_echo = 0;
+
 
     uint8_t* ptr_data = (uint8_t*)(data.data());
     if(ptr_data == NULL || data.size() < 1) { return; }
@@ -14,9 +16,11 @@ void Device::putData(const QByteArray &data) {
         _parser.process();
         if(!_parser.isComplete()) { continue; }
 
+
+
         if(isProxyNavOpen() && (_parser.isCompleteAsNMEA() || _parser.isCompleteAsUBX() || _parser.isCompleteAsMAVLink())) {
             emit writeProxyNav(QByteArray((char*)_parser.frame(), _parser.frameLen()));
-            continue;
+//            continue;
         }
 
         if(isProxyOpen() && (_parser.isComplete())) {
@@ -26,6 +30,7 @@ void Device::putData(const QByteArray &data) {
 
         //        qInfo("Packets: good %u, frame error %u, check error %u", m_proto.binComplete(),  m_proto.frameError(),  m_proto.binError());
 
+#if !defined(Q_OS_ANDROID)
         if(_parser.isStream()) {
             _streamList.append(&_parser);
         }
@@ -37,6 +42,7 @@ void Device::putData(const QByteArray &data) {
         if(_streamList.isListChenged()) {
             emit streamChanged();
         }
+#endif
 
         if(_parser.isProxy()) {
             continue;
@@ -44,6 +50,10 @@ void Device::putData(const QByteArray &data) {
 
         if(_parser.completeAsKBP() || _parser.completeAsKBP2()) {
             uint8_t addr = _parser.route();
+            _cnter_echo++;
+            if(_cnter_echo > 20000) {
+                _isSupressParser = true;
+            }
 
             if(lastRoute != addr) {
                 if(devAddr[addr] == NULL) {
@@ -61,15 +71,15 @@ void Device::putData(const QByteArray &data) {
             if(_parser.id() == ID_TIMESTAMP && _parser.ver() == v1) {
                 int timestamp = _parser.read<U4>();
                 int unix = _parser.read<U4>();
-                core.plot()->addEvent(timestamp, 0, unix);
-                core.consoleInfo(QString("Event time %1.%2").arg(unix).arg(timestamp));
+                core.dataset()->addEvent(timestamp, 0, unix);
+//                core.consoleInfo(QString("Event time %1.%2").arg(unix).arg(timestamp));
             }
 
             if(_parser.id() == ID_EVENT) {
                 int timestamp = _parser.read<U4>();
                 int id = _parser.read<U4>();
                 if(id < 100) {
-                    core.plot()->addEvent(timestamp, id);
+                    core.dataset()->addEvent(timestamp, id);
                 }
             }
 
@@ -77,12 +87,15 @@ void Device::putData(const QByteArray &data) {
                 int v_id = _parser.read<U1>();
                 int32_t v_uv = _parser.read<S4>();
                 if(v_id == 1) {
-                    core.plot()->addEncoder(float(v_uv));
+                    core.dataset()->addEncoder(float(v_uv));
                     qInfo("Voltage %f", float(v_uv));
                 }
             }
 #endif
 
+//            if(_isSupressParser == true) {
+//                return;
+//            }
             lastDevs->protoComplete(_parser);
         }
 
@@ -110,8 +123,8 @@ void Device::putData(const QByteArray &data) {
                     uint8_t mounth = 0, day = 0;
                     prot_nmea.readDate(&year, &mounth, & day);
 
-                    uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toTime_t();
-                    core.plot()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
+                    core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
         }
@@ -145,10 +158,10 @@ void Device::putData(const QByteArray &data) {
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
 
-                uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toTime_t();
+                uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
 
                 if(fix_type > 1 && fix_type < 5) {
-                    core.plot()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                    core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                 }
 
                 if(_isConsoled) {
@@ -163,13 +176,74 @@ void Device::putData(const QByteArray &data) {
 
         if(_parser.isCompleteAsMAVLink()) {
             ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)_parser;
-            if(_isConsoled) {
-                core.consoleInfo(QString(">> MAVLink v%1: msg id %2, comp id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+//            if(mavlink_frame.msgId() == 33) { // GLOBAL_POSITION_INT
+//                MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
+//                if(pos.isValid()) {
+//                    core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+////                    core.dataset()->addGnssVelocity(sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY()), 0);
+
+//                    _vru.velocityH = sqrtf(pos.velocityX()*pos.velocityX() + pos.velocityY()*pos.velocityY());
+//                    emit vruChanged();
+////                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2, velocity %3 m/s").arg(pos.latitude()).arg(pos.longitude()).arg(velocityH, 4));
+//                }
+//            }
+
+            if(mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
+                MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                if(pos.isValid()) {
+                    core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    core.dataset()->addGnssVelocity(pos.velocityH(), 0);
+
+                    _vru.velocityH = sqrtf(pos.velocityH());
+                    emit vruChanged();
+//                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2, velocity %3 m/s").arg(pos.latitude()).arg(pos.longitude()).arg(velocityH, 4));
+                }
             }
+
+            if(mavlink_frame.msgId() == 0) { // SYS_STATUS
+                MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
+                _vru.armState = (int)heartbeat.isArmed();
+                int flight_mode = (int)heartbeat.customMode();
+                if(flight_mode != _vru.flight_mode) {
+                    core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
+                }
+                _vru.flight_mode = flight_mode;
+                emit vruChanged();
+//                core.consoleInfo(QString(">> FC: Custom mode %1, arm %2, man %3, custom %4, mode %5").
+//                                 arg(heartbeat.custom_mode).
+//                                 arg((heartbeat.base_mode >> 7) & 1).
+//                                 arg((heartbeat.base_mode >> 6) & 1).
+//                                 arg(heartbeat.base_mode & 1).
+//                                 arg(heartbeat.base_mode));
+            }
+
+//            if(mavlink_frame.msgId() == 1) { // SYS_STATUS
+//                MAVLink_MSG_SYS_STATUS sys_status = mavlink_frame.read<MAVLink_MSG_SYS_STATUS>();
+
+//                core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(sys_status.batteryVoltage()).arg(sys_status.batteryCurrent()));
+//            }
+
+            if(mavlink_frame.msgId() == 147) { // BATTERY_STATUS
+                 MAVLink_MSG_BATTERY_STATUS battery_status = mavlink_frame.read<MAVLink_MSG_BATTERY_STATUS>();
+                 _vru.voltage = battery_status.voltage();
+                 _vru.current = battery_status.current();
+                 emit vruChanged();
+//                 core.consoleInfo(QString(">> FC: Battery voltage %1V, current %2A").arg(battery_status.voltage()).arg(battery_status.current()));
+            }
+
+            if(mavlink_frame.msgId() == 30) {
+                MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
+                core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+
+            }
+
+
+
+//            if(_isConsoled) {
+                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+//            }
         }
     }
-
-    int a = 0;
 }
 
 void Device::binFrameOut(ProtoBinOut &proto_out) {

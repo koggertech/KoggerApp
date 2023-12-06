@@ -2,7 +2,7 @@
 #include <bottomtrack.h>
 #include <surface.h>
 
-#include <QtGui/QOpenGLFramebufferObject>
+#include <QOpenGLFramebufferObject>
 
 #include <QtQuick/QQuickWindow>
 #include <qsgsimpletexturenode.h>
@@ -47,7 +47,6 @@ public:
         //scene.setRightMouseButtonPressed(fbitem->isRightMouseButtonPressed());
         //scene.setMousePos(fbitem->mousePos());
         //scene.setSize(QSize(fbitem->width(), fbitem->height()));
-
     }
 
     Scene3D scene;
@@ -67,97 +66,24 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 #include <memory>
 
 Scene3D::Scene3D()
-:mpStaticColorShaderProgram(new QOpenGLShaderProgram)
-,mpHeightColorShaderProgram(new QOpenGLShaderProgram)
 {
-    mShaderProgramMap["height"] = mpHeightColorShaderProgram.get();
-    mShaderProgramMap["static"] = mpStaticColorShaderProgram.get();
 }
 
 Scene3D::~Scene3D()
 {
 }
 
-//void Scene3D::setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel)
-//{
-//    mpSceneObjectsListModel = sceneObjectsListModel;
-//}
-
 void Scene3D::paintScene()
 {
-    //for(const auto& object : m_objectList)
-    //    object->draw(this, m_projection * m_view * m_model, m_shaderProgramMap);
-
-    if (!mpStaticColorShaderProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc    = mpStaticColorShaderProgram->attributeLocation("position");
-    int matrixLoc = mpStaticColorShaderProgram->uniformLocation("matrix");
-    int colorLoc  = mpStaticColorShaderProgram->uniformLocation("color");
-
-    QVector4D color(0.8f, 1.0f, 0.7f, 0.0f);
-
-    QVector <QVector3D> data{
-        {0.0f, 2.0f, 12.0f},
-        {10.0f, 2.0f, 12.0f},
-        {18.0f, 12.0f, 22.0f},
-        {15.0f, 62.0f, 12.0f},
-    };
-
-    //qDebug() << "p: " << m_projection <<", v: " << m_view << ", m: " << m_model;
-
-    mpStaticColorShaderProgram->setUniformValue(colorLoc,color);
-    mpStaticColorShaderProgram->setUniformValue(matrixLoc, mProjection * mView * mModel);
-    mpStaticColorShaderProgram->enableAttributeArray(posLoc);
-    mpStaticColorShaderProgram->setAttributeArray(posLoc, data.constData());
-
-    glDrawArrays(GL_POLYGON, 0, data.size());
-
-    mpStaticColorShaderProgram->disableAttributeArray(posLoc);
-    mpStaticColorShaderProgram->release();
 }
 
 void Scene3D::initialize()
 {
-    initializeOpenGLFunctions();
-
-    glEnable(GL_DEPTH_TEST);;
-    glClearColor(0.1f, 0.1f, 0.2f, 0.0f);
-
-    // ---------
-    bool success = mpStaticColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh");
-
-    if (!success) qCritical() << "Error adding vertex shader from source file.";
-
-    success = mpStaticColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh");
-
-    if (!success) qCritical() << "Error adding fragment shader from source file.";
-
-    success = mpStaticColorShaderProgram->link();
-
-    if (!success) qCritical() << "Error linking shaders in shader program.";
-
-    // --------
-
-    success = mpHeightColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh");
-
-    if (!success) qCritical() << "Error adding vertex shader from source file.";
-
-    success = mpHeightColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/heightcolor.fsh");
-
-    if (!success) qCritical() << "Error adding fragment shader from source file.";
-
-    success = mpHeightColorShaderProgram->link();
-
-    if (!success) qCritical() << "Error linking shaders in shader program.";
 }
 
 void Scene3D::render()
 {
     glDepthMask(true);
-
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -192,8 +118,7 @@ void Scene3D::render()
         }
     }
 
-    _lastMouse[0] = _mouse.x();
-    _lastMouse[1] = _mouse.y();
+
 
     mView = QMatrix4x4();
     float r = -500.0;
@@ -211,6 +136,27 @@ void Scene3D::render()
     mView.lookAt(cf + _posCenter, _posCenter, cu.normalized());
 
     mModel = QMatrix4x4();
+    mModel.scale(1.0, 1.0, _modelScaleZ);
+
+    if(_mouse.x() >= 0) {
+        QVector3D zero(0, 0, 0);
+        zero = zero.project(mView, mProjection, QRect(0, 0, _size.x(), _size.y()));
+        QVector3D screenCoordinates(_mouse.x(), _mouse.y(), zero.z());
+        QVector3D screenCoordinates0(_mouse.x(), _mouse.y(), 0);
+
+        QVector3D unprj = screenCoordinates.unproject(mView, mProjection, QRect(0, 0, _size.x(), _size.y()));
+//        QVector3D unprj0 = screenCoordinates0.unproject(mView, mProjection, QRect(0, 0, _size.x(), _size.y()));
+//        QVector3D dir = (-unprj + unprj0);
+        QVector3D ray = (-unprj + cf + _posCenter);
+
+        float t = QVector3D::dotProduct(unprj - QVector3D(0,0,0), QVector3D(0,0,1))/QVector3D::dotProduct(ray, QVector3D(0,0,1));
+        QVector3D p = unprj - t*ray;
+
+//        _testPonts.append(p);
+    }
+
+    _lastMouse[0] = _mouse.x();
+    _lastMouse[1] = _mouse.y();
 
     //auto pProgram = mBottomTrackDisplayedObject.shaderProgram();
 
@@ -239,6 +185,8 @@ void Scene3D::render()
     //mpOverlappedGridProgram->release();
 
     paintScene();
+
+
 
     glDisable(GL_DEPTH_TEST);
 //    glDisable(GL_CULL_FACE);
