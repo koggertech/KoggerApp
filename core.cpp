@@ -766,6 +766,8 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
     Q_UNUSED(url)
 
+    _dataset->setBottomTrackProvider(mpBottomTrackProvider);
+
     m_scene3dView = object->findChild<GraphicsScene3dView*> ();
 
     _plots2d = object->findChildren<qPlot2D*>();

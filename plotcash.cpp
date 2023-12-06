@@ -156,6 +156,11 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
     }
 }
 
+void Dataset::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
+{
+    mpBottomTrackProvider = bottomTrackProvider;
+}
+
 void Dataset::addEvent(int timestamp, int id, int unixt) {
     lastEventTimestamp = timestamp;
     lastEventId = id;
@@ -618,7 +623,6 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
     spatialProcessing();
 
     updateTrack(true);
-    updateRender3D();
 
     emit dataUpdate();
 }
@@ -699,6 +703,9 @@ void Dataset::updateTrack(bool update_all) {
             _bottomTrack.append(QVector3D(pos.ned.n,pos.ned.e, -distance));
         }
     }
+
+    if(mpBottomTrackProvider)
+        mpBottomTrackProvider->setBottomTrack(_bottomTrack);
 
     _lastTrackEpoch = to_size;
 }
