@@ -395,13 +395,35 @@ public:
         return full_range;
     }
 
-    float getMaxRnage(int16_t channel = -1) {
+    float getMaxRnage(int32_t channel = CHANNEL_FIRST, int32_t channel2 = CHANNEL_NONE) {
         float range = NAN;
 
+        float range1 = NAN;
+        float range2 = NAN;
         if(_charts.size() > 0 && channel == CHANNEL_FIRST) {
-            range = _charts.first().range();
+            range1 = _charts.first().range();
         } else if(_charts.contains(channel)) {
-            range = _charts[channel].range();
+            range1 = _charts[channel].range();
+        }
+
+        if(_charts.size() > 0 && channel2 == CHANNEL_FIRST) {
+            range2 = _charts.first().range();
+        } else if(_charts.contains(channel2)) {
+            range2 = _charts[channel2].range();
+        }
+
+        if(isfinite(range1)) {
+            range = range1;
+        }
+
+        if(isfinite(range2)) {
+            if(isfinite(range)) {
+                if(range < range2) {
+                    range = range2;
+                }
+            } else {
+                range = range2;
+            }
         }
 
         if(_rangeFinders.size() > 0) {
