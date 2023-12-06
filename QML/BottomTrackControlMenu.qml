@@ -8,42 +8,12 @@ import KoggerCommon 1.0
 Item {
     readonly property var controller : BottomTrackControlMenuController
 
-    id:                   root
-    objectName:           "bottomTrackControlMenu"
-    //Layout.minimumWidth:  160
-    //Layout.minimumHeight: 240
+    id:         root
+    objectName: "bottomTrackControlMenu"
 
     MenuBlockEx {
         id:           menuBlock
         anchors.fill: parent
-
-        Component.onCompleted: {
-            var bottomTrack = controller.bottomTrack
-            if(!bottomTrack){
-                visibilityCheckBox.checkState = Qt.Checked
-                return;
-            }
-
-            visibilityCheckBox.checkState = bottomTrack.visible ? Qt.Checked : Qt.Unchecked
-            filterTypeCombo.currentIndex  = bottomTrack.filter.type
-
-            initFilterParamsMenu(bottomTrack.filter)
-        }
-
-        function initFilterParamsMenu(filter){
-            if(!filter)
-                filterParamsLoader.sourceComponent = filterParamsPlaceholder
-
-            switch(filter.type){
-            case 1: filterParamsLoader.source = "MpcFilterControlMenu.qml"
-                break
-            case 2: filterParamsLoader.source = "NpdFilterControlMenu.qml"
-                break
-            }
-
-            filterParamsLoader.item.setFilter(filter)
-        }
-
 
         KParamGroup {
             id: paramGroup
@@ -57,31 +27,19 @@ Item {
             KCheck {
                 id:               visibilityCheckBox
                 text:             "Show"
+                checkState:       Qt.Checked
                 onCheckedChanged: root.controller.onVisibilityCheckBoxCheckedChanged(checked)
-            }
-
-            KParamSetup {
-                paramName: "Filter: "
-
-                KCombo {
-                    id:          filterTypeCombo
-                    model:       ["None", "Max points count", "Nearest point distance"]
-                    onActivated: {
-                        root.controller.onFilterTypeComboBoxIndexChanged(index)
-                        menuBlock.initFilterParamsMenu(controller.bottomTrack.filter)
-                    }
+                Component.onCompleted: {
+                    if(controller.bottomTrack)
+                        checkState = controller.bottomTrack.visible ? Qt.Checked : Qt.Unchecked
                 }
             }
 
-            Loader {
-                id:               filterParamsLoader
+            KButton {
+                id:               restoreBottomTrack
                 Layout.fillWidth: true
-                sourceComponent:  filterParamsPlaceholder
-            }
-
-            Component {
-                 id: filterParamsPlaceholder
-                 Item {}
+                text:             qsTr("Restore")
+                onClicked:        root.controller.onRestoreBottomTrackButtonClicked()
             }
         }
     }

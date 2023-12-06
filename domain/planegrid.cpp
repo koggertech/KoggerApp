@@ -5,7 +5,17 @@ PlaneGrid::PlaneGrid(QObject *parent)
     : SceneObject(new PlaneGridRenderImplementation, parent)
 {}
 
-void PlaneGrid::setSize(const QSize &size)
+void PlaneGrid::setPlane(const Plane &plane)
+{
+    auto r = RENDER_IMPL(PlaneGrid);
+
+    r->m_size = plane.size();
+    r->m_position = plane.center();
+
+    Q_EMIT changed();
+}
+
+void PlaneGrid::setSize(const QSizeF &size)
 {
     RENDER_IMPL(PlaneGrid)->m_size = size;
 
@@ -73,28 +83,28 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
 
     for(int i = 0; i <= cellCount; i++){
         grid.append({
-                {m_position.x() - static_cast<float>(gridSize) / 2.0f, m_position.y(), m_position.z() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize},
-                {m_position.x() + static_cast<float>(gridSize) / 2.0f, m_position.y(), m_position.z() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize},
-                {m_position.x() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize, m_position.y(), m_position.z() - static_cast<float>(gridSize) / 2.0f},
-                {m_position.x() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize, m_position.y(), m_position.z() + static_cast<float>(gridSize) / 2.0f}
+                {m_position.x() - static_cast<float>(gridSize) / 2.0f, m_position.y() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize, m_position.z()},
+                {m_position.x() + static_cast<float>(gridSize) / 2.0f, m_position.y() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize, m_position.z()},
+                {m_position.x() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize,m_position.y() - static_cast<float>(gridSize) / 2.0f, m_position.z()},
+                {m_position.x() - static_cast<float>(gridSize) / 2.0f + static_cast<float>(i) * m_cellSize,m_position.y() + static_cast<float>(gridSize) / 2.0f, m_position.z()}
             });
     }
 
     QVector<QVector3D> sceneBoundsPlane{
-        {m_position.x()-static_cast<float>(m_size.width()/2.0f), m_position.y(), m_position.z()-static_cast<float>(m_size.height()/2.0f)},
-        {m_position.x()+static_cast<float>(m_size.width()/2.0f), m_position.y(), m_position.z()-static_cast<float>(m_size.height()/2.0f)},
-        {m_position.x()+static_cast<float>(m_size.width()/2.0f), m_position.y(), m_position.z()+static_cast<float>(m_size.height()/2.0f)},
-        {m_position.x()-static_cast<float>(m_size.width()/2.0f), m_position.y(), m_position.z()+static_cast<float>(m_size.height()/2.0f)},
+        {m_position.x()-static_cast<float>(m_size.height()/2.0f), m_position.y()-static_cast<float>(m_size.width()/2.0f), m_position.z()},
+        {m_position.x()+static_cast<float>(m_size.height()/2.0f), m_position.y()-static_cast<float>(m_size.width()/2.0f), m_position.z()},
+        {m_position.x()+static_cast<float>(m_size.height()/2.0f), m_position.y()+static_cast<float>(m_size.width()/2.0f), m_position.z()},
+        {m_position.x()-static_cast<float>(m_size.height()/2.0f), m_position.y()+static_cast<float>(m_size.width()/2.0f), m_position.z()},
     };
 
     QVector<QVector3D> horzSizeLine{
-        {m_position.x()-static_cast<float>(m_size.width()/2.0f), m_position.y(), m_position.z()-static_cast<float>(m_size.height()/2.0f) - m_cellSize},
-        {m_position.x()+static_cast<float>(m_size.width()/2.0f), m_position.y(), m_position.z()-static_cast<float>(m_size.height()/2.0f) - m_cellSize}
+        {m_position.x()-static_cast<float>(m_size.height()/2.0f), m_position.y()-static_cast<float>(m_size.width()/2.0f) - m_cellSize, m_position.z()},
+        {m_position.x()+static_cast<float>(m_size.height()/2.0f), m_position.y()-static_cast<float>(m_size.width()/2.0f) - m_cellSize, m_position.z()}
     };
 
     QVector<QVector3D> vertSizeLine{
-        {m_position.x()-static_cast<float>(m_size.width()/2.0f) - m_cellSize, m_position.y(), m_position.z()-static_cast<float>(m_size.height()/2.0f)},
-        {m_position.x()-static_cast<float>(m_size.width()/2.0f) - m_cellSize, m_position.y(), m_position.z()+static_cast<float>(m_size.height()/2.0f)},
+        {m_position.x()-static_cast<float>(m_size.height()/2.0f) - m_cellSize, m_position.y()-static_cast<float>(m_size.width()/2.0f), m_position.z()},
+        {m_position.x()-static_cast<float>(m_size.height()/2.0f) - m_cellSize, m_position.y()+static_cast<float>(m_size.width()/2.0f), m_position.z()},
     };
 
     QVector<QVector3D> horzReferenceLines{
@@ -103,8 +113,8 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
         sceneBoundsPlane.at(1),
         horzSizeLine.at(1)
     };
-    horzReferenceLines[1].setZ(horzReferenceLines[1].z() - static_cast<float>(m_cellSize));
-    horzReferenceLines[3].setZ(horzReferenceLines[3].z() - static_cast<float>(m_cellSize));
+    horzReferenceLines[1].setY(horzReferenceLines[1].y() - static_cast<float>(m_cellSize));
+    horzReferenceLines[3].setY(horzReferenceLines[3].y() - static_cast<float>(m_cellSize));
 
     QVector<QVector3D> vertReferenceLines{
         sceneBoundsPlane.at(1),

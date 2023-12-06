@@ -11,19 +11,44 @@
 #include <QThread>
 
 #include <cube.h>
+#include <abstractentitydatafilter.h>
+
+class BottomTrack;
+class SurfaceProcessorTask{
+    Q_GADGET
+    Q_PROPERTY(BottomTrack*              bottomTrack           READ bottomTrack           CONSTANT)
+    Q_PROPERTY(bool                      gridInterpEnabled     READ gridInterpEnabled     CONSTANT)
+    Q_PROPERTY(qreal                     interpGridCellSize    READ interpGridCellSize    CONSTANT)
+    Q_PROPERTY(qreal                     edgeLengthLimit       READ edgeLengthLimit       CONSTANT)
+    Q_PROPERTY(AbstractEntityDataFilter* bottomTrackDataFilter READ bottomTrackDataFilter CONSTANT)
+
+public:
+    void setBottomTrack(std::weak_ptr<BottomTrack> bottomTrack);
+    void setGridInterpEnabled(bool enabled);
+    void setInterpGridCellSize(qreal size);
+    void setEdgeLengthLimit(qreal limit);
+    void setBottomTrackDataFilter(std::shared_ptr<AbstractEntityDataFilter> filter);
+    BottomTrack* bottomTrack() const;
+    bool gridInterpEnabled() const;
+    qreal interpGridCellSize() const;
+    qreal edgeLengthLimit() const;
+    AbstractEntityDataFilter *bottomTrackDataFilter() const;
+
+private:
+    friend class SurfaceProcessor;
+    bool m_gridInterpEnabled = false;
+    qreal m_interpGridCellSize = 5.0f;
+    qreal m_edgeLengthLimit = -1.0f;
+    std::shared_ptr<AbstractEntityDataFilter> m_bottomTrackDataFilter;
+    std::weak_ptr<BottomTrack> m_bottomTrack;
+};
+Q_DECLARE_METATYPE(SurfaceProcessorTask)
 
 class SurfaceProcessor : public QObject
 {
     Q_OBJECT
 
 public:
-    struct Task{
-        QVector <QVector3D> source;
-        Cube bounds;
-        bool needSmoothing = false;
-        qreal cellSize = 5.0f;
-    };
-
     struct Result{
         QVector <QVector3D> data;
         int primitiveType = GL_TRIANGLES;
@@ -32,10 +57,12 @@ public:
     explicit SurfaceProcessor(QObject *parent = nullptr);
     virtual ~SurfaceProcessor();
 
-    bool setTask(const Task& task);
+    bool setTask(const SurfaceProcessorTask& task);
     bool startInThread();
-    bool startInThread(const Task& task);
+    bool startInThread(const SurfaceProcessorTask& task);
     bool stopInThread(unsigned long time = ULONG_MAX);
+    SurfaceProcessorTask task() const;
+    const SurfaceProcessorTask& ctask() const;
 
     bool isBusy() const;
     Result result() const;
@@ -48,7 +75,7 @@ Q_SIGNALS:
     void taskFinished(Result result);
 
 private:
-    Task m_task;
+    SurfaceProcessorTask m_task;
     Result m_result;
     std::atomic_bool m_isBusy{false};
 };

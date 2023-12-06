@@ -13,32 +13,31 @@ Item {
         if(!filter)
             return
 
-        pointsCountSpinBox.blocked = true
-        pointsCountSpinBox.value   = filter.maxPointsCount
-        pointsCountSpinBox.blocked = false
+        pointsCountSpinBox.signalsBlocked = true
+        pointsCountSpinBox.value          = filter.maxPointsCount
+        pointsCountSpinBox.signalsBlocked = false
     }
 
-    id: root
-    Layout.fillWidth: true
+    id:         root
+    objectName: "mpcFilterControlMenu"
+    height:     pointsCountSpinBox.height
 
     KParamSetup {
-        anchors.top:   root.top
-        anchors.left:  root.left
-        anchors.right: root.right
-        paramName:     qsTr("Points count: ")
+        anchors.fill: root
+        paramName:    qsTr("Points count: ")
 
         KSpinBox {
-            property bool blocked : false
+            property bool signalsBlocked : false
 
-            id:    pointsCountSpinBox
-            from:  1
-            to:    10000
-            value: 100
+            id:         pointsCountSpinBox
+            objectName: "pointsCountSpinBox"
+            from:       1
+            to:         1000000
+            value:      100
             onValueChanged: {
-                if(!blocked)
+                if(!signalsBlocked)
                    root.controller.onPointsCountSpinBoxValueChanged(value)
             }
         }
-
     }
 }

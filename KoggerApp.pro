@@ -66,6 +66,7 @@ SOURCES += \
     maxpointsfilter.cpp \
     nearestpointfilter.cpp \
         plotcash.cpp \
+    ray.cpp \
     raycaster.cpp \
         streamlist.cpp \
         waterfall.cpp \
@@ -127,6 +128,7 @@ HEADERS += \
     maxpointsfilter.h \
     nearestpointfilter.h \
     plotcash.h \
+    ray.h \
     raycaster.h \
     streamlist.h \
     waterfall.h \

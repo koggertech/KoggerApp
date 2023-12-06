@@ -9,6 +9,7 @@
 #include <polygongroup.h>
 #include <pointgroup.h>
 #include <vertexeditingdecorator.h>
+#include <ray.h>
 
 #include <QQuickFramebufferObject>
 #include <QtMath>
@@ -35,8 +36,14 @@ public:
         qreal fov() const;
         qreal pitch() const;
         qreal yaw() const;
-        void rotate(qreal yaw, qreal pitch);
-        void move(const QVector2D& startPos, const QVector2D& endPos);
+        QMatrix4x4 viewMatrix() const;
+
+        //TODO! Process this method later
+        //void rotate(qreal yaw, qreal pitch);
+        void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
+
+        //void move(const QVector2D& startPos, const QVector2D& endPos);
+        void move(const QVector2D &lastMouse, const QVector2D &mousePos);
         void zoom(qreal delta);
         void commitMovement();
         void focusOnObject(std::weak_ptr<SceneObject> object);
@@ -55,8 +62,6 @@ public:
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
         QVector3D m_lookAt = {0.0f, 0.0f, 0.0f};
         QVector3D m_relativeOrbitPos = {0.0f, 0.0f, 0.0f};
-        QPointF m_startDragPos = {0.0f, 0.0f};
-        bool m_useFocusPoint = true;
 
         QMatrix4x4 m_view;
 
@@ -68,8 +73,10 @@ public:
         qreal m_pitch = 0.0f;
         qreal m_yaw = 0.0f;
         qreal m_fov = 45.0f;
-        qreal m_distToFocusPoint = 25.0f;
+        float m_distToFocusPoint = 25.0f;
         qreal m_sensivity = 0.5f;
+
+        QVector2D m_rotAngle;
     };
 
     //Renderer
@@ -87,6 +94,18 @@ public:
     private:
         friend class GraphicsScene3dView;
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
+    };
+
+    enum ActiveMode{
+        Idle                                = 0,
+        BottomTrackVertexSelectionMode      = 1,
+        BottomTrackVertexComboSelectionMode = 2,
+        PolygonCreationMode                 = 3,
+        MarkCreationMode                    = 4,
+        PolygonEditingMode                  = 5,
+        BottomTrackSyncPointCreationMode    = 6,
+        ShoreCreationMode                   = 7,
+        MeasuringRouteCreationMode          = 8
     };
 
     /**
@@ -109,8 +128,10 @@ public:
     std::shared_ptr <PointGroup> pointGroup() const;
     std::shared_ptr <PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
+    float verticalScale() const;
+    bool sceneBoundingBoxVisible() const;
     void clear();
-    void setBottomTrackVertexEditingModeEnabled(bool enabled);
+
 
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
@@ -119,14 +140,23 @@ public:
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
 
 public Q_SLOTS:
+    void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
     void setIsometricView();
+    void setIdleMode();
+    void setVerticalScale(float scale);
+    void setBottomTrackVertexSelectionMode();
+    void setBottomTrackVertexComboSelectionMode();
+    void setPolygonCreationMode();
+    void setPolygonEditingMode();
 
 private:
     void updateBounds();
     void updatePlaneGrid();
 
 private:
+    friend class BottomTrack;
+
     std::shared_ptr <Camera> m_camera;
     std::shared_ptr <Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
@@ -139,11 +169,14 @@ private:
     std::shared_ptr <CoordinateAxes> m_coordAxes;
     std::shared_ptr <PlaneGrid> m_planeGrid;
     std::shared_ptr <SceneObject> m_sceneBoundsPlane;
-    std::unique_ptr <VertexEditingDecorator> m_vertexEditingDecorator;
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
-    bool m_vertexEditingToolEnabled = false;
+    ActiveMode m_mode = Idle;
+    QRect m_comboSelectionRect = {0,0,0,0};
+    Ray m_ray;
+    float m_verticalScale = 1.0f;
+    bool m_isSceneBoundingBoxVisible = true;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

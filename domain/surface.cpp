@@ -22,6 +22,11 @@ Surface::Surface(QObject* parent)
 Surface::~Surface()
 {}
 
+void Surface::setProcessingTask(const SurfaceProcessorTask& task)
+{
+    m_processingTask = task;
+}
+
 SceneObject::SceneObjectType Surface::type() const
 {
     return SceneObjectType::Surface;
@@ -37,11 +42,14 @@ SurfaceGrid *Surface::grid() const
     return m_grid.get();
 }
 
+SurfaceProcessorTask Surface::processingTask() const
+{
+    return m_processingTask;
+}
+
 void Surface::setData(const QVector<QVector3D>& data, int primitiveType)
 {
-    blockSignals(true);
     SceneObject::setData(data, primitiveType);
-    blockSignals(false);
 
     updateGrid();
     updateContour();
@@ -211,7 +219,7 @@ void Surface::updateContour()
     }
 }
 
-void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     m_gridRenderImpl.render(ctx, mvp, shaderProgramMap);
     m_contourRenderImpl.render(ctx, mvp, shaderProgramMap);
@@ -230,16 +238,12 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
     }
 
     int posLoc    = shaderProgram->attributeLocation("position");
-    int maxYLoc   = shaderProgram->uniformLocation("max_y");
-    int minYLoc   = shaderProgram->uniformLocation("min_y");
+    int maxZLoc   = shaderProgram->uniformLocation("max_z");
+    int minZLoc   = shaderProgram->uniformLocation("min_z");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
-    int selectedPrimitiveFirstIndex = shaderProgram->uniformLocation("selectedPrimitiveFirstIndex");
-    int selectedPrimitiveLastIndex = shaderProgram->uniformLocation("selectedPrimitiveLastIndex");
 
-    shaderProgram->setUniformValue(maxYLoc, m_bounds.maximumY());
-    shaderProgram->setUniformValue(minYLoc, m_bounds.minimumY());
-    shaderProgram->setUniformValue(selectedPrimitiveFirstIndex, m_selectedIndices.first);
-    shaderProgram->setUniformValue(selectedPrimitiveLastIndex, m_selectedIndices.second);
+    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());

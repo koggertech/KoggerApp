@@ -8,6 +8,7 @@ HEADERS += \
     $$PWD/pointgroupcontrolmenucontroller.h \
     $$PWD/polygongroupcontrolmenucontroller.h \
     $$PWD/qmlcomponentcontroller.h \
+    $$PWD/scene3dcontrolmenucontroller.h \
     $$PWD/scene3dtoolbarcontroller.h \
     $$PWD/surfacecontrolmenucontroller.h
 
@@ -19,5 +20,6 @@ SOURCES += \
     $$PWD/pointgroupcontrolmenucontroller.cpp \
     $$PWD/polygongroupcontrolmenucontroller.cpp \
     $$PWD/qmlcomponentcontroller.cpp \
+    $$PWD/scene3dcontrolmenucontroller.cpp \
     $$PWD/scene3dtoolbarcontroller.cpp \
     $$PWD/surfacecontrolmenucontroller.cpp

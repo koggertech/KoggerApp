@@ -50,53 +50,63 @@ Item{
                 onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
             }
 
-            Button{
-                id: selectionToolButton
-                width: 40
-                height: 40
-                checkable: true
-                icon.source: "./one-finger.svg"
+            Row{
+                id: toolButtonsLayout
+                Button{
+                    id: selectionToolButton
+                    width: 40
+                    height: 40
+                    checkable: true
+                    icon.source: "./one-finger.svg"
 
-                icon.color: theme.textColor
+                    icon.color: theme.textColor
 
-                background: Rectangle {
-                    radius: 1
-                    height: parent.height
-                    width: parent.width
-                    color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-                    border.color: theme.controlBorderColor
-                    border.width: 1
+                    background: Rectangle {
+                        radius: 1
+                        height: parent.height
+                        width: parent.width
+                        color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
+                        border.color: theme.controlBorderColor
+                        border.width: 1
+                    }
+
+                    onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
                 }
 
-                onClicked: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                Button{
+                    id: bottomTrackVertexComboSelectionToolButton
+                    width: 40
+                    height: 40
+                    checkable: true
+                    icon.source: "./combo-selection.svg"
+                    icon.color: theme.textColor
+
+                    background: Rectangle {
+                        radius: 1
+                        height: parent.height
+                        width: parent.width
+                        color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
+                        border.color: theme.controlBorderColor
+                        border.width: 1
+                    }
+
+                    onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
+                }
             }
-
-            //Button{
-            //    width: 40
-            //    height: 40
-            //    checkable: true
-            //    icon.source: "./tool.svg"
-
-            //    icon.color: theme.textColor
-
-            //    background: Rectangle {
-            //        radius: 1
-            //        height: parent.height
-            //        width: parent.width
-            //        color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-            //        border.color: theme.controlBorderColor
-            //        border.width: 1
-            //    }
-
-            //    //onClicked: Scene3DToolbarController.setSelectionToolState(checked)
-            //}
         }
 
-        //ButtonGroup{
-        //    id: buttonGroup
-        //    buttons: row.children
-        //    exclusive: true
-        //}
+        ButtonGroup{
+            property bool buttonChangeFlag : false
+            id: buttonGroup
+            buttons: toolButtonsLayout.children
+            onCheckedButtonChanged: buttonChangeFlag = true
+            onClicked: {
+                if(!buttonChangeFlag)
+                    checkedButton = null
+
+                buttonChangeFlag = false;
+            }
+        }
     }
 
 

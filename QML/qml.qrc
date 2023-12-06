@@ -83,5 +83,8 @@
         <file>PolygonGroupControlMenu.qml</file>
         <file>fit-in-view.svg</file>
         <file>Plot2D.qml</file>
+        <file>KoggerCommon/KWaitProgressBar.qml</file>
+        <file>combo-selection.svg</file>
+        <file>Scene3DControlMenu.qml</file>
     </qresource>
 </RCC>

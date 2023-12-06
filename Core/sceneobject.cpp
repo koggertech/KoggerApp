@@ -12,6 +12,46 @@ SceneObject::SceneObject(RenderImplementation *impl, QObject *parent, QString na
 , m_renderImpl(impl)
 {}
 
+SceneObject::SceneObject(RenderImplementation *impl, GraphicsScene3dView *view, QObject *parent, QString name)
+: QObject(parent)
+, m_renderImpl(impl)
+, m_view(view)
+{}
+
+void SceneObject::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+}
+
+void SceneObject::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+}
+
+void SceneObject::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+}
+
+void SceneObject::mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+    Q_UNUSED(angleDelta)
+}
+
+void SceneObject::keyPressEvent(Qt::Key key)
+{
+    Q_UNUSED(key)
+}
+
 SceneObject::~SceneObject()
 {}
 
@@ -101,26 +141,13 @@ void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
     Q_EMIT changed();
 }
 
-void SceneObject::setSelectedIndices(int begin, int end)
-{
-    m_renderImpl->setSelectedIndices(begin, end);
-}
-
-void SceneObject::setSelectedIndices(QPair<int, int> indices)
-{
-    m_renderImpl->setSelectedIndices(indices);
-}
-
-void SceneObject::resetSelectedIndices()
-{
-    m_renderImpl->resetSelectedIndices();
-}
-
 void SceneObject::removeVertex(int index)
 {
     m_renderImpl->removeVertex(index);
+    m_renderImpl->createBounds();
 
     Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void SceneObject::clearData()
@@ -134,6 +161,7 @@ void SceneObject::setVisible(bool isVisible)
 {
     m_renderImpl->setVisible(isVisible);
 
+    Q_EMIT visibilityChanged(m_renderImpl->m_isVisible);
     Q_EMIT changed();
 }
 
@@ -167,8 +195,7 @@ SceneObject::RenderImplementation::~RenderImplementation()
 
 void SceneObject::RenderImplementation::render(QOpenGLFunctions *ctx,
                                                const QMatrix4x4 &mvp,
-                                               const QMap<QString,
-                                               std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+                                               const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     if(!m_isVisible)
         return;
@@ -231,21 +258,8 @@ void SceneObject::RenderImplementation::setVisible(bool isVisible)
 void SceneObject::RenderImplementation::clearData()
 {
     m_data.clear();
-}
 
-void SceneObject::RenderImplementation::setSelectedIndices(int begin, int end)
-{
-    m_selectedIndices = {begin, end};
-}
-
-void SceneObject::RenderImplementation::setSelectedIndices(QPair<int, int> indices)
-{
-    m_selectedIndices = indices;
-}
-
-void SceneObject::RenderImplementation::resetSelectedIndices()
-{
-    m_selectedIndices = {-1, -1};
+    createBounds();
 }
 
 QVector<QVector3D> SceneObject::RenderImplementation::data() const
@@ -296,7 +310,7 @@ void SceneObject::RenderImplementation::removeVertex(int index)
 void SceneObject::RenderImplementation::createBounds()
 {
     if (m_data.isEmpty()){
-        m_bounds = Cube(0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
+        m_bounds = Cube();
         return;
     }
 

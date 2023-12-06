@@ -1,8 +1,9 @@
 #ifndef SCENEOBJECT_H
 #define SCENEOBJECT_H
 
-#include <abstractentitydatafilter.h>
 #include <cube.h>
+#include <raycaster.h>
+#include <abstractentitydatafilter.h>
 
 #include <QPair>
 #include <QObject>
@@ -14,7 +15,8 @@
 
 #define RENDER_IMPL(Class) ({dynamic_cast<Class##RenderImplementation*>(m_renderImpl);})
 
-class SceneObject : public QObject
+class GraphicsScene3dView;
+class SceneObject : public QObject, public std::enable_shared_from_this<SceneObject>
 {
     Q_OBJECT
     Q_PROPERTY(AbstractEntityDataFilter* filter   READ filter                       CONSTANT)
@@ -40,9 +42,6 @@ public:
         virtual void setWidth(qreal width);
         virtual void setVisible(bool isVisible);
         virtual void clearData();
-        void setSelectedIndices(int begin, int end);
-        void setSelectedIndices(QPair<int,int> indices);
-        void resetSelectedIndices();
         QVector<QVector3D> data() const;
         const QVector<QVector3D>& cdata() const;
         QColor color() const;
@@ -62,7 +61,6 @@ public:
         bool m_isVisible = true;
         Cube m_bounds;
         int m_primitiveType = GL_POINTS;
-        QPair <int,int> m_selectedIndices = {-1, -1};
 
     private:
         friend class SceneObject;
@@ -103,6 +101,17 @@ protected:
                 QObject *parent = nullptr,
                 QString name = QStringLiteral("Scene object"));
 
+    SceneObject(RenderImplementation* impl,
+                GraphicsScene3dView* view = nullptr,
+                QObject *parent = nullptr,
+                QString name = QStringLiteral("Scene object"));
+
+    virtual void mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y);
+    virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y);
+    virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y);
+    virtual void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta);
+    virtual void keyPressEvent(Qt::Key key);
+
 public Q_SLOTS:
     /**
      * @brief Sets the name of object
@@ -118,20 +127,14 @@ public Q_SLOTS:
     void setColor(QColor color);
     void setWidth(qreal width);
     void setFilter(std::shared_ptr <AbstractEntityDataFilter> filter);
-    void setSelectedIndices(int begin, int end);
-    void setSelectedIndices(QPair<int,int> indices);
-    void resetSelectedIndices();
     void removeVertex(int index);
 
 Q_SIGNALS:
+    void visibilityChanged(bool isVisible);
     void dataChanged();
-
     void nameChanged(QString name);
-
     void boundsChanged();
-
     void filterChanged(AbstractEntityDataFilter* filter);
-
     void changed();
 
 private:
@@ -144,6 +147,8 @@ protected:
     QUuid m_uuid   = QUuid::createUuid();
     std::shared_ptr <AbstractEntityDataFilter> m_filter;
     RenderImplementation* m_renderImpl;
+    GraphicsScene3dView* m_view = nullptr;
+    RayCaster m_rayCaster;
 };
 
 #endif // SCENEOBJECT_H

@@ -18,23 +18,22 @@ Item {
         distanceValueSpinBox.signalsBlocked = false
     }
 
-    id:               root
-    Layout.fillWidth: true
+    id:         root
+    objectName: "npdFilterControlMenu"
+    height:     distanceValueSpinBox.height
 
     KParamSetup {
-        anchors.top:   root.top
-        anchors.left:  root.left
-        anchors.right: root.right
-
-        paramName: qsTr("Distance: ")
+        anchors.fill: root
+        paramName:    qsTr("Distance: ")
 
         KSpinBox {
             property bool signalsBlocked : false
 
-            id:    distanceValueSpinBox
-            from:  1
-            to:    10000
-            value: 1
+            id:         distanceValueSpinBox
+            objectName: "distanceValueSpinBox"
+            from:       1
+            to:         10000
+            value:      1
             onValueChanged: {
                 if(!signalsBlocked)
                     root.controller.onDistanceSpinBoxValueChanged(value)

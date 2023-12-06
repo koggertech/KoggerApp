@@ -19,8 +19,7 @@ public:
     virtual ~BottomTrackControlMenuController();
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
-
-    Q_INVOKABLE void onFilterTypeComboBoxIndexChanged(int index);
+    Q_INVOKABLE void onRestoreBottomTrackButtonClicked();
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 

@@ -10,9 +10,13 @@ Item {
     readonly property var controller : SurfaceControlMenuController
 
     id: root
+    objectName: "surfaceControlMenu"
 
     Component.onCompleted: {
         var surface = root.controller.surface;
+
+        if(!surface)
+            return
 
         visibilityCheckBox.checkState        = surface.visible ? Qt.Checked : Qt.Unchecked
         contourVisibilityCheckBox.checkState = surface.contour.visible ? Qt.Checked : Qt.Unchecked
@@ -22,14 +26,40 @@ Item {
         gridColorPickRect.color              = surface.grid.color
         contourColorDialog.setCurrentColor(surface.contour.color)
         gridColorDialog.setCurrentColor(surface.grid.color)
+        filterParamsLoader.sourceComponent = filterParamsPlaceholder
 
+        var processingTask = surface.processingTask;
+        var filter = processingTask.bottomTrackDataFilter;
 
+        if(filter){
+            filterTypeCombo.currentIndex = filter.type
+
+            switch(filter.type){
+            case 1: filterParamsLoader.source = "MpcFilterControlMenu.qml"
+                break
+            case 2: filterParamsLoader.source = "NpdFilterControlMenu.qml"
+                break
+            }
+
+            filterParamsLoader.item.setFilter(filter)
+        }
     }
 
     Layout.minimumWidth:  160
     Layout.minimumHeight: 240
 
     MenuBlockEx {
+        id:           menuBlock
+
+        function initFilterParamsMenu(filter){
+            if(!filter){
+
+                return
+            }
+
+
+        }
+
         anchors.fill: parent
 
         KParamGroup {
@@ -113,8 +143,23 @@ Item {
                 }
             }
 
+            KParamSetup {
+                id: triangleEdgeLengthLimit
+                objectName: "triangleEdgeLengthLimit"
+                paramName: qsTr("Triangle edge length limit: ")
+
+                KSpinBox {
+                    id: triangleEdgeLengthLimitSpinBox
+                    objectName: "triangleEdgeLengthLimitSpinBox"
+                    from: 0
+                    to: 100000
+
+                }
+            }
+
             KCheck {
                 id:               gridInterpolationCheckBox
+                objectName:       "gridInterpolationCheckBox"
                 text:             qsTr("Enable grid interpolation")
                 Layout.fillWidth: true
                 onCheckedChanged: root.controller.onGridInterpolationCheckBoxCheckedChanged(checked)
@@ -126,27 +171,56 @@ Item {
                 visible: gridInterpolationCheckBox.checked
 
                 KSpinBox {
-                    id: gridCellSizeSpinBox
-                    from: 1
-                    to: 100
+                    id:         gridCellSizeSpinBox
+                    objectName: "gridCellSizeSpinBox"
+                    from:       1
+                    to:         1000
                 }
+            }
+
+            KParamSetup {
+                paramName: "Filter: "
+
+                KCombo {
+                    id:         filterTypeCombo
+                    objectName: "filterTypeCombo"
+                    Layout.preferredWidth: 250
+                    model:      ["None", "Max points count", "Nearest point distance"]
+                    onCurrentIndexChanged: {
+                        switch(currentIndex){
+                        case 1:
+                            filterParamsLoader.source = "MpcFilterControlMenu.qml"
+                            break
+                        case 2:
+                            filterParamsLoader.source = "NpdFilterControlMenu.qml"
+                            break
+                        default:
+                            filterParamsLoader.sourceComponent = filterParamsPlaceholder
+                        break
+                        }
+                    }
+                }
+            }
+
+            Loader {
+                id:              filterParamsLoader
+                anchors{left: parent.left; right: parent.right}
+                objectName:      "filterParamsLoader"
+                sourceComponent: filterParamsPlaceholder
+            }
+
+            Component {
+                 id: filterParamsPlaceholder
+                 Item {}
             }
 
             KButton {
                 id:               updateSurfaceButton
                 Layout.fillWidth: true
                 text:             qsTr("Update surface")
-                onClicked:        root.controller.onUpdateSurfaceButtonClicked(gridInterpolationCheckBox.checked,
-                                                                             gridCellSizeSpinBox.value)
-            }
-
-            Text {
-                id:               messageItem
-                Layout.fillWidth: true
-                color:            theme.textColor
-                text:             qsTr("Surface source data is not available. " +
-                                  "Please, choose bottom track\nsource" +
-                                  "from list and press 'Update' button")
+                onClicked:        root.controller.onUpdateSurfaceButtonClicked(triangleEdgeLengthLimitSpinBox.value,
+                                                                               gridInterpolationCheckBox.checked,
+                                                                               gridCellSizeSpinBox.value)
             }
         }
     }

@@ -17,6 +17,7 @@ HEADERS += \
     $$PWD/contour.h\
     $$PWD/coordinateaxes.h \
     $$PWD/cube.h \
+    $$PWD/plane.h \
     $$PWD/planegrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
@@ -34,6 +35,7 @@ SOURCES += \
     $$PWD/contour.cpp\
     $$PWD/coordinateaxes.cpp \
     $$PWD/cube.cpp \
+    $$PWD/plane.cpp \
     $$PWD/planegrid.cpp \
     $$PWD/pointgroup.cpp \
     $$PWD/pointobject.cpp \

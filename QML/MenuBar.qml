@@ -271,40 +271,13 @@ Item {
         }
 
         SceneControlMenu {
-            id: sceneControlMenu
+            id:                 sceneControlMenu
+            objectName:         "sceneControlMenu"
             Layout.topMargin:   10
             anchors.top:        menuBar.top
             anchors.left:       menuBar.right
             anchors.leftMargin: 40
             visible:            menu3DSettings.active
         }
-
-
-        //ColumnLayout {
-        //    Layout.topMargin: 10
-        //    anchors.top:        menuBar.top
-        //    anchors.left:       menuBar.right
-        //    anchors.leftMargin: 40
-        //    spacing:            0
-        //    visible:            menu3DSettings.active
-
-        //    ActiveObjectParamsMenuLoader {
-        //        id:     activeObjectParamsMenuLoader
-        //        width:  _rightBarWidth
-        //        height: _activeObjectParamsMenuHeight
-        //        initialComponent: "MenuPlaceholder.qml"
-        //    }
-
-        //    SceneObjectsList {
-        //        width:        _rightBarWidth
-        //        height:       _sceneObjectsListHeight
-
-        //        onCountChanged: {
-        //            if(count === 0){
-        //                activeObjectParamsMenuLoader.reset()
-        //            }
-        //        }
-        //    }
-        //}
     }
 }

@@ -70,48 +70,19 @@ Window  {
 
             GraphicsScene3dView {
                 id:                renderer
+                objectName: "GraphicsScene3dView"
                 width:             mainview.width
                 Layout.fillHeight: true
                 Layout.fillWidth:  true
                 focus:             true
 
-                //Rectangle{
-                //    id: surfaceCalculatingRectangle
-                //    visible: Scene3DModel.triangulationAvailable()
-                //    width: 300
-                //    height: 100
-                //    color: "transparent"
-
-                //    ColumnLayout{
-
-                //        Layout.fillHeight: true
-                //        Layout.fillWidth: true
-                //        Layout.alignment: Qt.AlignCenter
-                //        width: 100
-                //        height: 50
-                //        spacing: 10
-
-
-                //        Text{
-                //            text: "Calculating surface.\nPlease wait..."
-                //            color: "white"
-                //            horizontalAlignment: Text.AlignHCenter
-                //        }
-
-                //        ProgressBar{
-                //            id: surfaceProcessingProgressBar
-                //            value: 0.0
-                //            indeterminate: true
-                //            Layout.fillWidth: true
-                //        }
-
-                //        anchors.bottom: parent.bottom
-                //        anchors.horizontalCenter: parent.horizontalCenter
-                //    }
-
-                //    anchors.verticalCenter: parent.verticalCenter;
-                //    anchors.horizontalCenter: parent.horizontalCenter
-                //}
+                KWaitProgressBar{
+                    id:        surfaceProcessingProgressBar
+                    objectName: "surfaceProcessingProgressBar"
+                    text:      "Calculating surface.\nPlease wait..."
+                    textColor: "black"
+                    visible:   false
+                }
 
                 PinchArea {
                     id:           pinch3D
@@ -341,6 +312,7 @@ Window  {
 
     MenuBar {
         id:                menuBar
+        objectName:        "menuBar"
         Layout.fillHeight: true
         Keys.forwardTo:    [mousearea3D]
         height: visualisationLayout.height
@@ -355,5 +327,11 @@ Window  {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.rightMargin:      20
         Keys.forwardTo:           [mousearea3D]
+    }
+
+    Connections{
+        target: SurfaceControlMenuController
+        onSurfaceProcessorTaskStarted: surfaceProcessingProgressBar.visible = true
+        onSurfaceProcessorTaskFinished: surfaceProcessingProgressBar.visible = false
     }
 }
