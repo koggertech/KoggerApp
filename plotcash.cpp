@@ -712,7 +712,9 @@ void Dataset::updateTrack(bool update_all) {
                 if(!isfinite(distance)) {
                     distance = NAN;
                 }
-                _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
+                // Checking for NAN
+                if(distance == distance)
+                    _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
             }
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }
