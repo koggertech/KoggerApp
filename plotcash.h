@@ -754,16 +754,18 @@ public slots:
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
     }
-    void updateRender3D() {
-        if(_render3D != NULL) {
-            _render3D->updateBottomTrack(_bottomTrack);
-        }
-    }
+//    void updateRender3D() {
+        // deprecated
+//        if(_render3D != NULL) {
+//            _render3D->updateBottomTrack(_bottomTrack);
+//        }
+//    }
 
     void clearTrack();
     void updateTrack(bool update_all = false);
 
     QStringList channelsNameList();
+
 
 private:
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
@@ -786,10 +788,10 @@ protected:
 
     LLARef _llaRef;
 
-//    QVector<uint32_t> _gnssTrackIndex;
-
     int _lastTrackEpoch = 0;
-    QVector<QVector3D> _bottomTrack;
+
+    QMap<int, QVector<QVector3D>> _bottomTracks;
+
     QVector<QVector3D> _boatTrack;
 
 
