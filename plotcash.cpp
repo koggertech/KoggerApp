@@ -156,9 +156,9 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
     }
 }
 
-void Dataset::set3DSceneModel(const ModelPointer pModel)
+void Dataset::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
 {
-    mp3DSceneModel = pModel;
+    mpBottomTrackProvider = bottomTrackProvider;
 }
 
 void Dataset::addEvent(int timestamp, int id, int unixt) {
@@ -623,7 +623,6 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
     spatialProcessing();
 
     updateTrack(true);
-    updateRender3D();
 
     emit dataUpdate();
 }
@@ -705,11 +704,10 @@ void Dataset::updateTrack(bool update_all) {
         }
     }
 
-    _lastTrackEpoch = to_size;
+    if(mpBottomTrackProvider)
+        mpBottomTrackProvider->setBottomTrack(_bottomTrack);
 
-    if (mp3DSceneModel) {
-        mp3DSceneModel->setBottomTrack(_bottomTrack);
-    }
+    _lastTrackEpoch = to_size;
 }
 
 QStringList Dataset::channelsNameList() {

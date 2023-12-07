@@ -52,16 +52,22 @@ SOURCES += \
     Plot2DGrid.cpp \
         ProtoBinnary.cpp \
         StreamListModel.cpp \
+    bottomtrackprovider.cpp \
         connection.cpp \
         console.cpp \
         consolelistmodel.cpp \
         core.cpp \
         filelist.cpp \
-    interpolatorbase.cpp \
+    graphicsscene3drenderer.cpp \
+    graphicsscene3dview.cpp \
         logger.cpp \
         main.cpp \
         flasher.cpp \
+    maxpointsfilter.cpp \
+    nearestpointfilter.cpp \
         plotcash.cpp \
+    ray.cpp \
+    raycaster.cpp \
         streamlist.cpp \
         waterfall.cpp \
 
@@ -83,10 +89,10 @@ RESOURCES += QML/qml.qrc \
     shaders.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
+QML_IMPORT_PATH = $$PWD\QML
 
 # Additional import path used to resolve QML modules just for Qt Quick Designer
-QML_DESIGNER_IMPORT_PATH =
+QML_DESIGNER_IMPORT_PATH = $$PWD\QML
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -107,6 +113,8 @@ HEADERS += \
     ProtoBinnary.h \
     StreamListModel.h \
     Themes.h \
+    abstractentitydatafilter.h \
+    bottomtrackprovider.h \
     XTFConf.h \
     connection.h \
     console.h \
@@ -114,9 +122,14 @@ HEADERS += \
     filelist.h \
     flasher.h \
     core.h \
-    interpolatorbase.h \
+    graphicsscene3drenderer.h \
+    graphicsscene3dview.h \
     logger.h \
+    maxpointsfilter.h \
+    nearestpointfilter.h \
     plotcash.h \
+    ray.h \
+    raycaster.h \
     streamlist.h \
     waterfall.h \
     waterfallproxy.h \
@@ -133,7 +146,15 @@ HEADERS += \
 
 
 DISTFILES += \
-    QML/Settings3DView.qml \
+    QML/Common/MenuBlockEx.qml \
+    QML/Scene3DToolbar.qml \
+    QML/SceneObjectsControlBar/ActiveObjectParams.qml \
+    QML/SceneObjectsControlBar/BottomTrackParams.qml \
+    QML/SceneObjectsControlBar/SceneObjectsControlBar.qml \
+    QML/SceneObjectsControlBar/SceneObjectsList.qml \
+    QML/SceneObjectsControlBar/SceneObjectsListDelegate.qml \
+    QML/SceneObjectsList.qml \
+    QML/SceneObjectsListDelegate.qml \
     QML/AdjBox.qml \
     QML/AdjBoxBack.qml \
     QML/BackStyle.qml \
@@ -165,7 +186,9 @@ DISTFILES += \
     android_build/res/values/libs.xml \
     base.vsh \
     heightcolor.frag \
-    staticcolor.fsh
+    staticcolor.fsh \
+    tools/models.pri \
+    tools/tools.pri
 
 
 android {
@@ -187,10 +210,8 @@ windows {
 }
 
 include ($$PWD/core/core.pri)
-include ($$PWD/factories/factories.pri)
 include ($$PWD/processors/processors.pri)
 include ($$PWD/domain/domain.pri)
-include ($$PWD/models/models.pri)
 include ($$PWD/controllers/controllers.pri)
 
 

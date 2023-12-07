@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <cmath>
 #include <math.h>
@@ -11,7 +10,6 @@
 
 #include "Triangle.h"
 #include "Point3D.h"
-#include "Equals.h"
 
 #include <thread>
 
@@ -63,7 +61,7 @@ public:
 
             for (size_t i = 0; i < polygon.size(); i++) {
                 for (size_t j = 0; j < polygon.size(); j++) {
-                    if (i != j && equal(polygon[i], polygon[j])) {
+                    if (i != j && polygon[i] == polygon[j]) {
                         polygon[i].setWrong(true);
                         break;
                     }
@@ -92,19 +90,24 @@ public:
         }
 
         for (auto it = mpTriangles->begin(); it != mpTriangles->end();)
-        {   bool comp_1 = it->contains(super.A()) || it->contains(super.B()) || it->contains(super.C());
-            bool comp_2 = it->AB().length() > edgeLengthLimit || it->BC().length() > edgeLengthLimit || it->AC().length() > edgeLengthLimit;
+        {   bool comp = it->contains(super.A()) || it->contains(super.B()) || it->contains(super.C());
 
-            if(comp_1)
-            {
+            if(comp)
                 it = mpTriangles->erase(it);
-            }else{
+            else
+                it++;
+        }
+
+        if(edgeLengthLimit != -1){
+            for (auto it = mpTriangles->begin(); it != mpTriangles->end();)
+            {
+                bool comp_2 = it->AB().length() > edgeLengthLimit || it->BC().length() > edgeLengthLimit || it->AC().length() > edgeLengthLimit;
+
                 if (comp_2){
                     it = mpTriangles->erase(it);
                 }else{
                     ++it;
                 }
-
             }
         }
 
@@ -113,6 +116,9 @@ public:
 
     TrianglesPointer trinagulate_2(const std::vector <Point3D <T>>& points, T edgeLengthLimit = -1.0f)
     {
+
+        Q_UNUSED(edgeLengthLimit)
+
         mpTriangles->clear();
 
         if(points.size() < 3){

@@ -7,6 +7,7 @@
 #include <DevQProperty.h>
 #include <QUrl>
 #include <QQmlApplicationEngine>
+#include <QStandardItemModel>
 #include <QQmlContext>
 #include <waterfall.h>
 #include <DevHub.h>
@@ -18,18 +19,22 @@
 #include "XTFConf.h"
 #include "ConverterXTF.h"
 
-#include <Q3DSettingsController.h>
-#include <Q3DSceneModel.h>
+#include <graphicsscene3dview.h>
+#include <bottomtrackprovider.h>
+#include <bottomtrackcontrolmenucontroller.h>
+#include <surfacecontrolmenucontroller.h>
+#include <pointgroupcontrolmenucontroller.h>
+#include <polygongroupcontrolmenucontroller.h>
+#include <mpcfiltercontrolmenucontroller.h>
+#include <npdfiltercontrolmenucontroller.h>
+#include <scene3dtoolbarcontroller.h>
+#include <scene3dcontrolmenucontroller.h>
 
 //#define FLASHER
 
 #ifdef FLASHER
 #include "flasher.h"
 #endif
-
-using Settings3DController = std::shared_ptr <Q3DSettingsController>;
-using Scene3DModel         = std::shared_ptr <Q3DSceneModel>;
-
 
 class Core : public QObject
 {
@@ -67,16 +72,6 @@ public:
     void consoleProto(FrameParser &parser, bool is_in = true);
 
     void setEngine(QQmlApplicationEngine *engine);
-
-private:
-
-    //! Метод создания контроллеров
-    void createControllers();
-    //! Метод создания моделей
-    void createModels();
-
-    Settings3DController mpSettings3DController;
-    Scene3DModel mpScene3DModel;
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
@@ -168,6 +163,8 @@ public:
     QList<qPlot2D*> _plots2d;
 //    QPlot2D* _plot1 = NULL;
     FboInSGRenderer* _render = NULL;
+    GraphicsScene3dView* m_scene3dView = nullptr;
+
 
     Device _devs;
     Logger _logger;
@@ -211,6 +208,28 @@ protected:
     void restoreBaudrate();
     void setUpgradeBaudrate();
 
+private:
+
+    //! Метод создания контроллеров
+    void createControllers();
+    //! Метод создания моделей
+    void createModels();
+\
+
+private:
+
+    // View controllers
+    std::shared_ptr <BottomTrackControlMenuController>  m_bottomTrackControlMenuController;
+    std::shared_ptr <MpcFilterControlMenuController>    m_mpcFilterControlMenuController;
+    std::shared_ptr <NpdFilterControlMenuController>    m_npdFilterControlMenuController;
+    std::shared_ptr <SurfaceControlMenuController>      m_surfaceControlMenuController;
+    std::shared_ptr <PointGroupControlMenuController>   m_pointGroupControlMenuController;
+    std::shared_ptr <PolygonGroupControlMenuController> m_polygonGroupControlMenuController;
+    std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
+    std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
+
+    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
+    std::unique_ptr <QStandardItemModel>  m_sceneObjectListModel; ///< graphics object list model
 
     bool isFactoryMode() {
 #ifdef FLASHER
@@ -219,6 +238,7 @@ protected:
         return false;
 #endif
     }
+
 };
 
 #endif // CORE_H

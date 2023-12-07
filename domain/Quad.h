@@ -5,6 +5,12 @@
 
 #include <Point3D.h>
 #include <Edge.h>
+#include "Triangle.h"
+
+#ifdef QT_CORE_LIB
+#include <QVector>
+#include <QVector3D>
+#endif
 
 template <typename T>
 class Quad
@@ -30,6 +36,20 @@ public:
         , mC(C)
         , mD(D)
     {}
+
+#ifdef QT_CORE_LIB
+
+    Quad(const QVector3D& A,
+         const QVector3D& B,
+         const QVector3D& C,
+         const QVector3D& D)
+        : mA(Point3D <T>::fromQVector3D(A))
+        , mB(Point3D <T>::fromQVector3D(B))
+        , mC(Point3D <T>::fromQVector3D(C))
+        , mD(Point3D <T>::fromQVector3D(D))
+    {}
+
+#endif
 
     //! Returns first vertice of quad
     Point3D <T> A() const { return mA; }
@@ -72,6 +92,47 @@ public:
 
         return edges;
     }
+
+#ifdef QT_CORE_LIB
+
+    bool intersectsWithLine(const QVector3D& origin,
+                            const QVector3D& direction,
+                            QVector3D& intersectionPoint,
+                            bool dirNormalized = false) const
+    {
+        auto dir = direction;
+
+        if (!dirNormalized)
+            dir.normalize();
+
+        auto triangles = QVector <Triangle <T>>{
+                                                   Triangle <T> (mA, mB, mC),
+                                                   Triangle <T> (mC, mD, mA),
+                                                   Triangle <T> (mD, mA, mB),
+                                                   Triangle <T> (mB, mC, mD)
+                                                };
+
+        for (const auto& triangle : triangles){
+
+            bool intersects = triangle.intersectsWithLine(origin,
+                                                          direction,
+                                                          intersectionPoint,
+                                                          dirNormalized);
+            if (intersects){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    T distanceToPoint(const QVector3D& point) const{
+        return point.distanceToPlane(mA.toQVector3D(),
+                                     mB.toQVector3D(),
+                                     mC.toQVector3D());
+    }
+
+#endif
 
 
 private:

@@ -1,33 +1,30 @@
 #include "contour.h"
 
-Contour::Contour()
-{
+Contour::Contour(QObject* parent)
+: SceneObject(parent)
+{}
 
-}
-
-float Contour::lineWidth() const
-{
-    return mLineWidth;
-}
+Contour::~Contour()
+{}
 
 bool Contour::keyPointsVisible() const
 {
-    return mKeyPointsVisible;
+    return m_keyPointsVisible;
 }
 
 QColor Contour::keyPointsRgbColor() const
 {
-    return mKeyPointsColor;
+    return m_keyPointsColor;
 }
 
 QVector4D Contour::keyPointsColor() const
 {
     float rgb_max = 255.0f;
 
-    auto r = mKeyPointsColor.red();
-    auto g = mKeyPointsColor.green();
-    auto b = mKeyPointsColor.blue();
-    auto a = mKeyPointsColor.alpha();
+    auto r = m_keyPointsColor.red();
+    auto g = m_keyPointsColor.green();
+    auto b = m_keyPointsColor.blue();
+    auto a = m_keyPointsColor.alpha();
 
     QVector4D vec{static_cast <float>(r) / rgb_max
                  ,static_cast <float>(g) / rgb_max
@@ -37,21 +34,12 @@ QVector4D Contour::keyPointsColor() const
     return vec;
 }
 
-void Contour::setLineWidth(float width)
-{
-    if (width < 1.0f){
-        mLineWidth = 1.0f;
-    }
-
-    mLineWidth = width;
-}
-
 void Contour::setKeyPointsVisible(bool visible)
 {
-    mKeyPointsVisible = visible;
+    m_keyPointsVisible = visible;
 }
 
 void Contour::setKeyPointsColor(QColor color)
 {
-    mKeyPointsColor = color;
+    m_keyPointsColor = color;
 }

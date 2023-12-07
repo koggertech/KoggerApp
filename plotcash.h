@@ -10,8 +10,10 @@
 #include <QPainter>
 #include "math.h"
 #include <qvector3d.h>
+
 #include <3Plot.h>
 #include <IDBinnary.h>
+#include <bottomtrackprovider.h>
 
 #include "time.h"
 
@@ -714,8 +716,7 @@ public:
         return _channelsSetup;
     }
 
-    //! Установить указатель на модель 3D - сцены
-    void set3DSceneModel(const ModelPointer pModel);
+    void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
@@ -752,7 +753,6 @@ public slots:
 
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
-        _render3D->setModel(mp3DSceneModel);
     }
     void updateRender3D() {
         if(_render3D != NULL) {
@@ -766,9 +766,7 @@ public slots:
     QStringList channelsNameList();
 
 private:
-
-    //! Указатель на модель 3D - сцены
-    ModelPointer mp3DSceneModel;
+    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);

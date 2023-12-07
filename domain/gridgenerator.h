@@ -1,5 +1,5 @@
-#ifndef BOTTOMTRACK_H
-#define BOTTOMTRACK_H
+#ifndef GRIDGENERATOR_H
+#define GRIDGENERATOR_H
 
 #include <Triangle.h>
 #include <Quad.h>
@@ -64,7 +64,6 @@ public:
             }
 
         } catch (std::bad_alloc& ex) {
-            std::cout << "Size: " << queue->size();
         }
 
 
@@ -76,8 +75,8 @@ public:
     {
         auto result = std::make_shared <std::vector <Quad <T>>>();
 
-        int horzCellsCount = std::round(width / cellSideSize) + 1;
-        int vertCellsCount = std::round(height / cellSideSize)+ 1;
+        int horzCellsCount = std::ceil(width / cellSideSize)/* + 1*/;
+        int vertCellsCount = std::ceil(height / cellSideSize)/*+ 1*/;
 
         for (int row = 0; row < horzCellsCount; row++){
             for (int col = 0; col < vertCellsCount; col++){
@@ -139,4 +138,4 @@ private:
 
 };
 
-#endif // BOTTOMTRACK_H
+#endif // GRIDGENERATOR_H

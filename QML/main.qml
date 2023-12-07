@@ -11,15 +11,21 @@ import QtQuick.Controls 2.15
 
 import WaterFall 1.0
 
+import KoggerCommon 1.0
+
 Window  {
-    id: mainview
-    visible: true
-    width: 1024
-    minimumWidth: 512
-    height: 512
+    id:            mainview
+    visible:       true
+    width:         1024
+    minimumWidth:  512
+    height:        512
     minimumHeight: 256
-    color: "black"
-    title: qsTr("KoggerApp, KOGGER")
+    color:         "black"
+    title:         qsTr("KoggerApp, KOGGER")
+
+    readonly property int _rightBarWidth:                360
+    readonly property int _activeObjectParamsMenuHeight: 500
+    readonly property int _sceneObjectsListHeight:       300
 
     //    Settings {
     //        property alias x: mainview.x
@@ -32,93 +38,57 @@ Window  {
 
     SplitView {
         Layout.fillHeight: true
-        Layout.fillWidth: true
-        anchors.fill: parent
-
-        orientation: Qt.Vertical
-        visible: true
+        Layout.fillWidth:  true
+        anchors.fill:      parent
+        orientation:       Qt.Vertical
+        visible:           true
 
         handle: Rectangle {
-            implicitWidth: 5
+            implicitWidth:  5
             implicitHeight: 5
-            color: SplitHandle.pressed ? "#A0A0A0" : "#707070"
+            color:          SplitHandle.pressed ? "#A0A0A0" : "#707070"
 
             Rectangle {
-                width: parent.width
+                width:  parent.width
                 height: 1
-                color: "#A0A0A0"
+                color:  "#A0A0A0"
             }
 
             Rectangle {
-                y: parent.height
-                width: parent.width
+                y:      parent.height
+                width:  parent.width
                 height: 1
-                color: "#A0A0A0"
+                color:  "#A0A0A0"
             }
         }
 
         ColumnLayout {
-            id: visualisationLayout
+            id:                   visualisationLayout
             SplitView.fillHeight: true
-            SplitView.fillWidth: true
-            spacing: 0
+            SplitView.fillWidth:  true
+            spacing:              0
 
-            Renderer {
-                id: renderer
-                visible: Scene3DModel.sceneVisibility()
-                width: mainview.width
+            GraphicsScene3dView {
+                id:                renderer
+                objectName: "GraphicsScene3dView"
+                width:             mainview.width
                 Layout.fillHeight: true
-                Layout.fillWidth: true
-                focus: true
+                Layout.fillWidth:  true
+                focus:             true
 
-                onVisibleChanged: {
-                    if(visible) { core.movePoints() }
-                }
-
-
-                Rectangle{
-                    id: surfaceCalculatingRectangle
-                    visible: Scene3DModel.triangulationAvailable()
-                    width: 300
-                    height: 100
-                    color: "transparent"
-
-                    ColumnLayout{
-
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignCenter
-                        width: 100
-                        height: 50
-                        spacing: 10
-
-
-                        Text{
-                            text: "Calculating surface.\nPlease wait..."
-                            color: "white"
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        ProgressBar{
-                            id: surfaceProcessingProgressBar
-                            value: 0.0
-                            indeterminate: true
-                            Layout.fillWidth: true
-                        }
-
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-
-                    anchors.verticalCenter: parent.verticalCenter;
-                    anchors.horizontalCenter: parent.horizontalCenter
+                KWaitProgressBar{
+                    id:        surfaceProcessingProgressBar
+                    objectName: "surfaceProcessingProgressBar"
+                    text:      "Calculating surface.\nPlease wait..."
+                    textColor: "black"
+                    visible:   false
                 }
 
                 PinchArea {
-                    id: pinch3D
+                    id:           pinch3D
                     anchors.fill: parent
+                    enabled:      true
 
-                    enabled: true
                     onPinchUpdated: {
                         renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
                         renderer.mouse(pinch.center.x, pinch.center.y, false)
@@ -136,35 +106,36 @@ Window  {
 
                     MouseArea {
                         id: mousearea3D
-                        enabled: true
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        enabled:              true
+                        anchors.fill:         parent
+                        acceptedButtons:      Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                        focus:                true
+                        hoverEnabled:         true
+                        Keys.enabled:         true
+                        Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
                         onWheel: {
-                            renderer.scaleDelta(wheel.angleDelta.y)
+                            renderer.mouseWheelTrigger(wheel.buttons,
+                                                       wheel.x,
+                                                       wheel.y,
+                                                       wheel.angleDelta)
                         }
 
                         onPositionChanged: {
-                            if((mousearea3D.pressedButtons & Qt.MiddleButton) || ((mousearea3D.pressedButtons & Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier))) {
-                                renderer.mouse(mouse.x, mouse.y, false)
-                            } else  if(mousearea3D.pressedButtons & Qt.LeftButton) {
-                                renderer.mouse(mouse.x, mouse.y, true)
-
-                            }
+                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y)
                         }
 
                         onPressed: {
-                            renderer.mouse(mouse.x, mouse.y, false)
+                            renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y)
                         }
 
                         onReleased: {
-                            renderer.mouse(-1, -1, false)
+                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y)
                         }
 
                     }
                 }
             }
-
 
 
             GridLayout {
@@ -181,7 +152,6 @@ Window  {
                     Layout.rowSpan   : 10
                     Layout.columnSpan: 10
                     focus: true
-
                     horizontal: menuBar.is2DHorizontal
                 }
 
@@ -228,34 +198,29 @@ Window  {
 //            }
 
             Rectangle {
-                visible: menuBar.is2DVisible
+                visible:          menuBar.is2DVisible
                 Layout.fillWidth: true
-                height: 1
-                color: theme.controlBorderColor
+                height:           1
+                color:            theme.controlBorderColor
             }
 
             CSlider {
-                visible: menuBar.is2DVisible
-                id: historyScroll
+                visible:          menuBar.is2DVisible
+                id:               historyScroll
                 Layout.fillWidth: true
                 width: mainview.width
                 implicitHeight: theme.controlHeight
-
                 value: waterView.timelinePosition
-
                 stepSize: 0.0001
                 from: 0
                 to: 1
-
                 onValueChanged: core.setTimelinePosition(value);
             }
-
-
         }
 
         Console {
-            id: console_vis
-            visible: theme.consoleVisible
+            id:                      console_vis
+            visible:                 theme.consoleVisible
             SplitView.minimumHeight: 100
         }
     }
@@ -347,20 +312,27 @@ Window  {
 
 
     MenuBar {
-        id: menuBar
+        id:                menuBar
+        objectName:        "menuBar"
         Layout.fillHeight: true
+        Keys.forwardTo:    [mousearea3D]
         height: visualisationLayout.height
-        //settingsWidth: theme.controlHeight*20 < 800 ? theme.controlHeight*20 : 800
-
         targetPlot: waterView
+
     }
 
-    Connections {
-        target: Scene3DModel
-        onStateChanged: {
-            renderer.visible = Scene3DModel.sceneVisibility()
-            surfaceCalculatingRectangle.visible = !Scene3DModel.triangulationAvailable()
-        }
+    Scene3DToolbar{
+        //visible: menuBar.is3DVisible
+        id:                       scene3DToolbar
+        anchors.top:              parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.rightMargin:      20
+        Keys.forwardTo:           [mousearea3D]
     }
 
+    Connections{
+        target: SurfaceControlMenuController
+        onSurfaceProcessorTaskStarted: surfaceProcessingProgressBar.visible = true
+        onSurfaceProcessorTaskFinished: surfaceProcessingProgressBar.visible = false
+    }
 }

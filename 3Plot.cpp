@@ -1,4 +1,6 @@
 #include "3Plot.h"
+#include <bottomtrack.h>
+#include <surface.h>
 
 #include <QOpenGLFramebufferObject>
 
@@ -7,6 +9,8 @@
 #include <QRandomGenerator>
 
 #include <iostream>
+
+#include <polygonobject.h>
 
 class FboRenderer : public QQuickFramebufferObject::Renderer
 {
@@ -21,9 +25,9 @@ public:
         update();
     }
 
-    void setModel(const ModelPointer pModel){
-        scene.setModel(pModel);
-    }
+    //void setSceneObjectsListModel(std::shared_ptr <SceneObjectsListModel> sceneObjectsListModel){
+    //    //scene.setSceneObjectsListModel(sceneObjectsListModel);
+    //}
 
     QOpenGLFramebufferObject *createFramebufferObject(const QSize &size) override {
         QOpenGLFramebufferObjectFormat format;
@@ -37,11 +41,12 @@ public:
         //scene.setLines(fbitem->lines());
 
         scene.scale(fbitem->scaleDelta());
-        scene.modelScale(fbitem->modelScaleZ());
-        scene.size(fbitem->size());
+        //scene.size(fbitem->size());
         scene.mouse(fbitem->mouse());
         scene.rotationFlag(fbitem->isRotation());
-
+        //scene.setRightMouseButtonPressed(fbitem->isRightMouseButtonPressed());
+        //scene.setMousePos(fbitem->mousePos());
+        //scene.setSize(QSize(fbitem->width(), fbitem->height()));
     }
 
     Scene3D scene;
@@ -50,8 +55,6 @@ public:
 QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 {
     auto renderer = new FboRenderer();
-
-    renderer->setModel(mpModel);
 
     return renderer;
 }
@@ -63,391 +66,19 @@ QQuickFramebufferObject::Renderer *FboInSGRenderer::createRenderer() const
 #include <memory>
 
 Scene3D::Scene3D()
-:mpStaticColorShaderProgram(new QOpenGLShaderProgram)
-,mpHeightColorShaderProgram(new QOpenGLShaderProgram)
 {
-
 }
 
 Scene3D::~Scene3D()
 {
 }
 
-void Scene3D::setModel(const ModelPointer pModel)
-{
-    mpModel = pModel;
-
-    if (!mpModel) return;
-
-    connect(mpModel.get(), &Q3DSceneModel::stateChanged,
-            this         , &Scene3D::modelStateChanged);
-
-    connect(mpModel.get(), &Q3DSceneModel::bottomTrackDataChanged,
-            this         , &Scene3D::bottomTrackDataChanged);
-
-    connect(mpModel.get(), &Q3DSceneModel::bottomTrackPropertiesChanged,
-            this         , &Scene3D::bottomTrackPropertiesChanged);
-
-    connect(mpModel.get(), &Q3DSceneModel::surfaceDataChanged,
-            this         , &Scene3D::surfaceDataChanged);
-
-    connect(mpModel.get(), &Q3DSceneModel::surfacePropertiesChanged,
-            this         , &Scene3D::surfacePropertiesChanged);
-
-    connect(mpModel.get(), &Q3DSceneModel::contourDataChanged,
-            this         , &Scene3D::contourDataChanged);
-
-    connect(mpModel.get(), &Q3DSceneModel::contourPropertiesChanged,
-            this         , &Scene3D::contourPropertiesChanged);
-
-    auto object = mpModel->bottomTrackDisplayedObject();
-
-    mBottomTrackDisplayedObject.setData(object.cdata());
-    mBottomTrackDisplayedObject.setPrimitiveType(object.primitiveType());
-
-    bottomTrackPropertiesChanged();
-    surfacePropertiesChanged();
-    contourPropertiesChanged();
-}
-
-void Scene3D::modelStateChanged()
-{
-    //mpBottomTrackDisplayedObject = mpModel->bottomTrack();
-   // mpSurfaceDisplayedObject = mpModel->surface();
-    //mBottomTrack = mpModel->bottomTrack();
-
-    //if (mBottomTrack.isEmpty())
-    //    return;
-
-    //mMaxZ = mBottomTrack.first().z();
-    //mMinZ = mMaxZ;
-
-    //for (const auto& p : mBottomTrack){
-    //    mMaxZ = std::max(mMaxZ, p.z());
-    //    mMinZ = std::min(mMinZ, p.z());
-    //}
-
-    //mBasicSurface = mpModel->basicSurface();
-    //mSmoothedSurface = mpModel->smoothedSurface();
-}
-
-void Scene3D::bottomTrackDataChanged()
-{
-    auto object = mpModel->bottomTrackDisplayedObject();
-
-    mBottomTrackDisplayedObject.setData(object.cdata());
-}
-
-void Scene3D::bottomTrackPropertiesChanged()
-{
-    auto object = mpModel->bottomTrackDisplayedObject();
-
-    // TODO: Скопировать остальные свойства
-
-    mBottomTrackDisplayedObject.setVisible(object.isVisible());
-}
-
-void Scene3D::surfaceDataChanged()
-{
-    auto object = mpModel->surfaceDisplayedObject();
-
-    mSurfaceDisplayedObject.setData(object.cdata());
-    mSurfaceDisplayedObject.setPrimitiveType(object.primitiveType());
-}
-
-void Scene3D::surfacePropertiesChanged()
-{
-    auto object = mpModel->surfaceDisplayedObject();
-
-    mSurfaceDisplayedObject.setVisible(object.isVisible());
-    mSurfaceDisplayedObject.setGridVisible(object.isGridVisible());
-}
-
-void Scene3D::contourDataChanged()
-{
-    auto object = mpModel->contourDisplayedObject();
-
-    mContourDisplayedObject.setPrimitiveType(object.primitiveType());
-    mContourDisplayedObject.setData(object.cdata());
-}
-
-void Scene3D::contourPropertiesChanged()
-{
-    auto object = mpModel->contourDisplayedObject();
-
-    mContourDisplayedObject.setVisible(object.isVisible());
-    mContourDisplayedObject.setColor(object.rgbColor());
-    mContourDisplayedObject.setLineWidth(object.lineWidth());
-    mContourDisplayedObject.setKeyPointsVisible(object.keyPointsVisible());
-    mContourDisplayedObject.setKeyPointsColor(object.keyPointsRgbColor());
-}
-
 void Scene3D::paintScene()
 {
-    if (mBottomTrackDisplayedObject.isVisible())
-        displayBottomTrack();
-
-    if (mSurfaceDisplayedObject.isVisible()){
-        displayBottomSurface();
-    }
-
-    if (mSurfaceDisplayedObject.isGridVisible()){
-        displayBottomSurfaceGrid();
-    }
-
-    if (mContourDisplayedObject.isVisible()){
-        displayContour();
-    }
-
-    if (mContourDisplayedObject.keyPointsVisible()){
-        displayContourKeyPoints();
-    }
-
-    displayTestPoints();
 }
-
-void Scene3D::displayTestPoints() {
-
-    auto pProgram = mpHeightColorShaderProgram.get();
-
-    if (mSurfaceDisplayedObject.isVisible() ||
-        mSurfaceDisplayedObject.isGridVisible()){
-        pProgram = mpStaticColorShaderProgram.get();
-    }
-
-    if (!pProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc    = pProgram->attributeLocation("position");
-    int maxZLoc   = pProgram->uniformLocation("max_z");
-    int minZLoc   = pProgram->uniformLocation("min_z");
-    int matrixLoc = pProgram->uniformLocation("matrix");
-
-    QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
-    int colorLoc = pProgram->uniformLocation("color");
-
-
-    pProgram->setUniformValue(colorLoc,color);
-    pProgram->setUniformValue(maxZLoc, mBottomTrackDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mBottomTrackDisplayedObject.minimumZ());
-    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-    pProgram->enableAttributeArray(posLoc);
-    pProgram->setAttributeArray(posLoc, _testPonts.constData());
-#if !defined(Q_OS_ANDROID)
-    glPointSize(10);
-#endif
-    glDrawArrays(GL_POINTS, 0, _testPonts.size());
-    pProgram->disableAttributeArray(posLoc);
-    pProgram->release();
-#if !defined(Q_OS_ANDROID)
-    glPointSize(1);
-#endif
-
-    pProgram->release();
-}
-
-void Scene3D::displayBottomTrack() {
-
-    auto pProgram = mpHeightColorShaderProgram.get();
-
-    if (mSurfaceDisplayedObject.isVisible() ||
-        mSurfaceDisplayedObject.isGridVisible()){
-        pProgram = mpStaticColorShaderProgram.get();
-    }
-
-    if (!pProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc    = pProgram->attributeLocation("position");
-    int maxZLoc   = pProgram->uniformLocation("max_z");
-    int minZLoc   = pProgram->uniformLocation("min_z");
-    int matrixLoc = pProgram->uniformLocation("matrix");
-
-    QVector4D color(0.8f, 0.2f, 0.7f, 1.0f);
-    int colorLoc = pProgram->uniformLocation("color");
-
-    pProgram->setUniformValue(colorLoc,color);
-    pProgram->setUniformValue(maxZLoc, mBottomTrackDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mBottomTrackDisplayedObject.minimumZ());
-    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-    pProgram->enableAttributeArray(posLoc);
-    pProgram->setAttributeArray(posLoc, mBottomTrackDisplayedObject.cdata().constData());
-    glLineWidth(4.0);
-    glDrawArrays(mBottomTrackDisplayedObject.primitiveType(), 0, mBottomTrackDisplayedObject.cdata().size());
-    pProgram->disableAttributeArray(posLoc);
-    pProgram->release();
-    glLineWidth(1.0);
-
-    pProgram->release();
-}
-
-void Scene3D::displayBottomSurface()
-{
-    auto pProgram = mpHeightColorShaderProgram.get();
-
-    if (!pProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc    = pProgram->attributeLocation("position");
-    int maxZLoc   = pProgram->uniformLocation("max_z");
-    int minZLoc   = pProgram->uniformLocation("min_z");
-    int matrixLoc = pProgram->uniformLocation("matrix");
-
-    pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.minimumZ());
-    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-
-    pProgram->enableAttributeArray(posLoc);
-    pProgram->setAttributeArray(posLoc, mSurfaceDisplayedObject.cdata().constData());
-    glDrawArrays(mSurfaceDisplayedObject.primitiveType(), 0, mSurfaceDisplayedObject.cdata().size());
-    //qDebug() <<"Type --> " << mSurfaceDisplayedObject.primitiveType();
-    pProgram->disableAttributeArray(posLoc);
-    pProgram->release();
-}
-
-void Scene3D::displayBottomSurfaceGrid()
-{
-    auto pProgram = mpHeightColorShaderProgram.get();
-
-    if (mSurfaceDisplayedObject.isVisible()){
-        pProgram = mpStaticColorShaderProgram.get();
-    }
-
-    if (!pProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc    = pProgram->attributeLocation("position");
-    int maxZLoc   = pProgram->uniformLocation("max_z");
-    int minZLoc   = pProgram->uniformLocation("min_z");
-    int matrixLoc = pProgram->uniformLocation("matrix");
-
-    if (mSurfaceDisplayedObject.isGridVisible()){
-        QVector4D color(0.0f, 0.0f, 0.0f, 1.0f);
-        int colorLoc = pProgram->uniformLocation("color");
-
-        pProgram->setUniformValue(colorLoc, color);
-    }
-
-    pProgram->setUniformValue(maxZLoc, mSurfaceDisplayedObject.maximumZ());
-    pProgram->setUniformValue(minZLoc, mSurfaceDisplayedObject.minimumZ());
-    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-
-    pProgram->enableAttributeArray(posLoc);
-    pProgram->setAttributeArray(posLoc, mSurfaceDisplayedObject.cgrid().constData());
-    glLineWidth(1.0);
-    glDrawArrays(GL_LINES, 0, mSurfaceDisplayedObject.cgrid().size());
-    pProgram->disableAttributeArray(posLoc);
-    pProgram->release();
-}
-
-void Scene3D::displayContour()
-{
-    auto pProgram = mpStaticColorShaderProgram.get();
-
-    if (!pProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc = pProgram->attributeLocation("position");
-    int matrixLoc = pProgram->uniformLocation("matrix");
-
-    QVector4D color = mContourDisplayedObject.color();
-
-    int colorLoc = pProgram->uniformLocation("color");
-
-    pProgram->setUniformValue(colorLoc, color);
-    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-    pProgram->enableAttributeArray(posLoc);
-    pProgram->setAttributeArray(posLoc, mContourDisplayedObject.cdata().constData());
-
-    glLineWidth(mContourDisplayedObject.lineWidth());
-    glDrawArrays(mContourDisplayedObject.primitiveType(), 0, mContourDisplayedObject.cdata().size());
-    glLineWidth(1.0f);
-
-    pProgram->disableAttributeArray(posLoc);
-    pProgram->release();
-}
-
-void Scene3D::displayContourKeyPoints()
-{
-    auto pProgram = mpStaticColorShaderProgram.get();
-
-    if (!pProgram->bind()){
-        qCritical() << "Error binding shader program.";
-        return;
-    }
-
-    int posLoc = pProgram->attributeLocation("position");
-    int matrixLoc = pProgram->uniformLocation("matrix");
-
-    QVector4D color = mContourDisplayedObject.keyPointsColor();
-
-    int colorLoc = pProgram->uniformLocation("color");
-
-    pProgram->setUniformValue(colorLoc, color);
-    pProgram->setUniformValue(matrixLoc, mProjection*mView*mModel);
-    pProgram->enableAttributeArray(posLoc);
-    pProgram->setAttributeArray(posLoc, mContourDisplayedObject.cdata().constData());
-#if !defined(Q_OS_ANDROID)
-    glPointSize(mContourDisplayedObject.lineWidth());
-#endif
-    glDrawArrays(GL_POINTS, 0, mContourDisplayedObject.cdata().size());
-#if !defined(Q_OS_ANDROID)
-    glPointSize(1.0);
-#endif
-
-    pProgram->disableAttributeArray(posLoc);
-    pProgram->release();
-}
-
-void FboInSGRenderer::setModel(const ModelPointer pModel)
-{
-    mpModel = pModel;
-}
-
 
 void Scene3D::initialize()
 {
-    initializeOpenGLFunctions();
-
-    glEnable(GL_DEPTH_TEST);;
-    glClearColor(0.1f, 0.1f, 0.2f, 0.0f);
-
-    // ---------
-    bool success = mpStaticColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh");
-
-    if (!success) qCritical() << "Error adding vertex shader from source file.";
-
-    success = mpStaticColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh");
-
-    if (!success) qCritical() << "Error adding fragment shader from source file.";
-
-    success = mpStaticColorShaderProgram->link();
-
-    if (!success) qCritical() << "Error linking shaders in shader program.";
-
-    // --------
-
-    success = mpHeightColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh");
-
-    if (!success) qCritical() << "Error adding vertex shader from source file.";
-
-    success = mpHeightColorShaderProgram->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/heightcolor.fsh");
-
-    if (!success) qCritical() << "Error adding fragment shader from source file.";
-
-    success = mpHeightColorShaderProgram->link();
-
-    if (!success) qCritical() << "Error linking shaders in shader program.";
 }
 
 void Scene3D::render()

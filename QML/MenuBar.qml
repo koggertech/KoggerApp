@@ -11,18 +11,18 @@ Item {
 
     property var lastItem: menuSettings
     property bool isConsoleVisible: consoleEnable.checked
-    property bool is3DVisible: scene3DSettings.is3DVisible
+    property bool is3DVisible: settings3DButton.checked
     property bool is2DVisible: visible2dButton.checked
     property bool is2DHorizontal: appSettings.is2DHorizontal
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
 
     function itemChangeActive(currentItem) {
-        if(currentItem !== null) {
+        if(currentItem) {
             currentItem.active = !(currentItem.active)
         }
 
-        if(lastItem !== null && lastItem !== currentItem) {
+        if(lastItem && lastItem !== currentItem) {
             lastItem.active = false
         }
 
@@ -270,16 +270,14 @@ Item {
             targetPlot: menu.targetPlot
         }
 
-        Settings3DView {
-            id: scene3DSettings
-            Layout.alignment: Qt.AlignTop
-            visible: menu3DSettings.active
-            Layout.maximumHeight: menu.height
-            width: settingsWidth
-            implicitWidth: settingsWidth
-
-            y:0
+        SceneControlMenu {
+            id:                 sceneControlMenu
+            objectName:         "sceneControlMenu"
+            Layout.topMargin:   10
+            anchors.top:        menuBar.top
+            anchors.left:       menuBar.right
+            anchors.leftMargin: 40
+            visible:            menu3DSettings.active
         }
-
     }
 }

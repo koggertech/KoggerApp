@@ -15,16 +15,35 @@ HEADERS += \
     $$PWD/boundarydetector.h \
     $$PWD/bowyerwatsondelaunay.h \
     $$PWD/contour.h\
+    $$PWD/coordinateaxes.h \
+    $$PWD/cube.h \
+    $$PWD/plane.h \
+    $$PWD/planegrid.h \
     $$PWD/point2d.h \
     $$PWD/point3dt.h \
-    $$PWD/sceneparams.h \
+    $$PWD/pointgroup.h \
+    $$PWD/pointobject.h \
+    $$PWD/polygongroup.h \
+    $$PWD/polygonobject.h \
     $$PWD/surface.h \
-    $$PWD/gridgenerator.h
+    $$PWD/gridgenerator.h \
+    $$PWD/surfacegrid.h \
+    $$PWD/vertexeditingdecorator.h
 
 SOURCES += \
     $$PWD/bottomtrack.cpp\
     $$PWD/contour.cpp\
-    $$PWD/surface.cpp
+    $$PWD/coordinateaxes.cpp \
+    $$PWD/cube.cpp \
+    $$PWD/plane.cpp \
+    $$PWD/planegrid.cpp \
+    $$PWD/pointgroup.cpp \
+    $$PWD/pointobject.cpp \
+    $$PWD/polygongroup.cpp \
+    $$PWD/polygonobject.cpp \
+    $$PWD/surface.cpp \
+    $$PWD/surfacegrid.cpp \
+    $$PWD/vertexeditingdecorator.cpp
 
 	
 

@@ -1,7 +1,11 @@
 #pragma once
 
-#include <iostream>
 #include <point2d.h>
+#include <Equals.h>
+
+#ifdef QT_CORE_LIB
+#include <QVector3D>
+#endif
 
 template <typename T>
 class Point3D
@@ -42,6 +46,11 @@ public:
     Point2D <T> toPoint2D() const{
         return Point2D <T>(x(), y(), mIndex);
     }
+
+    bool equal(const Point3D <T>& other) const {
+        return Equals::equal(mX, other.x()) && Equals::equal(mY, other.y());
+    }
+
     //! Equal operator
     bool operator==(const Point3D& other) const {
         return mX == other.x() && mY == other.y() /*&& mZ == other.z()*/;
@@ -64,6 +73,24 @@ public:
         out << "X: " << point.x() << ", Y: " << point.y() << ", Z: " << point.z() << std::endl;
         return out;
     }
+
+#ifdef QT_CORE_LIB
+    QVector3D toQVector3D() const{
+        return {
+            static_cast <float>(mX),
+            static_cast <float>(mY),
+            static_cast <float>(mZ),
+        };
+    };
+
+    static Point3D <T> fromQVector3D(const QVector3D& v){
+        return Point3D <T> (
+                                static_cast <T> (v.x()),
+                                static_cast <T> (v.y()),
+                                static_cast <T> (v.z())
+                                );
+    }
+#endif
 
 protected:
     //! X - value

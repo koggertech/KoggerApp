@@ -41,6 +41,25 @@ public:
         createCircumCircle();
     }
 
+#ifdef QT_CORE_LIB
+
+    Triangle(const QVector3D& a,
+             const QVector3D& b,
+             const QVector3D& c)
+        : mA(Point3D <T>::fromQVector3D(a))
+        , mB(Point3D <T>::fromQVector3D(b))
+        , mC(Point3D <T>::fromQVector3D(c))
+        , mAB(mA, mB)
+        , mBC(mB, mC)
+        , mAC(mA, mC)
+        , mWrong(false)
+    {
+        calcArea();
+        createCircumCircle();
+    }
+
+#endif
+
     //! Returns first vertice of triangle
     Point3D <T> A() const { return mA; }
 
@@ -233,6 +252,25 @@ public:
 
     }
 
+    //! Checks whether the triangle contains some point
+    bool contains2(const Point3D <T>& p)  {
+        T b = vect(mA.x() - p.x(), mA.y() - p.y(), mB.x() - mA.x(), mB.y() - mA.y());
+
+        T q = vect(mB.x() - p.x(), mB.y() - p.y(), mC.x() - mB.x(), mC.y() - mB.y());
+
+        T r = vect(mC.x() - p.x(), mC.y() - p.y(), mA.x() - mC.x(), mA.y() - mC.y());
+
+        return (b <= 0.0 && q <= 0.0 && r <= 0.0) || (b >= 0.0 && q >= 0.0 && r >= 0.0);
+
+        //T a = sqrt(pow(B().x() - A().x(), 2) + pow(B().y() - A().y(), 2));
+        //T b = sqrt(pow(C().x() - B().x(), 2) + pow(C().y() - B().y(), 2));
+        //T c = sqrt(pow(A().x() - C().x(), 2) + pow(A().y() - C().y(), 2));
+
+        //T hp = (a+b+c)/static_cast <T> (2.0f);
+        //T area = sqrt(hp * (hp - a) * (hp - b) * (hp - c));
+
+    }
+
     //! Equal operator
     bool operator==(const Triangle& other) const {
         return mA == other.A() && mB == other.B() && mC == other.C();
@@ -242,6 +280,71 @@ public:
     bool operator!=(const Triangle& other) const {
         return mA != other.A() || mB != other.B() || mC != other.C();
     }
+
+#ifdef QT_CORE_LIB
+
+    bool intersectsWithLine(const QVector3D& origin,
+                            const QVector3D& direction,
+                            QVector3D& intersectionPoint,
+                            bool dirNormalized = false) const
+    {
+        auto dir = direction;
+
+        if (!dirNormalized)
+            dir.normalize();
+
+        auto norm = normal();
+
+        auto w = mA.toQVector3D() - origin;
+        auto k = QVector3D::dotProduct(w, norm) /
+                 QVector3D::dotProduct(direction, norm);
+
+        QVector3D p = origin + k * dir;
+
+        if (containsPoint(p)){
+            intersectionPoint = p;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool containsPoint(const QVector3D& point) const{
+        QVector3D ap = point - mA.toQVector3D();
+        QVector3D bp = point - mB.toQVector3D();
+        QVector3D cp = point - mC.toQVector3D();
+        QVector3D ab = mB.toQVector3D() - mA.toQVector3D();
+        QVector3D bc = mC.toQVector3D() - mB.toQVector3D();
+        QVector3D ca = mA.toQVector3D() - mC.toQVector3D();
+
+        auto norm = normal();
+
+        float u1 = QVector3D::dotProduct(QVector3D::crossProduct(ab, ap), norm);
+        float u2 = QVector3D::dotProduct(QVector3D::crossProduct(bc, bp), norm);
+        float u3 = QVector3D::dotProduct(QVector3D::crossProduct(ca, cp), norm);
+
+        if ((u1 > 0.0f && u2 > 0.0f && u3 > 0.0f) || (u1 < 0.0f && u2 < 0.0f && u3 < 0.0f)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    T distanceToPoint(const QVector3D& point) const{
+        return point.distanceToPlane(mA.toQVector3D(),
+                                     mB.toQVector3D(),
+                                     mC.toQVector3D());
+    }
+
+    QVector3D normal() const{
+        return QVector3D::normal(
+                                 mA.toQVector3D(),
+                                 mB.toQVector3D(),
+                                 mC.toQVector3D()
+                                 );
+    }
+
+#endif
 
 private:
     //! First vertice of triangle

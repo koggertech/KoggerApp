@@ -10,6 +10,7 @@
 #include <Themes.h>
 #include <QThread>
 #include "3Plot.h"
+#include <sceneobject.h>
 #include "Plot2D.h"
 
 Core core;
@@ -38,6 +39,10 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
+    engine.addImportPath("qrc:/");
+
+
+    SceneObject::qmlDeclare();
 
 //    qInstallMessageHandler(messageHandler);
 
@@ -46,7 +51,6 @@ int main(int argc, char *argv[]) {
     qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
 
     engine.rootContext()->setContextProperty("dataset", core.dataset());
-
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
 
@@ -66,10 +70,6 @@ int main(int argc, char *argv[]) {
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
-
-
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &core, &Core::UILoad, Qt::QueuedConnection);
 
     engine.load(url);
 

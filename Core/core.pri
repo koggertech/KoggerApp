@@ -2,13 +2,10 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
-    $$PWD/abstractdelaunayprocessor.h \
-    $$PWD/displayedobject.h \
-    $$PWD/vertexobject.h \
-    $$PWD/constants.h \
-    $$PWD/abstractprocessingcase.h
-
+    $$PWD/QmlObjectNames.h \\
+    $$PWD/drawutils.h \
+    $$PWD/sceneobject.h \
 
 SOURCES += \
-    $$PWD/displayedobject.cpp \
-    $$PWD/vertexobject.cpp
+    $$PWD/drawutils.cpp \
+    $$PWD/sceneobject.cpp
