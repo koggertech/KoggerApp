@@ -45,8 +45,10 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
     if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
         auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
-        if(!hits.isEmpty())
+        if(!hits.isEmpty()){
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
+            Q_EMIT vertexHovered(hits.first().indices().first);
+        }
     }
 
     if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode)
@@ -71,6 +73,11 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     Q_UNUSED(y)
 
     if(!m_view) return;
+
+    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
+        if(!RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.isEmpty())
+            Q_EMIT vertexPressed(RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.first());
+    }
 }
 
 void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)

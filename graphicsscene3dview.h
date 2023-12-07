@@ -171,6 +171,7 @@ private:
     std::shared_ptr <CoordinateAxes> m_coordAxes;
     std::shared_ptr <PlaneGrid> m_planeGrid;
     std::shared_ptr <SceneObject> m_boatTrack;
+    std::shared_ptr <SceneObject> m_vertexSynchroCursour;
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
