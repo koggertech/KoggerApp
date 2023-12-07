@@ -156,6 +156,11 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
     }
 }
 
+QVector<QVector3D> Dataset::boatTrack() const
+{
+    return _boatTrack;
+}
+
 void Dataset::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
 {
     mpBottomTrackProvider = bottomTrackProvider;
@@ -671,7 +676,8 @@ void Dataset::spatialProcessing() {
 
 void Dataset::clearTrack() {
     _lastTrackEpoch = 0;
-    _bottomTrack.clear();
+    _bottomTracks.clear();
+    _boatTrack.clear();
     emit dataUpdate();
 }
 
@@ -680,10 +686,14 @@ void Dataset::updateTrack(bool update_all) {
     int from_index = 0;
 
     if(update_all) {
-        _bottomTrack.clear();
+        _bottomTracks.clear();
+        _boatTrack.clear();
     } else {
         from_index = _lastTrackEpoch;
     }
+
+    QMap<int, DatasetChannel> ch_list = channelsList();
+
 
     for(int i = from_index; i < to_size; i+=1) {
         Epoch* epoch = fromIndex(i);
@@ -696,16 +706,24 @@ void Dataset::updateTrack(bool update_all) {
             pos.LLA2NED(&_llaRef);
         }
 
-        float distance = epoch->distProccesing(CHANNEL_FIRST);
-
-
-        if(pos.ned.isCoordinatesValid() && isfinite(distance)) {
-            _bottomTrack.append(QVector3D(pos.ned.n,pos.ned.e, -distance));
+        if(pos.ned.isCoordinatesValid()) {
+            for (const auto& channel : ch_list) {
+                float distance = -1.0 * epoch->distProccesing(channel.channel);
+                if(!isfinite(distance)) {
+                    distance = NAN;
+                }
+                _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
+            }
+            _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }
     }
 
-    if(mpBottomTrackProvider)
-        mpBottomTrackProvider->setBottomTrack(_bottomTrack);
+    if(mpBottomTrackProvider) {
+        //!!! For example, the first bottom-track only
+        mpBottomTrackProvider->setBottomTrack(_bottomTracks.first());
+    }
+
+    //!!! _boatTrack provider
 
     _lastTrackEpoch = to_size;
 }

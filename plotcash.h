@@ -397,13 +397,35 @@ public:
         return full_range;
     }
 
-    float getMaxRnage(int16_t channel = -1) {
+    float getMaxRnage(int32_t channel = CHANNEL_FIRST, int32_t channel2 = CHANNEL_NONE) {
         float range = NAN;
 
+        float range1 = NAN;
+        float range2 = NAN;
         if(_charts.size() > 0 && channel == CHANNEL_FIRST) {
-            range = _charts.first().range();
+            range1 = _charts.first().range();
         } else if(_charts.contains(channel)) {
-            range = _charts[channel].range();
+            range1 = _charts[channel].range();
+        }
+
+        if(_charts.size() > 0 && channel2 == CHANNEL_FIRST) {
+            range2 = _charts.first().range();
+        } else if(_charts.contains(channel2)) {
+            range2 = _charts[channel2].range();
+        }
+
+        if(isfinite(range1)) {
+            range = range1;
+        }
+
+        if(isfinite(range2)) {
+            if(isfinite(range)) {
+                if(range < range2) {
+                    range = range2;
+                }
+            } else {
+                range = range2;
+            }
         }
 
         if(_rangeFinders.size() > 0) {
@@ -694,6 +716,8 @@ public:
         return _channelsSetup;
     }
 
+    QVector<QVector3D> boatTrack() const;
+
     void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
 
 public slots:
@@ -732,16 +756,18 @@ public slots:
     void set3DRender(FboInSGRenderer* render) {
         _render3D = render;
     }
-    void updateRender3D() {
-        if(_render3D != NULL) {
-            _render3D->updateBottomTrack(_bottomTrack);
-        }
-    }
+//    void updateRender3D() {
+        // deprecated
+//        if(_render3D != NULL) {
+//            _render3D->updateBottomTrack(_bottomTrack);
+//        }
+//    }
 
     void clearTrack();
     void updateTrack(bool update_all = false);
 
     QStringList channelsNameList();
+
 
 private:
     std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
@@ -764,10 +790,10 @@ protected:
 
     LLARef _llaRef;
 
-//    QVector<uint32_t> _gnssTrackIndex;
-
     int _lastTrackEpoch = 0;
-    QVector<QVector3D> _bottomTrack;
+
+    QMap<int, QVector<QVector3D>> _bottomTracks;
+
     QVector<QVector3D> _boatTrack;
 
 
