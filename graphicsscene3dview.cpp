@@ -356,14 +356,6 @@ void GraphicsScene3dView::updateBounds()
         .merge(m_pointGroup->bounds())
         .merge(m_bottomTrack->bounds());
 
-    //qDebug() << "Boat track bounds is: " << "width=" << m_boatTrack->bounds().width() << ", length=" << m_boatTrack->bounds().length() << ", height" << m_boatTrack->bounds().height();
-    //qDebug() << "Point group bounds is: " << "width=" << m_pointGroup->bounds().width() << ", length=" << m_pointGroup->bounds().length() << ", height" << m_pointGroup->bounds().height();
-    //qDebug() << "Polygon group bounds is: " << "width=" << m_polygonGroup->bounds().width() << ", length=" << m_polygonGroup->bounds().length() << ", height" << m_polygonGroup->bounds().height();
-    //qDebug() << "surface bounds is: " << "width=" << m_surface->bounds().width() << ", length=" << m_surface->bounds().length() << ", height" << m_surface->bounds().height();
-    //qDebug() << "bottom track bounds is: " << "width=" << m_boatTrack->bounds().width() << ", length=" << m_boatTrack->bounds().length() << ", height" << m_boatTrack->bounds().height();
-    //
-    //qDebug() << "width=" << m_bounds.width() << ", length=" << m_bounds.length() << ", height" << m_bounds.height();
-
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
