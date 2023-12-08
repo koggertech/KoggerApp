@@ -35,6 +35,10 @@ public Q_SLOTS:
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
 
+Q_SIGNALS:
+    void vertexHovered(int index);
+    void vertexPressed(int index);
+
 protected:
     friend class GraphicsScene3dView;
 
