@@ -389,7 +389,7 @@ GraphicsScene3dView::InFboRenderer::~InFboRenderer()
 void GraphicsScene3dView::InFboRenderer::render()
 {
     m_renderer->render();
-    update();
+//    update();
 }
 
 void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * fbo)

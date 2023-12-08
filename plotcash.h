@@ -753,9 +753,9 @@ public slots:
     void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
     void spatialProcessing();
 
-    void set3DRender(FboInSGRenderer* render) {
-        _render3D = render;
-    }
+//    void set3DRender(FboInSGRenderer* render) {
+//        _render3D = render;
+//    }
 //    void updateRender3D() {
         // deprecated
 //        if(_render3D != NULL) {
@@ -797,7 +797,7 @@ protected:
     QVector<QVector3D> _boatTrack;
 
 
-    FboInSGRenderer* _render3D;
+//    FboInSGRenderer* _render3D;
 
     enum {
         AutoRangeNone,
