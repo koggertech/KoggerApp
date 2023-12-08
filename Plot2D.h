@@ -20,12 +20,21 @@ typedef enum {
     AutoRangeMaxOnScreen
 } AutoRangeMode;
 
+typedef enum {
+    MouseToolNone = 0,
+    MouseToolNothing = 1,
+    MouseToolDistanceMin,
+    MouseToolDistance,
+    MouseToolDistanceMax,
+    MouseToolDistanceErase,
+} MouseTool;
+
 typedef struct DatasetCursor {
     int channel1 = CHANNEL_FIRST;
     int channel2 = CHANNEL_NONE;
 
     bool isChannelDoubled() {
-        return (CHANNEL_NONE == channel1 && CHANNEL_NONE == channel2);
+        return (CHANNEL_NONE != channel1 && CHANNEL_NONE != channel2);
     }
 
     std::vector<int> indexes;
@@ -41,6 +50,7 @@ typedef struct DatasetCursor {
     int last_dataset_size = 0;
 
     int mouseX = -1, mouseY = -1;
+    MouseTool _tool = MouseToolNothing;
 
     struct {
         float from = NAN;
@@ -87,18 +97,13 @@ typedef struct DatasetCursor {
         return (cursor.channel1 == channel1 && cursor.channel2 == channel2);
     }
 
-    void setMouse(int x, int y) { mouseX = x; mouseY = y; }
+    void setMouse(int x, int y) { mouseX = x; mouseY = y;  }
+    void setTool(MouseTool tool) { _tool = tool; }
+    MouseTool tool() { return _tool; }
 
 } DatasetCursor;
 
-typedef enum {
-    MouseToolNone = 0,
-    MouseToolNothing = 1,
-    MouseToolDistanceMin,
-    MouseToolDistance,
-    MouseToolDistanceMax,
-    MouseToolDistanceErase,
-} MouseTool;
+
 
 typedef struct  PlotColor{
     uint8_t r = 0;
@@ -648,13 +653,13 @@ public:
         p->setPen(pen);
         p->setFont(QFont("Asap", 14, QFont::Normal));
 
-
         const int image_height = canvas.height();
         const int image_width = canvas.width();
 
-        p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
-        p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
-
+        if(cursor._tool == MouseToolNothing) {
+            p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
+            p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
+        }
 
 
         const float canvas_height = canvas.height();
@@ -732,11 +737,11 @@ protected:
 
     DatasetCursor _cursor;
 
-    struct {
-        int x = -1;
-        int y = -1;
-        MouseTool tool = MouseToolNone;
-    } _mouse;
+//    struct {
+//        int x = -1;
+//        int y = -1;
+
+//    } _mouse;
 
     bool _isHorizontal = true;
 

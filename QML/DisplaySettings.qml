@@ -314,23 +314,18 @@ GridLayout {
                 visible: instruments > 1
                 CCheck {
                     id: gnssVisible
-                    checked: true
+                    checked: false
                     Layout.fillWidth: true
                     text: "GNSS data"
 
                     onCheckedChanged: targetPlot.plotGNSSVisible(checked, 1)
                     Component.onCompleted: targetPlot.plotGNSSVisible(checked, 1)
+
+                    Settings {
+                        property alias gnssVisible: gnssVisible.checked
+                    }
                 }
-
-//                CCheck {
-//                    id: gnssHSpeedVisible
-//                    checked: true
-//                    text: "Hor. Speed"
-//                    //                        onCheckedChanged: targetPlot.setDopplerInstrumentVis(checked)
-//                    //                        Component.onCompleted: targetPlot.setDopplerInstrumentVis(checked)
-//                }
             }
-
 
 
             RowLayout {

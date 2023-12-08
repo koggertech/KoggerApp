@@ -164,6 +164,8 @@ void Plot2D::setDistance(float from, float to) {
 }
 
 void Plot2D::zoomDistance(float ratio) {
+    _cursor.distance.mode = AutoRangeNone;
+
     int  delta = ratio;
     if(delta == 0) return;
 
@@ -193,21 +195,20 @@ void Plot2D::zoomDistance(float ratio) {
         new_range = 500;
     }
 
-    if(_cursor.channel2 == CHANNEL_NONE) {
-        if(from < to) {
-            _cursor.distance.to = ceil(_cursor.distance.from + new_range);
-        } else if(from > to) {
-            _cursor.distance.from = ceil(_cursor.distance.to + new_range);
-        }
-    } else if(_cursor.channel2 != CHANNEL_NONE) {
+
+    if(_cursor.isChannelDoubled()) {
         _cursor.distance.from = -ceil( new_range/2);
         _cursor.distance.to = ceil( new_range/2);
+    } else {
+       _cursor.distance.to = ceil(_cursor.distance.from + new_range);
     }
 
     plotUpdate();
 }
 
 void Plot2D::scrollDistance(float ratio)    {
+    _cursor.distance.mode = AutoRangeNone;
+
     float from = _cursor.distance.from;
     float to = _cursor.distance.to;
     float absrange = abs(to - from);
@@ -247,7 +248,12 @@ void Plot2D::setMousePosition(int x, int y) {
     const float distance_range = _cursor.distance.to - _cursor.distance.from;
     const float image_distance_ratio = distance_range/(float)image_height;
 
+    struct {
+        int x = -1, y = -1;
+    } _mouse;
 
+    _mouse.x = _cursor.mouseX;
+    _mouse.y = _cursor.mouseY;
     _cursor.setMouse(x, y);
 
 
@@ -290,10 +296,10 @@ void Plot2D::setMousePosition(int x, int y) {
         y_scale = 0;
     }
 
-    _mouse.x = x;
-    _mouse.y = y;
+//    _mouse.x = x;
+//    _mouse.y = y;
 
-    if(_mouse.tool > MouseToolNothing) {
+    if(_cursor.tool() > MouseToolNothing) {
         for(int x_ind = 0; x_ind < x_length; x_ind++) {
             int epoch_index = _cursor.getIndex(x_start + x_ind);
 
@@ -307,23 +313,23 @@ void Plot2D::setMousePosition(int x, int y) {
                 float image_y_pos = ((float)y_start + (float)x_ind*y_scale);
                 float dist = abs(image_y_pos*image_distance_ratio + distance_from);
 
-                if(_mouse.tool == MouseToolDistanceMin) {
+                if(_cursor.tool() == MouseToolDistanceMin) {
                     epoch->setMinDistProc(channel1, dist);
                     epoch->setMinDistProc(channel2, dist);
-                } else if(_mouse.tool == MouseToolDistance) {
+                } else if(_cursor.tool() == MouseToolDistance) {
                     epoch->setDistProcessing(channel1, dist);
                     epoch->setDistProcessing(channel2, dist);
-                } else if(_mouse.tool == MouseToolDistanceMax) {
+                } else if(_cursor.tool()== MouseToolDistanceMax) {
                     epoch->setMaxDistProc(channel1, dist);
                     epoch->setMaxDistProc(channel2, dist);
-                } else if(_mouse.tool == MouseToolDistanceErase) {
+                } else if(_cursor.tool() == MouseToolDistanceErase) {
                     epoch->clearDistProcessing(channel1);
                     epoch->clearDistProcessing(channel2);
                 }
             }
         }
 
-        if(_mouse.tool == MouseToolDistanceMin || _mouse.tool == MouseToolDistanceMax) {
+        if(_cursor.tool() == MouseToolDistanceMin || _cursor.tool() == MouseToolDistanceMax) {
             _bottomTrackParam.indexFrom = _cursor.getIndex(x_start);
             _bottomTrackParam.indexTo = _cursor.getIndex(x_start + x_length);
             _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
@@ -337,7 +343,7 @@ void Plot2D::setMousePosition(int x, int y) {
 }
 
 void Plot2D::setMouseTool(MouseTool tool) {
-    _mouse.tool = tool;
+    _cursor.setTool(tool);
 }
 
 void Plot2D::resetCash() {
@@ -424,9 +430,12 @@ void Plot2D::reRangeDistance() {
         }
     }
 
-
     if(isfinite(max_range)) {
-        _cursor.distance.from = 0;
+        if(_cursor.isChannelDoubled()) {
+            _cursor.distance.from = -ceil(max_range);;
+        } else {
+            _cursor.distance.from = 0;
+        }
         _cursor.distance.to = ceil(max_range);
     }
 }
