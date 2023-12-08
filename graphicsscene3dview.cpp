@@ -91,6 +91,11 @@ bool GraphicsScene3dView::sceneBoundingBoxVisible() const
     return m_isSceneBoundingBoxVisible;
 }
 
+Dataset *GraphicsScene3dView::dataset() const
+{
+    return m_dataset;
+}
+
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
@@ -338,13 +343,8 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
         return;
 
     QObject::connect(m_dataset, &Dataset::dataUpdate, [this](){
-        auto _boatTrack = m_dataset->boatTrack();
-        QVector<QVector3D> boatTrack;
-
-        for(int i = 0; i < _boatTrack.size()-1; i++)
-            boatTrack.append({_boatTrack.at(i), _boatTrack.at(i+1)});
-
         m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+        m_bottomTrack->setData(m_dataset->bottomTrack(), GL_LINE_STRIP);
     });
 }
 
@@ -389,7 +389,6 @@ GraphicsScene3dView::InFboRenderer::~InFboRenderer()
 void GraphicsScene3dView::InFboRenderer::render()
 {
     m_renderer->render();
-    update();
 }
 
 void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * fbo)

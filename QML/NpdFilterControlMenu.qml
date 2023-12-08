@@ -34,10 +34,6 @@ Item {
             from:       1
             to:         10000
             value:      1
-            onValueChanged: {
-                if(!signalsBlocked)
-                    root.controller.onDistanceSpinBoxValueChanged(value)
-            }
         }
 
     }

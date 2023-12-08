@@ -7,7 +7,6 @@
 
 class BottomTrack;
 class GraphicsScene3dView;
-class BottomTrackProvider;
 class BottomTrackControlMenuController : public QmlComponentController
 {
     Q_OBJECT
@@ -23,8 +22,6 @@ public:
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
-    void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> provider);
-
 protected:
     virtual void findComponent() override;
 
@@ -33,7 +30,6 @@ private:
 
 private:
     GraphicsScene3dView* m_graphicsSceneView = nullptr;
-    std::shared_ptr <BottomTrackProvider> m_bottomTrackProvider;
 };
 
 #endif // BOTTOMTRACKCONTROLMENUCONTROLLER_H

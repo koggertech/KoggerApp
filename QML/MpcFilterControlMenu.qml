@@ -34,10 +34,6 @@ Item {
             from:       1
             to:         1000000
             value:      100
-            onValueChanged: {
-                if(!signalsBlocked)
-                   root.controller.onPointsCountSpinBoxValueChanged(value)
-            }
         }
     }
 }

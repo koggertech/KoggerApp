@@ -20,19 +20,9 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
     connect(&_devs, &Device::dopplerBeamComlete, _dataset, &Dataset::addDopplerBeam);
     connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
-
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
-    createModels();
     createControllers();
-
-}
-
-void Core::createModels()
-{
-    mpBottomTrackProvider   = std::make_shared <BottomTrackProvider>();
-
-
 }
 
 void Core::createControllers()
@@ -766,8 +756,6 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
     Q_UNUSED(url)
 
-    _dataset->setBottomTrackProvider(mpBottomTrackProvider);
-
     m_scene3dView = object->findChild<GraphicsScene3dView*> ();
 
     _plots2d = object->findChildren<qPlot2D*>();
@@ -780,27 +768,24 @@ void Core::UILoad(QObject *object, const QUrl &url) {
         }
     }
 
-    if(m_scene3dView){
-        QObject::connect(mpBottomTrackProvider.get(), &BottomTrackProvider::bottomTrackChanged,
-            [this](QVector<QVector3D>& data){
-                m_scene3dView->bottomTrack()->setData(data, GL_LINE_STRIP);
-            });
-    }
+    //if(m_scene3dView){
+    //    QObject::connect(mpBottomTrackProvider.get(), &BottomTrackProvider::bottomTrackChanged,
+    //        [this](QVector<QVector3D>& data){
+    //            m_scene3dView->bottomTrack()->setData(data, GL_LINE_STRIP);
+    //        });
+    //}
 
     m_bottomTrackControlMenuController->setQmlEngine(object);
     m_bottomTrackControlMenuController->setGraphicsSceneView(m_scene3dView);
-    m_bottomTrackControlMenuController->setBottomTrackProvider(mpBottomTrackProvider);
 
     m_surfaceControlMenuController->setQmlEngine(object);
     m_surfaceControlMenuController->setGraphicsSceneView(m_scene3dView);
 
     m_npdFilterControlMenuController->setQmlEngine(object);
     m_npdFilterControlMenuController->setGraphicsSceneView(m_scene3dView);
-    m_npdFilterControlMenuController->setBottomTrackProvider(mpBottomTrackProvider);
 
     m_mpcFilterControlMenuController->setQmlEngine(object);
     m_mpcFilterControlMenuController->setGraphicsSceneView(m_scene3dView);
-    m_mpcFilterControlMenuController->setBottomTrackProvider(mpBottomTrackProvider);
 
     m_pointGroupControlMenuController->setQmlEngine(object);
     m_pointGroupControlMenuController->setGraphicsSceneView(m_scene3dView);
