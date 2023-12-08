@@ -14,6 +14,7 @@
 #include <QQuickFramebufferObject>
 #include <QtMath>
 
+class Dataset;
 class GraphicsScene3dRenderer;
 class GraphicsScene3dView : public QQuickFramebufferObject
 {
@@ -149,6 +150,7 @@ public Q_SLOTS:
     void setBottomTrackVertexComboSelectionMode();
     void setPolygonCreationMode();
     void setPolygonEditingMode();
+    void setDataset(Dataset* dataset);
 
 private:
     void updateBounds();
@@ -168,7 +170,8 @@ private:
     std::shared_ptr <PointGroup> m_pointGroup;
     std::shared_ptr <CoordinateAxes> m_coordAxes;
     std::shared_ptr <PlaneGrid> m_planeGrid;
-    std::shared_ptr <SceneObject> m_sceneBoundsPlane;
+    std::shared_ptr <SceneObject> m_boatTrack;
+    std::shared_ptr <SceneObject> m_vertexSynchroCursour;
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
@@ -177,6 +180,7 @@ private:
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
+    Dataset* m_dataset = nullptr;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

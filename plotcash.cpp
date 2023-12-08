@@ -156,6 +156,11 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
     }
 }
 
+QVector<QVector3D> Dataset::boatTrack() const
+{
+    return _boatTrack;
+}
+
 void Dataset::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
 {
     mpBottomTrackProvider = bottomTrackProvider;
@@ -707,7 +712,9 @@ void Dataset::updateTrack(bool update_all) {
                 if(!isfinite(distance)) {
                     distance = NAN;
                 }
-                _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
+                // Checking for NAN
+                if(distance == distance)
+                    _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
             }
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }

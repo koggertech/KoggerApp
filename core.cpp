@@ -772,6 +772,8 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
     _plots2d = object->findChildren<qPlot2D*>();
 
+    m_scene3dView->setDataset(_dataset);
+
     for(int i = 0; i < _plots2d.size(); i++) {
         if(_plots2d.at(i) != NULL) {
             _plots2d.at(i)->setPlot(_dataset);

@@ -716,6 +716,8 @@ public:
         return _channelsSetup;
     }
 
+    QVector<QVector3D> boatTrack() const;
+
     void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
 
 public slots:

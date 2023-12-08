@@ -1,6 +1,7 @@
 #include "graphicsscene3dview.h"
 #include <graphicsscene3drenderer.h>
 #include <surface.h>
+#include <plotcash.h>
 
 #include <memory.h>
 #include <math.h>
@@ -19,10 +20,13 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_pointGroup(std::make_shared<PointGroup>())
 , m_coordAxes(std::make_shared<CoordinateAxes>())
 , m_planeGrid(std::make_shared<PlaneGrid>())
-, m_sceneBoundsPlane(std::make_shared<SceneObject>())
+, m_boatTrack(std::make_shared<SceneObject>())
 {
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
+
+    m_boatTrack->setColor({30,153,67});
+    m_boatTrack->setWidth(3.0f);
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
@@ -36,7 +40,7 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(m_planeGrid.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     QObject::connect(m_surface.get(), &Surface::visibilityChanged, m_bottomTrack.get(), &BottomTrack::setDisplayingWithSurface);
 
@@ -325,12 +329,32 @@ void GraphicsScene3dView::setPolygonEditingMode()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setDataset(Dataset *dataset)
+{
+    if(m_dataset != dataset)
+        m_dataset = dataset;
+
+    if(!m_dataset)
+        return;
+
+    QObject::connect(m_dataset, &Dataset::dataUpdate, [this](){
+        auto _boatTrack = m_dataset->boatTrack();
+        QVector<QVector3D> boatTrack;
+
+        for(int i = 0; i < _boatTrack.size()-1; i++)
+            boatTrack.append({_boatTrack.at(i), _boatTrack.at(i+1)});
+
+        m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+    });
+}
+
 void GraphicsScene3dView::updateBounds()
 {
-    m_bounds = m_bottomTrack->bounds()
+    m_bounds = m_boatTrack->bounds()
         .merge(m_surface->bounds())
         .merge(m_polygonGroup->bounds())
-        .merge(m_pointGroup->bounds());
+        .merge(m_pointGroup->bounds())
+        .merge(m_bottomTrack->bounds());
 
     updatePlaneGrid();
 
@@ -382,6 +406,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
+    m_renderer->m_boatTrackRenderImpl       = *(view->m_boatTrack->m_renderImpl);
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
     m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;
