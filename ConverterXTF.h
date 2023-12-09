@@ -21,15 +21,24 @@ public:
         fileheader.RecordingProgramName[0] = 's';
         fileheader.RecordingProgramVersion[0] = '1';
 
-        fileheader.NumberOfSonarChannels = 2;
+        fileheader.NumberOfSonarChannels = 1;
+        if(channel2 != CHANNEL_NONE) {
+            fileheader.NumberOfSonarChannels = 2;
+        }
 
         fileheader.ChanInfo[0].SubChannelNumber = 0;
         fileheader.ChanInfo[0].TypeOfChannel = 1;
         fileheader.ChanInfo[0].BytesPerSample = 1;
 
-        fileheader.ChanInfo[1].SubChannelNumber = 1;
-        fileheader.ChanInfo[1].TypeOfChannel = 2;
-        fileheader.ChanInfo[1].BytesPerSample = fileheader.ChanInfo[0].BytesPerSample;
+        if(channel2 != CHANNEL_NONE) {
+            fileheader.ChanInfo[1].SubChannelNumber = 1;
+            fileheader.ChanInfo[1].TypeOfChannel = 2;
+            fileheader.ChanInfo[1].BytesPerSample = fileheader.ChanInfo[0].BytesPerSample;
+        } else {
+            fileheader.ChanInfo[1].SubChannelNumber = 0;
+            fileheader.ChanInfo[1].TypeOfChannel = 0;
+            fileheader.ChanInfo[1].BytesPerSample = 0;
+        }
 
 
         xtfdata.append((char*)&fileheader, sizeof (XTFFILEHEADER));
@@ -61,6 +70,12 @@ public:
                     pos.lla.longitude = 0;
                 }
 
+                float yaw = epoch->yaw();
+                if(isfinite(yaw)) {
+                    pingheader.SensorHeading = yaw;
+                    pingheader.Yaw = yaw;
+                }
+
                 if(pos.time.sec > 0) {
                     fix_timetag_ms = (pos.time.sec*1e9 + pos.time.nanoSec)/1e6;
                 }
@@ -68,30 +83,33 @@ public:
                 pingheader.ShipYcoordinate = pos.lla.latitude;
                 pingheader.ShipXcoordinate = pos.lla.longitude;
 
-                tm date_time = pos.time.getDateTime();
+                if(pos.time.sec > 0) {
+                    tm date_time = pos.time.getDateTime();
 
-                pingheader.Year = date_time.tm_year+1900;
-                pingheader.Month = date_time.tm_mon+1;
-                pingheader.JulianDay = date_time.tm_yday;
-                pingheader.Day = date_time.tm_mday;
-                pingheader.Hour = date_time.tm_hour;
-                pingheader.Minute = date_time.tm_min;
-                pingheader.Second = date_time.tm_sec;
-                pingheader.HSeconds = pos.time.get_ms_frac()/10;
+                    pingheader.Year = date_time.tm_year+1900;
+                    pingheader.Month = date_time.tm_mon+1;
+                    pingheader.JulianDay = date_time.tm_yday;
+                    pingheader.Day = date_time.tm_mday;
+                    pingheader.Hour = date_time.tm_hour;
+                    pingheader.Minute = date_time.tm_min;
+                    pingheader.Second = date_time.tm_sec;
+                    pingheader.HSeconds = pos.time.get_ms_frac()/10;
 
-                if(pos.lla.isCoordinatesValid()) {
-                    fix_h = pingheader.Hour;
-                    fix_m = pingheader.Minute;
-                    fix_s = pingheader.Second;
-                    fix_hs = pingheader.HSeconds;
-                    pingheader.FixTimeHour = fix_h;
-                    pingheader.FixTimeMinute = fix_m;
-                    pingheader.FixTimeSecond = fix_s;
-                    pingheader.FixTimeHsecond = fix_hs;
+                    if(pos.lla.isCoordinatesValid()) {
+                        fix_h = pingheader.Hour;
+                        fix_m = pingheader.Minute;
+                        fix_s = pingheader.Second;
+                        fix_hs = pingheader.HSeconds;
+                        pingheader.FixTimeHour = fix_h;
+                        pingheader.FixTimeMinute = fix_m;
+                        pingheader.FixTimeSecond = fix_s;
+                        pingheader.FixTimeHsecond = fix_hs;
+                    }
+
+                    pingheader.AttitudeTimeTag = fix_timetag_ms;
+                    pingheader.NavFixMilliseconds = fix_timetag_ms;
                 }
 
-                pingheader.AttitudeTimeTag = fix_timetag_ms;
-                pingheader.NavFixMilliseconds = fix_timetag_ms;
 
                 pingheader.SensorYcoordinate = pingheader.ShipYcoordinate;
                 pingheader.SensorXcoordinate = pingheader.ShipXcoordinate;
@@ -116,7 +134,7 @@ public:
                     }
                 }
 
-                if(chart2 != NULL) {
+                if(chart2 != NULL && channel2 != CHANNEL_NONE) {
                     QVector<uint8_t> raw = chart2->amplitude;
                     int constr_size = raw.size();
                     raw2.resize(constr_size);
@@ -147,18 +165,22 @@ public:
                     pingch2.SecondsPerPing = 0.1;
                 }
 
-                if(pingheader.NumChansToFollow == 2) {
-                    if(raw1.size() == raw2.size()) {
-                        xtfdata.append((char*)&pingheader, sizeof (pingheader));
+                if(pingheader.NumChansToFollow > 0) {
+                    //                    if(raw1.size() == raw2.size()) {
+                    xtfdata.append((char*)&pingheader, sizeof (pingheader));
 
+                    if(raw1.size() > 0) {
                         xtfdata.append((char*)&pingch1, sizeof (pingch1));
                         xtfdata.append((char*)raw1.constData(), raw1.size());
+                    }
 
+                    if(raw2.size() > 0) {
                         xtfdata.append((char*)&pingch2, sizeof (pingch2));
                         xtfdata.append((char*)raw2.constData(), raw2.size());
-
-                        ping_numb++;
                     }
+
+                    ping_numb++;
+                    //                    }
                 }
 
             }

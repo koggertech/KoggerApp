@@ -34,9 +34,16 @@
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
 
-typedef struct {
+typedef struct LLA {
     double latitude = NAN, longitude = NAN;
     double altitude = NAN;
+    LLA() {};
+    LLA(double lat, double lon, double alt= NAN) {
+        latitude = lat;
+        longitude = lon;
+        altitude = alt;
+    }
+
     bool isValid() {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
     }
