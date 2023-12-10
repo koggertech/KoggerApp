@@ -334,9 +334,6 @@ void Plot2D::setMousePosition(int x, int y) {
             _bottomTrackParam.indexTo = _cursor.getIndex(x_start + x_length);
             _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
         }
-
-
-
     }
 
     plotUpdate();

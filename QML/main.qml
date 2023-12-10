@@ -68,6 +68,7 @@ Window  {
             SplitView.fillWidth:  true
             spacing:              0
 
+
             GraphicsScene3dView {
                 id:                renderer
                 objectName: "GraphicsScene3dView"
@@ -75,6 +76,7 @@ Window  {
                 Layout.fillHeight: true
                 Layout.fillWidth:  true
                 focus:             true
+                visible: menuBar.is3DVisible
 
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
@@ -322,7 +324,7 @@ Window  {
     }
 
     Scene3DToolbar{
-        //visible: menuBar.is3DVisible
+        visible: menuBar.is3DVisible
         id:                       scene3DToolbar
         anchors.top:              parent.top
         anchors.horizontalCenter: parent.horizontalCenter

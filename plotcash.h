@@ -33,9 +33,16 @@
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
 
-typedef struct {
+typedef struct LLA {
     double latitude = NAN, longitude = NAN;
     double altitude = NAN;
+    LLA() {};
+    LLA(double lat, double lon, double alt= NAN) {
+        latitude = lat;
+        longitude = lon;
+        altitude = alt;
+    }
+
     bool isValid() {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
     }
@@ -751,9 +758,9 @@ public slots:
     void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
     void spatialProcessing();
 
-    void set3DRender(FboInSGRenderer* render) {
-        _render3D = render;
-    }
+//    void set3DRender(FboInSGRenderer* render) {
+//        _render3D = render;
+//    }
 //    void updateRender3D() {
         // deprecated
 //        if(_render3D != NULL) {
@@ -791,7 +798,7 @@ protected:
     QVector<QVector3D> _boatTrack;
 
 
-    FboInSGRenderer* _render3D;
+//    FboInSGRenderer* _render3D;
 
     enum {
         AutoRangeNone,

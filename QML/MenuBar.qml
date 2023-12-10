@@ -224,7 +224,7 @@ Item {
                     padding: 0
 
                     onClicked: {
-                        Settings3DController.changeSceneVisibility(checked)
+//                        Settings3DController.changeSceneVisibility(settings3DButton.checked)
 //                       itemChangeActive(settings3DButton)
                     }
                 }
