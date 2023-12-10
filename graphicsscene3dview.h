@@ -131,6 +131,7 @@ public:
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
+    Dataset* dataset() const;
     void clear();
 
 

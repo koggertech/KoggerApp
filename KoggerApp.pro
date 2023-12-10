@@ -52,7 +52,6 @@ SOURCES += \
     Plot2DGrid.cpp \
         ProtoBinnary.cpp \
         StreamListModel.cpp \
-    bottomtrackprovider.cpp \
         connection.cpp \
         console.cpp \
         consolelistmodel.cpp \
@@ -114,7 +113,6 @@ HEADERS += \
     StreamListModel.h \
     Themes.h \
     abstractentitydatafilter.h \
-    bottomtrackprovider.h \
     XTFConf.h \
     connection.h \
     console.h \

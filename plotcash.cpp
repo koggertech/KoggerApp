@@ -165,9 +165,12 @@ QVector<QVector3D> Dataset::boatTrack() const
     return _boatTrack;
 }
 
-void Dataset::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> bottomTrackProvider)
+QVector<QVector3D> Dataset::bottomTrack() const
 {
-    mpBottomTrackProvider = bottomTrackProvider;
+    if(_bottomTracks.isEmpty())
+        return {};
+
+    return _bottomTracks.first();
 }
 
 void Dataset::addEvent(int timestamp, int id, int unixt) {
@@ -730,13 +733,6 @@ void Dataset::updateTrack(bool update_all) {
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }
     }
-
-    if(mpBottomTrackProvider) {
-        //!!! For example, the first bottom-track only
-        mpBottomTrackProvider->setBottomTrack(_bottomTracks.first());
-    }
-
-    //!!! _boatTrack provider
 
     _lastTrackEpoch = to_size;
 }

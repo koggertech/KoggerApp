@@ -20,7 +20,6 @@
 #include "ConverterXTF.h"
 
 #include <graphicsscene3dview.h>
-#include <bottomtrackprovider.h>
 #include <bottomtrackcontrolmenucontroller.h>
 #include <surfacecontrolmenucontroller.h>
 #include <pointgroupcontrolmenucontroller.h>
@@ -209,12 +208,7 @@ protected:
     void setUpgradeBaudrate();
 
 private:
-
-    //! Метод создания контроллеров
     void createControllers();
-    //! Метод создания моделей
-    void createModels();
-\
 
 private:
 
@@ -227,9 +221,6 @@ private:
     std::shared_ptr <PolygonGroupControlMenuController> m_polygonGroupControlMenuController;
     std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
-
-    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
-    std::unique_ptr <QStandardItemModel>  m_sceneObjectListModel; ///< graphics object list model
 
     bool isFactoryMode() {
 #ifdef FLASHER

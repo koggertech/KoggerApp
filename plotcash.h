@@ -13,7 +13,6 @@
 
 #include <3Plot.h>
 #include <IDBinnary.h>
-#include <bottomtrackprovider.h>
 
 #include "time.h"
 
@@ -724,8 +723,7 @@ public:
     }
 
     QVector<QVector3D> boatTrack() const;
-
-    void setBottomTrackProvider(std::shared_ptr <BottomTrackProvider> bottomTrackProvider);
+    QVector<QVector3D> bottomTrack() const;
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
@@ -774,10 +772,6 @@ public slots:
     void updateTrack(bool update_all = false);
 
     QStringList channelsNameList();
-
-
-private:
-    std::shared_ptr <BottomTrackProvider> mpBottomTrackProvider;
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);

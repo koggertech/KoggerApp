@@ -3,8 +3,8 @@
 #include <bottomtrack.h>
 #include <maxpointsfilter.h>
 #include <nearestpointfilter.h>
-#include <bottomtrackprovider.h>
 #include <QmlObjectNames.h>
+#include <plotcash.h>
 
 BottomTrackControlMenuController::BottomTrackControlMenuController(QObject* parent)
 : QmlComponentController(parent)
@@ -25,20 +25,20 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
 
 void BottomTrackControlMenuController::onRestoreBottomTrackButtonClicked()
 {
-    if(!m_graphicsSceneView || !m_bottomTrackProvider)
+    if(!m_graphicsSceneView)
         return;
 
-    m_graphicsSceneView->bottomTrack()->setData(m_bottomTrackProvider->getBottomTrack(), GL_LINE_STRIP);
+    auto dataset = m_graphicsSceneView->dataset();
+
+    if(!dataset)
+        return;
+
+    m_graphicsSceneView->bottomTrack()->setData(dataset->bottomTrack(), GL_LINE_STRIP);
 }
 
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;
-}
-
-void BottomTrackControlMenuController::setBottomTrackProvider(std::shared_ptr<BottomTrackProvider> provider)
-{
-    m_bottomTrackProvider = provider;
 }
 
 BottomTrack *BottomTrackControlMenuController::bottomTrack() const
