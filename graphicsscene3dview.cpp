@@ -110,6 +110,8 @@ void GraphicsScene3dView::clear()
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
 
+    m_bounds = Cube(-5.0f,5.0f,-5.0f,5.0f,-5.0f,5.0f);
+
     setIsometricView();
 
     QQuickFramebufferObject::update();
