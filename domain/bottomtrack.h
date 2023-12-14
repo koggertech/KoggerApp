@@ -3,9 +3,11 @@
 
 #include <memory>
 #include <sceneobject.h>
+#include <plotcash.h>
 
 class GraphicsScene3dView;
 class Surface;
+class Epoch;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
@@ -32,12 +34,15 @@ public:
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
+    void setEpochs(const QList<Epoch*>& epochList,const QMap<int,DatasetChannel>& channels);
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
 
 Q_SIGNALS:
-    void vertexHovered(int index);
-    void vertexPressed(int index);
+    void epochHovered(int epochIndex);
+    void epochPressed(int epochIndex);
+    void epochErased(int epochIndex);
+    void epochListChanged();
 
 protected:
     friend class GraphicsScene3dView;
@@ -46,6 +51,17 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
+    void updateRenderData();
+
+private:
+    using EpochIndex = int;
+    using VerticeIndex = int;
+
+    QList<Epoch*> m_epochList;
+    QMap<int, DatasetChannel> m_channels;
+    QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
+    LLARef m_llaRef;
+    DatasetChannel m_visibleChannel;
 };
 
 #endif // BOTTOMTRACK_H

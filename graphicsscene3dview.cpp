@@ -41,8 +41,15 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-
     QObject::connect(m_surface.get(), &Surface::visibilityChanged, m_bottomTrack.get(), &BottomTrack::setDisplayingWithSurface);
+
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::epochHovered,
+                     [](int index){qDebug() << "Epoch with index " << index << "has been hovered";
+    });
+
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::epochPressed,
+                     [](int index){qDebug() << "Epoch with index " << index << "has been pressed";
+    });
 
     m_bounds = Cube(-5.0f,5.0f,-5.0f,5.0f,-5.0f,5.0f);
     updatePlaneGrid();
@@ -121,6 +128,8 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, q
     }
 
     m_startMousePos = {x,y};
+
+    m_bottomTrack->mousePressEvent(buttons,x,y);
 
     QQuickFramebufferObject::update();
 }
@@ -343,8 +352,17 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
         return;
 
     QObject::connect(m_dataset, &Dataset::dataUpdate, [this](){
-        m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-        m_bottomTrack->setData(m_dataset->bottomTrack(), GL_LINE_STRIP);
+
+        QList<Epoch*> epochs;
+
+        for(int i = 0; i < m_dataset->size(); i++)
+            epochs.append(m_dataset->fromIndex(i));
+
+        //qDebug() << "Updating bottom track epoch list. List size is " << epochs.size();
+
+        m_bottomTrack->setEpochs(epochs,m_dataset->channelsList());
+        //m_bottomTrack->setData(m_dataset->bottomTrack(), GL_LINE_STRIP);
+        m_boatTrack->setData(m_dataset->boatTrack(),GL_LINE_STRIP);
     });
 }
 
@@ -357,6 +375,11 @@ void GraphicsScene3dView::updateBounds()
         .merge(m_bottomTrack->bounds());
 
     updatePlaneGrid();
+
+    //qDebug() << "surface bounds: " << m_surface->bounds();
+    //qDebug() << "bottom track bounds: " << m_bottomTrack->bounds();
+    //qDebug() << "boat track bounds: " << m_boatTrack->bounds();
+    //qDebug() << "scene bounds: " << m_bounds;
 
     QQuickFramebufferObject::update();
 }

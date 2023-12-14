@@ -19,18 +19,18 @@ QVector3D Plane::topRight() const
 
 float Plane::width() const
 {
-    return topRight().y()-bottomLeft().y();
+    return std::abs(topRight().y()-bottomLeft().y());
 }
 
 float Plane::length() const
 {
-    return topRight().x()-bottomLeft().x();
+    return std::abs(topRight().x()-bottomLeft().x());
 }
 
 QSizeF Plane::size() const
 {
-    return {topRight().y()-bottomLeft().y(),
-                topRight().x()-bottomLeft().x()};
+    return {std::abs(topRight().y()-bottomLeft().y()),
+            std::abs(topRight().x()-bottomLeft().x())};
 }
 
 QVector3D Plane::center() const

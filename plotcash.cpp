@@ -66,10 +66,6 @@ void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_ti
     _positionGNSS.time = DateTime(unix_time, nanosec);
     _positionGNSS.lla.latitude = lat;
     _positionGNSS.lla.longitude = lon;
-    if(ref != NULL && ref->isInit) {
-        _positionGNSS.LLA2NED(ref);
-    }
-
     flags.posAvail = true;
 }
 
@@ -285,13 +281,6 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     if(pool_index < 0) {
         makeNewEpoch();
         pool_index = endIndex();
-    }
-
-    if(isfinite(lat) && isfinite(lon) && unix_time > 0) {
-        if(!_llaRef.isInit) {
-            LLA lla(lat, lon);
-            _llaRef = LLARef(lla);
-        }
     }
 
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
@@ -709,16 +698,26 @@ void Dataset::updateTrack(bool update_all) {
     QMap<int, DatasetChannel> ch_list = channelsList();
 
 
+    qDebug() << "Channel list size is " << ch_list.size();
+    qDebug() << "Channel map:";
+    for(const auto& ch : ch_list){
+        qDebug() << "--><ch>";
+        qDebug() << "----->channel: " << ch.channel;
+        qDebug() << "----->count: " << ch.count;
+        qDebug() << "<--<ch>";
+        qDebug() << "\n";
+    }
+
     for(int i = from_index; i < to_size; i+=1) {
         Epoch* epoch = fromIndex(i);
         Position pos = epoch->getPositionGNSS();
 
-//        if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
-//            if(!_llaRef.isInit) {
-//                _llaRef = LLARef(pos.lla);
-//            }
-//            pos.LLA2NED(&_llaRef);
-//        }
+        if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+            if(!_llaRef.isInit) {
+                _llaRef = LLARef(pos.lla);
+            }
+            pos.LLA2NED(&_llaRef);
+        }
 
         if(pos.ned.isCoordinatesValid()) {
             for (const auto& channel : ch_list) {

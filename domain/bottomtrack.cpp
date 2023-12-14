@@ -1,6 +1,8 @@
 #include "bottomtrack.h"
 #include <graphicsscene3dview.h>
 
+#include <QHash>
+
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
     : SceneObject(new BottomTrackRenderImplementation,view,parent)
 {}
@@ -11,6 +13,23 @@ BottomTrack::~BottomTrack()
 SceneObject::SceneObjectType BottomTrack::type() const
 {
     return SceneObject::SceneObjectType::BottomTrack;
+}
+
+void BottomTrack::setEpochs(const QList<Epoch*> &epochList,const QMap<int,DatasetChannel>& channels)
+{
+    m_epochList = std::move(epochList);
+    m_channels = std::move(channels);
+
+    if(!m_channels.isEmpty()){
+        if(m_visibleChannel.channel < m_channels.first().channel ||
+           m_visibleChannel.channel > m_channels.last().channel)
+        {
+            m_visibleChannel = m_channels.first();
+        }
+    }else
+        m_visibleChannel = DatasetChannel();
+
+    updateRenderData();
 }
 
 void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
@@ -47,7 +66,9 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
         auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
         if(!hits.isEmpty()){
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
-            Q_EMIT vertexHovered(hits.first().indices().first);
+            auto epochIndex = m_epochIndexMatchingMap.value({hits.first().indices().first});
+
+            Q_EMIT epochHovered(epochIndex);
         }
     }
 
@@ -75,8 +96,12 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     if(!m_view) return;
 
     if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
-        if(!RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.isEmpty())
-            Q_EMIT vertexPressed(RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.first());
+        if(!RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.isEmpty()){
+            auto epochIndex = m_epochIndexMatchingMap.value(
+                        RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.first());
+
+            Q_EMIT epochPressed(epochIndex);
+        }
     }
 }
 
@@ -98,32 +123,79 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         if(key == Qt::Key_Delete){
             auto indices = RENDER_IMPL(BottomTrack)->m_selectedVertexIndices;
 
-            for(const auto& i : indices)
-                removeVertex(i);
+            for(const auto& verticeIndex : indices){
+                auto epochIndex = m_epochIndexMatchingMap.value(verticeIndex);
+                auto epoch = m_epochList.at(epochIndex);
+
+                epoch->clearDistProcessing(m_visibleChannel.channel);
+
+                Q_EMIT epochErased(epochIndex);
+            }
 
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+
+            updateRenderData();
         }
     }
 
     if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode)
     {
         if(key == Qt::Key_Delete){
-            QVector<QVector3D> newData;
-
             auto indices = RENDER_IMPL(BottomTrack)->m_selectedVertexIndices;
-            auto currentData = RENDER_IMPL(BottomTrack)->cdata();
 
-            for(int i = 0; i < currentData.size(); i++){
-                if(!indices.contains(i))
-                    newData.append(currentData.at(i));
+            for(const auto& verticeIndex : indices){
+                auto epochIndex = m_epochIndexMatchingMap.value(verticeIndex);
+                auto epoch = m_epochList.at(epochIndex);
+
+                epoch->clearDistProcessing(m_visibleChannel.channel);
+
+                Q_EMIT epochErased(epochIndex);
             }
-            setData(newData, GL_LINE_STRIP);
+
             RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
 
             m_view->m_comboSelectionRect = {m_view->m_comboSelectionRect.bottomRight(),
-                                            m_view->m_comboSelectionRect.bottomRight()};;
+                                            m_view->m_comboSelectionRect.bottomRight()};
+
+            updateRenderData();
         }
     }
+}
+
+void BottomTrack::updateRenderData()
+{
+    m_epochIndexMatchingMap.clear();
+
+    QVector<QVector3D> renderData;
+
+    for(int i = 0; i < m_epochList.size(); i++){
+        auto epoch = m_epochList.at(i);
+        if(!epoch) continue;
+
+        Position pos = epoch->getPositionGNSS();
+
+        if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+            if(!m_llaRef.isInit) {
+                m_llaRef = LLARef(pos.lla);
+            }
+            pos.LLA2NED(&m_llaRef);
+        }
+
+        if(pos.ned.isCoordinatesValid()) {
+            float distance = -1.0 * epoch->distProccesing(m_visibleChannel.channel);
+
+            if(!isfinite(distance))
+                distance = NAN;
+
+            if(isnan(distance))
+                continue;
+
+            renderData.append(QVector3D(pos.ned.n,pos.ned.e,distance));
+            m_epochIndexMatchingMap.insert(renderData.size()-1,i);
+        }
+    }
+
+    SceneObject::setData(renderData,GL_LINE_STRIP);
 }
 
 //-----------------------RenderImplementation-----------------------------//
