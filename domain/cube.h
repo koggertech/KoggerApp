@@ -29,6 +29,7 @@ public:
     float width() const;
     float height() const;
     Cube merge(const Cube& other);
+    bool isEmpty() const;
 
     Plane front();
     Plane right();
