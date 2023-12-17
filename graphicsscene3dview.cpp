@@ -43,15 +43,6 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_surface.get(), &Surface::visibilityChanged, m_bottomTrack.get(), &BottomTrack::setDisplayingWithSurface);
 
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::epochHovered,
-                     [](int index){qDebug() << "Epoch with index " << index << "has been hovered";
-    });
-
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::epochPressed,
-                     [](int index){qDebug() << "Epoch with index " << index << "has been pressed";
-    });
-
-    m_bounds = Cube(-5.0f,5.0f,-5.0f,5.0f,-5.0f,5.0f);
     updatePlaneGrid();
 }
 
@@ -109,8 +100,9 @@ void GraphicsScene3dView::clear()
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
+    m_boatTrack->clearData();
 
-    m_bounds = Cube(-5.0f,5.0f,-5.0f,5.0f,-5.0f,5.0f);
+    m_bounds = Cube();
 
     setIsometricView();
 
@@ -182,30 +174,6 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
 
     m_ray.setOrigin(origin);
     m_ray.setDirection(direction);
-    //---------------------------------------------//
-
-    //m_rayCaster->reset();
-    //m_rayCaster->setMode(RayCaster::RayCastMode::Triangle);
-    //m_rayCaster->addObject(m_surface);
-    //m_rayCaster->trigger(m_ray.origin(), m_ray.direction());
-    //auto hits = m_rayCaster->hits();
-    //
-    //m_polygonGroup->clearData();
-    //if(!hits.isEmpty()){
-    //    auto polygon = std::make_shared<PolygonObject>();
-    //    auto hit = hits.first();
-    //    for(int i = hit.indices().first; i <= hit.indices().second; i++){
-    //        auto vertex = hit.sourceObject().lock()->cdata().at(i);
-    //        auto point = std::make_shared<PointObject>();
-    //        point->setPosition(vertex.x(), vertex.y(), vertex.z());
-    //        polygon->append(point);
-    //    }
-    //    m_polygonGroup->addPolygon(polygon);
-    //}
-    //
-    //qDebug() << "Surface triangle raycast test. Size is " << hits.size();
-
-    //--------------------------------------------
 
     m_bottomTrack->mouseMoveEvent(buttons,x,y);
     m_lastMousePos = {x,y};
@@ -360,10 +328,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
         for(int i = 0; i < m_dataset->size(); i++)
             epochs.append(m_dataset->fromIndex(i));
 
-        //qDebug() << "Updating bottom track epoch list. List size is " << epochs.size();
-
         m_bottomTrack->setEpochs(epochs,m_dataset->channelsList());
-        //m_bottomTrack->setData(m_dataset->bottomTrack(), GL_LINE_STRIP);
         m_boatTrack->setData(m_dataset->boatTrack(),GL_LINE_STRIP);
     });
 }
@@ -372,16 +337,11 @@ void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
         .merge(m_surface->bounds())
-        .merge(m_polygonGroup->bounds())
-        .merge(m_pointGroup->bounds())
         .merge(m_bottomTrack->bounds());
+        //.merge(m_polygonGroup->bounds())
+        //.merge(m_pointGroup->bounds());
 
     updatePlaneGrid();
-
-    //qDebug() << "surface bounds: " << m_surface->bounds();
-    //qDebug() << "bottom track bounds: " << m_bottomTrack->bounds();
-    //qDebug() << "boat track bounds: " << m_boatTrack->bounds();
-    //qDebug() << "scene bounds: " << m_bounds;
 
     QQuickFramebufferObject::update();
 }
