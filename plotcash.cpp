@@ -697,17 +697,6 @@ void Dataset::updateTrack(bool update_all) {
 
     QMap<int, DatasetChannel> ch_list = channelsList();
 
-
-    qDebug() << "Channel list size is " << ch_list.size();
-    qDebug() << "Channel map:";
-    for(const auto& ch : ch_list){
-        qDebug() << "--><ch>";
-        qDebug() << "----->channel: " << ch.channel;
-        qDebug() << "----->count: " << ch.count;
-        qDebug() << "<--<ch>";
-        qDebug() << "\n";
-    }
-
     for(int i = from_index; i < to_size; i+=1) {
         Epoch* epoch = fromIndex(i);
         Position pos = epoch->getPositionGNSS();
@@ -720,15 +709,15 @@ void Dataset::updateTrack(bool update_all) {
         }
 
         if(pos.ned.isCoordinatesValid()) {
-            for (const auto& channel : ch_list) {
-                float distance = -1.0 * epoch->distProccesing(channel.channel);
-                if(!isfinite(distance)) {
-                    distance = NAN;
-                }
-                // Checking for NAN
-                if(distance == distance)
-                    _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
-            }
+            //for (const auto& channel : ch_list) {
+            //    float distance = -1.0 * epoch->distProccesing(channel.channel);
+            //    if(!isfinite(distance)) {
+            //        distance = NAN;
+            //    }
+            //    // Checking for NAN
+            //    if(distance == distance)
+            //        _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
+            //}
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }
     }
