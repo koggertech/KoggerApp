@@ -34,9 +34,11 @@ public:
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
+    virtual void clearData() override;
     void setEpochs(const QList<Epoch*>& epochList,const QMap<int,DatasetChannel>& channels);
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
+
 
 Q_SIGNALS:
     void epochHovered(int epochIndex);

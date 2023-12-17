@@ -44,6 +44,17 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
     SceneObject::setData(data, primitiveType);
 }
 
+void BottomTrack::clearData()
+{
+    m_llaRef.isInit = false;
+    m_channels.clear();
+    m_visibleChannel = DatasetChannel();
+    m_epochIndexMatchingMap.clear();
+    m_epochList.clear();
+
+    SceneObject::clearData();
+}
+
 void BottomTrack::resetVertexSelection()
 {
     RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
@@ -185,9 +196,6 @@ void BottomTrack::updateRenderData()
             float distance = -1.0 * epoch->distProccesing(m_visibleChannel.channel);
 
             if(!isfinite(distance))
-                distance = NAN;
-
-            if(isnan(distance))
                 continue;
 
             renderData.append(QVector3D(pos.ned.n,pos.ned.e,distance));
