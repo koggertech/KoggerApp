@@ -1,13 +1,15 @@
 #ifndef BOTTOMTRACK_H
 #define BOTTOMTRACK_H
 
-#include <memory>
 #include <sceneobject.h>
 #include <plotcash.h>
 
+#include <memory>
+
+#include <QStringListModel>
+
 class GraphicsScene3dView;
 class Surface;
-class Epoch;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
@@ -31,6 +33,7 @@ public:
     explicit BottomTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
     virtual ~BottomTrack();
     virtual SceneObjectType type() const override;
+    std::weak_ptr<QStringListModel> channelListModel() const;
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
@@ -38,6 +41,7 @@ public Q_SLOTS:
     void setEpochs(const QList<Epoch*>& epochList,const QMap<int,DatasetChannel>& channels);
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
+    void setVisibleChannel(int channelIndex);
 
 
 Q_SIGNALS:
@@ -45,6 +49,7 @@ Q_SIGNALS:
     void epochPressed(int epochIndex);
     void epochErased(int epochIndex);
     void epochListChanged();
+    void visibleChannelChanged(int channelIndex);
 
 protected:
     friend class GraphicsScene3dView;
@@ -54,6 +59,7 @@ protected:
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
     void updateRenderData();
+    void updateChannelListModel();
 
 private:
     using EpochIndex = int;
@@ -64,6 +70,7 @@ private:
     QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
     LLARef m_llaRef;
     DatasetChannel m_visibleChannel;
+    std::shared_ptr<QStringListModel> m_channelListModel;
 };
 
 #endif // BOTTOMTRACK_H

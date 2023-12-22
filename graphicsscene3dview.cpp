@@ -315,8 +315,10 @@ void GraphicsScene3dView::setPolygonEditingMode()
 
 void GraphicsScene3dView::setDataset(Dataset *dataset)
 {
-    if(m_dataset != dataset)
-        m_dataset = dataset;
+    if(m_dataset)
+        QObject::disconnect(m_dataset);
+
+    m_dataset = dataset;
 
     if(!m_dataset)
         return;

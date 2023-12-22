@@ -30,10 +30,20 @@ void BottomTrackControlMenuController::onRestoreBottomTrackButtonClicked()
 
     auto dataset = m_graphicsSceneView->dataset();
 
-    if(!dataset)
+    Q_EMIT dataset->dataUpdate();
+
+    // if(!dataset)
+    //     return;
+
+    // m_graphicsSceneView->bottomTrack()->setData(dataset->bottomTrack(), GL_LINE_STRIP);
+}
+
+void BottomTrackControlMenuController::onVisibleChannelComboBoxIndexChanged(int index)
+{
+    if(!m_graphicsSceneView)
         return;
 
-    m_graphicsSceneView->bottomTrack()->setData(dataset->bottomTrack(), GL_LINE_STRIP);
+    m_graphicsSceneView->bottomTrack()->setVisibleChannel(index);
 }
 
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
@@ -47,6 +57,19 @@ BottomTrack *BottomTrackControlMenuController::bottomTrack() const
         return nullptr;
 
     return m_graphicsSceneView->bottomTrack().get();
+}
+
+QStringListModel* BottomTrackControlMenuController::channelListModel() const
+{
+    if(!m_graphicsSceneView)
+        return nullptr;
+
+    auto model = m_graphicsSceneView->bottomTrack()->channelListModel();
+
+    if(model.expired())
+        return nullptr;
+
+    return model.lock().get();
 }
 
 void BottomTrackControlMenuController::findComponent()

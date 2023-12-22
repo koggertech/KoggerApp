@@ -5,6 +5,7 @@
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
     : SceneObject(new BottomTrackRenderImplementation,view,parent)
+    , m_channelListModel(std::make_shared<QStringListModel>())
 {}
 
 BottomTrack::~BottomTrack()
@@ -13,6 +14,11 @@ BottomTrack::~BottomTrack()
 SceneObject::SceneObjectType BottomTrack::type() const
 {
     return SceneObject::SceneObjectType::BottomTrack;
+}
+
+std::weak_ptr<QStringListModel> BottomTrack::channelListModel() const
+{
+    return m_channelListModel;
 }
 
 void BottomTrack::setEpochs(const QList<Epoch*> &epochList,const QMap<int,DatasetChannel>& channels)
@@ -29,6 +35,7 @@ void BottomTrack::setEpochs(const QList<Epoch*> &epochList,const QMap<int,Datase
     }else
         m_visibleChannel = DatasetChannel();
 
+    updateChannelListModel();
     updateRenderData();
 }
 
@@ -63,6 +70,19 @@ void BottomTrack::resetVertexSelection()
 void BottomTrack::setDisplayingWithSurface(bool displaying)
 {
     RENDER_IMPL(BottomTrack)->m_isDisplayingWithSurface = displaying;
+}
+
+void BottomTrack::setVisibleChannel(int channelIndex)
+{
+    if(channelIndex < 0 || channelIndex >= m_channels.size())
+        return;
+
+    m_visibleChannel = m_channels.value(channelIndex);
+
+    updateRenderData();
+
+    Q_EMIT visibleChannelChanged(channelIndex);
+    Q_EMIT changed();
 }
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -175,6 +195,8 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 
 void BottomTrack::updateRenderData()
 {
+    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+
     m_epochIndexMatchingMap.clear();
 
     QVector<QVector3D> renderData;
@@ -204,6 +226,16 @@ void BottomTrack::updateRenderData()
     }
 
     SceneObject::setData(renderData,GL_LINE_STRIP);
+}
+
+void BottomTrack::updateChannelListModel()
+{
+    QStringList list;
+    int ch = 0;
+    for(const auto& channel : qAsConst(m_channels))
+        list << QString("lol %1").arg(ch++);
+
+    m_channelListModel->setStringList(list);
 }
 
 //-----------------------RenderImplementation-----------------------------//
