@@ -9,7 +9,7 @@ Plot2D::Plot2D() {
     _rangeFinder.setVisible(true);
     _grid.setVisible(true);
     _aim.setVisible(true);
-    _quadrature.setVisible(true);
+    _quadrature.setVisible(false);
     setDataChannel(CHANNEL_FIRST);
 //    _cursor.attitude.from = -180;
 //    _cursor.attitude.to = 180;
