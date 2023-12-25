@@ -190,7 +190,7 @@ public slots:
     void reboot();
     void process();
 
-    void dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, float range_mode3);
+    void dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, bool ismode4, float range_mode4);
 
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);

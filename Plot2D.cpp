@@ -9,7 +9,7 @@ Plot2D::Plot2D() {
     _rangeFinder.setVisible(true);
     _grid.setVisible(true);
     _aim.setVisible(true);
-
+    _quadrature.setVisible(true);
     setDataChannel(CHANNEL_FIRST);
 //    _cursor.attitude.from = -180;
 //    _cursor.attitude.to = 180;
@@ -34,6 +34,7 @@ bool Plot2D::getImage(int width, int height, QPainter* painter) {
     _bottomProcessing.draw(_canvas, _dataset, _cursor);
     _rangeFinder.draw(_canvas, _dataset, _cursor);
     _GNSS.draw(_canvas, _dataset, _cursor);
+    _quadrature.draw(_canvas, _dataset, _cursor);
 
     painter->setCompositionMode(QPainter::CompositionMode_Exclusion);
     _grid.draw(_canvas, _dataset, _cursor);

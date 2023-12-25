@@ -21,7 +21,7 @@ DevSettingsBox {
             groupName: "Range Modes"
 
             function changeMode() {
-                dev.dvlChangeMode(mode1Check.checked, mode2Check.checked, mode3Check.checked, mode3Range.value)
+                dev.dvlChangeMode(mode1Check.checked, mode2Check.checked, mode3Check.checked, mode4Check.checked, mode4Range.value)
             }
 
             RowLayout {
@@ -51,7 +51,19 @@ DevSettingsBox {
             RowLayout {
                 CCheck {
                     id: mode3Check
-                    text: "Mode3 range, m"
+                    text: "Mode3"
+                    checked: true
+
+                    onCheckedChanged: {
+                        modeChanger.changeMode()
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: mode4Check
+                    text: "Mode4 range, m"
                     checked: true
 
                     onCheckedChanged: {
@@ -60,7 +72,7 @@ DevSettingsBox {
                 }
 
                 SpinBoxCustom {
-                    id: mode3Range
+                    id: mode4Range
                     from: 30
                     to: 100
                     stepSize: 5

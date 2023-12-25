@@ -716,7 +716,7 @@ Resp IDBinDVLMode::parsePayload(FrameParser &proto) {
     return respOk;
 }
 
-void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, float range_mode3) {
+void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismode4, float range_mode4) {
     ProtoBinOut id_out;
     id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U1>(1);
@@ -724,17 +724,20 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, float rang
     id_out.write<U1>(0);
     id_out.write<U1>(0);
 
-    DVLModeSetup mode1, mode2, mode3;
+    DVLModeSetup mode1, mode2, mode3, mode4;
     mode1.id = 1;
     mode2.id = 2;
     mode3.id = 3;
+    mode4.id = 4;
     mode1.selection = ismode1;
     mode2.selection = ismode2;
     mode3.selection = ismode3;
-    mode3.stop = range_mode3;
+    mode4.selection = ismode4;
+    mode4.stop = range_mode4;
     id_out.write<DVLModeSetup>(mode1);
     id_out.write<DVLModeSetup>(mode2);
     id_out.write<DVLModeSetup>(mode3);
+    id_out.write<DVLModeSetup>(mode4);
 
     id_out.end();
     emit binFrameOut(id_out);

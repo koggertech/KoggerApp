@@ -128,8 +128,8 @@ int DevDriver::dopplerDist() {
     return idDVL->dist();
 }
 
-void DevDriver::dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, float range_mode3) {
-    idDVLMode->setModes(ismode1, ismode2, ismode3, range_mode3);
+void DevDriver::dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, bool ismode4, float range_mode4) {
+    idDVLMode->setModes(ismode1, ismode2, ismode3, ismode4, range_mode4);
 }
 
 

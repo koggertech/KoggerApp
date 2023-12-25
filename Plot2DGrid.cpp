@@ -42,7 +42,7 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
             QString range_text = QString::number(cursor.distance.to) + QStringLiteral(" m");
             p->drawText(image_width - 50 - range_text.count()*25, image_height - 10, range_text);
 
-            text_offset -= 140;
+            text_offset -= 170;
         }
 
         if(_rangeFinderLastVisible && cursor.distance.isValid()) {
@@ -99,7 +99,7 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
                 float attitude_text = velocity_range*i/lines_count + velocity_from;
                 int pos_y = i*image_height/lines_count;
 
-                p->drawText(image_width - 150, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" m/s"));
+                p->drawText(image_width - 180, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" m/s"));
             }
         }
 
