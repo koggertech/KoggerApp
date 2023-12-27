@@ -1,7 +1,16 @@
 #ifndef SURFACEPROCESSOR_H
 #define SURFACEPROCESSOR_H
 
+#include "qsystemdetection.h"
+#if !defined(Q_OS_ANDROID)
 #include <GL/gl.h>
+#else
+#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl31.h>
+#include <GLES3/gl32.h>
+#endif
+
 #include <memory>
 #include <atomic>
 

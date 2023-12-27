@@ -10,7 +10,20 @@
 #include <graphicsscene3dview.h>
 
 #include <QMatrix4x4>
+#include "qsystemdetection.h"
+#if !defined(Q_OS_ANDROID)
+#include <GL/gl.h>
 #include <QOpenGLFunctions>
+#else
+// #include <QOpenGLFunctions_3_0>
+#include <QOpenGLExtraFunctions>
+#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl31.h>
+#include <GLES3/gl32.h>
+#include <GLES/gl.h>
+#endif
+
 #include <QVector2D>
 #include <QMutex>
 

@@ -717,13 +717,20 @@ class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim() {}
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
+        if(cursor.mouseX < 0 || cursor.mouseY < 0) {
+            return false;
+        }
+
         QPen pen;
         pen.setWidth(_lineWidth);
         pen.setColor(_lineColor);
 
+
         QPainter* p = canvas.painter();
         p->setPen(pen);
-        p->setFont(QFont("Asap", 14, QFont::Normal));
+        QFont font = QFont("Asap", 14, QFont::Normal);
+        font.setPixelSize(18);
+        p->setFont(font);
 
         const int image_height = canvas.height();
         const int image_width = canvas.width();
@@ -736,9 +743,14 @@ public:
 
         const float canvas_height = canvas.height();
         float value_range = cursor.distance.to - cursor.distance.from;
-        float value_scale = canvas_height/value_range;
+        float value_scale = float(cursor.mouseY)/canvas_height;
+        float cursor_distance = value_scale*value_range + cursor.distance.from;
 
-        p->drawText(cursor.mouseX+20, cursor.mouseY-20, QString("%1 m").arg(cursor.mouseY/value_scale, 0, 'g', 4));
+        if(cursor.mouseY > 60) {
+            p->drawText(cursor.mouseX+20, cursor.mouseY-20, QString("%1 m").arg(cursor_distance, 0, 'g', 4));
+        } else {
+            p->drawText(cursor.mouseX+20, cursor.mouseY+40, QString("%1 m").arg(cursor_distance, 0, 'g', 4));
+        }
 
         return true;
     }

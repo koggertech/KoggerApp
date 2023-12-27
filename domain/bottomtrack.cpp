@@ -1,5 +1,6 @@
 #include "bottomtrack.h"
 #include <graphicsscene3dview.h>
+#include <QtOpenGLExtensions/QOpenGLExtensions>
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
     : SceneObject(new BottomTrackRenderImplementation,view,parent)
