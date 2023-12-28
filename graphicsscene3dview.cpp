@@ -22,6 +22,7 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_boatTrack(std::make_shared<SceneObject>())
 {
+    setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
@@ -333,6 +334,9 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
         m_bottomTrack->setEpochs(epochs,m_dataset->channelsList());
         m_boatTrack->setData(m_dataset->boatTrack(),GL_LINE_STRIP);
     });
+
+    QObject::connect(m_dataset,           &Dataset::epochSelected,
+                     m_bottomTrack.get(), &BottomTrack::selectEpoch);
 }
 
 void GraphicsScene3dView::updateBounds()

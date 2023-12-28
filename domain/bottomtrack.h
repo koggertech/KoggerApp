@@ -34,6 +34,9 @@ public:
     virtual ~BottomTrack();
     virtual SceneObjectType type() const override;
     std::weak_ptr<QStringListModel> channelListModel() const;
+    QList<Epoch*> epochs() const;
+    QMap<int,DatasetChannel> channels() const;
+    DatasetChannel visibleChannel() const;
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
@@ -42,14 +45,15 @@ public Q_SLOTS:
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
     void setVisibleChannel(int channelIndex);
-
+    void selectEpoch(int epochIndex, int channelId);
 
 Q_SIGNALS:
     void epochHovered(int epochIndex);
     void epochPressed(int epochIndex);
     void epochErased(int epochIndex);
+    void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
-    void visibleChannelChanged(int channelIndex);
+    void visibleChannelChanged(int channelId);
 
 protected:
     friend class GraphicsScene3dView;

@@ -191,6 +191,10 @@ const int CHANNEL_NONE = 0x8000;
 const int CHANNEL_FIRST = 0x8000-1;
 
 typedef struct DatasetChannel {
+    Q_GADGET
+    Q_PROPERTY(int channel  MEMBER channel)
+
+public:
     int channel = -1;
     int count = 0;
     double distance_from = NAN;
@@ -776,6 +780,7 @@ public slots:
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
+    void epochSelected(int epochIndex, int channelId);
 
 protected:
     int lastEventTimestamp = 0;

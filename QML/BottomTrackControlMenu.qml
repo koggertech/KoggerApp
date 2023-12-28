@@ -43,6 +43,7 @@ Item {
                     objectName: "visibleChannelCombo"
                     Layout.preferredWidth: 250
                     model: controller.channelListModel
+                    textRole: "display"
                     onCurrentIndexChanged: {
                         root.controller.onVisibleChannelComboBoxIndexChanged(currentIndex)
                     }
