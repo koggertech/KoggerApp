@@ -1,5 +1,6 @@
 #include "bottomtrack.h"
 #include <graphicsscene3dview.h>
+#include <epochevent.h>
 
 #include <QHash>
 
@@ -14,6 +15,15 @@ BottomTrack::~BottomTrack()
 SceneObject::SceneObjectType BottomTrack::type() const
 {
     return SceneObject::SceneObjectType::BottomTrack;
+}
+
+bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
+{
+    if(event->type() == EpochSelected2d){
+        auto epochEvent = static_cast<EpochEvent*>(event);
+        selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
+        qDebug() << QString("[Graphics scene 3d]: catched event from 2d view (epoch index is %1)").arg(epochEvent->epochIndex());
+    }
 }
 
 std::weak_ptr<QStringListModel> BottomTrack::channelListModel() const
@@ -108,16 +118,19 @@ void BottomTrack::selectEpoch(int epochIndex, int channelId)
     if(m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
         return;
 
-    if(!m_epochIndexMatchingMap.contains(epochIndex) || !m_channels.contains(channelId))
+    if(!m_channels.contains(channelId))
         return;
 
     if(epochIndex < 0 || epochIndex >= m_epochList.size())
         return;
 
+    if(!m_epochList.at(epochIndex))
+        return;
+
     auto r = RENDER_IMPL(BottomTrack);
 
     r->m_selectedVertexIndices.clear();
-    r->m_selectedVertexIndices.append(m_epochIndexMatchingMap);
+    r->m_selectedVertexIndices.append(m_epochIndexMatchingMap.key(epochIndex));
 
     Q_EMIT changed();
 }
@@ -138,7 +151,9 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
                 auto epochIndex = m_epochIndexMatchingMap.value({hits.first().indices().first});
 
-                Q_EMIT epochSelected(epochIndex, m_visibleChannel.channel);
+                auto epochEvent = new EpochEvent(EpochSelected3d,m_epochList.at(epochIndex),epochIndex, m_visibleChannel);
+
+                QCoreApplication::postEvent(this, epochEvent);
             }
         }
     }

@@ -780,7 +780,6 @@ public slots:
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
-    void epochSelected(int epochIndex, int channelId);
 
 protected:
     int lastEventTimestamp = 0;

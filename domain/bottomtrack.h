@@ -33,6 +33,7 @@ public:
     explicit BottomTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
     virtual ~BottomTrack();
     virtual SceneObjectType type() const override;
+    virtual bool eventFilter(QObject *watched, QEvent *event);
     std::weak_ptr<QStringListModel> channelListModel() const;
     QList<Epoch*> epochs() const;
     QMap<int,DatasetChannel> channels() const;

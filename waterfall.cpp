@@ -6,6 +6,7 @@
 
 #include <QMutex>
 #include <core.h>
+#include <epochevent.h>
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
@@ -90,6 +91,16 @@ void qPlot2D::plotUpdate() {
     update();
 
     mutex.unlock();
+}
+
+bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == EpochSelected3d) {
+        auto epochEvent = static_cast<EpochEvent*>(event);
+        qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
+    }
+
+    return false;
 }
 
 void qPlot2D::horScrollEvent(int delta) {
