@@ -24,6 +24,7 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
         selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
         qDebug() << QString("[Graphics scene 3d]: catched event from 2d view (epoch index is %1)").arg(epochEvent->epochIndex());
     }
+    return false;
 }
 
 std::weak_ptr<QStringListModel> BottomTrack::channelListModel() const
@@ -118,7 +119,7 @@ void BottomTrack::selectEpoch(int epochIndex, int channelId)
     if(m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
         return;
 
-    if(!m_channels.contains(channelId))
+    if(!m_channels.contains(channelId) || channelId != m_visibleChannel.channel)
         return;
 
     if(epochIndex < 0 || epochIndex >= m_epochList.size())
