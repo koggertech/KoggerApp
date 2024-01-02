@@ -22,7 +22,6 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
     if(event->type() == EpochSelected2d){
         auto epochEvent = static_cast<EpochEvent*>(event);
         selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
-        qDebug() << QString("[Graphics scene 3d]: catched event from 2d view (epoch index is %1)").arg(epochEvent->epochIndex());
     }
     return false;
 }
@@ -60,8 +59,6 @@ void BottomTrack::setEpochs(const QList<Epoch*> &epochList,const QMap<int,Datase
         }
     }else
         m_visibleChannel = DatasetChannel();
-
-    qDebug() << "Visible channel is" << m_visibleChannel.channel;
 
     updateRenderData();
 
