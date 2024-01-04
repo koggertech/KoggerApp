@@ -29,9 +29,10 @@ Item {
                 text:             "Show"
                 checkState:       Qt.Checked
                 onCheckedChanged: root.controller.onVisibilityCheckBoxCheckedChanged(checked)
+
                 Component.onCompleted: {
                     if(root.controller.bottomTrack)
-                        checkState = controller.bottomTrack.visible ? Qt.Checked : Qt.Unchecked
+                        visibilityCheckBox.checkState = controller.bottomTrack.visible ? Qt.Checked : Qt.Unchecked
                 }
             }
 
@@ -39,24 +40,25 @@ Item {
                 paramName: "Visible channel: "
 
                 KCombo {
-                    id:         visibleChannelCombo
-                    objectName: "visibleChannelCombo"
+                    id:                    visibleChannelCombo
+                    objectName:            "visibleChannelCombo"
                     Layout.preferredWidth: 250
-                    model: controller.channelListModel
-                    textRole: "display"
-                    onCurrentIndexChanged: {
-                        root.controller.onVisibleChannelComboBoxIndexChanged(currentIndex)
+                    model:                 root.controller.channelList
+                    onActivated:           root.controller.onVisibleChannelComboBoxIndexChanged(currentIndex)
+
+                    Component.onCompleted: {
+                        visibleChannelCombo.currentIndex = controller.visibleChannelIndex
                     }
                 }
             }
+        }
+    }
 
-
-            KButton {
-                id:               restoreBottomTrack
-                Layout.fillWidth: true
-                text:             qsTr("Restore")
-                onClicked:        root.controller.onRestoreBottomTrackButtonClicked()
-            }
+    Connections {
+        target: root.controller
+        function onChannelListUpdated() {
+            visibleChannelCombo.currentIndex = controller.visibleChannelIndex
+            visibleChannelCombo.model = controller.channelList
         }
     }
 }

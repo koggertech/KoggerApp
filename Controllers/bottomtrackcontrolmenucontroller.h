@@ -2,11 +2,9 @@
 #define BOTTOMTRACKCONTROLMENUCONTROLLER_H
 
 #include <qmlcomponentcontroller.h>
+#include <datasetchannellistmodel.h>
 
 #include <memory>
-
-#include <QStandardItem>
-#include <QStringListModel>
 
 class BottomTrack;
 class GraphicsScene3dView;
@@ -14,8 +12,8 @@ class BottomTrackControlMenuController : public QmlComponentController
 {
     Q_OBJECT
     Q_PROPERTY(BottomTrack* bottomTrack READ bottomTrack CONSTANT)
-    Q_PROPERTY(QStandardItemModel* channelListModel READ channelListModel CONSTANT)
-
+    Q_PROPERTY(QStringList channelList READ channelList CONSTANT)
+    Q_PROPERTY(int visibleChannelIndex READ visibleChannelIndex CONSTANT)
 
 public:
     BottomTrackControlMenuController(QObject* parent = nullptr);
@@ -24,7 +22,6 @@ public:
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onVisibleChannelComboBoxIndexChanged(int index);
-    //Q_INVOKABLE void onRestoreBottomTrackButtonClicked();
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
@@ -33,14 +30,19 @@ protected:
 
 private:
     BottomTrack* bottomTrack() const;
-    QStandardItemModel* channelListModel() const;
+    QStringList channelList() const;
+    int visibleChannelIndex() const;
 
 private Q_SLOTS:
-    void updateChannelListModel();
+    void updateChannelList();
+
+Q_SIGNALS:
+    void channelListUpdated();
 
 private:
     GraphicsScene3dView* m_graphicsSceneView = nullptr;
-    std::unique_ptr <QStandardItemModel> m_channelListModel;
+    QStringList m_channelList;
+
 };
 
 #endif // BOTTOMTRACKCONTROLMENUCONTROLLER_H

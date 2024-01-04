@@ -108,7 +108,13 @@ void BottomTrack::setVisibleChannel(int channelId)
     updateRenderData();
 
     Q_EMIT visibleChannelChanged(channelId);
+    Q_EMIT visibleChannelChanged(m_visibleChannel);
     Q_EMIT changed();
+}
+
+void BottomTrack::setVisibleChannel(const DatasetChannel &channel)
+{
+    m_visibleChannel = channel;
 }
 
 void BottomTrack::selectEpoch(int epochIndex, int channelId)

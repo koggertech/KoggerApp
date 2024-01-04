@@ -10,6 +10,7 @@
 #include <QPainter>
 #include "math.h"
 #include <qvector3d.h>
+#include <QQmlEngine>
 
 #include <3Plot.h>
 #include <IDBinnary.h>
@@ -192,7 +193,7 @@ const int CHANNEL_FIRST = 0x8000-1;
 
 typedef struct DatasetChannel {
     Q_GADGET
-    Q_PROPERTY(int channel  MEMBER channel)
+    Q_PROPERTY(int channelId  MEMBER channel)
 
 public:
     int channel = -1;
@@ -212,6 +213,7 @@ public:
         count++;
     }
 } DatasetChannel;
+Q_DECLARE_METATYPE(DatasetChannel)
 
 typedef enum BottomTrackPreset {
     BottomTrackOneBeam,

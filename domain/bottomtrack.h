@@ -13,6 +13,7 @@ class Surface;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
+    Q_PROPERTY(DatasetChannel visibleChannel READ visibleChannel WRITE setVisibleChannel NOTIFY visibleChannelChanged FINAL)
     QML_NAMED_ELEMENT(BottomTrack)
 
 public:
@@ -46,6 +47,7 @@ public Q_SLOTS:
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
     void setVisibleChannel(int channelIndex);
+    void setVisibleChannel(const DatasetChannel& channel);
     void selectEpoch(int epochIndex, int channelId);
 
 Q_SIGNALS:
@@ -55,6 +57,7 @@ Q_SIGNALS:
     void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
     void visibleChannelChanged(int channelId);
+    void visibleChannelChanged(DatasetChannel channel);
 
 protected:
     friend class GraphicsScene3dView;

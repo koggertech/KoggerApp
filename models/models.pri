@@ -1,6 +1,8 @@
 INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
-HEADERS +=
+HEADERS += \
+    $$PWD/datasetchannellistmodel.h
 
-SOURCES +=
+SOURCES += \
+    $$PWD/datasetchannellistmodel.cpp
