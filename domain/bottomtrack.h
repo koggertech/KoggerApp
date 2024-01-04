@@ -6,8 +6,6 @@
 
 #include <memory>
 
-#include <QStringListModel>
-
 class GraphicsScene3dView;
 class Surface;
 class BottomTrack : public SceneObject
@@ -35,7 +33,6 @@ public:
     virtual ~BottomTrack();
     virtual SceneObjectType type() const override;
     virtual bool eventFilter(QObject *watched, QEvent *event);
-    std::weak_ptr<QStringListModel> channelListModel() const;
     QList<Epoch*> epochs() const;
     QMap<int,DatasetChannel> channels() const;
     DatasetChannel visibleChannel() const;
@@ -67,7 +64,6 @@ protected:
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
     void updateRenderData();
-    void updateChannelListModel();
 
 private:
     using EpochIndex = int;
@@ -78,7 +74,6 @@ private:
     QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
     LLARef m_llaRef;
     DatasetChannel m_visibleChannel;
-    std::shared_ptr<QStringListModel> m_channelListModel;
 };
 
 #endif // BOTTOMTRACK_H

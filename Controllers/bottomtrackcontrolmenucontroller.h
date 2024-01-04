@@ -2,7 +2,6 @@
 #define BOTTOMTRACKCONTROLMENUCONTROLLER_H
 
 #include <qmlcomponentcontroller.h>
-#include <datasetchannellistmodel.h>
 
 #include <memory>
 

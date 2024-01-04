@@ -6,7 +6,6 @@
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
     : SceneObject(new BottomTrackRenderImplementation,view,parent)
-    , m_channelListModel(std::make_shared<QStringListModel>())
 {}
 
 BottomTrack::~BottomTrack()
@@ -24,11 +23,6 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
         selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
     }
     return false;
-}
-
-std::weak_ptr<QStringListModel> BottomTrack::channelListModel() const
-{
-    return m_channelListModel;
 }
 
 QList<Epoch*> BottomTrack::epochs() const
@@ -294,16 +288,6 @@ void BottomTrack::updateRenderData()
 
 
     SceneObject::setData(renderData,GL_LINE_STRIP);
-}
-
-void BottomTrack::updateChannelListModel()
-{
-    QStringList list;
-    int ch = 0;
-    for(const auto& channel : qAsConst(m_channels))
-        list << QString("lol %1").arg(ch++);
-
-    m_channelListModel->setStringList(list);
 }
 
 //-----------------------RenderImplementation-----------------------------//
