@@ -3,5 +3,9 @@
         <file>shaders/base.vsh</file>
         <file>shaders/heightcolor.fsh</file>
         <file>shaders/staticcolor.fsh</file>
+        <file>shaders/text.fsh</file>
+        <file>shaders/text.vsh</file>
+        <file>shaders/texture.fsh</file>
+        <file>shaders/texture.vsh</file>
     </qresource>
 </RCC>
