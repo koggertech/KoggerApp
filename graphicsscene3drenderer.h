@@ -34,7 +34,6 @@ private:
     QMatrix4x4 projection() const;
 
 protected:
-
     QMap <QString, std::shared_ptr <QOpenGLShaderProgram>> m_shaderProgramMap;
     bool m_isInitialized = false;
 

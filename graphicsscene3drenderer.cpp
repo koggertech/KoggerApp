@@ -9,6 +9,8 @@
 #include <QThread>
 #include <QDebug>
 
+#include <textrenderer.h>
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -95,6 +97,8 @@ void GraphicsScene3dRenderer::render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     drawObjects();
+
+    TextRenderer::instance();
 }
 
 
@@ -155,8 +159,18 @@ void GraphicsScene3dRenderer::drawObjects()
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
 
-    displayTexture(model, view, projection);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //Draw text
+    const QString text = "Lolissimo";\
+    const QVector3D dir(0.0f,1.0f,0.0f);
+    const QMatrix4x4 pvm = m_projection*view*m_model;
+    QVector3D pos(0.0f,0.0f,0.0f);
 
+    TextRenderer::instance().render3D(text,pos,dir,this,pvm);
+
+    //displayTexture(model, view, projection);
+    glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
@@ -252,55 +266,56 @@ void GraphicsScene3dRenderer::drawObjects()
         shaderProgram->release();
     }
 
-    //Draw text
-    QVector3D textColor(255.0f, 0.0f, 0.0f);
-    QVector2D textPos(100.0f,100.0f);
-    GLfloat scale = 1.0f;
-    QString text = "Test text m";
 
-    //QMatrix4x4 textProjection;
-    //textProjection.ortho(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 0.0f);
 
-    auto shaderProgram = m_shaderProgramMap["texture"];
+    //QVector3D textColor(255.0f, 0.0f, 0.0f);
+    //QVector2D textPos(100.0f,100.0f);
+    //GLfloat scale = 1.0f;
+    //QString text = "Test text m";
 
-    if (!shaderProgram->bind()){
-        qCritical() << "Error binding texture shader program.";
-        return;
-    }
+    ////QMatrix4x4 textProjection;
+    ////textProjection.ortho(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 0.0f);
 
-    shaderProgram->setUniformValue("mvp_matrix", projection * view * model);
-    shaderProgram->setUniformValue("texture", 0);
+    //auto shaderProgram = m_shaderProgramMap["texture"];
+
+    //if (!shaderProgram->bind()){
+    //    qCritical() << "Error binding texture shader program.";
+    //    return;
+    //}
+
+    //shaderProgram->setUniformValue("mvp_matrix", projection * view * model);
+    //shaderProgram->setUniformValue("texture", 0);
 
     // Iterate through all characters
-    QString::const_iterator c;
-    for (c = text.begin(); c != text.end(); c++)
-    {
-        Character ch = m_characters[(*c).toLatin1()];
+    //QString::const_iterator c;
+    //for (c = text.begin(); c != text.end(); c++)
+    //{
+    //    Character ch = m_characters[(*c).toLatin1()];
 
-        GLfloat xpos = textPos.x() + ch.bearing.x() * scale;
-        GLfloat ypos = textPos.y() - (ch.size.y() - ch.bearing.y()) * scale;
+    //    GLfloat xpos = textPos.x() + ch.bearing.x() * scale;
+    //    GLfloat ypos = textPos.y() - (ch.size.y() - ch.bearing.y()) * scale;
 
-        GLfloat w = ch.size.x() * scale;
-        GLfloat h = ch.size.y() * scale;
-        // Update VBO for each character
-        GLfloat vertices[6][4] = {
-            { xpos,     ypos + h,   0.0, 0.0 },
-            { xpos,     ypos,       0.0, 1.0 },
-            { xpos + w, ypos,       1.0, 1.0 },
+    //    GLfloat w = ch.size.x() * scale;
+    //    GLfloat h = ch.size.y() * scale;
+    //    // Update VBO for each character
+    //    GLfloat vertices[6][4] = {
+    //        { xpos,     ypos + h,   0.0, 0.0 },
+    //        { xpos,     ypos,       0.0, 1.0 },
+    //        { xpos + w, ypos,       1.0, 1.0 },
 
-            { xpos,     ypos + h,   0.0, 0.0 },
-            { xpos + w, ypos,       1.0, 1.0 },
-            { xpos + w, ypos + h,   1.0, 0.0 }
-        };
+    //        { xpos,     ypos + h,   0.0, 0.0 },
+    //        { xpos + w, ypos,       1.0, 1.0 },
+    //        { xpos + w, ypos + h,   1.0, 0.0 }
+    //    };
 
-        ch.texture->bind();
+    //    ch.texture->bind();
 
-        m_geometryEngine->drawCubeGeometry(shaderProgram.get());
+    //    m_geometryEngine->drawCubeGeometry(shaderProgram.get());
 
-        // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+    //    // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
 
-        textPos.setX(textPos.x() + (ch.advance >> 6) * scale); // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
-    }
+    //    textPos.setX(textPos.x() + (ch.advance >> 6) * scale); // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
+    //}
 }
 
 void GraphicsScene3dRenderer::initFont()
@@ -331,26 +346,12 @@ void GraphicsScene3dRenderer::initFont()
         }
 
         GLuint texture;
-        //glGenTextures(1, &texture);
-        //glBindTexture(GL_TEXTURE_2D, texture);
-        //glTexImage2D(
-        //    GL_TEXTURE_2D,
-        //    0,
-        //    GL_RED,
-        //    face->glyph->bitmap.width,
-        //    face->glyph->bitmap.rows,
-        //    0,
-        //    GL_RED,
-        //    GL_UNSIGNED_BYTE,
-        //    face->glyph->bitmap.buffer
-        //    );
 
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        QImage image((uchar*)face->glyph->bitmap.buffer,face->glyph->bitmap.width, face->glyph->bitmap.rows, face->glyph->bitmap.width * sizeof(uchar), QImage::Format_Indexed8);
+        QImage image((uchar*)face->glyph->bitmap.buffer,
+                     face->glyph->bitmap.width,
+                     face->glyph->bitmap.rows,
+                     face->glyph->bitmap.width * sizeof(uchar),
+                     QImage::Format_Indexed8);
 
         Character character = {
            new QOpenGLTexture(image),
@@ -366,7 +367,6 @@ void GraphicsScene3dRenderer::initFont()
         character.texture->generateMipMaps();
 
         m_characters.insert(c, character);
-
     }
 
     // Configure VAO/VBO for texture quads
