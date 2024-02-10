@@ -227,6 +227,11 @@ void SceneObject::RenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->release();
 }
 
+void SceneObject::RenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
+{
+    render(ctx, projection * view * model, shaderProgramMap);
+}
+
 void SceneObject::RenderImplementation::setData(const QVector<QVector3D> &data, int primitiveType)
 {
     if(m_primitiveType != primitiveType)

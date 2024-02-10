@@ -15,18 +15,14 @@ class TextRenderer
 public:
     static TextRenderer& instance();
 
-    /**
-     * @brief Renders text on screen
-     * @param text
-     * @param pos
-     * @param ctx
-     * @param projection
-     */
-    void render2D(const QString& text,
-                  QVector2D pos,
-                  QOpenGLFunctions* ctx,
-                  const QMatrix4x4& projection);
+    void setFontPixelSize(int size);
+    void setColor(const QColor& color);
 
+    void render(const QString& text,
+                float scale,
+                QVector2D pos,
+                QOpenGLFunctions* ctx,
+                const QMatrix4x4& projection);
     /**
      * @brief Rebders text somewhere in the world
      * @param text - text
@@ -36,6 +32,7 @@ public:
      * @param pvm - project * view * model matrix
      */
     void render3D(const QString& text,
+                  float scale,
                   QVector3D pos,
                   const QVector3D& dir,
                   QOpenGLFunctions* ctx,
@@ -75,8 +72,11 @@ private:
     std::unique_ptr <QOpenGLShaderProgram> m_shaderProgram;
     QOpenGLBuffer m_arrayBuffer;
     QOpenGLBuffer m_indexBuffer;
+    QColor m_color = {0,0,0};
+    int m_fontPixelSize = 64;
 
     static constexpr int stride3d = 5 * sizeof(float);
+    static constexpr int stride2d = 4 * sizeof(float);
 };
 
 #endif // TEXTRENDERER_H

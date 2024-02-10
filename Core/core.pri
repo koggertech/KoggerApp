@@ -8,5 +8,4 @@ HEADERS += \
     $$PWD/sceneobject.h \
 
 SOURCES += \
-    $$PWD/drawutils.cpp \
     $$PWD/sceneobject.cpp

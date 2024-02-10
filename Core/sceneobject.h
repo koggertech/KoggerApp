@@ -37,6 +37,13 @@ public:
                             const QMatrix4x4 &mvp,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const;
 
+
+        virtual void render(QOpenGLFunctions *ctx,
+                            const QMatrix4x4 &model,
+                            const QMatrix4x4 &view,
+                            const QMatrix4x4 &projection,
+                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const;
+
         virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS);
         virtual void setColor(QColor color);
         virtual void setWidth(qreal width);

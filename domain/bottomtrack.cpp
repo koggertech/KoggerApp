@@ -1,6 +1,8 @@
 #include "bottomtrack.h"
 #include <graphicsscene3dview.h>
 #include <epochevent.h>
+#include <textrenderer.h>
+#include <drawutils.h>
 
 #include <QHash>
 
@@ -303,6 +305,15 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
                                                           const QMap<QString,
                                                           std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
+
+}
+
+void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
+                                                          const QMatrix4x4 &model,
+                                                          const QMatrix4x4 &view,
+                                                          const QMatrix4x4 &projection,
+                                                          const QMap<QString,std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
+{
     if(!m_isVisible)
         return;
 
@@ -329,7 +340,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     posLoc = shaderProgram->attributeLocation("position");
     matrixLoc = shaderProgram->uniformLocation("matrix");
 
-    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
@@ -358,8 +369,11 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     for(const auto& i : m_selectedVertexIndices)
         selectedVertices.append(m_data.at(i));
 
+    if(selectedVertices.isEmpty())
+        return;
+
     shaderProgram->setUniformValue(colorLoc,vertexColor);
-    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->setUniformValue(widthLoc, 10.0f);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, selectedVertices.constData());
@@ -369,5 +383,26 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glDrawArrays(GL_POINTS, 0, selectedVertices.size());
     ctx->glLineWidth(1.0);
     ctx->glDisable(GL_PROGRAM_POINT_SIZE);
-    //------------->
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
+
+    if(selectedVertices.size() > 1)
+        return;
+
+    QRectF vport = DrawUtils::viewportRect(ctx);
+
+    QVector3D p = selectedVertices.first();
+    QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
+    p_screen.setY(vport.height() - p_screen.y());
+
+    QMatrix4x4 textProjection;
+    textProjection.ortho(vport.toRect());
+
+    TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()),
+                                    0.3f,
+                                    p_screen,
+                                    ctx,
+                                    textProjection
+                                    );
 }

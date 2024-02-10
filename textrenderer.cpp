@@ -1,4 +1,6 @@
 #include "textrenderer.h"
+#include <drawutils.h>
+#include <QDebug>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -26,6 +28,8 @@ namespace {
 
                                       )shader";
 
+    /*
+    //Default blending shader implementation
     static const QString fragmentShader = R"shader(
                                             #version 330 core
                                             #ifdef GL_ES
@@ -44,21 +48,68 @@ namespace {
                                             };
 
                                         )shader";
+    */
+    //Signed distance fields shader implementation
+    static const QString fragmentShader = R"shader(
+                                            #version 330 core
+                                            #ifdef GL_ES
+                                            precision mediump int;
+                                            precision mediump float;
+                                            #endif
+
+                                            uniform vec4 textColor;
+                                            uniform sampler2D tex;
+                                            varying vec2 v_texcoord;
+                                            out vec4 color;
+
+                                            float width = 0.51;
+                                            float edge = 0.02;
+
+                                            void main()
+                                            {
+                                                float distance = 1.0 - texture(tex,v_texcoord).r;
+                                                float alpha = 1.0 - smoothstep(width, width + edge, distance);
+                                                color = vec4(vec3(textColor.r,textColor.g,textColor.b), alpha);
+                                            };
+
+                                        )shader";
 
 }
-//gl_FragColor = texture2D(texture, v_texcoord);
+
 TextRenderer& TextRenderer::instance()
 {
     static TextRenderer instance;
     return instance;
 }
 
-void TextRenderer::render2D(const QString &text, QVector2D pos, QOpenGLFunctions* ctx, const QMatrix4x4 &projection)
+void TextRenderer::setFontPixelSize(int size)
+{
+    if(m_fontPixelSize != size){
+        m_fontPixelSize = size;
+        initFont();
+    }
+}
+
+void TextRenderer::setColor(const QColor &color)
+{
+    if(m_color != color)
+        m_color = color;
+}
+
+void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpenGLFunctions *ctx, const QMatrix4x4 &projection)
 {
     if (!m_shaderProgram->bind()){
         qCritical() << "Error binding text shader program.";
         return;
     }
+
+    if(!m_arrayBuffer.bind()){
+        qCritical() << "Error binding vertex array buffer!";
+        return;
+    }
+
+    ctx->glEnable(GL_BLEND);
+    ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     m_shaderProgram->setUniformValue("mvp_matrix", projection);
 
@@ -71,29 +122,52 @@ void TextRenderer::render2D(const QString &text, QVector2D pos, QOpenGLFunctions
 
         auto ch = m_chars[c];
 
-        float pen_x = pos.x() + ch.bearing.x();
-        float pen_y = pos.y() - (ch.size.y() - ch.bearing.y());
+        float pen_x = pos.x() + ch.bearing.x() * scale;
+        float pen_y = pos.y() - (ch.size.y()/* - ch.bearing.y()*/) * scale;
+
+        const float w = ch.size.x() * scale;
+        const float h = ch.size.y() * scale;
 
         float vertices[6][4] = {
-            { pen_x,               pen_y + ch.size.y(), 0.0, 0.0 },
-            { pen_x,               pen_y,               0.0, 1.0 },
-            { pen_x + ch.size.x(), pen_y,               1.0, 1.0 },
+            { pen_x,     pen_y,     0.0, 0.0 },
+            { pen_x,     pen_y + h, 0.0, 1.0 },
+            { pen_x + w, pen_y + h, 1.0, 1.0 },
 
-            { pen_x,               pen_y + ch.size.y(), 0.0, 0.0 },
-            { pen_x + ch.size.x(), pen_y,               1.0, 1.0 },
-            { pen_x + ch.size.x(), pen_y + ch.size.y(), 1.0, 0.0 }
+            { pen_x,     pen_y ,    0.0, 0.0 },
+            { pen_x + w, pen_y + h, 1.0, 1.0 },
+            { pen_x + w, pen_y,     1.0, 0.0 }
         };
 
         ch.texture->bind();
         m_shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
+        m_shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
 
-        pos.setX(pos.x() + (ch.advance >> 6));
+        m_arrayBuffer.write(0,vertices, 6 * 4 * sizeof(float));
+
+        int vertexLocation = m_shaderProgram->attributeLocation("a_position");
+        m_shaderProgram->enableAttributeArray(vertexLocation);
+        m_shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 2, stride2d);
+
+        int texcoordLocation = m_shaderProgram->attributeLocation("a_texcoord");
+        m_shaderProgram->enableAttributeArray(texcoordLocation);
+        m_shaderProgram->setAttributeBuffer(texcoordLocation, GL_FLOAT, 2 * sizeof(float), 2, stride2d);
+
+        ctx->glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        pos.setX(pos.x() + (ch.advance >> 6) * scale);
+
+        ch.texture->release();
 
         it++;
     }
+
+    ctx->glDisable(GL_BLEND);
+
+    m_shaderProgram->release();
+    m_arrayBuffer.release();
 }
 
-void TextRenderer::render3D(const QString &text, QVector3D pos, const QVector3D &dir, QOpenGLFunctions *ctx, const QMatrix4x4 &pvm)
+void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, const QVector3D &dir, QOpenGLFunctions *ctx, const QMatrix4x4 &pvm)
 {
     if (!m_shaderProgram->bind()){
         qCritical() << "Error binding text shader program.";
@@ -104,6 +178,9 @@ void TextRenderer::render3D(const QString &text, QVector3D pos, const QVector3D 
         qCritical() << "Error binding vertex array buffer!";
         return;
     }
+
+    ctx->glEnable(GL_BLEND);
+    ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     m_shaderProgram->setUniformValue("mvp_matrix", pvm);
 
@@ -116,22 +193,28 @@ void TextRenderer::render3D(const QString &text, QVector3D pos, const QVector3D 
 
         auto ch = m_chars[c];
 
-        float pen_x = pos.x() + ch.bearing.x();
-        float pen_y = pos.y() - (ch.size.y() - ch.bearing.y());
+
+        float pen_x = pos.x() + ch.bearing.x() * scale;
+        float pen_y = pos.y() - (ch.size.y() - ch.bearing.y()) * scale;
         float pen_z = pos.z();
 
-        float vertices[6][5] = {
-            { pen_x,               pen_y,               pen_z, 0.0, 0.0 },
-            { pen_x,               pen_y + ch.size.y(), pen_z, 0.0, 1.0 },
-            { pen_x + ch.size.x(), pen_y + ch.size.y(), pen_z, 1.0, 1.0 },
 
-            { pen_x,               pen_y ,              pen_z, 0.0, 0.0 },
-            { pen_x + ch.size.x(), pen_y + ch.size.y(), pen_z, 1.0, 1.0 },
-            { pen_x + ch.size.x(), pen_y              , pen_z, 1.0, 0.0 }
+        const float w = ch.size.x() * scale;
+        const float h = ch.size.y() * scale;
+
+        float vertices[6][5] = {
+            { pen_x,     pen_y,     pen_z, 0.0, 0.0 },
+            { pen_x,     pen_y + h, pen_z, 0.0, 1.0 },
+            { pen_x + w, pen_y + h, pen_z, 1.0, 1.0 },
+
+            { pen_x,     pen_y ,    pen_z, 0.0, 0.0 },
+            { pen_x + w, pen_y + h, pen_z, 1.0, 1.0 },
+            { pen_x + w, pen_y,     pen_z, 1.0, 0.0 }
         };
 
         ch.texture->bind();
         m_shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
+        m_shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
 
         m_arrayBuffer.write(0,vertices, 6 * 5 * sizeof(float));
 
@@ -145,12 +228,17 @@ void TextRenderer::render3D(const QString &text, QVector3D pos, const QVector3D 
 
         ctx->glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        pos.setX(pos.x() + (ch.advance >> 6));
+        pos.setX(pos.x() + (ch.advance >> 6) * scale);
 
         ch.texture->release();
 
         it++;
     }
+
+    ctx->glDisable(GL_BLEND);
+
+    m_shaderProgram->release();
+    m_arrayBuffer.release();
 }
 
 TextRenderer::TextRenderer()
@@ -216,7 +304,7 @@ void TextRenderer::initFont()
         return;
     }
 
-    FT_Set_Pixel_Sizes(face, 0, 74);
+    FT_Set_Pixel_Sizes(face, 0, m_fontPixelSize);
 
     for (GLubyte c = 0; c < 128; c++)
     {
@@ -238,7 +326,7 @@ void TextRenderer::initFont()
         character.bearing = QVector2D(face->glyph->bitmap_left, face->glyph->bitmap_top);
         character.advance = face->glyph->advance.x;
 
-        character.texture = std::make_shared<QOpenGLTexture>(image,QOpenGLTexture::DontGenerateMipMaps);
+        character.texture = std::make_shared<QOpenGLTexture>(image,QOpenGLTexture::GenerateMipMaps);
         character.texture->create();
 
         character.texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
@@ -248,6 +336,8 @@ void TextRenderer::initFont()
 
         m_chars.insert(c, character);
     }
+
+    qDebug() << "ch ------> " << m_chars['c'].size;
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);

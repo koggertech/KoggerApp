@@ -28,8 +28,6 @@ GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
 void GraphicsScene3dRenderer::initialize()
 {
     initializeOpenGLFunctions();
-    initFont();
-    doTexture();
 
     m_isInitialized = true;
 
@@ -61,32 +59,6 @@ void GraphicsScene3dRenderer::initialize()
     success = m_shaderProgramMap["height"]->link();
 
     if (!success) qCritical() << "Error linking shaders in shader program.";
-
-    // --------- text shader ------------//
-    success = m_shaderProgramMap["text"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/text.vsh");
-
-    if (!success) qCritical() << "Error adding text vertex shader from source file.";
-
-    success = m_shaderProgramMap["text"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/text.fsh");
-
-    if (!success) qCritical() << "Error adding text fragment shader from source file.";
-
-    success = m_shaderProgramMap["text"]->link();
-
-    if (!success) qCritical() << "Error linking text shaders in shader program.";
-
-    // --------- texture shader ------------//
-    success = m_shaderProgramMap["texture"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/texture.vsh");
-
-    if (!success) qCritical() << "Error adding texture vertex shader from source file.";
-
-    success = m_shaderProgramMap["texture"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/texture.fsh");
-
-    if (!success) qCritical() << "Error adding texture fragment shader from source file.";
-
-    success = m_shaderProgramMap["texture"]->link();
-
-    if (!success) qCritical() << "Error linking texture shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()
@@ -101,45 +73,6 @@ void GraphicsScene3dRenderer::render()
     TextRenderer::instance();
 }
 
-
-void GraphicsScene3dRenderer::doTexture()
-{
-    QImage image("D:/container.jpg");
-    m_texture = std::unique_ptr<QOpenGLTexture>(new QOpenGLTexture(image));
-
-    m_texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    m_texture->setMagnificationFilter(QOpenGLTexture::Linear);
-    m_texture->setWrapMode(QOpenGLTexture::Repeat);
-    m_texture->generateMipMaps();
-
-    m_geometryEngine = std::unique_ptr<GeometryEngine>(new GeometryEngine());
-}
-
-void GraphicsScene3dRenderer::displayTexture(const QMatrix4x4& model,
-                                             const QMatrix4x4& view,
-                                             const QMatrix4x4& projection)
-{
-    char s = 'Q';
-
-    // Texture test
-    Character character = m_characters[s];
-
-    character.texture->bind();
-
-    auto shaderProgram = m_shaderProgramMap["texture"];
-
-    if (!shaderProgram->bind()){
-        qCritical() << "Error binding texture shader program.";
-        return;
-    }
-
-    shaderProgram->setUniformValue("mvp_matrix", projection * view * model);
-    shaderProgram->setUniformValue("texture", 0);
-
-    m_geometryEngine->drawCubeGeometry(shaderProgram.get());
-}
-
-
 void GraphicsScene3dRenderer::drawObjects()
 {
     QMatrix4x4 model, view, projection;
@@ -152,25 +85,14 @@ void GraphicsScene3dRenderer::drawObjects()
     m_projection = std::move(projection);
 
     glEnable(GL_DEPTH_TEST);
-    m_planeGridRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    m_bottomTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
+    m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    m_bottomTrackRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //Draw text
-    const QString text = "Lolissimo";\
-    const QVector3D dir(0.0f,1.0f,0.0f);
-    const QMatrix4x4 pvm = m_projection*view*m_model;
-    QVector3D pos(0.0f,0.0f,0.0f);
-
-    TextRenderer::instance().render3D(text,pos,dir,this,pvm);
-
-    //displayTexture(model, view, projection);
-    glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
@@ -183,10 +105,11 @@ void GraphicsScene3dRenderer::drawObjects()
     QMatrix4x4 axesProjection;
     QMatrix4x4 axesModel;
 
+    m_axesThumbnailCamera.setDistance(35);
     axesView = m_axesThumbnailCamera.m_view;
     axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 5000.0f);
 
-    m_coordAxesRenderImpl.render(this, axesProjection * axesView * axesModel, m_shaderProgramMap);
+    m_coordAxesRenderImpl.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
@@ -265,121 +188,4 @@ void GraphicsScene3dRenderer::drawObjects()
         shaderProgram->disableAttributeArray(posLoc);
         shaderProgram->release();
     }
-
-
-
-    //QVector3D textColor(255.0f, 0.0f, 0.0f);
-    //QVector2D textPos(100.0f,100.0f);
-    //GLfloat scale = 1.0f;
-    //QString text = "Test text m";
-
-    ////QMatrix4x4 textProjection;
-    ////textProjection.ortho(viewport[0], viewport[1], viewport[2], viewport[3], 0.0f, 0.0f);
-
-    //auto shaderProgram = m_shaderProgramMap["texture"];
-
-    //if (!shaderProgram->bind()){
-    //    qCritical() << "Error binding texture shader program.";
-    //    return;
-    //}
-
-    //shaderProgram->setUniformValue("mvp_matrix", projection * view * model);
-    //shaderProgram->setUniformValue("texture", 0);
-
-    // Iterate through all characters
-    //QString::const_iterator c;
-    //for (c = text.begin(); c != text.end(); c++)
-    //{
-    //    Character ch = m_characters[(*c).toLatin1()];
-
-    //    GLfloat xpos = textPos.x() + ch.bearing.x() * scale;
-    //    GLfloat ypos = textPos.y() - (ch.size.y() - ch.bearing.y()) * scale;
-
-    //    GLfloat w = ch.size.x() * scale;
-    //    GLfloat h = ch.size.y() * scale;
-    //    // Update VBO for each character
-    //    GLfloat vertices[6][4] = {
-    //        { xpos,     ypos + h,   0.0, 0.0 },
-    //        { xpos,     ypos,       0.0, 1.0 },
-    //        { xpos + w, ypos,       1.0, 1.0 },
-
-    //        { xpos,     ypos + h,   0.0, 0.0 },
-    //        { xpos + w, ypos,       1.0, 1.0 },
-    //        { xpos + w, ypos + h,   1.0, 0.0 }
-    //    };
-
-    //    ch.texture->bind();
-
-    //    m_geometryEngine->drawCubeGeometry(shaderProgram.get());
-
-    //    // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-
-    //    textPos.setX(textPos.x() + (ch.advance >> 6) * scale); // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))
-    //}
-}
-
-void GraphicsScene3dRenderer::initFont()
-{
-    FT_Library ft;
-    FT_Face face;
-
-    if (FT_Init_FreeType(&ft)){
-        qDebug().noquote() << "ERROR::FREETYPE: Could not init FreeType Library";
-        return;
-    }
-
-    //if (FT_New_Face(ft, ":/assets/fonts/arial.ttf", 0, &face)){
-    if (FT_New_Face(ft, "D:/arial.ttf", 0, &face)){
-        qDebug().noquote() << "ERROR::FREETYPE: Failed to load font";
-        return;
-    }
-
-    FT_Set_Pixel_Sizes(face, 0, 24);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-
-    for (GLubyte c = 0; c < 128; c++)
-    {
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER)){
-            qDebug().noquote() << "ERROR::FREETYTPE: Failed to load Glyph";
-            continue;
-        }
-
-        GLuint texture;
-
-        QImage image((uchar*)face->glyph->bitmap.buffer,
-                     face->glyph->bitmap.width,
-                     face->glyph->bitmap.rows,
-                     face->glyph->bitmap.width * sizeof(uchar),
-                     QImage::Format_Indexed8);
-
-        Character character = {
-           new QOpenGLTexture(image),
-           texture,
-           QVector2D(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-           QVector2D(face->glyph->bitmap_left, face->glyph->bitmap_top),
-           face->glyph->advance.x
-        };
-
-        character.texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-        character.texture->setMagnificationFilter(QOpenGLTexture::Linear);
-        character.texture->setWrapMode(QOpenGLTexture::MirroredRepeat);
-        character.texture->generateMipMaps();
-
-        m_characters.insert(c, character);
-    }
-
-    // Configure VAO/VBO for texture quads
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    FT_Done_Face(face);
-    FT_Done_FreeType(ft);
 }
