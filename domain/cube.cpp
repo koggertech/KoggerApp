@@ -111,26 +111,6 @@ bool Cube::isEmpty() const
     return m_xMin == m_xMax && m_yMin == m_yMax && m_zMin == m_zMax;
 }
 
-Plane Cube::front()
-{
-
-}
-
-Plane Cube::right()
-{
-
-}
-
-Plane Cube::back()
-{
-
-}
-
-Plane Cube::left()
-{
-
-}
-
 Plane Cube::bottom()
 {
     return Plane({m_xMin,m_yMin,m_zMin},

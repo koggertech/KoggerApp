@@ -17,7 +17,7 @@
 
 #include "time.h"
 
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 #define MAKETIME(t) mktime(t)
 #define GMTIME(t) gmtime(t)
 #else

@@ -69,9 +69,9 @@ void Device::putData(const QByteArray &data) {
 
 #if !defined(Q_OS_ANDROID)
             if(_parser.id() == ID_TIMESTAMP && _parser.ver() == v1) {
-                int timestamp = _parser.read<U4>();
-                int unix = _parser.read<U4>();
-                core.dataset()->addEvent(timestamp, 0, unix);
+                int t = static_cast<int>(_parser.read<U4>());
+                int u = static_cast<int>(_parser.read<U4>());
+                core.dataset()->addEvent(t, 0, u);
 //                core.consoleInfo(QString("Event time %1.%2").arg(unix).arg(timestamp));
             }
 

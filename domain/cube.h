@@ -31,10 +31,6 @@ public:
     Cube merge(const Cube& other);
     bool isEmpty() const;
 
-    Plane front();
-    Plane right();
-    Plane back();
-    Plane left();
     Plane bottom();
     Plane top();
 

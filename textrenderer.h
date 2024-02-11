@@ -65,6 +65,8 @@ private:
                << "size ="          << ch.size                 << '\n'
                << "bearing ="       << ch.bearing              << '\n'
                << "<----------"                                << '\n';
+
+            return ds;
         }
     };
 

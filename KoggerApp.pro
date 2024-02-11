@@ -5,7 +5,7 @@ QT += qml
 
 #CONFIG += FLASHER
 
-windows {
+!android {
     QT += serialport
 }
 
@@ -206,15 +206,13 @@ DISTFILES += \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
-
-
 windows {
     LIBS += -lopengl32
 }
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
 
 INCLUDEPATH += $$PWD/libs/freetype/include
 DEPENDPATH += $$PWD/libs/freetype/include
