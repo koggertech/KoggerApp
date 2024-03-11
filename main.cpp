@@ -22,6 +22,12 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
 }
 
 int main(int argc, char *argv[]) {
+
+#if defined(Q_OS_LINUX)
+    QApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
+    ::qputenv("QT_SUPPORT_GL_CHILD_WIDGETS", "1");
+#endif
+
     QCoreApplication::setOrganizationName("KOGGER");
     QCoreApplication::setOrganizationDomain("kogger.tech");
     QCoreApplication::setApplicationName("KoggerApp");
