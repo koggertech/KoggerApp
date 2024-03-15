@@ -11,8 +11,8 @@ Plot2D::Plot2D() {
     _aim.setVisible(true);
     _quadrature.setVisible(false);
     setDataChannel(CHANNEL_FIRST);
-//    _cursor.attitude.from = -180;
-//    _cursor.attitude.to = 180;
+   _cursor.attitude.from = -180;
+   _cursor.attitude.to = 180;
 
     _cursor.distance.set(0, 20);
 //    _cursor.velocity.set(-1, 1);
@@ -300,7 +300,10 @@ void Plot2D::setMousePosition(int x, int y) {
 //    _mouse.x = x;
 //    _mouse.y = y;
 
+    qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
+
     if(_cursor.tool() > MouseToolNothing) {
+
         for(int x_ind = 0; x_ind < x_length; x_ind++) {
             int epoch_index = _cursor.getIndex(x_start + x_ind);
 

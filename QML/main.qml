@@ -233,7 +233,7 @@ Window  {
     ColumnLayout {
         anchors.top: parent
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: false
+        visible: true
 
         RowLayout {
             MenuBlock {

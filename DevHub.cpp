@@ -65,7 +65,7 @@ void Device::putData(const QByteArray &data) {
             }
 
 
-            if(_isConsoled && (_isDuplex || 1) && !(_parser.id() == 33 || _parser.id() == 33)) { core.consoleProto(_parser); }
+            if(_isConsoled && (_isDuplex || 1) && !(_parser.id() == 32 || _parser.id() == 33)) { core.consoleProto(_parser); }
 
 #if !defined(Q_OS_ANDROID)
             if(_parser.id() == ID_TIMESTAMP && _parser.ver() == v1) {

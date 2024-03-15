@@ -101,6 +101,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     3Plot.h \
     ConverterXTF.h \
+    DSP.h \
     DevDriver.h \
     DevHub.h \
     DevQProperty.h \

@@ -328,6 +328,11 @@ public:
         return *val;
     }
 
+    template<typename T>
+    void read(T* data_struct) {
+        read((uint8_t*)(data_struct), sizeof (T));
+    }
+
     void read(uint8_t* b, uint16_t len) {
         for(uint16_t i = 0; i < len; i++) {
             b[i] = _frame[_readPosition];

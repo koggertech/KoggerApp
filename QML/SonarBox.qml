@@ -95,7 +95,7 @@ DevSettingsBox {
                 paramName: "Pulse count"
 
                 SpinBoxCustom {
-                    from: 0; to: 30; stepSize: 1
+                    from: 0; to: 5000; stepSize: 1
                     value: dev.transPulse
                     onValueChanged: dev.transPulse = value
                 }

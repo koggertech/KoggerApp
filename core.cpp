@@ -14,7 +14,7 @@ Core::Core() : QObject(),
 //    connectionThread.start();
 
     connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
-    connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addIQ);
+connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
     connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
     connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
     connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
@@ -299,6 +299,59 @@ void Core::setLogging(bool is_logging) {
 
 bool Core::isLogging() {
     return _isLogging;
+}
+
+bool Core::exportComplexToCSV(QString file_path) {
+    QString export_file_name;
+    if(m_connection->lastType() == Connection::ConnectionFile) {
+        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+    } else {
+        export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+    }
+
+    _logger.creatExportStream(file_path + "/" + export_file_name + ".csv");
+
+    QMap<int, DatasetChannel> ch_list = _dataset->channelsList();
+
+    _dataset->setRefPosition(1518);
+
+    for(int i = 0; i < _dataset->size(); i++) {
+        Epoch* epoch = _dataset->fromIndex(i);
+
+        if(epoch == NULL) { continue; }
+
+        Epoch::Echogram* echogramm = epoch->chart(0);
+        float dist = echogramm->bottomProcessing.getDistance();
+        Position pos = epoch->getPositionGNSS();
+
+        if(!isfinite(dist)) { continue; }
+
+        for (const auto& channel : ch_list) {
+            int ich = channel.channel;
+
+            Complex16* data = epoch->complexSignalData16(ich);
+            int data_size = epoch->complexSignalSize16(ich);
+
+            QString row_data;
+
+            row_data.append(QString("%1,%2").arg(i).arg(ich));
+            row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
+            row_data.append(QString(",%1,%2").arg(pos.ned.n).arg(pos.ned.e));
+
+            if(data != NULL && data_size > 0) {
+                for(int ci = 0; ci < data_size; ci++) {
+                    row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                }
+            }
+
+            row_data.append("\n");
+            _logger.dataExport(row_data);
+        }
+    }
+
+    _logger.endExportStream();
+
+    return true;
 }
 
 bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {

@@ -105,27 +105,36 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         } else {
             return respErrorPayload;
         }
-    } else if(proto.ver() == v6) {
-        uint8_t cell_byte_size = proto.read<U1>();
-        type = proto.read<U1>();
-        channel = proto.read<U2>();
-        _lastSeqPosition = proto.read<U4>();
+    } else if(proto.ver() == v7) {
+        proto.read(&_rawHeader);
+
+        // qDebug("pkt");
+
+        uint8_t cell_byte_size = _rawHeader.dataSize*_rawHeader.channelCount;
+
+
+        type = _rawHeader.dataType;
+        _lastSeqPosition = _rawHeader.cellOffset;
 
         if(_lastSeqPosition == 0 && _rawSeqPosition != 0) {
             _rawCellCount = _rawSeqPosition;
             _rawDataSize = _rawCellCount*cell_byte_size;
             memcpy(_rawDataSave, _rawData, _rawDataSize);
             m_isCompleteChart = true;
-//            qInfo("size %i", m_chartSize);
+           // qDebug("size %i, _rawDataSize %i, cell_byte_size %i", _rawDataSize, _rawCellCount, cell_byte_size);
         }
 
         if(_lastSeqPosition == 0) {
             _rawSeqPosition = 0;
         }
 
+        // qDebug("_rawSeqPosition %i, _lastSeqPosition%i", _rawSeqPosition, _lastSeqPosition);
+
         if(_rawSeqPosition == _lastSeqPosition) {
             uint16_t part_byte_len = proto.readAvailable();
             uint32_t byte_offset = _rawSeqPosition*cell_byte_size;
+
+            // qDebug("cell_byte_size %i", part_byte_len);
 
             if(byte_offset + part_byte_len < sizeof (_rawData)) {
                 proto.read((uint8_t*)&_rawData[byte_offset], part_byte_len);
@@ -413,6 +422,8 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
     id_out.write<U1>(pulse);
     id_out.write<U1>(boost);
     id_out.end();
+
+
     emit binFrameOut(id_out);
 }
 

@@ -652,39 +652,39 @@ public:
         imag4.fill(NAN);
 
 
-        for(int i = 0; i < canvas.width(); i++) {
-            int pool_index = cursor.getIndex(i);
-            Epoch* data = dataset->fromIndex(pool_index);
-            if(data != NULL) {
-                QByteArray raw = data->iqData();
-                if(raw.size() >= 960*4) {
-                    const int16_t* data = (int16_t*)raw.data();
-                    real1[i] = data[0+40];
-                    imag1[i] = data[1+40];
+        // for(int i = 0; i < canvas.width(); i++) {
+        //     int pool_index = cursor.getIndex(i);
+        //     Epoch* data = dataset->fromIndex(pool_index);
+        //     if(data != NULL) {
+        //         QByteArray raw = data->complexSignalData();
+        //         if(raw.size() > 0) {
+        //             const int16_t* data = (int16_t*)raw.data();
+        //             real1[i] = data[0+50];
+        //             imag1[i] = data[1+50];
 
-                    real2[i] = data[2+40];
-                    imag2[i] = data[3+40];
+        //             real2[i] = data[2+50];
+        //             imag2[i] = data[3+50];
 
-                    real3[i] = data[4+40];
-                    imag3[i] = data[5+40];
+        //             real3[i] = data[4+50];
+        //             imag3[i] = data[5+50];
 
-                    real4[i] = data[6+40];
-                    imag4[i] = data[7+40];
-                }
-            }
-        }
+        //             real4[i] = data[6+50];
+        //             imag4[i] = data[7+50];
+        //         }
+        //     }
+        // }
 
-        drawY(canvas, real1, -3200+1500, 3200+1500, _penReal);
-        drawY(canvas, imag1, -3200+1500, 3200+1500, _penImag);
+        // drawY(canvas, real1, -3200+1500, 3200+1500, _penReal);
+        // drawY(canvas, imag1, -3200+1500, 3200+1500, _penImag);
 
-        drawY(canvas, real2, -3200+768, 3200+768, _penReal);
-        drawY(canvas, imag2, -3200+768, 3200+768, _penImag);
+        // drawY(canvas, real2, -3200+768, 3200+768, _penReal);
+        // drawY(canvas, imag2, -3200+768, 3200+768, _penImag);
 
-        drawY(canvas, real3, -3200-768, 3200-768, _penReal);
-        drawY(canvas, imag3, -3200-768, 3200-768, _penImag);
+        // drawY(canvas, real3, -3200-768, 3200-768, _penReal);
+        // drawY(canvas, imag3, -3200-768, 3200-768, _penImag);
 
-        drawY(canvas, real4, -3200-1500, 3200-1500, _penReal);
-        drawY(canvas, imag4, -3200-1500, 3200-1500, _penImag);
+        // drawY(canvas, real4, -3200-1500, 3200-1500, _penReal);
+        // drawY(canvas, imag4, -3200-1500, 3200-1500, _penImag);
 
 
         return true;

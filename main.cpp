@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
 
 #if defined(Q_OS_WIN)
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 #endif
 
 
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]) {
 
 //    qInstallMessageHandler(messageHandler);
 
-//    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
+
 
     qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
 

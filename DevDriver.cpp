@@ -557,7 +557,7 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 
             emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
 
-        } else if(ver == v6) {
+        } else if(ver == v7) {
             QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
             emit iqComplete(data, idChart->rawType());
         }

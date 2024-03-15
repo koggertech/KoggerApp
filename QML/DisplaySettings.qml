@@ -844,7 +844,6 @@ GridLayout {
                         to: 100
                         stepSize: 1
                         value: 10
-    //                    onValueChanged: bottomTrackProcessingGroup.updateProcessing()
                         Settings {
                             property alias exportDecimationValue: exportDecimationValue.value
                         }
@@ -862,6 +861,14 @@ GridLayout {
                         text: "Export to XTF"
                         Layout.fillWidth: true
                         onClicked: core.exportPlotAsXTF(exportPathText.text);
+                    }
+                }
+
+                RowLayout {
+                    CButton {
+                        text: "Complex signal to CSV"
+                        Layout.fillWidth: true
+                        onClicked: core.exportComplexToCSV(exportPathText.text);
                     }
                 }
 

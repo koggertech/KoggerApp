@@ -11,6 +11,8 @@
 #include "math.h"
 #include <qvector3d.h>
 
+#include <DSP.h>
+
 #include <3Plot.h>
 #include <IDBinnary.h>
 
@@ -293,19 +295,24 @@ public:
 
     } Echogram;
 
+    typedef struct ComplexSignal {
+        QByteArray data;
+        int type = 0;
+    } ComplexSignal;
 
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
     void setEncoder(float encoder);
     void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, int offset);
-    void setIQ(QByteArray data, uint8_t type);
+    void setComplexSignal16(int channel, QVector<Complex16> data);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setExternalPosition(Position position);
+    void setPositionRef(LLARef* ref);
 
     void setGnssVelocity(double h_speed, double course);
 
@@ -444,8 +451,30 @@ public:
         return range;
     }
 
-    QByteArray iqData() { return _iq;}
-    bool isIqAvail() { return flags.iqAvail; }
+    Complex16* complexSignalData16(int ch) {
+        if(_complex.contains(ch)) {
+            return (Complex16*)_complex[ch].data.data();
+        } else {
+            return NULL;
+        }
+    }
+
+    int complexSignalSize16(int ch) {
+        if(_complex.contains(ch)) {
+            return _complex[ch].data.size()/sizeof(Complex16);
+        } else {
+            return 0;
+        }
+    }
+
+    QMap<int, ComplexSignal> complexSignal() {
+        return _complex;
+    }
+
+    bool isComplexSignalAvail() {
+        return _complex.size() > 0;
+    }
+
 
 
     bool distAvail() { return flags.distAvail; }
@@ -625,8 +654,7 @@ protected:
         }
     } _attitude;
 
-    QByteArray _iq;
-    uint8_t _iq_type = 0;
+    QMap<int, ComplexSignal> _complex;
 
     IDBinDVL::BeamSolution _dopplerBeams[4];
     uint16_t _dopplerBeamCount = 0;
@@ -669,7 +697,6 @@ protected:
         bool posAvail = false;
 
         bool tempAvail = false;
-        bool iqAvail;
         bool isDVLSolutionAvail = false;
 
     } flags;
@@ -730,7 +757,7 @@ public slots:
     void addEncoder(float encoder);
     void addTimestamp(int timestamp);
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
-    void addIQ(QByteArray data, uint8_t type);
+    void addComplexSignal(QByteArray data, uint8_t type);
     void addDist(int dist);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
@@ -767,6 +794,8 @@ public slots:
 //            _render3D->updateBottomTrack(_bottomTrack);
 //        }
 //    }
+
+    void setRefPosition(int epoch_index);
 
     void clearTrack();
     void updateTrack(bool update_all = false);

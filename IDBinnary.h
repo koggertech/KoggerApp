@@ -108,6 +108,18 @@ class IDBinChart : public IDBin
 {
     Q_OBJECT
 public:
+    struct RawDataHeader {
+        struct  __attribute__((packed)) {
+            uint8_t dataType : 4;
+            uint8_t dataSize : 4;
+        };
+        uint8_t channelCount = 0;
+        uint8_t reserved1 = 0;
+        uint32_t cellOffset = 0;
+        float srcSampleRate = 0;
+        float cellSampleRate = 0;
+    } __attribute__((packed)) ;
+
     explicit IDBinChart() : IDBin() {
     }
 
@@ -148,6 +160,8 @@ protected:
     uint16_t channel = 0;
     uint8_t type = 0;
     bool m_isCompleteChart;
+
+    RawDataHeader _rawHeader;
 };
 
 

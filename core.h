@@ -97,7 +97,7 @@ public slots:
     bool isLogging();
 
 
-
+    bool exportComplexToCSV(QString file_path);
     bool exportPlotAsCVS(QString file_path, int channel, float decimation = 0);
     bool exportPlotAsXTF(QString file_path);
 
