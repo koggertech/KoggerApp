@@ -1,9 +1,5 @@
 build-KoggerApp-Desktop_Qt_5_15_0_MinGW_32_bit-Release
 build-KoggerApp-Desktop_Qt_5_15_0_MinGW_32_bit-Debug
-android*
-qtandroidserialport
-android.cpp
-android.h
 *.user
 *.bkp
 coreFlash.cpp
