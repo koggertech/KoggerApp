@@ -187,6 +187,7 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
 
+    _dataset->setRefPositionByFirstValid();
 
     QList<DatasetChannel> chs = _dataset->channelsList().values();
 

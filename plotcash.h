@@ -796,6 +796,9 @@ public slots:
 //    }
 
     void setRefPosition(int epoch_index);
+    void setRefPosition(Epoch* ref_epoch);
+    void setRefPositionByFirstValid();
+    Epoch* getFirstEpochByValidPosition();
 
     void clearTrack();
     void updateTrack(bool update_all = false);

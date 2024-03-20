@@ -745,7 +745,10 @@ void Dataset::spatialProcessing() {
 
 void Dataset::setRefPosition(int epoch_index) {
     Epoch*  ref_epoch = fromIndex(epoch_index);
+    setRefPosition(ref_epoch);
+}
 
+void Dataset::setRefPosition(Epoch *ref_epoch) {
     if(ref_epoch == NULL) {
         return;
     }
@@ -761,6 +764,23 @@ void Dataset::setRefPosition(int epoch_index) {
             epoch->setPositionRef(&_llaRef);
         }
     }
+}
+
+void Dataset::setRefPositionByFirstValid() {
+    Epoch* epoch = getFirstEpochByValidPosition();
+    if(epoch == NULL) { return; }
+
+    setRefPosition(epoch);
+}
+
+Epoch *Dataset::getFirstEpochByValidPosition() {
+    for(int iepoch = 0; iepoch < size(); iepoch++) {
+        Epoch* epoch = fromIndex(iepoch);
+        if(epoch == NULL) { continue; }
+        return epoch;
+    }
+
+    return NULL;
 }
 
 void Dataset::clearTrack() {
