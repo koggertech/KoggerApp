@@ -296,6 +296,15 @@ void IDBinDataset::setPeriod(U1 ch_id, uint32_t period) {
     sendChannel(ch_id, period, mask(ch_id));
 }
 
+QVector<IDBinDataset::Channel> IDBinDataset::getChannels() const {
+    const uint16_t channelsSize{3};
+    QVector<IDBinDataset::Channel> retVal;
+    retVal.reserve(channelsSize);
+    for (uint16_t i = 0; i < channelsSize; ++i)
+        retVal.push_back(m_channel[i]);
+    return retVal;
+}
+
 void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
     if(ch_id < _countof(m_channel)) {
         m_channel[ch_id].period = period;
@@ -521,6 +530,15 @@ void IDBinUART::setDevDefAddress(U1 addr) {
 
     id_out.end();
     emit binFrameOut(id_out);
+}
+
+QVector<IDBinUART::UART> IDBinUART::getUart() const {
+    const uint16_t uartSize {5};
+    QVector<UART> retVal;
+    retVal.reserve(uartSize);
+    for (uint16_t i = 0; i < uartSize; ++i)
+        retVal.push_back(m_uart[i]);
+    return retVal;
 }
 
 Resp IDBinVersion::parsePayload(FrameParser &proto) {

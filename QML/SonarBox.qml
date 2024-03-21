@@ -531,5 +531,67 @@ DevSettingsBox {
             }
         }
 
+        ParamGroup {
+            groupName: "Settings"
+
+            property string lastFolder: Qt.platform.os === "windows" ? shortcuts.home : "file:///" + shortcuts.home
+
+            FileDialog {
+                id: importFileDialog
+                title: "Open file"
+                selectExisting: true
+                folder: dev ? Qt.resolvedUrl(dev.lastFolder) : shortcuts.home
+                nameFilters: ["XML files (*.xml)"]
+                onAccepted: {
+                    dev.lastFolder = importFileDialog.folder
+                    var selectedFile = importFileDialog.fileUrl
+                    if (selectedFile !== "") {
+                        var filePath = selectedFile.toString();
+                        if (Qt.platform.os === "windows")
+                            filePath = filePath.substring(8)
+                        dev.importSettingsFromXML(filePath)
+                    }
+                }
+            }
+
+            FileDialog {
+                id: exportFileDialog
+                title: "Save as file"
+                selectExisting: false
+                folder: dev ? Qt.resolvedUrl(dev.lastFolder) : shortcuts.home
+                nameFilters: ["XML files (*.xml)"]
+                onAccepted: {
+                    dev.lastFolder = exportFileDialog.folder
+                    var selectedFile = exportFileDialog.fileUrl
+                    if (selectedFile !== "") {
+                        var filePath = selectedFile.toString();
+                        if (Qt.platform.os === "windows")
+                            filePath = filePath.substring(8)
+                        dev.exportSettingsToXML(filePath)
+                    }
+                }
+            }
+
+            ColumnLayout {
+                RowLayout {
+                    CButton {
+                        text: "Import"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            importFileDialog.open()
+                        }
+                    }
+                    CButton {
+                        text: "Export"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            exportFileDialog.open()
+                        }
+                    }
+                }
+            }
+
+        }
+
     }
 }

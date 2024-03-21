@@ -2,6 +2,7 @@
 #define IDBINNARY_H
 
 #include <QObject>
+#include <QVector>
 #include <ProtoBinnary.h>
 
 using namespace Parsers;
@@ -332,6 +333,7 @@ public:
     uint32_t period(U1 ch_id);
     void setPeriod(U1 ch_id, uint32_t period);
 
+    QVector<Channel> getChannels() const;
 protected:
     Channel m_channel[3];
 
@@ -503,6 +505,7 @@ public:
     void setDevDefAddress(U1 addr);
     U1 devDefAddress() { return devDef_address; }
 
+    QVector<UART> getUart() const;
 
     void requestAll() override {
         simpleRequest(v0);
