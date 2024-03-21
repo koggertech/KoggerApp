@@ -1,6 +1,8 @@
 #include "DevDriver.h"
 #include <time.h>
 #include <core.h>
+#include <QXmlStreamWriter>
+
 extern Core core;
 
 DevDriver::DevDriver(QObject *parent) :
@@ -130,6 +132,150 @@ int DevDriver::dopplerDist() {
 
 void DevDriver::dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, bool ismode4, float range_mode4) {
     idDVLMode->setModes(ismode1, ismode2, ismode3, ismode4, range_mode4);
+}
+
+void DevDriver::importSettingsFromXML(const QString& filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QXmlStreamReader xmlReader(&file);
+    while (!xmlReader.atEnd() && !xmlReader.hasError()) {
+        const QXmlStreamReader::TokenType token = xmlReader.readNext();
+        if (token == QXmlStreamReader::StartElement) {
+            const QString elementName = xmlReader.name().toString();
+            if (elementName == "Settings")
+                continue;
+
+            while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == elementName)) {
+                xmlReader.readNext();
+                if (xmlReader.isStartElement()) {
+                    if (elementName == "Echogram") {
+                        if (xmlReader.name().toString() == "resolution_mm")
+                            setChartResolution(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "number_of_samples")
+                            setChartSamples(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "offset_of_samples")
+                            setChartOffset(xmlReader.readElementText().toInt());
+                    }
+                    else if (elementName == "Rangefinder") {
+                        if (xmlReader.name().toString() == "max_distance_mm")
+                            setDistMax(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "dead_zone_mm")
+                            setDistDeadZone(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "confidence_threshold_perc")
+                            setConfidence(xmlReader.readElementText().toInt());
+                    }
+                    else if (elementName == "Transducer") {
+                        if (xmlReader.name().toString() == "pulse_count")
+                            setTransPulse(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "frequency_khz")
+                            setTransFreq(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "booster") {
+                            const QString state = xmlReader.readElementText().trimmed();
+                            setTransBoost(state.toUpper() == "TRUE" ? 1 : 0);
+                        }
+                    }
+                    else if (elementName == "DSP") {
+                        if (xmlReader.name().toString() == "horizontal_smoothing_factor")
+                            setDspSmoothFactor(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "speed_of_sound_m_s")
+                            setSoundSpeed(xmlReader.readElementText().toInt());
+                    }
+                    else if (elementName == "Dataset") {
+                        auto idString = xmlReader.name().toString();
+                        const auto id = static_cast<U1>(idString.remove(0, 6).toInt());
+                        while (xmlReader.readNext() != QXmlStreamReader::EndElement) {
+                            if (xmlReader.tokenType() == QXmlStreamReader::StartElement) {
+                                const QString nameStr = xmlReader.name().toString();
+                                const QString valStr = xmlReader.readElementText().trimmed();
+                                if (nameStr == "period_ms")
+                                    id == 1 ? setCh1Period(valStr.toUInt()) : setCh2Period(valStr.toUInt());
+                                else if (nameStr == "echogram")
+                                    setDatasetChart(id, valStr.toUpper() == "TRUE" ? 1 : 0);
+                                else if (nameStr == "rangefinder")
+                                    setDatasetDist(id, valStr.toUpper() == "TRUE" ? 1 : 0);
+                                else if (nameStr == "AHRS")
+                                    setDatasetEuler(id, valStr.toUpper() == "TRUE" ? 1 : 0);
+                                else if (nameStr == "temperature")
+                                    setDatasetTemp(id, valStr.toUpper() == "TRUE" ? 1 : 0);
+                                else if (nameStr == "timestamp")
+                                    setDatasetTimestamp(id, valStr.toUpper() == "TRUE" ? 1 : 0);
+                            }
+                        }
+                    }
+                    else if (elementName == "UART") {
+                        if (xmlReader.name().toString() == "dev_def_address")
+                            setDevDefAddress(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "baudrate")
+                            setBaudrate(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "dev_address")
+                            setDevAddress(xmlReader.readElementText().toInt());
+                    }
+                }
+            }
+        }
+    }
+
+    if (xmlReader.hasError())
+        qDebug() << "XML error:" << xmlReader.errorString().toUtf8();
+
+    file.close();
+}
+
+void DevDriver::exportSettingsToXML(const QString& filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QXmlStreamWriter xmlWriter(&file);
+    xmlWriter.setAutoFormatting(true);
+    xmlWriter.writeStartDocument();
+    xmlWriter.writeStartElement("Settings");
+
+    xmlWriter.writeStartElement("Echogram");
+    xmlWriter.writeTextElement("resolution_mm", QString::number(chartResolution()));
+    xmlWriter.writeTextElement("number_of_samples", QString::number(chartSamples()));
+    xmlWriter.writeTextElement("offset_of_samples", QString::number(chartOffset()));
+    xmlWriter.writeEndElement();
+    xmlWriter.writeStartElement("Rangefinder");
+    xmlWriter.writeTextElement("max_distance_mm", QString::number(distMax()));
+    xmlWriter.writeTextElement("dead_zone_mm", QString::number(distDeadZone()));
+    xmlWriter.writeTextElement("confidence_threshold_perc", QString::number(distConfidence()));
+    xmlWriter.writeEndElement();
+    xmlWriter.writeStartElement("Transducer");
+    xmlWriter.writeTextElement("pulse_count", QString::number(transPulse()));
+    xmlWriter.writeTextElement("frequency_khz", QString::number(transFreq()));
+    xmlWriter.writeTextElement("booster", QVariant(static_cast<bool>(transBoost())).toString());
+    xmlWriter.writeEndElement();
+    xmlWriter.writeStartElement("DSP");
+    xmlWriter.writeTextElement("horizontal_smoothing_factor", QString::number(dspSmoothFactor()));
+    xmlWriter.writeTextElement("speed_of_sound_m_s", QString::number(soundSpeed()));
+    xmlWriter.writeEndElement();
+    xmlWriter.writeStartElement("Dataset");
+    const auto channels = idDataset->getChannels();
+    for (uint8_t i = 1; i < channels.count(); ++i) {
+        xmlWriter.writeStartElement("group_" + QString::number(channels.at(i).id));
+        xmlWriter.writeTextElement("period_ms", QString::number(channels.at(i).period));
+        xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(i)).toString());
+        xmlWriter.writeTextElement("rangefinder", QVariant(idDataset->getDist_v0(i)).toString());
+        xmlWriter.writeTextElement("AHRS", QVariant(static_cast<bool>(idDataset->getEuler(i))).toString());
+        xmlWriter.writeTextElement("temperature", QVariant(idDataset->getTemp_v0(i)).toString());
+        xmlWriter.writeTextElement("timestamp", QVariant(idDataset->getTimestamp_v0(i)).toString());
+        xmlWriter.writeEndElement();
+    }
+    xmlWriter.writeEndElement();
+    xmlWriter.writeStartElement("UART");
+    xmlWriter.writeTextElement("dev_def_address", QString::number(getDevDefAddress()));
+    xmlWriter.writeTextElement("baudrate", QString::number(getBaudrate()));
+    xmlWriter.writeTextElement("dev_address", QString::number(getDevAddress()));
+    xmlWriter.writeEndElement();
+
+    xmlWriter.writeEndElement(); // Settings
+    xmlWriter.writeEndDocument();
+    file.close();
+
+    return;
 }
 
 
@@ -405,6 +551,14 @@ void DevDriver::setDatasetTimestamp(int ch_param) {
     if(is_changed) { emit datasetChanged(); }
 }
 
+void DevDriver::setDatasetTimestamp(U1 channel_id, bool state) {
+    bool is_on = idDataset->getTimestamp_v0(channel_id);
+    if (is_on != state) {
+        state ? idDataset->setTimestamp_v0(channel_id) : idDataset->resetTimestamp_v0(channel_id);
+        emit datasetChanged();
+    }
+}
+
 int DevDriver::datasetDist() {
     int ch_param = 0;
     if(idDataset->getDist_v0(1)) {
@@ -422,6 +576,14 @@ void DevDriver::setDatasetDist(int ch_param) {
     idDataset->setDist_v0(ch_param);
     idDataset->commit();
     if(is_changed) { emit datasetChanged(); }
+}
+
+void DevDriver::setDatasetDist(U1 channel_id, bool state) {
+    bool is_on = idDataset->getDist_v0(channel_id);
+    if (is_on != state) {
+        state ? idDataset->setDist_v0(channel_id) : idDataset->resetDist_v0(channel_id);
+        emit datasetChanged();
+    }
 }
 
 int DevDriver::datasetChart() {
@@ -443,6 +605,14 @@ void DevDriver::setDatasetChart(int ch_param) {
     if(is_changed) { emit datasetChanged(); }
 }
 
+void DevDriver::setDatasetChart(U1 channel_id, bool state) {
+    bool is_on = idDataset->getChart_v0(channel_id);
+    if (is_on != state) {
+        state ? idDataset->setChart_v0(channel_id) : idDataset->resetChart_v0(channel_id);
+        emit datasetChanged();
+    }
+}
+
 int DevDriver::datasetTemp() {
     int ch_param = 0;
     if(idDataset->getTemp_v0(1)) {
@@ -462,6 +632,14 @@ void DevDriver::setDatasetTemp(int ch_param) {
     if(is_changed) { emit datasetChanged();  }
 }
 
+void DevDriver::setDatasetTemp(U1 channel_id, bool state) {
+    bool is_on = idDataset->getTemp_v0(channel_id);
+    if (is_on != state) {
+        state ? idDataset->setTemp_v0(channel_id) : idDataset->resetTemp_v0(channel_id);
+        emit datasetChanged();
+    }
+}
+
 int DevDriver::datasetEuler() {
     int ch_param = 0;
     if(idDataset->getEuler(1)) {
@@ -479,6 +657,14 @@ void DevDriver::setDatasetEuler(int ch_param) {
     idDataset->setEuler(ch_param);
     idDataset->commit();
     if(is_changed) { emit datasetChanged();  }
+}
+
+void DevDriver::setDatasetEuler(U1 channel_id, bool state) {
+    bool is_on = idDataset->getEuler(channel_id);
+    if (is_on != state) {
+        state ? idDataset->setEuler(channel_id) : idDataset->resetEuler(channel_id);
+        emit datasetChanged();
+    }
 }
 
 int DevDriver::datasetSDDBT() {
