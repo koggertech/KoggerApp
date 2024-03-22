@@ -1,6 +1,8 @@
 #include "textrenderer.h"
 #include <drawutils.h>
 #include <QDebug>
+#include <QCoreApplication>
+#include <QFile>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -298,11 +300,14 @@ void TextRenderer::initFont()
         return;
     }
 
-    //if (FT_New_Face(ft, ":/assets/fonts/arial.ttf", 0, &face)){
-    if (FT_New_Face(ft, "D:/arial.ttf", 0, &face)){
+    QFile::copy(":/assets/fonts/arial.ttf", "/arial.ttf");
+
+    if (FT_New_Face(ft, "/arial.ttf", 0, &face)){
         qDebug().noquote() << "ERROR::FREETYPE: Failed to load font";
         return;
     }
+
+
 
     FT_Set_Pixel_Sizes(face, 0, m_fontPixelSize);
 
