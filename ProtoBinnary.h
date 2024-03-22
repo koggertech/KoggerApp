@@ -384,6 +384,7 @@ public:
     Version ver() const { return _ver;}
     bool mark() const { return _mark; }
     bool resp() const { return _resp; }
+    uint16_t checksum() { return _checksum; }
 
     bool isStream() {
         return _optionFlags.isStream;
@@ -460,6 +461,7 @@ protected:
     Type _type;
     uint8_t _address, _from;
     bool _mark, _resp;
+    uint16_t _checksum = 0;
 
     uint8_t _optionsLen;
     OP_Flags _optionFlags;
@@ -588,6 +590,7 @@ protected:
 
     bool checkAsKP1() {
         bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
+        _checksum = *(uint16_t*)(&_frame[_frameLen - 2]);
         if(res) {
             _readPosition = 6;
             _readMaxPosition = _frameLen - 2;
@@ -613,6 +616,7 @@ protected:
 
     bool checkAsKP2() {
         bool res = checkFletcher(&_frame[2], _frameLen - 4, _frame[_frameLen - 2], _frame[_frameLen - 1]);
+        _checksum = *(uint16_t*)(&_frame[_frameLen - 2]);
         if(res) {
             _readPosition = 4;
 
@@ -1098,6 +1102,8 @@ public:
         _frame[_frameLen + 1] = check2;
 
         _frameLen += 2;
+
+        _checksum = *(uint16_t*)(&_frame[_frameLen - 2]);
     }
 protected:
     void setRoute(uint8_t route) { _address = route; _frame[2] = route;}
