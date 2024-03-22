@@ -819,6 +819,8 @@ void Core::UILoad(QObject *object, const QUrl &url) {
     for(int i = 0; i < _plots2d.size(); i++) {
         if(_plots2d.at(i) != NULL) {
             _plots2d.at(i)->setPlot(_dataset);
+            m_scene3dView->bottomTrack()->installEventFilter(_plots2d.at(i));
+            _plots2d.at(i)->installEventFilter( m_scene3dView->bottomTrack().get());
         }
     }
 

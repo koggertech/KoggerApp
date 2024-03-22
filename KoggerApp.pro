@@ -5,7 +5,7 @@ QT += qml
 
 #CONFIG += FLASHER
 
-windows {
+!android {
     QT += serialport
 }
 
@@ -57,6 +57,7 @@ SOURCES += \
         consolelistmodel.cpp \
         core.cpp \
         filelist.cpp \
+    geometryengine.cpp \
     graphicsscene3drenderer.cpp \
     graphicsscene3dview.cpp \
         logger.cpp \
@@ -68,6 +69,7 @@ SOURCES += \
     ray.cpp \
     raycaster.cpp \
         streamlist.cpp \
+    textrenderer.cpp \
         waterfall.cpp \
 
 FLASHER {
@@ -85,6 +87,7 @@ SOURCES += \
 }
 
 RESOURCES += QML/qml.qrc \
+    resources.qrc \
     shaders.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
@@ -121,6 +124,7 @@ HEADERS += \
     filelist.h \
     flasher.h \
     core.h \
+    geometryengine.h \
     graphicsscene3drenderer.h \
     graphicsscene3dview.h \
     logger.h \
@@ -130,6 +134,7 @@ HEADERS += \
     ray.h \
     raycaster.h \
     streamlist.h \
+    textrenderer.h \
     waterfall.h \
     waterfallproxy.h \
 
@@ -202,16 +207,22 @@ DISTFILES += \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
-
-
 windows {
     LIBS += -lopengl32
 }
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+
+INCLUDEPATH += $$PWD/libs/freetype/include
+DEPENDPATH += $$PWD/libs/freetype/include
 
 include ($$PWD/core/core.pri)
 include ($$PWD/processors/processors.pri)
 include ($$PWD/domain/domain.pri)
 include ($$PWD/controllers/controllers.pri)
+include ($$PWD/events/events.pri)
 
 
 android {

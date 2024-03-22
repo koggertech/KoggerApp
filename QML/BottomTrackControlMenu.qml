@@ -29,18 +29,36 @@ Item {
                 text:             "Show"
                 checkState:       Qt.Checked
                 onCheckedChanged: root.controller.onVisibilityCheckBoxCheckedChanged(checked)
+
                 Component.onCompleted: {
-                    if(controller.bottomTrack)
-                        checkState = controller.bottomTrack.visible ? Qt.Checked : Qt.Unchecked
+                    if(root.controller.bottomTrack)
+                        visibilityCheckBox.checkState = controller.bottomTrack.visible ? Qt.Checked : Qt.Unchecked
                 }
             }
 
-            KButton {
-                id:               restoreBottomTrack
-                Layout.fillWidth: true
-                text:             qsTr("Restore")
-                onClicked:        root.controller.onRestoreBottomTrackButtonClicked()
+            KParamSetup {
+                paramName: "Visible channel: "
+
+                KCombo {
+                    id:                    visibleChannelCombo
+                    objectName:            "visibleChannelCombo"
+                    Layout.preferredWidth: 250
+                    model:                 root.controller.channelList
+                    onActivated:           root.controller.onVisibleChannelComboBoxIndexChanged(currentIndex)
+
+                    Component.onCompleted: {
+                        visibleChannelCombo.currentIndex = controller.visibleChannelIndex
+                    }
+                }
             }
+        }
+    }
+
+    Connections {
+        target: root.controller
+        function onChannelListUpdated() {
+            visibleChannelCombo.currentIndex = controller.visibleChannelIndex
+            visibleChannelCombo.model = controller.channelList
         }
     }
 }

@@ -55,22 +55,22 @@ public:
     bool operator==(const Point3D& other) const {
         return mX == other.x() && mY == other.y() /*&& mZ == other.z()*/;
         //return equal(mX,other.x()) && equal(mY,other.y()) && equal(mZ,other.z());
-    };
+    }
 
     //! Equal operator
     bool operator<(const Point3D& other) const {
         return mX < other.x() && mY < other.y() /*&& mZ < other.z()*/;
-    };
+    }
 
 
     //! Not-equal operator
     bool operator!=(const Point3D& other) const {
         return mX != other.x() && mY != other.y();
-    };
+    }
 
     //! Ostream operator
     friend std::ostream& operator<<(std::ostream& out, const Point3D <T>& point) {
-        out << "X: " << point.x() << ", Y: " << point.y() << ", Z: " << point.z() << std::endl;
+        //out << "X: " << point.x() << ", Y: " << point.y() << ", Z: " << point.z() << std::endl;
         return out;
     }
 
@@ -81,7 +81,7 @@ public:
             static_cast <float>(mY),
             static_cast <float>(mZ),
         };
-    };
+    }
 
     static Point3D <T> fromQVector3D(const QVector3D& v){
         return Point3D <T> (

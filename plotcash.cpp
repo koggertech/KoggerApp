@@ -342,13 +342,6 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         pool_index = endIndex();
     }
 
-    if(isfinite(lat) && isfinite(lon) && unix_time > 0) {
-        if(!_llaRef.isInit) {
-            LLA lla(lat, lon);
-            _llaRef = LLARef(lla);
-        }
-    }
-
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
     emit dataUpdate();
 }
@@ -803,28 +796,27 @@ void Dataset::updateTrack(bool update_all) {
 
     QMap<int, DatasetChannel> ch_list = channelsList();
 
-
     for(int i = from_index; i < to_size; i+=1) {
         Epoch* epoch = fromIndex(i);
         Position pos = epoch->getPositionGNSS();
 
-//        if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
-//            if(!_llaRef.isInit) {
-//                _llaRef = LLARef(pos.lla);
-//            }
-//            pos.LLA2NED(&_llaRef);
-//        }
+        if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+            if(!_llaRef.isInit) {
+                _llaRef = LLARef(pos.lla);
+            }
+            pos.LLA2NED(&_llaRef);
+        }
 
         if(pos.ned.isCoordinatesValid()) {
-            for (const auto& channel : ch_list) {
-                float distance = -1.0 * epoch->distProccesing(channel.channel);
-                if(!isfinite(distance)) {
-                    distance = NAN;
-                }
-                // Checking for NAN
-                if(distance == distance)
-                    _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
-            }
+            //for (const auto& channel : ch_list) {
+            //    float distance = -1.0 * epoch->distProccesing(channel.channel);
+            //    if(!isfinite(distance)) {
+            //        distance = NAN;
+            //    }
+            //    // Checking for NAN
+            //    if(distance == distance)
+            //        _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
+            //}
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }
     }

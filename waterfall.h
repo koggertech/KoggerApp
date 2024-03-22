@@ -28,6 +28,8 @@ public:
 
     void plotUpdate() override;
 
+    virtual bool eventFilter(QObject *watched, QEvent *event);
+
 protected:
     Dataset* m_plot = nullptr;
     QTimer* m_updateTimer;

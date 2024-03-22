@@ -10,6 +10,7 @@
 #include <QPainter>
 #include "math.h"
 #include <qvector3d.h>
+#include <QQmlEngine>
 
 #include <DSP.h>
 
@@ -18,7 +19,7 @@
 
 #include "time.h"
 
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 #define MAKETIME(t) mktime(t)
 #define GMTIME(t) gmtime(t)
 #else
@@ -193,6 +194,10 @@ const int CHANNEL_NONE = 0x8000;
 const int CHANNEL_FIRST = 0x8000-1;
 
 typedef struct DatasetChannel {
+    Q_GADGET
+    Q_PROPERTY(int channelId  MEMBER channel)
+
+public:
     int channel = -1;
     int count = 0;
     double distance_from = NAN;
@@ -210,6 +215,7 @@ typedef struct DatasetChannel {
         count++;
     }
 } DatasetChannel;
+Q_DECLARE_METATYPE(DatasetChannel)
 
 typedef enum BottomTrackPreset {
     BottomTrackOneBeam,

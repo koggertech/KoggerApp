@@ -4,6 +4,7 @@
 #include <plane.h>
 
 #include <QVector3D>
+#include <QDebug>
 
 #include <cmath>
 
@@ -28,11 +29,8 @@ public:
     float width() const;
     float height() const;
     Cube merge(const Cube& other);
+    bool isEmpty() const;
 
-    Plane front();
-    Plane right();
-    Plane back();
-    Plane left();
     Plane bottom();
     Plane top();
 
@@ -45,6 +43,24 @@ private:
     float m_zMax = 0.0f;
     bool m_isValid = false;
 };
+
+inline QDebug operator<<(QDebug stream,const Cube& cube)
+{
+    stream << "\n";
+    stream << "       ____________  \n";
+    stream << "      /|          /| \n";
+    stream << "     / |         / | \n";
+    stream << "    /__|________/  | \n";
+    stream << "    |  |        |  | h =" << cube.height() << "\n";
+    stream << "    |  |________|__| \n";
+    stream << "    | /         |  / \n";
+    stream << "    |/          | / l =" << cube.length() << "\n";
+    stream << "    |___________|/   \n";
+    stream << "       w ="<<cube.width();
+    stream << "\n";
+
+    return stream;
+}
 
 
 #endif // CUBE_H

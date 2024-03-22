@@ -29,58 +29,86 @@ QVector3D Cube::bottomPos() const {
     };
 }
 
-float Cube::length() const{
-    return std::abs(m_xMax - m_xMin);
+float Cube::length() const
+{
+    return std::fabs(m_xMax - m_xMin);
 }
 
 float Cube::width() const
 {
-    return std::abs(m_yMax - m_yMin);
+    return std::fabs(m_yMax - m_yMin);
 }
 
 float Cube::height() const{
-    return std::abs(m_zMax - m_zMin);
+    return std::fabs(m_zMax - m_zMin);
 }
 
 Cube Cube::merge(const Cube &other)
 {
-    if(!m_isValid && other.m_isValid)
+    if(isEmpty())
         return other;
-    else if(m_isValid && !other.m_isValid)
+
+    if(other.isEmpty())
         return *this;
-    else if(!m_isValid && !other.m_isValid)
-        return {};
 
-    m_xMin = std::fminf(m_xMin, other.m_xMin);
-    m_xMax = std::fmaxf(m_xMax, other.m_xMax);
+    // x borders
+    float n1 = m_xMin;
+    float f1 = m_xMin;
+    if (m_xMax < m_xMin)
+        n1 = m_xMax;
+    else
+        f1 = m_xMax;
 
-    m_yMin = std::fminf(m_yMin, other.m_yMin);
-    m_yMax = std::fmaxf(m_yMax, other.m_yMax);
+    float n2 = other.m_xMin;
+    float f2 = other.m_xMin;
+    if (other.m_xMax < other.m_xMin)
+        n2 = other.m_xMax;
+    else
+        f2 = other.m_xMax;
 
-    m_zMin = std::fminf(m_zMin, other.m_zMin);
-    m_zMax = std::fmaxf(m_zMax, other.m_zMax);
+    // y borders
+    float l1 = m_yMin;
+    float r1 = m_yMin;
+    if (m_yMax < m_yMin)
+        l1 = m_yMax;
+    else
+        r1 = m_yMax;
+
+    float l2 = other.m_yMin;
+    float r2 = other.m_yMin;
+    if (other.m_yMax < other.m_yMin)
+        l2 = other.m_yMax;
+    else
+        r2 = other.m_yMax;
+
+    //z borders
+    float t1 = m_zMin;
+    float b1 = m_zMin;
+    if (m_zMax < m_zMin)
+        t1 = m_zMax;
+    else
+        b1 = m_zMax;
+
+    float t2 = other.m_zMin;
+    float b2 = other.m_zMin;
+    if (other.m_zMax < other.m_zMin)
+        t2 = other.m_zMax;
+    else
+        b2 = other.m_zMax;
+
+    m_xMin = qMin(n1, n2);
+    m_xMax = qMax(f1, f2);
+    m_yMin = qMin(l1, l2);
+    m_yMax = qMax(r1, r2);
+    m_zMin = qMin(t1, t2);
+    m_zMax = qMax(b1, b2);
 
     return *this;
 }
 
-Plane Cube::front()
+bool Cube::isEmpty() const
 {
-
-}
-
-Plane Cube::right()
-{
-
-}
-
-Plane Cube::back()
-{
-
-}
-
-Plane Cube::left()
-{
-
+    return m_xMin == m_xMax && m_yMin == m_yMax && m_zMin == m_zMax;
 }
 
 Plane Cube::bottom()

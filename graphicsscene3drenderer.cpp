@@ -9,10 +9,17 @@
 #include <QThread>
 #include <QDebug>
 
+#include <textrenderer.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 GraphicsScene3dRenderer::GraphicsScene3dRenderer()
 {
     m_shaderProgramMap["height"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static"] = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["text"]   = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["texture"]   = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -61,12 +68,9 @@ void GraphicsScene3dRenderer::render()
     glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-    glFrontFace(GL_CW);
-
     drawObjects();
+
+    TextRenderer::instance();
 }
 
 void GraphicsScene3dRenderer::drawObjects()
@@ -81,12 +85,14 @@ void GraphicsScene3dRenderer::drawObjects()
     m_projection = std::move(projection);
 
     glEnable(GL_DEPTH_TEST);
-    m_planeGridRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    m_bottomTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
+    m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    m_bottomTrackRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
@@ -99,10 +105,11 @@ void GraphicsScene3dRenderer::drawObjects()
     QMatrix4x4 axesProjection;
     QMatrix4x4 axesModel;
 
+    m_axesThumbnailCamera.setDistance(35);
     axesView = m_axesThumbnailCamera.m_view;
     axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 5000.0f);
 
-    m_coordAxesRenderImpl.render(this, axesProjection * axesView * axesModel, m_shaderProgramMap);
+    m_coordAxesRenderImpl.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 

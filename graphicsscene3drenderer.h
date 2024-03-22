@@ -8,12 +8,15 @@
 #include <pointgroup.h>
 #include <polygongroup.h>
 #include <graphicsscene3dview.h>
+#include <geometryengine.h>
 
 #include <QMatrix4x4>
 #include "qsystemdetection.h"
 #if !defined(Q_OS_ANDROID)
 #include <GL/gl.h>
 #include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
+#include <QOpenGLTexture>
 #else
 // #include <QOpenGLFunctions_3_0>
 #include <QOpenGLExtraFunctions>
@@ -30,7 +33,7 @@
 #include <memory>
 
 class QOpenGLShaderProgram;
-class GraphicsScene3dRenderer : protected QOpenGLFunctions
+class GraphicsScene3dRenderer : protected QOpenGLExtraFunctions
 {
 public:
     GraphicsScene3dRenderer();
@@ -45,7 +48,6 @@ private:
     QMatrix4x4 projection() const;
 
 protected:
-
     QMap <QString, std::shared_ptr <QOpenGLShaderProgram>> m_shaderProgramMap;
     bool m_isInitialized = false;
 
@@ -70,6 +72,7 @@ private:
     Cube m_boundingBox;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
+    GLuint VAO, VBO;
 };
 
 #endif // GRAPHICSSCENE3D_H

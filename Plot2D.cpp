@@ -1,4 +1,5 @@
 #include "Plot2D.h"
+#include <epochevent.h>
 
 Plot2D::Plot2D() {
     _echogram.setVisible(true);
