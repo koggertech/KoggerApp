@@ -21,18 +21,21 @@ Resp  IDBin::parse(FrameParser &proto) {
     Resp resp_parse = respNone;
 
     if(proto.type() == CONTENT || proto.type() == SETTING || proto.type() == GETTING) {
+        m_lastType = proto.type();
+        m_lastVersion = proto.ver();
+        _lastAddress = proto.route();
+
         if(proto.resp()) {
-           m_lastResp = (Resp)proto.read<U1>();
-           resp_parse = respOk;
+            m_lastResp = (Resp)proto.read<U1>();
+            // checksumm = proto.read<U2>(); // hash checksum
+            // checkResp();
+            resp_parse = respOk;
         } else {
             m_lastResp = respNone;
             resp_parse = parsePayload(proto);
         }
 
         if(resp_parse == respOk) {
-            m_lastType = proto.type();
-            m_lastVersion = proto.ver();
-            _lastAddress = proto.route();
             emit updateContent(m_lastType, m_lastVersion, m_lastResp, _lastAddress);
         } else {
         }
