@@ -8,9 +8,10 @@ extern Core core;
 template < typename T, size_t N >
 size_t _countof( T const (&array)[ N ] ) { return N; }
 #endif
-
-IDBin::IDBin(QObject *parent) : QObject(parent) {
+IDBin::IDBin(QObject *parent) : QObject(parent), currReqCount_(0) {
 //    setProto(proto);
+
+    QObject::connect(&checkoutTimer_, &QTimer::timeout, this, &IDBin::onExpiredTimer);
 }
 
 IDBin::~IDBin() {
@@ -21,24 +22,40 @@ Resp  IDBin::parse(FrameParser &proto) {
     Resp resp_parse = respNone;
 
     if(proto.type() == CONTENT || proto.type() == SETTING || proto.type() == GETTING) {
-        if(proto.resp()) {
-           m_lastResp = (Resp)proto.read<U1>();
-           resp_parse = respOk;
-        } else {
+        m_lastType = proto.type();
+        m_lastVersion = proto.ver();
+        _lastAddress = proto.route();
+
+        if (proto.resp()) {
+            m_lastResp = (Resp)proto.read<U1>();
+
+            if (!hashLastInfo_.isReaded) {
+                if (checkResponse(proto)) {
+                    hashLastInfo_.isReaded = true;
+                    currReqCount_ = 0;
+                }
+            }
+
+            resp_parse = respOk;
+        }
+        else {
             m_lastResp = respNone;
             resp_parse = parsePayload(proto);
         }
 
-        if(resp_parse == respOk) {
-            m_lastType = proto.type();
-            m_lastVersion = proto.ver();
-            _lastAddress = proto.route();
+        if (resp_parse == respOk)
             emit updateContent(m_lastType, m_lastVersion, m_lastResp, _lastAddress);
-        } else {
-        }
     }
 
     return resp_parse;
+}
+
+bool IDBin::checkResponse(FrameParser& proto)
+{
+    auto checkSum = proto.read<U2>();
+    return (hashLastInfo_.checkSum == checkSum) &&
+           (hashLastInfo_.address == proto.route()) &&
+           (hashLastInfo_.version == proto.ver());
 }
 
 void IDBin::simpleRequest(Version ver) {
@@ -52,6 +69,28 @@ void IDBin::simpleRequest(Version ver) {
 
 void IDBin::appendKey(ProtoBinOut &proto_out) {
     proto_out.write<U4>(m_key);
+}
+
+void IDBin::hashBinFrameOut(ProtoBinOut &proto_out)
+{
+    hashLastInfo_ = { proto_out.ver(), proto_out.checksum(), proto_out.route(), false };
+
+    emit binFrameOut(proto_out); // to device
+
+    if (checkoutTimer_.isActive()) // restart timer
+        checkoutTimer_.stop();
+    checkoutTimer_.start(pollingPeriodTimeMsec_);
+}
+
+void IDBin::onExpiredTimer()
+{
+    checkoutTimer_.stop();
+    emit notifyDevDriver(hashLastInfo_.isReaded);
+
+    if (!hashLastInfo_.isReaded && (currReqCount_++ < repeatingCount_)) { // try request
+        requestAll();
+        checkoutTimer_.start(pollingPeriodTimeMsec_);
+    }
 }
 
 //void IDBin::sendDataProcessing(ProtoBinOut &proto_out) {
@@ -261,6 +300,11 @@ Resp IDBinDataset::parsePayload(FrameParser &proto) {
         return respErrorVersion;
     }
 
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
+    }
+
     return respOk;
 }
 
@@ -315,7 +359,8 @@ void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
         id_out.write<U4>(period);
         id_out.write<U4>(mask);
         id_out.end();
-        emit binFrameOut(id_out);
+
+        hashBinFrameOut(id_out);
     }
 }
 
@@ -330,6 +375,11 @@ Resp IDBinDistSetup::parsePayload(FrameParser &proto) {
         return respErrorVersion;
     }
 
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
+    }
+
     return respOk;
 }
 
@@ -342,7 +392,8 @@ void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
     id_out.write<U4>(start_offset);
     id_out.write<U4>(max_dist);
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 void IDBinDistSetup::setConfidence(int confidence) {
@@ -352,7 +403,8 @@ void IDBinDistSetup::setConfidence(int confidence) {
     id_out.create(SETTING, v2, id(), m_address);
     id_out.write<U1>(m_confidence);
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 
@@ -363,6 +415,11 @@ Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
         m_sanpleOffset = proto.read<U2>();
     } else {
         return respErrorVersion;
+    }
+
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
     }
 
     return respOk;
@@ -382,7 +439,8 @@ void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset
     id_out.write<U2>(resolution);
     id_out.write<U2>(offset);
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 Resp IDBinDSPSetup::parsePayload(FrameParser &proto) {
@@ -391,6 +449,11 @@ Resp IDBinDSPSetup::parsePayload(FrameParser &proto) {
         qInfo("read smooth %u", m_horSmoothFactor);
     } else {
         return respErrorVersion;
+    }
+
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
     }
 
     return respOk;
@@ -404,7 +467,8 @@ void IDBinDSPSetup::setV0(U1 hor_smooth_factor) {
     id_out.write<U1>(horSmoothFactor());
     id_out.end();
     qInfo("write smooth %u", m_horSmoothFactor);
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 
@@ -415,6 +479,11 @@ Resp IDBinTransc::parsePayload(FrameParser &proto) {
         m_boost = proto.read<U1>();
     } else {
         return respErrorVersion;
+    }
+
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
     }
 
     return respOk;
@@ -432,8 +501,7 @@ void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
     id_out.write<U1>(boost);
     id_out.end();
 
-
-    emit binFrameOut(id_out);
+    hashBinFrameOut(id_out);
 }
 
 
@@ -442,6 +510,11 @@ Resp IDBinSoundSpeed::parsePayload(FrameParser &proto) {
         m_soundSpeed = proto.read<U4>();
     } else {
         return respErrorVersion;
+    }
+
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
     }
 
     return respOk;
@@ -454,7 +527,8 @@ void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
     id_out.create(SETTING, v0, id(), m_address);
     id_out.write<U4>(snd_spd);
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 Resp IDBinUART::parsePayload(FrameParser &proto) {
@@ -490,6 +564,11 @@ Resp IDBinUART::parsePayload(FrameParser &proto) {
         return respErrorVersion;
     }
 
+    if (!hashLastInfo_.isReaded) {
+        hashLastInfo_.isReaded = true;
+        emit notifyDevDriver(hashLastInfo_.isReaded);
+    }
+
     return respOk;
 }
 
@@ -504,7 +583,8 @@ void IDBinUART::setBaudrate(U4 baudrate) {
     id_out.write<U4>(m_uart[1].baudrate);
 
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 void IDBinUART::setDevAddress(U1 addr) {
@@ -517,7 +597,8 @@ void IDBinUART::setDevAddress(U1 addr) {
     id_out.write<U1>(addr);
 
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 void IDBinUART::setDevDefAddress(U1 addr) {
@@ -529,7 +610,8 @@ void IDBinUART::setDevDefAddress(U1 addr) {
     id_out.write<U1>(addr);
 
     id_out.end();
-    emit binFrameOut(id_out);
+
+    hashBinFrameOut(id_out);
 }
 
 QVector<IDBinUART::UART> IDBinUART::getUart() const {

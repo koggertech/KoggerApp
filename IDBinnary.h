@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QVector>
+#include <QTimer>
 #include <ProtoBinnary.h>
 
 using namespace Parsers;
@@ -21,6 +22,16 @@ typedef enum {
     BoardEcho20 = 12,
 
 } BoardVersion;
+
+struct LastReadInfo {
+    LastReadInfo() : version(), checkSum(0), address(0), isReaded(false) {};
+    LastReadInfo(Version _version, uint16_t _checkSum, uint8_t _address, bool _isReaded) :
+        version(_version), checkSum(_checkSum), address(_address), isReaded(_isReaded) {};
+    Version version;
+    uint16_t checkSum;
+    uint8_t address;
+    bool isReaded;
+};
 
 class IDBin : public QObject
 {
@@ -50,6 +61,7 @@ signals:
     void updateContent(Type type, Version ver, Resp resp, uint8_t address);
     void dataSend(QByteArray data);
     void binFrameOut(ProtoBinOut &proto_out);
+    void notifyDevDriver(bool state);
 
 protected:
     const U4 m_key = 0xC96B5D4A;
@@ -67,6 +79,19 @@ protected:
 
     bool checkKeyConfirm(U4 key) { return (key == m_key); }
     void appendKey(ProtoBinOut &proto_out);
+
+    void hashBinFrameOut(ProtoBinOut &proto);
+    LastReadInfo hashLastInfo_;
+
+private:
+    /*methods*/
+    bool checkResponse(FrameParser& proto);
+    void onExpiredTimer();
+    /*data*/
+    static const uint8_t repeatingCount_ = 7;
+    static const int pollingPeriodTimeMsec_ = 1500;
+    QTimer checkoutTimer_;
+    uint8_t currReqCount_;
 };
 
 

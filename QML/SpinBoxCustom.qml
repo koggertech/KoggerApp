@@ -7,6 +7,7 @@ SpinBox {
     id: control
 
     property bool spinner: true
+    property bool isValid: true
 
     value: 50
     from: 20
@@ -192,7 +193,7 @@ SpinBox {
         width: control.spinner ? control.width - downCanvas.width - upCanvas.width : control.width
         height: control.height
 
-        color: theme.controlBackColor
+        color: isValid ? theme.controlBackColor : "red"
         border.color: theme.controlBorderColor
     }
 }

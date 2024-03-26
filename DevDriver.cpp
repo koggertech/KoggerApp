@@ -34,6 +34,14 @@ DevDriver::DevDriver(QObject *parent) :
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
+
+    QObject::connect(idDataset, &IDBin::notifyDevDriver, this, &DevDriver::setDatasetState);
+    QObject::connect(idDistSetup, &IDBin::notifyDevDriver, this, &DevDriver::setDistSetupState);
+    QObject::connect(idChartSetup, &IDBin::notifyDevDriver, this, &DevDriver::setChartSetupState);
+    QObject::connect(idDSPSetup, &IDBin::notifyDevDriver, this, &DevDriver::setDspSetupState);
+    QObject::connect(idTransc, &IDBin::notifyDevDriver, this, &DevDriver::setTranscState);
+    QObject::connect(idSoundSpeed, &IDBin::notifyDevDriver, this, &DevDriver::setSoundSpeedState);
+    QObject::connect(idUART, &IDBin::notifyDevDriver, this, &DevDriver::setUartState);
 }
 
 void DevDriver::regID(IDBin* id_bin, ParseCallback method, bool is_setup) {
@@ -278,6 +286,54 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     return;
 }
 
+void DevDriver::setDatasetState(bool state) {
+    if (state != datasetState_) {
+        datasetState_ = state;
+        emit datasetChanged();
+    }
+}
+
+void DevDriver::setDistSetupState(bool state) {
+    if (state != distSetupState_) {
+        distSetupState_ = state;
+        emit distSetupChanged();
+    }
+}
+
+void DevDriver::setChartSetupState(bool state) {
+    if (state != chartSetupState_) {
+        chartSetupState_ = state;
+        emit chartSetupChanged();
+    }
+}
+
+void DevDriver::setDspSetupState(bool state) {
+    if (state != dspSetupState_) {
+        dspSetupState_ = state;
+        emit dspSetupChanged();
+    }
+}
+
+void DevDriver::setTranscState(bool state) {
+    if (state != transcState_) {
+        transcState_ = state;
+        emit transChanged();
+    }
+}
+
+void DevDriver::setSoundSpeedState(bool state) {
+    if (state != soundSpeedState_) {
+        soundSpeedState_ = state;
+        emit soundChanged();
+    }
+}
+
+void DevDriver::setUartState(bool state) {
+    if (state != uartState_) {
+        uartState_ = state;
+        emit UARTChanged();
+    }
+}
 
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();

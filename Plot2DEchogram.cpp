@@ -272,7 +272,7 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
         }
     }
 
-    qInfo("Cash validate %u", cash_validate);
+    //qInfo("Cash validate %u", cash_validate);
 
     _lastCursor = cursor;
     _lastWidth = width;

@@ -28,6 +28,7 @@ DevSettingsBox {
                     stepSize: 10
                     value: dev.chartResolution
                     onValueChanged: dev.chartResolution = value
+                    isValid: dev.chartSetupState
                 }
             }
 
@@ -40,6 +41,7 @@ DevSettingsBox {
                     stepSize: 100
                     value: dev.chartSamples
                     onValueChanged: dev.chartSamples = value
+                    isValid: dev.chartSetupState
                 }
             }
 
@@ -50,6 +52,7 @@ DevSettingsBox {
                     from: 0; to: 10000; stepSize: 100
                     value: dev.chartOffset
                     onValueChanged: dev.chartOffset = value
+                    isValid: dev.chartSetupState
                 }
             }
         }
@@ -64,6 +67,7 @@ DevSettingsBox {
                     from: 0; to: 50000; stepSize: 1000
                     value: dev.distMax
                     onValueChanged: dev.distMax = value
+                    isValid: dev.distSetupState
                 }
             }
 
@@ -74,6 +78,7 @@ DevSettingsBox {
                     from: 0; to: 50000; stepSize: 100
                     value: dev.distDeadZone
                     onValueChanged: dev.distDeadZone = value
+                    isValid: dev.distSetupState
                 }
             }
 
@@ -84,6 +89,7 @@ DevSettingsBox {
                     from: 0; to: 100; stepSize: 1
                     value: dev.distConfidence
                     onValueChanged: dev.distConfidence = value
+                    isValid: dev.distSetupState
                 }
             }
         }
@@ -98,6 +104,7 @@ DevSettingsBox {
                     from: 0; to: 5000; stepSize: 1
                     value: dev.transPulse
                     onValueChanged: dev.transPulse = value
+                    isValid: dev.transcState
                 }
             }
 
@@ -108,6 +115,7 @@ DevSettingsBox {
                     from: 40; to: 6000; stepSize: 5
                     value: dev.transFreq
                     onValueChanged:  dev.transFreq = value
+                    isValid: dev.transcState
                 }
             }
 
@@ -118,6 +126,7 @@ DevSettingsBox {
                     from: 0; to: 1; stepSize: 1
                     value: dev.transBoost
                     onValueChanged: dev.transBoost = value
+                    isValid: dev.transcState
 
                     property var items: ["Off", "On"]
 
@@ -152,6 +161,7 @@ DevSettingsBox {
                     stepSize: 1
                     value: dev.dspHorSmooth
                     onValueChanged: dev.dspHorSmooth = value
+                    isValid: dev.dspState
                 }
             }
 
@@ -164,6 +174,7 @@ DevSettingsBox {
                     stepSize: 5
                     value: dev.soundSpeed/1000
                     onValueChanged: dev.soundSpeed = value*1000
+                    isValid: dev.soundState
                 }
             }
         }
@@ -200,12 +211,14 @@ DevSettingsBox {
                     from: 0; to: 2000; stepSize: 50
                     value: dev.ch1Period
                     onValueChanged: dev.ch1Period = value
+                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
                     from: 0; to: 2000; stepSize: 50
                     value: dev.ch2Period
                     onValueChanged: dev.ch2Period = value
+                    isValid: dev.datasetState
                 }
             }
 
@@ -226,6 +239,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
@@ -244,6 +258,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
             }
 
@@ -269,6 +284,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
@@ -292,6 +308,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
             }
 
@@ -312,6 +329,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
@@ -328,6 +346,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
             }
 
@@ -348,6 +367,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
@@ -364,6 +384,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
             }
 
@@ -384,6 +405,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
@@ -400,6 +422,7 @@ DevSettingsBox {
                     textFromValue: function(value) {
                         return items[value];
                     }
+                    isValid: dev.datasetState
                 }
             }
         }
