@@ -151,6 +151,14 @@ public:
     bool isAddressSupport() { return m_state.duplex; }
     bool isUpgradeSupport() { return m_state.duplex; }
 
+    bool getDatasetState() { return datasetState_; };
+    bool getDistSetupState() { return distSetupState_; };
+    bool getChartSetupState() { return chartSetupState_; };
+    bool getDspSetupState() { return dspSetupState_; };
+    bool getTranscState() { return transcState_; };
+    bool getSoundSpeedState() { return soundSpeedState_; };
+    bool getUartState() { return uartState_; };
+
 signals:
     void binFrameOut(ProtoBinOut &proto_out);
 
@@ -199,6 +207,14 @@ public slots:
 
     void importSettingsFromXML(const QString& file_path);
     void exportSettingsToXML(const QString& file_path);
+
+    void setDatasetState(bool state);
+    void setDistSetupState(bool state);
+    void setChartSetupState(bool state);
+    void setDspSetupState(bool state);
+    void setTranscState(bool state);
+    void setSoundSpeedState(bool state);
+    void setUartState(bool state);
 
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
@@ -322,6 +338,15 @@ protected slots:
     void receivedNav(Type type, Version ver, Resp resp);
     void receivedDVL(Type type, Version ver, Resp resp);
     void receivedDVLMode(Type type, Version ver, Resp resp);
+
+private:
+    bool datasetState_ = true;
+    bool distSetupState_ = true;
+    bool chartSetupState_ = true;
+    bool dspSetupState_ = true;
+    bool transcState_ = true;
+    bool soundSpeedState_ = true;
+    bool uartState_ = true;
 
 };
 

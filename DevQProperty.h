@@ -14,12 +14,12 @@ public:
     Q_PROPERTY(int distMax READ distMax WRITE setDistMax NOTIFY distSetupChanged)
     Q_PROPERTY(int distDeadZone READ distDeadZone WRITE setDistDeadZone NOTIFY distSetupChanged)
     Q_PROPERTY(int distConfidence READ distConfidence WRITE setConfidence NOTIFY distSetupChanged)
+    Q_PROPERTY(bool distSetupState READ getDistSetupState NOTIFY distSetupChanged)
 
     Q_PROPERTY(int chartSamples READ chartSamples WRITE setChartSamples NOTIFY chartSetupChanged)
     Q_PROPERTY(int chartResolution READ chartResolution WRITE setChartResolution NOTIFY chartSetupChanged)
     Q_PROPERTY(int chartOffset READ chartOffset WRITE setChartOffset NOTIFY chartSetupChanged)
-
-    Q_PROPERTY(int dspHorSmooth READ dspSmoothFactor WRITE setDspSmoothFactor NOTIFY dspSetupChanged)
+    Q_PROPERTY(bool chartSetupState READ getChartSetupState NOTIFY chartSetupChanged)
 
     Q_PROPERTY(int datasetTimestamp READ datasetTimestamp WRITE setDatasetTimestamp NOTIFY datasetChanged)
     Q_PROPERTY(int datasetDist READ datasetDist WRITE setDatasetDist NOTIFY datasetChanged)
@@ -28,20 +28,26 @@ public:
     Q_PROPERTY(int datasetEuler READ datasetEuler WRITE setDatasetEuler NOTIFY datasetChanged)
     Q_PROPERTY(int datasetSDDBT READ datasetSDDBT WRITE setDatasetSDDBT NOTIFY datasetChanged)
     Q_PROPERTY(int datasetSDDBT_P2 READ datasetSDDBT_P2 WRITE setDatasetSDDBT_P2 NOTIFY datasetChanged)
-
     Q_PROPERTY(int ch1Period READ ch1Period WRITE setCh1Period NOTIFY datasetChanged)
     Q_PROPERTY(int ch2Period READ ch2Period WRITE setCh2Period NOTIFY datasetChanged)
+    Q_PROPERTY(bool datasetState READ getDatasetState NOTIFY datasetChanged)
 
     Q_PROPERTY(int transFreq READ transFreq WRITE setTransFreq NOTIFY transChanged)
     Q_PROPERTY(int transPulse READ transPulse WRITE setTransPulse NOTIFY transChanged)
     Q_PROPERTY(int transBoost READ transBoost WRITE setTransBoost NOTIFY transChanged)
+    Q_PROPERTY(bool transcState READ getTranscState NOTIFY transChanged)
+
+    Q_PROPERTY(int dspHorSmooth READ dspSmoothFactor WRITE setDspSmoothFactor NOTIFY dspSetupChanged)
+    Q_PROPERTY(bool dspState READ getDspSetupState NOTIFY dspSetupChanged)
 
     Q_PROPERTY(int soundSpeed READ soundSpeed WRITE setSoundSpeed NOTIFY soundChanged)
+    Q_PROPERTY(bool soundState READ getSoundSpeedState NOTIFY soundChanged)
 
     Q_PROPERTY(int busAddress READ getBusAddress WRITE setBusAddress NOTIFY UARTChanged)
     Q_PROPERTY(int baudrate READ getBaudrate WRITE setBaudrate NOTIFY UARTChanged)
     Q_PROPERTY(int devAddress READ getDevAddress WRITE setDevAddress NOTIFY UARTChanged)
     Q_PROPERTY(int devDefAddress READ getDevDefAddress WRITE setDevDefAddress NOTIFY UARTChanged)
+    Q_PROPERTY(bool uartState READ getUartState NOTIFY UARTChanged)
 
     Q_PROPERTY(int upgradeFWStatus READ upgradeFWStatus NOTIFY upgradeChanged)
 
