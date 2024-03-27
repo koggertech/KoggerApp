@@ -8,7 +8,7 @@
 #include <QHash>
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
-    : SceneObject(new BottomTrackRenderImplementation,view,parent)
+    : SceneObject(new BottomTrackRenderImplementation,view,parent), lastProcDistEpoch_(0), datasetPtr_(nullptr)
 {}
 
 BottomTrack::~BottomTrack()
@@ -28,14 +28,14 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
-QList<Epoch*> BottomTrack::epochs() const
-{
-    return m_epochList;
-}
+//QList<Epoch*> BottomTrack::epochs() const
+//{
+//    return m_epochList;
+//}
 
 QMap<int, DatasetChannel> BottomTrack::channels() const
 {
-    return m_channels;
+    return datasetPtr_->channelsList();
 }
 
 DatasetChannel BottomTrack::visibleChannel() const
@@ -43,18 +43,18 @@ DatasetChannel BottomTrack::visibleChannel() const
     return m_visibleChannel;
 }
 
-void BottomTrack::setEpochs(const QList<Epoch*> &epochList,const QMap<int,DatasetChannel>& channels)
-{
-    m_epochList = epochList;
-    m_channels = channels;
+void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
+    datasetPtr_ = datasetPtr;
+}
 
-    if(!m_channels.isEmpty()){
-        if(m_visibleChannel.channel < m_channels.first().channel ||
-            m_visibleChannel.channel > m_channels.last().channel)
-        {
-            m_visibleChannel = m_channels.first();
-        }
-    }else
+void BottomTrack::isEpochsChanged()
+{
+    if(datasetPtr_ && !datasetPtr_->channelsList().isEmpty()){
+        if(m_visibleChannel.channel < datasetPtr_->channelsList().first().channel ||
+           m_visibleChannel.channel > datasetPtr_->channelsList().last().channel)
+           m_visibleChannel = datasetPtr_->channelsList().first();
+    }
+    else
         m_visibleChannel = DatasetChannel();
 
     updateRenderData();
@@ -77,12 +77,11 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 void BottomTrack::clearData()
 {
     m_llaRef.isInit = false;
-    m_channels.clear();
     m_epochIndexMatchingMap.clear();
-    m_epochList.clear();
     m_visibleChannel = DatasetChannel();
-
     SceneObject::clearData();
+    renderData_.clear();
+    lastProcDistEpoch_ = 0;
 }
 
 void BottomTrack::resetVertexSelection()
@@ -97,10 +96,10 @@ void BottomTrack::setDisplayingWithSurface(bool displaying)
 
 void BottomTrack::setVisibleChannel(int channelId)
 {
-    if(!m_channels.contains(channelId))
+    if(!datasetPtr_->channelsList().contains(channelId))
         return;
 
-    m_visibleChannel = m_channels.value(channelId);
+    m_visibleChannel = datasetPtr_->channelsList().value(channelId);
 
     updateRenderData();
 
@@ -119,13 +118,13 @@ void BottomTrack::selectEpoch(int epochIndex, int channelId)
     if(m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
         return;
 
-    if(!m_channels.contains(channelId) || channelId != m_visibleChannel.channel)
+    if(!datasetPtr_->channelsList().contains(channelId) || channelId != m_visibleChannel.channel)
         return;
 
-    if(epochIndex < 0 || epochIndex >= m_epochList.size())
+    if(epochIndex < 0 || epochIndex >= datasetPtr_->size())
         return;
 
-    if(!m_epochList.at(epochIndex))
+    if(!datasetPtr_->fromIndex(epochIndex))
         return;
 
     auto r = RENDER_IMPL(BottomTrack);
@@ -152,7 +151,7 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
                 auto epochIndex = m_epochIndexMatchingMap.value({hits.first().indices().first});
 
-                auto epochEvent = new EpochEvent(EpochSelected3d,m_epochList.at(epochIndex),epochIndex, m_visibleChannel);
+                auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, m_visibleChannel);
 
                 QCoreApplication::postEvent(this, epochEvent);
             }
@@ -212,7 +211,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 
             for(const auto& verticeIndex : indices){
                 auto epochIndex = m_epochIndexMatchingMap.value(verticeIndex);
-                auto epoch = m_epochList.at(epochIndex);
+                auto epoch = datasetPtr_->fromIndex(epochIndex);
 
                 if(m_visibleChannel.channel < 0)
                     return;
@@ -235,7 +234,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 
             for(const auto& verticeIndex : indices){
                 auto epochIndex = m_epochIndexMatchingMap.value(verticeIndex);
-                auto epoch = m_epochList.at(epochIndex);
+                auto epoch = datasetPtr_->fromIndex(epochIndex);
 
                 if(m_visibleChannel.channel < 0)
                     return;
@@ -257,40 +256,33 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 
 void BottomTrack::updateRenderData()
 {
-    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+    //RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+    //m_epochIndexMatchingMap.clear();
 
-    m_epochIndexMatchingMap.clear();
-
-    QVector<QVector3D> renderData;
-
-    if(m_visibleChannel.channel > -1){
-        for(int i = 0; i < m_epochList.size(); i++){
-            auto epoch = m_epochList.at(i);
-            if(!epoch) continue;
-
-            Position pos = epoch->getPositionGNSS();
-
-            if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
-                if(!m_llaRef.isInit) {
+    if (m_visibleChannel.channel > -1) {
+        for (int i = lastProcDistEpoch_; i < datasetPtr_->getCountDistEpochs(); ++i) {
+            auto epoch = datasetPtr_->fromIndex(i);
+            if (!epoch)
+                continue;
+            auto pos = epoch->getPositionGNSS();
+            if (pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+                if(!m_llaRef.isInit)
                     m_llaRef = LLARef(pos.lla);
-                }
                 pos.LLA2NED(&m_llaRef);
             }
-
-            if(pos.ned.isCoordinatesValid()) {
+            if (pos.ned.isCoordinatesValid()) {
                 float distance = -1.0 * epoch->distProccesing(m_visibleChannel.channel);
-
                 if(!isfinite(distance))
                     continue;
-
-                renderData.append(QVector3D(pos.ned.n,pos.ned.e,distance));
-                m_epochIndexMatchingMap.insert(renderData.size()-1,i);
+                renderData_.append(QVector3D(pos.ned.n,pos.ned.e,distance));
+                m_epochIndexMatchingMap.insert(renderData_.size() - 1, i);
             }
         }
+        lastProcDistEpoch_ = datasetPtr_->getCountDistEpochs();
     }
 
-
-    SceneObject::setData(renderData,GL_LINE_STRIP);
+    if (!renderData_.empty())
+        SceneObject::setData(renderData_,GL_LINE_STRIP);
 }
 
 //-----------------------RenderImplementation-----------------------------//

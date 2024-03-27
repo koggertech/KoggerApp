@@ -117,7 +117,7 @@ void Epoch::doBottomTrack2D(Echogram &chart, bool is_update_dist) {
 void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
 }
 
-Dataset::Dataset() {
+Dataset::Dataset() : countDistEpochs_(0) {
     resetDataset();
 }
 
@@ -162,14 +162,6 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
 QVector<QVector3D> Dataset::boatTrack() const
 {
     return _boatTrack;
-}
-
-QVector<QVector3D> Dataset::bottomTrack() const
-{
-    if(_bottomTracks.isEmpty())
-        return {};
-
-    return _bottomTracks.first();
 }
 
 void Dataset::addEvent(int timestamp, int id, int unixt) {
@@ -344,6 +336,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
     emit dataUpdate();
+    updateBoatTrack();
 }
 
 void Dataset::addGnssVelocity(double h_speed, double course) {
@@ -429,7 +422,7 @@ void Dataset::resetDataset() {
     _channelsSetup.clear();
     resetDistProcessing();
 
-    clearTrack();
+    clearBoatTrack();
     emit dataUpdate();
 }
 
@@ -686,12 +679,12 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         }
     }
 
+    countDistEpochs_ += epoch_stop_index - epoch_start_index;
+
     setChannelOffset(channel1, param.offset.x, param.offset.y, param.offset.z);
     spatialProcessing();
-
-    updateTrack(true);
-
     emit dataUpdate();
+    emit bottomTrackUpdated();
 }
 
 void Dataset::spatialProcessing() {
@@ -776,19 +769,17 @@ Epoch *Dataset::getFirstEpochByValidPosition() {
     return NULL;
 }
 
-void Dataset::clearTrack() {
+void Dataset::clearBoatTrack() {
     _lastTrackEpoch = 0;
-    _bottomTracks.clear();
     _boatTrack.clear();
     emit dataUpdate();
 }
 
-void Dataset::updateTrack(bool update_all) {
+void Dataset::updateBoatTrack(bool update_all) {
     const int to_size = size();
     int from_index = 0;
 
     if(update_all) {
-        _bottomTracks.clear();
         _boatTrack.clear();
     } else {
         from_index = _lastTrackEpoch;
@@ -808,20 +799,13 @@ void Dataset::updateTrack(bool update_all) {
         }
 
         if(pos.ned.isCoordinatesValid()) {
-            //for (const auto& channel : ch_list) {
-            //    float distance = -1.0 * epoch->distProccesing(channel.channel);
-            //    if(!isfinite(distance)) {
-            //        distance = NAN;
-            //    }
-            //    // Checking for NAN
-            //    if(distance == distance)
-            //        _bottomTracks[channel.channel].append(QVector3D(pos.ned.n,pos.ned.e, distance));
-            //}
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
         }
     }
 
     _lastTrackEpoch = to_size;
+
+    emit boatTrackUpdated();
 }
 
 QStringList Dataset::channelsNameList() {

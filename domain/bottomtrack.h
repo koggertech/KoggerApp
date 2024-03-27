@@ -39,14 +39,15 @@ public:
     virtual ~BottomTrack();
     virtual SceneObjectType type() const override;
     virtual bool eventFilter(QObject *watched, QEvent *event);
-    QList<Epoch*> epochs() const;
+    //QList<Epoch*> epochs() const;
     QMap<int,DatasetChannel> channels() const;
     DatasetChannel visibleChannel() const;
+    void setDatasetPtr(Dataset* datasetPtr);
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     virtual void clearData() override;
-    void setEpochs(const QList<Epoch*>& epochList,const QMap<int,DatasetChannel>& channels);
+    void isEpochsChanged();
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
     void setVisibleChannel(int channelIndex);
@@ -74,12 +75,12 @@ protected:
 private:
     using EpochIndex = int;
     using VerticeIndex = int;
-
-    QList<Epoch*> m_epochList;
-    QMap<int, DatasetChannel> m_channels;
     QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
     LLARef m_llaRef;
     DatasetChannel m_visibleChannel;
+    QVector<QVector3D> renderData_;
+    int lastProcDistEpoch_;
+    Dataset* datasetPtr_;
 };
 
 #endif // BOTTOMTRACK_H

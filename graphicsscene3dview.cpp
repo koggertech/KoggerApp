@@ -324,16 +324,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     if(!m_dataset)
         return;
 
-    QObject::connect(m_dataset, &Dataset::dataUpdate, [this](){
+    m_bottomTrack->setDatasetPtr(m_dataset);
 
-        QList<Epoch*> epochs;
-
-        for(int i = 0; i < m_dataset->size(); i++)
-            epochs.append(m_dataset->fromIndex(i));
-
-        m_bottomTrack->setEpochs(epochs,m_dataset->channelsList());
-        m_boatTrack->setData(m_dataset->boatTrack(),GL_LINE_STRIP);
+    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated, m_bottomTrack.get(), &BottomTrack::isEpochsChanged);
+    QObject::connect(m_dataset, &Dataset::boatTrackUpdated, this, [this]()->void {
+        m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
     });
+
 }
 
 void GraphicsScene3dView::updateBounds()

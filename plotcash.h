@@ -756,8 +756,7 @@ public:
     }
 
     QVector<QVector3D> boatTrack() const;
-    QVector<QVector3D> bottomTrack() const;
-
+    int getCountDistEpochs() { return countDistEpochs_; };
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
@@ -806,14 +805,16 @@ public slots:
     void setRefPositionByFirstValid();
     Epoch* getFirstEpochByValidPosition();
 
-    void clearTrack();
-    void updateTrack(bool update_all = false);
+    void clearBoatTrack();
+    void updateBoatTrack(bool update_all = false);
 
     QStringList channelsNameList();
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
+    void bottomTrackUpdated();
+    void boatTrackUpdated();
 
 protected:
     int lastEventTimestamp = 0;
@@ -830,8 +831,6 @@ protected:
     LLARef _llaRef;
 
     int _lastTrackEpoch = 0;
-
-    QMap<int, QVector<QVector3D>> _bottomTracks;
 
     QVector<QVector3D> _boatTrack;
 
@@ -856,6 +855,9 @@ protected:
     void makeNewEpoch() {
         _pool.resize(_pool.size() + 1);
     }
+
+private:
+    int countDistEpochs_;
 };
 
 #endif // PLOT_CASH_H
