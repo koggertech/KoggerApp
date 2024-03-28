@@ -47,7 +47,7 @@ public:
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     virtual void clearData() override;
-    void isEpochsChanged();
+    void isEpochsChanged(int lEpoch, int rEpoch);
     void resetVertexSelection();
     void setDisplayingWithSurface(bool displaying);
     void setVisibleChannel(int channelIndex);
@@ -70,7 +70,7 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
-    void updateRenderData();
+    void updateRenderData(int lEpoch = 0, int rEpoch = 0);
 
 private:
     using EpochIndex = int;
@@ -79,6 +79,7 @@ private:
     LLARef m_llaRef;
     DatasetChannel m_visibleChannel;
     Dataset* datasetPtr_;
+    QVector<QVector3D> renderData_;
 };
 
 #endif // BOTTOMTRACK_H

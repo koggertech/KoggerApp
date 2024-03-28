@@ -813,7 +813,7 @@ public slots:
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
-    void bottomTrackUpdated();
+    void bottomTrackUpdated(int lEpoch, int rEpoch);
     void boatTrackUpdated();
 
 protected:

@@ -688,7 +688,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
     spatialProcessing();
     emit dataUpdate();
     lastBottomTrackEpoch_ = size();
-    emit bottomTrackUpdated();
+    emit bottomTrackUpdated(epoch_min_index, epoch_max_index);
 }
 
 void Dataset::spatialProcessing() {
