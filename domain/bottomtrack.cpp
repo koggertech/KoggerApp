@@ -49,17 +49,19 @@ void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
 
 void BottomTrack::isEpochsChanged()
 {
-    if(datasetPtr_ && !datasetPtr_->channelsList().isEmpty()){
-        if(m_visibleChannel.channel < datasetPtr_->channelsList().first().channel ||
-           m_visibleChannel.channel > datasetPtr_->channelsList().last().channel)
-           m_visibleChannel = datasetPtr_->channelsList().first();
+    if (datasetPtr_) {
+        auto channelMap = datasetPtr_->channelsList();
+        if (!channelMap.isEmpty()) {
+            if (m_visibleChannel.channel < channelMap.first().channel ||
+                m_visibleChannel.channel > channelMap.last().channel)
+                m_visibleChannel = channelMap.first();
+        }
+        else
+            m_visibleChannel = DatasetChannel();
+
+        updateRenderData();
+        Q_EMIT epochListChanged();
     }
-    else
-        m_visibleChannel = DatasetChannel();
-
-    updateRenderData();
-
-    Q_EMIT epochListChanged();
 }
 
 void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
