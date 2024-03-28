@@ -117,7 +117,7 @@ void Epoch::doBottomTrack2D(Echogram &chart, bool is_update_dist) {
 void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
 }
 
-Dataset::Dataset() : countDistEpochs_(0) {
+Dataset::Dataset() : lastBoatTrackEpoch_(0), lastBottomTrackEpoch_(0) {
     resetDataset();
 }
 
@@ -162,6 +162,11 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
 QVector<QVector3D> Dataset::boatTrack() const
 {
     return _boatTrack;
+}
+
+int Dataset::getLastBottomTrackEpoch() const
+{
+    return lastBottomTrackEpoch_;
 }
 
 void Dataset::addEvent(int timestamp, int id, int unixt) {
@@ -679,11 +684,10 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         }
     }
 
-    countDistEpochs_ += epoch_stop_index - epoch_start_index;
-
     setChannelOffset(channel1, param.offset.x, param.offset.y, param.offset.z);
     spatialProcessing();
     emit dataUpdate();
+    lastBottomTrackEpoch_ = size();
     emit bottomTrackUpdated();
 }
 
@@ -770,7 +774,7 @@ Epoch *Dataset::getFirstEpochByValidPosition() {
 }
 
 void Dataset::clearBoatTrack() {
-    _lastTrackEpoch = 0;
+    lastBoatTrackEpoch_ = 0;
     _boatTrack.clear();
     emit dataUpdate();
 }
@@ -782,7 +786,7 @@ void Dataset::updateBoatTrack(bool update_all) {
     if(update_all) {
         _boatTrack.clear();
     } else {
-        from_index = _lastTrackEpoch;
+        from_index = lastBoatTrackEpoch_;
     }
 
     QMap<int, DatasetChannel> ch_list = channelsList();
@@ -803,7 +807,7 @@ void Dataset::updateBoatTrack(bool update_all) {
         }
     }
 
-    _lastTrackEpoch = to_size;
+    lastBoatTrackEpoch_ = to_size;
 
     emit boatTrackUpdated();
 }

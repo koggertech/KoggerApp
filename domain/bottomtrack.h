@@ -78,8 +78,6 @@ private:
     QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
     LLARef m_llaRef;
     DatasetChannel m_visibleChannel;
-    QVector<QVector3D> renderData_;
-    int lastProcDistEpoch_;
     Dataset* datasetPtr_;
 };
 

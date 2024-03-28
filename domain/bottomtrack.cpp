@@ -8,7 +8,7 @@
 #include <QHash>
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
-    : SceneObject(new BottomTrackRenderImplementation,view,parent), lastProcDistEpoch_(0), datasetPtr_(nullptr)
+    : SceneObject(new BottomTrackRenderImplementation,view,parent), datasetPtr_(nullptr)
 {}
 
 BottomTrack::~BottomTrack()
@@ -80,8 +80,6 @@ void BottomTrack::clearData()
     m_epochIndexMatchingMap.clear();
     m_visibleChannel = DatasetChannel();
     SceneObject::clearData();
-    renderData_.clear();
-    lastProcDistEpoch_ = 0;
 }
 
 void BottomTrack::resetVertexSelection()
@@ -256,11 +254,12 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 
 void BottomTrack::updateRenderData()
 {
-    //RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
-    //m_epochIndexMatchingMap.clear();
+    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+    m_epochIndexMatchingMap.clear();
+    QVector<QVector3D> renderData;
 
     if (m_visibleChannel.channel > -1) {
-        for (int i = lastProcDistEpoch_; i < datasetPtr_->getCountDistEpochs(); ++i) {
+        for (int i = 0; i < datasetPtr_->getLastBottomTrackEpoch(); ++i) {
             auto epoch = datasetPtr_->fromIndex(i);
             if (!epoch)
                 continue;
@@ -274,15 +273,14 @@ void BottomTrack::updateRenderData()
                 float distance = -1.0 * epoch->distProccesing(m_visibleChannel.channel);
                 if(!isfinite(distance))
                     continue;
-                renderData_.append(QVector3D(pos.ned.n,pos.ned.e,distance));
-                m_epochIndexMatchingMap.insert(renderData_.size() - 1, i);
+                renderData.append(QVector3D(pos.ned.n,pos.ned.e,distance));
+                m_epochIndexMatchingMap.insert(renderData.size() - 1, i);
             }
         }
-        lastProcDistEpoch_ = datasetPtr_->getCountDistEpochs();
     }
 
-    if (!renderData_.empty())
-        SceneObject::setData(renderData_,GL_LINE_STRIP);
+    if (!renderData.empty())
+        SceneObject::setData(renderData,GL_LINE_STRIP);
 }
 
 //-----------------------RenderImplementation-----------------------------//

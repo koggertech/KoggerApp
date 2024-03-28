@@ -756,7 +756,7 @@ public:
     }
 
     QVector<QVector3D> boatTrack() const;
-    int getCountDistEpochs() { return countDistEpochs_; };
+    int getLastBottomTrackEpoch() const;
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
@@ -830,7 +830,6 @@ protected:
 
     LLARef _llaRef;
 
-    int _lastTrackEpoch = 0;
 
     QVector<QVector3D> _boatTrack;
 
@@ -857,7 +856,8 @@ protected:
     }
 
 private:
-    int countDistEpochs_;
+    int lastBoatTrackEpoch_;
+    int lastBottomTrackEpoch_;
 };
 
 #endif // PLOT_CASH_H
