@@ -301,7 +301,10 @@ void Plot2D::setMousePosition(int x, int y) {
 //    _mouse.x = x;
 //    _mouse.y = y;
 
-    qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
+    // qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
+    int epoch_index = _cursor.getIndex(x_start);
+
+    sendSyncEvent(epoch_index);
 
     if(_cursor.tool() > MouseToolNothing) {
 

@@ -99,8 +99,13 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
         auto epochEvent = static_cast<EpochEvent*>(event);
         qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
     }
-
     return false;
+}
+
+void qPlot2D::sendSyncEvent(int epoch_index) {
+    // qDebug() << "Cursor epoch" << epoch_index;
+    auto epochEvent = new EpochEvent(EpochSelected2d, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
+    QCoreApplication::postEvent(this, epochEvent);
 }
 
 void qPlot2D::horScrollEvent(int delta) {

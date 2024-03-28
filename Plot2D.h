@@ -813,6 +813,8 @@ public:
 
     virtual void plotUpdate() {}
 
+    virtual void sendSyncEvent(int epoch_index) {}
+
 protected:
     Dataset* _dataset = NULL;
     Canvas _canvas;

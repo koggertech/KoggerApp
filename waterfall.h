@@ -30,6 +30,8 @@ public:
 
     virtual bool eventFilter(QObject *watched, QEvent *event);
 
+    void sendSyncEvent(int epoch_index);
+
 protected:
     Dataset* m_plot = nullptr;
     QTimer* m_updateTimer;
