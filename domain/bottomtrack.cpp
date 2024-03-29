@@ -270,6 +270,8 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
     if (m_visibleChannel.channel > -1) {
         int currMin = defMode ? 0 : lEpoch;
         int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
+        if (defMode)
+            renderData_.reserve(currMax);
         for (int i = currMin; i < currMax; ++i) {
             auto epoch = datasetPtr_->fromIndex(i);
             if (!epoch)
@@ -286,7 +288,7 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
                 float distance = -1.f * static_cast<float>(epoch->distProccesing(m_visibleChannel.channel));
                 if (!isfinite(distance))
                     continue;
-                if (defMode) {
+                if (defMode || (!defMode && (renderData_.size() < currMax))) {
                     renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
                     m_epochIndexMatchingMap.insert(renderData_.size() - 1, i);
                 }
