@@ -775,6 +775,8 @@ public:
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
     void setTimelinePosition(float position);
+    void setTimelinePositionByEpoch(int epochIndx);
+
     float timelinePosition() { return _cursor.position;}
     void scrollPosition(int columns);
 

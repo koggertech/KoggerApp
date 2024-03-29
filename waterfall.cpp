@@ -86,7 +86,7 @@ void qPlot2D::plotUpdate() {
 //        qInfo("HHHHHHHHHHHHHHHHHHHHHHHHHH==================HHHHHHHHHHHHHHHHHHHHHHHHHH");
         return;
     }
-//    emit timelinePositionChanged();
+    emit timelinePositionChanged();
 
     update();
 
@@ -97,7 +97,8 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 {
     if (event->type() == EpochSelected3d) {
         auto epochEvent = static_cast<EpochEvent*>(event);
-        qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
+        //qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
+        setTimelinePositionByEpoch(epochEvent->epochIndex() + _cursor.indexes.size() / 2);
     }
     return false;
 }

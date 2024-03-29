@@ -54,6 +54,11 @@ void Plot2D::setTimelinePosition(float position) {
     }
 }
 
+void Plot2D::setTimelinePositionByEpoch(int epochIndx) {
+    float pos = static_cast<float>(epochIndx) / static_cast<float>(_dataset->size());
+    setTimelinePosition(pos);
+}
+
 void Plot2D::scrollPosition(int columns) {
     float new_position = timelinePosition() + (1.0f/_dataset->size())*columns;
     setTimelinePosition(new_position);
