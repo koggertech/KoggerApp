@@ -347,6 +347,10 @@ void Plot2D::setMousePosition(int x, int y) {
             _bottomTrackParam.indexTo = _cursor.getIndex(x_start + x_length);
             _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
         }
+
+        if(_cursor.tool() == MouseToolDistance || _cursor.tool() == MouseToolDistanceErase) {
+            emit _dataset->bottomTrackUpdated(_cursor.getIndex(x_start), _cursor.getIndex(x_start + x_length));
+        }
     }
 
     plotUpdate();
