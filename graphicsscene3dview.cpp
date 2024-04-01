@@ -26,8 +26,8 @@ GraphicsScene3dView::GraphicsScene3dView()
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
-    m_boatTrack->setColor({30,153,67});
-    m_boatTrack->setWidth(3.0f);
+    m_boatTrack->setColor({80,0,150});
+    m_boatTrack->setWidth(5.0f);
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
@@ -351,15 +351,15 @@ void GraphicsScene3dView::updateBounds()
 void GraphicsScene3dView::updatePlaneGrid()
 {
     m_planeGrid->setPlane(m_bounds.bottom());
-
-    if(m_camera->distToFocusPoint() < 65)
-        m_planeGrid->setCellSize(1);
-    if(m_camera->distToFocusPoint() >= 65 && m_camera->distToFocusPoint() <= 130)
-        m_planeGrid->setCellSize(3);
-    if(m_camera->distToFocusPoint() >= 130 && m_camera->distToFocusPoint() <= 230)
-        m_planeGrid->setCellSize(5);
-    if(m_camera->distToFocusPoint() > 230)
-        m_planeGrid->setCellSize(10);
+    m_planeGrid->setCellSize(10);
+    // if(m_camera->distToFocusPoint() < 65)
+    //     m_planeGrid->setCellSize(1);
+    // if(m_camera->distToFocusPoint() >= 65 && m_camera->distToFocusPoint() <= 130)
+    //     m_planeGrid->setCellSize(3);
+    // if(m_camera->distToFocusPoint() >= 130 && m_camera->distToFocusPoint() <= 230)
+    //     m_planeGrid->setCellSize(5);
+    // if(m_camera->distToFocusPoint() > 230)
+    //     m_planeGrid->setCellSize(10);
 }
 
 //---------------------Renderer---------------------------//

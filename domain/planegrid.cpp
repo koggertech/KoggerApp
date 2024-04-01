@@ -139,7 +139,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glLineWidth(4.0f);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 200.0f, 255.0f, 200.0f)));
     shaderProgram->setAttributeArray(posLoc, sceneBoundsPlane.constData());
-    ctx->glDrawArrays(GL_QUADS, 0, sceneBoundsPlane.size());
+    // ctx->glDrawArrays(GL_QUADS, 0, sceneBoundsPlane.size());
     ctx->glLineWidth(1.0f);
     glDisable(GL_BLEND);
 
@@ -255,7 +255,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glLineWidth(4.0f);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 200.0f, 255.0f, 200.0f)));
     shaderProgram->setAttributeArray(posLoc, sceneBoundsPlane.constData());
-    ctx->glDrawArrays(GL_QUADS, 0, sceneBoundsPlane.size());
+    // ctx->glDrawArrays(GL_QUADS, 0, sceneBoundsPlane.size());
     ctx->glLineWidth(1.0f);
     glDisable(GL_BLEND);
 
