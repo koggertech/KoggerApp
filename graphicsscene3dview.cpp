@@ -189,6 +189,8 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons buttons, qreal x,
 
     //TODO: Commit only if camera in movement state
     m_camera->commitMovement();
+    m_bottomTrack->mouseReleaseEvent(buttons, x, y);
+    m_lastMousePos = {x,y};
 
     QQuickFramebufferObject::update();
 }

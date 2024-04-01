@@ -54,9 +54,19 @@ void Plot2D::setTimelinePosition(float position) {
     }
 }
 
+void Plot2D::setTimelinePositionSec(float position) {
+    if(position > 1.0f)
+        position = 1.0f;
+    if(position < 0)
+        position = 0;
+    _cursor.position = position;
+    plotUpdate();
+}
+
 void Plot2D::setTimelinePositionByEpoch(int epochIndx) {
-    float pos = static_cast<float>(epochIndx) / static_cast<float>(_dataset->size());
-    setTimelinePosition(pos);
+    float pos = epochIndx == -1 ? _cursor.position : static_cast<float>(epochIndx + _cursor.indexes.size() / 2) / static_cast<float>(_dataset->size());
+    _cursor.selectEpochIndx = epochIndx;
+    setTimelinePositionSec(pos);
 }
 
 void Plot2D::scrollPosition(int columns) {

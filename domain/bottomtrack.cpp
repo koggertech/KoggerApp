@@ -182,12 +182,23 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     if(!m_view) return;
 
     if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
+        if(buttons.testFlag(Qt::LeftButton)){
+            auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
+            if(!hits.isEmpty()){
+                RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
+                auto epochIndex = m_epochIndexMatchingMap.value({hits.first().indices().first});
+                auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, m_visibleChannel);
+                QCoreApplication::postEvent(this, epochEvent);
+            }
+        }
+        /*
         if(!RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.isEmpty()){
             auto epochIndex = m_epochIndexMatchingMap.value(
                         RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.first());
 
             Q_EMIT epochPressed(epochIndex);
         }
+        */
     }
 }
 
@@ -198,6 +209,9 @@ void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     Q_UNUSED(y)
 
     if(!m_view) return;
+
+    auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(-1),-1, m_visibleChannel);
+    QCoreApplication::postEvent(this, epochEvent);
 }
 
 void BottomTrack::keyPressEvent(Qt::Key key)

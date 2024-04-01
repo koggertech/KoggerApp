@@ -30,6 +30,7 @@ typedef enum {
 } MouseTool;
 
 typedef struct DatasetCursor {
+    int selectEpochIndx = -1;
     int channel1 = CHANNEL_FIRST;
     int channel2 = CHANNEL_NONE;
 
@@ -717,8 +718,19 @@ class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim() {}
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
-        if(cursor.mouseX < 0 || cursor.mouseY < 0) {
+        if((cursor.mouseX < 0 || cursor.mouseY < 0) && (cursor.selectEpochIndx == -1) ) {
             return false;
+        }
+
+        if (cursor.selectEpochIndx != -1) {
+            auto selectedEpoch = dataset->fromIndex(cursor.selectEpochIndx);
+            int offsetX = 0;
+            int halfCanvas = canvas.width() / 2;
+            int withoutHalf = dataset->size() - halfCanvas;
+            if (cursor.selectEpochIndx >= withoutHalf)
+                offsetX = cursor.selectEpochIndx - withoutHalf;
+            cursor.setMouse(canvas.width() / 2 + offsetX,
+                            canvas.height() * (selectedEpoch->chart(0)->bottomProcessing.distance / cursor.distance.range()));
         }
 
         QPen pen;
@@ -775,6 +787,7 @@ public:
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
     void setTimelinePosition(float position);
+    void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
 
     float timelinePosition() { return _cursor.position;}
