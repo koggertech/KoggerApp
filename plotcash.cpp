@@ -340,7 +340,17 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     }
 
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
-    _lastPositionGNSS = _pool[pool_index].getPositionGNSS();
+    Position pos = _pool[pool_index].getPositionGNSS();
+
+    if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+        if(!_llaRef.isInit) {
+            _llaRef = LLARef(pos.lla);
+        }
+
+        _pool[pool_index].setPositionRef(&_llaRef);
+        _lastPositionGNSS = _pool[pool_index].getPositionGNSS();
+    }
+
     emit dataUpdate();
     updateBoatTrack();
 }
@@ -796,12 +806,12 @@ void Dataset::updateBoatTrack(bool update_all) {
         Epoch* epoch = fromIndex(i);
         Position pos = epoch->getPositionGNSS();
 
-        if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
-            if(!_llaRef.isInit) {
-                _llaRef = LLARef(pos.lla);
-            }
-            pos.LLA2NED(&_llaRef);
-        }
+        // if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+        //     if(!_llaRef.isInit) {
+        //         _llaRef = LLARef(pos.lla);
+        //     }
+        //     pos.LLA2NED(&_llaRef);
+        // }
 
         if(pos.ned.isCoordinatesValid()) {
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
