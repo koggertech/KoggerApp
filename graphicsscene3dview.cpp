@@ -26,8 +26,8 @@ GraphicsScene3dView::GraphicsScene3dView()
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
-    m_boatTrack->setColor({80,0,150});
-    m_boatTrack->setWidth(5.0f);
+    m_boatTrack->setColor({80,0,180});
+    m_boatTrack->setWidth(6.0f);
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
