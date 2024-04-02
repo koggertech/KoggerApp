@@ -757,6 +757,15 @@ public:
 
     QVector<QVector3D> boatTrack() const;
     int getLastBottomTrackEpoch() const;
+
+    float getLastYaw() {
+        return _lastYaw;
+    }
+
+    Position getLastPosition() {
+        return _lastPositionGNSS;
+    }
+
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
@@ -849,6 +858,7 @@ protected:
     float lastTemperature = 0;
 
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
+    Position _lastPositionGNSS;
 
 
     void makeNewEpoch() {

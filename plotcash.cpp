@@ -340,6 +340,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     }
 
     _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
+    _lastPositionGNSS = _pool[pool_index].getPositionGNSS();
     emit dataUpdate();
     updateBoatTrack();
 }
