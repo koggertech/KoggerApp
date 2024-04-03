@@ -115,54 +115,56 @@ void GraphicsScene3dView::clear()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
+void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    Q_UNUSED(buttons)
+    Q_UNUSED(mouseButton)
+    Q_UNUSED(keyboardKey)
 
     if(m_mode == BottomTrackVertexComboSelectionMode){
-        if(buttons & Qt::LeftButton){
+        if(mouseButton & Qt::LeftButton){
             m_bottomTrack->resetVertexSelection();
             m_comboSelectionRect.setTopLeft({static_cast<int>(x),static_cast<int>(height()-y)});
             m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
         }
     }
 
-    m_startMousePos = {x,y};
+    m_startMousePos = {x, y};
 
-    m_bottomTrack->mousePressEvent(buttons,x,y);
+    m_bottomTrack->mousePressEvent(mouseButton, x, y);
 
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
+void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    if(buttons.testFlag(Qt::MiddleButton)){
-        m_comboSelectionRect = {0,0,0,0};
-        m_camera->move(QVector2D(m_startMousePos.x(),m_startMousePos.y()),
-                       QVector2D(x,y));
-        QQuickFramebufferObject::update();
-    }
+    if(mouseButton.testFlag(Qt::RightButton)){
+        if (keyboardKey == Qt::Key_Control) {
+            m_comboSelectionRect = {0,0,0,0};
+            m_camera->move(QVector2D(m_startMousePos.x(),m_startMousePos.y()), QVector2D(x ,y));
 
-    if(buttons.testFlag(Qt::RightButton)){
-        m_comboSelectionRect = {0,0,0,0};
-        float deltaAngleX = (2 * M_PI / size().width());
-        float deltaAngleY = (2 * M_PI / size().height());
-        float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
-        float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
+            QQuickFramebufferObject::update();
+        }
+        else {
+            m_comboSelectionRect = {0,0,0,0};
+            float deltaAngleX = (2 * M_PI / size().width());
+            float deltaAngleY = (2 * M_PI / size().height());
+            float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
+            float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
+            verticalScale();
+            //m_camera->rotate(yaw, -pitch);
+            //m_axesThumbnailCamera->rotate(yaw, -pitch);
 
-        //m_camera->rotate(yaw, -pitch);
-        //m_axesThumbnailCamera->rotate(yaw, -pitch);
+            m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
+            m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
 
-        m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
-        m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
+            QQuickFramebufferObject::update();
+        }
 
-        QQuickFramebufferObject::update();
-    }
-
-    if(m_mode == BottomTrackVertexComboSelectionMode){
-        if(buttons & Qt::LeftButton)
-            m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
-        QQuickFramebufferObject::update();
+        if(m_mode == BottomTrackVertexComboSelectionMode){
+            if(mouseButton & Qt::LeftButton)
+                m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
+            QQuickFramebufferObject::update();
+        }
     }
 
     //---------->Calculate ray in 3d space<---------//
@@ -181,28 +183,28 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qr
     m_ray.setOrigin(origin);
     m_ray.setDirection(direction);
 
-    m_bottomTrack->mouseMoveEvent(buttons,x,y);
+    m_bottomTrack->mouseMoveEvent(mouseButton,x,y);
     m_lastMousePos = {x,y};
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons buttons, qreal x, qreal y)
+void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
     Q_UNUSED(x)
     Q_UNUSED(y)
-    Q_UNUSED(buttons)
+    Q_UNUSED(mouseButton)
 
     //TODO: Commit only if camera in movement state
     m_camera->commitMovement();
-    m_bottomTrack->mouseReleaseEvent(buttons, x, y);
+    m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
     m_lastMousePos = {x,y};
 
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta)
+void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey)
 {
-    Q_UNUSED(buttons)
+    Q_UNUSED(mouseButton)
     Q_UNUSED(x)
     Q_UNUSED(y)
 
@@ -211,7 +213,13 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, q
         m_bottomTrack->resetVertexSelection();
     }
 
-    m_camera->zoom(angleDelta.y());
+    if (keyboardKey == Qt::Key_Control) {
+        float tempVerticalScale = m_verticalScale;
+        angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
+        setVerticalScale(tempVerticalScale);
+    }
+    else
+        m_camera->zoom(angleDelta.y());
 
     updatePlaneGrid();
 

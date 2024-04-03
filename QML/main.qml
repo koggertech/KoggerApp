@@ -90,6 +90,7 @@ Window  {
                     id:           pinch3D
                     anchors.fill: parent
                     enabled:      true
+                    property int lastKeyPressed: Qt.Key_unknown
 
                     onPinchUpdated: {
                         renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
@@ -116,25 +117,29 @@ Window  {
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
+                        Keys.onPressed: {
+                            pinch3D.lastKeyPressed = event.key;
+                        }
+
+                        Keys.onReleased: {
+                            pinch3D.lastKeyPressed = Qt.Key_unknown;
+                        }
+
                         onWheel: {
-                            renderer.mouseWheelTrigger(wheel.buttons,
-                                                       wheel.x,
-                                                       wheel.y,
-                                                       wheel.angleDelta)
+                            renderer.mouseWheelTrigger(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, pinch3D.lastKeyPressed)
                         }
 
                         onPositionChanged: {
-                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y)
+                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, pinch3D.lastKeyPressed)
                         }
 
                         onPressed: {
-                            renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y)
+                            renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, pinch3D.lastKeyPressed)
                         }
 
                         onReleased: {
-                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y)
+                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y, pinch3D.lastKeyPressed)
                         }
-
                     }
                 }
             }

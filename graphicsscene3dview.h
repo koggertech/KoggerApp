@@ -76,7 +76,7 @@ public:
         qreal m_yaw = 0.0f;
         qreal m_fov = 45.0f;
         float m_distToFocusPoint = 25.0f;
-        qreal m_sensivity = 0.5f;
+        qreal m_sensivity = 4.f;
 
         QVector2D m_rotAngle;
     };
@@ -135,11 +135,10 @@ public:
     Dataset* dataset() const;
     void clear();
 
-
-    Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
-    Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
-    Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons buttons, qreal x, qreal y);
-    Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta);
+    Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
+    Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
+    Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
+    Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
 
 public Q_SLOTS:
