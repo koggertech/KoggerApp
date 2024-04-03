@@ -28,7 +28,8 @@ HEADERS += \
     $$PWD/surface.h \
     $$PWD/gridgenerator.h \
     $$PWD/surfacegrid.h \
-    $$PWD/vertexeditingdecorator.h
+    $$PWD/vertexeditingdecorator.h \
+    $$PWD/navigation_arrow.h
 
 SOURCES += \
     $$PWD/bottomtrack.cpp\
@@ -43,7 +44,8 @@ SOURCES += \
     $$PWD/polygonobject.cpp \
     $$PWD/surface.cpp \
     $$PWD/surfacegrid.cpp \
-    $$PWD/vertexeditingdecorator.cpp
+    $$PWD/vertexeditingdecorator.cpp \
+    $$PWD/navigation_arrow.cpp
 
 	
 

@@ -9,6 +9,7 @@
 #include <polygongroup.h>
 #include <graphicsscene3dview.h>
 #include <geometryengine.h>
+#include <navigation_arrow.h>
 
 #include <QMatrix4x4>
 #include "qsystemdetection.h"
@@ -65,6 +66,7 @@ private:
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
     SceneObject::RenderImplementation m_boatTrackRenderImpl;
+    NavigationArrow::NavigationArrowRenderImplementation m_navigationArrowRenderImpl;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

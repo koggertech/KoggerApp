@@ -10,6 +10,7 @@
 #include <pointgroup.h>
 #include <vertexeditingdecorator.h>
 #include <ray.h>
+#include <navigation_arrow.h>
 
 #include <QQuickFramebufferObject>
 #include <QtMath>
@@ -173,6 +174,8 @@ private:
     std::shared_ptr <PlaneGrid> m_planeGrid;
     std::shared_ptr <SceneObject> m_boatTrack;
     std::shared_ptr <SceneObject> m_vertexSynchroCursour;
+    std::shared_ptr <NavigationArrow> m_navigationArrow;
+
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
