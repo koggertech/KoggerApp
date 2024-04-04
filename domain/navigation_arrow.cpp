@@ -5,10 +5,10 @@
 
 
 NavigationArrow::NavigationArrow(QObject *parent)
-    : SceneObject(new NavigationArrowRenderImplementation,parent)
+    : SceneObject(new NavigationArrowRenderImplementation,parent), isEnabled_(true)
 {}
 
-NavigationArrow::NavigationArrowRenderImplementation::NavigationArrowRenderImplementation()
+NavigationArrow::NavigationArrowRenderImplementation::NavigationArrowRenderImplementation() : isEnabled_(true)
 {}
 
 NavigationArrow::NavigationArrowRenderImplementation::~NavigationArrowRenderImplementation()
@@ -20,6 +20,12 @@ void NavigationArrow::setPositionAndAngle(const QVector3D& position, float degAn
     moveToPosition(renderNavArrow, position);
     rotateByDegrees(renderNavArrow, degAngle);
     RENDER_IMPL(NavigationArrow)->cubeVertices_ = renderNavArrow;
+    Q_EMIT changed();
+}
+void NavigationArrow::setEnabled(bool state)
+{
+    isEnabled_ = state;
+    RENDER_IMPL(NavigationArrow)->isEnabled_ = state;
     Q_EMIT changed();
 }
 
@@ -54,12 +60,12 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
                                                                   const QMatrix4x4 &mvp,
                                                                   const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-    if(!shaderProgramMap.contains("static"))
+    if (!isEnabled_ || !shaderProgramMap.contains("static"))
         return;
 
     auto shaderProgram = shaderProgramMap["static"];
 
-    if (!shaderProgram->bind()){
+    if (!shaderProgram->bind()) {
         qCritical() << "Error binding shader program.";
         return;
     }
@@ -75,7 +81,6 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
     shaderProgram->setAttributeArray(posLoc, cubeVertices_.constData());
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(255, 0, 0)));
     ctx->glDrawArrays(GL_QUADS, 0, cubeVertices_.size());
-    ctx->glLineWidth(1.0f);
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();

@@ -22,6 +22,7 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_boatTrack(std::make_shared<SceneObject>())
 , m_navigationArrow(std::make_shared<NavigationArrow>())
+, navigationArrowState_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -100,6 +101,12 @@ Dataset *GraphicsScene3dView::dataset() const
     return m_dataset;
 }
 
+void GraphicsScene3dView::setNavigationArrowState(bool state)
+{
+    m_navigationArrow->setEnabled(state);
+    navigationArrowState_ = state;
+}
+
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
@@ -108,6 +115,7 @@ void GraphicsScene3dView::clear()
     m_pointGroup->clearData();
     m_boatTrack->clearData();
     m_navigationArrow->clearData();
+    navigationArrowState_ = false;
     m_bounds = Cube();
 
     setIsometricView();
@@ -344,8 +352,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated, m_bottomTrack.get(), &BottomTrack::isEpochsChanged);
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated, this, [this]()->void {
         m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-        const Position pos = m_dataset->getLastPosition();
-        m_navigationArrow->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw());
+        if (navigationArrowState_) {
+            const Position pos = m_dataset->getLastPosition();
+            m_navigationArrow->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw());
+        }
     });
 
 }

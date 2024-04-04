@@ -133,6 +133,7 @@ public:
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
     Dataset* dataset() const;
+    void setNavigationArrowState(bool state);
     void clear();
 
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -184,6 +185,7 @@ private:
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
+    bool navigationArrowState_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

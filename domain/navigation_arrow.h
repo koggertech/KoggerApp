@@ -18,10 +18,12 @@ public:
     private:
         friend class NavigationArrow;
         QVector<QVector3D> cubeVertices_;
+        bool isEnabled_;
     };
 
     explicit NavigationArrow(QObject *parent = nullptr);
     void setPositionAndAngle(const QVector3D& position, float degAngle);
+    void setEnabled(bool state);
 private:
     /*methods*/
     void moveToPosition(QVector<QVector3D>& cubeVertices, const QVector3D& position) const;
@@ -31,4 +33,5 @@ private:
                                         {  0.f,  0.f,  0.f },
                                         {  2.f, -2.f,  0.f },
                                         {  0.f,  5.f,  0.f }};
+    bool isEnabled_;
 };

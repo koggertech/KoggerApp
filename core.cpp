@@ -129,6 +129,7 @@ bool Core::openConnectionAsSerial(const int id, bool autoconn, const QString &na
     closeConnection();
     devsConnection();
 
+    m_scene3dView->setNavigationArrowState(true);
     m_connection->openSerial(name, baudrate, false);
     m_connection->setRTS(false); // power on
 
@@ -182,7 +183,7 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
 
     if(m_scene3dView)
         m_scene3dView->clear();
-
+    m_scene3dView->setNavigationArrowState(false);
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
@@ -216,6 +217,7 @@ bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &addres
     connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
     connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
     m_connection->openIP(address, port, is_tcp);
+    m_scene3dView->setNavigationArrowState(true);
     return false;
 }
 
