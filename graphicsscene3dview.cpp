@@ -354,7 +354,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
         m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
         if (navigationArrowState_) {
             const Position pos = m_dataset->getLastPosition();
-            m_navigationArrow->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw());
+            m_navigationArrow->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
         }
     });
 
