@@ -158,7 +158,6 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
             float deltaAngleY = (2 * M_PI / size().height());
             float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
             float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
-            verticalScale();
             //m_camera->rotate(yaw, -pitch);
             //m_axesThumbnailCamera->rotate(yaw, -pitch);
 
@@ -167,12 +166,12 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
 
             QQuickFramebufferObject::update();
         }
+    }
 
-        if(m_mode == BottomTrackVertexComboSelectionMode){
-            if(mouseButton & Qt::LeftButton)
-                m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
-            QQuickFramebufferObject::update();
-        }
+    if(m_mode == BottomTrackVertexComboSelectionMode){
+        if(mouseButton & Qt::LeftButton)
+            m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
+        QQuickFramebufferObject::update();
     }
 
     //---------->Calculate ray in 3d space<---------//
