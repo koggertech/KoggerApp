@@ -78,7 +78,7 @@ void GraphicsScene3dRenderer::drawObjects()
     QMatrix4x4 model, view, projection;
 
     view = m_camera.m_view;
-    projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 5000.0f);
+    projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 11000.0f);
     model.scale(1.0f, 1.0f, m_verticalScale);
 
     m_model = std::move(model);
@@ -107,7 +107,7 @@ void GraphicsScene3dRenderer::drawObjects()
 
     m_axesThumbnailCamera.setDistance(35);
     axesView = m_axesThumbnailCamera.m_view;
-    axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 5000.0f);
+    axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 11000.0f);
 
     m_coordAxesRenderImpl.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
 

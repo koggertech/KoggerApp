@@ -72,10 +72,10 @@ public:
         QVector3D m_deltaOffset;
         QVector3D m_focusPoint;
 
-        qreal m_pitch = 0.0f;
-        qreal m_yaw = 0.0f;
-        qreal m_fov = 45.0f;
-        float m_distToFocusPoint = 25.0f;
+        qreal m_pitch = 0.f;
+        qreal m_yaw = 0.f;
+        qreal m_fov = 45.f;
+        float m_distToFocusPoint = 50.f;
         qreal m_sensivity = 4.f;
 
         QVector2D m_rotAngle;

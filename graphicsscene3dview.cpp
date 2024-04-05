@@ -557,10 +557,12 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
-    if(delta > 0.0f)
-        m_distToFocusPoint = m_distToFocusPoint / 1.15f;
-    else
-        m_distToFocusPoint = m_distToFocusPoint * 1.15f;
+    m_distToFocusPoint = delta > 0.f ? m_distToFocusPoint / 1.15f : m_distToFocusPoint * 1.15f;
+
+    if (m_distToFocusPoint < 2.f)
+        m_distToFocusPoint = 2.f;
+    if (m_distToFocusPoint >= 10000.f)
+        m_distToFocusPoint = 10000.f;
 
     updateViewMatrix();
 }
@@ -612,10 +614,10 @@ void GraphicsScene3dView::Camera::reset()
     m_deltaOffset = {0.0f, 0.0f, 0.0f};
     m_focusPoint = {0.0f, 0.0f, 0.0f};
 
-    m_pitch = 0.0f;
-    m_yaw = 0.0f;
-    m_fov = 45.0f;
-    m_distToFocusPoint = 25.0f;
+    m_pitch = 0.f;
+    m_yaw = 0.f;
+    m_fov = 45.f;
+    m_distToFocusPoint = 50.f;
 
     updateViewMatrix();
 }
