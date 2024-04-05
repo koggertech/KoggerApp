@@ -559,8 +559,8 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
 
 void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2D &endPos)
 {
-    QVector4D horizontalAxis{ 1.0f, 0.0f, 0.0f, 0.0f };
-    QVector4D verticalAxis{ 0.0f, 1.0f, 0.0f, 0.0f };
+    QVector4D horizontalAxis{ -1.0f, 0.0f, 0.0f, 0.0f };
+    QVector4D verticalAxis{ 0.0f, -1.0f, 0.0f, 0.0f };
 
     m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) +
                       verticalAxis * (float)(endPos.y() - startPos.y()))).toVector3D();
