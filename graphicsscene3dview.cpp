@@ -123,6 +123,30 @@ void GraphicsScene3dView::clear()
     QQuickFramebufferObject::update();
 }
 
+QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) {
+    QVector3D intersectionPoint;
+
+    // Check if the ray is parallel or nearly parallel to the plane
+    if (qAbs(rayDirection.z()) < 1e-6) {
+        // Ray is parallel or nearly parallel to the plane, no intersection
+        return intersectionPoint; // Zero vector indicates no intersection
+    }
+
+    // Calculate parameter t
+    float t = (planeZ - rayOrigin.z()) / rayDirection.z();
+
+    // Check if intersection point is behind the ray origin
+    if (t < 0) {
+        // Intersection point is behind the ray origin, discard
+        return intersectionPoint; // Zero vector indicates no intersection
+    }
+
+    // Calculate intersection point
+    intersectionPoint = rayOrigin + rayDirection * t;
+
+    return intersectionPoint;
+}
+
 void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
     Q_UNUSED(mouseButton)
@@ -145,27 +169,19 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    if(mouseButton.testFlag(Qt::RightButton)){
-        if (keyboardKey == Qt::Key_Control) {
-            m_comboSelectionRect = {0,0,0,0};
-            m_camera->move(QVector2D(m_startMousePos.x(),m_startMousePos.y()), QVector2D(x ,y));
+    if(mouseButton.testFlag(Qt::RightButton) && (keyboardKey != Qt::Key_Control)) {
+        m_comboSelectionRect = {0,0,0,0};
+        float deltaAngleX = (2 * M_PI / size().width());
+        float deltaAngleY = (2 * M_PI / size().height());
+        float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
+        float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
+        //m_camera->rotate(yaw, -pitch);
+        //m_axesThumbnailCamera->rotate(yaw, -pitch);
 
-            QQuickFramebufferObject::update();
-        }
-        else {
-            m_comboSelectionRect = {0,0,0,0};
-            float deltaAngleX = (2 * M_PI / size().width());
-            float deltaAngleY = (2 * M_PI / size().height());
-            float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
-            float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
-            //m_camera->rotate(yaw, -pitch);
-            //m_axesThumbnailCamera->rotate(yaw, -pitch);
+        m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
+        m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
 
-            m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
-            m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
-
-            QQuickFramebufferObject::update();
-        }
+        QQuickFramebufferObject::update();
     }
 
     if(m_mode == BottomTrackVertexComboSelectionMode){
@@ -189,6 +205,21 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
 
     m_ray.setOrigin(origin);
     m_ray.setDirection(direction);
+
+    if(mouseButton.testFlag(Qt::RightButton) && (keyboardKey == Qt::Key_Control)) {
+        auto startMouseOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f)
+                                  .unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto startMouseEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f)
+                                 .unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto startMouseDir = (startMouseEnd - startMouseOrig).normalized();
+
+        auto from = calculateIntersectionPoint(startMouseOrig, startMouseDir , 0);
+        auto to = calculateIntersectionPoint(origin, direction, 0);
+
+        m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+
+        QQuickFramebufferObject::update();
+    }
 
     m_bottomTrack->mouseMoveEvent(mouseButton,x,y);
     m_lastMousePos = {x,y};
@@ -528,16 +559,11 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
 
 void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2D &endPos)
 {
-    QMatrix4x4 inverted = m_view.inverted();
-
-    QVector4D horizontalAxis = inverted * QVector4D(-1.0f, 0.0f, 0.0f, 0.0f);
-    QVector4D verticalAxis = inverted * QVector4D(0.0f, 1.0f, 0.0f, 0.0f);
+    QVector4D horizontalAxis{ 1.0f, 0.0f, 0.0f, 0.0f };
+    QVector4D verticalAxis{ 0.0f, 1.0f, 0.0f, 0.0f };
 
     m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) +
-                      verticalAxis * (float)(endPos.y() - startPos.y())) *
-                      m_sensivity *
-                      0.05f)
-            .toVector3D();
+                      verticalAxis * (float)(endPos.y() - startPos.y()))).toVector3D();
 
     auto lookAt = m_lookAt + m_deltaOffset;
 
