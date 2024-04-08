@@ -100,7 +100,7 @@ Item {
                 placeholderText: qsTr("Enter path")
 
                 Keys.onPressed: {
-                    if (event.key === 16777220) {
+                    if (event.key === 16777220 || event.key === Qt.Key_Enter) {
                         core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
                     }
                 }
