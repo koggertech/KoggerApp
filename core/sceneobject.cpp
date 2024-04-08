@@ -1,6 +1,7 @@
 #include "sceneobject.h"
 #include <drawutils.h>
 
+
 SceneObject::SceneObject(QObject *parent)
 : QObject(parent)
 , m_renderImpl(new RenderImplementation)
@@ -314,29 +315,25 @@ void SceneObject::RenderImplementation::removeVertex(int index)
 
 void SceneObject::RenderImplementation::createBounds()
 {
-    if (m_data.isEmpty()){
+    if (m_data.isEmpty()) {
         m_bounds = Cube();
         return;
     }
 
-    float z_max = m_data.first().z();
-    float z_min = z_max;
+    float z_max{ !std::isfinite(m_data.first().z()) ? 0.f : m_data.first().z() };
+    float z_min{ z_max };
+    float x_max{ !std::isfinite(m_data.first().x()) ? 0.f : m_data.first().x() };
+    float x_min{ x_max };
+    float y_max{ !std::isfinite(m_data.first().y()) ? 0.f : m_data.first().y() };
+    float y_min{ y_max };
 
-    float x_max = m_data.first().x();
-    float x_min = x_max;
-
-    float y_max = m_data.first().y();
-    float y_min = y_max;
-
-    for (const auto& v: qAsConst(m_data)){
-        z_min = std::min(z_min, v.z());
-        z_max = std::max(z_max, v.z());
-
-        x_min = std::min(x_min, v.x());
-        x_max = std::max(x_max, v.x());
-
-        y_min = std::min(y_min, v.y());
-        y_max = std::max(y_max, v.y());
+    for (const auto& itm: qAsConst(m_data)){
+        z_min = std::min(z_min, !std::isfinite(itm.z()) ? 0.f : itm.z());
+        z_max = std::max(z_max, !std::isfinite(itm.z()) ? 0.f : itm.z());
+        x_min = std::min(x_min, !std::isfinite(itm.x()) ? 0.f : itm.x());
+        x_max = std::max(x_max, !std::isfinite(itm.x()) ? 0.f : itm.x());
+        y_min = std::min(y_min, !std::isfinite(itm.y()) ? 0.f : itm.y());
+        y_max = std::max(y_max, !std::isfinite(itm.y()) ? 0.f : itm.y());
     }
 
     m_bounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);

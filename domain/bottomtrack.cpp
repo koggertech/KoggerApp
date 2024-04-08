@@ -300,8 +300,8 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 
             if (pos.ned.isCoordinatesValid()) {
                 float distance = -1.f * static_cast<float>(epoch->distProccesing(m_visibleChannel.channel));
-                if (!isfinite(distance))
-                    continue;
+                //if (!isfinite(distance)) // TODO: to testing
+                //    continue;
                 if (defMode || (!defMode && (renderData_.size() < currMax))) {
                     renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
                     m_epochIndexMatchingMap.insert(renderData_.size() - 1, i);

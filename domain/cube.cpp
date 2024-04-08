@@ -1,32 +1,34 @@
 #include "cube.h"
 
+
 Cube::Cube()
+    : m_xMin(0.f), m_xMax(0.f),
+    m_yMin(0.f), m_yMax(0.f),
+    m_zMin(0.f), m_zMax(0.f),
+    m_isValid(false)
 {}
 
 Cube::Cube(float x_1, float x_2,
-         float y_1, float y_2,
-         float z_1, float z_2)
-:m_xMin(x_1), m_xMax(x_2)
-,m_yMin(y_1), m_yMax(y_2)
-,m_zMin(z_1), m_zMax(z_2)
-{
-    m_isValid = true;
-}
+           float y_1, float y_2,
+           float z_1, float z_2)
+    : m_xMin(x_1), m_xMax(x_2),
+    m_yMin(y_1), m_yMax(y_2),
+    m_zMin(z_1), m_zMax(z_2),
+    m_isValid(true)
+{}
 
-QVector3D Cube::center() const{
-    return {
-        m_xMin + length()/2.0f,
-        m_yMin + width()/2.0f,
-        m_zMin + height()/2.0f
-    };
+QVector3D Cube::center() const
+{
+    return { m_xMin + length() / 2.f,
+             m_yMin + width()  / 2.f,
+             m_zMin + height() / 2.f };
 };
 
-QVector3D Cube::bottomPos() const {
-    return {
-        m_xMin + length()/2.0f,
-        m_yMin + width()/2.0f,
-        m_zMin
-    };
+QVector3D Cube::bottomPos() const
+{
+    return { m_xMin + length() / 2.f,
+             m_yMin + width()  / 2.f,
+             m_zMin };
 }
 
 float Cube::length() const
@@ -45,56 +47,26 @@ float Cube::height() const{
 
 Cube Cube::merge(const Cube &other)
 {
-    if(isEmpty())
+    if (isEmpty())
         return other;
 
-    if(other.isEmpty())
+    if (other.isEmpty())
         return *this;
 
-    // x borders
-    float n1 = m_xMin;
-    float f1 = m_xMin;
-    if (m_xMax < m_xMin)
-        n1 = m_xMax;
-    else
-        f1 = m_xMax;
+    float n1{ m_xMin }, f1{ m_xMin }; // x borders
+    m_xMax < m_xMin ? n1 = m_xMax : f1 = m_xMax;
+    float n2{ other.m_xMin }, f2{ other.m_xMin };
+    other.m_xMax < other.m_xMin ? n2 = other.m_xMax : f2 = other.m_xMax;
 
-    float n2 = other.m_xMin;
-    float f2 = other.m_xMin;
-    if (other.m_xMax < other.m_xMin)
-        n2 = other.m_xMax;
-    else
-        f2 = other.m_xMax;
+    float l1{ m_yMin }, r1{ m_yMin }; // y borders
+    m_yMax < m_yMin ? l1 = m_yMax : r1 = m_yMax;
+    float l2{ other.m_yMin }, r2{ other.m_yMin };
+    other.m_yMax < other.m_yMin ? l2 = other.m_yMax : r2 = other.m_yMax;
 
-    // y borders
-    float l1 = m_yMin;
-    float r1 = m_yMin;
-    if (m_yMax < m_yMin)
-        l1 = m_yMax;
-    else
-        r1 = m_yMax;
-
-    float l2 = other.m_yMin;
-    float r2 = other.m_yMin;
-    if (other.m_yMax < other.m_yMin)
-        l2 = other.m_yMax;
-    else
-        r2 = other.m_yMax;
-
-    //z borders
-    float t1 = m_zMin;
-    float b1 = m_zMin;
-    if (m_zMax < m_zMin)
-        t1 = m_zMax;
-    else
-        b1 = m_zMax;
-
-    float t2 = other.m_zMin;
-    float b2 = other.m_zMin;
-    if (other.m_zMax < other.m_zMin)
-        t2 = other.m_zMax;
-    else
-        b2 = other.m_zMax;
+    float t1{ m_zMin }, b1{ m_zMin };  // z borders
+    m_zMax < m_zMin ? t1 = m_zMax : b1 = m_zMax;
+    float t2{ other.m_zMin }, b2{ other.m_zMin };
+    other.m_zMax < other.m_zMin ? t2 = other.m_zMax : b2 = other.m_zMax;
 
     m_xMin = qMin(n1, n2);
     m_xMax = qMax(f1, f2);
@@ -108,19 +80,19 @@ Cube Cube::merge(const Cube &other)
 
 bool Cube::isEmpty() const
 {
-    return m_xMin == m_xMax && m_yMin == m_yMax && m_zMin == m_zMax;
+    return (m_xMin == m_xMax) && (m_yMin == m_yMax) && (m_zMin == m_zMax);
 }
 
-Plane Cube::bottom()
+Plane Cube::bottom() const
 {
-    return Plane({m_xMin,m_yMin,m_zMin},
-                 {m_xMax,m_yMax,m_zMin});
+    return Plane({ m_xMin, m_yMin, m_zMin },
+                 { m_xMax, m_yMax, m_zMin });
 }
 
-Plane Cube::top()
+Plane Cube::top() const
 {
-    return Plane({m_xMin,m_yMin,m_zMax},
-                 {m_xMax,m_yMax,m_zMax});
+    return Plane({ m_xMin, m_yMin, m_zMax },
+                 { m_xMax, m_yMax, m_zMax });
 }
 
 float Cube::minimumX() const

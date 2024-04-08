@@ -1,6 +1,8 @@
 #include "ray.h"
 #include <sceneobject.h>
 
+#include <cfloat>
+
 Ray::Ray(QObject *parent)
     : QObject{parent}
 {}
@@ -39,28 +41,35 @@ QVector<RayHit> Ray::hitObject(std::weak_ptr<SceneObject> object, HittingMode hi
 
 QVector<RayHit> Ray::pickAsVertex(std::weak_ptr<SceneObject> object)
 {
-    auto _object = object.lock();
-    auto size = _object->cdata().size();
+    auto _object{ object.lock() };
+    auto size{ _object->cdata().size() };
 
-    if(size <= 0) return {};
+    if (size <= 0)
+        return {};
 
     RayHit hit;
     hit.setObject(object);
 
-    auto d = _object->cdata().first().distanceToLine(m_origin, m_direction);
+    auto d{ _object->cdata().first().distanceToLine(m_origin, m_direction) };
+    if (!std::isfinite(d))
+        d = FLT_MAX;
 
     for (int i = 0; i < size; i++){
-        auto p = _object->cdata().at(i);
-        auto _d = p.distanceToLine(m_origin, m_direction);
-        if(_d < d){
+        auto p{ _object->cdata().at(i) };
+
+        auto _d{ p.distanceToLine(m_origin, m_direction) };
+        if (!std::isfinite(_d))
+            d = FLT_MAX;
+
+        if (_d < d) {
             d = _d;
             hit.setIndices(i,i);
             hit.setWorldIntersection(p);
         }
     }
 
-    if(hit.indices().first >= 0)
-        return {hit};
+    if (hit.indices().first >= 0)
+        return { hit };
 
     return {};
 }

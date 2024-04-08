@@ -5,13 +5,11 @@
 
 #include <QVector3D>
 #include <QDebug>
-
 #include <cmath>
 
-class Cube{
 
+class Cube {
 public:
-
     Cube();
     Cube(float x_1, float x_2,
          float y_1, float y_2,
@@ -30,18 +28,17 @@ public:
     float height() const;
     Cube merge(const Cube& other);
     bool isEmpty() const;
-
-    Plane bottom();
-    Plane top();
+    Plane bottom() const;
+    Plane top() const;
 
 private:
-    float m_xMin = 0.0f;
-    float m_xMax = 0.0f;
-    float m_yMin = 0.0f;
-    float m_yMax = 0.0f;
-    float m_zMin = 0.0f;
-    float m_zMax = 0.0f;
-    bool m_isValid = false;
+    float m_xMin;
+    float m_xMax;
+    float m_yMin;
+    float m_yMax;
+    float m_zMin;
+    float m_zMax;
+    bool m_isValid;
 };
 
 inline QDebug operator<<(QDebug stream,const Cube& cube)
@@ -61,6 +58,5 @@ inline QDebug operator<<(QDebug stream,const Cube& cube)
 
     return stream;
 }
-
 
 #endif // CUBE_H

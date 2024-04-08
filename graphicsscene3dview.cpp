@@ -403,9 +403,8 @@ void GraphicsScene3dView::updateBounds()
     m_bounds = m_boatTrack->bounds()
         .merge(m_surface->bounds())
         .merge(m_bottomTrack->bounds())
-        .merge(m_navigationArrow->bounds());
-        //.merge(m_polygonGroup->bounds())
-        //.merge(m_pointGroup->bounds());
+        .merge(m_polygonGroup->bounds())
+        .merge(m_pointGroup->bounds());
 
     updatePlaneGrid();
 
