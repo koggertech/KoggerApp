@@ -256,6 +256,9 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
         setVerticalScale(tempVerticalScale);
     }
+    else if (keyboardKey == Qt::Key_Shift) {
+        angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
+    }
     else
         m_camera->zoom(angleDelta.y());
 
@@ -329,6 +332,11 @@ void GraphicsScene3dView::setVerticalScale(float scale)
         m_verticalScale = scale;
 
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::shiftCameraZAxis(float shift)
+{
+    m_camera->moveZAxis(shift);
 }
 
 void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
@@ -568,6 +576,12 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
     auto lookAt = m_lookAt + m_deltaOffset;
 
     updateViewMatrix(&lookAt);
+}
+
+void GraphicsScene3dView::Camera::moveZAxis(float z)
+{
+    m_lookAt.setZ(m_lookAt.z() + z);
+    updateViewMatrix();
 }
 
 //void GraphicsScene3dView::Camera::move(const QVector2D &lastMouse, const QVector2D &mousePos)

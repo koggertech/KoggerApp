@@ -46,6 +46,7 @@ public:
 
         //void move(const QVector2D& startPos, const QVector2D& endPos);
         void move(const QVector2D &lastMouse, const QVector2D &mousePos);
+        void moveZAxis(float z);
         void zoom(qreal delta);
         void commitMovement();
         void focusOnObject(std::weak_ptr<SceneObject> object);
@@ -149,6 +150,7 @@ public Q_SLOTS:
     void setIsometricView();
     void setIdleMode();
     void setVerticalScale(float scale);
+    void shiftCameraZAxis(float shift);
     void setBottomTrackVertexSelectionMode();
     void setBottomTrackVertexComboSelectionMode();
     void setPolygonCreationMode();
