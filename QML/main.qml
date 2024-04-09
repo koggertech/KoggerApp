@@ -112,12 +112,17 @@ Window  {
                         enabled:              true
                         anchors.fill:         parent
                         acceptedButtons:      Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                        focus:                true
+                        //focus:                true
                         hoverEnabled:         true
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
+                        onClicked: {
+                            mousearea3D.forceActiveFocus();
+                        }
+
                         Keys.onPressed: {
+                            mousearea3D.forceActiveFocus();
                             pinch3D.lastKeyPressed = event.key;
                         }
 
