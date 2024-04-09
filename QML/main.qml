@@ -68,6 +68,15 @@ Window  {
             SplitView.fillWidth:  true
             spacing:              0
 
+            property int lastKeyPressed: Qt.Key_unknown
+
+            Keys.onPressed: {
+                visualisationLayout.lastKeyPressed = event.key;
+            }
+
+            Keys.onReleased: {
+                visualisationLayout.lastKeyPressed = Qt.Key_unknown;
+            }
 
             GraphicsScene3dView {
                 id:                renderer
@@ -90,7 +99,6 @@ Window  {
                     id:           pinch3D
                     anchors.fill: parent
                     enabled:      true
-                    property int lastKeyPressed: Qt.Key_unknown
 
                     onPinchUpdated: {
                         renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
@@ -112,38 +120,29 @@ Window  {
                         enabled:              true
                         anchors.fill:         parent
                         acceptedButtons:      Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                        //focus:                true
+                        focus:                true
                         hoverEnabled:         true
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
-                        onClicked: {
+                        onEntered: {
                             mousearea3D.forceActiveFocus();
-                        }
-
-                        Keys.onPressed: {
-                            mousearea3D.forceActiveFocus();
-                            pinch3D.lastKeyPressed = event.key;
-                        }
-
-                        Keys.onReleased: {
-                            pinch3D.lastKeyPressed = Qt.Key_unknown;
                         }
 
                         onWheel: {
-                            renderer.mouseWheelTrigger(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, pinch3D.lastKeyPressed)
+                            renderer.mouseWheelTrigger(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, visualisationLayout.lastKeyPressed)
                         }
 
                         onPositionChanged: {
-                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, pinch3D.lastKeyPressed)
+                            renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onPressed: {
-                            renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, pinch3D.lastKeyPressed)
+                            renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onReleased: {
-                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y, pinch3D.lastKeyPressed)
+                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
                     }
                 }
