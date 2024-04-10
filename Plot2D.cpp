@@ -167,6 +167,13 @@ void Plot2D::setAngleVisibility(bool state)
     plotUpdate();
 }
 
+void Plot2D::setAngleRange(int angleRange)
+{
+    _cursor.attitude.from = static_cast<float>(-angleRange);
+    _cursor.attitude.to = static_cast<float>(angleRange);
+    plotUpdate();
+}
+
 void Plot2D::setVelocityVisible(bool visible) {
     _grid.setVelocityVisible(visible);
     plotUpdate();

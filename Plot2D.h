@@ -816,6 +816,8 @@ public:
 
     void setGridVetricalNumber(int grids);
     void setAngleVisibility(bool state);
+    void setAngleRange(int angleRange);
+
     void setVelocityVisible(bool visible);
     void setVelocityRange(float velocity);
     void setDistanceAutoRange(int auto_range_type);

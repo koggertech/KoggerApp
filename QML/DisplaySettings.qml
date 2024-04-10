@@ -352,17 +352,54 @@ GridLayout {
                 }
             }
 
-            CCheck {
-                id: angleVisible
-                Layout.fillWidth: true
-                text: "Angle range"
-                onCheckedChanged: targetPlot.plotAngleVisibility(checked)
-                Component.onCompleted: targetPlot.plotAngleVisibility(checked)
+            RowLayout {
+                visible: instruments > 1
 
-                Settings {
-                    property alias velocityVisible: angleVisible.checked
+                CCheck {
+                    id: angleVisible
+                    Layout.fillWidth: true
+                    text: "Angle range, °"
+                    onCheckedChanged: targetPlot.plotAngleVisibility(checked)
+                    Component.onCompleted: targetPlot.plotAngleVisibility(checked)
+
+                    Settings {
+                        property alias velocityVisible: angleVisible.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: angleRange
+                    from: 1
+                    to: 180
+                    stepSize: 1
+                    value: 45
+
+                    onValueChanged: targetPlot.plotAngleRange(angleRange.currValue)
+                    Component.onCompleted: targetPlot.plotAngleRange(angleRange.currValue)
+
+                    property int currValue: value
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(from, to)
+                        top:  Math.max(from, to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value).toLocaleString(locale, 'f', 0)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text)
+                    }
+
+                    onCurrValueChanged: targetPlot.plotAngleRange(currValue)
+
+                    Settings {
+                        property alias angleRange: angleRange.value
+                    }
                 }
             }
+
 
             RowLayout {
                 visible: instruments > 1

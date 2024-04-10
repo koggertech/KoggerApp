@@ -30,12 +30,12 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
         if (_velocityVisible && cursor.velocity.isValid()) { // velocity
             const float velFrom{ cursor.velocity.from }, velTo{ cursor.velocity.to },
                 velRange{ velTo - velFrom }, attVal{ velRange * i / linesCount + velFrom };
-            lineText.append({ QString::number(attVal , 'f', 2) + QStringLiteral(" m/s\t") });
+            lineText.append({ QString::number(attVal , 'f', 2) + QStringLiteral(" m/s    ") });
         }
         if (angleVisibility_ && cursor.attitude.isValid()) { // angle
             const float attFrom{ cursor.attitude.from }, attTo{ cursor.attitude.to },
                 attRange{ attTo - attFrom }, attVal{ attRange * i / linesCount + attFrom };
-            QString text{ QString::number(attVal, 'f', 0) + QStringLiteral("°\t") };
+            QString text{ QString::number(attVal, 'f', 0) + QStringLiteral("°    ") };
             lineText.append(text);
         }
         if (cursor.distance.isValid()) { // depth
