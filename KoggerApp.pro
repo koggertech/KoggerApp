@@ -19,7 +19,7 @@ android {
     QMAKE_CXXFLAGS_DEBUG += -O0
 }
 
-CONFIG += c++11
+CONFIG += c++17
 
 
 CONFIG += qmltypes

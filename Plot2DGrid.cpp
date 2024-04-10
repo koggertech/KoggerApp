@@ -1,109 +1,84 @@
 #include "Plot2D.h"
 
 
-Plot2DGrid::Plot2DGrid() {
-}
+Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
+{}
 
 
-bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
-    if(isVisible()) {
-        QPen pen;
-        pen.setWidth(_lineWidth);
-        pen.setColor(_lineColor);
+bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
+{
+    if (!isVisible())
+        return false;
 
-        QPainter* p = canvas.painter();
-        p->setPen(pen);
-        p->setFont(QFont("Asap", 14, QFont::Normal));
+    QPen pen(_lineColor);
+    pen.setWidth(_lineWidth);
 
-        const int image_height = canvas.height();
-        const int image_width = canvas.width();
-        const int lines_count = _lines;
-        for (int i = 1; i < lines_count; i++) {
-            int pos_y = i*image_height/lines_count;
+    QPainter* p = canvas.painter();
+    p->setPen(pen);
+    p->setFont(QFont("Asap", 14, QFont::Normal));
+    QFontMetrics fm(p->font());
 
-            p->drawLine(0, pos_y, image_width, pos_y);
+    const int imageHeight{ canvas.height() }, imageWidth{ canvas.width() },
+        linesCount{ _lines }, textXOffset{ 30 }, textYOffset{ 10 };
+
+    for (int i = 1; i < linesCount; ++i) {
+        const int posY = i * imageHeight / linesCount;
+        p->drawLine(0, posY, imageWidth, posY); // line
+
+        QString lineText;
+
+        if (_velocityVisible && cursor.velocity.isValid()) { // velocity
+            const float velFrom{ cursor.velocity.from }, velTo{ cursor.velocity.to },
+                velRange{ velTo - velFrom }, attVal{ velRange * i / linesCount + velFrom };
+            lineText.append({ QString::number(attVal , 'f', 2) + QStringLiteral(" m/s\t") });
+        }
+        if (angleVisibility_ && cursor.attitude.isValid()) { // angle
+            const float attFrom{ cursor.attitude.from }, attTo{ cursor.attitude.to },
+                attRange{ attTo - attFrom }, attVal{ attRange * i / linesCount + attFrom };
+            QString text{ QString::number(attVal, 'f', 0) + QStringLiteral("°\t") };
+            lineText.append(text);
+        }
+        if (cursor.distance.isValid()) { // depth
+            const float distFrom{ cursor.distance.from }, distTo{ cursor.distance.to },
+                distRange{ distTo - distFrom }, rangeVal{ distRange * i / linesCount + distFrom };
+            lineText.append( { QString::number(rangeVal, 'f', 2) + QStringLiteral(" m") } );
         }
 
-        int text_offset = 10;
+        if (!lineText.isEmpty())
+            p->drawText(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY - textYOffset, lineText);
+    }
 
-        if(cursor.distance.isValid()) {
-            const float distance_from = cursor.distance.from;
-            const float distance_to = cursor.distance.to;
-            const float distance_range = distance_to - distance_from;
+    if (cursor.distance.isValid()) {
+        p->setFont(QFont("Asap", 26, QFont::Normal));
+        float val{ cursor.distance.to };
+        QString range_text = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QStringLiteral(" m");
+        p->drawText(imageWidth - textXOffset / 2 - range_text.count() * 25, imageHeight - 10, range_text);
+    }
 
-            for (int i = 1; i < lines_count; i++) {
-                float range_text = distance_range*i/lines_count + distance_from;
-                int pos_y = i*image_height/lines_count;
+    if (_rangeFinderLastVisible && cursor.distance.isValid()) {
+        Epoch* lastEpoch = dataset->last();
+        Epoch* preLastEpoch = dataset->lastlast();
+        float distance = NAN;
 
-                p->drawText(image_width - 100, pos_y - text_offset, QString::number(range_text) + QStringLiteral(" m"));
-            }
+        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder()))
+            distance = lastEpoch->rangeFinder();
+        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder()))
+            distance = preLastEpoch->rangeFinder();
 
-            p->setFont(QFont("Asap", 26, QFont::Normal));
-            QString range_text = QString::number(cursor.distance.to) + QStringLiteral(" m");
-            p->drawText(image_width - 50 - range_text.count()*25, image_height - 10, range_text);
-
-            text_offset -= 170;
+        if (isfinite(distance)) {
+            pen.setColor(QColor(250, 100, 0));
+            p->setPen(pen);
+            p->setFont(QFont("Asap", 40, QFont::Normal));
+            float val{ round(distance * 100.f) / 100.f };
+            QString rangeText = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QStringLiteral(" m");
+            p->drawText(imageWidth / 2 - rangeText.count() * 32, imageHeight - 15, rangeText);
         }
-
-        if(_rangeFinderLastVisible && cursor.distance.isValid()) {
-            Epoch* last_epoch = dataset->last();
-            Epoch* lastlast_epoch = dataset->lastlast();
-
-            float distance = NAN;
-
-            if(last_epoch != NULL && isfinite(last_epoch->rangeFinder())) {
-                distance = last_epoch->rangeFinder();
-            } else if(lastlast_epoch != NULL && isfinite(lastlast_epoch->rangeFinder())) {
-                distance = lastlast_epoch->rangeFinder();
-            }
-
-            if(isfinite(distance)) {
-                pen.setColor(QColor(250, 100, 0));
-                p->setPen(pen);
-
-                p->setFont(QFont("Asap", 40, QFont::Normal));
-                QString range_text = QString::number(round(distance*100.0)/100.0) + QStringLiteral(" m");
-                p->drawText(image_width/2 - range_text.count()*32, image_height - 15, range_text);
-
-                text_offset -= 140;
-            }
-        }
-
-
-
-        if(cursor.attitude.isValid()) {
-            const float attitude_from = cursor.attitude.from;
-            const float attitude_to = cursor.attitude.to;
-            const float attitude_range = attitude_to - attitude_from;
-
-            p->setFont(QFont("Asap", 14, QFont::Normal));
-
-            for (int i = 1; i < lines_count; i++) {
-                float attitude_text = attitude_range*i/lines_count + attitude_from;
-                int pos_y = i*image_height/lines_count;
-
-                p->drawText(image_width - 150, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" °"));
-            }
-
-            text_offset -= 140;
-        }
-
-        if(_velocityVisible && cursor.velocity.isValid()) {
-            const float velocity_from = cursor.velocity.from;
-            const float velocity_to = cursor.velocity.to;
-            const float velocity_range = velocity_to - velocity_from;
-
-            p->setFont(QFont("Asap", 14, QFont::Normal));
-
-            for (int i = 1; i < lines_count; i++) {
-                float attitude_text = velocity_range*i/lines_count + velocity_from;
-                int pos_y = i*image_height/lines_count;
-
-                p->drawText(image_width - 180, pos_y - 10, QString::number(attitude_text) + QStringLiteral(" m/s"));
-            }
-        }
-
     }
 
     return true;
+}
+
+void Plot2DGrid::setAngleVisibility(bool state)
+{
+    angleVisibility_ = state;
 }

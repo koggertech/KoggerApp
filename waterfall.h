@@ -72,6 +72,7 @@ public slots:
     void plotGNSSVisible(bool visible, int flags) { setGNSSVisible(visible, flags);}
 
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
+    void plotAngleVisibility(bool state)   { setAngleVisibility(state); }
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }
     void plotVelocityRange(float velocity) { setVelocityRange(velocity); }
 

@@ -352,6 +352,18 @@ GridLayout {
                 }
             }
 
+            CCheck {
+                id: angleVisible
+                Layout.fillWidth: true
+                text: "Angle range"
+                onCheckedChanged: targetPlot.plotAngleVisibility(checked)
+                Component.onCompleted: targetPlot.plotAngleVisibility(checked)
+
+                Settings {
+                    property alias velocityVisible: angleVisible.checked
+                }
+            }
+
             RowLayout {
                 visible: instruments > 1
                 CCheck {

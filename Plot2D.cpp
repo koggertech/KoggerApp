@@ -161,6 +161,12 @@ void Plot2D::setGridVetricalNumber(int grids) {
     plotUpdate();
 }
 
+void Plot2D::setAngleVisibility(bool state)
+{
+    _grid.setAngleVisibility(state);
+    plotUpdate();
+}
+
 void Plot2D::setVelocityVisible(bool visible) {
     _grid.setVelocityVisible(visible);
     plotUpdate();

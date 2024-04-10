@@ -702,10 +702,12 @@ public:
     Plot2DGrid();
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
 
+    void setAngleVisibility(bool state);
     void setVetricalNumber(int grids) { _lines = grids; }
     void setVelocityVisible(bool visible) { _velocityVisible = visible; }
     void setRangeFinderVisible(bool visible) { _rangeFinderLastVisible = visible; }
 protected:
+    bool angleVisibility_;
     bool _velocityVisible = true;
     bool _rangeFinderLastVisible = true;
     int _lines = 20;
@@ -813,6 +815,7 @@ public:
     void setGNSSVisible(bool visible, int flags);
 
     void setGridVetricalNumber(int grids);
+    void setAngleVisibility(bool state);
     void setVelocityVisible(bool visible);
     void setVelocityRange(float velocity);
     void setDistanceAutoRange(int auto_range_type);
