@@ -340,14 +340,13 @@ protected slots:
     void receivedDVLMode(Type type, Version ver, Resp resp);
 
 private:
-    bool datasetState_ = true;
-    bool distSetupState_ = true;
-    bool chartSetupState_ = true;
-    bool dspSetupState_ = true;
-    bool transcState_ = true;
-    bool soundSpeedState_ = true;
-    bool uartState_ = true;
-
+    bool datasetState_;
+    bool distSetupState_;
+    bool chartSetupState_;
+    bool dspSetupState_;
+    bool transcState_;
+    bool soundSpeedState_;
+    bool uartState_;
 };
 
 

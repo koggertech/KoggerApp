@@ -6,7 +6,14 @@
 extern Core core;
 
 DevDriver::DevDriver(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    datasetState_(false),
+    distSetupState_(false),
+    chartSetupState_(false),
+    dspSetupState_(false),
+    transcState_(false),
+    soundSpeedState_(false),
+    uartState_(false)
 {
     regID(idTimestamp = new IDBinTimestamp(), &DevDriver::receivedTimestamp);
 
@@ -64,6 +71,7 @@ void DevDriver::requestSetup() {
     while (i.hasNext()) {
         i.next();
         if(i.value().isSetup) {
+            i.value().instance->startColdStartTimer();
             i.value().instance->requestAll();
         }
     }

@@ -53,6 +53,7 @@ public:
 
     virtual void simpleRequest(Version ver);
     virtual void requestAll() { simpleRequest(v0); }
+    virtual void startColdStartTimer() {};
 
     void setAddress(uint8_t addr) { m_address = addr; }
     void setConsoleOut(bool is_console) { isConsoleOut = is_console; }
@@ -82,16 +83,23 @@ protected:
 
     void hashBinFrameOut(ProtoBinOut &proto);
     LastReadInfo hashLastInfo_;
+    void intertnalStartColdStartTimer();
 
 private:
     /*methods*/
     bool checkResponse(FrameParser& proto);
-    void onExpiredTimer();
+    void onExpiredColdStartTimer();
+    void onExpiredSetTimer();
     /*data*/
     static const uint8_t repeatingCount_ = 7;
     static const int pollingPeriodTimeMsec_ = 1500;
-    QTimer checkoutTimer_;
-    uint8_t currReqCount_;
+
+    uint8_t setTimerCount_;
+    uint8_t coldTimerCount_;
+    QTimer setTimer_;
+    QTimer coldStartTimer_;
+    bool coldStart = true;
+    bool needToCheckResp_ = false;
 };
 
 
@@ -242,7 +250,7 @@ public:
 
     ID id() override { return ID_DATASET; }
     Resp  parsePayload(FrameParser &proto) override;
-
+    void startColdStartTimer() override;
     typedef struct {
         uint8_t id = 0;
         uint32_t period = 0;
@@ -377,6 +385,7 @@ public:
 
     ID id() override { return ID_DIST_SETUP; }
     Resp  parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
 
     void setRange(uint32_t start_offset, uint32_t max_dist);
 
@@ -411,6 +420,7 @@ public:
 
     ID id() override { return ID_CHART_SETUP; }
     Resp  parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
 
     void setV0(U2 count, U2 resolution, U2 offset);
 
@@ -445,6 +455,7 @@ public:
 
     ID id() override { return ID_DSP; }
     Resp  parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
 
     void setV0(U1 hor_smooth_factor);
 
@@ -467,6 +478,7 @@ public:
 
     ID id() override { return ID_TRANSC; }
     Resp  parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
 
     void setTransc(U2 freq, U1 pulse, U1 boost);
 
@@ -496,6 +508,7 @@ public:
 
     ID id() override { return ID_SND_SPEED; }
     Resp  parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
 
     void setSoundSpeed(U4 snd_spd);
     int getSoundSpeed() { return m_soundSpeed; }
@@ -514,6 +527,7 @@ public:
 
     ID id() override { return ID_UART; }
     Resp  parsePayload(FrameParser &proto) override;
+    void startColdStartTimer() override;
 
     typedef struct {
         U1 id = 0;
