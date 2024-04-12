@@ -24,7 +24,7 @@ typedef enum {
 } BoardVersion;
 
 struct LastReadInfo {
-    LastReadInfo() : version(), checkSum(0), address(0), isReaded(false) {};
+    LastReadInfo() : version(), checkSum(0), address(0), isReaded(true) {};
     LastReadInfo(Version _version, uint16_t _checkSum, uint8_t _address, bool _isReaded) :
         version(_version), checkSum(_checkSum), address(_address), isReaded(_isReaded) {};
     Version version;
@@ -82,8 +82,7 @@ protected:
     void appendKey(ProtoBinOut &proto_out);
 
     void hashBinFrameOut(ProtoBinOut &proto);
-    LastReadInfo hashLastInfo_;
-    void intertnalStartColdStartTimer();
+    void interExecColdStartTimer();
 
 private:
     /*methods*/
@@ -92,14 +91,14 @@ private:
     void onExpiredSetTimer();
     /*data*/
     static const uint8_t repeatingCount_ = 7;
-    static const int pollingPeriodTimeMsec_ = 1500;
-
-    uint8_t setTimerCount_;
-    uint8_t coldTimerCount_;
+    static const int timerPeriodMsec_ = 1500;
     QTimer setTimer_;
     QTimer coldStartTimer_;
-    bool coldStart = true;
-    bool needToCheckResp_ = false;
+    LastReadInfo hashLastInfo_;
+    uint8_t setTimerCount_;
+    uint8_t coldStartTimerCount_;
+    bool isColdStart_;
+    bool needToCheckSetResp_;
 };
 
 

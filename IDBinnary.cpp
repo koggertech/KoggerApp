@@ -8,19 +8,24 @@ extern Core core;
 template < typename T, size_t N >
 size_t _countof( T const (&array)[ N ] ) { return N; }
 #endif
-IDBin::IDBin(QObject *parent) : QObject(parent), setTimerCount_(0), coldTimerCount_(0) {
+IDBin::IDBin(QObject *parent) :
+    QObject(parent),
+    setTimerCount_(0),
+    coldStartTimerCount_(0),
+    isColdStart_(false), // for unique
+    needToCheckSetResp_(true)
+{
 //    setProto(proto);
 
-    coldStartTimer_.setInterval(pollingPeriodTimeMsec_) ;
-    setTimer_.setInterval(pollingPeriodTimeMsec_) ;
+    coldStartTimer_.setInterval(timerPeriodMsec_);
+    setTimer_.setInterval(timerPeriodMsec_);
 
     QObject::connect(&coldStartTimer_, &QTimer::timeout, this, &IDBin::onExpiredColdStartTimer);
     QObject::connect(&setTimer_, &QTimer::timeout, this, &IDBin::onExpiredSetTimer);
 }
 
-IDBin::~IDBin() {
-
-}
+IDBin::~IDBin()
+{}
 
 Resp  IDBin::parse(FrameParser &proto) {
     Resp resp_parse = respNone;
@@ -33,11 +38,18 @@ Resp  IDBin::parse(FrameParser &proto) {
         if (proto.resp()) {
             m_lastResp = (Resp)proto.read<U1>();
 
-            if (!hashLastInfo_.isReaded && needToCheckResp_) {
+            if ((m_lastResp == Resp::respOk)  && (!hashLastInfo_.isReaded && needToCheckSetResp_)) {
+                //qDebug() << "m_lastResp: " << m_lastResp;
+                qDebug() << "proto.resp(): " << proto.resp() << ", type: " << proto.type();
+
                 if (checkResponse(proto)) {
+                    qDebug() << "IDBin::parse() resp success, id(): " << id();
                     hashLastInfo_.isReaded = true;
-                    setTimerCount_ = 0;
-                    emit notifyDevDriver(hashLastInfo_.isReaded);
+                    onExpiredSetTimer();
+                }
+                else {
+                    qDebug() << "IDBin::parse() resp unsuccess, id(): " << id();
+                    needToCheckSetResp_ = false;
                 }
             }
 
@@ -47,18 +59,17 @@ Resp  IDBin::parse(FrameParser &proto) {
             m_lastResp = respNone;
             resp_parse = parsePayload(proto);
 
-            if (resp_parse == Resp::respOk && coldStart) {
-                coldStart = false;
-                coldTimerCount_ = 0;
-                emit notifyDevDriver(!coldStart);
+            if (!hashLastInfo_.isReaded && !needToCheckSetResp_) {
+                qDebug() << "IDBin::parse() payload set success, id(): "  << id();
+                hashLastInfo_.isReaded = true;
+                onExpiredSetTimer();
             }
 
-            if (!hashLastInfo_.isReaded && !needToCheckResp_) {
-                needToCheckResp_ = true;
-                hashLastInfo_.isReaded = true;
-                setTimerCount_ = 0;
-                emit notifyDevDriver(hashLastInfo_.isReaded);
-            }
+            if (resp_parse == Resp::respOk && isColdStart_) {
+                //qDebug() << "IDBin::parse() payload cold success, id():"  << id();
+                isColdStart_ = false;
+                onExpiredColdStartTimer();
+            }            
         }
 
         if (resp_parse == respOk)
@@ -71,9 +82,17 @@ Resp  IDBin::parse(FrameParser &proto) {
 bool IDBin::checkResponse(FrameParser& proto)
 {
     auto checkSum = proto.read<U2>();
+
+    Version ver = proto.ver();
+    qDebug() << "hashLastInfo_.checkSum :" << hashLastInfo_.checkSum << "\n"
+             << "hashLastInfo_.address :" << hashLastInfo_.address << "\n"
+             << "hashLastInfo_.version :" << hashLastInfo_.version << "\n"
+             << "checkSum :" << checkSum << "\n"
+             << "proto.route() :" << proto.route() << "\n"
+             << "proto.ver() :" << ver << "\n";
     return (hashLastInfo_.checkSum == checkSum) &&
            (hashLastInfo_.address == proto.route()) &&
-           (hashLastInfo_.version == proto.ver());
+           (hashLastInfo_.version == ver);
 }
 
 void IDBin::simpleRequest(Version ver) {
@@ -100,32 +119,47 @@ void IDBin::hashBinFrameOut(ProtoBinOut &proto_out)
     setTimer_.start();
 }
 
-void IDBin::intertnalStartColdStartTimer()
+void IDBin::interExecColdStartTimer()
 {
+    isColdStart_ = true;
+    //qDebug() << "IDBin::interExecColdStartTimer(), id(): " << id();
     coldStartTimer_.start();
 }
 
 void IDBin::onExpiredColdStartTimer()
 {
+    //qDebug() << "IDBin::onExpiredColdStartTimer(), id(): " << id();
     coldStartTimer_.stop();
-    emit notifyDevDriver(!coldStart);
 
-    if (coldStart && (coldTimerCount_++ < repeatingCount_)) { // try request
+    emit notifyDevDriver(!isColdStart_);
+    //qDebug() << "IDBin::onExpiredColdStartTimer() coldStartTimerCount_: " << coldStartTimerCount_ << ", id(): " << id();
+    if (isColdStart_ && (coldStartTimerCount_++ < repeatingCount_)) { // try request
+        //qDebug() << "IDBin::onExpiredColdStartTimer() request all, count: " << coldStartTimerCount_ << ", id(): " << id();
         requestAll();
-        intertnalStartColdStartTimer();
+        interExecColdStartTimer();
+    }
+    else {
+        //qDebug() << "IDBin::onExpiredColdStartTimer() success, id(): " << id();
+        coldStartTimerCount_ = 0;
     }
 }
 
 void IDBin::onExpiredSetTimer()
 {
+    qDebug() << "IDBin::onExpiredSetTimer(), id(): " << id();
     setTimer_.stop();
+
     emit notifyDevDriver(hashLastInfo_.isReaded);
-
+    qDebug() << "IDBin::onExpiredSetTimer() setTimerCount_: " << setTimerCount_ << ", id(): " << id();
     if (!hashLastInfo_.isReaded && (setTimerCount_++ < repeatingCount_)) { // try request
-        needToCheckResp_ = false;
-
+        qDebug() << "IDBin::onExpiredSetTimer() request all, count: " << setTimerCount_ << ", id(): " << id();
         requestAll();
         setTimer_.start();
+    }
+    else {
+        qDebug() << "IDBin::onExpiredSetTimer() success, id(): " << id();
+        setTimerCount_ = 0;
+        needToCheckSetResp_ = true;
     }
 }
 
@@ -341,7 +375,7 @@ Resp IDBinDataset::parsePayload(FrameParser &proto) {
 
 void IDBinDataset::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinDataset::setChannel(uint8_t ch_id, uint32_t period, uint32_t mask) {
@@ -416,7 +450,7 @@ Resp IDBinDistSetup::parsePayload(FrameParser &proto) {
 
 void IDBinDistSetup::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinDistSetup::setRange(uint32_t start_offset, uint32_t max_dist) {
@@ -458,7 +492,7 @@ Resp IDBinChartSetup::parsePayload(FrameParser &proto) {
 
 void IDBinChartSetup::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinChartSetup::setV0(uint16_t count, uint16_t resolution, uint16_t offset) {
@@ -492,7 +526,7 @@ Resp IDBinDSPSetup::parsePayload(FrameParser &proto) {
 
 void IDBinDSPSetup::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinDSPSetup::setV0(U1 hor_smooth_factor) {
@@ -522,7 +556,7 @@ Resp IDBinTransc::parsePayload(FrameParser &proto) {
 
 void IDBinTransc::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinTransc::setTransc(U2 freq, U1 pulse, U1 boost) {
@@ -553,7 +587,7 @@ Resp IDBinSoundSpeed::parsePayload(FrameParser &proto)
 
 void IDBinSoundSpeed::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinSoundSpeed::setSoundSpeed(U4 snd_spd) {
@@ -606,7 +640,7 @@ Resp IDBinUART::parsePayload(FrameParser &proto)
 
 void IDBinUART::startColdStartTimer()
 {
-    intertnalStartColdStartTimer();
+    interExecColdStartTimer();
 }
 
 void IDBinUART::setBaudrate(U4 baudrate) {
