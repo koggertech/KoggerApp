@@ -6,7 +6,7 @@ import Qt.labs.settings 1.1
 
 DevSettingsBox {
     id: control
-    isActive: dev.isChartSupport
+    isActive: dev !== null ? dev.isChartSupport : false
 
     MenuBlock {
     }
@@ -26,9 +26,16 @@ DevSettingsBox {
                     from: 10
                     to: 100
                     stepSize: 10
-                    value: dev.chartResolution
-                    onValueChanged: dev.chartResolution = value
-                    isValid: dev.chartSetupState
+                    value: 0
+                    devValue: dev !== null ? dev.chartResolution : 0
+                    isValid: dev !== null ? dev.chartSetupState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.chartResolution = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -39,9 +46,16 @@ DevSettingsBox {
                     from: 100
                     to: 15000
                     stepSize: 100
-                    value: dev.chartSamples
-                    onValueChanged: dev.chartSamples = value
-                    isValid: dev.chartSetupState
+                    value: 0
+                    devValue: dev !== null ? dev.chartSamples : 0
+                    isValid: dev !== null ? dev.chartSetupState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.chartSamples = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -49,10 +63,19 @@ DevSettingsBox {
                 paramName: "Offset of Samples"
 
                 SpinBoxCustom {
-                    from: 0; to: 10000; stepSize: 100
-                    value: dev.chartOffset
-                    onValueChanged: dev.chartOffset = value
-                    isValid: dev.chartSetupState
+                    from: 0
+                    to: 10000
+                    stepSize: 100
+                    value:0
+                    devValue: dev !== null ? dev.chartOffset : 0
+                    isValid: dev !== null ? dev.chartSetupState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.chartOffset = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
         }
@@ -64,10 +87,19 @@ DevSettingsBox {
                 paramName: "Max distance, mm"
 
                 SpinBoxCustom {
-                    from: 0; to: 50000; stepSize: 1000
-                    value: dev.distMax
-                    onValueChanged: dev.distMax = value
-                    isValid: dev.distSetupState
+                    from: 0;
+                    to: 50000;
+                    stepSize: 1000
+                    value: 0
+                    devValue: dev !== null ? dev.distMax : 0
+                    isValid: dev !== null ? dev.distSetupState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.distMax = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -75,10 +107,19 @@ DevSettingsBox {
                 paramName: "Dead zone, mm"
 
                 SpinBoxCustom {
-                    from: 0; to: 50000; stepSize: 100
-                    value: dev.distDeadZone
-                    onValueChanged: dev.distDeadZone = value
-                    isValid: dev.distSetupState
+                    from: 0
+                    to: 50000
+                    stepSize: 100
+                    value: 0
+                    devValue: dev !== null ? dev.distDeadZone : 0
+                    isValid: dev !== null ? dev.distSetupState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.distDeadZone = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -86,10 +127,19 @@ DevSettingsBox {
                 paramName: "Confidence threshold, %"
 
                 SpinBoxCustom {
-                    from: 0; to: 100; stepSize: 1
-                    value: dev.distConfidence
-                    onValueChanged: dev.distConfidence = value
-                    isValid: dev.distSetupState
+                    from: 0
+                    to: 100
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? dev.distConfidence : 0
+                    isValid: dev !== null ? dev.distSetupState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.distConfidence = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
         }
@@ -101,10 +151,19 @@ DevSettingsBox {
                 paramName: "Pulse count"
 
                 SpinBoxCustom {
-                    from: 0; to: 5000; stepSize: 1
-                    value: dev.transPulse
-                    onValueChanged: dev.transPulse = value
-                    isValid: dev.transcState
+                    from: 0
+                    to: 5000
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? dev.transPulse : 0
+                    isValid: dev !== null ? dev.transcState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.transPulse = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -112,10 +171,19 @@ DevSettingsBox {
                 paramName: "Frequency, kHz"
 
                 SpinBoxCustom {
-                    from: 40; to: 6000; stepSize: 5
-                    value: dev.transFreq
-                    onValueChanged:  dev.transFreq = value
-                    isValid: dev.transcState
+                    from: 40
+                    to: 6000
+                    stepSize: 5
+                    value: 0
+                    devValue: dev !== null ? dev.transFreq : 0
+                    isValid: dev !== null ? dev.transcState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.transFreq = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -123,10 +191,19 @@ DevSettingsBox {
                 paramName: "Booster"
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
-                    value: dev.transBoost
-                    onValueChanged: dev.transBoost = value
-                    isValid: dev.transcState
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? dev.transBoost : 0
+                    isValid: dev !== null ? dev.transcState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.transBoost = value
+                        }
+                        isDriverChanged = false
+                    }
 
                     property var items: ["Off", "On"]
 
@@ -159,9 +236,16 @@ DevSettingsBox {
                     from: 0
                     to: 4
                     stepSize: 1
-                    value: dev.dspHorSmooth
-                    onValueChanged: dev.dspHorSmooth = value
-                    isValid: dev.dspState
+                    value: 0
+                    devValue: dev !== null ? dev.dspHorSmooth : 0
+                    isValid: dev !== null ? dev.dspState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.dspHorSmooth = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -172,9 +256,16 @@ DevSettingsBox {
                     from: 300
                     to: 6000
                     stepSize: 5
-                    value: dev.soundSpeed/1000
-                    onValueChanged: dev.soundSpeed = value*1000
-                    isValid: dev.soundState
+                    value: 0
+                    devValue: dev !== null ? dev.soundSpeed / 1000 : 0
+                    isValid: dev !== null ? dev.soundState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.soundSpeed = value * 1000
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
         }
@@ -208,17 +299,35 @@ DevSettingsBox {
                 paramName: "Period, ms"
 
                 SpinBoxCustom {
-                    from: 0; to: 2000; stepSize: 50
-                    value: dev.ch1Period
-                    onValueChanged: dev.ch1Period = value
-                    isValid: dev.datasetState
+                    from: 0
+                    to: 2000
+                    stepSize: 50
+                    value: 0
+                    devValue: dev !== null ? dev.ch1Period : 0
+                    isValid: dev !== null ? dev.datasetState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.ch1Period = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
 
                 SpinBoxCustom {
-                    from: 0; to: 2000; stepSize: 50
-                    value: dev.ch2Period
-                    onValueChanged: dev.ch2Period = value
-                    isValid: dev.datasetState
+                    from: 0
+                    to: 2000
+                    stepSize: 50
+                    value: 0
+                    devValue: dev !== null ? dev.ch2Period : 0
+                    isValid: dev !== null ? dev.datasetState : false
+
+                    onValueChanged: {
+                        if (!isDriverChanged) {
+                            dev.ch2Period = value
+                        }
+                        isDriverChanged = false
+                    }
                 }
             }
 
@@ -226,39 +335,59 @@ DevSettingsBox {
                 paramName: "Echogram"
 
                 SpinBoxCustom {
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? dev.datasetChart === 1 : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
-                    from: 0; to: 1; stepSize: 1
 
-                    value: dev.datasetChart === 1
                     onValueChanged: {
-                        if(value == 1) { dev.datasetChart = 1
-                        } else { dev.datasetChart = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetChart = 1
+                            }
+                            else {
+                                dev.datasetChart = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "8-bit", "16-bit"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
-                    editable: false
-                    from: 0; to: 2; stepSize: 1
-                    value: dev.datasetChart === 2
+                    from: 0
+                    to: 2
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? dev.datasetChart === 2 : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     enabled: false
                     opacity: 0.5
+                    editable: false
 
                     onValueChanged: {
-                        if(value == 1) { dev.datasetChart = 2
-                        } else { dev.datasetChart = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetChart = 2
+                            }
+                            else {
+                                dev.datasetChart = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "8-bit", "16-bit"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
             }
 
@@ -266,49 +395,67 @@ DevSettingsBox {
                 paramName: "Rangefinder"
 
                 SpinBoxCustom {
-                    from: 0; to: 2; stepSize: 1
-                    value: dev.datasetDist === 1 ? 1 : dev.datasetSDDBT === 1 ? 2 : 0
+                    from: 0
+                    to: 2
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? (dev.datasetDist === 1 ? 1 : dev.datasetSDDBT === 1 ? 2 : 0) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
 
                     onValueChanged: {
-                        console.debug(value)
-                        if(value == 1) {
-                            dev.datasetDist = 1
-                        } else if(value == 2) {
-                            dev.datasetSDDBT = 1
-                        } else { dev.datasetDist = 0
-                            dev.datasetSDDBT = 0}
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetDist = 1
+                            }
+                            else if (value == 2) {
+                                dev.datasetSDDBT = 1
+                            }
+                            else {
+                                dev.datasetDist = 0
+                                dev.datasetSDDBT = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "On", "NMEA"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
-                    from: 0; to: 2; stepSize: 1
-                    value: dev.datasetDist === 2 ? 1 : dev.datasetSDDBT === 2 ? 2 : 0
+                    from: 0
+                    to: 2
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? (dev.datasetDist === 2 ? 1 : dev.datasetSDDBT === 2 ? 2 : 0) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
                     enabled: false
                     opacity: 0.5
 
                     onValueChanged: {
-                        console.debug(value)
-                        if(value == 1) {
-                            dev.datasetDist = 2
-                        } else if(value == 2) {
-                            dev.datasetSDDBT = 2
-                        } else { dev.datasetDist = 0
-                            dev.datasetSDDBT = 0}
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetDist = 2
+                            }
+                            else if (value == 2) {
+                                dev.datasetSDDBT = 2
+                            }
+                            else {
+                                dev.datasetDist = 0
+                                dev.datasetSDDBT = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "On", "NMEA"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
             }
 
@@ -316,37 +463,57 @@ DevSettingsBox {
                 paramName: "AHRS"
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
+                    from: 0
+                    to: 1
+                    stepSize: 1
                     editable: false
+                    value: 0
+                    devValue: dev !== null ? ((dev.datasetEuler & 1) === 1) : 0
+                    isValid: dev !== null ? dev.datasetState : false
 
-                    value: (dev.datasetEuler & 1) === 1
                     onValueChanged: {
-                        if(value == 1) { dev.datasetEuler = 1
-                        } else if(dev.datasetEuler & 1) { dev.datasetEuler = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetEuler = 1
+                            }
+                            else if (dev.datasetEuler & 1) {
+                                dev.datasetEuler = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "Euler", "Quat."]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? ((dev.datasetEuler & 2) === 2) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
 
-                    value: (dev.datasetEuler & 2) === 2
                     onValueChanged: {
-                        if(value == 1) { dev.datasetEuler = 2
-                        } else if(dev.datasetEuler & 2) { dev.datasetEuler = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetEuler = 2
+                            }
+                            else if (dev.datasetEuler & 2) {
+                                dev.datasetEuler = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "Euler", "Quat."]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
             }
 
@@ -354,37 +521,57 @@ DevSettingsBox {
                 paramName: "Temperature"
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? ((dev.datasetTemp & 1) === 1) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
 
-                    value: (dev.datasetTemp & 1) === 1
                     onValueChanged: {
-                        if(value == 1) { dev.datasetTemp = 1
-                        } else if(dev.datasetTemp & 1) { dev.datasetTemp = 0 }
+                        if (!isDriverChanged) {
+                            if(value == 1) {
+                                dev.datasetTemp = 1
+                            }
+                            else if (dev.datasetTemp & 1) {
+                                dev.datasetTemp = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "On"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? ((dev.datasetTemp & 2) === 2) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
 
-                    value: (dev.datasetTemp & 2) === 2
                     onValueChanged: {
-                        if(value == 1) { dev.datasetTemp = 2
-                        } else if(dev.datasetTemp & 2) { dev.datasetTemp = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetTemp = 2
+                            }
+                            else if (dev.datasetTemp & 2) {
+                                dev.datasetTemp = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "On"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
             }
 
@@ -392,37 +579,57 @@ DevSettingsBox {
                 paramName: "Timestamp"
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? ((dev.datasetTimestamp & 1) === 1) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
 
-                    value: (dev.datasetTimestamp & 1) === 1
                     onValueChanged: {
-                        if(value == 1) { dev.datasetTimestamp = 1
-                        } else if(dev.datasetTimestamp & 1) { dev.datasetTimestamp = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetTimestamp = 1
+                            }
+                            else if (dev.datasetTimestamp & 1) {
+                                dev.datasetTimestamp = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "On"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
 
                 SpinBoxCustom {
-                    from: 0; to: 1; stepSize: 1
+                    from: 0
+                    to: 1
+                    stepSize: 1
+                    value: 0
+                    devValue: dev !== null ? ((dev.datasetTimestamp & 2) === 2) : 0
+                    isValid: dev !== null ? dev.datasetState : false
                     editable: false
 
-                    value: (dev.datasetTimestamp & 2) === 2
                     onValueChanged: {
-                        if(value == 1) { dev.datasetTimestamp = 2
-                        } else if(dev.datasetTimestamp & 2) { dev.datasetTimestamp = 0 }
+                        if (!isDriverChanged) {
+                            if (value == 1) {
+                                dev.datasetTimestamp = 2
+                            }
+                            else if (dev.datasetTimestamp & 2) {
+                                dev.datasetTimestamp = 0
+                            }
+                        }
+                        isDriverChanged = false
                     }
 
                     property var items: ["Off", "On"]
                     textFromValue: function(value) {
                         return items[value];
                     }
-                    isValid: dev.datasetState
                 }
             }
         }
@@ -557,7 +764,7 @@ DevSettingsBox {
         ParamGroup {
             groupName: "Settings"
 
-            property string lastFolder: Qt.platform.os === "windows" ? shortcuts.home : "file:///" + shortcuts.home
+            property string lastFolder: Qt.platform.os === "windows" ? Qt.homeDir : "file:///" + Qt.homeDir
 
             FileDialog {
                 id: importFileDialog

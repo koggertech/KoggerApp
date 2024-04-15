@@ -9,6 +9,9 @@ SpinBox {
     property bool spinner: true
     property bool isValid: true
 
+    property int devValue: Number.MIN_VALUE
+    property bool isDriverChanged: true
+
     value: 50
     from: 20
     to: 30000
@@ -195,5 +198,19 @@ SpinBox {
 
         color: isValid ? theme.controlBackColor : "red"
         border.color: theme.controlBorderColor
+    }
+
+    onDevValueChanged: {
+        if (value != devValue) {
+            isDriverChanged = true
+            value = devValue
+        }
+        else {
+            isDriverChanged = false
+        }
+    }
+
+    Component.onCompleted: {
+        isDriverChanged = false
     }
 }
