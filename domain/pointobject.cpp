@@ -79,7 +79,11 @@ void PointObject::PointObjectRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
+#ifndef Q_OS_ANDROID
     ctx->glEnable(GL_PROGRAM_POINT_SIZE);
+#else
+    ctx->glEnable(34370);
+#endif
 
     int posLoc    = shaderProgram->attributeLocation("position");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
@@ -93,7 +97,12 @@ void PointObject::PointObjectRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
     ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
+
+#ifndef Q_OS_ANDROID
     ctx->glDisable(GL_PROGRAM_POINT_SIZE);
+#else
+    ctx->glDisable(34370);
+#endif
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();

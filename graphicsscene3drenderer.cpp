@@ -39,30 +39,22 @@ void GraphicsScene3dRenderer::initialize()
     // static
     if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
-
     if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh"))
         qCritical() << "Error adding fragment shader from source file.";
-
     if (!m_shaderProgramMap["static"]->link())
         qCritical() << "Error linking shaders in shader program.";
-
     // static sec
     if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base_sec.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
-
     if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh"))
         qCritical() << "Error adding fragment shader from source file.";
-
     if (!m_shaderProgramMap["static_sec"]->link())
         qCritical() << "Error linking shaders in shader program.";
-
     // height
     if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
-
     if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/heightcolor.fsh"))
         qCritical() << "Error adding fragment shader from source file.";
-
     if (!m_shaderProgramMap["height"]->link())
         qCritical() << "Error linking shaders in shader program.";
 }

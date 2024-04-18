@@ -15,5 +15,11 @@ bool SurfaceGrid::isTriangle() const
 
 bool SurfaceGrid::isQuad() const
 {
-    return RENDER_IMPL()->primitiveType() == GL_QUADS;
+    bool retVal{ false };
+
+#ifndef Q_OS_ANDROID
+    retVal = RENDER_IMPL()->primitiveType() == GL_QUADS;
+#endif
+
+    return retVal;
 }

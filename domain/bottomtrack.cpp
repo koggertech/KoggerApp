@@ -393,11 +393,21 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, selectedVertices.constData());
 
+#ifndef Q_OS_ANDROID
     ctx->glEnable(GL_PROGRAM_POINT_SIZE);
+#else
+    ctx->glEnable(34370);
+#endif
+
     ctx->glLineWidth(4.0);
     ctx->glDrawArrays(GL_POINTS, 0, selectedVertices.size());
     ctx->glLineWidth(1.0);
+
+#ifndef Q_OS_ANDROID
     ctx->glDisable(GL_PROGRAM_POINT_SIZE);
+#else
+    ctx->glDisable(34370);
+#endif
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
