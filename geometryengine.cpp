@@ -49,7 +49,7 @@
 ****************************************************************************/
 
 #include "geometryengine.h"
-
+/*
 #include <QVector2D>
 #include <QVector3D>
 
@@ -182,3 +182,4 @@ void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program)
     glDrawElements(GL_QUADS, 5, GL_UNSIGNED_SHORT, nullptr);
 }
 //! [2]
+*/

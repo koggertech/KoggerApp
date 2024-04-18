@@ -8,7 +8,7 @@
 #include <pointgroup.h>
 #include <polygongroup.h>
 #include <graphicsscene3dview.h>
-#include <geometryengine.h>
+// #include <geometryengine.h>
 #include <navigation_arrow.h>
 
 #include <QMatrix4x4>

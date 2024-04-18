@@ -47,7 +47,9 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+#pragma once
 
+/*
 #ifndef GEOMETRYENGINE_H
 #define GEOMETRYENGINE_H
 
@@ -71,3 +73,4 @@ private:
 };
 
 #endif // GEOMETRYENGINE_H
+*/

@@ -60,7 +60,7 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
                                                                   const QMatrix4x4 &mvp,
                                                                   const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-    if (!isEnabled_ || !shaderProgramMap.contains("static"))
+    if (!isEnabled_ || !shaderProgramMap.contains("static") || cubeVertices_.empty())
         return;
 
     auto shaderProgram = shaderProgramMap["static"];
@@ -78,9 +78,31 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
     shaderProgram->enableAttributeArray(posLoc);
 
     ctx->glLineWidth(1.0f);
-    shaderProgram->setAttributeArray(posLoc, cubeVertices_.constData());
+
+    QVector<GLfloat> vertices;
+    vertices.reserve(cubeVertices_.size() * 3);
+    vertices.append(static_cast<GLfloat>(cubeVertices_[0].x()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[0].y()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[0].z()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[3].x()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[3].y()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[3].z()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[1].x()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[1].y()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[1].z()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[2].x()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[2].y()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[2].z()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[3].x()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[3].y()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[3].z()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[1].x()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[1].y()));
+    vertices.append(static_cast<GLfloat>(cubeVertices_[1].z()));
+
+    shaderProgram->setAttributeArray(posLoc, vertices.constData(), 3);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(255, 0, 0)));
-    ctx->glDrawArrays(GL_QUADS, 0, cubeVertices_.size());
+    ctx->glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
