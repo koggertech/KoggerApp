@@ -12,6 +12,7 @@ QT += qml
 android {
     QT += androidextras
     QT += core-private
+    QT += gui-private
     CONFIG += mobility
 
     QMAKE_CXXFLAGS_DEBUG -= -O2

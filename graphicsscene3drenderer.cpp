@@ -14,12 +14,14 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+
 GraphicsScene3dRenderer::GraphicsScene3dRenderer()
 {
-    m_shaderProgramMap["height"] = std::make_shared<QOpenGLShaderProgram>();
-    m_shaderProgramMap["static"] = std::make_shared<QOpenGLShaderProgram>();
-    m_shaderProgramMap["text"]   = std::make_shared<QOpenGLShaderProgram>();
-    m_shaderProgramMap["texture"]   = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["height"]     = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["static"]     = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["texture"]    = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -34,31 +36,35 @@ void GraphicsScene3dRenderer::initialize()
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
 
-    // ---------
-    bool success = m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh");
+    // static
+    if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
+        qCritical() << "Error adding vertex shader from source file.";
 
-    if (!success) qCritical() << "Error adding vertex shader from source file.";
+    if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh"))
+        qCritical() << "Error adding fragment shader from source file.";
 
-    success = m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh");
+    if (!m_shaderProgramMap["static"]->link())
+        qCritical() << "Error linking shaders in shader program.";
 
-    if (!success) qCritical() << "Error adding fragment shader from source file.";
+    // static sec
+    if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base_sec.vsh"))
+        qCritical() << "Error adding vertex shader from source file.";
 
-    success = m_shaderProgramMap["static"]->link();
+    if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh"))
+        qCritical() << "Error adding fragment shader from source file.";
 
-    if (!success) qCritical() << "Error linking shaders in shader program.";
+    if (!m_shaderProgramMap["static_sec"]->link())
+        qCritical() << "Error linking shaders in shader program.";
 
-    // --------
-    success = m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh");
+    // height
+    if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
+        qCritical() << "Error adding vertex shader from source file.";
 
-    if (!success) qCritical() << "Error adding vertex shader from source file.";
+    if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/heightcolor.fsh"))
+        qCritical() << "Error adding fragment shader from source file.";
 
-    success = m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/heightcolor.fsh");
-
-    if (!success) qCritical() << "Error adding fragment shader from source file.";
-
-    success = m_shaderProgramMap["height"]->link();
-
-    if (!success) qCritical() << "Error linking shaders in shader program.";
+    if (!m_shaderProgramMap["height"]->link())
+        qCritical() << "Error linking shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()
@@ -85,13 +91,12 @@ void GraphicsScene3dRenderer::drawObjects()
     m_projection = std::move(projection);
 
     glEnable(GL_DEPTH_TEST);
-
-    m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    m_bottomTrackRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    m_surfaceRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
-    m_boatTrackRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
+    m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
+    m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+    m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
+    m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
+    m_boatTrackRenderImpl.render(this,       m_projection * view * m_model, m_shaderProgramMap);
     m_navigationArrowRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
     glDisable(GL_DEPTH_TEST);
 
@@ -113,20 +118,40 @@ void GraphicsScene3dRenderer::drawObjects()
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    //----------->Draw selection rect<-----------//
+    //-----------Draw selection rect-------------
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0,viewport[2],0,viewport[3],-1,1);
-    glBegin(GL_LINE_LOOP);
-    auto color = DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f));
-    glColor3f(color.x(), color.y(), color.z());
-    glVertex2f(m_comboSelectionRect.topLeft().x(),m_comboSelectionRect.topLeft().y());
-    glVertex2f(m_comboSelectionRect.topRight().x(),m_comboSelectionRect.topRight().y());
-    glVertex2f(m_comboSelectionRect.bottomRight().x(),m_comboSelectionRect.bottomRight().y());
-    glVertex2f(m_comboSelectionRect.bottomLeft().x(),m_comboSelectionRect.bottomLeft().y());
-    glEnd();
+#ifdef Q_OS_ANDROID
+    glOrthof(0.f, static_cast<float>(viewport[2]), 0.f, static_cast<float>(viewport[3]), -1.f, 1.f);
+#else
+    glOrtho(0.0, static_cast<double>(viewport[2]), 0.0, static_cast<double>(viewport[3]), -1.0, 1.0);
+#endif
 
-    //------------>Draw scene bounding box<======//
+    QVector<QVector2D> rectVert = { { static_cast<float>(m_comboSelectionRect.topLeft().x()),
+                                      static_cast<float>(m_comboSelectionRect.topLeft().y())     },
+                                    { static_cast<float>(m_comboSelectionRect.topRight().x()),
+                                      static_cast<float>(m_comboSelectionRect.topRight().y())    },
+                                    { static_cast<float>(m_comboSelectionRect.bottomRight().x()),
+                                      static_cast<float>(m_comboSelectionRect.bottomRight().y()) },
+                                    { static_cast<float>(m_comboSelectionRect.bottomLeft().x()),
+                                      static_cast<float>(m_comboSelectionRect.bottomLeft().y())  } };
+
+    auto shaderProgram = m_shaderProgramMap["static_sec"];
+    if (!shaderProgram->bind()) {
+        qCritical() << "Error binding shader program.";
+        return;
+    }
+
+    const int colorLoc  = shaderProgram->uniformLocation("color");
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.f, 104.f, 145.f, 0.f)));
+    shaderProgram->enableAttributeArray(0);
+    shaderProgram->setAttributeArray(0, rectVert.constData());
+
+    glDrawArrays(GL_LINE_LOOP, 0, rectVert.size());
+
+    shaderProgram->release();
+
+    //-----------Draw scene bounding box-------------
     if(m_isSceneBoundingBoxVisible){
         if(!m_shaderProgramMap.contains("static"))
             return;

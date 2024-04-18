@@ -1,5 +1,6 @@
 build-KoggerApp-Desktop_Qt_5_15_0_MinGW_32_bit-Release
 build-KoggerApp-Desktop_Qt_5_15_0_MinGW_32_bit-Debug
+build
 *.user
 *.bkp
 coreFlash.cpp
