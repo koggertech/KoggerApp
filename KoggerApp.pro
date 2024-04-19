@@ -42,36 +42,36 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        3Plot.cpp \
-        DevDriver.cpp \
-        DevHub.cpp \
+    3Plot.cpp \
+    DevDriver.cpp \
+    DevHub.cpp \
     EchogramProcessing.cpp \
-        IDBinnary.cpp \
+    IDBinnary.cpp \
     Link.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
-        ProtoBinnary.cpp \
-        StreamListModel.cpp \
-        connection.cpp \
-        console.cpp \
-        consolelistmodel.cpp \
-        core.cpp \
-        filelist.cpp \
+    ProtoBinnary.cpp \
+    StreamListModel.cpp \
+    connection.cpp \
+    console.cpp \
+    consolelistmodel.cpp \
+    core.cpp \
+    filelist.cpp \
     geometryengine.cpp \
     graphicsscene3drenderer.cpp \
     graphicsscene3dview.cpp \
-        logger.cpp \
-        main.cpp \
-        flasher.cpp \
+    logger.cpp \
+    main.cpp \
+    flasher.cpp \
     maxpointsfilter.cpp \
     nearestpointfilter.cpp \
-        plotcash.cpp \
+    plotcash.cpp \
     ray.cpp \
     raycaster.cpp \
-        streamlist.cpp \
+    streamlist.cpp \
     textrenderer.cpp \
-        waterfall.cpp \
+    waterfall.cpp \
 
 FLASHER {
 DEFINES += FLASHER
@@ -135,7 +135,7 @@ HEADERS += \
     ray.h \
     raycaster.h \
     streamlist.h \
-    textrenderer.h \
+    textrenderer.h \ # TODO
     waterfall.h \
     waterfallproxy.h \
 
@@ -212,13 +212,13 @@ windows {
     LIBS += -lopengl32
 }
 
-win32:RC_FILE = file.rc
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+#win32:RC_FILE = file.rc
+#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+#else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
 
-INCLUDEPATH += $$PWD/libs/freetype/include
-DEPENDPATH += $$PWD/libs/freetype/include
+#INCLUDEPATH += $$PWD/libs/freetype/include
+#DEPENDPATH += $$PWD/libs/freetype/include
 
 include ($$PWD/core/core.pri)
 include ($$PWD/processors/processors.pri)

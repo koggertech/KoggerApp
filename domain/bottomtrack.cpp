@@ -1,7 +1,7 @@
 #include "bottomtrack.h"
 #include <graphicsscene3dview.h>
 #include <epochevent.h>
-#include <textrenderer.h>
+//#include <textrenderer.h> TODO
 #include <drawutils.h>
 #include <QtOpenGLExtensions/QOpenGLExtensions>
 
@@ -424,10 +424,10 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     QMatrix4x4 textProjection;
     textProjection.ortho(vport.toRect());
 
-    TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()),
-                                    0.3f,
-                                    p_screen,
-                                    ctx,
-                                    textProjection
-                                    );
+    //TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()), TODO
+    //                                0.3f,
+    //                                p_screen,
+    //                                ctx,
+    //                                textProjection
+    //                                );
 }

@@ -1,5 +1,5 @@
 #include "textrenderer.h"
-#include <drawutils.h>
+/*#include <drawutils.h>
 #include <QDebug>
 #include <QCoreApplication>
 #include <QFile>
@@ -30,27 +30,27 @@ namespace {
 
                                       )shader";
 
-    /*
-    //Default blending shader implementation
-    static const QString fragmentShader = R"shader(
-                                            #version 330 core
-                                            #ifdef GL_ES
-                                            precision mediump int;
-                                            precision mediump float;
-                                            #endif
 
-                                            uniform sampler2D tex;
-                                            varying vec2 v_texcoord;
-                                            out vec4 color;
+    ////Default blending shader implementation
+    //static const QString fragmentShader = R"shader(
+    //                                        #version 330 core
+    //                                        #ifdef GL_ES
+    //                                        precision mediump int;
+    //                                        precision mediump float;
+    //                                        #endif
 
-                                            void main()
-                                            {
-                                                vec4 sampled = vec4(1.0,1.0,1.0, texture(tex, v_texcoord).r);
-                                                color = vec4(vec3(0.1,0.1,1.0),1.0) * sampled;
-                                            };
+    //                                        uniform sampler2D tex;
+    //                                        varying vec2 v_texcoord;
+    //                                        out vec4 color;
 
-                                        )shader";
-    */
+    //                                        void main()
+    //                                        {
+    //                                            vec4 sampled = vec4(1.0,1.0,1.0, texture(tex, v_texcoord).r);
+    //                                            color = vec4(vec3(0.1,0.1,1.0),1.0) * sampled;
+    //                                        };
+
+    //                                    )shader";
+
     //Signed distance fields shader implementation
     static const QString fragmentShader = R"shader(
                                             #version 330 core
@@ -125,7 +125,7 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpen
         auto ch = m_chars[c];
 
         float pen_x = pos.x() + ch.bearing.x() * scale;
-        float pen_y = pos.y() - (ch.size.y()/* - ch.bearing.y()*/) * scale;
+        float pen_y = pos.y() - (ch.size.y()) * scale; // "ch.bearing.y()" instead ch.size.y()
 
         const float w = ch.size.x() * scale;
         const float h = ch.size.y() * scale;
@@ -347,3 +347,4 @@ void TextRenderer::initFont()
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 }
+*/

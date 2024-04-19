@@ -1,4 +1,5 @@
-#ifndef TEXTRENDERER_H
+#pragma once
+/*#ifndef TEXTRENDERER_H
 #define TEXTRENDERER_H
 
 #include <sceneobject.h>
@@ -23,14 +24,14 @@ public:
                 QVector2D pos,
                 QOpenGLFunctions* ctx,
                 const QMatrix4x4& projection);
-    /**
-     * @brief Rebders text somewhere in the world
-     * @param text - text
-     * @param pos - text rect position
-     * @param dir - text rect front direction
-     * @param ctx - render context
-     * @param pvm - project * view * model matrix
-     */
+
+    // @brief Rebders text somewhere in the world
+    // @param text - text
+    // @param pos - text rect position
+    // @param dir - text rect front direction
+    // @param ctx - render context
+    // @param pvm - project * view * model matrix
+
     void render3D(const QString& text,
                   float scale,
                   QVector3D pos,
@@ -82,3 +83,4 @@ private:
 };
 
 #endif // TEXTRENDERER_H
+*/

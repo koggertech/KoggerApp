@@ -1,6 +1,6 @@
 #include "planegrid.h"
 #include <drawutils.h>
-#include <textrenderer.h>
+//#include <textrenderer.h>
 
 PlaneGrid::PlaneGrid(QObject *parent)
     : SceneObject(new PlaneGridRenderImplementation, parent)
@@ -285,8 +285,10 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
 #else
     glDisable(GL_LINE_STIPPLE);
 #endif
+
+    // TODO
     /*----------------------------dimentions lines reference----------------------------*/
-    shaderProgram->setAttributeArray(posLoc, horzReferenceLines.constData());
+    /*shaderProgram->setAttributeArray(posLoc, horzReferenceLines.constData());
     ctx->glDrawArrays(GL_LINES, 0, horzReferenceLines.size());
     shaderProgram->setAttributeArray(posLoc, vertReferenceLines.constData());
     ctx->glDrawArrays(GL_LINES, 0, vertReferenceLines.size());
@@ -325,6 +327,6 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                                     p_screen,
                                     ctx,
                                     textProjection
-                                    );
+                                    );*/
 }
 

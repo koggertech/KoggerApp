@@ -9,10 +9,9 @@
 #include <QThread>
 #include <QDebug>
 
-#include <textrenderer.h>
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
+//#include <textrenderer.h> // TODO
+//#include <ft2build.h>
+//#include FT_FREETYPE_H
 
 
 GraphicsScene3dRenderer::GraphicsScene3dRenderer()
@@ -68,7 +67,7 @@ void GraphicsScene3dRenderer::render()
 
     drawObjects();
 
-    TextRenderer::instance();
+    //TextRenderer::instance(); TODO
 }
 
 void GraphicsScene3dRenderer::drawObjects()
@@ -111,11 +110,13 @@ void GraphicsScene3dRenderer::drawObjects()
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     //-----------Draw selection rect-------------
+
+#ifdef Q_OS_ANDROID
+    // TODO: use shader
+    //glOrthof(0.f, static_cast<float>(viewport[2]), 0.f, static_cast<float>(viewport[3]), -1.f, 1.f);
+#else
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-#ifdef Q_OS_ANDROID
-    glOrthof(0.f, static_cast<float>(viewport[2]), 0.f, static_cast<float>(viewport[3]), -1.f, 1.f);
-#else
     glOrtho(0.0, static_cast<double>(viewport[2]), 0.0, static_cast<double>(viewport[3]), -1.0, 1.0);
 #endif
 
