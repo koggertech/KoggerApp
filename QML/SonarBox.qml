@@ -764,16 +764,13 @@ DevSettingsBox {
         ParamGroup {
             groupName: "Settings"
 
-            property string lastFolder: Qt.platform.os === "windows" ? Qt.homeDir : "file:///" + Qt.homeDir
-
             FileDialog {
                 id: importFileDialog
                 title: "Open file"
                 selectExisting: true
-                folder: dev ? Qt.resolvedUrl(dev.lastFolder) : shortcuts.home
                 nameFilters: ["XML files (*.xml)"]
+
                 onAccepted: {
-                    dev.lastFolder = importFileDialog.folder
                     var selectedFile = importFileDialog.fileUrl
                     if (selectedFile !== "") {
                         var filePath = selectedFile.toString();
@@ -788,10 +785,9 @@ DevSettingsBox {
                 id: exportFileDialog
                 title: "Save as file"
                 selectExisting: false
-                folder: dev ? Qt.resolvedUrl(dev.lastFolder) : shortcuts.home
                 nameFilters: ["XML files (*.xml)"]
+
                 onAccepted: {
-                    dev.lastFolder = exportFileDialog.folder
                     var selectedFile = exportFileDialog.fileUrl
                     if (selectedFile !== "") {
                         var filePath = selectedFile.toString();

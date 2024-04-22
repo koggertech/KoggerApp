@@ -6,7 +6,7 @@ import Qt.labs.settings 1.1
 
 DevSettingsBox {
     id: control
-    isActive: dev.isDoppler
+    isActive: dev ? dev.isDoppler : false
 
     MenuBlock {
     }

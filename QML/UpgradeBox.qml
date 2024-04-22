@@ -7,7 +7,7 @@ import Qt.labs.settings 1.1
 DevSettingsBox {
     id: control
     Layout.preferredHeight: columnItem.height
-    isActive: dev.isUpgradeSupport
+    isActive: dev ? dev.isUpgradeSupport : false
 
     FileDialog {
         id: fileDialog
@@ -42,7 +42,7 @@ DevSettingsBox {
                 Layout.fillHeight: true
                 from: -1
                 to: 101
-                value: dev.upgradeFWStatus
+                value: dev ? dev.upgradeFWStatus : 0
             }
         }
 

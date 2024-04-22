@@ -240,7 +240,7 @@ Window  {
 
 
     ColumnLayout {
-        anchors.top: parent
+        anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         visible: true
 
