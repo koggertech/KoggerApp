@@ -7,6 +7,7 @@ EpochEvent::EpochEvent(Type eventType,
     : QEvent(eventType)
     , m_epoch(epoch)
     , m_epochIndex(epochIndex)
+    , m_channelId(-1)
     , m_channel(channel)
 {}
 
@@ -28,4 +29,9 @@ DatasetChannel EpochEvent::channel() const
 bool EpochEvent::isValid() const
 {
     return m_epoch != nullptr;
+}
+
+int EpochEvent::getChannelId() const
+{
+    return m_channelId;
 }

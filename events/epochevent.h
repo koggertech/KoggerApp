@@ -20,11 +20,12 @@ public:
     int epochIndex() const;
     DatasetChannel channel() const;
     bool isValid() const;
+    int getChannelId() const;
 
 private:
     Epoch* m_epoch = nullptr;
     int m_epochIndex = -1;
-    int m_channelId = -1;
+    int m_channelId;
     DatasetChannel m_channel;
 };
 

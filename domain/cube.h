@@ -28,6 +28,7 @@ public:
     float height() const;
     Cube merge(const Cube& other);
     bool isEmpty() const;
+    bool isValid() const;
     Plane bottom() const;
     Plane top() const;
 
