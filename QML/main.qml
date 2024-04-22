@@ -45,7 +45,7 @@ Window  {
 
         handle: Rectangle {
             implicitWidth:  5
-            implicitHeight: 5
+            implicitHeight: 15
             color:          SplitHandle.pressed ? "#A0A0A0" : "#707070"
 
             Rectangle {
@@ -232,7 +232,7 @@ Window  {
         Console {
             id:                      console_vis
             visible:                 theme.consoleVisible
-            SplitView.minimumHeight: 100
+            SplitView.minimumHeight: 150
         }
     }
 

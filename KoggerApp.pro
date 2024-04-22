@@ -236,4 +236,7 @@ android {
 ANDROID_ABIS = armeabi-v7a
 
 
-android: include(C:/Users/aproo/AppData/Local/Android/Sdk/android_openssl/openssl.pri)
+android {
+    OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
+    include($$OPENSSL_PATH)
+}
