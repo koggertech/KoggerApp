@@ -42,7 +42,7 @@ class Core : public QObject
 public:
     explicit Core();
 
-    Q_PROPERTY(bool isFactoryMode READ isFactoryMode)
+    Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
 
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
 

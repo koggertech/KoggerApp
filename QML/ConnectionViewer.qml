@@ -14,7 +14,7 @@ Item {
     Connections {
         target: core
 
-        onConnectionChanged: {
+        function onConnectionChanged() {
             connectionButton.connection = core.isOpenConnection()
             dev = null
         }
@@ -253,7 +253,10 @@ Item {
 
                     Connections {
                         target: connectionButton
-                        onPressedChanged: canvas.requestPaint()
+
+                        function onPressedChanged() {
+                            canvas.requestPaint()
+                        }
                     }
 
                     onPaint: {

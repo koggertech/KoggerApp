@@ -59,6 +59,8 @@ void Epoch::setDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 }
 
 void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_time, int32_t nanosec) {
+    Q_UNUSED(ref);
+
     _positionGNSS.time = DateTime(unix_time, nanosec);
     _positionGNSS.lla.latitude = lat;
     _positionGNSS.lla.longitude = lon;
@@ -82,11 +84,17 @@ void Epoch::setGnssVelocity(double h_speed, double course) {
 }
 
 void Epoch::setTime(DateTime time) {
-
+    Q_UNUSED(time);
 }
 
 void Epoch::setTime(int year, int month, int day, int hour, int min, int sec, int nanosec) {
-
+    Q_UNUSED(year);
+    Q_UNUSED(month);
+    Q_UNUSED(day);
+    Q_UNUSED(hour);
+    Q_UNUSED(min);
+    Q_UNUSED(sec);
+    Q_UNUSED(nanosec);
 }
 
 
@@ -112,9 +120,13 @@ void Epoch::setAtt(float yaw, float pitch, float roll) {
 }
 
 void Epoch::doBottomTrack2D(Echogram &chart, bool is_update_dist) {
+    Q_UNUSED(chart);
+    Q_UNUSED(is_update_dist);
 }
 
 void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
+    Q_UNUSED(chart);
+    Q_UNUSED(is_update_dist);
 }
 
 Dataset::Dataset() : lastBoatTrackEpoch_(0), lastBottomTrackEpoch_(0) {
@@ -192,6 +204,7 @@ void Dataset::addEncoder(float encoder) {
 }
 
 void Dataset::addTimestamp(int timestamp) {
+    Q_UNUSED(timestamp);
 }
 
 void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset) {
@@ -214,6 +227,8 @@ void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution,
 }
 
 void Dataset::addComplexSignal(QByteArray data, uint8_t type) {
+    Q_UNUSED(type);
+
     int pool_index = endIndex();
 
     if(pool_index < 0 || !_pool[pool_index].isComplexSignalAvail()) {

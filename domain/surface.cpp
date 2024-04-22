@@ -148,13 +148,10 @@ void Surface::makeContourFromTriangles()
     BoundaryDetector <float> boundaryDetector;
 
     std::vector <::Triangle <float>> temp;
-
-    for(int i = 0; i < surfaceData.size()-3; i+=3){
-        temp.push_back(::Triangle <float>(
-                            Point3D <float>(surfaceData[i].x(),   surfaceData[i].y(),   surfaceData[i].z()),
-                            Point3D <float>(surfaceData[i+1].x(), surfaceData[i+1].y(), surfaceData[i+1].z()),
-                            Point3D <float>(surfaceData[i+2].x(), surfaceData[i+2].y(), surfaceData[i+2].z())
-                        ));
+    for (int i = 0; i < surfaceData.size() - 3; i += 3) {
+        temp.push_back({ Point3D<float>(surfaceData[i].x(),   surfaceData[i].y(),   surfaceData[i].z()),
+                         Point3D<float>(surfaceData[i+1].x(), surfaceData[i+1].y(), surfaceData[i+1].z()),
+                         Point3D<float>(surfaceData[i+2].x(), surfaceData[i+2].y(), surfaceData[i+2].z()) });
     }
 
     auto boundary = boundaryDetector.detect(temp);

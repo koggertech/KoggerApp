@@ -279,27 +279,34 @@ Resp IDBinAttitude::parsePayload(FrameParser &proto) {
 }
 
 float IDBinAttitude::yaw(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_yaw;
 }
 
 float IDBinAttitude::pitch(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_pitch;
 }
 
 float IDBinAttitude::roll(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_roll;
 }
 
 float IDBinAttitude::w0(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w0;
 }
 float IDBinAttitude::w1(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w1;
 }
 float IDBinAttitude::w2(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w2;
 }
 float IDBinAttitude::w3(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w3;
 }
 
@@ -335,7 +342,7 @@ Resp IDBinDVL::parsePayload(FrameParser &proto) {
 //         qInfo("DVL x: %f, y: %f, z: %f, d: %f", vel_x, vel_y, vel_z, _dist);
     } else  if(proto.ver() == v1) {
         _beamCount = 0;
-        for(uint8_t i = 0; i < 4 && sizeof(BeamSolution) <= proto.readAvailable() ; i++) {
+        for(uint8_t i = 0; i < 4 && static_cast<int16_t>(sizeof(BeamSolution)) <= proto.readAvailable(); i++) {
             _beams[i] = proto.read<BeamSolution>();
             _beamCount++;
         }
@@ -344,7 +351,7 @@ Resp IDBinDVL::parsePayload(FrameParser &proto) {
             test_bias += _beams[0].velocity*_beams[0].dt;
         }
     } else if(proto.ver() == v2) {
-        if(sizeof(DVLSolution) <= proto.readAvailable()) {
+        if (static_cast<int16_t>(sizeof(DVLSolution)) <= proto.readAvailable()) {
             _dvlSolution = proto.read<DVLSolution>();
 //            qInfo("DVL x: %f, y: %f, z: %f, d: %f", _dvlSolution.velocity.x, _dvlSolution.velocity.y, _dvlSolution.velocity.z, _dvlSolution.distance.z);
         } else {

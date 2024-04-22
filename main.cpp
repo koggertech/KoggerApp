@@ -18,6 +18,8 @@ Themes theme;
 
 
 void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
+    Q_UNUSED(type);
+    Q_UNUSED(context);
     core.consoleInfo(msg);
 }
 

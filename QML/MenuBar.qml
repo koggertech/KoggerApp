@@ -274,8 +274,8 @@ Item {
             id:                 sceneControlMenu
             objectName:         "sceneControlMenu"
             Layout.topMargin:   10
-            anchors.top:        menuBar.top
-            anchors.left:       menuBar.right
+            Layout.alignment:   Qt.AlignLeft
+            Layout.fillWidth:   true
             anchors.leftMargin: 40
             visible:            menu3DSettings.active
         }

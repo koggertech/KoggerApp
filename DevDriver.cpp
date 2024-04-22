@@ -445,7 +445,7 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
 }
 
 void DevDriver::sendFactoryFW(QByteArray update_data) {
-
+    Q_UNUSED(update_data);
 }
 
 int DevDriver::transFreq() {
@@ -792,14 +792,25 @@ void DevDriver::setCh2Period(int period) {
     if(is_changed) {  emit datasetChanged();  }
 }
 
-void DevDriver::receivedTimestamp(Type type, Version ver, Resp resp) {
+void DevDriver::receivedTimestamp(Type type, Version ver, Resp resp)
+{
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedDist(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
+
     emit distComplete(idDist->dist_mm());
 }
 
 void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(resp);
+
     if(idChart->isCompleteChart()) {
         if(ver == v0) {
             QVector<uint8_t> data(idChart->chartSize());
@@ -815,43 +826,72 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 //    qInfo("Euler: yaw %f, pitch %f, roll %f", idAtt->yaw(), idAtt->pitch(), idAtt->roll());
     emit attitudeComplete(idAtt->yaw(), idAtt->pitch(), idAtt->roll());
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
     core.dataset()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) { emit datasetChanged(); } else {  }
 }
 
 void DevDriver::receivedDistSetup(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {   emit distSetupChanged();  }
 }
 
 void DevDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit chartSetupChanged();  }
 }
 
 void DevDriver::receivedDSPSetup(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit dspSetupChanged();  }
 }
 
 void DevDriver::receivedTransc(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit transChanged();  }
 }
 
 void DevDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit soundChanged();  }
 }
 
 void DevDriver::receivedUART(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) { emit UARTChanged(); }
 }
 
 void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+
     if(resp == respNone) {
 
         if(ver == v0) {
@@ -915,12 +955,21 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedMark(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedFlash(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedBoot(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::fwUpgradeProcess() {
@@ -939,6 +988,8 @@ void DevDriver::fwUpgradeProcess() {
 }
 
 void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+
     if(resp == respNone) {
         if(ver == v0) {
             m_bootloaderLagacyMode = false;
@@ -988,9 +1039,14 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedNav(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+
     if(resp == respNone) {
         if(ver == v0) {
             emit dopplerVeloComplete();
@@ -1003,7 +1059,9 @@ void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
-
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::process() {

@@ -64,7 +64,8 @@ SpinBox {
 
         Connections {
             target: theme
-            onThemeIDChanged:  {
+
+            function onThemeIDChanged() {
                 upCanvas.requestPaint()
             }
         }
@@ -144,7 +145,8 @@ SpinBox {
 
         Connections {
             target: theme
-            onThemeIDChanged:  {
+
+            function onThemeIDChanged() {
                 downCanvas.requestPaint()
             }
         }

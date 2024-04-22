@@ -87,6 +87,8 @@ void RayCaster::trigger()
         case RayCastMode::Quad:
             pickAsQuads(_object);
             break;
+        case RayCastMode::Segment:
+            break;
         }
     }
 }
@@ -146,17 +148,15 @@ void RayCaster::pickAsTriangles(std::shared_ptr<SceneObject> object)
 
     for (int i = 0; i < size; i+=3){
 
-        Triangle <float> triangle(
-                                  object->cdata().at(i),
-                                  object->cdata().at(i+1),
-                                  object->cdata().at(i+2)
-                                );
+        Triangle<float> triangle { object->cdata().at(i),
+                                   object->cdata().at(i+1),
+                                   object->cdata().at(i+2) };
 
         QVector3D intersectionPoint;
 
         bool intersects = triangle.intersectsWithLine(m_origin, m_direction, intersectionPoint, true);
 
-        if (intersects){
+        if (intersects) {
             RayCasterHit hit;
             hit.setIndices(i, i+3);
             hit.setWorldIntersection(intersectionPoint);

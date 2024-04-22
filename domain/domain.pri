@@ -13,7 +13,6 @@ HEADERS += \
     $$PWD/barycentricinterpolator.h \
     $$PWD/bottomtrack.h\
     $$PWD/boundarydetector.h \
-    $$PWD/bowyerwatsondelaunay.h \
     $$PWD/contour.h\
     $$PWD/coordinateaxes.h \
     $$PWD/cube.h \

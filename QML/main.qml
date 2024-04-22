@@ -341,9 +341,15 @@ Window  {
         Keys.forwardTo:           [mousearea3D]
     }
 
-    Connections{
+    Connections {
         target: SurfaceControlMenuController
-        onSurfaceProcessorTaskStarted: surfaceProcessingProgressBar.visible = true
-        onSurfaceProcessorTaskFinished: surfaceProcessingProgressBar.visible = false
+
+        function onSurfaceProcessorTaskStarted() {
+            surfaceProcessingProgressBar.visible = true
+        }
+
+        function onSurfaceProcessorTaskFinished() {
+            surfaceProcessingProgressBar.visible = false
+        }
     }
 }

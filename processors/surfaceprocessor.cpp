@@ -129,7 +129,7 @@ void SurfaceProcessor::process()
     Delaunay <double> delaunay;
     auto triangles = delaunay.trinagulate(input, m_task.m_edgeLengthLimit);
 
-    if(m_task.m_gridInterpEnabled){
+    if (m_task.m_gridInterpEnabled) {
         m_result.primitiveType = GL_QUADS;
 
         std::vector <Point3D <double>> trimmedGrid;
@@ -185,8 +185,9 @@ void SurfaceProcessor::process()
         for(const auto& point : trimmedGrid)
             m_result.data.append(point.toQVector3D());
 
-    }else {
-        for (const auto& t : *triangles){
+    }
+    else {
+        for (const auto& t : *triangles) {
             m_result.data.append(t.A().toQVector3D());
             m_result.data.append(t.B().toQVector3D());
             m_result.data.append(t.C().toQVector3D());

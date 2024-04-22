@@ -208,6 +208,8 @@ bool Flasher::check(QByteArray &data) {
 }
 
 void Flasher::startConnection(bool duplex) {
+    Q_UNUSED(duplex);
+
     m_cmdRx.clear();
 
     m_state = CmdSend;

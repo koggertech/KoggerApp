@@ -173,8 +173,12 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         m_comboSelectionRect = {0,0,0,0};
         float deltaAngleX = (2 * M_PI / size().width());
         float deltaAngleY = (2 * M_PI / size().height());
+
         float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
+        Q_UNUSED(yaw);
         float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
+        Q_UNUSED(pitch);
+
         //m_camera->rotate(yaw, -pitch);
         //m_axesThumbnailCamera->rotate(yaw, -pitch);
 
@@ -231,6 +235,7 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     Q_UNUSED(x)
     Q_UNUSED(y)
     Q_UNUSED(mouseButton)
+    Q_UNUSED(keyboardKey);
 
     //TODO: Commit only if camera in movement state
     m_camera->commitMovement();

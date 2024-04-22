@@ -126,6 +126,10 @@ QStringList Core::availableSerialName(){
 }
 
 bool Core::openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode) {
+    Q_UNUSED(id);
+    Q_UNUSED(autoconn);
+    Q_UNUSED(mode);
+
     closeConnection();
     devsConnection();
 
@@ -156,6 +160,8 @@ bool Core::devsConnection() {
 }
 
 bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
+    Q_UNUSED(id);
+
     closeConnection();
 
     if(!is_append) {
@@ -213,6 +219,9 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
 
 }
 bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
+    Q_UNUSED(id);
+    Q_UNUSED(autoconn);
+
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
 
@@ -257,6 +266,10 @@ bool Core::closeConnection() {
 }
 
 bool Core::openProxy(const QString &address, const int port, bool is_tcp) {
+    Q_UNUSED(address);
+    Q_UNUSED(port);
+    Q_UNUSED(is_tcp);
+
     return false;
 }
 

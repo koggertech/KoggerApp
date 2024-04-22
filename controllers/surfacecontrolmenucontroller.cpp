@@ -91,6 +91,8 @@ void SurfaceControlMenuController::onGridInterpolationCheckBoxCheckedChanged(boo
 
 void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 {
+    Q_UNUSED(index);
+
     if(!m_graphicsSceneView)
         return;
 
@@ -141,7 +143,10 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked()
     if(filterTypeComboBox->property("currentIndex") == AbstractEntityDataFilter::FilterType::MaxPointsCount){
         auto mpcFilterMenu = filterParamsMenuLoader->findChild<QObject*>("mpcFilterControlMenu");
         auto pointsCountSpinBox = mpcFilterMenu->findChild<QObject*>("pointsCountSpinBox");
+
         int v = pointsCountSpinBox->property("value").toInt();
+        Q_UNUSED(v);
+
         filter = std::make_shared<MaxPointsFilter>(pointsCountSpinBox->property("value").toInt());
     }
 

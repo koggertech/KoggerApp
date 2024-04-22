@@ -208,6 +208,7 @@ public:
         header = *fileheader;
 
         volatile char* record_prog = fileheader->RecordingProgramName;
+        Q_UNUSED(record_prog);
 
         cdata += sizeof (XTFFILEHEADER);
 
