@@ -13,6 +13,8 @@ android {
     QT += androidextras
     QT += core-private
     QT += gui-private
+    QT += svg
+
     CONFIG += mobility
 
     QMAKE_CXXFLAGS_DEBUG -= -O2
