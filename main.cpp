@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     SceneObject::qmlDeclare();
 
-    qInstallMessageHandler(messageHandler); // TODO: comment this
+    //qInstallMessageHandler(messageHandler); // TODO: comment this
 
 
 

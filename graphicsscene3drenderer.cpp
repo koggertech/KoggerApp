@@ -38,21 +38,21 @@ void GraphicsScene3dRenderer::initialize()
     // static
     if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
-    if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh"))
+    if (!m_shaderProgramMap["static"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/static_color.fsh"))
         qCritical() << "Error adding fragment shader from source file.";
     if (!m_shaderProgramMap["static"]->link())
         qCritical() << "Error linking shaders in shader program.";
     // static sec
     if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base_sec.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
-    if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/staticcolor.fsh"))
+    if (!m_shaderProgramMap["static_sec"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/static_color.fsh"))
         qCritical() << "Error adding fragment shader from source file.";
     if (!m_shaderProgramMap["static_sec"]->link())
         qCritical() << "Error linking shaders in shader program.";
     // height
     if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/base.vsh"))
         qCritical() << "Error adding vertex shader from source file.";
-    if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/heightcolor.fsh"))
+    if (!m_shaderProgramMap["height"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/height_color.fsh"))
         qCritical() << "Error adding fragment shader from source file.";
     if (!m_shaderProgramMap["height"]->link())
         qCritical() << "Error linking shaders in shader program.";
@@ -110,24 +110,8 @@ void GraphicsScene3dRenderer::drawObjects()
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     //-----------Draw selection rect-------------
-
-#ifdef Q_OS_ANDROID
-    // TODO: use shader
-    //glOrthof(0.f, static_cast<float>(viewport[2]), 0.f, static_cast<float>(viewport[3]), -1.f, 1.f);
-#else
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0.0, static_cast<double>(viewport[2]), 0.0, static_cast<double>(viewport[3]), -1.0, 1.0);
-#endif
-
-    QVector<QVector2D> rectVert = { { static_cast<float>(m_comboSelectionRect.topLeft().x()),
-                                      static_cast<float>(m_comboSelectionRect.topLeft().y())     },
-                                    { static_cast<float>(m_comboSelectionRect.topRight().x()),
-                                      static_cast<float>(m_comboSelectionRect.topRight().y())    },
-                                    { static_cast<float>(m_comboSelectionRect.bottomRight().x()),
-                                      static_cast<float>(m_comboSelectionRect.bottomRight().y()) },
-                                    { static_cast<float>(m_comboSelectionRect.bottomLeft().x()),
-                                      static_cast<float>(m_comboSelectionRect.bottomLeft().y())  } };
+    if(!m_shaderProgramMap.contains("static_sec"))
+        return;
 
     auto shaderProgram = m_shaderProgramMap["static_sec"];
     if (!shaderProgram->bind()) {
@@ -136,16 +120,26 @@ void GraphicsScene3dRenderer::drawObjects()
     }
 
     const int colorLoc  = shaderProgram->uniformLocation("color");
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.f, 104.f, 145.f, 0.f)));
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
     shaderProgram->enableAttributeArray(0);
+
+    const float halfWidth = viewport[2] / 2.0f;
+    const float halfHeight = viewport[3] / 2.0f;
+    QVector<QVector2D> rectVert = { { (m_comboSelectionRect.topLeft().x()     / halfWidth)  - 1.0f,
+                                      (m_comboSelectionRect.topLeft().y()     / halfHeight) - 1.0f },
+                                    { (m_comboSelectionRect.topRight().x()    / halfWidth)  - 1.0f,
+                                      (m_comboSelectionRect.topRight().y()    / halfHeight) - 1.0f },
+                                    { (m_comboSelectionRect.bottomRight().x() / halfWidth)  - 1.0f,
+                                      (m_comboSelectionRect.bottomRight().y() / halfHeight) - 1.0f },
+                                    { (m_comboSelectionRect.bottomLeft().x()  / halfWidth)  - 1.0f,
+                                      (m_comboSelectionRect.bottomLeft().y()  / halfHeight) - 1.0f } };
+
     shaderProgram->setAttributeArray(0, rectVert.constData());
-
     glDrawArrays(GL_LINE_LOOP, 0, rectVert.size());
-
     shaderProgram->release();
 
     //-----------Draw scene bounding box-------------
-    if(m_isSceneBoundingBoxVisible){
+    if (m_isSceneBoundingBoxVisible) {
         if(!m_shaderProgramMap.contains("static"))
             return;
 

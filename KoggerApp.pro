@@ -88,8 +88,14 @@ SOURCES += \
 }
 
 RESOURCES += QML/qml.qrc \
-    resources.qrc \
-    shaders.qrc
+    resources.qrc
+
+windows {
+    RESOURCES += shaders.qrc
+}
+android {
+    RESOURCES += android_build/shaders.qrc
+}
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH = $$PWD\QML
@@ -189,9 +195,6 @@ DISTFILES += \
     android_build/gradlew \
     android_build/gradlew.bat \
     android_build/res/values/libs.xml \
-    base.vsh \
-    heightcolor.frag \
-    staticcolor.fsh \
     tools/models.pri \
     tools/tools.pri
 

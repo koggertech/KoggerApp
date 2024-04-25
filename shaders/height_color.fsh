@@ -1,12 +1,12 @@
 #version 140
+
 in vec3 vertice;
-//flat in highp int verticeId;
 uniform float max_z;
 uniform float min_z;
 uniform int selectedPrimitiveFirstIndex;
 uniform int selectedPrimitiveLastIndex;
 
-vec3 getColor(float v,float vmin, float vmax)
+vec3 getColor(float v, float vmin, float vmax)
 {
     vec3 c = vec3(1.0f, 1.0f, 1.0f);
     float dv;

@@ -1,4 +1,5 @@
 #version 140
+
 uniform vec4 color;
 
 void main()
