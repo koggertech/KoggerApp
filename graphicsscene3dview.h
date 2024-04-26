@@ -142,6 +142,7 @@ public:
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey = Qt::Key::Key_unknown);
+    Q_INVOKABLE void pinchTrigger(qreal prevX, qreal prevY, qreal currX, qreal currY, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
 
 public Q_SLOTS:

@@ -101,18 +101,17 @@ Window  {
                     enabled:      true
 
                     onPinchUpdated: {
-                        renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
-                        renderer.mouse(pinch.center.x, pinch.center.y, false)
+                        var shiftScale = pinch.scale - pinch.previousScale;
+                        var shiftAngle = pinch.angle - pinch.previousAngle;
+                        renderer.pinchTrigger(pinch.previousCenter.x,  pinch.previousCenter.y, pinch.center.x, pinch.center.y, shiftScale, shiftAngle)
                     }
 
                     onPinchStarted: {
                         mousearea3D.enabled = false
-                        renderer.mouse(-1, -1, false)
                     }
 
                     onPinchFinished: {
                         mousearea3D.enabled = true
-                        renderer.mouse(-1, -1, false)
                     }
 
                     MouseArea {

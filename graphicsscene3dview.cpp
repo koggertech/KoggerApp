@@ -124,123 +124,72 @@ void GraphicsScene3dView::clear()
 }
 
 QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) {
-    QVector3D intersectionPoint;
+    QVector3D retVal;
+    if (qAbs(rayDirection.z()) < 1e-6)
+        return retVal;
+    const float t = (planeZ - rayOrigin.z()) / rayDirection.z();
+    if (t < 0)
+        return retVal;
+    retVal = rayOrigin + rayDirection * t;
 
-    // Check if the ray is parallel or nearly parallel to the plane
-    if (qAbs(rayDirection.z()) < 1e-6) {
-        // Ray is parallel or nearly parallel to the plane, no intersection
-        return intersectionPoint; // Zero vector indicates no intersection
-    }
-
-    // Calculate parameter t
-    float t = (planeZ - rayOrigin.z()) / rayDirection.z();
-
-    // Check if intersection point is behind the ray origin
-    if (t < 0) {
-        // Intersection point is behind the ray origin, discard
-        return intersectionPoint; // Zero vector indicates no intersection
-    }
-
-    // Calculate intersection point
-    intersectionPoint = rayOrigin + rayDirection * t;
-
-    return intersectionPoint;
+    return retVal;
 }
 
 void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    Q_UNUSED(mouseButton)
     Q_UNUSED(keyboardKey)
 
-    if(m_mode == BottomTrackVertexComboSelectionMode){
-        if(mouseButton & Qt::LeftButton){
-            m_bottomTrack->resetVertexSelection();
-            m_comboSelectionRect.setTopLeft({static_cast<int>(x),static_cast<int>(height()-y)});
-            m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
-        }
+    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton)) {
+        m_bottomTrack->resetVertexSelection();
+        m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
+        m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
     }
 
-    m_startMousePos = {x, y};
-
     m_bottomTrack->mousePressEvent(mouseButton, x, y);
+    m_startMousePos = { x, y };
 
     QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    if(mouseButton.testFlag(Qt::RightButton) && (keyboardKey != Qt::Key_Control)) {
-        m_comboSelectionRect = {0,0,0,0};
-        float deltaAngleX = (2 * M_PI / size().width());
-        float deltaAngleY = (2 * M_PI / size().height());
+    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton))
+        m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
 
-        float yaw = (m_lastMousePos.x() - x) * deltaAngleX * m_camera->m_sensivity;
-        Q_UNUSED(yaw);
-        float pitch = (m_lastMousePos.y() - y) * deltaAngleY * m_camera->m_sensivity;
-        Q_UNUSED(pitch);
+    // ray for marker
+    auto toOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    auto toEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    auto toDir = (toEnd - toOrig).normalized();
+    auto to = calculateIntersectionPoint(toOrig, toDir, 0);
+    m_ray.setOrigin(toOrig);
+    m_ray.setDirection(toDir);
 
-        //m_camera->rotate(yaw, -pitch);
-        //m_axesThumbnailCamera->rotate(yaw, -pitch);
-
-        m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
-        m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x,y));
-
-        QQuickFramebufferObject::update();
+    if (mouseButton.testFlag(Qt::RightButton) && (keyboardKey != Qt::Key_Control)) {
+        m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+        m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
     }
-
-    if(m_mode == BottomTrackVertexComboSelectionMode){
-        if(mouseButton & Qt::LeftButton)
-            m_comboSelectionRect.setBottomRight({static_cast<int>(x),static_cast<int>(height()-y)});
-        QQuickFramebufferObject::update();
-    }
-
-    //---------->Calculate ray in 3d space<---------//
-    auto origin = QVector3D(x, height() - y, -1.0f)
-            .unproject(m_camera->m_view*m_model,
-                       m_projection,
-                       boundingRect().toRect());
-
-    auto end = QVector3D(x, height() - y, 1.0f)
-            .unproject(m_camera->m_view*m_model,
-                       m_projection,
-                       boundingRect().toRect());
-
-    auto direction = (end-origin).normalized();
-
-    m_ray.setOrigin(origin);
-    m_ray.setDirection(direction);
-
-    if(mouseButton.testFlag(Qt::RightButton) && (keyboardKey == Qt::Key_Control)) {
-        auto startMouseOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f)
-                                  .unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto startMouseEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f)
-                                 .unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto startMouseDir = (startMouseEnd - startMouseOrig).normalized();
-
-        auto from = calculateIntersectionPoint(startMouseOrig, startMouseDir , 0);
-        auto to = calculateIntersectionPoint(origin, direction, 0);
-
+    else if (mouseButton.testFlag(Qt::RightButton) && (keyboardKey == Qt::Key_Control)) {
+        auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto fromDir = (fromEnd - fromOrig).normalized();
+        auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
         m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
-
-        QQuickFramebufferObject::update();
     }
 
-    m_bottomTrack->mouseMoveEvent(mouseButton,x,y);
-    m_lastMousePos = {x,y};
+    m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
+    m_lastMousePos = { x, y };
+
     QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    Q_UNUSED(x)
-    Q_UNUSED(y)
-    Q_UNUSED(mouseButton)
     Q_UNUSED(keyboardKey);
 
     //TODO: Commit only if camera in movement state
     m_camera->commitMovement();
     m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
-    m_lastMousePos = {x,y};
+    m_lastMousePos = { x, y };
 
     QQuickFramebufferObject::update();
 }
@@ -251,24 +200,44 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     Q_UNUSED(x)
     Q_UNUSED(y)
 
-    if(m_mode == BottomTrackVertexComboSelectionMode){
-        m_comboSelectionRect = {0,0,0,0};
-        m_bottomTrack->resetVertexSelection();
-    }
-
     if (keyboardKey == Qt::Key_Control) {
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
         setVerticalScale(tempVerticalScale);
     }
-    else if (keyboardKey == Qt::Key_Shift) {
+    else if (keyboardKey == Qt::Key_Shift)
         angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
-    }
     else
         m_camera->zoom(angleDelta.y());
 
     updatePlaneGrid();
+    QQuickFramebufferObject::update();
+}
 
+void GraphicsScene3dView::pinchTrigger(qreal prevX, qreal prevY, qreal currX, qreal currY, qreal scaleDelta, qreal angleDelta)
+{
+    // zoom
+    m_camera->zoom(scaleDelta / 100.f);
+
+    // // rotate
+    // m_camera->rotate(QVector2D(prevX, prevY), QVector2D(currX, currY));
+    // m_axesThumbnailCamera->rotate(QVector2D(prevX, prevY), QVector2D(currX,currY));
+
+    // // move
+    // auto fromOrig = QVector3D(prevX, height() - prevY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    // auto fromEnd = QVector3D(prevX, height() - prevY, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    // auto fromDir = (fromEnd - fromOrig).normalized();
+    // auto from = calculateIntersectionPoint(fromOrig, fromDir , 0.0f);
+    // auto toOrig = QVector3D(currX, height() - currY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    // auto toEnd = QVector3D(currX, height() - currY, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    // auto toDir = (toEnd - toOrig).normalized();
+    // auto to = calculateIntersectionPoint(toOrig, toDir, 0.0f);
+    // m_ray.setOrigin(toOrig);
+    // m_ray.setDirection(toDir);
+    // m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+    // m_camera->commitMovement();
+
+    updatePlaneGrid();
     QQuickFramebufferObject::update();
 }
 
