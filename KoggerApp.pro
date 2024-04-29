@@ -217,7 +217,8 @@ windows {
     LIBS += -lopengl32
 }
 
-#win32:RC_FILE = file.rc
+win32:RC_FILE = file.rc
+
 #win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 #else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 #else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
