@@ -366,6 +366,8 @@ public:
     void setPeriod(U1 ch_id, uint32_t period);
 
     QVector<Channel> getChannels() const;
+    Channel getChannel(U1 channelId) const;
+
 protected:
     Channel m_channel[3];
 

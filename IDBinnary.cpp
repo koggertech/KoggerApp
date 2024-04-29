@@ -404,6 +404,14 @@ QVector<IDBinDataset::Channel> IDBinDataset::getChannels() const {
     return retVal;
 }
 
+IDBinDataset::Channel IDBinDataset::getChannel(U1 channelId) const
+{
+    if (channelId < 3)
+        return m_channel[channelId];
+
+    return {};
+}
+
 void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {
     if(ch_id < _countof(m_channel)) {
         m_channel[ch_id].period = period;

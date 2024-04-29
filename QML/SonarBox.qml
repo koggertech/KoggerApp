@@ -275,27 +275,6 @@ DevSettingsBox {
             groupName: "Dataset"
 
             ParamSetup {
-                paramName: ""
-                Layout.alignment: Qt.AlignHCenter
-
-                CText {
-                    Layout.preferredWidth: 150
-                    horizontalAlignment: Text.AlignHCenter
-                    small: true
-
-                    text: "Group #1"
-                }
-
-                CText {
-                    Layout.preferredWidth: 150
-                    horizontalAlignment: Text.AlignHCenter
-                    small: true
-
-                    text: "Group #2"
-                }
-            }
-
-            ParamSetup {
                 paramName: "Period, ms"
 
                 SpinBoxCustom {
@@ -309,22 +288,6 @@ DevSettingsBox {
                     onValueChanged: {
                         if (!isDriverChanged) {
                             dev.ch1Period = value
-                        }
-                        isDriverChanged = false
-                    }
-                }
-
-                SpinBoxCustom {
-                    from: 0
-                    to: 2000
-                    stepSize: 50
-                    value: 0
-                    devValue: dev !== null ? dev.ch2Period : 0
-                    isValid: dev !== null ? dev.datasetState : false
-
-                    onValueChanged: {
-                        if (!isDriverChanged) {
-                            dev.ch2Period = value
                         }
                         isDriverChanged = false
                     }
@@ -347,35 +310,6 @@ DevSettingsBox {
                         if (!isDriverChanged) {
                             if (value == 1) {
                                 dev.datasetChart = 1
-                            }
-                            else {
-                                dev.datasetChart = 0
-                            }
-                        }
-                        isDriverChanged = false
-                    }
-
-                    property var items: ["Off", "8-bit", "16-bit"]
-                    textFromValue: function(value) {
-                        return items[value];
-                    }
-                }
-
-                SpinBoxCustom {
-                    from: 0
-                    to: 2
-                    stepSize: 1
-                    value: 0
-                    devValue: dev !== null ? dev.datasetChart === 2 : 0
-                    isValid: dev !== null ? dev.datasetState : false
-                    enabled: false
-                    opacity: 0.5
-                    editable: false
-
-                    onValueChanged: {
-                        if (!isDriverChanged) {
-                            if (value == 1) {
-                                dev.datasetChart = 2
                             }
                             else {
                                 dev.datasetChart = 0
@@ -424,39 +358,6 @@ DevSettingsBox {
                         return items[value];
                     }
                 }
-
-                SpinBoxCustom {
-                    from: 0
-                    to: 2
-                    stepSize: 1
-                    value: 0
-                    devValue: dev !== null ? (dev.datasetDist === 2 ? 1 : dev.datasetSDDBT === 2 ? 2 : 0) : 0
-                    isValid: dev !== null ? dev.datasetState : false
-                    editable: false
-                    enabled: false
-                    opacity: 0.5
-
-                    onValueChanged: {
-                        if (!isDriverChanged) {
-                            if (value == 1) {
-                                dev.datasetDist = 2
-                            }
-                            else if (value == 2) {
-                                dev.datasetSDDBT = 2
-                            }
-                            else {
-                                dev.datasetDist = 0
-                                dev.datasetSDDBT = 0
-                            }
-                        }
-                        isDriverChanged = false
-                    }
-
-                    property var items: ["Off", "On", "NMEA"]
-                    textFromValue: function(value) {
-                        return items[value];
-                    }
-                }
             }
 
             ParamSetup {
@@ -477,33 +378,6 @@ DevSettingsBox {
                                 dev.datasetEuler = 1
                             }
                             else if (dev.datasetEuler & 1) {
-                                dev.datasetEuler = 0
-                            }
-                        }
-                        isDriverChanged = false
-                    }
-
-                    property var items: ["Off", "Euler", "Quat."]
-                    textFromValue: function(value) {
-                        return items[value];
-                    }
-                }
-
-                SpinBoxCustom {
-                    from: 0
-                    to: 1
-                    stepSize: 1
-                    value: 0
-                    devValue: dev !== null ? ((dev.datasetEuler & 2) === 2) : 0
-                    isValid: dev !== null ? dev.datasetState : false
-                    editable: false
-
-                    onValueChanged: {
-                        if (!isDriverChanged) {
-                            if (value == 1) {
-                                dev.datasetEuler = 2
-                            }
-                            else if (dev.datasetEuler & 2) {
                                 dev.datasetEuler = 0
                             }
                         }
@@ -546,33 +420,6 @@ DevSettingsBox {
                         return items[value];
                     }
                 }
-
-                SpinBoxCustom {
-                    from: 0
-                    to: 1
-                    stepSize: 1
-                    value: 0
-                    devValue: dev !== null ? ((dev.datasetTemp & 2) === 2) : 0
-                    isValid: dev !== null ? dev.datasetState : false
-                    editable: false
-
-                    onValueChanged: {
-                        if (!isDriverChanged) {
-                            if (value == 1) {
-                                dev.datasetTemp = 2
-                            }
-                            else if (dev.datasetTemp & 2) {
-                                dev.datasetTemp = 0
-                            }
-                        }
-                        isDriverChanged = false
-                    }
-
-                    property var items: ["Off", "On"]
-                    textFromValue: function(value) {
-                        return items[value];
-                    }
-                }
             }
 
             ParamSetup {
@@ -593,33 +440,6 @@ DevSettingsBox {
                                 dev.datasetTimestamp = 1
                             }
                             else if (dev.datasetTimestamp & 1) {
-                                dev.datasetTimestamp = 0
-                            }
-                        }
-                        isDriverChanged = false
-                    }
-
-                    property var items: ["Off", "On"]
-                    textFromValue: function(value) {
-                        return items[value];
-                    }
-                }
-
-                SpinBoxCustom {
-                    from: 0
-                    to: 1
-                    stepSize: 1
-                    value: 0
-                    devValue: dev !== null ? ((dev.datasetTimestamp & 2) === 2) : 0
-                    isValid: dev !== null ? dev.datasetState : false
-                    editable: false
-
-                    onValueChanged: {
-                        if (!isDriverChanged) {
-                            if (value == 1) {
-                                dev.datasetTimestamp = 2
-                            }
-                            else if (dev.datasetTimestamp & 2) {
                                 dev.datasetTimestamp = 0
                             }
                         }
