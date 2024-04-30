@@ -153,9 +153,6 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton))
-        m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
-
     // ray for marker
     auto toOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
     auto toEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
@@ -164,19 +161,36 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
 
-    if (mouseButton.testFlag(Qt::RightButton) && (keyboardKey != Qt::Key_Control)) {
-        m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
-        m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton)) {
+        m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
+        m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     }
-    else if (mouseButton.testFlag(Qt::RightButton) && (keyboardKey == Qt::Key_Control)) {
+    else if (m_mode == BottomTrackVertexSelectionMode) {
+        m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
+    }
+    else {
+#ifdef Q_OS_ANDROID
+        Q_UNUSED(keyboardKey);
         auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
         auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
         auto fromDir = (fromEnd - fromOrig).normalized();
         auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
         m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+#else
+        if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
+            m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+            m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+        }
+        else if (mouseButton.testFlag(Qt::LeftButton)) {
+            auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
+            m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+        }
+#endif
     }
 
-    m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     m_lastMousePos = { x, y };
 
     QQuickFramebufferObject::update();
@@ -214,28 +228,12 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::pinchTrigger(qreal prevX, qreal prevY, qreal currX, qreal currY, qreal scaleDelta, qreal angleDelta)
+void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta)
 {
-    // zoom
-    m_camera->zoom(scaleDelta / 100.f);
+    m_camera->zoom(scaleDelta);
 
-    // // rotate
-    // m_camera->rotate(QVector2D(prevX, prevY), QVector2D(currX, currY));
-    // m_axesThumbnailCamera->rotate(QVector2D(prevX, prevY), QVector2D(currX,currY));
-
-    // // move
-    // auto fromOrig = QVector3D(prevX, height() - prevY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    // auto fromEnd = QVector3D(prevX, height() - prevY, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    // auto fromDir = (fromEnd - fromOrig).normalized();
-    // auto from = calculateIntersectionPoint(fromOrig, fromDir , 0.0f);
-    // auto toOrig = QVector3D(currX, height() - currY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    // auto toEnd = QVector3D(currX, height() - currY, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    // auto toDir = (toEnd - toOrig).normalized();
-    // auto to = calculateIntersectionPoint(toOrig, toDir, 0.0f);
-    // m_ray.setOrigin(toOrig);
-    // m_ray.setDirection(toDir);
-    // m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
-    // m_camera->commitMovement();
+    m_camera->rotate(prevCenter, currCenter, angleDelta);
+    m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta);
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
@@ -529,11 +527,17 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
 
     m_rotAngle += r;
 
-    if(m_rotAngle[1] > M_PI_2 ) {
-        m_rotAngle[1] = M_PI_2;
-    } else if(m_rotAngle[1] < 0) {
-        m_rotAngle[1] = 0;
-    }
+    checkRotateAngle();
+
+    updateViewMatrix();
+}
+
+void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta)
+{
+    m_rotAngle.setX(m_rotAngle.x() - qDegreesToRadians(angleDelta));
+    m_rotAngle.setY(m_rotAngle.y() +  qDegreesToRadians((prevCenter - currCenter).y()));
+
+    checkRotateAngle();
 
     updateViewMatrix();
 }
@@ -570,12 +574,18 @@ void GraphicsScene3dView::Camera::moveZAxis(float z)
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
+#ifdef Q_OS_ANDROID
+    m_distToFocusPoint -= delta * 100.f;
+#else
     m_distToFocusPoint = delta > 0.f ? m_distToFocusPoint / 1.15f : m_distToFocusPoint * 1.15f;
+#endif
 
-    if (m_distToFocusPoint < 2.f)
-        m_distToFocusPoint = 2.f;
-    if (m_distToFocusPoint >= 10000.f)
-        m_distToFocusPoint = 10000.f;
+    const float minFocusDist = 2.0f;
+    const float maxFocusDist = 10000.0f;
+    if (m_distToFocusPoint < minFocusDist)
+        m_distToFocusPoint = minFocusDist;
+    if (m_distToFocusPoint >= maxFocusDist)
+        m_distToFocusPoint = maxFocusDist;
 
     updateViewMatrix();
 }
@@ -656,6 +666,15 @@ void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
 
     m_view = std::move(view);
 }
+
+void GraphicsScene3dView::Camera::checkRotateAngle()
+{
+    if (m_rotAngle[1] > M_PI_2)
+        m_rotAngle[1] = M_PI_2;
+    else if (m_rotAngle[1] < 0)
+        m_rotAngle[1] = 0;
+}
+
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const
 {

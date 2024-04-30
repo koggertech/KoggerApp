@@ -103,7 +103,7 @@ Window  {
                     onPinchUpdated: {
                         var shiftScale = pinch.scale - pinch.previousScale;
                         var shiftAngle = pinch.angle - pinch.previousAngle;
-                        renderer.pinchTrigger(pinch.previousCenter.x,  pinch.previousCenter.y, pinch.center.x, pinch.center.y, shiftScale, shiftAngle)
+                        renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
                     }
 
                     onPinchStarted: {
