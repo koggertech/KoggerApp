@@ -867,4 +867,46 @@ protected:
 };
 
 
+
+class IDBinUsblSolution : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinUsblSolution() : IDBin() {
+    }
+
+    ID id() override { return ID_USBL_SOLUTION; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    struct UsblSolution {
+        uint8_t id = 0;
+        uint8_t role = 0;
+        uint16_t reserved = 0;
+
+        int64_t timestamp_us = 0;
+        uint32_t ping_counter = 0;
+        int64_t carrier_counter = 0;
+
+        float distance_m = 0;
+        float distance_unc = 0;
+
+        float azimuth_deg = 0;
+        float azimuth_unc = 0;
+
+        float elevation_deg = 0;
+        float elevation_unc = 0;
+
+        float snr = 0;
+    } __attribute__((packed));
+
+
+    UsblSolution usblSolution() {
+        return _usblSolution;
+    }
+
+protected:
+    UsblSolution _usblSolution;
+};
+
+
 #endif // IDBINNARY_H

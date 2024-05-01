@@ -166,6 +166,7 @@ signals:
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
+    void usblSolutionComplete(IDBinUsblSolution::UsblSolution datat);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
     void dspSetupChanged();
@@ -244,6 +245,8 @@ protected:
     IDBinNav* idNav = NULL;
     IDBinDVL* idDVL = NULL;
     IDBinDVLMode* idDVLMode = NULL;
+
+    IDBinUsblSolution* idUSBL = NULL;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -338,6 +341,8 @@ protected slots:
     void receivedNav(Type type, Version ver, Resp resp);
     void receivedDVL(Type type, Version ver, Resp resp);
     void receivedDVLMode(Type type, Version ver, Resp resp);
+
+    void receivedUSBL(Type type, Version ver, Resp resp);
 
 private:
     bool datasetState_;

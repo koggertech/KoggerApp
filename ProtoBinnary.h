@@ -90,6 +90,8 @@ typedef enum ID {
     ID_DVL_VEL = 121,
     ID_DVL_MODE = 122,
 
+    ID_USBL_SOLUTION = 0x65,
+
     ID_GFW = 200,
 
     sizer = 0xFFFF

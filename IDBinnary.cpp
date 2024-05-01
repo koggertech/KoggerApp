@@ -924,3 +924,18 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismod
     id_out.end();
     emit binFrameOut(id_out);
 }
+
+Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
+    if(proto.ver() == v0) {
+        if(sizeof(UsblSolution) <= proto.readAvailable()) {
+            _usblSolution = proto.read<UsblSolution>();
+            qInfo("USBL d: %f, a: %f,e: %f, p: %lld", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.carrier_counter);
+        } else {
+            return respErrorPayload;
+        }
+    } else {
+        return respErrorVersion;
+    }
+
+    return respOk;
+}

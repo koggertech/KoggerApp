@@ -194,7 +194,7 @@ void Device::putData(const QByteArray &data) {
                     core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
                     core.dataset()->addGnssVelocity(pos.velocityH(), 0);
 
-                    _vru.velocityH = sqrtf(pos.velocityH());
+                    _vru.velocityH = pos.velocityH();
                     emit vruChanged();
 //                    core.consoleInfo(QString(">> FC: fused position lat/lon %1 %2, velocity %3 m/s").arg(pos.latitude()).arg(pos.longitude()).arg(velocityH, 4));
                 }
@@ -234,7 +234,6 @@ void Device::putData(const QByteArray &data) {
             if(mavlink_frame.msgId() == 30) {
                 MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
                 core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
-
             }
 
 

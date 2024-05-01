@@ -40,6 +40,8 @@ DevDriver::DevDriver(QObject *parent) :
     regID(idDVL = new IDBinDVL(), &DevDriver::receivedDVL);
     regID(idDVLMode = new IDBinDVLMode(), &DevDriver::receivedDVLMode);
 
+    regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
+
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 
     QObject::connect(idDataset, &IDBin::notifyDevDriver, this, &DevDriver::setDatasetState);
@@ -1004,6 +1006,11 @@ void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
 
 void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
 
+}
+
+void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
+    emit distComplete(idUSBL->usblSolution().distance_m*1000);
+    // emit attitudeComplete(idUSBL->usblSolution().azimuth_deg, idUSBL->usblSolution().elevation_deg, 0);
 }
 
 void DevDriver::process() {

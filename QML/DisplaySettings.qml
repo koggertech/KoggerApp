@@ -370,7 +370,7 @@ GridLayout {
                 SpinBoxCustom {
                     id: angleRange
                     from: 1
-                    to: 180
+                    to: 360
                     stepSize: 1
                     value: 45
 
