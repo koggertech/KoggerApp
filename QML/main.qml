@@ -45,7 +45,7 @@ Window  {
 
         handle: Rectangle {
             implicitWidth:  5
-            implicitHeight: 5
+            implicitHeight: 15
             color:          SplitHandle.pressed ? "#A0A0A0" : "#707070"
 
             Rectangle {
@@ -101,18 +101,17 @@ Window  {
                     enabled:      true
 
                     onPinchUpdated: {
-                        renderer.scaleDelta((pinch.previousScale - pinch.scale)*500.0)
-                        renderer.mouse(pinch.center.x, pinch.center.y, false)
+                        var shiftScale = pinch.scale - pinch.previousScale;
+                        var shiftAngle = pinch.angle - pinch.previousAngle;
+                        renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
                     }
 
                     onPinchStarted: {
                         mousearea3D.enabled = false
-                        renderer.mouse(-1, -1, false)
                     }
 
                     onPinchFinished: {
                         mousearea3D.enabled = true
-                        renderer.mouse(-1, -1, false)
                     }
 
                     MouseArea {
@@ -232,7 +231,7 @@ Window  {
         Console {
             id:                      console_vis
             visible:                 theme.consoleVisible
-            SplitView.minimumHeight: 100
+            SplitView.minimumHeight: 150
         }
     }
 
@@ -240,7 +239,7 @@ Window  {
 
 
     ColumnLayout {
-        anchors.top: parent
+        anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         visible: true
 
@@ -341,9 +340,15 @@ Window  {
         Keys.forwardTo:           [mousearea3D]
     }
 
-    Connections{
+    Connections {
         target: SurfaceControlMenuController
-        onSurfaceProcessorTaskStarted: surfaceProcessingProgressBar.visible = true
-        onSurfaceProcessorTaskFinished: surfaceProcessingProgressBar.visible = false
+
+        function onSurfaceProcessorTaskStarted() {
+            surfaceProcessingProgressBar.visible = true
+        }
+
+        function onSurfaceProcessorTaskFinished() {
+            surfaceProcessingProgressBar.visible = false
+        }
     }
 }

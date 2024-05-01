@@ -1,5 +1,6 @@
-#version 140
+#version 300 es
 
+precision highp float;
 in vec3 position;
 uniform mat4 matrix;
 uniform float width;

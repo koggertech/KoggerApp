@@ -214,7 +214,14 @@ public:
     bool isVisible() { return _isVisible; }
     void setVisible(bool visible) { _isVisible = visible; }
 
-    virtual bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) { return false; }
+    virtual bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
+    {
+        Q_UNUSED(canvas);
+        Q_UNUSED(dataset);
+        Q_UNUSED(cursor);
+        return false;
+    }
+
 protected:
     bool _isVisible = false;
 };
@@ -629,7 +636,10 @@ public:
     Plot2DQuadrature() {}
 
 
-    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
+    {
+        Q_UNUSED(dataset);
+
         if(!isVisible() || !cursor.distance.isValid()) { return false; }
 
         QVector<float> real1(canvas.width());
@@ -833,7 +843,7 @@ public:
 
     virtual void plotUpdate() {}
 
-    virtual void sendSyncEvent(int epoch_index) {}
+    virtual void sendSyncEvent(int epoch_index) { Q_UNUSED(epoch_index); }
 
 protected:
     Dataset* _dataset = NULL;

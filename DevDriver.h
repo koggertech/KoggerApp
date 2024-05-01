@@ -51,19 +51,14 @@ public:
 
     int datasetTimestamp();
     void setDatasetTimestamp(int ch_param);
-    void setDatasetTimestamp(U1 channel_id, bool state);
     int datasetDist();
     void setDatasetDist(int ch_param);
-    void setDatasetDist(U1 channel_id, bool state);
     int datasetChart();
     void setDatasetChart(int ch_param);
-    void setDatasetChart(U1 channel_id, bool state);
     int datasetTemp();
     void setDatasetTemp(int ch_param);
-    void setDatasetTemp(U1 channel_id, bool state);
     int datasetEuler();
     void setDatasetEuler(int ch_param);
-    void setDatasetEuler(U1 channel_id, bool state);
     int datasetSDDBT();
     void setDatasetSDDBT(int ch_param);
     int datasetSDDBT_P2();

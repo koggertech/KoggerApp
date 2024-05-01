@@ -246,7 +246,7 @@ DevSettingsBox {
                     Layout.fillHeight: true
                     from: 0
                     to: 100
-                    value: flasher.writeProgress
+                    // value: flasher.writeProgress // TODO
                 }
             }
 
@@ -260,7 +260,7 @@ DevSettingsBox {
                     Layout.fillHeight: true
                     from: 0
                     to: 100
-                    value: flasher.readProgress
+                    // value: flasher.readProgress // TODO
                 }
             }
 
@@ -274,7 +274,7 @@ DevSettingsBox {
                     Layout.fillHeight: true
                     from: 0
                     to: 100
-                    value: flasher.checkProgress
+                    // value: flasher.checkProgress // TODO
                 }
             }
 
@@ -288,7 +288,7 @@ DevSettingsBox {
                     Layout.fillHeight: true
                     from: -1
                     to: 101
-                    value: dev.upgradeFWStatus
+                    value: dev ? dev.upgradeFWStatus : 0
                 }
             }
 

@@ -120,7 +120,7 @@ void Plot2D::setBottomTrackVisible(bool visible) {
 }
 
 void Plot2D::setBottomTrackTheme(int theme_id) {
-
+    Q_UNUSED(theme_id);
 }
 
 void Plot2D::setRangefinderVisible(bool visible) {
@@ -151,6 +151,8 @@ void Plot2D::setDopplerInstrumentVisible(bool visible) {
 }
 
 void Plot2D::setGNSSVisible(bool visible, int flags) {
+    Q_UNUSED(flags);
+
     _GNSS.setVisible(visible);
     plotUpdate();
 }
@@ -274,6 +276,8 @@ void Plot2D::setMousePosition(int x, int y) {
     const int image_width = _canvas.width();
     const int image_height = _canvas.height();
     const int dataset_from = _cursor.getIndex(0);
+    Q_UNUSED(dataset_from);
+
     const float distance_from = _cursor.distance.from;
     const float distance_range = _cursor.distance.to - _cursor.distance.from;
     const float image_distance_ratio = distance_range/(float)image_height;

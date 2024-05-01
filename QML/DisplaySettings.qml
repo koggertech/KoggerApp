@@ -122,8 +122,8 @@ GridLayout {
                     model: ["Raw", "Side-Scan"]
                     currentIndex: 0
 
-                    onCurrentIndexChanged: targetPlot.plotEchogramType(currentIndex)
-                    Component.onCompleted: targetPlot.plotEchogramType(currentIndex)
+                    // onCurrentIndexChanged: targetPlot.plotEchogramType(currentIndex) // TODO
+                    // Component.onCompleted: targetPlot.plotEchogramType(currentIndex) // TODO
 
                     Settings {
                         property alias echogramTypesList: echogramTypesList.currentIndex
@@ -380,8 +380,8 @@ GridLayout {
                     property int currValue: value
 
                     validator: DoubleValidator {
-                        bottom: Math.min(from, to)
-                        top:  Math.max(from, to)
+                        bottom: Math.min(angleRange.from, angleRange.to)
+                        top:  Math.max(angleRange.from, angleRange.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -429,8 +429,8 @@ GridLayout {
                     property real realValue: value / 1000
 
                     validator: DoubleValidator {
-                        bottom: Math.min(from, to)
-                        top:  Math.max(from, to)
+                        bottom: Math.min(velocityRange.from, velocityRange.to)
+                        top:  Math.max(velocityRange.from, velocityRange.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -571,8 +571,8 @@ GridLayout {
                     property real realValue: value / 100
 
                     validator: DoubleValidator {
-                        bottom: Math.min(from, to)
-                        top:  Math.max(from, to)
+                        bottom: Math.min(bottomTrackGainSlopeValue.from, bottomTrackGainSlopeValue.to)
+                        top:  Math.max(bottomTrackGainSlopeValue.from, bottomTrackGainSlopeValue.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -611,8 +611,8 @@ GridLayout {
                     property real realValue: value / 100
 
                     validator: DoubleValidator {
-                        bottom: Math.min(from, to)
-                        top:  Math.max(from, to)
+                        bottom: Math.min(bottomTrackThresholdValue.from, bottomTrackThresholdValue.to)
+                        top:  Math.max(bottomTrackThresholdValue.from, bottomTrackThresholdValue.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -701,8 +701,8 @@ GridLayout {
                     property real realValue: value / 1000
 
                     validator: DoubleValidator {
-                        bottom: Math.min(from, to)
-                        top:  Math.max(from, to)
+                        bottom: Math.min(bottomTrackMinRangeValue.from, bottomTrackMinRangeValue.to)
+                        top:  Math.max(bottomTrackMinRangeValue.from, bottomTrackMinRangeValue.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -742,8 +742,8 @@ GridLayout {
                     property real realValue: value / 1000
 
                     validator: DoubleValidator {
-                        bottom: Math.min(from, to)
-                        top:  Math.max(from, to)
+                        bottom: Math.min(bottomTrackMaxRangeValue.from, bottomTrackMaxRangeValue.to)
+                        top:  Math.max(bottomTrackMaxRangeValue.from, bottomTrackMaxRangeValue.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -839,7 +839,7 @@ GridLayout {
                         hoverEnabled: true
                         Layout.fillWidth: true
 
-                        text: shortcuts.home
+                        // text: shortcuts.home // TODO
 
                         placeholderText: qsTr("Enter path")
                         Keys.onPressed: {

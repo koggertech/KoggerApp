@@ -162,7 +162,7 @@ protected:
             stream->size = end;
         }
 
-        if(data.size() < offset) {
+        if (static_cast<uint32_t>(data.size()) < offset) {
             Fragment new_fragment = {
                 .start = (uint32_t)data.size(),
                 .end = offset,
@@ -172,7 +172,8 @@ protected:
             gaps.append(new_fragment);
             stream->_counter._lostFragments++;
             debugAddGap(offset, offset - (uint32_t)data.size());
-        } else if(data.size() > offset) {
+        }
+        else if (static_cast<uint32_t>(data.size()) > offset) {
             debugSearchGap(offset, size);
 
             for(int32_t i = 0; i < gaps.size(); i++) {

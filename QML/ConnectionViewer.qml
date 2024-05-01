@@ -14,7 +14,7 @@ Item {
     Connections {
         target: core
 
-        onConnectionChanged: {
+        function onConnectionChanged() {
             connectionButton.connection = core.isOpenConnection()
             dev = null
         }
@@ -253,7 +253,10 @@ Item {
 
                     Connections {
                         target: connectionButton
-                        onPressedChanged: canvas.requestPaint()
+
+                        function onPressedChanged() {
+                            canvas.requestPaint()
+                        }
                     }
 
                     onPaint: {
@@ -789,16 +792,16 @@ Item {
             visible: connectionTypeCombo.currentText === "File" && dev !== null
 
             ParamGroup {
-                visible: dev.devName !== ""
-                groupName: dev.devName
+                visible: dev ? dev.devName !== "" : false
+                groupName: dev ? dev.devName : "undefined"
 
                 ParamSetup {
-                    paramName: "SN: " + dev.devSN
+                    paramName: "SN: " + (dev ? (dev.devSN ? dev.devSN : "undefined") : "undefined")
                 }
 
                 ParamSetup {
-                    visible: dev.fwVersion !== ""
-                    paramName: "FW version: "  + dev.fwVersion
+                    visible: dev ? dev.fwVersion !== "" : false
+                    paramName: "FW version: " + (dev ? (dev.fwVersion ? dev.fwVersion : "undefined") : "undefined")
                 }
             }
         }
@@ -831,7 +834,7 @@ Item {
 
             CButton {
                 id: devTab0
-                text: devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]"
+                text: devList[0] ? devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]" : "undefined"
                 Layout.fillWidth: true
                 opacity: dev === devList[0] ? 1 : 0.5
 
@@ -842,7 +845,7 @@ Item {
 
             CButton {
                 id: devTab1
-                text: devList[1].devName + " " + devList[1].fwVersion + " [" + devList[1].devSN + "]"
+                text: devList[1] ? devList[1].devName + " " + devList[1].fwVersion + " [" + devList[1].devSN + "]" : "undefined"
                 Layout.fillWidth: true
                 opacity: dev === devList[1] ? 1 : 0.5
 
@@ -853,7 +856,7 @@ Item {
 
             CButton {
                 id: devTab2
-                text: devList[2].devName + " " + devList[2].fwVersion + " [" + devList[2].devSN + "]"
+                text: devList[2] ? devList[2].devName + " " + devList[2].fwVersion + " [" + devList[2].devSN + "]" : "undefined"
                 Layout.fillWidth: true
                 opacity: dev === devList[2] ? 1 : 0.5
 

@@ -25,14 +25,14 @@ ColumnLayout {
             objectName:   "loader"
             id:           loader
             anchors.fill: parent
-            source:       "ActiveObjectParamsMenu/BottomTrackParamsMenu.qml"
+            //source:       "ActiveObjectParamsMenu/BottomTrackParamsMenu.qml"
         }
     }
 
     RowLayout{
         id:            buttonGroupLayout
-        anchors.left:  menuLoader.left
-        anchors.right: menuLoader.right
+        Layout.alignment: Qt.AlignLeft
+        Layout.fillWidth: true
         spacing:       0
 
         Button{

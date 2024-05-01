@@ -83,11 +83,11 @@ Item {
 
     Connections {
         target: theme
-        onThemeIDChanged:  {
+
+        function onThemeIDChanged() {
             canvas.requestPaint()
         }
     }
-
 
     Canvas {
         id: canvas

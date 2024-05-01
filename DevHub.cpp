@@ -110,7 +110,10 @@ void Device::putData(const QByteArray &data) {
             if(prot_nmea.isEqualId("RMC")) {
                 uint8_t h = 0, m = 0, s = 0;
                 uint16_t ms = 0;
+
                 bool is_correct =  prot_nmea.readTime(&h, &m, &s, &ms);
+                Q_UNUSED(is_correct);
+
                 char c = prot_nmea.readChar();
                 if(c == 'A') {
                     double lat = prot_nmea.readLatitude();
@@ -151,7 +154,10 @@ void Device::putData(const QByteArray &data) {
                 nanosec = ubx_frame.read<S4>();
 
                 uint8_t fix_type = ubx_frame.read<U1>();
+
                 uint8_t fix_flags = ubx_frame.read<U1>();
+                Q_UNUSED(fix_flags);
+
                 ubx_frame.read<U1>();
                 uint8_t satellites_in_used = ubx_frame.read<U1>();
 

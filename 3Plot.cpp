@@ -150,7 +150,10 @@ void Scene3D::render()
         QVector3D ray = (-unprj + cf + _posCenter);
 
         float t = QVector3D::dotProduct(unprj - QVector3D(0,0,0), QVector3D(0,0,1))/QVector3D::dotProduct(ray, QVector3D(0,0,1));
+
         QVector3D p = unprj - t*ray;
+        Q_UNUSED(p);
+
 
 //        _testPonts.append(p);
     }

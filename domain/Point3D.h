@@ -70,6 +70,7 @@ public:
 
     //! Ostream operator
     friend std::ostream& operator<<(std::ostream& out, const Point3D <T>& point) {
+        Q_UNUSED(point)
         //out << "X: " << point.x() << ", Y: " << point.y() << ", Z: " << point.z() << std::endl;
         return out;
     }

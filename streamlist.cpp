@@ -13,11 +13,15 @@ StreamList::StreamList() {
 }
 
 void StreamList::debugAddGap(uint32_t start, uint32_t size) {
+    Q_UNUSED(start);
+    Q_UNUSED(size);
 //    core.consoleInfo(QString("Find a gap %1 from %2").arg(size).arg(start));
 }
 
 
 void StreamList::debugSearchGap(uint32_t start, uint32_t size) {
+    Q_UNUSED(start);
+    Q_UNUSED(size);
 //    core.consoleInfo(QString("Search a gap %1 from %2").arg(size).arg(start));
 }
 

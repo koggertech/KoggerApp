@@ -1,4 +1,4 @@
-#version 140
+#version 300 es
 
 in vec3 position;
 

@@ -236,6 +236,8 @@ void Connection::setRTS(bool val) {
 }
 
 bool Connection::close(bool is_user) {
+    Q_UNUSED(is_user);
+
     switch (m_type) {
     case ConnectionSerial:
         if(m_serial->isOpen()) {

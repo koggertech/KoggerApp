@@ -21,6 +21,8 @@ SceneObject::SceneObjectType BottomTrack::type() const
 
 bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
 {
+    Q_UNUSED(watched);
+
     if(event->type() == EpochSelected2d){
         auto epochEvent = static_cast<EpochEvent*>(event);
         selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
@@ -320,7 +322,9 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
                                                           const QMap<QString,
                                                           std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
-
+    Q_UNUSED(ctx);
+    Q_UNUSED(mvp);
+    Q_UNUSED(shaderProgramMap);
 }
 
 void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,

@@ -33,6 +33,7 @@ void qPlot2D::paint(QPainter *painter) {
 
     clock_t end = clock();
     int cpu_time_used = ((end-start));
+    Q_UNUSED(cpu_time_used);
 
 //    qInfo("r time %d", cpu_time_used);
 }
@@ -95,6 +96,8 @@ void qPlot2D::plotUpdate() {
 
 bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 {
+    Q_UNUSED(watched);
+
     if (event->type() == EpochSelected3d) {
         auto epochEvent = static_cast<EpochEvent*>(event);
         //qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());

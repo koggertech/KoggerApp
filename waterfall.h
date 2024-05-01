@@ -28,9 +28,9 @@ public:
 
     void plotUpdate() override;
 
-    virtual bool eventFilter(QObject *watched, QEvent *event);
+    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
 
-    void sendSyncEvent(int epoch_index);
+    void sendSyncEvent(int epoch_index) override final;
 
 protected:
     Dataset* m_plot = nullptr;
@@ -58,7 +58,7 @@ public slots:
     int plotDatasetChannel2() { return _cursor.channel2; }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
-    void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
+    Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
     void plotBottomTrackVisible(bool visible) { setBottomTrackVisible(visible); }
     void plotBottomTrackTheme(int theme_id) { setBottomTrackTheme(theme_id); }
 

@@ -405,6 +405,7 @@ public:
     }
 
     float chartsFullRange(int16_t channel = -1) {
+        Q_UNUSED(channel);
         QList<int16_t> charts_channels = chartChannels();
 
         float full_range  = 0;

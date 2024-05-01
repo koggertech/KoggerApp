@@ -10,7 +10,7 @@ Item {
     property var targetPlot: null
 
     property var lastItem: menuSettings
-    property bool isConsoleVisible: consoleEnable.checked
+    //property bool isConsoleVisible: consoleEnable.checked // TODO
     property bool is3DVisible: settings3DButton.checked
     property bool is2DVisible: visible2dButton.checked
     property bool is2DHorizontal: appSettings.is2DHorizontal
@@ -98,7 +98,7 @@ Item {
                 CText {
                     Layout.fillWidth: true
                     Layout.topMargin: 4
-                    visible: chartEnable.checked
+                    // visible: chartEnable.checked // TODO
                     horizontalAlignment: Text.AlignHCenter
                     text: echogramLevelsSlider.stopValue
                     small: true
@@ -107,7 +107,7 @@ Item {
                 ChartLevel {
                     Layout.fillWidth: true
                     id: echogramLevelsSlider
-                    visible: chartEnable.checked
+                    // visible: chartEnable.checked // TODO
                     Layout.alignment: Qt.AlignHCenter
 
                     onStartValueChanged: {
@@ -131,7 +131,7 @@ Item {
                 CText {
                     Layout.fillWidth: true
                     Layout.bottomMargin: 4
-                    visible: chartEnable.checked
+                    // visible: chartEnable.checked // TODO
                     horizontalAlignment: Text.AlignHCenter
 
                     text: echogramLevelsSlider.startValue
@@ -274,8 +274,8 @@ Item {
             id:                 sceneControlMenu
             objectName:         "sceneControlMenu"
             Layout.topMargin:   10
-            anchors.top:        menuBar.top
-            anchors.left:       menuBar.right
+            Layout.alignment:   Qt.AlignLeft
+            Layout.fillWidth:   true
             anchors.leftMargin: 40
             visible:            menu3DSettings.active
         }

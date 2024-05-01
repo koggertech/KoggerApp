@@ -8,7 +8,7 @@ import QtQml.Models 2.15
 
 DevSettingsBox {
     id: control
-    isActive: dev.isRecorder
+    isActive: dev ? dev.isRecorder : false
 
     MenuBlock {
     }

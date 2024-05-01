@@ -39,16 +39,11 @@ Resp  IDBin::parse(FrameParser &proto) {
             m_lastResp = (Resp)proto.read<U1>();
 
             if ((m_lastResp == Resp::respOk)  && (!hashLastInfo_.isReaded && needToCheckSetResp_)) {
-                //qDebug() << "m_lastResp: " << m_lastResp;
-                qDebug() << "proto.resp(): " << proto.resp() << ", type: " << proto.type();
-
                 if (checkResponse(proto)) {
-                    qDebug() << "IDBin::parse() resp success, id(): " << id();
                     hashLastInfo_.isReaded = true;
                     onExpiredSetTimer();
                 }
                 else {
-                    qDebug() << "IDBin::parse() resp unsuccess, id(): " << id();
                     needToCheckSetResp_ = false;
                 }
             }
@@ -60,13 +55,11 @@ Resp  IDBin::parse(FrameParser &proto) {
             resp_parse = parsePayload(proto);
 
             if (!hashLastInfo_.isReaded && !needToCheckSetResp_) {
-                qDebug() << "IDBin::parse() payload set success, id(): "  << id();
                 hashLastInfo_.isReaded = true;
                 onExpiredSetTimer();
             }
 
             if (resp_parse == Resp::respOk && isColdStart_) {
-                //qDebug() << "IDBin::parse() payload cold success, id():"  << id();
                 isColdStart_ = false;
                 onExpiredColdStartTimer();
             }            
@@ -84,12 +77,6 @@ bool IDBin::checkResponse(FrameParser& proto)
     auto checkSum = proto.read<U2>();
 
     Version ver = proto.ver();
-    qDebug() << "hashLastInfo_.checkSum :" << hashLastInfo_.checkSum << "\n"
-             << "hashLastInfo_.address :" << hashLastInfo_.address << "\n"
-             << "hashLastInfo_.version :" << hashLastInfo_.version << "\n"
-             << "checkSum :" << checkSum << "\n"
-             << "proto.route() :" << proto.route() << "\n"
-             << "proto.ver() :" << ver << "\n";
     return (hashLastInfo_.checkSum == checkSum) &&
            (hashLastInfo_.address == proto.route()) &&
            (hashLastInfo_.version == ver);
@@ -122,42 +109,33 @@ void IDBin::hashBinFrameOut(ProtoBinOut &proto_out)
 void IDBin::interExecColdStartTimer()
 {
     isColdStart_ = true;
-    //qDebug() << "IDBin::interExecColdStartTimer(), id(): " << id();
     coldStartTimer_.start();
 }
 
 void IDBin::onExpiredColdStartTimer()
 {
-    //qDebug() << "IDBin::onExpiredColdStartTimer(), id(): " << id();
     coldStartTimer_.stop();
 
     emit notifyDevDriver(!isColdStart_);
-    //qDebug() << "IDBin::onExpiredColdStartTimer() coldStartTimerCount_: " << coldStartTimerCount_ << ", id(): " << id();
     if (isColdStart_ && (coldStartTimerCount_++ < repeatingCount_)) { // try request
-        //qDebug() << "IDBin::onExpiredColdStartTimer() request all, count: " << coldStartTimerCount_ << ", id(): " << id();
         requestAll();
         interExecColdStartTimer();
     }
     else {
-        //qDebug() << "IDBin::onExpiredColdStartTimer() success, id(): " << id();
         coldStartTimerCount_ = 0;
     }
 }
 
 void IDBin::onExpiredSetTimer()
 {
-    qDebug() << "IDBin::onExpiredSetTimer(), id(): " << id();
     setTimer_.stop();
 
     emit notifyDevDriver(hashLastInfo_.isReaded);
-    qDebug() << "IDBin::onExpiredSetTimer() setTimerCount_: " << setTimerCount_ << ", id(): " << id();
     if (!hashLastInfo_.isReaded && (setTimerCount_++ < repeatingCount_)) { // try request
-        qDebug() << "IDBin::onExpiredSetTimer() request all, count: " << setTimerCount_ << ", id(): " << id();
         requestAll();
         setTimer_.start();
     }
     else {
-        qDebug() << "IDBin::onExpiredSetTimer() success, id(): " << id();
         setTimerCount_ = 0;
         needToCheckSetResp_ = true;
     }
@@ -279,27 +257,34 @@ Resp IDBinAttitude::parsePayload(FrameParser &proto) {
 }
 
 float IDBinAttitude::yaw(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_yaw;
 }
 
 float IDBinAttitude::pitch(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_pitch;
 }
 
 float IDBinAttitude::roll(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_roll;
 }
 
 float IDBinAttitude::w0(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w0;
 }
 float IDBinAttitude::w1(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w1;
 }
 float IDBinAttitude::w2(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w2;
 }
 float IDBinAttitude::w3(Version src_ver) {
+    Q_UNUSED(src_ver);
     return m_w3;
 }
 
@@ -335,7 +320,7 @@ Resp IDBinDVL::parsePayload(FrameParser &proto) {
 //         qInfo("DVL x: %f, y: %f, z: %f, d: %f", vel_x, vel_y, vel_z, _dist);
     } else  if(proto.ver() == v1) {
         _beamCount = 0;
-        for(uint8_t i = 0; i < 4 && sizeof(BeamSolution) <= proto.readAvailable() ; i++) {
+        for(uint8_t i = 0; i < 4 && static_cast<int16_t>(sizeof(BeamSolution)) <= proto.readAvailable(); i++) {
             _beams[i] = proto.read<BeamSolution>();
             _beamCount++;
         }
@@ -344,7 +329,7 @@ Resp IDBinDVL::parsePayload(FrameParser &proto) {
             test_bias += _beams[0].velocity*_beams[0].dt;
         }
     } else if(proto.ver() == v2) {
-        if(sizeof(DVLSolution) <= proto.readAvailable()) {
+        if (static_cast<int16_t>(sizeof(DVLSolution)) <= proto.readAvailable()) {
             _dvlSolution = proto.read<DVLSolution>();
 //            qInfo("DVL x: %f, y: %f, z: %f, d: %f", _dvlSolution.velocity.x, _dvlSolution.velocity.y, _dvlSolution.velocity.z, _dvlSolution.distance.z);
         } else {
@@ -417,6 +402,14 @@ QVector<IDBinDataset::Channel> IDBinDataset::getChannels() const {
     for (uint16_t i = 0; i < channelsSize; ++i)
         retVal.push_back(m_channel[i]);
     return retVal;
+}
+
+IDBinDataset::Channel IDBinDataset::getChannel(U1 channelId) const
+{
+    if (channelId < 3)
+        return m_channel[channelId];
+
+    return {};
 }
 
 void IDBinDataset::sendChannel(U1 ch_id, uint32_t period, uint32_t mask) {

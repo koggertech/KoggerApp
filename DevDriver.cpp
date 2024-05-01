@@ -201,26 +201,18 @@ void DevDriver::importSettingsFromXML(const QString& filePath) {
                             setSoundSpeed(xmlReader.readElementText().toInt());
                     }
                     else if (elementName == "Dataset") {
-                        auto idString = xmlReader.name().toString();
-                        const auto id = static_cast<U1>(idString.remove(0, 6).toInt());
-                        while (xmlReader.readNext() != QXmlStreamReader::EndElement) {
-                            if (xmlReader.tokenType() == QXmlStreamReader::StartElement) {
-                                const QString nameStr = xmlReader.name().toString();
-                                const QString valStr = xmlReader.readElementText().trimmed();
-                                if (nameStr == "period_ms")
-                                    id == 1 ? setCh1Period(valStr.toUInt()) : setCh2Period(valStr.toUInt());
-                                else if (nameStr == "echogram")
-                                    setDatasetChart(id, valStr.toUpper() == "TRUE" ? 1 : 0);
-                                else if (nameStr == "rangefinder")
-                                    setDatasetDist(id, valStr.toUpper() == "TRUE" ? 1 : 0);
-                                else if (nameStr == "AHRS")
-                                    setDatasetEuler(id, valStr.toUpper() == "TRUE" ? 1 : 0);
-                                else if (nameStr == "temperature")
-                                    setDatasetTemp(id, valStr.toUpper() == "TRUE" ? 1 : 0);
-                                else if (nameStr == "timestamp")
-                                    setDatasetTimestamp(id, valStr.toUpper() == "TRUE" ? 1 : 0);
-                            }
-                        }
+                        if (xmlReader.name().toString() == "period_ms")
+                            setCh1Period(xmlReader.readElementText().toInt());
+                        else if (xmlReader.name().toString() == "echogram")
+                            xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetChart(1) : setDatasetChart(0);
+                        else if (xmlReader.name().toString() == "rangefinder")
+                            xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetDist(1) : setDatasetDist(0);
+                        else if (xmlReader.name().toString() == "AHRS")
+                            xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetEuler(1) : setDatasetEuler(0);
+                        else if (xmlReader.name().toString() == "temperature")
+                            xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetTemp(1) : setDatasetTemp(0);
+                        else if (xmlReader.name().toString() == "timestamp")
+                            xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetTimestamp(1) : setDatasetTimestamp(0);
                     }
                     else if (elementName == "UART") {
                         if (xmlReader.name().toString() == "dev_def_address")
@@ -271,17 +263,14 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     xmlWriter.writeTextElement("speed_of_sound_m_s", QString::number(soundSpeed()));
     xmlWriter.writeEndElement();
     xmlWriter.writeStartElement("Dataset");
-    const auto channels = idDataset->getChannels();
-    for (uint8_t i = 1; i < channels.count(); ++i) {
-        xmlWriter.writeStartElement("group_" + QString::number(channels.at(i).id));
-        xmlWriter.writeTextElement("period_ms", QString::number(channels.at(i).period));
-        xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(i)).toString());
-        xmlWriter.writeTextElement("rangefinder", QVariant(idDataset->getDist_v0(i)).toString());
-        xmlWriter.writeTextElement("AHRS", QVariant(static_cast<bool>(idDataset->getEuler(i))).toString());
-        xmlWriter.writeTextElement("temperature", QVariant(idDataset->getTemp_v0(i)).toString());
-        xmlWriter.writeTextElement("timestamp", QVariant(idDataset->getTimestamp_v0(i)).toString());
-        xmlWriter.writeEndElement();
-    }
+    const U1 channelId = 1;
+    const auto channel = idDataset->getChannel(channelId);
+    xmlWriter.writeTextElement("period_ms", QString::number(channel.period));
+    xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(channelId)).toString());
+    xmlWriter.writeTextElement("rangefinder", QVariant(idDataset->getDist_v0(channelId)).toString());
+    xmlWriter.writeTextElement("AHRS", QVariant(static_cast<bool>(idDataset->getEuler(channelId))).toString());
+    xmlWriter.writeTextElement("temperature", QVariant(idDataset->getTemp_v0(channelId)).toString());
+    xmlWriter.writeTextElement("timestamp", QVariant(idDataset->getTimestamp_v0(channelId)).toString());
     xmlWriter.writeEndElement();
     xmlWriter.writeStartElement("UART");
     xmlWriter.writeTextElement("dev_def_address", QString::number(getDevDefAddress()));
@@ -289,7 +278,7 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     xmlWriter.writeTextElement("dev_address", QString::number(getDevAddress()));
     xmlWriter.writeEndElement();
 
-    xmlWriter.writeEndElement(); // Settings
+    xmlWriter.writeEndElement();
     xmlWriter.writeEndDocument();
     file.close();
 
@@ -447,7 +436,7 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
 }
 
 void DevDriver::sendFactoryFW(QByteArray update_data) {
-
+    Q_UNUSED(update_data);
 }
 
 int DevDriver::transFreq() {
@@ -617,14 +606,6 @@ void DevDriver::setDatasetTimestamp(int ch_param) {
     if(is_changed) { emit datasetChanged(); }
 }
 
-void DevDriver::setDatasetTimestamp(U1 channel_id, bool state) {
-    bool is_on = idDataset->getTimestamp_v0(channel_id);
-    if (is_on != state) {
-        state ? idDataset->setTimestamp_v0(channel_id) : idDataset->resetTimestamp_v0(channel_id);
-        emit datasetChanged();
-    }
-}
-
 int DevDriver::datasetDist() {
     int ch_param = 0;
     if(idDataset->getDist_v0(1)) {
@@ -642,14 +623,6 @@ void DevDriver::setDatasetDist(int ch_param) {
     idDataset->setDist_v0(ch_param);
     idDataset->commit();
     if(is_changed) { emit datasetChanged(); }
-}
-
-void DevDriver::setDatasetDist(U1 channel_id, bool state) {
-    bool is_on = idDataset->getDist_v0(channel_id);
-    if (is_on != state) {
-        state ? idDataset->setDist_v0(channel_id) : idDataset->resetDist_v0(channel_id);
-        emit datasetChanged();
-    }
 }
 
 int DevDriver::datasetChart() {
@@ -671,14 +644,6 @@ void DevDriver::setDatasetChart(int ch_param) {
     if(is_changed) { emit datasetChanged(); }
 }
 
-void DevDriver::setDatasetChart(U1 channel_id, bool state) {
-    bool is_on = idDataset->getChart_v0(channel_id);
-    if (is_on != state) {
-        state ? idDataset->setChart_v0(channel_id) : idDataset->resetChart_v0(channel_id);
-        emit datasetChanged();
-    }
-}
-
 int DevDriver::datasetTemp() {
     int ch_param = 0;
     if(idDataset->getTemp_v0(1)) {
@@ -698,14 +663,6 @@ void DevDriver::setDatasetTemp(int ch_param) {
     if(is_changed) { emit datasetChanged();  }
 }
 
-void DevDriver::setDatasetTemp(U1 channel_id, bool state) {
-    bool is_on = idDataset->getTemp_v0(channel_id);
-    if (is_on != state) {
-        state ? idDataset->setTemp_v0(channel_id) : idDataset->resetTemp_v0(channel_id);
-        emit datasetChanged();
-    }
-}
-
 int DevDriver::datasetEuler() {
     int ch_param = 0;
     if(idDataset->getEuler(1)) {
@@ -723,14 +680,6 @@ void DevDriver::setDatasetEuler(int ch_param) {
     idDataset->setEuler(ch_param);
     idDataset->commit();
     if(is_changed) { emit datasetChanged();  }
-}
-
-void DevDriver::setDatasetEuler(U1 channel_id, bool state) {
-    bool is_on = idDataset->getEuler(channel_id);
-    if (is_on != state) {
-        state ? idDataset->setEuler(channel_id) : idDataset->resetEuler(channel_id);
-        emit datasetChanged();
-    }
 }
 
 int DevDriver::datasetSDDBT() {
@@ -794,14 +743,25 @@ void DevDriver::setCh2Period(int period) {
     if(is_changed) {  emit datasetChanged();  }
 }
 
-void DevDriver::receivedTimestamp(Type type, Version ver, Resp resp) {
+void DevDriver::receivedTimestamp(Type type, Version ver, Resp resp)
+{
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedDist(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
+
     emit distComplete(idDist->dist_mm());
 }
 
 void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(resp);
+
     if(idChart->isCompleteChart()) {
         if(ver == v0) {
             QVector<uint8_t> data(idChart->chartSize());
@@ -817,43 +777,72 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 //    qInfo("Euler: yaw %f, pitch %f, roll %f", idAtt->yaw(), idAtt->pitch(), idAtt->roll());
     emit attitudeComplete(idAtt->yaw(), idAtt->pitch(), idAtt->roll());
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
     core.dataset()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) { emit datasetChanged(); } else {  }
 }
 
 void DevDriver::receivedDistSetup(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {   emit distSetupChanged();  }
 }
 
 void DevDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit chartSetupChanged();  }
 }
 
 void DevDriver::receivedDSPSetup(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit dspSetupChanged();  }
 }
 
 void DevDriver::receivedTransc(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit transChanged();  }
 }
 
 void DevDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) {  emit soundChanged();  }
 }
 
 void DevDriver::receivedUART(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+
     if(resp == respNone) { emit UARTChanged(); }
 }
 
 void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+
     if(resp == respNone) {
 
         if(ver == v0) {
@@ -917,12 +906,21 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedMark(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedFlash(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedBoot(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::fwUpgradeProcess() {
@@ -941,6 +939,8 @@ void DevDriver::fwUpgradeProcess() {
 }
 
 void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+
     if(resp == respNone) {
         if(ver == v0) {
             m_bootloaderLagacyMode = false;
@@ -990,9 +990,14 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedNav(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+
     if(resp == respNone) {
         if(ver == v0) {
             emit dopplerVeloComplete();
@@ -1005,7 +1010,9 @@ void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
-
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
 }
 
 void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {

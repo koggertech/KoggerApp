@@ -13,6 +13,8 @@ android {
     QT += androidextras
     QT += core-private
     QT += gui-private
+    QT += svg
+
     CONFIG += mobility
 
     QMAKE_CXXFLAGS_DEBUG -= -O2
@@ -88,8 +90,14 @@ SOURCES += \
 }
 
 RESOURCES += QML/qml.qrc \
-    resources.qrc \
-    shaders.qrc
+    resources.qrc
+
+windows {
+    RESOURCES += shaders.qrc
+}
+android {
+    RESOURCES += android_build/shaders.qrc
+}
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH = $$PWD\QML
@@ -189,9 +197,6 @@ DISTFILES += \
     android_build/gradlew \
     android_build/gradlew.bat \
     android_build/res/values/libs.xml \
-    base.vsh \
-    heightcolor.frag \
-    staticcolor.fsh \
     tools/models.pri \
     tools/tools.pri
 
@@ -212,7 +217,8 @@ windows {
     LIBS += -lopengl32
 }
 
-#win32:RC_FILE = file.rc
+win32:RC_FILE = file.rc
+
 #win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 #else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 #else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
@@ -236,4 +242,7 @@ android {
 ANDROID_ABIS = armeabi-v7a
 
 
-android: include(C:/Users/aproo/AppData/Local/Android/Sdk/android_openssl/openssl.pri)
+android {
+    OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
+    include($$OPENSSL_PATH)
+}

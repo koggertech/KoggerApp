@@ -18,6 +18,8 @@ Themes theme;
 
 
 void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
+    Q_UNUSED(type);
+    Q_UNUSED(context);
     core.consoleInfo(msg);
 }
 
@@ -51,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     SceneObject::qmlDeclare();
 
-//    qInstallMessageHandler(messageHandler);
+    //qInstallMessageHandler(messageHandler); // TODO: comment this
 
 
 
