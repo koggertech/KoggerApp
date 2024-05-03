@@ -100,7 +100,7 @@ WaterFall {
         Layout.alignment: Qt.AlignHCenter
         spacing: 0
         visible: false
-        Layout.margins: 6
+        Layout.margins: 0
 
 
 
@@ -125,21 +125,11 @@ WaterFall {
 //            backgrn.focus = true
         }
 
-
-        MenuBlock {
-            id:backgrn
-//            onFocusChanged: {
-//                if(!focus) {
-//                    menuBlock.visible = false
-//                }
-//            }
-        }
-
         ButtonGroup { id: pencilbuttonGroup }
 
         CButton {
             Layout.fillWidth: true
-            Layout.margins: 4
+            // Layout.margins: 2
 //                    Layout.preferredHeight: 24
             text: "⇔"
             checkable: true
@@ -153,7 +143,7 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            Layout.margins: 4
+            // Layout.margins: 2
 //                    Layout.preferredHeight: 24
             text: "⇲"
             checkable: true
@@ -166,7 +156,7 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            Layout.margins: 4
+            // Layout.margins: 2
 //                    Layout.preferredHeight: 24
             text: "═"
             checkable: true
@@ -179,7 +169,7 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            Layout.margins: 4
+            // Layout.margins: 2
 //                    Layout.preferredHeight: 24
             text: "⇱"
             checkable: true
@@ -192,7 +182,7 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            Layout.margins: 4
+            // Layout.margins: 2
 //                    Layout.preferredHeight: 24
             text: "✕"
             checkable: true

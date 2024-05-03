@@ -28,6 +28,7 @@ public:
     };
 
     explicit PointObject(QObject *parent = nullptr);
+    explicit PointObject(float x, float y, float z) { setPosition(x, y, z); }
 
     SceneObjectType type() const override;
     float x() const;

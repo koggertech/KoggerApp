@@ -308,6 +308,17 @@ void Dataset::addDist(int dist) {
     emit dataUpdate();
 }
 
+void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
+    int pool_index = endIndex();
+    if(pool_index < 0 || _pool[pool_index].isUsblSolutionAvailable() == true) {
+        makeNewEpoch();
+        pool_index = endIndex();
+    }
+
+    _pool[endIndex()].set(data);
+    emit dataUpdate();
+}
+
 void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
     int pool_index = endIndex();
 
@@ -757,6 +768,44 @@ void Dataset::spatialProcessing() {
     }
 
     emit dataUpdate();
+}
+
+void Dataset::usblProcessing() {
+    const int to_size = size();
+    int from_index = 0;
+
+    _beaconTrack.clear();
+    _beaconTrack1.clear();
+
+    for(int i = from_index; i < to_size; i+=1) {
+        Epoch* epoch = fromIndex(i);
+        Position pos = epoch->getPositionGNSS();
+
+        // if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
+        //     if(!_llaRef.isInit) {
+        //         _llaRef = LLARef(pos.lla);
+        //     }
+        //     pos.LLA2NED(&_llaRef);
+        // }
+
+        if(pos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
+            double n = pos.ned.n, e = pos.ned.e;
+
+            double yaw = epoch->yaw();
+            double azimuth = epoch->usblSolution().azimuth_deg-180;
+            double dist = epoch->usblSolution().distance_m;
+            double dir = ((yaw + azimuth) + 120);
+            double rel_n = dist*cos(qDegreesToRadians(dir));
+            double rel_e = dist*sin(qDegreesToRadians(dir));
+            if(dist > 50 && azimuth < 10  && azimuth > -10) {
+                _beaconTrack.append(QVector3D(n+rel_n, e + rel_e, 0));
+            }
+            if(dist > 250 && (abs(azimuth)  > 170)) {
+                _beaconTrack1.append(QVector3D(n+rel_n, e + rel_e, 0));
+            }
+
+        }
+    }
 }
 
 void Dataset::setRefPosition(int epoch_index) {

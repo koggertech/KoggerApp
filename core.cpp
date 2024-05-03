@@ -14,8 +14,9 @@ Core::Core() : QObject(),
 //    connectionThread.start();
 
     connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
-connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
+    connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
     connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
+    connect(&_devs, &Device::usblSolutionComplete, _dataset, &Dataset::addUsblSolution);
     connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
     connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
     connect(&_devs, &Device::dopplerBeamComlete, _dataset, &Dataset::addDopplerBeam);
@@ -192,13 +193,25 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     if(m_scene3dView) {
         m_scene3dView->clear();
         m_scene3dView->setNavigationArrowState(false);
+
     }
+
 
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
 
     _dataset->setRefPositionByFirstValid();
+
+    _dataset->usblProcessing();
+
+    // QVector<QVector3D> positions;
+    // positions.append(QVector3D(1,1,1));
+    // positions.append(QVector3D(2,1,1));
+    // positions.append(QVector3D(3,1,1));
+    // positions.append(QVector3D(4,1,1));
+    m_scene3dView->addPoints(_dataset->beaconTrack(), QColor(255, 0, 0), 10);
+    m_scene3dView->addPoints(_dataset->beaconTrack1(), QColor(0, 255, 0), 10);
 
     QList<DatasetChannel> chs = _dataset->channelsList().values();
 
@@ -369,6 +382,48 @@ bool Core::exportComplexToCSV(QString file_path) {
 
             row_data.append("\n");
             _logger.dataExport(row_data);
+        }
+    }
+
+    _logger.endExportStream();
+
+    return true;
+}
+
+bool Core::exportUSBLToCSV(QString file_path) {
+    QString export_file_name;
+    if(m_connection->lastType() == Connection::ConnectionFile) {
+        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+    } else {
+        export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
+    }
+
+    _logger.creatExportStream(file_path + "/" + export_file_name + ".csv");
+
+    QMap<int, DatasetChannel> ch_list = _dataset->channelsList();
+
+    // _dataset->setRefPosition(1518);
+
+    _logger.dataExport("epoch,yaw,pitch,roll,north,east,ping_counter,carrier_counter,snr,azimuth_deg,elevation_deg,distance_m\n");
+
+    for(int i = 0; i < _dataset->size(); i+=1) {
+        Epoch* epoch = _dataset->fromIndex(i);
+        if(epoch == NULL) { continue; }
+
+        Position pos = epoch->getPositionGNSS();
+
+        if(pos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
+            QString row_data;
+
+            row_data.append(QString("%1").arg(i));
+            row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
+            row_data.append(QString(",%1,%2").arg(pos.ned.n).arg(pos.ned.e));
+            row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().ping_counter).arg(epoch->usblSolution().carrier_counter).arg(epoch->usblSolution().snr));
+            row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
+
+            row_data.append("\n");
+            _logger.dataExport(row_data);
+
         }
     }
 
@@ -876,6 +931,8 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
     m_scene3dControlMenuController->setQmlEngine(object);
     m_scene3dControlMenuController->setGraphicsSceneView(m_scene3dView);
+
+
 }
 
 void Core::closing()

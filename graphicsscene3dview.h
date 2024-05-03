@@ -158,6 +158,7 @@ public Q_SLOTS:
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
+    void addPoints(QVector<QVector3D>, QColor color, float width = 1);
 
 private:
     void updateBounds();

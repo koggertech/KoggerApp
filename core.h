@@ -98,6 +98,7 @@ public slots:
 
 
     bool exportComplexToCSV(QString file_path);
+    bool exportUSBLToCSV(QString file_path);
     bool exportPlotAsCVS(QString file_path, int channel, float decimation = 0);
     bool exportPlotAsXTF(QString file_path);
 

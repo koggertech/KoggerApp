@@ -370,6 +370,16 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
 }
 
+void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {
+    for(int i = 0; i < positions.size(); i++) {
+        auto p = std::make_shared<PointObject>();
+        p->setPosition(positions[i]);
+        p->setColor(color);
+        p->setWidth(width);
+        pointGroup()->append(p);
+    }
+}
+
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()

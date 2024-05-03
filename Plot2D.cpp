@@ -6,6 +6,7 @@ Plot2D::Plot2D() {
     _attitude.setVisible(true);
     _DVLBeamVelocity.setVisible(true);
     _DVLSolution.setVisible(true);
+    _usblSolution.setVisible(true);
     _bottomProcessing.setVisible(true);
     _rangeFinder.setVisible(true);
     _grid.setVisible(true);
@@ -32,6 +33,7 @@ bool Plot2D::getImage(int width, int height, QPainter* painter) {
     _attitude.draw(_canvas, _dataset, _cursor);
     _DVLBeamVelocity.draw(_canvas, _dataset, _cursor);
     _DVLSolution.draw(_canvas, _dataset, _cursor);
+    _usblSolution.draw(_canvas, _dataset, _cursor);
     _bottomProcessing.draw(_canvas, _dataset, _cursor);
     _rangeFinder.draw(_canvas, _dataset, _cursor);
     _GNSS.draw(_canvas, _dataset, _cursor);

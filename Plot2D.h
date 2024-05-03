@@ -473,6 +473,55 @@ protected:
 //        PlotPen(PlotColor(75, 205, 55), 2, PlotPen::LineStyleSolid)};
 };
 
+class Plot2DUSBLSolution : public Plot2DLine {
+public:
+    Plot2DUSBLSolution() {}
+
+
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
+        if(!isVisible() || !cursor.distance.isValid()) { return false; }
+
+        QVector<float> azimuth(canvas.width());
+        azimuth.fill(NAN);
+
+        QVector<float> elevation(canvas.width());
+        elevation.fill(NAN);
+
+        QVector<float> distance(canvas.width());
+        distance.fill(NAN);
+
+        for(int i = 0; i < canvas.width(); i++) {
+            int pool_index = cursor.getIndex(i);
+            Epoch* data = dataset->fromIndex(pool_index);
+
+            if(data != NULL &&  data->isUsblSolutionAvailable()) {
+                IDBinUsblSolution::UsblSolution sol = data->usblSolution();
+
+                azimuth[i] = sol.azimuth_deg;
+                elevation[i] = sol.elevation_deg;
+                distance[i] = sol.distance_m;
+            }
+        }
+
+        drawY(canvas, azimuth, cursor.attitude.from, cursor.attitude.to, _penAngle[0]);
+        drawY(canvas, elevation, cursor.attitude.from, cursor.attitude.to, _penAngle[1]);
+        drawY(canvas, distance, cursor.distance.from, cursor.distance.to, _penDist);
+
+        return true;
+    }
+
+
+protected:
+    PlotPen _penAngle[4] = {
+                               PlotPen(PlotColor(255, 0, 0), 2, PlotPen::LineStyleSolid),
+                               PlotPen(PlotColor(0, 255, 0), 2, PlotPen::LineStyleSolid),
+                               PlotPen(PlotColor(0, 0, 255), 2, PlotPen::LineStyleSolid),
+                               PlotPen(PlotColor(0, 170, 155), 2, PlotPen::LineStyleSolid)};
+
+    PlotPen _penDist = PlotPen(PlotColor(155, 155, 155), 3, PlotPen::LineStylePoint);
+
+};
+
 class Plot2DAttitude : public Plot2DLine {
 public:
     Plot2DAttitude() {}
@@ -866,6 +915,7 @@ protected:
     Plot2DAttitude _attitude;
     Plot2DDVLBeamVelocity _DVLBeamVelocity;
     Plot2DDVLSolution _DVLSolution;
+    Plot2DUSBLSolution _usblSolution;
     Plot2DRangefinder _rangeFinder;
     Plot2DBottomProcessing _bottomProcessing;
     Plot2DGNSS _GNSS;

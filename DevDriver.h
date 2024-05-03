@@ -161,7 +161,7 @@ signals:
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
-    void usblSolutionComplete(IDBinUsblSolution::UsblSolution datat);
+    void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
     void dspSetupChanged();

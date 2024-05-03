@@ -320,6 +320,8 @@ public:
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
 
+    void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
+
     void setGnssVelocity(double h_speed, double course);
 
     void setTime(DateTime time);
@@ -531,6 +533,11 @@ public:
     IDBinDVL::DVLSolution dvlSolution() { return _dvlSolution; }
     bool isDVLSolutionAvail() {  return flags.isDVLSolutionAvail; }
 
+
+    bool isUsblSolutionAvailable() { return _isUsblSolutionAvailable; }
+    IDBinUsblSolution::UsblSolution usblSolution() { return _usblSolution; }
+
+
     double lat() { return _positionGNSS.lla.latitude; }
     double lon() { return _positionGNSS.lla.longitude; }
 
@@ -668,6 +675,9 @@ protected:
 
     IDBinDVL::DVLSolution _dvlSolution;
 
+    IDBinUsblSolution::UsblSolution _usblSolution;
+    bool _isUsblSolutionAvailable = false;
+
     Position _positionGNSS;
     Position _positionExternal;
 
@@ -774,6 +784,7 @@ public slots:
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void addComplexSignal(QByteArray data, uint8_t type);
     void addDist(int dist);
+    void addUsblSolution(IDBinUsblSolution::UsblSolution data);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
@@ -810,6 +821,15 @@ public slots:
 //        }
 //    }
 
+    void usblProcessing();
+    QVector<QVector3D> beaconTrack() {
+        return _beaconTrack;
+    }
+
+    QVector<QVector3D> beaconTrack1() {
+        return _beaconTrack1;
+    }
+
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPositionByFirstValid();
@@ -842,6 +862,8 @@ protected:
 
 
     QVector<QVector3D> _boatTrack;
+    QVector<QVector3D> _beaconTrack;
+    QVector<QVector3D> _beaconTrack1;
 
 
 //    FboInSGRenderer* _render3D;

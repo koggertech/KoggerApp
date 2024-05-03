@@ -84,6 +84,7 @@ signals:
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
+    void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
@@ -161,6 +162,7 @@ protected:
         connect(devAddr[addr], &DevQProperty::iqComplete, this, &Device::iqComplete);
         connect(devAddr[addr], &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
         connect(devAddr[addr], &DevQProperty::distComplete, this, &Device::distComplete);
+        connect(devAddr[addr], &DevQProperty::usblSolutionComplete, this, &Device::usblSolutionComplete);
         connect(devAddr[addr], &DevQProperty::dopplerBeamComplete, this, &Device::dopplerBeamComlete);
         connect(devAddr[addr], &DevQProperty::dvlSolutionComplete, this, &Device::dvlSolutionComplete);
         connect(devAddr[addr], &DevQProperty::upgradeProgressChanged, this, &Device::upgradeProgressChanged);

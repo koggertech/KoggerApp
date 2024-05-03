@@ -62,11 +62,15 @@ Window  {
             }
         }
 
-        ColumnLayout {
+        GridLayout {
             id:                   visualisationLayout
-            SplitView.fillHeight: true
-            SplitView.fillWidth:  true
-            spacing:              0
+            // anchors.fill: parent
+            Layout.fillHeight: true
+            Layout.fillWidth:  true
+            rowSpacing: 0
+            columnSpacing: 0
+            rows    : 1
+            columns : 2
 
             property int lastKeyPressed: Qt.Key_unknown
 
@@ -80,12 +84,11 @@ Window  {
 
             GraphicsScene3dView {
                 id:                renderer
+                visible: menuBar.is3DVisible
                 objectName: "GraphicsScene3dView"
-                width:             mainview.width
                 Layout.fillHeight: true
                 Layout.fillWidth:  true
                 focus:             true
-                visible: menuBar.is3DVisible
 
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
@@ -145,86 +148,66 @@ Window  {
                         }
                     }
                 }
-            }
 
-
-            GridLayout {
-                visible: menuBar.is2DVisible
-                rows    : 10
-                columns : 10
-                Plot2D {
-                    id: waterView
-
-                    width: mainview.width
-                    Layout.fillHeight: true
-//                    Layout.fillWidth: true
-                    Layout.preferredWidth: mainview.width
-                    Layout.rowSpan   : 10
-                    Layout.columnSpan: 10
-                    focus: true
-                    horizontal: menuBar.is2DHorizontal
+                Scene3DToolbar{
+                    id:                       scene3DToolbar
+                    // anchors.bottom:              parent.bottom
+                    y:renderer.height - height
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    // anchors.rightMargin:      20
+                    Keys.forwardTo:           [mousearea3D]
                 }
-
-//                Plot2D {
-//                    id: waterView2
-//                    visible: true
-//                    width: mainview.width/2
-//                    Layout.fillHeight: true
-////                    Layout.fillWidth: true
-//                    Layout.preferredWidth: mainview.width/2
-//                    Layout.rowSpan   : 5
-//                    Layout.columnSpan: 5
-//                    focus: true
-
-//                    horizontal: menuBar.is2DHorizontal
-//                }
-
-//                Plot2D {
-//                    id: waterView3
-//                    visible: true
-//                    width: mainview.width
-//                    Layout.fillHeight: true
-////                    Layout.fillWidth: true
-//                    Layout.preferredWidth: mainview.width
-//                    Layout.rowSpan   : 5
-//                    Layout.columnSpan: 10
-//                    focus: true
-
-//                    horizontal: menuBar.is2DHorizontal
-//                }
             }
 
 
-
-//            Plot2D {
-//                id: waterView2
-//                visible: menuBar.is2DVisible
-//                width: mainview.width
-//                Layout.fillHeight: true
-//                Layout.fillWidth: true
-//                focus: true
-
-//                horizontal: menuBar.is2DHorizontal
-//            }
-
-            Rectangle {
-                visible:          menuBar.is2DVisible
+            Item {
+                Layout.fillHeight: true
                 Layout.fillWidth: true
-                height:           1
-                color:            theme.controlBorderColor
-            }
+                visible: menuBar.is2DVisible
 
-            CSlider {
-                visible:          menuBar.is2DVisible
-                id:               historyScroll
-                Layout.fillWidth: true
-                width: mainview.width
-                implicitHeight: theme.controlHeight
-                value: waterView.timelinePosition
-                stepSize: 0.0001
-                from: 0
-                to: 1
-                onValueChanged: core.setTimelinePosition(value);
+                GridLayout {
+                    anchors.fill: parent
+                    rows    : 2
+                    columns : 1
+
+                    Plot2D {
+                        id: waterView
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+
+                        Layout.rowSpan   : 1
+                        Layout.columnSpan: 1
+                        focus: true
+                        horizontal: menuBar.is2DHorizontal
+                    }
+
+                    // Plot2D {
+                    //     id: waterView1
+
+                    //     Layout.fillHeight: true
+                    //     Layout.fillWidth: true
+
+                    //     Layout.rowSpan   : 1
+                    //     Layout.columnSpan: 1
+                    //     focus: true
+                    //     horizontal: menuBar.is2DHorizontal
+                    // }
+
+                    CSlider {
+                        id: historyScroll
+                        Layout.fillWidth: true
+                        Layout.fillHeight: false
+                        Layout.columnSpan: parent.columns
+                        implicitHeight: theme.controlHeight
+                        height: theme.controlHeight
+                        value: waterView.timelinePosition
+                        stepSize: 0.0001
+                        from: 0
+                        to: 1
+                        onValueChanged: core.setTimelinePosition(value);
+                    }
+
+                }
             }
         }
 
@@ -309,13 +292,13 @@ Window  {
 
 
 
-//        CText {
-//            id: fcTextMode
-//            rightPadding: 20
-//            leftPadding: 20
-//            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
-//            text: devs.pilotArmed ? "Armed" : "Disarmed"
-//        }
+        //        CText {
+        //            id: fcTextMode
+        //            rightPadding: 20
+        //            leftPadding: 20
+        //            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
+        //            text: devs.pilotArmed ? "Armed" : "Disarmed"
+        //        }
 
 
     }
@@ -331,14 +314,7 @@ Window  {
 
     }
 
-    Scene3DToolbar{
-        visible: menuBar.is3DVisible
-        id:                       scene3DToolbar
-        anchors.top:              parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.rightMargin:      20
-        Keys.forwardTo:           [mousearea3D]
-    }
+
 
     Connections {
         target: SurfaceControlMenuController
