@@ -101,7 +101,7 @@ void GraphicsScene3dRenderer::drawObjects()
     QMatrix4x4 axesProjection;
     QMatrix4x4 axesModel;
 
-    m_axesThumbnailCamera.setDistance(35);
+    // m_axesThumbnailCamera.setDistance(35);
     axesView = m_axesThumbnailCamera.m_view;
     axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 11000.0f);
 

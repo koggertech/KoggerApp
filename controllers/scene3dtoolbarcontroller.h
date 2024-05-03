@@ -11,6 +11,7 @@ public:
     explicit Scene3dToolBarController(QObject *parent = nullptr);
     Q_INVOKABLE void onFitAllInViewButtonClicked();
     Q_INVOKABLE void onSetCameraIsometricViewButtonClicked();
+    Q_INVOKABLE void onSetCameraMapViewButtonClicked();
     Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
     Q_INVOKABLE void onBottomTrackVertexComboSelectionModeButtonChecked(bool checked);
 

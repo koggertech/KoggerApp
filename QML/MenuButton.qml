@@ -14,12 +14,12 @@ Button {
 
     background: Rectangle {
         id: backRect
-        radius: 1
+        radius: 2
         height: parent.height
         width: parent.width
-        color: control.active ? theme.controlBorderColor : theme.menuBackColor
+        color: (control.active) ? theme.controlSolidBackColor : theme.controlBackColor
         border.color: theme.controlBorderColor
-        border.width: 1
+        border.width: 0
     }
 
 //    contentItem: CText {

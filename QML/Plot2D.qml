@@ -94,15 +94,74 @@ WaterFall {
         }
     }
 
+    ColumnLayout {
+        Layout.alignment: Qt.AlignHCenter
+        visible: visible2dButton.checked
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 4
+
+        MenuBlock {
+            // width: 30
+            opacity: 0.7
+
+        }
+
+
+        CText {
+            Layout.fillWidth: true
+            Layout.topMargin: 0
+            Layout.preferredWidth: theme.controlHeight*1.5
+            // visible: chartEnable.checked // TODO
+            horizontalAlignment: Text.AlignHCenter
+            text: echogramLevelsSlider.stopValue
+            small: true
+        }
+
+        ChartLevel {
+            Layout.fillWidth: true
+            Layout.preferredWidth: theme.controlHeight*1.5
+            id: echogramLevelsSlider
+            // visible: chartEnable.checked // TODO
+            Layout.alignment: Qt.AlignHCenter
+
+            onStartValueChanged: {
+                plot.plotEchogramSetLevels(startValue, stopValue);
+            }
+
+            onStopValueChanged: {
+                plot.plotEchogramSetLevels(startValue, stopValue);
+            }
+
+            Component.onCompleted: {
+                plot.plotEchogramSetLevels(startValue, stopValue);
+            }
+
+            Settings {
+                property alias echogramLevelsStart: echogramLevelsSlider.startValue
+                property alias echogramLevelsStop: echogramLevelsSlider.stopValue
+            }
+        }
+
+        CText {
+            Layout.fillWidth: true
+            Layout.preferredWidth: theme.controlHeight*1.5
+            Layout.bottomMargin: 0
+            // visible: chartEnable.checked // TODO
+            horizontalAlignment: Text.AlignHCenter
+
+            text: echogramLevelsSlider.startValue
+            small: true
+        }
+    }
+
 
     RowLayout {
         id: menuBlock
         Layout.alignment: Qt.AlignHCenter
-        spacing: 0
+        spacing: 2
         visible: false
         Layout.margins: 0
-
-
 
         function position(mx, my) {
             var oy = plot.height - (my + implicitHeight)
@@ -114,7 +173,7 @@ WaterFall {
                 my = 0
             }
 
-            var ox = plot.width - (mx + implicitWidth)
+            var ox = plot.width - (mx - implicitWidth)
             if(ox < 0) {
                 mx = mx + ox
             }
@@ -129,8 +188,6 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            // Layout.margins: 2
-//                    Layout.preferredHeight: 24
             text: "⇔"
             checkable: true
             checked: true
@@ -143,8 +200,6 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            // Layout.margins: 2
-//                    Layout.preferredHeight: 24
             text: "⇲"
             checkable: true
             padding: 0
@@ -156,8 +211,6 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            // Layout.margins: 2
-//                    Layout.preferredHeight: 24
             text: "═"
             checkable: true
             padding: 0
@@ -169,8 +222,6 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            // Layout.margins: 2
-//                    Layout.preferredHeight: 24
             text: "⇱"
             checkable: true
             padding: 0
@@ -182,8 +233,6 @@ WaterFall {
 
         CButton {
             Layout.fillWidth: true
-            // Layout.margins: 2
-//                    Layout.preferredHeight: 24
             text: "✕"
             checkable: true
             padding: 0

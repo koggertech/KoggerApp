@@ -193,13 +193,16 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     if(m_scene3dView) {
         m_scene3dView->clear();
         m_scene3dView->setNavigationArrowState(false);
-
     }
 
 
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
+
+    if(m_scene3dView) {
+        m_scene3dView->fitAllInView();
+    }
 
     _dataset->setRefPositionByFirstValid();
 

@@ -3,23 +3,25 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
 RowLayout {
-    spacing: 0
+    spacing: 2
+
     MenuButton {
         id: setCameraIsometricView
         width: theme.controlHeight
         height: theme.controlHeight
-        icon.source: "./3dcube.svg"
+        icon.source: "./fit-in-view.svg"
 
         icon.color: theme.textColor
 
-        onClicked: Scene3dToolBarController.onSetCameraIsometricViewButtonClicked()
+        onClicked: Scene3dToolBarController.onSetCameraMapViewButtonClicked()
     }
 
     MenuButton {
         id: fitAllinViewButton
         width: theme.controlHeight
         height: theme.controlHeight
-        icon.source: "./fit-in-view.svg"
+        icon.source: "./3dcube.svg"
+
 
         icon.color: theme.textColor
 
@@ -52,10 +54,22 @@ RowLayout {
         onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
     }
 
+
+    CButton {
+        id: updateSurface
+        width: theme.controlHeight
+        height: theme.controlHeight
+        // checkable: true
+        // active: checked
+        // icon.source: "./combo-selection.svg"
+        // icon.color: theme.textColor
+        text: "S"
+
+        // onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
+    }
     ButtonGroup{
         property bool buttonChangeFlag : false
         id: buttonGroup
-        // buttons: toolButtonsLayout.children
         onCheckedButtonChanged: buttonChangeFlag = true
         onClicked: {
             if(!buttonChangeFlag)

@@ -6,10 +6,10 @@ import Qt.labs.settings 1.1
 
 Rectangle {
     id: connectionLine
-    radius: 1
+    radius: 2
     height: parent.height
     width: parent.width
     color: theme.menuBackColor
     border.color: theme.controlBorderColor
-    border.width: 1
+    border.width: 0
 }

@@ -35,214 +35,122 @@ Item {
 
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
-            Layout.preferredWidth: theme.controlHeight*1.8
-            Layout.topMargin: 10
+            Layout.preferredWidth: theme.controlHeight*1.5
+            Layout.topMargin: 6
+            spacing: 4
+            Layout.margins: 4
 
-            ColumnLayout {
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignHCenter
+            MenuButton {
+                id: menuSettings
+                icon.source: "./code-working.svg"
+                Layout.fillWidth: true
 
-                MenuButton {
-                    id: menuSettings
-                    icon.source: "./code-working.svg"
-                    Layout.fillWidth: true
-
-                    onPressed: {
-                        itemChangeActive(menuSettings)
-                    }
-                }
-
-//                MenuButton {
-//                    id: menuGraph
-//                    Layout.fillWidth: true
-////                    icon.source: "./settings-outline.svg"
-
-//                    onPressed: {
-//                        itemChangeActive(menuGraph)
-//                    }
-//                }
-
-                MenuButton {
-                    id: menuDisplay
-                    Layout.fillWidth: true
-                    icon.source: "./settings-outline.svg"
-
-                    onPressed: {
-                        itemChangeActive(menuDisplay)
-                    }
-                }
-
-                MenuButton {
-                    id: menu3DSettings
-                    visible: instruments > 0
-                    icon.source: "./3dcube.svg"
-
-                    Layout.fillWidth: true
-
-                    onPressed: {
-                        itemChangeActive(menu3DSettings)
-                    }
-                }
-
-
-            }
-
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
-                visible: visible2dButton.checked
-
-                MenuBlock {
-                }
-
-
-                CText {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 4
-                    // visible: chartEnable.checked // TODO
-                    horizontalAlignment: Text.AlignHCenter
-                    text: echogramLevelsSlider.stopValue
-                    small: true
-                }
-
-                ChartLevel {
-                    Layout.fillWidth: true
-                    id: echogramLevelsSlider
-                    // visible: chartEnable.checked // TODO
-                    Layout.alignment: Qt.AlignHCenter
-
-                    onStartValueChanged: {
-                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
-                    }
-
-                    onStopValueChanged: {
-                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
-                    }
-
-                    Component.onCompleted: {
-                        targetPlot.plotEchogramSetLevels(startValue, stopValue);
-                    }
-
-                    Settings {
-                        property alias echogramLevelsStart: echogramLevelsSlider.startValue
-                        property alias echogramLevelsStop: echogramLevelsSlider.stopValue
-                    }
-                }
-
-                CText {
-                    Layout.fillWidth: true
-                    Layout.bottomMargin: 4
-                    // visible: chartEnable.checked // TODO
-                    horizontalAlignment: Text.AlignHCenter
-
-                    text: echogramLevelsSlider.startValue
-                    small: true
+                onPressed: {
+                    itemChangeActive(menuSettings)
                 }
             }
 
-//            ColumnLayout {
-//                Layout.alignment: Qt.AlignHCenter
-//                spacing: 0
-//                visible: visible2dButton.checked
+            MenuButton {
+                id: menuDisplay
+                Layout.fillWidth: true
+                icon.source: "./settings-outline.svg"
 
+                onPressed: {
+                    itemChangeActive(menuDisplay)
+                }
+            }
 
-//                MenuBlock { }
-
-//                ButtonGroup { id: pencilbuttonGroup }
-
-//                CButton {
-//                    Layout.fillWidth: true
-//                    Layout.margins: 4
-//                    Layout.bottomMargin: 1
-////                    Layout.preferredHeight: 24
-//                    text: "⇔"
-//                    checkable: true
-//                    checked: true
-//                    padding: 0
-//                    onCheckedChanged: {
-//                        if(checked) {  waterView.setMouseMode(1) }
-//                    }
-//                    ButtonGroup.group: pencilbuttonGroup
-//                }
-
-//                CButton {
-//                    Layout.fillWidth: true
-//                    Layout.margins: 4
-//                    Layout.bottomMargin: 1
-////                    Layout.preferredHeight: 24
-//                    text: "⇲"
-//                    checkable: true
-//                    padding: 0
-//                    onCheckedChanged: {
-//                        if(checked) {  waterView.setMouseMode(2) }
-//                    }
-//                    ButtonGroup.group: pencilbuttonGroup
-//                }
-
-//                CButton {
-//                    Layout.fillWidth: true
-//                    Layout.margins: 4
-//                    Layout.bottomMargin: 1
-////                    Layout.preferredHeight: 24
-//                    text: "═"
-//                    checkable: true
-//                    padding: 0
-//                    onCheckedChanged: {
-//                        if(checked) {  waterView.setMouseMode(3) }
-//                    }
-//                    ButtonGroup.group: pencilbuttonGroup
-//                }
-
-//                CButton {
-//                    Layout.fillWidth: true
-//                    Layout.margins: 4
-////                    Layout.preferredHeight: 24
-//                    text: "⇱"
-//                    checkable: true
-//                    padding: 0
-//                    onCheckedChanged: {
-//                        if(checked) {  waterView.setMouseMode(4) }
-//                    }
-//                    ButtonGroup.group: pencilbuttonGroup
-//                }
-//            }
-
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 0
+            MenuButton {
+                id: menu3DSettings
                 visible: instruments > 0
+                icon.source: "./3dcube.svg"
 
-                MenuBlock { }
+                Layout.fillWidth: true
 
-                CButton {
-                    id: settings3DButton
-                    //id: visible3dButton
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-              //      Layout.preferredHeight: 24
-                    text: "3D"
-                    checkable: true
-                    padding: 0
+                onPressed: {
+                    itemChangeActive(menu3DSettings)
+                }
+            }
 
-                    onClicked: {
+            CButton {
+                id: settings3DButton
+                visible: instruments > 0
+                Layout.fillWidth: true
+                text: "3D"
+                checkable: true
+
+                onClicked: {
 //                        Settings3DController.changeSceneVisibility(settings3DButton.checked)
 //                       itemChangeActive(settings3DButton)
-                    }
-                }
-
-                CButton {
-                    id: visible2dButton
-                    Layout.fillWidth: true
-                    Layout.margins: 4
-//                    Layout.preferredHeight: 24
-                    text: "2D"
-                    checkable: true
-                    checked: true
-                    padding: 0
-                    onClicked: {
-//                        if(checked) { core.movePoints() }
-                    }
                 }
             }
+
+            CButton {
+                id: visible2dButton
+                visible: instruments > 0
+                Layout.fillWidth: true
+                text: "2D"
+                checkable: true
+                checked: true
+                onClicked: {
+//                        if(checked) { core.movePoints() }
+                }
+            }
+
+
+            // ColumnLayout {
+            //     Layout.alignment: Qt.AlignHCenter
+            //     visible: visible2dButton.checked
+
+            //     MenuBlock {
+            //     }
+
+
+            //     CText {
+            //         Layout.fillWidth: true
+            //         Layout.topMargin: 4
+            //         // visible: chartEnable.checked // TODO
+            //         horizontalAlignment: Text.AlignHCenter
+            //         text: echogramLevelsSlider.stopValue
+            //         small: true
+            //     }
+
+            //     ChartLevel {
+            //         Layout.fillWidth: true
+            //         id: echogramLevelsSlider
+            //         // visible: chartEnable.checked // TODO
+            //         Layout.alignment: Qt.AlignHCenter
+
+            //         onStartValueChanged: {
+            //             targetPlot.plotEchogramSetLevels(startValue, stopValue);
+            //         }
+
+            //         onStopValueChanged: {
+            //             targetPlot.plotEchogramSetLevels(startValue, stopValue);
+            //         }
+
+            //         Component.onCompleted: {
+            //             targetPlot.plotEchogramSetLevels(startValue, stopValue);
+            //         }
+
+            //         Settings {
+            //             property alias echogramLevelsStart: echogramLevelsSlider.startValue
+            //             property alias echogramLevelsStop: echogramLevelsSlider.stopValue
+            //         }
+            //     }
+
+            //     CText {
+            //         Layout.fillWidth: true
+            //         Layout.bottomMargin: 4
+            //         // visible: chartEnable.checked // TODO
+            //         horizontalAlignment: Text.AlignHCenter
+
+            //         text: echogramLevelsSlider.startValue
+            //         small: true
+            //     }
+            // }
+
+
         }
 
 
@@ -273,10 +181,12 @@ Item {
         SceneControlMenu {
             id:                 sceneControlMenu
             objectName:         "sceneControlMenu"
-            Layout.topMargin:   10
-            Layout.alignment:   Qt.AlignLeft
-            Layout.fillWidth:   true
-            anchors.leftMargin: 40
+            Layout.alignment: Qt.AlignTop
+            // Layout.topMargin:   10
+            // Layout.alignment:   Qt.AlignLeft
+            // Layout.fillWidth:   true
+            width: settingsWidth
+            implicitWidth: settingsWidth
             visible:            menu3DSettings.active
         }
     }

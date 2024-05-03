@@ -118,7 +118,7 @@ void GraphicsScene3dView::clear()
     navigationArrowState_ = false;
     m_bounds = Cube();
 
-    setIsometricView();
+    setMapView();
 
     QQuickFramebufferObject::update();
 }
@@ -259,7 +259,7 @@ void GraphicsScene3dView::fitAllInView()
                             std::max(m_bounds.height(),
                                      m_bounds.length()));
 
-    auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.5f;
+    auto d = (maxSize/2.0f)/(std::tan(m_camera->fov()/2.0f)) * 2.0f;
 
     if(d>0)
         m_camera->setDistance(d);
@@ -275,6 +275,16 @@ void GraphicsScene3dView::setIsometricView()
 {
     m_camera->setIsometricView();
     m_axesThumbnailCamera->setIsometricView();
+
+    fitAllInView();
+    updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setMapView() {
+    m_camera->setMapView();
+    m_axesThumbnailCamera->setMapView();
 
     fitAllInView();
     updatePlaneGrid();
@@ -633,6 +643,15 @@ void GraphicsScene3dView::Camera::setIsometricView()
 
     m_rotAngle.setX(qDegreesToRadians(135.0f));
     m_rotAngle.setY(qDegreesToRadians(45.0f));
+
+    updateViewMatrix();
+}
+
+void GraphicsScene3dView::Camera::setMapView() {
+    reset();
+
+    m_rotAngle.setX(qDegreesToRadians(0.0f));
+    m_rotAngle.setY(qDegreesToRadians(0.0f));
 
     updateViewMatrix();
 }

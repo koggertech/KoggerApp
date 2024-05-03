@@ -53,6 +53,7 @@ public:
         void focusOnPosition(const QVector3D& pos);
         void setDistance(qreal distance);
         void setIsometricView();
+        void setMapView();
         void reset();
 
     private:
@@ -150,6 +151,7 @@ public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
     void setIsometricView();
+    void setMapView();
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);

@@ -21,9 +21,9 @@ Button {
 
         implicitHeight: control.height
         implicitWidth: implicitHeight
-        radius: 1
+        radius: 2
         color: control.down || control.checked ? theme.controlSolidBackColor : theme.controlBackColor
         border.color: control.down || control.checked ? theme.controlSolidBorderColor : theme.controlBorderColor
-        border.width: 1
+        border.width: 0
     }
 }

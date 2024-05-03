@@ -16,6 +16,10 @@ void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
     m_graphicsSceneView->setIsometricView();
 }
 
+void Scene3dToolBarController::onSetCameraMapViewButtonClicked() {
+    m_graphicsSceneView->setMapView();
+}
+
 void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool checked)
 {
     if(checked)

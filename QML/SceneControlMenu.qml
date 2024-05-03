@@ -35,18 +35,18 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing:       0
 
-        Button{
-            id:               sceneMenuButton
-            Layout.fillWidth: true
-            checkable:        true
-            text:             "Scene"
-            Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
+        // Button{
+        //     id:               sceneMenuButton
+        //     Layout.fillWidth: true
+        //     checkable:        true
+        //     text:             "Scene"
+        //     Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
 
-            onCheckedChanged: {
-                if(checked)
-                    loader.source = "Scene3DControlMenu.qml"
-            }
-        }
+        //     onCheckedChanged: {
+        //         if(checked)
+        //             loader.source = "Scene3DControlMenu.qml"
+        //     }
+        // }
 
         Button{
             id:               bottomTrackMenuButton
@@ -66,6 +66,7 @@ ColumnLayout {
             checkable:        true
             text:             "Surface"
             Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
+            Component.onCompleted: checked = true
 
             onCheckedChanged: {
                 if(checked)

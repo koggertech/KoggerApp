@@ -152,7 +152,7 @@ Window  {
                 Scene3DToolbar{
                     id:                       scene3DToolbar
                     // anchors.bottom:              parent.bottom
-                    y:renderer.height - height
+                    y:renderer.height - height - 2
                     anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
@@ -169,16 +169,21 @@ Window  {
                     anchors.fill: parent
                     rows    : 2
                     columns : 1
+                    columnSpacing: 0
+                    rowSpacing: 0
 
                     Plot2D {
                         id: waterView
                         Layout.fillHeight: true
                         Layout.fillWidth: true
+                        Layout.margins: 0
 
                         Layout.rowSpan   : 1
                         Layout.columnSpan: 1
                         focus: true
                         horizontal: menuBar.is2DHorizontal
+
+
                     }
 
                     // Plot2D {
@@ -195,6 +200,7 @@ Window  {
 
                     CSlider {
                         id: historyScroll
+                        Layout.margins: 0
                         Layout.fillWidth: true
                         Layout.fillHeight: false
                         Layout.columnSpan: parent.columns
