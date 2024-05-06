@@ -790,8 +790,11 @@ public:
             int withoutHalf = dataset->size() - halfCanvas;
             if (cursor.selectEpochIndx >= withoutHalf)
                 offsetX = cursor.selectEpochIndx - withoutHalf;
-            cursor.setMouse(canvas.width() / 2 + offsetX,
-                            canvas.height() * (selectedEpoch->chart(0)->bottomProcessing.distance / cursor.distance.range()));
+            for (const int key : dataset->channelsList().keys()) {
+                if (auto chartPtr{ selectedEpoch->chart(key) }; chartPtr)
+                    cursor.setMouse(canvas.width() / 2 + offsetX, canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()));
+                break;
+            }
         }
 
         QPen pen;
