@@ -790,10 +790,13 @@ public:
             int withoutHalf = dataset->size() - halfCanvas;
             if (cursor.selectEpochIndx >= withoutHalf)
                 offsetX = cursor.selectEpochIndx - withoutHalf;
-            for (const int key : dataset->channelsList().keys()) {
-                if (auto chartPtr{ selectedEpoch->chart(key) }; chartPtr)
-                    cursor.setMouse(canvas.width() / 2 + offsetX, canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()));
-                break;
+            if (const auto keys{ dataset->channelsList().keys() }; !keys.empty()) {
+                if (const auto chartPtr{ selectedEpoch->chart(keys.at(0)) }; chartPtr) {
+                    const int x = canvas.width() / 2 + offsetX;
+                    const int y = keys.size() == 2 ? canvas.height() / 2 - canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()) :
+                                      canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range());
+                    cursor.setMouse(x, y);
+                }
             }
         }
 
