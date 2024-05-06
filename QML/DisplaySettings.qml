@@ -363,7 +363,7 @@ GridLayout {
                     Component.onCompleted: targetPlot.plotAngleVisibility(checked)
 
                     Settings {
-                        property alias velocityVisible: angleVisible.checked
+                        property alias angleVisible: angleVisible.checked
                     }
                 }
 
