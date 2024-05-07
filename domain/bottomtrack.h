@@ -76,7 +76,6 @@ private:
     using EpochIndex = int;
     using VerticeIndex = int;
     QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
-    LLARef m_llaRef;
     DatasetChannel m_visibleChannel;
     Dataset* datasetPtr_;
     QVector<QVector3D> renderData_;
