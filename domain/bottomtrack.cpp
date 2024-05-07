@@ -51,7 +51,7 @@ void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
 
 void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
 {
-    if (datasetPtr_) {
+    if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
         auto channelMap = datasetPtr_->channelsList();
         if (!channelMap.isEmpty()) {
             if (m_visibleChannel.channel < channelMap.first().channel ||
@@ -81,6 +81,7 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 void BottomTrack::clearData()
 {
     m_epochIndexMatchingMap.clear();
+    renderData_.clear();
     m_visibleChannel = DatasetChannel();
     SceneObject::clearData();
 }
@@ -264,7 +265,7 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
     bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
     bool defMode = interCall || updateAll;
 
-    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear(); //
+    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
 
     if (defMode) {
         m_epochIndexMatchingMap.clear();
@@ -285,8 +286,6 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 
             if (pos.ned.isCoordinatesValid()) {
                 float distance = -1.f * static_cast<float>(epoch->distProccesing(m_visibleChannel.channel));
-                //if (!isfinite(distance)) // TODO: to testing
-                //    continue;
                 if (defMode || (!defMode && (renderData_.size() < currMax))) {
                     renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
                     m_epochIndexMatchingMap.insert(renderData_.size() - 1, i);

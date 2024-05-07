@@ -165,8 +165,13 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
 
     closeConnection();
 
-    if(!is_append) {
+    if (!is_append)
         _dataset->resetDataset();
+
+    if (m_scene3dView) {
+        if (!is_append)
+            m_scene3dView->clear();
+        m_scene3dView->setNavigationArrowState(false);
     }
 
     QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
@@ -190,22 +195,14 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
         }
     }
 
-    if(m_scene3dView) {
-        m_scene3dView->clear();
-        m_scene3dView->setNavigationArrowState(false);
-    }
-
-
     connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
     m_connection->openFile(name);
 
-    if(m_scene3dView) {
+    if (m_scene3dView)
         m_scene3dView->fitAllInView();
-    }
 
     _dataset->setRefPositionByFirstValid();
-
     _dataset->usblProcessing();
 
     // QVector<QVector3D> positions;
@@ -213,8 +210,10 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     // positions.append(QVector3D(2,1,1));
     // positions.append(QVector3D(3,1,1));
     // positions.append(QVector3D(4,1,1));
-    m_scene3dView->addPoints(_dataset->beaconTrack(), QColor(255, 0, 0), 10);
-    m_scene3dView->addPoints(_dataset->beaconTrack1(), QColor(0, 255, 0), 10);
+    if (m_scene3dView) {
+        m_scene3dView->addPoints(_dataset->beaconTrack(), QColor(255, 0, 0), 10);
+        m_scene3dView->addPoints(_dataset->beaconTrack1(), QColor(0, 255, 0), 10);
+    }
 
     QList<DatasetChannel> chs = _dataset->channelsList().values();
 

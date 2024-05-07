@@ -814,8 +814,8 @@ public slots:
     void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
     void spatialProcessing();
     void emitPositionsUpdated() {
-        bottomTrackUpdated(0, endIndex());
-        boatTrackUpdated();
+        emit bottomTrackUpdated(0, endIndex());
+        emit boatTrackUpdated();
     }
 
 

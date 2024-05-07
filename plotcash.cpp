@@ -468,6 +468,7 @@ void Dataset::resetDataset() {
     _pool.clear();
     _llaRef.isInit = false;
     _channelsSetup.clear();
+    lastBottomTrackEpoch_ = 0;
     resetDistProcessing();
 
     clearBoatTrack();
