@@ -178,8 +178,10 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
 #else
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
+            m_camera->commitMovement();
             m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
             m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+            m_startMousePos = { x, y };
         }
         else if (mouseButton.testFlag(Qt::LeftButton)) {
             auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
