@@ -33,7 +33,7 @@ public:
     bool parse() {
         if(_frame.availContext() == 0) {
             if(_buffer.size() > 0) {
-                _context = _buffer;
+                _context = QByteArray::fromRawData(_buffer.constData(), _buffer.size());
                 _buffer.resize(0);
                 _frame.setContext((uint8_t*)_context.data(), _context.size());
             }
