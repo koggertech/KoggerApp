@@ -157,11 +157,9 @@ Item {
 
         DeviceSettingsViewer {
             id: devSettings
-            Layout.alignment: Qt.AlignTop
             visible: menuSettings.active
             Layout.maximumHeight: menu.height
-
-            width: settingsWidth
+            menuWidth: settingsWidth
             y:0
         }
 

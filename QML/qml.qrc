@@ -86,5 +86,7 @@
         <file>KoggerCommon/KWaitProgressBar.qml</file>
         <file>combo-selection.svg</file>
         <file>Scene3DControlMenu.qml</file>
+        <file>MenuRow.qml</file>
+        <file>ConnectionButton.qml</file>
     </qresource>
 </RCC>
