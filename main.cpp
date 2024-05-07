@@ -9,6 +9,9 @@
 #include <core.h>
 #include <Themes.h>
 #include <QThread>
+#include <QResource>
+#include <QFile>
+#include <QByteArray>
 #include "3Plot.h"
 #include <sceneobject.h>
 #include "Plot2D.h"
@@ -17,14 +20,28 @@ Core core;
 Themes theme;
 
 
-void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
+void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
     Q_UNUSED(type);
     Q_UNUSED(context);
     core.consoleInfo(msg);
 }
 
-int main(int argc, char *argv[]) {
+void setApplicationDisplayName(QGuiApplication& app)
+{
+    QResource resource(":/version.txt");
+    if (resource.isValid()) {
+        QFile file(":/version.txt");
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QByteArray data = file.readAll();
+            app.setApplicationDisplayName(QString::fromUtf8(data));
+            file.close();
+        }
+    }
+}
 
+int main(int argc, char *argv[])
+{
 #if defined(Q_OS_LINUX)
     QApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
     ::qputenv("QT_SUPPORT_GL_CHILD_WIDGETS", "1");
@@ -46,6 +63,7 @@ int main(int argc, char *argv[]) {
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+    setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
 
     engine.addImportPath("qrc:/");
