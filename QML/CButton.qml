@@ -4,10 +4,9 @@ import QtQuick.Controls 2.15
 Button {
     id: control
     text: "Ok"
-    checkable: false
     highlighted: true
     implicitHeight: theme.controlHeight
-    property bool active: (!control.checkable) || (control.checked && control.checkable)
+
 
     contentItem: CText {
         text: control.text
@@ -19,11 +18,12 @@ Button {
     background: Rectangle {
         id: backRect
 
+
         implicitHeight: control.height
         implicitWidth: implicitHeight
         radius: 2
-        color: active ? theme.controlSolidBackColor : theme.controlBackColor
-        border.color: theme.controlSolidBorderColor
-        border.width: (!control.checkable && control.down) ? 2 : 0
+        color: control.down || control.checked ? theme.controlSolidBackColor : theme.controlBackColor
+        border.color: control.down || control.checked ? theme.controlSolidBorderColor : theme.controlBorderColor
+        border.width: 0
     }
 }

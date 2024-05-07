@@ -6,18 +6,15 @@ import Qt.labs.settings 1.1
 
 MenuScroll {
     id: scrollBar
-    property int menuWidth: 200
 
     ColumnLayout {
-        width: menuWidth
-        Layout.maximumWidth: menuWidth
-        Layout.margins: 0
+        width: parent.width
         spacing: 10
 
         ConnectionViewer {
             id: devConnection
-            width: parent.width
-            Layout.maximumWidth: menuWidth
+            Layout.fillWidth: true
+            Layout.preferredWidth: parent.width
         }
 
         FactoryBox {

@@ -9,7 +9,6 @@ Rectangle {
     radius: 2
     height: parent.height
     width: parent.width
-    anchors.fill: parent
     color: theme.menuBackColor
     border.color: theme.controlBorderColor
     border.width: 0

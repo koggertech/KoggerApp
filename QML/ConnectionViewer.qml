@@ -4,11 +4,12 @@ import QtQuick.Controls 2.15
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.1
 
-ColumnLayout {
+Item {
+    Layout.fillWidth: true
+    Layout.preferredHeight: columnConnectionItem.height
+
     property var dev: null
     property var devList: devs.devs
-
-    Layout.margins: 0
 
     Connections {
         target: core
@@ -29,235 +30,260 @@ ColumnLayout {
     MenuBlock {
     }
 
-    // ColumnLayout {
-    //     id: columnConnectionItem
-    //     anchors.fill: parent
-    //     // Layout.fillWidth: true
-    //     // width: parent.width
-    //     // Layout.margins: 10
-    //     spacing: 0
+    ColumnLayout {
+        id: columnConnectionItem
+        width: parent.width
+        spacing: 0
 
-    MenuRow {
-        CButton {
-            id: typeSerialTab
+        RowLayout {
             Layout.fillWidth: true
-            Layout.preferredWidth: parent.width/typeConnectionButtonGroup.buttons.length
-            checkable: true
-            checked: true
-            ButtonGroup.group: typeConnectionButtonGroup
-            text: "Serial"
-        }
+            Layout.margins: 10
+            spacing: 10
 
-        CButton {
-            id: typeIpTab
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width/typeConnectionButtonGroup.buttons.length
-            checkable: true
-            ButtonGroup.group: typeConnectionButtonGroup
-            text: "IP"
-        }
+            CCombo  {
+                id: connectionTypeCombo
+                Layout.fillWidth: true
+                model: ["Serial", "IP", "File"]
 
-        CButton {
-            id: typeFileTab
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width/typeConnectionButtonGroup.buttons.length
-            checkable: true
-            ButtonGroup.group: typeConnectionButtonGroup
-            text: "File"
-        }
-
-
-        ButtonGroup {
-            property bool buttonChangeFlag : false
-            id: typeConnectionButtonGroup
-            onCheckedButtonChanged: buttonChangeFlag = true
-            onClicked: {
-                if(!buttonChangeFlag)
-                    checkedButton = null
-
-                buttonChangeFlag = false;
+                Settings {
+                    property alias connectionType: connectionTypeCombo.currentIndex
+                }
             }
-        }
-    }
 
-    MenuRow {
-        visible: typeSerialTab.checked
-        CCombo  {
-            id: baudrateCombo
-            Layout.fillWidth: true
-            // visible: connectionTypeCombo.currentText === "Serial"
-            model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
-            currentIndex: 4
+            CCombo  {
+                id: portCombo
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "Serial"
+                onPressedChanged: {
+                    if(pressed) {
+                        model = core.availableSerialName()
+                    }
+                }
+
+                Component.onCompleted: {
+                    model = core.availableSerialName()
+                }
+
+                Settings {
+                    property alias connectionPortText: portCombo.currentText
+                }
+            }
+
+            CCombo  {
+                id: baudrateCombo
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "Serial"
+                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
+                currentIndex: 4
 
 //                onCurrentTextChanged: {
 //                    if(connectionButton.connection) {
 //                        dev.baudrate = Number(baudrateCombo.currentText)
+
 //                        core.openConnectionAsSerial(portCombo.currentText, Number(baudrateCombo.currentText), false)
 //                    }
 //                }
 
-            Settings {
-                property alias serialBaudrate: baudrateCombo.currentIndex
-                property alias serialBaudrateText: baudrateCombo.currentText
-            }
-        }
-
-        CCombo  {
-            id: portCombo
-            Layout.fillWidth: true
-            // visible: connectionTypeCombo.currentText === "Serial"
-            onPressedChanged: {
-                if(pressed) {
-                    model = core.availableSerialName()
+                Settings {
+                    property alias serialBaudrate: baudrateCombo.currentIndex
+                    property alias serialBaudrateText: baudrateCombo.currentText
                 }
             }
 
-            Component.onCompleted: {
-                model = core.availableSerialName()
-            }
+            CTextField {
+                id: pathText
+                hoverEnabled: true
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "File"
 
-            Settings {
-                property alias connectionPortText: portCombo.currentText
-            }
-        }
-    }
+                text: ""
+                placeholderText: qsTr("Enter path")
 
-    MenuRow {
-        visible: typeFileTab.checked
-        CTextField {
-            id: pathText
-            hoverEnabled: true
-            Layout.fillWidth: true
-            // visible: connectionTypeCombo.currentText === "File"
+                Keys.onPressed: {
+                    if (event.key === 16777220 || event.key === Qt.Key_Enter) {
+                        core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
+                    }
+                }
 
-            text: ""
-            placeholderText: qsTr("Enter path")
-
-            Keys.onPressed: {
-                if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
+                Settings {
+                    property alias pathText: pathText.text
                 }
             }
 
-            Settings {
-                property alias pathText: pathText.text
-            }
-        }
+            CCombo  {
+                id: ipTypeCombo
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "IP"
+                model: ["UDP", "TCP"]
 
 
-    }
-
-    MenuRow {
-        visible: typeIpTab.checked
-        CCombo  {
-            id: ipTypeCombo
-            Layout.fillWidth: true
-            // visible: connectionTypeCombo.currentText === "IP"
-            model: ["UDP", "TCP"]
-
-
-            Settings {
-                property alias ipTypeCombo: ipTypeCombo.currentIndex
-            }
-        }
-
-        CTextField {
-            id: ipAddressText
-            hoverEnabled: true
-            Layout.fillWidth: true
-            // visible: connectionTypeCombo.currentText === "IP"
-
-            text: "192.168.4.1"
-            placeholderText: ""
-
-            Keys.onPressed: {
-                if (event.key === 16777220) {
-                    console.info(ipAddressText.text)
+                Settings {
+                    property alias ipTypeCombo: ipTypeCombo.currentIndex
                 }
             }
 
-            Settings {
-                property alias ipAddressText: ipAddressText.text
-            }
-        }
+            CTextField {
+                id: ipAddressText
+                hoverEnabled: true
+                Layout.fillWidth: true
+                visible: connectionTypeCombo.currentText === "IP"
 
-        CTextField {
-            id: ipPortText
-            hoverEnabled: true
-            Layout.fillWidth: false
-            implicitWidth: 80
-            // visible: connectionTypeCombo.currentText === "IP"
+                text: "192.168.4.1"
+                placeholderText: ""
 
-            text: "14444"
-            placeholderText: qsTr("Port")
-
-            Settings {
-                property alias ipPortText: ipPortText.text
-            }
-        }
-    }
-
-    MenuRow {
-        CButton {
-            visible: !typeFileTab.checked
-            id: openNewConnectionButton
-            Layout.fillWidth: true
-            checkable: false
-            text: "Open Port"
-
-            function openConnection() {
-                if(typeSerialTab.checked) {
-                    core.openConnectionAsSerial(1, autoconnectionCheck.checked, portCombo.currentText, Number(baudrateCombo.currentText), false)
+                Keys.onPressed: {
+                    if (event.key === 16777220) {
+                        console.info(ipAddressText.text)
+                    }
                 }
 
-                if(typeIpTab.checked) {
-                    core.openConnectionAsIP(1, autoconnectionCheck.checked, ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === "TCP");
+                Settings {
+                    property alias ipAddressText: ipAddressText.text
                 }
             }
 
-            onClicked: {
-                openNewConnectionButton.openConnection()
-            }
-        }
+            CTextField {
+                id: ipPortText
+                hoverEnabled: true
+                Layout.fillWidth: false
+                implicitWidth: 80
+                visible: connectionTypeCombo.currentText === "IP"
 
-        CButton {
-            visible: typeFileTab.checked
-            text: "Open File"
-            Layout.fillWidth: true
-            onClicked: {
-                logFileDialog.open()
-            }
+                text: "14444"
+                placeholderText: qsTr("Port")
 
-            FileDialog {
-                id: logFileDialog
-                title: "Please choose a file"
-                folder: shortcuts.home
-
-                nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
-
-                onAccepted: {
-                    pathText.text = logFileDialog.fileUrl.toString()
-
-                    var name_parts = logFileDialog.fileUrl.toString().split('.')
-
-                    core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
-                }
-                onRejected: {
+                Settings {
+                    property alias ipPortText: ipPortText.text
                 }
             }
 
-            Settings {
-                property alias logFolder: logFileDialog.folder
+            CButton {
+                text: "..."
+                Layout.fillWidth: false
+                visible: connectionTypeCombo.currentText === "File"
+                implicitHeight: theme.controlHeight
+                implicitWidth: implicitHeight*1.1
+                onClicked: {
+                    logFileDialog.open()
+                }
+
+                FileDialog {
+                    id: logFileDialog
+                    title: "Please choose a file"
+                    folder: shortcuts.home
+//                    fileMode: FileDialog.OpenFiles
+
+                    nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
+
+                    onAccepted: {
+                        pathText.text = logFileDialog.fileUrl.toString()
+
+                        var name_parts = logFileDialog.fileUrl.toString().split('.')
+
+                        core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
+                    }
+                    onRejected: {
+                    }
+                }
+
+                Settings {
+                    property alias logFolder: logFileDialog.folder
+                }
+            }
+
+
+
+            CButton {
+                id: connectionButton
+                property bool connection: false
+                implicitWidth: implicitHeight + 3
+                visible: connectionTypeCombo.currentText !== "File"
+
+                function openConnection() {
+                    if(connectionTypeCombo.currentText === "Serial") {
+                        core.openConnectionAsSerial(1, autoconnectionCheck.checked, portCombo.currentText, Number(baudrateCombo.currentText), false)
+                    } else if(connectionTypeCombo.currentText === "IP") {
+                        core.openConnectionAsIP(1, autoconnectionCheck.checked, ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === "TCP");
+                    }
+                }
+
+                text: ""
+
+//                ToolTip {
+//                    id: control
+//                    text: qsTr("A descriptive tool tip of what the button does")
+//                    visible: connectionButton.hovered
+//                    implicitWidth: 100
+//                    implicitHeight: 100
+
+//                    contentItem: Text {
+//                        text: control.text
+//                        font: control.font
+//                        color: "#21be2b"
+//                    }
+
+//                    background: Rectangle {
+//                        border.color: "#21be2b"
+//                    }
+//                }
+
+                onClicked: {
+                    if(connection) {
+                        core.closeConnection()
+                    } else {
+                        connectionButton.openConnection()
+                    }
+                }
+
+                Component.onCompleted: {
+
+                }
+
+                onConnectionChanged: {
+                    canvas.requestPaint()
+                }
+
+                indicator: Canvas {
+                    id: canvas
+                    x: connectionButton.width - width - connectionButton.rightPadding
+                    y: connectionButton.topPadding + (connectionButton.availableHeight - height) / 2
+                    width: connectionButton.availableWidth
+                    height: connectionButton.availableHeight
+                    contextType: "2d"
+
+                    Connections {
+                        target: connectionButton
+
+                        function onPressedChanged() {
+                            canvas.requestPaint()
+                        }
+                    }
+
+                    onPaint: {
+                        context.reset();
+
+                        if(connectionButton.connection) {
+                            context.moveTo(0, 0);
+                            context.lineTo(width, 0);
+                            context.lineTo(width, height);
+                            context.lineTo(0, height);
+                            context.closePath();
+                        } else {
+                            context.moveTo(0, 0);
+                            context.lineTo(width, height/2);
+                            context.lineTo(0, height);
+                            context.closePath();
+                        }
+
+                        context.fillStyle = connectionButton.connection ? "#E05040" : "#40E050"
+                        context.fill();
+                    }
+                }
             }
         }
-    }
-
 
         RowLayout {
-            // Layout.fillWidth: true
-            Layout.maximumWidth: parent.width
-            width: parent.width
-
+            Layout.fillWidth: true
             Layout.margins: 10
             Layout.topMargin: -5
             spacing: 5
@@ -839,5 +865,5 @@ ColumnLayout {
                 }
             }
         }
-    // }
+    }
 }

@@ -78,8 +78,7 @@ Item {
             }
 
             RowLayout {
-                anchors.left:  paramGroup.left
-                anchors.right: paramGroup.right
+                Layout.alignment: Qt.AlignLeft
 
                 KCheck {
                     id:               contourVisibilityCheckBox
@@ -111,8 +110,7 @@ Item {
             }
 
             RowLayout {
-                anchors.left:  paramGroup.left
-                anchors.right: paramGroup.right
+                Layout.alignment: Qt.AlignLeft
 
                 KCheck {
                     id:               gridVisibilityCheckBox
@@ -204,7 +202,7 @@ Item {
 
             Loader {
                 id:              filterParamsLoader
-                anchors{left: parent.left; right: parent.right}
+                Layout.alignment: Qt.AlignLeft
                 objectName:      "filterParamsLoader"
                 sourceComponent: filterParamsPlaceholder
             }
