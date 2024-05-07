@@ -38,7 +38,7 @@ ComboBox {
 
         Connections {
             target: theme
-            onThemeIDChanged:  {
+            function onThemeIDChanged()  {
                 canvas.requestPaint()
             }
         }

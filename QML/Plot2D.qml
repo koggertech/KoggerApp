@@ -96,7 +96,7 @@ WaterFall {
 
     ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
-        visible: visible2dButton.checked
+        //visible: visible2dButton.checked
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 4

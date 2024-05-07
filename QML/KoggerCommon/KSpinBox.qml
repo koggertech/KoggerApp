@@ -23,7 +23,7 @@ SpinBox {
         width: control.width
         font: theme.textFont
         color: theme.textColor
-        selectionColor: styleSet.colorControllTextActive
+        //selectionColor: styleSet.colorControllTextActive
         selectedTextColor: theme.textColor
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
@@ -55,7 +55,7 @@ SpinBox {
 
         Connections {
             target: theme
-            onThemeIDChanged:  {
+            function onThemeIDChanged() {
                 upCanvas.requestPaint()
             }
         }
@@ -133,7 +133,7 @@ SpinBox {
 
         Connections {
             target: theme
-            onThemeIDChanged:  {
+            function onThemeIDChanged() {
                 downCanvas.requestPaint()
             }
         }
