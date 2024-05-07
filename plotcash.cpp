@@ -68,6 +68,11 @@ void Epoch::setPositionLLA(double lat, double lon, LLARef* ref, uint32_t unix_ti
     flags.posAvail = true;
 }
 
+void Epoch::setPositionLLA(Position position) {
+    _positionGNSS = position;
+    flags.posAvail = true;
+}
+
 void Epoch::setExternalPosition(Position position) {
     _positionExternal = position;
 }
@@ -186,7 +191,7 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
     lastEventId = id;
 
     //    if(poolLastIndex() < 0) {
-    makeNewEpoch();
+    addNewEpoch();
     //    }
 
     _pool[endIndex()].setEvent(timestamp, id, unixt);
@@ -196,7 +201,7 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
 void Dataset::addEncoder(float encoder) {
     _lastEncoder = encoder;
     if(endIndex() < 0) {
-        makeNewEpoch();
+        addNewEpoch();
     }
     //    poolAppend();
     _pool[endIndex()].setEncoder(_lastEncoder);
@@ -215,7 +220,7 @@ void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution,
     if(pool_index < 0
             //             || _pool[pool_index].eventAvail() == false
             || _pool[pool_index].chartAvail(channel)) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
 
@@ -232,7 +237,7 @@ void Dataset::addComplexSignal(QByteArray data, uint8_t type) {
     int pool_index = endIndex();
 
     if(pool_index < 0 || !_pool[pool_index].isComplexSignalAvail()) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
 
@@ -300,7 +305,7 @@ void Dataset::addComplexSignal(QByteArray data, uint8_t type) {
 void Dataset::addDist(int dist) {
     int pool_index = endIndex();
     if(pool_index < 0 || _pool[pool_index].distAvail() == true) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
 
@@ -311,7 +316,7 @@ void Dataset::addDist(int dist) {
 void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     int pool_index = endIndex();
     if(pool_index < 0 || _pool[pool_index].isUsblSolutionAvailable() == true) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
 
@@ -323,7 +328,7 @@ void Dataset::addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt) {
     int pool_index = endIndex();
 
     if(pool_index < 0 || (_pool[pool_index].isDopplerBeamAvail() == true)) { //
-        makeNewEpoch();
+        addNewEpoch();
     }
 
     pool_index = endIndex();
@@ -336,7 +341,7 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
     int pool_index = endIndex();
 
     if(pool_index < 0 || (_pool[pool_index].isDopplerBeamAvail() == false)) { //
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
 
@@ -347,7 +352,7 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 void Dataset::addAtt(float yaw, float pitch, float roll) {
     int pool_index = endIndex();
     if(pool_index < 0) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
     _pool[endIndex()].setAtt(yaw, pitch, roll);
@@ -358,23 +363,24 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
 }
 
 void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec) {
+    Epoch* last_epoch = last();
 
-    int pool_index = endIndex();
-    if(pool_index < 0) {
-        makeNewEpoch();
-        pool_index = endIndex();
-    }
+    Position pos;
+    pos.lla = LLA(lat, lon);
+    pos.time = DateTime(unix_time, nanosec);
 
-    _pool[pool_index].setPositionLLA(lat, lon, &_llaRef, unix_time, nanosec);
-    Position pos = _pool[pool_index].getPositionGNSS();
+    if(pos.lla.isCoordinatesValid()) {
+        if(last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+            last_epoch = addNewEpoch();
+        }
 
-    if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
         if(!_llaRef.isInit) {
             _llaRef = LLARef(pos.lla);
         }
 
-        _pool[pool_index].setPositionRef(&_llaRef);
-        _lastPositionGNSS = _pool[pool_index].getPositionGNSS();
+        last_epoch->setPositionLLA(pos);
+        last_epoch->setPositionRef(&_llaRef);
+        _lastPositionGNSS = pos;
     }
 
     emit dataUpdate();
@@ -384,7 +390,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 void Dataset::addGnssVelocity(double h_speed, double course) {
     int pool_index = endIndex();
     if(pool_index < 0) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
 
@@ -404,7 +410,7 @@ void Dataset::addTemp(float temp_c) {
 
     int pool_index = endIndex();
     if(pool_index < 0) {
-        makeNewEpoch();
+        addNewEpoch();
         pool_index = endIndex();
     }
     _pool[pool_index].setTemp(temp_c);
@@ -813,13 +819,13 @@ void Dataset::setRefPosition(int epoch_index) {
     setRefPosition(ref_epoch);
 }
 
-void Dataset::setRefPosition(Epoch *ref_epoch) {
-    if(ref_epoch == NULL) {
-        return;
-    }
+void Dataset::setRefPosition(Epoch* epoch) {
+    if(epoch == NULL) { return; }
 
-    Position ref_pos = ref_epoch->getPositionGNSS();
+    setRefPosition(epoch->getPositionGNSS());
+}
 
+void Dataset::setRefPosition(Position ref_pos) {
     if(ref_pos.lla.isCoordinatesValid()) {
         _llaRef = LLARef(ref_pos.lla);
 
@@ -829,6 +835,8 @@ void Dataset::setRefPosition(Epoch *ref_epoch) {
             epoch->setPositionRef(&_llaRef);
         }
     }
+
+    emitPositionsUpdated();
 }
 
 void Dataset::setRefPositionByFirstValid() {
@@ -842,7 +850,9 @@ Epoch *Dataset::getFirstEpochByValidPosition() {
     for(int iepoch = 0; iepoch < size(); iepoch++) {
         Epoch* epoch = fromIndex(iepoch);
         if(epoch == NULL) { continue; }
-        return epoch;
+        if(epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+            return epoch;
+        }
     }
 
     return NULL;

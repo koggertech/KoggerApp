@@ -80,7 +80,6 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 
 void BottomTrack::clearData()
 {
-    m_llaRef.isInit = false;
     m_epochIndexMatchingMap.clear();
     m_visibleChannel = DatasetChannel();
     SceneObject::clearData();
@@ -283,11 +282,6 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
                 continue;
 
             auto pos = epoch->getPositionGNSS();
-            if (pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
-                if (!m_llaRef.isInit)
-                    m_llaRef = LLARef(pos.lla);
-                pos.LLA2NED(&m_llaRef);
-            }
 
             if (pos.ned.isCoordinatesValid()) {
                 float distance = -1.f * static_cast<float>(epoch->distProccesing(m_visibleChannel.channel));

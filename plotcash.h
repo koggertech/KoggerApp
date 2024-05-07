@@ -59,6 +59,7 @@ typedef struct  LLARef {
     double refLatCos = NAN;
     double refLatRad = NAN;
     double refLonRad = NAN;
+    LLA refLla;
     bool isInit = false;
 
     LLARef() {}
@@ -68,6 +69,7 @@ typedef struct  LLARef {
         refLonRad= lla.longitude * M_DEG_TO_RAD;
         refLatSin = sin(refLatRad);
         refLatCos = cos(refLatRad);
+        refLla = lla;
         isInit = true;
     }
 } LLARef;
@@ -317,6 +319,7 @@ public:
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void setPositionLLA(Position position);
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
 
@@ -739,7 +742,7 @@ public:
         if(size() > 0) {
             return fromIndex(endIndex());
         }
-        return NULL;
+        return addNewEpoch();
     }
 
     Epoch* lastlast() {
@@ -810,16 +813,11 @@ public slots:
 
     void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
     void spatialProcessing();
+    void emitPositionsUpdated() {
+        bottomTrackUpdated(0, endIndex());
+        boatTrackUpdated();
+    }
 
-//    void set3DRender(FboInSGRenderer* render) {
-//        _render3D = render;
-//    }
-//    void updateRender3D() {
-        // deprecated
-//        if(_render3D != NULL) {
-//            _render3D->updateBottomTrack(_bottomTrack);
-//        }
-//    }
 
     void usblProcessing();
     QVector<QVector3D> beaconTrack() {
@@ -832,6 +830,7 @@ public slots:
 
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
+    void setRefPosition(Position position);
     void setRefPositionByFirstValid();
     Epoch* getFirstEpochByValidPosition();
 
@@ -884,8 +883,9 @@ protected:
     Position _lastPositionGNSS;
 
 
-    void makeNewEpoch() {
+    Epoch* addNewEpoch() {
         _pool.resize(_pool.size() + 1);
+        return last();
     }
 
 private:
