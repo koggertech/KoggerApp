@@ -13,8 +13,8 @@
 class Device : public QObject {
     Q_OBJECT
 public:
-    Device() {
-    }
+    Device();
+    ~Device();
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
     Q_PROPERTY(bool protoBinConsoled WRITE setProtoBinConsoled)

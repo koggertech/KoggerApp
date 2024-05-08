@@ -4,6 +4,12 @@
 extern Core core;
 #include <QDateTime>
 
+Device::Device()
+{ }
+
+Device::~Device()
+{ }
+
 void Device::putData(const QByteArray &data) {
     static int _cnter_echo = 0;
 

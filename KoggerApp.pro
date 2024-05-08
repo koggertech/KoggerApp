@@ -50,6 +50,7 @@ SOURCES += \
     EchogramProcessing.cpp \
     IDBinnary.cpp \
     Link.cpp \
+    LinkManager.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
@@ -120,6 +121,7 @@ HEADERS += \
     EchogramProcessing.h \
     IDBinnary.h \
     Link.h \
+    LinkManager.h \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \

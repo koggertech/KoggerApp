@@ -29,6 +29,8 @@
 #include <scene3dtoolbarcontroller.h>
 #include <scene3dcontrolmenucontroller.h>
 
+#include <LinkManager.h>
+
 //#define FLASHER
 
 #ifdef FLASHER
@@ -222,6 +224,8 @@ private:
     std::shared_ptr <PolygonGroupControlMenuController> m_polygonGroupControlMenuController;
     std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
+
+    std::unique_ptr<linking::LinkManager> linkManager_;
 
     bool isFactoryMode() {
 #ifdef FLASHER

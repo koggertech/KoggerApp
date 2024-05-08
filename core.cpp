@@ -24,6 +24,8 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
     createControllers();
+
+    linkManager_ = std::make_unique<linking::LinkManager>();
 }
 
 void Core::createControllers()

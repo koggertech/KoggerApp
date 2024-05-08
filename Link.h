@@ -22,10 +22,11 @@ typedef enum {
 class Link : public QObject {
     Q_OBJECT
 public:
-    Link() {
-    }
+    Link();
+    Link(const Link& other); // TODO
 
     void openAsUDP(const QString &address, const int port_in,  const int port_out);
+    void openAsSerial(const QString& name);
 
     bool isOpen();
     void close();
@@ -47,6 +48,29 @@ public:
     FrameParser* frameParser() { return &_frame; }
     QIODevice* device() { return _dev; }
 
+    Link& operator=(const Link& other) {
+        this->_buffer = other._buffer;
+        this->_context = other._context;
+        this->_dev = other._dev;
+        this->_frame = other._frame;
+        this->_type = other._type;
+        this->portName_ = other.portName_;
+
+        return *this;
+    }
+
+    bool operator==(const Link& other) const { // TODO
+        if (this->_type == other._type &&
+            this->_dev == other._dev)
+            return true;
+        else
+            return false;
+    };    
+
+    /*Serial*/
+    QString getPortName() const;
+    /**/
+
 public slots:
     bool writeFrame(FrameParser* frame);
     bool write(QByteArray data);
@@ -66,6 +90,11 @@ private:
     QByteArray _buffer;
 
     LinkType _type = LinkNone;
+
+    /*Serial*/
+    QString portName_;
+    /**/
+
     void setType(LinkType type) { _type = type; }
     void setDev(QIODevice* dev);
     void deleteDev();

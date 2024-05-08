@@ -10,6 +10,11 @@
 #include <QSerialPortInfo>
 #endif
 
+Link::Link()
+{ }
+
+Link::Link(const Link& other) // TODO
+{ }
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
     QUdpSocket* socket = new QUdpSocket();
@@ -29,6 +34,15 @@ void Link::openAsUDP(const QString &address, const int port_in,  const int port_
     }
 }
 
+void Link::openAsSerial(const QString &portName)
+{
+    // TODO
+    portName_ = portName;
+    QUdpSocket* socket = new QUdpSocket();
+    setDev(socket);
+    setType(LinkUART);
+}
+
 bool Link::isOpen() {
     QIODevice *dev = device();
     if(dev != nullptr && dev->isOpen()) {
@@ -39,6 +53,11 @@ bool Link::isOpen() {
 
 void Link::close() {
     deleteDev();
+}
+
+QString Link::getPortName() const
+{
+    return portName_;
 }
 
 bool Link::writeFrame(FrameParser *frame) {
