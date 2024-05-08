@@ -19,6 +19,12 @@ typedef enum {
     LinkIPTCP,
 } LinkType;
 
+typedef enum {
+    kManual = 0,
+    kAuto,
+    kAutoOnce
+} ControlType;
+
 class Link : public QObject {
     Q_OBJECT
 public:
@@ -65,10 +71,24 @@ public:
             return true;
         else
             return false;
-    };    
+    };
 
+    /*multi link*/
+    bool getConnectionStatus() const;
+    ControlType getControlType() const;
     /*Serial*/
     QString getPortName() const;
+    int getBaudrate() const;
+    bool getParity() const;
+    /*UDP/TCP*/
+    LinkType getLinkType() const;
+    QString getAddress() const;
+    int getSourcePort() const;
+    int getDestinationPort() const;
+    /*other*/
+    bool isPinned() const;
+    bool isHided() const;
+    bool isNotAvailable() const;
     /**/
 
 public slots:
@@ -86,13 +106,27 @@ private:
     FrameParser _frame;
 
     QIODevice* _dev = nullptr;
+
     QByteArray _context;
     QByteArray _buffer;
 
     LinkType _type = LinkNone;
 
+    /*multi link*/
+    ControlType controlType_;
     /*Serial*/
     QString portName_;
+    int baudrate_;
+    bool parity_;
+    /*UDP/TCP*/
+    LinkType linkType_;
+    QString address_;
+    int srcPort_;
+    int dstPort_;
+    /*others*/
+    bool isPinned_;
+    bool isHided_;
+    bool isNotAvailable_;
     /**/
 
     void setType(LinkType type) { _type = type; }

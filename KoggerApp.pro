@@ -55,6 +55,7 @@ SOURCES += \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
     ProtoBinnary.cpp \
+    LinkListModel.cpp \
     StreamListModel.cpp \
     connection.cpp \
     console.cpp \
@@ -125,6 +126,7 @@ HEADERS += \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \
+    LinkListModel.h \
     StreamListModel.h \
     Themes.h \
     abstractentitydatafilter.h \

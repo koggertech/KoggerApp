@@ -10,7 +10,16 @@
 #include <QSerialPortInfo>
 #endif
 
-Link::Link()
+Link::Link() :
+    controlType_(ControlType::kManual),
+    baudrate_(0),
+    parity_(false),
+    linkType_(LinkType::LinkNone),
+    srcPort_(0),
+    dstPort_(0),
+    isPinned_(false),
+    isHided_(false),
+    isNotAvailable_(false)
 { }
 
 Link::Link(const Link& other) // TODO
@@ -55,9 +64,64 @@ void Link::close() {
     deleteDev();
 }
 
+bool Link::getConnectionStatus() const
+{
+    return _dev->isOpen();
+}
+
+ControlType Link::getControlType() const
+{
+    return controlType_;
+}
+
 QString Link::getPortName() const
 {
     return portName_;
+}
+
+int Link::getBaudrate() const
+{
+    return baudrate_;
+}
+
+bool Link::getParity() const
+{
+    return parity_;
+}
+
+LinkType Link::getLinkType() const
+{
+    return linkType_;
+}
+
+QString Link::getAddress() const
+{
+    return address_;
+}
+
+int Link::getSourcePort() const
+{
+    return srcPort_;
+}
+
+int Link::getDestinationPort() const
+{
+    return dstPort_;
+}
+
+bool Link::isPinned() const
+{
+    return isPinned_;
+}
+
+bool Link::isHided() const
+{
+    return isHided_;
+}
+
+bool Link::isNotAvailable() const
+{
+    return isNotAvailable_;
 }
 
 bool Link::writeFrame(FrameParser *frame) {
