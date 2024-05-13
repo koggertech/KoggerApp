@@ -43,7 +43,7 @@ class Core : public QObject
 
 public:
     explicit Core();
-
+    ~Core();
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
 
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
@@ -74,6 +74,7 @@ public:
 
     void setEngine(QQmlApplicationEngine *engine);
 
+    LinkManager* getLinkManager() const;
 public slots:
     QList<QSerialPortInfo> availableSerial();
     QStringList availableSerialName();
@@ -225,7 +226,7 @@ private:
     std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
 
-    std::unique_ptr<linking::LinkManager> linkManager_;
+    LinkManager* linkManager_;
 
     bool isFactoryMode() {
 #ifdef FLASHER

@@ -46,6 +46,9 @@ ColumnLayout {
             checked: true
             ButtonGroup.group: typeConnectionButtonGroup
             text: "Serial"
+            onClicked: {
+                linkManager.addLink()
+            }
         }
 
         CButton {
@@ -78,6 +81,116 @@ ColumnLayout {
                 buttonChangeFlag = false;
             }
         }
+    }
+
+    MenuRow {
+        Component {
+            id: fileItem
+
+            Item {
+                id: wrapper
+                width: filesList.width; height: 28
+
+                RowLayout {
+                    id: rowItem
+                    spacing: 0
+                    anchors.fill: parent
+//                        margins: 4
+                    CTextField {
+                        text: portName
+                        implicitWidth: 70
+                        background:  Rectangle {
+                            color: "red"
+                            border.width: 1
+                            border.color: theme.controlBorderColor
+                        }
+                    }
+
+                    // CTextField {
+                    //     text: "31.12.21 11:11"
+                    //     implicitWidth: 170
+                    //     background:  Rectangle {
+                    //         color: "transparent"
+                    //         border.width: 1
+                    //         border.color: theme.controlBorderColor
+                    //     }
+                    // }
+
+                    // CTextField {
+                    //     Layout.fillWidth: true
+                    //     text: Math.ceil(doneSize/(1024*1024)) + "MB / " + Math.ceil(size/(1024*1024)) + " MB"
+                    //     background:  Item {
+
+                    //         Rectangle {
+                    //             height: parent.height
+                    //             anchors.bottom: parent.bottom
+                    //             color: "green"
+                    //             width: (parent.width)*doneSize / (size + 1)
+                    //         }
+
+                    //         Rectangle {
+                    //             anchors.fill: parent
+                    //             color: "transparent"
+                    //             border.width: 1
+                    //             border.color: theme.controlBorderColor
+                    //         }
+                    //     }
+
+                    //     Timer {
+
+                    //     }
+                    // }
+
+//                     CButton {
+//                         text: "D"
+//                         implicitWidth: 26
+//                         implicitHeight: 26
+//                         Layout.leftMargin: 4
+//
+// //                            background: Rectangle {
+// //                                color:   theme.controlBorderColor
+// //                            }
+//
+//                         onClicked: {
+//                             filesList.currentIndex = index
+//                             dev.requestStream(id);
+//                         }
+//                     }
+                }
+            }
+        }
+
+        ListView {
+            id: filesList
+            model: linkManager.linkListModel
+            Layout.margins: 0
+            Layout.topMargin: 30
+            Layout.bottomMargin: 30
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            height: 400
+            delegate: fileItem
+            focus: true
+//                flickableDirection: Flickable.AutoFlickDirection
+
+//                onCurrentIndexChanged: {
+//                    console.log(filesList.currentIndex);
+//                }
+
+//                contentWidth: 320
+
+//                highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
+
+//                onCountChanged: {
+//                    if(consScrollEnable.checked) {
+//                        Qt.callLater( positionViewAtEnd )
+//                    }
+//                }
+
+//                ScrollBar.vertical: ScrollBar { }
+
+        }
+
     }
 
     MenuRow {

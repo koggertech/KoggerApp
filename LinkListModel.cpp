@@ -23,9 +23,11 @@ QHash<int, QByteArray> LinkListModel::roleNames() const {
 void LinkListModel::doAppend(bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                              ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
 {
+    const int line = rowCount();
+    beginInsertRows(QModelIndex(), line, line);
     _vectors[LinkListModel::ConnectionStatus].append(connectionStatus);
     _vectors[LinkListModel::ControlType].append(controlType);
-    _vectors[LinkListModel::PortName].append(portName);
+    _vectors[LinkListModel::PortName].append("portNamesdcsdcs");
     _vectors[LinkListModel::Baudrate].append(baudrate);
     _vectors[LinkListModel::Parity].append(parity);
     _vectors[LinkListModel::LinkType].append(linkType);
@@ -35,4 +37,5 @@ void LinkListModel::doAppend(bool connectionStatus, ::ControlType controlType, c
     _vectors[LinkListModel::isPinned].append(isPinned);
     _vectors[LinkListModel::isHided].append(isHided);
     _vectors[LinkListModel::isNotAvailable].append(isNotAvailable);
+    endInsertRows();
 }

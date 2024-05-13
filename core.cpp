@@ -25,7 +25,12 @@ Core::Core() : QObject(),
 
     createControllers();
 
-    linkManager_ = std::make_unique<linking::LinkManager>();
+    linkManager_ = new LinkManager();
+}
+
+Core::~Core()
+{
+    delete linkManager_;
 }
 
 void Core::createControllers()
@@ -55,6 +60,11 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     m_engine->rootContext()->setContextProperty("NpdFilterControlMenuController",    m_npdFilterControlMenuController.get());
     m_engine->rootContext()->setContextProperty("Scene3DControlMenuController",      m_scene3dControlMenuController.get());
     m_engine->rootContext()->setContextProperty("Scene3dToolBarController",          m_scene3dToolBarController.get());
+}
+
+LinkManager* Core::getLinkManager() const
+{
+    return linkManager_;
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
