@@ -220,7 +220,9 @@ Window  {
         Console {
             id:                      console_vis
             visible:                 theme.consoleVisible
+            // visible: false
             SplitView.minimumHeight: 150
+            SplitView.maximumHeight: 400
         }
     }
 

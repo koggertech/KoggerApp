@@ -195,41 +195,41 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
     } else if(proto.ver() == v7) {
         proto.read(&_rawHeader);
 
-        // qDebug("pkt");
-
-        uint8_t cell_byte_size = _rawHeader.dataSize*_rawHeader.channelCount;
-
+        int data_step = _rawHeader.dataSize*_rawHeader.channelCount;
 
         type = _rawHeader.dataType;
-        _lastSeqPosition = _rawHeader.cellOffset;
 
-        if(_lastSeqPosition == 0 && _rawSeqPosition != 0) {
-            _rawCellCount = _rawSeqPosition;
-            _rawDataSize = _rawCellCount*cell_byte_size;
-            memcpy(_rawDataSave, _rawData, _rawDataSize);
+        int local_pos = _rawHeader.localOffset;
+
+        if(local_pos == 0) {
+            // _rawCellCount = _lastLocalOffset + _lastCellsLength;
+            _rawDataSize = _byteOffset;
+            memcpy(_rawDataSave, _rawData, _byteOffset);
+            _byteOffset = 0;
+            _lastLocalOffset = 0;
+            _lastCellsLength = 0;
+            // _lastLocalCounter = 0;
             m_isCompleteChart = true;
-           // qDebug("size %i, _rawDataSize %i, cell_byte_size %i", _rawDataSize, _rawCellCount, cell_byte_size);
+            qDebug("size %i",  _rawDataSize);
+            // qDebug("size %i, _rawDataSize %i, cell_byte_size %i", _rawDataSize, _rawCellCount, cell_byte_size);
         }
 
-        if(_lastSeqPosition == 0) {
-            _rawSeqPosition = 0;
-        }
+        int byte_avail = (proto.readAvailable()/data_step)*data_step;
 
-        // qDebug("_rawSeqPosition %i, _lastSeqPosition%i", _rawSeqPosition, _lastSeqPosition);
-
-        if(_rawSeqPosition == _lastSeqPosition) {
-            uint16_t part_byte_len = proto.readAvailable();
-            uint32_t byte_offset = _rawSeqPosition*cell_byte_size;
-
-            // qDebug("cell_byte_size %i", part_byte_len);
-
-            if(byte_offset + part_byte_len < sizeof (_rawData)) {
-                proto.read((uint8_t*)&_rawData[byte_offset], part_byte_len);
-                _rawSeqPosition += part_byte_len/cell_byte_size;
+        if(local_pos == _lastLocalOffset + _lastCellsLength) {
+            if(data_step > 0) {
+                uint32_t cell_number = byte_avail/data_step;
+                proto.read((uint8_t*)&_rawData[_byteOffset], byte_avail);
+                _lastCellsLength = cell_number;
+                _byteOffset += byte_avail;
             }
+            // qDebug("counter %i, bytes %i, pos %i, loc %i", _lastCellsLength, _byteOffset, _lastLocalOffset, local_pos);
         } else {
-            return respErrorPayload;
+            qDebug("ERROR counter %i, bytes %i, pos %i, loc %i", _lastCellsLength, _byteOffset, _lastLocalOffset, local_pos);
         }
+
+        _lastLocalOffset = local_pos;
+
     } else {
         return respErrorVersion;
     }
