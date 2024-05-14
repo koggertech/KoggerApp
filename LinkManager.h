@@ -31,6 +31,7 @@ signals:
     void stateChanged();
 
 public slots:
-
+    void open(QUuid uid) {};
+    void close(QUuid uid) {}
 };
 
