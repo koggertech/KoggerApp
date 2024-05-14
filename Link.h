@@ -16,7 +16,7 @@ using namespace Parsers;
 
 typedef enum {
     LinkNone,
-    LinkUART,
+    LinkSerial,
     LinkIPUDP,
     LinkIPTCP,
 } LinkType;
@@ -31,51 +31,19 @@ class Link : public QObject {
     Q_OBJECT
 public:
     Link();
-    Link(const Link& other); // TODO
+    Link(const Link& other);
+
+    void createAsSerial(const QString &portName, int baudrate, bool parity);
+    void openAsSerial();
 
     void openAsUDP(const QString &address, const int port_in,  const int port_out);
 
     bool isOpen();
     void close();
-
-    bool parse() {
-        if(_frame.availContext() == 0) {
-            if(_buffer.size() > 0) {
-                _context = QByteArray::fromRawData(_buffer.constData(), _buffer.size());
-                _buffer.resize(0);
-                _frame.setContext((uint8_t*)_context.data(), _context.size());
-            }
-        }
-
-        _frame.process();
-        return _frame.isComplete() || _frame.availContext();
-    }
-
+    bool parse();
 
     FrameParser* frameParser() { return &_frame; }
     QIODevice* device() { return _dev; }
-
-    Link& operator=(const Link& other) {
-        this->_buffer = other._buffer;
-        this->_context = other._context;
-        this->_dev = other._dev;
-        this->_frame = other._frame;
-        this->_type = other._type;
-        this->portName_ = other.portName_;
-
-        return *this;
-    }
-
-    bool operator==(const Link& other) const { // TODO
-        if (this->_type == other._type &&
-            this->_dev == other._dev)
-            return true;
-        else
-            return false;
-    };
-
-
-    void createAsSerial(const QString& name);
 
     /*multi link*/
     bool getConnectionStatus() const;
@@ -95,6 +63,10 @@ public:
     bool isNotAvailable() const;
     /**/
 
+    /*operators*/
+    Link& operator=(const Link& other);
+    bool operator==(const Link& other) const;
+
 public slots:
     bool writeFrame(FrameParser* frame);
     bool write(QByteArray data);
@@ -103,7 +75,6 @@ private slots:
     void toContext(const QByteArray data);
     void readyRead();
     void aboutToClose();
-
 
 private:
     QMutex _mutex;

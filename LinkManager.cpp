@@ -5,7 +5,7 @@
 
 LinkManager::LinkManager()
 {
-    qDebug() << "LinkManager::LinkManager()";
+
 }
 
 LinkManager::~LinkManager()
@@ -34,7 +34,7 @@ QPair<QUuid, Link> LinkManager::createSerialPort(const QSerialPortInfo &serialIn
         return {};
 
     Link newLink;
-    newLink.createAsSerial(serialInfo.portName());
+    newLink.createAsSerial(serialInfo.portName(), 96100, false);
 
     QUuid uuid{ QUuid::createUuid() };
 
@@ -43,23 +43,10 @@ QPair<QUuid, Link> LinkManager::createSerialPort(const QSerialPortInfo &serialIn
 
 void LinkManager::update()
 {
-    qDebug() << "LinkManager::update";
-
     auto currSerialList{ getSerialList() };
 
-    qDebug() << "currSerialList:";
-    for (auto& itm : currSerialList) {
-        qDebug() << itm.portName();
-    }
-
     addNewLinks(currSerialList);
-    //deleteMissingLinks(currSerialList);
-
-    qDebug() << "updated hash:";
-    auto res = getHash();
-    for (auto& itm : res) {
-        qDebug() << itm.getPortName();
-    }
+    deleteMissingLinks(currSerialList);
 }
 
 void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
@@ -78,24 +65,20 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
                 // hash
                 hash_.insert(link.first, link.second);
 
-                // TODO model
-                QUuid uuid = QUuid::createUuid(); // creating uuid
-                bool connectionStatus = link.second.getConnectionStatus();
-                ::ControlType controlType = link.second.getControlType();
-                QString portName = link.second.getPortName(); // itmI .portName();
-                int baudrate = link.second.getParity();
-                bool parity = link.second.getParity();
-                ::LinkType linkType = link.second.getLinkType();
-                QString address = link.second.getAddress();
-                int sourcePort = link.second.getSourcePort();
-                int destinationPort = link.second.getDestinationPort();
-                bool isPinned = link.second.isPinned();
-                bool isHided = link.second.isHided();
-                bool isNotAvailable = link.second.isNotAvailable();
-
-                emit model_.appendEvent(uuid, connectionStatus, controlType, portName, baudrate, parity, linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable);
-
-                qDebug() << "added serial port: " << link.second.getPortName();
+                // model
+                emit model_.appendEvent(link.first,
+                                        link.second.getConnectionStatus(),
+                                        link.second.getControlType(),
+                                        link.second.getPortName(),
+                                        link.second.getBaudrate(),
+                                        link.second.getParity(),
+                                        link.second.getLinkType(),
+                                        link.second.getAddress(),
+                                        link.second.getSourcePort(),
+                                        link.second.getDestinationPort(),
+                                        link.second.isPinned(),
+                                        link.second.isHided(),
+                                        link.second.isNotAvailable());
 
                 emit stateChanged();
         }
@@ -122,8 +105,6 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
             it->disconnect();
             it = hash_.erase(it);
 
-            qDebug() << "deleted serial port: " << it.value().getPortName();
-
             emit stateChanged();
         }
     }
@@ -131,7 +112,6 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
 
 void LinkManager::onExpiredTimer()
 {
-    qDebug() << "LinkManager::onTimerExpired()";
     update();
 }
 

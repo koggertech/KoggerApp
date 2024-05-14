@@ -22,7 +22,7 @@ Link::Link() :
     isNotAvailable_(false)
 { }
 
-Link::Link(const Link& other) // copy constr
+Link::Link(const Link& other)
     : QObject(other.parent()),
     _mutex(),
     _frame(other._frame),
@@ -43,6 +43,30 @@ Link::Link(const Link& other) // copy constr
     isNotAvailable_(other.isNotAvailable_) {
 }
 
+void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
+{
+    linkType_ = LinkType::LinkSerial;
+
+    portName_ = portName;
+    parity_ = parity;
+    baudrate_ = baudrate;
+}
+
+void Link::openAsSerial()
+{
+    QSerialPort* dev = new QSerialPort();
+    dev->setPortName(portName_);
+
+    if (parity_) {
+        dev->setParity(QSerialPort::NoParity);
+    }
+
+    dev->setBaudRate(baudrate_);
+
+    setDev(dev);
+    setType(LinkSerial);
+}
+
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
     QUdpSocket* socket = new QUdpSocket();
 
@@ -56,22 +80,9 @@ void Link::openAsUDP(const QString &address, const int port_in,  const int port_
     if (is_bind) {
         setDev(socket);
         setType(LinkIPUDP);
-     } else {
+    } else {
         delete socket;
     }
-}
-
-void Link::createAsSerial(const QString &portName)
-{
-    QSerialPort* dev = new QSerialPort();
-
-    dev->setPortName(portName);
-    dev->setParity(QSerialPort::NoParity);
-    dev->setBaudRate(96100);
-    //delete dev;
-    setDev(dev);
-    setType(LinkUART);
-
 }
 
 bool Link::isOpen() {
@@ -84,6 +95,20 @@ bool Link::isOpen() {
 
 void Link::close() {
     deleteDev();
+}
+
+bool Link::parse()
+{
+    if (_frame.availContext() == 0) {
+        if (_buffer.size() > 0) {
+            _context = QByteArray::fromRawData(_buffer.constData(), _buffer.size());
+            _buffer.resize(0);
+            _frame.setContext((uint8_t*)_context.data(), _context.size());
+        }
+    }
+
+    _frame.process();
+    return _frame.isComplete() || _frame.availContext();
 }
 
 bool Link::getConnectionStatus() const
@@ -147,6 +172,27 @@ bool Link::isHided() const
 bool Link::isNotAvailable() const
 {
     return isNotAvailable_;
+}
+
+Link &Link::operator=(const Link &other)
+{
+    this->_buffer = other._buffer;
+    this->_context = other._context;
+    this->_dev = other._dev;
+    this->_frame = other._frame;
+    this->_type = other._type;
+    this->portName_ = other.portName_;
+
+    return *this;
+}
+
+bool Link::operator==(const Link &other) const
+{
+    if (this->_type == other._type &&
+        this->_dev == other._dev)
+        return true;
+    else
+        return false;
 }
 
 bool Link::writeFrame(FrameParser *frame) {
