@@ -24,3 +24,27 @@ LinkListModel* LinkManager::getModelPtr()
 {
     return &model_;
 }
+
+Link* LinkManager::getLinkPtr(QUuid uuid)
+{
+    auto it = hash_.find(uuid);
+    if (it != hash_.end()) {
+        return &(it.value());
+    }
+    return nullptr;
+}
+
+void LinkManager::open(QUuid uuid)
+{
+    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        // TODO
+        linkPtr->openAsSerial();
+    }
+    else
+        qDebug() << "LinkManager::open: link not found";
+}
+
+void LinkManager::close(QUuid uuid)
+{
+
+}

@@ -59,7 +59,7 @@ private:
         {{LinkListModel::IsHided},          {"IsHided"}},
         {{LinkListModel::IsNotAvailable},   {"IsNotAvailable"}}
     };
-    QHash<int, QVector<QVariant>> vectors_;
+    QHash<int, QVector<QVariant>> vectors_; // first - roleName, second - vec of vals
     QHash<QUuid, int> index_; // first - uuid, second - row
     QVector<int> roles_;
     int categories_;

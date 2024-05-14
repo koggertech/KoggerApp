@@ -40,6 +40,7 @@ void LinkListModel::clear()
 {
     beginResetModel();
     vectors_.clear();
+    index_.clear();
     size_ = 0;
     endResetModel();
 }
@@ -103,8 +104,6 @@ void LinkListModel::doRemove(QUuid uuid)
 
         beginRemoveRows(QModelIndex(), line, line);
 
-        index_.remove(uuid);
-
         vectors_[LinkListModel::Uuid].erase(vectors_[LinkListModel::Uuid].begin() + line);
         vectors_[LinkListModel::ConnectionStatus].erase(vectors_[LinkListModel::ConnectionStatus].begin() + line);
         vectors_[LinkListModel::ControlType].erase(vectors_[LinkListModel::ControlType].begin() + line);
@@ -118,6 +117,12 @@ void LinkListModel::doRemove(QUuid uuid)
         vectors_[LinkListModel::IsPinned].erase(vectors_[LinkListModel::IsPinned].begin() + line);
         vectors_[LinkListModel::IsHided].erase(vectors_[LinkListModel::IsHided].begin() + line);
         vectors_[LinkListModel::IsNotAvailable].erase(vectors_[LinkListModel::IsNotAvailable].begin() + line);
+
+        index_.remove(uuid);
+        for (auto it = index_.begin(); it != index_.end(); ++it) {
+            if (it.value() - 1 >= 0)
+                --it.value();
+        }
 
         --size_;
 

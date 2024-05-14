@@ -21,6 +21,8 @@ public:
     LinkListModel* getModelPtr();
 
 private:
+    /*methods*/
+    Link* getLinkPtr(QUuid uuid);
     /*data*/
     std::unique_ptr<QThread> workerThread_;
     std::unique_ptr<LinkManagerWorker> workerObject_;
@@ -31,7 +33,7 @@ signals:
     void stateChanged();
 
 public slots:
-    void open(QUuid uid) {};
-    void close(QUuid uid) {}
+    void open(QUuid uuid);
+    void close(QUuid uuid);
 };
 

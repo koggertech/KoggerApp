@@ -57,14 +57,12 @@ void Link::openAsSerial()
     QSerialPort* dev = new QSerialPort();
     dev->setPortName(portName_);
 
-    if (parity_) {
-        dev->setParity(QSerialPort::NoParity);
-    }
+    parity_ ? dev->setParity(QSerialPort::EvenParity) : dev->setParity(QSerialPort::NoParity);
 
     dev->setBaudRate(baudrate_);
 
     setDev(dev);
-    setType(LinkSerial);
+    setType(linkType_);
 }
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
