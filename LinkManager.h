@@ -1,14 +1,12 @@
 #pragma once
 
 #include <QHash>
-#include <QList>
-#include <QPair>
-#include <QSerialPortInfo>
-#include <QTimer>
+#include <QThread>
 #include <QUuid>
 
 #include "Link.h"
 #include "LinkListModel.h"
+#include "LinkManagerWorker.h"
 
 
 class LinkManager : public QObject
@@ -19,34 +17,20 @@ public:
 
     /*methods*/
     LinkManager();
-    ~LinkManager();
-
-    void update(); // TODO: starts by timer
-
     QHash<QUuid, Link> getHash() const;
     LinkListModel* getModelPtr();
 
 private:
-    /*methods*/
-    QList<QSerialPortInfo> getSerialList() const;
-    QPair<QUuid, Link> createSerialPort(const QSerialPortInfo& serialInfo) const;
-
-    void addNewLinks(const QList<QSerialPortInfo> &currSerialList);
-    void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
-
     /*data*/
+    std::unique_ptr<QThread> workerThread_;
+    std::unique_ptr<LinkManagerWorker> workerObject_;
     QHash<QUuid, Link> hash_;
     LinkListModel model_;
 
-    QTimer timer_;
-    static const int timerInterval_ = 200; // msecs
+signals:
+    void stateChanged();
 
 public slots:
 
-private slots:
-    void onExpiredTimer();
-
-signals:
-    void stateChanged();
 };
 

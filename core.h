@@ -173,6 +173,7 @@ public:
     Logger _logger;
     ConverterXTF _converterXTF;
     QThread connectionThread;
+    QThread linkManagerThread_;
     QQmlApplicationEngine *m_engine = nullptr;
 
 #ifdef FLASHER

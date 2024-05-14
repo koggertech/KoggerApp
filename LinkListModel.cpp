@@ -54,6 +54,7 @@ void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType co
     if (!index_.contains(uuid)) {
         const int line = rowCount();
         beginInsertRows(QModelIndex(), line, line);
+        index_[uuid] = line;
 
         vectors_[LinkListModel::Uuid].append(uuid);
         vectors_[LinkListModel::ConnectionStatus].append(connectionStatus);
@@ -69,8 +70,7 @@ void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType co
         vectors_[LinkListModel::IsHided].append(isHided);
         vectors_[LinkListModel::IsNotAvailable].append(isNotAvailable);
 
-        index_[uuid] = line;
-        size_++;
+        ++size_;
         endInsertRows();
     }
     else {
@@ -96,8 +96,10 @@ void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType co
 
 void LinkListModel::doRemove(QUuid uuid)
 {
-    if (index_.contains(uuid)) {
+    if (index_.contains(uuid)) { // TODO
         int line = index_[uuid];
+
+        index_.remove(uuid);
 
         vectors_[LinkListModel::Uuid].erase(vectors_[LinkListModel::Uuid].begin() + line);
         vectors_[LinkListModel::ConnectionStatus].erase(vectors_[LinkListModel::ConnectionStatus].begin() + line);
@@ -113,6 +115,12 @@ void LinkListModel::doRemove(QUuid uuid)
         vectors_[LinkListModel::IsHided].erase(vectors_[LinkListModel::IsHided].begin() + line);
         vectors_[LinkListModel::IsNotAvailable].erase(vectors_[LinkListModel::IsNotAvailable].begin() + line);
 
-        emit dataChanged(index(line, 0), index(line, 0));
+        --size_;
+
+        const int line2 = rowCount();
+        beginInsertRows(QModelIndex(), line2, line2);
+        endRemoveRows();
+
+        //emit dataChanged(index(line, 0), index(line, 0));
     }
 }

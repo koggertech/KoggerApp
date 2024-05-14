@@ -26,7 +26,7 @@ Core::Core() : QObject(),
 
     createControllers();
 
-    linkManager_->update();
+    //linkManager_->update();
 }
 
 Core::~Core()
