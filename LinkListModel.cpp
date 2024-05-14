@@ -52,8 +52,6 @@ int LinkListModel::size() const
 void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                              ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
 {
-    qDebug() << "doAppend start";
-
     if (!index_.contains(uuid)) {
         const int line = rowCount();
         beginInsertRows(QModelIndex(), line, line);
@@ -96,13 +94,10 @@ void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType co
 
         emit dataChanged(index(line, 0), index(line, 0));
     }
-
-    qDebug() << "doAppend end";
 }
 
 void LinkListModel::doRemove(QUuid uuid)
 {
-    qDebug() << "doRemove start";
     if (index_.contains(uuid)) {
         int line = index_[uuid];
 
@@ -128,5 +123,4 @@ void LinkListModel::doRemove(QUuid uuid)
 
         endRemoveRows();
     }
-    qDebug() << "doRemove end";
 }

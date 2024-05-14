@@ -24,5 +24,3 @@ LinkListModel* LinkManager::getModelPtr()
 {
     return &model_;
 }
-
-

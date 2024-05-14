@@ -46,7 +46,7 @@ void LinkManagerWorker::addNewLinks(const QList<QSerialPortInfo> &currSerialList
 
         if (!isBeen) {
             auto link = createSerialPort(itmI);
-            qDebug() << "addNewLinks locked";
+
             mutex_.lock();
             // hash
             hash_->insert(link.first, link.second);
@@ -65,7 +65,6 @@ void LinkManagerWorker::addNewLinks(const QList<QSerialPortInfo> &currSerialList
                                     link.second.isHided(),
                                     link.second.isNotAvailable());
             mutex_.unlock();
-            qDebug() << "addNewLinks unlocked";
 
             emit dataUpdated();
         }
@@ -74,8 +73,7 @@ void LinkManagerWorker::addNewLinks(const QList<QSerialPortInfo> &currSerialList
 
 void LinkManagerWorker::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList)
 {
-    QHash<QUuid, Link>::iterator it;
-    for (it = hash_->begin(); it != hash_->end(); ++it) {
+    for (auto it = hash_->begin(); it != hash_->end();) {
 
         bool isBeen{ false };
         for (auto& itm : currSerialList) {
@@ -86,18 +84,17 @@ void LinkManagerWorker::deleteMissingLinks(const QList<QSerialPortInfo> &currSer
         }
 
         if (!isBeen) {
-            qDebug() << "deleteMissingLinks locked";
-
             mutex_.lock();
             // model
             emit model_->removeEvent(it.key());
             // hash
             it = hash_->erase(it);
             mutex_.unlock();
-            qDebug() << "deleteMissingLinks unlocked";
 
             emit dataUpdated();
         }
+        else
+            ++it;
     }
 }
 
