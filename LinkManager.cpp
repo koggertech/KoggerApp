@@ -34,8 +34,7 @@ QPair<QUuid, Link> LinkManager::createSerialPort(const QSerialPortInfo &serialIn
         return {};
 
     Link newLink;
-    //newLink.openAsSerial(serialInfo.portName());
-    //qDebug() << "is opened: " << newLink.isOpen();
+    newLink.createAsSerial(serialInfo.portName());
 
     QUuid uuid{ QUuid::createUuid() };
 
@@ -75,31 +74,30 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
         }
         if (!isBeen) {
                 auto link = createSerialPort(itmI);
+
                 // hash
                 hash_.insert(link.first, link.second);
 
                 // TODO model
-                QUuid uuid = QUuid::createUuid();
-
-                bool connectionStatus = false;
-                ::ControlType controlType = ::ControlType::kManual;
-                QString portName = itmI.portName();
-                int baudrate = 1;
-                bool parity = false;
-                ::LinkType linkType = ::LinkType::LinkNone;
-                QString address = "1";
-                int sourcePort = 1;
-                int destinationPort = 1;
-                bool isPinned = false;
-                bool isHided = false;
-                bool isNotAvailable = false;
+                QUuid uuid = QUuid::createUuid(); // creating uuid
+                bool connectionStatus = link.second.getConnectionStatus();
+                ::ControlType controlType = link.second.getControlType();
+                QString portName = link.second.getPortName(); // itmI .portName();
+                int baudrate = link.second.getParity();
+                bool parity = link.second.getParity();
+                ::LinkType linkType = link.second.getLinkType();
+                QString address = link.second.getAddress();
+                int sourcePort = link.second.getSourcePort();
+                int destinationPort = link.second.getDestinationPort();
+                bool isPinned = link.second.isPinned();
+                bool isHided = link.second.isHided();
+                bool isNotAvailable = link.second.isNotAvailable();
 
                 emit model_.appendEvent(uuid, connectionStatus, controlType, portName, baudrate, parity, linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable);
 
-                qDebug() << "added serial port: " << "  " /*link.second.getPortName()*/;
+                qDebug() << "added serial port: " << link.second.getPortName();
 
                 emit stateChanged();
-
         }
     }
 }

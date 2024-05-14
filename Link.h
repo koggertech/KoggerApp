@@ -34,7 +34,6 @@ public:
     Link(const Link& other); // TODO
 
     void openAsUDP(const QString &address, const int port_in,  const int port_out);
-    void openAsSerial(const QString& name);
 
     bool isOpen();
     void close();
@@ -74,6 +73,9 @@ public:
         else
             return false;
     };
+
+
+    void createAsSerial(const QString& name);
 
     /*multi link*/
     bool getConnectionStatus() const;

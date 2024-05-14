@@ -22,8 +22,26 @@ Link::Link() :
     isNotAvailable_(false)
 { }
 
-Link::Link(const Link& other) // TODO
-{ }
+Link::Link(const Link& other) // copy constr
+    : QObject(other.parent()),
+    _mutex(),
+    _frame(other._frame),
+    _dev(other._dev),
+    _context(other._context),
+    _buffer(other._buffer),
+    _type(other._type),
+    controlType_(other.controlType_),
+    portName_(other.portName_),
+    baudrate_(other.baudrate_),
+    parity_(other.parity_),
+    linkType_(other.linkType_),
+    address_(other.address_),
+    srcPort_(other.srcPort_),
+    dstPort_(other.dstPort_),
+    isPinned_(other.isPinned_),
+    isHided_(other.isHided_),
+    isNotAvailable_(other.isNotAvailable_) {
+}
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
     QUdpSocket* socket = new QUdpSocket();
@@ -43,13 +61,17 @@ void Link::openAsUDP(const QString &address, const int port_in,  const int port_
     }
 }
 
-void Link::openAsSerial(const QString &portName)
+void Link::createAsSerial(const QString &portName)
 {
-    // TODO
-    portName_ = portName;
-    QUdpSocket* socket = new QUdpSocket();
-    setDev(socket);
+    QSerialPort* dev = new QSerialPort();
+
+    dev->setPortName(portName);
+    dev->setParity(QSerialPort::NoParity);
+    dev->setBaudRate(96100);
+    //delete dev;
+    setDev(dev);
     setType(LinkUART);
+
 }
 
 bool Link::isOpen() {
@@ -66,7 +88,10 @@ void Link::close() {
 
 bool Link::getConnectionStatus() const
 {
-    return _dev->isOpen();
+    if(_dev != nullptr && _dev->isOpen()) {
+        return true;
+    }
+    return false;
 }
 
 ControlType Link::getControlType() const
