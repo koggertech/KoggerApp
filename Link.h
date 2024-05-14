@@ -4,11 +4,13 @@
 #include <ProtoBinnary.h>
 
 #include <QObject>
-#include "QIODevice"
-#include "QByteArray"
+#include <QIODevice>
+#include <QByteArray>
 #include <QQueue>
-#include "QMutex"
-#include "QThread"
+#include <QMutex>
+#include <QThread>
+#include <QUuid>
+
 
 using namespace Parsers;
 

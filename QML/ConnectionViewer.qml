@@ -97,7 +97,7 @@ ColumnLayout {
                     anchors.fill: parent
 //                        margins: 4
                     CTextField {
-                        text: portName
+                        text: PortName
                         implicitWidth: 70
                         background:  Rectangle {
                             color: "red"

@@ -8,7 +8,8 @@
 Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
-    _dataset(new Dataset)
+    _dataset(new Dataset),
+    linkManager_(new LinkManager)
 {
 //    m_connection->moveToThread(&connectionThread);
 //    connectionThread.start();
@@ -25,11 +26,14 @@ Core::Core() : QObject(),
 
     createControllers();
 
-    linkManager_ = new LinkManager();
+    linkManager_->update();
 }
 
 Core::~Core()
 {
+    delete m_console;
+    delete m_connection;
+    delete _dataset;
     delete linkManager_;
 }
 

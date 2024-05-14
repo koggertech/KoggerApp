@@ -1,13 +1,11 @@
 #include "LinkManager.h"
 
 #include <QDebug>
-#include <QListIterator>
 
 
 LinkManager::LinkManager()
 {
-    // createSerialPortsByDefault();
-    updateLinkModel("sdsgfsg");
+    qDebug() << "LinkManager::LinkManager()";
 }
 
 LinkManager::~LinkManager()
@@ -15,41 +13,19 @@ LinkManager::~LinkManager()
 
 }
 
-QHash<QUuid, Link> LinkManager::createSerialPortsByDefault()
+QHash<QUuid, Link> LinkManager::getHash() const
 {
-    updateLinksList();
-    return linkHash_;
+    return hash_;
 }
 
-QHash<QUuid, Link> LinkManager::getLinkHash()
+LinkListModel* LinkManager::getModelPtr()
 {
-    return linkHash_;
+    return &model_;
 }
 
-LinkListModel* LinkManager::getLinkModel()
+QList<QSerialPortInfo> LinkManager::getSerialList() const
 {
-    return &linkModel_;
-}
-
-void LinkManager::updateLinkModel(const QString& portName)
-{
-    // TODO
-
-    bool connectionStatus = false;
-    ::ControlType controlType = ::ControlType::kManual;
-    //QString portName_ = ";
-    int baudrate = 1;
-    bool parity = false;
-    ::LinkType linkType = ::LinkType::LinkNone;
-    QString address = "1";
-    int sourcePort = 1;
-    int destinationPort = 1;
-    bool isPinned = false;
-    bool isHided = false;
-    bool isNotAvailable = false;
-
-   linkModel_.appendEvent(connectionStatus, controlType, portName, baudrate, parity, linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable);
-    emit linkModelChanged();
+    return QSerialPortInfo::availablePorts();
 }
 
 QPair<QUuid, Link> LinkManager::createSerialPort(const QSerialPortInfo &serialInfo) const
@@ -58,55 +34,80 @@ QPair<QUuid, Link> LinkManager::createSerialPort(const QSerialPortInfo &serialIn
         return {};
 
     Link newLink;
-    newLink.openAsSerial(serialInfo.portName());
+    //newLink.openAsSerial(serialInfo.portName());
+    //qDebug() << "is opened: " << newLink.isOpen();
+
     QUuid uuid{ QUuid::createUuid() };
 
     return qMakePair(uuid, newLink);
 }
 
-QList<QSerialPortInfo> LinkManager::getSerialList() const
+void LinkManager::update()
 {
-    return QSerialPortInfo::availablePorts();
-}
+    qDebug() << "LinkManager::update";
 
-void LinkManager::updateLinksList()
-{
     auto currSerialList{ getSerialList() };
-    if (addNewLinks(currSerialList) || deleteMissingLinks(currSerialList)) {
-        emit linkHashChanged();
-        emit linkModelChanged();
+
+    qDebug() << "currSerialList:";
+    for (auto& itm : currSerialList) {
+        qDebug() << itm.portName();
+    }
+
+    addNewLinks(currSerialList);
+    //deleteMissingLinks(currSerialList);
+
+    qDebug() << "updated hash:";
+    auto res = getHash();
+    for (auto& itm : res) {
+        qDebug() << itm.getPortName();
     }
 }
 
-bool LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
+void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
 {
-    bool retVal{ false };
-
     for (auto& itmI : currSerialList) {
         bool isBeen{ false };
-        for (auto& itmJ : linkHash_) {
+        for (auto& itmJ : hash_) {
             if (itmI.portName() == itmJ.getPortName()) {
                 isBeen = true;
                 break;
             }
         }
         if (!isBeen) {
-            if (auto link = createSerialPort(itmI); link.second.isOpen()) {
-                linkHash_.insert(link.first, link.second);
-                retVal = true;
-            }
+                auto link = createSerialPort(itmI);
+                // hash
+                hash_.insert(link.first, link.second);
+
+                // TODO model
+                QUuid uuid = QUuid::createUuid();
+
+                bool connectionStatus = false;
+                ::ControlType controlType = ::ControlType::kManual;
+                QString portName = itmI.portName();
+                int baudrate = 1;
+                bool parity = false;
+                ::LinkType linkType = ::LinkType::LinkNone;
+                QString address = "1";
+                int sourcePort = 1;
+                int destinationPort = 1;
+                bool isPinned = false;
+                bool isHided = false;
+                bool isNotAvailable = false;
+
+                emit model_.appendEvent(uuid, connectionStatus, controlType, portName, baudrate, parity, linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable);
+
+                qDebug() << "added serial port: " << "  " /*link.second.getPortName()*/;
+
+                emit stateChanged();
+
         }
     }
-
-    return retVal;
 }
 
-bool LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList)
+void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList)
 {
-    bool retVal{ false };
-
     QHash<QUuid, Link>::iterator it;
-    for (it = linkHash_.begin(); it != linkHash_.end(); ++it) {
+    for (it = hash_.begin(); it != hash_.end(); ++it) {
 
         bool isBeen{ false };
         for (auto& itm : currSerialList) {
@@ -116,15 +117,23 @@ bool LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
             }
         }
         if (!isBeen) {
+            // model
+            emit model_.removeEvent(it.key());
+
+            // hash
             it->disconnect();
-            it = linkHash_.erase(it);
-            retVal = true;
+            it = hash_.erase(it);
+
+            qDebug() << "deleted serial port: " << it.value().getPortName();
+
+            emit stateChanged();
         }
     }
-
-    return retVal;
 }
 
-void LinkManager::addLink() {
-    updateLinkModel("asascasc");
+void LinkManager::onExpiredTimer()
+{
+    qDebug() << "LinkManager::onTimerExpired()";
+    update();
 }
+

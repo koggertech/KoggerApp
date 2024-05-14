@@ -4,46 +4,49 @@
 #include <QList>
 #include <QPair>
 #include <QSerialPortInfo>
+#include <QTimer>
 #include <QUuid>
 
 #include "Link.h"
 #include "LinkListModel.h"
 
 
-class LinkManager : public QObject {
+class LinkManager : public QObject
+{
     Q_OBJECT
 public:
-
-    Q_PROPERTY(LinkListModel* linkListModel READ getLinkModel NOTIFY linkModelChanged)
+    Q_PROPERTY(LinkListModel* linkListModel READ getModelPtr NOTIFY stateChanged)
 
     /*methods*/
-    explicit LinkManager();
+    LinkManager();
     ~LinkManager();
-    QHash<QUuid, Link> createSerialPortsByDefault();
-    QHash<QUuid, Link> getLinkHash();
 
-    LinkListModel* getLinkModel();
-    void updateLinkModel(const QString& portName);
+    void update(); // TODO: starts by timer
+
+    QHash<QUuid, Link> getHash() const;
+    LinkListModel* getModelPtr();
 
 private:
     /*methods*/
-    QPair<QUuid, Link> createSerialPort(const QSerialPortInfo& serialInfo) const;
     QList<QSerialPortInfo> getSerialList() const;
-    void updateLinksList();
-    bool addNewLinks(const QList<QSerialPortInfo> &currSerialList);
-    bool deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
+    QPair<QUuid, Link> createSerialPort(const QSerialPortInfo& serialInfo) const;
+
+    void addNewLinks(const QList<QSerialPortInfo> &currSerialList);
+    void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
 
     /*data*/
-    QHash<QUuid, Link> linkHash_;
-    LinkListModel linkModel_;
+    QHash<QUuid, Link> hash_;
+    LinkListModel model_;
+
+    QTimer timer_;
+    static const int timerInterval_ = 200; // msecs
 
 public slots:
-    void addLink();
 
 private slots:
+    void onExpiredTimer();
 
 signals:
-    void linkHashChanged();
-    void linkModelChanged();
+    void stateChanged();
 };
 

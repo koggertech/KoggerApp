@@ -9,18 +9,8 @@ class LinkListModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
-    LinkListModel(QObject* parent = nullptr);
-
-    QVariant data(const QModelIndex& index, int role) const override;
-    QHash<int, QByteArray> roleNames() const override;
-
-    Q_INVOKABLE int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-        Q_UNUSED(parent)
-        return _size;
-    }
-
-
     enum Roles {
+        Uuid,
         ConnectionStatus,
         ControlType,
         PortName,
@@ -30,53 +20,53 @@ public:
         Address,
         SourcePort,
         DestinationPort,
-        isPinned,
-        isHided,
-        isNotAvailable
+        IsPinned,
+        IsHided,
+        IsNotAvailable
     };
 
-    void clear() {
-        beginResetModel();
-        _vectors.clear();
-        _size = 0;
-        endResetModel();
-    }
+    /*methods*/
+    explicit LinkListModel(QObject* parent = nullptr);
+    ~LinkListModel();
 
-    int size() {
-        return _size;
-    }
-
-signals:
-    void appendEvent(bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                     ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    QVariant data(const QModelIndex& index, int role) const override;
+    QHash<int, QByteArray> roleNames() const override;
+    Q_INVOKABLE int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    void clear();
+    int size() const;
 
 private:
     Q_DISABLE_COPY(LinkListModel)
 
-    int _size = 0;
-    int _categories = 0;
-
-    QVector<int> _roles;
-
-    QHash<int, QByteArray> _roleNames {
-        {{LinkListModel::ConnectionStatus}, {"connectionStatus"}},
-        {{LinkListModel::ControlType}, {"controlType"}},
-        {{LinkListModel::PortName}, {"portName"}},
-        {{LinkListModel::Baudrate}, {"baudrate"}},
-        {{LinkListModel::Parity}, {"parity"}},
-        {{LinkListModel::LinkType}, {"linkType"}},
-        {{LinkListModel::Address}, {"address"}},
-        {{LinkListModel::SourcePort}, {"sourcePort"}},
-        {{LinkListModel::DestinationPort}, {"destinationPort"}},
-        {{LinkListModel::isPinned}, {"isPinned"}},
-        {{LinkListModel::isHided}, {"isHided"}},
-        {{LinkListModel::isNotAvailable}, {"isNotAvailable"}}
-    };
-
-    QHash<int, QVector<QVariant>> _vectors;
-    QHash<int, int> _index;
-
-
-    void doAppend(bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+    /*methods*/
+    void doAppend(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                   ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void doRemove(QUuid uuid);
+
+    /*data*/
+    QHash<int, QByteArray> roleNames_ {
+        {{LinkListModel::Uuid},             {"Uuid"}},
+        {{LinkListModel::ConnectionStatus}, {"ConnectionStatus"}},
+        {{LinkListModel::ControlType},      {"ControlType"}},
+        {{LinkListModel::PortName},         {"PortName"}},
+        {{LinkListModel::Baudrate},         {"Baudrate"}},
+        {{LinkListModel::Parity},           {"Parity"}},
+        {{LinkListModel::LinkType},         {"LinkType"}},
+        {{LinkListModel::Address},          {"Address"}},
+        {{LinkListModel::SourcePort},       {"SourcePort"}},
+        {{LinkListModel::DestinationPort},  {"DestinationPort"}},
+        {{LinkListModel::IsPinned},         {"IsPinned"}},
+        {{LinkListModel::IsHided},          {"IsHided"}},
+        {{LinkListModel::IsNotAvailable},   {"IsNotAvailable"}}
+    };
+    QHash<int, QVector<QVariant>> vectors_;
+    QHash<QUuid, int> index_; // first - uuid, second - row
+    QVector<int> roles_;
+    int categories_;
+    int size_;
+
+signals:
+    void appendEvent(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+                     ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void removeEvent(QUuid uuid);
 };
