@@ -1,5 +1,6 @@
 #include "LinkListModel.h"
 
+#include <QDebug>
 
 LinkListModel::LinkListModel(QObject* parent) :
     QAbstractListModel(parent),
@@ -51,9 +52,12 @@ int LinkListModel::size() const
 void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                              ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
 {
+    qDebug() << "doAppend start";
+
     if (!index_.contains(uuid)) {
         const int line = rowCount();
         beginInsertRows(QModelIndex(), line, line);
+
         index_[uuid] = line;
 
         vectors_[LinkListModel::Uuid].append(uuid);
@@ -92,12 +96,17 @@ void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType co
 
         emit dataChanged(index(line, 0), index(line, 0));
     }
+
+    qDebug() << "doAppend end";
 }
 
 void LinkListModel::doRemove(QUuid uuid)
 {
-    if (index_.contains(uuid)) { // TODO
+    qDebug() << "doRemove start";
+    if (index_.contains(uuid)) {
         int line = index_[uuid];
+
+        beginRemoveRows(QModelIndex(), line, line);
 
         index_.remove(uuid);
 
@@ -117,10 +126,7 @@ void LinkListModel::doRemove(QUuid uuid)
 
         --size_;
 
-        const int line2 = rowCount();
-        beginInsertRows(QModelIndex(), line2, line2);
         endRemoveRows();
-
-        //emit dataChanged(index(line, 0), index(line, 0));
     }
+    qDebug() << "doRemove end";
 }

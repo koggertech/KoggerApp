@@ -12,8 +12,6 @@ LinkManagerWorker::LinkManagerWorker(QHash<QUuid, Link>* hashPtr, LinkListModel*
     timer_->setInterval(timerInterval_);
 
     QObject::connect(timer_.get(), &QTimer::timeout, this, &LinkManagerWorker::onExpiredTimer);
-
-    timer_->start();
 }
 
 QList<QSerialPortInfo> LinkManagerWorker::getCurrentSerialList() const
@@ -45,12 +43,13 @@ void LinkManagerWorker::addNewLinks(const QList<QSerialPortInfo> &currSerialList
                 break;
             }
         }
+
         if (!isBeen) {
             auto link = createSerialPort(itmI);
-
+            qDebug() << "addNewLinks locked";
+            mutex_.lock();
             // hash
             hash_->insert(link.first, link.second);
-
             // model
             emit model_->appendEvent(link.first,
                                     link.second.getConnectionStatus(),
@@ -65,6 +64,8 @@ void LinkManagerWorker::addNewLinks(const QList<QSerialPortInfo> &currSerialList
                                     link.second.isPinned(),
                                     link.second.isHided(),
                                     link.second.isNotAvailable());
+            mutex_.unlock();
+            qDebug() << "addNewLinks unlocked";
 
             emit dataUpdated();
         }
@@ -75,6 +76,7 @@ void LinkManagerWorker::deleteMissingLinks(const QList<QSerialPortInfo> &currSer
 {
     QHash<QUuid, Link>::iterator it;
     for (it = hash_->begin(); it != hash_->end(); ++it) {
+
         bool isBeen{ false };
         for (auto& itm : currSerialList) {
             if (itm.portName() == it->getPortName()) {
@@ -82,12 +84,18 @@ void LinkManagerWorker::deleteMissingLinks(const QList<QSerialPortInfo> &currSer
                 break;
             }
         }
+
         if (!isBeen) {
+            qDebug() << "deleteMissingLinks locked";
+
+            mutex_.lock();
             // model
             emit model_->removeEvent(it.key());
-
             // hash
             it = hash_->erase(it);
+            mutex_.unlock();
+            qDebug() << "deleteMissingLinks unlocked";
+
             emit dataUpdated();
         }
     }
@@ -104,8 +112,6 @@ void LinkManagerWorker::update()
 
 void LinkManagerWorker::onExpiredTimer()
 {
-    qDebug() << "LinkManagerThread::onExpiredTimer";
-    //emit doUpdate();
     update();
     timer_->start();
 }
