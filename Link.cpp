@@ -11,6 +11,7 @@
 #endif
 
 Link::Link() :
+    uuid_(QUuid::createUuid()),
     controlType_(ControlType::kManual),
     baudrate_(0),
     parity_(false),
@@ -22,31 +23,9 @@ Link::Link() :
     isNotAvailable_(false)
 { }
 
-Link::Link(const Link& other)
-    : QObject(other.parent()),
-    _mutex(),
-    _frame(other._frame),
-    _dev(other._dev),
-    _context(other._context),
-    _buffer(other._buffer),
-    _type(other._type),
-    controlType_(other.controlType_),
-    portName_(other.portName_),
-    baudrate_(other.baudrate_),
-    parity_(other.parity_),
-    linkType_(other.linkType_),
-    address_(other.address_),
-    srcPort_(other.srcPort_),
-    dstPort_(other.dstPort_),
-    isPinned_(other.isPinned_),
-    isHided_(other.isHided_),
-    isNotAvailable_(other.isNotAvailable_) {
-}
-
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
     linkType_ = LinkType::LinkSerial;
-
     portName_ = portName;
     parity_ = parity;
     baudrate_ = baudrate;
@@ -55,14 +34,25 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 void Link::openAsSerial()
 {
     QSerialPort* dev = new QSerialPort();
+
     dev->setPortName(portName_);
-
     parity_ ? dev->setParity(QSerialPort::EvenParity) : dev->setParity(QSerialPort::NoParity);
-
     dev->setBaudRate(baudrate_);
 
+    dev->setReadBufferSize(8 * 1024 * 1024);
+    dev->open(QIODevice::ReadWrite);
+
+    if (dev->isOpen())
+    {
+        emit connectionStatus(this, true);
+        qDebug() << "Connection: serial is open";
+    }
+    else {
+        emit connectionStatus(this, false);
+        qDebug() << "Connection: serial isn't open";
+    }
+
     setDev(dev);
-    setType(linkType_);
 }
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
@@ -107,6 +97,12 @@ bool Link::parse()
 
     _frame.process();
     return _frame.isComplete() || _frame.availContext();
+}
+
+
+QUuid Link::getUuid() const
+{
+    return uuid_;
 }
 
 bool Link::getConnectionStatus() const
@@ -172,27 +168,6 @@ bool Link::isNotAvailable() const
     return isNotAvailable_;
 }
 
-Link &Link::operator=(const Link &other)
-{
-    this->_buffer = other._buffer;
-    this->_context = other._context;
-    this->_dev = other._dev;
-    this->_frame = other._frame;
-    this->_type = other._type;
-    this->portName_ = other.portName_;
-
-    return *this;
-}
-
-bool Link::operator==(const Link &other) const
-{
-    if (this->_type == other._type &&
-        this->_dev == other._dev)
-        return true;
-    else
-        return false;
-}
-
 bool Link::writeFrame(FrameParser *frame) {
     return frame->isComplete() && write(QByteArray((const char*)frame->frame(), frame->frameLen()));
 }
@@ -219,6 +194,7 @@ void Link::deleteDev() {
     if(_dev != nullptr) {
         if(_dev->isOpen()) {
             _dev->close();
+            emit connectionStatus(this, false);
         }
         _dev->disconnect(this);
         this->disconnect(_dev);
@@ -245,7 +221,8 @@ void Link::readyRead() {
 
 void Link::aboutToClose() {
     QIODevice *dev = device();
-    if(dev != nullptr) {
-        emit changeState();
+    if (dev != nullptr) {
+        emit changeState(); //
+        emit connectionStatus(this, dev->isOpen());
     }
 }

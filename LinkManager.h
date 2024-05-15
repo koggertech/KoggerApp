@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QHash>
+#include <QList>
 #include <QThread>
 #include <QUuid>
 
@@ -17,7 +18,8 @@ public:
 
     /*methods*/
     LinkManager();
-    QHash<QUuid, Link> getHash() const;
+
+    QList<Link*> getLinkPtrList() const;
     LinkListModel* getModelPtr();
 
 private:
@@ -26,11 +28,13 @@ private:
     /*data*/
     std::unique_ptr<QThread> workerThread_;
     std::unique_ptr<LinkManagerWorker> workerObject_;
-    QHash<QUuid, Link> hash_;
+
+    QList<Link*> list_;
     LinkListModel model_;
 
 signals:
     void stateChanged();
+    void openedEvent(bool);
 
 public slots:
     void open(QUuid uuid);

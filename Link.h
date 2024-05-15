@@ -31,7 +31,6 @@ class Link : public QObject {
     Q_OBJECT
 public:
     Link();
-    Link(const Link& other);
 
     void createAsSerial(const QString &portName, int baudrate, bool parity);
     void openAsSerial();
@@ -45,7 +44,9 @@ public:
     FrameParser* frameParser() { return &_frame; }
     QIODevice* device() { return _dev; }
 
+
     /*multi link*/
+    QUuid getUuid() const;
     bool getConnectionStatus() const;
     ControlType getControlType() const;
     /*Serial*/
@@ -63,9 +64,6 @@ public:
     bool isNotAvailable() const;
     /**/
 
-    /*operators*/
-    Link& operator=(const Link& other);
-    bool operator==(const Link& other) const;
 
 public slots:
     bool writeFrame(FrameParser* frame);
@@ -87,7 +85,10 @@ private:
 
     LinkType _type = LinkNone;
 
+
     /*multi link*/
+    QUuid uuid_;
+
     ControlType controlType_;
     /*Serial*/
     QString portName_;
@@ -109,6 +110,7 @@ private:
     void deleteDev();
 
 signals:
+    void connectionStatus(Link*, bool);
     void readyParse(Link* link);
     void changeState();
 };

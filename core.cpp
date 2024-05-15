@@ -168,6 +168,13 @@ bool Core::devsConnection() {
     connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
     connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
 
+    // LinkManager // TODO?
+    // QObject::connect(linkManager_, &LinkManager::openedEvent, this, &Core::connectionChanged);
+    // QObject::connect(linkManager_, &LinkManager::openedEvent, &_devs, &Device::startConnection);
+    // QObject::connect(&_devs, &Device::dataSend, linkManager_, &LinkManager::sendData);
+    // QObject::connect(linkManager_, &LinkManager::loggingStream, &_logger, &Logger::loggingStream);
+
+
     if(_isLogging) {
         _logger.startNewLog();
     }
