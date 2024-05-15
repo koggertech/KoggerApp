@@ -4,15 +4,11 @@
 
 LinkListModel::LinkListModel(QObject* parent) :
     QAbstractListModel(parent),
-    categories_(0),
     size_(0)
 {
     connect(this, &LinkListModel::appendEvent, this, &LinkListModel::doAppend);
     connect(this, &LinkListModel::removeEvent, this, &LinkListModel::doRemove);
 }
-
-LinkListModel::~LinkListModel()
-{}
 
 QVariant LinkListModel::data(const QModelIndex &index, int role) const
 {
@@ -45,7 +41,7 @@ void LinkListModel::clear()
     endResetModel();
 }
 
-int LinkListModel::size() const
+int LinkListModel::getSize() const
 {
     return size_;
 }
@@ -120,7 +116,7 @@ void LinkListModel::doRemove(QUuid uuid)
 
         index_.remove(uuid);
         for (auto it = index_.begin(); it != index_.end(); ++it) {
-            if (it.value() - 1 >= 0)
+            if (it.value() > line)
                 --it.value();
         }
 

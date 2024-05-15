@@ -27,13 +27,13 @@ public:
 
     /*methods*/
     explicit LinkListModel(QObject* parent = nullptr);
-    ~LinkListModel();
 
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
     Q_INVOKABLE int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+
+    int getSize() const;
     void clear();
-    int size() const;
 
 private:
     Q_DISABLE_COPY(LinkListModel)
@@ -61,8 +61,6 @@ private:
     };
     QHash<int, QVector<QVariant>> vectors_; // first - roleName, second - vec of vals
     QHash<QUuid, int> index_; // first - uuid, second - row
-    QVector<int> roles_;
-    int categories_;
     int size_;
 
 signals:
