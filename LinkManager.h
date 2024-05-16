@@ -17,7 +17,8 @@ public:
     Q_PROPERTY(LinkListModel* linkListModel READ getModelPtr NOTIFY stateChanged)
 
     /*methods*/
-    LinkManager();
+    LinkManager(QObject* parent);
+    ~LinkManager();
 
     QList<Link*> getLinkPtrList() const;
     LinkListModel* getModelPtr();

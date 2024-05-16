@@ -14,6 +14,11 @@ LinkManagerWorker::LinkManagerWorker(QList<Link*>* hashPtr, LinkListModel* model
     QObject::connect(timer_.get(), &QTimer::timeout, this, &LinkManagerWorker::onExpiredTimer);
 }
 
+LinkManagerWorker::~LinkManagerWorker()
+{
+    timer_->stop();
+}
+
 QList<QSerialPortInfo> LinkManagerWorker::getCurrentSerialList() const
 {
     return QSerialPortInfo::availablePorts();

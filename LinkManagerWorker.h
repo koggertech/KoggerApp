@@ -18,6 +18,7 @@ class LinkManagerWorker : public QObject
 public:
     /*methods*/
     explicit LinkManagerWorker(QList<Link*>* hashPtr, LinkListModel* modelPtr, QObject *parent = nullptr);
+    ~LinkManagerWorker();
 
 private:
     /*methods*/

@@ -3,7 +3,7 @@
 #include <QDebug>
 
 
-LinkManager::LinkManager()
+LinkManager::LinkManager(QObject* parent) : QObject(parent)
 {
     workerThread_ = std::make_unique<QThread>();
     workerObject_ = std::make_unique<LinkManagerWorker>(&list_, &model_, this);
@@ -13,6 +13,15 @@ LinkManager::LinkManager()
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();
+}
+
+LinkManager::~LinkManager()
+{
+    if (workerThread_ && workerThread_->isRunning()) {
+        workerThread_->quit();
+        workerThread_->wait();
+        workerThread_.reset();
+    }
 }
 
 QList<Link*> LinkManager::getLinkPtrList() const
