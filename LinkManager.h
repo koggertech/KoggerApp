@@ -37,7 +37,10 @@ signals:
     void openedEvent(bool);
 
 public slots:
-    void open(QUuid uuid);
+    void openSerial(QUuid uuid);
+    void openUdp(QUuid uuid);
+    void openTcp(QUuid uuid);
+
     void close(QUuid uuid);
 };
 

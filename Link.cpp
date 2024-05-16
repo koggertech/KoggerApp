@@ -16,8 +16,8 @@ Link::Link() :
     baudrate_(0),
     parity_(false),
     linkType_(LinkType::LinkNone),
-    srcPort_(0),
-    dstPort_(0),
+    sourcePort_(0),
+    destinationPort_(0),
     isPinned_(false),
     isHided_(false),
     isNotAvailable_(false)
@@ -33,26 +33,71 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 
 void Link::openAsSerial()
 {
-    QSerialPort* dev = new QSerialPort();
+    close();
 
-    dev->setPortName(portName_);
-    parity_ ? dev->setParity(QSerialPort::EvenParity) : dev->setParity(QSerialPort::NoParity);
-    dev->setBaudRate(baudrate_);
+    QSerialPort *serialPort = new QSerialPort(this);
 
-    dev->setReadBufferSize(8 * 1024 * 1024);
-    dev->open(QIODevice::ReadWrite);
+    serialPort->setPortName(portName_);
+    parity_ ? serialPort->setParity(QSerialPort::EvenParity) : serialPort->setParity(QSerialPort::NoParity);
+    serialPort->setBaudRate(baudrate_);
 
-    if (dev->isOpen())
-    {
+    serialPort->setReadBufferSize(8 * 1024 * 1024);
+    serialPort->open(QIODevice::ReadWrite);
+
+    if (serialPort->isOpen()) {
+        setDev(serialPort);
+
         emit connectionStatusChanged(this, true);
         qDebug() << "Connection: serial is open";
     }
     else {
+        delete serialPort;
+
         emit connectionStatusChanged(this, false);
         qDebug() << "Connection: serial isn't open";
     }
 
-    setDev(dev);
+}
+
+void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
+{
+    linkType_ = LinkType::LinkIPUDP;
+    address_ = address;
+    sourcePort_ = sourcePort;
+    destinationPort_ = destinationPort;
+}
+
+void Link::openAsUdp()
+{
+    close();
+
+    QUdpSocket *socketUdp = new QUdpSocket(this);
+
+    bool isBinded = socketUdp->bind(QHostAddress::AnyIPv4, sourcePort_, QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress);
+
+    if (!isBinded) {
+        delete socketUdp;
+        return;
+    }
+
+    hostAddress_.setAddress(address_);
+    if (destinationPort_ > 0)
+        socketUdp->connectToHost(hostAddress_, destinationPort_, QIODevice::ReadWrite);
+
+    bool isOpen = socketUdp->state() != QAbstractSocket::UnconnectedState;
+
+    if (isOpen) {
+        setDev(socketUdp);
+
+        emit connectionStatusChanged(this, true);
+        qDebug() << "Connection: udp is open";
+    }
+    else {
+        delete socketUdp;
+
+        emit connectionStatusChanged(this, false);
+        qDebug() << "Connection: udp isn't open";
+    }
 }
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
@@ -73,12 +118,36 @@ void Link::openAsUDP(const QString &address, const int port_in,  const int port_
     }
 }
 
-bool Link::isOpen() {
-    QIODevice *dev = device();
-    if(dev != nullptr && dev->isOpen()) {
-        return true;
+bool Link::isOpen() const {
+    bool retVal{ false };
+
+    if (!ioDevice_)
+        return retVal;
+
+    switch (linkType_) {
+    case LinkType::LinkNone: {
+        retVal = false;
+        break;
     }
-    return false;
+    case LinkType::LinkSerial: {
+        retVal = ioDevice_->isOpen();
+        break;
+    }
+    case LinkType::LinkIPUDP: {
+        if (auto ptr = static_cast<QUdpSocket*>(ioDevice_); ptr)
+            retVal = ptr->state() != QAbstractSocket::UnconnectedState;
+        break;
+    }
+    case LinkType::LinkIPTCP: {
+        if (auto ptr = static_cast<QTcpSocket*>(ioDevice_); ptr)
+            retVal = ptr->state() != QAbstractSocket::UnconnectedState;
+        break;
+    }
+    default:
+        break;
+    }
+
+    return retVal;
 }
 
 void Link::close() {
@@ -107,7 +176,7 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
-    if(_dev != nullptr && _dev->isOpen()) {
+    if(ioDevice_ != nullptr && ioDevice_->isOpen()) {
         return true;
     }
     return false;
@@ -145,12 +214,12 @@ QString Link::getAddress() const
 
 int Link::getSourcePort() const
 {
-    return srcPort_;
+    return sourcePort_;
 }
 
 int Link::getDestinationPort() const
 {
-    return dstPort_;
+    return destinationPort_;
 }
 
 bool Link::isPinned() const
@@ -175,7 +244,7 @@ bool Link::writeFrame(FrameParser *frame) {
 bool Link::write(QByteArray data) {
     QIODevice *dev = device();
     if(dev != nullptr && dev->isOpen()) {
-        _dev->write(data);
+        ioDevice_->write(data);
         return true;
     }
     return false;
@@ -184,23 +253,23 @@ bool Link::write(QByteArray data) {
 void Link::setDev(QIODevice *dev) {
     deleteDev();
     if(dev != nullptr && dev->isOpen()) {
-        _dev = dev;
+        ioDevice_ = dev;
         connect(dev, &QAbstractSocket::readyRead, this, &Link::readyRead);
         connect(dev, &QAbstractSocket::aboutToClose, this, &Link::aboutToClose);
     }
 }
 
 void Link::deleteDev() {
-    if(_dev != nullptr) {
-        if(_dev->isOpen()) {
-            _dev->close();
+    if (ioDevice_ != nullptr) {
+        if (ioDevice_->isOpen()) {
+            ioDevice_->close();
             emit connectionStatusChanged(this, false);
         }
-        _dev->disconnect(this);
-        this->disconnect(_dev);
+        ioDevice_->disconnect(this);
+        this->disconnect(ioDevice_);
         setType(LinkNone);
-        delete _dev;
-        _dev = nullptr;
+        delete ioDevice_;
+        ioDevice_ = nullptr;
     }
 }
 
@@ -212,6 +281,7 @@ void Link::toContext(const QByteArray data) {
     }
 //    _mutex.unlock();
 }
+
 void Link::readyRead() {
     QIODevice *dev = device();
     if(dev != nullptr) {

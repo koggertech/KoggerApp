@@ -138,13 +138,14 @@ ColumnLayout {
                         borderRadius: 1
 
                         onClicked: {
-                            if(ConnectionStatus) {
+                            if (ConnectionStatus) {
                                 linkManager.close(Uuid)
-                            } else {
-                                linkManager.open(Uuid)
+                            }
+                            else {
+                                LinkType == 1 ? linkManager.openSerial(Uuid) : LinkType == 2 ? linkManager.openUdp(Uuid) : LinkType == 2 ? linkManager.openTcp(Uuid) : console.log("Undefined type")
                             }
                         }
-                     }
+                    }
                 }
             }
         }

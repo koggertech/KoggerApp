@@ -10,9 +10,20 @@
 #include <QMutex>
 #include <QThread>
 #include <QUuid>
+#include <QUdpSocket>
+#include <QTcpSocket>
+#include <QHostAddress>
 
+#if defined(Q_OS_ANDROID)
+#include "qtandroidserialport/src/qserialport.h"
+#include "qtandroidserialport/src/qserialportinfo.h"
+#else
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#endif
 
 using namespace Parsers;
+
 
 typedef enum {
     LinkNone,
@@ -34,15 +45,17 @@ public:
 
     void createAsSerial(const QString &portName, int baudrate, bool parity);
     void openAsSerial();
+    void createAsUdp(const QString &address, int sourcePort, int destinationPort);
+    void openAsUdp();
 
     void openAsUDP(const QString &address, const int port_in,  const int port_out);
 
-    bool isOpen();
+    bool isOpen() const;
     void close();
     bool parse();
 
     FrameParser* frameParser() { return &_frame; }
-    QIODevice* device() { return _dev; }
+    QIODevice* device() { return ioDevice_; }
 
 
     /*multi link*/
@@ -78,12 +91,13 @@ private:
     QMutex _mutex;
     FrameParser _frame;
 
-    QIODevice* _dev = nullptr;
+    QIODevice* ioDevice_ = nullptr;
+    QHostAddress hostAddress_;
 
     QByteArray _context;
     QByteArray _buffer;
 
-    LinkType _type = LinkNone;
+    LinkType type_ = LinkNone;
 
 
     /*multi link*/
@@ -97,15 +111,15 @@ private:
     /*UDP/TCP*/
     LinkType linkType_;
     QString address_;
-    int srcPort_;
-    int dstPort_;
+    int sourcePort_;
+    int destinationPort_;
     /*others*/
     bool isPinned_;
     bool isHided_;
     bool isNotAvailable_;
     /**/
 
-    void setType(LinkType type) { _type = type; }
+    void setType(LinkType type) { type_ = type; }
     void setDev(QIODevice* dev);
     void deleteDev();
 

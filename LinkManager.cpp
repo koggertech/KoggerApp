@@ -35,13 +35,35 @@ Link* LinkManager::getLinkPtr(QUuid uuid)
     return nullptr;
 }
 
-void LinkManager::open(QUuid uuid)
+void LinkManager::openSerial(QUuid uuid)
 {
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         // TODO
         linkPtr->openAsSerial();
         emit openedEvent(true);
+    }
+    else
+        qDebug() << "LinkManager::open: link not found";
+}
 
+void LinkManager::openUdp(QUuid uuid)
+{
+    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        // TODO
+        linkPtr->openAsUdp();
+        emit openedEvent(true);
+
+    }
+    else
+        qDebug() << "LinkManager::open: link not found";
+}
+
+void LinkManager::openTcp(QUuid uuid)
+{
+    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        // TODO
+        //linkPtr->openAsTcp();
+        emit openedEvent(true);
     }
     else
         qDebug() << "LinkManager::open: link not found";
