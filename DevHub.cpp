@@ -10,17 +10,17 @@ Device::Device()
 Device::~Device()
 { }
 
-void Device::putData(const QByteArray &data) {
+void Device::frameInput(Link* link, FrameParser frame) {
     static int _cnter_echo = 0;
 
 
-    uint8_t* ptr_data = (uint8_t*)(data.data());
-    if(ptr_data == NULL || data.size() < 1) { return; }
-    _parser.setContext(ptr_data, data.size());
+    // uint8_t* ptr_data = (uint8_t*)(data.data());
+    // if(ptr_data == NULL || data.size() < 1) { return; }
+    // _parser.setContext(ptr_data, data.size());
 
-    while (_parser.availContext()) {
-        _parser.process();
-        if(!_parser.isComplete()) { continue; }
+    if (frame.isComplete()) {
+        // _parser.process();
+        _parser = frame;
 
 
 
@@ -31,7 +31,7 @@ void Device::putData(const QByteArray &data) {
 
         if(isProxyOpen() && (_parser.isComplete())) {
             emit writeProxy(QByteArray((char*)_parser.frame(), _parser.frameLen()));
-            continue;
+            return; //continue;
         }
 
         //        qInfo("Packets: good %u, frame error %u, check error %u", m_proto.binComplete(),  m_proto.frameError(),  m_proto.binError());
@@ -51,7 +51,7 @@ void Device::putData(const QByteArray &data) {
 #endif
 
         if(_parser.isProxy()) {
-            continue;
+            return; //continue;
         }
 
         if(_parser.completeAsKBP() || _parser.completeAsKBP2()) {
@@ -63,15 +63,14 @@ void Device::putData(const QByteArray &data) {
 
             if(lastRoute != addr) {
                 if(devAddr[addr] == NULL) {
-                    createDev(addr, _isDuplex);
+                    createDev(link, addr, (link != NULL));
                 } else {
                     lastDevs = devAddr[addr];
                     lastRoute = addr;
                 }
             }
 
-
-            if(_isConsoled && (_isDuplex || 1) && !(_parser.id() == 32 || _parser.id() == 33)) { core.consoleProto(_parser); }
+            if(_isConsoled && (link != NULL) && !(_parser.id() == 32 || _parser.id() == 33)) { core.consoleProto(_parser); }
 
 #if !defined(Q_OS_ANDROID)
             if(_parser.id() == ID_TIMESTAMP && _parser.ver() == v1) {
@@ -257,16 +256,16 @@ void Device::putData(const QByteArray &data) {
     }
 }
 
-void Device::binFrameOut(ProtoBinOut &proto_out) {
-    QByteArray data((char*)proto_out.frame(), proto_out.frameLen());
-    emit dataSend(data);
-    if(_isConsoled && _isDuplex && !(proto_out.id() == 33 || proto_out.id() == 33)) { core.consoleProto(proto_out, false); }
+void Device::binFrameOut(ProtoBinOut proto_out) {
+    // QByteArray data((char*)proto_out.frame(), proto_out.frameLen());
+    // emit dataSend(data);
+    if(_isConsoled && !(proto_out.id() == 33 || proto_out.id() == 33)) { core.consoleProto(proto_out, false); }
 }
 
-void Device::startConnection(bool duplex) {
-    _isDuplex = duplex;
-    createDev(0, duplex);
-}
+// void Device::startConnection(bool duplex) {
+//     _isDuplex = duplex;
+//     createDev(0, duplex);
+// }
 
 void Device::stopConnection() {
     delAllDev();

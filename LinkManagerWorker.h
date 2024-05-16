@@ -37,10 +37,11 @@ private:
 
 signals:
     void dataUpdated();
+    void frameReady(Link* link, FrameParser frame);
 
 public slots:
     void onExpiredTimer();
     void stateChanged(Link* linkPtr, bool state);
-
+    void frameInput(Link* link, FrameParser frame);
 };
 

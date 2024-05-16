@@ -23,6 +23,10 @@ public:
     QList<Link*> getLinkPtrList() const;
     LinkListModel* getModelPtr();
 
+    LinkManagerWorker* getWorker() {
+        return workerObject_.get();
+    }
+
 private:
     /*methods*/
     Link* getLinkPtr(QUuid uuid);

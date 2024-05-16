@@ -79,11 +79,11 @@ public:
 
 
 public slots:
-    bool writeFrame(FrameParser* frame);
+    bool writeFrame(FrameParser frame);
     bool write(QByteArray data);
 
 private slots:
-    void toContext(const QByteArray data);
+
     void readyRead();
     void aboutToClose();
 
@@ -123,14 +123,14 @@ private:
     void setDev(QIODevice* dev);
     void deleteDev();
 
+    void toParser(const QByteArray data);
 signals:;
     void readyParse(Link* link);
-    void changeState();
-
+    // void changeState();
 
     void connectionStatusChanged(Link* link, bool state);
     void deleted();
-    void frameReady();
+    void frameReady(Link* link, FrameParser frame);
     void dataReady();
 
 };

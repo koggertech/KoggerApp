@@ -33,7 +33,8 @@ Link* LinkManagerWorker::createSerialPort(const QSerialPortInfo &serialInfo) con
     newLink->createAsSerial(serialInfo.portName(), 921600, false);
 
     connect(newLink, &Link::connectionStatusChanged, this, &LinkManagerWorker::stateChanged);
-
+    connect(newLink, &Link::frameReady, this, &LinkManagerWorker::frameReady);
+    // connect(this, &LinkManagerWorker::frameInput, newLink, &Link::writeFrame);
 
     return newLink;
 }
@@ -96,8 +97,10 @@ void LinkManagerWorker::deleteMissingLinks(const QList<QSerialPortInfo> &currSer
             // model
             emit model_->removeEvent(link->getUuid());
             // list
-            if (link->isOpen())
+            if (link->isOpen()) {
                 link->disconnect();
+                this->disconnect(link);
+            }
             delete link;
             list_->removeAt(i);
             mutex_.unlock();
@@ -141,4 +144,8 @@ void LinkManagerWorker::stateChanged(Link *linkPtr, bool state)
                              linkPtr->isNotAvailable());
 
     emit dataUpdated();
+}
+
+void LinkManagerWorker::frameInput(Link *link, FrameParser frame) {
+
 }
