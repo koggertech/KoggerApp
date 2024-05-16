@@ -109,10 +109,16 @@ private:
     void setDev(QIODevice* dev);
     void deleteDev();
 
-signals:
-    void connectionStatus(Link*, bool);
+signals:;
     void readyParse(Link* link);
     void changeState();
+
+
+    void connectionStatusChanged(Link* link, bool state);
+    void deleted();
+    void frameReady();
+    void dataReady();
+
 };
 
 

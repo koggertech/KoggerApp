@@ -31,7 +31,7 @@ private:
     QList<Link*>* list_;
     LinkListModel* model_;
     std::unique_ptr<QTimer> timer_;
-    static const int timerInterval_ = 200; // msecs
+    static const int timerInterval_ = 500; // msecs
     QMutex mutex_;
 
 signals:

@@ -25,9 +25,9 @@ Link* LinkManagerWorker::createSerialPort(const QSerialPortInfo &serialInfo) con
         return {};
 
     Link* newLink = new Link();
-    newLink->createAsSerial(serialInfo.portName(), 96100, false);
+    newLink->createAsSerial(serialInfo.portName(), 921600, false);
 
-    connect(newLink, &Link::connectionStatus, this, &LinkManagerWorker::stateChanged);
+    connect(newLink, &Link::connectionStatusChanged, this, &LinkManagerWorker::stateChanged);
 
 
     return newLink;

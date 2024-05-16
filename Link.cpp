@@ -44,11 +44,11 @@ void Link::openAsSerial()
 
     if (dev->isOpen())
     {
-        emit connectionStatus(this, true);
+        emit connectionStatusChanged(this, true);
         qDebug() << "Connection: serial is open";
     }
     else {
-        emit connectionStatus(this, false);
+        emit connectionStatusChanged(this, false);
         qDebug() << "Connection: serial isn't open";
     }
 
@@ -194,7 +194,7 @@ void Link::deleteDev() {
     if(_dev != nullptr) {
         if(_dev->isOpen()) {
             _dev->close();
-            emit connectionStatus(this, false);
+            emit connectionStatusChanged(this, false);
         }
         _dev->disconnect(this);
         this->disconnect(_dev);
@@ -223,6 +223,6 @@ void Link::aboutToClose() {
     QIODevice *dev = device();
     if (dev != nullptr) {
         emit changeState(); //
-        emit connectionStatus(this, dev->isOpen());
+        emit connectionStatusChanged(this, dev->isOpen());
     }
 }
