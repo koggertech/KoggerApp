@@ -39,7 +39,7 @@ private:
     Q_DISABLE_COPY(LinkListModel)
 
     /*methods*/
-    void doAppend(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+    void doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                   ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
     void doRemove(QUuid uuid);
 
@@ -64,7 +64,7 @@ private:
     int size_;
 
 signals:
-    void appendEvent(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+    void appendModifyEvent(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                      ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
     void removeEvent(QUuid uuid);
 };

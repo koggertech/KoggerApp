@@ -128,11 +128,10 @@ signals:;
     void changeState();
 
 
-    void connectionStatusChanged(Link* link, bool state);
+    void connectionStatusChanged(QUuid uuid);
     void deleted();
     void frameReady();
     void dataReady();
-
 };
 
 

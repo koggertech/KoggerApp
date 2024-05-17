@@ -33,8 +33,6 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 
 void Link::openAsSerial()
 {
-    close();
-
     QSerialPort *serialPort = new QSerialPort(this);
 
     serialPort->setPortName(portName_);
@@ -46,15 +44,13 @@ void Link::openAsSerial()
 
     if (serialPort->isOpen()) {
         setDev(serialPort);
-
-        emit connectionStatusChanged(this, true);
-        qDebug() << "Connection: serial is open";
+        emit connectionStatusChanged(uuid_);
+        qDebug() << "link opened as serial: " << getUuid();
     }
     else {
         delete serialPort;
-
-        emit connectionStatusChanged(this, false);
-        qDebug() << "Connection: serial isn't open";
+        emit connectionStatusChanged(uuid_);
+        qDebug() << "link not opened as serial: " << getUuid();
     }
 
 }
@@ -69,8 +65,6 @@ void Link::createAsUdp(const QString &address, int sourcePort, int destinationPo
 
 void Link::openAsUdp()
 {
-    close();
-
     QUdpSocket *socketUdp = new QUdpSocket(this);
 
     bool isBinded = socketUdp->bind(QHostAddress::AnyIPv4, sourcePort_, QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress);
@@ -89,14 +83,14 @@ void Link::openAsUdp()
     if (isOpen) {
         setDev(socketUdp);
 
-        emit connectionStatusChanged(this, true);
-        qDebug() << "Connection: udp is open";
+        emit connectionStatusChanged(uuid_);
+        qDebug() << "link opened as udp: " << getUuid();
     }
     else {
         delete socketUdp;
 
-        emit connectionStatusChanged(this, false);
-        qDebug() << "Connection: udp isn't open";
+        emit connectionStatusChanged(uuid_);
+        qDebug() << "link not opened as udp: " << getUuid();
     }
 }
 
@@ -259,18 +253,23 @@ void Link::setDev(QIODevice *dev) {
     }
 }
 
-void Link::deleteDev() {
+void Link::deleteDev()
+{
     if (ioDevice_ != nullptr) {
         if (ioDevice_->isOpen()) {
             ioDevice_->close();
-            emit connectionStatusChanged(this, false);
+            emit connectionStatusChanged(uuid_);  // ???
         }
+
         ioDevice_->disconnect(this);
         this->disconnect(ioDevice_);
         setType(LinkNone);
         delete ioDevice_;
         ioDevice_ = nullptr;
     }
+
+    qDebug() << "link deleted dev: " << getUuid();
+
 }
 
 void Link::toContext(const QByteArray data) {
@@ -293,6 +292,7 @@ void Link::aboutToClose() {
     QIODevice *dev = device();
     if (dev != nullptr) {
         emit changeState(); //
-        emit connectionStatusChanged(this, dev->isOpen());
+        emit connectionStatusChanged(uuid_);
+        qDebug() << "link aboutToClose dev: " << getUuid();
     }
 }

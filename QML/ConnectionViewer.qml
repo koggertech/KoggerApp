@@ -142,7 +142,7 @@ ColumnLayout {
                                 linkManager.close(Uuid)
                             }
                             else {
-                                LinkType == 1 ? linkManager.openSerial(Uuid) : LinkType == 2 ? linkManager.openUdp(Uuid) : LinkType == 2 ? linkManager.openTcp(Uuid) : console.log("Undefined type")
+                                LinkType == 1 ? linkManager.openAsSerial(Uuid) : LinkType == 2 ? linkManager.openAsUdp(Uuid) : LinkType == 2 ? linkManager.openAsTcp(Uuid) : console.log("Undefined type")
                             }
                         }
                     }

@@ -6,7 +6,7 @@ LinkListModel::LinkListModel(QObject* parent) :
     QAbstractListModel(parent),
     size_(0)
 {
-    connect(this, &LinkListModel::appendEvent, this, &LinkListModel::doAppend);
+    connect(this, &LinkListModel::appendModifyEvent, this, &LinkListModel::doAppendModify);
     connect(this, &LinkListModel::removeEvent, this, &LinkListModel::doRemove);
 }
 
@@ -46,7 +46,7 @@ int LinkListModel::getSize() const
     return size_;
 }
 
-void LinkListModel::doAppend(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                              ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
 {
     if (!index_.contains(uuid)) {

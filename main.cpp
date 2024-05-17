@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("dataset", core.dataset());
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
-    engine.rootContext()->setContextProperty("linkManager", core.getLinkManager());
+    engine.rootContext()->setContextProperty("linkManager", core.getLinkManagerWrapper());
 
 #ifdef FLASHER
     engine.rootContext()->setContextProperty("flasher", &core.flasher);

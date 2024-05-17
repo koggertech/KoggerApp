@@ -3,90 +3,184 @@
 #include <QDebug>
 
 
-LinkManager::LinkManager(QObject* parent) : QObject(parent)
+LinkManager::LinkManager(QObject *parent) :
+    QObject(parent)
 {
-    workerThread_ = std::make_unique<QThread>();
-    workerObject_ = std::make_unique<LinkManagerWorker>(&list_, &model_, this);
+    timer_ = std::make_unique<QTimer>(this);
+    timer_->setInterval(timerInterval_);
 
-    QObject::connect(workerThread_.get(), &QThread::started, workerObject_.get(), &LinkManagerWorker::onExpiredTimer);
-    QObject::connect(workerObject_.get(), &LinkManagerWorker::dataUpdated, this, &LinkManager::stateChanged);
-
-    workerObject_->moveToThread(workerThread_.get());
-    workerThread_->start();
+    QObject::connect(timer_.get(), &QTimer::timeout, this, &LinkManager::onExpiredTimer);
 }
 
 LinkManager::~LinkManager()
 {
-    if (workerThread_ && workerThread_->isRunning()) {
-        workerThread_->quit();
-        workerThread_->wait();
-        workerThread_.reset();
+    timer_->stop();
+}
+
+QList<QSerialPortInfo> LinkManager::getCurrentSerialList() const
+{
+    return QSerialPortInfo::availablePorts();
+}
+
+Link* LinkManager::createSerialPort(const QSerialPortInfo &serialInfo) const
+{
+    Link* newLinkPtr = nullptr;
+
+    if (serialInfo.isNull())
+        return newLinkPtr;
+
+    newLinkPtr = new Link();
+    newLinkPtr->createAsSerial(serialInfo.portName(), 921600, false);
+
+    QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
+
+    return newLinkPtr;
+}
+
+void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
+{
+    for (const auto& itmI : currSerialList) {
+        bool isBeen{ false };
+
+        for (auto& itmJ : list_) {
+            if (itmI.portName() == itmJ->getPortName()) {
+                isBeen = true;
+                break;
+            }
+        }
+
+        if (!isBeen) {
+            auto link = createSerialPort(itmI);
+            qDebug() << "link created: " << link->getUuid();
+
+            // list
+            list_.append(link);
+            // model
+            emit appendModifyModel(link->getUuid(),
+                                   link->getConnectionStatus(),
+                                   link->getControlType(),
+                                   link->getPortName(),
+                                   link->getBaudrate(),
+                                   link->getParity(),
+                                   link->getLinkType(),
+                                   link->getAddress(),
+                                   link->getSourcePort(),
+                                   link->getDestinationPort(),
+                                   link->isPinned(),
+                                   link->isHided(),
+                                   link->isNotAvailable());
+        }
     }
 }
 
-QList<Link*> LinkManager::getLinkPtrList() const
+void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList)
 {
-    return list_;
+    for (int i = 0; i < list_.size(); ++i) {
+        Link* link = list_.at(i);
+
+        bool isBeen{ false };
+        for (const auto& itm : currSerialList) {
+            if (itm.portName() == link->getPortName()) {
+                isBeen = true;
+                break;
+            }
+        }
+
+        if (!isBeen) {
+            // model
+            emit deleteModel(link->getUuid());
+            // list
+            link->disconnect();
+            if (link->isOpen())
+                link->close();
+            qDebug() << "link deleted: " << link->getUuid();
+            delete link;
+            list_.removeAt(i);
+            --i;
+        }
+    }
 }
 
-LinkListModel* LinkManager::getModelPtr()
+void LinkManager::update()
 {
-    return &model_;
+    auto currSerialList{ getCurrentSerialList() };
+
+    addNewLinks(currSerialList);
+    deleteMissingLinks(currSerialList);
 }
 
-Link* LinkManager::getLinkPtr(QUuid uuid)
+Link *LinkManager::getLinkPtr(QUuid uuid)
 {
+    Link* retVal{ nullptr };
+
     for (auto& itm : list_) {
-        if (itm->getUuid() == uuid)
-            return itm;
+        if (itm->getUuid() == uuid) {
+            retVal = itm;
+            break;
+        }
     }
 
-    return nullptr;
+    return retVal;
 }
 
-void LinkManager::openSerial(QUuid uuid)
+void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 {
-    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        // TODO
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        emit appendModifyModel(linkPtr->getUuid(),
+                               linkPtr->getConnectionStatus(),
+                               linkPtr->getControlType(),
+                               linkPtr->getPortName(),
+                               linkPtr->getBaudrate(),
+                               linkPtr->getParity(),
+                               linkPtr->getLinkType(),
+                               linkPtr->getAddress(),
+                               linkPtr->getSourcePort(),
+                               linkPtr->getDestinationPort(),
+                               linkPtr->isPinned(),
+                               linkPtr->isHided(),
+                               linkPtr->isNotAvailable());
+    }
+}
+
+void LinkManager::onExpiredTimer()
+{
+    update();
+    timer_->start();
+}
+
+void LinkManager::openAsSerial(QUuid uuid)
+{
+    timer_->stop();
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
         linkPtr->openAsSerial();
-        emit openedEvent(true);
-    }
-    else
-        qDebug() << "LinkManager::open: link not found";
+
+    timer_->start();
 }
 
-void LinkManager::openUdp(QUuid uuid)
+void LinkManager::openAsUdp(QUuid uuid)
 {
-    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        // TODO
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
         linkPtr->openAsUdp();
-        emit openedEvent(true);
-
-    }
-    else
-        qDebug() << "LinkManager::open: link not found";
 }
 
-void LinkManager::openTcp(QUuid uuid)
+void LinkManager::openAsTcp(QUuid uuid)
 {
-    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        // TODO
-        //linkPtr->openAsTcp();
-        emit openedEvent(true);
-    }
-    else
-        qDebug() << "LinkManager::open: link not found";
+    timer_->stop();
+
+    Q_UNUSED(uuid);
+    //if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
+    //    linkPtr->openAsTcp();
+
+    timer_->start();
 }
 
 void LinkManager::close(QUuid uuid)
 {
-    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        // TODO
-        qDebug() << "trying to closing link...";
+    timer_->stop();
 
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
         linkPtr->close();
-        emit openedEvent(false);
-    }
-    else
-        qDebug() << "LinkManager::open: link not found";
+
+    timer_->start();
 }

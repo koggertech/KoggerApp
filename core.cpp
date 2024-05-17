@@ -9,7 +9,7 @@ Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
     _dataset(new Dataset),
-    linkManager_(new LinkManager(this))
+    linkManagerWrapper_(new LinkManagerWrapper(this))
 {
 //    m_connection->moveToThread(&connectionThread);
 //    connectionThread.start();
@@ -31,7 +31,7 @@ Core::Core() : QObject(),
 
 Core::~Core()
 {
-    delete linkManager_;
+    delete linkManagerWrapper_;
 }
 
 void Core::createControllers()
@@ -63,9 +63,9 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     m_engine->rootContext()->setContextProperty("Scene3dToolBarController",          m_scene3dToolBarController.get());
 }
 
-LinkManager* Core::getLinkManager() const
+LinkManagerWrapper* Core::getLinkManagerWrapper() const
 {
-    return linkManager_;
+    return linkManagerWrapper_;
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {

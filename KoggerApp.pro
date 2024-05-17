@@ -51,7 +51,7 @@ SOURCES += \
     IDBinnary.cpp \
     Link.cpp \
     LinkManager.cpp \
-    LinkManagerWorker.cpp \
+    LinkManagerWrapper.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
@@ -124,7 +124,7 @@ HEADERS += \
     IDBinnary.h \
     Link.h \
     LinkManager.h \
-    LinkManagerWorker.h \
+    LinkManagerWrapper.h \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \

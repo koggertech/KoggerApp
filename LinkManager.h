@@ -1,47 +1,52 @@
 #pragma once
 
-#include <QHash>
+#include <memory>
+
+#include <QObject>
+#include <QTimer>
 #include <QList>
-#include <QThread>
 #include <QUuid>
+#include <QSerialPortInfo>
 
 #include "Link.h"
-#include "LinkListModel.h"
-#include "LinkManagerWorker.h"
 
 
 class LinkManager : public QObject
 {
     Q_OBJECT
 public:
-    Q_PROPERTY(LinkListModel* linkListModel READ getModelPtr NOTIFY stateChanged)
-
     /*methods*/
-    LinkManager(QObject* parent);
+    explicit LinkManager(QObject *parent = nullptr);
     ~LinkManager();
-
-    QList<Link*> getLinkPtrList() const;
-    LinkListModel* getModelPtr();
 
 private:
     /*methods*/
-    Link* getLinkPtr(QUuid uuid);
-    /*data*/
-    std::unique_ptr<QThread> workerThread_;
-    std::unique_ptr<LinkManagerWorker> workerObject_;
+    QList<QSerialPortInfo> getCurrentSerialList() const;
+    Link* createSerialPort(const QSerialPortInfo& serialInfo) const;
+    void addNewLinks(const QList<QSerialPortInfo> &currSerialList);
+    void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
+    void update();
+    Link *getLinkPtr(QUuid uuid);
 
+    /*data*/
     QList<Link*> list_;
-    LinkListModel model_;
+    std::unique_ptr<QTimer> timer_;
+    static const int timerInterval_ = 500; // msecs
+    QMutex mutex_;
 
 signals:
-    void stateChanged();
-    void openedEvent(bool);
+    void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
+                       LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void deleteModel(QUuid uuid);
 
 public slots:
-    void openSerial(QUuid uuid);
-    void openUdp(QUuid uuid);
-    void openTcp(QUuid uuid);
+    void onLinkConnectionStatusChanged(QUuid uuid);
+
+    void onExpiredTimer();
+
+    void openAsSerial(QUuid uuid);
+    void openAsUdp(QUuid uuid);
+    void openAsTcp(QUuid uuid);
 
     void close(QUuid uuid);
 };
-
