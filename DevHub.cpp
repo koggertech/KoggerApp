@@ -256,6 +256,22 @@ void Device::frameInput(Link* link, FrameParser frame) {
     }
 }
 
+void Device::onLinkClosed(Link *link)
+{
+    qDebug() << "Device::onLinkClosed";
+    if (link) {
+        // TODO
+    }
+}
+
+void Device::onLinkDeleted(Link *link)
+{
+    qDebug() << "Device::onLinkDeleted";
+    if (link) {
+        // TODO
+    }
+}
+
 void Device::binFrameOut(ProtoBinOut proto_out) {
     // QByteArray data((char*)proto_out.frame(), proto_out.frameLen());
     // emit dataSend(data);

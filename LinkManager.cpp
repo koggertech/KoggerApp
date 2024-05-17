@@ -34,6 +34,8 @@ Link* LinkManager::createSerialPort(const QSerialPortInfo &serialInfo) const
 
     QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
     QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
+    QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
+
     // connect(this, &LinkManagerWorker::frameInput, newLink, &Link::writeFrame);
 
     return newLinkPtr;
@@ -89,6 +91,8 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
         }
 
         if (!isBeen) {
+            emit linkDeleted(link);
+
             // model
             emit deleteModel(link->getUuid());
             // list

@@ -40,6 +40,9 @@ signals:
     void deleteModel(QUuid uuid);
     void frameReady(Link* link, FrameParser frame); //
 
+    void linkClosed(Link* link);
+    void linkDeleted(Link* link);
+
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
 

@@ -301,6 +301,7 @@ void Link::aboutToClose() {
     if (dev != nullptr) {
         //emit changeState(); //
         emit connectionStatusChanged(uuid_);
+        emit closed(this);
         qDebug() << "link aboutToClose dev: " << getUuid();
     }
 }

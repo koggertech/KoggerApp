@@ -124,12 +124,12 @@ private:
     void deleteDev();
 
     void toParser(const QByteArray data);
-signals:;
+
+signals:
     void readyParse(Link* link);
     // void changeState();
-
     void connectionStatusChanged(QUuid uuid);
-    void deleted();
+    void closed(Link* link);
     void frameReady(Link* link, FrameParser frame);
     void dataReady();
 };
