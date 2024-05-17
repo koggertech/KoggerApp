@@ -155,7 +155,7 @@ public:
     bool getUartState() { return uartState_; };
 
 signals:
-    void binFrameOut(ProtoBinOut &proto_out);
+    void binFrameOut(ProtoBinOut proto_out);
 
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void iqComplete(QByteArray data, uint8_t type);

@@ -21,7 +21,9 @@ Link::Link() :
     isPinned_(false),
     isHided_(false),
     isNotAvailable_(false)
-{ }
+{
+    _frame.resetComplete();
+}
 
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
@@ -231,8 +233,8 @@ bool Link::isNotAvailable() const
     return isNotAvailable_;
 }
 
-bool Link::writeFrame(FrameParser *frame) {
-    return frame->isComplete() && write(QByteArray((const char*)frame->frame(), frame->frameLen()));
+bool Link::writeFrame(FrameParser frame) {
+    return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
 
 bool Link::write(QByteArray data) {
@@ -272,26 +274,32 @@ void Link::deleteDev()
 
 }
 
-void Link::toContext(const QByteArray data) {
-//    _mutex.lock();
-    if(_buffer.size() == 0) {
-        _buffer.append(data);
-        emit readyParse(this);
+void Link::toParser(const QByteArray data) {
+    if(data.size() <= 0) {
+        return;
     }
-//    _mutex.unlock();
+
+    _frame.setContext((uint8_t*)data.data(), data.size());
+
+    while (_frame.availContext() > 0) {
+        _frame.process();
+        if(_frame.isComplete()) {
+            emit frameReady(this, _frame);
+        }
+    }
 }
 
 void Link::readyRead() {
     QIODevice *dev = device();
     if(dev != nullptr) {
-        toContext(dev->readAll());
+        toParser(dev->readAll());
     }
 }
 
 void Link::aboutToClose() {
     QIODevice *dev = device();
     if (dev != nullptr) {
-        emit changeState(); //
+        //emit changeState(); //
         emit connectionStatusChanged(uuid_);
         qDebug() << "link aboutToClose dev: " << getUuid();
     }

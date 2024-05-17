@@ -21,6 +21,10 @@ public:
     ~LinkManagerWrapper();
     LinkListModel* getModelPtr();
 
+    LinkManager* getWorker() { //
+        return workerObject_.get();
+    }
+
 private:
     /*data*/
     std::unique_ptr<QThread> workerThread_;

@@ -24,6 +24,8 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
+    connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, &_devs, &Device::frameInput);
+
     createControllers();
 
     //linkManager_->update();
@@ -160,8 +162,8 @@ bool Core::devsConnection() {
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
 
-    connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
-    connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
+    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
+    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
     connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
     connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
 
@@ -215,8 +217,8 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
         }
     }
 
-    connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
-    connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
+    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
+    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
     m_connection->openFile(name);
 
     if (m_scene3dView)
@@ -260,8 +262,8 @@ bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &addres
     connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
     connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
 
-    connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
-    connect(m_connection, &Connection::receiveData, &_devs, &Device::putData);
+    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
+    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
     connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
     connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
     m_connection->openIP(address, port, is_tcp);

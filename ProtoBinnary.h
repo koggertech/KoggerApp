@@ -134,6 +134,7 @@ public:
     FrameParser() {
         _frameChar = (char*)_frame;
         setContext(nullptr, 0);
+        setProxyContext(nullptr, 0);
         resetState();
     }
 
@@ -292,7 +293,7 @@ public:
     }
 
 
-    uint32_t availContext() {
+    int32_t availContext() {
         if(_contextLen == 0 && _savedContextLen != 0) {
             _contextData = _savedContextData;
             _contextLen = _savedContextLen;
@@ -505,7 +506,7 @@ protected:
         uint32_t notCompleteProxy = 0;
     } _counter;
 
-    uint32_t availContextPrivate() {
+    int32_t availContextPrivate() {
         return _contextLen;
     }
 
@@ -1106,6 +1107,7 @@ public:
         _frameLen += 2;
 
         _checksum = *(uint16_t*)(&_frame[_frameLen - 2]);
+        _proto = ProtoKP1;
     }
 protected:
     void setRoute(uint8_t route) { _address = route; _frame[2] = route;}

@@ -56,9 +56,9 @@ public:
     }
 
 public slots:
-    void putData(const QByteArray &data);
-    void binFrameOut(ProtoBinOut &proto_out);
-    void startConnection(bool duplex);
+    void frameInput(Link* link, FrameParser frame);
+    void binFrameOut(ProtoBinOut proto_out);
+    // void startConnection(bool duplex);
     void stopConnection();
     bool isCreatedId(int id) { return getDevList().size() > id; }
     void setProtoBinConsoled(bool is_consoled) { _isConsoled = is_consoled; }
@@ -109,7 +109,7 @@ protected:
     DevQProperty* devSort[256] = {};
 
     DevQProperty* lastDevs = NULL;
-    uint8_t lastRoute = 0;
+    int lastRoute = -1;
 
     QList<DevQProperty*> _devList;
     StreamList _streamList;
@@ -117,7 +117,7 @@ protected:
     Link proxyLink;
     Link proxyNavLink;
 
-    bool _isDuplex = false;
+    // bool _isDuplex = true;
     bool _isConsoled = false;
 
     struct {
@@ -146,7 +146,7 @@ protected:
         emit devChanged();
     }
 
-    void createDev(uint8_t addr, bool duplex) {
+    void createDev(Link* link, uint8_t addr, bool duplex) {
         devAddr[addr] = new DevQProperty();
         devAddr[addr]->setBusAddress(addr);
 
@@ -158,6 +158,8 @@ protected:
         }
 
         connect(devAddr[addr], &DevQProperty::binFrameOut, this, &Device::binFrameOut);
+        connect(devAddr[addr], &DevQProperty::binFrameOut, link, &Link::writeFrame);
+
         connect(devAddr[addr], &DevQProperty::chartComplete, this, &Device::chartComplete);
         connect(devAddr[addr], &DevQProperty::iqComplete, this, &Device::iqComplete);
         connect(devAddr[addr], &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);

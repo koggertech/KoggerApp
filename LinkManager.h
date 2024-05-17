@@ -38,6 +38,7 @@ signals:
     void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
                        LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
     void deleteModel(QUuid uuid);
+    void frameReady(Link* link, FrameParser frame); //
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
@@ -49,4 +50,6 @@ public slots:
     void openAsTcp(QUuid uuid);
 
     void close(QUuid uuid);
+
+    void frameInput(Link* link, FrameParser frame); //
 };
