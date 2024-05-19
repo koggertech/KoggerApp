@@ -1016,6 +1016,10 @@ void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
+
     usblSolutionComplete(idUSBL->usblSolution());
     // emit distComplete(idUSBL->usblSolution().distance_m*1000);
     // emit attitudeComplete(idUSBL->usblSolution().azimuth_deg, idUSBL->usblSolution().elevation_deg, 0);
