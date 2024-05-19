@@ -27,6 +27,8 @@ Link::Link() :
 
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
+    qDebug() << "Link::createAsSerial, uuid:" << getUuid().toString();
+
     linkType_ = LinkType::LinkSerial;
     portName_ = portName;
     parity_ = parity;
@@ -35,6 +37,8 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 
 void Link::openAsSerial()
 {
+    qDebug() << "Link::openAsSerial, uuid:" << getUuid().toString();
+
     QSerialPort *serialPort = new QSerialPort(this);
 
     serialPort->setPortName(portName_);
@@ -59,6 +63,8 @@ void Link::openAsSerial()
 
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
 {
+    qDebug() << "Link::createAsUdp, uuid:" << getUuid().toString();
+
     linkType_ = LinkType::LinkIPUDP;
     address_ = address;
     sourcePort_ = sourcePort;
@@ -67,6 +73,8 @@ void Link::createAsUdp(const QString &address, int sourcePort, int destinationPo
 
 void Link::openAsUdp()
 {
+    qDebug() << "Link::openAsUdp, uuid:" << getUuid().toString();
+
     QUdpSocket *socketUdp = new QUdpSocket(this);
 
     bool isBinded = socketUdp->bind(QHostAddress::AnyIPv4, sourcePort_, QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress);
@@ -94,6 +102,23 @@ void Link::openAsUdp()
         emit connectionStatusChanged(uuid_);
         qDebug() << "link not opened as udp: " << getUuid();
     }
+}
+
+void Link::createAsTcp(const QString &address, int sourcePort, int destinationPort)
+{
+    qDebug() << "Link::createAsTcp, uuid:" << getUuid().toString();
+
+    linkType_ = LinkType::LinkIPTCP;
+    address_ = address;
+    sourcePort_ = sourcePort;
+    destinationPort_ = destinationPort;
+}
+
+void Link::openAsTcp()
+{
+    qDebug() << "Link::openAsTcp, uuid:" << getUuid().toString();
+
+    // TODO
 }
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {

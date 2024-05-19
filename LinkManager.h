@@ -55,4 +55,8 @@ public slots:
     void close(QUuid uuid);
 
     void frameInput(Link* link, FrameParser frame); //
+
+    void createAsUdp(QString address, int sourcePort, int destinationPort);
+    void createAsTcp(QString address, int sourcePort, int destinationPort);
+
 };

@@ -45,10 +45,14 @@ public:
 
     void createAsSerial(const QString &portName, int baudrate, bool parity);
     void openAsSerial();
+
     void createAsUdp(const QString &address, int sourcePort, int destinationPort);
     void openAsUdp();
 
-    void openAsUDP(const QString &address, const int port_in,  const int port_out);
+    void createAsTcp(const QString &address, int sourcePort, int destinationPort);
+    void openAsTcp();
+
+    void openAsUDP(const QString &address, const int port_in,  const int port_out); //
 
     bool isOpen() const;
     void close();

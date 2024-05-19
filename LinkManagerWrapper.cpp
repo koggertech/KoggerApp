@@ -12,8 +12,13 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     // this -> thread
     QObject::connect(this, &LinkManagerWrapper::sendOpenAsSerial, workerObject_.get(), &LinkManager::openAsSerial);
+
+    QObject::connect(this, &LinkManagerWrapper::sendCreateAsUdp, workerObject_.get(), &LinkManager::createAsUdp);
     QObject::connect(this, &LinkManagerWrapper::sendOpenAsUdp, workerObject_.get(), &LinkManager::openAsUdp);
+
+    QObject::connect(this, &LinkManagerWrapper::sendCreateAsTcp, workerObject_.get(), &LinkManager::createAsTcp);
     QObject::connect(this, &LinkManagerWrapper::sendOpenAsTcp, workerObject_.get(), &LinkManager::openAsTcp);
+
     QObject::connect(this, &LinkManagerWrapper::sendClose, workerObject_.get(), &LinkManager::close);
 
     // thread -> this
@@ -48,9 +53,19 @@ void LinkManagerWrapper::openAsSerial(QUuid uuid)
     emit sendOpenAsSerial(uuid);
 }
 
+void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
+{
+    emit sendCreateAsUdp(address, sourcePort, destinationPort);
+}
+
 void LinkManagerWrapper::openAsUdp(QUuid uuid)
 {
     emit sendOpenAsUdp(uuid);
+}
+
+void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destinationPort)
+{
+    emit sendCreateAsTcp(address, sourcePort, destinationPort);
 }
 
 void LinkManagerWrapper::openAsTcp(QUuid uuid)

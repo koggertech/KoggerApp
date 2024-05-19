@@ -168,17 +168,20 @@ void LinkManager::openAsSerial(QUuid uuid)
 
 void LinkManager::openAsUdp(QUuid uuid)
 {
+    timer_->stop();
+
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
         linkPtr->openAsUdp();
+
+    timer_->start();
 }
 
 void LinkManager::openAsTcp(QUuid uuid)
 {
     timer_->stop();
 
-    Q_UNUSED(uuid);
-    //if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
-    //    linkPtr->openAsTcp();
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
+        linkPtr->openAsTcp();
 
     timer_->start();
 }
@@ -193,6 +196,33 @@ void LinkManager::close(QUuid uuid)
     timer_->start();
 }
 
-void LinkManager::frameInput(Link *link, FrameParser frame) {
+void LinkManager::frameInput(Link *link, FrameParser frame)
+{
 
+}
+
+void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPort)
+{
+    Link* newLinkPtr = new Link();
+
+    newLinkPtr->createAsUdp(address, sourcePort, destinationPort);
+
+    QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
+    QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
+    QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
+
+    list_.append(newLinkPtr);
+}
+
+void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
+{
+    Link* newLinkPtr = new Link();
+
+    newLinkPtr->createAsTcp(address, sourcePort, destinationPort);
+
+    QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
+    QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
+    QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
+
+    list_.append(newLinkPtr);
 }

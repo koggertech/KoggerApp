@@ -33,18 +33,27 @@ signals:
     void modelChanged(); //
 
     void sendOpenAsSerial(QUuid uuid);
+
+    void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsUdp(QUuid uuid);
+    void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsTcp(QUuid uuid);
 
     void sendClose(QUuid uuid);
 
 public slots:
+
     void openAsSerial(QUuid uuid);
+
+    void createAsUdp(QString address, int sourcePort, int destinationPort);
     void openAsUdp(QUuid uuid);
+
+    void createAsTcp(QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid);
 
     void close(QUuid uuid);
 
+    // for model
     void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
                          LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
     void deleteModelData(QUuid uuid);
