@@ -104,15 +104,17 @@ signals:
     void vruChanged();
 
 protected:
-    FrameParser _parser;
-
-    bool _isSupressParser = false;
 
     DevQProperty* devAddr[256] = {};
     DevQProperty* devSort[256] = {};
 
+    QHash<QUuid, QHash<int, DevQProperty*>> _devTree;
+
     DevQProperty* lastDevs = NULL;
     int lastRoute = -1;
+    QUuid lastUid_;
+    int lastAddress_ = -1;
+    DevQProperty* lastDevice_ = NULL;
 
     QList<DevQProperty*> _devList;
     StreamList _streamList;
@@ -149,34 +151,54 @@ protected:
         emit devChanged();
     }
 
-    void createDev(Link* link, uint8_t addr, bool duplex) {
-        devAddr[addr] = new DevQProperty();
-        devAddr[addr]->setBusAddress(addr);
+    DevQProperty* getDevice(QUuid uuid, Link* link, uint8_t addr) {
+        if(lastUid_ == uuid && lastAddress_ == addr) {
+            return lastDevice_;
+        } else {
+            lastDevice_ = _devTree[uuid][addr];
+            if(lastDevice_ == NULL) {
+                lastDevice_ = createDev(uuid, link, addr);
+                emit devChanged();
+            }
+            lastUid_ = uuid;
+            lastAddress_ = addr;
+        }
+
+        return lastDevice_;
+    }
+
+    DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr) {
+        DevQProperty* dev = new DevQProperty();
+        _devTree[uuid][addr] = dev;
+        dev->setBusAddress(addr);
+
+        // dev = new DevQProperty();
+        // dev->setBusAddress(addr);
 
         for(uint16_t i = 0; i < 256; i++) {
             if(devSort[i] == NULL) {
-                devSort[i] = devAddr[addr];
+                devSort[i] = dev;
                 break;
             }
         }
 
-        connect(devAddr[addr], &DevQProperty::binFrameOut, this, &Device::binFrameOut);
-        connect(devAddr[addr], &DevQProperty::binFrameOut, link, &Link::writeFrame);
+        if(link != NULL) {
+            connect(dev, &DevQProperty::binFrameOut, this, &Device::binFrameOut);
+            connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
+        }
 
-        connect(devAddr[addr], &DevQProperty::chartComplete, this, &Device::chartComplete);
-        connect(devAddr[addr], &DevQProperty::iqComplete, this, &Device::iqComplete);
-        connect(devAddr[addr], &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
-        connect(devAddr[addr], &DevQProperty::distComplete, this, &Device::distComplete);
-        connect(devAddr[addr], &DevQProperty::usblSolutionComplete, this, &Device::usblSolutionComplete);
-        connect(devAddr[addr], &DevQProperty::dopplerBeamComplete, this, &Device::dopplerBeamComlete);
-        connect(devAddr[addr], &DevQProperty::dvlSolutionComplete, this, &Device::dvlSolutionComplete);
-        connect(devAddr[addr], &DevQProperty::upgradeProgressChanged, this, &Device::upgradeProgressChanged);
+        connect(dev, &DevQProperty::chartComplete, this, &Device::chartComplete);
+        connect(dev, &DevQProperty::iqComplete, this, &Device::iqComplete);
+        connect(dev, &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
+        connect(dev, &DevQProperty::distComplete, this, &Device::distComplete);
+        connect(dev, &DevQProperty::usblSolutionComplete, this, &Device::usblSolutionComplete);
+        connect(dev, &DevQProperty::dopplerBeamComplete, this, &Device::dopplerBeamComlete);
+        connect(dev, &DevQProperty::dvlSolutionComplete, this, &Device::dvlSolutionComplete);
+        connect(dev, &DevQProperty::upgradeProgressChanged, this, &Device::upgradeProgressChanged);
 
-        lastDevs = devAddr[addr];
-        lastRoute = addr;
+        dev->startConnection(link != NULL);
 
-        devAddr[addr]->startConnection(duplex);
-        emit devChanged();
+        return dev;
     }
 
     void gatewayKP();
