@@ -172,32 +172,58 @@ void LinkManager::openAsSerial(QUuid uuid)
     timer_->start();
 }
 
-void LinkManager::openAsUdp(QUuid uuid)
+void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
     timer_->stop();
 
-    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->updateUdpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsUdp();
+    }
 
     timer_->start();
 }
 
-void LinkManager::openAsTcp(QUuid uuid)
+void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
     timer_->stop();
 
-    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->updateTcpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsTcp();
+    }
 
     timer_->start();
 }
 
-void LinkManager::close(QUuid uuid)
+void LinkManager::closeLink(QUuid uuid)
 {
     timer_->stop();
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
         linkPtr->close();
+
+    timer_->start();
+}
+
+void LinkManager::deleteLink(QUuid uuid)
+{
+    timer_->stop();
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        emit linkDeleted(linkPtr);
+
+        emit deleteModel(linkPtr->getUuid());
+        linkPtr->disconnect();
+        this->disconnect(linkPtr);
+
+        if (linkPtr->isOpen())
+            linkPtr->close();
+
+        qDebug() << "link deleted: " << linkPtr->getUuid();
+
+        delete linkPtr;
+    }
 
     timer_->start();
 }

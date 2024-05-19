@@ -19,7 +19,9 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this, &LinkManagerWrapper::sendCreateAsTcp, workerObject_.get(), &LinkManager::createAsTcp);
     QObject::connect(this, &LinkManagerWrapper::sendOpenAsTcp, workerObject_.get(), &LinkManager::openAsTcp);
 
-    QObject::connect(this, &LinkManagerWrapper::sendClose, workerObject_.get(), &LinkManager::close);
+    QObject::connect(this, &LinkManagerWrapper::sendCloseLink, workerObject_.get(), &LinkManager::closeLink);
+    QObject::connect(this, &LinkManagerWrapper::sendDeleteLink, workerObject_.get(), &LinkManager::deleteLink);
+
 
     // thread -> this
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel, this, &LinkManagerWrapper::appendModifyModelData);
@@ -58,9 +60,9 @@ void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destin
     emit sendCreateAsUdp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsUdp(QUuid uuid)
+void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
-    emit sendOpenAsUdp(uuid);
+    emit sendOpenAsUdp(uuid, address, sourcePort, destinationPort);
 }
 
 void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destinationPort)
@@ -68,14 +70,19 @@ void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destin
     emit sendCreateAsTcp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsTcp(QUuid uuid)
+void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
-    emit sendOpenAsTcp(uuid);
+    emit sendOpenAsTcp(uuid, address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::close(QUuid uuid)
+void LinkManagerWrapper::closeLink(QUuid uuid)
 {
-    emit sendClose(uuid);
+    emit sendCloseLink(uuid);
+}
+
+void LinkManagerWrapper::deleteLink(QUuid uuid)
+{
+    emit sendDeleteLink(uuid);
 }
 
 void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,

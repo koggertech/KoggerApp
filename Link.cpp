@@ -71,6 +71,15 @@ void Link::createAsUdp(const QString &address, int sourcePort, int destinationPo
     destinationPort_ = destinationPort;
 }
 
+void Link::updateUdpParameters(const QString& address, int sourcePort, int destinationPort)
+{
+    qDebug() << "Link::updateUdpParameters, uuid:" << getUuid().toString();
+
+    address_ = address;
+    sourcePort_ = sourcePort;
+    destinationPort_ = destinationPort;
+}
+
 void Link::openAsUdp()
 {
     qDebug() << "Link::openAsUdp, uuid:" << getUuid().toString();
@@ -109,6 +118,15 @@ void Link::createAsTcp(const QString &address, int sourcePort, int destinationPo
     qDebug() << "Link::createAsTcp, uuid:" << getUuid().toString();
 
     linkType_ = LinkType::LinkIPTCP;
+    address_ = address;
+    sourcePort_ = sourcePort;
+    destinationPort_ = destinationPort;
+}
+
+void Link::updateTcpParameters(const QString& address, int sourcePort, int destinationPort)
+{
+    qDebug() << "Link::updateTcpParameters, uuid:" << getUuid().toString();
+
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;

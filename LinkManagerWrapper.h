@@ -35,23 +35,26 @@ signals:
     void sendOpenAsSerial(QUuid uuid);
 
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
-    void sendOpenAsUdp(QUuid uuid);
+    void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
-    void sendOpenAsTcp(QUuid uuid);
+    void sendOpenAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
-    void sendClose(QUuid uuid);
+    void sendCloseLink(QUuid uuid);
+    void sendDeleteLink(QUuid uuid);
 
 public slots:
 
     void openAsSerial(QUuid uuid);
 
     void createAsUdp(QString address, int sourcePort, int destinationPort);
-    void openAsUdp(QUuid uuid);
+    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
     void createAsTcp(QString address, int sourcePort, int destinationPort);
-    void openAsTcp(QUuid uuid);
+    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
-    void close(QUuid uuid);
+    void closeLink(QUuid uuid);
+    void deleteLink(QUuid uuid);
+
 
     // for model
     void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,

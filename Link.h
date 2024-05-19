@@ -43,13 +43,15 @@ class Link : public QObject {
 public:
     Link();
 
-    void createAsSerial(const QString &portName, int baudrate, bool parity);
+    void createAsSerial(const QString& portName, int baudrate, bool parity);
     void openAsSerial();
 
-    void createAsUdp(const QString &address, int sourcePort, int destinationPort);
+    void createAsUdp(const QString& address, int sourcePort, int destinationPort);
+    void updateUdpParameters(const QString& address, int sourcePort, int destinationPort);
     void openAsUdp();
 
-    void createAsTcp(const QString &address, int sourcePort, int destinationPort);
+    void createAsTcp(const QString& address, int sourcePort, int destinationPort);
+    void updateTcpParameters(const QString& address, int sourcePort, int destinationPort);
     void openAsTcp();
 
     void openAsUDP(const QString &address, const int port_in,  const int port_out); //

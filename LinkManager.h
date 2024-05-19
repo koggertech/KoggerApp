@@ -49,10 +49,11 @@ public slots:
     void onExpiredTimer();
 
     void openAsSerial(QUuid uuid);
-    void openAsUdp(QUuid uuid);
-    void openAsTcp(QUuid uuid);
+    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
-    void close(QUuid uuid);
+    void closeLink(QUuid uuid);
+    void deleteLink(QUuid uuid);
 
     void frameInput(Link* link, FrameParser frame); //
 
