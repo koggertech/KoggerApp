@@ -47,6 +47,9 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
         bool isBeen{ false };
 
         for (auto& itmJ : list_) {
+            if (itmJ->getLinkType() != LinkType::LinkSerial)
+                continue;
+
             if (itmI.portName() == itmJ->getPortName()) {
                 isBeen = true;
                 break;
@@ -81,6 +84,9 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
 {
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
+
+        if (link->getLinkType() != LinkType::LinkSerial)
+            continue;
 
         bool isBeen{ false };
         for (const auto& itm : currSerialList) {
