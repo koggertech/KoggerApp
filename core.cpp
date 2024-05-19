@@ -24,14 +24,11 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
-    connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, &_devs, &Device::frameInput);
-
-    connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
-    connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
+    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::frameReady, &_devs, &Device::frameInput);
+    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
+    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
 
     createControllers();
-
-    //linkManager_->update();
 }
 
 Core::~Core()

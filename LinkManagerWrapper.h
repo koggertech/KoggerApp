@@ -19,16 +19,14 @@ public:
     /*methods*/
     LinkManagerWrapper(QObject* parent);
     ~LinkManagerWrapper();
-    LinkListModel* getModelPtr();
 
-    LinkManager* getWorker() { //
-        return workerObject_.get();
-    }
+    LinkListModel* getModelPtr();
+    std::shared_ptr<LinkManager> getWorker();
 
 private:
     /*data*/
     std::unique_ptr<QThread> workerThread_;
-    std::unique_ptr<LinkManager> workerObject_;
+    std::shared_ptr<LinkManager> workerObject_;
     LinkListModel model_;
 
 signals:

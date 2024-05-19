@@ -6,7 +6,7 @@
 LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 {
     workerThread_ = std::make_unique<QThread>(/**/);
-    workerObject_ = std::make_unique<LinkManager>(this);
+    workerObject_ = std::make_shared<LinkManager>(this);
 
     QObject::connect(workerThread_.get(), &QThread::started, workerObject_.get(), &LinkManager::onExpiredTimer);
 
@@ -36,6 +36,11 @@ LinkManagerWrapper::~LinkManagerWrapper()
 LinkListModel* LinkManagerWrapper::getModelPtr()
 {
     return &model_;
+}
+
+std::shared_ptr<LinkManager> LinkManagerWrapper::getWorker()
+{
+    return workerObject_;
 }
 
 void LinkManagerWrapper::openAsSerial(QUuid uuid)
