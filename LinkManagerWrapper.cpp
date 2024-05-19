@@ -12,6 +12,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     // this -> thread
     QObject::connect(this, &LinkManagerWrapper::sendOpenAsSerial, workerObject_.get(), &LinkManager::openAsSerial);
+    QObject::connect(this, &LinkManagerWrapper::sendUpdateBaudrate, workerObject_.get(), &LinkManager::updateBaudrate);
 
     QObject::connect(this, &LinkManagerWrapper::sendCreateAsUdp, workerObject_.get(), &LinkManager::createAsUdp);
     QObject::connect(this, &LinkManagerWrapper::sendOpenAsUdp, workerObject_.get(), &LinkManager::openAsUdp);
@@ -53,6 +54,11 @@ std::shared_ptr<LinkManager> LinkManagerWrapper::getWorker()
 void LinkManagerWrapper::openAsSerial(QUuid uuid)
 {
     emit sendOpenAsSerial(uuid);
+}
+
+void LinkManagerWrapper::updateBaudrate(QUuid uuid, int baudrate)
+{
+    emit sendUpdateBaudrate(uuid, baudrate);
 }
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)

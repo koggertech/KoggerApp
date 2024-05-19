@@ -32,10 +32,12 @@ private:
 signals:
     void modelChanged(); //
 
+    void sendUpdateBaudrate(QUuid uuid, int baudrate);
     void sendOpenAsSerial(QUuid uuid);
 
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
@@ -45,6 +47,7 @@ signals:
 public slots:
 
     void openAsSerial(QUuid uuid);
+    void updateBaudrate(QUuid uuid, int baudrate);
 
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);

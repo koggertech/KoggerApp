@@ -45,6 +45,7 @@ public:
 
     void createAsSerial(const QString& portName, int baudrate, bool parity);
     void openAsSerial();
+    void updateBaudrate(int baudrate);
 
     void createAsUdp(const QString& address, int sourcePort, int destinationPort);
     void updateUdpParameters(const QString& address, int sourcePort, int destinationPort);

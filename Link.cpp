@@ -61,6 +61,17 @@ void Link::openAsSerial()
 
 }
 
+void Link::updateBaudrate(int baudrate)
+{
+    qDebug() << "Link::updateBaudrate";
+
+    baudrate_ = baudrate;
+    if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
+        currDev->setBaudRate(baudrate_);
+        qDebug() << "casted & setted";
+    }
+}
+
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
 {
     qDebug() << "Link::createAsUdp, uuid:" << getUuid().toString();

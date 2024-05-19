@@ -63,19 +63,7 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
             // list
             list_.append(link);
             // model
-            emit appendModifyModel(link->getUuid(),
-                                   link->getConnectionStatus(),
-                                   link->getControlType(),
-                                   link->getPortName(),
-                                   link->getBaudrate(),
-                                   link->getParity(),
-                                   link->getLinkType(),
-                                   link->getAddress(),
-                                   link->getSourcePort(),
-                                   link->getDestinationPort(),
-                                   link->isPinned(),
-                                   link->isHided(),
-                                   link->isNotAvailable());
+            doEmitAppendModifyModel(link);
         }
     }
 }
@@ -137,22 +125,27 @@ Link *LinkManager::getLinkPtr(QUuid uuid)
     return retVal;
 }
 
+void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
+{
+    emit appendModifyModel(linkPtr->getUuid(),
+                           linkPtr->getConnectionStatus(),
+                           linkPtr->getControlType(),
+                           linkPtr->getPortName(),
+                           linkPtr->getBaudrate(),
+                           linkPtr->getParity(),
+                           linkPtr->getLinkType(),
+                           linkPtr->getAddress(),
+                           linkPtr->getSourcePort(),
+                           linkPtr->getDestinationPort(),
+                           linkPtr->isPinned(),
+                           linkPtr->isHided(),
+                           linkPtr->isNotAvailable());
+}
+
 void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 {
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        emit appendModifyModel(linkPtr->getUuid(),
-                               linkPtr->getConnectionStatus(),
-                               linkPtr->getControlType(),
-                               linkPtr->getPortName(),
-                               linkPtr->getBaudrate(),
-                               linkPtr->getParity(),
-                               linkPtr->getLinkType(),
-                               linkPtr->getAddress(),
-                               linkPtr->getSourcePort(),
-                               linkPtr->getDestinationPort(),
-                               linkPtr->isPinned(),
-                               linkPtr->isHided(),
-                               linkPtr->isNotAvailable());
+        doEmitAppendModifyModel(linkPtr);
     }
 }
 
@@ -172,6 +165,19 @@ void LinkManager::openAsSerial(QUuid uuid)
     timer_->start();
 }
 
+void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
+{
+    timer_->stop();
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->updateBaudrate(baudrate);
+
+        doEmitAppendModifyModel(linkPtr); //
+    }
+
+    timer_->start();
+}
+
 void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
     timer_->stop();
@@ -179,6 +185,8 @@ void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int des
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->updateUdpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsUdp();
+
+        doEmitAppendModifyModel(linkPtr); //
     }
 
     timer_->start();
@@ -191,6 +199,8 @@ void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int des
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->updateTcpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsTcp();
+
+        doEmitAppendModifyModel(linkPtr); //
     }
 
     timer_->start();
@@ -200,8 +210,11 @@ void LinkManager::closeLink(QUuid uuid)
 {
     timer_->stop();
 
-    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->close();
+
+        doEmitAppendModifyModel(linkPtr); //
+    }
 
     timer_->start();
 }
@@ -247,19 +260,7 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
 
     list_.append(newLinkPtr);
 
-    emit appendModifyModel(newLinkPtr->getUuid(),
-                           newLinkPtr->getConnectionStatus(),
-                           newLinkPtr->getControlType(),
-                           newLinkPtr->getPortName(),
-                           newLinkPtr->getBaudrate(),
-                           newLinkPtr->getParity(),
-                           newLinkPtr->getLinkType(),
-                           newLinkPtr->getAddress(),
-                           newLinkPtr->getSourcePort(),
-                           newLinkPtr->getDestinationPort(),
-                           newLinkPtr->isPinned(),
-                           newLinkPtr->isHided(),
-                           newLinkPtr->isNotAvailable());
+    doEmitAppendModifyModel(newLinkPtr);
 }
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
@@ -274,17 +275,5 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
 
     list_.append(newLinkPtr);
 
-    emit appendModifyModel(newLinkPtr->getUuid(),
-                           newLinkPtr->getConnectionStatus(),
-                           newLinkPtr->getControlType(),
-                           newLinkPtr->getPortName(),
-                           newLinkPtr->getBaudrate(),
-                           newLinkPtr->getParity(),
-                           newLinkPtr->getLinkType(),
-                           newLinkPtr->getAddress(),
-                           newLinkPtr->getSourcePort(),
-                           newLinkPtr->getDestinationPort(),
-                           newLinkPtr->isPinned(),
-                           newLinkPtr->isHided(),
-                           newLinkPtr->isNotAvailable());
+    doEmitAppendModifyModel(newLinkPtr);
 }

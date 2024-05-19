@@ -28,6 +28,8 @@ private:
     void update();
     Link *getLinkPtr(QUuid uuid);
 
+    void doEmitAppendModifyModel(Link* linkPtr);
+
     /*data*/
     QList<Link*> list_;
     std::unique_ptr<QTimer> timer_;
@@ -49,6 +51,8 @@ public slots:
     void onExpiredTimer();
 
     void openAsSerial(QUuid uuid);
+    void updateBaudrate(QUuid uuid,int baudrate);
+
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
