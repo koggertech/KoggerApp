@@ -220,6 +220,20 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
     QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
 
     list_.append(newLinkPtr);
+
+    emit appendModifyModel(newLinkPtr->getUuid(),
+                           newLinkPtr->getConnectionStatus(),
+                           newLinkPtr->getControlType(),
+                           newLinkPtr->getPortName(),
+                           newLinkPtr->getBaudrate(),
+                           newLinkPtr->getParity(),
+                           newLinkPtr->getLinkType(),
+                           newLinkPtr->getAddress(),
+                           newLinkPtr->getSourcePort(),
+                           newLinkPtr->getDestinationPort(),
+                           newLinkPtr->isPinned(),
+                           newLinkPtr->isHided(),
+                           newLinkPtr->isNotAvailable());
 }
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
@@ -233,4 +247,18 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
 
     list_.append(newLinkPtr);
+
+    emit appendModifyModel(newLinkPtr->getUuid(),
+                           newLinkPtr->getConnectionStatus(),
+                           newLinkPtr->getControlType(),
+                           newLinkPtr->getPortName(),
+                           newLinkPtr->getBaudrate(),
+                           newLinkPtr->getParity(),
+                           newLinkPtr->getLinkType(),
+                           newLinkPtr->getAddress(),
+                           newLinkPtr->getSourcePort(),
+                           newLinkPtr->getDestinationPort(),
+                           newLinkPtr->isPinned(),
+                           newLinkPtr->isHided(),
+                           newLinkPtr->isNotAvailable());
 }
