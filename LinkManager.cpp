@@ -204,7 +204,9 @@ void LinkManager::close(QUuid uuid)
 
 void LinkManager::frameInput(Link *link, FrameParser frame)
 {
-
+    // TODO
+    Q_UNUSED(link);
+    Q_UNUSED(frame);
 }
 
 void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPort)
