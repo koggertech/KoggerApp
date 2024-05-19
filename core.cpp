@@ -14,7 +14,8 @@ Core::Core() : QObject(),
 //    connectionThread.start();
 
     connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
-    connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
+    connect(&_devs, &Device::rawDataRecieved, _dataset, &Dataset::rawDataRecieved);
+
     connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
     connect(&_devs, &Device::usblSolutionComplete, _dataset, &Dataset::addUsblSolution);
     connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
@@ -353,39 +354,35 @@ bool Core::exportComplexToCSV(QString file_path) {
 
     QMap<int, DatasetChannel> ch_list = _dataset->channelsList();
 
-    _dataset->setRefPosition(1518);
+    // _dataset->setRefPosition(1518);
 
     for(int i = 0; i < _dataset->size(); i++) {
         Epoch* epoch = _dataset->fromIndex(i);
 
         if(epoch == NULL) { continue; }
 
-        Epoch::Echogram* echogramm = epoch->chart(0);
-        float dist = echogramm->bottomProcessing.getDistance();
-        Position pos = epoch->getPositionGNSS();
+        if(epoch->isComplexSignalAvail()) {
+            ComplexSignals sigs = epoch->complexSignals();
 
-        if(!isfinite(dist)) { continue; }
+            for (auto ch = sigs.cbegin(), end = sigs.cend(); ch != end; ++ch) {
+                ComplexSignal signal = ch.value();
 
-        for (const auto& channel : ch_list) {
-            int ich = channel.channel;
+                ComplexF* data = signal.data.data();
+                int data_size = signal.data.size();
 
-            Complex16* data = epoch->complexSignalData16(ich);
-            int data_size = epoch->complexSignalSize16(ich);
+                QString row_data;
+                row_data.append(QString("%1,%2").arg(i).arg(ch.key()));
+                row_data.append(QString(",%1").arg(signal.globalOffset));
 
-            QString row_data;
-
-            row_data.append(QString("%1,%2").arg(i).arg(ich));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
-            row_data.append(QString(",%1,%2").arg(pos.ned.n).arg(pos.ned.e));
-
-            if(data != NULL && data_size > 0) {
-                for(int ci = 0; ci < data_size; ci++) {
-                    row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                if(data != NULL && data_size > 0) {
+                    for(int ci = 0; ci < data_size; ci++) {
+                        row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                    }
                 }
-            }
 
-            row_data.append("\n");
-            _logger.dataExport(row_data);
+                row_data.append("\n");
+                _logger.dataExport(row_data);
+            }
         }
     }
 
@@ -416,7 +413,8 @@ bool Core::exportUSBLToCSV(QString file_path) {
 
         Position pos = epoch->getPositionGNSS();
 
-        if(pos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
+        // pos.ned.isCoordinatesValid() && epoch->isAttAvail() &&
+        if( epoch->isUsblSolutionAvailable()) {
             QString row_data;
 
             row_data.append(QString("%1").arg(i));

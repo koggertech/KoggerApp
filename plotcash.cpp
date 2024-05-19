@@ -31,11 +31,14 @@ void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, i
     _charts[channel].type = 1;
 }
 
-void Epoch::setComplexSignal16(int channel, QVector<Complex16> data) {
-    _complex[channel].data = QByteArray((const char*)data.constData(), data.size()*sizeof(Complex16));
-    _complex[channel].type = 2;
-}
+// void Epoch::setComplexSignal16(int channel, QVector<Complex16> data) {
+//     // _complex[channel].data = QByteArray((const char*)data.constData(), data.size()*sizeof(Complex16));
+//     // _complex[channel].type = 2;
+// }
 
+void Epoch::setComplexF(int channel, ComplexSignal signal) {
+    _complex[channel] = signal;
+}
 void Epoch::setDist(int dist) {
     _rangeFinders[0] = dist*0.001;
     flags.distAvail = true;
@@ -132,6 +135,33 @@ void Epoch::doBottomTrack2D(Echogram &chart, bool is_update_dist) {
 void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
     Q_UNUSED(chart);
     Q_UNUSED(is_update_dist);
+}
+
+void Epoch::moveComplexToEchogram(float offset_m) {
+    for (auto i = _complex.cbegin(), end = _complex.cend(); i != end; ++i) {
+        // cout << qPrintable(i.key()) << ": " << i.value() << endl;
+        QVector<ComplexF> data = i.value().data;
+
+
+        int size = data.size();
+        ComplexF* compelex_data = data.data();
+
+        QVector<uint8_t> chart(size);
+        uint8_t* chart_data = chart.data();
+
+        for(int i  = 0; i < size; i++) {
+            float amp = (compelex_data[i].logPow() - 86)*2.5;
+
+            if(amp < 0) {
+                amp = 0;
+            } else if(amp > 255) {
+                amp = 255;
+            }
+            chart_data[i] = amp;
+        }
+
+        setChart(i.key(), chart, 1500.0f/i.value().sampleRate, offset_m);
+    }
 }
 
 Dataset::Dataset() : lastBoatTrackEpoch_(0), lastBottomTrackEpoch_(0) {
@@ -231,44 +261,83 @@ void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution,
     emit dataUpdate();
 }
 
-void Dataset::addComplexSignal(QByteArray data, uint8_t type) {
-    Q_UNUSED(type);
+void Dataset::rawDataRecieved(RawData raw_data) {
+    Epoch* last_epoch = last();
 
-    int pool_index = endIndex();
+    RawData::RawDataHeader header = raw_data.header;
 
-    if(pool_index < 0 || !_pool[pool_index].isComplexSignalAvail()) {
-        addNewEpoch();
-        pool_index = endIndex();
-    }
+    ComplexF* compelex_data = (ComplexF*)raw_data.data.data();
+    int size = raw_data.data.size()/sizeof(ComplexF)/header.channelCount;
 
-    const int ch_number = 4;
-
-    ComplexF* compelex_data = (ComplexF*)data.data();
-    int size = data.size()/sizeof(ComplexF)/ch_number;
-
-    for(int ich = 0; ich < ch_number; ich++) {
-        QVector<uint8_t> chart(size);
-        uint8_t* chart_data = chart.data();
-
-        QVector<ComplexF> signal(size);
-        ComplexF* signal_data = signal.data();
-
-
-        for(int i  = 0; i < size; i++) {
-            float amp = (compelex_data[i*ch_number + ich].logPow() - 86)*2.5;
-            if(amp < 0) {
-                amp = 0;
-            } else if(amp > 255) {
-                amp = 255;
-            }
-            chart_data[i] = amp;
+    if(header.localOffset == 0) {
+        float offset_m = 0;
+        if(last_epoch->isUsblSolutionAvailable()) {
+            offset_m = last_epoch->usblSolution().distance_m;
+            offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
         }
+        last_epoch->moveComplexToEchogram(offset_m);
+        last_epoch = addNewEpoch();
+        ComplexSignals compex_signals = last_epoch->complexSignals();
 
-        addChart(ich, chart, 0.06, 0);
-        // _pool[endIndex()].setComplexSignal16(ich, signal);
+        for(int ich = 0; ich < header.channelCount; ich++) {
+            ComplexSignal signal = compex_signals[ich];
+
+            signal.globalOffset = header.globalOffset;
+            signal.sampleRate = header.sampleRate;
+            signal.isComplex = header.isComplex;
+
+            signal.data.resize(size);
+            ComplexF* signal_data = signal.data.data();
+
+            for(int i  = 0; i < size; i++) {
+                signal_data[i] = compelex_data[i*header.channelCount + ich];
+            }
+            last_epoch->setComplexF(ich, signal);
+        }
+    } else {
+        ComplexSignals compex_signals = last_epoch->complexSignals();
+
+        for(int ich = 0; ich < header.channelCount; ich++) {
+            ComplexSignal signal = compex_signals[ich];
+            uint32_t inbuf_localOffset = signal.data.size();
+            if(inbuf_localOffset == header.localOffset) {
+                signal.data.resize(signal.data.size() + size);
+                ComplexF* signal_data = signal.data.data() + inbuf_localOffset;
+
+                for(int i  = 0; i < size; i++) {
+                    signal_data[i] = compelex_data[i*header.channelCount + ich];
+                }
+
+                last_epoch->setComplexF(ich, signal);
+            } else {
+                continue;
+            }
+        }
     }
 
-    //    updateImage(true);
+    // for(int ich = 0; ich < header.channelCount; ich++) {
+    //     QVector<uint8_t> chart(size);
+    //     uint8_t* chart_data = chart.data();
+
+    //     ComplexSignal signal = compex_signals[ich];
+    //     ComplexF* signal_data = signal.data.data();
+
+    //     for(int i  = 0; i < size; i++) {
+    //         float amp = (compelex_data[i*header.channelCount + ich].logPow() - 86)*2.5;
+    //         signal_data[size] = compelex_data[i*header.channelCount + ich];
+
+    //         if(amp < 0) {
+    //             amp = 0;
+    //         } else if(amp > 255) {
+    //             amp = 255;
+    //         }
+    //         chart_data[i] = amp;
+    //     }
+
+    //     addChart(ich, chart, 0.06, 0);
+    //     _pool[endIndex()].setComplexF(ich, signal);
+    // }
+
     emit dataUpdate();
 }
 

@@ -81,6 +81,7 @@ signals:
     void dataSend(QByteArray data);
 
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
+    void rawDataRecieved(RawData raw_data);
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
@@ -159,7 +160,7 @@ protected:
 
         connect(devAddr[addr], &DevQProperty::binFrameOut, this, &Device::binFrameOut);
         connect(devAddr[addr], &DevQProperty::chartComplete, this, &Device::chartComplete);
-        connect(devAddr[addr], &DevQProperty::iqComplete, this, &Device::iqComplete);
+        connect(devAddr[addr], &DevQProperty::rawDataRecieved, this, &Device::rawDataRecieved);
         connect(devAddr[addr], &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
         connect(devAddr[addr], &DevQProperty::distComplete, this, &Device::distComplete);
         connect(devAddr[addr], &DevQProperty::usblSolutionComplete, this, &Device::usblSolutionComplete);

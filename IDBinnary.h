@@ -137,11 +137,7 @@ protected:
 
 
 
-class IDBinChart : public IDBin
-{
-    Q_OBJECT
-public:
-
+struct RawData {
     struct RawDataHeader {
         struct  __attribute__((packed)) {
             uint8_t dataType : 3; // int8, int16, int32, float
@@ -152,7 +148,17 @@ public:
         uint32_t globalOffset = 0;
         uint32_t localOffset = 0;
         float sampleRate = 0;
-    } __attribute__((packed)) ;
+    } __attribute__((packed));
+
+    RawDataHeader header;
+    QByteArray data;
+};
+
+
+class IDBinChart : public IDBin
+{
+    Q_OBJECT
+public:
 
     explicit IDBinChart() : IDBin() {
     }
@@ -174,9 +180,9 @@ public:
     U2 offsetRange() {return m_absOffset*m_sampleResol; }
 
     uint8_t* logData8() { return m_completeChart; }
-    uint8_t* rawData() { return _rawDataSave; }
-    uint32_t rawDataSize() { return _rawDataSize; }
-    uint8_t rawType() { return type; }
+    // uint8_t* rawData() { return _rawDataSave; }
+    // uint32_t rawDataSize() { return _rawDataSize; }
+    // uint8_t rawType() { return type; }
 
 protected:
     uint32_t m_seqOffset = 0, m_sampleResol = 0, m_absOffset = 0;
@@ -185,20 +191,11 @@ protected:
     uint8_t m_fillChart[20000];
     uint8_t m_completeChart[20000];
 
-    int _lastCellsLength = 0;
-    int _byteOffset = 0;
-    int _lastLocalOffset = 0;
-    uint32_t _rawDataSize = 0;
-    uint32_t _rawCellCount = 0;
-    // uint32_t _lastSeqPosition = 0;
-    uint32_t _rawSeqPosition = 0;
-    uint16_t channel = 0;
-    uint8_t type = 0;
-    uint8_t _rawData[1024*256];
-    uint8_t _rawDataSave[1024*256];
     bool m_isCompleteChart = false;
 
-    RawDataHeader _rawHeader = {};
+    RawData _rawData;
+signals:
+    void rawDataRecieved(RawData raw_data);
 };
 
 

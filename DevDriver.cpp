@@ -19,6 +19,7 @@ DevDriver::DevDriver(QObject *parent) :
 
     regID(idDist = new IDBinDist(), &DevDriver::receivedDist);
     regID(idChart = new IDBinChart(), &DevDriver::receivedChart);
+    connect(idChart, &IDBinChart::rawDataRecieved, this, &DevDriver::rawDataRecieved);
     regID(idAtt = new IDBinAttitude(), &DevDriver::receivedAtt);
     regID(idTemp = new IDBinTemp(), &DevDriver::receivedTemp);
 
@@ -769,10 +770,11 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 
             emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
 
-        } else if(ver == v7) {
-            QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
-            emit iqComplete(data, idChart->rawType());
         }
+        // else if(ver == v7) {
+        //     QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
+        //     emit iqComplete(data, idChart->rawType());
+        // }
     }
 }
 

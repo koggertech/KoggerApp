@@ -193,50 +193,21 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             return respErrorPayload;
         }
     } else if(proto.ver() == v7) {
-        proto.read(&_rawHeader);
+        RawData::RawDataHeader header;
 
-        int data_step = _rawHeader.dataSize*_rawHeader.channelCount;
+        proto.read(&header);
 
-        type = _rawHeader.dataType;
-
-        int local_pos = _rawHeader.localOffset;
-
-        if(local_pos == 0) {
-            // _rawCellCount = _lastLocalOffset + _lastCellsLength;
-            _rawDataSize = _byteOffset;
-            memcpy(_rawDataSave, _rawData, _byteOffset);
-            _byteOffset = 0;
-            _lastLocalOffset = 0;
-            _lastCellsLength = 0;
-            // _lastLocalCounter = 0;
-            m_isCompleteChart = true;
-            qDebug("size %i",  _rawDataSize);
-            // qDebug("size %i, _rawDataSize %i, cell_byte_size %i", _rawDataSize, _rawCellCount, cell_byte_size);
-        }
-
-        int byte_avail = (proto.readAvailable()/data_step)*data_step;
-
-        if(local_pos == _lastLocalOffset + _lastCellsLength) {
-            if(data_step > 0) {
-                uint32_t cell_number = byte_avail/data_step;
-                proto.read((uint8_t*)&_rawData[_byteOffset], byte_avail);
-                _lastCellsLength = cell_number;
-                _byteOffset += byte_avail;
-            }
-            // qDebug("counter %i, bytes %i, pos %i, loc %i", _lastCellsLength, _byteOffset, _lastLocalOffset, local_pos);
-        } else {
-            qDebug("ERROR counter %i, bytes %i, pos %i, loc %i", _lastCellsLength, _byteOffset, _lastLocalOffset, local_pos);
-        }
-
-        _lastLocalOffset = local_pos;
-
+        int avail = proto.readAvailable();
+        RawData raw_data;
+        raw_data.header = header;
+        raw_data.data = QByteArray((char*)proto.read(avail), avail);
+        emit rawDataRecieved(raw_data);
     } else {
         return respErrorVersion;
     }
 
     return respOk;
 }
-
 
 Resp IDBinAttitude::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
@@ -255,6 +226,7 @@ Resp IDBinAttitude::parsePayload(FrameParser &proto) {
 
     return respOk;
 }
+
 
 float IDBinAttitude::yaw(Version src_ver) {
     Q_UNUSED(src_ver);
@@ -932,3 +904,5 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
 
     return respOk;
 }
+
+
