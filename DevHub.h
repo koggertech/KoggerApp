@@ -103,6 +103,9 @@ signals:
     void vruChanged();
 
 protected:
+    FrameParser _parser;
+
+    bool _isSupressParser = false;
 
     DevQProperty* devAddr[256] = {};
     DevQProperty* devSort[256] = {};
