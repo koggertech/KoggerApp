@@ -10,7 +10,7 @@ Device::Device()
 Device::~Device()
 { }
 
-void Device::frameInput(Link* link, FrameParser frame) {
+void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
     static int _cnter_echo = 0;
 
 
@@ -256,16 +256,30 @@ void Device::frameInput(Link* link, FrameParser frame) {
     }
 }
 
-void Device::onLinkClosed(Link *link)
+void Device::onLinkOpened(QUuid uuid, Link *link)
 {
+    Q_UNUSED(uuid);
+
+    qDebug() << "Device::onLinkOpened";
+    if (link) {
+        // TODO
+    }
+}
+
+void Device::onLinkClosed(QUuid uuid, Link *link)
+{
+    Q_UNUSED(uuid);
+
     qDebug() << "Device::onLinkClosed";
     if (link) {
         // TODO
     }
 }
 
-void Device::onLinkDeleted(Link *link)
+void Device::onLinkDeleted(QUuid uuid, Link *link)
 {
+    Q_UNUSED(uuid);
+
     qDebug() << "Device::onLinkDeleted";
     if (link) {
         // TODO

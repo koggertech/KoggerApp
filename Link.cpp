@@ -51,6 +51,8 @@ void Link::openAsSerial()
     if (serialPort->isOpen()) {
         setDev(serialPort);
         emit connectionStatusChanged(uuid_);
+        emit opened(uuid_, this);
+
         qDebug() << "link opened as serial: " << getUuid();
     }
     else {
@@ -114,6 +116,8 @@ void Link::openAsUdp()
         setDev(socketUdp);
 
         emit connectionStatusChanged(uuid_);
+        emit opened(uuid_, this);
+
         qDebug() << "link opened as udp: " << getUuid();
     }
     else {
@@ -315,6 +319,7 @@ void Link::deleteDev()
         if (ioDevice_->isOpen()) {
             ioDevice_->close();
             emit connectionStatusChanged(uuid_);  // ???
+            //emit closed(uuid_, this)
         }
 
         ioDevice_->disconnect(this);
@@ -338,7 +343,7 @@ void Link::toParser(const QByteArray data) {
     while (_frame.availContext() > 0) {
         _frame.process();
         if(_frame.isComplete()) {
-            emit frameReady(this, _frame);
+            emit frameReady(uuid_, this, _frame);
         }
     }
 }
@@ -355,7 +360,7 @@ void Link::aboutToClose() {
     if (dev != nullptr) {
         //emit changeState(); //
         emit connectionStatusChanged(uuid_);
-        emit closed(this);
+        emit closed(uuid_, this);
         qDebug() << "link aboutToClose dev: " << getUuid();
     }
 }

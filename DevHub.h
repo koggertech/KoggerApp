@@ -56,9 +56,10 @@ public:
     }
 
 public slots:
-    void frameInput(Link* link, FrameParser frame);
-    void onLinkClosed(Link* link);
-    void onLinkDeleted(Link* link);
+    void frameInput(QUuid uuid, Link* link, FrameParser frame);
+    void onLinkOpened(QUuid uuid, Link *link);
+    void onLinkClosed(QUuid uuid, Link* link);
+    void onLinkDeleted(QUuid uuid, Link* link);
     void binFrameOut(ProtoBinOut proto_out);
     // void startConnection(bool duplex);
     void stopConnection();

@@ -40,10 +40,11 @@ signals:
     void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
                        LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
     void deleteModel(QUuid uuid);
-    void frameReady(Link* link, FrameParser frame); //
 
-    void linkClosed(Link* link);
-    void linkDeleted(Link* link);
+    void frameReady(QUuid uuid, Link* link, FrameParser frame); //
+    void linkClosed(QUuid uuid, Link* link);
+    void linkOpened(QUuid uuid, Link* link);
+    void linkDeleted(QUuid uuid, Link* link);
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
