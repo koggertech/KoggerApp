@@ -9,6 +9,7 @@ ColumnLayout {
     property var devList: devs.devs
 
     Layout.margins: 0
+    spacing: 10
 
     Connections {
         target: core
@@ -89,29 +90,52 @@ ColumnLayout {
 
             Item {
                 id: wrapper
-                width: filesList.width; height: 28
+                width: filesList.width; height: theme.controlHeight+4
 
-                // Rectangle {
-                //     anchors.fill: parent
-                //     color: theme.controlBackColor
-                // }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    anchors.leftMargin: 0
+                    anchors.rightMargin: 0
+                    anchors.verticalCenter: parent
+                    color: theme.controlBackColor
+                    border.width: 1
+                    border.color: theme.controlBorderColor
+                    radius: 2
+                }
 
                 RowLayout {
-                    spacing: 0
+                    spacing: 1
                     // Layout.fillWidth: true
                     anchors.fill: parent
+                    // anchors.topMargin: 2
+                    // anchors.bottomMargin: 2
+                    anchors.verticalCenter: parent
+                    anchors.margins: 1
 
                     CTextField {
-                        width: 40
+                        width: 47
+                        implicitWidth: 47
                         readOnly: true
                         selectByMouse: false
+                        leftPadding: 6
+                        rightPadding: 2
                         // textEdited: false
                         text: LinkType == 1 ? "COM" : LinkType == 2 ? "UDP" : LinkType == 2 ? "TCP" : "???"
-                        // background:  Rectangle {
-                        //     color: "transparent"
-                        //     border.width: 1
-                        //     border.color: theme.controlBorderColor
-                        // }
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
+                    }
+
+                    Rectangle {
+                        color: theme.controlBackColor
+                        height: parent.height
+                        width: 2
+                        border.width: 2
+                        border.color: theme.controlBorderColor
+                        radius: 0
                     }
 
                     CTextField {
@@ -121,6 +145,12 @@ ColumnLayout {
                         readOnly: true
                         visible: LinkType == 1
                         text: PortName
+
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
                     }
 
                     CCombo  {
@@ -130,19 +160,150 @@ ColumnLayout {
                         visible: LinkType == 1
                         model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
                         currentIndex: 4
+                        displayText: Baudrate
+
+                        onCurrentTextChanged: {
+                            linkManager.updateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                        }
+
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
+                    }
+
+                    CText {
+                        visible: LinkType == 2
+                        leftPadding: 6
+                        rightPadding: 0
+                        text: "IP:"
+                    }
+
+                    CTextField {
+                        id: ipAddressText
+                        visible: LinkType == 2
+                        hoverEnabled: true
+                        selectByMouse: true
+                        Layout.fillWidth: true
+                        leftPadding: 0
+                        rightPadding: 6
+
+                        text: ""
+                        // placeholderText: "ip"
+
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
+
+                        Keys.onPressed: {
+                            if (event.key === 16777220) {
+                                console.info(ipAddressText.text)
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: LinkType == 2
+                        color: theme.controlBackColor
+                        height: parent.height
+                        width: 2
+                        border.width: 2
+                        border.color: theme.controlBorderColor
+                        radius: 0
+                    }
+
+                    CText {
+                        visible: LinkType == 2
+                        leftPadding: 4
+                        rightPadding: 0
+                        text: "Src:"
+                    }
+
+                    CTextField {
+                        id: ipPortText
+                        visible: LinkType == 2
+                        hoverEnabled: true
+                        Layout.fillWidth: false
+                        implicitWidth: 60
+
+                        leftPadding: 2
+                        rightPadding: 2
+
+
+                        text: ""
+                        placeholderText: qsTr("")
+
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
+                    }
+
+                    Rectangle {
+                        visible: LinkType == 2
+                        color: theme.controlBackColor
+                        height: parent.height
+                        width: 2
+                        border.width: 2
+                        border.color: theme.controlBorderColor
+                        radius: 0
+                    }
+
+                    CText {
+                        visible: LinkType == 2
+                        leftPadding: 4
+                        rightPadding: 0
+                        text: "Dst:"
+                    }
+
+                    CTextField {
+                        id: ipPort2Text
+                        visible: LinkType == 2
+                        hoverEnabled: true
+                        Layout.fillWidth: false
+                        implicitWidth: 60
+                        leftPadding: 2
+                        rightPadding: 2
+
+                        text: ""
+                        placeholderText: qsTr("")
+
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
                     }
 
                     CButton {
                         text: ConnectionStatus ? "Close" : "Open"
                         backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
-                        borderRadius: 1
+                        borderRadius: 2
 
                         onClicked: {
                             if (ConnectionStatus) {
-                                linkManager.close(Uuid)
+                                linkManager.closeLink(Uuid)
                             }
                             else {
-                                LinkType == 1 ? linkManager.openAsSerial(Uuid) : LinkType == 2 ? linkManager.openAsUdp(Uuid) : LinkType == 2 ? linkManager.openAsTcp(Uuid) : console.log("Undefined type")
+                                switch(LinkType) {
+                                case 1:
+                                    linkManager.openAsSerial(Uuid)
+                                    break
+                                case 2:
+                                    linkManager.openAsUdp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
+                                    break
+                                case 3:
+                                    linkManager.openAsTcp(Uuid)
+                                    break
+                                default:
+                                    console.log("Undefined type")
+                                    break
+                                }
+
                             }
                         }
                     }
@@ -153,21 +314,28 @@ ColumnLayout {
         ListView {
             id: filesList
             model: linkManager.linkListModel
+            visible: count > 0
             Layout.margins: 0
-            Layout.topMargin: 30
-            Layout.bottomMargin: 30
+            Layout.topMargin: 0
+            Layout.bottomMargin: 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            height: 100
+            height: count*theme.controlHeight
+            Layout.preferredHeight: count*(theme.controlHeight+4)
+            Layout.maximumHeight: 10*(theme.controlHeight+4)
             delegate: fileItem
             focus: true
+
+            onCountChanged: {
+                // qDebug("sasa");
+                // console.log(filesList.count)
+            }
+
 //                flickableDirection: Flickable.AutoFlickDirection
 
 //                onCurrentIndexChanged: {
 //                    console.log(filesList.currentIndex);
 //                }
-
-//                contentWidth: 320
 
 //                highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
 
@@ -177,11 +345,24 @@ ColumnLayout {
 //                    }
 //                }
 
-//                ScrollBar.vertical: ScrollBar { }
+               ScrollBar.vertical: ScrollBar { }
 
         }
 
     }
+
+    MenuRow {
+        Layout.topMargin: 0
+        CButton {
+            Layout.topMargin: 0
+            text: "+ UDP"
+
+            onClicked: {
+                linkManager.createAsUdp("", 0, 0)
+            }
+        }
+    }
+
 
 //     MenuRow {
 //         visible: typeSerialTab.checked
