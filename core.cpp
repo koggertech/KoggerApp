@@ -26,6 +26,7 @@ Core::Core() : QObject(),
 
     QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::frameReady, &_devs, &Device::frameInput);
     QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
+    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkOpened, &_devs, &Device::onLinkOpened);
     QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
 
     createControllers();

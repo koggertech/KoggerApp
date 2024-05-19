@@ -136,8 +136,11 @@ signals:
     void readyParse(Link* link);
     // void changeState();
     void connectionStatusChanged(QUuid uuid);
-    void closed(Link* link);
-    void frameReady(Link* link, FrameParser frame);
+
+    void frameReady(QUuid uuid, Link* link, FrameParser frame);
+    void opened(QUuid uuid, Link* linkPtr);
+    void closed(QUuid uuid, Link* link);
+
     void dataReady();
 };
 
