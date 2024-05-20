@@ -259,6 +259,7 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
     QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
     QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
+    QObject::connect(newLinkPtr, &Link::opened, this, &LinkManager::linkOpened);
 
     list_.append(newLinkPtr);
 
@@ -274,6 +275,7 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
     QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
+    QObject::connect(newLinkPtr, &Link::opened, this, &LinkManager::linkOpened);
 
     list_.append(newLinkPtr);
 
