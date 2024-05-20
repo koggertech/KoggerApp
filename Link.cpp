@@ -99,7 +99,7 @@ void Link::openAsUdp()
 
     QUdpSocket *socketUdp = new QUdpSocket(this);
 
-    bool isBinded = socketUdp->bind(QHostAddress::AnyIPv4, sourcePort_, QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress);
+    bool isBinded = socketUdp->bind(QHostAddress::AnyIPv4, sourcePort_); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
 
     if (!isBinded) {
         delete socketUdp;
@@ -107,12 +107,9 @@ void Link::openAsUdp()
     }
 
     hostAddress_.setAddress(address_);
-    if (destinationPort_ > 0)
-        socketUdp->connectToHost(hostAddress_, destinationPort_, QIODevice::ReadWrite);
 
-    bool isOpen = socketUdp->state() != QAbstractSocket::UnconnectedState;
-
-    if (isOpen) {
+    if (isBinded) {
+        socketUdp->open(QIODevice::ReadWrite);
         setDev(socketUdp);
 
         emit connectionStatusChanged(uuid_);
@@ -155,21 +152,8 @@ void Link::openAsTcp()
 }
 
 void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
-    QUdpSocket* socket = new QUdpSocket();
-
-    socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     4*1024*1024);
-    socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 4*1024*1024);
-    bool is_bind = socket->bind(QHostAddress::Any, port_in); // , QAbstractSocket::ReuseAddressHint | QAbstractSocket::ShareAddress
-    if(port_out > 0) {
-        socket->connectToHost(address, port_out, QIODevice::ReadWrite);
-    }
-
-    if (is_bind) {
-        setDev(socket);
-        setType(LinkIPUDP);
-    } else {
-        delete socket;
-    }
+    updateUdpParameters(address, port_in, port_out);
+    openAsUdp();
 }
 
 bool Link::isOpen() const {
@@ -297,8 +281,12 @@ bool Link::writeFrame(FrameParser frame) {
 
 bool Link::write(QByteArray data) {
     QIODevice *dev = device();
-    if(dev != nullptr && dev->isOpen()) {
-        ioDevice_->write(data);
+    if(dev != nullptr && isOpen()) {
+        if(linkType_ == LinkType::LinkIPUDP) {
+            (static_cast<QUdpSocket*>(ioDevice_))->writeDatagram(data, hostAddress_, destinationPort_);
+        } else {
+            ioDevice_->write(data);
+        }
         return true;
     }
     return false;
@@ -306,7 +294,7 @@ bool Link::write(QByteArray data) {
 
 void Link::setDev(QIODevice *dev) {
     deleteDev();
-    if(dev != nullptr && dev->isOpen()) {
+    if(dev != nullptr) {
         ioDevice_ = dev;
         connect(dev, &QAbstractSocket::readyRead, this, &Link::readyRead);
         connect(dev, &QAbstractSocket::aboutToClose, this, &Link::aboutToClose);
@@ -351,7 +339,27 @@ void Link::toParser(const QByteArray data) {
 void Link::readyRead() {
     QIODevice *dev = device();
     if(dev != nullptr) {
-        toParser(dev->readAll());
+        if(linkType_ == LinkType::LinkIPUDP) {
+            QUdpSocket* socs_upd = (QUdpSocket*)dev;
+            while (socs_upd->hasPendingDatagrams())
+            {
+                QByteArray datagram;
+                datagram.resize(socs_upd->pendingDatagramSize());
+                QHostAddress sender;
+                quint16 senderPort;
+
+                qint64 slen = socs_upd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                if (slen == -1) {
+                    break;
+                }
+
+                toParser(datagram);
+            }
+        } else {
+            toParser(dev->readAll());
+        }
+
+
     }
 }
 

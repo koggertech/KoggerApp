@@ -204,6 +204,10 @@ ColumnLayout {
                                 console.info(ipAddressText.text)
                             }
                         }
+
+                        Settings {
+                            property alias ipAddressText: ipAddressText.text
+                        }
                     }
 
                     Rectangle {
@@ -242,6 +246,10 @@ ColumnLayout {
                             border.width: 0
                             border.color: theme.controlBorderColor
                         }
+
+                        Settings {
+                            property alias ipPortText: ipPortText.text
+                        }
                     }
 
                     Rectangle {
@@ -277,6 +285,10 @@ ColumnLayout {
                             color: "transparent"
                             border.width: 0
                             border.color: theme.controlBorderColor
+                        }
+
+                        Settings {
+                            property alias ipPortText: ipPort2Text.text
                         }
                     }
 
