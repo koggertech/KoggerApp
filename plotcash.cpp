@@ -293,6 +293,7 @@ void Dataset::rawDataRecieved(RawData raw_data) {
                 signal_data[i] = compelex_data[i*header.channelCount + ich];
             }
             last_epoch->setComplexF(ich, signal);
+            validateChannelList(ich);
         }
     } else {
         ComplexSignals compex_signals = last_epoch->complexSignals();
