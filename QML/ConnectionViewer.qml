@@ -163,7 +163,8 @@ ColumnLayout {
                         displayText: Baudrate
 
                         onCurrentTextChanged: {
-                            linkManager.updateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            if (LinkType == 1)
+                                linkManager.updateBaudrate(Uuid, Number(baudrateCombo.currentText))
                         }
 
                         background:  Rectangle {
