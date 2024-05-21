@@ -313,6 +313,15 @@ void Dataset::addDist(int dist) {
     emit dataUpdate();
 }
 
+void Dataset::addRangefinder(float distance) {
+    Epoch* epoch = last();
+    if(epoch->distAvail()) {
+        epoch = addNewEpoch();
+    }
+
+    epoch->setDist(distance*0.001);
+}
+
 void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     int pool_index = endIndex();
     if(pool_index < 0 || _pool[pool_index].isUsblSolutionAvailable() == true) {

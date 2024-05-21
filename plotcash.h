@@ -787,6 +787,7 @@ public slots:
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void addComplexSignal(QByteArray data, uint8_t type);
     void addDist(int dist);
+    void addRangefinder(float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);

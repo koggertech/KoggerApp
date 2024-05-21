@@ -85,7 +85,11 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
             if(prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
                 prot_nmea.skip();
-                prot_nmea.readDouble();
+                double depth_m = prot_nmea.readDouble();
+                if(isfinite(depth_m)) {
+                    core.dataset()->addRangefinder(depth_m);
+                }
+
             } else {
             }
 
@@ -231,7 +235,7 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
             //            }
         }
 
-        if((frame.isCompleteAsNMEA() && ((ProtoNMEA*)&frame)->isEqualId("DBT"))
+        if((frame.isCompleteAsNMEA() && !((ProtoNMEA*)&frame)->isEqualId("DBT"))
             || frame.isCompleteAsUBX()
             || frame.isCompleteAsMAVLink())
         {
