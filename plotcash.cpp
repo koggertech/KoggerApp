@@ -319,7 +319,8 @@ void Dataset::addRangefinder(float distance) {
         epoch = addNewEpoch();
     }
 
-    epoch->setDist(distance*0.001);
+    epoch->setDist(distance*1000);
+    emit dataUpdate();
 }
 
 void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
