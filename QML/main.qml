@@ -44,8 +44,8 @@ Window  {
         visible:           true
 
         handle: Rectangle {
-            implicitWidth:  5
-            implicitHeight: 15
+            // implicitWidth:  5
+            implicitHeight: theme.controlHeight/2
             color:          SplitHandle.pressed ? "#A0A0A0" : "#707070"
 
             Rectangle {
@@ -64,6 +64,7 @@ Window  {
 
         GridLayout {
             id:                   visualisationLayout
+            SplitView.fillHeight: true
             // anchors.fill: parent
             Layout.fillHeight: true
             Layout.fillWidth:  true
@@ -221,6 +222,7 @@ Window  {
             id:                      console_vis
             visible:                 theme.consoleVisible
             SplitView.minimumHeight: 150
+            SplitView.maximumHeight: mainview.height - theme.controlHeight/2 - theme.controlHeight
         }
     }
 
