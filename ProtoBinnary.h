@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 #include "stddef.h"
+#include <stdio.h>
 #include <cmath>
 #include "MAVLinkConf.h"
 
@@ -133,8 +134,7 @@ public:
 
     FrameParser() {
         _frameChar = (char*)_frame;
-        setContext(nullptr, 0);
-        setProxyContext(nullptr, 0);
+        resetContext();
         resetState();
     }
 
@@ -285,11 +285,25 @@ public:
         _contextLen = len;
     }
 
+    void resetContext() {
+        _contextData = NULL;
+        _contextLen = 0;
+
+        _savedContextData = NULL;
+        _savedContextLen = 0;
+    }
+
+    int nested() {
+        return _nested;
+    }
+
     void setProxyContext(uint8_t* data, uint32_t len) {
         _savedContextData = _contextData + 1;
         _savedContextLen = _contextLen - 1;
         _contextData = data;
         _contextLen = len;
+
+        _nested++;
     }
 
 
@@ -298,6 +312,7 @@ public:
             _contextData = _savedContextData;
             _contextLen = _savedContextLen;
             _savedContextLen = 0;
+            _nested--;
         }
         return _contextLen;
     }
@@ -447,6 +462,8 @@ protected:
 
     uint8_t* _savedContextData;
     int32_t _savedContextLen;
+
+    int32_t _nested = 0;
 
     uint8_t _frame[1024];
     char* _frameChar;
@@ -950,6 +967,24 @@ public:
         char c = _frame[_readPosition++];
         _readPosition++;
         return c;
+    }
+
+    double readDouble() {
+        uint32_t i = 0;
+        char data[20] = {};
+        while(i < sizeof(data) && _frame[_readPosition] != ',') {
+            data[i] = _frame[_readPosition];
+            _readPosition++;
+            i++;
+        }
+
+        double res = NAN;
+        if(i > 0) {
+            sscanf(data, "%lf", &res);
+        }
+
+        _readPosition++;
+        return res;
     }
 
     double readLatitude() {

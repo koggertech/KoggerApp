@@ -37,17 +37,25 @@ public:
     QList<DevQProperty*> getDevList() {
         _devList.clear();
 
-        for(uint16_t i = 1; i < 256; i++) {
-            if(devSort[i] != NULL) {
-                _devList.append(devSort[i]);
-            } else {
-                break;
+        for (auto i = _devTree.cbegin(), end = _devTree.cend(); i != end; ++i) {
+            QHash<int, DevQProperty*> devs = i.value();
+
+            for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+                _devList.append(k.value());
             }
         }
 
-        if(devSort[0] != NULL) {
-            _devList.append(devSort[0]);
-        }
+        // for(uint16_t i = 1; i < 256; i++) {
+        //     if(devSort[i] != NULL) {
+        //         _devList.append(devSort[i]);
+        //     } else {
+        //         break;
+        //     }
+        // }
+
+        // if(devSort[0] != NULL) {
+        //     _devList.append(devSort[0]);
+        // }
         return _devList;
     }
 
@@ -104,10 +112,6 @@ signals:
     void vruChanged();
 
 protected:
-
-    DevQProperty* devAddr[256] = {};
-    DevQProperty* devSort[256] = {};
-
     QHash<QUuid, QHash<int, DevQProperty*>> _devTree;
 
     DevQProperty* lastDevs = NULL;
@@ -133,32 +137,15 @@ protected:
         int flight_mode = -1;
     } _vru;
 
-    void delAllDev() {
-        lastRoute = 0;
-        lastDevs = NULL;
 
-        for(uint16_t i = 0; i < 256; i++) {
-            if(devAddr[i] != NULL) {
-                devAddr[i]->stopConnection();
-                devAddr[i]->disconnect(this);
-                delete devAddr[i];
-                devAddr[i] = NULL;
-            }
-
-            devSort[i] = NULL;
-        }
-
-        emit devChanged();
-    }
 
     DevQProperty* getDevice(QUuid uuid, Link* link, uint8_t addr) {
-        if(lastUid_ == uuid && lastAddress_ == addr) {
+        if(lastUid_ == uuid && lastAddress_ == addr && lastDevice_ != NULL) {
             return lastDevice_;
         } else {
             lastDevice_ = _devTree[uuid][addr];
             if(lastDevice_ == NULL) {
                 lastDevice_ = createDev(uuid, link, addr);
-                emit devChanged();
             }
             lastUid_ = uuid;
             lastAddress_ = addr;
@@ -167,20 +154,32 @@ protected:
         return lastDevice_;
     }
 
+    void delAllDev() {
+        for (auto i = _devTree.cbegin(), end = _devTree.cend(); i != end; ++i) {
+            deleteDevicesByLink(i.key());
+        }
+    }
+
+    void deleteDevicesByLink(QUuid uuid) {
+        if(_devTree.contains(uuid)) {
+            QHash<int, DevQProperty*> devs = _devTree[uuid];
+            for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
+                if(lastDevice_ == i.value()) {
+                    lastDevice_ = NULL;
+                }
+                disconnect(i.value());
+                delete i.value();
+            }
+            _devTree[uuid].clear();
+            _devTree.remove(uuid);
+            emit devChanged();
+        }
+    }
+
     DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr) {
         DevQProperty* dev = new DevQProperty();
         _devTree[uuid][addr] = dev;
         dev->setBusAddress(addr);
-
-        // dev = new DevQProperty();
-        // dev->setBusAddress(addr);
-
-        for(uint16_t i = 0; i < 256; i++) {
-            if(devSort[i] == NULL) {
-                devSort[i] = dev;
-                break;
-            }
-        }
 
         if(link != NULL) {
             connect(dev, &DevQProperty::binFrameOut, this, &Device::binFrameOut);
@@ -197,6 +196,8 @@ protected:
         connect(dev, &DevQProperty::upgradeProgressChanged, this, &Device::upgradeProgressChanged);
 
         dev->startConnection(link != NULL);
+
+        emit devChanged();
 
         return dev;
     }

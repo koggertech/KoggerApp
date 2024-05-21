@@ -73,7 +73,6 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
                 }
             }
 #endif
-
             dev->protoComplete(frame);
         }
 
@@ -82,6 +81,13 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
 
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
             core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
+
+            if(prot_nmea.isEqualId("DBT")) {
+                prot_nmea.skip();
+                prot_nmea.skip();
+                prot_nmea.readDouble();
+            } else {
+            }
 
             if(prot_nmea.isEqualId("RMC")) {
                 uint8_t h = 0, m = 0, s = 0;
@@ -224,6 +230,15 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
             core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
             //            }
         }
+
+        if((frame.isCompleteAsNMEA() && ((ProtoNMEA*)&frame)->isEqualId("DBT"))
+            || frame.isCompleteAsUBX()
+            || frame.isCompleteAsMAVLink())
+        {
+            if(frame.nested() == 0) {
+                deleteDevicesByLink(uuid);
+            }
+        }
     }
 }
 
@@ -244,7 +259,9 @@ void Device::onLinkClosed(QUuid uuid, Link *link)
 
     qDebug() << "Device::onLinkClosed";
     if (link) {
-        // TODO
+        if(link->getControlType() == ControlType::kManual) {
+            deleteDevicesByLink(uuid);
+        }
     }
 }
 
@@ -254,7 +271,7 @@ void Device::onLinkDeleted(QUuid uuid, Link *link)
 
     qDebug() << "Device::onLinkDeleted";
     if (link) {
-        // TODO
+        deleteDevicesByLink(uuid);
     }
 }
 

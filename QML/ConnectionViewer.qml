@@ -176,9 +176,10 @@ ColumnLayout {
 
                     CText {
                         visible: LinkType == 2
+                        small: true
                         leftPadding: 6
                         rightPadding: 0
-                        text: "IP:"
+                        text: "ip:"
                     }
 
                     CTextField {
@@ -222,9 +223,10 @@ ColumnLayout {
 
                     CText {
                         visible: LinkType == 2
+                        small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: "Src:"
+                        text: "src:"
                     }
 
                     CTextField {
@@ -264,9 +266,10 @@ ColumnLayout {
 
                     CText {
                         visible: LinkType == 2
+                        small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: "Dst:"
+                        text: "dst:"
                     }
 
                     CTextField {
@@ -366,9 +369,20 @@ ColumnLayout {
 
     MenuRow {
         Layout.topMargin: 0
+        Layout.fillWidth: false
+
         CButton {
-            Layout.topMargin: 0
-            text: "+ UDP"
+            text: "+WiFiBridge"
+            Layout.fillWidth: false
+
+            onClicked: {
+                linkManager.createAsUdp("", 0, 0)
+            }
+        }
+
+        CButton {
+            text: "+UDP"
+            Layout.fillWidth: false
 
             onClicked: {
                 linkManager.createAsUdp("", 0, 0)
