@@ -230,7 +230,7 @@ private:
     std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
 
-    LinkManagerWrapper* linkManagerWrapper_;
+    std::unique_ptr<LinkManagerWrapper> linkManagerWrapper_;
     std::unique_ptr<FileReaderWrapper> fileReaderWrapper_;
 
     bool isFactoryMode() {

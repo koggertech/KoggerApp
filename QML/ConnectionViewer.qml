@@ -48,7 +48,7 @@ ColumnLayout {
     //         ButtonGroup.group: typeConnectionButtonGroup
     //         text: "Serial"
     //         onClicked: {
-    //             linkManager.addLink()
+    //             linkManagerWrapper.addLink()
     //         }
     //     }
 
@@ -129,7 +129,7 @@ ColumnLayout {
                             border.color: theme.controlBorderColor
                         }
                         onCheckedChanged: {
-                            linkManager.sendPinnedChanged(Uuid, checked)
+                            linkManagerWrapper.sendPinnedChanged(Uuid, checked)
                         }
                     }
 
@@ -168,7 +168,7 @@ ColumnLayout {
 
                         onCurrentTextChanged: {
                             if (LinkType == 1)
-                                linkManager.updateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                linkManagerWrapper.updateBaudrate(Uuid, Number(baudrateCombo.currentText))
                         }
 
                         background:  Rectangle {
@@ -306,18 +306,18 @@ ColumnLayout {
 
                         onClicked: {
                             if (ConnectionStatus) {
-                                linkManager.closeLink(Uuid)
+                                linkManagerWrapper.closeLink(Uuid)
                             }
                             else {
                                 switch(LinkType) {
                                 case 1:
-                                    linkManager.openAsSerial(Uuid)
+                                    linkManagerWrapper.openAsSerial(Uuid)
                                     break
                                 case 2:
-                                    linkManager.openAsUdp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
+                                    linkManagerWrapper.openAsUdp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
                                     break
                                 case 3:
-                                    linkManager.openAsTcp(Uuid)
+                                    linkManagerWrapper.openAsTcp(Uuid)
                                     break
                                 default:
                                     console.log("Undefined type")
@@ -333,7 +333,7 @@ ColumnLayout {
 
         ListView {
             id: filesList
-            model: linkManager.linkListModel
+            model: linkManagerWrapper.linkListModel
             visible: count > 0
             Layout.margins: 0
             Layout.topMargin: 0
@@ -389,7 +389,7 @@ ColumnLayout {
             Layout.fillWidth: false
 
             onClicked: {
-                linkManager.createAsUdp("", 0, 0)
+                linkManagerWrapper.createAsUdp("", 0, 0)
             }
         }
 
@@ -398,7 +398,7 @@ ColumnLayout {
             Layout.fillWidth: false
 
             onClicked: {
-                linkManager.createAsUdp("", 0, 0)
+                linkManagerWrapper.createAsUdp("", 0, 0)
             }
         }
     }

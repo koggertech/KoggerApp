@@ -9,7 +9,7 @@ Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
     _dataset(new Dataset),
-    linkManagerWrapper_(new LinkManagerWrapper(this))
+    linkManagerWrapper_(std::make_unique<LinkManagerWrapper>(this))
 {
 //    m_connection->moveToThread(&connectionThread);
 //    connectionThread.start();
@@ -24,17 +24,17 @@ Core::Core() : QObject(),
     connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
     connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
-    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::frameReady, &_devs, &Device::frameInput);
-    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
-    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkOpened, &_devs, &Device::onLinkOpened);
-    QObject::connect(linkManagerWrapper_->getWorker().get(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, &_devs, &Device::frameInput);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened, &_devs, &Device::onLinkOpened);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
 
     createControllers();
 }
 
 Core::~Core()
 {
-    delete linkManagerWrapper_;
+
 }
 
 void Core::createControllers()
@@ -68,7 +68,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 
 LinkManagerWrapper* Core::getLinkManagerWrapper() const
 {
-    return linkManagerWrapper_;
+    return linkManagerWrapper_.get();
 }
 
 FileReaderWrapper* Core::getFileReaderWrapper() const

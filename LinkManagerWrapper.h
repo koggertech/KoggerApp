@@ -21,12 +21,12 @@ public:
     ~LinkManagerWrapper();
 
     LinkListModel* getModelPtr();
-    std::shared_ptr<LinkManager> getWorker();
+    LinkManager* getWorker();
 
 private:
     /*data*/
     std::unique_ptr<QThread> workerThread_;
-    std::shared_ptr<LinkManager> workerObject_;
+    std::unique_ptr<LinkManager> workerObject_;
     LinkListModel model_;
 
 signals:

@@ -6,7 +6,7 @@
 LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 {
     workerThread_ = std::make_unique<QThread>(/**/);
-    workerObject_ = std::make_shared<LinkManager>(this);
+    workerObject_ = std::make_unique<LinkManager>(this);
 
     // pinned ports
     QObject::connect(workerThread_.get(), &QThread::started, workerObject_.get(), &LinkManager::importPinnedLinksFromXML);
@@ -48,9 +48,9 @@ LinkListModel* LinkManagerWrapper::getModelPtr()
     return &model_;
 }
 
-std::shared_ptr<LinkManager> LinkManagerWrapper::getWorker()
+LinkManager* LinkManagerWrapper::getWorker()
 {
-    return workerObject_;
+    return workerObject_.get();
 }
 
 void LinkManagerWrapper::openAsSerial(QUuid uuid)
