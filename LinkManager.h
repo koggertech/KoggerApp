@@ -27,8 +27,9 @@ private:
     void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
     void update();
     Link *getLinkPtr(QUuid uuid);
-
     void doEmitAppendModifyModel(Link* linkPtr);
+    void exportPinnedLinksToXML();
+    Link* createNewLink() const;
 
     /*data*/
     QList<Link*> list_;
@@ -65,4 +66,7 @@ public slots:
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
 
+    void onPinnedChanged(QUuid uuid, bool state);
+
+    void importPinnedLinksFromXML();
 };

@@ -44,6 +44,8 @@ signals:
     void sendCloseLink(QUuid uuid);
     void sendDeleteLink(QUuid uuid);
 
+    void sendPinnedChanged(QUuid uuid, bool state);
+
 public slots:
 
     void openAsSerial(QUuid uuid);

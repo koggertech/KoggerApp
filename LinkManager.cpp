@@ -1,6 +1,8 @@
 #include "LinkManager.h"
 
 #include <QDebug>
+#include <QFile>
+#include <QXmlStreamReader>
 
 
 LinkManager::LinkManager(QObject *parent) :
@@ -29,16 +31,9 @@ Link* LinkManager::createSerialPort(const QSerialPortInfo &serialInfo) const
     if (serialInfo.isNull())
         return newLinkPtr;
 
-    newLinkPtr = new Link();
-    newLinkPtr->createAsSerial(serialInfo.portName(), 921600, false);
+    newLinkPtr = createNewLink();
 
-    QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
-
-    QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
-    QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
-    QObject::connect(newLinkPtr, &Link::opened, this, &LinkManager::linkOpened);
-
-    // connect(this, &LinkManagerWorker::frameInput, newLink, &Link::writeFrame);
+    newLinkPtr->createAsSerial(serialInfo.portName(), 921600, false);   
 
     return newLinkPtr;
 }
@@ -75,7 +70,8 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
 
-        if (link->getLinkType() != LinkType::LinkSerial)
+        if (link->getLinkType() != LinkType::LinkSerial ||
+            link->getIsPinned()) // TODO
             continue;
 
         bool isBeen{ false };
@@ -139,9 +135,169 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
                            linkPtr->getAddress(),
                            linkPtr->getSourcePort(),
                            linkPtr->getDestinationPort(),
-                           linkPtr->isPinned(),
-                           linkPtr->isHided(),
-                           linkPtr->isNotAvailable());
+                           linkPtr->getIsPinned(),
+                           linkPtr->getIsHided(),
+                           linkPtr->getIsNotAvailable());
+}
+
+void LinkManager::exportPinnedLinksToXML()
+{
+    timer_->stop();
+
+    qDebug() << "LinkManager::exportPinnedLinksToXML";
+    QString filePath{"pinned_links.xml"};
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QXmlStreamWriter xmlWriter(&file);
+    xmlWriter.setAutoFormatting(true);
+    xmlWriter.writeStartDocument();
+    xmlWriter.writeStartElement("pinned_links");
+
+    for (auto& itm : list_) {
+        if (itm->getIsPinned()) {
+            xmlWriter.writeStartElement("link");
+            xmlWriter.writeTextElement("uuid", itm->getUuid().toString());
+            xmlWriter.writeTextElement("control_type", QString::number(static_cast<int>(itm->getControlType())));
+            xmlWriter.writeTextElement("port_name", itm->getPortName());
+            xmlWriter.writeTextElement("baudrate", QString::number(itm->getBaudrate()));
+            xmlWriter.writeTextElement("parity", QVariant(static_cast<bool>(itm->getParity())).toString());
+            xmlWriter.writeTextElement("link_type", QString::number(static_cast<int>(itm->getLinkType())));
+            xmlWriter.writeTextElement("address", itm->getAddress());
+            xmlWriter.writeTextElement("source_port", QString::number(itm->getSourcePort()));
+            xmlWriter.writeTextElement("destination_port", QString::number(itm->getDestinationPort()));
+            xmlWriter.writeTextElement("is_pinned", QVariant(static_cast<bool>(itm->getIsPinned())).toString());
+            xmlWriter.writeTextElement("is_hided", QVariant(static_cast<bool>(itm->getIsHided())).toString());
+            xmlWriter.writeTextElement("is_not_available", QVariant(static_cast<bool>(itm->getIsNotAvailable())).toString());
+            xmlWriter.writeTextElement("connection_status", QVariant(static_cast<bool>(itm->getConnectionStatus())).toString());
+            xmlWriter.writeEndElement();
+        }
+    }
+
+    xmlWriter.writeEndElement();
+    xmlWriter.writeEndDocument();
+    file.close();
+
+    timer_->start();
+}
+
+Link *LinkManager::createNewLink() const
+{
+    Link* retVal = new Link();
+
+    QObject::connect(retVal, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
+    QObject::connect(retVal, &Link::frameReady, this, &LinkManager::frameReady);
+    QObject::connect(retVal, &Link::closed, this, &LinkManager::linkClosed);
+    QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
+
+    // connect(this, &LinkManagerWorker::frameInput, newLink, &Link::writeFrame);
+
+    return retVal;
+}
+
+void LinkManager::onPinnedChanged(QUuid uuid, bool state)
+{
+    timer_->stop();
+
+    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setPinned(state);
+        exportPinnedLinksToXML();
+    }
+
+    timer_->start();
+}
+
+void LinkManager::importPinnedLinksFromXML()
+{
+    qDebug() << "LinkManager::importPinnedLinksFromXML";
+    QString filePath{"pinned_links.xml"};
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QXmlStreamReader xmlReader(&file);
+
+    while (!xmlReader.atEnd() && !xmlReader.hasError()) {
+        const QXmlStreamReader::TokenType token = xmlReader.readNext();
+
+        if (token == QXmlStreamReader::StartElement) {
+            if (xmlReader.name() == "link") {
+                qDebug() << "import link: ";
+
+                Link* link = createNewLink();
+
+                while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == "link")) {
+                    if (xmlReader.tokenType() == QXmlStreamReader::StartElement) {
+                        if (xmlReader.name().toString() == "uuid") {
+                            link->setUuid(QUuid(xmlReader.readElementText()));
+                            qDebug() << "\tuuid: " << link->getUuid().toString();
+                        }
+                        else if (xmlReader.name().toString() == "connection_status") {
+                            // TODO
+                            //link->setConnectionStatus(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            //qDebug() << "\tconnection_status: " << link->getConnectionStatus();
+                        }
+                        else if (xmlReader.name().toString() == "control_type") {
+                            link->setControlType(static_cast<ControlType>(xmlReader.readElementText().toInt()));
+                            qDebug() << "\tcontrol_type: " << link->getControlType();
+                        }
+                        else if (xmlReader.name().toString() == "port_name") {
+                            link->setPortName(xmlReader.readElementText());
+                            qDebug() << "\tport_name: " << link->getPortName();
+                        }
+                        else if (xmlReader.name().toString() == "baudrate") {
+                            link->setBaudrate(xmlReader.readElementText().toInt());
+                            qDebug() << "\tbaudrate: " << link->getBaudrate();
+                        }
+                        else if (xmlReader.name().toString() == "parity") {
+                            link->setParity(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            qDebug() << "\tparity: " << link->getParity();
+                        }
+                        else if (xmlReader.name().toString() == "link_type") {
+                            link->setLinkType(static_cast<LinkType>(xmlReader.readElementText().toInt()));
+                            qDebug() << "\tlink_type: " << link->getLinkType();
+                        }
+                        else if (xmlReader.name().toString() == "address") {
+                            link->setAddress(xmlReader.readElementText());
+                            qDebug() << "\taddress: " << link->getAddress();
+                        }
+                        else if (xmlReader.name().toString() == "source_port") {
+                            link->setSourcePort(xmlReader.readElementText().toInt());
+                            qDebug() << "\tsource_port: " << link->getSourcePort();
+                        }
+                        else if (xmlReader.name().toString() == "destination_port") {
+                            link->setDestinationPort(xmlReader.readElementText().toInt());
+                            qDebug() << "\tdestination_port: " << link->getDestinationPort();
+                        }
+                        else if (xmlReader.name().toString() == "is_pinned") {
+                            link->setPinned(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            qDebug() << "\tis_pinned: " << link->getIsPinned();
+                        }
+                        else if (xmlReader.name().toString() == "is_hided") {
+                            link->setHided(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            qDebug() << "\tis_hided: " << link->getIsHided();
+                        }
+                        else if (xmlReader.name().toString() == "is_not_available") {
+                            link->setNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            qDebug() << "\tis_not_available: " << link->getIsNotAvailable();
+                        }
+                    }
+                    xmlReader.readNext();
+                }
+
+                list_.append(link);
+                doEmitAppendModifyModel(link);
+            }
+        }
+    }
+
+    if (xmlReader.hasError())
+        qDebug() << "XML error:" << xmlReader.errorString();
+    file.close();
+
+    qDebug() << "LinkManager::importPinnedLinksFromXML: start update timer";
+    timer_->start();
 }
 
 void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
@@ -252,14 +408,9 @@ void LinkManager::frameInput(Link *link, FrameParser frame)
 
 void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
-    Link* newLinkPtr = new Link();
+    Link* newLinkPtr = createNewLink();
 
     newLinkPtr->createAsUdp(address, sourcePort, destinationPort);
-
-    QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
-    QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
-    QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
-    QObject::connect(newLinkPtr, &Link::opened, this, &LinkManager::linkOpened);
 
     list_.append(newLinkPtr);
 
@@ -268,14 +419,9 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
 {
-    Link* newLinkPtr = new Link();
+    Link* newLinkPtr = createNewLink();
 
     newLinkPtr->createAsTcp(address, sourcePort, destinationPort);
-
-    QObject::connect(newLinkPtr, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
-    QObject::connect(newLinkPtr, &Link::frameReady, this, &LinkManager::frameReady);
-    QObject::connect(newLinkPtr, &Link::closed, this, &LinkManager::linkClosed);
-    QObject::connect(newLinkPtr, &Link::opened, this, &LinkManager::linkOpened);
 
     list_.append(newLinkPtr);
 

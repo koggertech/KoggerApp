@@ -10,12 +10,15 @@
 #include <QSerialPortInfo>
 #endif
 
+
 Link::Link() :
     uuid_(QUuid::createUuid()),
     controlType_(ControlType::kManual),
+    linkType_(LinkType::LinkNone),
+    portName_(""),
     baudrate_(0),
     parity_(false),
-    linkType_(LinkType::LinkNone),
+    address_(""),
     sourcePort_(0),
     destinationPort_(0),
     isPinned_(false),
@@ -23,6 +26,25 @@ Link::Link() :
     isNotAvailable_(false)
 {
     _frame.resetComplete();
+}
+
+Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName,
+           int baudrate, bool parity, QString address, int sourcePort, int destinationPort,
+           bool isPinned, bool isHided, bool isNotAvailable) :
+    uuid_(QUuid(uuidStr)),
+    controlType_(controlType),
+    linkType_(linkType),
+    portName_(portName),
+    baudrate_(baudrate),
+    parity_(parity),
+    address_(address),
+    sourcePort_(sourcePort),
+    destinationPort_(destinationPort),
+    isPinned_(isPinned),
+    isHided_(isHided),
+    isNotAvailable_(isNotAvailable)
+{
+
 }
 
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
@@ -206,6 +228,80 @@ bool Link::parse()
     return _frame.isComplete() || _frame.availContext();
 }
 
+void Link::setUuid(QUuid uuid)
+{
+    uuid_ = uuid;
+}
+
+void Link::setConnectionStatus(bool connectionStatus)
+{
+    if (!connectionStatus)
+        close();
+    else {
+        switch (linkType_) {
+        case LinkType::LinkNone: { break; }
+        case LinkType::LinkSerial: { openAsSerial(); break; }
+        case LinkType::LinkIPUDP: { openAsUdp(); break; }
+        case LinkType::LinkIPTCP: { openAsTcp(); break; }
+        default: { break; }
+        }
+    }
+}
+
+void Link::setControlType(ControlType controlType)
+{
+    controlType_ = controlType;
+}
+
+void Link::setPortName(const QString &portName)
+{
+    portName_ = portName;
+}
+
+void Link::setBaudrate(int baudrate)
+{
+    baudrate_ = baudrate;
+}
+
+void Link::setParity(bool parity)
+{
+    parity_ = parity;
+}
+
+void Link::setLinkType(LinkType linkType)
+{
+    linkType_ = linkType;
+}
+
+void Link::setAddress(const QString &address)
+{
+    address_ = address;
+}
+
+void Link::setSourcePort(int sourcePort)
+{
+    sourcePort_ = sourcePort;
+}
+
+void Link::setDestinationPort(int destinationPort)
+{
+    destinationPort_ = destinationPort;
+}
+
+void Link::setPinned(bool state)
+{
+    isPinned_ = state;
+}
+
+void Link::setHided(bool isHided)
+{
+    isHided_ = isHided;
+}
+
+void Link::setNotAvailable(bool isNotAvailable)
+{
+    isNotAvailable_ = isNotAvailable;
+}
 
 QUuid Link::getUuid() const
 {
@@ -260,17 +356,17 @@ int Link::getDestinationPort() const
     return destinationPort_;
 }
 
-bool Link::isPinned() const
+bool Link::getIsPinned() const
 {
     return isPinned_;
 }
 
-bool Link::isHided() const
+bool Link::getIsHided() const
 {
     return isHided_;
 }
 
-bool Link::isNotAvailable() const
+bool Link::getIsNotAvailable() const
 {
     return isNotAvailable_;
 }
@@ -312,7 +408,7 @@ void Link::deleteDev()
 
         ioDevice_->disconnect(this);
         this->disconnect(ioDevice_);
-        setType(LinkNone);
+        //setLinkType(LinkNone);
         delete ioDevice_;
         ioDevice_ = nullptr;
     }

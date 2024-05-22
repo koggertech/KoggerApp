@@ -42,6 +42,8 @@ class Link : public QObject {
     Q_OBJECT
 public:
     Link();
+    Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName, int baudrate, bool parity, QString address,
+         int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
 
     void createAsSerial(const QString& portName, int baudrate, bool parity);
     void openAsSerial();
@@ -64,83 +66,76 @@ public:
     FrameParser* frameParser() { return &_frame; }
     QIODevice* device() { return ioDevice_; }
 
+    void setUuid(QUuid uuid);
+    void setConnectionStatus(bool connectionStatus);
+    void setControlType(ControlType controlType);
+    void setPortName(const QString& portName);
+    void setBaudrate(int baudrate);
+    void setParity(bool parity);
+    void setLinkType(LinkType linkType);
+    void setAddress(const QString& address);
+    void setSourcePort(int sourcePort);
+    void setDestinationPort(int destinationPort);
+    void setPinned(bool isPinned);
+    void setHided(bool isHided);
+    void setNotAvailable(bool isNotAvailable);
 
-    /*multi link*/
-    QUuid getUuid() const;
-    bool getConnectionStatus() const;
+    QUuid       getUuid() const;
+    bool        getConnectionStatus() const;
     ControlType getControlType() const;
-    /*Serial*/
-    QString getPortName() const;
-    int getBaudrate() const;
-    bool getParity() const;
-    /*UDP/TCP*/
-    LinkType getLinkType() const;
-    QString getAddress() const;
-    int getSourcePort() const;
-    int getDestinationPort() const;
-    /*other*/
-    bool isPinned() const;
-    bool isHided() const;
-    bool isNotAvailable() const;
-    /**/
-
+    QString     getPortName() const;
+    int         getBaudrate() const;
+    bool        getParity() const;
+    LinkType    getLinkType() const;
+    QString     getAddress() const;
+    int         getSourcePort() const;
+    int         getDestinationPort() const;
+    bool        getIsPinned() const;
+    bool        getIsHided() const;
+    bool        getIsNotAvailable() const;
 
 public slots:
     bool writeFrame(FrameParser frame);
     bool write(QByteArray data);
 
 private slots:
-
     void readyRead();
     void aboutToClose();
 
 private:
+    /*methods*/
+    void setDev(QIODevice* dev);
+    void deleteDev();
+    void toParser(const QByteArray data);
+
+    /*data*/
     QMutex _mutex;
     FrameParser _frame;
-
     QIODevice* ioDevice_ = nullptr;
     QHostAddress hostAddress_;
-
     QByteArray _context;
     QByteArray _buffer;
 
-    LinkType type_ = LinkNone;
-
-
-    /*multi link*/
     QUuid uuid_;
-
     ControlType controlType_;
-    /*Serial*/
+    LinkType linkType_;
     QString portName_;
     int baudrate_;
     bool parity_;
-    /*UDP/TCP*/
-    LinkType linkType_;
     QString address_;
     int sourcePort_;
     int destinationPort_;
-    /*others*/
     bool isPinned_;
     bool isHided_;
     bool isNotAvailable_;
-    /**/
-
-    void setType(LinkType type) { type_ = type; }
-    void setDev(QIODevice* dev);
-    void deleteDev();
-
-    void toParser(const QByteArray data);
 
 signals:
     void readyParse(Link* link);
     // void changeState();
     void connectionStatusChanged(QUuid uuid);
-
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
-
     void dataReady();
 };
 

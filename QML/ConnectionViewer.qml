@@ -113,19 +113,23 @@ ColumnLayout {
                     anchors.verticalCenter: parent
                     anchors.margins: 1
 
-                    CTextField {
-                        width: 47
-                        implicitWidth: 47
-                        readOnly: true
-                        selectByMouse: false
+                    CCheck {
+                        width: 72
+                        implicitWidth: 72
+                        //readOnly: true
+                        //selectByMouse: false
                         leftPadding: 6
                         rightPadding: 2
                         // textEdited: false
                         text: LinkType == 1 ? "COM" : LinkType == 2 ? "UDP" : LinkType == 2 ? "TCP" : "???"
+                        //checked: IsPinned
                         background:  Rectangle {
                             color: "transparent"
                             border.width: 0
                             border.color: theme.controlBorderColor
+                        }
+                        onCheckedChanged: {
+                            linkManager.sendPinnedChanged(Uuid, checked)
                         }
                     }
 
