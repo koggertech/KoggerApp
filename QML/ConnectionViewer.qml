@@ -376,6 +376,15 @@ ColumnLayout {
         Layout.fillWidth: false
 
         CButton {
+            text: "+File"
+            Layout.fillWidth: false
+
+            onClicked: {
+                // fileReaderWrapper
+            }
+        }
+
+        CButton {
             text: "+WiFiBridge"
             Layout.fillWidth: false
 

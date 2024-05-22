@@ -71,6 +71,11 @@ LinkManagerWrapper* Core::getLinkManagerWrapper() const
     return linkManagerWrapper_;
 }
 
+FileReaderWrapper* Core::getFileReaderWrapper() const
+{
+    return fileReaderWrapper_.get();
+}
+
 void Core::consoleProto(FrameParser &parser, bool is_in) {
     QString str_mode;
     QString comment = "";

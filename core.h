@@ -30,6 +30,7 @@
 #include <scene3dcontrolmenucontroller.h>
 
 #include <LinkManagerWrapper.h>
+#include <FileReaderWrapper.h>
 
 //#define FLASHER
 
@@ -75,6 +76,8 @@ public:
     void setEngine(QQmlApplicationEngine *engine);
 
     LinkManagerWrapper* getLinkManagerWrapper() const;
+    FileReaderWrapper* getFileReaderWrapper() const;
+
 public slots:
     QList<QSerialPortInfo> availableSerial();
     QStringList availableSerialName();
@@ -228,6 +231,7 @@ private:
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
 
     LinkManagerWrapper* linkManagerWrapper_;
+    std::unique_ptr<FileReaderWrapper> fileReaderWrapper_;
 
     bool isFactoryMode() {
 #ifdef FLASHER
