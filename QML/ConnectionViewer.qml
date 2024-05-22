@@ -122,13 +122,14 @@ ColumnLayout {
                         rightPadding: 2
                         // textEdited: false
                         text: LinkType == 1 ? "COM" : LinkType == 2 ? "UDP" : LinkType == 2 ? "TCP" : "???"
-                        //checked: IsPinned
+                        checked: IsPinned
                         background:  Rectangle {
                             color: "transparent"
                             border.width: 0
                             border.color: theme.controlBorderColor
                         }
-                        onCheckedChanged: {
+
+                        onToggled: {
                             linkManagerWrapper.sendPinnedChanged(Uuid, checked)
                         }
                     }

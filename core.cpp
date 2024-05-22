@@ -223,8 +223,8 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
         }
     }
 
-    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
-    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
+    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection); // FileReader?
+    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput); // FileReader?
     m_connection->openFile(name);
 
     if (m_scene3dView)
