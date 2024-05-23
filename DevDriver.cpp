@@ -205,8 +205,12 @@ void DevDriver::importSettingsFromXML(const QString& filePath) {
                             setCh1Period(xmlReader.readElementText().toInt());
                         else if (xmlReader.name().toString() == "echogram")
                             xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetChart(1) : setDatasetChart(0);
-                        else if (xmlReader.name().toString() == "rangefinder")
-                            xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetDist(1) : setDatasetDist(0);
+                        else if (xmlReader.name().toString() == "rangefinder") {
+                            int state = xmlReader.readElementText().toInt();
+                            if (state == 0) { setDatasetDist(0); setDatasetSDDBT(0); }
+                            if (state == 1) { setDatasetDist(1); }
+                            if (state == 2) { setDatasetSDDBT(1); }
+                        }
                         else if (xmlReader.name().toString() == "AHRS")
                             xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? setDatasetEuler(1) : setDatasetEuler(0);
                         else if (xmlReader.name().toString() == "temperature")
@@ -266,8 +270,13 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     const U1 channelId = 1;
     const auto channel = idDataset->getChannel(channelId);
     xmlWriter.writeTextElement("period_ms", QString::number(channel.period));
-    xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(channelId)).toString());
-    xmlWriter.writeTextElement("rangefinder", QVariant(idDataset->getDist_v0(channelId)).toString());
+    xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(channelId)).toString());    
+    {
+        int state = 0;
+        if (idDataset->getDist_v0(channelId) == 1) state = 1;
+        if (idDataset->getSDDBT(channelId) == 1) state = 2;
+        xmlWriter.writeTextElement("rangefinder", QString::number(state));
+    }
     xmlWriter.writeTextElement("AHRS", QVariant(static_cast<bool>(idDataset->getEuler(channelId))).toString());
     xmlWriter.writeTextElement("temperature", QVariant(idDataset->getTemp_v0(channelId)).toString());
     xmlWriter.writeTextElement("timestamp", QVariant(idDataset->getTimestamp_v0(channelId)).toString());
