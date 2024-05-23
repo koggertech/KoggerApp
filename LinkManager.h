@@ -30,6 +30,7 @@ private:
     void doEmitAppendModifyModel(Link* linkPtr);
     void exportPinnedLinksToXML();
     Link* createNewLink() const;
+    void printLinkDebugInfo(Link* link) const;
 
     /*data*/
     QList<Link*> list_;

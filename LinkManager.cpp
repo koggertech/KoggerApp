@@ -196,6 +196,17 @@ Link *LinkManager::createNewLink() const
     return retVal;
 }
 
+void LinkManager::printLinkDebugInfo(Link* link) const
+{
+    if (!link)
+        qDebug() << "\tlink is nullptr";
+    else {
+        qDebug() << QString("uuid: %1; controlType: %2; portName: %3; baudrate: %4; parity: %5; linkType: %6; address: %7; sourcePort: %8; destinationPort: %9; isPinned: %10; isHided: %11; isNotAvailable: %12; connectionStatus: %13")
+                        .arg(link->getUuid().toString()).arg(link->getConnectionStatus()).arg(link->getControlType()).arg(link->getPortName()).arg(link->getBaudrate())
+                        .arg(link->getParity()).arg(link->getLinkType()).arg(link->getAddress()).arg(link->getSourcePort()).arg(link->getDestinationPort()).arg(link->getIsPinned()).arg(link->getIsHided()).arg(link->getIsNotAvailable());
+    }
+}
+
 void LinkManager::onPinnedChanged(QUuid uuid, bool state)
 {
     timer_->stop();
@@ -287,6 +298,8 @@ void LinkManager::importPinnedLinksFromXML()
                 }
 
                 list_.append(link);
+                qDebug() << "added link from xml:";
+                printLinkDebugInfo(link);
                 doEmitAppendModifyModel(link);
             }
         }
