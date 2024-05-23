@@ -196,7 +196,7 @@ ColumnLayout {
                         leftPadding: 0
                         rightPadding: 6
 
-                        text: ""
+                        text: Address
                         // placeholderText: "ip"
 
                         background:  Rectangle {
@@ -211,9 +211,9 @@ ColumnLayout {
                             }
                         }
 
-                        Settings {
-                            property alias ipAddressText: ipAddressText.text
-                        }
+                        //Settings {
+                        //    property alias ipAddressText: ipAddressText.text
+                        //}
                     }
 
                     Rectangle {
@@ -245,7 +245,7 @@ ColumnLayout {
                         rightPadding: 2
 
 
-                        text: ""
+                        text: SourcePort
                         placeholderText: qsTr("")
 
                         background:  Rectangle {
@@ -254,9 +254,9 @@ ColumnLayout {
                             border.color: theme.controlBorderColor
                         }
 
-                        Settings {
-                            property alias ipPortText: ipPortText.text
-                        }
+                        //Settings {
+                        //    property alias ipPortText: ipPortText.text
+                        //}
                     }
 
                     Rectangle {
@@ -286,7 +286,7 @@ ColumnLayout {
                         leftPadding: 2
                         rightPadding: 2
 
-                        text: ""
+                        text: DestinationPort
                         placeholderText: qsTr("")
 
                         background:  Rectangle {
@@ -295,9 +295,9 @@ ColumnLayout {
                             border.color: theme.controlBorderColor
                         }
 
-                        Settings {
-                            property alias ipPortText: ipPort2Text.text
-                        }
+                        //Settings {
+                        //    property alias ipPortText: ipPort2Text.text
+                        //}
                     }
 
                     CButton {
