@@ -15,6 +15,7 @@
 #include "3Plot.h"
 #include <sceneobject.h>
 #include "Plot2D.h"
+#include "QQuickWindow"
 
 Core core;
 Themes theme;
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 #endif
 
+    QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
 
     QSurfaceFormat format;
     format.setSwapInterval(0);
