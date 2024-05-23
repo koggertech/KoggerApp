@@ -140,9 +140,10 @@ protected:
 struct RawData {
     struct RawDataHeader {
         struct  __attribute__((packed)) {
-            uint8_t dataType : 3; // int8, int16, int32, float
-            uint8_t isComplex : 1; // real, complex
-            uint8_t dataSize : 4; // bytes
+            uint16_t dataType : 5; //
+            uint16_t dataSize : 6; // +1 bytes
+            uint16_t dataTrigger : 2;
+            uint16_t channelGroup : 3;
         };
         uint8_t channelCount = 0;
         uint32_t globalOffset = 0;
