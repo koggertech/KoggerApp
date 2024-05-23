@@ -18,7 +18,7 @@ Link::Link() :
     portName_(""),
     baudrate_(0),
     parity_(false),
-    hostAddress_(""),
+    address_(""),
     sourcePort_(0),
     destinationPort_(0),
     isPinned_(false),
@@ -37,7 +37,7 @@ Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString 
     portName_(portName),
     baudrate_(baudrate),
     parity_(parity),
-    hostAddress_(address),
+    address_(address),
     sourcePort_(sourcePort),
     destinationPort_(destinationPort),
     isPinned_(isPinned),
@@ -90,7 +90,7 @@ void Link::createAsUdp(const QString &address, int sourcePort, int destinationPo
     qDebug() << "Link::createAsUdp, uuid:" << getUuid().toString();
 
     linkType_ = LinkType::LinkIPUDP;
-    hostAddress_.setAddress(address);
+    address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -99,7 +99,7 @@ void Link::updateUdpParameters(const QString& address, int sourcePort, int desti
 {
     qDebug() << "Link::updateUdpParameters, uuid:" << getUuid().toString();
 
-    hostAddress_.setAddress(address);
+    address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -117,7 +117,7 @@ void Link::openAsUdp()
         return;
     }
 
-    //hostAddress_.setAddress(address_);
+    hostAddress_.setAddress(address_);
 
     if (isBinded) {
         socketUdp->open(QIODevice::ReadWrite);
@@ -141,7 +141,7 @@ void Link::createAsTcp(const QString &address, int sourcePort, int destinationPo
     qDebug() << "Link::createAsTcp, uuid:" << getUuid().toString();
 
     linkType_ = LinkType::LinkIPTCP;
-    hostAddress_.setAddress(address);
+    address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -150,7 +150,7 @@ void Link::updateTcpParameters(const QString& address, int sourcePort, int desti
 {
     qDebug() << "Link::updateTcpParameters, uuid:" << getUuid().toString();
 
-    hostAddress_.setAddress(address);
+    address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -270,7 +270,8 @@ void Link::setLinkType(LinkType linkType)
 
 void Link::setAddress(const QString &address)
 {
-    hostAddress_.setAddress(address);
+    address_ = address;
+    //hostAddress_.setAddress(address_);
     // TODO: rebind?
 }
 
@@ -341,7 +342,7 @@ LinkType Link::getLinkType() const
 
 QString Link::getAddress() const
 {
-    return hostAddress_.toString();
+    return address_;
 }
 
 int Link::getSourcePort() const

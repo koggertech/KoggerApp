@@ -113,6 +113,7 @@ private:
     QIODevice* ioDevice_ = nullptr;
     QByteArray _context;
     QByteArray _buffer;
+    QHostAddress hostAddress_;
 
     QUuid uuid_;
     ControlType controlType_;
@@ -120,7 +121,7 @@ private:
     QString portName_;
     int baudrate_;
     bool parity_;
-    QHostAddress hostAddress_;
+    QString address_;
     int sourcePort_;
     int destinationPort_;
     bool isPinned_;
