@@ -234,8 +234,8 @@ void LinkManager::importPinnedLinksFromXML()
                         }
                         else if (xmlReader.name().toString() == "connection_status") {
                             // TODO
-                            //link->setConnectionStatus(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
-                            //qDebug() << "\tconnection_status: " << link->getConnectionStatus();
+                            link->setConnectionStatus(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            qDebug() << "\tconnection_status: " << link->getConnectionStatus();
                         }
                         else if (xmlReader.name().toString() == "control_type") {
                             link->setControlType(static_cast<ControlType>(xmlReader.readElementText().toInt()));
@@ -394,6 +394,7 @@ void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setBaudrate(baudrate);
 
+        qDebug() << baudrate;
         doEmitAppendModifyModel(linkPtr); // why?
 
         if (linkPtr->getIsPinned())
