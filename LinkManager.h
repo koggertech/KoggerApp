@@ -54,7 +54,6 @@ public slots:
     void onExpiredTimer();
 
     void openAsSerial(QUuid uuid);
-    void updateBaudrate(QUuid uuid,int baudrate);
 
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
@@ -62,12 +61,19 @@ public slots:
     void closeLink(QUuid uuid);
     void deleteLink(QUuid uuid);
 
+
+    void updateBaudrate(QUuid uuid, int baudrate);
+    void updateAddress(QUuid uuid, const QString& address);
+    void updateSourcePort(QUuid uuid,int sourcePort);
+    void updateDestinationPort(QUuid uuid,int destinationPort);
+    void updatePinnedState(QUuid uuid, bool state);
+
+
+
     void frameInput(Link* link, FrameParser frame); //
 
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
-
-    void onPinnedChanged(QUuid uuid, bool state);
 
     void importPinnedLinksFromXML();
 };

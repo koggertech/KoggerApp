@@ -30,9 +30,8 @@ private:
     LinkListModel model_;
 
 signals:
-    void modelChanged(); //
+    void modelChanged(); // Q_PROPERTY in .h
 
-    void sendUpdateBaudrate(QUuid uuid, int baudrate);
     void sendOpenAsSerial(QUuid uuid);
 
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
@@ -44,12 +43,15 @@ signals:
     void sendCloseLink(QUuid uuid);
     void sendDeleteLink(QUuid uuid);
 
-    void sendPinnedChanged(QUuid uuid, bool state);
+    void sendUpdateBaudrate(QUuid uuid, int baudrate);
+    void sendUpdateAddress(QUuid uuid, QString address);
+    void sendUpdateSourcePort(QUuid uuid, int sourcePort);
+    void sendUpdateDestinationPort(QUuid uuid, int destinationPort);
+    void sendUpdatePinnedState(QUuid uuid, bool state);
 
 public slots:
 
     void openAsSerial(QUuid uuid);
-    void updateBaudrate(QUuid uuid, int baudrate);
 
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
@@ -59,6 +61,10 @@ public slots:
 
     void closeLink(QUuid uuid);
     void deleteLink(QUuid uuid);
+
+
+    void updateBaudrate(QUuid uuid, int baudrate);
+
 
 
     // for model

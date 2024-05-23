@@ -47,7 +47,6 @@ public:
 
     void createAsSerial(const QString& portName, int baudrate, bool parity);
     void openAsSerial();
-    void updateBaudrate(int baudrate);
 
     void createAsUdp(const QString& address, int sourcePort, int destinationPort);
     void updateUdpParameters(const QString& address, int sourcePort, int destinationPort);
@@ -112,7 +111,6 @@ private:
     QMutex _mutex;
     FrameParser _frame;
     QIODevice* ioDevice_ = nullptr;
-    QHostAddress hostAddress_;
     QByteArray _context;
     QByteArray _buffer;
 
@@ -122,7 +120,7 @@ private:
     QString portName_;
     int baudrate_;
     bool parity_;
-    QString address_;
+    QHostAddress hostAddress_;
     int sourcePort_;
     int destinationPort_;
     bool isPinned_;

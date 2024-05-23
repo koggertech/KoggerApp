@@ -18,7 +18,7 @@ Link::Link() :
     portName_(""),
     baudrate_(0),
     parity_(false),
-    address_(""),
+    hostAddress_(""),
     sourcePort_(0),
     destinationPort_(0),
     isPinned_(false),
@@ -37,7 +37,7 @@ Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString 
     portName_(portName),
     baudrate_(baudrate),
     parity_(parity),
-    address_(address),
+    hostAddress_(address),
     sourcePort_(sourcePort),
     destinationPort_(destinationPort),
     isPinned_(isPinned),
@@ -85,23 +85,12 @@ void Link::openAsSerial()
 
 }
 
-void Link::updateBaudrate(int baudrate)
-{
-    qDebug() << "Link::updateBaudrate";
-
-    baudrate_ = baudrate;
-    if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
-        currDev->setBaudRate(baudrate_);
-        qDebug() << "casted & setted";
-    }
-}
-
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
 {
     qDebug() << "Link::createAsUdp, uuid:" << getUuid().toString();
 
     linkType_ = LinkType::LinkIPUDP;
-    address_ = address;
+    hostAddress_.setAddress(address);
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -110,7 +99,7 @@ void Link::updateUdpParameters(const QString& address, int sourcePort, int desti
 {
     qDebug() << "Link::updateUdpParameters, uuid:" << getUuid().toString();
 
-    address_ = address;
+    hostAddress_.setAddress(address);
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -128,7 +117,7 @@ void Link::openAsUdp()
         return;
     }
 
-    hostAddress_.setAddress(address_);
+    //hostAddress_.setAddress(address_);
 
     if (isBinded) {
         socketUdp->open(QIODevice::ReadWrite);
@@ -152,7 +141,7 @@ void Link::createAsTcp(const QString &address, int sourcePort, int destinationPo
     qDebug() << "Link::createAsTcp, uuid:" << getUuid().toString();
 
     linkType_ = LinkType::LinkIPTCP;
-    address_ = address;
+    hostAddress_.setAddress(address);
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -161,7 +150,7 @@ void Link::updateTcpParameters(const QString& address, int sourcePort, int desti
 {
     qDebug() << "Link::updateTcpParameters, uuid:" << getUuid().toString();
 
-    address_ = address;
+    hostAddress_.setAddress(address);
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
 }
@@ -260,7 +249,13 @@ void Link::setPortName(const QString &portName)
 
 void Link::setBaudrate(int baudrate)
 {
+    qDebug() << "Link::setBaudrate";
+
     baudrate_ = baudrate;
+    if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
+        currDev->setBaudRate(baudrate_);
+        qDebug() << "casted & setted";
+    }
 }
 
 void Link::setParity(bool parity)
@@ -275,17 +270,20 @@ void Link::setLinkType(LinkType linkType)
 
 void Link::setAddress(const QString &address)
 {
-    address_ = address;
+    hostAddress_.setAddress(address);
+    // TODO: rebind?
 }
 
 void Link::setSourcePort(int sourcePort)
 {
     sourcePort_ = sourcePort;
+    // TODO: rebind?
 }
 
 void Link::setDestinationPort(int destinationPort)
 {
     destinationPort_ = destinationPort;
+    // TODO: rebind?
 }
 
 void Link::setPinned(bool state)
@@ -343,7 +341,7 @@ LinkType Link::getLinkType() const
 
 QString Link::getAddress() const
 {
-    return address_;
+    return hostAddress_.toString();
 }
 
 int Link::getSourcePort() const

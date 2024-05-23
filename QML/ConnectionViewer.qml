@@ -130,7 +130,7 @@ ColumnLayout {
                         }
 
                         onToggled: {
-                            linkManagerWrapper.sendPinnedChanged(Uuid, checked)
+                            linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
                         }
                     }
 
@@ -164,12 +164,12 @@ ColumnLayout {
                         // Layout.fillWidth: true
                         visible: LinkType == 1
                         model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
-                        currentIndex: 4
+                        currentIndex: 7
                         displayText: Baudrate
 
                         onCurrentTextChanged: {
                             if (LinkType == 1)
-                                linkManagerWrapper.updateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
                         }
 
                         background:  Rectangle {
@@ -177,6 +177,11 @@ ColumnLayout {
                             border.width: 0
                             border.color: theme.controlBorderColor
                         }
+
+                        Component.onCompleted: {
+                            linkManagerWrapper.sendUpdateBaudrate(Number(baudrateCombo.currentText))
+                        }
+
                     }
 
                     CText {
@@ -198,6 +203,10 @@ ColumnLayout {
 
                         text: Address
                         // placeholderText: "ip"
+
+                        onTextEdited: {
+                            linkManagerWrapper.sendUpdateAddress(Uuid, ipAddressText.text)
+                        }
 
                         background:  Rectangle {
                             color: "transparent"
@@ -254,6 +263,9 @@ ColumnLayout {
                             border.color: theme.controlBorderColor
                         }
 
+                        onTextEdited: {
+                            linkManagerWrapper.sendUpdateSourcePort(Uuid, ipPortText.text)
+                        }
                         //Settings {
                         //    property alias ipPortText: ipPortText.text
                         //}
@@ -293,6 +305,10 @@ ColumnLayout {
                             color: "transparent"
                             border.width: 0
                             border.color: theme.controlBorderColor
+                        }
+
+                        onTextEdited: {
+                            linkManagerWrapper.sendUpdateDestinationPort(Uuid, ipPort2Text.text)
                         }
 
                         //Settings {
