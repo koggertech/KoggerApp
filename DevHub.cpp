@@ -5,7 +5,9 @@ extern Core core;
 #include <QDateTime>
 
 Device::Device()
-{ }
+{
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+}
 
 Device::~Device()
 { }

@@ -15,6 +15,7 @@ DevDriver::DevDriver(QObject *parent) :
     soundSpeedState_(false),
     uartState_(false)
 {
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
     regID(idTimestamp = new IDBinTimestamp(), &DevDriver::receivedTimestamp);
 
     regID(idDist = new IDBinDist(), &DevDriver::receivedDist);

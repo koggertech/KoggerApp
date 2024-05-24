@@ -15,6 +15,7 @@ IDBin::IDBin(QObject *parent) :
     isColdStart_(false), // for unique
     needToCheckSetResp_(true)
 {
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
 //    setProto(proto);
 
     coldStartTimer_.setInterval(timerPeriodMsec_);

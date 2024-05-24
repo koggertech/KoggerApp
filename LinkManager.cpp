@@ -8,6 +8,10 @@
 LinkManager::LinkManager(QObject *parent) :
     QObject(parent)
 {
+    qRegisterMetaType<ControlType>("ControlType");
+    qRegisterMetaType<LinkType>("LinkType");
+    qRegisterMetaType<FrameParser>("FrameParser");
+
     timer_ = std::make_unique<QTimer>(this);
     timer_->setInterval(timerInterval_);
 
