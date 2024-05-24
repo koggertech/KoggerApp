@@ -70,8 +70,7 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
 
-        if (link->getLinkType() != LinkType::LinkSerial ||
-            link->getIsPinned()) // TODO
+        if (link->getLinkType() != LinkType::LinkSerial)
             continue;
 
         bool isBeen{ false };
@@ -82,7 +81,17 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
             }
         }
 
-        if (!isBeen) {
+        if (link->getIsPinned()) {
+            if (!isBeen && !link->getIsNotAvailable()) {
+                link->setIsNotAvailable(true);
+                doEmitAppendModifyModel(link);
+            }
+            else if (isBeen && link->getIsNotAvailable()) {
+                link->setIsNotAvailable(false);
+                doEmitAppendModifyModel(link);
+            }
+        }
+        else if (!isBeen) {
             emit linkDeleted(link->getUuid(), link);
 
             // model
@@ -270,15 +279,15 @@ void LinkManager::importPinnedLinksFromXML()
                             qDebug() << "\tdestination_port: " << link->getDestinationPort();
                         }
                         else if (xmlReader.name().toString() == "is_pinned") {
-                            link->setPinned(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setIsPinned(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
                             qDebug() << "\tis_pinned: " << link->getIsPinned();
                         }
                         else if (xmlReader.name().toString() == "is_hided") {
-                            link->setHided(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setIsHided(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
                             qDebug() << "\tis_hided: " << link->getIsHided();
                         }
                         else if (xmlReader.name().toString() == "is_not_available") {
-                            link->setNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                            link->setIsNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
                             qDebug() << "\tis_not_available: " << link->getIsNotAvailable();
                         }
                     }
@@ -462,7 +471,7 @@ void LinkManager::updatePinnedState(QUuid uuid, bool state)
     qDebug() << "LinkManager::updatePinnedState";
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        linkPtr->setPinned(state);
+        linkPtr->setIsPinned(state);
 
         exportPinnedLinksToXML();
     }

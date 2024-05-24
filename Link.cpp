@@ -290,18 +290,19 @@ void Link::setDestinationPort(int destinationPort)
     // TODO: rebind?
 }
 
-void Link::setPinned(bool state)
+void Link::setIsPinned(bool state)
 {
     isPinned_ = state;
 }
 
-void Link::setHided(bool isHided)
+void Link::setIsHided(bool isHided)
 {
     isHided_ = isHided;
 }
 
-void Link::setNotAvailable(bool isNotAvailable)
+void Link::setIsNotAvailable(bool isNotAvailable)
 {
+    qDebug() << "Link::setNotAvailable: " << isNotAvailable;
     isNotAvailable_ = isNotAvailable;
 }
 

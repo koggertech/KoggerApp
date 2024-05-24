@@ -75,9 +75,9 @@ public:
     void setAddress(const QString& address);
     void setSourcePort(int sourcePort);
     void setDestinationPort(int destinationPort);
-    void setPinned(bool isPinned);
-    void setHided(bool isHided);
-    void setNotAvailable(bool isNotAvailable);
+    void setIsPinned(bool isPinned);
+    void setIsHided(bool isHided);
+    void setIsNotAvailable(bool isNotAvailable);
 
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;

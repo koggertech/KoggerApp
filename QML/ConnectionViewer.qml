@@ -98,7 +98,7 @@ ColumnLayout {
                     anchors.leftMargin: 0
                     anchors.rightMargin: 0
                     anchors.verticalCenter: parent
-                    color: ConnectionStatus ? "#005000" : IsNotAvailable ? theme.controlBackColor : "#500000"
+                    color: ConnectionStatus ? "#005000" : IsNotAvailable ? "#500000" : theme.controlBackColor
                     border.width: 0
                     border.color: theme.controlBorderColor
                     radius: 2
