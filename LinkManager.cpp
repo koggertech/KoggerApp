@@ -202,8 +202,8 @@ void LinkManager::printLinkDebugInfo(Link* link) const
         qDebug() << "\tlink is nullptr";
     else {
         qDebug() << QString("uuid: %1; controlType: %2; portName: %3; baudrate: %4; parity: %5; linkType: %6; address: %7; sourcePort: %8; destinationPort: %9; isPinned: %10; isHided: %11; isNotAvailable: %12; connectionStatus: %13")
-                        .arg(link->getUuid().toString()).arg(link->getConnectionStatus()).arg(link->getControlType()).arg(link->getPortName()).arg(link->getBaudrate())
-                        .arg(link->getParity()).arg(link->getLinkType()).arg(link->getAddress()).arg(link->getSourcePort()).arg(link->getDestinationPort()).arg(link->getIsPinned()).arg(link->getIsHided()).arg(link->getIsNotAvailable());
+                        .arg(link->getUuid().toString()).arg(link->getControlType()).arg(link->getPortName()).arg(link->getBaudrate()).arg(link->getParity()).arg(link->getLinkType()).arg(link->getAddress()).arg(link->getSourcePort())
+                        .arg(link->getDestinationPort()).arg(link->getIsPinned()).arg(link->getIsHided()).arg(link->getIsNotAvailable()).arg(link->getConnectionStatus());
     }
 }
 
@@ -393,6 +393,7 @@ void LinkManager::deleteLink(QUuid uuid)
 void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 {
     timer_->stop();
+    qDebug() << "LinkManager::updateBaudrate";
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setBaudrate(baudrate);
@@ -410,6 +411,7 @@ void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 void LinkManager::updateAddress(QUuid uuid, const QString &address)
 {
     timer_->stop();
+    qDebug() << "LinkManager::updateAddress";
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
@@ -425,6 +427,7 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
 void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
 {
     timer_->stop();
+    qDebug() << "LinkManager::updateSourcePort";
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setSourcePort(sourcePort);
@@ -441,6 +444,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 {
     timer_->stop();
 
+    qDebug() << "LinkManager::updateDestinationPort";
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setDestinationPort(destinationPort);
 
@@ -455,6 +459,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 void LinkManager::updatePinnedState(QUuid uuid, bool state)
 {
     timer_->stop();
+    qDebug() << "LinkManager::updatePinnedState";
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setPinned(state);

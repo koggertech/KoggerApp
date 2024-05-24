@@ -167,8 +167,12 @@ ColumnLayout {
                         currentIndex: 7
                         displayText: Baudrate
 
+                        // using comboBox
                         onCurrentTextChanged: {
-                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            if (LinkType == 1) {
+                                console.info("baudrateCombo: onCurrentTextChanged: currentText: " + Number(baudrateCombo.currentText))
+                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            }
                         }
 
                         background:  Rectangle {
@@ -177,10 +181,13 @@ ColumnLayout {
                             border.color: theme.controlBorderColor
                         }
 
+                        // set val from QML to raw com link
                         Component.onCompleted: {
-                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            if (LinkType == 1) {
+                                console.info("baudrateCombo: Component.onCompleted: currentText: " + Number(baudrateCombo.currentText))
+                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            }
                         }
-
                     }
 
                     CText {

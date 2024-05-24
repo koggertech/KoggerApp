@@ -252,9 +252,12 @@ void Link::setBaudrate(int baudrate)
     qDebug() << "Link::setBaudrate";
 
     baudrate_ = baudrate;
-    if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
-        currDev->setBaudRate(baudrate_);
-        qDebug() << "casted & setted";
+
+    if (linkType_ == LinkType::LinkSerial) {
+        if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
+            currDev->setBaudRate(baudrate_);
+            qDebug() << "casted & setted";
+        }
     }
 }
 
