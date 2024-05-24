@@ -157,7 +157,7 @@ ColumnLayout {
                         rightPadding: 2
                         Layout.fillWidth: true
                         text: "Auto"
-                        // checked: IsPinned
+                        checked: ControlType
                         background:  Rectangle {
                             color: "transparent"
                             border.width: 0
