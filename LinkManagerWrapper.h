@@ -43,6 +43,7 @@ signals:
     void sendUpdateSourcePort(QUuid uuid, int sourcePort);
     void sendUpdateDestinationPort(QUuid uuid, int destinationPort);
     void sendUpdatePinnedState(QUuid uuid, bool state);
+    void sendUpdateControlType(QUuid uuid, int controlType);
 
 public slots:
     void openAsSerial(QUuid uuid);

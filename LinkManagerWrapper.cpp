@@ -9,6 +9,8 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     workerObject_ = std::make_unique<LinkManager>(this);
 
     QObject::connect(workerThread_.get(), &QThread::started,                              workerObject_.get(), &LinkManager::importPinnedLinksFromXML);
+    QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                this,                &LinkManagerWrapper::appendModifyModelData);
+    QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                      this,                &LinkManagerWrapper::deleteModelData);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,          workerObject_.get(), &LinkManager::openAsSerial);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsUdp,           workerObject_.get(), &LinkManager::createAsUdp);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsUdp,             workerObject_.get(), &LinkManager::openAsUdp);
@@ -21,8 +23,14 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,      workerObject_.get(), &LinkManager::updateSourcePort);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort, workerObject_.get(), &LinkManager::updateDestinationPort);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,     workerObject_.get(), &LinkManager::updatePinnedState);
-    QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                this,                &LinkManagerWrapper::appendModifyModelData);
-    QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                      this,                &LinkManagerWrapper::deleteModelData);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateControlType,     [this](QUuid uuid, int controlType) {
+                                                                                              switch (controlType) {
+                                                                                              case 0: { workerObject_->updateControlType(uuid, ControlType::kManual);   break; }
+                                                                                              case 1: { workerObject_->updateControlType(uuid, ControlType::kAuto);     break; }
+                                                                                              case 2: { workerObject_->updateControlType(uuid, ControlType::kAutoOnce); break; }
+                                                                                              default : { break; }
+                                                                                              }
+                                                                                          });
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();

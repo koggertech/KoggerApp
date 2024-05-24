@@ -83,6 +83,8 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
 
         if (link->getIsPinned()) {
             if (!isBeen && !link->getIsNotAvailable()) {
+                if (link->isOpen())
+                    link->close();
                 link->setIsNotAvailable(true);
                 doEmitAppendModifyModel(link);
             }
@@ -110,12 +112,34 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
     }
 }
 
+void LinkManager::openAutoConnections()
+{
+    for (int i = 0; i < list_.size(); ++i) {
+        Link* link = list_.at(i);
+
+        if (!link->getConnectionStatus()) {
+            if (link->getControlType() == ControlType::kAuto &&
+                !link->getIsNotAvailable()) {
+                switch (link->getLinkType()) {
+                case LinkType::LinkNone:    { break; }
+                case LinkType::LinkSerial:  { link->openAsSerial(); break; }
+                case LinkType::LinkIPUDP:   { link->openAsUdp(); break; }
+                case LinkType::LinkIPTCP:   { link->openAsTcp(); break; }
+                default:                    { break; }
+                }
+            }
+        }
+    }
+}
+
 void LinkManager::update()
 {
     auto currSerialList{ getCurrentSerialList() };
 
     addNewLinks(currSerialList);
     deleteMissingLinks(currSerialList);
+
+    openAutoConnections();
 }
 
 Link *LinkManager::getLinkPtr(QUuid uuid)
@@ -402,7 +426,7 @@ void LinkManager::deleteLink(QUuid uuid)
 void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 {
     timer_->stop();
-    qDebug() << "LinkManager::updateBaudrate";
+    qDebug() << "LinkManager::updateBaudrate: " << baudrate;
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setBaudrate(baudrate);
@@ -420,7 +444,7 @@ void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 void LinkManager::updateAddress(QUuid uuid, const QString &address)
 {
     timer_->stop();
-    qDebug() << "LinkManager::updateAddress";
+    qDebug() << "LinkManager::updateAddress: " << address;
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
@@ -436,7 +460,7 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
 void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
 {
     timer_->stop();
-    qDebug() << "LinkManager::updateSourcePort";
+    qDebug() << "LinkManager::updateSourcePort: " << sourcePort;
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setSourcePort(sourcePort);
@@ -453,7 +477,7 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 {
     timer_->stop();
 
-    qDebug() << "LinkManager::updateDestinationPort";
+    qDebug() << "LinkManager::updateDestinationPort: " << destinationPort;
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setDestinationPort(destinationPort);
 
@@ -468,12 +492,29 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 void LinkManager::updatePinnedState(QUuid uuid, bool state)
 {
     timer_->stop();
-    qDebug() << "LinkManager::updatePinnedState";
+
+    qDebug() << "LinkManager::updatePinnedState: " << state;
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsPinned(state);
 
         exportPinnedLinksToXML();
+    }
+
+    timer_->start();
+}
+
+void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
+{
+    timer_->stop();
+
+    qDebug() << "LinkManager::updateControlType: " << controlType;
+
+    if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setControlType(controlType);
+
+        if (linkPtr->getIsPinned())
+            exportPinnedLinksToXML();
     }
 
     timer_->start();

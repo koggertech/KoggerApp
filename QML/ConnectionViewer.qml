@@ -165,7 +165,7 @@ ColumnLayout {
                         }
 
                         onToggled: {
-                            // linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
+                            linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
                         }
                     }
 

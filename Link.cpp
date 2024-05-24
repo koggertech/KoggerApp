@@ -249,8 +249,6 @@ void Link::setPortName(const QString &portName)
 
 void Link::setBaudrate(int baudrate)
 {
-    qDebug() << "Link::setBaudrate";
-
     baudrate_ = baudrate;
 
     if (linkType_ == LinkType::LinkSerial) {
@@ -302,7 +300,6 @@ void Link::setIsHided(bool isHided)
 
 void Link::setIsNotAvailable(bool isNotAvailable)
 {
-    qDebug() << "Link::setNotAvailable: " << isNotAvailable;
     isNotAvailable_ = isNotAvailable;
 }
 

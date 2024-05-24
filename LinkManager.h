@@ -25,6 +25,7 @@ private:
     Link* createSerialPort(const QSerialPortInfo& serialInfo) const;
     void addNewLinks(const QList<QSerialPortInfo> &currSerialList);
     void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
+    void openAutoConnections();
     void update();
     Link *getLinkPtr(QUuid uuid);
     void doEmitAppendModifyModel(Link* linkPtr);
@@ -67,8 +68,7 @@ public slots:
     void updateSourcePort(QUuid uuid,int sourcePort);
     void updateDestinationPort(QUuid uuid,int destinationPort);
     void updatePinnedState(QUuid uuid, bool state);
-
-
+    void updateControlType(QUuid uuid, ControlType controlType);
 
     void frameInput(Link* link, FrameParser frame); //
 
