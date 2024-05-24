@@ -98,8 +98,8 @@ ColumnLayout {
                     anchors.leftMargin: 0
                     anchors.rightMargin: 0
                     anchors.verticalCenter: parent
-                    color: theme.controlBackColor
-                    border.width: 1
+                    color: ConnectionStatus ? "#005000" : IsNotAvailable ? theme.controlBackColor : "#500000"
+                    border.width: 0
                     border.color: theme.controlBorderColor
                     radius: 2
                 }
@@ -113,15 +113,32 @@ ColumnLayout {
                     anchors.verticalCenter: parent
                     anchors.margins: 1
 
+
+
+                    // Rectangle {
+                    //     color: theme.controlBackColor
+                    //     height: parent.height
+                    //     width: 2
+                    //     border.width: 2
+                    //     border.color: "transparent"
+                    //     radius: 0
+                    // }
+
+                    MenuButton {
+                        id: linkSettingsButton
+                        padding: 2
+                        checkable: true
+                        width: theme.controlHeight
+                        height: theme.controlHeight
+                        icon.source: "./settings-outline.svg"
+                        active: checked
+                    }
+
                     CCheck {
-                        width: 72
-                        implicitWidth: 72
-                        //readOnly: true
-                        //selectByMouse: false
+                        visible: linkSettingsButton.checked
                         leftPadding: 6
                         rightPadding: 2
-                        // textEdited: false
-                        text: LinkType == 1 ? "COM" : LinkType == 2 ? "UDP" : LinkType == 2 ? "TCP" : "???"
+                        text: "Pinned"
                         checked: IsPinned
                         background:  Rectangle {
                             color: "transparent"
@@ -134,13 +151,22 @@ ColumnLayout {
                         }
                     }
 
-                    Rectangle {
-                        color: theme.controlBackColor
-                        height: parent.height
-                        width: 2
-                        border.width: 2
-                        border.color: theme.controlBorderColor
-                        radius: 0
+                    CCheck {
+                        visible: linkSettingsButton.checked
+                        leftPadding: 6
+                        rightPadding: 2
+                        Layout.fillWidth: true
+                        text: "Auto"
+                        // checked: IsPinned
+                        background:  Rectangle {
+                            color: "transparent"
+                            border.width: 0
+                            border.color: theme.controlBorderColor
+                        }
+
+                        onToggled: {
+                            // linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
+                        }
                     }
 
                     CTextField {
@@ -148,7 +174,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         selectByMouse: true
                         readOnly: true
-                        visible: LinkType == 1
+                        visible: LinkType == 1 && !linkSettingsButton.checked
                         text: PortName
 
                         background:  Rectangle {
@@ -162,7 +188,7 @@ ColumnLayout {
                         id: baudrateCombo
                         implicitWidth: 150
                         // Layout.fillWidth: true
-                        visible: LinkType == 1
+                        visible: LinkType == 1 && !linkSettingsButton.checked
                         model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
                         currentIndex: 7
                         displayText: Baudrate
@@ -191,7 +217,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         small: true
                         leftPadding: 6
                         rightPadding: 0
@@ -200,7 +226,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipAddressText
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         hoverEnabled: true
                         selectByMouse: true
                         Layout.fillWidth: true
@@ -232,7 +258,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -242,7 +268,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -251,7 +277,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPortText
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: 60
@@ -278,7 +304,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -288,7 +314,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -297,7 +323,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPort2Text
-                        visible: LinkType == 2
+                        visible: LinkType == 2 && !linkSettingsButton.checked
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: 60
