@@ -5,10 +5,13 @@
 
 LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 {
-    workerThread_ = std::make_unique<QThread>();
-    workerObject_ = std::make_unique<LinkManager>();
+    workerThread_ = std::make_unique<QThread>(this);
+    workerObject_ = std::make_unique<LinkManager>(nullptr);
+
+    workerObject_->moveToThread(workerThread_.get());
 
     QObject::connect(workerThread_.get(), &QThread::started,                              workerObject_.get(), &LinkManager::importPinnedLinksFromXML,     Qt::QueuedConnection);
+    QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,             workerObject_.get(), &LinkManager::stopTimer,                    Qt::QueuedConnection);
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                this,                &LinkManagerWrapper::appendModifyModelData, Qt::QueuedConnection);
     QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                      this,                &LinkManagerWrapper::deleteModelData,       Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,          workerObject_.get(), &LinkManager::openAsSerial,                 Qt::QueuedConnection);
@@ -23,6 +26,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,      workerObject_.get(), &LinkManager::updateSourcePort,             Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort, workerObject_.get(), &LinkManager::updateDestinationPort,        Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,     workerObject_.get(), &LinkManager::updatePinnedState,            Qt::QueuedConnection);
+
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateControlType,     this,                 [this](QUuid uuid, int controlType) {
         QMetaObject::invokeMethod(workerObject_.get(), [this, uuid, controlType]() {
                 switch (controlType) {
@@ -34,7 +38,6 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
             }, Qt::QueuedConnection);
     });
 
-    workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();
 }
 
@@ -43,8 +46,9 @@ LinkManagerWrapper::~LinkManagerWrapper()
     if (workerThread_ && workerThread_->isRunning()) {
         workerThread_->quit();
         workerThread_->wait();
-        workerThread_.reset();
     }
+
+    workerThread_->deleteLater();
 }
 
 LinkListModel* LinkManagerWrapper::getModelPtr()

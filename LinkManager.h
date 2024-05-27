@@ -52,6 +52,8 @@ signals:
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
 
+    void createTimer();
+    void stopTimer();
     void onExpiredTimer();
 
     void openAsSerial(QUuid uuid);

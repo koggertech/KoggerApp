@@ -80,8 +80,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("dataset", core.dataset());
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
-    engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapper());
-    engine.rootContext()->setContextProperty("fileReaderWrapper", core.getFileReaderWrapper());
+    engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
 
 #ifdef FLASHER
     engine.rootContext()->setContextProperty("flasher", &core.flasher);
@@ -99,6 +98,11 @@ int main(int argc, char *argv[])
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
+
+    QObject::connect(&app, &QGuiApplication::aboutToQuit, [&]() {
+        core.stopLinkManagerTimer();
+        core.stopFileReader();
+    });
 
     engine.load(url);
 

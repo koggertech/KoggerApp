@@ -11,10 +11,20 @@ public:
     explicit FileReader(QObject *parent = nullptr);
     ~FileReader();
 
-private:  
+private:
+    /*methods*/
+    void cleanUp();
+
+    /*data*/
+    int progress_;
+    volatile bool break_;
 
 signals:
+    void progressUpdated(int);
+    void completed();
 
 public slots:
+    void startRead();
+    void stopRead();
 
 };

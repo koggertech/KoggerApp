@@ -53,7 +53,6 @@ SOURCES += \
     LinkManager.cpp \
     LinkManagerWrapper.cpp \
     FileReader.cpp \
-    FileReaderWrapper.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
@@ -128,7 +127,6 @@ HEADERS += \
     LinkManager.h \
     LinkManagerWrapper.h \
     FileReader.h \
-    FileReaderWrapper.h \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \

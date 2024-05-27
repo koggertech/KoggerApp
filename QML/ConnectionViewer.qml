@@ -425,15 +425,6 @@ ColumnLayout {
         Layout.fillWidth: false
 
         CButton {
-            text: "+File"
-            Layout.fillWidth: false
-
-            onClicked: {
-                // fileReaderWrapper
-            }
-        }
-
-        CButton {
             text: "+WiFiBridge"
             Layout.fillWidth: false
 
@@ -448,6 +439,36 @@ ColumnLayout {
 
             onClicked: {
                 linkManagerWrapper.createAsUdp("", 0, 0)
+            }
+        }
+    }
+
+    MenuRow {
+        CText {
+            Layout.fillWidth: true
+            text: "FileReader:"
+        }
+
+        ProgressBar {
+            Layout.fillWidth: true
+            from: 0
+            to: 100
+            value: core.fileReaderProgress
+        }
+
+        CButton {
+            text: "start"
+            Layout.fillWidth: true
+            onClicked: {
+                core.startFileReader()
+            }
+        }
+
+        CButton {
+            text: "stop"
+            Layout.fillWidth: true
+            onClicked: {
+                core.stopFileReader()
             }
         }
     }

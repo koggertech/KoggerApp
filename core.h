@@ -30,7 +30,7 @@
 #include <scene3dcontrolmenucontroller.h>
 
 #include <LinkManagerWrapper.h>
-#include <FileReaderWrapper.h>
+#include <FileReader.h>
 
 //#define FLASHER
 
@@ -45,11 +45,11 @@ class Core : public QObject
 public:
     explicit Core();
     ~Core();
+
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
-
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
-
     Q_PROPERTY(bool logging WRITE setLogging)
+    Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged)
 
     ConsoleListModel* consoleList() {
         return m_console->listModel();
@@ -75,8 +75,8 @@ public:
 
     void setEngine(QQmlApplicationEngine *engine);
 
-    LinkManagerWrapper* getLinkManagerWrapper() const;
-    FileReaderWrapper* getFileReaderWrapper() const;
+    LinkManagerWrapper* getLinkManagerWrapperPtr() const;
+    void stopLinkManagerTimer() const;
 
 public slots:
     QList<QSerialPortInfo> availableSerial();
@@ -159,8 +159,19 @@ public slots:
 
     void UILoad(QObject *object, const QUrl &url);
 
+    // fileReader
+    void startFileReader();
+    void stopFileReader();
+    void receiveFileReaderProgress(int progress);
+    int getFileReaderProgress();
+
 signals:
     void connectionChanged(bool duplex = false);
+
+    // fileReader
+    void sendStartFileReader();
+    void sendStopFileReader();
+    void fileReaderProgressChanged();
 
 public:
     Console *m_console;
@@ -176,7 +187,6 @@ public:
     Logger _logger;
     ConverterXTF _converterXTF;
     QThread connectionThread;
-    QThread linkManagerThread_;
     QQmlApplicationEngine *m_engine = nullptr;
 
 #ifdef FLASHER
@@ -219,6 +229,14 @@ private:
     void createControllers();
 
 private:
+    // linkManager
+    std::unique_ptr<LinkManagerWrapper> linkManagerWrapper_;
+
+    // fileReader
+    std::unique_ptr<FileReader> fileReader_;
+    std::unique_ptr<QThread> fileReaderThread_;
+    QList<QMetaObject::Connection> fileReaderConnections_;
+    int fileReaderProgress_ = 0;
 
     // View controllers
     std::shared_ptr <BottomTrackControlMenuController>  m_bottomTrackControlMenuController;
@@ -230,8 +248,6 @@ private:
     std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
 
-    std::unique_ptr<LinkManagerWrapper> linkManagerWrapper_;
-    std::unique_ptr<FileReaderWrapper> fileReaderWrapper_;
 
     bool isFactoryMode() {
 #ifdef FLASHER

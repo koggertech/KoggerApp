@@ -66,14 +66,25 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     m_engine->rootContext()->setContextProperty("Scene3dToolBarController",          m_scene3dToolBarController.get());
 }
 
-LinkManagerWrapper* Core::getLinkManagerWrapper() const
+LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
 {
     return linkManagerWrapper_.get();
 }
 
-FileReaderWrapper* Core::getFileReaderWrapper() const
+void Core::stopLinkManagerTimer() const
 {
-    return fileReaderWrapper_.get();
+    emit linkManagerWrapper_->sendStopTimer();
+}
+
+void Core::receiveFileReaderProgress(int progress)
+{
+    fileReaderProgress_ = progress;
+    emit fileReaderProgressChanged();
+}
+
+int Core::getFileReaderProgress()
+{
+    return fileReaderProgress_;
 }
 
 void Core::consoleProto(FrameParser &parser, bool is_in) {
@@ -963,6 +974,54 @@ void Core::UILoad(QObject *object, const QUrl &url) {
     m_scene3dControlMenuController->setGraphicsSceneView(m_scene3dView);
 
 
+}
+
+void Core::startFileReader()
+{
+    qDebug() << "Core::startFileReader";
+    qDebug() << "core th_id: " << QThread::currentThreadId();
+
+    if (fileReader_)
+        return;
+
+    // new
+    fileReaderThread_ = std::make_unique<QThread>(this);
+    fileReader_ = std::make_unique<FileReader>(nullptr);
+
+    // connect
+    fileReaderConnections_.append(QObject::connect(this,              &Core::sendStartFileReader,   fileReader_.get(), &FileReader::startRead,           Qt::QueuedConnection));
+    fileReaderConnections_.append(QObject::connect(this,              &Core::sendStopFileReader,    fileReader_.get(), &FileReader::stopRead,            Qt::DirectConnection));
+    fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::progressUpdated, this,              &Core::receiveFileReaderProgress, Qt::QueuedConnection));
+    fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::completed,       this,              &Core::stopFileReader,            Qt::QueuedConnection));
+
+    fileReader_->moveToThread(fileReaderThread_.get());
+    fileReaderThread_->start();
+
+    emit sendStartFileReader();
+}
+
+void Core::stopFileReader()
+{
+    qDebug() << "Core::stopFileReader";
+
+    if (!fileReader_)
+        return;
+
+    emit sendStopFileReader();
+
+    // delete
+    if (fileReaderThread_ && fileReaderThread_->isRunning()) {
+        fileReaderThread_->quit();
+        fileReaderThread_->wait();
+    }
+
+    // disconnect
+    for (auto& itm : fileReaderConnections_)
+        disconnect(itm);
+    fileReaderConnections_.clear();
+
+    fileReaderThread_.reset();
+    fileReader_.reset();
 }
 
 void Core::closing()

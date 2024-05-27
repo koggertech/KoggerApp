@@ -11,16 +11,11 @@ LinkManager::LinkManager(QObject *parent) :
     qRegisterMetaType<ControlType>("ControlType");
     qRegisterMetaType<LinkType>("LinkType");
     qRegisterMetaType<FrameParser>("FrameParser");
-
-    timer_ = std::make_unique<QTimer>(this);
-    timer_->setInterval(timerInterval_);
-
-    QObject::connect(timer_.get(), &QTimer::timeout, this, &LinkManager::onExpiredTimer);
 }
 
 LinkManager::~LinkManager()
 {
-    timer_->stop();
+
 }
 
 QList<QSerialPortInfo> LinkManager::getCurrentSerialList() const
@@ -334,7 +329,8 @@ void LinkManager::importPinnedLinksFromXML()
         qDebug() << "XML error:" << xmlReader.errorString();
     file.close();
 
-    qDebug() << "LinkManager::importPinnedLinksFromXML: start update timer";
+    qDebug() << "LinkManager::importPinnedLinksFromXML: start update timer";    
+    createTimer();
     timer_->start();
 }
 
@@ -346,6 +342,20 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
         if (linkPtr->getIsPinned()) // or to open/close?
             exportPinnedLinksToXML();
     }
+}
+
+void LinkManager::createTimer()
+{
+    if (!timer_) {
+        timer_ = std::make_unique<QTimer>(this);
+        timer_->setInterval(timerInterval_);
+        QObject::connect(timer_.get(), &QTimer::timeout, this, &LinkManager::onExpiredTimer, Qt::QueuedConnection);
+    }
+}
+
+void LinkManager::stopTimer()
+{
+    timer_->stop();
 }
 
 void LinkManager::onExpiredTimer()
