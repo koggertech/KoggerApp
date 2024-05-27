@@ -10,7 +10,9 @@ Device::Device()
 }
 
 Device::~Device()
-{ }
+{
+
+}
 
 void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
     if (frame.isComplete()) {

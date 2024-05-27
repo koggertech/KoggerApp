@@ -160,7 +160,7 @@ public slots:
     void UILoad(QObject *object, const QUrl &url);
 
     // fileReader
-    void startFileReader();
+    void startFileReader(const QString& filePath);
     void stopFileReader();
     void receiveFileReaderProgress(int progress);
     int getFileReaderProgress();
@@ -169,7 +169,7 @@ signals:
     void connectionChanged(bool duplex = false);
 
     // fileReader
-    void sendStartFileReader();
+    void sendStartFileReader(const QString& filePath);
     void sendStopFileReader();
     void fileReaderProgressChanged();
 

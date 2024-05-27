@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QByteArray>
 
 
 class FileReader : public QObject
@@ -14,17 +15,17 @@ public:
 private:
     /*methods*/
     void cleanUp();
-
     /*data*/
-    int progress_;
     volatile bool break_;
 
 signals:
     void progressUpdated(int);
     void completed();
+    void interrupted();
+    void receiveData(const QByteArray &data);
 
 public slots:
-    void startRead();
+    void startRead(const QString& filePath);
     void stopRead();
 
 };

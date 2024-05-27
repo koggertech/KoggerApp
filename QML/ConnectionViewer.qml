@@ -460,7 +460,7 @@ ColumnLayout {
             text: "start"
             Layout.fillWidth: true
             onClicked: {
-                core.startFileReader()
+                core.startFileReader(pathText.text)
             }
         }
 
