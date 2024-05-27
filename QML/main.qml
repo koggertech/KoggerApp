@@ -64,7 +64,6 @@ Window  {
 
         Keys.onReleased: {
             if (event.key === Qt.Key_F11) {
-                console.info("keys.onreleased!")
                 windowController.toggleFullScreen();
             }
         }
