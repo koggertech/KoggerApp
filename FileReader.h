@@ -2,6 +2,10 @@
 
 #include <QObject>
 #include <QByteArray>
+#include <QUuid>
+
+#include "Link.h"
+#include "ProtoBinnary.h"
 
 
 class FileReader : public QObject
@@ -22,7 +26,7 @@ signals:
     void progressUpdated(int);
     void completed();
     void interrupted();
-    void receiveData(const QByteArray &data);
+    void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
 
 public slots:
     void startRead(const QString& filePath);

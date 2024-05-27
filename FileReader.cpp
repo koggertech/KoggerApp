@@ -3,14 +3,14 @@
 #include <QDebug>
 #include <QFile>
 #include <QThread>
-#include "QUrl"
+#include <QUrl>
 
 
 FileReader::FileReader(QObject *parent) :
     QObject(parent),
     break_(false)
 {
-
+    qRegisterMetaType<Parsers::FrameParser>("Parsers::FrameParser");
 }
 
 FileReader::~FileReader()
@@ -45,6 +45,8 @@ void FileReader::startRead(const QString& filePath)
 
     qint64 totalSize = file.size();
     qint64 bytesRead = 0;
+    Parsers::FrameParser frameParser;
+    QUuid aaa = QUuid::createUuid();
 
     while (true) {
         if (break_) {
@@ -66,6 +68,18 @@ void FileReader::startRead(const QString& filePath)
         int percentage = static_cast<int>((static_cast<double>(bytesRead) / totalSize) * 100);
 
         emit progressUpdated(percentage);
+
+
+///
+        frameParser.setContext((uint8_t*)data.data(), data.size());
+
+        while (frameParser.availContext() > 0) {
+            frameParser.process();
+            if(frameParser.isComplete()) {
+                emit frameReady(aaa, nullptr, frameParser);
+            }
+        }
+
 
         //emit receiveData(data);
 
