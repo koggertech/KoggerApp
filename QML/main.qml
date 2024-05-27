@@ -34,7 +34,16 @@ Window  {
     //        property alias height: mainview.height
     //    }
 
+    Settings {
+            id: appSettings
+            property bool isFullScreen: false
+    }
 
+    Component.onCompleted: {
+        if (appSettings.isFullScreen) {
+            mainview.showFullScreen();
+        }
+    }
 
     SplitView {
         Layout.fillHeight: true
@@ -64,7 +73,14 @@ Window  {
 
         Keys.onReleased: {
             if (event.key === Qt.Key_F11) {
-                windowController.toggleFullScreen();
+                if (mainview.visibility === Window.FullScreen) {
+                    mainview.showNormal();
+                    appSettings.isFullScreen = false;
+                }
+                else {
+                    appSettings.isFullScreen = true;
+                    mainview.showFullScreen();
+                }
             }
         }
 
