@@ -16,6 +16,7 @@
 #include <sceneobject.h>
 #include "Plot2D.h"
 #include "QQuickWindow"
+#include "WindowController.h"
 
 Core core;
 Themes theme;
@@ -93,11 +94,17 @@ int main(int argc, char *argv[])
     core.consoleInfo("Run...");
     core.setEngine(&engine);
 
+    QWindow *mainWindow = nullptr;
+    WindowController *windowController = new WindowController(nullptr);
+    engine.rootContext()->setContextProperty("windowController", windowController);
+
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
+                     &app, [windowController, &mainWindow, url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
+        mainWindow = qobject_cast<QWindow *>(obj);
+        windowController->setWindow(mainWindow);
     }, Qt::QueuedConnection);
 
     engine.load(url);

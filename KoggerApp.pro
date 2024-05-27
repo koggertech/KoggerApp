@@ -74,6 +74,7 @@ SOURCES += \
     streamlist.cpp \
     textrenderer.cpp \
     waterfall.cpp \
+    WindowController.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -146,6 +147,7 @@ HEADERS += \
     textrenderer.h \ # TODO
     waterfall.h \
     waterfallproxy.h \
+    WindowController.h
 
 android {
 HEADERS += \

@@ -62,6 +62,13 @@ Window  {
             }
         }
 
+        Keys.onReleased: {
+            if (event.key === Qt.Key_F11) {
+                console.info("keys.onreleased!")
+                windowController.toggleFullScreen();
+            }
+        }
+
         GridLayout {
             id:                   visualisationLayout
             SplitView.fillHeight: true
