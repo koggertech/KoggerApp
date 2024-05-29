@@ -8,7 +8,8 @@
 
 FileReader::FileReader(QObject *parent) :
     QObject(parent),
-    break_(false)
+    break_(false),
+    progress_(0)
 {
     qRegisterMetaType<Parsers::FrameParser>("Parsers::FrameParser");
 }
@@ -21,6 +22,7 @@ FileReader::~FileReader()
 void FileReader::cleanUp()
 {
     break_ = false;
+    progress_ = 0;
 }
 
 void FileReader::startRead(const QString& filePath)
@@ -29,7 +31,7 @@ void FileReader::startRead(const QString& filePath)
 
     QByteArray data;
     QFile file;
-    QUrl url(filePath);
+    const QUrl url(filePath);
     url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
 
     qDebug() << QString("File path: %1").arg(file.fileName());
@@ -43,10 +45,13 @@ void FileReader::startRead(const QString& filePath)
     //setType(ConnectionFile);
     //emit openedEvent(false);
 
-    qint64 totalSize = file.size();
+    const qint64 totalSize = file.size();
     qint64 bytesRead = 0;
     Parsers::FrameParser frameParser;
-    QUuid aaa = QUuid::createUuid();
+
+    const QUuid someUuid = QUuid::createUuid();
+    Link someLink;
+    someLink.setUuid(someUuid);
 
     while (true) {
         if (break_) {
@@ -56,8 +61,8 @@ void FileReader::startRead(const QString& filePath)
             return;
         }
 
-        QByteArray chunk = file.read(1024 * 1024);
-        qint64 chunkSize = chunk.size();
+        const QByteArray chunk = file.read(1024 * 1024);
+        const qint64 chunkSize = chunk.size();
 
         if (chunkSize == 0)
             break;
@@ -65,21 +70,24 @@ void FileReader::startRead(const QString& filePath)
         data.append(chunk);
         bytesRead += chunkSize;
 
-        int percentage = static_cast<int>((static_cast<double>(bytesRead) / totalSize) * 100);
+        auto currProgress = static_cast<int>((static_cast<float>(bytesRead) / static_cast<float>(totalSize)) * 100.0f);
+        currProgress = std::max(0, currProgress);
+        currProgress = std::min(100, currProgress);
 
-        emit progressUpdated(percentage);
-
+        if (progress_ != currProgress) {
+            progress_ = currProgress;
+            emit progressUpdated(progress_);
+        }
 
 ///
         frameParser.setContext((uint8_t*)data.data(), data.size());
 
         while (frameParser.availContext() > 0) {
             frameParser.process();
-            if(frameParser.isComplete()) {
-                emit frameReady(aaa, nullptr, frameParser);
+            if (frameParser.isComplete()) {
+                emit frameReady(someUuid, &someLink, frameParser);
             }
         }
-
 
         //emit receiveData(data);
 

@@ -21,6 +21,7 @@ private:
     void cleanUp();
     /*data*/
     volatile bool break_;
+    int progress_;
 
 signals:
     void progressUpdated(int);
