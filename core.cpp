@@ -980,24 +980,26 @@ void Core::startFileReader(const QString& filePath)
 {
     qDebug() << "Core::startFileReader: th_id: " << QThread::currentThreadId();
 
-    if (fileReader_)
-        return;
+    _devs.openFile(filePath);
 
-    // new
-    fileReaderThread_ = std::make_unique<QThread>(this);
-    fileReader_ = std::make_unique<FileReader>(nullptr);
+    // if (fileReader_)
+    //     return;
 
-    // connect
-    fileReaderConnections_.append(QObject::connect(this,              &Core::sendStopFileReader,    fileReader_.get(), &FileReader::stopRead,            Qt::DirectConnection));
-    fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::progressUpdated, this,              &Core::receiveFileReaderProgress, Qt::QueuedConnection));
-    fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::completed,       this,              &Core::stopFileReader,            Qt::QueuedConnection));
-    fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::interrupted,     this,              &Core::stopFileReader,            Qt::QueuedConnection));
-    fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::frameReady,      &_devs,            &Device::frameInput,              Qt::QueuedConnection));
+    // // new
+    // fileReaderThread_ = std::make_unique<QThread>(this);
+    // fileReader_ = std::make_unique<FileReader>(nullptr);
 
-    fileReader_->moveToThread(fileReaderThread_.get());
-    fileReaderThread_->start();
+    // // connect
+    // fileReaderConnections_.append(QObject::connect(this,              &Core::sendStopFileReader,    fileReader_.get(), &FileReader::stopRead,            Qt::DirectConnection));
+    // fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::progressUpdated, this,              &Core::receiveFileReaderProgress, Qt::QueuedConnection));
+    // fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::completed,       this,              &Core::stopFileReader,            Qt::QueuedConnection));
+    // fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::interrupted,     this,              &Core::stopFileReader,            Qt::QueuedConnection));
+    // fileReaderConnections_.append(QObject::connect(fileReader_.get(), &FileReader::frameReady,      &_devs,            &Device::frameInput,              Qt::QueuedConnection));
 
-    QMetaObject::invokeMethod(fileReader_.get(), "startRead", Q_ARG(QString, filePath));
+    // fileReader_->moveToThread(fileReaderThread_.get());
+    // fileReaderThread_->start();
+
+    // QMetaObject::invokeMethod(fileReader_.get(), "startRead", Q_ARG(QString, filePath));
 }
 
 void Core::stopFileReader()

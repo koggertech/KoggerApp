@@ -85,7 +85,7 @@ void FileReader::startRead(const QString& filePath)
         while (frameParser.availContext() > 0) {
             frameParser.process();
             if (frameParser.isComplete()) {
-                emit frameReady(someUuid, &someLink, frameParser);
+                emit frameReady(someUuid, NULL, frameParser);
             }
         }
 

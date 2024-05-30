@@ -65,6 +65,7 @@ public:
 
 public slots:
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
+    void openFile(const QString& filePath);
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -138,9 +139,12 @@ protected:
     } _vru;
 
 
+    volatile bool break_ = false;
+    int progress_ = 0;
+
 
     DevQProperty* getDevice(QUuid uuid, Link* link, uint8_t addr) {
-        if(lastUid_ == uuid && lastAddress_ == addr && lastDevice_ != NULL) {
+        if((link == NULL || lastUid_ == uuid) && lastAddress_ == addr && lastDevice_ != NULL) {
             return lastDevice_;
         } else {
             lastDevice_ = _devTree[uuid][addr];

@@ -17,18 +17,6 @@ Device::~Device()
 void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
     if (frame.isComplete()) {
 
-//         if(isProxyNavOpen() && (frame.isCompleteAsNMEA() || frame.isCompleteAsUBX() || frame.isCompleteAsMAVLink())) {
-//             emit writeProxyNav(QByteArray((char*)frame.frame(), frame.frameLen()));
-// //            continue;
-//         }
-
-//         if(isProxyOpen() && (frame.isComplete())) {
-//             emit writeProxy(QByteArray((char*)frame.frame(), frame.frameLen()));
-//             return; //continue;
-//         }
-
-//        qInfo("Packets: good %u, frame error %u, check error %u", m_proto.binComplete(),  m_proto.frameError(),  m_proto.binError());
-
 #if !defined(Q_OS_ANDROID)
         if(frame.isStream()) {
             _streamList.append(&frame);
@@ -239,15 +227,91 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
             //            }
         }
 
-        if((frame.isCompleteAsNMEA() && !((ProtoNMEA*)&frame)->isEqualId("DBT"))
-            || frame.isCompleteAsUBX()
-            || frame.isCompleteAsMAVLink())
-        {
-            if(frame.nested() == 0) {
-                deleteDevicesByLink(uuid);
+        if(link != NULL) {
+            if((frame.isCompleteAsNMEA() && !((ProtoNMEA*)&frame)->isEqualId("DBT"))
+                || frame.isCompleteAsUBX()
+                || frame.isCompleteAsMAVLink())
+            {
+                if(frame.nested() == 0) {
+                    deleteDevicesByLink(uuid);
+                }
             }
         }
     }
+}
+
+void Device::openFile(const QString &filePath) {
+    qDebug() << "FileReader::startRead: th_id: " << QThread::currentThreadId();
+
+    // QByteArray data;
+    QFile file;
+    const QUrl url(filePath);
+    url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+
+    qDebug() << QString("File path: %1").arg(file.fileName());
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "FileReader::startRead file not opened!";
+        // emit interrupted();
+        return;
+    }
+
+    //setType(ConnectionFile);
+    //emit openedEvent(false);
+
+    const qint64 totalSize = file.size();
+    qint64 bytesRead = 0;
+    Parsers::FrameParser frameParser;
+
+    const QUuid someUuid;
+
+    delAllDev();
+
+    while (true) {
+        if (break_) {
+            qDebug() << "FileReader::startRead interrupted!";
+            file.close();
+            // emit interrupted();
+            return;
+        }
+
+        QByteArray chunk = file.read(1024 * 1024);
+        const qint64 chunkSize = chunk.size();
+
+        if (chunkSize == 0)
+            break;
+
+        // data.append(chunk);
+        bytesRead += chunkSize;
+
+        auto currProgress = static_cast<int>((static_cast<float>(bytesRead) / static_cast<float>(totalSize)) * 100.0f);
+        currProgress = std::max(0, currProgress);
+        currProgress = std::min(100, currProgress);
+
+        if (progress_ != currProgress) {
+            progress_ = currProgress;
+            // emit progressUpdated(progress_);
+        }
+
+        ///
+        frameParser.setContext((uint8_t*)chunk.data(), chunk.size());
+
+        while (frameParser.availContext() > 0) {
+            frameParser.process();
+            if (frameParser.isComplete()) {
+                // emit frameReady(someUuid, NULL, frameParser);
+                frameInput(someUuid, NULL, frameParser);
+            }
+        }
+
+        //emit receiveData(data);
+
+        chunk.clear();
+    }
+
+    file.close();
+
+    // emit completed();
 }
 
 void Device::onLinkOpened(QUuid uuid, Link *link)
