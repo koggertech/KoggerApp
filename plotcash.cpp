@@ -267,7 +267,9 @@ void Dataset::rawDataRecieved(RawData raw_data) {
     RawData::RawDataHeader header = raw_data.header;
 
     ComplexF* compelex_data = (ComplexF*)raw_data.data.data();
-    int size = raw_data.data.size()/sizeof(ComplexF)/header.channelCount;
+    int16_t* real16_data = (int16_t*)raw_data.data.data();
+
+    int size = raw_data.data.size()/(header.dataSize + 1)/header.channelCount;
 
     if(header.localOffset == 0) {
         float offset_m = 0;
@@ -286,11 +288,23 @@ void Dataset::rawDataRecieved(RawData raw_data) {
             signal.sampleRate = header.sampleRate;
 
             signal.data.resize(size);
+
             ComplexF* signal_data = signal.data.data();
 
-            for(int i  = 0; i < size; i++) {
-                signal_data[i] = compelex_data[i*header.channelCount + ich];
+            if(header.dataType == 0) {
+                signal.isComplex = true;
+
+                for(int i  = 0; i < size; i++) {
+                    signal_data[i] = compelex_data[i*header.channelCount + ich];
+                }
+            } else if(header.dataType == 1) {
+                signal.isComplex = false;
+
+                for(int i  = 0; i < size; i++) {
+                    signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
+                }
             }
+
             last_epoch->setComplexF(ich, signal);
             validateChannelList(ich);
         }
@@ -302,12 +316,23 @@ void Dataset::rawDataRecieved(RawData raw_data) {
             uint32_t inbuf_localOffset = signal.data.size();
             signal.data.resize(header.localOffset + size);
 
+            // signal.data.fill(ComplexF(0,0))
+
             if(inbuf_localOffset == header.localOffset) {
                 ComplexF* signal_data = signal.data.data() + inbuf_localOffset;
-                for(int i  = 0; i < size; i++) {
-                    signal_data[i] = compelex_data[i*header.channelCount + ich];
+                if(header.dataType == 0) {
+                    for(int i  = 0; i < size; i++) {
+                        signal_data[i] = compelex_data[i*header.channelCount + ich];
+                    }
+                } else if(header.dataType == 1) {
+                    for(int i  = 0; i < size; i++) {
+                        signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
+                    }
                 }
+            } else {
+                qDebug("raw data has broken");
             }
+
 
             last_epoch->setComplexF(ich, signal);
         }
