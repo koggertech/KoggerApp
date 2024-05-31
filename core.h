@@ -169,7 +169,7 @@ signals:
     void connectionChanged(bool duplex = false);
 
     // fileReader
-    void sendStartFileReader(const QString& filePath);
+    //void sendStartFileReader(const QString& filePath);
     void sendStopFileReader();
     void fileReaderProgressChanged();
 

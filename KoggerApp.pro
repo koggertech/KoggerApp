@@ -47,6 +47,7 @@ SOURCES += \
     3Plot.cpp \
     DevDriver.cpp \
     DevHub.cpp \
+    DeviceManager.cpp \
     EchogramProcessing.cpp \
     IDBinnary.cpp \
     Link.cpp \
@@ -120,6 +121,7 @@ HEADERS += \
     DSP.h \
     DevDriver.h \
     DevHub.h \
+    DeviceManager.h \
     DevQProperty.h \
     EchogramProcessing.h \
     IDBinnary.h \
