@@ -10,7 +10,7 @@
 #include <QStandardItemModel>
 #include <QQmlContext>
 #include <waterfall.h>
-#include <DevHub.h>
+//#include <DevHub.h>
 #include <logger.h>
 #include <QThread>
 #include <3Plot.h>
@@ -29,6 +29,7 @@
 #include <scene3dtoolbarcontroller.h>
 #include <scene3dcontrolmenucontroller.h>
 
+#include <DeviceManagerWrapper.h>
 #include <LinkManagerWrapper.h>
 #include <FileReader.h>
 
@@ -75,6 +76,7 @@ public:
 
     void setEngine(QQmlApplicationEngine *engine);
 
+    DeviceManagerWrapper* getDeviceManagerWrapper() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     void stopLinkManagerTimer() const;
 
@@ -155,7 +157,7 @@ public slots:
 //        m_plot->setDistVis(visible);
 //    }
 
-    Device* dev() { return &_devs; }
+    //Device* dev() { return &_devs; }
 
     void UILoad(QObject *object, const QUrl &url);
 
@@ -183,7 +185,7 @@ public:
     GraphicsScene3dView* m_scene3dView = nullptr;
 
 
-    Device _devs;
+    //Device _devs;
     Logger _logger;
     ConverterXTF _converterXTF;
     QThread connectionThread;
@@ -229,6 +231,9 @@ private:
     void createControllers();
 
 private:
+    // deviceManager
+    std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapper_;
+
     // linkManager
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapper_;
 

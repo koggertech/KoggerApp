@@ -9,25 +9,41 @@ Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
     _dataset(new Dataset),
+    deviceManagerWrapper_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapper_(std::make_unique<LinkManagerWrapper>(this))
 {
-//    m_connection->moveToThread(&connectionThread);
-//    connectionThread.start();
+    // connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
+    // connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
+    // connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
+    // connect(&_devs, &Device::usblSolutionComplete, _dataset, &Dataset::addUsblSolution);
+    // connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
+    // connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
+    // connect(&_devs, &Device::dopplerBeamComlete, _dataset, &Dataset::addDopplerBeam);
+    // connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
+    // connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
 
-    connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
-    connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
-    connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
-    connect(&_devs, &Device::usblSolutionComplete, _dataset, &Dataset::addUsblSolution);
-    connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
-    connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
-    connect(&_devs, &Device::dopplerBeamComlete, _dataset, &Dataset::addDopplerBeam);
-    connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
-    connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
+    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, &_devs, &Device::frameInput);
+    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
+    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened, &_devs, &Device::onLinkOpened);
+    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
 
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, &_devs, &Device::frameInput);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened, &_devs, &Device::onLinkOpened);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
+
+    qDebug() << "Core::Core: th_id: " << QThread::currentThreadId();
+
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,          Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::iqComplete,                _dataset,   &Dataset::addComplexSignal,  Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::distComplete,              _dataset,   &Dataset::addDist,           Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::usblSolutionComplete,      _dataset,   &Dataset::addUsblSolution,   Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,            Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::positionComplete,          _dataset,   &Dataset::addPosition,       Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dopplerBeamComlete,        _dataset,   &Dataset::addDopplerBeam,    Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dvlSolutionComplete,       _dataset,   &Dataset::addDVLSolution,    Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::upgradeProgressChanged,    this,       &Core::upgradeChanged,       Qt::BlockingQueuedConnection);
+
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput, Qt::BlockingQueuedConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed, Qt::BlockingQueuedConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened, Qt::BlockingQueuedConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted, Qt::BlockingQueuedConnection);
 
     createControllers();
 }
@@ -64,6 +80,11 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     m_engine->rootContext()->setContextProperty("NpdFilterControlMenuController",    m_npdFilterControlMenuController.get());
     m_engine->rootContext()->setContextProperty("Scene3DControlMenuController",      m_scene3dControlMenuController.get());
     m_engine->rootContext()->setContextProperty("Scene3dToolBarController",          m_scene3dToolBarController.get());
+}
+
+DeviceManagerWrapper* Core::getDeviceManagerWrapper() const
+{
+    return deviceManagerWrapper_.get();
 }
 
 LinkManagerWrapper* Core::getLinkManagerWrapperPtr() const
@@ -181,20 +202,11 @@ bool Core::devsConnection() {
 
     // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
-    connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
+    //connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
     connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
 
-    // LinkManager // TODO?
-    // QObject::connect(linkManager_, &LinkManager::openedEvent, this, &Core::connectionChanged);
-    // QObject::connect(linkManager_, &LinkManager::openedEvent, &_devs, &Device::startConnection);
-    // QObject::connect(&_devs, &Device::dataSend, linkManager_, &LinkManager::sendData);
-    // QObject::connect(linkManager_, &LinkManager::loggingStream, &_logger, &Logger::loggingStream);
-
-
-    if(_isLogging) {
+    if (_isLogging)
         _logger.startNewLog();
-    }
-
 
     return true;
 }
@@ -281,7 +293,7 @@ bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &addres
 
     // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
-    connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
+    //connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
     connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
     m_connection->openIP(address, port, is_tcp);
 
@@ -297,10 +309,10 @@ bool Core::isOpenConnection() {
 
 bool Core::closeConnection() {
     m_connection->close();
-    _devs.stopConnection();
+    //_devs.stopConnection();
 
-    m_connection->disconnect(&_devs);
-    _devs.disconnect(m_connection);
+    //m_connection->disconnect(&_devs);
+    //_devs.disconnect(m_connection);
 
     m_connection->disconnect(this);
     this->disconnect(m_connection);
@@ -980,7 +992,7 @@ void Core::startFileReader(const QString& filePath)
 {
     qDebug() << "Core::startFileReader: th_id: " << QThread::currentThreadId();
 
-    _devs.openFile(filePath);
+    //_devs.openFile(filePath);
 
     // if (fileReader_)
     //     return;

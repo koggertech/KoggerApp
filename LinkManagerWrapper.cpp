@@ -1,4 +1,5 @@
 #include "LinkManagerWrapper.h"
+#include "Core.h"
 
 #include <QDebug>
 

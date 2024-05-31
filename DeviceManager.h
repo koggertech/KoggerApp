@@ -12,7 +12,7 @@
 #include "streamlist.h"
 #include "DevQProperty.h"
 //#include "ProtoBinnary.h"
-#include "core.h"
+//#include "core.h"
 
 
 class DeviceManager : public QObject
@@ -21,7 +21,7 @@ class DeviceManager : public QObject
 
 public:
     /*methods*/
-    DeviceManager(Core* corePtr);
+    DeviceManager();
     ~DeviceManager();
 
     Q_INVOKABLE float vruVoltage();
@@ -42,14 +42,10 @@ public:
     Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
     Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
     Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
-    Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged) //
+    //Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged) //
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
-    Q_INVOKABLE void openProxyLink(const QString &address, const int port_in,  const int port_out);
-    Q_INVOKABLE void openProxyNavLink(const QString &address, const int port_in,  const int port_out);
-    Q_INVOKABLE void closeProxyLink();
-    Q_INVOKABLE void closeProxyNavLink();
     Q_INVOKABLE StreamListModel* streamsList();
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
@@ -109,7 +105,6 @@ private:
     } vru_;
     QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
     QUuid lastUuid_;
-    Core* corePtr_;
     DevQProperty* lastDevs_;
     DevQProperty* lastDevice_;
     QList<DevQProperty*> devList_;

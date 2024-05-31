@@ -48,6 +48,7 @@ SOURCES += \
     DevDriver.cpp \
     DevHub.cpp \
     DeviceManager.cpp \
+    DeviceManagerWrapper.cpp \
     EchogramProcessing.cpp \
     IDBinnary.cpp \
     Link.cpp \
@@ -122,6 +123,7 @@ HEADERS += \
     DevDriver.h \
     DevHub.h \
     DeviceManager.h \
+    DeviceManagerWrapper.h \
     DevQProperty.h \
     EchogramProcessing.h \
     IDBinnary.h \

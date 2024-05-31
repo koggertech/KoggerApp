@@ -11,6 +11,7 @@
 #include "math.h"
 #include <qvector3d.h>
 #include <QQmlEngine>
+#include <QMutex>
 
 #include <DSP.h>
 
@@ -727,7 +728,11 @@ class Dataset : public QObject {
 public:
     Dataset();
 
-    inline int size() const { return _pool.size(); }
+    inline int size() const {
+
+        return _pool.size();
+
+    }
 
     Epoch* fromIndex(int index_offset = 0) {
         int index = validIndex(index_offset);
@@ -847,6 +852,8 @@ signals:
     void boatTrackUpdated();
 
 protected:
+    QMutex mutex_;
+
     int lastEventTimestamp = 0;
     int lastEventId = 0;
     float _lastEncoder = 0;
@@ -885,7 +892,10 @@ protected:
 
 
     Epoch* addNewEpoch() {
+        //mutex_.lock();
         _pool.resize(_pool.size() + 1);
+
+        //mutex_.unlock();
         return last();
     }
 

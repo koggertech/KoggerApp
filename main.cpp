@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 #endif
 
     engine.rootContext()->setContextProperty("logViewer", core.console());
-    engine.rootContext()->setContextProperty("devs", core.dev());
+    //engine.rootContext()->setContextProperty("devs", core.dev()); //
+    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapper()); // TODO: QML
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);
