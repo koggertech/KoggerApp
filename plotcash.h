@@ -248,6 +248,7 @@ typedef struct ComplexSignal {
     uint32_t globalOffset = 0;
     float sampleRate = 0;
     bool isComplex = true;
+    int groupIndex = 0;
     QVector<ComplexF> data;
 } ComplexSignal;
 

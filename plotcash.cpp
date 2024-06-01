@@ -278,11 +278,15 @@ void Dataset::rawDataRecieved(RawData raw_data) {
         //     offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
         // }
         last_epoch->moveComplexToEchogram(offset_m);
-        last_epoch = addNewEpoch();
+        if(header.channelGroup == 0) {
+            last_epoch = addNewEpoch();
+        }
         ComplexSignals compex_signals = last_epoch->complexSignals();
 
         for(int ich = 0; ich < header.channelCount; ich++) {
-            ComplexSignal signal = compex_signals[ich];
+            int ch_num = ich + (header.channelGroup*32);
+            ComplexSignal signal = compex_signals[ch_num];
+            signal.groupIndex = header.channelGroup;
 
             signal.globalOffset = header.globalOffset;
             signal.sampleRate = header.sampleRate;
@@ -305,14 +309,16 @@ void Dataset::rawDataRecieved(RawData raw_data) {
                 }
             }
 
-            last_epoch->setComplexF(ich, signal);
-            validateChannelList(ich);
+            last_epoch->setComplexF(ch_num, signal);
+            validateChannelList(ch_num);
         }
     } else {
         ComplexSignals compex_signals = last_epoch->complexSignals();
 
         for(int ich = 0; ich < header.channelCount; ich++) {
-            ComplexSignal signal = compex_signals[ich];
+            int ch_num = ich + (header.channelGroup*32);
+
+            ComplexSignal signal = compex_signals[ch_num];
             uint32_t inbuf_localOffset = signal.data.size();
             signal.data.resize(header.localOffset + size);
 
@@ -334,7 +340,7 @@ void Dataset::rawDataRecieved(RawData raw_data) {
             }
 
 
-            last_epoch->setComplexF(ich, signal);
+            last_epoch->setComplexF(ch_num, signal);
         }
     }
 
