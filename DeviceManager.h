@@ -68,10 +68,13 @@ signals:
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
+    void rangefinderComplete(float distance);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
+    void gnssVelocityComplete(double h_speed, double course);
+    void eventComplete(int timestamp, int id, int unixt);
     void chartSetupChanged();
     void distSetupChanged();
     void datasetChanged();

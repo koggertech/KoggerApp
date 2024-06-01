@@ -106,22 +106,26 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             if (frame.id() == ID_TIMESTAMP && frame.ver() == v1) {
                 int t = static_cast<int>(frame.read<U4>());
                 int u = static_cast<int>(frame.read<U4>());
-                core.dataset()->addEvent(t, 0, u);
+                // core.dataset()->addEvent(t, 0, u);
+                eventComplete(t, 0, u);
             }
 
             if (frame.id() == ID_EVENT) {
                 int timestamp = frame.read<U4>();
                 int id = frame.read<U4>();
-                if (id < 100)
-                    core.dataset()->addEvent(timestamp, id);
+                if (id < 100) {
+                    // core.dataset()->addEvent(timestamp, id);
+                    eventComplete(timestamp, id, 0);
+                }
+
             }
 
             if (frame.id() == ID_VOLTAGE) {
                 int v_id = frame.read<U1>();
                 int32_t v_uv = frame.read<S4>();
                 if (v_id == 1) {
-                    core.dataset()->addEncoder(float(v_uv));
-                    qInfo("Voltage %f", float(v_uv));
+                    // core.dataset()->addEncoder(float(v_uv));
+                    // qInfo("Voltage %f", float(v_uv));
                 }
             }
 #endif
@@ -137,8 +141,11 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 prot_nmea.skip();
                 prot_nmea.skip();
                 double depth_m = prot_nmea.readDouble();
-                if (isfinite(depth_m))
-                    core.dataset()->addRangefinder(depth_m);
+                if (isfinite(depth_m)) {
+                    // core.dataset()->addRangefinder(depth_m);
+                    rangefinderComplete(depth_m);
+                }
+
             }
 
             if (prot_nmea.isEqualId("RMC")) {
@@ -161,7 +168,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     prot_nmea.readDate(&year, &mounth, & day);
 
                     uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
-                    core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    // core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
         }
@@ -199,8 +207,11 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 uint32_t unix_time = QDateTime(QDate(year, month, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
 
-                if (fix_type > 1 && fix_type < 5)
-                    core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                if (fix_type > 1 && fix_type < 5) {
+                    // core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                    positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                }
+
                 if (isConsoled_)
                     core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8").arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
             }
@@ -216,8 +227,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
                 MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
                 if (pos.isValid()) {
-                    core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
-                    core.dataset()->addGnssVelocity(pos.velocityH(), 0);
+                    // core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    // core.dataset()->addGnssVelocity(pos.velocityH(), 0);
+                    gnssVelocityComplete(pos.velocityH(), 0);
 
                     vru_.velocityH = pos.velocityH();
                     emit vruChanged();
@@ -244,7 +257,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
             if (mavlink_frame.msgId() == 30) {
                 MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
-                core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+                // core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+                attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
             }
 
             core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));

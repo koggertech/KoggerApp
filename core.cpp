@@ -30,20 +30,28 @@ Core::Core() : QObject(),
 
     qDebug() << "Core::Core: th_id: " << QThread::currentThreadId();
 
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,          Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::iqComplete,                _dataset,   &Dataset::addComplexSignal,  Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::distComplete,              _dataset,   &Dataset::addDist,           Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::usblSolutionComplete,      _dataset,   &Dataset::addUsblSolution,   Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,            Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::positionComplete,          _dataset,   &Dataset::addPosition,       Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dopplerBeamComlete,        _dataset,   &Dataset::addDopplerBeam,    Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dvlSolutionComplete,       _dataset,   &Dataset::addDVLSolution,    Qt::BlockingQueuedConnection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::upgradeProgressChanged,    this,       &Core::upgradeChanged,       Qt::BlockingQueuedConnection);
+    Qt::ConnectionType device_manager_connection = Qt::ConnectionType::AutoConnection;
 
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput, Qt::BlockingQueuedConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed, Qt::BlockingQueuedConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened, Qt::BlockingQueuedConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted, Qt::BlockingQueuedConnection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,          device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::iqComplete,                _dataset,   &Dataset::addComplexSignal,  device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::distComplete,              _dataset,   &Dataset::addDist,           device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::rangefinderComplete,       _dataset,   &Dataset::addRangefinder,    device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::usblSolutionComplete,      _dataset,   &Dataset::addUsblSolution,   device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,            device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::positionComplete,          _dataset,   &Dataset::addPosition,       device_manager_connection);
+
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::gnssVelocityComplete,       _dataset,   &Dataset::addGnssVelocity,  device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::eventComplete,              _dataset,   &Dataset::addEvent,         device_manager_connection);
+
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dopplerBeamComlete,        _dataset,   &Dataset::addDopplerBeam,    device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dvlSolutionComplete,       _dataset,   &Dataset::addDVLSolution,    device_manager_connection);
+    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::upgradeProgressChanged,    this,       &Core::upgradeChanged,       device_manager_connection);
+
+
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput, device_manager_connection);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed, device_manager_connection);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened, device_manager_connection);
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted, device_manager_connection);
 
     createControllers();
 }
