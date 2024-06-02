@@ -88,5 +88,6 @@
         <file>Scene3DControlMenu.qml</file>
         <file>MenuRow.qml</file>
         <file>ConnectionButton.qml</file>
+        <file>MenuFrame.qml</file>
     </qresource>
 </RCC>

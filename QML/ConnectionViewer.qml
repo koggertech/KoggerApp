@@ -27,8 +27,8 @@ ColumnLayout {
         devTab2.visible = devs.isCreatedId(2)
     }
 
-    MenuBlock {
-    }
+    // MenuBlock {
+    // }
 
     // ColumnLayout {
     //     id: columnConnectionItem
@@ -85,6 +85,7 @@ ColumnLayout {
     // }
 
     MenuRow {
+        // Layout.margins: 0
         Component {
             id: fileItem
 
@@ -97,7 +98,7 @@ ColumnLayout {
                     anchors.margins: 1
                     anchors.leftMargin: 0
                     anchors.rightMargin: 0
-                    anchors.verticalCenter: parent
+                    // anchors.verticalCenter: parent
                     color: ConnectionStatus ? "#005000" : IsNotAvailable ? "#500000" : theme.controlBackColor
                     border.width: 0
                     border.color: theme.controlBorderColor
@@ -110,7 +111,7 @@ ColumnLayout {
                     anchors.fill: parent
                     // anchors.topMargin: 2
                     // anchors.bottomMargin: 2
-                    anchors.verticalCenter: parent
+                    // anchors.verticalCenter: parent
                     anchors.margins: 1
 
 
@@ -421,6 +422,7 @@ ColumnLayout {
     }
 
     MenuRow {
+        // Layout.margins: 0
         Layout.topMargin: 0
         Layout.fillWidth: false
 
@@ -1264,4 +1266,13 @@ ColumnLayout {
             }
         }
     // }
+
+        // Rectangle {
+        //     // anchors.fill: parent
+        //     Layout.alignment: Qt.AlignTop
+        //     // width: parent.width
+        //     // height: parent.height
+        //     z: -1
+        //     border.color: "orange"
+        // }
 }

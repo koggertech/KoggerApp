@@ -8,16 +8,17 @@ MenuScroll {
     id: scrollBar
     property int menuWidth: 200
 
-    ColumnLayout {
-        width: menuWidth
-        Layout.maximumWidth: menuWidth
-        Layout.margins: 0
+    Column {
+        // width: menuWidth
+        // Layout.margins: 0
+        padding: 0
         spacing: 10
 
-        ConnectionViewer {
-            id: devConnection
-            width: parent.width
-            Layout.maximumWidth: menuWidth
+        MenuFrame {
+            ConnectionViewer {
+                id: devConnection
+                width: menuWidth
+            }
         }
 
         FactoryBox {

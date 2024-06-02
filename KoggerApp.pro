@@ -194,6 +194,7 @@ DISTFILES += \
     QML/CustomGroupBox.qml \
     QML/DeviceSettingsViewer.qml \
     QML/MenuBar.qml \
+    QML/MenuFrame.qml \
     QML/MenuButton.qml \
     QML/MenuViewer.qml \
     QML/TabBackStyle.qml \

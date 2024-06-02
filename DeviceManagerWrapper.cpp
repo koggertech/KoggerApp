@@ -7,11 +7,11 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     workerThread_ = std::make_unique<QThread>(this);
     workerObject_ = std::make_unique<DeviceManager>();
 
-    workerObject_->moveToThread(workerThread_.get());
+    // workerObject_->moveToThread(workerThread_.get());
 
     // connects
     QObject::connect(this, &DeviceManagerWrapper::sendOpenFile, workerObject_.get(), &DeviceManager::openFile);
-
+    QObject::connect(workerObject_.get(), &DeviceManager::devChanged, this, &DeviceManagerWrapper::devChanged);
     workerThread_->start();
 }
 

@@ -27,6 +27,8 @@ public:
     Q_PROPERTY(QFont textFontS READ textFontS NOTIFY changed)
 
     Q_PROPERTY(QColor menuBackColor READ menuBackColor NOTIFY changed)
+    Q_PROPERTY(QColor frameBackColor READ frameBackColor NOTIFY changed)
+
     Q_PROPERTY(QColor controlBackColor READ controlBackColor NOTIFY changed)
     Q_PROPERTY(QColor controlBorderColor READ controlBorderColor NOTIFY changed)
     Q_PROPERTY(QColor controlSolidBackColor READ controlSolidBackColor NOTIFY changed)
@@ -48,6 +50,8 @@ public:
     QFont textFontS() { return *_textFontS; }
 
     QColor menuBackColor() { return *_menuBackColor; }
+    QColor frameBackColor() { return *_frameBackColor; }
+
     QColor controlBackColor() { return *_controlBackColor; }
     QColor controlBorderColor() { return *_controlBorderColor; }
     QColor controlSolidBackColor() { return *_controlSolidBackColor; }
@@ -70,6 +74,8 @@ public:
         _textFont->setPixelSize(18);
 #endif
         _textErrorColor = new QColor(250, 0, 0);
+
+        _frameBackColor = new QColor(45, 45, 45, 50);
 
         if(theme_id == 0) {
             _textColor = new QColor(250, 250, 250);
@@ -154,6 +160,7 @@ protected:
     QFont* _textFontS;
 
     QColor* _menuBackColor;
+    QColor* _frameBackColor;
     QColor* _controlBackColor;
     QColor* _controlBorderColor;
     QColor* _controlSolidBackColor;
