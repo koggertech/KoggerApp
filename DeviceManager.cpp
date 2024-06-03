@@ -404,9 +404,9 @@ bool DeviceManager::isCreatedId(int id)
     return getDevList().size() > id;
 }
 
-void DeviceManager::setProtoBinConsoled(bool is_consoled)
+void DeviceManager::setProtoBinConsoled(bool isConsoled)
 {
-    isConsoled_ = is_consoled;
+    isConsoled_ = isConsoled;
 }
 
 void DeviceManager::upgradeLastDev(QByteArray data)
@@ -414,6 +414,46 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     if (lastDevs_ != NULL) {
         lastDevs_->sendUpdateFW(data);
     }
+}
+
+void DeviceManager::openProxyLink(const QString &address, const int port_in, const int port_out) {
+    closeProxyLink();
+    connect(&proxyLink, &Link::readyParse, this, &DeviceManager::readyReadProxy);
+    connect(this, &DeviceManager::writeProxy, &proxyLink, &Link::write);
+    proxyLink.openAsUDP(address, port_in, port_out);
+    if(proxyLink.isOpen()) {
+        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port is open");
+    } else {
+        this->disconnect(&proxyLink);
+        proxyLink.disconnect(this);
+        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port isn't open");
+    }
+}
+
+void DeviceManager::openProxyNavLink(const QString &address, const int port_in, const int port_out) {
+    closeProxyNavLink();
+    connect(&proxyNavLink, &Link::readyParse, this, &DeviceManager::readyReadProxyNav);
+    connect(this, &DeviceManager::writeProxyNav, &proxyNavLink, &Link::write);
+    proxyNavLink.openAsUDP(address, port_in, port_out);
+    if(proxyNavLink.isOpen()) {
+        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port is open");
+    } else {
+        this->disconnect(&proxyNavLink);
+        proxyNavLink.disconnect(this);
+        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port isn't open");
+    }
+}
+
+void DeviceManager::closeProxyLink() {
+    proxyLink.close();
+    this->disconnect(&proxyLink);
+    proxyLink.disconnect(this);
+}
+
+void DeviceManager::closeProxyNavLink() {
+    proxyNavLink.close();
+    this->disconnect(&proxyNavLink);
+    proxyNavLink.disconnect(this);
 }
 
 StreamListModel* DeviceManager::streamsList()

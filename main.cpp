@@ -75,22 +75,19 @@ int main(int argc, char *argv[])
 
     //qInstallMessageHandler(messageHandler); // TODO: comment this
 
-
-
     qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
 
     engine.rootContext()->setContextProperty("dataset", core.dataset());
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
+    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapper());
 
 #ifdef FLASHER
     engine.rootContext()->setContextProperty("flasher", &core.flasher);
 #endif
 
     engine.rootContext()->setContextProperty("logViewer", core.console());
-    engine.rootContext()->setContextProperty("devs", core.getDeviceManagerWrapper()); //
-    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapper()); // TODO: QML
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);

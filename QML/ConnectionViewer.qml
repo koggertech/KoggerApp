@@ -6,7 +6,7 @@ import Qt.labs.settings 1.1
 
 ColumnLayout {
     property var dev: null
-    property var devList: devs.devs
+    property var devList: deviceManagerWrapper.devs
 
     Layout.margins: 0
     spacing: 10
@@ -21,10 +21,10 @@ ColumnLayout {
     }
 
     onDevListChanged: {
-        devTab0.visible = devs.isCreatedId(0)
-        if(devs.isCreatedId(0)) { dev = devList[0] }
-        devTab1.visible = devs.isCreatedId(1)
-        devTab2.visible = devs.isCreatedId(2)
+        devTab0.visible = deviceManagerWrapper.isCreatedId(0)
+        if(deviceManagerWrapper.isCreatedId(0)) { dev = devList[0] }
+        devTab1.visible = deviceManagerWrapper.isCreatedId(1)
+        devTab2.visible = deviceManagerWrapper.isCreatedId(2)
     }
 
     // MenuBlock {
@@ -773,9 +773,9 @@ ColumnLayout {
 
                     onCheckedChanged: {
                         if(proxyCheck.checked) {
-                            devs.openProxyLink(proxyAddressText.text, Number(proxyBindPortText.text), Number(proxyPortText.text))
+                            deviceManagerWrapper.openProxyLink(proxyAddressText.text, Number(proxyBindPortText.text), Number(proxyPortText.text))
                         } else {
-                            devs.closeProxyLink()
+                            deviceManagerWrapper.closeProxyLink()
                         }
                     }
                 }
@@ -847,9 +847,9 @@ ColumnLayout {
 
                     onCheckedChanged: {
                         if(proxyNavCheck.checked) {
-                            devs.openProxyNavLink(proxyNavAddressText.text, Number(proxyNavBindPortText.text), Number(proxyNavPortText.text))
+                            deviceManagerWrapper.openProxyNavLink(proxyNavAddressText.text, Number(proxyNavBindPortText.text), Number(proxyNavPortText.text))
                         } else {
-                            devs.closeProxyNavLink()
+                            deviceManagerWrapper.closeProxyNavLink()
                         }
                     }
                 }

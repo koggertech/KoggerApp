@@ -41,8 +41,8 @@ Rectangle {
                     text: "Binnary"
                     Layout.alignment: Qt.AlignRight
 
-                    onCheckedChanged: devs.protoBinConsoled = protoBinConsoled.checked
-                    Component.onCompleted: devs.protoBinConsoled = protoBinConsoled.checked
+                    onCheckedChanged: deviceManagerWrapper.protoBinConsoled = protoBinConsoled.checked
+                    Component.onCompleted: deviceManagerWrapper.protoBinConsoled = protoBinConsoled.checked
 
                     Settings {
                         property alias protoBinConsoled: protoBinConsoled.checked

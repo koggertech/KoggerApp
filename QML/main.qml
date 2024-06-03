@@ -262,14 +262,14 @@ Window  {
             CCombo  {
                 id: pilotArmedState
                 Layout.margins: 4
-                visible: devs.pilotArmState >= 0
+                visible: deviceManagerWrapper.pilotArmState >= 0
                 Layout.fillWidth: true
                 model: ["Disarmed", "Armed"]
-                currentIndex: devs.pilotArmState
+                currentIndex: deviceManagerWrapper.pilotArmState
 
                 onCurrentIndexChanged: {
-                    if(currentIndex != devs.pilotArmState) {
-                        currentIndex = devs.pilotArmState
+                    if(currentIndex != deviceManagerWrapper.pilotArmState) {
+                        currentIndex = deviceManagerWrapper.pilotArmState
                     }
                 }
             }
@@ -277,7 +277,7 @@ Window  {
             CCombo  {
                 id: pilotModeState
                 Layout.margins: 4
-                visible: devs.pilotModeState >= 0
+                visible: deviceManagerWrapper.pilotModeState >= 0
                 Layout.fillWidth: true
                 model: [
                     "Manual",
@@ -296,11 +296,11 @@ Window  {
                     "Mode16",
                     "Mode17"
                 ]
-                currentIndex: devs.pilotModeState
+                currentIndex: deviceManagerWrapper.pilotModeState
 
                 onCurrentIndexChanged: {
-                    if(currentIndex != devs.pilotModeState) {
-                        currentIndex = devs.pilotModeState
+                    if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                        currentIndex = deviceManagerWrapper.pilotModeState
                     }
                 }
             }
@@ -313,10 +313,10 @@ Window  {
             CText {
                 id: fcTextBatt
                 Layout.margins: 4
-                visible: isFinite(devs.vruVoltage)
+                visible: isFinite(deviceManagerWrapper.vruVoltage)
                 rightPadding: 20
                 leftPadding: 20
-                text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
+                text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
             }
         }
 

@@ -125,7 +125,7 @@ DevSettingsBox {
 
             ListView {
                 id: filesList
-                model: devs.streamsList
+                model: deviceManagerWrapper.streamsList
                 Layout.margins: 0
                 Layout.topMargin: 30
                 Layout.bottomMargin: 30

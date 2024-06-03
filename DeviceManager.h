@@ -33,17 +33,6 @@ public:
     QList<DevQProperty*> getDevList();
     DevQProperty* getLastDev();
 
-    /*QML*/
-    Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
-    Q_PROPERTY(bool protoBinConsoled WRITE setProtoBinConsoled)
-    Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
-    Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
-    Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
-    Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
-    Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
-    Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
-    //Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged) //
-
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
@@ -57,6 +46,14 @@ public slots:
     void stopConnection();
     void setProtoBinConsoled(bool is_consoled);
     void upgradeLastDev(QByteArray data);
+
+    // proxy
+    void openProxyLink(const QString &address, const int port_in,  const int port_out);
+    void openProxyNavLink(const QString &address, const int port_in,  const int port_out);
+    bool isProxyOpen() { return proxyLink.isOpen(); }
+    bool isProxyNavOpen() { return proxyNavLink.isOpen(); }
+    void closeProxyLink();
+    void closeProxyNavLink();
 
 private slots:
     void readyReadProxy(Link* link);
@@ -116,4 +113,11 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+
+
+    // proxy
+    Link proxyLink;
+    Link proxyNavLink;
+
+
 }; // class DeviceWrapper
