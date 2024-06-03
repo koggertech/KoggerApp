@@ -107,7 +107,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 int t = static_cast<int>(frame.read<U4>());
                 int u = static_cast<int>(frame.read<U4>());
                 // core.dataset()->addEvent(t, 0, u);
-                eventComplete(t, 0, u);
+                emit eventComplete(t, 0, u);
             }
 
             if (frame.id() == ID_EVENT) {
@@ -115,7 +115,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 int id = frame.read<U4>();
                 if (id < 100) {
                     // core.dataset()->addEvent(timestamp, id);
-                    eventComplete(timestamp, id, 0);
+                    emit eventComplete(timestamp, id, 0);
                 }
 
             }
@@ -143,7 +143,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 double depth_m = prot_nmea.readDouble();
                 if (isfinite(depth_m)) {
                     // core.dataset()->addRangefinder(depth_m);
-                    rangefinderComplete(depth_m);
+                    emit rangefinderComplete(depth_m);
                 }
 
             }
@@ -169,7 +169,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                     uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
                     // core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
-                    positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                    emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
         }
@@ -209,7 +209,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 if (fix_type > 1 && fix_type < 5) {
                     // core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
-                    positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
+                    emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                 }
 
                 if (isConsoled_)
@@ -228,9 +228,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
                 if (pos.isValid()) {
                     // core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
-                    positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                    emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
                     // core.dataset()->addGnssVelocity(pos.velocityH(), 0);
-                    gnssVelocityComplete(pos.velocityH(), 0);
+                    emit gnssVelocityComplete(pos.velocityH(), 0);
 
                     vru_.velocityH = pos.velocityH();
                     emit vruChanged();
@@ -258,7 +258,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             if (mavlink_frame.msgId() == 30) {
                 MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
                 // core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
-                attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+                emit attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
             }
 
             core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
@@ -279,7 +279,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
 void DeviceManager::openFile(const QString &filePath) //
 {
-    qDebug() << "FileReader::startRead: th_id: " << QThread::currentThreadId();
+    qDebug() << "DeviceManager::openFile: th_id: " << QThread::currentThreadId();
 
     // QByteArray data;
     QFile file;
@@ -289,7 +289,7 @@ void DeviceManager::openFile(const QString &filePath) //
     qDebug() << QString("File path: %1").arg(file.fileName());
 
     if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "FileReader::startRead file not opened!";
+        qDebug() << "DeviceManager::openFile file not opened!";
         // emit interrupted();
         return;
     }
@@ -307,7 +307,7 @@ void DeviceManager::openFile(const QString &filePath) //
 
     while (true) {
         if (break_) {
-            qDebug() << "FileReader::startRead interrupted!";
+            qDebug() << "DeviceManager::openFile interrupted!";
             file.close();
             // emit interrupted();
             return;
@@ -369,7 +369,7 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
 {
     Q_UNUSED(uuid);
 
-    qDebug() << "Device::onLinkClosed";
+    qDebug() << "DeviceManager::onLinkClosed";
     if (link) {
         if (link->getControlType() == ControlType::kManual) {
             deleteDevicesByLink(uuid);
@@ -381,7 +381,7 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
 {
     Q_UNUSED(uuid);
 
-    qDebug() << "Device::onLinkDeleted";
+    qDebug() << "DeviceManager::onLinkDeleted";
     if (link) {
         deleteDevicesByLink(uuid);
     }
