@@ -9,6 +9,7 @@ Core::Core() : QObject(),
     m_console(new Console()),
     m_connection(new Connection()),
     _dataset(new Dataset),
+    _isLogging(false),
     deviceManagerWrapper_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapper_(std::make_unique<LinkManagerWrapper>(this))
 {
@@ -30,6 +31,7 @@ Core::Core() : QObject(),
 
     qDebug() << "Core::Core: th_id: " << QThread::currentThreadId();
 
+    // device manager
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::DirectConnection;
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,            deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::iqComplete,                _dataset,   &Dataset::addComplexSignal,    deviceManagerConnection);
@@ -45,11 +47,20 @@ Core::Core() : QObject(),
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::gnssVelocityComplete,      _dataset,   &Dataset::addGnssVelocity,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,              deviceManagerConnection);
 
+    // link manager
     Qt::ConnectionType linkManagerConnection = Qt::ConnectionType::AutoConnection;
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::frameReady,                  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput,     linkManagerConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkClosed,                  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkOpened,                  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkDeleted,                 deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput,     linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection);
+
+    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, this, [this](QUuid uuid, Link* link, FrameParser frame) {
+        if (isLogging()) {
+            QMetaObject::invokeMethod(&_logger, [this, uuid, link, frame]() {
+                    _logger.onFrameParserReceive(uuid, link, frame);
+                }, Qt::QueuedConnection);
+        }
+    });
 
     createControllers();
 }
@@ -209,7 +220,7 @@ bool Core::devsConnection() {
     // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
     //connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
-    connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
+    //connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
 
     if (_isLogging)
         _logger.startNewLog();
@@ -300,7 +311,7 @@ bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &addres
     // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
     // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
     //connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
-    connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
+    //connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
     m_connection->openIP(address, port, is_tcp);
 
     if (m_scene3dView)
@@ -395,13 +406,16 @@ void Core::appendStatusOnOpenFile(bool isAppend)
 }
 
 void Core::setLogging(bool is_logging) {
-    if(m_connection->isOpen()) {
-        if(isLogging() && !is_logging) {
-            _logger.stopLogging();
-        } else if(!isLogging() && is_logging) {
-            _logger.startNewLog();
-        }
-    }
+    // if(m_connection->isOpen()) {
+    //     if(isLogging() && !is_logging) {
+    //         _logger.stopLogging();
+    //     } else if(!isLogging() && is_logging) {
+    //         _logger.startNewLog();
+    //     }
+    // }
+    if (is_logging == isLogging())
+        return;
+    isLogging() ? _logger.stopLogging() : _logger.startNewLog();
     _isLogging = is_logging;
 }
 

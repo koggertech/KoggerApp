@@ -75,3 +75,8 @@ bool Logger::endExportStream() {
     _exportFile->close();
     return true;
 }
+
+void Logger::onFrameParserReceive(QUuid uuid, Link* linkPtr, FrameParser frame)
+{
+    loggingStream(QByteArray((const char*)frame.frame(), frame.frameLen()));
+}
