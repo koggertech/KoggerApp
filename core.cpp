@@ -30,28 +30,26 @@ Core::Core() : QObject(),
 
     qDebug() << "Core::Core: th_id: " << QThread::currentThreadId();
 
-    Qt::ConnectionType device_manager_connection = Qt::ConnectionType::AutoConnection;
+    Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::DirectConnection;
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,            deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::iqComplete,                _dataset,   &Dataset::addComplexSignal,    deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::distComplete,              _dataset,   &Dataset::addDist,             deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::usblSolutionComplete,      _dataset,   &Dataset::addUsblSolution,     deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dopplerBeamComlete,        _dataset,   &Dataset::addDopplerBeam,      deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dvlSolutionComplete,       _dataset,   &Dataset::addDVLSolution,      deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::upgradeProgressChanged,    this,       &Core::upgradeChanged,         deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::appendOnFileOpening,       this,       &Core::appendStatusOnOpenFile, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::eventComplete,             _dataset,   &Dataset::addEvent,            deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::rangefinderComplete,       _dataset,   &Dataset::addRangefinder,      deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::positionComplete,          _dataset,   &Dataset::addPosition,         deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::gnssVelocityComplete,      _dataset,   &Dataset::addGnssVelocity,     deviceManagerConnection);
+    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,              deviceManagerConnection);
 
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,          device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::iqComplete,                _dataset,   &Dataset::addComplexSignal,  device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::distComplete,              _dataset,   &Dataset::addDist,           device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::rangefinderComplete,       _dataset,   &Dataset::addRangefinder,    device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::usblSolutionComplete,      _dataset,   &Dataset::addUsblSolution,   device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,            device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::positionComplete,          _dataset,   &Dataset::addPosition,       device_manager_connection);
-
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::gnssVelocityComplete,       _dataset,   &Dataset::addGnssVelocity,  device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::eventComplete,              _dataset,   &Dataset::addEvent,         device_manager_connection);
-
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dopplerBeamComlete,        _dataset,   &Dataset::addDopplerBeam,    device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dvlSolutionComplete,       _dataset,   &Dataset::addDVLSolution,    device_manager_connection);
-    connect(deviceManagerWrapper_->getWorker(), &DeviceManager::upgradeProgressChanged,    this,       &Core::upgradeChanged,       device_manager_connection);
-
-
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput, device_manager_connection);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed, device_manager_connection);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened, device_manager_connection);
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted, device_manager_connection);
+    Qt::ConnectionType linkManagerConnection = Qt::ConnectionType::AutoConnection;
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::frameReady,                  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput,     linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkClosed,                  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkOpened,                  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection);
+    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkDeleted,                 deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection);
 
     createControllers();
 }
@@ -380,6 +378,19 @@ bool Core::upgradeFW(const QString &name, QObject* dev) {
 void Core::upgradeChanged(int progress_status) {
     if(progress_status == DevDriver::successUpgrade) {
 //        restoreBaudrate();
+    }
+}
+
+
+void Core::appendStatusOnOpenFile(bool isAppend)
+{
+    if (!isAppend)
+        _dataset->resetDataset();
+
+    if (m_scene3dView) {
+        if (!isAppend)
+            m_scene3dView->clear();
+        m_scene3dView->setNavigationArrowState(false);
     }
 }
 

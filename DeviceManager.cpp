@@ -277,7 +277,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
     }
 }
 
-void DeviceManager::openFile(const QString &filePath) //
+void DeviceManager::openFile(const QString &filePath, bool isAppend) //
 {
     qDebug() << "DeviceManager::openFile: th_id: " << QThread::currentThreadId();
 
@@ -296,6 +296,8 @@ void DeviceManager::openFile(const QString &filePath) //
 
     //setType(ConnectionFile);
     //emit openedEvent(false);
+
+    emit appendOnFileOpening(isAppend);
 
     const qint64 totalSize = file.size();
     qint64 bytesRead = 0;

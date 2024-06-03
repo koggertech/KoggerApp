@@ -10,11 +10,12 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     // workerObject_->moveToThread(workerThread_.get());
 
     // connects
-    QObject::connect(this, &DeviceManagerWrapper::sendOpenFile, workerObject_.get(), &DeviceManager::openFile);
 
-    QObject::connect(workerObject_.get(), &DeviceManager::devChanged,       this, &DeviceManagerWrapper::devChanged);
-    QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,    this, &DeviceManagerWrapper::streamChanged);
-    QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,       this, &DeviceManagerWrapper::vruChanged);
+    auto connectionType = Qt::DirectConnection; // one thread
+    QObject::connect(this,                &DeviceManagerWrapper::sendOpenFile,  workerObject_.get(), &DeviceManager::openFile,              connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,     connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,  connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,     connectionType);
 
     //workerThread_->start();
 }

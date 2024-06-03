@@ -101,6 +101,8 @@ public slots:
     bool upgradeFW(const QString &name, QObject* dev);
     void upgradeChanged(int progress_status);
 
+    void appendStatusOnOpenFile(bool isAppend);
+
     void setLogging(bool is_logging);
     bool isLogging();
 

@@ -38,7 +38,7 @@ public slots:
     Q_INVOKABLE StreamListModel* streamsList();
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
-    void openFile(const QString& filePath);
+    void openFile(const QString& filePath, bool isAppend);
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -63,15 +63,10 @@ signals:
     void dataSend(QByteArray data);
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void iqComplete(QByteArray data, uint8_t type);
-    void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
-    void rangefinderComplete(float distance);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
-    void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
-    void gnssVelocityComplete(double h_speed, double course);
-    void eventComplete(int timestamp, int id, int unixt);
     void chartSetupChanged();
     void distSetupChanged();
     void datasetChanged();
@@ -87,6 +82,17 @@ signals:
     void writeProxy(QByteArray data);
     void writeProxyNavFrame(FrameParser *frame);
     void writeProxyNav(QByteArray data);
+
+
+    void eventComplete(int timestamp, int id, int unixt);
+    void rangefinderComplete(float distance);
+    void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
+    void gnssVelocityComplete(double h_speed, double course);
+    void attitudeComplete(float yaw, float pitch, float roll);
+
+
+
+    void appendOnFileOpening(bool isAppend);
 
 private:
     /*methods*/
