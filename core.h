@@ -2,7 +2,6 @@
 #define CORE_H
 
 #include <QObject>
-#include <connection.h>
 #include <console.h>
 #include <DevQProperty.h>
 #include <QUrl>
@@ -10,7 +9,6 @@
 #include <QStandardItemModel>
 #include <QQmlContext>
 #include <waterfall.h>
-//#include <DevHub.h>
 #include <logger.h>
 #include <QThread>
 #include <3Plot.h>
@@ -32,8 +30,6 @@
 #include <DeviceManagerWrapper.h>
 #include <LinkManagerWrapper.h>
 #include <FileReader.h>
-
-//#define FLASHER
 
 #ifdef FLASHER
 #include "flasher.h"
@@ -81,22 +77,21 @@ public:
     void stopLinkManagerTimer() const;
 
 public slots:
-    QList<QSerialPortInfo> availableSerial();
-    QStringList availableSerialName();
     bool openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode);
     bool openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp);
+
+
     bool openConnectionAsFile(const int id, const QString &name, bool is_append = false);
+    bool closeConnectionAsFile();
+
+
     bool openXTF(QByteArray data);
     bool openCSV(QString name, int separator_type, int row = -1, int col_time = -1, bool is_utc_time = true, int col_lat = -1, int col_lon = -1, int col_north = -1, int col_east = -1, int altitude = -1, int distance = -1);
     bool devsConnection();
 
-    bool isOpenConnection();
-    bool closeConnection();
 
     bool openProxy(const QString &address, const int port, bool is_tcp);
     bool closeProxy();
-
-    bool connectionBaudrate(int baudrate);
 
     bool upgradeFW(const QString &name, QObject* dev);
     void upgradeChanged(int progress_status);
@@ -177,10 +172,9 @@ signals:
 
 public:
     Console *m_console;
-    Connection *m_connection;
     Dataset* _dataset;
     QList<qPlot2D*> _plots2d;
-//    QPlot2D* _plot1 = NULL;
+
     FboInSGRenderer* _render = NULL;
     GraphicsScene3dView* m_scene3dView = nullptr;
 
@@ -229,6 +223,8 @@ protected:
 
 private:
     void createControllers();
+    void createLinkManagerConnections();
+    void removeLinkManagerConnections();
 
 private:
     // deviceManager
@@ -236,6 +232,7 @@ private:
 
     // linkManager
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapper_;
+    QList<QMetaObject::Connection> linkManagerWrapperConnections_;
 
     // fileReader
     std::unique_ptr<FileReader> fileReader_;
@@ -253,6 +250,8 @@ private:
     std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
     std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
 
+
+    QString openedfilePath_;
 
     bool isFactoryMode() {
 #ifdef FLASHER

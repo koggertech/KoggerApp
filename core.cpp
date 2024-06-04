@@ -5,32 +5,15 @@
 #include <ctime>
 #include <chrono>
 
+
 Core::Core() : QObject(),
     m_console(new Console()),
-    m_connection(new Connection()),
     _dataset(new Dataset),
     _isLogging(false),
     deviceManagerWrapper_(std::make_unique<DeviceManagerWrapper>(this)),
-    linkManagerWrapper_(std::make_unique<LinkManagerWrapper>(this))
+    linkManagerWrapper_(std::make_unique<LinkManagerWrapper>(this)),
+    openedfilePath_("")
 {
-    // connect(&_devs, &Device::chartComplete, _dataset, &Dataset::addChart);
-    // connect(&_devs, &Device::iqComplete, _dataset, &Dataset::addComplexSignal);
-    // connect(&_devs, &Device::distComplete, _dataset, &Dataset::addDist);
-    // connect(&_devs, &Device::usblSolutionComplete, _dataset, &Dataset::addUsblSolution);
-    // connect(&_devs, &Device::attitudeComplete, _dataset, &Dataset::addAtt);
-    // connect(&_devs, &Device::positionComplete, _dataset, &Dataset::addPosition);
-    // connect(&_devs, &Device::dopplerBeamComlete, _dataset, &Dataset::addDopplerBeam);
-    // connect(&_devs, &Device::dvlSolutionComplete, _dataset, &Dataset::addDVLSolution);
-    // connect(&_devs, &Device::upgradeProgressChanged, this, &Core::upgradeChanged);
-
-    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, &_devs, &Device::frameInput);
-    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkClosed, &_devs, &Device::onLinkClosed);
-    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkOpened, &_devs, &Device::onLinkOpened);
-    // QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::linkDeleted, &_devs, &Device::onLinkDeleted);
-
-
-    qDebug() << "Core::Core: th_id: " << QThread::currentThreadId();
-
     // device manager
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::DirectConnection;
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::chartComplete,             _dataset,   &Dataset::addChart,            deviceManagerConnection);
@@ -46,27 +29,14 @@ Core::Core() : QObject(),
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::gnssVelocityComplete,      _dataset,   &Dataset::addGnssVelocity,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::attitudeComplete,          _dataset,   &Dataset::addAtt,              deviceManagerConnection);
 
-    // link manager
-    Qt::ConnectionType linkManagerConnection = Qt::ConnectionType::AutoConnection;
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput,     linkManagerConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection);
-    QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection);
-    // logging
-    QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, this, [this](QUuid uuid, Link* link, FrameParser frame) {
-        if (isLogging()) {
-            QMetaObject::invokeMethod(&_logger, [this, uuid, link, frame]() {
-                    _logger.onFrameParserReceive(uuid, link, frame);
-                }, Qt::QueuedConnection);
-        }
-    });
+    createLinkManagerConnections();
 
     createControllers();
 }
 
 Core::~Core()
 {
-
+    removeLinkManagerConnections();
 }
 
 void Core::createControllers()
@@ -79,6 +49,32 @@ void Core::createControllers()
     m_polygonGroupControlMenuController = std::make_shared<PolygonGroupControlMenuController>();
     m_scene3dControlMenuController      = std::make_shared<Scene3DControlMenuController>();
     m_scene3dToolBarController          = std::make_shared<Scene3dToolBarController>();
+}
+
+void Core::createLinkManagerConnections()
+{
+    Qt::ConnectionType linkManagerConnection = Qt::ConnectionType::AutoConnection;
+
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::frameReady,  deviceManagerWrapper_->getWorker(), &DeviceManager::frameInput,     linkManagerConnection));
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection));
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection));
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection));
+    // logging
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, this, [this](QUuid uuid, Link* link, FrameParser frame) {
+        if (isLogging()) {
+            QMetaObject::invokeMethod(&_logger, [this, uuid, link, frame]() {
+                    _logger.onFrameParserReceive(uuid, link, frame);
+                }, Qt::QueuedConnection);
+        }
+    }));
+
+}
+
+void Core::removeLinkManagerConnections()
+{
+    for (auto& itm : linkManagerWrapperConnections_)
+        disconnect(itm);
+    linkManagerWrapperConnections_.clear();
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)
@@ -177,50 +173,20 @@ void Core::consoleProto(FrameParser &parser, bool is_in) {
     }
 }
 
-QList<QSerialPortInfo> Core::availableSerial(){
-    return m_connection->availableSerial();
-}
-
-QStringList Core::availableSerialName(){
-    consoleInfo("Scaning serial ports...");
-    QStringList serialNameList;
-    const QList<QSerialPortInfo> serialList = availableSerial();
-    consoleInfo((QString("Find serial ports: %1").arg(serialList.size())));
-    for (const auto& serial : serialList) {
-//        if (!serial.portName().startsWith(QStringLiteral("cu."), Qt::CaseInsensitive)) {
-            serialNameList.append(serial.portName());
-            consoleInfo("Find serial:" + serial.portName());
-//        }
-    }
-    return serialNameList;
-}
-
 bool Core::openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode) {
     Q_UNUSED(id);
     Q_UNUSED(autoconn);
     Q_UNUSED(mode);
 
-    closeConnection();
     devsConnection();
 
     if (m_scene3dView)
         m_scene3dView->setNavigationArrowState(true);
 
-    m_connection->openSerial(name, baudrate, false);
-    m_connection->setRTS(false); // power on
-
     return true;
 }
 
 bool Core::devsConnection() {
-    connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
-    connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
-
-    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
-    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
-    //connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
-    //connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
-
     if (_isLogging)
         _logger.startNewLog();
 
@@ -229,6 +195,8 @@ bool Core::devsConnection() {
 
 bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
     Q_UNUSED(id);
+
+    removeLinkManagerConnections();
 
     if (!is_append)
         _dataset->resetDataset();
@@ -254,6 +222,9 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     }
 
     emit deviceManagerWrapper_->sendOpenFile(name);
+
+    openedfilePath_ = name;
+
 
     if (m_scene3dView)
         m_scene3dView->fitAllInView();
@@ -282,18 +253,25 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     return true;
 }
 
+bool Core::closeConnectionAsFile()
+{
+    createLinkManagerConnections();
+
+    if (_dataset)
+        _dataset->resetDataset();
+
+    if (m_scene3dView) {
+        m_scene3dView->clear();
+        m_scene3dView->setNavigationArrowState(false);
+    }
+
+    openedfilePath_.clear();
+
+}
+
 bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
     Q_UNUSED(id);
     Q_UNUSED(autoconn);
-
-    connect(m_connection, &Connection::closedEvent, this, &Core::connectionChanged);
-    connect(m_connection, &Connection::openedEvent, this, &Core::connectionChanged);
-
-    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection);
-    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput);
-    //connect(&_devs, &Device::dataSend, m_connection, &Connection::sendData);
-    //connect(m_connection, &Connection::loggingStream, &_logger, &Logger::loggingStream);
-    m_connection->openIP(address, port, is_tcp);
 
     if (m_scene3dView)
         m_scene3dView->setNavigationArrowState(true);
@@ -301,33 +279,6 @@ bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &addres
     return false;
 }
 
-bool Core::isOpenConnection() {
-    return m_connection->isOpen();
-}
-
-bool Core::closeConnection() {
-    m_connection->close();
-    //_devs.stopConnection();
-
-    //m_connection->disconnect(&_devs);
-    //_devs.disconnect(m_connection);
-
-    m_connection->disconnect(this);
-    this->disconnect(m_connection);
-
-    m_connection->disconnect(&_logger);
-
-#ifdef FLASHER
-    m_connection->disconnect(&flasher);
-    flasher.disconnect(m_connection);
-    flasher.disconnect(this);
-#endif
-
-    _logger.stopLogging();
-
-
-    return true;
-}
 
 bool Core::openProxy(const QString &address, const int port, bool is_tcp) {
     Q_UNUSED(address);
@@ -339,10 +290,6 @@ bool Core::openProxy(const QString &address, const int port, bool is_tcp) {
 
 bool Core::closeProxy() {
     return false;
-}
-
-bool Core::connectionBaudrate(int baudrate) {
-    return m_connection->setBaudrate(baudrate);
 }
 
 bool Core::upgradeFW(const QString &name, QObject* dev) {
@@ -362,7 +309,6 @@ bool Core::upgradeFW(const QString &name, QObject* dev) {
 
     DevQProperty* dev_q = (DevQProperty*)(dev);
     dev_q->sendUpdateFW(m_file.readAll());
-//    setUpgradeBaudrate();
 
     return true;
 }
@@ -374,13 +320,6 @@ void Core::upgradeChanged(int progress_status) {
 }
 
 void Core::setLogging(bool is_logging) {
-    // if(m_connection->isOpen()) {
-    //     if(isLogging() && !is_logging) {
-    //         _logger.stopLogging();
-    //     } else if(!isLogging() && is_logging) {
-    //         _logger.startNewLog();
-    //     }
-    // }
     if (is_logging == isLogging())
         return;
     isLogging() ? _logger.stopLogging() : _logger.startNewLog();
@@ -393,8 +332,9 @@ bool Core::isLogging() {
 
 bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name;
-    if(m_connection->lastType() == Connection::ConnectionFile) {
-        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+
+    if (!openedfilePath_.isEmpty()) {
+        export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     }
@@ -446,8 +386,9 @@ bool Core::exportComplexToCSV(QString file_path) {
 
 bool Core::exportUSBLToCSV(QString file_path) {
     QString export_file_name;
-    if(m_connection->lastType() == Connection::ConnectionFile) {
-        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+
+    if (!openedfilePath_.isEmpty()) {
+        export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     }
@@ -488,8 +429,8 @@ bool Core::exportUSBLToCSV(QString file_path) {
 
 bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     QString export_file_name;
-    if(m_connection->lastType() == Connection::ConnectionFile) {
-        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+    if (!openedfilePath_.isEmpty()) {
+        export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     }
@@ -523,25 +464,25 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     }
 
 
-    if(meas_nbr) {
+    if (meas_nbr) {
         _logger.dataExport("Number,");
     }
 
-    if(event_id) {
+    if (event_id) {
         _logger.dataExport("Event UNIX,");
         _logger.dataExport("Event timestamp,");
         _logger.dataExport("Event ID,");
     }
 
-    if(rangefinder) {
+    if (rangefinder) {
         _logger.dataExport("Rangefinder,");
     }
 
-    if(bottom_depth) {
+    if (bottom_depth) {
         _logger.dataExport("Beam distance,");
     }
 
-    if(pos_lat_lon) {
+    if (pos_lat_lon) {
         _logger.dataExport("Latitude,");
         _logger.dataExport("Longitude,");
 
@@ -551,31 +492,27 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
         }
     }
 
-    if(external_pos_lla && ext_pos_lla_find) {
+    if (external_pos_lla && ext_pos_lla_find) {
         _logger.dataExport("ExtLatitude,");
         _logger.dataExport("ExtLongitude,");
         _logger.dataExport("ExtAltitude,");
     }
 
-    if(external_pos_neu && ext_pos_ned_find) {
+    if (external_pos_neu && ext_pos_ned_find) {
         _logger.dataExport("ExtNorth,");
         _logger.dataExport("ExtEast,");
         _logger.dataExport("ExtHeight,");
     }
 
-    if(sonar_height) {
+    if (sonar_height) {
         _logger.dataExport("SonarHeight,");
     }
 
-    if(bottom_height) {
+    if (bottom_height) {
         _logger.dataExport("BottomHeight,");
     }
 
-
-
     _logger.dataExport("\n");
-
-
 
     int prev_timestamp = 0;
     int prev_unix = 0;
@@ -587,9 +524,6 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     float decimation_path = 0;
     LLARef lla_ref;
     NED last_pos_ned;
-
-
-
 
     for(int i = 0; i < row_cnt; i++) {
         Epoch* epoch = _dataset->fromIndex(i);
@@ -620,14 +554,10 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
                     decimation_path -= decimation_m;
                 }
-
-
             } else {
                 continue;
             }
         }
-
-
 
         QString row_data;
 
@@ -746,8 +676,8 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
 bool Core::exportPlotAsXTF(QString file_path) {
     QString export_file_name;
-    if(m_connection->lastType() == Connection::ConnectionFile) {
-        export_file_name = m_connection->lastFileName().section('/', -1).section('.', 0, 0);
+    if (!openedfilePath_.isEmpty()) {
+        export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     }
@@ -829,14 +759,8 @@ bool Core::openCSV(QString name, int separator_type, int first_row, int col_time
 
         track.append(Position());
 
-//        bool is_glue_date_time = datetime_format.contains(separator) && (col_time < columns.size());
 
-
-
-
-        if(col_time > 0 && (col_time-1 < columns.size()) ) {
-//            int y = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0, nsec = 0;
-//            sscanf(columns[col_time-1], time_format, &y, &month, &day, &hour, );
+        if (col_time > 0 && (col_time-1 < columns.size()) ) {
 
             int year = -1, month = -1, day = -1, hour = -1, minute = -1;
             double sec = -1;
@@ -886,14 +810,6 @@ bool Core::openCSV(QString name, int separator_type, int first_row, int col_time
                     track.last().time.addSecs(-18);
                 }
 
-
-//                QDateTime time;
-//                time.setTimeSpec(Qt::UTC);
-//                time.setTime(QTime(hour, minute, sec_int, nano_sec/1e6));
-//                time.setDate(QDate(year, month, day));
-//                int64_t unix_msec = time.toMSecsSinceEpoch();
-//                track.last().time.sec = unix_msec/1000;
-//                track.last().time.nanoSec = (unix_msec%1000)*1e6;
             }
         }
 
@@ -926,15 +842,6 @@ bool Core::openCSV(QString name, int separator_type, int first_row, int col_time
 
     return true;
 
-}
-
-void Core::restoreBaudrate() {
-    m_connection->setBaudrate(backupBaudrate);
-}
-
-void Core::setUpgradeBaudrate() {
-    backupBaudrate = m_connection->baudrate();
-    m_connection->setBaudrate(115200);
 }
 
 void Core::UILoad(QObject *object, const QUrl &url) {
@@ -985,8 +892,6 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
     m_scene3dControlMenuController->setQmlEngine(object);
     m_scene3dControlMenuController->setGraphicsSceneView(m_scene3dView);
-
-
 }
 
 void Core::startFileReader(const QString& filePath)
