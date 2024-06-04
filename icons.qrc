@@ -6,5 +6,8 @@
         <file>icons/settings.svg</file>
         <file>icons/record.svg</file>
         <file>icons/record_fill.svg</file>
+        <file>icons/map.svg</file>
+        <file>icons/photo.svg</file>
+        <file>icons/plug.svg</file>
     </qresource>
 </RCC>
