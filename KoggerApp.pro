@@ -46,7 +46,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     3Plot.cpp \
     DevDriver.cpp \
-    DevHub.cpp \
     DeviceManager.cpp \
     DeviceManagerWrapper.cpp \
     EchogramProcessing.cpp \
@@ -61,7 +60,6 @@ SOURCES += \
     ProtoBinnary.cpp \
     LinkListModel.cpp \
     StreamListModel.cpp \
-    connection.cpp \
     console.cpp \
     consolelistmodel.cpp \
     core.cpp \
@@ -122,7 +120,6 @@ HEADERS += \
     ConverterXTF.h \
     DSP.h \
     DevDriver.h \
-    DevHub.h \
     DeviceManager.h \
     DeviceManagerWrapper.h \
     DevQProperty.h \
@@ -140,7 +137,6 @@ HEADERS += \
     Themes.h \
     abstractentitydatafilter.h \
     XTFConf.h \
-    connection.h \
     console.h \
     consolelistmodel.h \
     filelist.h \

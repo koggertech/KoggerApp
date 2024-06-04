@@ -370,12 +370,15 @@ ColumnLayout {
                             else {
                                 switch(LinkType) {
                                 case 1:
+                                    core.closeConnectionAsFile();
                                     linkManagerWrapper.openAsSerial(Uuid)
                                     break
                                 case 2:
+                                    core.closeConnectionAsFile();
                                     linkManagerWrapper.openAsUdp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
                                     break
                                 case 3:
+                                    core.closeConnectionAsFile();
                                     linkManagerWrapper.openAsTcp(Uuid)
                                     break
                                 default:
@@ -589,6 +592,15 @@ ColumnLayout {
 
             Settings {
                 property alias logFolder: appendFileDialog.folder
+            }
+        }
+
+        CButton {
+            id: closeButton
+            text: "X"
+            Layout.fillWidth: true
+            onClicked: {
+                core.closeConnectionAsFile();
             }
         }
     }
