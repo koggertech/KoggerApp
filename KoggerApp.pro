@@ -94,6 +94,7 @@ SOURCES += \
 }
 
 RESOURCES += QML/qml.qrc \
+    icons.qrc \
     resources.qrc
 
 windows {
