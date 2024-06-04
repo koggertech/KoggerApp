@@ -502,8 +502,7 @@ ColumnLayout {
 
             Keys.onPressed: {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
-                    //deviceManagerWrapper.sendOpenFile(pathText.text, appendCheck.checked)
+                    core.openConnectionAsFile(1, pathText.text, false);
                 }
             }
 
@@ -532,7 +531,7 @@ ColumnLayout {
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
-                    deviceManagerWrapper.sendOpenFile(pathText.text, false)
+                    core.openConnectionAsFile(1, pathText.text, false);
                 }
                 onRejected: {
                 }
@@ -563,7 +562,8 @@ ColumnLayout {
 
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 
-                    deviceManagerWrapper.sendOpenFile(pathText.text, true)
+                    //deviceManagerWrapper.sendOpenFile(pathText.text, true)
+                    core.openConnectionAsFile(1, pathText.text, true);
                 }
                 onRejected: {
                 }
