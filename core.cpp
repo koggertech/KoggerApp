@@ -267,95 +267,21 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     }
 
     QList<DatasetChannel> chs = _dataset->channelsList().values();
-    for(int i = 0; i < _plots2d.size(); i++) {
-        if(i == 0 &&_plots2d.at(i) != NULL) {
-            if(chs.size() >= 2) {
+    for (int i = 0; i < _plots2d.size(); i++) {
+        if (i == 0 &&_plots2d.at(i) != NULL) {
+            if (chs.size() >= 2) {
                 _plots2d.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
             }
 
-            if(chs.size() == 1) {
+            if (chs.size() == 1) {
                 _plots2d.at(i)->setDataChannel(chs[0].channel);
             }
         }
     }
 
     return true;
-
-
-
-
-
-
-    // closeConnection();
-
-    // if (!is_append)
-    //     _dataset->resetDataset();
-
-    // if (m_scene3dView) {
-    //     if (!is_append)
-    //         m_scene3dView->clear();
-    //     m_scene3dView->setNavigationArrowState(false);
-    // }
-
-    // QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
-    // if(splitname.size() > 1) {
-    //     QString format = splitname.last();
-    //     if(format.contains("xtf", Qt::CaseInsensitive)) {
-
-    //         QFile file;
-    //         QUrl url(name);
-    //         if(url.isLocalFile()) {
-    //             file.setFileName(url.toLocalFile());
-    //         } else {
-    //             file.setFileName(url.toString());
-    //         }
-
-    //         if(file.open(QIODevice::ReadOnly)) {
-    //             return openXTF(file.readAll());
-    //         }
-
-    //         return false;
-    //     }
-    // }
-
-    // // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection); // FileReader?
-    // // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput); // FileReader?
-    // m_connection->openFile(name);
-
-    // if (m_scene3dView)
-    //     m_scene3dView->fitAllInView();
-
-    // _dataset->setRefPositionByFirstValid();
-    // _dataset->usblProcessing();
-
-    // // QVector<QVector3D> positions;
-    // // positions.append(QVector3D(1,1,1));
-    // // positions.append(QVector3D(2,1,1));
-    // // positions.append(QVector3D(3,1,1));
-    // // positions.append(QVector3D(4,1,1));
-    // if (m_scene3dView) {
-    //     m_scene3dView->addPoints(_dataset->beaconTrack(), QColor(255, 0, 0), 10);
-    //     m_scene3dView->addPoints(_dataset->beaconTrack1(), QColor(0, 255, 0), 10);
-    // }
-
-    // QList<DatasetChannel> chs = _dataset->channelsList().values();
-
-
-    // for(int i = 0; i < _plots2d.size(); i++) {
-    //     if(i == 0 &&_plots2d.at(i) != NULL) {
-    //         if(chs.size() >= 2) {
-    //             _plots2d.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
-    //         }
-
-    //         if(chs.size() == 1) {
-    //             _plots2d.at(i)->setDataChannel(chs[0].channel);
-    //         }
-    //     }
-    // }
-
-    // return true;
-
 }
+
 bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
     Q_UNUSED(id);
     Q_UNUSED(autoconn);
