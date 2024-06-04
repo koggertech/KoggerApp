@@ -8,9 +8,6 @@ DevSettingsBox {
     id: control
     isActive: dev !== null ? dev.isChartSupport : false
 
-    MenuBlock {
-    }
-
     ColumnLayout {
         id: columnItem
         spacing: 24

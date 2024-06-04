@@ -10,9 +10,6 @@ DevSettingsBox {
     id: control
     isActive: dev ? dev.isRecorder : false
 
-    MenuBlock {
-    }
-
     ColumnLayout {
         id: columnItem
         spacing: 24

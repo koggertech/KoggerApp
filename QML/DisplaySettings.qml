@@ -12,13 +12,10 @@ GridLayout {
 
     property var targetPlot: null
 
-    MenuBlock {
-    }
-
     ColumnLayout {
         id: columnItem
         spacing: 24
-        Layout.margins: 24
+        Layout.margins: 10
 
         ParamGroup {
             groupName: "Plot"

@@ -163,13 +163,14 @@ Item {
             y:0
         }
 
+
+
         DiplaySettingsViewer {
             id: appSettings
             Layout.alignment: Qt.AlignTop
             visible: menuDisplay.active
             Layout.maximumHeight: menu.height
-            width: settingsWidth
-            implicitWidth: settingsWidth
+            menuWidth: settingsWidth
 
             y:0
 

@@ -8,9 +8,6 @@ DevSettingsBox {
     id: control
     isActive: dev ? dev.isDoppler : false
 
-    MenuBlock {
-    }
-
     ColumnLayout {
         id: columnItem
         spacing: 24
