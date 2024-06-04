@@ -89,5 +89,6 @@
         <file>MenuRow.qml</file>
         <file>ConnectionButton.qml</file>
         <file>MenuFrame.qml</file>
+        <file>CheckButton.qml</file>
     </qresource>
 </RCC>

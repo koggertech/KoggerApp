@@ -107,75 +107,89 @@ ColumnLayout {
 
                 RowLayout {
                     spacing: 1
-                    // Layout.fillWidth: true
                     anchors.fill: parent
-                    // anchors.topMargin: 2
-                    // anchors.bottomMargin: 2
-                    // anchors.verticalCenter: parent
                     anchors.margins: 1
 
-
-
-                    // Rectangle {
-                    //     color: theme.controlBackColor
-                    //     height: parent.height
-                    //     width: 2
-                    //     border.width: 2
-                    //     border.color: "transparent"
-                    //     radius: 0
-                    // }
-
-                    MenuButton {
+                    CheckButton {
                         id: linkSettingsButton
-                        padding: 2
-                        checkable: true
                         width: theme.controlHeight
                         height: theme.controlHeight
-                        icon.source: "./settings-outline.svg"
-                        active: checked
+                        icon.source: "./icons/settings.svg"
+                        borderWidth: 0
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Settings"
                     }
 
-                    CCheck {
+                    CheckButton {
                         visible: linkSettingsButton.checked
-                        leftPadding: 6
-                        rightPadding: 2
-                        text: "Pinned"
+                        Layout.alignment: Qt.AlignLeft
+                        icon.source: "./icons/pin.svg"
                         checked: IsPinned
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
 
-                        onToggled: {
+                        onCheckedChanged: {
                             linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
                         }
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: checked ? "Unpin" : "Pin"
                     }
 
-                    CCheck {
+                    CheckButton {
                         visible: linkSettingsButton.checked
-                        leftPadding: 6
-                        rightPadding: 2
-                        Layout.fillWidth: true
-                        text: "Auto"
+                        Layout.alignment: Qt.AlignLeft
+                        icon.source: "./icons/repeat.svg"
                         checked: ControlType
-                        background:  Rectangle {
-                            color: "transparent"
-                            border.width: 0
-                            border.color: theme.controlBorderColor
-                        }
+                        // text: "Auto"
 
-                        onToggled: {
+                        onCheckedChanged: {
                             linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
                         }
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Auto"
                     }
+
+                    CheckButton {
+                        visible: linkSettingsButton.checked && LinkType == 2
+                        Layout.alignment: Qt.AlignLeft
+                        icon.source: "./icons/x.svg"
+                        checked: false
+
+                        onCheckedChanged: {
+                            if(checked) {
+                                linkManagerWrapper.deleteLink(Uuid)
+                            }
+                        }
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Delete"
+                    }
+
+                    // CCheck {
+                    //     visible: linkSettingsButton.checked
+                    //     leftPadding: 6
+                    //     rightPadding: 2
+                    //     Layout.fillWidth: true
+                    //     text: "Auto"
+                    //     checked: ControlType
+                    //     background:  Rectangle {
+                    //         color: "transparent"
+                    //         border.width: 0
+                    //         border.color: theme.controlBorderColor
+                    //     }
+
+                    //     onToggled: {
+                    //         linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
+                    //     }
+                    // }
 
                     CTextField {
                         width: 40
                         Layout.fillWidth: true
                         selectByMouse: true
                         readOnly: true
-                        visible: LinkType == 1 && !linkSettingsButton.checked
+                        visible: LinkType == 1
                         text: PortName
 
                         background:  Rectangle {
@@ -189,7 +203,7 @@ ColumnLayout {
                         id: baudrateCombo
                         implicitWidth: 150
                         // Layout.fillWidth: true
-                        visible: LinkType == 1 && !linkSettingsButton.checked
+                        visible: LinkType == 1
                         model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
                         currentIndex: 7
                         displayText: Baudrate
@@ -218,7 +232,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         small: true
                         leftPadding: 6
                         rightPadding: 0
@@ -227,7 +241,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipAddressText
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         hoverEnabled: true
                         selectByMouse: true
                         Layout.fillWidth: true
@@ -259,7 +273,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -269,7 +283,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -278,7 +292,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPortText
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: 60
@@ -305,7 +319,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -315,7 +329,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -324,7 +338,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPort2Text
-                        visible: LinkType == 2 && !linkSettingsButton.checked
+                        visible: LinkType == 2
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: 60
@@ -350,6 +364,7 @@ ColumnLayout {
                     }
 
                     CButton {
+                        Layout.alignment: Qt.AlignRight
                         text: ConnectionStatus ? "Close" : "Open"
                         backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
                         borderRadius: 2
