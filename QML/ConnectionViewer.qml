@@ -200,6 +200,8 @@ ColumnLayout {
                     }
 
                     CCombo  {
+                        property bool isStartup: true
+
                         id: baudrateCombo
                         implicitWidth: 150
                         // Layout.fillWidth: true
@@ -208,26 +210,18 @@ ColumnLayout {
                         currentIndex: 7
                         displayText: Baudrate
 
-                        // using comboBox
                         onCurrentTextChanged: {
-                            if (LinkType == 1) {
+                            if (LinkType == 1 && !isStartup) {
                                 console.info("baudrateCombo: onCurrentTextChanged: currentText: " + Number(baudrateCombo.currentText))
                                 linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
                             }
+                            isStartup = false
                         }
 
                         background:  Rectangle {
                             color: "transparent"
                             border.width: 0
                             border.color: theme.controlBorderColor
-                        }
-
-                        // set val from QML to raw com link
-                        Component.onCompleted: {
-                            if (LinkType == 1) {
-                                console.info("baudrateCombo: Component.onCompleted: currentText: " + Number(baudrateCombo.currentText))
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                            }
                         }
                     }
 
@@ -517,8 +511,7 @@ ColumnLayout {
 
             Keys.onPressed: {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
-                    //deviceManagerWrapper.sendOpenFile(pathText.text, appendCheck.checked)
+                    core.openConnectionAsFile(1, pathText.text, false);
                 }
             }
 
@@ -547,7 +540,7 @@ ColumnLayout {
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
-                    deviceManagerWrapper.sendOpenFile(pathText.text, false)
+                    core.openConnectionAsFile(1, pathText.text, false);
                 }
                 onRejected: {
                 }
@@ -578,7 +571,8 @@ ColumnLayout {
 
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 
-                    deviceManagerWrapper.sendOpenFile(pathText.text, true)
+                    //deviceManagerWrapper.sendOpenFile(pathText.text, true)
+                    core.openConnectionAsFile(1, pathText.text, true);
                 }
                 onRejected: {
                 }
