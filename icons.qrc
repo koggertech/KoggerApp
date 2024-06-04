@@ -9,5 +9,8 @@
         <file>icons/map.svg</file>
         <file>icons/photo.svg</file>
         <file>icons/plug.svg</file>
+        <file>icons/file.svg</file>
+        <file>icons/file-off.svg</file>
+        <file>icons/file-plus.svg</file>
     </qresource>
 </RCC>

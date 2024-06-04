@@ -13,15 +13,18 @@ Button {
     property color checkedBackColor: "white"
     property color backColor: "transparent"
     property color checkedBorderColor: "transparent"
-    property color borderColor: theme.textColor
-    rightPadding: text === "" ? 2 : 6
-    leftPadding: text === "" ? 2 : 6
-
-
-    height: theme.controlHeight
-    // width: text === "" ? theme.controlHeight : undefined
+    property color borderColor: theme.controlSolidBorderColor
 
     padding: 0
+    rightPadding: text === "" ? 2 : 6
+    leftPadding: icon.source == "" ? 6 : 2
+
+    icon.source: ""
+
+    height: theme.controlHeight
+    width: text === "" ? theme.controlHeight : undefined
+
+
     font: theme.textFont
     palette.buttonText: checked ? checkedColor : color
     palette.brightText: checked ? checkedColor : color
@@ -30,6 +33,8 @@ Button {
 
     background: Rectangle {
         id: backRect
+        anchors.fill: parent
+        anchors.margins: 0
         radius: 2
         height: parent.height
         width: parent.width
