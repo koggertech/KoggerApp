@@ -444,11 +444,22 @@ ColumnLayout {
             }
         }
 
+
+
         CButton {
-            id: loggingCheck
-            text: "Logging"
+            id: mavlinkProxy
+            text: "MAVProxy"
             Layout.fillWidth: false
             checkable: true
+        }
+
+        CheckButton {
+            id: loggingCheck
+            // text: "LOG"
+            checkedColor: "red"
+            color: "red"
+
+            Layout.alignment: Qt.AlignRight
 
             onCheckedChanged: core.logging = loggingCheck.checked
             Component.onCompleted: core.logging = loggingCheck.checked
@@ -456,13 +467,11 @@ ColumnLayout {
             Settings {
                 property alias loggingCheck: loggingCheck.checked
             }
-        }
 
-        CButton {
-            id: mavlinkProxy
-            text: "MAVProxy"
-            Layout.fillWidth: false
-            checkable: true
+            icon.source: checked ? "./icons/record_fill.svg": "./icons/record.svg"
+
+            ToolTip.visible: hovered
+            ToolTip.text: "Logging"
         }
     }
     /*

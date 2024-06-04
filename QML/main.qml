@@ -251,88 +251,71 @@ Window  {
 
 
 
-    ColumnLayout {
+    MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: true
+        visible: deviceManagerWrapper.pilotArmState >= 0
+        ColumnLayout {
+            RowLayout {
+                CheckButton {
+                    text: checked ? "Armed" : "Disarmed"
+                    checked: deviceManagerWrapper.pilotArmState == 1
+                    color: "white"
+                    backColor: "red"
+                    checkedColor: "white"
+                    checkedBackColor: "transparent"
+                    borderColor: "transparent"
+                    checkedBorderColor: theme.textColor
+                }
 
-        RowLayout {
-            MenuBlock {
-            }
-            CCombo  {
-                id: pilotArmedState
-                Layout.margins: 4
-                visible: deviceManagerWrapper.pilotArmState >= 0
-                Layout.fillWidth: true
-                model: ["Disarmed", "Armed"]
-                currentIndex: deviceManagerWrapper.pilotArmState
+                CCombo  {
+                    id: pilotModeState
+                    visible: deviceManagerWrapper.pilotModeState >= 0
+                    model: [
+                        "Manual",
+                        "Acro",
+                        "Steering",
+                        "Hold",
+                        "Loiter",
+                        "Follow",
+                        "Simple",
+                        "Dock",
+                        "Circle",
+                        "Auto",
+                        "RTL",
+                        "SmartRTL",
+                        "Guided",
+                        "Mode16",
+                        "Mode17"
+                    ]
+                    currentIndex: deviceManagerWrapper.pilotModeState
 
-                onCurrentIndexChanged: {
-                    if(currentIndex != deviceManagerWrapper.pilotArmState) {
-                        currentIndex = deviceManagerWrapper.pilotArmState
+                    onCurrentIndexChanged: {
+                        if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                            currentIndex = deviceManagerWrapper.pilotModeState
+                        }
+                    }
+
+                    background:  Rectangle {
+                        color: "transparent"
+                        border.width: 0
+                        border.color: theme.controlBorderColor
                     }
                 }
             }
 
-            CCombo  {
-                id: pilotModeState
-                Layout.margins: 4
-                visible: deviceManagerWrapper.pilotModeState >= 0
-                Layout.fillWidth: true
-                model: [
-                    "Manual",
-                    "Acro",
-                    "Steering",
-                    "Hold",
-                    "Loiter",
-                    "Follow",
-                    "Simple",
-                    "Dock",
-                    "Circle",
-                    "Auto",
-                    "RTL",
-                    "SmartRTL",
-                    "Guided",
-                    "Mode16",
-                    "Mode17"
-                ]
-                currentIndex: deviceManagerWrapper.pilotModeState
-
-                onCurrentIndexChanged: {
-                    if(currentIndex != deviceManagerWrapper.pilotModeState) {
-                        currentIndex = deviceManagerWrapper.pilotModeState
-                    }
+            RowLayout {
+                CText {
+                    id: fcTextBatt
+                    // Layout.margins: 4
+                    visible: isFinite(deviceManagerWrapper.vruVoltage)
+                    rightPadding: 6
+                    leftPadding: 6
+                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
                 }
             }
         }
-
-        RowLayout {
-            MenuBlock {
-
-            }
-            CText {
-                id: fcTextBatt
-                Layout.margins: 4
-                visible: isFinite(deviceManagerWrapper.vruVoltage)
-                rightPadding: 20
-                leftPadding: 20
-                text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
-            }
-        }
-
-
-
-        //        CText {
-        //            id: fcTextMode
-        //            rightPadding: 20
-        //            leftPadding: 20
-        //            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
-        //            text: devs.pilotArmed ? "Armed" : "Disarmed"
-        //        }
-
-
     }
-
 
     MenuBar {
         id:                menuBar

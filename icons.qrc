@@ -4,5 +4,7 @@
         <file>icons/pin.svg</file>
         <file>icons/x.svg</file>
         <file>icons/settings.svg</file>
+        <file>icons/record.svg</file>
+        <file>icons/record_fill.svg</file>
     </qresource>
 </RCC>
