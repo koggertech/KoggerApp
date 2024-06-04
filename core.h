@@ -112,7 +112,6 @@ public slots:
 #endif
 
     void setPlotStartLevel(int level) {
-//        m_plot->setStartLevel(level);
         for(int i = 0; i < _plots2d.size(); i++) {
             if(_plots2d.at(i) != NULL) {
                 _plots2d.at(i)->setEchogramLowLevel(level);
@@ -121,8 +120,6 @@ public slots:
     }
 
     void setPlotStopLevel(int level) {
-//        m_plot->setStopLevel(level);
-//        m_waterFall->setEchogramHightLevel(level);
         for(int i = 0; i < _plots2d.size(); i++) {
             if(_plots2d.at(i) != NULL) {
                 _plots2d.at(i)->setEchogramHightLevel(level);
@@ -131,29 +128,12 @@ public slots:
     }
 
     void setTimelinePosition(double position) {
-//        m_plot->setTimelinePosition(position);
-//        m_waterFall->setDataPosition(position);
         for(int i = 0; i < _plots2d.size(); i++) {
             if(_plots2d.at(i) != NULL) {
                 _plots2d.at(i)->setTimelinePosition(position);
             }
         }
     }
-
-//    void setChartVis(bool visible) {
-//        m_plot->setChartVis(visible);
-//    }
-
-//    void setOscVis(bool visible) {
-//        m_plot->setOscVis(visible);
-//    }
-
-//    void setDistVis(bool visible) {
-//        m_plot->setDistVis(visible);
-//    }
-
-    //Device* dev() { return &_devs; }
-
     void UILoad(QObject *object, const QUrl &url);
 
     // fileReader
@@ -179,7 +159,6 @@ public:
     GraphicsScene3dView* m_scene3dView = nullptr;
 
 
-    //Device _devs;
     Logger _logger;
     ConverterXTF _converterXTF;
     QThread connectionThread;
@@ -252,6 +231,9 @@ private:
 
 
     QString openedfilePath_;
+
+    bool isOpenedFile() const;
+
 
     bool isFactoryMode() {
 #ifdef FLASHER

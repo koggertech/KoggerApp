@@ -77,6 +77,11 @@ void Core::removeLinkManagerConnections()
     linkManagerWrapperConnections_.clear();
 }
 
+bool Core::isOpenedFile() const
+{
+    return !openedfilePath_.isEmpty();
+}
+
 void Core::setEngine(QQmlApplicationEngine *engine)
 {
     m_engine = engine;
@@ -225,7 +230,6 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
 
     openedfilePath_ = name;
 
-
     if (m_scene3dView)
         m_scene3dView->fitAllInView();
 
@@ -255,6 +259,9 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
 
 bool Core::closeConnectionAsFile()
 {
+    if (!isOpenedFile())
+        return false;
+
     createLinkManagerConnections();
 
     if (_dataset)
@@ -267,6 +274,7 @@ bool Core::closeConnectionAsFile()
 
     openedfilePath_.clear();
 
+    return true;
 }
 
 bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
@@ -333,7 +341,7 @@ bool Core::isLogging() {
 bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name;
 
-    if (!openedfilePath_.isEmpty()) {
+    if (isOpenedFile()) {
         export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
@@ -387,7 +395,7 @@ bool Core::exportComplexToCSV(QString file_path) {
 bool Core::exportUSBLToCSV(QString file_path) {
     QString export_file_name;
 
-    if (!openedfilePath_.isEmpty()) {
+    if (isOpenedFile()) {
         export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
@@ -429,7 +437,7 @@ bool Core::exportUSBLToCSV(QString file_path) {
 
 bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
     QString export_file_name;
-    if (!openedfilePath_.isEmpty()) {
+    if (isOpenedFile()) {
         export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
@@ -676,7 +684,7 @@ bool Core::exportPlotAsCVS(QString file_path, int channel, float decimation) {
 
 bool Core::exportPlotAsXTF(QString file_path) {
     QString export_file_name;
-    if (!openedfilePath_.isEmpty()) {
+    if (isOpenedFile()) {
         export_file_name = openedfilePath_.section('/', -1).section('.', 0, 0);
     } else {
         export_file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
