@@ -38,7 +38,7 @@ public slots:
     Q_INVOKABLE StreamListModel* streamsList();
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
-    void openFile(const QString& filePath, bool isAppend);
+    void openFile(const QString& filePath);
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -90,9 +90,6 @@ signals:
     void gnssVelocityComplete(double h_speed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
 
-
-
-    void appendOnFileOpening(bool isAppend);
 
 private:
     /*methods*/

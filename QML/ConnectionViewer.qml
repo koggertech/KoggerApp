@@ -533,8 +533,8 @@ ColumnLayout {
 
             Keys.onPressed: {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    //core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
-                    deviceManagerWrapper.sendOpenFile(pathText.text, appendCheck.checked)
+                    core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
+                    //deviceManagerWrapper.sendOpenFile(pathText.text, appendCheck.checked)
                 }
             }
 
@@ -563,8 +563,8 @@ ColumnLayout {
 
                     var name_parts = logFileDialog.fileUrl.toString().split('.')
 
-                    //core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
-                    deviceManagerWrapper.sendOpenFile(pathText.text, appendCheck.checked)
+                    core.openConnectionAsFile(1, pathText.text, appendCheck.checked);
+                    //deviceManagerWrapper.sendOpenFile(pathText.text, appendCheck.checked)
                 }
                 onRejected: {
                 }

@@ -40,7 +40,6 @@ Core::Core() : QObject(),
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dopplerBeamComlete,        _dataset,   &Dataset::addDopplerBeam,      deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::dvlSolutionComplete,       _dataset,   &Dataset::addDVLSolution,      deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::upgradeProgressChanged,    this,       &Core::upgradeChanged,         deviceManagerConnection);
-    QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::appendOnFileOpening,       this,       &Core::appendStatusOnOpenFile, deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::eventComplete,             _dataset,   &Dataset::addEvent,            deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::rangefinderComplete,       _dataset,   &Dataset::addRangefinder,      deviceManagerConnection);
     QObject::connect(deviceManagerWrapper_->getWorker(), &DeviceManager::positionComplete,          _dataset,   &Dataset::addPosition,         deviceManagerConnection);
@@ -53,7 +52,7 @@ Core::Core() : QObject(),
     QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkClosed,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection);
     QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkOpened,  deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection);
     QObject::connect(linkManagerWrapper_->getWorker(),   &LinkManager::linkDeleted, deviceManagerWrapper_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection);
-
+    // logging
     QObject::connect(linkManagerWrapper_->getWorker(), &LinkManager::frameReady, this, [this](QUuid uuid, Link* link, FrameParser frame) {
         if (isLogging()) {
             QMetaObject::invokeMethod(&_logger, [this, uuid, link, frame]() {
@@ -231,8 +230,6 @@ bool Core::devsConnection() {
 bool Core::openConnectionAsFile(const int id, const QString &name, bool is_append) {
     Q_UNUSED(id);
 
-    closeConnection();
-
     if (!is_append)
         _dataset->resetDataset();
 
@@ -243,29 +240,20 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     }
 
     QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
-    if(splitname.size() > 1) {
-        QString format = splitname.last();
-        if(format.contains("xtf", Qt::CaseInsensitive)) {
 
+    if (splitname.size() > 1) {
+        QString format = splitname.last();
+        if (format.contains("xtf", Qt::CaseInsensitive)) {
             QFile file;
             QUrl url(name);
-            if(url.isLocalFile()) {
-                file.setFileName(url.toLocalFile());
-            } else {
-                file.setFileName(url.toString());
-            }
-
-            if(file.open(QIODevice::ReadOnly)) {
+            url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+            if (file.open(QIODevice::ReadOnly))
                 return openXTF(file.readAll());
-            }
-
             return false;
         }
     }
 
-    // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection); // FileReader?
-    // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput); // FileReader?
-    m_connection->openFile(name);
+    emit deviceManagerWrapper_->sendOpenFile(name);
 
     if (m_scene3dView)
         m_scene3dView->fitAllInView();
@@ -273,19 +261,12 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     _dataset->setRefPositionByFirstValid();
     _dataset->usblProcessing();
 
-    // QVector<QVector3D> positions;
-    // positions.append(QVector3D(1,1,1));
-    // positions.append(QVector3D(2,1,1));
-    // positions.append(QVector3D(3,1,1));
-    // positions.append(QVector3D(4,1,1));
     if (m_scene3dView) {
         m_scene3dView->addPoints(_dataset->beaconTrack(), QColor(255, 0, 0), 10);
         m_scene3dView->addPoints(_dataset->beaconTrack1(), QColor(0, 255, 0), 10);
     }
 
     QList<DatasetChannel> chs = _dataset->channelsList().values();
-
-
     for(int i = 0; i < _plots2d.size(); i++) {
         if(i == 0 &&_plots2d.at(i) != NULL) {
             if(chs.size() >= 2) {
@@ -299,6 +280,80 @@ bool Core::openConnectionAsFile(const int id, const QString &name, bool is_appen
     }
 
     return true;
+
+
+
+
+
+
+    // closeConnection();
+
+    // if (!is_append)
+    //     _dataset->resetDataset();
+
+    // if (m_scene3dView) {
+    //     if (!is_append)
+    //         m_scene3dView->clear();
+    //     m_scene3dView->setNavigationArrowState(false);
+    // }
+
+    // QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
+    // if(splitname.size() > 1) {
+    //     QString format = splitname.last();
+    //     if(format.contains("xtf", Qt::CaseInsensitive)) {
+
+    //         QFile file;
+    //         QUrl url(name);
+    //         if(url.isLocalFile()) {
+    //             file.setFileName(url.toLocalFile());
+    //         } else {
+    //             file.setFileName(url.toString());
+    //         }
+
+    //         if(file.open(QIODevice::ReadOnly)) {
+    //             return openXTF(file.readAll());
+    //         }
+
+    //         return false;
+    //     }
+    // }
+
+    // // connect(m_connection, &Connection::openedEvent, &_devs, &Device::startConnection); // FileReader?
+    // // connect(m_connection, &Connection::receiveData, &_devs, &Device::frameInput); // FileReader?
+    // m_connection->openFile(name);
+
+    // if (m_scene3dView)
+    //     m_scene3dView->fitAllInView();
+
+    // _dataset->setRefPositionByFirstValid();
+    // _dataset->usblProcessing();
+
+    // // QVector<QVector3D> positions;
+    // // positions.append(QVector3D(1,1,1));
+    // // positions.append(QVector3D(2,1,1));
+    // // positions.append(QVector3D(3,1,1));
+    // // positions.append(QVector3D(4,1,1));
+    // if (m_scene3dView) {
+    //     m_scene3dView->addPoints(_dataset->beaconTrack(), QColor(255, 0, 0), 10);
+    //     m_scene3dView->addPoints(_dataset->beaconTrack1(), QColor(0, 255, 0), 10);
+    // }
+
+    // QList<DatasetChannel> chs = _dataset->channelsList().values();
+
+
+    // for(int i = 0; i < _plots2d.size(); i++) {
+    //     if(i == 0 &&_plots2d.at(i) != NULL) {
+    //         if(chs.size() >= 2) {
+    //             _plots2d.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+    //         }
+
+    //         if(chs.size() == 1) {
+    //             _plots2d.at(i)->setDataChannel(chs[0].channel);
+    //         }
+    //     }
+    // }
+
+    // return true;
 
 }
 bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
@@ -389,19 +444,6 @@ bool Core::upgradeFW(const QString &name, QObject* dev) {
 void Core::upgradeChanged(int progress_status) {
     if(progress_status == DevDriver::successUpgrade) {
 //        restoreBaudrate();
-    }
-}
-
-
-void Core::appendStatusOnOpenFile(bool isAppend)
-{
-    if (!isAppend)
-        _dataset->resetDataset();
-
-    if (m_scene3dView) {
-        if (!isAppend)
-            m_scene3dView->clear();
-        m_scene3dView->setNavigationArrowState(false);
     }
 }
 
