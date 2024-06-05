@@ -162,7 +162,7 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
 
 void LinkManager::exportPinnedLinksToXML()
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     qDebug() << "LinkManager::exportPinnedLinksToXML";
     QString filePath{"pinned_links.xml"};
@@ -198,8 +198,6 @@ void LinkManager::exportPinnedLinksToXML()
     xmlWriter.writeEndElement();
     xmlWriter.writeEndDocument();
     file.close();
-
-    timer_->start();
 }
 
 Link *LinkManager::createNewLink() const
@@ -361,19 +359,17 @@ void LinkManager::onExpiredTimer()
 
 void LinkManager::openAsSerial(QUuid uuid)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsForceStopped(false);
         linkPtr->openAsSerial();
     }
-
-    timer_->start();
 }
 
 void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsForceStopped(false);
@@ -382,13 +378,11 @@ void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int des
 
         doEmitAppendModifyModel(linkPtr); //
     }
-
-    timer_->start();
 }
 
 void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsForceStopped(false);
@@ -397,39 +391,33 @@ void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int des
 
         doEmitAppendModifyModel(linkPtr); //
     }
-
-    timer_->start();
 }
 
 void LinkManager::closeLink(QUuid uuid)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->close();
 
         doEmitAppendModifyModel(linkPtr); //
     }
-
-    timer_->start();
 }
 
 void LinkManager::closeFLink(QUuid uuid)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setIsForceStopped(true);
         linkPtr->close();
         doEmitAppendModifyModel(linkPtr); //
     }
-
-    timer_->start();
 }
 
 void LinkManager::deleteLink(QUuid uuid)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         emit linkDeleted(linkPtr->getUuid(), linkPtr);
@@ -453,13 +441,12 @@ void LinkManager::deleteLink(QUuid uuid)
             linkType == LinkType::LinkIPUDP)
             exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 {
-    timer_->stop();
+    TimerController(timer_.get());
+
     qDebug() << "LinkManager::updateBaudrate: " << baudrate;
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
@@ -471,13 +458,12 @@ void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::updateAddress(QUuid uuid, const QString &address)
 {
-    timer_->stop();
+    TimerController(timer_.get());
+
     qDebug() << "LinkManager::updateAddress: " << address;
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
@@ -487,13 +473,12 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
 {
-    timer_->stop();
+    TimerController(timer_.get());
+
     qDebug() << "LinkManager::updateSourcePort: " << sourcePort;
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
@@ -503,13 +488,11 @@ void LinkManager::updateSourcePort(QUuid uuid, int sourcePort)
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     qDebug() << "LinkManager::updateDestinationPort: " << destinationPort;
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
@@ -519,13 +502,11 @@ void LinkManager::updateDestinationPort(QUuid uuid, int destinationPort)
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::updatePinnedState(QUuid uuid, bool state)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     qDebug() << "LinkManager::updatePinnedState: " << state;
 
@@ -534,13 +515,11 @@ void LinkManager::updatePinnedState(QUuid uuid, bool state)
 
         exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
 {
-    timer_->stop();
+    TimerController(timer_.get());
 
     qDebug() << "LinkManager::updateControlType: " << controlType;
 
@@ -550,8 +529,6 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
     }
-
-    timer_->start();
 }
 
 void LinkManager::frameInput(Link *link, FrameParser frame)
@@ -606,5 +583,17 @@ void LinkManager::openFLinks()
                 break;
             }
         }
+    }
+}
+
+LinkManager::TimerController::TimerController(QTimer *timer) : timer_(timer) {
+    if (timer_) {
+        timer->stop();
+    }
+}
+
+LinkManager::TimerController::~TimerController() {
+    if (timer_) {
+        timer_->start();
     }
 }
