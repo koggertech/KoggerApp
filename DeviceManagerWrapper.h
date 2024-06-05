@@ -33,8 +33,8 @@ public:
     float                vruVoltage         ()           { return getWorker()->vruVoltage();        }
     float                vruCurrent         ()           { return getWorker()->vruCurrent();        }
     float                vruVelocityH       ()           { return getWorker()->vruVelocityH();      }
-    bool                 pilotArmState      ()           { return getWorker()->pilotArmState();     }
-    bool                 pilotModeState     ()           { return getWorker()->pilotModeState();    }
+    int                 pilotArmState      ()           { return getWorker()->pilotArmState();     }
+    int                 pilotModeState     ()           { return getWorker()->pilotModeState();    }
     void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
 
 public slots:

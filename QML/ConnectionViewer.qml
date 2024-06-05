@@ -447,11 +447,22 @@ ColumnLayout {
             }
         }
 
+
+
         CButton {
-            id: loggingCheck
-            text: "Logging"
+            id: mavlinkProxy
+            text: "MAVProxy"
             Layout.fillWidth: false
             checkable: true
+        }
+
+        CheckButton {
+            id: loggingCheck
+            text: "REC"
+            checkedColor: "red"
+            color: "red"
+
+            Layout.alignment: Qt.AlignRight
 
             onCheckedChanged: core.logging = loggingCheck.checked
             Component.onCompleted: core.logging = loggingCheck.checked
@@ -459,13 +470,11 @@ ColumnLayout {
             Settings {
                 property alias loggingCheck: loggingCheck.checked
             }
-        }
 
-        CButton {
-            id: mavlinkProxy
-            text: "MAVProxy"
-            Layout.fillWidth: false
-            checkable: true
+            icon.source: checked ? "./icons/record_fill.svg": "./icons/record.svg"
+
+            // ToolTip.visible: hovered
+            // ToolTip.text: "Recording"
         }
     }
     /*
@@ -502,12 +511,11 @@ ColumnLayout {
     */
 
     MenuRow {
-        // visible: typeFileTab.checked
+        spacing: 4
         CTextField {
             id: pathText
             hoverEnabled: true
             Layout.fillWidth: true
-            // visible: connectionTypeCombo.currentText === "File"
 
             text: ""
             placeholderText: qsTr("Enter path")
@@ -523,10 +531,12 @@ ColumnLayout {
             }
         }
 
-        CButton {
-            visible: typeFileTab.checked
-            text: "New"
-            Layout.fillWidth: true
+        CheckButton {
+            icon.source: "./icons/file.svg"
+            checkable: false
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+
             onClicked: {
                 newFileDialog.open()
             }
@@ -554,10 +564,12 @@ ColumnLayout {
             }
         }
 
-        CButton {
-            visible: typeFileTab.checked
-            text: "Append"
-            Layout.fillWidth: true
+        CheckButton {
+            icon.source: "./icons/file-plus.svg"
+            checkable: false
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+
             onClicked: {
                 appendFileDialog.open()
             }
@@ -586,10 +598,12 @@ ColumnLayout {
             }
         }
 
-        CButton {
-            id: closeButton
-            text: "X"
-            Layout.fillWidth: true
+        CheckButton {
+            icon.source: "./icons/file-off.svg"
+            checkable: false
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+
             onClicked: {
                 core.closeConnectionAsFile();
             }
@@ -1105,10 +1119,7 @@ ColumnLayout {
     //        }
 
     MenuRow {
-        // Layout.fillWidth: true
-        // Layout.margins: 10
-        // spacing: 10
-        visible: connectionButton.connection
+        visible: devList.length > 0
 
         CButton {
             id: devTab0

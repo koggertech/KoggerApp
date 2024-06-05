@@ -94,67 +94,65 @@ WaterFall {
         }
     }
 
-    ColumnLayout {
+
+    MenuFrame {
         Layout.alignment: Qt.AlignHCenter
         //visible: visible2dButton.checked
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 4
+        margins: 0
 
-        MenuBlock {
-            // width: 30
-            opacity: 0.7
+        ColumnLayout {
 
-        }
-
-
-        CText {
-            Layout.fillWidth: true
-            Layout.topMargin: 0
-            Layout.preferredWidth: theme.controlHeight*1.5
-            // visible: chartEnable.checked // TODO
-            horizontalAlignment: Text.AlignHCenter
-            text: echogramLevelsSlider.stopValue
-            small: true
-        }
-
-        ChartLevel {
-            Layout.fillWidth: true
-            Layout.preferredWidth: theme.controlHeight*1.5
-            id: echogramLevelsSlider
-            // visible: chartEnable.checked // TODO
-            Layout.alignment: Qt.AlignHCenter
-
-            onStartValueChanged: {
-                plot.plotEchogramSetLevels(startValue, stopValue);
+            CText {
+                Layout.fillWidth: true
+                Layout.topMargin: 0
+                Layout.preferredWidth: theme.controlHeight*1.2
+                // visible: chartEnable.checked // TODO
+                horizontalAlignment: Text.AlignHCenter
+                text: echogramLevelsSlider.stopValue
+                small: true
             }
 
-            onStopValueChanged: {
-                plot.plotEchogramSetLevels(startValue, stopValue);
+            ChartLevel {
+                opacity: 0.8
+                Layout.fillWidth: true
+                Layout.preferredWidth: theme.controlHeight*1.2
+                id: echogramLevelsSlider
+                // visible: chartEnable.checked // TODO
+                Layout.alignment: Qt.AlignHCenter
+
+                onStartValueChanged: {
+                    plot.plotEchogramSetLevels(startValue, stopValue);
+                }
+
+                onStopValueChanged: {
+                    plot.plotEchogramSetLevels(startValue, stopValue);
+                }
+
+                Component.onCompleted: {
+                    plot.plotEchogramSetLevels(startValue, stopValue);
+                }
+
+                Settings {
+                    property alias echogramLevelsStart: echogramLevelsSlider.startValue
+                    property alias echogramLevelsStop: echogramLevelsSlider.stopValue
+                }
             }
 
-            Component.onCompleted: {
-                plot.plotEchogramSetLevels(startValue, stopValue);
+            CText {
+                Layout.fillWidth: true
+                Layout.preferredWidth: theme.controlHeight*1.2
+                Layout.bottomMargin: 0
+                // visible: chartEnable.checked // TODO
+                horizontalAlignment: Text.AlignHCenter
+
+                text: echogramLevelsSlider.startValue
+                small: true
             }
-
-            Settings {
-                property alias echogramLevelsStart: echogramLevelsSlider.startValue
-                property alias echogramLevelsStop: echogramLevelsSlider.stopValue
-            }
-        }
-
-        CText {
-            Layout.fillWidth: true
-            Layout.preferredWidth: theme.controlHeight*1.5
-            Layout.bottomMargin: 0
-            // visible: chartEnable.checked // TODO
-            horizontalAlignment: Text.AlignHCenter
-
-            text: echogramLevelsSlider.startValue
-            small: true
         }
     }
-
 
     RowLayout {
         id: menuBlock

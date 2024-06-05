@@ -31,18 +31,19 @@ Item {
 
     RowLayout {
         id: menuLayout
-        Layout.fillWidth: true
+        spacing: 0
+
 
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
-            Layout.preferredWidth: theme.controlHeight*1.5
+            Layout.preferredWidth: theme.controlHeight*1.2
             Layout.topMargin: 6
             spacing: 4
             Layout.margins: 4
 
             MenuButton {
                 id: menuSettings
-                icon.source: "./code-working.svg"
+                icon.source: "./icons/plug.svg"
                 Layout.fillWidth: true
 
                 onPressed: {
@@ -72,88 +73,38 @@ Item {
                 }
             }
 
-            CButton {
+            CheckButton {
                 id: settings3DButton
                 visible: instruments > 0
                 Layout.fillWidth: true
-                text: "3D"
-                checkable: true
+                // text: "3D"
+                // checkable: true
+                icon.source: "./icons/map.svg"
+                backColor: theme.controlBackColor
+                borderColor:  theme.controlBackColor
+                checkedBorderColor: "black"
 
                 onClicked: {
-//                        Settings3DController.changeSceneVisibility(settings3DButton.checked)
-//                       itemChangeActive(settings3DButton)
                 }
             }
 
-            CButton {
+            CheckButton {
                 id: visible2dButton
                 visible: instruments > 0
                 Layout.fillWidth: true
-                text: "2D"
-                checkable: true
+                // text: "2D"
+                // checkable: true
+                icon.source: "./icons/photo.svg"
+
+                backColor: theme.controlBackColor
+                borderColor:  theme.controlBackColor
+                checkedBorderColor: "black"
+
                 checked: true
                 onClicked: {
-//                        if(checked) { core.movePoints() }
                 }
             }
-
-
-            // ColumnLayout {
-            //     Layout.alignment: Qt.AlignHCenter
-            //     visible: visible2dButton.checked
-
-            //     MenuBlock {
-            //     }
-
-
-            //     CText {
-            //         Layout.fillWidth: true
-            //         Layout.topMargin: 4
-            //         // visible: chartEnable.checked // TODO
-            //         horizontalAlignment: Text.AlignHCenter
-            //         text: echogramLevelsSlider.stopValue
-            //         small: true
-            //     }
-
-            //     ChartLevel {
-            //         Layout.fillWidth: true
-            //         id: echogramLevelsSlider
-            //         // visible: chartEnable.checked // TODO
-            //         Layout.alignment: Qt.AlignHCenter
-
-            //         onStartValueChanged: {
-            //             targetPlot.plotEchogramSetLevels(startValue, stopValue);
-            //         }
-
-            //         onStopValueChanged: {
-            //             targetPlot.plotEchogramSetLevels(startValue, stopValue);
-            //         }
-
-            //         Component.onCompleted: {
-            //             targetPlot.plotEchogramSetLevels(startValue, stopValue);
-            //         }
-
-            //         Settings {
-            //             property alias echogramLevelsStart: echogramLevelsSlider.startValue
-            //             property alias echogramLevelsStop: echogramLevelsSlider.stopValue
-            //         }
-            //     }
-
-            //     CText {
-            //         Layout.fillWidth: true
-            //         Layout.bottomMargin: 4
-            //         // visible: chartEnable.checked // TODO
-            //         horizontalAlignment: Text.AlignHCenter
-
-            //         text: echogramLevelsSlider.startValue
-            //         small: true
-            //     }
-            // }
-
-
         }
-
-
 
         DeviceSettingsViewer {
             id: devSettings
@@ -162,8 +113,6 @@ Item {
             menuWidth: settingsWidth
             y:0
         }
-
-
 
         DiplaySettingsViewer {
             id: appSettings

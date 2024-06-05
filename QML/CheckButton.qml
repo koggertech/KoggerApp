@@ -4,29 +4,42 @@ import QtQuick.Layouts 1.15
 import QtQuick.Controls.Styles 1.4
 
 Button {
+    id: control
     checkable: true
     property bool active: false
     property int borderWidth: 1
     property color color: theme.textColor
+    property color checkedColor: "black"
+    property color checkedBackColor: "white"
+    property color backColor: "transparent"
+    property color checkedBorderColor: "transparent"
+    property color borderColor: theme.controlSolidBorderColor
 
-    implicitHeight: theme.controlHeight
-    implicitWidth: theme.controlHeight
-
-    id: control
-    Layout.preferredHeight: theme.controlHeight
     padding: 0
-    font: theme.textFont
-    palette.buttonText: color
+    rightPadding: text === "" ? 2 : 6
+    leftPadding: icon.source == "" ? 6 : 2
 
-    icon.color: checked ? "black" : theme.textColor
+    icon.source: ""
+
+    height: theme.controlHeight
+    width: text === "" ? theme.controlHeight : undefined
+
+
+    font: theme.textFont
+    palette.buttonText: checked ? checkedColor : color
+    palette.brightText: checked ? checkedColor : color
+
+    icon.color: checked ? checkedColor : color
 
     background: Rectangle {
         id: backRect
+        anchors.fill: parent
+        anchors.margins: 0
         radius: 2
         height: parent.height
         width: parent.width
-        color: checked ? "white" : "transparent"
-        border.color: checked ? "transparent" : theme.textColor
-        border.width: borderWidth
+        color: control.checked ? control.checkedBackColor : control.backColor
+        border.color: control.checked ? control.checkedBorderColor : control.borderColor
+        border.width: control.borderWidth
     }
 }
