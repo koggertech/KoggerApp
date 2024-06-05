@@ -398,6 +398,8 @@ void LinkManager::closeLink(QUuid uuid)
     TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        if (linkPtr->getControlType() == ControlType::kAuto)
+            linkPtr->setIsForceStopped(true);
         linkPtr->close();
 
         doEmitAppendModifyModel(linkPtr); //
