@@ -123,6 +123,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             if (frame.id() == ID_VOLTAGE) {
                 int v_id = frame.read<U1>();
                 int32_t v_uv = frame.read<S4>();
+                Q_UNUSED(v_uv);
                 if (v_id == 1) {
                     // core.dataset()->addEncoder(float(v_uv));
                     // qInfo("Voltage %f", float(v_uv));
@@ -361,8 +362,7 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 
     qDebug() << "Device::onLinkOpened";
     if (link) {
-        // TODO
-        DevQProperty* dev = getDevice(uuid, link, 0);
+        getDevice(uuid, link, 0);
     }
 }
 

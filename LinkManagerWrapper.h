@@ -59,6 +59,7 @@ public slots:
     void createAsTcp(QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void closeLink(QUuid uuid);
+    void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);
     void updateBaudrate(QUuid uuid, int baudrate);
     void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
