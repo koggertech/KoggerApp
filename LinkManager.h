@@ -62,6 +62,7 @@ public slots:
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
 
     void closeLink(QUuid uuid);
+    void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);
 
 
@@ -78,4 +79,6 @@ public slots:
     void createAsTcp(QString address, int sourcePort, int destinationPort);
 
     void importPinnedLinksFromXML();
+
+    void openFLinks();
 };

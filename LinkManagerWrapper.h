@@ -23,11 +23,15 @@ public:
     LinkListModel* getModelPtr();
     LinkManager* getWorker();
 
+    void closeOpenedLinks(); //
+    void openClosedLinks();
+
 private:
     /*data*/
     std::unique_ptr<QThread> workerThread_;
     std::unique_ptr<LinkManager> workerObject_;
     LinkListModel model_;
+    QList<QPair<QUuid, LinkType>> forceClosedLinks_;
 
 signals:
     void modelChanged(); // Q_PROPERTY in .h
@@ -37,6 +41,7 @@ signals:
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void sendCloseLink(QUuid uuid);
+    void sendFCloseLink(QUuid uuid);
     void sendDeleteLink(QUuid uuid);
     void sendUpdateBaudrate(QUuid uuid, int baudrate);
     void sendUpdateAddress(QUuid uuid, QString address);
@@ -45,6 +50,7 @@ signals:
     void sendUpdatePinnedState(QUuid uuid, bool state);
     void sendUpdateControlType(QUuid uuid, int controlType);
     void sendStopTimer();
+    void sendOpenFLinks();
 
 public slots:
     void openAsSerial(QUuid uuid);

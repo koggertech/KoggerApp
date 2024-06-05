@@ -93,20 +93,7 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
             }
         }
         else if (!isBeen) {
-            emit linkDeleted(link->getUuid(), link);
-
-            // model
-            emit deleteModel(link->getUuid());
-            // list
-            link->disconnect();
-            this->disconnect(link);
-
-            if (link->isOpen())
-                link->close();
-            qDebug() << "link deleted: " << link->getUuid();
-            delete link;
-            list_.removeAt(i);
-            --i;
+            deleteLink(link->getUuid());
         }
     }
 }
@@ -118,7 +105,8 @@ void LinkManager::openAutoConnections()
 
         if (!link->getConnectionStatus()) {
             if (link->getControlType() == ControlType::kAuto &&
-                !link->getIsNotAvailable()) {
+                !link->getIsNotAvailable() &&
+                !link->getIsForceStopped()) {
                 switch (link->getLinkType()) {
                 case LinkType::LinkNone:    { break; }
                 case LinkType::LinkSerial:  { link->openAsSerial(); break; }
@@ -368,8 +356,10 @@ void LinkManager::openAsSerial(QUuid uuid)
 {
     timer_->stop();
 
-    if (const auto linkPtr = getLinkPtr(uuid); linkPtr)
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setIsForceStopped(false);
         linkPtr->openAsSerial();
+    }
 
     timer_->start();
 }
@@ -379,6 +369,7 @@ void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int des
     timer_->stop();
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setIsForceStopped(false);
         linkPtr->updateUdpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsUdp();
 
@@ -393,6 +384,7 @@ void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int des
     timer_->stop();
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setIsForceStopped(false);
         linkPtr->updateTcpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsTcp();
 
@@ -415,6 +407,19 @@ void LinkManager::closeLink(QUuid uuid)
     timer_->start();
 }
 
+void LinkManager::closeFLink(QUuid uuid)
+{
+    timer_->stop();
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setIsForceStopped(true);
+        linkPtr->close();
+        doEmitAppendModifyModel(linkPtr); //
+    }
+
+    timer_->start();
+}
+
 void LinkManager::deleteLink(QUuid uuid)
 {
     timer_->stop();
@@ -431,7 +436,15 @@ void LinkManager::deleteLink(QUuid uuid)
 
         qDebug() << "link deleted: " << linkPtr->getUuid();
 
+        auto linkType = linkPtr->getLinkType();
+
+        list_.removeOne(linkPtr);
         delete linkPtr;
+
+        // manual deleting
+        if (linkType == LinkType::LinkIPTCP ||
+            linkType == LinkType::LinkIPUDP)
+            exportPinnedLinksToXML();
     }
 
     timer_->start();
@@ -561,4 +574,30 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
     list_.append(newLinkPtr);
 
     doEmitAppendModifyModel(newLinkPtr);
+}
+
+void LinkManager::openFLinks()
+{
+    for (auto& itm : list_) {
+        if (itm->getIsForceStopped()) {
+            itm->setIsForceStopped(false);
+
+            switch (itm->getLinkType()) {
+            case LinkType::LinkSerial: {
+                itm->openAsSerial();
+                break;
+            }
+            case LinkType::LinkIPTCP : {
+                itm->openAsTcp();
+                break;
+            }
+            case LinkType::LinkIPUDP: {
+                itm->openAsUdp();
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    }
 }

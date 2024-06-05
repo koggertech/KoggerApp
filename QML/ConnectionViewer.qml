@@ -127,7 +127,7 @@ ColumnLayout {
                         icon.source: "./icons/pin.svg"
                         checked: IsPinned
 
-                        onCheckedChanged: {
+                        onToggled: {
                             linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
                         }
 
@@ -142,7 +142,7 @@ ColumnLayout {
                         checked: ControlType
                         // text: "Auto"
 
-                        onCheckedChanged: {
+                        onToggled: {
                             linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
                         }
 
@@ -156,7 +156,7 @@ ColumnLayout {
                         icon.source: "./icons/x.svg"
                         checked: false
 
-                        onCheckedChanged: {
+                        onToggled: {
                             if(checked) {
                                 linkManagerWrapper.deleteLink(Uuid)
                             }

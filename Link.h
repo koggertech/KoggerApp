@@ -79,6 +79,8 @@ public:
     void setIsHided(bool isHided);
     void setIsNotAvailable(bool isNotAvailable);
 
+    void setIsForceStopped(bool isForcedStopped);
+
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     ControlType getControlType() const;
@@ -92,6 +94,8 @@ public:
     bool        getIsPinned() const;
     bool        getIsHided() const;
     bool        getIsNotAvailable() const;
+
+    bool        getIsForceStopped() const;
 
 public slots:
     bool writeFrame(FrameParser frame);
@@ -127,6 +131,8 @@ private:
     bool isPinned_;
     bool isHided_;
     bool isNotAvailable_;
+
+    bool isForcedStopped_;
 
 signals:
     void readyParse(Link* link);

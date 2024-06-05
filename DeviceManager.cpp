@@ -304,7 +304,7 @@ void DeviceManager::openFile(const QString &filePath) //
 
     const QUuid someUuid;
 
-    delAllDev();
+    //delAllDev(); // device deleting by link
 
     while (true) {
         if (break_) {
@@ -372,9 +372,7 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
 
     qDebug() << "DeviceManager::onLinkClosed";
     if (link) {
-        if (link->getControlType() == ControlType::kManual) {
-            deleteDevicesByLink(uuid);
-        }
+        deleteDevicesByLink(uuid);
     }
 }
 

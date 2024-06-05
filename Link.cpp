@@ -23,7 +23,8 @@ Link::Link() :
     destinationPort_(0),
     isPinned_(false),
     isHided_(false),
-    isNotAvailable_(false)
+    isNotAvailable_(false),
+    isForcedStopped_(false)
 {
     _frame.resetComplete();
 }
@@ -42,7 +43,8 @@ Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString 
     destinationPort_(destinationPort),
     isPinned_(isPinned),
     isHided_(isHided),
-    isNotAvailable_(isNotAvailable)
+    isNotAvailable_(isNotAvailable),
+    isForcedStopped_(false)
 {
 
 }
@@ -303,6 +305,11 @@ void Link::setIsNotAvailable(bool isNotAvailable)
     isNotAvailable_ = isNotAvailable;
 }
 
+void Link::setIsForceStopped(bool isForcedStopped)
+{
+    isForcedStopped_ = isForcedStopped;
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -310,7 +317,7 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
-    if(ioDevice_ != nullptr && ioDevice_->isOpen()) {
+    if(ioDevice_ && ioDevice_->isOpen()) {
         return true;
     }
     return false;
@@ -371,6 +378,11 @@ bool Link::getIsNotAvailable() const
     return isNotAvailable_;
 }
 
+bool Link::getIsForceStopped() const
+{
+    return isForcedStopped_;
+}
+
 bool Link::writeFrame(FrameParser frame) {
     return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
@@ -410,10 +422,10 @@ void Link::deleteDev()
         this->disconnect(ioDevice_);
         //setLinkType(LinkNone);
         delete ioDevice_;
-        ioDevice_ = nullptr;
     }
 
     qDebug() << "link deleted dev: " << getUuid();
+    ioDevice_ = nullptr;
 
 }
 

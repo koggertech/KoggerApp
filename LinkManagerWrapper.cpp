@@ -21,6 +21,8 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsTcp,           workerObject_.get(), &LinkManager::createAsTcp,                  Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsTcp,             workerObject_.get(), &LinkManager::openAsTcp,                    Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendCloseLink,             workerObject_.get(), &LinkManager::closeLink,                    Qt::QueuedConnection);
+    QObject::connect(this,                &LinkManagerWrapper::sendFCloseLink,             workerObject_.get(), &LinkManager::closeFLink,                    Qt::BlockingQueuedConnection);
+    QObject::connect(this,                &LinkManagerWrapper::sendOpenFLinks,             workerObject_.get(), &LinkManager::openFLinks,                    Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendDeleteLink,            workerObject_.get(), &LinkManager::deleteLink,                   Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateBaudrate,        workerObject_.get(), &LinkManager::updateBaudrate,               Qt::QueuedConnection);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateAddress,         workerObject_.get(), &LinkManager::updateAddress,                Qt::QueuedConnection);
@@ -60,6 +62,18 @@ LinkListModel* LinkManagerWrapper::getModelPtr()
 LinkManager* LinkManagerWrapper::getWorker()
 {
     return workerObject_.get();
+}
+
+void LinkManagerWrapper::closeOpenedLinks()
+{
+    for (auto& itm : model_.getOpenedUuids()) {
+        emit sendFCloseLink(itm.first);
+    }
+}
+
+void LinkManagerWrapper::openClosedLinks()
+{
+    emit sendOpenFLinks();
 }
 
 void LinkManagerWrapper::openAsSerial(QUuid uuid)

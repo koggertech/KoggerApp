@@ -35,6 +35,8 @@ public:
     int getSize() const;
     void clear();
 
+    QList<QPair<QUuid, ::LinkType>> getOpenedUuids() const;
+
 private:
     Q_DISABLE_COPY(LinkListModel)
 

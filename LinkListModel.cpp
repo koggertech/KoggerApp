@@ -41,6 +41,20 @@ void LinkListModel::clear()
     endResetModel();
 }
 
+QList<QPair<QUuid, LinkType>> LinkListModel::getOpenedUuids() const
+{
+    QList<QPair<QUuid, ::LinkType>> retVal;
+
+    for (auto& itm : index_.keys()) {
+        int line = index_[itm];
+        if (vectors_[LinkListModel::ConnectionStatus][line].toBool()) {
+            retVal.append(qMakePair(itm, static_cast<::LinkType>(vectors_[LinkListModel::LinkType][line].toInt())));
+        }
+    }
+
+    return retVal;
+}
+
 int LinkListModel::getSize() const
 {
     return size_;
