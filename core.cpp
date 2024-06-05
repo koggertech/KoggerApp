@@ -270,7 +270,7 @@ bool Core::closeConnectionAsFile()
 
     if (m_scene3dView) {
         m_scene3dView->clear();
-        m_scene3dView->setNavigationArrowState(false);
+        m_scene3dView->setNavigationArrowState(true);
     }
 
     openedfilePath_.clear();

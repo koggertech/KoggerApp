@@ -22,7 +22,7 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_planeGrid(std::make_shared<PlaneGrid>())
 , m_boatTrack(std::make_shared<SceneObject>())
 , m_navigationArrow(std::make_shared<NavigationArrow>())
-, navigationArrowState_(false)
+, navigationArrowState_(true)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
