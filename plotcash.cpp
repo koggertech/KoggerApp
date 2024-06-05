@@ -390,7 +390,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
         last_epoch->setPositionLLA(pos);
         last_epoch->setPositionRef(&_llaRef);
-        _lastPositionGNSS = pos;
+        _lastPositionGNSS = last_epoch->getPositionGNSS();
     }
 
     emit dataUpdate();
