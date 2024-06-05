@@ -182,6 +182,8 @@ bool Core::openConnectionAsSerial(const int id, bool autoconn, const QString &na
     Q_UNUSED(id);
     Q_UNUSED(autoconn);
     Q_UNUSED(mode);
+    Q_UNUSED(name);
+    Q_UNUSED(baudrate);
 
     devsConnection();
 
@@ -283,6 +285,9 @@ bool Core::closeConnectionAsFile()
 bool Core::openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp) {
     Q_UNUSED(id);
     Q_UNUSED(autoconn);
+    Q_UNUSED(address);
+    Q_UNUSED(port);
+    Q_UNUSED(is_tcp);
 
     if (m_scene3dView)
         m_scene3dView->setNavigationArrowState(true);
@@ -907,6 +912,7 @@ void Core::UILoad(QObject *object, const QUrl &url) {
 
 void Core::startFileReader(const QString& filePath)
 {
+    Q_UNUSED(filePath);
     /*
     qDebug() << "Core::startFileReader: th_id: " << QThread::currentThreadId();
 
