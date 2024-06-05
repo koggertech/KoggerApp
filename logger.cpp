@@ -78,5 +78,11 @@ bool Logger::endExportStream() {
 
 void Logger::onFrameParserReceive(QUuid uuid, Link* linkPtr, FrameParser frame)
 {
+    Q_UNUSED(uuid);
+    Q_UNUSED(linkPtr);
+
+    if (frame.nested() > 0)
+        return;
+
     loggingStream(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
