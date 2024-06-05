@@ -269,7 +269,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 || frame.isCompleteAsUBX()
                 || frame.isCompleteAsMAVLink())
             {
-                if (frame.nested() == 0) {
+                if (!frame.isNested()) {
                     deleteDevicesByLink(uuid);
                 }
             }

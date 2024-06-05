@@ -293,8 +293,8 @@ public:
         _savedContextLen = 0;
     }
 
-    int nested() {
-        return _nested;
+    bool isNested() {
+        return _savedContextData != NULL;
     }
 
     void setProxyContext(uint8_t* data, uint32_t len) {
@@ -302,17 +302,15 @@ public:
         _savedContextLen = _contextLen - 1;
         _contextData = data;
         _contextLen = len;
-
-        _nested++;
     }
 
 
     int32_t availContext() {
-        if(_contextLen == 0 && _savedContextLen != 0) {
+        if(_contextLen == 0 && _savedContextData != NULL) {
             _contextData = _savedContextData;
             _contextLen = _savedContextLen;
             _savedContextLen = 0;
-            _nested--;
+            _savedContextData = NULL;
         }
         return _contextLen;
     }
