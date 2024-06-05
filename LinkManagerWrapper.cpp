@@ -105,6 +105,10 @@ void LinkManagerWrapper::closeLink(QUuid uuid)
 {
     emit sendCloseLink(uuid);
 }
+void LinkManagerWrapper::closeFLink(QUuid uuid)
+{
+    emit sendFCloseLink(uuid);
+}
 
 void LinkManagerWrapper::deleteLink(QUuid uuid)
 {
