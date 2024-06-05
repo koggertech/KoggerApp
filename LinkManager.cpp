@@ -232,8 +232,17 @@ void LinkManager::importPinnedLinksFromXML()
     qDebug() << "LinkManager::importPinnedLinksFromXML";
     QString filePath{"pinned_links.xml"};
     QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+
+    auto createAndStartTimerFunc = [this]() {
+        qDebug() << "LinkManager::importPinnedLinksFromXML: start update timer";
+        createTimer();
+        timer_->start();
+    };
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        createAndStartTimerFunc();
         return;
+    }
 
     QXmlStreamReader xmlReader(&file);
 
@@ -317,9 +326,7 @@ void LinkManager::importPinnedLinksFromXML()
         qDebug() << "XML error:" << xmlReader.errorString();
     file.close();
 
-    qDebug() << "LinkManager::importPinnedLinksFromXML: start update timer";    
-    createTimer();
-    timer_->start();
+    createAndStartTimerFunc();
 }
 
 void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
