@@ -1,22 +1,19 @@
-#ifndef CORE_H
-#define CORE_H
+#pragma once
 
 #include <QObject>
-#include <console.h>
-#include <DevQProperty.h>
 #include <QUrl>
 #include <QQmlApplicationEngine>
 #include <QStandardItemModel>
 #include <QQmlContext>
-#include <waterfall.h>
-#include <logger.h>
 #include <QThread>
-#include <3Plot.h>
-#include <Plot2D.h>
 
-#include "XTFConf.h"
+#ifdef FLASHER
+#include "flasher.h"
+#endif
+#include "waterfall.h"
+#include "logger.h"
+#include "console.h"
 #include "ConverterXTF.h"
-
 #include <graphicsscene3dview.h>
 #include <bottomtrackcontrolmenucontroller.h>
 #include <surfacecontrolmenucontroller.h>
@@ -26,21 +23,17 @@
 #include <npdfiltercontrolmenucontroller.h>
 #include <scene3dtoolbarcontroller.h>
 #include <scene3dcontrolmenucontroller.h>
-
 #include <DeviceManagerWrapper.h>
 #include <LinkManagerWrapper.h>
 #include <FileReader.h>
 
-#ifdef FLASHER
-#include "flasher.h"
-#endif
 
 class Core : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Core();
+    Core();
     ~Core();
 
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
@@ -48,139 +41,101 @@ public:
     Q_PROPERTY(bool logging WRITE setLogging)
     Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged)
 
-    ConsoleListModel* consoleList() {
-        return m_console->listModel();
-    }
-
-    Console *console() {
-        return m_console;
-    }
-
-    Dataset* dataset() {
-        return _dataset;
-    }
-
-    void consoleInfo(QString msg) {
-        console()->put(QtMsgType::QtInfoMsg, msg);
-    }
-
-    void consoleWarning(QString msg) {
-        console()->put(QtMsgType::QtWarningMsg, msg);
-    }
-
-    void consoleProto(FrameParser &parser, bool is_in = true);
-
     void setEngine(QQmlApplicationEngine *engine);
-
-    DeviceManagerWrapper* getDeviceManagerWrapper() const;
+    Console* getConsolePtr();
+    Dataset* getDatasetPtr();
+    DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     void stopLinkManagerTimer() const;
-
-public slots:
-    bool openConnectionAsSerial(const int id, bool autoconn, const QString &name, int baudrate, bool mode);
-    bool openConnectionAsIP(const int id, bool autoconn, const QString &address, const int port, bool is_tcp);
-
-
-    bool openConnectionAsFile(const int id, const QString &name, bool is_append = false);
-    bool closeConnectionAsFile();
-
-
-    bool openXTF(QByteArray data);
-    bool openCSV(QString name, int separator_type, int row = -1, int col_time = -1, bool is_utc_time = true, int col_lat = -1, int col_lon = -1, int col_north = -1, int col_east = -1, int altitude = -1, int distance = -1);
-    bool devsConnection();
-
-
-    bool openProxy(const QString &address, const int port, bool is_tcp);
-    bool closeProxy();
-
-    bool upgradeFW(const QString &name, QObject* dev);
-    void upgradeChanged(int progress_status);
-
-    void setLogging(bool is_logging);
-    bool isLogging();
-
-
-    bool exportComplexToCSV(QString file_path);
-    bool exportUSBLToCSV(QString file_path);
-    bool exportPlotAsCVS(QString file_path, int channel, float decimation = 0);
-    bool exportPlotAsXTF(QString file_path);
-
-
+    void consoleInfo(QString msg);
+    void consoleWarning(QString msg);
+    void consoleProto(FrameParser& parser, bool isIn = true);
 #ifdef FLASHER
-    bool simpleFlash(const QString &name);
-    bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
+    void getFlasherPtr() const;
 #endif
 
-    void setPlotStartLevel(int level) {
-        for(int i = 0; i < _plots2d.size(); i++) {
-            if(_plots2d.at(i) != NULL) {
-                _plots2d.at(i)->setEchogramLowLevel(level);
-            }
-        }
-    }
-
-    void setPlotStopLevel(int level) {
-        for(int i = 0; i < _plots2d.size(); i++) {
-            if(_plots2d.at(i) != NULL) {
-                _plots2d.at(i)->setEchogramHightLevel(level);
-            }
-        }
-    }
-
-    void setTimelinePosition(double position) {
-        for(int i = 0; i < _plots2d.size(); i++) {
-            if(_plots2d.at(i) != NULL) {
-                _plots2d.at(i)->setTimelinePosition(position);
-            }
-        }
-    }
-    void UILoad(QObject *object, const QUrl &url);
-
+public slots:
+    bool openLogFile(const QString& name, bool isAppend = false);
+    bool closeLogFile();
+    bool openXTF(QByteArray data);    
+    bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
+    bool openProxy(const QString& address, const int port, bool isTcp);
+    bool closeProxy();
+    bool upgradeFW(const QString& name, QObject* dev);
+    void upgradeChanged(int progressStatus);
+    void setLogging(bool isLogging);
+    bool getIsLogging();
+    bool exportComplexToCSV(QString filePath);
+    bool exportUSBLToCSV(QString filePath);
+    bool exportPlotAsCVS(QString filePath, int channel, float decimation = 0);
+    bool exportPlotAsXTF(QString filePath);
+    void setPlotStartLevel(int level);
+    void setPlotStopLevel(int level);
+    void setTimelinePosition(double position);
+    void UILoad(QObject* object, const QUrl& url);
     // fileReader
     void startFileReader(const QString& filePath);
     void stopFileReader();
     void receiveFileReaderProgress(int progress);
     int getFileReaderProgress();
+#ifdef FLASHER
+    bool simpleFlash(const QString &name);
+    bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
+#endif
 
 signals:
     void connectionChanged(bool duplex = false);
-
     // fileReader
-    //void sendStartFileReader(const QString& filePath);
     void sendStopFileReader();
     void fileReaderProgressChanged();
 
-public:
-    Console *m_console;
-    Dataset* _dataset;
-    QList<qPlot2D*> _plots2d;
-
-    FboInSGRenderer* _render = NULL;
-    GraphicsScene3dView* m_scene3dView = nullptr;
-
-
-    Logger _logger;
-    ConverterXTF _converterXTF;
-    QThread connectionThread;
-    QQmlApplicationEngine *m_engine = nullptr;
-
-#ifdef FLASHER
-    Flasher flasher;
-#endif
-
 private slots:
-    void closing();
 #ifdef FLASHER
     void updateDeviceID(QByteArray uid);
     void flasherConnectionChanged(Flasher::BootState connection_status);
     bool reconnectForFlash();
 #endif
 
-protected:
+private:
+    /*methods*/
+    ConsoleListModel* consoleList();
+    void createControllers();
+    void createDeviceManagerConnections();
+    void createLinkManagerConnections();
+    void removeLinkManagerConnections();
+    bool isOpenedFile() const;
+    bool isFactoryMode() const;
+
+    /*data*/
+    std::shared_ptr<BottomTrackControlMenuController> bottomTrackControlMenuController_;
+    std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
+    std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;
+    std::shared_ptr<SurfaceControlMenuController> surfaceControlMenuController_;
+    std::shared_ptr<PointGroupControlMenuController> pointGroupControlMenuController_;
+    std::shared_ptr<PolygonGroupControlMenuController> polygonGroupControlMenuController_;
+    std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
+    std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
+    std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
+    std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
+    QQmlApplicationEngine* qmlAppEnginePtr_ = nullptr;
+    Dataset* datasetPtr_;
+    Console* consolePtr_;
+    GraphicsScene3dView* scene3dViewPtr_ = nullptr;
+    ConverterXTF converterXtf_;
+    Logger logger_;
+    QList<qPlot2D*> plot2dList_;
+    QList<QMetaObject::Connection> linkManagerWrapperConnections_;
+    QString openedfilePath_;
+    bool isLogging_;
+    // fileReader
+    std::unique_ptr<FileReader> fileReader_;
+    std::unique_ptr<QThread> fileReaderThread_;
+    QList<QMetaObject::Connection> fileReaderConnections_;
+    int fileReaderProgress_ = 0;
 #ifdef FLASHER
+    Flasher flasher;
     QByteArray boot_data;
     QByteArray fw_data;
-
     QTcpSocket *_socket = new QTcpSocket();
     bool getFW(void* uid);
     QString _pn;
@@ -190,59 +145,6 @@ protected:
         FactoryProduct,
         FactorySimple
     } _factoryState = FactoryIdle;
-
     QByteArray _flashUID;
 #endif
-
-    bool _isLogging;
-
-    int backupBaudrate = 115200;
-    void restoreBaudrate();
-    void setUpgradeBaudrate();
-
-private:
-    void createControllers();
-    void createLinkManagerConnections();
-    void removeLinkManagerConnections();
-
-private:
-    // deviceManager
-    std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapper_;
-
-    // linkManager
-    std::unique_ptr<LinkManagerWrapper> linkManagerWrapper_;
-    QList<QMetaObject::Connection> linkManagerWrapperConnections_;
-
-    // fileReader
-    std::unique_ptr<FileReader> fileReader_;
-    std::unique_ptr<QThread> fileReaderThread_;
-    QList<QMetaObject::Connection> fileReaderConnections_;
-    int fileReaderProgress_ = 0;
-
-    // View controllers
-    std::shared_ptr <BottomTrackControlMenuController>  m_bottomTrackControlMenuController;
-    std::shared_ptr <MpcFilterControlMenuController>    m_mpcFilterControlMenuController;
-    std::shared_ptr <NpdFilterControlMenuController>    m_npdFilterControlMenuController;
-    std::shared_ptr <SurfaceControlMenuController>      m_surfaceControlMenuController;
-    std::shared_ptr <PointGroupControlMenuController>   m_pointGroupControlMenuController;
-    std::shared_ptr <PolygonGroupControlMenuController> m_polygonGroupControlMenuController;
-    std::shared_ptr <Scene3DControlMenuController>      m_scene3dControlMenuController;
-    std::shared_ptr <Scene3dToolBarController>          m_scene3dToolBarController;
-
-
-    QString openedfilePath_;
-
-    bool isOpenedFile() const;
-
-
-    bool isFactoryMode() {
-#ifdef FLASHER
-        return true;
-#else
-        return false;
-#endif
-    }
-
 };
-
-#endif // CORE_H

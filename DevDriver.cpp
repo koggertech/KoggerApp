@@ -798,7 +798,7 @@ void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
-    core.dataset()->addTemp(idTemp->temp());
+    core.getDatasetPtr()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {

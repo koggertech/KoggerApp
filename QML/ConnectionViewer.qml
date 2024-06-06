@@ -370,15 +370,15 @@ ColumnLayout {
                             else {
                                 switch(LinkType) {
                                 case 1:
-                                    core.closeConnectionAsFile();
+                                    core.closeLogFile();
                                     linkManagerWrapper.openAsSerial(Uuid)
                                     break
                                 case 2:
-                                    core.closeConnectionAsFile();
+                                    core.closeLogFile();
                                     linkManagerWrapper.openAsUdp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
                                     break
                                 case 3:
-                                    core.closeConnectionAsFile();
+                                    core.closeLogFile();
                                     linkManagerWrapper.openAsTcp(Uuid)
                                     break
                                 default:
@@ -522,7 +522,7 @@ ColumnLayout {
 
             Keys.onPressed: {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    core.openConnectionAsFile(1, pathText.text, false);
+                    core.openLogFile(pathText.text, false);
                 }
             }
 
@@ -553,7 +553,7 @@ ColumnLayout {
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
-                    core.openConnectionAsFile(1, pathText.text, false);
+                    core.openLogFile(pathText.text, false);
                 }
                 onRejected: {
                 }
@@ -587,7 +587,7 @@ ColumnLayout {
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 
                     //deviceManagerWrapper.sendOpenFile(pathText.text, true)
-                    core.openConnectionAsFile(1, pathText.text, true);
+                    core.openLogFile(pathText.text, true);
                 }
                 onRejected: {
                 }
@@ -605,7 +605,7 @@ ColumnLayout {
             borderWidth: 0
 
             onClicked: {
-                core.closeConnectionAsFile();
+                core.closeLogFile();
             }
         }
     }

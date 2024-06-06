@@ -77,17 +77,17 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
 
-    engine.rootContext()->setContextProperty("dataset", core.dataset());
+    engine.rootContext()->setContextProperty("dataset", core.getDatasetPtr());
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
-    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapper());
+    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
 
 #ifdef FLASHER
-    engine.rootContext()->setContextProperty("flasher", &core.flasher);
+    engine.rootContext()->setContextProperty("flasher", &core.getFlasherPtr);
 #endif
 
-    engine.rootContext()->setContextProperty("logViewer", core.console());
+    engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);
