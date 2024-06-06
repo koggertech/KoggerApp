@@ -63,6 +63,9 @@ int LinkListModel::getSize() const
 void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                              ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
 {
+    if (isHided)
+        return;
+
     if (!index_.contains(uuid)) {
         const int line = rowCount();
         beginInsertRows(QModelIndex(), line, line);

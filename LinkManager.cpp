@@ -600,7 +600,7 @@ void LinkManager::createAndOpenAsUdpProxy(QString address, int sourcePort, int d
     newLinkPtr->createAsUdp(address, sourcePort, destinationPort);
 
     newLinkPtr->setIsProxy(true);
-    //newLinkPtr->setIsHided(true); TODO
+    newLinkPtr->setIsHided(true);
 
     proxyLinkUuid_ = newLinkPtr->getUuid();
 
@@ -608,7 +608,6 @@ void LinkManager::createAndOpenAsUdpProxy(QString address, int sourcePort, int d
 
     newLinkPtr->openAsUdp();
 
-    doEmitAppendModifyModel(newLinkPtr);
 
     qDebug() << "LinkManager::createAndOpenAsUdpProxy end: uuid:" << proxyLinkUuid_.toString() << ", address: " << address << ", srcPort: " << sourcePort << ", dstPort: " << destinationPort;
 }
