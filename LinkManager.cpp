@@ -591,6 +591,41 @@ void LinkManager::openFLinks()
     }
 }
 
+void LinkManager::createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort)
+{
+
+    TimerController(timer_.get());
+
+    Link* newLinkPtr = createNewLink();
+
+    newLinkPtr->createAsUdp(address, sourcePort, destinationPort);
+
+    newLinkPtr->setIsProxy(true);
+    //newLinkPtr->setIsHided(true); TODO
+
+    proxyLinkUuid_ = newLinkPtr->getUuid();
+
+    list_.append(newLinkPtr);
+
+    newLinkPtr->openAsUdp();
+
+    doEmitAppendModifyModel(newLinkPtr);
+
+    qDebug() << "LinkManager::createAndOpenAsUdpProxy end: uuid:" << proxyLinkUuid_.toString() << ", address: " << address << ", srcPort: " << sourcePort << ", dstPort: " << destinationPort;
+}
+
+void LinkManager::closeUdpProxy()
+{
+    qDebug() << "LinkManager::closeUdpProxy start: uuid:" << proxyLinkUuid_.toString();
+
+    if (proxyLinkUuid_ == QUuid())
+        return;
+
+    deleteLink(proxyLinkUuid_);
+    proxyLinkUuid_ = QUuid();
+
+}
+
 LinkManager::TimerController::TimerController(QTimer *timer) : timer_(timer) {
     if (timer_) {
         timer->stop();

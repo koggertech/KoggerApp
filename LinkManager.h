@@ -50,6 +50,8 @@ public slots:
     void createAsTcp(QString address, int sourcePort, int destinationPort);
     void importPinnedLinksFromXML();
     void openFLinks();
+    void createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);
+    void closeUdpProxy();
 
 private:
     /*structures*/
@@ -73,6 +75,7 @@ private:
     void exportPinnedLinksToXML();
     Link* createNewLink() const;
     void printLinkDebugInfo(Link* link) const;
+    QUuid proxyLinkUuid_;
 
     /*data*/
     QList<Link*> list_;

@@ -24,11 +24,12 @@ Link::Link() :
     isPinned_(false),
     isHided_(false),
     isNotAvailable_(false),
+    isProxy_(false),
     isForcedStopped_(false)
 {
     _frame.resetComplete();
 }
-
+/*
 Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName,
            int baudrate, bool parity, QString address, int sourcePort, int destinationPort,
            bool isPinned, bool isHided, bool isNotAvailable) :
@@ -48,7 +49,7 @@ Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString 
 {
 
 }
-
+*/
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
     qDebug() << "Link::createAsSerial, uuid:" << getUuid().toString();
@@ -305,6 +306,11 @@ void Link::setIsNotAvailable(bool isNotAvailable)
     isNotAvailable_ = isNotAvailable;
 }
 
+void Link::setIsProxy(bool isProxy)
+{
+    isProxy_ = isProxy;
+}
+
 void Link::setIsForceStopped(bool isForcedStopped)
 {
     isForcedStopped_ = isForcedStopped;
@@ -376,6 +382,11 @@ bool Link::getIsHided() const
 bool Link::getIsNotAvailable() const
 {
     return isNotAvailable_;
+}
+
+bool Link::getIsProxy() const
+{
+    return isProxy_;
 }
 
 bool Link::getIsForceStopped() const

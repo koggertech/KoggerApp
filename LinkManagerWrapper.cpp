@@ -10,27 +10,28 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     workerObject_ = std::make_unique<LinkManager>(nullptr);
 
     workerObject_->moveToThread(workerThread_.get());
-
-    QObject::connect(workerThread_.get(), &QThread::started,                              workerObject_.get(), &LinkManager::importPinnedLinksFromXML,     Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,             workerObject_.get(), &LinkManager::stopTimer,                    Qt::QueuedConnection);
-    QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                this,                &LinkManagerWrapper::appendModifyModelData, Qt::QueuedConnection);
-    QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                      this,                &LinkManagerWrapper::deleteModelData,       Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,          workerObject_.get(), &LinkManager::openAsSerial,                 Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendCreateAsUdp,           workerObject_.get(), &LinkManager::createAsUdp,                  Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsUdp,             workerObject_.get(), &LinkManager::openAsUdp,                    Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendCreateAsTcp,           workerObject_.get(), &LinkManager::createAsTcp,                  Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsTcp,             workerObject_.get(), &LinkManager::openAsTcp,                    Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendCloseLink,             workerObject_.get(), &LinkManager::closeLink,                    Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendFCloseLink,             workerObject_.get(), &LinkManager::closeFLink,                    Qt::BlockingQueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendOpenFLinks,             workerObject_.get(), &LinkManager::openFLinks,                    Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendDeleteLink,            workerObject_.get(), &LinkManager::deleteLink,                   Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendUpdateBaudrate,        workerObject_.get(), &LinkManager::updateBaudrate,               Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendUpdateAddress,         workerObject_.get(), &LinkManager::updateAddress,                Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,      workerObject_.get(), &LinkManager::updateSourcePort,             Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort, workerObject_.get(), &LinkManager::updateDestinationPort,        Qt::QueuedConnection);
-    QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,     workerObject_.get(), &LinkManager::updatePinnedState,            Qt::QueuedConnection);
-
-    QObject::connect(this,                &LinkManagerWrapper::sendUpdateControlType,     this,                 [this](QUuid uuid, int controlType) {
+    auto connectionType = Qt::QueuedConnection;
+    QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::importPinnedLinksFromXML,     connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,               workerObject_.get(), &LinkManager::stopTimer,                    connectionType);
+    QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                  this,                &LinkManagerWrapper::appendModifyModelData, connectionType);
+    QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                        this,                &LinkManagerWrapper::deleteModelData,       connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsSerial,            workerObject_.get(), &LinkManager::openAsSerial,                 connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendCreateAsUdp,             workerObject_.get(), &LinkManager::createAsUdp,                  connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsUdp,               workerObject_.get(), &LinkManager::openAsUdp,                    connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendCreateAsTcp,             workerObject_.get(), &LinkManager::createAsTcp,                  connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendOpenAsTcp,               workerObject_.get(), &LinkManager::openAsTcp,                    connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendCloseLink,               workerObject_.get(), &LinkManager::closeLink,                    connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendFCloseLink,              workerObject_.get(), &LinkManager::closeFLink,                   Qt::BlockingQueuedConnection);
+    QObject::connect(this,                &LinkManagerWrapper::sendOpenFLinks,              workerObject_.get(), &LinkManager::openFLinks,                   connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendDeleteLink,              workerObject_.get(), &LinkManager::deleteLink,                   connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateBaudrate,          workerObject_.get(), &LinkManager::updateBaudrate,               connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateAddress,           workerObject_.get(), &LinkManager::updateAddress,                connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,        workerObject_.get(), &LinkManager::updateSourcePort,             connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort,   workerObject_.get(), &LinkManager::updateDestinationPort,        connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,       workerObject_.get(), &LinkManager::updatePinnedState,            connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendCreateAndOpenAsUdpProxy, workerObject_.get(), &LinkManager::createAndOpenAsUdpProxy,      connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendCloseUdpProxy,           workerObject_.get(), &LinkManager::closeUdpProxy,                connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendUpdateControlType,       this,                [this](QUuid uuid, int controlType) {
         QMetaObject::invokeMethod(workerObject_.get(), [this, uuid, controlType]() {
                 switch (controlType) {
                     case 0: workerObject_->updateControlType(uuid, ControlType::kManual);   break;
@@ -38,7 +39,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
                     case 2: workerObject_->updateControlType(uuid, ControlType::kAutoOnce); break;
                     default: break;
                 }
-            }, Qt::QueuedConnection);
+        }, Qt::QueuedConnection);
     });
 
     workerThread_->start();

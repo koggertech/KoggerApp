@@ -51,6 +51,8 @@ signals:
     void sendUpdateControlType(QUuid uuid, int controlType);
     void sendStopTimer();
     void sendOpenFLinks();
+    void sendCreateAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);
+    void sendCloseUdpProxy();
 
 public slots:
     void openAsSerial(QUuid uuid);

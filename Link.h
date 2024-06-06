@@ -28,7 +28,7 @@ using namespace Parsers;
 typedef enum {
     LinkNone,
     LinkSerial,
-    LinkIPUDP,
+    LinkIPUDP, // also is proxy
     LinkIPTCP,
 } LinkType;
 
@@ -42,8 +42,8 @@ class Link : public QObject {
     Q_OBJECT
 public:
     Link();
-    Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName, int baudrate, bool parity, QString address,
-         int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    //Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName, int baudrate, bool parity, QString address,
+    //     int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
 
     void createAsSerial(const QString& portName, int baudrate, bool parity);
     void openAsSerial();
@@ -78,7 +78,7 @@ public:
     void setIsPinned(bool isPinned);
     void setIsHided(bool isHided);
     void setIsNotAvailable(bool isNotAvailable);
-
+    void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
 
     QUuid       getUuid() const;
@@ -94,7 +94,7 @@ public:
     bool        getIsPinned() const;
     bool        getIsHided() const;
     bool        getIsNotAvailable() const;
-
+    bool        getIsProxy() const;
     bool        getIsForceStopped() const;
 
 public slots:
@@ -131,6 +131,7 @@ private:
     bool isPinned_;
     bool isHided_;
     bool isNotAvailable_;
+    bool isProxy_;
 
     bool isForcedStopped_;
 
