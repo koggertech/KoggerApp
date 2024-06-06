@@ -50,8 +50,8 @@ public slots:
     // proxy
     void openProxyLink(const QString &address, const int port_in,  const int port_out);
     void openProxyNavLink(const QString &address, const int port_in,  const int port_out);
-    bool isProxyOpen() { return proxyLink.isOpen(); }
-    bool isProxyNavOpen() { return proxyNavLink.isOpen(); }
+    // bool isProxyOpen() { return proxyLink.isOpen(); }
+    // bool isProxyNavOpen() { return proxyNavLink.isOpen(); }
     void closeProxyLink();
     void closeProxyNavLink();
 
@@ -78,10 +78,8 @@ signals:
     void devChanged();
     void streamChanged();
     void vruChanged();
-    void writeProxyFrame(FrameParser *frame);
-    void writeProxy(QByteArray data);
-    void writeProxyNavFrame(FrameParser *frame);
-    void writeProxyNav(QByteArray data);
+    void writeProxyFrame(FrameParser frame);
+    void writeMavlinkFrame(FrameParser frame);
 
 
     void eventComplete(int timestamp, int id, int unixt);
@@ -120,8 +118,8 @@ private:
 
 
     // proxy
-    Link proxyLink;
-    Link proxyNavLink;
-
+    QUuid proxyLinkUuid_;
+    QUuid mavlinUuid_;
+    Link* mavlinkLink_ = nullptr;
 
 }; // class DeviceWrapper

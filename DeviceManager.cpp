@@ -227,47 +227,64 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             }
         }
 
-        if (frame.isCompleteAsMAVLink()) {
-            ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)frame;
 
-            if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
-                MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
-                if (pos.isValid()) {
-                    // core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
-                    emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
-                    // core.dataset()->addGnssVelocity(pos.velocityH(), 0);
-                    emit gnssVelocityComplete(pos.velocityH(), 0);
+        if(frame.isCompleteAsMAVLink()) {
+            if (proxyLinkUuid_ != uuid) {
+                emit writeProxyFrame(frame);
 
-                    vru_.velocityH = pos.velocityH();
+                if(link != nullptr) {
+                    mavlinUuid_ = uuid;
+                    if(mavlinkLink_ != nullptr) {
+                        disconnect(this, &DeviceManager::writeMavlinkFrame,  mavlinkLink_, &Link::writeFrame);
+                    }
+                    mavlinkLink_ = link;
+                    connect(this, &DeviceManager::writeMavlinkFrame, mavlinkLink_, &Link::writeFrame, Qt::UniqueConnection);
+                }
+
+
+                ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)frame;
+
+                if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
+                    MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                    if (pos.isValid()) {
+                        // core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                        emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                        // core.dataset()->addGnssVelocity(pos.velocityH(), 0);
+                        emit gnssVelocityComplete(pos.velocityH(), 0);
+
+                        vru_.velocityH = pos.velocityH();
+                        emit vruChanged();
+                    }
+                }
+
+                if (mavlink_frame.msgId() == 0) { // SYS_STATUS
+                    MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
+                    vru_.armState = (int)heartbeat.isArmed();
+                    int flight_mode = (int)heartbeat.customMode();
+                    if (flight_mode != vru_.flight_mode) {
+                        core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
+                    }
+                    vru_.flight_mode = flight_mode;
                     emit vruChanged();
                 }
-            }
 
-            if (mavlink_frame.msgId() == 0) { // SYS_STATUS
-                MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
-                vru_.armState = (int)heartbeat.isArmed();
-                int flight_mode = (int)heartbeat.customMode();
-                if (flight_mode != vru_.flight_mode) {
-                    core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
-                }                
-                vru_.flight_mode = flight_mode;
-                emit vruChanged();
-            }
+                if (mavlink_frame.msgId() == 147) { // BATTERY_STATUS
+                    MAVLink_MSG_BATTERY_STATUS battery_status = mavlink_frame.read<MAVLink_MSG_BATTERY_STATUS>();
+                    vru_.voltage = battery_status.voltage();
+                    vru_.current = battery_status.current();
+                    emit vruChanged();
+                }
 
-            if (mavlink_frame.msgId() == 147) { // BATTERY_STATUS
-                MAVLink_MSG_BATTERY_STATUS battery_status = mavlink_frame.read<MAVLink_MSG_BATTERY_STATUS>();
-                vru_.voltage = battery_status.voltage();
-                vru_.current = battery_status.current();
-                emit vruChanged();
-            }
+                if (mavlink_frame.msgId() == 30) {
+                    MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
+                    // core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+                    emit attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+                }
 
-            if (mavlink_frame.msgId() == 30) {
-                MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
-                // core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
-                emit attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+                core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+            } else {
+                emit writeMavlinkFrame(frame);
             }
-
-            core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
         }
 
         if (link != NULL) {
@@ -370,7 +387,12 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 
     qDebug() << "Device::onLinkOpened";
     if (link) {
-        getDevice(uuid, link, 0);
+        if(link->getIsProxy()) {
+            proxyLinkUuid_ = uuid;
+            connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
+        } else {
+            getDevice(uuid, link, 0);
+        }
     }
 }
 
@@ -381,6 +403,7 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     qDebug() << "DeviceManager::onLinkClosed";
     if (link) {
         deleteDevicesByLink(uuid);
+        this->disconnect(link);
         otherProtocolStat.remove(uuid);
     }
 }
@@ -392,6 +415,7 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
     qDebug() << "DeviceManager::onLinkDeleted";
     if (link) {
         deleteDevicesByLink(uuid);
+        this->disconnect(link);
         otherProtocolStat.remove(uuid);
     }
 }
@@ -426,43 +450,43 @@ void DeviceManager::upgradeLastDev(QByteArray data)
 }
 
 void DeviceManager::openProxyLink(const QString &address, const int port_in, const int port_out) {
-    closeProxyLink();
-    connect(&proxyLink, &Link::readyParse, this, &DeviceManager::readyReadProxy);
-    connect(this, &DeviceManager::writeProxy, &proxyLink, &Link::write);
-    proxyLink.openAsUDP(address, port_in, port_out);
-    if(proxyLink.isOpen()) {
-        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port is open");
-    } else {
-        this->disconnect(&proxyLink);
-        proxyLink.disconnect(this);
-        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port isn't open");
-    }
+    // closeProxyLink();
+    // connect(&proxyLink, &Link::readyParse, this, &DeviceManager::readyReadProxy);
+    // connect(this, &DeviceManager::writeProxy, &proxyLink, &Link::write);
+    // proxyLink.openAsUDP(address, port_in, port_out);
+    // if(proxyLink.isOpen()) {
+    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port is open");
+    // } else {
+    //     this->disconnect(&proxyLink);
+    //     proxyLink.disconnect(this);
+    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port isn't open");
+    // }
 }
 
 void DeviceManager::openProxyNavLink(const QString &address, const int port_in, const int port_out) {
-    closeProxyNavLink();
-    connect(&proxyNavLink, &Link::readyParse, this, &DeviceManager::readyReadProxyNav);
-    connect(this, &DeviceManager::writeProxyNav, &proxyNavLink, &Link::write);
-    proxyNavLink.openAsUDP(address, port_in, port_out);
-    if(proxyNavLink.isOpen()) {
-        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port is open");
-    } else {
-        this->disconnect(&proxyNavLink);
-        proxyNavLink.disconnect(this);
-        core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port isn't open");
-    }
+    // closeProxyNavLink();
+    // connect(&proxyNavLink, &Link::readyParse, this, &DeviceManager::readyReadProxyNav);
+    // connect(this, &DeviceManager::writeProxyNav, &proxyNavLink, &Link::write);
+    // proxyNavLink.openAsUDP(address, port_in, port_out);
+    // if(proxyNavLink.isOpen()) {
+    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port is open");
+    // } else {
+    //     this->disconnect(&proxyNavLink);
+    //     proxyNavLink.disconnect(this);
+    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port isn't open");
+    // }
 }
 
 void DeviceManager::closeProxyLink() {
-    proxyLink.close();
-    this->disconnect(&proxyLink);
-    proxyLink.disconnect(this);
+    // proxyLink.close();
+    // this->disconnect(&proxyLink);
+    // proxyLink.disconnect(this);
 }
 
 void DeviceManager::closeProxyNavLink() {
-    proxyNavLink.close();
-    this->disconnect(&proxyNavLink);
-    proxyNavLink.disconnect(this);
+    // proxyNavLink.close();
+    // this->disconnect(&proxyNavLink);
+    // proxyNavLink.disconnect(this);
 }
 
 StreamListModel* DeviceManager::streamsList()
