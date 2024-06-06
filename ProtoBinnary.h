@@ -138,10 +138,11 @@ public:
         resetState();
     }
 
-
-
     void process() {
         _proto = ProtoNone;
+        if(_proxyState == ProxyWrapper) {
+            _proxyState = ProxyContent;
+        }
         while (availContextPrivate() > 0) {
             uint8_t b = *_contextData;
 
@@ -286,6 +287,8 @@ public:
     }
 
     void resetContext() {
+        _proxyState = ProxyNone;
+
         _contextData = NULL;
         _contextLen = 0;
 
@@ -294,7 +297,7 @@ public:
     }
 
     bool isNested() {
-        return _savedContextData != NULL;
+        return _proxyState == ProxyContent;
     }
 
     void setProxyContext(uint8_t* data, uint32_t len) {
@@ -302,6 +305,7 @@ public:
         _savedContextLen = _contextLen - 1;
         _contextData = data;
         _contextLen = len;
+        _proxyState = ProxyWrapper;
     }
 
 
@@ -311,6 +315,7 @@ public:
             _contextLen = _savedContextLen;
             _savedContextLen = 0;
             _savedContextData = NULL;
+            _proxyState = ProxyNone;
         }
         return _contextLen;
     }
@@ -461,7 +466,12 @@ protected:
     uint8_t* _savedContextData;
     int32_t _savedContextLen;
 
-    int32_t _nested = 0;
+    enum {
+        ProxyNone,
+        ProxyWrapper,
+        ProxyContent,
+        ProxyEnd
+    } _proxyState = ProxyNone;
 
     uint8_t _frame[1024];
     char* _frameChar;
