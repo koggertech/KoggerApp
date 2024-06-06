@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QHash>
+#include <memory>
+#include <QObject>
 #include <QList>
 #include <QThread>
+#include <QPair>
 #include <QUuid>
-
 #include "Link.h"
 #include "LinkManager.h"
 #include "LinkListModel.h"
@@ -22,16 +23,22 @@ public:
 
     LinkListModel* getModelPtr();
     LinkManager* getWorker();
-
-    void closeOpenedLinks(); //
+    void closeOpenedLinks();
     void openClosedLinks();
 
-private:
-    /*data*/
-    std::unique_ptr<QThread> workerThread_;
-    std::unique_ptr<LinkManager> workerObject_;
-    LinkListModel model_;
-    QList<QPair<QUuid, LinkType>> forceClosedLinks_;
+public slots:
+    void openAsSerial(QUuid uuid);
+    void createAsUdp(QString address, int sourcePort, int destinationPort);
+    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void createAsTcp(QString address, int sourcePort, int destinationPort);
+    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void closeLink(QUuid uuid);
+    void closeFLink(QUuid uuid);
+    void deleteLink(QUuid uuid);
+    void updateBaudrate(QUuid uuid, int baudrate);
+    void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
+                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void deleteModelData(QUuid uuid);
 
 signals:
     void modelChanged(); // Q_PROPERTY in .h
@@ -54,17 +61,10 @@ signals:
     void sendCreateAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);
     void sendCloseUdpProxy();
 
-public slots:
-    void openAsSerial(QUuid uuid);
-    void createAsUdp(QString address, int sourcePort, int destinationPort);
-    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
-    void createAsTcp(QString address, int sourcePort, int destinationPort);
-    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
-    void closeLink(QUuid uuid);
-    void closeFLink(QUuid uuid);
-    void deleteLink(QUuid uuid);
-    void updateBaudrate(QUuid uuid, int baudrate);
-    void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
-    void deleteModelData(QUuid uuid);
+private:
+    /*data*/
+    std::unique_ptr<QThread> workerThread_;
+    std::unique_ptr<LinkManager> workerObject_;
+    LinkListModel model_;
+    QList<QPair<QUuid, LinkType>> forceClosedLinks_;
 };

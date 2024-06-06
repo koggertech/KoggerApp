@@ -1,11 +1,11 @@
 #pragma once
 
 #include <memory>
-
 #include <QObject>
-#include <QTimer>
-#include <QList>
+#include <QString>
 #include <QUuid>
+#include <QList>
+#include <QTimer>
 #if defined(Q_OS_ANDROID)
 #include "qtandroidserialport/src/qserialport.h"
 #include "qtandroidserialport/src/qserialportinfo.h"
@@ -13,26 +13,16 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #endif
-
 #include "Link.h"
+#include "ProtoBinnary.h"
 
 
 class LinkManager : public QObject
 {
     Q_OBJECT
+
 public:
     explicit LinkManager(QObject *parent = nullptr);
-    ~LinkManager();
-
-signals:
-    void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                       LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
-    void deleteModel(QUuid uuid);
-
-    void frameReady(QUuid uuid, Link* link, FrameParser frame);
-    void linkClosed(QUuid uuid, Link* link);
-    void linkOpened(QUuid uuid, Link* link);
-    void linkDeleted(QUuid uuid, Link* link);
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
@@ -58,6 +48,15 @@ public slots:
     void openFLinks();
     void createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);
     void closeUdpProxy();
+
+signals:
+    void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
+                           LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void deleteModel(QUuid uuid);
+    void frameReady(QUuid uuid, Link* link, FrameParser frame);
+    void linkClosed(QUuid uuid, Link* link);
+    void linkOpened(QUuid uuid, Link* link);
+    void linkDeleted(QUuid uuid, Link* link);
 
 private:
     /*structures*/
@@ -87,5 +86,4 @@ private:
     QList<Link*> list_;
     std::unique_ptr<QTimer> timer_;
     static const int timerInterval_ = 500; // msecs
-    QMutex mutex_;
 };

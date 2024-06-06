@@ -1,7 +1,6 @@
 #include "DeviceManager.h"
 
 #include <QDateTime>
-
 #include "core.h"
 extern Core core;
 
@@ -9,6 +8,7 @@ extern Core core;
 DeviceManager::DeviceManager() :
     lastDevs_(nullptr),
     lastDevice_(nullptr),
+    mavlinkLink_(nullptr),
     lastAddress_(-1),
     progress_(0),
     isConsoled_(false),
@@ -55,7 +55,7 @@ int DeviceManager::pilotArmState()
 
 int DeviceManager::pilotModeState()
 {
-    return vru_.flight_mode;
+    return vru_.flightMode;
 }
 
 QList<DevQProperty *> DeviceManager::getDevList()
@@ -93,7 +93,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
         if (link != NULL) {
             if (frame.isProxy() || frame.completeAsKBP()) {
-                otherProtocolStat.remove(uuid);
+                otherProtocolStat_.remove(uuid);
             }
         }
 
@@ -111,7 +111,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             if (frame.id() == ID_TIMESTAMP && frame.ver() == v1) {
                 int t = static_cast<int>(frame.read<U4>());
                 int u = static_cast<int>(frame.read<U4>());
-                // core.dataset()->addEvent(t, 0, u);
                 emit eventComplete(t, 0, u);
             }
 
@@ -119,7 +118,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 int timestamp = frame.read<U4>();
                 int id = frame.read<U4>();
                 if (id < 100) {
-                    // core.dataset()->addEvent(timestamp, id);
                     emit eventComplete(timestamp, id, 0);
                 }
 
@@ -148,7 +146,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 prot_nmea.skip();
                 double depth_m = prot_nmea.readDouble();
                 if (isfinite(depth_m)) {
-                    // core.dataset()->addRangefinder(depth_m);
                     emit rangefinderComplete(depth_m);
                 }
 
@@ -174,7 +171,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     prot_nmea.readDate(&year, &mounth, & day);
 
                     uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
-                    // core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
@@ -214,12 +210,13 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 uint32_t unix_time = QDateTime(QDate(year, month, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
 
                 if (fix_type > 1 && fix_type < 5) {
-                    // core.dataset()->addPosition(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                     emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                 }
 
-                if (isConsoled_)
-                    core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8").arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
+                if (isConsoled_) {
+                    core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
+                                         .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
+                }
             }
             else {
                 if (isConsoled_)
@@ -227,12 +224,11 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             }
         }
 
-
-        if(frame.isCompleteAsMAVLink()) {
+        if (frame.isCompleteAsMAVLink()) {
             if (proxyLinkUuid_ != uuid) {
                 emit writeProxyFrame(frame);
 
-                if(link != nullptr) {
+                if (link != nullptr) {
                     mavlinUuid_ = uuid;
                     if(mavlinkLink_ != nullptr) {
                         disconnect(this, &DeviceManager::writeMavlinkFrame,  mavlinkLink_, &Link::writeFrame);
@@ -247,11 +243,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
                     MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
                     if (pos.isValid()) {
-                        // core.dataset()->addPosition(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
                         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
-                        // core.dataset()->addGnssVelocity(pos.velocityH(), 0);
                         emit gnssVelocityComplete(pos.velocityH(), 0);
-
                         vru_.velocityH = pos.velocityH();
                         emit vruChanged();
                     }
@@ -261,10 +254,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     MAVLink_MSG_HEARTBEAT heartbeat = mavlink_frame.read<MAVLink_MSG_HEARTBEAT>();
                     vru_.armState = (int)heartbeat.isArmed();
                     int flight_mode = (int)heartbeat.customMode();
-                    if (flight_mode != vru_.flight_mode) {
+                    if (flight_mode != vru_.flightMode) {
                         core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
                     }
-                    vru_.flight_mode = flight_mode;
+                    vru_.flightMode = flight_mode;
                     emit vruChanged();
                 }
 
@@ -277,24 +270,23 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 if (mavlink_frame.msgId() == 30) {
                     MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
-                    // core.dataset()->addAtt(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
                     emit attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
                 }
 
                 core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
-            } else {
+            }
+            else {
                 emit writeMavlinkFrame(frame);
             }
         }
 
         if (link != NULL) {
-            if ((frame.isCompleteAsNMEA() && !((ProtoNMEA*)&frame)->isEqualId("DBT"))
-                || frame.isCompleteAsUBX()
-                || frame.isCompleteAsMAVLink())
-            {
+            if ((frame.isCompleteAsNMEA() && !((ProtoNMEA*)&frame)->isEqualId("DBT")) ||
+                frame.isCompleteAsUBX() ||
+                frame.isCompleteAsMAVLink()) {
                 if (!frame.isNested()) {
-                    otherProtocolStat[uuid]++;
-                    if(otherProtocolStat[uuid] > 30) {
+                    otherProtocolStat_[uuid]++;
+                    if (otherProtocolStat_[uuid] > 30) {
                         deleteDevicesByLink(uuid);
                     }
                 }
@@ -303,7 +295,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
     }
 }
 
-void DeviceManager::openFile(const QString &filePath) //
+void DeviceManager::openFile(const QString &filePath)
 {
     qDebug() << "DeviceManager::openFile: th_id: " << QThread::currentThreadId();
 
@@ -322,7 +314,6 @@ void DeviceManager::openFile(const QString &filePath) //
 
     //setType(ConnectionFile);
     //emit openedEvent(false);
-
 
     const qint64 totalSize = file.size();
     qint64 bytesRead = 0;
@@ -387,10 +378,11 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 
     qDebug() << "Device::onLinkOpened";
     if (link) {
-        if(link->getIsProxy()) {
+        if (link->getIsProxy()) {
             proxyLinkUuid_ = uuid;
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
-        } else {
+        }
+        else {
             getDevice(uuid, link, 0);
         }
     }
@@ -404,7 +396,7 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     if (link) {
         deleteDevicesByLink(uuid);
         this->disconnect(link);
-        otherProtocolStat.remove(uuid);
+        otherProtocolStat_.remove(uuid);
     }
 }
 
@@ -416,14 +408,14 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
     if (link) {
         deleteDevicesByLink(uuid);
         this->disconnect(link);
-        otherProtocolStat.remove(uuid);
+        otherProtocolStat_.remove(uuid);
     }
 }
 
-void DeviceManager::binFrameOut(ProtoBinOut proto_out)
+void DeviceManager::binFrameOut(ProtoBinOut protoOut)
 {
-    if (isConsoled_ && !(proto_out.id() == 33 || proto_out.id() == 33)) {
-        core.consoleProto(proto_out, false);
+    if (isConsoled_ && !(protoOut.id() == 33 || protoOut.id() == 33)) {
+        core.consoleProto(protoOut, false);
     }
 }
 
@@ -447,46 +439,6 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     if (lastDevs_ != NULL) {
         lastDevs_->sendUpdateFW(data);
     }
-}
-
-void DeviceManager::openProxyLink(const QString &address, const int port_in, const int port_out) {
-    // closeProxyLink();
-    // connect(&proxyLink, &Link::readyParse, this, &DeviceManager::readyReadProxy);
-    // connect(this, &DeviceManager::writeProxy, &proxyLink, &Link::write);
-    // proxyLink.openAsUDP(address, port_in, port_out);
-    // if(proxyLink.isOpen()) {
-    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port is open");
-    // } else {
-    //     this->disconnect(&proxyLink);
-    //     proxyLink.disconnect(this);
-    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy port isn't open");
-    // }
-}
-
-void DeviceManager::openProxyNavLink(const QString &address, const int port_in, const int port_out) {
-    // closeProxyNavLink();
-    // connect(&proxyNavLink, &Link::readyParse, this, &DeviceManager::readyReadProxyNav);
-    // connect(this, &DeviceManager::writeProxyNav, &proxyNavLink, &Link::write);
-    // proxyNavLink.openAsUDP(address, port_in, port_out);
-    // if(proxyNavLink.isOpen()) {
-    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port is open");
-    // } else {
-    //     this->disconnect(&proxyNavLink);
-    //     proxyNavLink.disconnect(this);
-    //     core.consoleInfo("DeviceManager::openProxyNavLink: Proxy Nav port isn't open");
-    // }
-}
-
-void DeviceManager::closeProxyLink() {
-    // proxyLink.close();
-    // this->disconnect(&proxyLink);
-    // proxyLink.disconnect(this);
-}
-
-void DeviceManager::closeProxyNavLink() {
-    // proxyNavLink.close();
-    // this->disconnect(&proxyNavLink);
-    // proxyNavLink.disconnect(this);
 }
 
 StreamListModel* DeviceManager::streamsList()

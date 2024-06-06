@@ -851,13 +851,16 @@ void Dataset::usblProcessing() {
 
         if(pos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
             double n = pos.ned.n, e = pos.ned.e;
-
+            Q_UNUSED(n);
+            Q_UNUSED(e);
             double yaw = epoch->yaw();
             double azimuth = epoch->usblSolution().azimuth_deg-180;
             double dist = epoch->usblSolution().distance_m;
             double dir = ((yaw + azimuth) + 120);
             double rel_n = dist*cos(qDegreesToRadians(dir));
             double rel_e = dist*sin(qDegreesToRadians(dir));
+            Q_UNUSED(rel_n);
+            Q_UNUSED(rel_e);
             // if(i > 4000 && i < 4500) {
             //     _beaconTrack.append(QVector3D(n+rel_n, e + rel_e, 0));
             // }

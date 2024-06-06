@@ -13,11 +13,6 @@ LinkManager::LinkManager(QObject *parent) :
     qRegisterMetaType<FrameParser>("FrameParser");
 }
 
-LinkManager::~LinkManager()
-{
-
-}
-
 QList<QSerialPortInfo> LinkManager::getCurrentSerialList() const
 {
     return QSerialPortInfo::availablePorts();
@@ -125,12 +120,13 @@ void LinkManager::update()
 
     addNewLinks(currSerialList);
     deleteMissingLinks(currSerialList);
-
     openAutoConnections();
 }
 
-Link *LinkManager::getLinkPtr(QUuid uuid)
+Link* LinkManager::getLinkPtr(QUuid uuid)
 {
+    TimerController(timer_.get());
+
     Link* retVal{ nullptr };
 
     for (auto& itm : list_) {
@@ -208,8 +204,6 @@ Link *LinkManager::createNewLink() const
     QObject::connect(retVal, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(retVal, &Link::closed, this, &LinkManager::linkClosed);
     QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
-
-    // connect(this, &LinkManagerWorker::frameInput, newLink, &Link::writeFrame);
 
     return retVal;
 }
@@ -545,6 +539,8 @@ void LinkManager::frameInput(Link *link, FrameParser frame)
 
 void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
+    TimerController(timer_.get());
+
     Link* newLinkPtr = createNewLink();
 
     newLinkPtr->createAsUdp(address, sourcePort, destinationPort);
@@ -556,6 +552,8 @@ void LinkManager::createAsUdp(QString address, int sourcePort, int destinationPo
 
 void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPort)
 {
+    TimerController(timer_.get());
+
     Link* newLinkPtr = createNewLink();
 
     newLinkPtr->createAsTcp(address, sourcePort, destinationPort);
@@ -567,6 +565,8 @@ void LinkManager::createAsTcp(QString address, int sourcePort, int destinationPo
 
 void LinkManager::openFLinks()
 {
+    TimerController(timer_.get());
+
     for (auto& itm : list_) {
         if (itm->getIsForceStopped()) {
             itm->setIsForceStopped(false);
@@ -593,7 +593,6 @@ void LinkManager::openFLinks()
 
 void LinkManager::createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort)
 {
-
     TimerController(timer_.get());
 
     Link* newLinkPtr = createNewLink();
@@ -626,13 +625,15 @@ void LinkManager::closeUdpProxy()
 
 }
 
-LinkManager::TimerController::TimerController(QTimer *timer) : timer_(timer) {
+LinkManager::TimerController::TimerController(QTimer *timer) : timer_(timer)
+{
     if (timer_) {
         timer->stop();
     }
 }
 
-LinkManager::TimerController::~TimerController() {
+LinkManager::TimerController::~TimerController()
+{
     if (timer_) {
         timer_->start();
     }

@@ -353,7 +353,7 @@ QString DevDriver::devPN() {
     return QString();
 }
 
-void DevDriver::protoComplete(FrameParser &proto) {
+void DevDriver::protoComplete(FrameParser& proto) {
     if(!proto.isComplete()) return;
 
     m_state.mark = proto.mark();

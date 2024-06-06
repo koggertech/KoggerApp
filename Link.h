@@ -1,26 +1,12 @@
-#ifndef LINK_H
-#define LINK_H
-
-#include <ProtoBinnary.h>
+#pragma once
 
 #include <QObject>
 #include <QIODevice>
 #include <QByteArray>
-#include <QQueue>
-#include <QMutex>
-#include <QThread>
 #include <QUuid>
-#include <QUdpSocket>
-#include <QTcpSocket>
+#include <QString>
 #include <QHostAddress>
-
-#if defined(Q_OS_ANDROID)
-#include "qtandroidserialport/src/qserialport.h"
-#include "qtandroidserialport/src/qserialportinfo.h"
-#else
-#include <QSerialPort>
-#include <QSerialPortInfo>
-#endif
+#include "ProtoBinnary.h"
 
 using namespace Parsers;
 
@@ -38,33 +24,25 @@ typedef enum {
     kAutoOnce
 } ControlType;
 
-class Link : public QObject {
+class Link : public QObject
+{
     Q_OBJECT
+
 public:
     Link();
-    //Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName, int baudrate, bool parity, QString address,
-    //     int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
-
     void createAsSerial(const QString& portName, int baudrate, bool parity);
     void openAsSerial();
-
     void createAsUdp(const QString& address, int sourcePort, int destinationPort);
     void updateUdpParameters(const QString& address, int sourcePort, int destinationPort);
     void openAsUdp();
-
     void createAsTcp(const QString& address, int sourcePort, int destinationPort);
     void updateTcpParameters(const QString& address, int sourcePort, int destinationPort);
     void openAsTcp();
-
-    void openAsUDP(const QString &address, const int port_in,  const int port_out); //
-
     bool isOpen() const;
     void close();
     bool parse();
-
-    FrameParser* frameParser() { return &_frame; }
-    QIODevice* device() { return ioDevice_; }
-
+    FrameParser* frameParser();
+    QIODevice* device();
     void setUuid(QUuid uuid);
     void setConnectionStatus(bool connectionStatus);
     void setControlType(ControlType controlType);
@@ -80,7 +58,6 @@ public:
     void setIsNotAvailable(bool isNotAvailable);
     void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
-
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     ControlType getControlType() const;
@@ -101,9 +78,13 @@ public slots:
     bool writeFrame(FrameParser frame);
     bool write(QByteArray data);
 
-private slots:
-    void readyRead();
-    void aboutToClose();
+signals:
+    void readyParse(Link* link);
+    void connectionStatusChanged(QUuid uuid);
+    void frameReady(QUuid uuid, Link* link, FrameParser frame);
+    void opened(QUuid uuid, Link* linkPtr);
+    void closed(QUuid uuid, Link* link);
+    void dataReady();
 
 private:
     /*methods*/
@@ -112,13 +93,11 @@ private:
     void toParser(const QByteArray data);
 
     /*data*/
-    QMutex _mutex;
-    FrameParser _frame;
-    QIODevice* ioDevice_ = nullptr;
-    QByteArray _context;
-    QByteArray _buffer;
+    QIODevice* ioDevice_;
+    FrameParser frame_;
+    QByteArray context_;
+    QByteArray buffer_;
     QHostAddress hostAddress_;
-
     QUuid uuid_;
     ControlType controlType_;
     LinkType linkType_;
@@ -132,18 +111,9 @@ private:
     bool isHided_;
     bool isNotAvailable_;
     bool isProxy_;
-
     bool isForcedStopped_;
 
-signals:
-    void readyParse(Link* link);
-    // void changeState();
-    void connectionStatusChanged(QUuid uuid);
-    void frameReady(QUuid uuid, Link* link, FrameParser frame);
-    void opened(QUuid uuid, Link* linkPtr);
-    void closed(QUuid uuid, Link* link);
-    void dataReady();
+private slots:
+    void readyRead();
+    void aboutToClose();
 };
-
-
-#endif // LINK_H

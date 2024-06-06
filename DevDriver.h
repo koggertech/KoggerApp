@@ -1,5 +1,4 @@
-#ifndef SONARDRIVER_H
-#define SONARDRIVER_H
+#pragma once
 
 #include <QObject>
 #include <ProtoBinnary.h>
@@ -183,7 +182,7 @@ signals:
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
 
 public slots:
-    void protoComplete(FrameParser &proto);
+    void protoComplete(FrameParser& proto);
     void startConnection(bool duplex);
     void stopConnection();
     void restartState();
@@ -350,6 +349,3 @@ private:
     bool soundSpeedState_;
     bool uartState_;
 };
-
-
-#endif // SONARDRIVER_H

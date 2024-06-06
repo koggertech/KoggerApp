@@ -12,6 +12,7 @@
 
 
 Link::Link() :
+    ioDevice_(nullptr),
     uuid_(QUuid::createUuid()),
     controlType_(ControlType::kManual),
     linkType_(LinkType::LinkNone),
@@ -27,29 +28,9 @@ Link::Link() :
     isProxy_(false),
     isForcedStopped_(false)
 {
-    _frame.resetComplete();
+    frame_.resetComplete();
 }
-/*
-Link::Link(QString uuidStr, ControlType controlType, LinkType linkType, QString portName,
-           int baudrate, bool parity, QString address, int sourcePort, int destinationPort,
-           bool isPinned, bool isHided, bool isNotAvailable) :
-    uuid_(QUuid(uuidStr)),
-    controlType_(controlType),
-    linkType_(linkType),
-    portName_(portName),
-    baudrate_(baudrate),
-    parity_(parity),
-    address_(address),
-    sourcePort_(sourcePort),
-    destinationPort_(destinationPort),
-    isPinned_(isPinned),
-    isHided_(isHided),
-    isNotAvailable_(isNotAvailable),
-    isForcedStopped_(false)
-{
 
-}
-*/
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
     qDebug() << "Link::createAsSerial, uuid:" << getUuid().toString();
@@ -161,16 +142,11 @@ void Link::updateTcpParameters(const QString& address, int sourcePort, int desti
 void Link::openAsTcp()
 {
     qDebug() << "Link::openAsTcp, uuid:" << getUuid().toString();
-
     // TODO
 }
 
-void Link::openAsUDP(const QString &address, const int port_in,  const int port_out) {
-    updateUdpParameters(address, port_in, port_out);
-    openAsUdp();
-}
-
-bool Link::isOpen() const {
+bool Link::isOpen() const
+{
     bool retVal{ false };
 
     if (!ioDevice_)
@@ -202,22 +178,33 @@ bool Link::isOpen() const {
     return retVal;
 }
 
-void Link::close() {
+void Link::close()
+{
     deleteDev();
 }
 
 bool Link::parse()
 {
-    if (_frame.availContext() == 0) {
-        if (_buffer.size() > 0) {
-            _context = QByteArray::fromRawData(_buffer.constData(), _buffer.size());
-            _buffer.resize(0);
-            _frame.setContext((uint8_t*)_context.data(), _context.size());
+    if (frame_.availContext() == 0) {
+        if (buffer_.size() > 0) {
+            context_ = QByteArray::fromRawData(buffer_.constData(), buffer_.size());
+            buffer_.resize(0);
+            frame_.setContext((uint8_t*)context_.data(), context_.size());
         }
     }
 
-    _frame.process();
-    return _frame.isComplete() || _frame.availContext();
+    frame_.process();
+    return frame_.isComplete() || frame_.availContext();
+}
+
+FrameParser *Link::frameParser()
+{
+    return &frame_;
+}
+
+QIODevice *Link::device()
+{
+    return ioDevice_;
 }
 
 void Link::setUuid(QUuid uuid)
@@ -323,7 +310,7 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
-    if(ioDevice_ && ioDevice_->isOpen()) {
+    if (ioDevice_ && ioDevice_->isOpen()) {
         return true;
     }
     return false;
@@ -394,11 +381,13 @@ bool Link::getIsForceStopped() const
     return isForcedStopped_;
 }
 
-bool Link::writeFrame(FrameParser frame) {
+bool Link::writeFrame(FrameParser frame)
+{
     return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
 
-bool Link::write(QByteArray data) {
+bool Link::write(QByteArray data)
+{
     QIODevice *dev = device();
     if(dev != nullptr && isOpen()) {
         if(linkType_ == LinkType::LinkIPUDP) {
@@ -411,7 +400,8 @@ bool Link::write(QByteArray data) {
     return false;
 }
 
-void Link::setDev(QIODevice *dev) {
+void Link::setDev(QIODevice *dev)
+{
     deleteDev();
     if(dev != nullptr) {
         ioDevice_ = dev;
@@ -440,49 +430,48 @@ void Link::deleteDev()
 
 }
 
-void Link::toParser(const QByteArray data) {
-    if(data.size() <= 0) {
+void Link::toParser(const QByteArray data)
+{
+    if (data.size() <= 0) {
         return;
     }
 
-    _frame.setContext((uint8_t*)data.data(), data.size());
+    frame_.setContext((uint8_t*)data.data(), data.size());
 
-    while (_frame.availContext() > 0) {
-        _frame.process();
-        if(_frame.isComplete()) {
-            emit frameReady(uuid_, this, _frame);
+    while (frame_.availContext() > 0) {
+        frame_.process();
+        if (frame_.isComplete()) {
+            emit frameReady(uuid_, this, frame_);
         }
     }
 }
 
-void Link::readyRead() {
-    QIODevice *dev = device();
-    if(dev != nullptr) {
-        if(linkType_ == LinkType::LinkIPUDP) {
-            QUdpSocket* socs_upd = (QUdpSocket*)dev;
-            while (socs_upd->hasPendingDatagrams())
-            {
+void Link::readyRead()
+{
+    QIODevice* dev = device();
+    if (dev != nullptr) {
+        if (linkType_ == LinkType::LinkIPUDP) {
+            QUdpSocket* socsUpd = (QUdpSocket*)dev;
+            while (socsUpd->hasPendingDatagrams()) {
                 QByteArray datagram;
-                datagram.resize(socs_upd->pendingDatagramSize());
+                datagram.resize(socsUpd->pendingDatagramSize());
                 QHostAddress sender;
                 quint16 senderPort;
-
-                qint64 slen = socs_upd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
                 if (slen == -1) {
                     break;
                 }
-
                 toParser(datagram);
             }
-        } else {
+        }
+        else {
             toParser(dev->readAll());
         }
-
-
     }
 }
 
-void Link::aboutToClose() {
+void Link::aboutToClose()
+{
     QIODevice *dev = device();
     if (dev != nullptr) {
         //emit changeState(); //

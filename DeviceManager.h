@@ -1,18 +1,16 @@
 #pragma once
 
 #include <QObject>
+#include <QByteArray>
+#include <QString>
 #include <QList>
-#include <QVariant>
-#include <QStringListModel>
-#include <QUdpSocket>
-#include <QThread>
-
+#include <QHash>
+#include <QUuid>
 #include "Link.h"
-//#include "FileReader.h"
 #include "streamlist.h"
 #include "DevQProperty.h"
-//#include "ProtoBinnary.h"
-//#include "core.h"
+#include "ProtoBinnary.h"
+#include "IDBinnary.h"
 
 
 class DeviceManager : public QObject
@@ -42,30 +40,18 @@ public slots:
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
-    void binFrameOut(ProtoBinOut proto_out);
+    void binFrameOut(ProtoBinOut protoOut);
     void stopConnection();
-    void setProtoBinConsoled(bool is_consoled);
+    void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
-
-    // proxy
-    void openProxyLink(const QString &address, const int port_in,  const int port_out);
-    void openProxyNavLink(const QString &address, const int port_in,  const int port_out);
-    // bool isProxyOpen() { return proxyLink.isOpen(); }
-    // bool isProxyNavOpen() { return proxyNavLink.isOpen(); }
-    void closeProxyLink();
-    void closeProxyNavLink();
-
-private slots:
-    void readyReadProxy(Link* link);
-    void readyReadProxyNav(Link* link);
 
 signals:
     void dataSend(QByteArray data);
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
-    void rawDataRecieved(RawData raw_data);
+    void rawDataRecieved(RawData rawData);
     void distComplete(int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
-    void dopplerBeamComlete(IDBinDVL::BeamSolution *beams, uint16_t cnt);
+    void dopplerBeamComlete(IDBinDVL::BeamSolution* beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
     void chartSetupChanged();
     void distSetupChanged();
@@ -73,21 +59,18 @@ signals:
     void transChanged();
     void soundChanged();
     void UARTChanged();
-    void upgradeProgressChanged(int progress_status);
+    void upgradeProgressChanged(int progressStatus);
     void deviceVersionChanged();
     void devChanged();
     void streamChanged();
     void vruChanged();
     void writeProxyFrame(FrameParser frame);
     void writeMavlinkFrame(FrameParser frame);
-
-
     void eventComplete(int timestamp, int id, int unixt);
     void rangefinderComplete(float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
-    void gnssVelocityComplete(double h_speed, double course);
+    void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
-
 
 private:
     /*methods*/
@@ -102,24 +85,24 @@ private:
         float current = NAN;
         float velocityH = NAN;
         int armState = -1;
-        int flight_mode = -1;
+        int flightMode = -1;
     } vru_;
-    QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
-    QHash<QUuid, int> otherProtocolStat;
-    QUuid lastUuid_;
     DevQProperty* lastDevs_;
     DevQProperty* lastDevice_;
+    Link* mavlinkLink_;
     QList<DevQProperty*> devList_;
+    QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
+    QHash<QUuid, int> otherProtocolStat_;
     StreamList streamList_;
+    QUuid lastUuid_;
+    QUuid proxyLinkUuid_;
+    QUuid mavlinUuid_;
     int lastAddress_;
     int progress_;
     bool isConsoled_;
     volatile bool break_;
 
-
-    // proxy
-    QUuid proxyLinkUuid_;
-    QUuid mavlinUuid_;
-    Link* mavlinkLink_ = nullptr;
-
-}; // class DeviceWrapper
+private slots:
+    void readyReadProxy(Link* link);
+    void readyReadProxyNav(Link* link);
+};
