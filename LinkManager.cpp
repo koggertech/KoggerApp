@@ -398,6 +398,8 @@ void LinkManager::closeLink(QUuid uuid)
     TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        if (linkPtr->getControlType() == ControlType::kAuto)
+            linkPtr->setIsForceStopped(true);
         linkPtr->close();
 
         doEmitAppendModifyModel(linkPtr); //
@@ -524,6 +526,9 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
     qDebug() << "LinkManager::updateControlType: " << controlType;
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        if (controlType == ControlType::kManual)
+            linkPtr->setIsForceStopped(false);
+
         linkPtr->setControlType(controlType);
 
         if (linkPtr->getIsPinned())

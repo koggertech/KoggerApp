@@ -365,7 +365,7 @@ ColumnLayout {
 
                         onClicked: {
                             if (ConnectionStatus) {
-                                linkManagerWrapper.closeFLink(Uuid)
+                                linkManagerWrapper.closeLink(Uuid)
                             }
                             else {
                                 switch(LinkType) {
