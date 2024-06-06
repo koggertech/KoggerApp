@@ -310,7 +310,7 @@ Window  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "./icons/home.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 11 // "Guided"
+                    checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -343,13 +343,6 @@ Window  {
                 //             currentIndex = deviceManagerWrapper.pilotModeState
                 //         }
                 //     }
-
-                //     background:  Rectangle {
-                //         color: "transparent"
-                //         border.width: 0
-                //         border.color: theme.controlBorderColor
-                //     }
-                // }
             }
 
             RowLayout {

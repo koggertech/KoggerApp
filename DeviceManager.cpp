@@ -80,9 +80,6 @@ DevQProperty *DeviceManager::getLastDev()
 
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
-    //if (!corePtr_)
-    //    return;
-
     if (frame.isComplete()) {
 
 #if !defined(Q_OS_ANDROID)
@@ -94,8 +91,16 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             emit streamChanged();
 #endif
 
-        if (frame.isProxy())
+        if (link != NULL) {
+            if (frame.isProxy() || frame.completeAsKBP()) {
+                otherProtocolStat.remove(uuid);
+            }
+        }
+
+        if (frame.isProxy()) {
             return; //continue;
+        }
+
         if (frame.completeAsKBP() || frame.completeAsKBP2()) {
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
@@ -271,7 +276,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 || frame.isCompleteAsMAVLink())
             {
                 if (!frame.isNested()) {
-                    deleteDevicesByLink(uuid);
+                    otherProtocolStat[uuid]++;
+                    if(otherProtocolStat[uuid] > 30) {
+                        deleteDevicesByLink(uuid);
+                    }
                 }
             }
         }
@@ -373,6 +381,7 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     qDebug() << "DeviceManager::onLinkClosed";
     if (link) {
         deleteDevicesByLink(uuid);
+        otherProtocolStat.remove(uuid);
     }
 }
 
@@ -383,6 +392,7 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
     qDebug() << "DeviceManager::onLinkDeleted";
     if (link) {
         deleteDevicesByLink(uuid);
+        otherProtocolStat.remove(uuid);
     }
 }
 

@@ -76,7 +76,9 @@ Item {
             CheckButton {
                 id: settings3DButton
                 visible: instruments > 0
-                Layout.fillWidth: true
+                // Layout.fillWidth: true
+                // height: theme.controlHeight*1.5
+                width: theme.controlHeight*1.2
                 // text: "3D"
                 // checkable: true
                 icon.source: "./icons/map.svg"
@@ -91,7 +93,9 @@ Item {
             CheckButton {
                 id: visible2dButton
                 visible: instruments > 0
-                Layout.fillWidth: true
+                // Layout.fillWidth: true
+                // height: theme.controlHeight*1.5
+                width: theme.controlHeight*1.2
                 // text: "2D"
                 // checkable: true
                 icon.source: "./icons/photo.svg"
