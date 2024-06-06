@@ -17,7 +17,8 @@ Core::Core() :
     consolePtr_(new Console),
     scene3dViewPtr_(nullptr),
     openedfilePath_(""),
-    isLogging_(false)
+    isLogging_(false),
+    fileReaderProgress_(0)
 {
     createDeviceManagerConnections();
     createLinkManagerConnections();

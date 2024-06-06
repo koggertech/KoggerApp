@@ -43,6 +43,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+
+### SOURCES
 SOURCES += \
     3Plot.cpp \
     DevDriver.cpp \
@@ -115,6 +117,8 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+
+### HEADERS
 HEADERS += \
     3Plot.h \
     ConverterXTF.h \
@@ -167,6 +171,7 @@ HEADERS += \
 }
 
 
+### DISTFILES
 DISTFILES += \
     QML/Common/MenuBlockEx.qml \
     QML/Scene3DToolbar.qml \
@@ -198,7 +203,6 @@ DISTFILES += \
     QML/UpgradeBox.qml \
     QML/FlashBox.qml \
     QML/main.qml \
-    a.fsh \
     android_build/AndroidManifest.xml \
     android_build/build.gradle \
     android_build/gradle.properties \
@@ -250,7 +254,6 @@ android {
 }
 
 ANDROID_ABIS = armeabi-v7a
-
 
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri

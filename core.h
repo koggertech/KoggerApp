@@ -117,10 +117,10 @@ private:
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
-    QQmlApplicationEngine* qmlAppEnginePtr_ = nullptr;
+    QQmlApplicationEngine* qmlAppEnginePtr_;
     Dataset* datasetPtr_;
     Console* consolePtr_;
-    GraphicsScene3dView* scene3dViewPtr_ = nullptr;
+    GraphicsScene3dView* scene3dViewPtr_;
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
@@ -131,7 +131,7 @@ private:
     std::unique_ptr<FileReader> fileReader_;
     std::unique_ptr<QThread> fileReaderThread_;
     QList<QMetaObject::Connection> fileReaderConnections_;
-    int fileReaderProgress_ = 0;
+    int fileReaderProgress_;
 #ifdef FLASHER
     Flasher flasher;
     QByteArray boot_data;
