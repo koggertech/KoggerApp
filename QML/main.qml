@@ -258,50 +258,91 @@ Window  {
         ColumnLayout {
             RowLayout {
                 CheckButton {
-                    text: checked ? "Armed" : "Disarmed"
+                    // text: checked ? "Armed" : "Disarmed"
+                    icon.source: checked ? "./icons/propeller.svg" : "./icons/propeller-off.svg"
                     checked: deviceManagerWrapper.pilotArmState == 1
                     color: "white"
                     backColor: "red"
-                    checkedColor: "white"
-                    checkedBackColor: "transparent"
+                    // checkedColor: "white"
+                    // checkedBackColor: "transparent"
                     borderColor: "transparent"
                     checkedBorderColor: theme.textColor
                 }
 
-                CCombo  {
-                    id: pilotModeState
-                    visible: deviceManagerWrapper.pilotModeState >= 0
-                    model: [
-                        "Manual",
-                        "Acro",
-                        "Steering",
-                        "Hold",
-                        "Loiter",
-                        "Follow",
-                        "Simple",
-                        "Dock",
-                        "Circle",
-                        "Auto",
-                        "RTL",
-                        "SmartRTL",
-                        "Guided",
-                        "Mode16",
-                        "Mode17"
-                    ]
-                    currentIndex: deviceManagerWrapper.pilotModeState
+                ButtonGroup { id: autopilotModeGroup }
 
-                    onCurrentIndexChanged: {
-                        if(currentIndex != deviceManagerWrapper.pilotModeState) {
-                            currentIndex = deviceManagerWrapper.pilotModeState
-                        }
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/direction-arrows.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
+                    onCheckedChanged: {
                     }
-
-                    background:  Rectangle {
-                        color: "transparent"
-                        border.width: 0
-                        border.color: theme.controlBorderColor
-                    }
+                    ButtonGroup.group: autopilotModeGroup
                 }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/route.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 10 // "Auto"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/anchor.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 5 // "Loiter"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/map-pin.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/home.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                // CCombo  {
+                //     id: pilotModeState
+                //     visible: deviceManagerWrapper.pilotModeState >= 0
+                //     model: [
+                //         "Manual",
+                //         "Acro",
+                //         "Steering",
+                //         "Hold",
+                //         "Loiter",
+                //         "Follow",
+                //         "Simple",
+                //         "Dock",
+                //         "Circle",
+                //         "Auto",
+                //         "RTL",
+                //         "SmartRTL",
+                //         "Guided",
+                //         "Mode16",
+                //         "Mode17"
+                //     ]
+                //     currentIndex: deviceManagerWrapper.pilotModeState
+
+                //     onCurrentIndexChanged: {
+                //         if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                //             currentIndex = deviceManagerWrapper.pilotModeState
+                //         }
+                //     }
             }
 
             RowLayout {
@@ -309,8 +350,8 @@ Window  {
                     id: fcTextBatt
                     // Layout.margins: 4
                     visible: isFinite(deviceManagerWrapper.vruVoltage)
-                    rightPadding: 6
-                    leftPadding: 6
+                    rightPadding: 4
+                    leftPadding: 4
                     text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
                 }
             }

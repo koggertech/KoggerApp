@@ -157,7 +157,7 @@ WaterFall {
     RowLayout {
         id: menuBlock
         Layout.alignment: Qt.AlignHCenter
-        spacing: 2
+        spacing: 1
         visible: false
         Layout.margins: 0
 
@@ -184,56 +184,66 @@ WaterFall {
 
         ButtonGroup { id: pencilbuttonGroup }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "⇔"
-            checkable: true
+            // text: "⇔"
+            icon.source: "./icons/direction-arrows.svg"
+            // checkable: true
             checked: true
-            padding: 0
+            // padding: 0
+            backColor: theme.controlBackColor
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(1) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "⇲"
-            checkable: true
-            padding: 0
+            // text: "⇲"
+            // checkable: true
+            // padding: 0
+            icon.source: "./icons/arrow-bar-to-down.svg"
+            backColor: theme.controlBackColor
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(2) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "═"
-            checkable: true
-            padding: 0
+            icon.source: "./icons/pencil.svg"
+            backColor: theme.controlBackColor
+            // text: "═"
+            // checkable: true
+            // padding: 0
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(3) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "⇱"
-            checkable: true
-            padding: 0
+            icon.source: "./icons/arrow-bar-to-up.svg"
+            backColor: theme.controlBackColor
+            // text: "⇱"
+            // checkable: true
+            // padding: 0
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(4) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "✕"
-            checkable: true
-            padding: 0
+            icon.source: "./icons/eraser.svg"
+            backColor: theme.controlBackColor
+            // text: "✕"
+            // checkable: true
+            // padding: 0
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(5) }
             }

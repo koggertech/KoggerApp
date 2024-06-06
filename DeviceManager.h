@@ -107,6 +107,7 @@ private:
         int flight_mode = -1;
     } vru_;
     QHash<QUuid, QHash<int, DevQProperty*>> devTree_;
+    QHash<QUuid, int> otherProtocolStat;
     QUuid lastUuid_;
     DevQProperty* lastDevs_;
     DevQProperty* lastDevice_;
