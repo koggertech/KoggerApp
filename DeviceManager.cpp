@@ -547,7 +547,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     }
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);
-    connect(dev, &DevQProperty::iqComplete, this, &DeviceManager::iqComplete);
+    connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved);
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);

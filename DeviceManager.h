@@ -62,7 +62,7 @@ private slots:
 signals:
     void dataSend(QByteArray data);
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
-    void iqComplete(QByteArray data, uint8_t type);
+    void rawDataRecieved(RawData raw_data);
     void distComplete(int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution *beams, uint16_t cnt);

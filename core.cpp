@@ -394,46 +394,41 @@ bool Core::getIsLogging()
     return isLogging_;
 }
 
-bool Core::exportComplexToCSV(QString filePath)
-{
+bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
-    logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
-    QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
-    datasetPtr_->setRefPosition(1518);
+    logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");
 
-    for (int i = 0; i < datasetPtr_->size(); i++) {
+    QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
+
+    // _dataset->setRefPosition(1518);
+
+    for(int i = 0; i < datasetPtr_->size(); i++) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
-        if (epoch == NULL)
-            continue;
+        if(epoch == NULL) { continue; }
 
-        Epoch::Echogram* echogramm = epoch->chart(0);
-        float dist = echogramm->bottomProcessing.getDistance();
-        Position pos = epoch->getPositionGNSS();
+        if(epoch->isComplexSignalAvail()) {
+            ComplexSignals sigs = epoch->complexSignals();
 
-        if (!isfinite(dist))
-            continue;
+            for (auto ch = sigs.cbegin(), end = sigs.cend(); ch != end; ++ch) {
+                ComplexSignal signal = ch.value();
 
-        for (const auto& channel : ch_list) {
-            int ich = channel.channel;
+                ComplexF* data = signal.data.data();
+                int data_size = signal.data.size();
 
-            Complex16* data = epoch->complexSignalData16(ich);
-            int data_size = epoch->complexSignalSize16(ich);
+                QString row_data;
+                row_data.append(QString("%1,%2").arg(i).arg(ch.key()));
+                row_data.append(QString(",%1").arg(signal.globalOffset));
 
-            QString row_data;
-
-            row_data.append(QString("%1,%2").arg(i).arg(ich));
-            row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
-            row_data.append(QString(",%1,%2").arg(pos.ned.n).arg(pos.ned.e));
-
-            if (data != NULL && data_size > 0) {
-                for (int ci = 0; ci < data_size; ci++) {
-                    row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                if(data != NULL && data_size > 0) {
+                    for(int ci = 0; ci < data_size; ci++) {
+                        row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                    }
                 }
-            }
 
-            row_data.append("\n");
-            logger_.dataExport(row_data);
+                row_data.append("\n");
+                logger_.dataExport(row_data);
+            }
         }
     }
 
@@ -460,7 +455,8 @@ bool Core::exportUSBLToCSV(QString filePath)
 
         Position pos = epoch->getPositionGNSS();
 
-        if (pos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
+        // pos.ned.isCoordinatesValid() && epoch->isAttAvail() &&
+        if( epoch->isUsblSolutionAvailable()) {
             QString row_data;
 
             row_data.append(QString("%1").arg(i));
@@ -879,7 +875,7 @@ void Core::createDeviceManagerConnections()
 {
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::DirectConnection;
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::chartComplete,             datasetPtr_,   &Dataset::addChart,            deviceManagerConnection);
-    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::iqComplete,                datasetPtr_,   &Dataset::addComplexSignal,    deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rawDataRecieved,           datasetPtr_,   &Dataset::rawDataRecieved,    deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::distComplete,              datasetPtr_,   &Dataset::addDist,             deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::usblSolutionComplete,      datasetPtr_,   &Dataset::addUsblSolution,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::dopplerBeamComlete,        datasetPtr_,   &Dataset::addDopplerBeam,      deviceManagerConnection);

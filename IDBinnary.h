@@ -137,21 +137,29 @@ protected:
 
 
 
+struct RawData {
+    struct RawDataHeader {
+        struct  __attribute__((packed)) {
+            uint16_t dataType : 5; //
+            uint16_t dataSize : 6; // +1 bytes
+            uint16_t dataTrigger : 2;
+            uint16_t channelGroup : 3;
+        };
+        uint8_t channelCount = 0;
+        uint32_t globalOffset = 0;
+        uint32_t localOffset = 0;
+        float sampleRate = 0;
+    } __attribute__((packed));
+
+    RawDataHeader header;
+    QByteArray data;
+};
+
+
 class IDBinChart : public IDBin
 {
     Q_OBJECT
 public:
-    struct RawDataHeader {
-        struct  __attribute__((packed)) {
-            uint8_t dataType : 4;
-            uint8_t dataSize : 4;
-        };
-        uint8_t channelCount = 0;
-        uint8_t reserved1 = 0;
-        uint32_t cellOffset = 0;
-        float srcSampleRate = 0;
-        float cellSampleRate = 0;
-    } __attribute__((packed)) ;
 
     explicit IDBinChart() : IDBin() {
     }
@@ -173,28 +181,22 @@ public:
     U2 offsetRange() {return m_absOffset*m_sampleResol; }
 
     uint8_t* logData8() { return m_completeChart; }
-    uint8_t* rawData() { return _rawDataSave; }
-    uint32_t rawDataSize() { return _rawDataSize; }
-    uint8_t rawType() { return type; }
+    // uint8_t* rawData() { return _rawDataSave; }
+    // uint32_t rawDataSize() { return _rawDataSize; }
+    // uint8_t rawType() { return type; }
 
 protected:
-    uint32_t m_seqOffset, m_sampleResol, m_absOffset;
+    uint32_t m_seqOffset = 0, m_sampleResol = 0, m_absOffset = 0;
     uint32_t m_chartSizeIncr = 0;
     uint32_t m_chartSize = 0;
     uint8_t m_fillChart[20000];
     uint8_t m_completeChart[20000];
 
-    uint8_t _rawData[1024*256];
-    uint8_t _rawDataSave[1024*256];
-    uint32_t _rawDataSize = 0;
-    uint32_t _rawCellCount = 0;
-    uint32_t _rawSeqPosition = 0;
-    uint32_t _lastSeqPosition = 0;
-    uint16_t channel = 0;
-    uint8_t type = 0;
-    bool m_isCompleteChart;
+    bool m_isCompleteChart = false;
 
-    RawDataHeader _rawHeader;
+    RawData _rawData;
+signals:
+    void rawDataRecieved(RawData raw_data);
 };
 
 

@@ -910,21 +910,21 @@ GridLayout {
                     }
                 }
 
-                // RowLayout {
-                //     CButton {
-                //         text: "Complex signal to CSV"
-                //         Layout.fillWidth: true
-                //         onClicked: core.exportComplexToCSV(exportPathText.text);
-                //     }
-                // }
+                RowLayout {
+                    CButton {
+                        text: "Complex signal to CSV"
+                        Layout.fillWidth: true
+                        onClicked: core.exportComplexToCSV(exportPathText.text);
+                    }
+                }
 
-                // RowLayout {
-                //     CButton {
-                //         text: "USBL to CSV"
-                //         Layout.fillWidth: true
-                //         onClicked: core.exportUSBLToCSV(exportPathText.text);
-                //     }
-                // }
+                RowLayout {
+                    CButton {
+                        text: "USBL to CSV"
+                        Layout.fillWidth: true
+                        onClicked: core.exportUSBLToCSV(exportPathText.text);
+                    }
+                }
 
             }
         }

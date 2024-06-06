@@ -108,6 +108,31 @@ void Device::frameInput(QUuid uuid, Link* link, FrameParser frame) {
                     core.dataset()->addPosition(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
+
+            if(prot_nmea.isEqualId("GGA")) {
+                uint8_t h = 0, m = 0, s = 0;
+                uint16_t ms = 0;
+
+                bool is_correct =  prot_nmea.readTime(&h, &m, &s, &ms);
+                Q_UNUSED(is_correct);
+
+                double lat = prot_nmea.readLatitude();
+                double lon = prot_nmea.readLongitude();
+
+                char c = prot_nmea.readChar();
+                if(c == '1') {
+
+                    // prot_nmea.skip();
+                    // prot_nmea.skip();
+
+                    // uint16_t year = 0;
+                    // uint8_t mounth = 0, day = 0;
+                    // prot_nmea.readDate(&year, &mounth, & day);
+
+                    // uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
+                    core.dataset()->addPosition(lat, lon, 0, 0);
+                }
+            }
         }
 
         if(frame.isCompleteAsUBX()) {

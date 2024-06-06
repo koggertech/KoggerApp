@@ -361,6 +361,12 @@ public:
         }
     }
 
+    uint8_t* read(int size) {
+        uint8_t* ptr = &_frame[_readPosition];
+        _readPosition += size;
+        return ptr;
+    }
+
     char readChar() {
         char c = _frame[_readPosition++];
         _readPosition++;

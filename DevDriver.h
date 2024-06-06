@@ -158,6 +158,8 @@ signals:
     void binFrameOut(ProtoBinOut proto_out);
 
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
+    void rawDataRecieved(RawData raw_data);
+
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);

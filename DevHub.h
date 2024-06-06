@@ -191,7 +191,7 @@ protected:
         }
 
         connect(dev, &DevQProperty::chartComplete, this, &Device::chartComplete);
-        connect(dev, &DevQProperty::iqComplete, this, &Device::iqComplete);
+        connect(devAddr[addr], &DevQProperty::rawDataRecieved, this, &Device::rawDataRecieved);
         connect(dev, &DevQProperty::attitudeComplete, this, &Device::attitudeComplete);
         connect(dev, &DevQProperty::distComplete, this, &Device::distComplete);
         connect(dev, &DevQProperty::usblSolutionComplete, this, &Device::usblSolutionComplete);
