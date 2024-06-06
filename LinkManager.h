@@ -6,7 +6,13 @@
 #include <QTimer>
 #include <QList>
 #include <QUuid>
+#if defined(Q_OS_ANDROID)
+#include "qtandroidserialport/src/qserialport.h"
+#include "qtandroidserialport/src/qserialportinfo.h"
+#else
+#include <QSerialPort>
 #include <QSerialPortInfo>
+#endif
 
 #include "Link.h"
 
