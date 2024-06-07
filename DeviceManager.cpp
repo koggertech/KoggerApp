@@ -225,10 +225,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
         }
 
         if (frame.isCompleteAsMAVLink()) {
-            if (proxyLinkUuid_ != uuid) {
+            if (link == nullptr || proxyLinkUuid_ != uuid) {
                 emit writeProxyFrame(frame);
 
-                if (link != nullptr) {
+                if (link != nullptr && mavlinUuid_ != uuid) {
                     mavlinUuid_ = uuid;
                     if(mavlinkLink_ != nullptr) {
                         disconnect(this, &DeviceManager::writeMavlinkFrame,  mavlinkLink_, &Link::writeFrame);
@@ -236,7 +236,6 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     mavlinkLink_ = link;
                     connect(this, &DeviceManager::writeMavlinkFrame, mavlinkLink_, &Link::writeFrame, Qt::UniqueConnection);
                 }
-
 
                 ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)frame;
 
@@ -276,7 +275,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
             }
             else {
-                emit writeMavlinkFrame(frame);
+                if (link != nullptr) {
+                    emit writeMavlinkFrame(frame);
+                }
             }
         }
 
@@ -397,6 +398,9 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);
+        if(uuid == mavlinUuid_) {
+            mavlinUuid_ = QUuid();
+        }
     }
 }
 
@@ -409,6 +413,9 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);
+        if(uuid == mavlinUuid_) {
+            mavlinUuid_ = QUuid();
+        }
     }
 }
 
