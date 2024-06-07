@@ -41,7 +41,6 @@ public slots:
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
     void binFrameOut(ProtoBinOut protoOut);
-    void stopConnection();
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 

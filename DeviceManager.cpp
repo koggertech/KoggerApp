@@ -14,8 +14,6 @@ DeviceManager::DeviceManager() :
     isConsoled_(false),
     break_(false)
 {
-    qDebug() << "DeviceManager::DeviceManager: th_id: " << QThread::currentThreadId();
-
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
@@ -298,37 +296,22 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
 void DeviceManager::openFile(const QString &filePath)
 {
-    qDebug() << "DeviceManager::openFile: th_id: " << QThread::currentThreadId();
-
-    // QByteArray data;
     QFile file;
     const QUrl url(filePath);
     url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
 
-    qDebug() << QString("File path: %1").arg(file.fileName());
-
     if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "DeviceManager::openFile file not opened!";
-        // emit interrupted();
         return;
     }
-
-    //setType(ConnectionFile);
-    //emit openedEvent(false);
 
     const qint64 totalSize = file.size();
     qint64 bytesRead = 0;
     Parsers::FrameParser frameParser;
-
     const QUuid someUuid;
-
-    //delAllDev(); // device deleting by link
 
     while (true) {
         if (break_) {
-            qDebug() << "DeviceManager::openFile interrupted!";
             file.close();
-            // emit interrupted();
             return;
         }
 
@@ -338,7 +321,6 @@ void DeviceManager::openFile(const QString &filePath)
         if (chunkSize == 0)
             break;
 
-        // data.append(chunk);
         bytesRead += chunkSize;
 
         auto currProgress = static_cast<int>((static_cast<float>(bytesRead) / static_cast<float>(totalSize)) * 100.0f);
@@ -347,37 +329,27 @@ void DeviceManager::openFile(const QString &filePath)
 
         if (progress_ != currProgress) {
             progress_ = currProgress;
-            // emit progressUpdated(progress_);
         }
 
-        ///
         frameParser.setContext((uint8_t*)chunk.data(), chunk.size());
 
         while (frameParser.availContext() > 0) {
             frameParser.process();
             if (frameParser.isComplete()) {
-                // emit frameReady(someUuid, NULL, frameParser);
                 frameInput(someUuid, NULL, frameParser);
             }
         }
-
-        //emit receiveData(data);
 
         chunk.clear();
     }
 
     file.close();
-
-    // emit completed();
 }
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
-    qDebug() << "DeviceManager::onLinkOpened: th_id: " << QThread::currentThreadId();
-
     Q_UNUSED(uuid);
 
-    qDebug() << "Device::onLinkOpened";
     if (link) {
         if (link->getIsProxy()) {
             proxyLinkUuid_ = uuid;
@@ -393,7 +365,6 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
 {
     Q_UNUSED(uuid);
 
-    qDebug() << "DeviceManager::onLinkClosed";
     if (link) {
         deleteDevicesByLink(uuid);
         this->disconnect(link);
@@ -408,7 +379,6 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
 {
     Q_UNUSED(uuid);
 
-    qDebug() << "DeviceManager::onLinkDeleted";
     if (link) {
         deleteDevicesByLink(uuid);
         this->disconnect(link);
@@ -424,11 +394,6 @@ void DeviceManager::binFrameOut(ProtoBinOut protoOut)
     if (isConsoled_ && !(protoOut.id() == 33 || protoOut.id() == 33)) {
         core.consoleProto(protoOut, false);
     }
-}
-
-void DeviceManager::stopConnection()
-{
-    delAllDev();
 }
 
 bool DeviceManager::isCreatedId(int id)

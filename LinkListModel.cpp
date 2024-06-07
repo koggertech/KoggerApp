@@ -1,6 +1,5 @@
 #include "LinkListModel.h"
 
-#include <QDebug>
 
 LinkListModel::LinkListModel(QObject* parent) :
     QAbstractListModel(parent),
