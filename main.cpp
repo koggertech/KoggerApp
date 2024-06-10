@@ -17,6 +17,10 @@
 #include "Plot2D.h"
 #include "QQuickWindow"
 
+#if defined(Q_OS_ANDROID)
+#include "android.h"
+#endif
+
 Core core;
 Themes theme;
 
@@ -109,7 +113,7 @@ int main(int argc, char *argv[])
     qCritical() << "App is created";
 
 #if defined(Q_OS_ANDROID)
-//    checkAndroidWritePermission();
+    checkAndroidWritePermission();
 #endif
 
     return app.exec();

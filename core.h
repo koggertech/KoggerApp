@@ -107,6 +107,7 @@ private:
     bool isFactoryMode() const;
 
     /*data*/
+    Console* consolePtr_;
     std::shared_ptr<BottomTrackControlMenuController> bottomTrackControlMenuController_;
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;
@@ -119,7 +120,6 @@ private:
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     QQmlApplicationEngine* qmlAppEnginePtr_;
     Dataset* datasetPtr_;
-    Console* consolePtr_;
     GraphicsScene3dView* scene3dViewPtr_;
     ConverterXTF converterXtf_;
     Logger logger_;

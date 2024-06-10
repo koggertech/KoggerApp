@@ -8,10 +8,8 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     workerThread_ = std::make_unique<QThread>(this);
     workerObject_ = std::make_unique<LinkManager>(nullptr);
 
-    workerObject_->moveToThread(workerThread_.get());
-    auto connectionType = Qt::QueuedConnection;
+    auto connectionType = Qt::AutoConnection;
     QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::createAndStartTimer,          connectionType);
-    QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::importPinnedLinksFromXML,     connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,               workerObject_.get(), &LinkManager::stopTimer,                    connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                  this,                &LinkManagerWrapper::appendModifyModelData, connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::deleteModel,                        this,                &LinkManagerWrapper::deleteModelData,       connectionType);
@@ -21,7 +19,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAsTcp,             workerObject_.get(), &LinkManager::createAsTcp,                  connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenAsTcp,               workerObject_.get(), &LinkManager::openAsTcp,                    connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCloseLink,               workerObject_.get(), &LinkManager::closeLink,                    connectionType);
-    QObject::connect(this,                &LinkManagerWrapper::sendFCloseLink,              workerObject_.get(), &LinkManager::closeFLink,                   Qt::BlockingQueuedConnection);
+    QObject::connect(this,                &LinkManagerWrapper::sendFCloseLink,              workerObject_.get(), &LinkManager::closeFLink,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendOpenFLinks,              workerObject_.get(), &LinkManager::openFLinks,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendDeleteLink,              workerObject_.get(), &LinkManager::deleteLink,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateBaudrate,          workerObject_.get(), &LinkManager::updateBaudrate,               connectionType);
@@ -42,6 +40,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
         }, Qt::QueuedConnection);
     });
 
+    workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();
 }
 
