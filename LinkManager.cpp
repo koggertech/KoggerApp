@@ -24,9 +24,7 @@ Link* LinkManager::createSerialPort(const QSerialPortInfo &serialInfo) const
 
     if (serialInfo.isNull())
         return newLinkPtr;
-
     newLinkPtr = createNewLink();
-
     newLinkPtr->createAsSerial(serialInfo.portName(), 921600, false);   
 
     return newLinkPtr;
@@ -49,9 +47,7 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
 
         if (!isBeen) {
             auto link = createSerialPort(itmI);
-            // list
             list_.append(link);
-            // model
             doEmitAppendModifyModel(link);
         }
     }
@@ -101,11 +97,11 @@ void LinkManager::openAutoConnections()
                 !link->getIsNotAvailable() &&
                 !link->getIsForceStopped()) {
                 switch (link->getLinkType()) {
-                case LinkType::LinkNone:    { break; }
-                case LinkType::LinkSerial:  { link->openAsSerial(); break; }
-                case LinkType::LinkIPUDP:   { link->openAsUdp(); break; }
-                case LinkType::LinkIPTCP:   { link->openAsTcp(); break; }
-                default:                    { break; }
+                    case LinkType::LinkNone:   { break; }
+                    case LinkType::LinkSerial: { link->openAsSerial(); break; }
+                    case LinkType::LinkIPUDP:  { link->openAsUdp(); break; }
+                    case LinkType::LinkIPTCP:  { link->openAsTcp(); break; }
+                    default:                   { break; }
                 }
             }
         }
@@ -124,6 +120,7 @@ void LinkManager::update()
 Link* LinkManager::getLinkPtr(QUuid uuid)
 {
     TimerController(timer_.get());
+
     Link* retVal{ nullptr };
 
     for (auto& itm : list_) {
@@ -138,6 +135,8 @@ Link* LinkManager::getLinkPtr(QUuid uuid)
 
 void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
 {
+    TimerController(timer_.get());
+
     emit appendModifyModel(linkPtr->getUuid(),
                            linkPtr->getConnectionStatus(),
                            linkPtr->getControlType(),
@@ -206,6 +205,8 @@ Link *LinkManager::createNewLink() const
 
 void LinkManager::printLinkDebugInfo(Link* link) const
 {
+    TimerController(timer_.get());
+
     if (!link)
         qDebug() << "\tlink is nullptr";
     else {
@@ -217,16 +218,12 @@ void LinkManager::printLinkDebugInfo(Link* link) const
 
 void LinkManager::importPinnedLinksFromXML()
 {
+    TimerController(timer_.get());
+
     QString filePath{"pinned_links.xml"};
     QFile file(filePath);
 
-    auto createAndStartTimerFunc = [this]() {
-        createTimer();
-        timer_->start();
-    };
-
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        createAndStartTimerFunc();
         return;
     }
 
@@ -285,19 +282,18 @@ void LinkManager::importPinnedLinksFromXML()
                 }
 
                 list_.append(link);
-                // printLinkDebugInfo(link);
                 doEmitAppendModifyModel(link);
             }
         }
     }
 
     file.close();
-
-    createAndStartTimerFunc();
 }
 
 void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 {
+    TimerController(timer_.get());
+
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
 
@@ -306,24 +302,31 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
     }
 }
 
-void LinkManager::createTimer()
+void LinkManager::createAndStartTimer()
 {
     if (!timer_) {
         timer_ = std::make_unique<QTimer>(this);
         timer_->setInterval(timerInterval_);
         QObject::connect(timer_.get(), &QTimer::timeout, this, &LinkManager::onExpiredTimer, Qt::QueuedConnection);
     }
+
+    timer_->start();
 }
 
 void LinkManager::stopTimer()
 {
-    timer_->stop();
+    if (timer_) {
+        timer_->stop();
+    }
 }
 
 void LinkManager::onExpiredTimer()
 {
     update();
-    timer_->start();
+
+    if (timer_) {
+        timer_->start();
+    }
 }
 
 void LinkManager::openAsSerial(QUuid uuid)

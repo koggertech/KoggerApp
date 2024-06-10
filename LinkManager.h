@@ -26,7 +26,7 @@ public:
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
-    void createTimer();
+    void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();
     void openAsSerial(QUuid uuid);
@@ -80,6 +80,7 @@ private:
     void exportPinnedLinksToXML();
     Link* createNewLink() const;
     void printLinkDebugInfo(Link* link) const;
+
     QUuid proxyLinkUuid_;
 
     /*data*/

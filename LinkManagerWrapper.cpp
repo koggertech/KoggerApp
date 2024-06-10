@@ -10,6 +10,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 
     workerObject_->moveToThread(workerThread_.get());
     auto connectionType = Qt::QueuedConnection;
+    QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::createAndStartTimer,          connectionType);
     QObject::connect(workerThread_.get(), &QThread::started,                                workerObject_.get(), &LinkManager::importPinnedLinksFromXML,     connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendStopTimer,               workerObject_.get(), &LinkManager::stopTimer,                    connectionType);
     QObject::connect(workerObject_.get(), &LinkManager::appendModifyModel,                  this,                &LinkManagerWrapper::appendModifyModelData, connectionType);
