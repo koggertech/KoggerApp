@@ -33,7 +33,6 @@ Item {
         id: menuLayout
         spacing: 0
 
-
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
             Layout.preferredWidth: theme.controlHeight*1.2
@@ -76,29 +75,24 @@ Item {
             CheckButton {
                 id: settings3DButton
                 visible: instruments > 0
-                // Layout.fillWidth: true
-                // height: theme.controlHeight*1.5
                 width: theme.controlHeight*1.2
-                // text: "3D"
-                // checkable: true
                 icon.source: "./icons/map.svg"
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
                 checkedBorderColor: "black"
 
                 onClicked: {
+                    if(!settings3DButton.checked && !visible2dButton.checked) {
+                        visible2dButton.checked = true
+                    }
                 }
             }
 
             CheckButton {
                 id: visible2dButton
                 visible: instruments > 0
-                // Layout.fillWidth: true
-                // height: theme.controlHeight*1.5
                 width: theme.controlHeight*1.2
-                // text: "2D"
-                // checkable: true
-                icon.source: "./icons/photo.svg"
+                icon.source: "./icons/ripple.svg"
 
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
@@ -106,7 +100,14 @@ Item {
 
                 checked: true
                 onClicked: {
+                    if(!settings3DButton.checked && !visible2dButton.checked) {
+                        settings3DButton.checked = true
+                    }
                 }
+            }
+
+            MouseOpacityArea {
+                id: menuMouseArea
             }
         }
 

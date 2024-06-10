@@ -117,7 +117,7 @@ Item {
             context.lineTo(stopPointX - widthSlider/2, stopY);
             context.moveTo(startPointX + widthSlider/2, startY);
             context.lineTo(stopPointX + widthSlider/2, stopY);
-            context.fillRect(startPointX - widthSlider/2, startY,  widthSlider, stopY - startY);
+            // context.fillRect(startPointX - widthSlider/2, startY,  widthSlider, stopY - startY);
             context.stroke()
 
 

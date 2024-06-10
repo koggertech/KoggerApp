@@ -79,7 +79,6 @@ WaterFall {
             }
 
         }
-
     }
 
     onHeightChanged: {
@@ -94,7 +93,6 @@ WaterFall {
         }
     }
 
-
     MenuFrame {
         Layout.alignment: Qt.AlignHCenter
         //visible: visible2dButton.checked
@@ -102,6 +100,9 @@ WaterFall {
         anchors.bottom: parent.bottom
         anchors.margins: 4
         margins: 0
+
+        // isDraggable: true
+        isOpacityControlled: true
 
         ColumnLayout {
 
@@ -116,7 +117,7 @@ WaterFall {
             }
 
             ChartLevel {
-                opacity: 0.8
+                // opacity: 0.8
                 Layout.fillWidth: true
                 Layout.preferredWidth: theme.controlHeight*1.2
                 id: echogramLevelsSlider

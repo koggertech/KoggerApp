@@ -20,7 +20,7 @@ RowLayout {
         id: fitAllinViewButton
         width: theme.controlHeight
         height: theme.controlHeight
-        icon.source: "./3dcube.svg"
+        icon.source: "./icons/zoom-cancel.svg"
 
 
         icon.color: theme.textColor
@@ -54,6 +54,21 @@ RowLayout {
         onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
     }
 
+    CheckButton {
+        implicitHeight: theme.controlHeight
+        implicitWidth: theme.controlHeight
+
+        icon.source: "./icons/route.svg"
+        // icon.width: width
+        // icon.height: height
+    }
+
+    CheckButton {
+        implicitHeight: theme.controlHeight
+        implicitWidth: theme.controlHeight
+
+        icon.source: "./icons/overline.svg"
+    }
 
     CButton {
         id: updateSurface
@@ -67,6 +82,8 @@ RowLayout {
 
         // onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
     }
+
+
     ButtonGroup{
         property bool buttonChangeFlag : false
         id: buttonGroup

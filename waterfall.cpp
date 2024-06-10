@@ -28,7 +28,7 @@ void qPlot2D::paint(QPainter *painter) {
     clock_t start = clock();
 
     if(m_plot != nullptr && painter != nullptr) {
-         getImage((int)width(), (int)height(), painter);
+        getImage((int)width(), (int)height(), painter, _isHorizontal);
     }
 
     clock_t end = clock();
@@ -161,7 +161,7 @@ void qPlot2D::plotMousePosition(int x, int y) {
         setMousePosition(x, y);
     } else {
         if(x >=0 && y >= 0) {
-            setMousePosition(height() - y, width() - x);
+            setMousePosition(height() - y, x);
         } else {
             setMousePosition(-1, -1);
         }

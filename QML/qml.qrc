@@ -90,5 +90,6 @@
         <file>ConnectionButton.qml</file>
         <file>MenuFrame.qml</file>
         <file>CheckButton.qml</file>
+        <file>MouseOpacityArea.qml</file>
     </qresource>
 </RCC>

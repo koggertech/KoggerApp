@@ -848,7 +848,7 @@ public:
         _dataset = dataset;
     }
 
-    bool getImage(int width, int height, QPainter* painter);
+    bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
 
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }

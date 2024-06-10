@@ -92,8 +92,8 @@ Window  {
             Layout.fillWidth:  true
             rowSpacing: 0
             columnSpacing: 0
-            rows    : 1
-            columns : 2
+            rows    : mainview.width > mainview.height ? 1 : 2
+            columns : mainview.width > mainview.height ? 2 : 1
 
             property int lastKeyPressed: Qt.Key_unknown
 
@@ -248,15 +248,16 @@ Window  {
         }
     }
 
-
-
-
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         visible: deviceManagerWrapper.pilotArmState >= 0
+        isDraggable: true
+        isOpacityControlled: true
+
         ColumnLayout {
             RowLayout {
+                Layout.alignment: Qt.AlignHCenter
                 CheckButton {
                     // text: checked ? "Armed" : "Disarmed"
                     icon.source: checked ? "./icons/propeller.svg" : "./icons/propeller-off.svg"

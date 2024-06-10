@@ -62,5 +62,7 @@
         <file>icons/arrow-bar-to-up.svg</file>
         <file>icons/anchor.svg</file>
         <file>icons/home.svg</file>
+        <file>icons/zoom-cancel.svg</file>
+        <file>icons/ripple.svg</file>
     </qresource>
 </RCC>

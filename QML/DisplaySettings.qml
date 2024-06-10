@@ -484,7 +484,7 @@ GridLayout {
             CCheck {
                 id: horisontalVertical
                 checked: true
-                text: "Horisontal"
+                text: "Horizontal"
             }
 
             Settings {
