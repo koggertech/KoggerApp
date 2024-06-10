@@ -12,13 +12,10 @@ GridLayout {
 
     property var targetPlot: null
 
-    MenuBlock {
-    }
-
     ColumnLayout {
         id: columnItem
         spacing: 24
-        Layout.margins: 24
+        Layout.margins: 10
 
         ParamGroup {
             groupName: "Plot"
@@ -487,7 +484,7 @@ GridLayout {
             CCheck {
                 id: horisontalVertical
                 checked: true
-                text: "Horisontal"
+                text: "Horizontal"
             }
 
             Settings {
@@ -913,21 +910,21 @@ GridLayout {
                     }
                 }
 
-                // RowLayout {
-                //     CButton {
-                //         text: "Complex signal to CSV"
-                //         Layout.fillWidth: true
-                //         onClicked: core.exportComplexToCSV(exportPathText.text);
-                //     }
-                // }
+                RowLayout {
+                    CButton {
+                        text: "Complex signal to CSV"
+                        Layout.fillWidth: true
+                        onClicked: core.exportComplexToCSV(exportPathText.text);
+                    }
+                }
 
-                // RowLayout {
-                //     CButton {
-                //         text: "USBL to CSV"
-                //         Layout.fillWidth: true
-                //         onClicked: core.exportUSBLToCSV(exportPathText.text);
-                //     }
-                // }
+                RowLayout {
+                    CButton {
+                        text: "USBL to CSV"
+                        Layout.fillWidth: true
+                        onClicked: core.exportUSBLToCSV(exportPathText.text);
+                    }
+                }
 
             }
         }

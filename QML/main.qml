@@ -92,8 +92,8 @@ Window  {
             Layout.fillWidth:  true
             rowSpacing: 0
             columnSpacing: 0
-            rows    : 1
-            columns : 2
+            rows    : mainview.width > mainview.height ? 1 : 2
+            columns : mainview.width > mainview.height ? 2 : 1
 
             property int lastKeyPressed: Qt.Key_unknown
 
@@ -248,91 +248,116 @@ Window  {
         }
     }
 
-
-
-
-    ColumnLayout {
+    MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: true
+        visible: deviceManagerWrapper.pilotArmState >= 0
+        isDraggable: true
+        isOpacityControlled: true
 
-        RowLayout {
-            MenuBlock {
-            }
-            CCombo  {
-                id: pilotArmedState
-                Layout.margins: 4
-                visible: devs.pilotArmState >= 0
-                Layout.fillWidth: true
-                model: ["Disarmed", "Armed"]
-                currentIndex: devs.pilotArmState
-
-                onCurrentIndexChanged: {
-                    if(currentIndex != devs.pilotArmState) {
-                        currentIndex = devs.pilotArmState
-                    }
+        ColumnLayout {
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                CheckButton {
+                    // text: checked ? "Armed" : "Disarmed"
+                    icon.source: checked ? "./icons/propeller.svg" : "./icons/propeller-off.svg"
+                    checked: deviceManagerWrapper.pilotArmState == 1
+                    color: "white"
+                    backColor: "red"
+                    // checkedColor: "white"
+                    // checkedBackColor: "transparent"
+                    borderColor: "transparent"
+                    checkedBorderColor: theme.textColor
                 }
+
+                ButtonGroup { id: autopilotModeGroup }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/direction-arrows.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/route.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 10 // "Auto"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/anchor.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 5 // "Loiter"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/map-pin.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/home.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                // CCombo  {
+                //     id: pilotModeState
+                //     visible: deviceManagerWrapper.pilotModeState >= 0
+                //     model: [
+                //         "Manual",
+                //         "Acro",
+                //         "Steering",
+                //         "Hold",
+                //         "Loiter",
+                //         "Follow",
+                //         "Simple",
+                //         "Dock",
+                //         "Circle",
+                //         "Auto",
+                //         "RTL",
+                //         "SmartRTL",
+                //         "Guided",
+                //         "Mode16",
+                //         "Mode17"
+                //     ]
+                //     currentIndex: deviceManagerWrapper.pilotModeState
+
+                //     onCurrentIndexChanged: {
+                //         if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                //             currentIndex = deviceManagerWrapper.pilotModeState
+                //         }
+                //     }
             }
 
-            CCombo  {
-                id: pilotModeState
-                Layout.margins: 4
-                visible: devs.pilotModeState >= 0
-                Layout.fillWidth: true
-                model: [
-                    "Manual",
-                    "Acro",
-                    "Steering",
-                    "Hold",
-                    "Loiter",
-                    "Follow",
-                    "Simple",
-                    "Dock",
-                    "Circle",
-                    "Auto",
-                    "RTL",
-                    "SmartRTL",
-                    "Guided",
-                    "Mode16",
-                    "Mode17"
-                ]
-                currentIndex: devs.pilotModeState
-
-                onCurrentIndexChanged: {
-                    if(currentIndex != devs.pilotModeState) {
-                        currentIndex = devs.pilotModeState
-                    }
+            RowLayout {
+                CText {
+                    id: fcTextBatt
+                    // Layout.margins: 4
+                    visible: isFinite(deviceManagerWrapper.vruVoltage)
+                    rightPadding: 4
+                    leftPadding: 4
+                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
                 }
             }
         }
-
-        RowLayout {
-            MenuBlock {
-
-            }
-            CText {
-                id: fcTextBatt
-                Layout.margins: 4
-                visible: isFinite(devs.vruVoltage)
-                rightPadding: 20
-                leftPadding: 20
-                text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
-            }
-        }
-
-
-
-        //        CText {
-        //            id: fcTextMode
-        //            rightPadding: 20
-        //            leftPadding: 20
-        //            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
-        //            text: devs.pilotArmed ? "Armed" : "Disarmed"
-        //        }
-
-
     }
-
 
     MenuBar {
         id:                menuBar

@@ -381,6 +381,7 @@ private:
 
         // Calc half-perimeter of the triangle
         const T P = (mAB.length() + mBC.length() + mAC.length()) / static_cast <T> (2.0);
+        Q_UNUSED(P);
         // Now, calc radius of the triangle circum circle
         const T R = (mAB.length() * mBC.length() * mAC.length()) / (4.0 * mArea);
 

@@ -7,6 +7,7 @@ TextField {
 
     id: control
     implicitHeight: theme.controlHeight
+    height: theme.controlHeight
     padding: 0
     rightPadding: 10
     leftPadding: 10
@@ -19,6 +20,6 @@ TextField {
         radius: 1
         color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
         border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor
-        border.width: 1
+        border.width: 0
     }
 }

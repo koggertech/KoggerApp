@@ -24,7 +24,7 @@ public:
 
     void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
-    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  updater(); }
+    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  update(); }
 
     void plotUpdate() override;
 

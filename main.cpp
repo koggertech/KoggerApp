@@ -75,20 +75,19 @@ int main(int argc, char *argv[])
 
     //qInstallMessageHandler(messageHandler); // TODO: comment this
 
-
-
     qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
 
-    engine.rootContext()->setContextProperty("dataset", core.dataset());
+    engine.rootContext()->setContextProperty("dataset", core.getDatasetPtr());
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
+    engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
+    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
 
 #ifdef FLASHER
-    engine.rootContext()->setContextProperty("flasher", &core.flasher);
+    engine.rootContext()->setContextProperty("flasher", &core.getFlasherPtr);
 #endif
 
-    engine.rootContext()->setContextProperty("logViewer", core.console());
-    engine.rootContext()->setContextProperty("devs", core.dev());
+    engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);
@@ -99,6 +98,11 @@ int main(int argc, char *argv[])
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
+
+    QObject::connect(&app, &QGuiApplication::aboutToQuit, [&]() {
+        core.stopLinkManagerTimer();
+        core.stopFileReader();
+    });
 
     engine.load(url);
 

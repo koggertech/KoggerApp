@@ -6,46 +6,64 @@ import Qt.labs.settings 1.1
 
 MenuScroll {
     id: scrollBar
+    property int menuWidth: 200
 
-    ColumnLayout {
-        width: parent.width
+    Column {
+        // width: menuWidth
+        // Layout.margins: 0
+        padding: 0
         spacing: 10
 
-        ConnectionViewer {
-            id: devConnection
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            ConnectionViewer {
+                id: devConnection
+                width: menuWidth
+            }
         }
 
-        FactoryBox {
-            dev: devConnection.dev
-            visible: core.isFactoryMode
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            visible: false
+            FactoryBox {
+                dev: devConnection.dev
+                visible: core.isFactoryMode
+            }
         }
 
-        SonarBox {
-            dev: devConnection.dev
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            visible: sonarBox.isActive
+            SonarBox {
+                id: sonarBox
+                dev: devConnection.dev
+                width: menuWidth
+            }
         }
 
-        DopplerBox {
-            dev: devConnection.dev
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            visible: dopplerBox.isActive
+            DopplerBox {
+                id: dopplerBox
+                visible: isActive
+                dev: devConnection.dev
+                width: menuWidth
+            }
         }
 
-        RecorderBox {
-            dev: devConnection.dev
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            visible: recorderBox.isActive
+            RecorderBox {
+                id: recorderBox
+                dev: devConnection.dev
+                width: menuWidth
+            }
         }
 
-        UpgradeBox {
-            dev: devConnection.dev
-            Layout.fillWidth: true
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            visible: upgradeBox.isActive
+            UpgradeBox {
+                id: upgradeBox
+                dev: devConnection.dev
+                width: menuWidth
+            }
         }
 
 //        DevAddrBox {

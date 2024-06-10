@@ -11,6 +11,7 @@
 #include "math.h"
 #include <qvector3d.h>
 #include <QQmlEngine>
+#include <QMutex>
 
 #include <DSP.h>
 
@@ -243,6 +244,17 @@ typedef struct {
     } offset;
 } BottomTrackParam;
 
+
+typedef struct ComplexSignal {
+    uint32_t globalOffset = 0;
+    float sampleRate = 0;
+    bool isComplex = true;
+    int groupIndex = 0;
+    QVector<ComplexF> data;
+} ComplexSignal;
+
+typedef QMap<int, ComplexSignal> ComplexSignals;
+
 class Epoch {
 public:
     typedef struct {
@@ -303,17 +315,13 @@ public:
 
     } Echogram;
 
-    typedef struct ComplexSignal {
-        QByteArray data;
-        int type = 0;
-    } ComplexSignal;
+
 
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
     void setEncoder(float encoder);
     void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, int offset);
-    void setComplexSignal16(int channel, QVector<Complex16> data);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -322,6 +330,11 @@ public:
     void setPositionLLA(Position position);
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
+
+    void setComplexF(int channel, ComplexSignal signal);
+    ComplexSignals complexSignals() { return _complex; }
+    ComplexSignal complexSignal(int channel) { return _complex[channel]; }
+    bool isComplexSignalAvail() { return _complex.size() > 0; }
 
     void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
 
@@ -463,32 +476,6 @@ public:
         return range;
     }
 
-    Complex16* complexSignalData16(int ch) {
-        if(_complex.contains(ch)) {
-            return (Complex16*)_complex[ch].data.data();
-        } else {
-            return NULL;
-        }
-    }
-
-    int complexSignalSize16(int ch) {
-        if(_complex.contains(ch)) {
-            return _complex[ch].data.size()/sizeof(Complex16);
-        } else {
-            return 0;
-        }
-    }
-
-    QMap<int, ComplexSignal> complexSignal() {
-        return _complex;
-    }
-
-    bool isComplexSignalAvail() {
-        return _complex.size() > 0;
-    }
-
-
-
     bool distAvail() { return flags.distAvail; }
 
     double  distProccesing(int16_t channel) {
@@ -603,6 +590,9 @@ public:
 
 //        if(m_chartResol == 0) { m_chartResol = 1; }
 
+        start -= _charts[channel].offset;
+        end -= _charts[channel].offset;
+
         float raw_range_f = _charts[channel].range();
         float target_range_f = (float)(end - start);
         float scale_factor = ((float)raw_size/(float)len)*(target_range_f/raw_range_f);
@@ -650,7 +640,7 @@ public:
         return true;
     }
 
-
+    void moveComplexToEchogram(float offset_m);
 
 
 protected:
@@ -671,7 +661,7 @@ protected:
         }
     } _attitude;
 
-    QMap<int, ComplexSignal> _complex;
+    ComplexSignals _complex;
 
     IDBinDVL::BeamSolution _dopplerBeams[4];
     uint16_t _dopplerBeamCount = 0;
@@ -727,7 +717,11 @@ class Dataset : public QObject {
 public:
     Dataset();
 
-    inline int size() const { return _pool.size(); }
+    inline int size() const {
+
+        return _pool.size();
+
+    }
 
     Epoch* fromIndex(int index_offset = 0) {
         int index = validIndex(index_offset);
@@ -785,8 +779,9 @@ public slots:
     void addEncoder(float encoder);
     void addTimestamp(int timestamp);
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
-    void addComplexSignal(QByteArray data, uint8_t type);
+    void rawDataRecieved(RawData raw_data);
     void addDist(int dist);
+    void addRangefinder(float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
@@ -846,6 +841,8 @@ signals:
     void boatTrackUpdated();
 
 protected:
+    QMutex mutex_;
+
     int lastEventTimestamp = 0;
     int lastEventId = 0;
     float _lastEncoder = 0;
@@ -884,7 +881,10 @@ protected:
 
 
     Epoch* addNewEpoch() {
+        //mutex_.lock();
         _pool.resize(_pool.size() + 1);
+
+        //mutex_.unlock();
         return last();
     }
 

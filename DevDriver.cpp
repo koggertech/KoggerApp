@@ -15,10 +15,12 @@ DevDriver::DevDriver(QObject *parent) :
     soundSpeedState_(false),
     uartState_(false)
 {
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
     regID(idTimestamp = new IDBinTimestamp(), &DevDriver::receivedTimestamp);
 
     regID(idDist = new IDBinDist(), &DevDriver::receivedDist);
     regID(idChart = new IDBinChart(), &DevDriver::receivedChart);
+    connect(idChart, &IDBinChart::rawDataRecieved, this, &DevDriver::rawDataRecieved);
     regID(idAtt = new IDBinAttitude(), &DevDriver::receivedAtt);
     regID(idTemp = new IDBinTemp(), &DevDriver::receivedTemp);
 
@@ -351,7 +353,7 @@ QString DevDriver::devPN() {
     return QString();
 }
 
-void DevDriver::protoComplete(FrameParser &proto) {
+void DevDriver::protoComplete(FrameParser& proto) {
     if(!proto.isComplete()) return;
 
     m_state.mark = proto.mark();
@@ -778,10 +780,11 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 
             emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
 
-        } else if(ver == v7) {
-            QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
-            emit iqComplete(data, idChart->rawType());
         }
+        // else if(ver == v7) {
+        //     QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
+        //     emit iqComplete(data, idChart->rawType());
+        // }
     }
 }
 
@@ -797,7 +800,7 @@ void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
-    core.dataset()->addTemp(idTemp->temp());
+    core.getDatasetPtr()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {
@@ -1025,6 +1028,10 @@ void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
+    Q_UNUSED(type);
+    Q_UNUSED(ver);
+    Q_UNUSED(resp);
+
     usblSolutionComplete(idUSBL->usblSolution());
     // emit distComplete(idUSBL->usblSolution().distance_m*1000);
     // emit attitudeComplete(idUSBL->usblSolution().azimuth_deg, idUSBL->usblSolution().elevation_deg, 0);

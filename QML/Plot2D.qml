@@ -79,7 +79,6 @@ WaterFall {
             }
 
         }
-
     }
 
     onHeightChanged: {
@@ -94,72 +93,72 @@ WaterFall {
         }
     }
 
-    ColumnLayout {
+    MenuFrame {
         Layout.alignment: Qt.AlignHCenter
         //visible: visible2dButton.checked
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 4
+        margins: 0
 
-        MenuBlock {
-            // width: 30
-            opacity: 0.7
+        // isDraggable: true
+        isOpacityControlled: true
 
-        }
+        ColumnLayout {
 
-
-        CText {
-            Layout.fillWidth: true
-            Layout.topMargin: 0
-            Layout.preferredWidth: theme.controlHeight*1.5
-            // visible: chartEnable.checked // TODO
-            horizontalAlignment: Text.AlignHCenter
-            text: echogramLevelsSlider.stopValue
-            small: true
-        }
-
-        ChartLevel {
-            Layout.fillWidth: true
-            Layout.preferredWidth: theme.controlHeight*1.5
-            id: echogramLevelsSlider
-            // visible: chartEnable.checked // TODO
-            Layout.alignment: Qt.AlignHCenter
-
-            onStartValueChanged: {
-                plot.plotEchogramSetLevels(startValue, stopValue);
+            CText {
+                Layout.fillWidth: true
+                Layout.topMargin: 0
+                Layout.preferredWidth: theme.controlHeight*1.2
+                // visible: chartEnable.checked // TODO
+                horizontalAlignment: Text.AlignHCenter
+                text: echogramLevelsSlider.stopValue
+                small: true
             }
 
-            onStopValueChanged: {
-                plot.plotEchogramSetLevels(startValue, stopValue);
+            ChartLevel {
+                // opacity: 0.8
+                Layout.fillWidth: true
+                Layout.preferredWidth: theme.controlHeight*1.2
+                id: echogramLevelsSlider
+                // visible: chartEnable.checked // TODO
+                Layout.alignment: Qt.AlignHCenter
+
+                onStartValueChanged: {
+                    plot.plotEchogramSetLevels(startValue, stopValue);
+                }
+
+                onStopValueChanged: {
+                    plot.plotEchogramSetLevels(startValue, stopValue);
+                }
+
+                Component.onCompleted: {
+                    plot.plotEchogramSetLevels(startValue, stopValue);
+                }
+
+                Settings {
+                    property alias echogramLevelsStart: echogramLevelsSlider.startValue
+                    property alias echogramLevelsStop: echogramLevelsSlider.stopValue
+                }
             }
 
-            Component.onCompleted: {
-                plot.plotEchogramSetLevels(startValue, stopValue);
+            CText {
+                Layout.fillWidth: true
+                Layout.preferredWidth: theme.controlHeight*1.2
+                Layout.bottomMargin: 0
+                // visible: chartEnable.checked // TODO
+                horizontalAlignment: Text.AlignHCenter
+
+                text: echogramLevelsSlider.startValue
+                small: true
             }
-
-            Settings {
-                property alias echogramLevelsStart: echogramLevelsSlider.startValue
-                property alias echogramLevelsStop: echogramLevelsSlider.stopValue
-            }
-        }
-
-        CText {
-            Layout.fillWidth: true
-            Layout.preferredWidth: theme.controlHeight*1.5
-            Layout.bottomMargin: 0
-            // visible: chartEnable.checked // TODO
-            horizontalAlignment: Text.AlignHCenter
-
-            text: echogramLevelsSlider.startValue
-            small: true
         }
     }
-
 
     RowLayout {
         id: menuBlock
         Layout.alignment: Qt.AlignHCenter
-        spacing: 2
+        spacing: 1
         visible: false
         Layout.margins: 0
 
@@ -186,56 +185,66 @@ WaterFall {
 
         ButtonGroup { id: pencilbuttonGroup }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "⇔"
-            checkable: true
+            // text: "⇔"
+            icon.source: "./icons/direction-arrows.svg"
+            // checkable: true
             checked: true
-            padding: 0
+            // padding: 0
+            backColor: theme.controlBackColor
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(1) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "⇲"
-            checkable: true
-            padding: 0
+            // text: "⇲"
+            // checkable: true
+            // padding: 0
+            icon.source: "./icons/arrow-bar-to-down.svg"
+            backColor: theme.controlBackColor
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(2) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "═"
-            checkable: true
-            padding: 0
+            icon.source: "./icons/pencil.svg"
+            backColor: theme.controlBackColor
+            // text: "═"
+            // checkable: true
+            // padding: 0
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(3) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "⇱"
-            checkable: true
-            padding: 0
+            icon.source: "./icons/arrow-bar-to-up.svg"
+            backColor: theme.controlBackColor
+            // text: "⇱"
+            // checkable: true
+            // padding: 0
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(4) }
             }
             ButtonGroup.group: pencilbuttonGroup
         }
 
-        CButton {
+        CheckButton {
             Layout.fillWidth: true
-            text: "✕"
-            checkable: true
-            padding: 0
+            icon.source: "./icons/eraser.svg"
+            backColor: theme.controlBackColor
+            // text: "✕"
+            // checkable: true
+            // padding: 0
             onCheckedChanged: {
                 if(checked) {  plot.plotMouseTool(5) }
             }

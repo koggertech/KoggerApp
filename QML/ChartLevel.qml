@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.15
 
 Item {
     id: control
-    width: 91
+    width: 87
     height: theme.controlHeight*8
 
     property int widthSlider: theme.controlHeight
@@ -71,7 +71,13 @@ Item {
     }
 
     MouseArea {
+        id:mouseArea
         anchors.fill: parent
+
+        // hoverEnabled: true
+        // onEntered: parent.color = 'yellow'
+        // onExited: parent.color = 'black'
+
         onPressed: {
             updateValue(mouseX, mouseY, true)
         }
@@ -111,7 +117,7 @@ Item {
             context.lineTo(stopPointX - widthSlider/2, stopY);
             context.moveTo(startPointX + widthSlider/2, startY);
             context.lineTo(stopPointX + widthSlider/2, stopY);
-            context.fillRect(startPointX - widthSlider/2, startY,  widthSlider, stopY - startY);
+            // context.fillRect(startPointX - widthSlider/2, startY,  widthSlider, stopY - startY);
             context.stroke()
 
 

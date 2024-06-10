@@ -75,3 +75,15 @@ bool Logger::endExportStream() {
     _exportFile->close();
     return true;
 }
+
+void Logger::onFrameParserReceive(QUuid uuid, Link* linkPtr, FrameParser frame)
+{
+    Q_UNUSED(uuid);
+    Q_UNUSED(linkPtr);
+
+    if (frame.isNested()) {
+        return;
+    }
+
+    loggingStream(QByteArray((const char*)frame.frame(), frame.frameLen()));
+}

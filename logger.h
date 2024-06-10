@@ -5,9 +5,12 @@
 #include <QFile>
 #include <QDataStream>
 #include <QTextStream>
-#include "QUrl"
+#include <QUrl>
 #include <QDir>
 #include <QDateTime>
+#include <QUuid>
+#include "Link.h"
+#include "ProtoBinnary.h"
 
 
 class Logger : public QObject {
@@ -27,6 +30,7 @@ public slots:
     bool dataExport(QString str);
     bool dataByteExport(QByteArray data);
     bool endExportStream();
+    void onFrameParserReceive(QUuid uuid, Link* link, FrameParser frame);
 
 protected:
     QFile* m_logFile;

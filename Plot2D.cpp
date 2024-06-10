@@ -20,12 +20,17 @@ Plot2D::Plot2D() {
 //    _cursor.velocity.set(-1, 1);
 }
 
-bool Plot2D::getImage(int width, int height, QPainter* painter) {
-    _canvas.setSize(width, height, painter);
-//    _canvas.clear();
+bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizontal) {
+    if(is_horizontal) {
+        _canvas.setSize(width, height, painter);
+    } else {
+        _canvas.setSize(height, width, painter);
+        painter->rotate(-90);
+        painter->translate(-height, 0);
+    }
+
     reindexingCursor();
     reRangeDistance();
-
 
 //    painter->setCompositionMode(QPainter::RasterOp_SourceXorDestination);
     _echogram.draw(_canvas, _dataset, _cursor);
@@ -335,7 +340,7 @@ void Plot2D::setMousePosition(int x, int y) {
 //    _mouse.x = x;
 //    _mouse.y = y;
 
-    // qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
+    qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
     int epoch_index = _cursor.getIndex(x_start);
 
     sendSyncEvent(epoch_index);
