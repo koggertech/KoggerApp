@@ -13,10 +13,7 @@ Logger::Logger() :
     csvLogFile_(std::make_unique<QFile>(this)),
     exportFile_(std::make_unique<QFile>(this)),
     datasetPtr_(nullptr),
-    lastCsvPos_(Position()),
-    klfCurrentIteration_(0),
-    csvCurrentIteration_(0),
-    csvHatWrited_(false)
+    klfCurrentIteration_(0)
 {
 
 }
@@ -68,8 +65,6 @@ bool Logger::startNewKlfLog()
 
 bool Logger::stopKlfLogging()
 {
-    qDebug() << "Logger::stopKlfLogging";
-
     if (isOpenKlf()) {
         core.consoleInfo("Logger klf stoped");
     }
@@ -112,14 +107,6 @@ void Logger::onFrameParserReceiveKlf(QUuid uuid, Link* linkPtr, FrameParser fram
     loggingKlfStream(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
 
-
-
-
-
-
-
-
-
 bool Logger::startNewCsvLog()
 {
     //qDebug() << "Logger::startNewCsvLog";
@@ -150,7 +137,7 @@ bool Logger::startNewCsvLog()
             core.consoleInfo("Logger csv make file: " + csvLogFile_->fileName());
 
             // connects
-            csvConnections_.append(QObject::connect(datasetPtr_, &Dataset::dataUpdate, this, &Logger::loggingCsvStream, Qt::AutoConnection));
+            csvData_.csvConnections.append(QObject::connect(datasetPtr_, &Dataset::dataUpdate, this, &Logger::loggingCsvStream, Qt::AutoConnection));
         }
         else {
             core.consoleInfo("Logger csv can't make file: " + csvLogFile_->fileName());
@@ -165,126 +152,75 @@ bool Logger::startNewCsvLog()
 
 bool Logger::stopCsvLogging()
 {
-    //qDebug() << "Logger::stopCsvLogging";
-
-    for (auto& itm : csvConnections_)
+    for (auto& itm : csvData_.csvConnections) {
         disconnect(itm);
-    csvConnections_.clear();
+    }
 
-    lastCsvPos_ = Position();
-    csvCurrentIteration_ = 0;
-    csvHatWrited_ = false;
+    csvData_.csvConnections.clear();
+    csvData_.lastCsvPos = Position();
+    csvData_.csvCurrentIteration = 0;
+    csvData_.csvHatWrited = false;
+    csvData_.counter = 0;
 
     if (isOpenCsv()) {
         csvLogFile_->close();
     }
-
 
     return true;
 }
 
 void Logger::loggingCsvStream()
 {
-    //qDebug() << "Logger::loggingCsvStream";
-
-    if (!isOpenCsv())
+    auto epoch = datasetPtr_->lastlast();
+    if (!epoch || !isOpenCsv()) {
         return;
+    }
 
-    if (!csvHatWrited_)
+    if (!csvData_.csvHatWrited)
         writeCsvHat();
 
+    if (epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+        csvData_.lastCsvPos = epoch->getPositionGNSS();
+    }
 
-    /*
-    // TODO
-    auto a = datasetPtr_->lastlast();
-    auto currPos = a->getPositionGNSS();
-    auto rangeFinder = a->rangeFinder();
+    if (epoch->rangeFinder()) {
+        int prevTimestamp = 0;
+        int prevUnix = 0;
+        int prevEventId = 0;
+        double prevLat = 0, prevLon = 0;
 
+        LLARef llaRef;
+        NED lastPosNed;
+        QString rowData;
 
+        if (csvData_.measNbr)
+            rowData.append(QString("%1,").arg(csvData_.counter));
 
-    /////////////////////////////////////////////////////////
-
-    int prev_timestamp = 0;
-    int prev_unix = 0;
-    int prev_event_id = 0;
-    float prev_dist_proc = 0;
-    double prev_lat = 0, prev_lon = 0;
-
-    float decimation_m = decimation;
-    float decimation_path = 0;
-    LLARef lla_ref;
-    NED last_pos_ned;
-
-
-
-    //for (int i = 0; i < row_cnt; i++) {
-
-
-        Epoch* epoch = datasetPtr_->fromIndex(i);
-
-        if (decimation_m > 0) {
-            if (!epoch->isPosAvail())
-                continue;
-
-            Position pos = epoch->getPositionGNSS();
-
-            if (pos.lla.isCoordinatesValid()) {
-                if (!lla_ref.isInit) {
-                    lla_ref = LLARef(pos.lla);
-                    pos.LLA2NED(&lla_ref);
-                    last_pos_ned = pos.ned;
-                }
-                else {
-                    pos.LLA2NED(&lla_ref);
-                    float dif_n = pos.ned.n - last_pos_ned.n;
-                    float dif_e = pos.ned.e - last_pos_ned.e;
-                    last_pos_ned = pos.ned;
-                    decimation_path += sqrtf(dif_n*dif_n + dif_e*dif_e);
-                    if(decimation_path < decimation_m)
-                        continue;
-                    decimation_path -= decimation_m;
-                }
-            }
-            else {
-                continue;
-            }
-        }
-
-
-        QString row_data;
-
-        if (csvData_.meas_nbr)
-            row_data.append(QString("%1,").arg(i));
-
-        if (csvData_.event_id) {
+        if (csvData_.eventId) {
             if (epoch->eventAvail()) {
-                prev_timestamp = epoch->eventTimestamp();
-                prev_event_id = epoch->eventID();
-                prev_unix = epoch->eventUnix();
+                prevTimestamp = epoch->eventTimestamp();
+                prevEventId = epoch->eventID();
+                prevUnix = epoch->eventUnix();
             }
-            row_data.append(QString("%1,%2,%3,").arg(prev_unix).arg(prev_timestamp).arg(prev_event_id));
+            rowData.append(QString("%1,%2,%3,").arg(prevUnix).arg(prevTimestamp).arg(prevEventId));
         }
 
         if (csvData_.rangefinder)
-            epoch->distAvail() ? row_data.append(QString("%1,").arg((float)epoch->rangeFinder())) : row_data.append("0,");
+            epoch->distAvail() ? rowData.append(QString("%1,").arg((float)epoch->rangeFinder())) : rowData.append("0,");
 
-        if (csvData_.bottom_depth) {
-            prev_dist_proc = epoch->distProccesing(channel);
-            row_data.append(QString("%1,").arg((float)(prev_dist_proc)));
+        if (csvData_.bottomDepth) {
+            rowData.append(QString("%1,").arg(NAN));
         }
 
-        if (csvData_.pos_lat_lon) {
-            if (epoch->isPosAvail()) {
-                prev_lat = epoch->lat();
-                prev_lon = epoch->lon();
-            }
+        if (csvData_.posLatLon) {
+            prevLat = csvData_.lastCsvPos.lla.latitude;
+            prevLon = csvData_.lastCsvPos.lla.longitude;
+            rowData.append(QString::number(prevLat, 'f', 8));
+            rowData.append(",");
+            rowData.append(QString::number(prevLon, 'f', 8));
+            rowData.append(",");
 
-            row_data.append(QString::number(prev_lat, 'f', 8));
-            row_data.append(",");
-            row_data.append(QString::number(prev_lon, 'f', 8));
-            row_data.append(",");
-
-            if (pos_time) {
+            if (csvData_.posTime) {
                 if (epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
                     DateTime time_epoch = *epoch->time();
 
@@ -298,168 +234,119 @@ void Logger::loggingCsvStream()
                     t_sep.tm_year += 1900;
                     t_sep.tm_mon += 1;
 
-                    row_data.append(QString("%1-%2-%3").arg(t_sep.tm_year).arg(t_sep.tm_mon).arg(t_sep.tm_mday));
-                    row_data.append(",");
-                    row_data.append(QString("%1:%2:%3").arg(t_sep.tm_hour).arg(t_sep.tm_min).arg((double)t_sep.tm_sec+(double)dt->nanoSec/1e9));
-                    row_data.append(",");
+                    rowData.append(QString("%1-%2-%3").arg(t_sep.tm_year).arg(t_sep.tm_mon).arg(t_sep.tm_mday));
+                    rowData.append(",");
+                    rowData.append(QString("%1:%2:%3").arg(t_sep.tm_hour).arg(t_sep.tm_min).arg((double)t_sep.tm_sec+(double)dt->nanoSec/1e9));
+                    rowData.append(",");
                 }
                 else {
-                    row_data.append(",");
-                    row_data.append(",");
+                    rowData.append(",");
+                    rowData.append(",");
                 }
             }
         }
 
-        Position position = epoch->getExternalPosition();
+        //Position position = epoch->getExternalPosition();
+        //if (csvData_.external_pos_lla && csvData_.ext_pos_lla_find) {
+            rowData.append(QString::number(NAN, 'f', 10));
+            rowData.append(",");
+            rowData.append(QString::number(NAN, 'f', 10));
+            rowData.append(",");
+            rowData.append(QString::number(NAN, 'f', 3));
+            rowData.append(",");
+        //}
 
-        if (csvData_.external_pos_lla && csvData_.ext_pos_lla_find) {
-            row_data.append(QString::number(position.lla.latitude, 'f', 10));
-            row_data.append(",");
-            row_data.append(QString::number(position.lla.longitude, 'f', 10));
-            row_data.append(",");
-            row_data.append(QString::number(position.lla.altitude, 'f', 3));
-            row_data.append(",");
+        //if (csvData_.external_pos_neu && csvData_.ext_pos_ned_find) {
+            rowData.append(QString::number(NAN, 'f', 10));
+            rowData.append(",");
+            rowData.append(QString::number(NAN, 'f', 10));
+            rowData.append(",");
+            rowData.append(QString::number(NAN, 'f', 3));
+            rowData.append(",");
+        //}
+
+        if (csvData_.sonarHeight) {
+            rowData.append(QString::number(NAN, 'f', 3));
+            rowData.append(",");
         }
-
-        if (csvData_.external_pos_neu && csvData_.ext_pos_ned_find) {
-            row_data.append(QString::number(position.ned.n, 'f', 10));
-            row_data.append(",");
-            row_data.append(QString::number(position.ned.e, 'f', 10));
-            row_data.append(",");
-            row_data.append(QString::number(-position.ned.d, 'f', 3));
-            row_data.append(",");
+        if (csvData_.bottomHeight) {
+            rowData.append(QString::number(NAN, 'f', 3));
+            rowData.append(",");
         }
+        rowData.append("\n");
 
-        Epoch::Echogram* sensor = epoch->chart(channel);
-
-        if (csvData_.sonar_height) {
-            if (sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
-                row_data.append(QString::number(-sensor->sensorPosition.ned.d, 'f', 3));
-            }
-            else if (sensor != NULL && isfinite(sensor->sensorPosition.lla.altitude)) {
-                row_data.append(QString::number(sensor->sensorPosition.lla.altitude, 'f', 3));
-            }
-            row_data.append(",");
+        // write to file
+        csvLogFile_->write(rowData.toUtf8());
+        if (csvData_.csvCurrentIteration > csvData_.csvFlushInterval) {
+            csvLogFile_->flush();
+            csvData_.csvCurrentIteration = 0;
         }
-
-        if (csvData_.bottom_height) {
-            if(sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.ned.d)) {
-                row_data.append(QString::number(-sensor->bottomProcessing.bottomPoint.ned.d, 'f', 3));
-            }
-            else if (sensor != NULL && isfinite(sensor->bottomProcessing.bottomPoint.lla.altitude)) {
-                row_data.append(QString::number(sensor->bottomProcessing.bottomPoint.lla.altitude, 'f', 3));
-            }
-            row_data.append(",");
+        else {
+            ++csvData_.csvCurrentIteration;
         }
-
-        row_data.append("\n");
-        logger_.dataExport(row_data);
-
-
-
-    //}
-
-    // write to file
-    //QByteArray res;
-    //klfLogFile_->write(res);
-
-
-
-
-
-    //logger_.endExportStream();
-
-    return true;*/
+        ++csvData_.counter;
+    }
 }
 
 bool Logger::isOpenCsv()
 {
-    //qDebug() << "Logger::isOpenCsv";
     return csvLogFile_->isOpen();
 }
 
-
 void Logger::writeCsvHat()
 {
-    /////////////////////////////////////////////////////////
-    // write table hat ?
+    if (!isOpenCsv())
+        return;
 
+    if (csvData_.measNbr)
+        csvLogFile_->write(QString("Number,").toUtf8());
 
-    /*
-    int row_cnt = datasetPtr_->size();
-    datasetPtr_->spatialProcessing(); // emitting data upd
-
-    for (int i = 0; i < row_cnt; i++) {
-        Epoch* epoch = datasetPtr_->fromIndex(i);
-
-        Position position = epoch->getExternalPosition();
-        csvData_.ext_pos_lla_find |= position.lla.isValid();
-        csvData_.ext_pos_ned_find |= position.ned.isValid();
-    }
-
-    if (csvData_.meas_nbr)
-        logger_.dataExport("Number,");
-
-    if (csvData_.event_id) {
-        logger_.dataExport("Event UNIX,");
-        logger_.dataExport("Event timestamp,");
-        logger_.dataExport("Event ID,");
+    if (csvData_.eventId) {
+        csvLogFile_->write(QString("Event UNIX,").toUtf8());
+        csvLogFile_->write(QString("Event timestamp,").toUtf8());
+        csvLogFile_->write(QString("Event ID,").toUtf8());
     }
 
     if (csvData_.rangefinder)
-        logger_.dataExport("Rangefinder,");
+        csvLogFile_->write(QString("Rangefinder,").toUtf8());
 
-    if (csvData_.bottom_depth)
-        logger_.dataExport("Beam distance,");
 
-    if (csvData_.pos_lat_lon) {
-        logger_.dataExport("Latitude,");
-        logger_.dataExport("Longitude,");
+    if (csvData_.bottomDepth)
+        csvLogFile_->write(QString("Beam distance,").toUtf8());
 
-        if (csvData_.pos_time) {
-            logger_.dataExport("GNSS UTC Date,");
-            logger_.dataExport("GNSS UTC Time,");
+
+    if (csvData_.posLatLon) {
+        csvLogFile_->write(QString("Latitude,").toUtf8());
+        csvLogFile_->write(QString("Longitude,").toUtf8());
+
+        if (csvData_.posTime) {
+            csvLogFile_->write(QString("GNSS UTC Date,").toUtf8());
+            csvLogFile_->write(QString("GNSS UTC Time,").toUtf8());
         }
     }
 
-    if (csvData_.external_pos_lla && csvData_.ext_pos_lla_find) {
-        logger_.dataExport("ExtLatitude,");
-        logger_.dataExport("ExtLongitude,");
-        logger_.dataExport("ExtAltitude,");
-    }
+    //if (csvData_.external_pos_lla && csvData_.ext_pos_lla_find) {
+    csvLogFile_->write(QString("ExtLatitude,").toUtf8());
+    csvLogFile_->write(QString("ExtLongitude,").toUtf8());
+    csvLogFile_->write(QString("ExtAltitude,").toUtf8());
+    //}
 
-    if (csvData_.external_pos_neu && csvData_.ext_pos_ned_find) {
-        logger_.dataExport("ExtNorth,");
-        logger_.dataExport("ExtEast,");
-        logger_.dataExport("ExtHeight,");
-    }
+    //if (csvData_.external_pos_neu && csvData_.ext_pos_ned_find) {
+    csvLogFile_->write(QString("ExtNorth,").toUtf8());
+    csvLogFile_->write(QString("ExtEast,").toUtf8());
+    csvLogFile_->write(QString("ExtHeight,").toUtf8());
+    //}
 
-    if (csvData_.sonar_height)
-        logger_.dataExport("SonarHeight,");
+    if (csvData_.sonarHeight)
+        csvLogFile_->write(QString("SonarHeight,").toUtf8());
 
-    if (csvData_.bottom_height)
-        logger_.dataExport("BottomHeight,");
+    if (csvData_.bottomHeight)
+        csvLogFile_->write(QString("BottomHeight,").toUtf8());
 
-    logger_.dataExport("\n");
+    csvLogFile_->write(QString("\n").toUtf8());
 
-
-
-    /////////////////////////////////////////////////////////
-
-
-*/
-
-    csvHatWrited_ = true;
+    csvData_.csvHatWrited = true;
 }
-
-
-
-
-
-
-
-
-
 
 bool Logger::creatExportStream(QString name)
 {

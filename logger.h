@@ -41,34 +41,30 @@ public slots:
     bool endExportStream();
 
 private:
-    static const int klfFlushInterval_ = 100; // frames
-    static const int csvFlushInterval_ = 3; // epoch
-
     struct {
-        bool meas_nbr           = true;
-        bool event_id           = true;
-        bool rangefinder        = false;
-        bool bottom_depth       = true;
-        bool pos_lat_lon        = true;
-        bool pos_time           = true;
-
-        bool external_pos_lla   = true;
-        bool external_pos_neu   = true;
-        bool sonar_height       = true;
-        bool bottom_height      = true;
-
-        bool ext_pos_lla_find   = false;
-        bool ext_pos_ned_find   = false;
+        QList<QMetaObject::Connection> csvConnections;
+        Position lastCsvPos;
+        const int csvFlushInterval = 3; // num epoch
+        int csvCurrentIteration    = 0;
+        int counter                = 0;
+        const bool measNbr         = true;
+        const bool eventId         = true;
+        const bool rangefinder     = true; // been false ?!
+        const bool bottomDepth     = true;
+        const bool posLatLon       = true;
+        const bool posTime         = true;
+        const bool externalPosla   = true;
+        const bool externalPosNeu  = true;
+        const bool sonarHeight     = true;
+        const bool bottomHeight    = true;
+        bool csvHatWrited          = false;
 
     } csvData_;
 
+    static const int klfFlushInterval_ = 100; // num frames
     std::unique_ptr<QFile> klfLogFile_;
     std::unique_ptr<QFile> csvLogFile_;
     std::unique_ptr<QFile> exportFile_;
     Dataset* datasetPtr_;
-    QList<QMetaObject::Connection> csvConnections_;
-    Position lastCsvPos_;
     int klfCurrentIteration_;
-    int csvCurrentIteration_;
-    bool csvHatWrited_;
 };
