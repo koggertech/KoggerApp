@@ -19,6 +19,7 @@ Item {
     property bool isDraggable: false
     property bool isOpacityControlled: false
     property real offOpacity: 0.5
+    property bool isHovered: mouseOpacityArea.containsMouse
 
     Rectangle {
         id: backgroundRect

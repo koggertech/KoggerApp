@@ -64,5 +64,9 @@
         <file>icons/home.svg</file>
         <file>icons/zoom-cancel.svg</file>
         <file>icons/ripple.svg</file>
+        <file>icons/click.svg</file>
+        <file>icons/direction.svg</file>
+        <file>icons/direction-horizontal.svg</file>
+        <file>icons/cone.svg</file>
     </qresource>
 </RCC>

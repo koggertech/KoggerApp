@@ -411,6 +411,7 @@ ColumnLayout {
             onCountChanged: {
                 // qDebug("sasa");
                 // console.log(filesList.count)
+                Qt.callLater( positionViewAtEnd )
             }
 
             //                flickableDirection: Flickable.AutoFlickDirection
