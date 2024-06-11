@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QUuid>
+#include "plotcash.h"
 #include "Link.h"
 #include "ProtoBinnary.h"
 
@@ -16,6 +17,7 @@ class Logger : public QObject
 
 public:
     Logger();
+    void setDatasetPtr(Dataset* datasetPtr);
 
 public slots:
     // .klf
@@ -28,7 +30,7 @@ public slots:
     // .csv
     bool startNewCsvLog();
     bool stopCsvLogging();
-    void loggingCsvStream(const QByteArray &data);
+    void loggingCsvStream();
     bool isOpenCsv();
 
     // export
@@ -41,4 +43,7 @@ private:
     std::unique_ptr<QFile> klfLogFile_;
     std::unique_ptr<QFile> csvLogFile_;
     std::unique_ptr<QFile> exportFile_;
+    Dataset* datasetPtr_;
+    QList<QMetaObject::Connection> csvConnections_;
+    Position lastCsvPos_;
 };

@@ -11,9 +11,19 @@ extern Core core;
 Logger::Logger() :
     klfLogFile_(std::make_unique<QFile>(this)),
     csvLogFile_(std::make_unique<QFile>(this)),
-    exportFile_(std::make_unique<QFile>(this))
+    exportFile_(std::make_unique<QFile>(this)),
+    datasetPtr_(nullptr),
+    lastCsvPos_(Position())
 {
 
+}
+
+void Logger::setDatasetPtr(Dataset *datasetPtr)
+{
+    if (!datasetPtr)
+        return;
+
+    datasetPtr_ = datasetPtr;
 }
 
 bool Logger::startNewKlfLog()
@@ -93,13 +103,64 @@ void Logger::onFrameParserReceiveKlf(QUuid uuid, Link* linkPtr, FrameParser fram
 
 
 
+
+
+
+
+
 bool Logger::startNewCsvLog()
 {
-    return true;
+    qDebug() << "Logger::startNewCsvLog";
+
+    stopCsvLogging();
+
+    // open file
+    bool isOpen = false;
+    QDir dir;
+
+#ifdef Q_OS_ANDROID
+    QString logPath =  QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/KoggerApp";
+#else
+    QString logPath = QCoreApplication::applicationDirPath() + "/logs";
+#endif
+
+    if (dir.mkpath(logPath)) {
+        dir.setPath(logPath);
+
+        QString fileName = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss") + ".csv";
+        fileName.replace(':', '.');
+
+        csvLogFile_->setFileName(logPath + "/" + fileName);
+        isOpen = csvLogFile_->open(QIODevice::WriteOnly);
+
+        if (isOpen) {
+            core.consoleInfo("Logger csv dir: " + dir.path());
+            core.consoleInfo("Logger csv make file: " + csvLogFile_->fileName());
+
+            // connects
+            csvConnections_.append(QObject::connect(datasetPtr_, &Dataset::dataUpdate, this, &Logger::loggingCsvStream, Qt::AutoConnection));
+        }
+        else {
+            core.consoleInfo("Logger csv can't make file: " + csvLogFile_->fileName());
+        }
+    }
+    else {
+        core.consoleInfo("Logger csv can't make dir");
+    }
+
+    return isOpen;
 }
 
 bool Logger::stopCsvLogging()
 {
+    qDebug() << "Logger::stopCsvLogging";
+
+    for (auto& itm : csvConnections_)
+        disconnect(itm);
+    csvConnections_.clear();
+
+    lastCsvPos_ = Position();
+
     if (isOpenCsv()) {
         csvLogFile_->close();
     }
@@ -107,15 +168,40 @@ bool Logger::stopCsvLogging()
     return true;
 }
 
-void Logger::loggingCsvStream(const QByteArray &data)
+void Logger::loggingCsvStream()
 {
+    //qDebug() << "Logger::loggingCsvStream";
 
+    if (!isOpenCsv())
+        return;
+
+
+    // TODO
+    auto a = datasetPtr_->lastlast();
+    //qDebug() << a->time()->getDateTime().tm_sec;
+    //if (lastCsvPos_.ned.n != a->getPositionGNSS().ned.n) {
+
+    //}
+
+
+    // write to file
+    //QByteArray res;
+    //klfLogFile_->write(res);
 }
 
 bool Logger::isOpenCsv()
 {
+    qDebug() << "Logger::isOpenCsv";
+
     return csvLogFile_->isOpen();
 }
+
+
+
+
+
+
+
 
 
 
