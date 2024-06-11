@@ -3,30 +3,131 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
 ColumnLayout {
+    Layout.alignment: Qt.AlignHCenter
+
     MenuFrame {
         id: surfaceSettings
-        visible: updateSurface.hovered || rSurface.hovered
-        Layout.alignment: Qt.AlignRight
+        visible: updateSurface.hovered || isHovered
+        z: surfaceSettings.visible
+        Layout.alignment: Qt.AlignHCenter
         // Layout.fillWidth: true
         // width: 300
 
-        CheckButton {
-            id: rSurface
-            implicitHeight: theme.controlHeight
-            // implicitWidth: 300
-            // width: 300
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
+        onIsHoveredChanged: {
+            console.debug("menu hovered " + isHovered.toString())
+        }
 
+        ColumnLayout {
+            width: 300
+            ParamSetup {
+                paramName: "Edge limit, m:"
 
-            icon.source: "./icons/stack-backward.svg"
-            // onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
+                SpinBoxCustom {
+                    implicitWidth: 110
+                    from: 5
+                    to: 200
+                    stepSize: 5
+                    value: 50
+                }
+            }
+
+            ParamSetup {
+                paramName: "Decimation by:"
+
+                CheckButton {
+                    id: decimationCountCheck
+                    text: "Count"
+                    checked: true
+                    ButtonGroup.group: decimationGroup
+                }
+
+                CheckButton {
+                    id: decimationDistanceCheck
+                    text: "Distance"
+                    ButtonGroup.group: decimationGroup
+                }
+
+                // CheckButton {
+                //     icon.source: "./icons/x.svg"
+                //     ButtonGroup.group: decimationGroup
+                // }
+
+                ButtonGroup{
+                    id: decimationGroup
+                }
+            }
+
+            ParamSetup {
+                visible: decimationCountCheck.checked
+                paramName: "Point count:"
+
+                SpinBoxCustom {
+                    // implicitWidth: 110
+                    from: 100
+                    to: 10000
+                    stepSize: 100
+                    value: 1000
+                }
+            }
+
+            ParamSetup {
+                visible: decimationDistanceCheck.checked
+                paramName: "Decimation, m:"
+
+                SpinBoxCustom {
+                    implicitWidth: 150
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 5
+                }
+            }
+
+            ParamSetup {
+                paramName: "Type:"
+
+                CheckButton {
+                    id: triangleTypeCheck
+                    text: "Triangle"
+                    checked: true
+                    ButtonGroup.group: surfaceTypeGroup
+                }
+
+                CheckButton {
+                    id: gridTypeCheck
+                    text: "Grid"
+                    ButtonGroup.group: surfaceTypeGroup
+                }
+
+                ButtonGroup{
+                    id: surfaceTypeGroup
+                }
+            }
+
+            ParamSetup {
+                visible: gridTypeCheck.checked
+                paramName: "Grid step, m:"
+
+                SpinBoxCustom {
+                    implicitWidth: 150
+                    from: 1
+                    to: 20
+                    stepSize: 1
+                    value: 5
+                }
+            }
+
+            CheckButton {
+                text: "Update"
+                Layout.fillWidth: true
+                icon.source: "./icons/refresh.svg"
+            }
         }
     }
 
     RowLayout {
         spacing: 2
+        Layout.alignment: Qt.AlignHCenter
 
         MenuButton {
             id: setCameraIsometricView
@@ -114,7 +215,7 @@ ColumnLayout {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
-            hoverEnabled: true
+            // hoverEnabled: true
 
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)

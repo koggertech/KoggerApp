@@ -55,8 +55,10 @@ Item {
 
     MouseArea {
         id: mouseOpacityArea
+        // enabled: control.visible
         propagateComposedEvents: true
         anchors.fill: columnItem
+        anchors.margins: -10
         hoverEnabled: true
         onPressed: mouse.accepted = false
         onReleased: mouse.accepted = false
