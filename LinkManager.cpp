@@ -3,10 +3,13 @@
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QDebug>
+#include <QStandardPaths>
+#include <QDir>
 
 
 LinkManager::LinkManager(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    coldStarted_(true)
 {
     qRegisterMetaType<ControlType>("ControlType");
     qRegisterMetaType<LinkType>("LinkType");
@@ -156,10 +159,19 @@ void LinkManager::exportPinnedLinksToXML()
 {
     TimerController(timer_.get());
 
-    QString filePath{"pinned_links.xml"};
+    QString filePath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/pinned_links.xml";
+
+    QDir dir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
+    if (!dir.exists()) {
+        if (!dir.mkpath(".")) {
+            return;
+        }
+    }
+
     QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         return;
+    }
 
     QXmlStreamWriter xmlWriter(&file);
     xmlWriter.setAutoFormatting(true);
@@ -220,9 +232,9 @@ void LinkManager::importPinnedLinksFromXML()
 {
     TimerController(timer_.get());
 
-    QString filePath{"pinned_links.xml"};
-    QFile file(filePath);
+    QString filePath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/pinned_links.xml";
 
+    QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         return;
     }
@@ -322,6 +334,10 @@ void LinkManager::stopTimer()
 
 void LinkManager::onExpiredTimer()
 {
+    if (coldStarted_) {
+        importPinnedLinksFromXML();
+        coldStarted_ = false;
+    }
     update();
 
     if (timer_) {

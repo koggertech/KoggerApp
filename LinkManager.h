@@ -81,10 +81,10 @@ private:
     Link* createNewLink() const;
     void printLinkDebugInfo(Link* link) const;
 
-    QUuid proxyLinkUuid_;
-
     /*data*/
     QList<Link*> list_;
     std::unique_ptr<QTimer> timer_;
     static const int timerInterval_ = 500; // msecs
+    QUuid proxyLinkUuid_;
+    bool coldStarted_;
 };

@@ -14,6 +14,7 @@
 #if defined(Q_OS_ANDROID)
 #include <jni.h>
 #include <QtGlobal>
+#include <QtAndroid>
 #if (QT_VERSION_MAJOR < 6)
 #include <QtAndroidExtras>
 #include <QAndroidJniObject>
@@ -125,16 +126,19 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_VERSION_1_6;
 }
 
-//#include <QtAndroid>
 bool checkAndroidWritePermission() {
-//    QCoreApplication::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-//    if(r == QtAndroid::PermissionResult::Denied) {
-//        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
-//        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-//        if(r == QtAndroid::PermissionResult::Denied) {
-//             return false;
-//        }
-//   }
+
+    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+
+    if (r == QtAndroid::PermissionResult::Denied) {
+        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.READ_EXTERNAL_STORAGE" );
+
+        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+        if (r == QtAndroid::PermissionResult::Denied) {
+             return false;
+        }
+   }
    return true;
 }
 #endif

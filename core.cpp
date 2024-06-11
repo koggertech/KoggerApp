@@ -10,11 +10,11 @@
 
 Core::Core() :
     QObject(),
+    consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
     qmlAppEnginePtr_(nullptr),
     datasetPtr_(new Dataset),
-    consolePtr_(new Console),
     scene3dViewPtr_(nullptr),
     openedfilePath_(""),
     isLogging_(false),
