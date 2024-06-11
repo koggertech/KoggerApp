@@ -9,15 +9,16 @@ extern Core core;
 
 
 Logger::Logger() :
-    logFile_(new QFile(this)),
-    exportFile_(new QFile(this))
+    klfLogFile_(std::make_unique<QFile>(this)),
+    csvLogFile_(std::make_unique<QFile>(this)),
+    exportFile_(std::make_unique<QFile>(this))
 {
 
 }
 
-bool Logger::startNewLog()
+bool Logger::startNewKlfLog()
 {
-    stopLogging();
+    stopKlfLogging();
 
     bool isOpen = false;
     QDir dir;
@@ -34,15 +35,15 @@ bool Logger::startNewLog()
         QString fileName = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss") + ".klf";
         fileName.replace(':', '.');
 
-        logFile_->setFileName(logPath + "/" + fileName);
-        isOpen = logFile_->open(QIODevice::WriteOnly);
+        klfLogFile_->setFileName(logPath + "/" + fileName);
+        isOpen = klfLogFile_->open(QIODevice::WriteOnly);
 
         if (isOpen) {
             core.consoleInfo("Logger dir: " + dir.path());
-            core.consoleInfo("Logger make file: " + logFile_->fileName());
+            core.consoleInfo("Logger make file: " + klfLogFile_->fileName());
         }
         else {
-            core.consoleInfo("Logger can't make file: " + logFile_->fileName());
+            core.consoleInfo("Logger can't make file: " + klfLogFile_->fileName());
         }
     }
     else {
@@ -52,27 +53,72 @@ bool Logger::startNewLog()
     return isOpen;
 }
 
-bool Logger::stopLogging()
+bool Logger::stopKlfLogging()
 {
-    if (isOpen()) {
-        core.consoleInfo("Logger stoped");
+    qDebug() << "Logger::stopKlfLogging";
+
+    if (isOpenKlf()) {
+        core.consoleInfo("Logger klf stoped");
     }
 
-    logFile_->close();
+    klfLogFile_->close();
+
     return true;
 }
 
-void Logger::loggingStream(const QByteArray &data)
+void Logger::loggingKlfStream(const QByteArray &data)
 {
-    if (isOpen()) {
-        logFile_->write(data);
+    if (isOpenKlf()) {
+        klfLogFile_->write(data);
     }
 }
 
-bool Logger::isOpen()
+bool Logger::isOpenKlf()
 {
-    return logFile_->isOpen();
+    return klfLogFile_->isOpen();
 }
+
+void Logger::onFrameParserReceiveKlf(QUuid uuid, Link* linkPtr, FrameParser frame)
+{
+    Q_UNUSED(uuid);
+    Q_UNUSED(linkPtr);
+
+    if (frame.isNested()) {
+        return;
+    }
+
+    loggingKlfStream(QByteArray((const char*)frame.frame(), frame.frameLen()));
+}
+
+
+
+
+bool Logger::startNewCsvLog()
+{
+    return true;
+}
+
+bool Logger::stopCsvLogging()
+{
+    if (isOpenCsv()) {
+        csvLogFile_->close();
+    }
+
+    return true;
+}
+
+void Logger::loggingCsvStream(const QByteArray &data)
+{
+
+}
+
+bool Logger::isOpenCsv()
+{
+    return csvLogFile_->isOpen();
+}
+
+
+
 
 bool Logger::creatExportStream(QString name)
 {
@@ -116,14 +162,4 @@ bool Logger::endExportStream()
     return true;
 }
 
-void Logger::onFrameParserReceive(QUuid uuid, Link* linkPtr, FrameParser frame)
-{
-    Q_UNUSED(uuid);
-    Q_UNUSED(linkPtr);
 
-    if (frame.isNested()) {
-        return;
-    }
-
-    loggingStream(QByteArray((const char*)frame.frame(), frame.frameLen()));
-}

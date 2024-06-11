@@ -38,7 +38,8 @@ public:
 
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
-    Q_PROPERTY(bool logging WRITE setLogging)
+    Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
+    Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
@@ -63,8 +64,10 @@ public slots:
     bool closeProxy();
     bool upgradeFW(const QString& name, QObject* dev);
     void upgradeChanged(int progressStatus);
-    void setLogging(bool isLogging);
-    bool getIsLogging();
+    void setKlfLogging(bool isLogging);
+    bool getIsKlfLogging();
+    void setCsvLogging(bool isLogging);
+    bool getIsCsvLogging();
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, int channel, float decimation = 0);
@@ -126,7 +129,8 @@ private:
     QList<qPlot2D*> plot2dList_;
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
     QString openedfilePath_;
-    bool isLogging_;
+    bool isLoggingKlf_;
+    bool isLoggingCsv_;
     // fileReader
     std::unique_ptr<FileReader> fileReader_;
     std::unique_ptr<QThread> fileReaderThread_;

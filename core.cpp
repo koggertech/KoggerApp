@@ -17,7 +17,8 @@ Core::Core() :
     datasetPtr_(new Dataset),
     scene3dViewPtr_(nullptr),
     openedfilePath_(""),
-    isLogging_(false),
+    isLoggingKlf_(false),
+    isLoggingCsv_(false),
     fileReaderProgress_(0)
 {
     createDeviceManagerConnections();
@@ -382,17 +383,30 @@ void Core::upgradeChanged(int progressStatus)
     }
 }
 
-void Core::setLogging(bool isLogging)
+void Core::setKlfLogging(bool isLogging)
 {
-    if (isLogging == this->getIsLogging())
+    if (isLogging == this->getIsKlfLogging())
         return;
-    this->getIsLogging() ? logger_.stopLogging() : logger_.startNewLog();
-    isLogging_ = isLogging;
+    this->getIsKlfLogging() ? logger_.stopKlfLogging() : logger_.startNewKlfLog();
+    isLoggingKlf_ = isLogging;
 }
 
-bool Core::getIsLogging()
+bool Core::getIsKlfLogging()
 {
-    return isLogging_;
+    return isLoggingKlf_;
+}
+
+void Core::setCsvLogging(bool isLogging)
+{
+    if (isLogging == this->getIsCsvLogging())
+        return;
+    this->getIsCsvLogging() ? logger_.stopCsvLogging() : logger_.startNewCsvLog();
+    isLoggingCsv_ = isLogging;
+}
+
+bool Core::getIsCsvLogging()
+{
+    return isLoggingCsv_;
 }
 
 bool Core::exportComplexToCSV(QString file_path) {
@@ -897,9 +911,9 @@ void Core::createLinkManagerConnections()
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(),   &LinkManager::linkOpened,  deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(),   &LinkManager::linkDeleted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::frameReady, this, [this](QUuid uuid, Link* link, FrameParser frame) { // logging
-        if (getIsLogging()) {
+        if (getIsKlfLogging()) {
             QMetaObject::invokeMethod(&logger_, [this, uuid, link, frame]() {
-                    logger_.onFrameParserReceive(uuid, link, frame);
+                    logger_.onFrameParserReceiveKlf(uuid, link, frame);
                 }, Qt::QueuedConnection);
         }
     }));

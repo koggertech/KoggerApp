@@ -473,17 +473,38 @@ ColumnLayout {
 
         CheckButton {
             id: loggingCheck
-            text: "REC"
+            text: "REC KLF"
             checkedColor: "red"
             color: "red"
 
             Layout.alignment: Qt.AlignRight
 
-            onCheckedChanged: core.logging = loggingCheck.checked
-            Component.onCompleted: core.logging = loggingCheck.checked
+            onCheckedChanged: core.loggingKlf = loggingCheck.checked
+            Component.onCompleted: core.loggingKlf = loggingCheck.checked
 
             Settings {
                 property alias loggingCheck: loggingCheck.checked
+            }
+
+            icon.source: checked ? "./icons/record_fill.svg": "./icons/record.svg"
+
+            // ToolTip.visible: hovered
+            // ToolTip.text: "Recording"
+        }
+
+        CheckButton {
+            id: loggingCheck2
+            text: "REC CSV"
+            checkedColor: "red"
+            color: "red"
+
+            Layout.alignment: Qt.AlignRight
+
+            onCheckedChanged: core.loggingCsv = loggingCheck2.checked
+            Component.onCompleted: core.loggingCsv = loggingCheck2.checked
+
+            Settings {
+                property alias loggingCheck2: loggingCheck2.checked
             }
 
             icon.source: checked ? "./icons/record_fill.svg": "./icons/record.svg"
