@@ -1,78 +1,118 @@
 #include <logger.h>
-#include <core.h>
+
+#include <QDateTime>
+#include <QDir>
+#include <QStandardPaths>
+#include <QUrl>
+#include "core.h"
 extern Core core;
 
 
-bool Logger::startNewLog() {
+Logger::Logger() :
+    logFile_(new QFile(this)),
+    exportFile_(new QFile(this))
+{
+
+}
+
+bool Logger::startNewLog()
+{
     stopLogging();
 
-    bool is_open = false;
+    bool isOpen = false;
     QDir dir;
-    QString str_log_path = QCoreApplication::applicationDirPath() + "/logs";
-    if(dir.mkpath(str_log_path)) {
-        dir.setPath(str_log_path);
 
-        QString file_name = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss") + ".klf";
-        file_name.replace(':', '.');
+#ifdef Q_OS_ANDROID
+    QString logPath =  QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/KoggerApp";
+#else
+    QString logPath = QCoreApplication::applicationDirPath() + "/logs";
+#endif
 
-        m_logFile->setFileName(str_log_path + "/" + file_name);
-        is_open = m_logFile->open(QIODevice::WriteOnly);
+    if (dir.mkpath(logPath)) {
+        dir.setPath(logPath);
 
-        if(is_open) {
+        QString fileName = QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss") + ".klf";
+        fileName.replace(':', '.');
+
+        logFile_->setFileName(logPath + "/" + fileName);
+        isOpen = logFile_->open(QIODevice::WriteOnly);
+
+        if (isOpen) {
             core.consoleInfo("Logger dir: " + dir.path());
-            core.consoleInfo("Logger make file: " + m_logFile->fileName());
-        } else {
-            core.consoleInfo("Logger can't make file: " + m_logFile->fileName());
+            core.consoleInfo("Logger make file: " + logFile_->fileName());
         }
-    } else {
+        else {
+            core.consoleInfo("Logger can't make file: " + logFile_->fileName());
+        }
+    }
+    else {
         core.consoleInfo("Logger can't make dir");
     }
 
-    return is_open;
+    return isOpen;
 }
 
-bool Logger::stopLogging() {
-    if(isOpen()) { core.consoleInfo("Logger stoped"); }
-    m_logFile->close();
+bool Logger::stopLogging()
+{
+    if (isOpen()) {
+        core.consoleInfo("Logger stoped");
+    }
+
+    logFile_->close();
     return true;
 }
 
-void Logger::loggingStream(const QByteArray &data) {
-    if(isOpen()) { m_logFile->write(data); }
+void Logger::loggingStream(const QByteArray &data)
+{
+    if (isOpen()) {
+        logFile_->write(data);
+    }
 }
 
-bool Logger::creatExportStream(QString name) {
-    bool is_open = false;
+bool Logger::isOpen()
+{
+    return logFile_->isOpen();
+}
+
+bool Logger::creatExportStream(QString name)
+{
+    bool isOpen = false;
 
     QUrl url(name);
-    _exportFile->setFileName(url.toLocalFile());
-    is_open = _exportFile->open(QIODevice::WriteOnly);
+    exportFile_->setFileName(url.toLocalFile());
+    isOpen = exportFile_->open(QIODevice::WriteOnly);
 
-    if(is_open) {
-        core.consoleInfo("Export make file: " + _exportFile->fileName());
-    } else {
-        core.consoleInfo("Export can't make file: " + _exportFile->fileName());
+    if (isOpen) {
+        core.consoleInfo("Export make file: " + exportFile_->fileName());
+    }
+    else {
+        core.consoleInfo("Export can't make file: " + exportFile_->fileName());
     }
 
-    return is_open;
+    return isOpen;
 }
 
-bool Logger::dataExport(QString str) {
-    if(_exportFile->isOpen()) {
-        _exportFile->write(str.toUtf8());
+bool Logger::dataExport(QString str)
+{
+    if (exportFile_->isOpen()) {
+        exportFile_->write(str.toUtf8());
     }
+
     return true;
 }
 
-bool Logger::dataByteExport(QByteArray data) {
-    if(_exportFile->isOpen()) {
-        _exportFile->write(data);
+bool Logger::dataByteExport(QByteArray data)
+{
+    if (exportFile_->isOpen()) {
+        exportFile_->write(data);
     }
+
     return true;
 }
 
-bool Logger::endExportStream() {
-    _exportFile->close();
+bool Logger::endExportStream()
+{
+    exportFile_->close();
     return true;
 }
 
