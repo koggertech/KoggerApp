@@ -41,6 +41,7 @@ public:
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged)
+    Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -56,7 +57,7 @@ public:
 #endif
 
 public slots:
-    bool openLogFile(const QString& name, bool isAppend = false);
+    bool openLogFile(const QString& filePath, bool isAppend = false, bool onStartUp = false);
     bool closeLogFile();
     bool openXTF(QByteArray data);    
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
@@ -91,6 +92,7 @@ signals:
     // fileReader
     void sendStopFileReader();
     void fileReaderProgressChanged();
+    void filePathChanged();
 
 private slots:
 #ifdef FLASHER
@@ -108,6 +110,8 @@ private:
     void removeLinkManagerConnections();
     bool isOpenedFile() const;
     bool isFactoryMode() const;
+    QString getFilePath() const;
+    void fixFilePathString(QString& filePath) const;
 
     /*data*/
     Console* consolePtr_;
@@ -136,6 +140,7 @@ private:
     std::unique_ptr<QThread> fileReaderThread_;
     QList<QMetaObject::Connection> fileReaderConnections_;
     int fileReaderProgress_;
+    QString filePath_;
 #ifdef FLASHER
     Flasher flasher;
     QByteArray boot_data;

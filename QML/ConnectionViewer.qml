@@ -553,12 +553,12 @@ ColumnLayout {
             hoverEnabled: true
             Layout.fillWidth: true
 
-            text: ""
+            text: core.filePath
             placeholderText: qsTr("Enter path")
 
             Keys.onPressed: {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    core.openLogFile(pathText.text, false);
+                    core.openLogFile(pathText.text, false, false);
                 }
             }
 
@@ -589,7 +589,7 @@ ColumnLayout {
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
-                    core.openLogFile(pathText.text, false);
+                    core.openLogFile(pathText.text, false, false);
                 }
                 onRejected: {
                 }
@@ -623,7 +623,7 @@ ColumnLayout {
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 
                     //deviceManagerWrapper.sendOpenFile(pathText.text, true)
-                    core.openLogFile(pathText.text, true);
+                    core.openLogFile(pathText.text, true, false);
                 }
                 onRejected: {
                 }
