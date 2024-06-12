@@ -2,6 +2,9 @@
 
 #include <ctime>
 #include "bottomtrack.h"
+#ifdef Q_OS_WINDOWS
+#include <Windows.h>
+#endif
 
 
 Core::Core() :
@@ -15,7 +18,8 @@ Core::Core() :
     openedfilePath_(""),
     isLoggingKlf_(false),
     isLoggingCsv_(false),
-    fileReaderProgress_(0)
+    fileReaderProgress_(0),
+    filePath_(QString())
 {
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
@@ -137,8 +141,16 @@ void Core::getFlasherPtr() const
 }
 #endif
 
-bool Core::openLogFile(const QString &name, bool isAppend)
+bool Core::openLogFile(const QString &filePath, bool isAppend, bool onStartUp)
 {
+    QString localfilePath = filePath;
+
+    if (onStartUp) {
+        fixFilePathString(localfilePath);
+        filePath_ = localfilePath;
+        emit filePathChanged();
+    }
+
     linkManagerWrapperPtr_->closeOpenedLinks();
     removeLinkManagerConnections();
 
@@ -151,13 +163,13 @@ bool Core::openLogFile(const QString &name, bool isAppend)
         scene3dViewPtr_->setNavigationArrowState(false);
     }
 
-    QStringList splitname = name.split(QLatin1Char('.'), Qt::SkipEmptyParts);
+    QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
     if (splitname.size() > 1) {
         QString format = splitname.last();
         if (format.contains("xtf", Qt::CaseInsensitive)) {
             QFile file;
-            QUrl url(name);
+            QUrl url(localfilePath);
             url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
             if (file.open(QIODevice::ReadOnly))
                 return openXTF(file.readAll());
@@ -165,9 +177,9 @@ bool Core::openLogFile(const QString &name, bool isAppend)
         }
     }
 
-    emit deviceManagerWrapperPtr_->sendOpenFile(name);
+    emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 
-    openedfilePath_ = name;
+    openedfilePath_ = localfilePath;
 
     if (scene3dViewPtr_)
         scene3dViewPtr_->fitAllInView();
@@ -935,5 +947,25 @@ bool Core::isFactoryMode() const
         return true;
 #else
         return false;
+#endif
+}
+
+QString Core::getFilePath() const
+{
+    return filePath_;
+}
+
+void Core::fixFilePathString(QString& filePath) const
+{
+#ifdef Q_OS_WINDOWS
+    filePath.remove("'");
+
+    DWORD size = GetLongPathNameW(reinterpret_cast<LPCWSTR>(filePath.utf16()), nullptr, 0);
+    std::wstring buffer(size, L'\0');
+    size = GetLongPathNameW(reinterpret_cast<LPCWSTR>(filePath.utf16()), &buffer[0], size);
+    buffer.resize(size);
+    filePath = QString::fromStdWString(buffer.c_str());
+
+    filePath.replace("\\", "/");
 #endif
 }

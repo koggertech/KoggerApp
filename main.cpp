@@ -97,13 +97,20 @@ int main(int argc, char *argv[])
     core.setEngine(&engine);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
+    QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
+                     &app,      [url](QObject *obj, const QUrl &objUrl) {
+                                    if (!obj && url == objUrl)
+                                        QCoreApplication::exit(-1);
+                                }, Qt::QueuedConnection);
 
-    QObject::connect(&app, &QGuiApplication::aboutToQuit, [&]() {
+    if (argc > 1) {
+        QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
+                         &core,     [&argv]() {
+                                        core.openLogFile(argv[1], false, true);
+                                    }, Qt::QueuedConnection);
+    }
+
+    QObject::connect(&app, &QGuiApplication::aboutToQuit, &core, [&]() {
         core.stopLinkManagerTimer();
         core.stopFileReader();
     });
