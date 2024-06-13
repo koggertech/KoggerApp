@@ -16,7 +16,6 @@
 #include <sceneobject.h>
 #include "Plot2D.h"
 #include "QQuickWindow"
-
 #if defined(Q_OS_ANDROID)
 #include "android.h"
 #endif
@@ -74,7 +73,6 @@ int main(int argc, char *argv[])
 
     engine.addImportPath("qrc:/");
 
-
     SceneObject::qmlDeclare();
 
     //qInstallMessageHandler(messageHandler); // TODO: comment this
@@ -86,11 +84,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
-
 #ifdef FLASHER
     engine.rootContext()->setContextProperty("flasher", &core.getFlasherPtr);
 #endif
-
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
     core.consoleInfo("Run...");
@@ -103,25 +99,20 @@ int main(int argc, char *argv[])
                                         QCoreApplication::exit(-1);
                                 }, Qt::QueuedConnection);
 
+// file opening on startup
+#ifdef Q_OS_ANDROID
+    checkAndroidWritePermission();
+    tryOpenFileAndroid(engine);
+#else
     if (argc > 1) {
         QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
-                         &core,     [&argv]() {
-                                        core.openLogFile(argv[1], false, true);
-                                    }, Qt::QueuedConnection);
+            &core,     [&argv]() {
+                core.openLogFile(argv[1], false, true);
+            }, Qt::QueuedConnection);
     }
-
-    QObject::connect(&app, &QGuiApplication::aboutToQuit, &core, [&]() {
-        core.stopLinkManagerTimer();
-        core.stopFileReader();
-    });
-
-    engine.load(url);
-
-    qCritical() << "App is created";
-
-#if defined(Q_OS_ANDROID)
-    checkAndroidWritePermission();
 #endif
 
+    engine.load(url);
+    qCritical() << "App is created";
     return app.exec();
 }

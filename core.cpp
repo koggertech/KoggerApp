@@ -144,9 +144,10 @@ void Core::getFlasherPtr() const
 bool Core::openLogFile(const QString &filePath, bool isAppend, bool onStartUp)
 {
     QString localfilePath = filePath;
-
+    //consoleInfo(" Core::openLogFile: " + filePath);
     if (onStartUp) {
         fixFilePathString(localfilePath);
+        //consoleInfo(" Core::openLogFile after fix: " + filePath);
         filePath_ = localfilePath;
         emit filePathChanged();
     }
