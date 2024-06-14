@@ -84,7 +84,8 @@ public:
         Polygon      = 3,
         PointGroup   = 5,
         PolygonGroup = 6,
-        Unknown      = 7
+        Unknown      = 7,
+        BoatTrack    = 8
     };
 
     Q_ENUM(SceneObjectType)

@@ -87,5 +87,5 @@ void BottomTrackControlMenuController::updateChannelList()
 
 void BottomTrackControlMenuController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>(QmlObjectNames::bottomTrackControlMenu);
+    m_component = m_engine->findChild<QObject*>(QmlObjectNames::bottomTrackControlMenu());
 }

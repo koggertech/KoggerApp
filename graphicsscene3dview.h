@@ -5,6 +5,7 @@
 #include <planegrid.h>
 #include <raycaster.h>
 #include <surface.h>
+#include <boattrack.h>
 #include <bottomtrack.h>
 #include <polygongroup.h>
 #include <pointgroup.h>
@@ -128,10 +129,11 @@ public:
      * @return renderer
      */
     Renderer *createRenderer() const override;
-    std::shared_ptr <BottomTrack> bottomTrack() const;
-    std::shared_ptr <Surface> surface() const;
-    std::shared_ptr <PointGroup> pointGroup() const;
-    std::shared_ptr <PolygonGroup> polygonGroup() const;
+    std::shared_ptr<BoatTrack> boatTrack() const;
+    std::shared_ptr<BottomTrack> bottomTrack() const;
+    std::shared_ptr<Surface> surface() const;
+    std::shared_ptr<PointGroup> pointGroup() const;
+    std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
@@ -169,20 +171,20 @@ private:
 private:
     friend class BottomTrack;
 
-    std::shared_ptr <Camera> m_camera;
-    std::shared_ptr <Camera> m_axesThumbnailCamera;
+    std::shared_ptr<Camera> m_camera;
+    std::shared_ptr<Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
-    std::shared_ptr <RayCaster> m_rayCaster;
-    std::shared_ptr <Surface> m_surface;
-    std::shared_ptr <BottomTrack> m_bottomTrack;
-    std::shared_ptr <PolygonGroup> m_polygonGroup;
-    std::shared_ptr <PointGroup> m_pointGroup;
-    std::shared_ptr <CoordinateAxes> m_coordAxes;
-    std::shared_ptr <PlaneGrid> m_planeGrid;
-    std::shared_ptr <SceneObject> m_boatTrack;
-    std::shared_ptr <SceneObject> m_vertexSynchroCursour;
-    std::shared_ptr <NavigationArrow> m_navigationArrow;
+    std::shared_ptr<RayCaster> m_rayCaster;
+    std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<BoatTrack> m_boatTrack;
+    std::shared_ptr<BottomTrack> m_bottomTrack;
+    std::shared_ptr<PolygonGroup> m_polygonGroup;
+    std::shared_ptr<PointGroup> m_pointGroup;
+    std::shared_ptr<CoordinateAxes> m_coordAxes;
+    std::shared_ptr<PlaneGrid> m_planeGrid;
+    std::shared_ptr<SceneObject> m_vertexSynchroCursour;
+    std::shared_ptr<NavigationArrow> m_navigationArrow;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

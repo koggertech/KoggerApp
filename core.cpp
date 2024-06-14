@@ -36,6 +36,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     qmlAppEnginePtr_ = engine;
     QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::UILoad, Qt::QueuedConnection);
+    qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",    boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",  bottomTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",      surfaceControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("PointGroupControlMenuController",   pointGroupControlMenuController_.get());
@@ -789,6 +790,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     //        });
     //}
 
+    boatTrackControlMenuController_->setQmlEngine(object);
+    boatTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
     bottomTrackControlMenuController_->setQmlEngine(object);
     bottomTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
@@ -887,6 +891,7 @@ ConsoleListModel* Core::consoleList()
 
 void Core::createControllers()
 {
+    boatTrackControlMenuController_    = std::make_shared<BoatTrackControlMenuController>();
     bottomTrackControlMenuController_  = std::make_shared<BottomTrackControlMenuController>();
     mpcFilterControlMenuController_    = std::make_shared<MpcFilterControlMenuController>();
     npdFilterControlMenuController_    = std::make_shared<NpdFilterControlMenuController>();

@@ -15,12 +15,12 @@ GraphicsScene3dView::GraphicsScene3dView()
 , m_axesThumbnailCamera(std::make_shared<Camera>())
 , m_rayCaster(std::make_shared<RayCaster>())
 , m_surface(std::make_shared<Surface>())
+, m_boatTrack(std::make_shared<BoatTrack>())
 , m_bottomTrack(std::make_shared<BottomTrack>(this, this))
 , m_polygonGroup(std::make_shared<PolygonGroup>())
 , m_pointGroup(std::make_shared<PointGroup>())
 , m_coordAxes(std::make_shared<CoordinateAxes>())
 , m_planeGrid(std::make_shared<PlaneGrid>())
-, m_boatTrack(std::make_shared<SceneObject>())
 , m_navigationArrow(std::make_shared<NavigationArrow>())
 , navigationArrowState_(true)
 {
@@ -34,6 +34,7 @@ GraphicsScene3dView::GraphicsScene3dView()
     m_navigationArrow->setColor({ 255, 0, 0 });
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_pointGroup.get(), &PointGroup::changed, this, &QQuickFramebufferObject::update);
@@ -59,6 +60,11 @@ GraphicsScene3dView::~GraphicsScene3dView()
 QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
 {
     return new GraphicsScene3dView::InFboRenderer();
+}
+
+std::shared_ptr<BoatTrack> GraphicsScene3dView::boatTrack() const
+{
+    return m_boatTrack;
 }
 
 std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
@@ -110,10 +116,10 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
+    m_boatTrack->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
-    m_boatTrack->clearData();
     m_navigationArrow->clearData();
     navigationArrowState_ = false;
     m_bounds = Cube();
@@ -395,10 +401,10 @@ void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, 
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
-        .merge(m_surface->bounds())
-        .merge(m_bottomTrack->bounds())
-        .merge(m_polygonGroup->bounds())
-        .merge(m_pointGroup->bounds());
+                   .merge(m_surface->bounds())
+                    .merge(m_bottomTrack->bounds())
+                    .merge(m_polygonGroup->bounds())
+                    .merge(m_pointGroup->bounds());
 
     updatePlaneGrid();
 
@@ -445,11 +451,11 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
+    m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
-    m_renderer->m_boatTrackRenderImpl       = *(view->m_boatTrack->m_renderImpl);
     m_renderer->m_navigationArrowRenderImpl = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;

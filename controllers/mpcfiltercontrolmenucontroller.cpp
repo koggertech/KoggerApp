@@ -20,5 +20,5 @@ void MpcFilterControlMenuController::setGraphicsSceneView(GraphicsScene3dView *s
 
 void MpcFilterControlMenuController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>(QmlObjectNames::mpcFilterControlMenu);
+    m_component = m_engine->findChild<QObject*>(QmlObjectNames::mpcFilterControlMenu());
 }

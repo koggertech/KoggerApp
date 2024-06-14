@@ -15,6 +15,7 @@
 #include "console.h"
 #include "ConverterXTF.h"
 #include <graphicsscene3dview.h>
+#include <boattrackcontrolmenucontroller.h>
 #include <bottomtrackcontrolmenucontroller.h>
 #include <surfacecontrolmenucontroller.h>
 #include <pointgroupcontrolmenucontroller.h>
@@ -115,6 +116,7 @@ private:
 
     /*data*/
     Console* consolePtr_;
+    std::shared_ptr<BoatTrackControlMenuController> boatTrackControlMenuController_;
     std::shared_ptr<BottomTrackControlMenuController> bottomTrackControlMenuController_;
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;

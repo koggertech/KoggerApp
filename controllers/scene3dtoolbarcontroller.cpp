@@ -43,5 +43,5 @@ void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneVi
 
 void Scene3dToolBarController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>(QmlObjectNames::scene3dToolBar);
+    m_component = m_engine->findChild<QObject*>(QmlObjectNames::scene3dToolBar());
 }

@@ -218,6 +218,14 @@ ColumnLayout {
             icon.source: "./icons/route.svg"
             // icon.width: width
             // icon.height: height
+
+            onCheckedChanged: {
+                BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                BoatTrackTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+            }
         }
 
         CheckButton {

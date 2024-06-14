@@ -109,7 +109,7 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
     if (!m_graphicsSceneView)
         return;
 
-    auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);
+    auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu());
 
     if(!menu)
         return;

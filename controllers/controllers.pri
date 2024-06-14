@@ -2,6 +2,7 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
+    $$PWD/boattrackcontrolmenucontroller.h \
     $$PWD/bottomtrackcontrolmenucontroller.h \
     $$PWD/mpcfiltercontrolmenucontroller.h \
     $$PWD/npdfiltercontrolmenucontroller.h \
@@ -14,6 +15,7 @@ HEADERS += \
 
 
 SOURCES += \
+    $$PWD/boattrackcontrolmenucontroller.cpp \
     $$PWD/bottomtrackcontrolmenucontroller.cpp \
     $$PWD/mpcfiltercontrolmenucontroller.cpp \
     $$PWD/npdfiltercontrolmenucontroller.cpp \
