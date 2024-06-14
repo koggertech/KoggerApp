@@ -2,19 +2,19 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 
+
 ColumnLayout {
     Layout.alignment: Qt.AlignHCenter
 
+    // surface extra settings
     MenuFrame {
         id: surfaceSettings
-        visible: updateSurface.hovered || isHovered
+        visible: surfaceCheckButton.checked && (surfaceCheckButton.hovered || isHovered)
         z: surfaceSettings.visible
         Layout.alignment: Qt.AlignHCenter
-        // Layout.fillWidth: true
-        // width: 300
 
         onIsHoveredChanged: {
-            console.debug("menu hovered " + isHovered.toString())
+            console.debug("surface menu hovered " + isHovered.toString())
         }
 
         ColumnLayout {
@@ -23,6 +23,7 @@ ColumnLayout {
                 paramName: "Edge limit, m:"
 
                 SpinBoxCustom {
+                    id: triangleEdgeLengthLimitSpinBox
                     implicitWidth: 110
                     from: 5
                     to: 200
@@ -62,7 +63,7 @@ ColumnLayout {
                 paramName: "Point count:"
 
                 SpinBoxCustom {
-                    // implicitWidth: 110
+                    id: decimationCountSpinBox
                     from: 100
                     to: 10000
                     stepSize: 100
@@ -71,10 +72,12 @@ ColumnLayout {
             }
 
             ParamSetup {
+                //id: decimationDistance
                 visible: decimationDistanceCheck.checked
                 paramName: "Decimation, m:"
 
                 SpinBoxCustom {
+                    id: decimationDistanceSpinBox
                     implicitWidth: 150
                     from: 1
                     to: 100
@@ -109,6 +112,7 @@ ColumnLayout {
                 paramName: "Grid step, m:"
 
                 SpinBoxCustom {
+                    id: gridCellSizeSpinBox
                     implicitWidth: 150
                     from: 1
                     to: 20
@@ -117,10 +121,34 @@ ColumnLayout {
                 }
             }
 
-            CheckButton {
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+
+                CheckButton {
+                    id: contourVisibilityCheckButton
+                    text: qsTr("Show contour")
+                    //checked: true
+                    Layout.fillWidth: true
+                    onToggled: SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                }
+                CheckButton {
+                    id: gridVisibilityCheckButton
+                    text: qsTr("Show grid")
+                    //checked: true
+                    Layout.fillWidth: true
+                    onToggled: SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                }
+            }
+
+            CButton {
                 text: "Update"
                 Layout.fillWidth: true
                 icon.source: "./icons/refresh.svg"
+                onClicked: SurfaceControlMenuController.onUpdateSurfaceButtonClicked(
+                               triangleEdgeLengthLimitSpinBox.value,
+                               !gridTypeCheck.checked ? -1: gridCellSizeSpinBox.value,
+                               !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
+                               !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
             }
         }
     }
@@ -179,11 +207,13 @@ ColumnLayout {
         }
 
         CheckButton {
+            id: boatTrackCheckButton
             implicitHeight: theme.controlHeight
             implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
+            checked: true
 
             icon.source: "./icons/route.svg"
             // icon.width: width
@@ -191,11 +221,13 @@ ColumnLayout {
         }
 
         CheckButton {
+            id: bottomTrackCheckButton
             implicitHeight: theme.controlHeight
             implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
+            checked: true
 
             icon.source: "./icons/overline.svg"
 
@@ -209,20 +241,29 @@ ColumnLayout {
         }
 
         CheckButton {
-            id: updateSurface
+            id: surfaceCheckButton
             implicitHeight: theme.controlHeight
             implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
+            checked: true
             // hoverEnabled: true
 
-            onCheckedChanged: {
+            onCheckedChanged: {                
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
+                SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                contourVisibilityCheckButton.checked = checked
+                gridVisibilityCheckButton.checked = checked
             }
 
             Component.onCompleted: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
+                SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                contourVisibilityCheckButton.checked = checked
+                gridVisibilityCheckButton.checked = checked
             }
 
             icon.source: "./icons/stack-backward.svg"
@@ -243,101 +284,3 @@ ColumnLayout {
         }
     }
 }
-
-// Rectangle {
-//     // color: "#915181"
-
-//     Row {
-//         id: row
-
-//         Button {
-//             id: setCameraIsometricView
-//             width: 40
-//             height: 40
-//             icon.source: "./3dcube.svg"
-
-//             icon.color: theme.textColor
-
-//             background: Rectangle {
-//                 radius: 1
-//                 height: parent.height
-//                 width: parent.width
-//                 color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-//                 border.color: theme.controlBorderColor
-//                 border.width: 1
-//             }
-
-//             onClicked: Scene3dToolBarController.onSetCameraIsometricViewButtonClicked()
-//         }
-
-//         Button {
-//             id: fitAllinViewButton
-//             width: 40
-//             height: 40
-//             icon.source: "./fit-in-view.svg"
-
-//             icon.color: theme.textColor
-
-//             background: Rectangle {
-//                 radius: 1
-//                 height: parent.height
-//                 width: parent.width
-//                 color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-//                 border.color: theme.controlBorderColor
-//                 border.width: 1
-//             }
-
-//             onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
-//         }
-
-//         Row {
-//             id: toolButtonsLayout
-//             Button{
-//                 id: selectionToolButton
-//                 width: 40
-//                 height: 40
-//                 checkable: true
-//                 icon.source: "./one-finger.svg"
-
-//                 icon.color: theme.textColor
-
-//                 background: Rectangle {
-//                     radius: 1
-//                     height: parent.height
-//                     width: parent.width
-//                     color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-//                     border.color: theme.controlBorderColor
-//                     border.width: 1
-//                 }
-
-//                 onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
-//             }
-
-//             Button{
-//                 id: bottomTrackVertexComboSelectionToolButton
-//                 width: 40
-//                 height: 40
-//                 checkable: true
-//                 icon.source: "./combo-selection.svg"
-//                 icon.color: theme.textColor
-
-//                 background: Rectangle {
-//                     radius: 1
-//                     height: parent.height
-//                     width: parent.width
-//                     color: parent.checked ? theme.controlBorderColor : theme.menuBackColor
-//                     border.color: theme.controlBorderColor
-//                     border.width: 1
-//                 }
-
-//                 onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
-//             }
-//         }
-//     }
-
-
-// }
-
-
-
-

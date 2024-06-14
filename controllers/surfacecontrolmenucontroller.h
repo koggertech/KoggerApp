@@ -32,7 +32,10 @@ public:
 
     Q_INVOKABLE void onGridInterpolationCheckBoxCheckedChanged(bool checked);
 
-    Q_INVOKABLE void onUpdateSurfaceButtonClicked();
+    Q_INVOKABLE void onUpdateSurfaceButtonClicked(int triangleEdgeLengthLimitSpinBox,
+                                                  int gridCellSizeSpinBox,
+                                                  int decimationCountSpinBox,
+                                                  int decimationDistanceSpinBox);
 
     Q_INVOKABLE void onFilterTypeComboBoxIndexChanged(int index);
 

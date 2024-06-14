@@ -12,23 +12,24 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
     QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskStarted,
                      this               , &SurfaceControlMenuController::surfaceProcessorTaskStarted);
 
-    QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskFinished, [this](SurfaceProcessor::Result result){
-        if(!m_graphicsSceneView)
-            return;
+    QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskFinished,
+                     this,                [this](SurfaceProcessor::Result result) {
+                                              if (!m_graphicsSceneView)
+                                                  return;
 
-        //QVector<QVector3D> data;
-        //for(const auto& v : qAsConst(result.data))
-        //    data.append({v.x(), v.z(), v.y()});
+                                              //QVector<QVector3D> data;
+                                              //for(const auto& v : qAsConst(result.data))
+                                              //    data.append({v.x(), v.z(), v.y()});
 
+                                              QMetaObject::invokeMethod(m_graphicsSceneView->surface().get(),
+                                                                        "setData",
+                                                                        Qt::QueuedConnection,
+                                                                        Q_ARG(QVector<QVector3D>, result.data),
+                                                                        Q_ARG(int, result.primitiveType));
 
-        QMetaObject::invokeMethod(m_graphicsSceneView->surface().get(),
-                                  "setData",
-                                  Q_ARG(QVector<QVector3D>, result.data),
-                                  Q_ARG(int, result.primitiveType));
-        m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
-
-        Q_EMIT surfaceProcessorTaskFinished();
-    });
+                                              m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
+                                              Q_EMIT surfaceProcessorTaskFinished();
+                                          });
 }
 
 void SurfaceControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
@@ -51,14 +52,17 @@ Surface *SurfaceControlMenuController::surface() const
 
 AbstractEntityDataFilter *SurfaceControlMenuController::inputDataFilter() const
 {
-    auto task = m_graphicsSceneView->surface()->processingTask();
+    if (!m_graphicsSceneView)
+        return nullptr;
+
+    auto task = m_graphicsSceneView->surface()->processingTask(); // ?!
 
     return nullptr;
 }
 
 void SurfaceControlMenuController::onSurfaceVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if(!m_graphicsSceneView)
+    if (!m_graphicsSceneView)
         return;
 
     m_graphicsSceneView->surface()->setVisible(checked);
@@ -66,6 +70,9 @@ void SurfaceControlMenuController::onSurfaceVisibilityCheckBoxCheckedChanged(boo
 
 void SurfaceControlMenuController::onSurfaceContourVisibilityCheckBoxCheckedChanged(bool checked)
 {
+    if (!m_graphicsSceneView)
+        return;
+
     m_graphicsSceneView->surface()->contour()->setVisible(checked);
 }
 
@@ -76,11 +83,17 @@ void SurfaceControlMenuController::onContourColorDialogAccepted(QColor color)
 
 void SurfaceControlMenuController::onSurfaceGridVisibilityCheckBoxCheckedChanged(bool checked)
 {
+    if (!m_graphicsSceneView)
+        return;
+
     m_graphicsSceneView->surface()->grid()->setVisible(checked);
 }
 
 void SurfaceControlMenuController::onGridColorDialogAccepted(QColor color)
 {
+    if (!m_graphicsSceneView)
+        return;
+
     m_graphicsSceneView->surface()->grid()->setColor(color);
 }
 
@@ -93,7 +106,7 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 {
     Q_UNUSED(index);
 
-    if(!m_graphicsSceneView)
+    if (!m_graphicsSceneView)
         return;
 
     auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);
@@ -107,55 +120,33 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
         return;
 }
 
-
-
-void SurfaceControlMenuController::onUpdateSurfaceButtonClicked()
+void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int triangleEdgeLengthLimitSpinBox,
+                                                                int gridCellSizeSpinBox,
+                                                                int decimationCountSpinBox,
+                                                                int decimationDistanceSpinBox)
 {
-    auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu);
-
-    if(!menu)
+    if (!m_graphicsSceneView) {
+        qDebug().noquote() << "m_graphicsSceneView is nullptr!";
         return;
+    }
 
-    auto triangleEdgeLengthSpinBox = menu->findChild<QObject*>("triangleEdgeLengthLimitSpinBox");
-    auto gridCellSizeSpinBox = menu->findChild<QObject*>("gridCellSizeSpinBox");
-    auto gridInterpSpinBox = menu->findChild<QObject*>("gridInterpolationCheckBox");
-
-    if(m_surfaceProcessor.isBusy()){
+    if (m_surfaceProcessor.isBusy()) {
         qDebug().noquote() << "Surface processor is busy!";
         return;
     }
 
-    if(!m_graphicsSceneView)
-        return;
-
     SurfaceProcessorTask task;
-
-    task.setGridInterpEnabled(gridInterpSpinBox->property("checked").toBool());
-    task.setInterpGridCellSize(gridCellSizeSpinBox->property("value").toInt());
+    task.setGridInterpEnabled(gridCellSizeSpinBox == -1 ? false : true);
+    task.setInterpGridCellSize(gridCellSizeSpinBox);
     task.setBottomTrack(m_graphicsSceneView->bottomTrack());
-    task.setEdgeLengthLimit(triangleEdgeLengthSpinBox->property("value").toInt());
-
+    task.setEdgeLengthLimit(triangleEdgeLengthLimitSpinBox);
     std::shared_ptr<AbstractEntityDataFilter> filter;
-
-    auto filterTypeComboBox = menu->findChild<QObject*>("filterTypeCombo");
-    auto filterParamsMenuLoader = menu->findChild<QObject*>("filterParamsLoader");
-
-    if(filterTypeComboBox->property("currentIndex") == AbstractEntityDataFilter::FilterType::MaxPointsCount){
-        auto mpcFilterMenu = filterParamsMenuLoader->findChild<QObject*>("mpcFilterControlMenu");
-        auto pointsCountSpinBox = mpcFilterMenu->findChild<QObject*>("pointsCountSpinBox");
-
-        int v = pointsCountSpinBox->property("value").toInt();
-        Q_UNUSED(v);
-
-        filter = std::make_shared<MaxPointsFilter>(pointsCountSpinBox->property("value").toInt());
+    if (decimationCountSpinBox != -1) {
+        filter = std::make_shared<MaxPointsFilter>(decimationCountSpinBox);
     }
-
-    if(filterTypeComboBox->property("currentIndex") == AbstractEntityDataFilter::FilterType::NearestPointDistance){
-        auto npdFilterMenu = filterParamsMenuLoader->findChild<QObject*>("npdFilterControlMenu");
-        auto distanceSpinBox = npdFilterMenu->findChild<QObject*>("distanceValueSpinBox");
-        filter = std::make_shared<NearestPointFilter>(distanceSpinBox->property("value").toFloat());
+    else if (decimationDistanceSpinBox != -1) {
+        filter = std::make_shared<NearestPointFilter>(static_cast<float>(decimationDistanceSpinBox));
     }
-
     task.setBottomTrackDataFilter(filter);
 
     m_surfaceProcessor.startInThread(task);

@@ -13,7 +13,9 @@ const QString UnderlyingThreadName = "SurfaceProcessorThread";
 
 SurfaceProcessor::SurfaceProcessor(QObject *parent)
     : QObject{parent}
-{}
+{
+    qRegisterMetaType<Result>("Result");
+}
 
 SurfaceProcessor::~SurfaceProcessor()
 {

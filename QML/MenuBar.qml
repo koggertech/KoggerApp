@@ -60,7 +60,7 @@ Item {
                 }
             }
 
-            MenuButton {
+            /*MenuButton {
                 id: menu3DSettings
                 visible: instruments > 0
                 icon.source: "./3dcube.svg"
@@ -70,7 +70,7 @@ Item {
                 onPressed: {
                     itemChangeActive(menu3DSettings)
                 }
-            }
+            }*/
 
             CheckButton {
                 id: settings3DButton
@@ -131,7 +131,7 @@ Item {
             targetPlot: menu.targetPlot
         }
 
-        SceneControlMenu {
+        /*SceneControlMenu {
             id:                 sceneControlMenu
             objectName:         "sceneControlMenu"
             Layout.alignment: Qt.AlignTop
@@ -141,6 +141,6 @@ Item {
             width: settingsWidth
             implicitWidth: settingsWidth
             visible:            menu3DSettings.active
-        }
+        }*/
     }
 }
