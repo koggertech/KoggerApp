@@ -1,10 +1,9 @@
-#ifndef BOTTOMTRACK_H
-#define BOTTOMTRACK_H
-
-#include <sceneobject.h>
-#include <plotcash.h>
+#pragma once
 
 #include <memory>
+#include "sceneobject.h"
+#include "plotcash.h"
+
 
 class GraphicsScene3dView;
 class Surface;
@@ -31,8 +30,7 @@ public:
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     private:
         friend class BottomTrack;
-        QVector<int> m_selectedVertexIndices;
-        bool m_isDisplayingWithSurface = true;
+        QVector<int> selectedVertexIndices_;
         bool surfaceUpdated_;
         bool surfaceState_;
     };
@@ -51,7 +49,6 @@ public Q_SLOTS:
     virtual void clearData() override;
     void isEpochsChanged(int lEpoch, int rEpoch);
     void resetVertexSelection();
-    void setDisplayingWithSurface(bool displaying);
     void setVisibleChannel(int channelIndex);
     void setVisibleChannel(const DatasetChannel& channel);
     void selectEpoch(int epochIndex, int channelId);
@@ -79,10 +76,8 @@ protected:
 private:
     using EpochIndex = int;
     using VerticeIndex = int;
-    QHash<VerticeIndex,EpochIndex> m_epochIndexMatchingMap;
-    DatasetChannel m_visibleChannel;
+    QHash<VerticeIndex,EpochIndex> epochIndexMatchingMap_;
+    DatasetChannel visibleChannel_;
     Dataset* datasetPtr_;
     QVector<QVector3D> renderData_;
 };
-
-#endif // BOTTOMTRACK_H
