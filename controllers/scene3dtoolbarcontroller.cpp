@@ -28,14 +28,6 @@ void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool 
         m_graphicsSceneView->setIdleMode();
 }
 
-void Scene3dToolBarController::onBottomTrackVertexComboSelectionModeButtonChecked(bool checked)
-{
-    if(checked)
-        m_graphicsSceneView->setBottomTrackVertexComboSelectionMode();
-    else
-        m_graphicsSceneView->setIdleMode();
-}
-
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;

@@ -250,23 +250,24 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         }
     }
 
-    if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode && key == Qt::Key_Delete) {
+    if (key == Qt::Key_Delete) {
         const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
-        bool isSomethingDeleted{ false };
-        for (const auto& verticeIndex : indices) {
-            const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
-            if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
-                epoch->clearDistProcessing(visibleChannel_.channel);
-                Q_EMIT epochErased(epochIndex);
-                isSomethingDeleted = true;
+        if (!indices.isEmpty()) {
+            bool isSomethingDeleted{ false };
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
+                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    Q_EMIT epochErased(epochIndex);
+                    isSomethingDeleted = true;
+                }
+            }
+            if (isSomethingDeleted) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+                updateRenderData();
+                emit datasetPtr_->dataUpdate();
             }
         }
-        if (isSomethingDeleted) {
-            RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-            updateRenderData();
-            emit datasetPtr_->dataUpdate();
-        }
-        m_view->m_comboSelectionRect = { m_view->m_comboSelectionRect.bottomRight(), m_view->m_comboSelectionRect.bottomRight() };
     }
 }
 

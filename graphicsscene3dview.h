@@ -158,7 +158,6 @@ public Q_SLOTS:
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
     void setBottomTrackVertexSelectionMode();
-    void setBottomTrackVertexComboSelectionMode();
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
@@ -167,6 +166,7 @@ public Q_SLOTS:
 private:
     void updateBounds();
     void updatePlaneGrid();
+    void clearComboSelectionRect();
 
 private:
     friend class BottomTrack;
@@ -190,12 +190,13 @@ private:
     QMatrix4x4 m_projection;
     Cube m_bounds;
     ActiveMode m_mode = Idle;
-    QRect m_comboSelectionRect = {0,0,0,0};
+    QRect m_comboSelectionRect = { 0, 0, 0, 0 };
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+    ActiveMode activeModeBeforeRmb_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

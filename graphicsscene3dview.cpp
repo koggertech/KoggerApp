@@ -9,20 +9,21 @@
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 
-GraphicsScene3dView::GraphicsScene3dView()
-: QQuickFramebufferObject()
-, m_camera(std::make_shared<Camera>())
-, m_axesThumbnailCamera(std::make_shared<Camera>())
-, m_rayCaster(std::make_shared<RayCaster>())
-, m_surface(std::make_shared<Surface>())
-, m_boatTrack(std::make_shared<BoatTrack>())
-, m_bottomTrack(std::make_shared<BottomTrack>(this, this))
-, m_polygonGroup(std::make_shared<PolygonGroup>())
-, m_pointGroup(std::make_shared<PointGroup>())
-, m_coordAxes(std::make_shared<CoordinateAxes>())
-, m_planeGrid(std::make_shared<PlaneGrid>())
-, m_navigationArrow(std::make_shared<NavigationArrow>())
-, navigationArrowState_(true)
+GraphicsScene3dView::GraphicsScene3dView() :
+    QQuickFramebufferObject(),
+    m_camera(std::make_shared<Camera>()),
+    m_axesThumbnailCamera(std::make_shared<Camera>()),
+    m_rayCaster(std::make_shared<RayCaster>()),
+    m_surface(std::make_shared<Surface>()),
+    m_boatTrack(std::make_shared<BoatTrack>()),
+    m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
+    m_polygonGroup(std::make_shared<PolygonGroup>()),
+    m_pointGroup(std::make_shared<PointGroup>()),
+    m_coordAxes(std::make_shared<CoordinateAxes>()),
+    m_planeGrid(std::make_shared<PlaneGrid>()),
+    m_navigationArrow(std::make_shared<NavigationArrow>()),
+    navigationArrowState_(true),
+    activeModeBeforeRmb_(ActiveMode::Idle)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -144,8 +145,13 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 {
     Q_UNUSED(keyboardKey)
 
-    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton)) {
+    clearComboSelectionRect();
+
+    if (mouseButton & Qt::RightButton) {
         m_bottomTrack->resetVertexSelection();
+        activeModeBeforeRmb_ = m_mode;
+        m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
+
         m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
     }
@@ -166,7 +172,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
 
-    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton)) {
+    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::RightButton)) {
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
         m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     }
@@ -207,7 +213,14 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 {
     Q_UNUSED(keyboardKey);
 
-    //TODO: Commit only if camera in movement state
+    clearComboSelectionRect();
+
+    if (activeModeBeforeRmb_ != ActiveMode::Idle) {
+        m_mode = activeModeBeforeRmb_;
+        activeModeBeforeRmb_ = ActiveMode::Idle;
+    }
+
+    //TODO: Commit only if camera in movement state    
     m_camera->commitMovement();
     m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
     m_lastMousePos = { x, y };
@@ -303,7 +316,7 @@ void GraphicsScene3dView::setIdleMode()
 {
     m_mode = Idle;
 
-    m_comboSelectionRect = {0,0,0,0};
+    clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
 
     QQuickFramebufferObject::update();
@@ -337,15 +350,6 @@ void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::setBottomTrackVertexComboSelectionMode()
-{
-    setIdleMode();
-
-    m_mode = BottomTrackVertexComboSelectionMode;
-
-    QQuickFramebufferObject::update();
-}
-
 void GraphicsScene3dView::setPolygonCreationMode()
 {
     setIdleMode();
@@ -366,25 +370,32 @@ void GraphicsScene3dView::setPolygonEditingMode()
 
 void GraphicsScene3dView::setDataset(Dataset *dataset)
 {
-    if(m_dataset)
+    if (m_dataset)
         QObject::disconnect(m_dataset);
 
     m_dataset = dataset;
 
-    if(!m_dataset)
+    if (!m_dataset)
         return;
 
     m_bottomTrack->setDatasetPtr(m_dataset);
 
-    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated, m_bottomTrack.get(), &BottomTrack::isEpochsChanged);
-    QObject::connect(m_dataset, &Dataset::boatTrackUpdated, this, [this]()->void {
-        m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-        if (navigationArrowState_) {
-            const Position pos = m_dataset->getLastPosition();
-            m_navigationArrow->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
-        }
-    });
-
+    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
+                     this,      [this](int lEpoch, int rEpoch) -> void {
+                                    clearComboSelectionRect();
+                                    m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
+                                }
+                     );
+    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
+                     this,      [this]() -> void {
+                                    m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+                                    if (navigationArrowState_) {
+                                        const Position pos = m_dataset->getLastPosition();
+                                        m_navigationArrow->setPositionAndAngle(
+                                            QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
+                                    }
+                                }
+                     );
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {
@@ -422,6 +433,11 @@ void GraphicsScene3dView::updatePlaneGrid()
     //     m_planeGrid->setCellSize(5);
     // if(m_camera->distToFocusPoint() > 230)
     //     m_planeGrid->setCellSize(10);
+}
+
+void GraphicsScene3dView::clearComboSelectionRect()
+{
+    m_comboSelectionRect = { 0, 0, 0, 0 };
 }
 
 //---------------------Renderer---------------------------//

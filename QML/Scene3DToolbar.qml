@@ -196,19 +196,6 @@ ColumnLayout {
             onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
         }
 
-        MenuButton {
-            id: bottomTrackVertexComboSelectionToolButton
-            width: theme.controlHeight
-            height: theme.controlHeight
-            checkable: true
-            active: checked
-            icon.source: "./combo-selection.svg"
-            icon.color: theme.textColor
-            ButtonGroup.group: buttonGroup
-
-            onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
-        }
-
         CheckButton {
             id: boatTrackCheckButton
             implicitHeight: theme.controlHeight
