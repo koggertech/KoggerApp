@@ -150,6 +150,8 @@ Window  {
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
+                        property int lastMouseKeyPressed: Qt.NoButton // TODO: maybe this mouseArea should be outside pinchArea
+
                         onEntered: {
                             mousearea3D.forceActiveFocus();
                         }
@@ -163,11 +165,13 @@ Window  {
                         }
 
                         onPressed: {
+                            lastMouseKeyPressed = mouse.buttons
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onReleased: {
-                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+                            renderer.mouseReleaseTrigger(lastMouseKeyPressed, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+                            lastMouseKeyPressed = Qt.NoButton
                         }
                     }
                 }

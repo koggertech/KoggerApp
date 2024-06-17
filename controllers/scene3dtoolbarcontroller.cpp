@@ -20,14 +20,6 @@ void Scene3dToolBarController::onSetCameraMapViewButtonClicked() {
     m_graphicsSceneView->setMapView();
 }
 
-void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool checked)
-{
-    if(checked)
-        m_graphicsSceneView->setBottomTrackVertexSelectionMode();
-    else
-        m_graphicsSceneView->setIdleMode();
-}
-
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;

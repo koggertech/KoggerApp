@@ -103,7 +103,7 @@ public:
     };
 
     enum ActiveMode{
-        Idle                                = 0,
+        Idle                                = 0, // not used
         BottomTrackVertexSelectionMode      = 1,
         BottomTrackVertexComboSelectionMode = 2,
         PolygonCreationMode                 = 3,
@@ -157,7 +157,6 @@ public Q_SLOTS:
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
-    void setBottomTrackVertexSelectionMode();
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
@@ -189,14 +188,15 @@ private:
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
-    ActiveMode m_mode = Idle;
+    ActiveMode m_mode = ActiveMode::BottomTrackVertexSelectionMode;
     QRect m_comboSelectionRect = { 0, 0, 0, 0 };
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
-    ActiveMode activeModeBeforeRmb_;
+    bool wasMoved_;
+    Qt::MouseButtons wasMovedMouseButton_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

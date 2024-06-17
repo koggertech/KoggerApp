@@ -183,19 +183,6 @@ ColumnLayout {
             onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
         }
 
-        MenuButton {
-            id: selectionToolButton
-            width: theme.controlHeight
-            height: theme.controlHeight
-            checkable: true
-            active: checked
-            icon.source: "./icons/click.svg"
-            icon.color: theme.textColor
-            ButtonGroup.group: buttonGroup
-
-            onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
-        }
-
         CheckButton {
             id: boatTrackCheckButton
             implicitHeight: theme.controlHeight

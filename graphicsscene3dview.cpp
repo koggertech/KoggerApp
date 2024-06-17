@@ -23,7 +23,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     navigationArrowState_(true),
-    activeModeBeforeRmb_(ActiveMode::Idle)
+    wasMoved_(false),
+    wasMovedMouseButton_(Qt::MouseButton::NoButton)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -145,25 +146,29 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 {
     Q_UNUSED(keyboardKey)
 
+    wasMoved_ = false;
+    m_mode = ActiveMode::BottomTrackVertexSelectionMode;
     clearComboSelectionRect();
 
-    if (mouseButton & Qt::RightButton) {
+    if (mouseButton == Qt::MouseButton::RightButton) {
         m_bottomTrack->resetVertexSelection();
-        activeModeBeforeRmb_ = m_mode;
         m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
 
         m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
     }
 
-    m_bottomTrack->mousePressEvent(mouseButton, x, y);
     m_startMousePos = { x, y };
-
     QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
+    if (wasMovedMouseButton_ != mouseButton)
+        wasMovedMouseButton_ = mouseButton;
+    if (!wasMoved_)
+        wasMoved_ = true;
+
     // ray for marker
     auto toOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
     auto toEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
@@ -174,9 +179,6 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
 
     if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::RightButton)) {
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
-        m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
-    }
-    else if (m_mode == BottomTrackVertexSelectionMode) {
         m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     }
     else {
@@ -205,7 +207,6 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     }
 
     m_lastMousePos = { x, y };
-
     QQuickFramebufferObject::update();
 }
 
@@ -215,15 +216,20 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
     clearComboSelectionRect();
 
-    if (activeModeBeforeRmb_ != ActiveMode::Idle) {
-        m_mode = activeModeBeforeRmb_;
-        activeModeBeforeRmb_ = ActiveMode::Idle;
+    //TODO: Commit only if camera in movement state
+    m_camera->commitMovement();
+    m_lastMousePos = { x, y };
+
+    if (mouseButton == Qt::MouseButton::RightButton) {
+        m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
+    }
+    if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
+        m_bottomTrack->resetVertexSelection();
+        m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
     }
 
-    //TODO: Commit only if camera in movement state    
-    m_camera->commitMovement();
-    m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
-    m_lastMousePos = { x, y };
+    wasMoved_ = false;
+    wasMovedMouseButton_ = Qt::MouseButton::NoButton;
 
     QQuickFramebufferObject::update();
 }
@@ -314,7 +320,7 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setIdleMode()
 {
-    m_mode = Idle;
+    m_mode = BottomTrackVertexSelectionMode;
 
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
@@ -339,15 +345,6 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 void GraphicsScene3dView::shiftCameraZAxis(float shift)
 {
     m_camera->moveZAxis(shift);
-}
-
-void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
-{
-    setIdleMode();
-
-    m_mode = BottomTrackVertexSelectionMode;
-
-    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::setPolygonCreationMode()
