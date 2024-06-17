@@ -7,12 +7,17 @@
 
 #include <QHash>
 
-BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
-    : SceneObject(new BottomTrackRenderImplementation,view,parent), datasetPtr_(nullptr)
-{}
+BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent) :
+    SceneObject(new BottomTrackRenderImplementation, view, parent),
+    datasetPtr_(nullptr)
+{
+
+}
 
 BottomTrack::~BottomTrack()
-{}
+{
+
+}
 
 SceneObject::SceneObjectType BottomTrack::type() const
 {
@@ -135,6 +140,16 @@ void BottomTrack::selectEpoch(int epochIndex, int channelId)
     r->m_selectedVertexIndices.append(m_epochIndexMatchingMap.key(epochIndex));
 
     Q_EMIT changed();
+}
+
+void BottomTrack::surfaceUpdated()
+{
+    RENDER_IMPL(BottomTrack)->surfaceUpdated_ = true;
+}
+
+void BottomTrack::surfaceStateChanged(bool state)
+{
+    RENDER_IMPL(BottomTrack)->surfaceState_ = state;
 }
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -304,7 +319,9 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 
 //-----------------------RenderImplementation-----------------------------//
 
-BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation()
+BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation() :
+    surfaceUpdated_(false),
+    surfaceState_(false)
 {}
 
 BottomTrack::BottomTrackRenderImplementation::~BottomTrackRenderImplementation()
@@ -335,12 +352,13 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     QOpenGLShaderProgram* shaderProgram = nullptr;
     int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    if(m_isDisplayingWithSurface){
+    if (surfaceUpdated_ && surfaceState_ /*!m_isDisplayingWithSurface*/){
         shaderProgram = shaderProgramMap["static"].get();
         shaderProgram->bind();
         colorLoc = shaderProgram->uniformLocation("color");
         shaderProgram->setUniformValue(colorLoc,QVector4D(1.0f, 0.2f, 0.2f, 1.0f));
-    }else{
+    }
+    else {
         shaderProgram = shaderProgramMap["height"].get();
         shaderProgram->bind();
         maxZLoc = shaderProgram->uniformLocation("max_z");

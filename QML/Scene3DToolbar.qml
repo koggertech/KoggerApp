@@ -14,7 +14,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
 
         onIsHoveredChanged: {
-            console.debug("surface menu hovered " + isHovered.toString())
+            //console.debug("surface menu hovered " + isHovered.toString())
         }
 
         ColumnLayout {
@@ -144,11 +144,14 @@ ColumnLayout {
                 text: "Update"
                 Layout.fillWidth: true
                 icon.source: "./icons/refresh.svg"
-                onClicked: SurfaceControlMenuController.onUpdateSurfaceButtonClicked(
-                               triangleEdgeLengthLimitSpinBox.value,
-                               !gridTypeCheck.checked ? -1: gridCellSizeSpinBox.value,
-                               !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
-                               !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
+                onClicked: {
+                    SurfaceControlMenuController.onUpdateSurfaceButtonClicked(
+                        triangleEdgeLengthLimitSpinBox.value,
+                        !gridTypeCheck.checked ? -1: gridCellSizeSpinBox.value,
+                        !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
+                        !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
+                    BottomTrackControlMenuController.onSurfaceUpdated()
+                }
             }
         }
     }
@@ -258,12 +261,13 @@ ColumnLayout {
             checked: true
             // hoverEnabled: true
 
-            onCheckedChanged: {                
+            onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
                 SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
                 SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
                 contourVisibilityCheckButton.checked = checked
                 gridVisibilityCheckButton.checked = checked
+                BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
             Component.onCompleted: {
@@ -272,6 +276,7 @@ ColumnLayout {
                 SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
                 contourVisibilityCheckButton.checked = checked
                 gridVisibilityCheckButton.checked = checked
+                BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
             icon.source: "./icons/stack-backward.svg"

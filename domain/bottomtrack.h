@@ -33,6 +33,8 @@ public:
         friend class BottomTrack;
         QVector<int> m_selectedVertexIndices;
         bool m_isDisplayingWithSurface = true;
+        bool surfaceUpdated_;
+        bool surfaceState_;
     };
 
     explicit BottomTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
@@ -53,6 +55,8 @@ public Q_SLOTS:
     void setVisibleChannel(int channelIndex);
     void setVisibleChannel(const DatasetChannel& channel);
     void selectEpoch(int epochIndex, int channelId);
+    void surfaceUpdated();
+    void surfaceStateChanged(bool state);
 
 Q_SIGNALS:
     void epochHovered(int epochIndex);

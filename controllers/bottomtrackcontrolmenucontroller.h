@@ -21,6 +21,8 @@ public:
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onVisibleChannelComboBoxIndexChanged(int index);
+    Q_INVOKABLE void onSurfaceUpdated();
+    Q_INVOKABLE void onSurfaceStateChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
