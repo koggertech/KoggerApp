@@ -28,7 +28,7 @@ void qPlot2D::paint(QPainter *painter) {
     clock_t start = clock();
 
     if(m_plot != nullptr && painter != nullptr) {
-        getImage((int)width(), (int)height(), painter, _isHorizontal);
+        Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
     }
 
     clock_t end = clock();
@@ -99,6 +99,10 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
     Q_UNUSED(watched);
 
     if (event->type() == EpochSelected3d) {
+        if (_cursor._tool != MouseToolNothing) {
+            _cursor._tool = MouseToolNothing;
+            emit onToolChanged();
+        }
         auto epochEvent = static_cast<EpochEvent*>(event);
         //qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
         setTimelinePositionByEpoch(epochEvent->epochIndex());
@@ -107,7 +111,8 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
 }
 
 void qPlot2D::sendSyncEvent(int epoch_index) {
-    // qDebug() << "Cursor epoch" << epoch_index;
+    //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
+    _cursor.selectEpochIndx = -1;
     auto epochEvent = new EpochEvent(EpochSelected2d, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
     QCoreApplication::postEvent(this, epochEvent);
 }

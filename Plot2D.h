@@ -840,7 +840,8 @@ protected:
 };
 
 
-class Plot2D {
+class Plot2D
+{
 public:
     Plot2D();
 
@@ -858,6 +859,7 @@ public:
     void setTimelinePositionByEpoch(int epochIndx);
 
     float timelinePosition() { return _cursor.position;}
+    int getToolMode() const;
     void scrollPosition(int columns);
 
     void setDataChannel(int channel, int channel2 = CHANNEL_NONE);
@@ -898,7 +900,9 @@ public:
 
     virtual void plotUpdate() {}
 
-    virtual void sendSyncEvent(int epoch_index) { Q_UNUSED(epoch_index); }
+    virtual void sendSyncEvent(int epoch_index) {
+        Q_UNUSED(epoch_index);
+    }
 
 protected:
     Dataset* _dataset = NULL;

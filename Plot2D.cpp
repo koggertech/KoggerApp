@@ -1,7 +1,9 @@
 #include "Plot2D.h"
 #include <epochevent.h>
 
-Plot2D::Plot2D() {
+
+Plot2D::Plot2D()
+{
     _echogram.setVisible(true);
     _attitude.setVisible(true);
     _DVLBeamVelocity.setVisible(true);
@@ -74,6 +76,11 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx) {
     float pos = epochIndx == -1 ? _cursor.position : static_cast<float>(epochIndx + _cursor.indexes.size() / 2) / static_cast<float>(_dataset->size());
     _cursor.selectEpochIndx = epochIndx;
     setTimelinePositionSec(pos);
+}
+
+int Plot2D::getToolMode() const
+{
+    return static_cast<int>(_cursor._tool);
 }
 
 void Plot2D::scrollPosition(int columns) {
@@ -340,7 +347,7 @@ void Plot2D::setMousePosition(int x, int y) {
 //    _mouse.x = x;
 //    _mouse.y = y;
 
-    qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
+    //qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
     int epoch_index = _cursor.getIndex(x_start);
 
     sendSyncEvent(epoch_index);

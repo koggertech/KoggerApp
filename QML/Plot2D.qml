@@ -187,67 +187,76 @@ WaterFall {
 
         CheckButton {
             Layout.fillWidth: true
-            // text: "⇔"
             icon.source: "./icons/direction-arrows.svg"
-            // checkable: true
-            checked: true
-            // padding: 0
+            checked: plot.toolMode == 1
             backColor: theme.controlBackColor
+
             onCheckedChanged: {
-                if(checked) {  plot.plotMouseTool(1) }
+                if (checked) {
+                    plot.plotMouseTool(1)
+                }
             }
+
             ButtonGroup.group: pencilbuttonGroup
         }
 
         CheckButton {
             Layout.fillWidth: true
-            // text: "⇲"
-            // checkable: true
-            // padding: 0
             icon.source: "./icons/arrow-bar-to-down.svg"
+            checked: plot.toolMode == 2
             backColor: theme.controlBackColor
+
             onCheckedChanged: {
-                if(checked) {  plot.plotMouseTool(2) }
+                if (checked) {
+                    plot.plotMouseTool(2)
+                }
             }
+
             ButtonGroup.group: pencilbuttonGroup
         }
 
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/pencil.svg"
+            checked: plot.toolMode == 3
             backColor: theme.controlBackColor
-            // text: "═"
-            // checkable: true
-            // padding: 0
+
             onCheckedChanged: {
-                if(checked) {  plot.plotMouseTool(3) }
+                if (checked) {
+                    plot.plotMouseTool(3)
+                }
             }
+
             ButtonGroup.group: pencilbuttonGroup
         }
 
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/arrow-bar-to-up.svg"
+            checked: plot.toolMode == 4
             backColor: theme.controlBackColor
-            // text: "⇱"
-            // checkable: true
-            // padding: 0
+
             onCheckedChanged: {
-                if(checked) {  plot.plotMouseTool(4) }
+                if (checked) {
+                    plot.plotMouseTool(4)
+                }
             }
+
             ButtonGroup.group: pencilbuttonGroup
         }
 
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/eraser.svg"
+            checked: plot.toolMode == 5
             backColor: theme.controlBackColor
-            // text: "✕"
-            // checkable: true
-            // padding: 0
+
             onCheckedChanged: {
-                if(checked) {  plot.plotMouseTool(5) }
+                if (checked) {
+                    plot.plotMouseTool(5)
+                }
             }
+
             ButtonGroup.group: pencilbuttonGroup
         }
     }

@@ -17,6 +17,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
+    Q_PROPERTY(int toolMode READ getToolMode NOTIFY onToolChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
@@ -40,6 +41,7 @@ protected:
 
 signals:
     void timelinePositionChanged();
+    void onToolChanged();
 
 protected slots:
     void timerUpdater();
@@ -51,7 +53,7 @@ public slots:
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
     void plotMousePosition(int x, int y);
-    void plotMouseTool(int mode);
+    Q_INVOKABLE void plotMouseTool(int mode);
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }

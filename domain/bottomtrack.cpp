@@ -30,7 +30,10 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
 
     if (event->type() == EpochSelected2d) {
         auto epochEvent = static_cast<EpochEvent*>(event);
+        resetVertexSelection();
+        m_view->m_mode = GraphicsScene3dView::ActiveMode::BottomTrackVertexSelectionMode;
         selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
+        m_view->update();
     }
     return false;
 }
