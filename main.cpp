@@ -112,6 +112,12 @@ int main(int argc, char *argv[])
     }
 #endif
 
+    QObject::connect(&app,  &QGuiApplication::aboutToQuit,
+                     &core, [&]() {
+                                core.stopLinkManagerTimer();
+                                //core.stopFileReader();
+                            });
+
     engine.load(url);
     qCritical() << "App is created";
     return app.exec();
