@@ -115,6 +115,8 @@ void qPlot2D::sendSyncEvent(int epoch_index) {
 }
 
 void qPlot2D::horScrollEvent(int delta) {
+    _cursor.selectEpochIndx = -1;
+
     if(_isHorizontal) {
         scrollPosition(-delta);
     } else {

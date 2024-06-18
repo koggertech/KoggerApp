@@ -860,7 +860,7 @@ public:
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
     void setAimEpochEventState(bool state);
-    void setTimelinePosition(float position);
+    void setTimelinePosition(float position, bool fromGui = false);
     void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
 

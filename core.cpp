@@ -759,11 +759,11 @@ void Core::setPlotStopLevel(int level)
     }
 }
 
-void Core::setTimelinePosition(double position)
+void Core::setTimelinePosition(double position, bool fromGui)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL)
-            plot2dList_.at(i)->setTimelinePosition(position);
+            plot2dList_.at(i)->setTimelinePosition(position, fromGui);
     }
 }
 
