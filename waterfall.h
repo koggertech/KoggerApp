@@ -17,7 +17,6 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
-    Q_PROPERTY(int toolMode READ getToolMode NOTIFY onToolChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
@@ -41,7 +40,6 @@ protected:
 
 signals:
     void timelinePositionChanged();
-    void onToolChanged();
 
 protected slots:
     void timerUpdater();

@@ -814,7 +814,7 @@ public:
         const int image_height = canvas.height();
         const int image_width = canvas.width();
 
-        if(cursor._tool == MouseToolNothing) {
+        if (cursor._tool == MouseToolNothing || beenEpochEvent_) {
             p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
             p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
         }
@@ -834,7 +834,12 @@ public:
         return true;
     }
 
+    void setEpochEventState(bool state) {
+        beenEpochEvent_ = state;
+    }
+
 protected:
+    bool beenEpochEvent_ = false;
     int _lineWidth = 1;
     QColor _lineColor = QColor(255, 255, 255, 255);
 };
@@ -854,12 +859,12 @@ public:
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
+    void setAimEpochEventState(bool state);
     void setTimelinePosition(float position);
     void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
 
     float timelinePosition() { return _cursor.position;}
-    int getToolMode() const;
     void scrollPosition(int columns);
 
     void setDataChannel(int channel, int channel2 = CHANNEL_NONE);

@@ -53,6 +53,11 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
     return true;
 }
 
+void Plot2D::setAimEpochEventState(bool state)
+{
+    _aim.setEpochEventState(state);
+}
+
 void Plot2D::setTimelinePosition(float position) {
     if(position > 1.0f) { position = 1.0f; }
     if(position < 0) { position = 0; }
@@ -76,11 +81,6 @@ void Plot2D::setTimelinePositionByEpoch(int epochIndx) {
     float pos = epochIndx == -1 ? _cursor.position : static_cast<float>(epochIndx + _cursor.indexes.size() / 2) / static_cast<float>(_dataset->size());
     _cursor.selectEpochIndx = epochIndx;
     setTimelinePositionSec(pos);
-}
-
-int Plot2D::getToolMode() const
-{
-    return static_cast<int>(_cursor._tool);
 }
 
 void Plot2D::scrollPosition(int columns) {

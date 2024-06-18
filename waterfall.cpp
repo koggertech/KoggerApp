@@ -99,12 +99,9 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
     Q_UNUSED(watched);
 
     if (event->type() == EpochSelected3d) {
-        if (_cursor._tool != MouseToolNothing) {
-            _cursor._tool = MouseToolNothing;
-            emit onToolChanged();
-        }
         auto epochEvent = static_cast<EpochEvent*>(event);
         //qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
+        setAimEpochEventState(true);
         setTimelinePositionByEpoch(epochEvent->epochIndex());
     }
     return false;
@@ -162,6 +159,7 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
 }
 
 void qPlot2D::plotMousePosition(int x, int y) {
+    setAimEpochEventState(false);
     if(_isHorizontal) {
         setMousePosition(x, y);
     } else {

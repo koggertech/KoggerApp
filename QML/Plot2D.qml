@@ -188,7 +188,7 @@ WaterFall {
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/direction-arrows.svg"
-            checked: plot.toolMode == 1
+            checked: true
             backColor: theme.controlBackColor
 
             onCheckedChanged: {
@@ -203,7 +203,6 @@ WaterFall {
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/arrow-bar-to-down.svg"
-            checked: plot.toolMode == 2
             backColor: theme.controlBackColor
 
             onCheckedChanged: {
@@ -218,7 +217,6 @@ WaterFall {
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/pencil.svg"
-            checked: plot.toolMode == 3
             backColor: theme.controlBackColor
 
             onCheckedChanged: {
@@ -233,7 +231,6 @@ WaterFall {
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/arrow-bar-to-up.svg"
-            checked: plot.toolMode == 4
             backColor: theme.controlBackColor
 
             onCheckedChanged: {
@@ -248,7 +245,6 @@ WaterFall {
         CheckButton {
             Layout.fillWidth: true
             icon.source: "./icons/eraser.svg"
-            checked: plot.toolMode == 5
             backColor: theme.controlBackColor
 
             onCheckedChanged: {
