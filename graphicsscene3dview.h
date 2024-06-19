@@ -157,6 +157,7 @@ public Q_SLOTS:
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
+    void setBottomTrackVertexSelectionMode();
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
@@ -189,13 +190,14 @@ private:
     QMatrix4x4 m_projection;
     Cube m_bounds;
     ActiveMode m_mode = ActiveMode::BottomTrackVertexSelectionMode;
+    ActiveMode lastMode_ = ActiveMode::BottomTrackVertexSelectionMode;
     QRect m_comboSelectionRect = { 0, 0, 0, 0 };
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
-    static constexpr double mouseThreshold_{ 17.0 };
+    static constexpr double mouseThreshold_{ 10.0 };
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
 };

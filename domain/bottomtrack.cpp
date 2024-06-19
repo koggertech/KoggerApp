@@ -422,17 +422,17 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
 
-    if (selectedVertices.size() > 1)
-        return;
+    //if (selectedVertices.size() > 1)
+    //    return;
 
-    QRectF vport = DrawUtils::viewportRect(ctx);
+    //QRectF vport = DrawUtils::viewportRect(ctx);
 
-    QVector3D p = selectedVertices.first();
-    QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
-    p_screen.setY(vport.height() - p_screen.y());
+    //QVector3D p = selectedVertices.first();
+    //QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
+    //p_screen.setY(vport.height() - p_screen.y());
 
-    QMatrix4x4 textProjection;
-    textProjection.ortho(vport.toRect());
+    //QMatrix4x4 textProjection;
+    //textProjection.ortho(vport.toRect());
 
     //TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()), TODO
     //                                0.3f,

@@ -148,13 +148,12 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     Q_UNUSED(keyboardKey)
 
     wasMoved_ = false;
-    m_mode = ActiveMode::BottomTrackVertexSelectionMode;
     clearComboSelectionRect();
 
     if (mouseButton == Qt::MouseButton::RightButton) {
         m_bottomTrack->resetVertexSelection();
+        lastMode_ = m_mode;
         m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
-
         m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
     }
@@ -227,6 +226,7 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     m_lastMousePos = { x, y };
 
     if (mouseButton == Qt::MouseButton::RightButton) {
+        m_mode = lastMode_;
         m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
     }
     if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
@@ -326,7 +326,7 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setIdleMode()
 {
-    m_mode = BottomTrackVertexSelectionMode;
+    m_mode = Idle; 
 
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
@@ -351,6 +351,15 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 void GraphicsScene3dView::shiftCameraZAxis(float shift)
 {
     m_camera->moveZAxis(shift);
+}
+
+void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
+{
+    setIdleMode();
+
+    m_mode = BottomTrackVertexSelectionMode;
+
+    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::setPolygonCreationMode()
