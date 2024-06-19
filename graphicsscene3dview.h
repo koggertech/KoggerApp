@@ -195,6 +195,7 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+    static constexpr double mouseThreshold_{ 17.0 };
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
 };

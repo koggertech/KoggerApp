@@ -3,6 +3,7 @@
 #include <surface.h>
 #include <plotcash.h>
 
+#include <cmath>
 #include <memory.h>
 #include <math.h>
 
@@ -164,10 +165,15 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
-    if (wasMovedMouseButton_ != mouseButton)
-        wasMovedMouseButton_ = mouseButton;
-    if (!wasMoved_)
-        wasMoved_ = true;
+    // movement threshold for sync
+    if (!wasMoved_) {
+        double dist{ std::sqrt(std::pow(x - m_startMousePos.x(), 2) + std::pow(y - m_startMousePos.y(), 2)) };
+        if (dist > mouseThreshold_) {
+            wasMoved_ = true;
+            if (wasMovedMouseButton_ != mouseButton)
+                wasMovedMouseButton_ = mouseButton;
+        }
+    }
 
     // ray for marker
     auto toOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
