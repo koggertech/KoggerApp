@@ -185,6 +185,7 @@ ColumnLayout {
 
         MenuButton {
             id: selectionToolButton
+            objectName: "selectionToolButton"
             width: theme.controlHeight
             height: theme.controlHeight
             checkable: true

@@ -150,6 +150,12 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
 
+    if (engine_) { // maybe this will be removed
+        if (auto selectionToolButton = engine_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
+            selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
+        }
+    }
+
     if (mouseButton == Qt::MouseButton::RightButton) {
         m_bottomTrack->resetVertexSelection();
         lastMode_ = m_mode;
@@ -418,6 +424,11 @@ void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, 
         p->setWidth(width);
         pointGroup()->append(p);
     }
+}
+
+void GraphicsScene3dView::setQmlEngine(QObject* engine)
+{
+    engine_ = engine;
 }
 
 void GraphicsScene3dView::updateBounds()

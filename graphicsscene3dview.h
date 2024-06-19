@@ -162,6 +162,7 @@ public Q_SLOTS:
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
+    void setQmlEngine(QObject* engine);
 
 private:
     void updateBounds();
@@ -200,6 +201,7 @@ private:
     static constexpr double mouseThreshold_{ 10.0 };
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
+    QObject* engine_ = nullptr;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
