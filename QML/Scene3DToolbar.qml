@@ -9,12 +9,26 @@ ColumnLayout {
     // surface extra settings
     MenuFrame {
         id: surfaceSettings
-        visible: surfaceCheckButton.checked && (surfaceCheckButton.hovered || isHovered)
+        visible: surfaceCheckButton.checked && (surfaceCheckButton.hovered || isHovered || surfaceCheckButton.longPressTriggered)
         z: surfaceSettings.visible
         Layout.alignment: Qt.AlignHCenter
 
         onIsHoveredChanged: {
+            if (!isHovered || !surfaceCheckButton.hovered)
+                surfaceCheckButton.longPressTriggered = false
             //console.debug("surface menu hovered " + isHovered.toString())
+        }
+
+        onVisibleChanged: {
+            if (visible)
+                focus = true;
+        }
+
+        onFocusChanged: {
+            console.info("surfaceSettings onFocusChanged: " + focus)
+            if (!focus) {
+                surfaceCheckButton.longPressTriggered = false
+            }
         }
 
         ColumnLayout {
@@ -249,6 +263,7 @@ ColumnLayout {
             checkedBorderColor: theme.controlBorderColor
             checked: true
             // hoverEnabled: true
+            icon.source: "./icons/stack-backward.svg"
 
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
@@ -268,8 +283,40 @@ ColumnLayout {
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
-            icon.source: "./icons/stack-backward.svg"
-            // onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexComboSelectionModeButtonChecked(checked)
+            onFocusChanged: {
+                console.info("surfaceCheckButton onFocusChanged: " + focus)
+            }
+
+            property bool longPressTriggered: false
+
+            MouseArea {
+                id: touchArea
+                anchors.fill: parent
+                onPressed: {
+                    longPressTimer.start()
+                    surfaceCheckButton.longPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!surfaceCheckButton.longPressTriggered) {
+                        surfaceCheckButton.checked = !surfaceCheckButton.checked
+                    }
+                    longPressTimer.stop()
+                }
+
+                onCanceled: {
+                    longPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: longPressTimer
+                interval: 700 // ms
+                repeat: false
+                onTriggered: {
+                    surfaceCheckButton.longPressTriggered = true;
+                }
+            }
         }
 
 
