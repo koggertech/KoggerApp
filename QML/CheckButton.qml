@@ -14,15 +14,19 @@ Button {
     property color backColor: "transparent"
     property color checkedBorderColor: "transparent"
     property color borderColor: theme.controlSolidBorderColor
+    property string iconSource: ""
+
+    implicitHeight: theme.controlHeight
+    //implicitWidth: icon.width + textWidth + leftPadding + rightPadding
+
+    icon.source: iconSource
 
     padding: 0
     rightPadding: text === "" ? 2 : 6
     leftPadding: icon.source == "" ? 6 : 2
 
-    icon.source: ""
-
-    height: theme.controlHeight
-    width: text === "" ? theme.controlHeight : undefined
+    //height: theme.controlHeight
+    //width: text === "" ? theme.controlHeight : undefined
 
 
     font: theme.textFont

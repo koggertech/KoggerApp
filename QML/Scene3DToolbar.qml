@@ -32,13 +32,13 @@ ColumnLayout {
         }
 
         ColumnLayout {
-            width: 300
+            //width: 300
             ParamSetup {
                 paramName: "Edge limit, m:"
 
                 SpinBoxCustom {
                     id: triangleEdgeLengthLimitSpinBox
-                    implicitWidth: 110
+                    //implicitWidth: 110
                     from: 5
                     to: 200
                     stepSize: 5
@@ -174,56 +174,53 @@ ColumnLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
 
-        MenuButton {
-            id: setCameraIsometricView
-            width: theme.controlHeight
-            height: theme.controlHeight
-            icon.source: "./fit-in-view.svg"
 
-            icon.color: theme.textColor
+        CheckButton {
+            id: setCameraIsometricView
+            backColor: theme.controlBackColor
+            iconSource: "./fit-in-view.svg"
+            checkable: false
+            checked: false
+            implicitWidth: theme.controlHeight
 
             onClicked: Scene3dToolBarController.onSetCameraMapViewButtonClicked()
         }
 
-        MenuButton {
+        CheckButton {
             id: fitAllinViewButton
-            width: theme.controlHeight
-            height: theme.controlHeight
-            icon.source: "./icons/zoom-cancel.svg"
-
-
-            icon.color: theme.textColor
+            iconSource: "./icons/zoom-cancel.svg"
+            backColor: theme.controlBackColor
+            checkable: false
+            checked: false
+            implicitWidth: theme.controlHeight
 
             onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
         }
 
-        MenuButton {
+        CheckButton {
             id: selectionToolButton
             objectName: "selectionToolButton"
-            width: theme.controlHeight
-            height: theme.controlHeight
-            checkable: true
-            active: checked
-            checked: true
-            icon.source: "./icons/click.svg"
-            icon.color: theme.textColor
-            ButtonGroup.group: buttonGroup
-
-            onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
-        }
-
-        CheckButton {
-            id: boatTrackCheckButton
-            implicitHeight: theme.controlHeight
-            implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
+            iconSource: "./icons/click.svg"
+            implicitWidth: theme.controlHeight
 
-            icon.source: "./icons/route.svg"
-            // icon.width: width
-            // icon.height: height
+            onCheckedChanged: {
+                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+            }
+        }
+
+        CheckButton {
+            id: boatTrackCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/route.svg"
+            implicitWidth: theme.controlHeight
+
 
             onCheckedChanged: {
                 BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
@@ -236,14 +233,12 @@ ColumnLayout {
 
         CheckButton {
             id: bottomTrackCheckButton
-            implicitHeight: theme.controlHeight
-            implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-
-            icon.source: "./icons/overline.svg"
+            iconSource: "./icons/overline.svg"
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
@@ -256,14 +251,12 @@ ColumnLayout {
 
         CheckButton {
             id: surfaceCheckButton
-            implicitHeight: theme.controlHeight
-            implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            // hoverEnabled: true
-            icon.source: "./icons/stack-backward.svg"
+            iconSource: "./icons/stack-backward.svg"
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
