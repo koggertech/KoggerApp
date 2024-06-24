@@ -37,6 +37,7 @@ public slots:
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
     void openFile(const QString& filePath);
+    void closeFile();
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -79,13 +80,32 @@ private:
     DevQProperty* createDev(QUuid uuid, Link* link, uint8_t addr);
 
     /*data*/
-    struct {
-        float voltage = NAN;
-        float current = NAN;
-        float velocityH = NAN;
-        int armState = -1;
-        int flightMode = -1;
-    } vru_;
+    struct VruData {
+        VruData() :
+            voltage(NAN),
+            current(NAN),
+            velocityH(NAN),
+            armState(-1),
+            flightMode(-1)
+        {};
+
+        void cleanVru()
+        {
+            voltage = NAN;
+            current = NAN;
+            velocityH = NAN;
+            armState = -1;
+            flightMode = -1;
+        };
+
+        float voltage;
+        float current;
+        float velocityH;
+        int armState;
+        int flightMode;
+    };
+
+    VruData vru_;
     DevQProperty* lastDevs_;
     DevQProperty* lastDevice_;
     Link* mavlinkLink_;

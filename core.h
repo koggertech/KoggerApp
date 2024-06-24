@@ -76,7 +76,8 @@ public slots:
     bool exportPlotAsXTF(QString filePath);
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
-    void setTimelinePosition(double position, bool fromGui = false);
+    void setTimelinePosition(double position);
+    void resetAim();
     void UILoad(QObject* object, const QUrl& url);
     // fileReader
     void startFileReader(const QString& filePath);

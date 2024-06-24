@@ -343,7 +343,18 @@ void DeviceManager::openFile(const QString &filePath)
         chunk.clear();
     }
 
+    delAllDev();
+    vru_.cleanVru();
+    emit vruChanged();
+
     file.close();
+}
+
+void DeviceManager::closeFile()
+{
+    delAllDev();
+    vru_.cleanVru();
+    emit vruChanged();
 }
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)

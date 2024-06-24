@@ -214,6 +214,8 @@ bool Core::closeLogFile()
     if (!isOpenedFile())
         return false;
 
+    emit deviceManagerWrapperPtr_->sendCloseFile();
+
     createLinkManagerConnections();
 
     if (datasetPtr_)
@@ -759,11 +761,19 @@ void Core::setPlotStopLevel(int level)
     }
 }
 
-void Core::setTimelinePosition(double position, bool fromGui)
+void Core::setTimelinePosition(double position)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL)
-            plot2dList_.at(i)->setTimelinePosition(position, fromGui);
+            plot2dList_.at(i)->setTimelinePosition(position);
+    }
+}
+
+void Core::resetAim()
+{
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (plot2dList_.at(i) != NULL)
+            plot2dList_.at(i)->resetAim();
     }
 }
 

@@ -58,11 +58,8 @@ void Plot2D::setAimEpochEventState(bool state)
     _aim.setEpochEventState(state);
 }
 
-void Plot2D::setTimelinePosition(float position, bool fromGui)
+void Plot2D::setTimelinePosition(float position)
 {
-    if (fromGui) {
-        _cursor.selectEpochIndx = -1;
-    }
     if (position > 1.0f) {
         position = 1.0f;
     }
@@ -73,6 +70,11 @@ void Plot2D::setTimelinePosition(float position, bool fromGui)
         _cursor.position = position;
         plotUpdate();
     }
+}
+
+void Plot2D::resetAim()
+{
+    _cursor.selectEpochIndx = -1;
 }
 
 void Plot2D::setTimelinePositionSec(float position)

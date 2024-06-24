@@ -237,9 +237,14 @@ Window  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-                        onMoved: core.setTimelinePosition(value, true);
-                    }
 
+                        onValueChanged: {
+                            core.setTimelinePosition(value);
+                        }
+                        onMoved: {
+                            core.resetAim();
+                        }
+                    }
                 }
             }
         }
