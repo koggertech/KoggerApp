@@ -24,6 +24,9 @@ public:
                             const QMatrix4x4& mvp,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
+#if defined (Q_OS_ANDROID)
+        QVector<QVector3D> quadSurfaceVertices_;
+#endif
     private:
         friend class Surface;
         SceneObject::RenderImplementation m_gridRenderImpl;

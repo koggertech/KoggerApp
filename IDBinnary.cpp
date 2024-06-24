@@ -6,7 +6,7 @@ extern Core core;
 
 #if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 template < typename T, size_t N >
-size_t _countof( T const (&array)[ N ] ) { return N; }
+size_t _countof( T const (&array)[ N ] ) { Q_UNUSED(array); return N; }
 #endif
 IDBin::IDBin(QObject *parent) :
     QObject(parent),

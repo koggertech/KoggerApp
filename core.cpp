@@ -965,6 +965,7 @@ QString Core::getFilePath() const
 
 void Core::fixFilePathString(QString& filePath) const
 {
+    Q_UNUSED(filePath);
 #ifdef Q_OS_WINDOWS
     filePath.remove("'");
 
