@@ -36,7 +36,7 @@ bool Logger::startNewKlfLog()
 #ifdef Q_OS_ANDROID
     QString logPath =  QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/KoggerApp";
 #else
-    QString logPath = QCoreApplication::applicationDirPath() + "/logs";
+    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
 #endif
 
     if (dir.mkpath(logPath)) {
@@ -120,7 +120,7 @@ bool Logger::startNewCsvLog()
 #ifdef Q_OS_ANDROID
     QString logPath =  QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/KoggerApp";
 #else
-    QString logPath = QCoreApplication::applicationDirPath() + "/logs";
+    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
 #endif
 
     if (dir.mkpath(logPath)) {
