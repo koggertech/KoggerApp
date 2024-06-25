@@ -156,6 +156,8 @@ bool Core::openLogFile(const QString &filePath, bool isAppend, bool onStartUp)
     linkManagerWrapperPtr_->closeOpenedLinks();
     removeLinkManagerConnections();
 
+    QCoreApplication::processEvents(QEventLoop::AllEvents);
+
     if (!isAppend)
         datasetPtr_->resetDataset();
 

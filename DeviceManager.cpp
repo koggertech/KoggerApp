@@ -342,9 +342,10 @@ void DeviceManager::openFile(const QString &filePath)
 
         chunk.clear();
     }
+    file.close();
 
-    delAllDev();
     vru_.cleanVru();
+    delAllDev();
     emit vruChanged();
 
     file.close();
@@ -472,8 +473,13 @@ DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
 
 void DeviceManager::delAllDev()
 {
+    QList<QUuid> keysToDelete;
     for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-        deleteDevicesByLink(i.key());
+        keysToDelete.append(i.key());
+    }
+
+    for (const auto& key : keysToDelete) {
+        deleteDevicesByLink(key);
     }
 }
 
