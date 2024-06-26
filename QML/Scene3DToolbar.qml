@@ -164,7 +164,7 @@ ColumnLayout {
                         !gridTypeCheck.checked ? -1: gridCellSizeSpinBox.value,
                         !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
                         !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
-                    BottomTrackControlMenuController.onSurfaceUpdated()
+                    //BottomTrackControlMenuController.onSurfaceUpdated()
                 }
             }
         }

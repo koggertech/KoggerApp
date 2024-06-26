@@ -28,6 +28,9 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
                                                                         Q_ARG(int, result.primitiveType));
 
                                               m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
+                                              if (!result.data.empty()) {
+                                                  m_graphicsSceneView->bottomTrack()->surfaceUpdated();
+                                              }
                                               Q_EMIT surfaceProcessorTaskFinished();
                                           });
 }
