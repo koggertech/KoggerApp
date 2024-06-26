@@ -198,7 +198,11 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+#if defined (Q_OS_ANDROID)
+    static constexpr double mouseThreshold_{ 20.0 };
+#else
     static constexpr double mouseThreshold_{ 10.0 };
+#endif
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;

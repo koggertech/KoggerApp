@@ -14,18 +14,26 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
 
         onIsHoveredChanged: {
-            if (!isHovered || !surfaceCheckButton.hovered)
-                surfaceCheckButton.longPressTriggered = false
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !surfaceCheckButton.hovered) {
+                    surfaceCheckButton.longPressTriggered = false
+                }
+            }
             //console.debug("surface menu hovered " + isHovered.toString())
         }
 
         onVisibleChanged: {
-            if (visible)
+            if (visible) {
                 focus = true;
+            }
         }
 
         onFocusChanged: {
-            console.info("surfaceSettings onFocusChanged: " + focus)
             if (!focus) {
                 surfaceCheckButton.longPressTriggered = false
             }
@@ -43,6 +51,11 @@ ColumnLayout {
                     to: 200
                     stepSize: 5
                     value: 50
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -54,12 +67,20 @@ ColumnLayout {
                     text: "Count"
                     checked: true
                     ButtonGroup.group: decimationGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 CheckButton {
                     id: decimationDistanceCheck
                     text: "Distance"
                     ButtonGroup.group: decimationGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 // CheckButton {
@@ -82,6 +103,11 @@ ColumnLayout {
                     to: 10000
                     stepSize: 100
                     value: 1000
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -97,6 +123,11 @@ ColumnLayout {
                     to: 100
                     stepSize: 1
                     value: 5
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -108,12 +139,20 @@ ColumnLayout {
                     text: "Triangle"
                     checked: true
                     ButtonGroup.group: surfaceTypeGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 CheckButton {
                     id: gridTypeCheck
                     text: "Grid"
                     ButtonGroup.group: surfaceTypeGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 ButtonGroup{
@@ -132,6 +171,11 @@ ColumnLayout {
                     to: 20
                     stepSize: 1
                     value: 5
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -143,14 +187,28 @@ ColumnLayout {
                     text: qsTr("Show contour")
                     //checked: true
                     Layout.fillWidth: true
-                    onToggled: SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+
+                    onToggled: {
+                        SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
                 CheckButton {
                     id: gridVisibilityCheckButton
                     text: qsTr("Show grid")
                     //checked: true
                     Layout.fillWidth: true
-                    onToggled: SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+
+                    onToggled: {
+                        SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -165,6 +223,10 @@ ColumnLayout {
                         !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
                         !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
                     //BottomTrackControlMenuController.onSurfaceUpdated()
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
                 }
             }
         }
@@ -257,7 +319,10 @@ ColumnLayout {
             checked: true
             iconSource: "./icons/stack-backward.svg"
             implicitWidth: theme.controlHeight
+onHoveredChanged: {
+    console.info("IS HOVERED CHANGED 2 !!!: " + hovered)
 
+}
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
                 SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
@@ -304,8 +369,9 @@ ColumnLayout {
 
             Timer {
                 id: longPressTimer
-                interval: 700 // ms
+                interval: 100 // ms
                 repeat: false
+
                 onTriggered: {
                     surfaceCheckButton.longPressTriggered = true;
                 }
@@ -318,8 +384,9 @@ ColumnLayout {
             id: buttonGroup
             onCheckedButtonChanged: buttonChangeFlag = true
             onClicked: {
-                if(!buttonChangeFlag)
+                if (!buttonChangeFlag) {
                     checkedButton = null
+                }
 
                 buttonChangeFlag = false;
             }
