@@ -319,10 +319,7 @@ ColumnLayout {
             checked: true
             iconSource: "./icons/stack-backward.svg"
             implicitWidth: theme.controlHeight
-onHoveredChanged: {
-    console.info("IS HOVERED CHANGED 2 !!!: " + hovered)
 
-}
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
                 SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
@@ -339,10 +336,6 @@ onHoveredChanged: {
                 contourVisibilityCheckButton.checked = checked
                 gridVisibilityCheckButton.checked = checked
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
-            }
-
-            onFocusChanged: {
-                console.info("surfaceCheckButton onFocusChanged: " + focus)
             }
 
             property bool longPressTriggered: false
