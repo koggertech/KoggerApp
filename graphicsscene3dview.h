@@ -44,7 +44,7 @@ public:
         //TODO! Process this method later
         //void rotate(qreal yaw, qreal pitch);
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
-        void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta);
+        void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
         void move(const QVector2D &lastMouse, const QVector2D &mousePos);
         void moveZAxis(float z);

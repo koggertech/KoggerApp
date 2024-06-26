@@ -270,8 +270,8 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 {
     m_camera->zoom(scaleDelta);
 
-    m_camera->rotate(prevCenter, currCenter, angleDelta);
-    m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta);
+    m_camera->rotate(prevCenter, currCenter, angleDelta, height());
+    m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta , height());
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
@@ -598,13 +598,15 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
     updateViewMatrix();
 }
 
-void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta)
+void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight)
 {
+    const qreal increaseCoeff{ 1.3 };
+    const qreal angleDeltaY = (prevCenter - currCenter).y() / widgetHeight * 90.0;
+
     m_rotAngle.setX(m_rotAngle.x() - qDegreesToRadians(angleDelta));
-    m_rotAngle.setY(m_rotAngle.y() +  qDegreesToRadians((prevCenter - currCenter).y()));
+    m_rotAngle.setY(m_rotAngle.y() + qDegreesToRadians(angleDeltaY * increaseCoeff));
 
     checkRotateAngle();
-
     updateViewMatrix();
 }
 
@@ -641,7 +643,8 @@ void GraphicsScene3dView::Camera::moveZAxis(float z)
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
 #ifdef Q_OS_ANDROID
-    m_distToFocusPoint -= delta * 100.f;
+    const float increaseCoeff{ 0.95f };
+    m_distToFocusPoint -= delta * m_distToFocusPoint * increaseCoeff;
 #else
     m_distToFocusPoint = delta > 0.f ? m_distToFocusPoint / 1.15f : m_distToFocusPoint * 1.15f;
 #endif
