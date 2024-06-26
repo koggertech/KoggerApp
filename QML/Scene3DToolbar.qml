@@ -9,7 +9,7 @@ ColumnLayout {
     // surface extra settings
     MenuFrame {
         id: surfaceSettings
-        visible: surfaceCheckButton.checked && (surfaceCheckButton.hovered || isHovered || surfaceCheckButton.longPressTriggered)
+        visible: surfaceCheckButton.hovered || isHovered || surfaceCheckButton.longPressTriggered
         z: surfaceSettings.visible
         Layout.alignment: Qt.AlignHCenter
 

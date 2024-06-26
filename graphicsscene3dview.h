@@ -199,7 +199,7 @@ private:
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
 #if defined (Q_OS_ANDROID)
-    static constexpr double mouseThreshold_{ 20.0 };
+    static constexpr double mouseThreshold_{ 15.0 };
 #else
     static constexpr double mouseThreshold_{ 10.0 };
 #endif
