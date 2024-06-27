@@ -142,6 +142,7 @@ public:
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
 
+    Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -206,6 +207,7 @@ private:
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
+    bool switchedToBottomTrackVertexComboSelectionMode_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

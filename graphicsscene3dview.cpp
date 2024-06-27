@@ -25,7 +25,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     navigationArrowState_(true),
     wasMoved_(false),
-    wasMovedMouseButton_(Qt::MouseButton::NoButton)
+    wasMovedMouseButton_(Qt::MouseButton::NoButton),
+    switchedToBottomTrackVertexComboSelectionMode_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -143,6 +144,18 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
+void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
+{
+    switchedToBottomTrackVertexComboSelectionMode_ = true;
+
+    m_bottomTrack->resetVertexSelection();
+    lastMode_ = m_mode;
+    m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
+    m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
+    m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
+
+}
+
 void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
     Q_UNUSED(keyboardKey)
@@ -157,11 +170,7 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     }
 
     if (mouseButton == Qt::MouseButton::RightButton) {
-        m_bottomTrack->resetVertexSelection();
-        lastMode_ = m_mode;
-        m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
-        m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
-        m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
+        switchToBottomTrackVertexComboSelectionMode(x, y);
     }
 
     m_startMousePos = { x, y };
@@ -188,7 +197,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
 
-    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::RightButton)) {
+    if (switchedToBottomTrackVertexComboSelectionMode_) {
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
         m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     }
@@ -227,19 +236,20 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
     clearComboSelectionRect();
 
-    //TODO: Commit only if camera in movement state
-    m_camera->commitMovement();
+    m_camera->commitMovement(); //TODO: Commit only if camera in movement state
     m_lastMousePos = { x, y };
 
-    if (mouseButton == Qt::MouseButton::RightButton) {
+    if (switchedToBottomTrackVertexComboSelectionMode_) {
         m_mode = lastMode_;
         m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
     }
+
     if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
         m_bottomTrack->resetVertexSelection();
         m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
     }
 
+    switchedToBottomTrackVertexComboSelectionMode_ = false;
     wasMoved_ = false;
     wasMovedMouseButton_ = Qt::MouseButton::NoButton;
 

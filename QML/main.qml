@@ -113,6 +113,8 @@ Window  {
                 Layout.fillWidth:  true
                 focus:             true
 
+                property bool longPressTriggered: false
+
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
@@ -151,6 +153,10 @@ Window  {
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
                         property int lastMouseKeyPressed: Qt.NoButton // TODO: maybe this mouseArea should be outside pinchArea
+                        property point startMousePos: Qt.point(-1, -1)
+                        property bool wasMoved: false
+                        property real mouseThreshold: 15
+                        property bool vertexMode: false
 
                         onEntered: {
                             mousearea3D.forceActiveFocus();
@@ -161,18 +167,61 @@ Window  {
                         }
 
                         onPositionChanged: {
+                            if (Qt.platform.os === "android") {
+                                if (!wasMoved) {
+                                    var delta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
+                                    if (delta > mouseThreshold) {
+                                        wasMoved = true;
+                                    }
+                                }
+                                if (renderer.longPressTriggered && !wasMoved) {
+                                    if (!vertexMode) {
+                                        renderer.switchToBottomTrackVertexComboSelectionMode(mouse.x, mouse.y)
+                                    }
+                                    vertexMode = true
+                                }
+                            }
+
                             renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onPressed: {
+                            startMousePos = Qt.point(mouse.x, mouse.y)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.start()
+                            renderer.longPressTriggered = false
+
                             lastMouseKeyPressed = mouse.buttons
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onReleased: {
+                            startMousePos = Qt.point(-1, -1)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.stop()
+
                             renderer.mouseReleaseTrigger(lastMouseKeyPressed, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                             lastMouseKeyPressed = Qt.NoButton
                         }
+
+                        onCanceled: {
+                            startMousePos = Qt.point(-1, -1)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.stop()
+                        }
+                    }
+                }
+
+                Timer {
+                    id: longPressTimer
+                    interval: 500 // ms
+                    repeat: false
+
+                    onTriggered: {
+                        renderer.longPressTriggered = true
                     }
                 }
 
