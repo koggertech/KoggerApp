@@ -50,9 +50,9 @@ WaterFall {
 
             onClicked: {
                 plot.focus = true
-                if (mouse.button === Qt.RightButton) {
-                    menuBlock.position(mouse.x, mouse.y)
 
+                if (mouse.button === Qt.RightButton && theme.instrumentsGrade !== 0) {
+                    menuBlock.position(mouse.x, mouse.y)
                 }
             }
 
@@ -60,6 +60,12 @@ WaterFall {
                 if (mouse.button === Qt.LeftButton) {
                     plot.plotMousePosition(-1, -1)
                 }
+
+
+                if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0) {
+                        menuBlock.position(mouse.x, mouse.y)
+                }
+
             }
 
             onPressed: {

@@ -5,12 +5,16 @@
 #include <QFont>
 #include <QColor>
 
+
 class Themes : public QObject
 {
     Q_OBJECT
+
 public:
 
-    Themes() {
+    Themes() :
+        instrumentsGrade_(-1)
+    {
         setTheme();
         _isConsoleVisible = false;
     }
@@ -39,6 +43,8 @@ public:
     Q_PROPERTY(int themeID READ themeId WRITE setTheme NOTIFY changed)
 
     Q_PROPERTY(bool consoleVisible READ consoleVisible WRITE setConsoleVisible NOTIFY interfaceChanged)
+    Q_PROPERTY(int instrumentsGrade READ getInstrumentsGrade WRITE setInstrumentsGrade NOTIFY instrumentsGradeChanged)
+
 
     QColor textColor() { return *_textColor; }
     QColor textErrorColor() { return *_textErrorColor; }
@@ -141,12 +147,27 @@ public:
         interfaceChanged();
     }
 
-    bool consoleVisible() { return _isConsoleVisible; }
+    bool consoleVisible()
+    {
+        return _isConsoleVisible;
+    }
+
+    int getInstrumentsGrade() const
+    {
+        return instrumentsGrade_;
+    }
+
+    void setInstrumentsGrade(int instrumentsGrade)
+    {
+        instrumentsGrade_ = instrumentsGrade;
+        instrumentsGradeChanged();
+    }
 
 signals:
     void changed();
-
     void interfaceChanged();
+    void instrumentsGradeChanged();
+
 protected:
     int _id = 0;
 
@@ -169,6 +190,7 @@ protected:
     int32_t _menuWidth;
 
     bool _isConsoleVisible;
+    int instrumentsGrade_;
 };
 
 #endif // THEME_H
