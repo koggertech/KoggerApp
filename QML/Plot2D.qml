@@ -12,8 +12,8 @@ WaterFall {
     PinchArea {
         id: pinch2D
         anchors.fill: parent
-
         enabled: true
+
         onPinchUpdated: {
             plot.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
             plot.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
@@ -32,23 +32,15 @@ WaterFall {
 
         MouseArea {
             id: mousearea
-
-//            propagateComposedEvents: true
-
             enabled: true
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onWheel: {
-                if (wheel.modifiers & Qt.ControlModifier) {
-                    plot.verZoomEvent(-wheel.angleDelta.y)
-                } else if (wheel.modifiers & Qt.ShiftModifier) {
-                    plot.verScrollEvent(-wheel.angleDelta.y)
-                } else {
-                    plot.horScrollEvent(wheel.angleDelta.y)
-                }
-            }
+
+            property int lastMouseX: -1
 
             onClicked: {
+                lastMouseX = mouse.x
+
                 plot.focus = true
 
                 if (mouse.button === Qt.RightButton && theme.instrumentsGrade !== 0) {
@@ -56,19 +48,9 @@ WaterFall {
                 }
             }
 
-            onReleased: {
-                if (mouse.button === Qt.LeftButton) {
-                    plot.plotMousePosition(-1, -1)
-                }
-
-
-                if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0) {
-                        menuBlock.position(mouse.x, mouse.y)
-                }
-
-            }
-
             onPressed: {
+                lastMouseX = mouse.x
+
                 if (mouse.button === Qt.LeftButton) {
                     menuBlock.visible = false
                 }
@@ -78,12 +60,46 @@ WaterFall {
                 }
             }
 
-            onPositionChanged: {
-                if(mousearea.pressedButtons & Qt.LeftButton) {
-                    plot.plotMousePosition(mouse.x, mouse.y)
+            onReleased: {
+                lastMouseX = -1
+
+                if (mouse.button === Qt.LeftButton) {
+                    plot.plotMousePosition(-1, -1)
+                }
+
+                if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0) {
+                        menuBlock.position(mouse.x, mouse.y)
                 }
             }
 
+            onCanceled: {
+                lastMouseX = -1
+            }
+
+            onPositionChanged: {
+                var delta = mouse.x - lastMouseX
+                lastMouseX = mouse.x
+
+                if (mousearea.pressedButtons & Qt.LeftButton) {
+                    plot.plotMousePosition(mouse.x, mouse.y)
+
+                    if (theme.instrumentsGrade === 0) {
+                        plot.horScrollEvent(delta)
+                    }
+                }
+            }
+
+            onWheel: {
+                if (wheel.modifiers & Qt.ControlModifier) {
+                    plot.verZoomEvent(-wheel.angleDelta.y)
+                }
+                else if (wheel.modifiers & Qt.ShiftModifier) {
+                    plot.verScrollEvent(-wheel.angleDelta.y)
+                }
+                else {
+                    plot.horScrollEvent(wheel.angleDelta.y)
+                }
+            }
         }
     }
 
