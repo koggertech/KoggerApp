@@ -126,14 +126,14 @@ Window  {
                     anchors.fill: parent
                     enabled:      true
 
+                    onPinchStarted: {
+                        mousearea3D.enabled = false
+                    }
+
                     onPinchUpdated: {
                         var shiftScale = pinch.scale - pinch.previousScale;
                         var shiftAngle = pinch.angle - pinch.previousAngle;
                         renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
-                    }
-
-                    onPinchStarted: {
-                        mousearea3D.enabled = false
                     }
 
                     onPinchFinished: {

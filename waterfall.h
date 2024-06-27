@@ -50,7 +50,7 @@ public slots:
     void horScrollEvent(int delta);
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
-    void plotMousePosition(int x, int y);
+    Q_INVOKABLE void plotMousePosition(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }

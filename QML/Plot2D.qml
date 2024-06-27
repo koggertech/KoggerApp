@@ -14,20 +14,60 @@ WaterFall {
         anchors.fill: parent
         enabled: true
 
-        onPinchUpdated: {
-            plot.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
-            plot.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
-            plot.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
+        property int thresholdXAxis: 15
+        property int thresholdYAxis: 15
+        property double zoomThreshold: 0.1
+
+        property bool movementX: false
+        property bool movementY: false
+        property bool zoomY: false
+        property point pinchStartPos: Qt.point(-1, -1)
+
+        function clearPinchMovementState() {
+            movementX = false
+            movementY = false
+            zoomY = false
         }
 
         onPinchStarted: {
             mousearea.enabled = false
-            plot.setMousePosition(-1, -1)
+            plot.plotMousePosition(-1, -1)
+
+            clearPinchMovementState()
+            pinchStartPos = Qt.point(pinch.center.x, pinch.center.y)
         }
+
+        onPinchUpdated: {
+            console.info("onPinchUpdated")
+
+            if (movementX) {
+                plot.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
+            }
+            else if (movementY) {
+                plot.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
+            }
+            else if (zoomY) {
+                plot.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
+            }
+            else {
+                if (Math.abs(pinchStartPos.x - pinch.center.x) > thresholdXAxis) {
+                    movementX = true
+                }
+                else if (Math.abs(pinchStartPos.y - pinch.center.y) > thresholdYAxis) {
+                    movementY = true
+                }
+                else if (pinch.scale > (1.0 + zoomThreshold) || pinch.scale < (1.0 - zoomThreshold)) {
+                    zoomY = true
+                }
+            }
+        }       
 
         onPinchFinished: {
             mousearea.enabled = true
             plot.plotMousePosition(-1, -1)
+
+            clearPinchMovementState()
+            pinchStartPos = Qt.point(-1, -1)
         }
 
         MouseArea {
