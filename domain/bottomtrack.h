@@ -83,6 +83,8 @@ protected:
     void updateRenderData(int lEpoch = 0, int rEpoch = 0);
 
 private:
+    QVector<QPair<int, int>> getSubarrays(const QVector<int>& sequenceVector); // TODO: to utils
+
     using EpochIndex = int;
     using VerticeIndex = int;
     QHash<VerticeIndex,EpochIndex> epochIndexMatchingMap_;

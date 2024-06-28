@@ -537,24 +537,25 @@ void Dataset::resetDistProcessing() {
     }
 }
 
-void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param) {
-    if(param.indexFrom < 0 || param.indexTo < 0) { return; }
+void Dataset::bottomTrackProcessing(int channel1, int channel2)
+{
+    if(bottomTrackParam_.indexFrom < 0 || bottomTrackParam_.indexTo < 0) { return; }
 
-    int epoch_min_index = param.indexFrom - param.windowSize/2;
+    int epoch_min_index = bottomTrackParam_.indexFrom - bottomTrackParam_.windowSize/2;
 
     if(epoch_min_index < 0) {
         epoch_min_index = 0;
     }
 
-    int epoch_max_index = param.indexTo + param.windowSize/2;
+    int epoch_max_index = bottomTrackParam_.indexTo + bottomTrackParam_.windowSize/2;
     if(epoch_max_index >= size()) {
         epoch_max_index = size();
     }
 
     QVector<int32_t> summ;
 
-    float gain_slope = param.gainSlope;
-    float threshold = param.threshold;
+    float gain_slope = bottomTrackParam_.gainSlope;
+    float threshold = bottomTrackParam_.threshold;
 
     int istart = 4;
     int init_win = 6;
@@ -566,7 +567,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
 
 
 
-    if(param.preset == BottomTrackOneBeamNarrow) {
+    if(bottomTrackParam_.preset == BottomTrackPreset::BottomTrackOneBeamNarrow) {
         istart = 4;
         init_win = 6;
         scale_win = 35;
@@ -577,7 +578,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
     }
 
 
-    if(param.preset == BottomTrackSideScan) {
+    if(bottomTrackParam_.preset == BottomTrackPreset::BottomTrackSideScan) {
         istart = 4;
         init_win = 6;
         scale_win = 12;
@@ -594,8 +595,8 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         float min = NAN, max = NAN;
     } EpochConstrants;
 
-    QVector<QVector<int32_t>> cash(param.windowSize);
-    QVector<EpochConstrants> constr(param.windowSize);
+    QVector<QVector<int32_t>> cash(bottomTrackParam_.windowSize);
+    QVector<EpochConstrants> constr(bottomTrackParam_.windowSize);
 
     QVector<float> bottom_track(epoch_max_index - epoch_min_index);
     bottom_track.fill(NAN);
@@ -613,15 +614,15 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         uint8_t* data = (uint8_t*)chart->amplitude.constData();
         const int data_size = chart->amplitude.size();
 
-        int cash_ind = (epoch_counter-1)%param.windowSize;
+        int cash_ind = (epoch_counter-1)%bottomTrackParam_.windowSize;
 
-        int back_cash_ind = ((epoch_counter)%param.windowSize);
+        int back_cash_ind = ((epoch_counter)%bottomTrackParam_.windowSize);
         int32_t* back_cash_data = (int32_t*)cash[back_cash_ind].constData();
         const int back_cash_size = cash[back_cash_ind].size();
 
         int32_t* summ_data = (int32_t*)summ.constData();
 
-        if(epoch_counter >= param.windowSize) {
+        if(epoch_counter >= bottomTrackParam_.windowSize) {
             for(int i = istart; i < back_cash_size; i++) { summ_data[i] -= back_cash_data[i]; }
         }
 
@@ -676,10 +677,10 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         constr[cash_ind].min = chart->bottomProcessing.getMin();
         constr[cash_ind].max = chart->bottomProcessing.getMax();
 
-        const int win_center_index = (epoch_counter - 1 + param.windowSize/2)%param.windowSize;
+        const int win_center_index = (epoch_counter - 1 + bottomTrackParam_.windowSize/2)%bottomTrackParam_.windowSize;
 
-        float search_from_distance = param.minDistance;
-        float search_to_distance = param.maxDistance;
+        float search_from_distance = bottomTrackParam_.minDistance;
+        float search_to_distance = bottomTrackParam_.maxDistance;
 
         if(search_from_distance < constr[win_center_index].min) {
             search_from_distance = constr[win_center_index].min;
@@ -699,7 +700,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         if(end_search_index > summ.size()) { end_search_index = summ.size(); }
 
 
-        int max_val = threshold_int*param.windowSize;
+        int max_val = threshold_int*bottomTrackParam_.windowSize;
         int max_ind = -1;
         for(int i = start_search_index; i < end_search_index ; i++) {
             if(max_val < summ_data[i]) {
@@ -711,13 +712,13 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         if(max_ind > 0) {
             float distance = ((max_ind+init_win+1)*t1)*chart->resolution;
 
-            if(epoch_counter >= param.windowSize) {
-                if(param.verticalGap > 0) {
+            if(epoch_counter >= bottomTrackParam_.windowSize) {
+                if(bottomTrackParam_.verticalGap > 0) {
                     int32_t* center_cash_data = (int32_t*)cash[win_center_index].constData();
                     const int center_cash_size = cash[win_center_index].size();
 
-                    int start_gap_index = max_ind*(1.0f-param.verticalGap);
-                    int end_gap_index = max_ind*(1.0f+param.verticalGap);
+                    int start_gap_index = max_ind*(1.0f-bottomTrackParam_.verticalGap);
+                    int end_gap_index = max_ind*(1.0f+bottomTrackParam_.verticalGap);
 
                     if(start_gap_index < start_search_index) { start_gap_index = start_search_index; }
                     if(start_gap_index > center_cash_size) { start_gap_index = center_cash_size; }
@@ -741,21 +742,21 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
                     }
                 }
 
-                bottom_track[iepoch - epoch_min_index - param.windowSize/2] = distance;
+                bottom_track[iepoch - epoch_min_index - bottomTrackParam_.windowSize/2] = distance;
             } else {
                 bottom_track[iepoch - epoch_min_index - epoch_counter/2] = distance;
             }
-        }
+            }
     }
 
 
-    int epoch_start_index = param.indexFrom;
+    int epoch_start_index = bottomTrackParam_.indexFrom;
 
     if(epoch_start_index < 0) {
         epoch_start_index = 0;
     }
 
-    int epoch_stop_index = param.indexTo;
+    int epoch_stop_index = bottomTrackParam_.indexTo;
     if(epoch_stop_index >= size()) {
         epoch_stop_index = size();
     }
@@ -782,7 +783,7 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2, BottomTrackParam
         }
     }
 
-    setChannelOffset(channel1, param.offset.x, param.offset.y, param.offset.z);
+    setChannelOffset(channel1, bottomTrackParam_.offset.x, bottomTrackParam_.offset.y, bottomTrackParam_.offset.z);
     spatialProcessing();
     emit dataUpdate();
     lastBottomTrackEpoch_ = size();

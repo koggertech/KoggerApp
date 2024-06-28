@@ -915,7 +915,6 @@ protected:
     Dataset* _dataset = NULL;
     Canvas _canvas;
 
-    BottomTrackParam _bottomTrackParam;
 
     DatasetCursor _cursor;
 

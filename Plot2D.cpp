@@ -396,10 +396,12 @@ void Plot2D::setMousePosition(int x, int y) {
             }
         }
 
-        if(_cursor.tool() == MouseToolDistanceMin || _cursor.tool() == MouseToolDistanceMax) {
-            _bottomTrackParam.indexFrom = _cursor.getIndex(x_start);
-            _bottomTrackParam.indexTo = _cursor.getIndex(x_start + x_length);
-            _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
+        if (_cursor.tool() == MouseToolDistanceMin || _cursor.tool() == MouseToolDistanceMax) {
+            if (auto btp = _dataset->getBottomTrackParamPtr(); btp) {
+                btp->indexFrom = _cursor.getIndex(x_start);
+                btp->indexTo = _cursor.getIndex(x_start + x_length);
+                _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2);
+            }
         }
 
         if(_cursor.tool() == MouseToolDistance || _cursor.tool() == MouseToolDistanceErase) {

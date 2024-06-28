@@ -319,7 +319,7 @@ Window  {
 
                     ButtonGroup { id: pencilbuttonGroup }
 
-                    /*CheckButton {
+                    CheckButton {
                         Layout.fillWidth: true
                         icon.source: "./icons/arrow-bar-to-down.svg"
                         backColor: theme.controlBackColor
@@ -331,9 +331,9 @@ Window  {
                         }
 
                         ButtonGroup.group: pencilbuttonGroup
-                    }*/
+                    }
 
-                    /*CheckButton {
+                    CheckButton {
                         Layout.fillWidth: true
                         icon.source: "./icons/arrow-bar-to-up.svg"
                         backColor: theme.controlBackColor
@@ -345,7 +345,7 @@ Window  {
                         }
 
                         ButtonGroup.group: pencilbuttonGroup
-                    }*/
+                    }
 
                     CheckButton {
                         Layout.fillWidth: true
