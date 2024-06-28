@@ -129,6 +129,7 @@ Window  {
                     enabled:      true
 
                     onPinchStarted: {
+                        menuBlock.visible = false
                         mousearea3D.enabled = false
                     }
 
@@ -186,6 +187,7 @@ Window  {
                         }
 
                         onPressed: {
+                            menuBlock.visible = false
                             startMousePos = Qt.point(mouse.x, mouse.y)
                             wasMoved = false
                             vertexMode = false
@@ -199,10 +201,16 @@ Window  {
                         onReleased: {
                             startMousePos = Qt.point(-1, -1)
                             wasMoved = false
-                            vertexMode = false
                             longPressTimer.stop()
 
                             renderer.mouseReleaseTrigger(lastMouseKeyPressed, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+
+                            if (mouse.button === Qt.RightButton || (Qt.platform.os === "android" && vertexMode)) {
+                                menuBlock.position(mouse.x, mouse.y)
+                            }
+
+                            vertexMode = false
+
                             lastMouseKeyPressed = Qt.NoButton
                         }
 
@@ -232,6 +240,90 @@ Window  {
                     anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                RowLayout {
+                    id: menuBlock
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 1
+                    visible: false
+                    Layout.margins: 0
+
+                    function position(mx, my) {
+                        var oy = renderer.height - (my + implicitHeight)
+                        if (oy < 0) {
+                            my = my + oy
+                        }
+                        if (my < 0) {
+                            my = 0
+                        }
+                        var ox = renderer.width - (mx - implicitWidth)
+                        if (ox < 0) {
+                            mx = mx + ox
+                        }
+                        x = mx
+                        y = my
+                        visible = true
+                    }
+
+                    ButtonGroup { id: pencilbuttonGroup }
+
+                    /*CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/arrow-bar-to-down.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.MinDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }*/
+
+                    /*CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/arrow-bar-to-up.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.MaxDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }*/
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/eraser.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.ClearDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.Undefined)
+
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
                 }
             }
 

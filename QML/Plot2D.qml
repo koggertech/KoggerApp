@@ -30,6 +30,8 @@ WaterFall {
         }
 
         onPinchStarted: {
+            menuBlock.visible = false
+
             mousearea.enabled = false
             plot.plotMousePosition(-1, -1)
 
@@ -108,7 +110,7 @@ WaterFall {
                 }
 
                 if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0) {
-                        menuBlock.position(mouse.x, mouse.y)
+                    menuBlock.position(mouse.x, mouse.y)
                 }
             }
 
@@ -313,6 +315,19 @@ WaterFall {
                 if (checked) {
                     plot.plotMouseTool(5)
                 }
+            }
+
+            ButtonGroup.group: pencilbuttonGroup
+        }
+
+        CheckButton {
+            Layout.fillWidth: true
+            icon.source: "./icons/x.svg"
+            backColor: theme.controlBackColor
+            checkable: false
+
+            onClicked: {
+                menuBlock.visible = false
             }
 
             ButtonGroup.group: pencilbuttonGroup

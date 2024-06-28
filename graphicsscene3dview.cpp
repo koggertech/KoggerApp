@@ -294,6 +294,13 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent)
+{
+    m_bottomTrack->actionEvent(actionEvent);
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
 {
     m_isSceneBoundingBoxVisible = visible;

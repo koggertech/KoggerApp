@@ -57,6 +57,44 @@ void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
     datasetPtr_ = datasetPtr;
 }
 
+void BottomTrack::actionEvent(ActionEvent actionEvent)
+{
+    switch (actionEvent) {
+    case ActionEvent::Undefined: {
+        break;
+    }
+    case ActionEvent::ClearDistProc: {
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
+        if (!indices.isEmpty()) {
+            bool isSomethingDeleted{ false };
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
+                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    Q_EMIT epochErased(epochIndex);
+                    isSomethingDeleted = true;
+                }
+            }
+            if (isSomethingDeleted) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+                updateRenderData();
+                emit datasetPtr_->dataUpdate();
+            }
+        }
+
+        break;
+    }
+    case ActionEvent::MaxDistProc: {
+        break;
+    }
+    case ActionEvent::MinDistProc: {
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
 {
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {

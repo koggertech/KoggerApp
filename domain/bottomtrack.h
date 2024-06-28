@@ -14,6 +14,14 @@ class BottomTrack : public SceneObject
     QML_NAMED_ELEMENT(BottomTrack)
 
 public:
+    enum class ActionEvent {
+        Undefined = 0,
+        ClearDistProc,
+        MaxDistProc,
+        MinDistProc
+    };
+    Q_ENUM(ActionEvent)
+
     class BottomTrackRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
@@ -43,6 +51,7 @@ public:
     QMap<int,DatasetChannel> channels() const;
     DatasetChannel visibleChannel() const;
     void setDatasetPtr(Dataset* datasetPtr);
+    void actionEvent(ActionEvent actionEvent);
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
