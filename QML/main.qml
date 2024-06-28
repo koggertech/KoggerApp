@@ -45,6 +45,57 @@ Window  {
         }
     }
 
+    //-> drag-n-drop
+    property string draggedFilePath: ""
+
+    Rectangle {
+        id: overlay
+        anchors.fill: parent
+        color: "white"
+        opacity: 0
+        z: 1
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 300
+            }
+        }
+    }
+
+    DropArea {
+        anchors.fill: parent
+
+        onEntered: {
+            draggedFilePath = ""
+            if (drag.hasUrls) {
+                for (var i = 0; i < drag.urls.length; ++i) {
+                    var url = drag.urls[i]
+                    var filePath = url.replace("file:///", "").toLowerCase()
+                    if (filePath.endsWith(".klf")) {
+                        draggedFilePath = filePath
+                        overlay.opacity = 0.3
+                        break
+                    }
+                }
+            }
+        }
+
+        onExited: {
+            overlay.opacity = 0
+            draggedFilePath = ""
+        }
+
+        onDropped: {
+            if (draggedFilePath !== "") {
+                core.openLogFile(draggedFilePath, false, true)
+                overlay.opacity = 0
+                draggedFilePath = ""
+            }
+            overlay.opacity = 0
+        }
+    }
+    // drag-n-drop <-
+
     SplitView {
         Layout.fillHeight: true
         Layout.fillWidth:  true
