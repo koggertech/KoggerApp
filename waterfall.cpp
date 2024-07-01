@@ -28,7 +28,7 @@ void qPlot2D::paint(QPainter *painter) {
     clock_t start = clock();
 
     if(m_plot != nullptr && painter != nullptr) {
-         getImage((int)width(), (int)height(), painter);
+        Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
     }
 
     clock_t end = clock();
@@ -101,18 +101,22 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
     if (event->type() == EpochSelected3d) {
         auto epochEvent = static_cast<EpochEvent*>(event);
         //qDebug() << QString("[Plot 2d]: catched event from 3d view (epoch index is %1)").arg(epochEvent->epochIndex());
+        setAimEpochEventState(true);
         setTimelinePositionByEpoch(epochEvent->epochIndex());
     }
     return false;
 }
 
 void qPlot2D::sendSyncEvent(int epoch_index) {
-    // qDebug() << "Cursor epoch" << epoch_index;
+    //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
+    _cursor.selectEpochIndx = -1;
     auto epochEvent = new EpochEvent(EpochSelected2d, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
     QCoreApplication::postEvent(this, epochEvent);
 }
 
 void qPlot2D::horScrollEvent(int delta) {
+    _cursor.selectEpochIndx = -1;
+
     if(_isHorizontal) {
         scrollPosition(-delta);
     } else {
@@ -138,30 +142,34 @@ void qPlot2D::plotMouseTool(int mode) {
 
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
-    if(_dataset != nullptr) {
-        _bottomTrackParam.preset = (BottomTrackPreset)preset;
-        _bottomTrackParam.gainSlope = gain_slope;
-        _bottomTrackParam.threshold = threshold;
-        _bottomTrackParam.windowSize = window_size;
-        _bottomTrackParam.verticalGap = vertical_gap;
-        _bottomTrackParam.minDistance = range_min;
-        _bottomTrackParam.maxDistance = range_max;
-        _bottomTrackParam.indexFrom = 0;
-        _bottomTrackParam.indexTo = _dataset->size();
-        _bottomTrackParam.offset.x = offsetx;
-        _bottomTrackParam.offset.y = offsety;
-        _bottomTrackParam.offset.z = offsetz;
-        _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
+    if (_dataset != nullptr) {
+        if (auto btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->preset = static_cast<BottomTrackPreset>(preset);
+            btpPtr->gainSlope = gain_slope;
+            btpPtr->threshold = threshold;
+            btpPtr->windowSize = window_size;
+            btpPtr->verticalGap = vertical_gap;
+            btpPtr->minDistance = range_min;
+            btpPtr->maxDistance = range_max;
+            btpPtr->indexFrom = 0;
+            btpPtr->indexTo = _dataset->size();
+            btpPtr->offset.x = offsetx;
+            btpPtr->offset.y = offsety;
+            btpPtr->offset.z = offsetz;
+
+            _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2);
+        }
     }
     plotUpdate();
 }
 
 void qPlot2D::plotMousePosition(int x, int y) {
+    setAimEpochEventState(false);
     if(_isHorizontal) {
         setMousePosition(x, y);
     } else {
         if(x >=0 && y >= 0) {
-            setMousePosition(height() - y, width() - x);
+            setMousePosition(height() - y, x);
         } else {
             setMousePosition(-1, -1);
         }

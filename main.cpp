@@ -15,6 +15,11 @@
 #include "3Plot.h"
 #include <sceneobject.h>
 #include "Plot2D.h"
+#include "QQuickWindow"
+#include "bottomtrack.h"
+#if defined(Q_OS_ANDROID)
+#include "android.h"
+#endif
 
 Core core;
 Themes theme;
@@ -40,6 +45,14 @@ void setApplicationDisplayName(QGuiApplication& app)
     }
 }
 
+void registerQmlMetaTypes()
+{
+    qmlRegisterType<qPlot2D>( "WaterFall", 1, 0, "WaterFall");
+    qmlRegisterType<BottomTrack>("BottomTrack", 1, 0, "BottomTrack");
+    qRegisterMetaType<BottomTrack::ActionEvent>("BottomTrack::ActionEvent");
+}
+
+
 int main(int argc, char *argv[])
 {
 #if defined(Q_OS_LINUX)
@@ -57,6 +70,7 @@ int main(int argc, char *argv[])
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 #endif
 
+    QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
 
     QSurfaceFormat format;
     format.setSwapInterval(0);
@@ -68,43 +82,52 @@ int main(int argc, char *argv[])
 
     engine.addImportPath("qrc:/");
 
-
     SceneObject::qmlDeclare();
 
     //qInstallMessageHandler(messageHandler); // TODO: comment this
 
+    registerQmlMetaTypes();
 
-
-    qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
-
-    engine.rootContext()->setContextProperty("dataset", core.dataset());
+    engine.rootContext()->setContextProperty("dataset", core.getDatasetPtr());
     engine.rootContext()->setContextProperty("core", &core);
     engine.rootContext()->setContextProperty("theme", &theme);
-
+    engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
+    engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
 #ifdef FLASHER
-    engine.rootContext()->setContextProperty("flasher", &core.flasher);
+    engine.rootContext()->setContextProperty("flasher", &core.getFlasherPtr);
 #endif
-
-    engine.rootContext()->setContextProperty("logViewer", core.console());
-    engine.rootContext()->setContextProperty("devs", core.dev());
+    engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
-    QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
-                     &app, [url](QObject *obj, const QUrl &objUrl) {
-        if (!obj && url == objUrl)
-            QCoreApplication::exit(-1);
-    }, Qt::QueuedConnection);
+    QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
+                     &app,      [url](QObject *obj, const QUrl &objUrl) {
+                                    if (!obj && url == objUrl)
+                                        QCoreApplication::exit(-1);
+                                }, Qt::QueuedConnection);
 
-    engine.load(url);
-
-    qCritical() << "App is created";
-
-#if defined(Q_OS_ANDROID)
-//    checkAndroidWritePermission();
+// file opening on startup
+#ifdef Q_OS_ANDROID
+    checkAndroidWritePermission();
+    tryOpenFileAndroid(engine);
+#else
+    if (argc > 1) {
+        QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
+            &core,     [&argv]() {
+                core.openLogFile(argv[1], false, true);
+            }, Qt::QueuedConnection);
+    }
 #endif
 
+    QObject::connect(&app,  &QGuiApplication::aboutToQuit,
+                     &core, [&]() {
+                                core.stopLinkManagerTimer();
+                                //core.stopFileReader();
+                            });
+
+    engine.load(url);
+    qCritical() << "App is created";
     return app.exec();
 }

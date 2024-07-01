@@ -5,6 +5,7 @@ import QtQuick.Controls.Styles 1.4
 
 Button {
     property bool active: false
+    property int borderWidth: 0
 
     id: control
     Layout.preferredHeight: theme.controlHeight
@@ -19,7 +20,7 @@ Button {
         width: parent.width
         color: (control.active) ? theme.controlSolidBackColor : theme.controlBackColor
         border.color: theme.controlBorderColor
-        border.width: 0
+        border.width: borderWidth
     }
 
 //    contentItem: CText {

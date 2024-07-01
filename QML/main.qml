@@ -34,7 +34,67 @@ Window  {
     //        property alias height: mainview.height
     //    }
 
+    Settings {
+            id: appSettings
+            property bool isFullScreen: false
+    }
 
+    Component.onCompleted: {
+        if (appSettings.isFullScreen) {
+            mainview.showFullScreen();
+        }
+    }
+
+    //-> drag-n-drop
+    property string draggedFilePath: ""
+
+    Rectangle {
+        id: overlay
+        anchors.fill: parent
+        color: "white"
+        opacity: 0
+        z: 1
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 300
+            }
+        }
+    }
+
+    DropArea {
+        anchors.fill: parent
+
+        onEntered: {
+            draggedFilePath = ""
+            if (drag.hasUrls) {
+                for (var i = 0; i < drag.urls.length; ++i) {
+                    var url = drag.urls[i]
+                    var filePath = url.replace("file:///", "").toLowerCase()
+                    if (filePath.endsWith(".klf")) {
+                        draggedFilePath = filePath
+                        overlay.opacity = 0.3
+                        break
+                    }
+                }
+            }
+        }
+
+        onExited: {
+            overlay.opacity = 0
+            draggedFilePath = ""
+        }
+
+        onDropped: {
+            if (draggedFilePath !== "") {
+                core.openLogFile(draggedFilePath, false, true)
+                overlay.opacity = 0
+                draggedFilePath = ""
+            }
+            overlay.opacity = 0
+        }
+    }
+    // drag-n-drop <-
 
     SplitView {
         Layout.fillHeight: true
@@ -62,6 +122,19 @@ Window  {
             }
         }
 
+        Keys.onReleased: {
+            if (event.key === Qt.Key_F11) {
+                if (mainview.visibility === Window.FullScreen) {
+                    mainview.showNormal();
+                    appSettings.isFullScreen = false;
+                }
+                else {
+                    appSettings.isFullScreen = true;
+                    mainview.showFullScreen();
+                }
+            }
+        }
+
         GridLayout {
             id:                   visualisationLayout
             SplitView.fillHeight: true
@@ -70,8 +143,8 @@ Window  {
             Layout.fillWidth:  true
             rowSpacing: 0
             columnSpacing: 0
-            rows    : 1
-            columns : 2
+            rows    : mainview.width > mainview.height ? 1 : 2
+            columns : mainview.width > mainview.height ? 2 : 1
 
             property int lastKeyPressed: Qt.Key_unknown
 
@@ -91,6 +164,8 @@ Window  {
                 Layout.fillWidth:  true
                 focus:             true
 
+                property bool longPressTriggered: false
+
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
@@ -104,14 +179,15 @@ Window  {
                     anchors.fill: parent
                     enabled:      true
 
+                    onPinchStarted: {
+                        menuBlock.visible = false
+                        mousearea3D.enabled = false
+                    }
+
                     onPinchUpdated: {
                         var shiftScale = pinch.scale - pinch.previousScale;
                         var shiftAngle = pinch.angle - pinch.previousAngle;
                         renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
-                    }
-
-                    onPinchStarted: {
-                        mousearea3D.enabled = false
                     }
 
                     onPinchFinished: {
@@ -128,6 +204,12 @@ Window  {
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
+                        property int lastMouseKeyPressed: Qt.NoButton // TODO: maybe this mouseArea should be outside pinchArea
+                        property point startMousePos: Qt.point(-1, -1)
+                        property bool wasMoved: false
+                        property real mouseThreshold: 15
+                        property bool vertexMode: false
+
                         onEntered: {
                             mousearea3D.forceActiveFocus();
                         }
@@ -137,16 +219,68 @@ Window  {
                         }
 
                         onPositionChanged: {
+                            if (Qt.platform.os === "android") {
+                                if (!wasMoved) {
+                                    var delta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
+                                    if (delta > mouseThreshold) {
+                                        wasMoved = true;
+                                    }
+                                }
+                                if (renderer.longPressTriggered && !wasMoved) {
+                                    if (!vertexMode) {
+                                        renderer.switchToBottomTrackVertexComboSelectionMode(mouse.x, mouse.y)
+                                    }
+                                    vertexMode = true
+                                }
+                            }
+
                             renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onPressed: {
+                            menuBlock.visible = false
+                            startMousePos = Qt.point(mouse.x, mouse.y)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.start()
+                            renderer.longPressTriggered = false
+
+                            lastMouseKeyPressed = mouse.buttons
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onReleased: {
-                            renderer.mouseReleaseTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+                            startMousePos = Qt.point(-1, -1)
+                            wasMoved = false
+                            longPressTimer.stop()
+
+                            renderer.mouseReleaseTrigger(lastMouseKeyPressed, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+
+                            if (mouse.button === Qt.RightButton || (Qt.platform.os === "android" && vertexMode)) {
+                                menuBlock.position(mouse.x, mouse.y)
+                            }
+
+                            vertexMode = false
+
+                            lastMouseKeyPressed = Qt.NoButton
                         }
+
+                        onCanceled: {
+                            startMousePos = Qt.point(-1, -1)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.stop()
+                        }
+                    }
+                }
+
+                Timer {
+                    id: longPressTimer
+                    interval: 500 // ms
+                    repeat: false
+
+                    onTriggered: {
+                        renderer.longPressTriggered = true
                     }
                 }
 
@@ -157,6 +291,90 @@ Window  {
                     anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                RowLayout {
+                    id: menuBlock
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 1
+                    visible: false
+                    Layout.margins: 0
+
+                    function position(mx, my) {
+                        var oy = renderer.height - (my + implicitHeight)
+                        if (oy < 0) {
+                            my = my + oy
+                        }
+                        if (my < 0) {
+                            my = 0
+                        }
+                        var ox = renderer.width - (mx - implicitWidth)
+                        if (ox < 0) {
+                            mx = mx + ox
+                        }
+                        x = mx
+                        y = my
+                        visible = true
+                    }
+
+                    ButtonGroup { id: pencilbuttonGroup }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/arrow-bar-to-down.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.MinDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/arrow-bar-to-up.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.MaxDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/eraser.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.ClearDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.Undefined)
+
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
                 }
             }
 
@@ -211,9 +429,14 @@ Window  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-                        onValueChanged: core.setTimelinePosition(value);
-                    }
 
+                        onValueChanged: {
+                            core.setTimelinePosition(value);
+                        }
+                        onMoved: {
+                            core.resetAim();
+                        }
+                    }
                 }
             }
         }
@@ -226,91 +449,116 @@ Window  {
         }
     }
 
-
-
-
-    ColumnLayout {
+    MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: true
+        visible: deviceManagerWrapper.pilotArmState >= 0
+        isDraggable: true
+        isOpacityControlled: true
 
-        RowLayout {
-            MenuBlock {
-            }
-            CCombo  {
-                id: pilotArmedState
-                Layout.margins: 4
-                visible: devs.pilotArmState >= 0
-                Layout.fillWidth: true
-                model: ["Disarmed", "Armed"]
-                currentIndex: devs.pilotArmState
-
-                onCurrentIndexChanged: {
-                    if(currentIndex != devs.pilotArmState) {
-                        currentIndex = devs.pilotArmState
-                    }
+        ColumnLayout {
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                CheckButton {
+                    // text: checked ? "Armed" : "Disarmed"
+                    icon.source: checked ? "./icons/propeller.svg" : "./icons/propeller-off.svg"
+                    checked: deviceManagerWrapper.pilotArmState == 1
+                    color: "white"
+                    backColor: "red"
+                    // checkedColor: "white"
+                    // checkedBackColor: "transparent"
+                    borderColor: "transparent"
+                    checkedBorderColor: theme.textColor
                 }
+
+                ButtonGroup { id: autopilotModeGroup }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/direction-arrows.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/route.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 10 // "Auto"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/anchor.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 5 // "Loiter"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/map-pin.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                CheckButton {
+                    // Layout.fillWidth: true
+                    icon.source: "./icons/home.svg"
+                    checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
+                    onCheckedChanged: {
+                    }
+                    ButtonGroup.group: autopilotModeGroup
+                }
+
+                // CCombo  {
+                //     id: pilotModeState
+                //     visible: deviceManagerWrapper.pilotModeState >= 0
+                //     model: [
+                //         "Manual",
+                //         "Acro",
+                //         "Steering",
+                //         "Hold",
+                //         "Loiter",
+                //         "Follow",
+                //         "Simple",
+                //         "Dock",
+                //         "Circle",
+                //         "Auto",
+                //         "RTL",
+                //         "SmartRTL",
+                //         "Guided",
+                //         "Mode16",
+                //         "Mode17"
+                //     ]
+                //     currentIndex: deviceManagerWrapper.pilotModeState
+
+                //     onCurrentIndexChanged: {
+                //         if(currentIndex != deviceManagerWrapper.pilotModeState) {
+                //             currentIndex = deviceManagerWrapper.pilotModeState
+                //         }
+                //     }
             }
 
-            CCombo  {
-                id: pilotModeState
-                Layout.margins: 4
-                visible: devs.pilotModeState >= 0
-                Layout.fillWidth: true
-                model: [
-                    "Manual",
-                    "Acro",
-                    "Steering",
-                    "Hold",
-                    "Loiter",
-                    "Follow",
-                    "Simple",
-                    "Dock",
-                    "Circle",
-                    "Auto",
-                    "RTL",
-                    "SmartRTL",
-                    "Guided",
-                    "Mode16",
-                    "Mode17"
-                ]
-                currentIndex: devs.pilotModeState
-
-                onCurrentIndexChanged: {
-                    if(currentIndex != devs.pilotModeState) {
-                        currentIndex = devs.pilotModeState
-                    }
+            RowLayout {
+                CText {
+                    id: fcTextBatt
+                    // Layout.margins: 4
+                    visible: isFinite(deviceManagerWrapper.vruVoltage)
+                    rightPadding: 4
+                    leftPadding: 4
+                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
                 }
             }
         }
-
-        RowLayout {
-            MenuBlock {
-
-            }
-            CText {
-                id: fcTextBatt
-                Layout.margins: 4
-                visible: isFinite(devs.vruVoltage)
-                rightPadding: 20
-                leftPadding: 20
-                text: devs.vruVoltage.toFixed(1) + " V   " + devs.vruCurrent.toFixed(1) + " A   " + devs.vruVelocityH.toFixed(2) + " m/s"
-            }
-        }
-
-
-
-        //        CText {
-        //            id: fcTextMode
-        //            rightPadding: 20
-        //            leftPadding: 20
-        //            color: devs.pilotArmed ? theme.textColor : theme.textErrorColor
-        //            text: devs.pilotArmed ? "Armed" : "Disarmed"
-        //        }
-
-
     }
-
 
     MenuBar {
         id:                menuBar

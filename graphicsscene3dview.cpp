@@ -3,26 +3,30 @@
 #include <surface.h>
 #include <plotcash.h>
 
+#include <cmath>
 #include <memory.h>
 #include <math.h>
 
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 
-GraphicsScene3dView::GraphicsScene3dView()
-: QQuickFramebufferObject()
-, m_camera(std::make_shared<Camera>())
-, m_axesThumbnailCamera(std::make_shared<Camera>())
-, m_rayCaster(std::make_shared<RayCaster>())
-, m_surface(std::make_shared<Surface>())
-, m_bottomTrack(std::make_shared<BottomTrack>(this, this))
-, m_polygonGroup(std::make_shared<PolygonGroup>())
-, m_pointGroup(std::make_shared<PointGroup>())
-, m_coordAxes(std::make_shared<CoordinateAxes>())
-, m_planeGrid(std::make_shared<PlaneGrid>())
-, m_boatTrack(std::make_shared<SceneObject>())
-, m_navigationArrow(std::make_shared<NavigationArrow>())
-, navigationArrowState_(false)
+GraphicsScene3dView::GraphicsScene3dView() :
+    QQuickFramebufferObject(),
+    m_camera(std::make_shared<Camera>()),
+    m_axesThumbnailCamera(std::make_shared<Camera>()),
+    m_rayCaster(std::make_shared<RayCaster>()),
+    m_surface(std::make_shared<Surface>()),
+    m_boatTrack(std::make_shared<BoatTrack>()),
+    m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
+    m_polygonGroup(std::make_shared<PolygonGroup>()),
+    m_pointGroup(std::make_shared<PointGroup>()),
+    m_coordAxes(std::make_shared<CoordinateAxes>()),
+    m_planeGrid(std::make_shared<PlaneGrid>()),
+    m_navigationArrow(std::make_shared<NavigationArrow>()),
+    navigationArrowState_(true),
+    wasMoved_(false),
+    wasMovedMouseButton_(Qt::MouseButton::NoButton),
+    switchedToBottomTrackVertexComboSelectionMode_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -34,6 +38,7 @@ GraphicsScene3dView::GraphicsScene3dView()
     m_navigationArrow->setColor({ 255, 0, 0 });
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_pointGroup.get(), &PointGroup::changed, this, &QQuickFramebufferObject::update);
@@ -47,7 +52,6 @@ GraphicsScene3dView::GraphicsScene3dView()
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(m_surface.get(), &Surface::visibilityChanged, m_bottomTrack.get(), &BottomTrack::setDisplayingWithSurface);
     QObject::connect(m_navigationArrow.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     updatePlaneGrid();
@@ -59,6 +63,11 @@ GraphicsScene3dView::~GraphicsScene3dView()
 QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
 {
     return new GraphicsScene3dView::InFboRenderer();
+}
+
+std::shared_ptr<BoatTrack> GraphicsScene3dView::boatTrack() const
+{
+    return m_boatTrack;
 }
 
 std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
@@ -110,10 +119,10 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
+    m_boatTrack->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
-    m_boatTrack->clearData();
     m_navigationArrow->clearData();
     navigationArrowState_ = false;
     m_bounds = Cube();
@@ -135,24 +144,51 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
+void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
+{
+    switchedToBottomTrackVertexComboSelectionMode_ = true;
+
+    m_bottomTrack->resetVertexSelection();
+    lastMode_ = m_mode;
+    m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
+    m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
+    m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
+
+}
+
 void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
     Q_UNUSED(keyboardKey)
 
-    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton)) {
-        m_bottomTrack->resetVertexSelection();
-        m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
-        m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
+    wasMoved_ = false;
+    clearComboSelectionRect();
+
+    if (engine_) { // maybe this will be removed
+        if (auto selectionToolButton = engine_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
+            selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
+        }
     }
 
-    m_bottomTrack->mousePressEvent(mouseButton, x, y);
-    m_startMousePos = { x, y };
+    if (mouseButton == Qt::MouseButton::RightButton) {
+        switchToBottomTrackVertexComboSelectionMode(x, y);
+    }
 
+    m_startMousePos = { x, y };
     QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
+    // movement threshold for sync
+    if (!wasMoved_) {
+        double dist{ std::sqrt(std::pow(x - m_startMousePos.x(), 2) + std::pow(y - m_startMousePos.y(), 2)) };
+        if (dist > mouseThreshold_) {
+            wasMoved_ = true;
+            if (wasMovedMouseButton_ != mouseButton)
+                wasMovedMouseButton_ = mouseButton;
+        }
+    }
+
     // ray for marker
     auto toOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
     auto toEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
@@ -161,11 +197,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
 
-    if (m_mode == BottomTrackVertexComboSelectionMode && (mouseButton & Qt::LeftButton)) {
+    if (switchedToBottomTrackVertexComboSelectionMode_) {
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
-        m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
-    }
-    else if (m_mode == BottomTrackVertexSelectionMode) {
         m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     }
     else {
@@ -194,7 +227,6 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     }
 
     m_lastMousePos = { x, y };
-
     QQuickFramebufferObject::update();
 }
 
@@ -202,10 +234,24 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 {
     Q_UNUSED(keyboardKey);
 
-    //TODO: Commit only if camera in movement state
-    m_camera->commitMovement();
-    m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
+    clearComboSelectionRect();
+
+    m_camera->commitMovement(); //TODO: Commit only if camera in movement state
     m_lastMousePos = { x, y };
+
+    if (switchedToBottomTrackVertexComboSelectionMode_) {
+        m_mode = lastMode_;
+        m_bottomTrack->mouseReleaseEvent(mouseButton, x, y);
+    }
+
+    if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
+        m_bottomTrack->resetVertexSelection();
+        m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
+    }
+
+    switchedToBottomTrackVertexComboSelectionMode_ = false;
+    wasMoved_ = false;
+    wasMovedMouseButton_ = Qt::MouseButton::NoButton;
 
     QQuickFramebufferObject::update();
 }
@@ -234,8 +280,8 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 {
     m_camera->zoom(scaleDelta);
 
-    m_camera->rotate(prevCenter, currCenter, angleDelta);
-    m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta);
+    m_camera->rotate(prevCenter, currCenter, angleDelta, height());
+    m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta , height());
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
@@ -244,6 +290,13 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
     m_bottomTrack->keyPressEvent(key);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent)
+{
+    m_bottomTrack->actionEvent(actionEvent);
 
     QQuickFramebufferObject::update();
 }
@@ -296,9 +349,9 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setIdleMode()
 {
-    m_mode = Idle;
+    m_mode = Idle; 
 
-    m_comboSelectionRect = {0,0,0,0};
+    clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
 
     QQuickFramebufferObject::update();
@@ -332,15 +385,6 @@ void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::setBottomTrackVertexComboSelectionMode()
-{
-    setIdleMode();
-
-    m_mode = BottomTrackVertexComboSelectionMode;
-
-    QQuickFramebufferObject::update();
-}
-
 void GraphicsScene3dView::setPolygonCreationMode()
 {
     setIdleMode();
@@ -361,25 +405,32 @@ void GraphicsScene3dView::setPolygonEditingMode()
 
 void GraphicsScene3dView::setDataset(Dataset *dataset)
 {
-    if(m_dataset)
+    if (m_dataset)
         QObject::disconnect(m_dataset);
 
     m_dataset = dataset;
 
-    if(!m_dataset)
+    if (!m_dataset)
         return;
 
     m_bottomTrack->setDatasetPtr(m_dataset);
 
-    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated, m_bottomTrack.get(), &BottomTrack::isEpochsChanged);
-    QObject::connect(m_dataset, &Dataset::boatTrackUpdated, this, [this]()->void {
-        m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-        if (navigationArrowState_) {
-            const Position pos = m_dataset->getLastPosition();
-            m_navigationArrow->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
-        }
-    });
-
+    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
+                     this,      [this](int lEpoch, int rEpoch) -> void {
+                                    clearComboSelectionRect();
+                                    m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
+                                }
+                     );
+    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
+                     this,      [this]() -> void {
+                                    m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+                                    if (navigationArrowState_) {
+                                        const Position pos = m_dataset->getLastPosition();
+                                        m_navigationArrow->setPositionAndAngle(
+                                            QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
+                                    }
+                                }
+                     );
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {
@@ -392,13 +443,18 @@ void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, 
     }
 }
 
+void GraphicsScene3dView::setQmlEngine(QObject* engine)
+{
+    engine_ = engine;
+}
+
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
-        .merge(m_surface->bounds())
-        .merge(m_bottomTrack->bounds())
-        .merge(m_polygonGroup->bounds())
-        .merge(m_pointGroup->bounds());
+                   .merge(m_surface->bounds())
+                    .merge(m_bottomTrack->bounds())
+                    .merge(m_polygonGroup->bounds())
+                    .merge(m_pointGroup->bounds());
 
     updatePlaneGrid();
 
@@ -417,6 +473,11 @@ void GraphicsScene3dView::updatePlaneGrid()
     //     m_planeGrid->setCellSize(5);
     // if(m_camera->distToFocusPoint() > 230)
     //     m_planeGrid->setCellSize(10);
+}
+
+void GraphicsScene3dView::clearComboSelectionRect()
+{
+    m_comboSelectionRect = { 0, 0, 0, 0 };
 }
 
 //---------------------Renderer---------------------------//
@@ -445,11 +506,11 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
+    m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
-    m_renderer->m_boatTrackRenderImpl       = *(view->m_boatTrack->m_renderImpl);
     m_renderer->m_navigationArrowRenderImpl = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
@@ -554,13 +615,15 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
     updateViewMatrix();
 }
 
-void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta)
+void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight)
 {
+    const qreal increaseCoeff{ 1.3 };
+    const qreal angleDeltaY = (prevCenter - currCenter).y() / widgetHeight * 90.0;
+
     m_rotAngle.setX(m_rotAngle.x() - qDegreesToRadians(angleDelta));
-    m_rotAngle.setY(m_rotAngle.y() +  qDegreesToRadians((prevCenter - currCenter).y()));
+    m_rotAngle.setY(m_rotAngle.y() + qDegreesToRadians(angleDeltaY * increaseCoeff));
 
     checkRotateAngle();
-
     updateViewMatrix();
 }
 
@@ -597,7 +660,8 @@ void GraphicsScene3dView::Camera::moveZAxis(float z)
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
 #ifdef Q_OS_ANDROID
-    m_distToFocusPoint -= delta * 100.f;
+    const float increaseCoeff{ 0.95f };
+    m_distToFocusPoint -= delta * m_distToFocusPoint * increaseCoeff;
 #else
     m_distToFocusPoint = delta > 0.f ? m_distToFocusPoint / 1.15f : m_distToFocusPoint * 1.15f;
 #endif

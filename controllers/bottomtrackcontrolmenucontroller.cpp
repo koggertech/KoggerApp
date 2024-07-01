@@ -36,11 +36,31 @@ void BottomTrackControlMenuController::onVisibleChannelComboBoxIndexChanged(int 
     m_graphicsSceneView->bottomTrack()->setVisibleChannel(channelId);
 }
 
+void BottomTrackControlMenuController::onSurfaceUpdated()
+{
+    if (!m_graphicsSceneView)
+        return;
+
+    auto bottomTrack = m_graphicsSceneView->bottomTrack();
+
+    QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceUpdated");
+}
+
+void BottomTrackControlMenuController::onSurfaceStateChanged(bool state)
+{
+    if (!m_graphicsSceneView)
+        return;
+
+    auto bottomTrack = m_graphicsSceneView->bottomTrack();
+
+    QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceStateChanged", Q_ARG(bool, state));
+}
+
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;
 
-    if(!m_graphicsSceneView)
+    if (!m_graphicsSceneView)
         return;
 
     QObject::connect(m_graphicsSceneView->bottomTrack().get(), &BottomTrack::epochListChanged,
@@ -87,5 +107,5 @@ void BottomTrackControlMenuController::updateChannelList()
 
 void BottomTrackControlMenuController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>(QmlObjectNames::bottomTrackControlMenu);
+    m_component = m_engine->findChild<QObject*>(QmlObjectNames::bottomTrackControlMenu());
 }

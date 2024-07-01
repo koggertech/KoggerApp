@@ -43,19 +43,25 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+
+### SOURCES
 SOURCES += \
     3Plot.cpp \
     DevDriver.cpp \
-    DevHub.cpp \
+    DeviceManager.cpp \
+    DeviceManagerWrapper.cpp \
     EchogramProcessing.cpp \
     IDBinnary.cpp \
     Link.cpp \
+    LinkManager.cpp \
+    LinkManagerWrapper.cpp \
+    FileReader.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
     ProtoBinnary.cpp \
+    LinkListModel.cpp \
     StreamListModel.cpp \
-    connection.cpp \
     console.cpp \
     consolelistmodel.cpp \
     core.cpp \
@@ -73,7 +79,7 @@ SOURCES += \
     raycaster.cpp \
     streamlist.cpp \
     textrenderer.cpp \
-    waterfall.cpp \
+    waterfall.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -90,6 +96,7 @@ SOURCES += \
 }
 
 RESOURCES += QML/qml.qrc \
+    icons.qrc \
     resources.qrc
 
 windows {
@@ -110,24 +117,30 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+
+### HEADERS
 HEADERS += \
     3Plot.h \
     ConverterXTF.h \
     DSP.h \
     DevDriver.h \
-    DevHub.h \
+    DeviceManager.h \
+    DeviceManagerWrapper.h \
     DevQProperty.h \
     EchogramProcessing.h \
     IDBinnary.h \
     Link.h \
+    LinkManager.h \
+    LinkManagerWrapper.h \
+    FileReader.h \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \
+    LinkListModel.h \
     StreamListModel.h \
     Themes.h \
     abstractentitydatafilter.h \
     XTFConf.h \
-    connection.h \
     console.h \
     consolelistmodel.h \
     filelist.h \
@@ -145,7 +158,7 @@ HEADERS += \
     streamlist.h \
     textrenderer.h \ # TODO
     waterfall.h \
-    waterfallproxy.h \
+    waterfallproxy.h
 
 android {
 HEADERS += \
@@ -158,6 +171,7 @@ HEADERS += \
 }
 
 
+### DISTFILES
 DISTFILES += \
     QML/Common/MenuBlockEx.qml \
     QML/Scene3DToolbar.qml \
@@ -182,13 +196,13 @@ DISTFILES += \
     QML/CustomGroupBox.qml \
     QML/DeviceSettingsViewer.qml \
     QML/MenuBar.qml \
+    QML/MenuFrame.qml \
     QML/MenuButton.qml \
     QML/MenuViewer.qml \
     QML/TabBackStyle.qml \
     QML/UpgradeBox.qml \
     QML/FlashBox.qml \
     QML/main.qml \
-    a.fsh \
     android_build/AndroidManifest.xml \
     android_build/build.gradle \
     android_build/gradle.properties \
@@ -240,7 +254,6 @@ android {
 }
 
 ANDROID_ABIS = armeabi-v7a
-
 
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri

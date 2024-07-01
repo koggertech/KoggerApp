@@ -24,7 +24,7 @@ public:
 
     void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
-    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  updater(); }
+    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  update(); }
 
     void plotUpdate() override;
 
@@ -50,8 +50,8 @@ public slots:
     void horScrollEvent(int delta);
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
-    void plotMousePosition(int x, int y);
-    void plotMouseTool(int mode);
+    Q_INVOKABLE void plotMousePosition(int x, int y);
+    Q_INVOKABLE void plotMouseTool(int mode);
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }

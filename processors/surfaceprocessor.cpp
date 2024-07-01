@@ -13,7 +13,9 @@ const QString UnderlyingThreadName = "SurfaceProcessorThread";
 
 SurfaceProcessor::SurfaceProcessor(QObject *parent)
     : QObject{parent}
-{}
+{
+    qRegisterMetaType<Result>("Result");
+}
 
 SurfaceProcessor::~SurfaceProcessor()
 {
@@ -65,6 +67,11 @@ bool SurfaceProcessor::stopInThread(unsigned long time)
 
     if(parent() || !(currentThread && currentThread->objectName() == UnderlyingThreadName))
         return true;
+
+    if (QThread::currentThread() == currentThread) { // same thread
+        currentThread->quit();
+        return true;
+    }
 
     currentThread->quit();
 

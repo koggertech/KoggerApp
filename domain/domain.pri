@@ -2,18 +2,19 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
-    $$PWD/Circle.h\
-    $$PWD/Quad.h\
-    $$PWD/Triangle.h\
-    $$PWD/Point3D.h\
-    $$PWD/DelaunayTriangulation.h\
-    $$PWD/Edge.h\
-    $$PWD/Equals.h\
-    $$PWD/Interpolator.h\
+    $$PWD/Circle.h \
+    $$PWD/Quad.h \
+    $$PWD/Triangle.h \
+    $$PWD/Point3D.h \
+    $$PWD/DelaunayTriangulation.h \
+    $$PWD/Edge.h \
+    $$PWD/Equals.h \
+    $$PWD/Interpolator.h \
     $$PWD/barycentricinterpolator.h \
-    $$PWD/bottomtrack.h\
+    $$PWD/boattrack.h \
+    $$PWD/bottomtrack.h \
     $$PWD/boundarydetector.h \
-    $$PWD/contour.h\
+    $$PWD/contour.h \
     $$PWD/coordinateaxes.h \
     $$PWD/cube.h \
     $$PWD/plane.h \
@@ -31,8 +32,9 @@ HEADERS += \
     $$PWD/navigation_arrow.h
 
 SOURCES += \
-    $$PWD/bottomtrack.cpp\
-    $$PWD/contour.cpp\
+    $$PWD/boattrack.cpp \
+    $$PWD/bottomtrack.cpp \
+    $$PWD/contour.cpp \
     $$PWD/coordinateaxes.cpp \
     $$PWD/cube.cpp \
     $$PWD/plane.cpp \
@@ -45,7 +47,3 @@ SOURCES += \
     $$PWD/surfacegrid.cpp \
     $$PWD/vertexeditingdecorator.cpp \
     $$PWD/navigation_arrow.cpp
-
-	
-
-

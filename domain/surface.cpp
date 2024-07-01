@@ -73,9 +73,26 @@ void Surface::updateGrid()
     case GL_TRIANGLES:
         makeTriangleGrid();
         break;
-    case GL_QUADS:
+    case GL_QUADS:{
         makeQuadGrid();
+
+#if defined (Q_OS_ANDROID)
+        auto impl = RENDER_IMPL(Surface);
+        impl->quadSurfaceVertices_.clear();
+        impl->quadSurfaceVertices_.reserve(impl->data().size() * 2);
+        auto data = impl->data();
+        for (int i = 0; i < data.size(); i += 4) {
+            QVector3D A = data[i];
+            QVector3D B = data[i + 1];
+            QVector3D C = data[i + 2];
+            QVector3D D = data[i + 3];
+            impl->quadSurfaceVertices_.append({ A, B, C,
+                                                A, C, D });
+        }
+#endif
+
         break;
+    }
     default:
         break;
     }
@@ -117,7 +134,7 @@ void Surface::makeQuadGrid()
     if (impl->cdata().size() < 4)
         return;
 
-    QVector <QVector3D> grid;
+    QVector<QVector3D> grid;
 
     for (int i = 0; i < impl->cdata().size()-4; i+=4){
         QVector3D A = impl->cdata()[i];
@@ -177,7 +194,7 @@ void Surface::makeContourFromQuads()
 
     std::vector <::Quad <float>> temp;
 
-    for(int i = 0; i < surfaceData.size()-4; i+=4){
+    for (int i = 0; i < surfaceData.size() - 4; i += 4) {
         temp.push_back(::Quad <float>(
                             Point3D <float>(surfaceData[i].x(),   surfaceData[i].y(),   surfaceData[i].z()),
                             Point3D <float>(surfaceData[i+1].x(), surfaceData[i+1].y(), surfaceData[i+1].z()),
@@ -243,9 +260,20 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
     shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
+#if defined (Q_OS_ANDROID)
+    if (primitiveType() == GL_TRIANGLES) {
+        shaderProgram->setAttributeArray(posLoc, m_data.constData());
+        ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
+    }
+    else if (primitiveType() == GL_QUADS) {
+        shaderProgram->setAttributeArray(posLoc, quadSurfaceVertices_.constData());
+        ctx->glDrawArrays(GL_TRIANGLES, 0, quadSurfaceVertices_.size());
+    }
+#else
+    shaderProgram->setAttributeArray(posLoc, m_data.constData());
     ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
+#endif
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();

@@ -9,18 +9,17 @@ MenuScroll {
     property bool is2DHorizontal: displaySettings.is2DHorizontal
     property int instruments:  displaySettings.instruments
     property var targetPlot: null
+    property int menuWidth: 200
+
 
     ColumnLayout {
-        width: parent.width
-        Layout.preferredWidth: parent.width
-        implicitWidth:  parent.width
-        spacing: 10
-
-        DisplaySettings {
-            id: displaySettings
-            targetPlot: scrollBar.targetPlot
-            Layout.maximumWidth: parent.width
-            Layout.preferredWidth: parent.width
+        MenuFrame {
+            DisplaySettings {
+                id: displaySettings
+                targetPlot: scrollBar.targetPlot
+                width: menuWidth
+            }
         }
     }
+
 }

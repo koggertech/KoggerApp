@@ -3,7 +3,6 @@
 #include <QGuiApplication>
 #include <QQmlContext>
 #include <QApplication>
-#include <QQmlApplicationEngine>
 
 //#include <core.h>
 //Core core;
@@ -14,6 +13,7 @@
 #if defined(Q_OS_ANDROID)
 #include <jni.h>
 #include <QtGlobal>
+#include <QtAndroid>
 #if (QT_VERSION_MAJOR < 6)
 #include <QtAndroidExtras>
 #include <QAndroidJniObject>
@@ -28,6 +28,8 @@
 
 #include "qtandroidserialport/src/qserialport.h"
 
+#include "core.h"
+extern Core core;
 
 
 static jobject _class_loader = nullptr;
@@ -125,17 +127,54 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_VERSION_1_6;
 }
 
-//#include <QtAndroid>
 bool checkAndroidWritePermission() {
-//    QCoreApplication::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-//    if(r == QtAndroid::PermissionResult::Denied) {
-//        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
-//        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-//        if(r == QtAndroid::PermissionResult::Denied) {
-//             return false;
-//        }
-//   }
+
+    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+
+    if (r == QtAndroid::PermissionResult::Denied) {
+        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.READ_EXTERNAL_STORAGE" );
+
+        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+        if (r == QtAndroid::PermissionResult::Denied) {
+             return false;
+        }
+   }
    return true;
 }
+
+void tryOpenFileAndroid(QQmlApplicationEngine& engine)
+{
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+    QAndroidJniObject intent = activity.callObjectMethod("getIntent", "()Landroid/content/Intent;");
+
+    if (intent.isValid()) {
+        QAndroidJniObject action = intent.callObjectMethod("getAction", "()Ljava/lang/String;");
+        QString actionString = action.toString();
+        if (actionString == "android.intent.action.VIEW") {
+            QAndroidJniObject uri = intent.callObjectMethod("getData", "()Landroid/net/Uri;");
+            if (uri.isValid()) {
+                QAndroidJniObject path = uri.callObjectMethod("getPath", "()Ljava/lang/String;");
+                QString filePath = path.toString();
+                //core.consoleInfo("FILE PATH encoded: " + filePath);
+                QUrl url = QUrl::fromEncoded(filePath.toUtf8());
+                filePath = url.toString();
+                //core.consoleInfo("FILE PATH decoded: " + filePath);
+                //if (filePath.contains("/root/storage/emulated/0/Download/")) {
+                    filePath.replace("/root/storage/emulated/0/Download/", "content://com.android.externalstorage.documents/document/primary%3ADownload%2F");
+                //}
+                //if (filePath.contains("/uid/file:///storage/emulated/0/Download/")) {
+                    filePath.replace("/uid/file:///storage/emulated/0/Download/", "content://com.android.externalstorage.documents/document/primary%3ADownload%2F");
+                //}
+                //core.consoleInfo("FILE PATH replaced: " + filePath);
+                QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
+                    &core,     [filePath]() {
+                        core.openLogFile(filePath, false, true);
+                    }, Qt::AutoConnection);
+            }
+        }
+    }
+}
+
 #endif
 #endif

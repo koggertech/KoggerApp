@@ -5,12 +5,16 @@
 #include <QFont>
 #include <QColor>
 
+
 class Themes : public QObject
 {
     Q_OBJECT
+
 public:
 
-    Themes() {
+    Themes() :
+        instrumentsGrade_(-1)
+    {
         setTheme();
         _isConsoleVisible = false;
     }
@@ -27,6 +31,8 @@ public:
     Q_PROPERTY(QFont textFontS READ textFontS NOTIFY changed)
 
     Q_PROPERTY(QColor menuBackColor READ menuBackColor NOTIFY changed)
+    Q_PROPERTY(QColor frameBackColor READ frameBackColor NOTIFY changed)
+
     Q_PROPERTY(QColor controlBackColor READ controlBackColor NOTIFY changed)
     Q_PROPERTY(QColor controlBorderColor READ controlBorderColor NOTIFY changed)
     Q_PROPERTY(QColor controlSolidBackColor READ controlSolidBackColor NOTIFY changed)
@@ -37,6 +43,8 @@ public:
     Q_PROPERTY(int themeID READ themeId WRITE setTheme NOTIFY changed)
 
     Q_PROPERTY(bool consoleVisible READ consoleVisible WRITE setConsoleVisible NOTIFY interfaceChanged)
+    Q_PROPERTY(int instrumentsGrade READ getInstrumentsGrade WRITE setInstrumentsGrade NOTIFY instrumentsGradeChanged)
+
 
     QColor textColor() { return *_textColor; }
     QColor textErrorColor() { return *_textErrorColor; }
@@ -48,6 +56,8 @@ public:
     QFont textFontS() { return *_textFontS; }
 
     QColor menuBackColor() { return *_menuBackColor; }
+    QColor frameBackColor() { return *_frameBackColor; }
+
     QColor controlBackColor() { return *_controlBackColor; }
     QColor controlBorderColor() { return *_controlBorderColor; }
     QColor controlSolidBackColor() { return *_controlSolidBackColor; }
@@ -70,6 +80,8 @@ public:
         _textFont->setPixelSize(18);
 #endif
         _textErrorColor = new QColor(250, 0, 0);
+
+        _frameBackColor = new QColor(45, 45, 45, 50);
 
         if(theme_id == 0) {
             _textColor = new QColor(250, 250, 250);
@@ -135,12 +147,27 @@ public:
         interfaceChanged();
     }
 
-    bool consoleVisible() { return _isConsoleVisible; }
+    bool consoleVisible()
+    {
+        return _isConsoleVisible;
+    }
+
+    int getInstrumentsGrade() const
+    {
+        return instrumentsGrade_;
+    }
+
+    void setInstrumentsGrade(int instrumentsGrade)
+    {
+        instrumentsGrade_ = instrumentsGrade;
+        instrumentsGradeChanged();
+    }
 
 signals:
     void changed();
-
     void interfaceChanged();
+    void instrumentsGradeChanged();
+
 protected:
     int _id = 0;
 
@@ -154,6 +181,7 @@ protected:
     QFont* _textFontS;
 
     QColor* _menuBackColor;
+    QColor* _frameBackColor;
     QColor* _controlBackColor;
     QColor* _controlBorderColor;
     QColor* _controlSolidBackColor;
@@ -162,6 +190,7 @@ protected:
     int32_t _menuWidth;
 
     bool _isConsoleVisible;
+    int instrumentsGrade_;
 };
 
 #endif // THEME_H

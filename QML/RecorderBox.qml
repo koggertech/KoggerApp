@@ -10,9 +10,6 @@ DevSettingsBox {
     id: control
     isActive: dev ? dev.isRecorder : false
 
-    MenuBlock {
-    }
-
     ColumnLayout {
         id: columnItem
         spacing: 24
@@ -125,7 +122,7 @@ DevSettingsBox {
 
             ListView {
                 id: filesList
-                model: devs.streamsList
+                model: deviceManagerWrapper.streamsList
                 Layout.margins: 0
                 Layout.topMargin: 30
                 Layout.bottomMargin: 30

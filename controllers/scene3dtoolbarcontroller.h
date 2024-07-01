@@ -13,7 +13,6 @@ public:
     Q_INVOKABLE void onSetCameraIsometricViewButtonClicked();
     Q_INVOKABLE void onSetCameraMapViewButtonClicked();
     Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
-    Q_INVOKABLE void onBottomTrackVertexComboSelectionModeButtonChecked(bool checked);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 protected:

@@ -22,5 +22,5 @@ void NpdFilterControlMenuController::setGraphicsSceneView(GraphicsScene3dView *s
 
 void NpdFilterControlMenuController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>(QmlObjectNames::npdFilterControlMenu);
+    m_component = m_engine->findChild<QObject*>(QmlObjectNames::npdFilterControlMenu());
 }

@@ -814,7 +814,7 @@ public:
         const int image_height = canvas.height();
         const int image_width = canvas.width();
 
-        if(cursor._tool == MouseToolNothing) {
+        if (cursor._tool == MouseToolNothing || beenEpochEvent_) {
             p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
             p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
         }
@@ -834,13 +834,19 @@ public:
         return true;
     }
 
+    void setEpochEventState(bool state) {
+        beenEpochEvent_ = state;
+    }
+
 protected:
+    bool beenEpochEvent_ = false;
     int _lineWidth = 1;
     QColor _lineColor = QColor(255, 255, 255, 255);
 };
 
 
-class Plot2D {
+class Plot2D
+{
 public:
     Plot2D();
 
@@ -848,12 +854,15 @@ public:
         _dataset = dataset;
     }
 
-    bool getImage(int width, int height, QPainter* painter);
+    bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
 
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
+    void setAimEpochEventState(bool state);
     void setTimelinePosition(float position);
+    void resetAim();
+
     void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
 
@@ -898,13 +907,14 @@ public:
 
     virtual void plotUpdate() {}
 
-    virtual void sendSyncEvent(int epoch_index) { Q_UNUSED(epoch_index); }
+    virtual void sendSyncEvent(int epoch_index) {
+        Q_UNUSED(epoch_index);
+    }
 
 protected:
     Dataset* _dataset = NULL;
     Canvas _canvas;
 
-    BottomTrackParam _bottomTrackParam;
 
     DatasetCursor _cursor;
 

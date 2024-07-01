@@ -7,8 +7,9 @@ import Qt.labs.settings 1.1
 Rectangle {
     id: connectionLine
     radius: 2
-    height: parent.height
-    width: parent.width
+    // height: parent.height
+    // width: parent.width
+    anchors.fill: parent
     color: theme.menuBackColor
     border.color: theme.controlBorderColor
     border.width: 0

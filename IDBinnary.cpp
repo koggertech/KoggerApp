@@ -6,7 +6,7 @@ extern Core core;
 
 #if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 template < typename T, size_t N >
-size_t _countof( T const (&array)[ N ] ) { return N; }
+size_t _countof( T const (&array)[ N ] ) { Q_UNUSED(array); return N; }
 #endif
 IDBin::IDBin(QObject *parent) :
     QObject(parent),
@@ -15,6 +15,7 @@ IDBin::IDBin(QObject *parent) :
     isColdStart_(false), // for unique
     needToCheckSetResp_(true)
 {
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
 //    setProto(proto);
 
     coldStartTimer_.setInterval(timerPeriodMsec_);
@@ -193,50 +194,21 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             return respErrorPayload;
         }
     } else if(proto.ver() == v7) {
-        proto.read(&_rawHeader);
+        RawData::RawDataHeader header;
 
-        // qDebug("pkt");
+        proto.read(&header);
 
-        uint8_t cell_byte_size = _rawHeader.dataSize*_rawHeader.channelCount;
-
-
-        type = _rawHeader.dataType;
-        _lastSeqPosition = _rawHeader.cellOffset;
-
-        if(_lastSeqPosition == 0 && _rawSeqPosition != 0) {
-            _rawCellCount = _rawSeqPosition;
-            _rawDataSize = _rawCellCount*cell_byte_size;
-            memcpy(_rawDataSave, _rawData, _rawDataSize);
-            m_isCompleteChart = true;
-           // qDebug("size %i, _rawDataSize %i, cell_byte_size %i", _rawDataSize, _rawCellCount, cell_byte_size);
-        }
-
-        if(_lastSeqPosition == 0) {
-            _rawSeqPosition = 0;
-        }
-
-        // qDebug("_rawSeqPosition %i, _lastSeqPosition%i", _rawSeqPosition, _lastSeqPosition);
-
-        if(_rawSeqPosition == _lastSeqPosition) {
-            uint16_t part_byte_len = proto.readAvailable();
-            uint32_t byte_offset = _rawSeqPosition*cell_byte_size;
-
-            // qDebug("cell_byte_size %i", part_byte_len);
-
-            if(byte_offset + part_byte_len < sizeof (_rawData)) {
-                proto.read((uint8_t*)&_rawData[byte_offset], part_byte_len);
-                _rawSeqPosition += part_byte_len/cell_byte_size;
-            }
-        } else {
-            return respErrorPayload;
-        }
+        int avail = proto.readAvailable();
+        RawData raw_data;
+        raw_data.header = header;
+        raw_data.data = QByteArray((char*)proto.read(avail), avail);
+        emit rawDataRecieved(raw_data);
     } else {
         return respErrorVersion;
     }
 
     return respOk;
 }
-
 
 Resp IDBinAttitude::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
@@ -255,6 +227,7 @@ Resp IDBinAttitude::parsePayload(FrameParser &proto) {
 
     return respOk;
 }
+
 
 float IDBinAttitude::yaw(Version src_ver) {
     Q_UNUSED(src_ver);
@@ -920,7 +893,7 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismod
 
 Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
-        if(sizeof(UsblSolution) <= proto.readAvailable()) {
+        if(static_cast<int16_t>(sizeof(UsblSolution)) <= proto.readAvailable()) {
             _usblSolution = proto.read<UsblSolution>();
             qInfo("USBL d: %f, a: %f,e: %f, p: %lld", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.carrier_counter);
         } else {
@@ -932,3 +905,5 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
 
     return respOk;
 }
+
+

@@ -13,7 +13,7 @@ ColumnLayout {
         loader.setSource(initialComponent)
     }
 
-    //Component.onCompleted: sceneMenuButton.checked = true
+    Component.onCompleted: sceneMenuButton.checked = true
 
     Item {
         id: menuLoader

@@ -38,6 +38,6 @@ vec3 getColor(float v, float vmin, float vmax)
 void main()
 {
     float norm_z = (vertice.z - min_z) / (abs(max_z - min_z));
-    vec4 color = vec4(getColor(norm_z, 0.0f, 1.0f), 1.0f);
+    vec4 color = vec4(getColor(norm_z, 0.0f, 1.0f) * 0.95f, 1.0f);
     gl_FragColor = color;
-};
+}

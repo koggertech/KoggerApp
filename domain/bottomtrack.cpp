@@ -7,12 +7,17 @@
 
 #include <QHash>
 
-BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent)
-    : SceneObject(new BottomTrackRenderImplementation,view,parent), datasetPtr_(nullptr)
-{}
+BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent) :
+    SceneObject(new BottomTrackRenderImplementation, view, parent),
+    datasetPtr_(nullptr)
+{
+
+}
 
 BottomTrack::~BottomTrack()
-{}
+{
+
+}
 
 SceneObject::SceneObjectType BottomTrack::type() const
 {
@@ -23,9 +28,12 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched);
 
-    if(event->type() == EpochSelected2d){
+    if (event->type() == EpochSelected2d) {
         auto epochEvent = static_cast<EpochEvent*>(event);
+        resetVertexSelection();
+        m_view->m_mode = GraphicsScene3dView::ActiveMode::BottomTrackVertexSelectionMode;
         selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
+        m_view->update();
     }
     return false;
 }
@@ -42,11 +50,95 @@ QMap<int, DatasetChannel> BottomTrack::channels() const
 
 DatasetChannel BottomTrack::visibleChannel() const
 {
-    return m_visibleChannel;
+    return visibleChannel_;
 }
 
 void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
     datasetPtr_ = datasetPtr;
+}
+
+void BottomTrack::actionEvent(ActionEvent actionEvent)
+{
+    auto minMaxFunc = [this](bool isMin) -> void {
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
+        if (!indices.isEmpty()) {
+            QVector<int> sequenceVector;
+            sequenceVector.reserve(indices.size());
+
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }; epoch) {
+                    sequenceVector.push_back(epochIndex);
+
+                    const float coeff = isMin ? 1.1f : 0.9f;
+                    const auto channels = datasetPtr_->channelsList();
+                    for (const auto& channel : channels) {
+                        if (!isMin) {
+                            epoch->setMaxDistProc(channel.channel, epoch->distProccesing(channel.channel) * coeff);
+                        }
+                        else {
+                            epoch->setMinDistProc(channel.channel, epoch->distProccesing(channel.channel) * coeff);
+                        }
+                    }
+                }
+            }
+
+            sequenceVector.shrink_to_fit();
+            const auto subArraysVec{ getSubarrays(sequenceVector) };
+
+            for (auto& itm : subArraysVec) {
+                if (auto btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
+                    btp->indexFrom = itm.first;
+                    btp->indexTo = itm.second;
+                    datasetPtr_->bottomTrackProcessing(0, 1); // TODO: 0, 1
+                }
+                else {
+                    break;
+                }
+            }
+
+            updateRenderData();
+            emit datasetPtr_->dataUpdate();
+        }
+    };
+
+    switch (actionEvent) {
+    case ActionEvent::Undefined: {
+        break;
+    }
+    case ActionEvent::ClearDistProc: {
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
+
+        if (!indices.isEmpty()) {
+            bool isSomethingDeleted{ false };
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
+                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    Q_EMIT epochErased(epochIndex);
+                    isSomethingDeleted = true;
+                }
+            }
+            if (isSomethingDeleted) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+                updateRenderData();
+                emit datasetPtr_->dataUpdate();
+            }
+        }
+
+        break;
+    }
+    case ActionEvent::MaxDistProc: {
+        minMaxFunc(false);
+        break;
+    }
+    case ActionEvent::MinDistProc: {
+        minMaxFunc(true);
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
@@ -54,12 +146,12 @@ void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
         auto channelMap = datasetPtr_->channelsList();
         if (!channelMap.isEmpty()) {
-            if (m_visibleChannel.channel < channelMap.first().channel ||
-                m_visibleChannel.channel > channelMap.last().channel)
-                m_visibleChannel = channelMap.first();
+            if (visibleChannel_.channel < channelMap.first().channel ||
+                visibleChannel_.channel > channelMap.last().channel)
+                visibleChannel_ = channelMap.first();
         }
         else
-            m_visibleChannel = DatasetChannel();
+            visibleChannel_ = DatasetChannel();
 
         updateRenderData(lEpoch, rEpoch);
         Q_EMIT epochListChanged();
@@ -68,7 +160,7 @@ void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
 
 void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 {
-    if(m_filter){
+    if (m_filter) {
         QVector <QVector3D> filteredData;
         m_filter->apply(data, filteredData);
         SceneObject::setData(filteredData, primitiveType);
@@ -80,61 +172,66 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 
 void BottomTrack::clearData()
 {
-    m_epochIndexMatchingMap.clear();
+    epochIndexMatchingMap_.clear();
     renderData_.clear();
-    m_visibleChannel = DatasetChannel();
+    visibleChannel_ = DatasetChannel();
     SceneObject::clearData();
 }
 
 void BottomTrack::resetVertexSelection()
 {
-    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
-}
-
-void BottomTrack::setDisplayingWithSurface(bool displaying)
-{
-    RENDER_IMPL(BottomTrack)->m_isDisplayingWithSurface = displaying;
+    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
 }
 
 void BottomTrack::setVisibleChannel(int channelId)
 {
-    if(!datasetPtr_->channelsList().contains(channelId))
+    if (!datasetPtr_->channelsList().contains(channelId))
         return;
 
-    m_visibleChannel = datasetPtr_->channelsList().value(channelId);
+    visibleChannel_ = datasetPtr_->channelsList().value(channelId);
 
     updateRenderData();
 
     Q_EMIT visibleChannelChanged(channelId);
-    Q_EMIT visibleChannelChanged(m_visibleChannel);
+    Q_EMIT visibleChannelChanged(visibleChannel_);
     Q_EMIT changed();
 }
 
 void BottomTrack::setVisibleChannel(const DatasetChannel &channel)
 {
-    m_visibleChannel = channel;
+    visibleChannel_ = channel;
 }
 
 void BottomTrack::selectEpoch(int epochIndex, int channelId)
 {
-    if(m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
+    if (m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
         return;
 
-    if(!datasetPtr_->channelsList().contains(channelId) || channelId != m_visibleChannel.channel)
+    if (!datasetPtr_->channelsList().contains(channelId) || channelId != visibleChannel_.channel)
         return;
 
-    if(epochIndex < 0 || epochIndex >= datasetPtr_->size())
+    if (epochIndex < 0 || epochIndex >= datasetPtr_->size())
         return;
 
-    if(!datasetPtr_->fromIndex(epochIndex))
+    if (!datasetPtr_->fromIndex(epochIndex))
         return;
 
     auto r = RENDER_IMPL(BottomTrack);
 
-    r->m_selectedVertexIndices.clear();
-    r->m_selectedVertexIndices.append(m_epochIndexMatchingMap.key(epochIndex));
+    r->selectedVertexIndices_.clear();
+    r->selectedVertexIndices_.append(epochIndexMatchingMap_.key(epochIndex));
 
     Q_EMIT changed();
+}
+
+void BottomTrack::surfaceUpdated()
+{
+    RENDER_IMPL(BottomTrack)->surfaceUpdated_ = true;
+}
+
+void BottomTrack::surfaceStateChanged(bool state)
+{
+    RENDER_IMPL(BottomTrack)->surfaceState_ = state;
 }
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -143,34 +240,34 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     Q_UNUSED(x)
     Q_UNUSED(y)
 
-    if(!m_view) return;
+    if (!m_view)
+        return;
 
-    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
-        if(buttons.testFlag(Qt::LeftButton)){
+    if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode) {
+        if (buttons.testFlag(Qt::LeftButton)) {
             auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
 
-            if(!hits.isEmpty()){
-                RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
-                auto epochIndex = m_epochIndexMatchingMap.value({hits.first().indices().first});
+            if (!hits.isEmpty()) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
+                auto epochIndex = epochIndexMatchingMap_.value({hits.first().indices().first});
 
-                auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, m_visibleChannel);
+                auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
 
                 QCoreApplication::postEvent(this, epochEvent);
             }
         }
     }
 
-    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode)
-    {
-        RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
-        for(int i = 0; i < RENDER_IMPL(BottomTrack)->m_data.size(); i++){
+    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode) {
+        RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+        for (int i = 0; i < RENDER_IMPL(BottomTrack)->m_data.size(); i++) {
             auto p = RENDER_IMPL(BottomTrack)->m_data.at(i);
             auto p_screen = p.project(m_view->camera().lock()->viewMatrix()*m_view->m_model,
                             m_view->m_projection,
                             m_view->boundingRect().toRect());
 
-            if(m_view->m_comboSelectionRect.contains(p_screen.x(), p_screen.y()))
-                RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.append(i);
+            if (m_view->m_comboSelectionRect.contains(p_screen.x(), p_screen.y()))
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_.append(i);
         }
     }
 }
@@ -181,15 +278,16 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     Q_UNUSED(x)
     Q_UNUSED(y)
 
-    if(!m_view) return;
+    if (!m_view)
+        return;
 
-    if(m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode){
-        if(buttons.testFlag(Qt::LeftButton)){
+    if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode) {
+        if (buttons.testFlag(Qt::LeftButton)) {
             auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
-            if(!hits.isEmpty()){
-                RENDER_IMPL(BottomTrack)->m_selectedVertexIndices = {hits.first().indices().first};
-                auto epochIndex = m_epochIndexMatchingMap.value({hits.first().indices().first});
-                auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, m_visibleChannel);
+            if (!hits.isEmpty()) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
+                auto epochIndex = epochIndexMatchingMap_.value({hits.first().indices().first});
+                auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
                 QCoreApplication::postEvent(this, epochEvent);
             }
         }
@@ -212,50 +310,51 @@ void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
     if(!m_view) return;
 
-    auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(-1),-1, m_visibleChannel);
+    auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(-1),-1, visibleChannel_);
     QCoreApplication::postEvent(this, epochEvent);
 }
 
 void BottomTrack::keyPressEvent(Qt::Key key)
 {
-    if (!m_view || m_visibleChannel.channel < 0)
+    if (!m_view || visibleChannel_.channel < 0)
         return;
 
     if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode && key == Qt::Key_Delete) {
-        const auto indices{ RENDER_IMPL(BottomTrack)->m_selectedVertexIndices };
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
         bool isSomethingDeleted{ false };
         for (const auto& verticeIndex : indices) {
-            const auto epochIndx{ m_epochIndexMatchingMap.value(verticeIndex) };
+            const auto epochIndx{ epochIndexMatchingMap_.value(verticeIndex) };
             if (auto epoch{ datasetPtr_->fromIndex(epochIndx) }) {
-                epoch->clearDistProcessing(m_visibleChannel.channel);
+                epoch->clearDistProcessing(visibleChannel_.channel);
                 Q_EMIT epochErased(epochIndx);
                 isSomethingDeleted = true;
             }
         }
         if (isSomethingDeleted) {
-            RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+            RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
             updateRenderData();
             emit datasetPtr_->dataUpdate();
         }
     }
 
-    if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexComboSelectionMode && key == Qt::Key_Delete) {
-        const auto indices{ RENDER_IMPL(BottomTrack)->m_selectedVertexIndices };
-        bool isSomethingDeleted{ false };
-        for (const auto& verticeIndex : indices) {
-            const auto epochIndex{ m_epochIndexMatchingMap.value(verticeIndex) };
-            if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
-                epoch->clearDistProcessing(m_visibleChannel.channel);
-                Q_EMIT epochErased(epochIndex);
-                isSomethingDeleted = true;
+    if (key == Qt::Key_Delete) {
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
+        if (!indices.isEmpty()) {
+            bool isSomethingDeleted{ false };
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
+                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    Q_EMIT epochErased(epochIndex);
+                    isSomethingDeleted = true;
+                }
+            }
+            if (isSomethingDeleted) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+                updateRenderData();
+                emit datasetPtr_->dataUpdate();
             }
         }
-        if (isSomethingDeleted) {
-            RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
-            updateRenderData();
-            emit datasetPtr_->dataUpdate();
-        }
-        m_view->m_comboSelectionRect = { m_view->m_comboSelectionRect.bottomRight(), m_view->m_comboSelectionRect.bottomRight() };
     }
 }
 
@@ -265,14 +364,14 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
     bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
     bool defMode = interCall || updateAll;
 
-    RENDER_IMPL(BottomTrack)->m_selectedVertexIndices.clear();
+    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
 
     if (defMode) {
-        m_epochIndexMatchingMap.clear();
+        epochIndexMatchingMap_.clear();
         renderData_.clear();
     }
 
-    if (m_visibleChannel.channel > -1) {
+    if (visibleChannel_.channel > -1) {
         int currMin = defMode ? 0 : lEpoch;
         int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
         if (defMode)
@@ -285,14 +384,14 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
             auto pos = epoch->getPositionGNSS();
 
             if (pos.ned.isCoordinatesValid()) {
-                float distance = -1.f * static_cast<float>(epoch->distProccesing(m_visibleChannel.channel));
+                float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channel));
                 if (defMode || (!defMode && (renderData_.size() < currMax))) {
                     renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
-                    m_epochIndexMatchingMap.insert(renderData_.size() - 1, i);
+                    epochIndexMatchingMap_.insert(renderData_.size() - 1, i);
                 }
                 else {
                     renderData_[i] = QVector3D(pos.ned.n,pos.ned.e,distance);
-                    m_epochIndexMatchingMap[i] = i;
+                    epochIndexMatchingMap_[i] = i;
                 }
             }
         }
@@ -302,9 +401,36 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
         SceneObject::setData(renderData_,GL_LINE_STRIP);
 }
 
-//-----------------------RenderImplementation-----------------------------//
+QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceVector)
+{
+    QVector<QPair<int, int>> retVal;
 
-BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation()
+    if (sequenceVector.isEmpty()) {
+        return retVal;
+    }
+
+    int start = sequenceVector[0];
+    int end = sequenceVector[0];
+
+    for (int i = 1; i < sequenceVector.size(); ++i) {
+        if (sequenceVector[i] == end + 1) {
+            end = sequenceVector[i];
+        } else {
+            retVal.append(qMakePair(start, end));
+            start = sequenceVector[i];
+            end = sequenceVector[i];
+        }
+    }
+
+    retVal.append(qMakePair(start, end));
+
+    return retVal;
+}
+
+//-----------------------RenderImplementation-----------------------------//
+BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation() :
+    surfaceUpdated_(false),
+    surfaceState_(true)
 {}
 
 BottomTrack::BottomTrackRenderImplementation::~BottomTrackRenderImplementation()
@@ -326,21 +452,19 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
                                                           const QMatrix4x4 &projection,
                                                           const QMap<QString,std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
-    if(!m_isVisible)
-        return;
-
-    if(!shaderProgramMap.contains("height"))
+    if (!m_isVisible || !shaderProgramMap.contains("height") || !shaderProgramMap.contains("static"))
         return;
 
     QOpenGLShaderProgram* shaderProgram = nullptr;
     int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    if(m_isDisplayingWithSurface){
+    if (surfaceUpdated_ && surfaceState_) {
         shaderProgram = shaderProgramMap["static"].get();
         shaderProgram->bind();
         colorLoc = shaderProgram->uniformLocation("color");
         shaderProgram->setUniformValue(colorLoc,QVector4D(1.0f, 0.2f, 0.2f, 1.0f));
-    }else{
+    }
+    else {
         shaderProgram = shaderProgramMap["height"].get();
         shaderProgram->bind();
         maxZLoc = shaderProgram->uniformLocation("max_z");
@@ -355,8 +479,6 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
-
-
 
     ctx->glLineWidth(4.0);
     ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
@@ -378,10 +500,11 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
 
     //TODO: Needs to optimize data preparing
     QVector<QVector3D> selectedVertices;
-    for(const auto& i : m_selectedVertexIndices)
+    selectedVertices.reserve(selectedVertices.size());
+    for (const auto& i : selectedVertexIndices_)
         selectedVertices.append(m_data.at(i));
 
-    if(selectedVertices.isEmpty())
+    if (selectedVertices.isEmpty())
         return;
 
     shaderProgram->setUniformValue(colorLoc,vertexColor);
@@ -409,17 +532,17 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
 
-    if(selectedVertices.size() > 1)
-        return;
+    //if (selectedVertices.size() > 1)
+    //    return;
 
-    QRectF vport = DrawUtils::viewportRect(ctx);
+    //QRectF vport = DrawUtils::viewportRect(ctx);
 
-    QVector3D p = selectedVertices.first();
-    QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
-    p_screen.setY(vport.height() - p_screen.y());
+    //QVector3D p = selectedVertices.first();
+    //QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
+    //p_screen.setY(vport.height() - p_screen.y());
 
-    QMatrix4x4 textProjection;
-    textProjection.ortho(vport.toRect());
+    //QMatrix4x4 textProjection;
+    //textProjection.ortho(vport.toRect());
 
     //TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()), TODO
     //                                0.3f,

@@ -4,14 +4,14 @@
 #include <QString>
 
 namespace QmlObjectNames{
-    static const QString activeObjectParamsMenuLoaderName = "activeObjectParamsMenuLoader";
-    static const QString bottomTrackControlMenu           = "bottomTrackControlMenu";
-    static const QString surfaceControlMenu               = "surfaceControlMenu";
-    static const QString npdFilterControlMenu             = "npdFilterControlMenu";
-    static const QString mpcFilterControlMenu             = "mpcFilterControlMenu";
-    static const QString bottomTrackParamsMenu            = "bottomTrackParamsMenu";
-    static const QString surfaceParamsMenu                = "surfaceParamsMenu";
-    static const QString scene3dToolBar                   = "scene3dToolBar";
+    inline QString activeObjectParamsMenuLoaderName () { return QStringLiteral("activeObjectParamsMenuLoader"); };
+    inline QString bottomTrackControlMenu           () { return QStringLiteral("bottomTrackControlMenu"); };
+    inline QString surfaceControlMenu               () { return QStringLiteral("surfaceControlMenu"); };
+    inline QString npdFilterControlMenu             () { return QStringLiteral("npdFilterControlMenu"); };
+    inline QString mpcFilterControlMenu             () { return QStringLiteral("mpcFilterControlMenu"); };
+    inline QString bottomTrackParamsMenu            () { return QStringLiteral("bottomTrackParamsMenu"); };
+    inline QString surfaceParamsMenu                () { return QStringLiteral("surfaceParamsMenu"); };
+    inline QString scene3dToolBar                   () { return QStringLiteral("scene3dToolBar"); };
 }
 
 #endif // QMLOBJECTNAMES_H

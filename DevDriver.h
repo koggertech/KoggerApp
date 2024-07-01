@@ -1,5 +1,4 @@
-#ifndef SONARDRIVER_H
-#define SONARDRIVER_H
+#pragma once
 
 #include <QObject>
 #include <ProtoBinnary.h>
@@ -155,9 +154,11 @@ public:
     bool getUartState() { return uartState_; };
 
 signals:
-    void binFrameOut(ProtoBinOut &proto_out);
+    void binFrameOut(ProtoBinOut proto_out);
 
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
+    void rawDataRecieved(RawData raw_data);
+
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
@@ -181,7 +182,7 @@ signals:
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
 
 public slots:
-    void protoComplete(FrameParser &proto);
+    void protoComplete(FrameParser& proto);
     void startConnection(bool duplex);
     void stopConnection();
     void restartState();
@@ -348,6 +349,3 @@ private:
     bool soundSpeedState_;
     bool uartState_;
 };
-
-
-#endif // SONARDRIVER_H

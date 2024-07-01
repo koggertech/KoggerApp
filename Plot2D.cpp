@@ -1,7 +1,9 @@
 #include "Plot2D.h"
 #include <epochevent.h>
 
-Plot2D::Plot2D() {
+
+Plot2D::Plot2D()
+{
     _echogram.setVisible(true);
     _attitude.setVisible(true);
     _DVLBeamVelocity.setVisible(true);
@@ -20,12 +22,17 @@ Plot2D::Plot2D() {
 //    _cursor.velocity.set(-1, 1);
 }
 
-bool Plot2D::getImage(int width, int height, QPainter* painter) {
-    _canvas.setSize(width, height, painter);
-//    _canvas.clear();
+bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizontal) {
+    if(is_horizontal) {
+        _canvas.setSize(width, height, painter);
+    } else {
+        _canvas.setSize(height, width, painter);
+        painter->rotate(-90);
+        painter->translate(-height, 0);
+    }
+
     reindexingCursor();
     reRangeDistance();
-
 
 //    painter->setCompositionMode(QPainter::RasterOp_SourceXorDestination);
     _echogram.draw(_canvas, _dataset, _cursor);
@@ -46,21 +53,39 @@ bool Plot2D::getImage(int width, int height, QPainter* painter) {
     return true;
 }
 
-void Plot2D::setTimelinePosition(float position) {
-    if(position > 1.0f) { position = 1.0f; }
-    if(position < 0) { position = 0; }
+void Plot2D::setAimEpochEventState(bool state)
+{
+    _aim.setEpochEventState(state);
+}
 
-    if(_cursor.position != position) {
+void Plot2D::setTimelinePosition(float position)
+{
+    if (position > 1.0f) {
+        position = 1.0f;
+    }
+    if (position < 0) {
+        position = 0;
+    }
+    if (_cursor.position != position) {
         _cursor.position = position;
         plotUpdate();
     }
 }
 
-void Plot2D::setTimelinePositionSec(float position) {
-    if(position > 1.0f)
+void Plot2D::resetAim()
+{
+    _cursor.selectEpochIndx = -1;
+}
+
+void Plot2D::setTimelinePositionSec(float position)
+{
+    if (position > 1.0f) {
         position = 1.0f;
-    if(position < 0)
+    }
+    if (position < 0) {
         position = 0;
+    }
+
     _cursor.position = position;
     plotUpdate();
 }
@@ -335,7 +360,7 @@ void Plot2D::setMousePosition(int x, int y) {
 //    _mouse.x = x;
 //    _mouse.y = y;
 
-    // qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
+    //qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
     int epoch_index = _cursor.getIndex(x_start);
 
     sendSyncEvent(epoch_index);
@@ -371,10 +396,12 @@ void Plot2D::setMousePosition(int x, int y) {
             }
         }
 
-        if(_cursor.tool() == MouseToolDistanceMin || _cursor.tool() == MouseToolDistanceMax) {
-            _bottomTrackParam.indexFrom = _cursor.getIndex(x_start);
-            _bottomTrackParam.indexTo = _cursor.getIndex(x_start + x_length);
-            _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
+        if (_cursor.tool() == MouseToolDistanceMin || _cursor.tool() == MouseToolDistanceMax) {
+            if (auto btp = _dataset->getBottomTrackParamPtr(); btp) {
+                btp->indexFrom = _cursor.getIndex(x_start);
+                btp->indexTo = _cursor.getIndex(x_start + x_length);
+                _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2);
+            }
         }
 
         if(_cursor.tool() == MouseToolDistance || _cursor.tool() == MouseToolDistanceErase) {

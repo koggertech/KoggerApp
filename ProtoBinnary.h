@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 #include "stddef.h"
+#include <stdio.h>
 #include <cmath>
 #include "MAVLinkConf.h"
 
@@ -133,14 +134,15 @@ public:
 
     FrameParser() {
         _frameChar = (char*)_frame;
-        setContext(nullptr, 0);
+        resetContext();
         resetState();
     }
 
-
-
     void process() {
         _proto = ProtoNone;
+        if(_proxyState == ProxyWrapper) {
+            _proxyState = ProxyContent;
+        }
         while (availContextPrivate() > 0) {
             uint8_t b = *_contextData;
 
@@ -284,19 +286,36 @@ public:
         _contextLen = len;
     }
 
+    void resetContext() {
+        _proxyState = ProxyNone;
+
+        _contextData = NULL;
+        _contextLen = 0;
+
+        _savedContextData = NULL;
+        _savedContextLen = 0;
+    }
+
+    bool isNested() {
+        return _proxyState == ProxyContent;
+    }
+
     void setProxyContext(uint8_t* data, uint32_t len) {
         _savedContextData = _contextData + 1;
         _savedContextLen = _contextLen - 1;
         _contextData = data;
         _contextLen = len;
+        _proxyState = ProxyWrapper;
     }
 
 
-    uint32_t availContext() {
-        if(_contextLen == 0 && _savedContextLen != 0) {
+    int32_t availContext() {
+        if(_contextLen == 0 && _savedContextData != NULL) {
             _contextData = _savedContextData;
             _contextLen = _savedContextLen;
             _savedContextLen = 0;
+            _savedContextData = NULL;
+            _proxyState = ProxyNone;
         }
         return _contextLen;
     }
@@ -340,6 +359,12 @@ public:
             b[i] = _frame[_readPosition];
             _readPosition++;
         }
+    }
+
+    uint8_t* read(int size) {
+        uint8_t* ptr = &_frame[_readPosition];
+        _readPosition += size;
+        return ptr;
     }
 
     char readChar() {
@@ -447,6 +472,13 @@ protected:
     uint8_t* _savedContextData;
     int32_t _savedContextLen;
 
+    enum {
+        ProxyNone,
+        ProxyWrapper,
+        ProxyContent,
+        ProxyEnd
+    } _proxyState = ProxyNone;
+
     uint8_t _frame[1024];
     char* _frameChar;
     int16_t _frameLen;
@@ -505,7 +537,7 @@ protected:
         uint32_t notCompleteProxy = 0;
     } _counter;
 
-    uint32_t availContextPrivate() {
+    int32_t availContextPrivate() {
         return _contextLen;
     }
 
@@ -951,6 +983,24 @@ public:
         return c;
     }
 
+    double readDouble() {
+        uint32_t i = 0;
+        char data[20] = {};
+        while(i < sizeof(data) && _frame[_readPosition] != ',') {
+            data[i] = _frame[_readPosition];
+            _readPosition++;
+            i++;
+        }
+
+        double res = NAN;
+        if(i > 0) {
+            sscanf(data, "%lf", &res);
+        }
+
+        _readPosition++;
+        return res;
+    }
+
     double readLatitude() {
         int16_t deg_h = _frame[_readPosition++] - '0';
         int16_t deg_l = _frame[_readPosition++] - '0';
@@ -1106,6 +1156,7 @@ public:
         _frameLen += 2;
 
         _checksum = *(uint16_t*)(&_frame[_frameLen - 2]);
+        _proto = ProtoKP1;
     }
 protected:
     void setRoute(uint8_t route) { _address = route; _frame[2] = route;}

@@ -5,6 +5,7 @@
 #include <planegrid.h>
 #include <raycaster.h>
 #include <surface.h>
+#include <boattrack.h>
 #include <bottomtrack.h>
 #include <polygongroup.h>
 #include <pointgroup.h>
@@ -43,7 +44,7 @@ public:
         //TODO! Process this method later
         //void rotate(qreal yaw, qreal pitch);
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
-        void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta);
+        void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
         void move(const QVector2D &lastMouse, const QVector2D &mousePos);
         void moveZAxis(float z);
@@ -102,7 +103,7 @@ public:
     };
 
     enum ActiveMode{
-        Idle                                = 0,
+        Idle                                = 0, // not used
         BottomTrackVertexSelectionMode      = 1,
         BottomTrackVertexComboSelectionMode = 2,
         PolygonCreationMode                 = 3,
@@ -128,10 +129,11 @@ public:
      * @return renderer
      */
     Renderer *createRenderer() const override;
-    std::shared_ptr <BottomTrack> bottomTrack() const;
-    std::shared_ptr <Surface> surface() const;
-    std::shared_ptr <PointGroup> pointGroup() const;
-    std::shared_ptr <PolygonGroup> polygonGroup() const;
+    std::shared_ptr<BoatTrack> boatTrack() const;
+    std::shared_ptr<BottomTrack> bottomTrack() const;
+    std::shared_ptr<Surface> surface() const;
+    std::shared_ptr<PointGroup> pointGroup() const;
+    std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
@@ -140,12 +142,14 @@ public:
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
 
+    Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
+    Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
@@ -156,44 +160,55 @@ public Q_SLOTS:
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
     void setBottomTrackVertexSelectionMode();
-    void setBottomTrackVertexComboSelectionMode();
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
+    void setQmlEngine(QObject* engine);
 
 private:
     void updateBounds();
     void updatePlaneGrid();
+    void clearComboSelectionRect();
 
 private:
     friend class BottomTrack;
 
-    std::shared_ptr <Camera> m_camera;
-    std::shared_ptr <Camera> m_axesThumbnailCamera;
+    std::shared_ptr<Camera> m_camera;
+    std::shared_ptr<Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
-    std::shared_ptr <RayCaster> m_rayCaster;
-    std::shared_ptr <Surface> m_surface;
-    std::shared_ptr <BottomTrack> m_bottomTrack;
-    std::shared_ptr <PolygonGroup> m_polygonGroup;
-    std::shared_ptr <PointGroup> m_pointGroup;
-    std::shared_ptr <CoordinateAxes> m_coordAxes;
-    std::shared_ptr <PlaneGrid> m_planeGrid;
-    std::shared_ptr <SceneObject> m_boatTrack;
-    std::shared_ptr <SceneObject> m_vertexSynchroCursour;
-    std::shared_ptr <NavigationArrow> m_navigationArrow;
+    std::shared_ptr<RayCaster> m_rayCaster;
+    std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<BoatTrack> m_boatTrack;
+    std::shared_ptr<BottomTrack> m_bottomTrack;
+    std::shared_ptr<PolygonGroup> m_polygonGroup;
+    std::shared_ptr<PointGroup> m_pointGroup;
+    std::shared_ptr<CoordinateAxes> m_coordAxes;
+    std::shared_ptr<PlaneGrid> m_planeGrid;
+    std::shared_ptr<SceneObject> m_vertexSynchroCursour;
+    std::shared_ptr<NavigationArrow> m_navigationArrow;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     Cube m_bounds;
-    ActiveMode m_mode = Idle;
-    QRect m_comboSelectionRect = {0,0,0,0};
+    ActiveMode m_mode = ActiveMode::BottomTrackVertexSelectionMode;
+    ActiveMode lastMode_ = ActiveMode::BottomTrackVertexSelectionMode;
+    QRect m_comboSelectionRect = { 0, 0, 0, 0 };
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+#if defined (Q_OS_ANDROID)
+    static constexpr double mouseThreshold_{ 15.0 };
+#else
+    static constexpr double mouseThreshold_{ 10.0 };
+#endif
+    bool wasMoved_;
+    Qt::MouseButtons wasMovedMouseButton_;
+    QObject* engine_ = nullptr;
+    bool switchedToBottomTrackVertexComboSelectionMode_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

@@ -84,11 +84,11 @@ QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool &ok)
             __android_log_print(ANDROID_LOG_ERROR, V_TAG, "Error from availableDevicesInfo");
         }
         ok = false;
-        core.consoleInfo("Serial Port API not supported");
+        //core.consoleInfo("Serial Port API not supported");
         return serialPortInfoList;
     } else {
         gErrorCount = 0;
-        core.consoleInfo("Serial Port API supported");
+        //core.consoleInfo("Serial Port API supported");
     }
 
     QAndroidJniEnvironment envL;

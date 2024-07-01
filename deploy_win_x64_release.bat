@@ -1,5 +1,8 @@
 @echo off
 
+REM ask if user wants to archive
+set /p archive=Do you want to archive the output directory? (y/n): 
+
 REM local paths:
 set binPath=build\MinGW_8_1_0_x64_desktop-Release\release\KoggerApp.exe
 set qmlPath=QML
@@ -17,9 +20,14 @@ REM deploy and copy binary file:
 windeployqt %binPath% -qmldir %qmlPath% -dir %outPath% -no-translations -no-virtualkeyboard
 xcopy "%binPath%" "%outPath%"
 
-REM .zip archiving
-pushd "%outPath%"
-7z a "..\%zip_file%" * %compression_level%
-popd
+if /i "%archive%"=="y" (
+    REM .zip archiving
+    pushd "%outPath%"
+    7z a "..\%zip_file%" *
+    popd
+    echo Archiving completed.
+) else (
+    echo Skipping archiving.
+)
 
 pause
