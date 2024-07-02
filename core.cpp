@@ -813,6 +813,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     surfaceControlMenuController_->setQmlEngine(object);
     surfaceControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
+    mosaicViewControlMenuController_->setQmlEngine(object);
+    mosaicViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
     npdFilterControlMenuController_->setQmlEngine(object);
     npdFilterControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 

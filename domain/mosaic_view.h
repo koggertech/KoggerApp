@@ -27,6 +27,8 @@ public:
     virtual void clearData() override;
     virtual SceneObjectType type() const override;
 
+    void updateData();
+
 private:
 
 };

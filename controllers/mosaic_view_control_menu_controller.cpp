@@ -39,9 +39,10 @@ void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
     qDebug() << "onUpdateMosaicViewButtonClicked";
 
     if (!m_graphicsSceneView) {
-        qDebug().noquote() << "m_graphicsSceneView is nullptr!";
         return;
     }
+
+    m_graphicsSceneView->getMosaicViewPtr()->updateData();
 }
 
 MosaicView *MosaicViewControlMenuController::getMosaicViewPtr() const

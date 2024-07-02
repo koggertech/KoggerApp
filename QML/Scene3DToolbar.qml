@@ -232,6 +232,54 @@ ColumnLayout {
         }
     }
 
+    // mosaicView extra settings
+    MenuFrame {
+        id: mosaicViewSettings
+        visible: mosaicViewCheckButton.hovered || isHovered || mosaicViewCheckButton.longPressTriggered
+        z: mosaicViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !mosaicViewCheckButton.hovered) {
+                    mosaicViewCheckButton.longPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                mosaicViewCheckButton.longPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CButton {
+                text: "Update"
+                Layout.fillWidth: true
+                icon.source: "./icons/refresh.svg"
+                onClicked: {
+                    MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+        }
+    }
+
     RowLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
@@ -387,6 +435,38 @@ ColumnLayout {
 
             Component.onCompleted: {
                 MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            property bool longPressTriggered: false
+
+            MouseArea {
+                id: mosaicViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    mosaicViewLongPressTimer.start()
+                    mosaicViewCheckButton.longPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!mosaicViewCheckButton.longPressTriggered) {
+                        mosaicViewCheckButton.checked = !mosaicViewCheckButton.checked
+                    }
+                    mosaicViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    mosaicViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: mosaicViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    mosaicViewCheckButton.longPressTriggered = true;
+                }
             }
         }
 

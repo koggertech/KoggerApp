@@ -63,3 +63,8 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
 }
+
+void MosaicView::updateData()
+{
+    qDebug() << "updateData";
+}
