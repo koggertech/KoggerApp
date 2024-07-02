@@ -18,6 +18,7 @@
 #include <boattrackcontrolmenucontroller.h>
 #include <bottomtrackcontrolmenucontroller.h>
 #include <surfacecontrolmenucontroller.h>
+#include "mosaic_view_control_menu_controller.h"
 #include <pointgroupcontrolmenucontroller.h>
 #include <polygongroupcontrolmenucontroller.h>
 #include <mpcfiltercontrolmenucontroller.h>
@@ -122,6 +123,7 @@ private:
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;
     std::shared_ptr<SurfaceControlMenuController> surfaceControlMenuController_;
+    std::shared_ptr<MosaicViewControlMenuController> mosaicViewControlMenuController_;
     std::shared_ptr<PointGroupControlMenuController> pointGroupControlMenuController_;
     std::shared_ptr<PolygonGroupControlMenuController> polygonGroupControlMenuController_;
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;

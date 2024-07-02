@@ -371,6 +371,24 @@ ColumnLayout {
             }
         }
 
+        // mosaic view button
+        CheckButton {
+            id: mosaicViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/map-route.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+        }
 
         ButtonGroup{
             property bool buttonChangeFlag : false
