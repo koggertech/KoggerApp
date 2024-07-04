@@ -368,18 +368,16 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         }
         else {
-            qDebug() << "DeviceManager::onLinkOpened: link->getIsMotorDevice(): " << link->getIsMotorDevice();
-
             if (!link->getIsMotorDevice()) {
                 getDevice(uuid, link, 0);
             }
             else { // create motor driver
-                if (!motorControl_) {
-                    motorControl_ = std::make_unique<MotorControl>();
+                if (motorControl_) {
+                    motorControl_.reset();
                 }
+                motorControl_ = std::make_unique<MotorControl>(this, link);
 
                 // setting motorControl_
-
 
             }
         }

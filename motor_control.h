@@ -1,7 +1,8 @@
 #pragma once
 
 #include <QObject>
-
+#include <QUuid>
+#include "Link.h"
 
 class MotorControl : public QObject
 {
@@ -9,7 +10,7 @@ class MotorControl : public QObject
 
 public:
     /*methods*/
-    MotorControl();
+    MotorControl(QObject* parent = nullptr, Link* linkPtr = nullptr);
     ~MotorControl();
 
 public slots:
@@ -17,6 +18,7 @@ public slots:
 signals:
 
 private:
+    Link* linkPtr_;
 
 private slots:
 
