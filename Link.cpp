@@ -26,7 +26,8 @@ Link::Link() :
     isHided_(false),
     isNotAvailable_(false),
     isProxy_(false),
-    isForcedStopped_(false)
+    isForcedStopped_(false),
+    isMotorDevice_(false)
 {
     frame_.resetComplete();
 }
@@ -278,6 +279,11 @@ void Link::setIsForceStopped(bool isForcedStopped)
     isForcedStopped_ = isForcedStopped;
 }
 
+void Link::setIsMotorDevice(bool isMotorDevice)
+{
+    isMotorDevice_ = isMotorDevice;
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -354,6 +360,11 @@ bool Link::getIsProxy() const
 bool Link::getIsForceStopped() const
 {
     return isForcedStopped_;
+}
+
+bool Link::getIsMotorDevice() const
+{
+    return isMotorDevice_;
 }
 
 bool Link::writeFrame(FrameParser frame)

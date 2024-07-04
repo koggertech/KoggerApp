@@ -58,6 +58,7 @@ public:
     void setIsNotAvailable(bool isNotAvailable);
     void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
+    void setIsMotorDevice(bool isMotorDevice);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     ControlType getControlType() const;
@@ -73,6 +74,7 @@ public:
     bool        getIsNotAvailable() const;
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
+    bool        getIsMotorDevice() const;
 
 public slots:
     bool writeFrame(FrameParser frame);
@@ -112,6 +114,7 @@ private:
     bool isNotAvailable_;
     bool isProxy_;
     bool isForcedStopped_;
+    bool isMotorDevice_;
 
 private slots:
     void readyRead();

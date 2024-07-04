@@ -49,7 +49,7 @@ ColumnLayout {
                 Rectangle {
                     id: backgroundRect
                     anchors.fill: parent
-                    color: theme.controlBackColor
+                    color: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
 
                     RowLayout {
                         anchors.fill: parent
@@ -88,41 +88,18 @@ ColumnLayout {
 
                         CButton {
                             text: ConnectionStatus ? "Close" : "Open"
-                            backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
+                            backColor: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
                             visible: LinkType === 1
 
                             onClicked: {
                                 if (ConnectionStatus) {
                                     linkManagerWrapper.closeLink(Uuid)
                                 } else {
-                                    linkManagerWrapper.openAsSerial(Uuid)
-                                }
-
-                                // Анимация изменения цвета фона
-                                if (ConnectionStatus) {
-                                    closeAnimation.start()
-                                } else {
-                                    openAnimation.start()
+                                    linkManagerWrapper.openAsSerial(Uuid, true)
                                 }
                             }
                         }
                     }
-                }
-
-                ColorAnimation {
-                    id: openAnimation
-                    target: backgroundRect
-                    property: "color"
-                    to: "green"
-                    duration: 500
-                }
-
-                ColorAnimation {
-                    id: closeAnimation
-                    target: backgroundRect
-                    property: "color"
-                    to: theme.controlBackColor
-                    duration: 500
                 }
             }
         }

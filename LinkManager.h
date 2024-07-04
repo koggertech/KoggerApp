@@ -29,7 +29,7 @@ public slots:
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();
-    void openAsSerial(QUuid uuid);
+    void openAsSerial(QUuid uuid, bool isMotorDevice = false);
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void closeLink(QUuid uuid);

@@ -11,6 +11,7 @@
 #include "DevQProperty.h"
 #include "ProtoBinnary.h"
 #include "IDBinnary.h"
+#include "motor_control.h"
 
 
 class DeviceManager : public QObject
@@ -120,6 +121,7 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+    std::unique_ptr<MotorControl> motorControl_;
 
 private slots:
     void readyReadProxy(Link* link);
