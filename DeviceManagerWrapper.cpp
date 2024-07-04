@@ -17,6 +17,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,     connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,  connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,     connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::motorDeviceChanged,           this,                &DeviceManagerWrapper::motorDeviceChanged,     connectionType);
 
     //workerThread_->start();
 }

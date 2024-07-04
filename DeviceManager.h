@@ -32,6 +32,8 @@ public:
     QList<DevQProperty*> getDevList();
     DevQProperty* getLastDev();
 
+    bool isMotorControlCreated() const;
+
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
@@ -72,6 +74,8 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
+
+    void motorDeviceChanged();
 
 private:
     /*methods*/

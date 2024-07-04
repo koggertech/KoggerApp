@@ -76,6 +76,13 @@ DevQProperty *DeviceManager::getLastDev()
     return lastDevs_;
 }
 
+bool DeviceManager::isMotorControlCreated() const
+{
+    if (motorControl_)
+        return true;
+    return false;
+}
+
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
     if (frame.isComplete()) {
@@ -379,6 +386,8 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 
                 // setting motorControl_
 
+
+                motorDeviceChanged();
             }
         }
     }
@@ -389,6 +398,11 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     Q_UNUSED(uuid);
 
     if (link) {
+        if (link->getIsMotorDevice()) {
+            motorControl_.reset();
+            emit motorDeviceChanged();
+        }
+
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);

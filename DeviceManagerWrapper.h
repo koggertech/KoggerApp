@@ -25,6 +25,9 @@ public:
     Q_PROPERTY(int                  pilotArmState       READ    pilotArmState           NOTIFY vruChanged)
     Q_PROPERTY(int                  pilotModeState      READ    pilotModeState          NOTIFY vruChanged)
 
+    // MotorControl on DeviceManager
+    Q_PROPERTY(int countMotorDevices READ getMotorCountDevices NOTIFY motorDeviceChanged)
+
     DeviceManager* getWorker();
 
     /*QML*/
@@ -35,6 +38,7 @@ public:
     float                vruVelocityH       ()           { return getWorker()->vruVelocityH();      }
     int                 pilotArmState      ()           { return getWorker()->pilotArmState();     }
     int                 pilotModeState     ()           { return getWorker()->pilotModeState();    }
+    int getMotorCountDevices () { if (getWorker()->isMotorControlCreated()) { return 1; } else { return 0; } }
     void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
 
 public slots:
@@ -50,6 +54,7 @@ signals:
     void devChanged();
     void streamChanged();
     void vruChanged();
+    void motorDeviceChanged();
 
 private:
     std::unique_ptr<QThread> workerThread_;

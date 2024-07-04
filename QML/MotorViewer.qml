@@ -104,4 +104,16 @@ ColumnLayout {
             }
         }
     }
+
+    CTextField {
+        id: motorControlState
+        text: deviceManagerWrapper.countMotorDevices === 1 ? "motorControl activated" : "motorControl disabled"
+        readOnly: true
+        background: Rectangle {
+            color: "transparent"
+            border.width: 0
+            border.color: theme.controlBorderColor
+        }
+    }
+
 }
