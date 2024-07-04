@@ -337,7 +337,7 @@ ColumnLayout {
             }
 
             Component.onCompleted: {
-                BoatTrackTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
         }
 
