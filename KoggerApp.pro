@@ -192,6 +192,7 @@ DISTFILES += \
     QML/CSlider.qml \
     QML/ComboBackStyle.qml \
     QML/ConnectionViewer.qml \
+    QML/MotorViewer.qml \
     QML/Console.qml \
     QML/CustomGroupBox.qml \
     QML/DeviceSettingsViewer.qml \

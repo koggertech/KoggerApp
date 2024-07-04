@@ -22,6 +22,13 @@ MenuScroll {
         }
 
         MenuFrame {
+            MotorViewer {
+                id: motorView
+                width: menuWidth
+            }
+        }
+
+        MenuFrame {
             visible: false
             FactoryBox {
                 dev: devConnection.dev

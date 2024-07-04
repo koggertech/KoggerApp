@@ -369,6 +369,9 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
         }
         else {
             getDevice(uuid, link, 0);
+
+            // create motor driver
+
         }
     }
 }
