@@ -55,7 +55,7 @@ signals:
     void streamChanged();
     void vruChanged();
     void motorDeviceChanged();
-    void sendDoAction();
+    void sendDoAction(int id);
 
 private:
     std::unique_ptr<QThread> workerThread_;

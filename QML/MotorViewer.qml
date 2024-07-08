@@ -127,11 +127,20 @@ ColumnLayout {
         }
 
         CButton {
-            text: "Apply"
+            text: "action 1"
             Layout.fillWidth: true
 
             onClicked: {
-                deviceManagerWrapper.sendDoAction()
+                deviceManagerWrapper.sendDoAction(0)
+            }
+        }
+
+        CButton {
+            text: "action 2"
+            Layout.fillWidth: true
+
+            onClicked: {
+                deviceManagerWrapper.sendDoAction(1)
             }
         }
     }

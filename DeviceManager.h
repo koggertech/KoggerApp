@@ -47,7 +47,7 @@ public slots:
     void binFrameOut(ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
-    void doAction();
+    void doAction(int id);
 
 signals:
     void dataSend(QByteArray data);

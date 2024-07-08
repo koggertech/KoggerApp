@@ -450,7 +450,7 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     }
 }
 
-void DeviceManager::doAction()
+void DeviceManager::doAction(int id)
 {
     qDebug() << "DeviceManager::doAction";
 
@@ -458,11 +458,11 @@ void DeviceManager::doAction()
         return;
     }
 
-
+    if (id == 0) {
     // TESTING
     uint8_t addr        = 0x00;
     int32_t value       = 1;
-    int32_t   angle       = 90;
+    int32_t angle     = 180;
 
     //auto res = motorControl_->position(addr, &value, &angle);
     auto res = motorControl_->runSteps(addr, value, angle);
@@ -489,6 +489,16 @@ void DeviceManager::doAction()
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     */
+    }
+    if (id == 1) {
+        // TESTING
+        uint8_t addr = 0x01; // TODO: check address
+        int32_t value = 1;
+        int32_t angle = 90;
+
+        auto res = motorControl_->runSteps(addr, value, angle);
+    }
+
 }
 
 StreamListModel* DeviceManager::streamsList()
