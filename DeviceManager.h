@@ -47,6 +47,7 @@ public slots:
     void binFrameOut(ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
+    void doAction();
 
 signals:
     void dataSend(QByteArray data);
@@ -125,6 +126,7 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+
     std::unique_ptr<MotorControl> motorControl_;
 
 private slots:

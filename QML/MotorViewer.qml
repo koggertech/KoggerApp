@@ -44,58 +44,96 @@ ColumnLayout {
             Item {
                 id: itemWrapper
                 width: motorsList.width
-                height: theme.controlHeight + 4
+                height: theme.controlHeight * 2 + 12
 
                 Rectangle {
                     id: backgroundRect
                     anchors.fill: parent
                     color: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
 
-                    RowLayout {
+                    ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 2
 
-                        CTextField {
-                            id: portName
-                            text: LinkType === 1 ? PortName : "some another port"
+                        RowLayout {
+                            anchors.fill: parent
+                            Layout.fillHeight: true
+
+                            CTextField {
+                                id: portName
+                                text: LinkType === 1 ? PortName : "some another port"
+                                Layout.fillWidth: true
+                                readOnly: true
+                                background: Rectangle {
+                                    color: "transparent"
+                                    border.width: 0
+                                    border.color: theme.controlBorderColor
+                                }
+                            }
+
+                            CCombo {
+                                id: baudrateCombo
+                                implicitWidth: 150
+                                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
+                                currentIndex: 7
+                                displayText: Baudrate
+                                visible: LinkType === 1
+
+                                onCurrentTextChanged: {
+                                    linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                }
+
+                                background: Rectangle {
+                                    color: "transparent"
+                                    border.width: 0
+                                    border.color: theme.controlBorderColor
+                                }
+                            }
+
+                            CButton {
+                                text: ConnectionStatus ? "Close" : "Open"
+                                backColor: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
+                                visible: LinkType === 1
+
+                                onClicked: {
+                                    if (ConnectionStatus) {
+                                        linkManagerWrapper.closeLink(Uuid)
+                                    } else {
+                                        linkManagerWrapper.openAsSerial(Uuid, true)
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
                             Layout.fillWidth: true
-                            readOnly: true
-                            background: Rectangle {
-                                color: "transparent"
-                                border.width: 0
-                                border.color: theme.controlBorderColor
-                            }
-                        }
+                            spacing: 10
+                            visible: ConnectionStatus
 
-                        CCombo {
-                            id: baudrateCombo
-                            implicitWidth: 150
-                            model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
-                            currentIndex: 7
-                            displayText: Baudrate
-                            visible: LinkType === 1
-
-                            onCurrentTextChanged: {
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            SpinBoxCustom {
+                                id: spinBox1
+                                from: 0
+                                to: 100
+                                stepSize: 1
+                                value: 50
+                                Layout.fillWidth: true
                             }
 
-                            background: Rectangle {
-                                color: "transparent"
-                                border.width: 0
-                                border.color: theme.controlBorderColor
+                            SpinBoxCustom {
+                                id: spinBox2
+                                from: 0
+                                to: 100
+                                stepSize: 1
+                                value: 50
+                                Layout.fillWidth: true
                             }
-                        }
 
-                        CButton {
-                            text: ConnectionStatus ? "Close" : "Open"
-                            backColor: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
-                            visible: LinkType === 1
+                            CButton {
+                                text: "Apply"
+                                Layout.fillWidth: true
 
-                            onClicked: {
-                                if (ConnectionStatus) {
-                                    linkManagerWrapper.closeLink(Uuid)
-                                } else {
-                                    linkManagerWrapper.openAsSerial(Uuid, true)
+                                onClicked: {
+                                    deviceManagerWrapper.sendDoAction()
                                 }
                             }
                         }
@@ -115,5 +153,4 @@ ColumnLayout {
             border.color: theme.controlBorderColor
         }
     }
-
 }

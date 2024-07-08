@@ -434,22 +434,28 @@ void Link::readyRead()
 {
     QIODevice* dev = device();
     if (dev != nullptr) {
-        if (linkType_ == LinkType::LinkIPUDP) {
-            QUdpSocket* socsUpd = (QUdpSocket*)dev;
-            while (socsUpd->hasPendingDatagrams()) {
-                QByteArray datagram;
-                datagram.resize(socsUpd->pendingDatagramSize());
-                QHostAddress sender;
-                quint16 senderPort;
-                qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                if (slen == -1) {
-                    break;
+
+        if (!isMotorDevice_) {
+            if (linkType_ == LinkType::LinkIPUDP) {
+                QUdpSocket* socsUpd = (QUdpSocket*)dev;
+                while (socsUpd->hasPendingDatagrams()) {
+                    QByteArray datagram;
+                    datagram.resize(socsUpd->pendingDatagramSize());
+                    QHostAddress sender;
+                    quint16 senderPort;
+                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                    if (slen == -1) {
+                        break;
+                    }
+                    toParser(datagram);
                 }
-                toParser(datagram);
+            }
+            else {
+                toParser(dev->readAll());
             }
         }
         else {
-            toParser(dev->readAll());
+            emit dataReady(dev->readAll());
         }
     }
 }

@@ -387,7 +387,7 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
                 // setting motorControl_
 
 
-                motorDeviceChanged();
+                emit motorDeviceChanged();
             }
         }
     }
@@ -448,6 +448,47 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     if (lastDevs_ != NULL) {
         lastDevs_->sendUpdateFW(data);
     }
+}
+
+void DeviceManager::doAction()
+{
+    qDebug() << "DeviceManager::doAction";
+
+    if (!motorControl_) {
+        return;
+    }
+
+
+    // TESTING
+    uint8_t addr        = 0x00;
+    int32_t value       = 1;
+    int32_t   angle       = 90;
+
+    //auto res = motorControl_->position(addr, &value, &angle);
+    auto res = motorControl_->runSteps(addr, value, angle);
+    //auto res = motorControl_->goZero(addr); // 0,1 - enginres
+
+    /*
+    for (int i = 0; i < 10; ++i)
+    {
+        //qDebug() << "iter: " << i;
+        //qDebug() << "runSteps";
+        //auto res = motorControl_->runSteps(addr, value, angle);
+        //qDebug() << "runSteps status: " << MotorControl::convertStatus(res);
+
+
+        //qDebug() << "position";
+        //int32_t val       = 0;
+        //float   ang       = 0.f;
+        //auto res2 = motorControl_->position(addr, &val, &ang);
+        //qDebug() << "position status: " << res2;
+        //qDebug() << "val: " << val << ", ang: " << ang;
+
+
+        motorControl_->runSteps(addr, value, angle);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    */
 }
 
 StreamListModel* DeviceManager::streamsList()

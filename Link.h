@@ -86,7 +86,7 @@ signals:
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
-    void dataReady();
+    void dataReady(QByteArray data);
 
 private:
     /*methods*/
