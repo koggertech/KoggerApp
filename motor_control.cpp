@@ -48,21 +48,56 @@ void MotorControl::readData(QByteArray data)
     MKS_Status resCheck = MKS_Status::MKS_FAIL;
 
     switch (respStruct_.type_) {
-    case ResponseType::kUndefined: { break; }
-    case ResponseType::kGoZero: { resCheck = goZeroResponseCheck(data); break; }
-    case ResponseType::kPosition: { resCheck = positionResponseCheck(data); break; }
-    case ResponseType::kRunSteps: {
-        // TODO
-        if (buffer_.size() == 6)
+    case ResponseType::kGoZero: {
+        auto requiredSize = static_cast<int>(sizeof(struct_3byte));
+        if (buffer_.size() >= requiredSize) {
             buffer_.clear();
-        buffer_.append(data);
-        if (buffer_.size() == 6) {
-            resCheck = runStepsResponseCheck(buffer_);
         }
-
+        buffer_.append(data);
+        if (buffer_.size() == requiredSize) {
+            resCheck = goZeroResponseCheck(data);
+            buffer_.clear();
+        }
         break;
     }
-    case ResponseType::kSetEn: { resCheck = setEnResponseCheck(data); break; }
+    case ResponseType::kPosition: {
+        auto requiredSize = static_cast<int>(sizeof(struct_encAnswer));
+        if (buffer_.size() >= requiredSize) {
+            buffer_.clear();
+        }
+        buffer_.append(data);
+        if (buffer_.size() == requiredSize) {
+            resCheck = positionResponseCheck(data);
+            buffer_.clear();
+        }
+        break;
+    }
+    case ResponseType::kRunSteps: {
+        auto requiredSize = static_cast<int>(sizeof(struct_3byte) * 2);
+        if (buffer_.size() >= requiredSize) {
+            buffer_.clear();
+        }
+        buffer_.append(data);
+        if (buffer_.size() == requiredSize) {
+            resCheck = runStepsResponseCheck(buffer_);
+            buffer_.clear();
+        }
+        break;
+    }
+    case ResponseType::kSetEn: {
+        auto requiredSize = static_cast<int>(sizeof(struct_3byte));
+        if (buffer_.size() >= requiredSize) {
+            buffer_.clear();
+        }
+        buffer_.append(data);
+        if (buffer_.size() == requiredSize) {
+            resCheck = setEnResponseCheck(data);
+            buffer_.clear();
+        }
+        break;
+    }
+    case ResponseType::kUndefined:
+        break;
     default:
         break;
     }
@@ -116,7 +151,7 @@ MKS_Status MotorControl::setEnResponseCheck(const QByteArray& data)
 
     MKS_Status retVal = MKS_Status::MKS_OK;
 
-    if (respStruct_.type_ != ResponseType::kSetEn || data.size() != sizeof(struct_3byte)) {
+    if (respStruct_.type_ != ResponseType::kSetEn) {
         retVal = MKS_FAIL;
     }
     else {
@@ -201,16 +236,16 @@ MKS_Status MotorControl::runStepsResponseCheck(const QByteArray& data)
 
     MKS_Status retVal = MKS_Status::MKS_OK;
 
-    const int size = 2;
+    const int count = 2;
     //qDebug() << "data.size(): " << data.size();
 
-    if (respStruct_.type_ != ResponseType::kRunSteps || data.size() != sizeof(struct_3byte) * size) {
+    if (respStruct_.type_ != ResponseType::kRunSteps || data.size() != sizeof(struct_3byte) * count) {
         retVal = MKS_FAIL;
         //qDebug() << "eeeeh 1";
     }
     else {
-        struct_3byte answer[size];
-        memcpy(&answer, data.data(), sizeof(struct_3byte) * size);
+        struct_3byte answer[count];
+        memcpy(&answer, data.data(), sizeof(struct_3byte) * count);
 
         for (uint8_t m = 0; m < 2; ++m) {
             uint8_t inCRC = calculateCrc((uint8_t*)&answer[m], 2);
