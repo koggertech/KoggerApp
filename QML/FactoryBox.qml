@@ -10,7 +10,7 @@ DevSettingsBox {
 
         FileDialog {
             id: fileDialog
-            title: "Please choose a file"
+            title: qsTr("Please choose a file")
             folder: shortcuts.home
             nameFilters: ["Upgrade files (*.bin)"]
             onAccepted: {
@@ -38,10 +38,10 @@ DevSettingsBox {
 
 
         ParamGroup {
-            groupName: "Factory"
+            groupName: qsTr("Factory")
 
             ParamSetup {
-                paramName: "PN"
+                paramName: qsTr("PN")
 
                 CTextField {
                     id:pn_nbr
@@ -237,7 +237,7 @@ DevSettingsBox {
             //        }
 
             ParamSetup {
-                paramName: "Write"
+                paramName: qsTr("Write")
 
                 CProgress {
                     Layout.leftMargin: 0
@@ -251,7 +251,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Read"
+                paramName: qsTr("Read")
 
                 CProgress {
                     Layout.leftMargin: 0
@@ -265,7 +265,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Check"
+                paramName: qsTr("Check")
 
                 CProgress {
                     Layout.leftMargin: 0
@@ -279,7 +279,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Upgrade"
+                paramName: qsTr("Upgrade")
 
                 CProgress {
                     Layout.leftMargin: 20
@@ -298,7 +298,7 @@ DevSettingsBox {
                 width: control.width
 
                 CButton {
-                    text: "FLASH"
+                    text: qsTr("FLASH")
                     Layout.fillWidth: true
                     implicitHeight: 30
                     onClicked: {
@@ -313,7 +313,7 @@ DevSettingsBox {
                 width: control.width
 
                 CButton {
-                    text: "Simple FLASH"
+                    text: qsTr("Simple FLASH")
                     Layout.fillWidth: true
                     implicitHeight: 30
                     onClicked: {

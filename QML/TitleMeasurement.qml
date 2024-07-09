@@ -8,7 +8,7 @@ Item {
     height: 32
     property int setPositionSwitch: 0
     property int positionSwitch: 0
-    property string textTitle: "TITLE"
+    property string textTitle: qsTr("TITLE")
 
     function setPos(pos) {
         if(pos === 0) {
@@ -62,11 +62,11 @@ Item {
         ButtonGroup {
             buttons: column.children
             onClicked: {
-                if(button.text == "OFF") {
+                if(button.text === qsTr("OFF")) {
                     positionSwitch = 0
-                } else if(button.text == "CH1") {
+                } else if(button.text === qsTr("CH1")) {
                     positionSwitch = 1
-                } else if(button.text == "CH2") {
+                } else if(button.text === qsTr("CH2")) {
                     positionSwitch = 2
                 }
             }
@@ -77,19 +77,19 @@ Item {
             CRButton {
                 id:switch_off
                 checked: setPositionSwitch == 0
-                text: "OFF"
+                text: qsTr("OFF")
             }
 
             CRButton {
                 id:switch_ch1
                 checked: setPositionSwitch == 1
-                text: "CH1"
+                text: qsTr("CH1")
             }
 
             CRButton {
                 id:switch_ch2
                 checked: setPositionSwitch == 2
-                text: "CH2"
+                text: qsTr("CH2")
             }
         }
     }

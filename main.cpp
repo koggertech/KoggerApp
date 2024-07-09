@@ -20,6 +20,8 @@
 #if defined(Q_OS_ANDROID)
 #include "android.h"
 #endif
+#include <QTranslator>
+#include <QLocale>
 
 Core core;
 Themes theme;
@@ -77,6 +79,15 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+
+    // translation TODO
+    QTranslator translator;
+    QString language = QLocale::system().name().split('_').first();
+    QString translationFile = ":/languages/translation_" + language + ".qm";
+    if (translator.load(translationFile)) {
+        app.installTranslator(&translator);
+    }
+
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
 

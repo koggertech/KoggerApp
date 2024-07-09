@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.12
 import QtQuick.Controls 2.15
 
 Rectangle{
-    property string text : "Please, wait..."
+    property string text : qsTr("Please, wait...")
     property string textColor : "black"
 
     id:      root

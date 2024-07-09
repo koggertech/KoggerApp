@@ -169,7 +169,7 @@ Window  {
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
-                    text:      "Calculating surface.\nPlease wait..."
+                    text:      qsTr("Calculating surface.\nPlease wait...")
                     textColor: "black"
                     visible:   false
                 }
@@ -554,7 +554,7 @@ Window  {
                     visible: isFinite(deviceManagerWrapper.vruVoltage)
                     rightPadding: 4
                     leftPadding: 4
-                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
+                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + qsTr(" V   ") + deviceManagerWrapper.vruCurrent.toFixed(1) + qsTr(" A   ") + deviceManagerWrapper.vruVelocityH.toFixed(2) + qsTr(" m/s")
                 }
             }
         }

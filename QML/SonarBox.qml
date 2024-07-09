@@ -14,10 +14,10 @@ DevSettingsBox {
         Layout.margins: 24
 
         ParamGroup {
-            groupName: "Echogram"
+            groupName: qsTr("Echogram")
 
             ParamSetup {
-                paramName: "Resolution, mm"
+                paramName: qsTr("Resolution, mm")
 
                 SpinBoxCustom {
                     from: 10
@@ -37,7 +37,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Number of Samples"
+                paramName: qsTr("Number of Samples")
 
                 SpinBoxCustom {
                     from: 100
@@ -57,7 +57,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Offset of Samples"
+                paramName: qsTr("Offset of Samples")
 
                 SpinBoxCustom {
                     from: 0
@@ -78,10 +78,10 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "Rangefinder"
+            groupName: qsTr("Rangefinder")
 
             ParamSetup {
-                paramName: "Max distance, mm"
+                paramName: qsTr("Max distance, mm")
 
                 SpinBoxCustom {
                     from: 0;
@@ -101,7 +101,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Dead zone, mm"
+                paramName: qsTr("Dead zone, mm")
 
                 SpinBoxCustom {
                     from: 0
@@ -121,7 +121,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Confidence threshold, %"
+                paramName: qsTr("Confidence threshold, %")
 
                 SpinBoxCustom {
                     from: 0
@@ -142,10 +142,10 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "Transducer"
+            groupName: qsTr("Transducer")
 
             ParamSetup {
-                paramName: "Pulse count"
+                paramName: qsTr("Pulse count")
 
                 SpinBoxCustom {
                     from: 0
@@ -165,7 +165,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Frequency, kHz"
+                paramName: qsTr("Frequency, kHz")
 
                 SpinBoxCustom {
                     from: 40
@@ -185,7 +185,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Booster"
+                paramName: qsTr("Booster")
 
                 SpinBoxCustom {
                     from: 0
@@ -202,7 +202,7 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
 
-                    property var items: ["Off", "On"]
+                    property var items: [qsTr("Off"), qsTr("On")]
 
                     validator: RegExpValidator {
                         regExp: new RegExp("(Off|On)", "i")
@@ -224,10 +224,10 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "DSP"
+            groupName: qsTr("DSP")
 
             ParamSetup {
-                paramName: "Horizontal smoothing factor"
+                paramName: qsTr("Horizontal smoothing factor")
 
                 SpinBoxCustom {
                     from: 0
@@ -247,7 +247,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Speed of Sound, m/s"
+                paramName: qsTr("Speed of Sound, m/s")
 
                 SpinBoxCustom {
                     from: 300
@@ -269,10 +269,10 @@ DevSettingsBox {
 
 
         ParamGroup {
-            groupName: "Dataset"
+            groupName: qsTr("Dataset")
 
             ParamSetup {
-                paramName: "Period, ms"
+                paramName: qsTr("Period, ms")
 
                 SpinBoxCustom {
                     from: 0
@@ -292,7 +292,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Echogram"
+                paramName: qsTr("Echogram")
 
                 SpinBoxCustom {
                     from: 0
@@ -315,7 +315,7 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
 
-                    property var items: ["Off", "8-bit", "16-bit"]
+                    property var items: [qsTr("Off"), qsTr("8-bit"), qsTr("16-bit")]
                     textFromValue: function(value) {
                         return items[value];
                     }
@@ -323,7 +323,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Rangefinder"
+                paramName: qsTr("Rangefinder")
 
                 SpinBoxCustom {
                     from: 0
@@ -350,7 +350,7 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
 
-                    property var items: ["Off", "On", "NMEA"]
+                    property var items: [qsTr("Off"), qsTr("On"), qsTr("NMEA")]
                     textFromValue: function(value) {
                         return items[value];
                     }
@@ -358,7 +358,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "AHRS"
+                paramName: qsTr("AHRS")
 
                 SpinBoxCustom {
                     from: 0
@@ -381,7 +381,7 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
 
-                    property var items: ["Off", "Euler", "Quat."]
+                    property var items: [qsTr("Off"), qsTr("Euler"), qsTr("Quat.")]
                     textFromValue: function(value) {
                         return items[value];
                     }
@@ -389,7 +389,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Temperature"
+                paramName: qsTr("Temperature")
 
                 SpinBoxCustom {
                     from: 0
@@ -412,7 +412,7 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
 
-                    property var items: ["Off", "On"]
+                    property var items: [qsTr("Off"), qsTr("On")]
                     textFromValue: function(value) {
                         return items[value];
                     }
@@ -420,7 +420,7 @@ DevSettingsBox {
             }
 
             ParamSetup {
-                paramName: "Timestamp"
+                paramName: qsTr("Timestamp")
 
                 SpinBoxCustom {
                     from: 0
@@ -443,7 +443,7 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
 
-                    property var items: ["Off", "On"]
+                    property var items: [qsTr("Off"), qsTr("On")]
                     textFromValue: function(value) {
                         return items[value];
                     }
@@ -452,7 +452,7 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "Actions"
+            groupName: qsTr("Actions")
 
 //            ParamSetup {
 //                paramName: "Upgrade"
@@ -529,7 +529,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
-                    text: "Flash settings"
+                    text: qsTr("Flash settings")
 
                     onClicked: {
                         dev.flashSettings()
@@ -539,7 +539,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
-                    text: "Erase settings"
+                    text: qsTr("Erase settings")
 
                     onClicked: {
                         dev.resetSettings()
@@ -549,7 +549,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 60
-                    text: "Reboot"
+                    text: qsTr("Reboot")
 
                     onClicked: {
                         dev.reboot()
@@ -569,7 +569,7 @@ DevSettingsBox {
                 }
 
                 CButton {
-                    text: "Set baudrate"
+                    text: qsTr("Set baudrate")
 
                     onClicked: {
                         dev.baudrate = Number(baudrateCombo.currentText)
@@ -579,11 +579,11 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "Settings"
+            groupName: qsTr("Settings")
 
             FileDialog {
                 id: importFileDialog
-                title: "Open file"
+                title: qsTr("Open file")
                 selectExisting: true
                 nameFilters: ["XML files (*.xml)"]
 
@@ -600,7 +600,7 @@ DevSettingsBox {
 
             FileDialog {
                 id: exportFileDialog
-                title: "Save as file"
+                title: qsTr("Save as file")
                 selectExisting: false
                 nameFilters: ["XML files (*.xml)"]
 
@@ -618,14 +618,14 @@ DevSettingsBox {
             ColumnLayout {
                 RowLayout {
                     CButton {
-                        text: "Import"
+                        text: qsTr("Import")
                         Layout.fillWidth: true
                         onClicked: {
                             importFileDialog.open()
                         }
                     }
                     CButton {
-                        text: "Export"
+                        text: qsTr("Export")
                         Layout.fillWidth: true
                         onClicked: {
                             exportFileDialog.open()
@@ -633,8 +633,6 @@ DevSettingsBox {
                     }
                 }
             }
-
         }
-
     }
 }

@@ -10,7 +10,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetChart1
             checked: dev.datasetChart === channelNumber
-            text: "Chart"
+            text: qsTr("Chart")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetChart !== channelNumber) {
@@ -24,7 +24,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetDist1
             checked: dev.datasetDist === channelNumber
-            text: "Distance"
+            text: qsTr("Distance")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetDist !== channelNumber) {
@@ -38,7 +38,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetDistNMEA1
             checked: dev.datasetSDDBT === channelNumber
-            text: "Dist. NMEA"
+            text: qsTr("Dist. NMEA")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetSDDBT !== channelNumber) {
@@ -52,7 +52,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetDistNMEAP1
             checked: dev.datasetSDDBT_P2 === channelNumber
-            text: "Dist. NMEA#2"
+            text: qsTr("Dist. NMEA#2")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetSDDBT_P2 !== channelNumber) {
@@ -67,7 +67,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetTimestamp
             checked: dev.datasetTimestamp === channelNumber
-            text: "Timastamp"
+            text: qsTr("Timestamp")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetTimestamp !== channelNumber) {
@@ -81,7 +81,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetTemp
             checked: dev.datasetTemp === channelNumber
-            text: "Temper."
+            text: qsTr("Temper.")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetTemp !== channelNumber) {
@@ -97,7 +97,7 @@ ColumnLayout {
         CCheck {
             id:switchDatasetAttYPR
             checked: dev.datasetEuler === channelNumber
-            text: "Euler"
+            text: qsTr("Euler")
 
             onCheckStateChanged: {
                 if(checked == true && dev.datasetEuler !== channelNumber) {
