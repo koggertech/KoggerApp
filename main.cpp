@@ -22,10 +22,45 @@
 #endif
 #include <QTranslator>
 #include <QLocale>
+#include <QSettings>
+#include <QVector>
+#include <QString>
 
 Core core;
 Themes theme;
+QTranslator translator;
+QVector<QString> availableLanguages{"en", "ru", "pl"};
 
+
+void loadLanguage(QGuiApplication &app)
+{
+    QSettings settings;
+    QString currentLanguage;
+
+    int savedLanguageIndex = settings.value("appLanguage", -1).toInt();
+
+    if (savedLanguageIndex == -1) {
+        currentLanguage = QLocale::system().name().split('_').first();
+        if (availableLanguages.indexOf(currentLanguage) == -1) {
+            currentLanguage = availableLanguages.front();
+        }
+    }
+    else {
+        if (savedLanguageIndex >= 0 && savedLanguageIndex < availableLanguages.count()) {
+            currentLanguage = availableLanguages.at(savedLanguageIndex);
+        }
+        else {
+            currentLanguage = availableLanguages.front();
+        }
+    }
+
+
+    QString translationFile = ":/languages/translation_" + currentLanguage + ".qm";
+
+    if (translator.load(translationFile)) {
+        app.installTranslator(&translator);
+    }
+}
 
 void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
@@ -79,18 +114,10 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
-
-    // translation TODO
-    QTranslator translator;
-    QString language = QLocale::system().name().split('_').first();
-    QString translationFile = ":/languages/translation_" + language + ".qm";
-    if (translator.load(translationFile)) {
-        app.installTranslator(&translator);
-    }
+    loadLanguage(app);
 
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;
-
     engine.addImportPath("qrc:/");
 
     SceneObject::qmlDeclare();
@@ -126,9 +153,9 @@ int main(int argc, char *argv[])
 #else
     if (argc > 1) {
         QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
-            &core,     [&argv]() {
-                core.openLogFile(argv[1], false, true);
-            }, Qt::QueuedConnection);
+                         &core,     [&argv]() {
+                                        core.openLogFile(argv[1], false, true);
+                                    }, Qt::QueuedConnection);
     }
 #endif
 

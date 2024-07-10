@@ -942,6 +942,15 @@ GridLayout {
                     currentIndex: 0
 
                     onCurrentIndexChanged: {
+                        console.info("appLanguage::onCurrentIndexChanged")
+                    }
+
+                    Component.onCompleted: {
+                        console.info("appLanguage::onCompleted")
+                    }
+
+                    Settings {
+                        property alias appLanguage: appLanguage.currentIndex
                     }
                 }
             }
