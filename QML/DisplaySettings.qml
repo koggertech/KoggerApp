@@ -12,6 +12,8 @@ GridLayout {
 
     property var targetPlot: null
 
+    signal languageChanged(string langStr)
+
     ColumnLayout {
         id: columnItem
         spacing: 24
@@ -932,7 +934,7 @@ GridLayout {
         ParamGroup {
             groupName: qsTr("Preference")
 
-            ParamSetup { // TODO: language selector
+            ParamSetup {
                 paramName: qsTr("Language:")
 
                 CCombo  {
@@ -941,12 +943,21 @@ GridLayout {
                     model: [qsTr("English"), qsTr("Russian"), qsTr("Polish")]
                     currentIndex: 0
 
-                    onCurrentIndexChanged: {
-                        console.info("appLanguage::onCurrentIndexChanged")
-                    }
+                    function getLanguageByIndex(index) {
+                            switch (index) {
+                                case 0:
+                                    return qsTr("English");
+                                case 1:
+                                    return qsTr("Russian");
+                                case 2:
+                                    return qsTr("Polish");
+                                default:
+                                    return qsTr("English");
+                            }
+                        }
 
-                    Component.onCompleted: {
-                        console.info("appLanguage::onCompleted")
+                    onCurrentIndexChanged: {
+                        control.languageChanged(getLanguageByIndex(currentIndex))
                     }
 
                     Settings {
