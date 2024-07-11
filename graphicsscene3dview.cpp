@@ -29,6 +29,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false)
 {
+    //qDebug() << "LLL: " << this;
+
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);

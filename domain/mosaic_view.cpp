@@ -3,11 +3,19 @@
 #include <Triangle.h>
 #include <drawutils.h>
 
-
 MosaicView::MosaicView(QObject* parent) :
-    SceneObject(new MosaicViewRenderImplementation, parent)
-{
+    SceneObject(new MosaicViewRenderImplementation, parent),
+    gen(rd()),
+    dis(0.0f,1.0f),
+    m_grid(std::make_shared <SurfaceGrid>())
 
+{
+    RENDER_IMPL(MosaicView)->setGens(&gen, &dis);
+
+    QObject::connect(m_grid.get(), &SurfaceGrid::changed, [this](){
+        RENDER_IMPL(MosaicView)->m_gridRenderImpl = *m_grid->m_renderImpl;
+        Q_EMIT changed();
+    });
 }
 
 MosaicView::~MosaicView()
@@ -37,34 +45,151 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
     if (!m_isVisible)
         return;
 
-    if (!shaderProgramMap.contains("height"))
-        return;
-
-    auto shaderProgram = shaderProgramMap["height"];
-
-    if (!shaderProgram->bind()){
-        qCritical() << "Error binding shader program.";
+    auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
+    if (!shaderProgram) {
+        qWarning() << "Shader program 'mosaic' not found!";
         return;
     }
 
-    int posLoc    = shaderProgram->attributeLocation("position");
-    int maxZLoc   = shaderProgram->uniformLocation("max_z");
-    int minZLoc   = shaderProgram->uniformLocation("min_z");
-    int matrixLoc = shaderProgram->uniformLocation("matrix");
+    shaderProgram->bind();
 
-    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
-    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
-    shaderProgram->setUniformValue(matrixLoc, mvp);
+    shaderProgram->setUniformValue("mvp", mvp);
+
+    int posLoc = shaderProgram->attributeLocation("position");
+    int texLoc = shaderProgram->attributeLocation("texCoord");
+
     shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, vertices_.constData());
 
-    shaderProgram->setAttributeArray(posLoc, m_data.constData());
-    ctx->glDrawArrays(GL_QUADS, 0, m_data.size());
+    shaderProgram->enableAttributeArray(texLoc);
+    shaderProgram->setAttributeArray(texLoc, texCoords_.constData());
+
+    ctx->glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, indices_.constData());
 
     shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->disableAttributeArray(texLoc);
+
     shaderProgram->release();
+}
+
+
+
+void MosaicView::MosaicViewRenderImplementation::setTexture(const QImage& texture)
+{
+    qDebug() << "setTexture";
+
+    textureImage_ = texture;
+
+    initializeTexture();
+}
+
+void MosaicView::MosaicViewRenderImplementation::generateRandomVertices(int width, int height, float gridSize)
+{
+    auto perlin = [](float x, float y) {
+        return (sin(x) + cos(y)) / 2.0f;
+    };
+
+    auto perlinNoise = [perlin](float x, float y, int octaves, float scale, float persistence, float lacunarity) {
+        float amplitude = 1.0f;
+        float frequency = 1.0f;
+        float noiseHeight = 0.0f;
+
+        for (int i = 0; i < octaves; ++i) {
+            float sampleX = x * frequency * scale;
+            float sampleY = y * frequency * scale;
+
+            float perlinValue = perlin(sampleX, sampleY);
+            noiseHeight += perlinValue * amplitude;
+
+            amplitude *= persistence;
+            frequency *= lacunarity;
+        }
+
+        return noiseHeight;
+    };
+
+    vertices_.clear();
+    texCoords_.clear();
+    indices_.clear();
+
+    for (int i = 0; i < height; ++i) {
+        for (int j = 0; j < width; ++j) {
+            float x = j * gridSize;
+            float y = i * gridSize;
+            float z = perlinNoise(x, y, 6, 0.1f, 0.5f, 2.0f) * 50.0f + ((*dis)(*gen) * -5.5f); // Высота определяется Perlin noise + случайное смещение
+
+            vertices_.append(QVector3D(x, y, z));
+            texCoords_.append(QVector2D(j / float(width - 1), i / float(height - 1)));
+        }
+    }
+
+    for (int i = 0; i < height - 1; ++i) {
+        for (int j = 0; j < width - 1; ++j) {
+            int topLeft = i * width + j;
+            int topRight = topLeft + 1;
+            int bottomLeft = (i + 1) * width + j;
+            int bottomRight = bottomLeft + 1;
+
+            indices_.append(topLeft);
+            indices_.append(bottomLeft);
+            indices_.append(topRight);
+
+            indices_.append(topRight);
+            indices_.append(bottomLeft);
+            indices_.append(bottomRight);
+        }
+    }
+}
+
+void MosaicView::MosaicViewRenderImplementation::initializeTexture()
+{
+    qDebug() << "initializeTexture";
+
+    QOpenGLContext *currentContext = QOpenGLContext::currentContext();
+
+    if (!currentContext) {
+        qWarning() << "cannot initialize texture without a valid OpenGL context.";
+        return;
+    }
+
+    if (textureImage_.isNull()) {
+        return;
+    }
+
+    if (texture_) {
+        delete texture_;
+    }
+
+    texture_ = new QOpenGLTexture(textureImage_.mirrored());
+    texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    texture_->setMagnificationFilter(QOpenGLTexture::Linear);
+    texture_->setWrapMode(QOpenGLTexture::Repeat);
+
+    textureInitialized_ = true;
 }
 
 void MosaicView::updateData()
 {
-    qDebug() << "updateData";
+    m_grid->clearData();
+
+    generateRandomVertices(100, 100, 1.0f);
+
+
+    // grid
+    //auto impl = RENDER_IMPL(MosaicView);
+    //m_grid->setData(grid, GL_LINES);
+    //impl->m_gridRenderImpl = *m_grid->m_renderImpl;
+
+    emit changed();
 }
+
+void MosaicView::setTexture(const QImage& texture)
+{
+    RENDER_IMPL(MosaicView)->setTexture(texture);
+}
+
+void MosaicView::generateRandomVertices(int width, int height, float gridSize)
+{
+    RENDER_IMPL(MosaicView)->generateRandomVertices(width, height, gridSize);
+}
+
