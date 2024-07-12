@@ -47,9 +47,8 @@ public:
 
         QVector<QVector3D> vertices_;
         QVector<int> indices_;
-        QVector<QColor> colors_;
 
-        QVector<QVector2D> texCoords_;
+        //QVector<QVector2D> texCoords_;
 
 
         std::mt19937* gen;//(rd());

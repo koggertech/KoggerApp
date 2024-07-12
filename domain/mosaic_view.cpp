@@ -54,25 +54,15 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
     shaderProgram->bind();
 
     shaderProgram->setUniformValue("mvp", mvp);
-
     int posLoc = shaderProgram->attributeLocation("position");
-    int texLoc = shaderProgram->attributeLocation("texCoord");
-
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, vertices_.constData());
-
-    shaderProgram->enableAttributeArray(texLoc);
-    shaderProgram->setAttributeArray(texLoc, texCoords_.constData());
 
     ctx->glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, indices_.constData());
 
     shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->disableAttributeArray(texLoc);
-
     shaderProgram->release();
 }
-
-
 
 void MosaicView::MosaicViewRenderImplementation::setTexture(const QImage& texture)
 {
@@ -109,17 +99,14 @@ void MosaicView::MosaicViewRenderImplementation::generateRandomVertices(int widt
     };
 
     vertices_.clear();
-    texCoords_.clear();
     indices_.clear();
 
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
             float x = j * gridSize;
             float y = i * gridSize;
-            float z = perlinNoise(x, y, 6, 0.1f, 0.5f, 2.0f) * 50.0f + ((*dis)(*gen) * -5.5f); // Высота определяется Perlin noise + случайное смещение
-
+            float z = perlinNoise(x, y, 6, 0.1f, 0.5f, 2.0f) * 30.0f + ((*dis)(*gen));
             vertices_.append(QVector3D(x, y, z));
-            texCoords_.append(QVector2D(j / float(width - 1), i / float(height - 1)));
         }
     }
 
@@ -174,11 +161,7 @@ void MosaicView::updateData()
 
     generateRandomVertices(100, 100, 1.0f);
 
-
     // grid
-    //auto impl = RENDER_IMPL(MosaicView);
-    //m_grid->setData(grid, GL_LINES);
-    //impl->m_gridRenderImpl = *m_grid->m_renderImpl;
 
     emit changed();
 }
