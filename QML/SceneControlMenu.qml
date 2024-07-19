@@ -52,7 +52,7 @@ ColumnLayout {
             id:               bottomTrackMenuButton
             Layout.fillWidth: true
             checkable:        true
-            text:             "Bottom track"
+            text:             qsTr("Bottom track")
             Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
 
             onCheckedChanged: {
@@ -64,7 +64,7 @@ ColumnLayout {
         Button{
             Layout.fillWidth: true
             checkable:        true
-            text:             "Surface"
+            text:             qsTr("Surface")
             Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
             Component.onCompleted: checked = true
 
@@ -77,7 +77,7 @@ ColumnLayout {
         Button{
             Layout.fillWidth: true
             checkable:        true
-            text:             "Point group"
+            text:             qsTr("Point group")
             Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
 
             onCheckedChanged: {
@@ -89,7 +89,7 @@ ColumnLayout {
         Button{
             Layout.fillWidth: true
             checkable:        true
-            text:             "Polygon group"
+            text:             qsTr("Polygon group")
             Layout.maximumWidth: menuLoader.width/buttonGroup.buttons.length
 
             onCheckedChanged: {

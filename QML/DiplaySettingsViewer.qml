@@ -11,6 +11,7 @@ MenuScroll {
     property var targetPlot: null
     property int menuWidth: 200
 
+    signal languageChanged(string langStr)
 
     ColumnLayout {
         MenuFrame {
@@ -22,4 +23,11 @@ MenuScroll {
         }
     }
 
+    function handleChildSignal(langStr) {
+        languageChanged(langStr)
+    }
+
+    Component.onCompleted: {
+        displaySettings.languageChanged.connect(handleChildSignal)
+    }
 }

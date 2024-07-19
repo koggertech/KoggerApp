@@ -15,7 +15,7 @@ DevSettingsBox {
 
         ParamGroup {
             id: modeChanger
-            groupName: "Range Modes"
+            groupName: qsTr("Range Modes")
 
             function changeMode() {
                 dev.dvlChangeMode(mode1Check.checked, mode2Check.checked, mode3Check.checked, mode4Check.checked, mode4Range.value)
@@ -24,7 +24,7 @@ DevSettingsBox {
             RowLayout {
                 CCheck {
                     id: mode1Check
-                    text: "Mode1"
+                    text: qsTr("Mode1")
                     checked: true
 
                     onCheckedChanged: {
@@ -36,7 +36,7 @@ DevSettingsBox {
             RowLayout {
                 CCheck {
                     id: mode2Check
-                    text: "Mode2"
+                    text: qsTr("Mode2")
                     checked: true
 
                     onCheckedChanged: {
@@ -48,7 +48,7 @@ DevSettingsBox {
             RowLayout {
                 CCheck {
                     id: mode3Check
-                    text: "Mode3"
+                    text: qsTr("Mode3")
                     checked: true
 
                     onCheckedChanged: {
@@ -60,7 +60,7 @@ DevSettingsBox {
             RowLayout {
                 CCheck {
                     id: mode4Check
-                    text: "Mode4 range, m"
+                    text: qsTr("Mode4 range, m")
                     checked: true
 
                     onCheckedChanged: {

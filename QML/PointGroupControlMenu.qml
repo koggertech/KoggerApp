@@ -238,7 +238,7 @@ Item {
                 }
 
                 KParamSetup {
-                    paramName: "width: "
+                    paramName: qsTr("width: ")
 
                     KSpinBox {
                         id: widthSpinBox
@@ -259,7 +259,7 @@ Item {
 
             KButton {
                 Layout.fillWidth: true
-                text: "Add point"
+                text: qsTr("Add point")
                 onClicked: root.controller.onAddPointButtonClicked()
             }
         }

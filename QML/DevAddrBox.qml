@@ -16,7 +16,7 @@ DevSettingsBox {
 
         TitleMenuBox {
             id:title
-            titleText: "Bus settings"
+            titleText: qsTr("Bus settings")
             closeble: false
         }
 
@@ -29,7 +29,7 @@ DevSettingsBox {
                 spacing: 10
 
                 Text {
-                    text: "Bus address:"
+                    text: qsTr("Bus address:")
                     color: "#808080"
                     font.pixelSize: 16
                 }
@@ -64,7 +64,7 @@ DevSettingsBox {
                 }
 
                 CButton {
-                    text: "Set Device's address"
+                    text: qsTr("Set Device's address")
 
                     onClicked: {
                         dev.devAddress = spinDev.value
@@ -85,7 +85,7 @@ DevSettingsBox {
                 }
 
                 CButton {
-                    text: "Set baudrate"
+                    text: qsTr("Set baudrate")
 
                     onClicked: {
                         dev.baudrate = Number(baudrateCombo.currentText)
@@ -101,7 +101,7 @@ DevSettingsBox {
                 spacing: 10
 
                 Text {
-                    text: "Set default device's address:"
+                    text: qsTr("Set default device's address:")
                     color: "#808080"
                     font.pixelSize: 16
                 }

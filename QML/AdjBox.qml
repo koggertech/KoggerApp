@@ -6,7 +6,7 @@ Item {
     id: control
     Layout.fillWidth: true
     height: 64
-    property string textTitle: "VALUE NAME:"
+    property string textTitle: qsTr("VALUE NAME:")
     property string textValue: ""
     property real sliderStepCount: 0
     property real sliderValue: 0

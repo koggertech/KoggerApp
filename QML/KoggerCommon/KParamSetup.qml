@@ -6,7 +6,7 @@ RowLayout {
     Layout.fillWidth: true
     spacing: 10
 
-    property string paramName: "Param"
+    property string paramName: qsTr("Param")
 
     KText {
         Layout.fillWidth: true

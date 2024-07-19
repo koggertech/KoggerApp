@@ -23,14 +23,14 @@ Item {
 
             Text {
                 id: textTheme
-                text: "Export:"
+                text: qsTr("Export:")
                 color: "white"
                 font.pointSize: 12
             }
 
             CCheck {
                 id: exportDist
-                text: "Distance"
+                text: qsTr("Distance")
                 checked: true
             }
         }
@@ -43,7 +43,7 @@ Item {
 
             CButton {
                 Layout.fillWidth: true
-                text: "Export to CSV"
+                text: qsTr("Export to CSV")
                 onClicked: {
                     core.exportPlotAsCVS();
                 }

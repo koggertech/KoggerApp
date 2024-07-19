@@ -25,7 +25,7 @@ DevSettingsBox {
             CButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 100
-                text: "Write"
+                text: qsTr("Write")
 
                 onClicked: {
                     dev.flashSettings()
@@ -35,7 +35,7 @@ DevSettingsBox {
             CButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 100
-                text: "Erase"
+                text: qsTr("Erase")
 
                 onClicked: {
                     dev.resetSettings()
@@ -45,7 +45,7 @@ DevSettingsBox {
             CButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 100
-                text: "Reboot"
+                text: qsTr("Reboot")
 
                 onClicked: {
                     dev.reboot()

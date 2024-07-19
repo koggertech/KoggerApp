@@ -6,7 +6,7 @@ Item {
     id: control
     Layout.fillWidth: true
     height: 32
-    property string textTitle: "TITLE"
+    property string textTitle: qsTr("TITLE")
 
 
     Canvas {

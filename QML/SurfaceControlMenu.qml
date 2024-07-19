@@ -185,7 +185,7 @@ Item {
                     id:         filterTypeCombo
                     objectName: "filterTypeCombo"
                     Layout.preferredWidth: 250
-                    model:      ["None", "Max points count", "Nearest point distance"]
+                    model:      [qsTr("None"), qsTr("Max points count"), qsTr("Nearest point distance")]
                     onCurrentIndexChanged: {
                         switch(currentIndex){
                         case 1:

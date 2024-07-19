@@ -8,10 +8,10 @@ CButton {
     implicitWidth: implicitHeight + 3
 
     function openConnection() {
-        if(connectionTypeCombo.currentText === "Serial") {
+        if(connectionTypeCombo.currentText === qsTr("Serial")) {
             core.openConnectionAsSerial(1, autoconnectionCheck.checked, portCombo.currentText, Number(baudrateCombo.currentText), false)
-        } else if(connectionTypeCombo.currentText === "IP") {
-            core.openConnectionAsIP(1, autoconnectionCheck.checked, ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === "TCP");
+        } else if(connectionTypeCombo.currentText === qsTr("IP")) {
+            core.openConnectionAsIP(1, autoconnectionCheck.checked, ipAddressText.text, Number(ipPortText.text), ipTypeCombo.currentText === qsTr("TCP"));
         }
     }
 

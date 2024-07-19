@@ -5,7 +5,7 @@ import QtQuick.Controls 2.15
 ColumnLayout {
     spacing: 5
 
-    property string groupName: "Group"
+    property string groupName: qsTr("Group")
 
     RowLayout {
         spacing: 16

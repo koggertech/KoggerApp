@@ -11,7 +11,7 @@ RowLayout {
     Layout.topMargin: 5
     Layout.bottomMargin: 5
 
-    property string titleText: "TitleBox"
+    property string titleText: qsTr("TitleBox")
     property bool closeble: false
     property bool isOpen: checkBoxOpen.checked || !closeble
 

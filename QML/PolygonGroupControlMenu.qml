@@ -26,7 +26,7 @@ Item {
 
         KParamGroup {
             id: paramGroup
-            groupName:       "Polygon group controls"
+            groupName:       qsTr("Polygon group controls")
             anchors.left:    parent.left
             anchors.right:   parent.right
             anchors.top:     parent.top
@@ -35,7 +35,7 @@ Item {
 
             KCheck {
                 id:               visibilityCheckBox
-                text:             "Show"
+                text:             qsTr("Show")
                 onCheckedChanged: root.controller.onVisibilityCheckBoxCheckedChanged(checked)
             }
 
@@ -209,7 +209,7 @@ Item {
 
             KButton {
                 Layout.fillWidth: true
-                text: "Add polygon"
+                text: qsTr("Add polygon")
                 onClicked: root.controller.onAddPolygonButtonClicked()
             }
         }

@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 
 Button {
     id: control
-    text: "Ok"
+    text: qsTr("Ok")
     highlighted: true
     implicitHeight: theme.controlHeight
 
