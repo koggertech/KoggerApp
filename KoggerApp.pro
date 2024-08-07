@@ -4,6 +4,7 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
+#CONFIG += MOTOR # motor_control definition
 
 !android {
     QT += serialport
@@ -79,8 +80,7 @@ SOURCES += \
     raycaster.cpp \
     streamlist.cpp \
     textrenderer.cpp \
-    waterfall.cpp \
-    motor_control.cpp
+    waterfall.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -159,8 +159,7 @@ HEADERS += \
     streamlist.h \
     textrenderer.h \ # TODO
     waterfall.h \
-    waterfallproxy.h \
-    motor_control.h
+    waterfallproxy.h
 
 android {
 HEADERS += \
@@ -194,7 +193,6 @@ DISTFILES += \
     QML/CSlider.qml \
     QML/ComboBackStyle.qml \
     QML/ConnectionViewer.qml \
-    QML/MotorViewer.qml \
     QML/Console.qml \
     QML/CustomGroupBox.qml \
     QML/DeviceSettingsViewer.qml \
@@ -261,4 +259,11 @@ ANDROID_ABIS = armeabi-v7a
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
     include($$OPENSSL_PATH)
+}
+
+MOTOR {
+DEFINES += MOTOR
+HEADERS += motor_control.h
+SOURCES += motor_control.cpp
+DISTFILES += QML/MotorViewer.qml
 }

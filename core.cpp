@@ -969,6 +969,15 @@ bool Core::isFactoryMode() const
 #endif
 }
 
+bool Core::isMotorControlMode() const
+{
+#ifdef MOTOR
+    return true;
+#else
+    return false;
+#endif
+}
+
 QString Core::getFilePath() const
 {
     return filePath_;

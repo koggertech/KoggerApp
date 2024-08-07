@@ -18,6 +18,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged,  connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,     connectionType);
 
+#ifdef MOTOR
     QObject::connect(workerObject_.get(), &DeviceManager::motorDeviceChanged,       this,                &DeviceManagerWrapper::motorDeviceChanged, connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::anglesHasChanged,         this,                &DeviceManagerWrapper::angleChanged,       connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::posIsConstant,            this,                &DeviceManagerWrapper::posIsConstant,      connectionType);
@@ -25,6 +26,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(this,                &DeviceManagerWrapper::sendReturnToZero,  workerObject_.get(), &DeviceManager::returnToZero,              connectionType);
     QObject::connect(this,                &DeviceManagerWrapper::sendOpenCsvFile,   workerObject_.get(), &DeviceManager::openCsvFile,               connectionType);
     QObject::connect(this,                &DeviceManagerWrapper::sendClearTasks,    workerObject_.get(), &DeviceManager::clearTasks,                connectionType);
+#endif
 
     //workerThread_->start();
 }
@@ -44,6 +46,7 @@ DeviceManager* DeviceManagerWrapper::getWorker()
     return workerObject_.get();
 }
 
+#ifdef MOTOR
 void DeviceManagerWrapper::posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle)
 {
     qDebug() << "DeviceManagerWrapper::posIsConstant: currFAngle: " << currFAngle << ", taskFAngle: " << taskFAngle << ", currSAngle: " << currSAngle << ", taskSAngle: " << taskSAngle;
@@ -55,3 +58,4 @@ void DeviceManagerWrapper::posIsConstant(float currFAngle, float taskFAngle, flo
 
     emit enginesStopped();
 }
+#endif
