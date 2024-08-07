@@ -121,6 +121,8 @@ public:
         return idVersion->boardVersion();
     }
 
+    bool isBoardInited() { return boardVersion() != BoardNone; }
+
     bool isSonar() {
         BoardVersion ver = boardVersion();
         return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced || ver == BoardSideEnhanced || ver == BoardEcho20;

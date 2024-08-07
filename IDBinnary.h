@@ -20,6 +20,8 @@ typedef enum {
     BoardRecorderMini = 9,
     BoardDVL = 10,
     BoardEcho20 = 12,
+    BoardUSBL = 15,
+    BoardUSBLBeacon = 16,
 
 } BoardVersion;
 

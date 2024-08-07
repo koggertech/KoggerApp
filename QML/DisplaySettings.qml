@@ -336,7 +336,7 @@ GridLayout {
                 SpinBoxCustom {
                     id: gridNumber
                     from: 1
-                    to: 20
+                    to: 24
                     stepSize: 1
                     value: 5
 

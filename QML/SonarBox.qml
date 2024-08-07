@@ -34,6 +34,16 @@ DevSettingsBox {
                         isDriverChanged = false
                     }
                 }
+
+                CheckButton {
+                    text: "Request"
+                    checkable: false
+                    onPressedChanged: pressed ? backColor = "gray" : backColor = "black"
+                    // text
+                    onClicked: {
+                        dev.requestChart()
+                    }
+                }
             }
 
             ParamSetup {

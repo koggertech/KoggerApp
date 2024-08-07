@@ -64,6 +64,9 @@ QList<DevQProperty *> DeviceManager::getDevList()
         QHash<int, DevQProperty*> devs = i.value();
 
         for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+            // if(k.value()->boardVersion() != BoardRecorderMini) {
+            //     devList_.append(k.value());
+            // }
             devList_.append(k.value());
         }
     }

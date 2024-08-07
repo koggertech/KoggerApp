@@ -32,7 +32,7 @@ ColumnLayout {
         }
 
         ColumnLayout {
-            width: 300
+            // width: 400
             ParamSetup {
                 paramName: "Edge limit, m:"
 
@@ -221,7 +221,7 @@ ColumnLayout {
             checkedBorderColor: theme.controlBorderColor
             checked: true
 
-            icon.source: "./icons/route.svg"
+            iconSource: "./icons/route.svg"
             // icon.width: width
             // icon.height: height
 

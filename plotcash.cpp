@@ -137,7 +137,7 @@ void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
     Q_UNUSED(is_update_dist);
 }
 
-void Epoch::moveComplexToEchogram(float offset_m) {
+void Epoch::moveComplexToEchogram(float offset_m, float levels_offset_db) {
     for (auto i = _complex.cbegin(), end = _complex.cend(); i != end; ++i) {
         // cout << qPrintable(i.key()) << ": " << i.value() << endl;
         QVector<ComplexF> data = i.value().data;
@@ -149,15 +149,19 @@ void Epoch::moveComplexToEchogram(float offset_m) {
         QVector<uint8_t> chart(size);
         uint8_t* chart_data = chart.data();
 
-        for(int i  = 0; i < size; i++) {
-            float amp = (compelex_data[i].logPow() - 86)*2.5;
+        if(i.key() >= 32 && i.key() < 36 ) {
+            levels_offset_db = 20;
+        }
+
+        for(int k  = 0; k < size; k++) {
+            float amp = (compelex_data[k].logPow() + levels_offset_db)*2.5;
 
             if(amp < 0) {
                 amp = 0;
             } else if(amp > 255) {
                 amp = 255;
             }
-            chart_data[i] = amp;
+            chart_data[k] = amp;
         }
 
         setChart(i.key(), chart, 1500.0f/i.value().sampleRate, offset_m);
@@ -277,7 +281,13 @@ void Dataset::rawDataRecieved(RawData raw_data) {
         //     offset_m = last_epoch->usblSolution().distance_m;
         //     offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
         // }
-        last_epoch->moveComplexToEchogram(offset_m);
+        float offset_db = 0;
+        if(header.channelGroup == 0) {
+            offset_db = -86;
+        }
+
+        last_epoch->moveComplexToEchogram(offset_m, offset_db);
+
         if(header.channelGroup == 0) {
             last_epoch = addNewEpoch();
         }
