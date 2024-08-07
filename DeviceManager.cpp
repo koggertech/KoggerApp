@@ -79,6 +79,13 @@ DevQProperty *DeviceManager::getLastDev()
     return lastDevs_;
 }
 
+bool DeviceManager::isMotorControlCreated() const
+{
+    if (motorControl_)
+        return true;
+    return false;
+}
+
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
     if (frame.isComplete()) {
@@ -371,7 +378,28 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         }
         else {
-            getDevice(uuid, link, 0);
+            if (!link->getIsMotorDevice()) {
+                getDevice(uuid, link, 0);
+            }
+            else { // create motor driver
+                if (motorControl_) {
+                    motorControl_.reset();
+                }
+                motorControl_ = std::make_unique<MotorControl>(this, link);
+
+                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::posIsConstant);
+                QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
+                                                                                             if (addr == 225) {
+                                                                                                 fAngle_ = angle;
+                                                                                             }
+                                                                                             if (addr == 226) {
+                                                                                                 sAngle_ = angle;
+                                                                                             }
+                                                                                             emit anglesHasChanged();
+                                                                                         });
+
+                emit motorDeviceChanged();
+            }
         }
     }
 }
@@ -381,6 +409,11 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     Q_UNUSED(uuid);
 
     if (link) {
+        if (link->getIsMotorDevice()) {
+            motorControl_.reset();
+            emit motorDeviceChanged();
+        }
+
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);
@@ -426,6 +459,79 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     if (lastDevs_ != NULL) {
         lastDevs_->sendUpdateFW(data);
     }
+}
+
+float DeviceManager::getFAngle()
+{
+    return fAngle_;
+}
+
+float DeviceManager::getSAngle()
+{
+    return sAngle_;
+}
+
+void DeviceManager::returnToZero(int id)
+{
+    if (!motorControl_) {
+        return;
+    }
+
+    if (id == 0) {
+        motorControl_->goZero(motorControl_->getFAddr());
+    }
+    if (id == 1) {
+        motorControl_->goZero(motorControl_->getSAddr());
+    }
+}
+
+void DeviceManager::runSteps(int id, int speed, int angle)
+{
+    if (!motorControl_) {
+        return;
+    }
+
+    if (id == 0) {
+        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle);
+    }
+    if (id == 1) {
+        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle);
+    }
+}
+
+void DeviceManager::openCsvFile(QString name)
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    QFile file;
+    QUrl url(name);
+    url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    QTextStream in(&file);
+    QStringList tasks;
+
+    while (!in.atEnd()) {
+        QString row = in.readLine();
+        tasks.append(row);
+    }
+
+    motorControl_->addTask(tasks);
+}
+
+void DeviceManager::clearTasks()
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    motorControl_->clearTasks();
 }
 
 StreamListModel* DeviceManager::streamsList()

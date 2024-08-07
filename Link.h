@@ -58,6 +58,7 @@ public:
     void setIsNotAvailable(bool isNotAvailable);
     void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
+    void setIsMotorDevice(bool isMotorDevice);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     ControlType getControlType() const;
@@ -73,6 +74,7 @@ public:
     bool        getIsNotAvailable() const;
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
+    bool        getIsMotorDevice() const;
 
 public slots:
     bool writeFrame(FrameParser frame);
@@ -84,7 +86,7 @@ signals:
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
-    void dataReady();
+    void dataReady(QByteArray data);
 
 private:
     /*methods*/
@@ -112,6 +114,7 @@ private:
     bool isNotAvailable_;
     bool isProxy_;
     bool isForcedStopped_;
+    bool isMotorDevice_;
 
 private slots:
     void readyRead();

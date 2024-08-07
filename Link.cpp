@@ -26,7 +26,8 @@ Link::Link() :
     isHided_(false),
     isNotAvailable_(false),
     isProxy_(false),
-    isForcedStopped_(false)
+    isForcedStopped_(false),
+    isMotorDevice_(false)
 {
     frame_.resetComplete();
 }
@@ -278,6 +279,11 @@ void Link::setIsForceStopped(bool isForcedStopped)
     isForcedStopped_ = isForcedStopped;
 }
 
+void Link::setIsMotorDevice(bool isMotorDevice)
+{
+    isMotorDevice_ = isMotorDevice;
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -356,6 +362,11 @@ bool Link::getIsForceStopped() const
     return isForcedStopped_;
 }
 
+bool Link::getIsMotorDevice() const
+{
+    return isMotorDevice_;
+}
+
 bool Link::writeFrame(FrameParser frame)
 {
     return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
@@ -423,22 +434,28 @@ void Link::readyRead()
 {
     QIODevice* dev = device();
     if (dev != nullptr) {
-        if (linkType_ == LinkType::LinkIPUDP) {
-            QUdpSocket* socsUpd = (QUdpSocket*)dev;
-            while (socsUpd->hasPendingDatagrams()) {
-                QByteArray datagram;
-                datagram.resize(socsUpd->pendingDatagramSize());
-                QHostAddress sender;
-                quint16 senderPort;
-                qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                if (slen == -1) {
-                    break;
+
+        if (!isMotorDevice_) {
+            if (linkType_ == LinkType::LinkIPUDP) {
+                QUdpSocket* socsUpd = (QUdpSocket*)dev;
+                while (socsUpd->hasPendingDatagrams()) {
+                    QByteArray datagram;
+                    datagram.resize(socsUpd->pendingDatagramSize());
+                    QHostAddress sender;
+                    quint16 senderPort;
+                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                    if (slen == -1) {
+                        break;
+                    }
+                    toParser(datagram);
                 }
-                toParser(datagram);
+            }
+            else {
+                toParser(dev->readAll());
             }
         }
         else {
-            toParser(dev->readAll());
+            emit dataReady(dev->readAll());
         }
     }
 }

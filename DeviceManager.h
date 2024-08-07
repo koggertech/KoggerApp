@@ -11,6 +11,7 @@
 #include "DevQProperty.h"
 #include "ProtoBinnary.h"
 #include "IDBinnary.h"
+#include "motor_control.h"
 
 
 class DeviceManager : public QObject
@@ -31,6 +32,8 @@ public:
     QList<DevQProperty*> getDevList();
     DevQProperty* getLastDev();
 
+    bool isMotorControlCreated() const;
+
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
@@ -44,6 +47,14 @@ public slots:
     void binFrameOut(ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
+
+    // motor control
+    float getFAngle();
+    float getSAngle();
+    void returnToZero(int id);
+    void runSteps(int id, int speed, int angle);
+    void openCsvFile(QString path);
+    void clearTasks();
 
 signals:
     void dataSend(QByteArray data);
@@ -71,6 +82,10 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
+
+    void motorDeviceChanged();
+    void anglesHasChanged();
+    void posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
 
 private:
     /*methods*/
@@ -120,6 +135,11 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+
+    // motor control
+    std::unique_ptr<MotorControl> motorControl_;
+    float fAngle_ = 0.0f;
+    float sAngle_ = 0.0f;
 
 private slots:
     void readyReadProxy(Link* link);

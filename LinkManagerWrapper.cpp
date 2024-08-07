@@ -76,9 +76,9 @@ void LinkManagerWrapper::openClosedLinks()
     emit sendOpenFLinks();
 }
 
-void LinkManagerWrapper::openAsSerial(QUuid uuid)
+void LinkManagerWrapper::openAsSerial(QUuid uuid,  bool isMotorDevice)
 {
-    emit sendOpenAsSerial(uuid);
+    emit sendOpenAsSerial(uuid, isMotorDevice);
 }
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
