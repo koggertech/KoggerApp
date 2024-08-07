@@ -104,55 +104,192 @@ ColumnLayout {
             }
         }
     }
+
     RowLayout {
         Layout.fillWidth: true
         spacing: 10
 
-        SpinBoxCustom {
-            id: spinBox1
-            from: 0
-            to: 100
-            stepSize: 1
-            value: 50
+        CText {
             Layout.fillWidth: true
-        }
-
-        SpinBoxCustom {
-            id: spinBox2
-            from: 0
-            to: 100
-            stepSize: 1
-            value: 50
-            Layout.fillWidth: true
+            text: "return to zero:"
         }
 
         CButton {
-            text: "action 1"
-            Layout.fillWidth: true
-
+            text: "first"
             onClicked: {
-                deviceManagerWrapper.sendDoAction(0)
+                deviceManagerWrapper.sendReturnToZero(0)
             }
         }
 
         CButton {
-            text: "action 2"
-            Layout.fillWidth: true
-
+            text: "second"
             onClicked: {
-                deviceManagerWrapper.sendDoAction(1)
+                deviceManagerWrapper.sendReturnToZero(1)
             }
         }
     }
-   /* CTextField {
-        id: motorControlState
-        text: deviceManagerWrapper.countMotorDevices === 1 ? "motorControl activated" : "motorControl disabled"
-        readOnly: true
-        background: Rectangle {
-            color: "transparent"
-            border.width: 0
-            border.color: theme.controlBorderColor
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 10
+
+        CText {
+            Layout.fillWidth: true
+            text: "angle:"
         }
-    }*/
+
+        RowLayout {
+            CText {
+                Layout.fillWidth: true
+
+                text: "first:"
+            }
+
+            SpinBoxCustom { // small
+                id: spinBox1
+                from: -179
+                to: 179
+                stepSize: 1
+                value: 25
+                Layout.fillWidth: true
+            }
+            CButton {
+                text: "set"
+                onClicked: {
+                    deviceManagerWrapper.sendRunSteps(0, 1, spinBox1.value)
+                }
+            }
+        }
+        RowLayout {
+            CText {
+                Layout.fillWidth: true
+                text: "second:"
+            }
+            SpinBoxCustom { // big
+                id: spinBox2
+                from: -49
+                to: 49
+                stepSize: 1
+                value: 25
+                Layout.fillWidth: true
+            }
+            CButton {
+                text: "set"
+                onClicked: {
+                    deviceManagerWrapper.sendRunSteps(1, 1, spinBox2.value)
+                }
+            }
+        }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 10
+
+        CText {
+            Layout.fillWidth: true
+            text: "current f angle: " + deviceManagerWrapper.fAngle.toFixed(3) + "°"
+        }
+
+        CText {
+            Layout.fillWidth: true
+            text: "current s angle: " + deviceManagerWrapper.sAngle.toFixed(3) + "°"
+        }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 10
+
+        CTextField {
+            id: pathText
+            hoverEnabled: true
+            Layout.fillWidth: true
+
+            text: core.filePath
+            placeholderText: qsTr("Enter path")
+
+            Keys.onPressed: {
+                if (event.key === 16777220 || event.key === Qt.Key_Enter) {
+                    deviceManagerWrapper.sendOpenCsvFile(pathText.text);
+                }
+            }
+
+            Settings {
+                property alias pathText: pathText.text
+            }
+        }
+
+        CheckButton {
+            icon.source: "./icons/file.svg"
+            checkable: false
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+            implicitWidth: theme.controlHeight
+
+            onClicked: {
+                newFileDialog.open()
+            }
+
+            FileDialog {
+                id: newFileDialog
+                title: "Please choose a CSV file"
+                folder: shortcuts.home
+
+                nameFilters: ["CSV (*.csv)"]
+
+                onAccepted: {
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", "")
+
+                    var name_parts = newFileDialog.fileUrl.toString().split('.')
+
+                    deviceManagerWrapper.sendOpenCsvFile(pathText.text);
+                }
+                onRejected: {
+                }
+            }
+
+            Settings {
+                property alias logFolder: newFileDialog.folder
+            }
+        }
+
+        CheckButton {
+            icon.source: "./icons/file-off.svg"
+            checkable: false
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+            implicitWidth: theme.controlHeight
+
+            onClicked: {
+                deviceManagerWrapper.sendClearTasks();
+            }
+        }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 10
+
+        CText {
+            Layout.fillWidth: true
+            text: "cfa: " + deviceManagerWrapper.currFAngle.toFixed(3) + "°"
+        }
+
+        CText {
+            Layout.fillWidth: true
+            text: "csa: " + deviceManagerWrapper.currSAngle.toFixed(3) + "°"
+        }
+
+        CText {
+            Layout.fillWidth: true
+            text: "tfa: " + deviceManagerWrapper.taskFAngle.toFixed(3) + "°"
+        }
+
+        CText {
+            Layout.fillWidth: true
+            text: "tsa: " + deviceManagerWrapper.taskSAngle.toFixed(3) + "°"
+        }
+    }
 
 }

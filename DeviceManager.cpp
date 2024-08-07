@@ -384,8 +384,16 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
                 }
                 motorControl_ = std::make_unique<MotorControl>(this, link);
 
-                // setting motorControl_
-
+                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::posIsConstant);
+                QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
+                                                                                             if (addr == 225) {
+                                                                                                 fAngle_ = angle;
+                                                                                             }
+                                                                                             if (addr == 226) {
+                                                                                                 sAngle_ = angle;
+                                                                                             }
+                                                                                             emit anglesHasChanged();
+                                                                                         });
 
                 emit motorDeviceChanged();
             }
@@ -450,55 +458,77 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     }
 }
 
-void DeviceManager::doAction(int id)
+float DeviceManager::getFAngle()
 {
-    qDebug() << "DeviceManager::doAction";
+    return fAngle_;
+}
 
+float DeviceManager::getSAngle()
+{
+    return sAngle_;
+}
+
+void DeviceManager::returnToZero(int id)
+{
     if (!motorControl_) {
         return;
     }
 
     if (id == 0) {
-    // TESTING
-    uint8_t addr        = 0x00;
-    int32_t value       = 1;
-    int32_t angle     = 180;
-
-    //auto res = motorControl_->position(addr, &value, &angle);
-    auto res = motorControl_->runSteps(addr, value, angle);
-    //auto res = motorControl_->goZero(addr); // 0,1 - enginres
-
-    /*
-    for (int i = 0; i < 10; ++i)
-    {
-        //qDebug() << "iter: " << i;
-        //qDebug() << "runSteps";
-        //auto res = motorControl_->runSteps(addr, value, angle);
-        //qDebug() << "runSteps status: " << MotorControl::convertStatus(res);
-
-
-        //qDebug() << "position";
-        //int32_t val       = 0;
-        //float   ang       = 0.f;
-        //auto res2 = motorControl_->position(addr, &val, &ang);
-        //qDebug() << "position status: " << res2;
-        //qDebug() << "val: " << val << ", ang: " << ang;
-
-
-        motorControl_->runSteps(addr, value, angle);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    */
+        motorControl_->goZero(motorControl_->getFAddr());
     }
     if (id == 1) {
-        // TESTING
-        uint8_t addr = 0x01; // TODO: check address
-        int32_t value = 1;
-        int32_t angle = 90;
+        motorControl_->goZero(motorControl_->getSAddr());
+    }
+}
 
-        auto res = motorControl_->runSteps(addr, value, angle);
+void DeviceManager::runSteps(int id, int speed, int angle)
+{
+    if (!motorControl_) {
+        return;
     }
 
+    if (id == 0) {
+        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle);
+    }
+    if (id == 1) {
+        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle);
+    }
+}
+
+void DeviceManager::openCsvFile(QString name)
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    QFile file;
+    QUrl url(name);
+    url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    QTextStream in(&file);
+    QStringList tasks;
+
+    while (!in.atEnd()) {
+        QString row = in.readLine();
+        tasks.append(row);
+    }
+
+    motorControl_->addTask(tasks);
+}
+
+void DeviceManager::clearTasks()
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    motorControl_->clearTasks();
 }
 
 StreamListModel* DeviceManager::streamsList()
