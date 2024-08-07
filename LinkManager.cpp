@@ -92,13 +92,18 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
 
 void LinkManager::openAutoConnections()
 {
+    for (int i = 0; i < list_.size(); ++i) { // do not open auto conns when file is open
+        if (list_.at(i)->getIsForceStopped()) {
+            return;
+        }
+    }
+
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
 
         if (!link->getConnectionStatus()) {
             if (link->getControlType() == ControlType::kAuto &&
-                !link->getIsNotAvailable() &&
-                !link->getIsForceStopped()) {
+                !link->getIsNotAvailable()) {
                 switch (link->getLinkType()) {
                     case LinkType::LinkNone:   { break; }
                     case LinkType::LinkSerial: { link->openAsSerial(); break; }
@@ -500,9 +505,6 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
     TimerController(timer_.get());
 
     if (auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        if (controlType == ControlType::kManual)
-            linkPtr->setIsForceStopped(false);
-
         linkPtr->setControlType(controlType);
 
         if (linkPtr->getIsPinned())

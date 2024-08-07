@@ -9,40 +9,53 @@ ColumnLayout {
     // surface extra settings
     MenuFrame {
         id: surfaceSettings
-        visible: surfaceCheckButton.checked && (surfaceCheckButton.hovered || isHovered || surfaceCheckButton.longPressTriggered)
+        visible: surfaceCheckButton.hovered || isHovered || surfaceCheckButton.longPressTriggered
         z: surfaceSettings.visible
         Layout.alignment: Qt.AlignHCenter
 
         onIsHoveredChanged: {
-            if (!isHovered || !surfaceCheckButton.hovered)
-                surfaceCheckButton.longPressTriggered = false
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !surfaceCheckButton.hovered) {
+                    surfaceCheckButton.longPressTriggered = false
+                }
+            }
             //console.debug("surface menu hovered " + isHovered.toString())
         }
 
         onVisibleChanged: {
-            if (visible)
+            if (visible) {
                 focus = true;
+            }
         }
 
         onFocusChanged: {
-            console.info("surfaceSettings onFocusChanged: " + focus)
             if (!focus) {
                 surfaceCheckButton.longPressTriggered = false
             }
         }
 
         ColumnLayout {
-            // width: 400
+            //width: 300
             ParamSetup {
                 paramName: "Edge limit, m:"
 
                 SpinBoxCustom {
                     id: triangleEdgeLengthLimitSpinBox
-                    implicitWidth: 110
+                    //implicitWidth: 110
                     from: 5
                     to: 200
                     stepSize: 5
                     value: 50
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -54,12 +67,20 @@ ColumnLayout {
                     text: "Count"
                     checked: true
                     ButtonGroup.group: decimationGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 CheckButton {
                     id: decimationDistanceCheck
                     text: "Distance"
                     ButtonGroup.group: decimationGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 // CheckButton {
@@ -82,6 +103,11 @@ ColumnLayout {
                     to: 10000
                     stepSize: 100
                     value: 1000
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -97,6 +123,11 @@ ColumnLayout {
                     to: 100
                     stepSize: 1
                     value: 5
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -108,12 +139,20 @@ ColumnLayout {
                     text: "Triangle"
                     checked: true
                     ButtonGroup.group: surfaceTypeGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 CheckButton {
                     id: gridTypeCheck
                     text: "Grid"
                     ButtonGroup.group: surfaceTypeGroup
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
                 ButtonGroup{
@@ -132,6 +171,11 @@ ColumnLayout {
                     to: 20
                     stepSize: 1
                     value: 5
+                    editable: false
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -143,14 +187,28 @@ ColumnLayout {
                     text: qsTr("Show contour")
                     //checked: true
                     Layout.fillWidth: true
-                    onToggled: SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+
+                    onToggled: {
+                        SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
                 CheckButton {
                     id: gridVisibilityCheckButton
                     text: qsTr("Show grid")
                     //checked: true
                     Layout.fillWidth: true
-                    onToggled: SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+
+                    onToggled: {
+                        SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
 
@@ -164,7 +222,11 @@ ColumnLayout {
                         !gridTypeCheck.checked ? -1: gridCellSizeSpinBox.value,
                         !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
                         !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
-                    BottomTrackControlMenuController.onSurfaceUpdated()
+                    //BottomTrackControlMenuController.onSurfaceUpdated()
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
                 }
             }
         }
@@ -174,76 +236,71 @@ ColumnLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
 
-        MenuButton {
-            id: setCameraIsometricView
-            width: theme.controlHeight
-            height: theme.controlHeight
-            icon.source: "./fit-in-view.svg"
 
-            icon.color: theme.textColor
+        CheckButton {
+            id: setCameraIsometricView
+            backColor: theme.controlBackColor
+            iconSource: "./fit-in-view.svg"
+            checkable: false
+            checked: false
+            implicitWidth: theme.controlHeight
 
             onClicked: Scene3dToolBarController.onSetCameraMapViewButtonClicked()
         }
 
-        MenuButton {
+        CheckButton {
             id: fitAllinViewButton
-            width: theme.controlHeight
-            height: theme.controlHeight
-            icon.source: "./icons/zoom-cancel.svg"
-
-
-            icon.color: theme.textColor
+            iconSource: "./icons/zoom-cancel.svg"
+            backColor: theme.controlBackColor
+            checkable: false
+            checked: false
+            implicitWidth: theme.controlHeight
 
             onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
         }
 
-        MenuButton {
+        CheckButton {
             id: selectionToolButton
             objectName: "selectionToolButton"
-            width: theme.controlHeight
-            height: theme.controlHeight
-            checkable: true
-            active: checked
-            checked: true
-            icon.source: "./icons/click.svg"
-            icon.color: theme.textColor
-            ButtonGroup.group: buttonGroup
-
-            onCheckedChanged: Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
-        }
-
-        CheckButton {
-            id: boatTrackCheckButton
-            implicitHeight: theme.controlHeight
-            implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
+            iconSource: "./icons/click.svg"
+            implicitWidth: theme.controlHeight
 
+            onCheckedChanged: {
+                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+            }
+        }
+
+        CheckButton {
+            id: boatTrackCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
             iconSource: "./icons/route.svg"
-            // icon.width: width
-            // icon.height: height
+            implicitWidth: theme.controlHeight
+
 
             onCheckedChanged: {
                 BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
 
             Component.onCompleted: {
-                BoatTrackTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
         }
 
         CheckButton {
             id: bottomTrackCheckButton
-            implicitHeight: theme.controlHeight
-            implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-
-            icon.source: "./icons/overline.svg"
+            iconSource: "./icons/overline.svg"
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
@@ -256,14 +313,12 @@ ColumnLayout {
 
         CheckButton {
             id: surfaceCheckButton
-            implicitHeight: theme.controlHeight
-            implicitWidth: theme.controlHeight
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            // hoverEnabled: true
-            icon.source: "./icons/stack-backward.svg"
+            iconSource: "./icons/stack-backward.svg"
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
@@ -281,10 +336,6 @@ ColumnLayout {
                 contourVisibilityCheckButton.checked = checked
                 gridVisibilityCheckButton.checked = checked
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
-            }
-
-            onFocusChanged: {
-                console.info("surfaceCheckButton onFocusChanged: " + focus)
             }
 
             property bool longPressTriggered: false
@@ -311,8 +362,9 @@ ColumnLayout {
 
             Timer {
                 id: longPressTimer
-                interval: 700 // ms
+                interval: 100 // ms
                 repeat: false
+
                 onTriggered: {
                     surfaceCheckButton.longPressTriggered = true;
                 }
@@ -325,8 +377,9 @@ ColumnLayout {
             id: buttonGroup
             onCheckedButtonChanged: buttonChangeFlag = true
             onClicked: {
-                if(!buttonChangeFlag)
+                if (!buttonChangeFlag) {
                     checkedButton = null
+                }
 
                 buttonChangeFlag = false;
             }

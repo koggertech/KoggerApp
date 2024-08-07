@@ -44,7 +44,7 @@ public:
         //TODO! Process this method later
         //void rotate(qreal yaw, qreal pitch);
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
-        void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta);
+        void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
         void move(const QVector2D &lastMouse, const QVector2D &mousePos);
         void moveZAxis(float z);
@@ -142,12 +142,14 @@ public:
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
 
+    Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey = Qt::Key::Key_unknown);
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
+    Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
@@ -198,10 +200,15 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+#if defined (Q_OS_ANDROID)
+    static constexpr double mouseThreshold_{ 15.0 };
+#else
     static constexpr double mouseThreshold_{ 10.0 };
+#endif
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
+    bool switchedToBottomTrackVertexComboSelectionMode_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

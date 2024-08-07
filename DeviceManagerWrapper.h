@@ -45,6 +45,7 @@ private slots:
 
 signals:
     void sendOpenFile(QString path);
+    void sendCloseFile();
 
     void devChanged();
     void streamChanged();

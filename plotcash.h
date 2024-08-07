@@ -220,13 +220,13 @@ public:
 } DatasetChannel;
 Q_DECLARE_METATYPE(DatasetChannel)
 
-typedef enum BottomTrackPreset {
-    BottomTrackOneBeam,
+enum class BottomTrackPreset {
+    BottomTrackOneBeam = 0,
     BottomTrackOneBeamNarrow,
     BottomTrackSideScan
-} BottomTrackPreset;
+};
 
-typedef struct {
+struct BottomTrackParam {
     float gainSlope = 1.0;
     float threshold = 1.0;
     float verticalGap = 0;
@@ -237,13 +237,12 @@ typedef struct {
     int indexTo = 0;
     int windowSize = 1;
 
-    BottomTrackPreset preset = BottomTrackOneBeam;
+    BottomTrackPreset preset = BottomTrackPreset::BottomTrackOneBeam;
 
     struct {
         float x = 0, y = 0, z = 0;
     } offset;
-} BottomTrackParam;
-
+};
 
 typedef struct ComplexSignal {
     uint32_t globalOffset = 0;
@@ -774,6 +773,10 @@ public:
         return _lastPositionGNSS;
     }
 
+    BottomTrackParam* getBottomTrackParamPtr() {
+        return &bottomTrackParam_;
+    }
+
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float encoder);
@@ -806,7 +809,7 @@ public slots:
         }
     }
 
-    void bottomTrackProcessing(int channel1, int channel2, BottomTrackParam param);
+    void bottomTrackProcessing(int channel1, int channel2);
     void spatialProcessing();
     void emitPositionsUpdated() {
         emit bottomTrackUpdated(0, endIndex());
@@ -891,6 +894,7 @@ protected:
 private:
     int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;
+    BottomTrackParam bottomTrackParam_;
 };
 
 #endif // PLOT_CASH_H

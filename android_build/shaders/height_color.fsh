@@ -47,6 +47,6 @@ highp vec3 getColor(highp float v) {
 
 void main() {
     highp float norm_z = (vertice.z - min_z) / abs(max_z - min_z);
-    highp vec4 color = vec4(getColor(norm_z), 1.0);
+    highp vec4 color = vec4(getColor(norm_z) * 0.95, 1.0);
     fragColor = color;
 }

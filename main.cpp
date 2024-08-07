@@ -16,6 +16,7 @@
 #include <sceneobject.h>
 #include "Plot2D.h"
 #include "QQuickWindow"
+#include "bottomtrack.h"
 #if defined(Q_OS_ANDROID)
 #include "android.h"
 #endif
@@ -43,6 +44,14 @@ void setApplicationDisplayName(QGuiApplication& app)
         }
     }
 }
+
+void registerQmlMetaTypes()
+{
+    qmlRegisterType<qPlot2D>( "WaterFall", 1, 0, "WaterFall");
+    qmlRegisterType<BottomTrack>("BottomTrack", 1, 0, "BottomTrack");
+    qRegisterMetaType<BottomTrack::ActionEvent>("BottomTrack::ActionEvent");
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -77,7 +86,7 @@ int main(int argc, char *argv[])
 
     //qInstallMessageHandler(messageHandler); // TODO: comment this
 
-    qmlRegisterType<qPlot2D>("WaterFall", 1, 0, "WaterFall");
+    registerQmlMetaTypes();
 
     engine.rootContext()->setContextProperty("dataset", core.getDatasetPtr());
     engine.rootContext()->setContextProperty("core", &core);

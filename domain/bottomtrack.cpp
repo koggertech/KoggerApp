@@ -57,6 +57,90 @@ void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
     datasetPtr_ = datasetPtr;
 }
 
+void BottomTrack::actionEvent(ActionEvent actionEvent)
+{
+    auto minMaxFunc = [this](bool isMin) -> void {
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
+        if (!indices.isEmpty()) {
+            QVector<int> sequenceVector;
+            sequenceVector.reserve(indices.size());
+
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }; epoch) {
+                    sequenceVector.push_back(epochIndex);
+
+                    const float coeff = isMin ? 1.1f : 0.9f;
+                    const auto channels = datasetPtr_->channelsList();
+                    for (const auto& channel : channels) {
+                        if (!isMin) {
+                            epoch->setMaxDistProc(channel.channel, epoch->distProccesing(channel.channel) * coeff);
+                        }
+                        else {
+                            epoch->setMinDistProc(channel.channel, epoch->distProccesing(channel.channel) * coeff);
+                        }
+                    }
+                }
+            }
+
+            sequenceVector.shrink_to_fit();
+            const auto subArraysVec{ getSubarrays(sequenceVector) };
+
+            for (auto& itm : subArraysVec) {
+                if (auto btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
+                    btp->indexFrom = itm.first;
+                    btp->indexTo = itm.second;
+                    datasetPtr_->bottomTrackProcessing(0, 1); // TODO: 0, 1
+                }
+                else {
+                    break;
+                }
+            }
+
+            updateRenderData();
+            emit datasetPtr_->dataUpdate();
+        }
+    };
+
+    switch (actionEvent) {
+    case ActionEvent::Undefined: {
+        break;
+    }
+    case ActionEvent::ClearDistProc: {
+        const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
+
+        if (!indices.isEmpty()) {
+            bool isSomethingDeleted{ false };
+            for (const auto& verticeIndex : indices) {
+                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
+                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    Q_EMIT epochErased(epochIndex);
+                    isSomethingDeleted = true;
+                }
+            }
+            if (isSomethingDeleted) {
+                RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+                updateRenderData();
+                emit datasetPtr_->dataUpdate();
+            }
+        }
+
+        break;
+    }
+    case ActionEvent::MaxDistProc: {
+        minMaxFunc(false);
+        break;
+    }
+    case ActionEvent::MinDistProc: {
+        minMaxFunc(true);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
 {
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
@@ -315,6 +399,32 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 
     if (!renderData_.empty())
         SceneObject::setData(renderData_,GL_LINE_STRIP);
+}
+
+QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceVector)
+{
+    QVector<QPair<int, int>> retVal;
+
+    if (sequenceVector.isEmpty()) {
+        return retVal;
+    }
+
+    int start = sequenceVector[0];
+    int end = sequenceVector[0];
+
+    for (int i = 1; i < sequenceVector.size(); ++i) {
+        if (sequenceVector[i] == end + 1) {
+            end = sequenceVector[i];
+        } else {
+            retVal.append(qMakePair(start, end));
+            start = sequenceVector[i];
+            end = sequenceVector[i];
+        }
+    }
+
+    retVal.append(qMakePair(start, end));
+
+    return retVal;
 }
 
 //-----------------------RenderImplementation-----------------------------//

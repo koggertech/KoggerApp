@@ -68,6 +68,11 @@ bool SurfaceProcessor::stopInThread(unsigned long time)
     if(parent() || !(currentThread && currentThread->objectName() == UnderlyingThreadName))
         return true;
 
+    if (QThread::currentThread() == currentThread) { // same thread
+        currentThread->quit();
+        return true;
+    }
+
     currentThread->quit();
 
     return currentThread->wait(time);

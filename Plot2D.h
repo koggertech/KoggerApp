@@ -860,7 +860,9 @@ public:
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; }
 
     void setAimEpochEventState(bool state);
-    void setTimelinePosition(float position, bool fromGui = false);
+    void setTimelinePosition(float position);
+    void resetAim();
+
     void setTimelinePositionSec(float position);
     void setTimelinePositionByEpoch(int epochIndx);
 
@@ -913,7 +915,6 @@ protected:
     Dataset* _dataset = NULL;
     Canvas _canvas;
 
-    BottomTrackParam _bottomTrackParam;
 
     DatasetCursor _cursor;
 

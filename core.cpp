@@ -142,19 +142,20 @@ void Core::getFlasherPtr() const
 }
 #endif
 
-bool Core::openLogFile(const QString &filePath, bool isAppend, bool onStartUp)
+bool Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEvent)
 {
     QString localfilePath = filePath;
-    //consoleInfo(" Core::openLogFile: " + filePath);
-    if (onStartUp) {
+
+    if (onCustomEvent) {
         fixFilePathString(localfilePath);
-        //consoleInfo(" Core::openLogFile after fix: " + filePath);
         filePath_ = localfilePath;
         emit filePathChanged();
     }
 
     linkManagerWrapperPtr_->closeOpenedLinks();
     removeLinkManagerConnections();
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents);
 
     if (!isAppend)
         datasetPtr_->resetDataset();
@@ -213,6 +214,8 @@ bool Core::closeLogFile()
 {
     if (!isOpenedFile())
         return false;
+
+    emit deviceManagerWrapperPtr_->sendCloseFile();
 
     createLinkManagerConnections();
 
@@ -759,11 +762,19 @@ void Core::setPlotStopLevel(int level)
     }
 }
 
-void Core::setTimelinePosition(double position, bool fromGui)
+void Core::setTimelinePosition(double position)
 {
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL)
-            plot2dList_.at(i)->setTimelinePosition(position, fromGui);
+            plot2dList_.at(i)->setTimelinePosition(position);
+    }
+}
+
+void Core::resetAim()
+{
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (plot2dList_.at(i) != NULL)
+            plot2dList_.at(i)->resetAim();
     }
 }
 
@@ -965,6 +976,7 @@ QString Core::getFilePath() const
 
 void Core::fixFilePathString(QString& filePath) const
 {
+    Q_UNUSED(filePath);
 #ifdef Q_OS_WINDOWS
     filePath.remove("'");
 

@@ -142,20 +142,23 @@ void qPlot2D::plotMouseTool(int mode) {
 
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
-    if(_dataset != nullptr) {
-        _bottomTrackParam.preset = (BottomTrackPreset)preset;
-        _bottomTrackParam.gainSlope = gain_slope;
-        _bottomTrackParam.threshold = threshold;
-        _bottomTrackParam.windowSize = window_size;
-        _bottomTrackParam.verticalGap = vertical_gap;
-        _bottomTrackParam.minDistance = range_min;
-        _bottomTrackParam.maxDistance = range_max;
-        _bottomTrackParam.indexFrom = 0;
-        _bottomTrackParam.indexTo = _dataset->size();
-        _bottomTrackParam.offset.x = offsetx;
-        _bottomTrackParam.offset.y = offsety;
-        _bottomTrackParam.offset.z = offsetz;
-        _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2, _bottomTrackParam);
+    if (_dataset != nullptr) {
+        if (auto btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->preset = static_cast<BottomTrackPreset>(preset);
+            btpPtr->gainSlope = gain_slope;
+            btpPtr->threshold = threshold;
+            btpPtr->windowSize = window_size;
+            btpPtr->verticalGap = vertical_gap;
+            btpPtr->minDistance = range_min;
+            btpPtr->maxDistance = range_max;
+            btpPtr->indexFrom = 0;
+            btpPtr->indexTo = _dataset->size();
+            btpPtr->offset.x = offsetx;
+            btpPtr->offset.y = offsety;
+            btpPtr->offset.z = offsetz;
+
+            _dataset->bottomTrackProcessing(_cursor.channel1, _cursor.channel2);
+        }
     }
     plotUpdate();
 }

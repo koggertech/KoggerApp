@@ -58,7 +58,7 @@ public:
 #endif
 
 public slots:
-    bool openLogFile(const QString& filePath, bool isAppend = false, bool onStartUp = false);
+    bool openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
     bool openXTF(QByteArray data);    
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
@@ -76,7 +76,8 @@ public slots:
     bool exportPlotAsXTF(QString filePath);
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
-    void setTimelinePosition(double position, bool fromGui = false);
+    void setTimelinePosition(double position);
+    void resetAim();
     void UILoad(QObject* object, const QUrl& url);
     // fileReader
     void startFileReader(const QString& filePath);

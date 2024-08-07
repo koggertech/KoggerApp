@@ -116,6 +116,7 @@ ColumnLayout {
                         height: theme.controlHeight
                         icon.source: "./icons/settings.svg"
                         borderWidth: 0
+                        implicitWidth: theme.controlHeight
 
                         ToolTip.visible: hovered
                         ToolTip.text: "Settings"
@@ -126,6 +127,7 @@ ColumnLayout {
                         Layout.alignment: Qt.AlignLeft
                         icon.source: "./icons/pin.svg"
                         checked: IsPinned
+                        implicitWidth: theme.controlHeight
 
                         onToggled: {
                             linkManagerWrapper.sendUpdatePinnedState(Uuid, checked)
@@ -141,6 +143,7 @@ ColumnLayout {
                         icon.source: "./icons/repeat.svg"
                         checked: ControlType
                         // text: "Auto"
+                        implicitWidth: theme.controlHeight
 
                         onToggled: {
                             linkManagerWrapper.sendUpdateControlType(Uuid, Number(checked))
@@ -155,6 +158,7 @@ ColumnLayout {
                         Layout.alignment: Qt.AlignLeft
                         icon.source: "./icons/x.svg"
                         checked: false
+                        implicitWidth: theme.controlHeight
 
                         onToggled: {
                             if(checked) {
@@ -289,7 +293,14 @@ ColumnLayout {
                         visible: LinkType == 2
                         hoverEnabled: true
                         Layout.fillWidth: false
-                        implicitWidth: 60
+                        implicitWidth: {
+                            if (Qt.platform.os == "android") {
+                                return 100;
+                            }
+                            else {
+                                return 60;
+                            }
+                        }
 
                         leftPadding: 2
                         rightPadding: 2
@@ -335,7 +346,14 @@ ColumnLayout {
                         visible: LinkType == 2
                         hoverEnabled: true
                         Layout.fillWidth: false
-                        implicitWidth: 60
+                        implicitWidth: {
+                            if (Qt.platform.os == "android") {
+                                return 100;
+                            }
+                            else {
+                                return 60;
+                            }
+                        }
                         leftPadding: 2
                         rightPadding: 2
 
@@ -572,6 +590,7 @@ ColumnLayout {
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0
+            implicitWidth: theme.controlHeight
 
             onClicked: {
                 newFileDialog.open()
@@ -605,6 +624,7 @@ ColumnLayout {
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0
+            implicitWidth: theme.controlHeight
 
             onClicked: {
                 appendFileDialog.open()
@@ -639,6 +659,7 @@ ColumnLayout {
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0
+            implicitWidth: theme.controlHeight
 
             onClicked: {
                 core.closeLogFile();

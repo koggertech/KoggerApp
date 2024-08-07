@@ -14,6 +14,14 @@ class BottomTrack : public SceneObject
     QML_NAMED_ELEMENT(BottomTrack)
 
 public:
+    enum class ActionEvent {
+        Undefined = 0,
+        ClearDistProc,
+        MaxDistProc,
+        MinDistProc
+    };
+    Q_ENUM(ActionEvent)
+
     class BottomTrackRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
@@ -43,6 +51,7 @@ public:
     QMap<int,DatasetChannel> channels() const;
     DatasetChannel visibleChannel() const;
     void setDatasetPtr(Dataset* datasetPtr);
+    void actionEvent(ActionEvent actionEvent);
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
@@ -74,6 +83,8 @@ protected:
     void updateRenderData(int lEpoch = 0, int rEpoch = 0);
 
 private:
+    QVector<QPair<int, int>> getSubarrays(const QVector<int>& sequenceVector); // TODO: to utils
+
     using EpochIndex = int;
     using VerticeIndex = int;
     QHash<VerticeIndex,EpochIndex> epochIndexMatchingMap_;

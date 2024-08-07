@@ -45,6 +45,57 @@ Window  {
         }
     }
 
+    //-> drag-n-drop
+    property string draggedFilePath: ""
+
+    Rectangle {
+        id: overlay
+        anchors.fill: parent
+        color: "white"
+        opacity: 0
+        z: 1
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 300
+            }
+        }
+    }
+
+    DropArea {
+        anchors.fill: parent
+
+        onEntered: {
+            draggedFilePath = ""
+            if (drag.hasUrls) {
+                for (var i = 0; i < drag.urls.length; ++i) {
+                    var url = drag.urls[i]
+                    var filePath = url.replace("file:///", "").toLowerCase()
+                    if (filePath.endsWith(".klf")) {
+                        draggedFilePath = filePath
+                        overlay.opacity = 0.3
+                        break
+                    }
+                }
+            }
+        }
+
+        onExited: {
+            overlay.opacity = 0
+            draggedFilePath = ""
+        }
+
+        onDropped: {
+            if (draggedFilePath !== "") {
+                core.openLogFile(draggedFilePath, false, true)
+                overlay.opacity = 0
+                draggedFilePath = ""
+            }
+            overlay.opacity = 0
+        }
+    }
+    // drag-n-drop <-
+
     SplitView {
         Layout.fillHeight: true
         Layout.fillWidth:  true
@@ -113,6 +164,8 @@ Window  {
                 Layout.fillWidth:  true
                 focus:             true
 
+                property bool longPressTriggered: false
+
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
@@ -126,14 +179,15 @@ Window  {
                     anchors.fill: parent
                     enabled:      true
 
+                    onPinchStarted: {
+                        menuBlock.visible = false
+                        mousearea3D.enabled = false
+                    }
+
                     onPinchUpdated: {
                         var shiftScale = pinch.scale - pinch.previousScale;
                         var shiftAngle = pinch.angle - pinch.previousAngle;
                         renderer.pinchTrigger(pinch.previousCenter, pinch.center, shiftScale, shiftAngle)
-                    }
-
-                    onPinchStarted: {
-                        mousearea3D.enabled = false
                     }
 
                     onPinchFinished: {
@@ -151,6 +205,10 @@ Window  {
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
 
                         property int lastMouseKeyPressed: Qt.NoButton // TODO: maybe this mouseArea should be outside pinchArea
+                        property point startMousePos: Qt.point(-1, -1)
+                        property bool wasMoved: false
+                        property real mouseThreshold: 15
+                        property bool vertexMode: false
 
                         onEntered: {
                             mousearea3D.forceActiveFocus();
@@ -161,18 +219,68 @@ Window  {
                         }
 
                         onPositionChanged: {
+                            if (Qt.platform.os === "android") {
+                                if (!wasMoved) {
+                                    var delta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
+                                    if (delta > mouseThreshold) {
+                                        wasMoved = true;
+                                    }
+                                }
+                                if (renderer.longPressTriggered && !wasMoved) {
+                                    if (!vertexMode) {
+                                        renderer.switchToBottomTrackVertexComboSelectionMode(mouse.x, mouse.y)
+                                    }
+                                    vertexMode = true
+                                }
+                            }
+
                             renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onPressed: {
+                            menuBlock.visible = false
+                            startMousePos = Qt.point(mouse.x, mouse.y)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.start()
+                            renderer.longPressTriggered = false
+
                             lastMouseKeyPressed = mouse.buttons
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
                         onReleased: {
+                            startMousePos = Qt.point(-1, -1)
+                            wasMoved = false
+                            longPressTimer.stop()
+
                             renderer.mouseReleaseTrigger(lastMouseKeyPressed, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
+
+                            if (mouse.button === Qt.RightButton || (Qt.platform.os === "android" && vertexMode)) {
+                                menuBlock.position(mouse.x, mouse.y)
+                            }
+
+                            vertexMode = false
+
                             lastMouseKeyPressed = Qt.NoButton
                         }
+
+                        onCanceled: {
+                            startMousePos = Qt.point(-1, -1)
+                            wasMoved = false
+                            vertexMode = false
+                            longPressTimer.stop()
+                        }
+                    }
+                }
+
+                Timer {
+                    id: longPressTimer
+                    interval: 500 // ms
+                    repeat: false
+
+                    onTriggered: {
+                        renderer.longPressTriggered = true
                     }
                 }
 
@@ -183,6 +291,90 @@ Window  {
                     anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                RowLayout {
+                    id: menuBlock
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 1
+                    visible: false
+                    Layout.margins: 0
+
+                    function position(mx, my) {
+                        var oy = renderer.height - (my + implicitHeight)
+                        if (oy < 0) {
+                            my = my + oy
+                        }
+                        if (my < 0) {
+                            my = 0
+                        }
+                        var ox = renderer.width - (mx - implicitWidth)
+                        if (ox < 0) {
+                            mx = mx + ox
+                        }
+                        x = mx
+                        y = my
+                        visible = true
+                    }
+
+                    ButtonGroup { id: pencilbuttonGroup }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/arrow-bar-to-down.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.MinDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/arrow-bar-to-up.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.MaxDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/eraser.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.ClearDistProc)
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
+
+                    CheckButton {
+                        Layout.fillWidth: true
+                        icon.source: "./icons/x.svg"
+                        backColor: theme.controlBackColor
+                        checkable: false
+
+                        onClicked: {
+                            renderer.bottomTrackActionEvent(BottomTrack.Undefined)
+
+                            menuBlock.visible = false
+                        }
+
+                        ButtonGroup.group: pencilbuttonGroup
+                    }
                 }
             }
 
@@ -237,9 +429,14 @@ Window  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-                        onMoved: core.setTimelinePosition(value, true);
-                    }
 
+                        onValueChanged: {
+                            core.setTimelinePosition(value);
+                        }
+                        onMoved: {
+                            core.resetAim();
+                        }
+                    }
                 }
             }
         }

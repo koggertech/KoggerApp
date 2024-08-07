@@ -36,7 +36,7 @@ bool Logger::startNewKlfLog()
 #ifdef Q_OS_ANDROID
     QString logPath =  QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/KoggerApp";
 #else
-    QString logPath = QCoreApplication::applicationDirPath() + "/logs";
+    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
 #endif
 
     if (dir.mkpath(logPath)) {
@@ -120,7 +120,7 @@ bool Logger::startNewCsvLog()
 #ifdef Q_OS_ANDROID
     QString logPath =  QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/KoggerApp";
 #else
-    QString logPath = QCoreApplication::applicationDirPath() + "/logs";
+    QString logPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/KoggerApp/logs";
 #endif
 
     if (dir.mkpath(logPath)) {
@@ -222,21 +222,21 @@ void Logger::loggingCsvStream()
 
             if (csvData_.posTime) {
                 if (epoch->isPosAvail() && epoch->positionTimeUnix() != 0) {
-                    DateTime time_epoch = *epoch->time();
+                    QDateTime dateTime = QDateTime::fromSecsSinceEpoch(epoch->getPositionGNSS().time.sec);
 
-                    DateTime* dt = epoch->time();
-                    if (time_epoch.sec > 0) {
-                        time_epoch.sec -= 18;
-                        dt = &time_epoch;
-                    }
-                    //                    DateTime* dt = epoch->positionTime();
-                    volatile tm t_sep = dt->getDateTime();
-                    t_sep.tm_year += 1900;
-                    t_sep.tm_mon += 1;
+                    int year = dateTime.date().year();
+                    int month = dateTime.date().month();
+                    int day = dateTime.date().day();
+                    int hour = dateTime.time().hour();
+                    int minute = dateTime.time().minute();
+                    int second = dateTime.time().second();
 
-                    rowData.append(QString("%1-%2-%3").arg(t_sep.tm_year).arg(t_sep.tm_mon).arg(t_sep.tm_mday));
+                    QString dateStr = QString("%1-%2-%3").arg(year).arg(month).arg(day);
+                    QString timeStr = QString("%1:%2:%3").arg(hour).arg(minute).arg(second);
+
+                    rowData.append(dateStr);
                     rowData.append(",");
-                    rowData.append(QString("%1:%2:%3").arg(t_sep.tm_hour).arg(t_sep.tm_min).arg((double)t_sep.tm_sec+(double)dt->nanoSec/1e9));
+                    rowData.append(timeStr);
                     rowData.append(",");
                 }
                 else {

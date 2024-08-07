@@ -959,6 +959,9 @@ GridLayout {
                     model: ["Fish Finders", "Bottom Tracking", "Maximum"]
                     currentIndex: 0
 
+                    onCurrentIndexChanged: theme.instrumentsGrade = currentIndex
+                    Component.onCompleted: theme.instrumentsGrade = currentIndex
+
                     Settings {
                         property alias instrumentsGradeList: instrumentsGradeList.currentIndex
                     }

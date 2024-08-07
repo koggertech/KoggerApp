@@ -12,57 +12,87 @@ WaterFall {
     PinchArea {
         id: pinch2D
         anchors.fill: parent
-
         enabled: true
-        onPinchUpdated: {
-            plot.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
-            plot.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
-            plot.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
+
+        property int thresholdXAxis: 15
+        property int thresholdYAxis: 15
+        property double zoomThreshold: 0.1
+
+        property bool movementX: false
+        property bool movementY: false
+        property bool zoomY: false
+        property point pinchStartPos: Qt.point(-1, -1)
+
+        function clearPinchMovementState() {
+            movementX = false
+            movementY = false
+            zoomY = false
         }
 
         onPinchStarted: {
+            menuBlock.visible = false
+
             mousearea.enabled = false
-            plot.setMousePosition(-1, -1)
+            plot.plotMousePosition(-1, -1)
+
+            clearPinchMovementState()
+            pinchStartPos = Qt.point(pinch.center.x, pinch.center.y)
         }
+
+        onPinchUpdated: {
+            console.info("onPinchUpdated")
+
+            if (movementX) {
+                plot.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
+            }
+            else if (movementY) {
+                plot.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
+            }
+            else if (zoomY) {
+                plot.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
+            }
+            else {
+                if (Math.abs(pinchStartPos.x - pinch.center.x) > thresholdXAxis) {
+                    movementX = true
+                }
+                else if (Math.abs(pinchStartPos.y - pinch.center.y) > thresholdYAxis) {
+                    movementY = true
+                }
+                else if (pinch.scale > (1.0 + zoomThreshold) || pinch.scale < (1.0 - zoomThreshold)) {
+                    zoomY = true
+                }
+            }
+        }       
 
         onPinchFinished: {
             mousearea.enabled = true
             plot.plotMousePosition(-1, -1)
+
+            clearPinchMovementState()
+            pinchStartPos = Qt.point(-1, -1)
         }
 
         MouseArea {
             id: mousearea
-
-//            propagateComposedEvents: true
-
             enabled: true
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onWheel: {
-                if (wheel.modifiers & Qt.ControlModifier) {
-                    plot.verZoomEvent(-wheel.angleDelta.y)
-                } else if (wheel.modifiers & Qt.ShiftModifier) {
-                    plot.verScrollEvent(-wheel.angleDelta.y)
-                } else {
-                    plot.horScrollEvent(wheel.angleDelta.y)
-                }
-            }
+
+            property int lastMouseX: -1
 
             onClicked: {
+                lastMouseX = mouse.x
+
                 plot.focus = true
-                if (mouse.button === Qt.RightButton) {
+
+                if (mouse.button === Qt.RightButton && theme.instrumentsGrade !== 0) {
                     menuBlock.position(mouse.x, mouse.y)
-
-                }
-            }
-
-            onReleased: {
-                if (mouse.button === Qt.LeftButton) {
-                    plot.plotMousePosition(-1, -1)
                 }
             }
 
             onPressed: {
+                lastMouseX = mouse.x
+
                 if (mouse.button === Qt.LeftButton) {
                     menuBlock.visible = false
                 }
@@ -72,12 +102,46 @@ WaterFall {
                 }
             }
 
-            onPositionChanged: {
-                if(mousearea.pressedButtons & Qt.LeftButton) {
-                    plot.plotMousePosition(mouse.x, mouse.y)
+            onReleased: {
+                lastMouseX = -1
+
+                if (mouse.button === Qt.LeftButton) {
+                    plot.plotMousePosition(-1, -1)
+                }
+
+                if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0) {
+                    menuBlock.position(mouse.x, mouse.y)
                 }
             }
 
+            onCanceled: {
+                lastMouseX = -1
+            }
+
+            onPositionChanged: {
+                var delta = mouse.x - lastMouseX
+                lastMouseX = mouse.x
+
+                if (mousearea.pressedButtons & Qt.LeftButton) {
+                    plot.plotMousePosition(mouse.x, mouse.y)
+
+                    if (theme.instrumentsGrade === 0) {
+                        plot.horScrollEvent(delta)
+                    }
+                }
+            }
+
+            onWheel: {
+                if (wheel.modifiers & Qt.ControlModifier) {
+                    plot.verZoomEvent(-wheel.angleDelta.y)
+                }
+                else if (wheel.modifiers & Qt.ShiftModifier) {
+                    plot.verScrollEvent(-wheel.angleDelta.y)
+                }
+                else {
+                    plot.horScrollEvent(wheel.angleDelta.y)
+                }
+            }
         }
     }
 
@@ -251,6 +315,19 @@ WaterFall {
                 if (checked) {
                     plot.plotMouseTool(5)
                 }
+            }
+
+            ButtonGroup.group: pencilbuttonGroup
+        }
+
+        CheckButton {
+            Layout.fillWidth: true
+            icon.source: "./icons/x.svg"
+            backColor: theme.controlBackColor
+            checkable: false
+
+            onClicked: {
+                menuBlock.visible = false
             }
 
             ButtonGroup.group: pencilbuttonGroup
