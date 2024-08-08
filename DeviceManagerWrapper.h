@@ -25,17 +25,23 @@ public:
     Q_PROPERTY(int                  pilotArmState       READ    pilotArmState           NOTIFY vruChanged)
     Q_PROPERTY(int                  pilotModeState      READ    pilotModeState          NOTIFY vruChanged)
 
+#ifdef MOTOR
     // MotorControl on DeviceManager
     Q_PROPERTY(int countMotorDevices READ getMotorCountDevices NOTIFY motorDeviceChanged)
     Q_PROPERTY(float fAngle READ getFAngle NOTIFY angleChanged)
     Q_PROPERTY(float sAngle READ getSAngle NOTIFY angleChanged)
-
-
     Q_PROPERTY(float currFAngle READ getCurrFAngle NOTIFY enginesStopped)
     Q_PROPERTY(float currSAngle READ getCurrSAngle NOTIFY enginesStopped)
     Q_PROPERTY(float taskFAngle READ getTaskFAngle NOTIFY enginesStopped)
     Q_PROPERTY(float taskSAngle READ getTaskSAngle NOTIFY enginesStopped)
-
+    int                  getMotorCountDevices() { if (getWorker()->isMotorControlCreated()) { return 1; } else { return 0; } }
+    float                getFAngle()            { return getWorker()->getFAngle(); }
+    float                getSAngle()            { return getWorker()->getSAngle(); }
+    float                getCurrFAngle()        { return currFAngle_; }
+    float                getCurrSAngle()        { return currSAngle_; }
+    float                getTaskFAngle()        { return taskFAngle_; }
+    float                getTaskSAngle()        { return taskSAngle_; }
+#endif
 
     DeviceManager* getWorker();
 
@@ -48,14 +54,6 @@ public:
     int                  pilotArmState      ()           { return getWorker()->pilotArmState();     }
     int                  pilotModeState     ()           { return getWorker()->pilotModeState();    }
 
-    int                  getMotorCountDevices() { if (getWorker()->isMotorControlCreated()) { return 1; } else { return 0; } }
-    float                getFAngle()            { return getWorker()->getFAngle(); }
-    float                getSAngle()            { return getWorker()->getSAngle(); }
-    float                getCurrFAngle()        { return currFAngle_; }
-    float                getCurrSAngle()        { return currSAngle_; }
-    float                getTaskFAngle()        { return taskFAngle_; }
-    float                getTaskSAngle()        { return taskSAngle_; }
-
     void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
 
 public slots:
@@ -63,33 +61,36 @@ public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
 
 private slots:
+
+#ifdef MOTOR
     void posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
+#endif
 
 signals:
     void sendOpenFile(QString path);
     void sendCloseFile();
-    void sendOpenCsvFile(QString path);
-    void sendClearTasks();
-
     void devChanged();
     void streamChanged();
     void vruChanged();
 
-    // motor
+#ifdef MOTOR
+    void sendOpenCsvFile(QString path);
+    void sendClearTasks();
     void motorDeviceChanged();
     void angleChanged();
     void enginesStopped();
-
     void sendReturnToZero(int id);
     void sendRunSteps(int id, int val, int angle);
-
+#endif
 
 private:
     std::unique_ptr<QThread> workerThread_;
     std::unique_ptr<DeviceManager> workerObject_;
 
+#ifdef MOTOR
     float currFAngle_ = 0.0f;
     float taskFAngle_ = 0.0f;
     float currSAngle_ = 0.0f;
     float taskSAngle_ = 0.0f;
+#endif
 }; // class DeviceWrapper

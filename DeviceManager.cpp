@@ -92,12 +92,14 @@ DevQProperty *DeviceManager::getLastDev()
     return lastDevs_;
 }
 
+#ifdef MOTOR
 bool DeviceManager::isMotorControlCreated() const
 {
     if (motorControl_)
         return true;
     return false;
 }
+#endif
 
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
@@ -391,6 +393,7 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         }
         else {
+#ifdef MOTOR
             if (!link->getIsMotorDevice()) {
                 getDevice(uuid, link, 0);
             }
@@ -402,17 +405,20 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 
                 QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::calibrationStandIn);
                 QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
-                                                                                             if (addr == 225) {
-                                                                                                 fAngle_ = angle;
-                                                                                             }
-                                                                                             if (addr == 226) {
-                                                                                                 sAngle_ = angle;
-                                                                                             }
-                                                                                             emit anglesHasChanged();
-                                                                                         });
+                    if (addr == 225) {
+                        fAngle_ = angle;
+                    }
+                    if (addr == 226) {
+                        sAngle_ = angle;
+                    }
+                    emit anglesHasChanged();
+                });
 
                 emit motorDeviceChanged();
             }
+#else
+            getDevice(uuid, link, 0);
+#endif
         }
     }
 }
@@ -422,10 +428,12 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     Q_UNUSED(uuid);
 
     if (link) {
+#ifdef MOTOR
         if (link->getIsMotorDevice()) {
             motorControl_.reset();
             emit motorDeviceChanged();
         }
+#endif
 
         deleteDevicesByLink(uuid);
         this->disconnect(link);
@@ -474,6 +482,7 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     }
 }
 
+#ifdef MOTOR
 float DeviceManager::getFAngle()
 {
     return fAngle_;
@@ -505,10 +514,10 @@ void DeviceManager::runSteps(int id, int speed, int angle)
     }
 
     if (id == 0) {
-        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle);
+        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle, false); // false - need waiting for curr pos
     }
     if (id == 1) {
-        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle);
+        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle, false);
     }
 }
 
@@ -554,6 +563,7 @@ void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float
         usbl_devs[0]->askBeaconPosition(ask);
     }
 }
+#endif
 
 StreamListModel* DeviceManager::streamsList()
 {
