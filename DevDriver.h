@@ -215,6 +215,8 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
 
+    void askBeaconPosition(IDBinUsblSolution::AskBeacon ask);
+
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
 

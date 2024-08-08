@@ -30,6 +30,7 @@ public:
     Q_INVOKABLE int pilotModeState();
 
     QList<DevQProperty*> getDevList();
+    QList<DevQProperty*> getDevList(BoardVersion ver);
     DevQProperty* getLastDev();
 
     bool isMotorControlCreated() const;
@@ -55,6 +56,7 @@ public slots:
     void runSteps(int id, int speed, int angle);
     void openCsvFile(QString path);
     void clearTasks();
+    void calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
 
 signals:
     void dataSend(QByteArray data);
@@ -85,7 +87,6 @@ signals:
 
     void motorDeviceChanged();
     void anglesHasChanged();
-    void posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
 
 private:
     /*methods*/

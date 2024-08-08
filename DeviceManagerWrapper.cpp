@@ -20,7 +20,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
 
     QObject::connect(workerObject_.get(), &DeviceManager::motorDeviceChanged,       this,                &DeviceManagerWrapper::motorDeviceChanged, connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::anglesHasChanged,         this,                &DeviceManagerWrapper::angleChanged,       connectionType);
-    QObject::connect(workerObject_.get(), &DeviceManager::posIsConstant,            this,                &DeviceManagerWrapper::posIsConstant,      connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::calibrationStandIn,            this,                &DeviceManagerWrapper::posIsConstant,      connectionType);
     QObject::connect(this,                &DeviceManagerWrapper::sendRunSteps,      workerObject_.get(), &DeviceManager::runSteps,                  connectionType);
     QObject::connect(this,                &DeviceManagerWrapper::sendReturnToZero,  workerObject_.get(), &DeviceManager::returnToZero,              connectionType);
     QObject::connect(this,                &DeviceManagerWrapper::sendOpenCsvFile,   workerObject_.get(), &DeviceManager::openCsvFile,               connectionType);

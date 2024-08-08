@@ -345,6 +345,11 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::askBeaconPosition(IDBinUsblSolution::AskBeacon ask) {
+    if(!m_state.connect) return;
+    idUSBL->askBeacon(ask);
+}
+
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }

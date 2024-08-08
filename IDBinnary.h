@@ -887,7 +887,7 @@ public:
     struct UsblSolution {
         uint8_t id = 0;
         uint8_t role = 0;
-        uint16_t reserved = 0;
+        uint16_t watermark = 0;
 
         int64_t timestamp_us = 0;
         uint32_t ping_counter = 0;
@@ -903,12 +903,27 @@ public:
         float elevation_unc = 0;
 
         float snr = 0;
+
+        // double latitude;
+        // double longitude;
+        // float depth;
     } __attribute__((packed));
 
+    struct AskBeacon {
+        uint8_t id = 0; // 0 is promisc mode
+        uint8_t reserved = 0;
+        uint16_t watermark = 0;
+        double latitude = NAN;
+        double longitude = NAN;
+        float external_heading = NAN;
+        float force_beacon_depth = NAN;
+    }  __attribute__((packed));
 
     UsblSolution usblSolution() {
         return _usblSolution;
     }
+
+    void askBeacon(AskBeacon ask);
 
 protected:
     UsblSolution _usblSolution;

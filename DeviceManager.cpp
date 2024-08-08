@@ -64,14 +64,27 @@ QList<DevQProperty *> DeviceManager::getDevList()
         QHash<int, DevQProperty*> devs = i.value();
 
         for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
-            // if(k.value()->boardVersion() != BoardRecorderMini) {
-            //     devList_.append(k.value());
-            // }
             devList_.append(k.value());
         }
     }
 
     return devList_;
+}
+
+QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
+    QList<DevQProperty *> list;
+
+    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+        QHash<int, DevQProperty*> devs = i.value();
+
+        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+            if(k.value()->boardVersion() == ver) {
+                list.append(k.value());
+            }
+        }
+    }
+
+    return list;
 }
 
 DevQProperty *DeviceManager::getLastDev()
@@ -387,7 +400,7 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
                 }
                 motorControl_ = std::make_unique<MotorControl>(this, link);
 
-                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::posIsConstant);
+                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::calibrationStandIn);
                 QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
                                                                                              if (addr == 225) {
                                                                                                  fAngle_ = angle;
@@ -532,6 +545,14 @@ void DeviceManager::clearTasks()
     }
 
     motorControl_->clearTasks();
+}
+
+void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle) {
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
+    if(usbl_devs.size() > 0) {
+        IDBinUsblSolution::AskBeacon ask;
+        usbl_devs[0]->askBeaconPosition(ask);
+    }
 }
 
 StreamListModel* DeviceManager::streamsList()
