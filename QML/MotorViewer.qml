@@ -10,7 +10,8 @@ ColumnLayout {
 
     CTextField {
         id: portNames
-        text: "motor control:"
+        Layout.fillWidth: true
+        text: "Motor Control"
         readOnly: true
         background: Rectangle {
             color: "transparent"
@@ -19,83 +20,100 @@ ColumnLayout {
         }
     }
 
-    ListView {
-        id: motorsList
-        model: linkManagerWrapper.linkListModel
-        visible: count > 0
-        height: count * theme.controlHeight
-        delegate: motorItem
-        focus: true
-
-        Layout.margins: 0
-        Layout.topMargin: 0
-        Layout.bottomMargin: 0
+    RowLayout {
         Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredHeight: count * (theme.controlHeight + 4)
-        Layout.maximumHeight: 10 * (theme.controlHeight + 4)
+        spacing: 10
 
-        onCountChanged: {
-            Qt.callLater(positionViewAtEnd)
+        CText {
+            text: "connect device:"
         }
 
-        Component {
-            id: motorItem
-            Item {
-                id: itemWrapper
-                width: motorsList.width
-                height: theme.controlHeight + 4
+        ComboBox {
+            id: motorsComboBox
+            model: linkManagerWrapper.linkListModel
+            visible: count > 0
+            width: parent.width
+            height: theme.controlHeight
+            Layout.margins: 0
+            Layout.topMargin: 0
+            Layout.bottomMargin: 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
 
-                Rectangle {
-                    id: backgroundRect
-                    anchors.fill: parent
-                    color: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
+            delegate: motorItem
 
-                    RowLayout {
+            background: Rectangle {
+                color: "transparent"
+                border.width: 0
+                border.color: theme.controlBorderColor
+            }
+
+            Component.onCompleted: {
+                currentIndex = 0
+            }
+
+            Component {
+                id: motorItem
+                Item {
+                    id: itemWrapper
+                    width: motorsComboBox.width
+                    height: theme.controlHeight + 4
+
+                    Rectangle {
+                        id: backgroundRect
                         anchors.fill: parent
-                        anchors.margins: 2
+                        color: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
 
-                        CTextField {
-                            id: portName
-                            text: LinkType === 1 ? PortName : "some another port"
-                            Layout.fillWidth: true
-                            readOnly: true
-                            background: Rectangle {
-                                color: "transparent"
-                                border.width: 0
-                                border.color: theme.controlBorderColor
-                            }
-                        }
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 2
 
-                        CCombo {
-                            id: baudrateCombo
-                            implicitWidth: 150
-                            model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
-                            currentIndex: 7
-                            displayText: Baudrate
-                            visible: LinkType === 1
 
-                            onCurrentTextChanged: {
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            CTextField {
+                                id: portName
+                                text: LinkType === 1 ? PortName : "some another port"
+                                Layout.fillWidth: true
+                                readOnly: true
+                                background: Rectangle {
+                                    color: "transparent"
+                                    border.width: 0
+                                    border.color: theme.controlBorderColor
+                                }
                             }
 
-                            background: Rectangle {
-                                color: "transparent"
-                                border.width: 0
-                                border.color: theme.controlBorderColor
+                            CCombo {
+                                id: baudrateCombo
+                                implicitWidth: 150
+                                model: [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
+                                currentIndex: 7
+                                displayText: Baudrate
+                                visible: LinkType === 1
+
+                                onCurrentTextChanged: {
+                                    linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                }
+
+                                background: Rectangle {
+                                    color: "transparent"
+                                    border.width: 0
+                                    border.color: theme.controlBorderColor
+                                }
                             }
-                        }
 
-                        CButton {
-                            text: ConnectionStatus ? "Close" : "Open"
-                            backColor: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
-                            visible: LinkType === 1
+                            CButton {
+                                text: ConnectionStatus ? "Close" : "Open"
+                                backColor: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
+                                visible: LinkType === 1
 
-                            onClicked: {
-                                if (ConnectionStatus) {
-                                    linkManagerWrapper.closeLink(Uuid)
-                                } else {
-                                    linkManagerWrapper.openAsSerial(Uuid, true)
+                                onClicked: {
+                                    motorsComboBox.currentIndex = 0
+
+                                    if (ConnectionStatus) {
+                                        linkManagerWrapper.closeLink(Uuid)
+                                    }
+                                    else {
+                                        linkManagerWrapper.openAsSerial(Uuid, true)
+                                    }
                                 }
                             }
                         }
