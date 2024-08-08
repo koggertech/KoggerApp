@@ -498,10 +498,10 @@ void DeviceManager::runSteps(int id, int speed, int angle)
     }
 
     if (id == 0) {
-        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle);
+        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle, false); // false - need waiting for curr pos
     }
     if (id == 1) {
-        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle);
+        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle, false);
     }
 }
 

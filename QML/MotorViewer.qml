@@ -10,7 +10,7 @@ ColumnLayout {
 
     CTextField {
         id: portNames
-        text: "available serial ports:"
+        text: "motor control:"
         readOnly: true
         background: Rectangle {
             color: "transparent"
@@ -111,72 +111,45 @@ ColumnLayout {
 
         CText {
             Layout.fillWidth: true
+            text: "current angles: "
+        }
+
+        CText {
+            Layout.fillWidth: true
+            text: "f: " + deviceManagerWrapper.fAngle.toFixed(3) + "°"
+        }
+
+        CText {
+            Layout.fillWidth: true
+            text: "s: " + deviceManagerWrapper.sAngle.toFixed(3) + "°"
+        }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 10
+
+        CText {
+            Layout.fillWidth: true
             text: "return to zero:"
         }
 
-        CButton {
-            text: "first"
-            onClicked: {
-                deviceManagerWrapper.sendReturnToZero(0)
-            }
-        }
-
-        CButton {
-            text: "second"
-            onClicked: {
-                deviceManagerWrapper.sendReturnToZero(1)
-            }
-        }
-    }
-
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 10
-
-        CText {
+        ColumnLayout {
             Layout.fillWidth: true
-            text: "angle:"
-        }
 
-        RowLayout {
-            CText {
-                Layout.fillWidth: true
-
-                text: "first:"
-            }
-
-            SpinBoxCustom { // small
-                id: spinBox1
-                from: -179
-                to: 179
-                stepSize: 1
-                value: 25
-                Layout.fillWidth: true
-            }
             CButton {
-                text: "set"
+                text: "first"
+                implicitWidth: 80
                 onClicked: {
-                    deviceManagerWrapper.sendRunSteps(0, 1, spinBox1.value)
+                    deviceManagerWrapper.sendReturnToZero(0)
                 }
             }
-        }
-        RowLayout {
-            CText {
-                Layout.fillWidth: true
-                text: "second:"
-            }
-            SpinBoxCustom { // big
-                id: spinBox2
-                from: -49
-                to: 49
-                stepSize: 1
-                value: 25
-                Layout.fillWidth: true
-            }
+
             CButton {
-                text: "set"
+                text: "second"
+                implicitWidth: 80
                 onClicked: {
-                    deviceManagerWrapper.sendRunSteps(1, 1, spinBox2.value)
+                    deviceManagerWrapper.sendReturnToZero(1)
                 }
             }
         }
@@ -188,35 +161,82 @@ ColumnLayout {
 
         CText {
             Layout.fillWidth: true
-            text: "current f angle: " + deviceManagerWrapper.fAngle.toFixed(3) + "°"
+            text: "set angles (°):"
         }
 
-        CText {
-            Layout.fillWidth: true
-            text: "current s angle: " + deviceManagerWrapper.sAngle.toFixed(3) + "°"
+        ColumnLayout {
+            RowLayout {
+                spacing: 10
+
+                CText {
+                    text: "f:"
+                }
+
+                SpinBoxCustom { // small
+                    id: spinBox1
+                    from: -179
+                    to: 179
+                    stepSize: 1
+                    value: 15
+                }
+                CButton {
+                    text: "set"
+                    implicitWidth: 80
+                    onClicked: {
+                        deviceManagerWrapper.sendRunSteps(0, 1, spinBox1.value)
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: 10
+
+                CText {
+                    text: "s:"
+                }
+
+                SpinBoxCustom { // big
+                    id: spinBox2
+                    from: -49
+                    to: 49
+                    stepSize: 1
+                    value: 15
+                }
+                CButton {
+                    text: "set"
+                    implicitWidth: 80
+                    onClicked: {
+                        deviceManagerWrapper.sendRunSteps(1, 1, spinBox2.value)
+                    }
+                }
+            }
         }
     }
 
     RowLayout {
         Layout.fillWidth: true
         spacing: 10
+
+        CText {
+            Layout.fillWidth: true
+            text: "task file:"
+        }
 
         CTextField {
-            id: pathText
+            id: pathTextMotor
             hoverEnabled: true
             Layout.fillWidth: true
 
-            text: core.filePath
             placeholderText: qsTr("Enter path")
 
             Keys.onPressed: {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
-                    deviceManagerWrapper.sendOpenCsvFile(pathText.text);
+                    deviceManagerWrapper.sendOpenCsvFile(pathTextMotor.text);
                 }
             }
 
             Settings {
-                property alias pathText: pathText.text
+                property alias pathTextMotor: pathTextMotor.text
             }
         }
 
@@ -239,12 +259,11 @@ ColumnLayout {
                 nameFilters: ["CSV (*.csv)"]
 
                 onAccepted: {
-                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", "")
-
+                    pathTextMotor.text = newFileDialog.fileUrl.toString().replace("file:///", "")
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
-
-                    deviceManagerWrapper.sendOpenCsvFile(pathText.text);
+                    deviceManagerWrapper.sendOpenCsvFile(pathTextMotor.text);
                 }
+
                 onRejected: {
                 }
             }
@@ -271,25 +290,54 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 10
 
-        CText {
+        RowLayout {
             Layout.fillWidth: true
-            text: "cfa: " + deviceManagerWrapper.currFAngle.toFixed(3) + "°"
+            spacing: 10
+
+            CText {
+                Layout.fillWidth: true
+                text: "f:"
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                CText {
+                    Layout.fillWidth: true
+                    text: "task: " + deviceManagerWrapper.taskFAngle.toFixed(3) + "°"
+                }
+
+                CText {
+                    Layout.fillWidth: true
+                    text: "fact: " + deviceManagerWrapper.currFAngle.toFixed(3) + "°"
+                }
+            }
         }
 
-        CText {
+        RowLayout {
             Layout.fillWidth: true
-            text: "csa: " + deviceManagerWrapper.currSAngle.toFixed(3) + "°"
-        }
+            spacing: 10
 
-        CText {
-            Layout.fillWidth: true
-            text: "tfa: " + deviceManagerWrapper.taskFAngle.toFixed(3) + "°"
-        }
+            CText {
+                Layout.fillWidth: true
+                text: "s:"
+            }
 
-        CText {
-            Layout.fillWidth: true
-            text: "tsa: " + deviceManagerWrapper.taskSAngle.toFixed(3) + "°"
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 10
+
+                CText {
+                    Layout.fillWidth: true
+                    text: "task: " + deviceManagerWrapper.taskSAngle.toFixed(3) + "°"
+                }
+
+                CText {
+                    Layout.fillWidth: true
+                    text: "fact: " + deviceManagerWrapper.currSAngle.toFixed(3) + "°"
+                }
+            }
         }
     }
-
 }
