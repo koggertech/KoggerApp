@@ -76,10 +76,17 @@ void LinkManagerWrapper::openClosedLinks()
     emit sendOpenFLinks();
 }
 
+#ifdef MOTOR
+void LinkManagerWrapper::openAsSerial(QUuid uuid,  bool isMotorDevice)
+{
+    emit sendOpenAsSerial(uuid, isMotorDevice);
+}
+#else
 void LinkManagerWrapper::openAsSerial(QUuid uuid)
 {
     emit sendOpenAsSerial(uuid);
 }
+#endif
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {

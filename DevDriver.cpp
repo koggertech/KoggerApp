@@ -345,6 +345,11 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::askBeaconPosition(IDBinUsblSolution::AskBeacon ask) {
+    if(!m_state.connect) return;
+    idUSBL->askBeacon(ask);
+}
+
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }
@@ -895,6 +900,14 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 break;
             case BoardEcho20:
                 m_devName = "ECHO20";
+                break;
+
+            case BoardUSBL:
+                m_devName = "USBL";
+                break;
+
+            case BoardUSBLBeacon:
+                m_devName = "Beacon";
                 break;
             default:
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());

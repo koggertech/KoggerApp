@@ -27,7 +27,13 @@ public:
     void openClosedLinks();
 
 public slots:
+
+#ifdef MOTOR
+    void openAsSerial(QUuid uuid, bool isMotorDevice = false);
+#else
     void openAsSerial(QUuid uuid);
+#endif
+
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
@@ -42,7 +48,13 @@ public slots:
 
 signals:
     void modelChanged(); // Q_PROPERTY in .h
+
+#ifdef MOTOR
+    void sendOpenAsSerial(QUuid uuid, bool isMotorDevice = false);
+#else
     void sendOpenAsSerial(QUuid uuid);
+#endif
+
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);

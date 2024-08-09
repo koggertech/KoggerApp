@@ -356,6 +356,18 @@ bool Link::getIsForceStopped() const
     return isForcedStopped_;
 }
 
+#ifdef MOTOR
+void Link::setIsMotorDevice(bool isMotorDevice)
+{
+    isMotorDevice_ = isMotorDevice;
+}
+
+bool Link::getIsMotorDevice() const
+{
+    return isMotorDevice_;
+}
+#endif
+
 bool Link::writeFrame(FrameParser frame)
 {
     return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
@@ -421,6 +433,35 @@ void Link::toParser(const QByteArray data)
 
 void Link::readyRead()
 {
+
+#ifdef MOTOR
+    QIODevice* dev = device();
+    if (dev != nullptr) {
+
+        if (!isMotorDevice_) {
+            if (linkType_ == LinkType::LinkIPUDP) {
+                QUdpSocket* socsUpd = (QUdpSocket*)dev;
+                while (socsUpd->hasPendingDatagrams()) {
+                    QByteArray datagram;
+                    datagram.resize(socsUpd->pendingDatagramSize());
+                    QHostAddress sender;
+                    quint16 senderPort;
+                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                    if (slen == -1) {
+                        break;
+                    }
+                    toParser(datagram);
+                }
+            }
+            else {
+                toParser(dev->readAll());
+            }
+        }
+        else {
+            emit dataReady(dev->readAll());
+        }
+    }
+#else
     QIODevice* dev = device();
     if (dev != nullptr) {
         if (linkType_ == LinkType::LinkIPUDP) {
@@ -441,6 +482,8 @@ void Link::readyRead()
             toParser(dev->readAll());
         }
     }
+#endif
+
 }
 
 void Link::aboutToClose()

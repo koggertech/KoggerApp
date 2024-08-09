@@ -639,7 +639,7 @@ public:
         return true;
     }
 
-    void moveComplexToEchogram(float offset_m);
+    void moveComplexToEchogram(float offset_m, float levels_offset_db);
 
 
 protected:

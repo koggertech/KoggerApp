@@ -906,4 +906,13 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     return respOk;
 }
 
+void IDBinUsblSolution::askBeacon(AskBeacon ask) {
+    ProtoBinOut req_out;
+    req_out.create(GETTING, Version::v0, id(), m_address);
+    req_out.write<AskBeacon>(ask);
+    req_out.end();
+
+    emit binFrameOut(req_out);
+}
+
 

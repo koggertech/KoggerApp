@@ -4,6 +4,7 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
+CONFIG += MOTOR # motor_control definition
 
 !android {
     QT += serialport
@@ -258,4 +259,11 @@ ANDROID_ABIS = armeabi-v7a
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
     include($$OPENSSL_PATH)
+}
+
+MOTOR {
+DEFINES += MOTOR
+HEADERS += motor_control.h
+SOURCES += motor_control.cpp
+DISTFILES += QML/MotorViewer.qml
 }

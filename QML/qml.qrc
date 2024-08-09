@@ -91,5 +91,6 @@
         <file>MenuFrame.qml</file>
         <file>CheckButton.qml</file>
         <file>MouseOpacityArea.qml</file>
+        <file>MotorViewer.qml</file>
     </qresource>
 </RCC>

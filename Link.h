@@ -74,6 +74,12 @@ public:
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
 
+#ifdef MOTOR
+    void        setIsMotorDevice(bool isMotorDevice);
+    bool        getIsMotorDevice() const;
+#endif
+
+
 public slots:
     bool writeFrame(FrameParser frame);
     bool write(QByteArray data);
@@ -84,7 +90,12 @@ signals:
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
+
+#ifdef MOTOR
+    void dataReady(QByteArray data);
+#else
     void dataReady();
+#endif
 
 private:
     /*methods*/
@@ -112,6 +123,10 @@ private:
     bool isNotAvailable_;
     bool isProxy_;
     bool isForcedStopped_;
+
+#ifdef MOTOR
+    bool isMotorDevice_ = false;
+#endif
 
 private slots:
     void readyRead();
