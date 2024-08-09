@@ -11,7 +11,8 @@ HEADERS += \
     $$PWD/qmlcomponentcontroller.h \
     $$PWD/scene3dcontrolmenucontroller.h \
     $$PWD/scene3dtoolbarcontroller.h \
-    $$PWD/surfacecontrolmenucontroller.h
+    $$PWD/surfacecontrolmenucontroller.h \
+    $$PWD/mosaic_view_control_menu_controller.h
 
 
 SOURCES += \
@@ -24,4 +25,5 @@ SOURCES += \
     $$PWD/qmlcomponentcontroller.cpp \
     $$PWD/scene3dcontrolmenucontroller.cpp \
     $$PWD/scene3dtoolbarcontroller.cpp \
-    $$PWD/surfacecontrolmenucontroller.cpp
+    $$PWD/surfacecontrolmenucontroller.cpp \
+    $$PWD/mosaic_view_control_menu_controller.cpp

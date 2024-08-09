@@ -21,6 +21,8 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer()
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["texture"]    = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
+
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -56,6 +58,14 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding fragment shader from source file.";
     if (!m_shaderProgramMap["height"]->link())
         qCritical() << "Error linking shaders in shader program.";
+
+    // mosaic
+    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mosaic_view.vsh"))
+        qCritical() << "Error adding mosaic vertex shader from source file.";
+    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/mosaic_view.fsh"))
+        qCritical() << "Error adding mosaic fragment shader from source file.";
+    if (!m_shaderProgramMap["mosaic"]->link())
+        qCritical() << "Error linking mosaic shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()
@@ -85,10 +95,11 @@ void GraphicsScene3dRenderer::drawObjects()
     m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+    mosaicViewRenderImpl_.render(this,       m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_projection * view * m_model, m_shaderProgramMap);
-    m_navigationArrowRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------
