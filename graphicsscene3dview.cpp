@@ -513,6 +513,15 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     if(!view)
         return;
 
+    //read from renderer
+    view->m_model = m_renderer->m_model;
+    view->m_projection = m_renderer->m_projection;
+    if (auto mosaicViewRenderImpl = dynamic_cast<MosaicView::MosaicViewRenderImplementation*>(view->mosaicView_->m_renderImpl); mosaicViewRenderImpl) {
+        mosaicViewRenderImpl->setTexture(m_renderer->mosaicViewRenderImpl_.getTexturePtr());
+        //mosaicViewRenderImpl->textureImage_ = m_renderer->mosaicViewRenderImpl_.textureImage_;
+        mosaicViewRenderImpl->setNeedsTextureInit(m_renderer->mosaicViewRenderImpl_.getNeedsTextureInit());
+    }
+
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
@@ -530,10 +539,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_verticalScale             = view->m_verticalScale;
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
-
-    //read from renderer
-    view->m_model = m_renderer->m_model;
-    view->m_projection = m_renderer->m_projection;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)

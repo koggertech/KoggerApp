@@ -11,7 +11,7 @@ MosaicView::MosaicView(QObject* parent) :
 
 {
     QObject::connect(grid_.get(), &SurfaceGrid::changed, [this](){
-        RENDER_IMPL(MosaicView)->m_gridRenderImpl = *grid_->m_renderImpl;
+        RENDER_IMPL(MosaicView)->gridRenderImpl_ = *grid_->m_renderImpl;
         Q_EMIT changed();
     });
 }
@@ -40,12 +40,76 @@ void MosaicView::clearData()
     SceneObject::clearData();
 }
 
+MosaicView::MosaicViewRenderImplementation::MosaicViewRenderImplementation()
+{
+    QOpenGLContext* currentContext = QOpenGLContext::currentContext();
+
+    //qDebug() << "        currentContext->isValid(): " <<         currentContext->isValid();
+
+    if (!currentContext) {
+        qDebug() << "NOT CURR CONT";
+    }
+    else {
+        auto generateTexture = [](int width, int height) -> QImage {
+            qDebug() << "generateTexture";
+
+
+            Q_UNUSED(width);
+            Q_UNUSED(height);
+            QString imagePath = "C:/Users/salty/Desktop/Lenna.png";
+            QImage image;
+            if (!image.load(imagePath)) {
+                qWarning("Не удалось загрузить изображение!");
+            }
+            return image;
+
+            /*
+        QImage texture(width, height, QImage::Format_RGB32);
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int r = rand() % 256;
+                int g = rand() % 256;
+                int b = rand() % 256;
+                texture.setPixel(x, y, qRgb(r, g, b));
+            }
+        }
+        return texture;
+        */
+        };
+
+
+        auto textureImage = generateTexture(100, 100);
+
+        setTextureImage(textureImage);
+
+
+        initializeTexture();
+
+    }
+}
+
 void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     if (!m_isVisible)
         return;
 
-    m_gridRenderImpl.render(ctx, mvp, shaderProgramMap);
+    gridRenderImpl_.render(ctx, mvp, shaderProgramMap);
+
+
+
+
+
+/*
+    qDebug() << "111 needsTextureInitialization_: " << needsTextureInitialization_ << ", textureImage_.isNull(): " << textureImage_.isNull() << ", textureInitialized_: " << textureInitialized_;
+
+    if (needsTextureInitialization_ && !textureImage_.isNull() && !textureInitialized_) {
+        qDebug() << "Initializing texture in render method.";
+        const_cast<MosaicViewRenderImplementation*>(this)->initializeTexture();
+    }
+
+    qDebug() << "222 needsTextureInitialization_: " << needsTextureInitialization_ << ", textureImage_.isNull(): " << textureImage_.isNull() << ", textureInitialized_: " << textureInitialized_;
+*/
+
 
 
     auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
@@ -58,12 +122,23 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
 
     shaderProgram->setUniformValue("mvp", mvp);
     int posLoc = shaderProgram->attributeLocation("position");
+    int texCoordLoc = shaderProgram->attributeLocation("texCoord");
+
     shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->enableAttributeArray(texCoordLoc);
+
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
+    shaderProgram->setAttributeArray(texCoordLoc, texCoords_.constData());
+
+    if (!needsTextureInit_) {
+        texture_->bind();
+    }
 
     ctx->glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, indices_.constData());
 
     shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->disableAttributeArray(texCoordLoc);
+
     shaderProgram->release();
 }
 
@@ -72,33 +147,60 @@ void MosaicView::MosaicViewRenderImplementation::setIndices(QVector<int>& indice
     indices_ = indices;
 }
 
+void MosaicView::MosaicViewRenderImplementation::setTexCoords(const QVector<QVector2D>& texCoords)
+{
+    texCoords_ = texCoords;
+}
+
+void MosaicView::MosaicViewRenderImplementation::setNeedsTextureInit(bool state)
+{
+    needsTextureInit_ = state;
+}
+
 QVector<int>& MosaicView::MosaicViewRenderImplementation::getIndicesPtr()
 {
     return indices_;
 }
 
-
-void MosaicView::MosaicViewRenderImplementation::setTexture(const QImage& texture)
+QOpenGLTexture* MosaicView::MosaicViewRenderImplementation::getTexturePtr()
 {
-    qDebug() << "setTexture";
+    return texture_;
+}
 
+QImage MosaicView::MosaicViewRenderImplementation::getTextureImagePtr()
+{
+    return textureImage_;
+}
+
+bool MosaicView::MosaicViewRenderImplementation::getNeedsTextureInit()
+{
+    return needsTextureInit_;
+}
+
+void MosaicView::MosaicViewRenderImplementation::setTexture(QOpenGLTexture* texturePtr)
+{
+    texture_ = texturePtr;
+}
+
+void MosaicView::MosaicViewRenderImplementation::setTextureImage(QImage texture)
+{
     textureImage_ = texture;
-
-    initializeTexture();
+    needsTextureInit_ = true;
 }
 
 void MosaicView::MosaicViewRenderImplementation::initializeTexture()
 {
-    qDebug() << "initializeTexture";
+    qDebug() << "MosaicView::MosaicViewRenderImplementation::initializeTexture()";
 
-    QOpenGLContext *currentContext = QOpenGLContext::currentContext();
+    QOpenGLContext* currentContext = QOpenGLContext::currentContext();
 
     if (!currentContext) {
-        qWarning() << "cannot initialize texture without a valid OpenGL context.";
+        qWarning() << "Cannot initialize texture without a valid OpenGL context.";
         return;
     }
 
     if (textureImage_.isNull()) {
+        qWarning() << "Texture image is null.";
         return;
     }
 
@@ -107,11 +209,18 @@ void MosaicView::MosaicViewRenderImplementation::initializeTexture()
     }
 
     texture_ = new QOpenGLTexture(textureImage_.mirrored());
-    texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    texture_->setMagnificationFilter(QOpenGLTexture::Linear);
-    texture_->setWrapMode(QOpenGLTexture::Repeat);
+    if (texture_->isCreated()) {
+        qDebug() << "Texture successfully created.";
+        texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+        texture_->setMagnificationFilter(QOpenGLTexture::Linear);
+        texture_->setWrapMode(QOpenGLTexture::Repeat);
 
-    textureInitialized_ = true;
+        needsTextureInit_ = false;
+    }
+    else {
+        qWarning() << "Failed to create texture.";
+        needsTextureInit_ = true;
+    }
 }
 
 void MosaicView::updateData()
@@ -119,25 +228,16 @@ void MosaicView::updateData()
     grid_->clearData();
 
     generateRandomVertices(width_, height_, cellSize_);
+    RENDER_IMPL(MosaicView)->setTextureImage(generateImage(100, 100));
 
-    // grid
     updateGrid();
-
     emit changed();
 }
 
-void MosaicView::setTexture(const QImage& texture)
-{
-    RENDER_IMPL(MosaicView)->setTexture(texture);
-}
 
 void MosaicView::generateRandomVertices(int width, int height, float cellSize)
 {
-    auto perlin = [](float x, float y) {
-        return (sin(x) + cos(y)) / 2.0f;
-    };
-
-    auto perlinNoise = [perlin](float x, float y, int octaves, float scale, float persistence, float lacunarity) {
+    auto perlinNoise = [](float x, float y, int octaves, float scale, float persistence, float lacunarity) {
         float amplitude = 1.0f;
         float frequency = 1.0f;
         float noiseHeight = 0.0f;
@@ -146,7 +246,7 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
             float sampleX = x * frequency * scale;
             float sampleY = y * frequency * scale;
 
-            float perlinValue = perlin(sampleX, sampleY);
+            float perlinValue = (sin(sampleX) + cos(sampleY)) / 2.0f;
             noiseHeight += perlinValue * amplitude;
 
             amplitude *= persistence;
@@ -157,6 +257,7 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
     };
 
     QVector<QVector3D> vertices;
+    QVector<QVector2D> texCoords;
     QVector<int> indices;
 
     for (int i = 0; i < height; ++i) {
@@ -165,6 +266,7 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
             float y = i * cellSize;
             float z = perlinNoise(x, y, 6, 0.1f, 0.5f, 2.0f) * 30.0f + (dis_(gen_));
             vertices.append(QVector3D(x, y, z));
+            texCoords.append(QVector2D(float(j) / width, float(i) / height));
         }
     }
 
@@ -186,8 +288,38 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
     }
 
     RENDER_IMPL(MosaicView)->setData(vertices);
+    RENDER_IMPL(MosaicView)->setTexCoords(texCoords);
     RENDER_IMPL(MosaicView)->setIndices(indices);
 }
+
+
+QImage MosaicView::generateImage(int width, int height)
+{
+    qDebug() << "generateImage";
+
+/*
+         Q_UNUSED(width);
+         Q_UNUSED(height);
+         QString imagePath = "C:/Users/salty/Desktop/Lenna.png";
+         QImage image;
+         if (!image.load(imagePath)) {
+             qWarning("Не удалось загрузить изображение!");
+         }
+         return image;
+*/
+
+    QImage texture(width, height, QImage::Format_RGB32);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int r = rand() % 256;
+            int g = rand() % 256;
+            int b = rand() % 256;
+            texture.setPixel(x, y, qRgb(r, g, b));
+        }
+    }
+
+    return texture;
+};
 
 void MosaicView::updateGrid()
 {
@@ -221,13 +353,14 @@ void MosaicView::makeQuadGrid()
         D.setZ(D.z() + 0.02);
 
         grid.append({ A, B, //
-                      B, D,
-                      A, C,
-                      C, D });
+                     B, D,
+                     A, C,
+                     C, D });
     }
 
+    grid_->setColor(QColor(0, 255, 0));
     grid_->setWidth(1);
     grid_->setData(grid, GL_LINES);
 
-    impl->m_gridRenderImpl = *grid_->m_renderImpl;
+    impl->gridRenderImpl_ = *grid_->m_renderImpl;
 }

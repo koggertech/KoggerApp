@@ -21,24 +21,32 @@ public:
     class MosaicViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
+        MosaicViewRenderImplementation();
         virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
+        void setTexture(QOpenGLTexture* texturePtr);
+        void setTextureImage(QImage texture);
         void setIndices(QVector<int>& indices);
+        void setNeedsTextureInit(bool state);
+        void setTexCoords(const QVector<QVector2D>& texCoords);
+        QOpenGLTexture* getTexturePtr();
+        QImage getTextureImagePtr();
         QVector<int>& getIndicesPtr();
-        void setTexture(const QImage& texture);
+        bool getNeedsTextureInit();
 
     private:
         friend class MosaicView;
 
         void initializeTexture();
 
-        QOpenGLTexture* texture_;
-        QImage textureImage_;
-        bool textureInitialized_ = false;
+        SceneObject::RenderImplementation gridRenderImpl_;
         QVector<int> indices_;
-        //QVector<QVector2D> texCoords_;
-        SceneObject::RenderImplementation m_gridRenderImpl;
+        QVector<QVector2D> texCoords_;
+        QOpenGLTexture* texture_ = nullptr;
+        QImage textureImage_;
+        bool needsTextureInit_ = false;
     };
+
 
     explicit MosaicView(QObject* parent = nullptr);
     virtual ~MosaicView();
@@ -51,7 +59,7 @@ public:
     void updateData();
 
 private:
-    void setTexture(const QImage& texture);
+    QImage generateImage(int width, int height);
     void generateRandomVertices(int width, int height, float cellSize);
     void updateGrid();
     void makeQuadGrid();
@@ -64,5 +72,4 @@ private:
     const int width_ = 100;
     const int height_ = 100;
     const float cellSize_ = 1.0f;
-
 };

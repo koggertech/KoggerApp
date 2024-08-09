@@ -66,37 +66,6 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding mosaic fragment shader from source file.";
     if (!m_shaderProgramMap["mosaic"]->link())
         qCritical() << "Error linking mosaic shaders in shader program.";
-
-
-    //mosaicViewRenderImpl_.generateRandomVertices(1000,)
-
-
-
-    auto generateTexture = [](int width, int height) -> QImage  {
-
-        qDebug() << "generateTexture";
-
-        QImage texture(width, height, QImage::Format_RGB32);
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                int r = rand() % 256;
-                int g = rand() % 256;
-                int b = rand() % 256;
-                texture.setPixel(x, y, qRgb(r, g, b));
-            }
-        }
-        return texture;
-
-    };
-
-    auto texture = generateTexture(1000,1000);
-
-
-    //mosaicViewRenderImpl_.setTexture(texture);
-    //mosaicViewRenderImpl_.generateRandomVertices(100,100,1.0f);
-
-
-    //generateRandomVertices(100, 100, 1.0f);
 }
 
 void GraphicsScene3dRenderer::render()
