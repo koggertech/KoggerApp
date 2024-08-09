@@ -90,6 +90,7 @@ private slots:
     MKS_Status readData(QByteArray data);
     void onTimerEnd();
     void onMovementTimerEnd();
+    void onWaitingTimerEnd();
 
 signals:
     void commandSended(const QByteArray& data);
@@ -162,8 +163,10 @@ private:
     QQueue<QueueItem> taskQueue_;
     QTimer elapsedTimer_;
     QTimer movementTimer_;
+    QTimer waitingTimer_;
     float taskFAngle_ = 0.0f;
     float taskSAngle_ = 0.0f;
+    float lastTaskPause_ = 0.0f;
     int32_t fPos_ = 0;
     int32_t sPos_ = 0;
     uint8_t fAddr_ = 0x01;

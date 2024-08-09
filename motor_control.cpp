@@ -14,6 +14,7 @@ MotorControl::MotorControl(QObject* parent, Link* linkPtr) :
     elapsedTimer_.start();
 
     QObject::connect(&movementTimer_, &QTimer::timeout, this, &MotorControl::onMovementTimerEnd);
+    QObject::connect(&waitingTimer_, &QTimer::timeout, this, &MotorControl::onWaitingTimerEnd);
 }
 
 MotorControl::~MotorControl()
@@ -154,7 +155,7 @@ MKS_Status MotorControl::readData(QByteArray data)
 
 void MotorControl::onTimerEnd()
 {
-    if (!taskQueue_.isEmpty() && !isMovementTimer_ && (isConstantFPos_ && isConstantSPos_)) {
+    if (!taskQueue_.isEmpty() && !isMovementTimer_ && (isConstantFPos_ && isConstantSPos_) && !waitingTimer_.isActive()) {
         auto task = taskQueue_.dequeue();
 
         // calc max pause time
@@ -164,17 +165,23 @@ void MotorControl::onTimerEnd()
         float deltaSAngle =  PosToAngle(deltaSPos);
         float needFSecs = (std::fabs(deltaFAngle) / circDeg_) * fullRotSec_;
         float needSSecs = (std::fabs(deltaSAngle) / circDeg_) * fullRotSec_;
-        float maxSecVal = std::max(std::max(std::max(needFSecs, needSSecs), task.pause_), 1.0f);
+        float maxSecVal = std::max(std::max(needFSecs, needSSecs), 1.0f);
+
+        lastTaskPause_ = task.pause_;
+
         isMovementTimer_ = true;
         movementTimer_.setInterval(maxSecVal * 1000.f);
         movementTimer_.start();
 
         wasTask_ = true;
 
+        qDebug() << "start task";
+
         runSteps(fAddr_, 1, task.fAngle_, true, false);
         runSteps(sAddr_, 1, task.sAngle_, true, false);
     }
     else if (!isMovementTimer_) {
+        //qDebug() << "checking pos!!!!, waiting timer: " << waitingTimer_.isActive();
         if (isFirst_) {
            motorPosition(fAddr_,nullptr,nullptr);
         }
@@ -192,12 +199,26 @@ void MotorControl::onMovementTimerEnd()
     movementTimer_.stop();
     isMovementTimer_ = false;
 
+    qDebug() << "movement finished";
+
     if (wasTask_) {
         wasTask_= false;
 
-        motorPosition(fAddr_, NULL, NULL);
-        motorPosition(sAddr_, NULL, NULL);
+        qDebug() << "start waiting: " << lastTaskPause_;
+
+        waitingTimer_.setInterval(lastTaskPause_ * 1000.0f);
+        waitingTimer_.start();
+
+        motorPosition(fAddr_, nullptr, nullptr);
+        motorPosition(sAddr_, nullptr, nullptr);
+
+        lastTaskPause_ = 0.0f;
     }
+}
+
+void MotorControl::onWaitingTimerEnd()
+{
+    waitingTimer_.stop();
 }
 
 uint8_t MotorControl::calculateCrc(uint8_t* data, uint8_t length)
@@ -445,6 +466,8 @@ MKS_Status MotorControl::motorPosition(uint8_t addr, int32_t* value, float* angl
 
 MKS_Status MotorControl::motorPositionResponseCheck(const QByteArray& data)
 {
+    //qDebug() << "MotorControl::motorPositionResponseCheck";
+
     MKS_Status retVal = MKS_Status::MKS_OK;
 
     if (respStruct_.type_ != ResponseType::kMotorPosition || data.size() != sizeof(struct_encAnswerMotorPos)) {
