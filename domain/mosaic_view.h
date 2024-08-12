@@ -21,30 +21,25 @@ public:
     class MosaicViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
-        MosaicViewRenderImplementation();
         virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
         void setTexture(QOpenGLTexture* texturePtr);
         void setTextureImage(QImage texture);
         void setIndices(QVector<int>& indices);
-        void setNeedsTextureInit(bool state);
         void setTexCoords(const QVector<QVector2D>& texCoords);
         QOpenGLTexture* getTexturePtr();
         QImage getTextureImagePtr();
         QVector<int>& getIndicesPtr();
-        bool getNeedsTextureInit();
+        void initializeTexture();
 
     private:
         friend class MosaicView;
-
-        void initializeTexture();
 
         SceneObject::RenderImplementation gridRenderImpl_;
         QVector<int> indices_;
         QVector<QVector2D> texCoords_;
         QOpenGLTexture* texture_ = nullptr;
         QImage textureImage_;
-        bool needsTextureInit_ = false;
     };
 
 
@@ -69,7 +64,7 @@ private:
     std::mt19937 gen_;
     std::uniform_real_distribution<> dis_;
     std::shared_ptr <SurfaceGrid> grid_;
-    const int width_ = 100;
-    const int height_ = 100;
-    const float cellSize_ = 1.0f;
+    const int width_ = 25;
+    const int height_ = 25;
+    const float cellSize_ = 7.0f;
 };

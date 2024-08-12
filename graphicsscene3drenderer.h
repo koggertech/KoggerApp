@@ -76,6 +76,7 @@ private:
     Cube m_boundingBox;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
+    bool needToRefresh_ = false;
     GLuint VAO, VBO;
 };
 

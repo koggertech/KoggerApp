@@ -458,6 +458,16 @@ void GraphicsScene3dView::setQmlEngine(QObject* engine)
     engine_ = engine;
 }
 
+void GraphicsScene3dView::setNeedToRefresh(bool state)
+{
+    needToRefresh_ = state;
+}
+
+bool GraphicsScene3dView::getNeedToRefresh() const
+{
+    return needToRefresh_;
+}
+
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
@@ -518,8 +528,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     view->m_projection = m_renderer->m_projection;
     if (auto mosaicViewRenderImpl = dynamic_cast<MosaicView::MosaicViewRenderImplementation*>(view->mosaicView_->m_renderImpl); mosaicViewRenderImpl) {
         mosaicViewRenderImpl->setTexture(m_renderer->mosaicViewRenderImpl_.getTexturePtr());
-        //mosaicViewRenderImpl->textureImage_ = m_renderer->mosaicViewRenderImpl_.textureImage_;
-        mosaicViewRenderImpl->setNeedsTextureInit(m_renderer->mosaicViewRenderImpl_.getNeedsTextureInit());
     }
 
     // write to renderer
@@ -539,6 +547,11 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_verticalScale             = view->m_verticalScale;
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
+
+    m_renderer->needToRefresh_ = view->needToRefresh_;
+    if (view->needToRefresh_) {
+        view->needToRefresh_ = false;
+    }
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
