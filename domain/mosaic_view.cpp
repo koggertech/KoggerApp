@@ -142,7 +142,7 @@ void MosaicView::updateData()
     grid_->clearData();
 
     generateRandomVertices(width_, height_, cellSize_);
-    RENDER_IMPL(MosaicView)->setTextureImage(generateImage(100, 100));
+    RENDER_IMPL(MosaicView)->setTextureImage(generateImage(1000, 1000));
 
     updateGrid();
     emit changed();
@@ -209,8 +209,6 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
 
 QImage MosaicView::generateImage(int width, int height)
 {
-    qDebug() << "generateImage";
-
 /*
          Q_UNUSED(width);
          Q_UNUSED(height);

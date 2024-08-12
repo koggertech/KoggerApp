@@ -167,8 +167,8 @@ public Q_SLOTS:
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlEngine(QObject* engine);
-    void setNeedToRefresh(bool state);
-    bool getNeedToRefresh() const;
+    void setNeedToRefreshMosaicTexture(bool state);
+    bool getNeedToRefreshMosaicTexture() const;
 
 private:
     void updateBounds();
@@ -214,7 +214,7 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
-    bool needToRefresh_ = false;
+    bool needToRefreshMosaicTexture_ = false;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

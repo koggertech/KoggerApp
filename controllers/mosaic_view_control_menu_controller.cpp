@@ -43,7 +43,7 @@ void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
     }
 
     m_graphicsSceneView->getMosaicViewPtr()->updateData();
-    m_graphicsSceneView->setNeedToRefresh(true);
+    m_graphicsSceneView->setNeedToRefreshMosaicTexture(true);
 }
 
 MosaicView *MosaicViewControlMenuController::getMosaicViewPtr() const

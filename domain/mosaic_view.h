@@ -42,7 +42,6 @@ public:
         QImage textureImage_;
     };
 
-
     explicit MosaicView(QObject* parent = nullptr);
     virtual ~MosaicView();
 

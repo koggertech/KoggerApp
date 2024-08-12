@@ -29,8 +29,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false)
 {
-    //qDebug() << "LLL: " << this;
-
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -129,6 +127,7 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
+    mosaicView_->clearData();
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
@@ -458,14 +457,14 @@ void GraphicsScene3dView::setQmlEngine(QObject* engine)
     engine_ = engine;
 }
 
-void GraphicsScene3dView::setNeedToRefresh(bool state)
+void GraphicsScene3dView::setNeedToRefreshMosaicTexture(bool state)
 {
-    needToRefresh_ = state;
+    needToRefreshMosaicTexture_ = state;
 }
 
-bool GraphicsScene3dView::getNeedToRefresh() const
+bool GraphicsScene3dView::getNeedToRefreshMosaicTexture() const
 {
-    return needToRefresh_;
+    return needToRefreshMosaicTexture_;
 }
 
 void GraphicsScene3dView::updateBounds()
@@ -548,9 +547,9 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
 
-    m_renderer->needToRefresh_ = view->needToRefresh_;
-    if (view->needToRefresh_) {
-        view->needToRefresh_ = false;
+    m_renderer->needToRefreshMosaicTexture_ = view->needToRefreshMosaicTexture_;
+    if (view->needToRefreshMosaicTexture_) {
+        view->needToRefreshMosaicTexture_ = false;
     }
 }
 
