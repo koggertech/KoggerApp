@@ -138,6 +138,16 @@ public:
         return ver == BoardDVL;
     }
 
+    bool isUSBLBeacon() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardUSBLBeacon;
+    }
+
+    bool isUSBL() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardUSBL;
+    }
+
     bool isChartSupport() { return m_state.duplex && isSonar(); }
     bool isDistSupport() { return m_state.duplex && isSonar(); }
     bool isDSPSupport() { return m_state.duplex && isSonar(); }
@@ -215,7 +225,12 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
 
+    void askBeaconPosition() {
+        IDBinUsblSolution::AskBeacon ask;
+        askBeaconPosition(ask);
+    }
     void askBeaconPosition(IDBinUsblSolution::AskBeacon ask);
+    void enableBeaconOnce(float timeout);
 
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);

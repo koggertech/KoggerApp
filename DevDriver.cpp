@@ -350,6 +350,11 @@ void DevDriver::askBeaconPosition(IDBinUsblSolution::AskBeacon ask) {
     idUSBL->askBeacon(ask);
 }
 
+void DevDriver::enableBeaconOnce(float timeout) {
+    if(!m_state.connect) return;
+    idUSBL->enableBeaconOnce(timeout);
+}
+
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();
 }

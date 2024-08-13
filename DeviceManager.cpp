@@ -563,6 +563,7 @@ void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float
         usbl_devs[0]->askBeaconPosition(ask);
     }
 
+    emit encoderComplete(currFAngle, currSAngle, NAN);
     emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
 }
 #endif

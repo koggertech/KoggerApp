@@ -924,6 +924,7 @@ public:
     }
 
     void askBeacon(AskBeacon ask);
+    void enableBeaconOnce(float timeout);
 
 protected:
     UsblSolution _usblSolution;

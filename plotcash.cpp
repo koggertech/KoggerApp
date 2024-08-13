@@ -17,13 +17,6 @@ void Epoch::setEvent(int timestamp, int id, int unixt) {
     flags.eventAvail = true;
 }
 
-void Epoch::setEncoder(float encoder) {
-    _encoder.validMask |= 1;
-    _encoder.e1 = encoder;
-    flags.encoderAvail = true;
-}
-
-
 void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, int offset) {
     _charts[channel].amplitude = data;
     _charts[channel].resolution = resolution;
@@ -111,14 +104,10 @@ void Epoch::setTemp(float temp_c) {
     flags.tempAvail = true;
 }
 
-void Epoch::setEncoders(int16_t enc1, int16_t enc2, int16_t enc3, int16_t enc4, int16_t enc5, int16_t enc6) {
+void Epoch::setEncoders(float enc1, float enc2, float enc3) {
     _encoder.e1 = enc1;
     _encoder.e2 = enc2;
     _encoder.e3 = enc3;
-    _encoder.e4 = enc4;
-    _encoder.e5 = enc5;
-    _encoder.e6 = enc6;
-    _encoder.validMask = (uint16_t)0x111111;
 }
 
 void Epoch::setAtt(float yaw, float pitch, float roll) {
@@ -232,13 +221,13 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
     emit dataUpdate();
 }
 
-void Dataset::addEncoder(float encoder) {
-    _lastEncoder = encoder;
-    if(endIndex() < 0) {
-        addNewEpoch();
+void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg) {
+    Epoch* last_epoch = last();
+    if(last_epoch->isEncodersSeted()) {
+        last_epoch = addNewEpoch();
     }
-    //    poolAppend();
-    _pool[endIndex()].setEncoder(_lastEncoder);
+
+    last_epoch->setEncoders(angle1_deg, angle2_deg, angle3_deg);
     emit dataUpdate();
 }
 

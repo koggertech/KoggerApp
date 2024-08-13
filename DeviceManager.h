@@ -89,6 +89,7 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
+    void encoderComplete(float e1, float e2, float e3);
 
 #ifdef MOTOR
     void motorDeviceChanged();

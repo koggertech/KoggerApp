@@ -92,5 +92,6 @@
         <file>CheckButton.qml</file>
         <file>MouseOpacityArea.qml</file>
         <file>MotorViewer.qml</file>
+        <file>USBLBox.qml</file>
     </qresource>
 </RCC>

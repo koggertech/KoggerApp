@@ -319,7 +319,6 @@ public:
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
-    void setEncoder(float encoder);
     void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, int offset);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
@@ -343,8 +342,10 @@ public:
     void setTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0);
 
     void setTemp(float temp_c);
-    void setEncoders(int16_t enc1, int16_t enc2 = 0xFFFF, int16_t enc3 = 0xFFFF, int16_t = 0xFFFF, int16_t = 0xFFFF, int16_t enc6 = 0xFFFF);
     void setAtt(float yaw, float pitch, float roll);
+
+    void setEncoders(float enc1, float enc2, float enc3);
+    bool isEncodersSeted() { return _encoder.isSeted();}
 
     void setDistProcessing(int16_t channel, float dist) {
         if(_charts.contains(channel)) {
@@ -681,13 +682,12 @@ protected:
     float m_temp_c = 0;
 
     struct {
-        uint16_t validMask = 0;
-        int16_t e1 = 0;
-        int16_t e2 = 0;
-        int16_t e3 = 0;
-        int16_t e4 = 0;
-        int16_t e5 = 0;
-        int16_t e6 = 0;
+        float e1 = NAN;
+        float e2 = NAN;
+        float e3 = NAN;
+        bool isSeted() {
+            return isfinite(e1) || isfinite(e2) || isfinite(e3);
+        }
     } _encoder;
 
     struct {
@@ -779,7 +779,7 @@ public:
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
-    void addEncoder(float encoder);
+    void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
     void addTimestamp(int timestamp);
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
@@ -859,13 +859,9 @@ protected:
 
     LLARef _llaRef;
 
-
     QVector<QVector3D> _boatTrack;
     QVector<QVector3D> _beaconTrack;
     QVector<QVector3D> _beaconTrack1;
-
-
-//    FboInSGRenderer* _render3D;
 
     enum {
         AutoRangeNone,
@@ -882,12 +878,8 @@ protected:
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
     Position _lastPositionGNSS;
 
-
     Epoch* addNewEpoch() {
-        //mutex_.lock();
         _pool.resize(_pool.size() + 1);
-
-        //mutex_.unlock();
         return last();
     }
 

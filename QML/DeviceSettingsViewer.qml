@@ -64,6 +64,16 @@ MenuScroll {
         }
 
         MenuFrame {
+            visible: usblBox.isActive
+            USBLBox {
+                id: usblBox
+                visible: isActive
+                dev: devConnection.dev
+                width: menuWidth
+            }
+        }
+
+        MenuFrame {
             visible: recorderBox.isActive
             RecorderBox {
                 id: recorderBox
