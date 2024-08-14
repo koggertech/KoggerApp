@@ -49,7 +49,13 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
 
         // point
         bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false;
+
+#ifndef Q_OS_ANDROID
         ctx->glEnable(GL_PROGRAM_POINT_SIZE);
+#else
+        ctx->glEnable(34370);
+#endif
+
         shaderProgram->setUniformValue(isPointLoc, !isUsbl);
         QVector<QVector3D> point{ itm.data_.last() };
         // color point
@@ -62,7 +68,12 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ + 3.0f);
         shaderProgram->setAttributeArray(posLoc, point.constData());
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
+
+#ifndef Q_OS_ANDROID
         ctx->glDisable(GL_PROGRAM_POINT_SIZE);
+#else
+        ctx->glDisable(34370);
+#endif
 
         // line
         if (itm.isTrackVisible_) {
@@ -184,7 +195,7 @@ void UsblView::setTrackRef(QMap<int, UsblObjectParams>& tracks)
     }
 }
 
-void UsblView::clearData()
+void UsblView::clearTracks()
 {
     tracks_.clear();
     RENDER_IMPL(UsblView)->tracks_.clear();

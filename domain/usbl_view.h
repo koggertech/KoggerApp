@@ -56,7 +56,7 @@ public:
 
     /*UsblView*/
     void setTrackRef(QMap<int, UsblObjectParams>& tracks); // first - id, second - tracks
-    void clearData();
+    void clearTracks();
 
 private:
     // data

@@ -72,7 +72,7 @@ void UsblViewControlMenuController::onClearUsblViewButtonClicked()
         return;
     }
 
-    m_graphicsSceneView->getUsblViewPtr()->clearData();
+    m_graphicsSceneView->getUsblViewPtr()->clearTracks();
 }
 
 UsblView *UsblViewControlMenuController::getUsblViewPtr() const

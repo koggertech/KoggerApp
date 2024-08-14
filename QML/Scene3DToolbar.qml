@@ -267,6 +267,8 @@ ColumnLayout {
             CButton {
                 text: "Update"
                 Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
                 onClicked: {
                     UsblViewControlMenuController.onUpdateUsblViewButtonClicked()
                 }
@@ -278,6 +280,8 @@ ColumnLayout {
             CButton {
                 text: "Clear"
                 Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
                 onClicked: {
                     UsblViewControlMenuController.onClearUsblViewButtonClicked()
                 }
