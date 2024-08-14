@@ -7,10 +7,10 @@ MosaicView::MosaicView(QObject* parent) :
     SceneObject(new MosaicViewRenderImplementation, parent),
     gen_(rd_()),
     dis_(0.0f,1.0f),
-    grid_(std::make_shared <SurfaceGrid>())
+    grid_(std::make_shared<SurfaceGrid>())
 
 {
-    QObject::connect(grid_.get(), &SurfaceGrid::changed, [this](){
+    QObject::connect(grid_.get(), &SurfaceGrid::changed, this, [this]() { // ?
         RENDER_IMPL(MosaicView)->gridRenderImpl_ = *grid_->m_renderImpl;
         Q_EMIT changed();
     });
@@ -26,23 +26,18 @@ SceneObject::SceneObjectType MosaicView::type() const
     return SceneObjectType::MosaicView;
 }
 
-void MosaicView::setData(const QVector<QVector3D>& data, int primitiveType)
+MosaicView::MosaicViewRenderImplementation::MosaicViewRenderImplementation() :
+    textureId_(0)
 {
-    SceneObject::setData(data, primitiveType);
 
-    updateGrid();
-
-    Q_EMIT changed();
-}
-
-void MosaicView::clearData()
-{
-    SceneObject::clearData();
 }
 
 void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     if (!m_isVisible)
+        return;
+
+    if (indices_.isEmpty())
         return;
 
     gridRenderImpl_.render(ctx, mvp, shaderProgramMap);
@@ -65,8 +60,8 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
     shaderProgram->setAttributeArray(texCoordLoc, texCoords_.constData());
 
-    if (texture_) {
-        texture_->bind();
+    if (textureId_) {
+        glBindTexture(GL_TEXTURE_2D, textureId_);
     }
 
     ctx->glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, indices_.constData());
@@ -77,77 +72,20 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
     shaderProgram->release();
 }
 
-void MosaicView::MosaicViewRenderImplementation::setIndices(QVector<int>& indices)
+void MosaicView::setTextureId(GLuint textureId)
 {
-    indices_ = indices;
-}
+    RENDER_IMPL(MosaicView)->textureId_= textureId;
 
-void MosaicView::MosaicViewRenderImplementation::setTexCoords(const QVector<QVector2D>& texCoords)
-{
-    texCoords_ = texCoords;
-}
-
-QVector<int>& MosaicView::MosaicViewRenderImplementation::getIndicesPtr()
-{
-    return indices_;
-}
-
-QOpenGLTexture* MosaicView::MosaicViewRenderImplementation::getTexturePtr()
-{
-    return texture_;
-}
-
-QImage MosaicView::MosaicViewRenderImplementation::getTextureImagePtr()
-{
-    return textureImage_;
-}
-
-void MosaicView::MosaicViewRenderImplementation::setTexture(QOpenGLTexture* texturePtr)
-{
-    texture_ = texturePtr;
-}
-
-void MosaicView::MosaicViewRenderImplementation::setTextureImage(QImage texture)
-{
-    textureImage_ = texture;
-}
-
-void MosaicView::MosaicViewRenderImplementation::initializeTexture()
-{
-    QOpenGLContext* currentContext = QOpenGLContext::currentContext();
-
-    if (!currentContext) {
-        qWarning() << "Cannot initialize texture without a valid OpenGL context.";
-        return;
-    }
-
-    if (textureImage_.isNull()) {
-        return;
-    }
-
-    if (texture_) {
-        delete texture_;
-    }
-
-    texture_ = new QOpenGLTexture(textureImage_.mirrored());
-    if (texture_->isCreated()) {
-        texture_->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-        texture_->setMagnificationFilter(QOpenGLTexture::Linear);
-        texture_->setWrapMode(QOpenGLTexture::Repeat);
-    }
+    Q_EMIT changed();
 }
 
 void MosaicView::updateData()
 {
-    grid_->clearData();
-
     generateRandomVertices(width_, height_, cellSize_);
-    RENDER_IMPL(MosaicView)->setTextureImage(generateImage(1000, 1000));
-
     updateGrid();
-    emit changed();
-}
 
+    Q_EMIT changed();
+}
 
 void MosaicView::generateRandomVertices(int width, int height, float cellSize)
 {
@@ -201,37 +139,12 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
         }
     }
 
-    RENDER_IMPL(MosaicView)->setData(vertices);
-    RENDER_IMPL(MosaicView)->setTexCoords(texCoords);
-    RENDER_IMPL(MosaicView)->setIndices(indices);
+    RENDER_IMPL(MosaicView)->m_data = vertices;
+    RENDER_IMPL(MosaicView)->texCoords_ = texCoords;
+    RENDER_IMPL(MosaicView)->indices_ = indices;
+
+    Q_EMIT changed();
 }
-
-
-QImage MosaicView::generateImage(int width, int height)
-{
-/*
-         Q_UNUSED(width);
-         Q_UNUSED(height);
-         QString imagePath = "C:/Users/salty/Desktop/Lenna.png";
-         QImage image;
-         if (!image.load(imagePath)) {
-             qWarning("Не удалось загрузить изображение!");
-         }
-         return image;
-*/
-
-    QImage texture(width, height, QImage::Format_RGB32);
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int r = rand() % 256;
-            int g = rand() % 256;
-            int b = rand() % 256;
-            texture.setPixel(x, y, qRgb(r, g, b));
-        }
-    }
-
-    return texture;
-};
 
 void MosaicView::updateGrid()
 {
@@ -250,7 +163,7 @@ void MosaicView::makeQuadGrid()
 
     QVector<QVector3D> grid;
 
-    auto indicesPtr = impl->getIndicesPtr();
+    auto indicesPtr = impl->indices_;
     auto verticesPtr = impl->m_data;
 
     for (int i = 0; i < indicesPtr.size(); i += 6){
@@ -264,10 +177,10 @@ void MosaicView::makeQuadGrid()
         C.setZ(C.z() + 0.02);
         D.setZ(D.z() + 0.02);
 
-        grid.append({ A, B, //
-                     B, D,
-                     A, C,
-                     C, D });
+        grid.append({ A, B,
+                      B, D,
+                      A, C,
+                      C, D });
     }
 
     grid_->setColor(QColor(0, 255, 0));

@@ -92,6 +92,7 @@ public:
     public:
         InFboRenderer();
         virtual ~InFboRenderer();
+        void setTextureImage(const QImage &image);
 
     protected:
         virtual void render() override;
@@ -100,7 +101,11 @@ public:
 
     private:
         friend class GraphicsScene3dView;
+        void initializeTexture();
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
+        GLuint textureId_;
+        QImage textureImage_;
+        bool needToInitializeTexture_;
     };
 
     enum ActiveMode{
@@ -143,6 +148,7 @@ public:
     void setNavigationArrowState(bool state);
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
+    void setTextureId(GLuint id);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -152,6 +158,7 @@ public:
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
+    Q_INVOKABLE void setTextureImage(const QImage &image);
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
@@ -167,8 +174,6 @@ public Q_SLOTS:
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlEngine(QObject* engine);
-    void setNeedToRefreshMosaicTexture(bool state);
-    bool getNeedToRefreshMosaicTexture() const;
 
 private:
     void updateBounds();
@@ -214,7 +219,7 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
-    bool needToRefreshMosaicTexture_ = false;
+    mutable InFboRenderer* renderer_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

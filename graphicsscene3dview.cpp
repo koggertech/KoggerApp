@@ -10,6 +10,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 
+
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
     m_camera(std::make_shared<Camera>()),
@@ -27,7 +28,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     navigationArrowState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
-    switchedToBottomTrackVertexComboSelectionMode_(false)
+    switchedToBottomTrackVertexComboSelectionMode_(false),
+    renderer_(nullptr)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -61,11 +63,14 @@ GraphicsScene3dView::GraphicsScene3dView() :
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
-{}
+{
+
+}
 
 QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
 {
-    return new GraphicsScene3dView::InFboRenderer();
+    renderer_ = new GraphicsScene3dView::InFboRenderer();
+    return renderer_;
 }
 
 std::shared_ptr<BoatTrack> GraphicsScene3dView::boatTrack() const
@@ -151,6 +156,11 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     retVal = rayOrigin + rayDirection * t;
 
     return retVal;
+}
+
+void GraphicsScene3dView::setTextureId(GLuint id)
+{
+    mosaicView_->setTextureId(id);
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -310,6 +320,14 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setTextureImage(const QImage &image) {
+    if (renderer_) {
+        renderer_->setTextureImage(image);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
 {
     m_isSceneBoundingBoxVisible = visible;
@@ -457,16 +475,6 @@ void GraphicsScene3dView::setQmlEngine(QObject* engine)
     engine_ = engine;
 }
 
-void GraphicsScene3dView::setNeedToRefreshMosaicTexture(bool state)
-{
-    needToRefreshMosaicTexture_ = state;
-}
-
-bool GraphicsScene3dView::getNeedToRefreshMosaicTexture() const
-{
-    return needToRefreshMosaicTexture_;
-}
-
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
@@ -503,12 +511,24 @@ void GraphicsScene3dView::clearComboSelectionRect()
 GraphicsScene3dView::InFboRenderer::InFboRenderer()
     :QQuickFramebufferObject::Renderer()
     , m_renderer(new GraphicsScene3dRenderer)
+    , textureId_(0)
+    , needToInitializeTexture_(false)
 {
     m_renderer->initialize();
 }
 
 GraphicsScene3dView::InFboRenderer::~InFboRenderer()
-{}
+{
+    if (textureId_) {
+        glDeleteTextures(1, &textureId_);
+    }
+}
+
+void GraphicsScene3dView::InFboRenderer::setTextureImage(const QImage &image)
+{
+    textureImage_ = image;
+    needToInitializeTexture_ = true;
+}
 
 void GraphicsScene3dView::InFboRenderer::render()
 {
@@ -519,14 +539,17 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
 {
     auto view = qobject_cast<GraphicsScene3dView*>(fbo);
 
-    if(!view)
+    if (!view) {
         return;
+    }
 
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
-    if (auto mosaicViewRenderImpl = dynamic_cast<MosaicView::MosaicViewRenderImplementation*>(view->mosaicView_->m_renderImpl); mosaicViewRenderImpl) {
-        mosaicViewRenderImpl->setTexture(m_renderer->mosaicViewRenderImpl_.getTexturePtr());
+    if (needToInitializeTexture_ && !textureImage_.isNull()) {
+        initializeTexture();
+        view->setTextureId(textureId_);
+        needToInitializeTexture_ = false;
     }
 
     // write to renderer
@@ -546,11 +569,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_verticalScale             = view->m_verticalScale;
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
-
-    m_renderer->needToRefreshMosaicTexture_ = view->needToRefreshMosaicTexture_;
-    if (view->needToRefreshMosaicTexture_) {
-        view->needToRefreshMosaicTexture_ = false;
-    }
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
@@ -559,6 +577,45 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(4);
     return new QOpenGLFramebufferObject(size, format);
+}
+
+void GraphicsScene3dView::InFboRenderer::initializeTexture()
+{
+    /*
+    // without mipmap
+    if (textureId_) {
+        glDeleteTextures(1, &textureId_);
+    }
+
+    glGenTextures(1, &textureId_);
+    glBindTexture(GL_TEXTURE_2D, textureId_);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888).mirrored();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    */
+
+    QOpenGLContext* context = QOpenGLContext::currentContext();
+    QOpenGLFunctions* functions = context->functions();
+
+    if (textureId_) {
+        functions->glDeleteTextures(1, &textureId_);
+    }
+
+    functions->glGenTextures(1, &textureId_);
+    functions->glBindTexture(GL_TEXTURE_2D, textureId_);
+
+    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888).mirrored();
+    functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+
+    functions->glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 GraphicsScene3dView::Camera::Camera()
