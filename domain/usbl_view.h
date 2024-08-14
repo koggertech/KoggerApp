@@ -7,7 +7,7 @@
 #include <QVector>
 #include <QVector3D>
 #include <QColor>
-#include "plotcash.h"
+#include <QMap>
 
 
 class UsblView : public SceneObject
@@ -16,17 +16,35 @@ class UsblView : public SceneObject
     QML_NAMED_ELEMENT(UsblView)
 
 public:
+    enum class UsblObjectType {
+        kUndefined = 0,
+        kUsbl,
+        kBeacon
+    };
+
+    struct UsblObjectParams
+    {
+        UsblObjectParams() : isTrackVisible_(true), type_(UsblObjectType::kUndefined), lineWidth_(2.0f), pointRadius_(10.0f), objectColor_(255,55,55), data_() {};
+        UsblObjectParams(bool isTrackVisisble, UsblObjectType type, float lineWidth, float pointRadius, QColor objectColor, QVector<QVector3D> data) :
+            isTrackVisible_(isTrackVisisble), type_(type), lineWidth_(lineWidth), pointRadius_(pointRadius), objectColor_(objectColor), data_(data) {};
+
+        bool isTrackVisible_;
+        UsblObjectType type_;
+        float lineWidth_;
+        float pointRadius_;
+        QColor objectColor_;
+        QVector<QVector3D> data_;
+    };
+
     class UsblViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
-        UsblViewRenderImplementation();
         virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     private:
         friend class UsblView;
         // data
-        float pointRadius_;
-        bool isTrackVisible_;
+        QMap<int, UsblObjectParams> tracks_;
     };
 
     explicit UsblView(QObject* parent = nullptr);
@@ -38,12 +56,9 @@ public:
     virtual SceneObjectType type() const override;
 
     /*UsblView*/
-    void setPointRadius(float radius);
-    void setTrackVisible(bool state);
-    void setDatasetPtr(Dataset* datasetPtr);
-    void updateData();
+    void setTrackRef(QMap<int, UsblObjectParams>& tracks); // first - id, second - tracks
 
 private:
     // data
-    Dataset* datasetPtr_;
+    QMap<int, UsblObjectParams> tracks_;
 };

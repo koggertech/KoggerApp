@@ -39,27 +39,28 @@ void UsblViewControlMenuController::onUpdateUsblViewButtonClicked()
         return;
     }
 
-    // data
-    QVector <QVector3D> data;
-    for (int i = 0; i < 100; ++i){
-        QVector3D A;
-        A.setX(i + std::rand() % 3 + 1);
-        A.setY(i + std::rand() % 7 - 1);
-        A.setZ(i + std::rand() % 10 + 1);
-        data.append(A);
+    QMap<int, UsblView::UsblObjectParams> tracks;
+
+    for (int j = 0; j < 5; ++j) {
+        UsblView::UsblObjectParams params;
+        params.isTrackVisible_ = true;
+        !j ? params.type_ = UsblView::UsblObjectType::kUsbl : params.type_ = UsblView::UsblObjectType::kBeacon;
+        params.objectColor_ = QColor(std::rand() % 255,std::rand() % 255,std::rand() % 255);
+        params.lineWidth_ = static_cast<qreal>(std::rand() % 7);
+        params.pointRadius_ = static_cast<float>(std::rand() % 20 + 15);
+        QVector <QVector3D> data;
+        int dataSize = std::rand() % 150 + 50;
+        for (int i = 0; i < dataSize; ++i){
+            QVector3D A;
+            A.setX(i + std::rand() % 3 + 1);
+            A.setY(i + std::rand() % 7 - 1);
+            A.setZ(i + std::rand() % 10 + 1);
+            data.append(A);
+        }
+        params.data_ = data;
+        tracks.insert(j, params);
     }
-    m_graphicsSceneView->getUsblViewPtr()->setData(data , GL_LINE_STRIP);
-
-    // color
-    auto currColor = QColor(std::rand() % 255,std::rand() % 255,std::rand() % 255);
-    m_graphicsSceneView->getUsblViewPtr()->setColor(currColor);
-
-    // width
-    m_graphicsSceneView->getUsblViewPtr()->setWidth(static_cast<qreal>(std::rand() % 7)); // line
-    m_graphicsSceneView->getUsblViewPtr()->setPointRadius(static_cast<float>(std::rand() % 50 + 15)); // point
-
-    // track visible
-    //m_graphicsSceneView->getUsblViewPtr()->setTrackVisible(std::rand() % 2 == 0);
+    m_graphicsSceneView->getUsblViewPtr()->setTrackRef(tracks);
 }
 
 UsblView *UsblViewControlMenuController::getUsblViewPtr() const
