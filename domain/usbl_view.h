@@ -7,6 +7,7 @@
 #include <QVector>
 #include <QVector3D>
 #include <QColor>
+#include "plotcash.h"
 
 
 class UsblView : public SceneObject
@@ -18,13 +19,14 @@ public:
     class UsblViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
-        virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
-
+        UsblViewRenderImplementation();
+        virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
+                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
     private:
         friend class UsblView;
-
         // data
-
+        float pointRadius_;
+        bool isTrackVisible_;
     };
 
     explicit UsblView(QObject* parent = nullptr);
@@ -35,9 +37,13 @@ public:
     virtual void clearData() override;
     virtual SceneObjectType type() const override;
 
+    /*UsblView*/
+    void setPointRadius(float radius);
+    void setTrackVisible(bool state);
+    void setDatasetPtr(Dataset* datasetPtr);
     void updateData();
 
 private:
     // data
-
+    Dataset* datasetPtr_;
 };
