@@ -459,11 +459,12 @@ void GraphicsScene3dView::setQmlEngine(QObject* engine)
 
 void GraphicsScene3dView::updateBounds()
 {
-    m_bounds = m_boatTrack->bounds()
-                   .merge(m_surface->bounds())
-                    .merge(m_bottomTrack->bounds())
-                    .merge(m_polygonGroup->bounds())
-                    .merge(m_pointGroup->bounds());
+    m_bounds =        m_boatTrack->bounds()
+               .merge(m_surface->bounds())
+               .merge(m_bottomTrack->bounds())
+               .merge(m_polygonGroup->bounds())
+               .merge(m_pointGroup->bounds())
+               .merge(usblView_->bounds());
 
     updatePlaneGrid();
 

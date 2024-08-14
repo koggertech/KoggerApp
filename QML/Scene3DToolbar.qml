@@ -267,11 +267,20 @@ ColumnLayout {
             CButton {
                 text: "Update"
                 Layout.fillWidth: true
-                icon.source: "./icons/refresh.svg"
                 onClicked: {
                     UsblViewControlMenuController.onUpdateUsblViewButtonClicked()
                 }
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
 
+            CButton {
+                text: "Clear"
+                Layout.fillWidth: true
+                onClicked: {
+                    UsblViewControlMenuController.onClearUsblViewButtonClicked()
+                }
                 onFocusChanged: {
                     surfaceSettings.focus = true
                 }

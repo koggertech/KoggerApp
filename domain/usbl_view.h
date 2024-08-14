@@ -40,8 +40,9 @@ public:
     {
     public:
         virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp,
-                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+                            const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
     private:
+        virtual void createBounds() override final;
         friend class UsblView;
         // data
         QMap<int, UsblObjectParams> tracks_;
@@ -51,12 +52,11 @@ public:
     virtual ~UsblView();
 
     /*SceneObject*/
-    virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
-    virtual void clearData() override;
     virtual SceneObjectType type() const override;
 
     /*UsblView*/
     void setTrackRef(QMap<int, UsblObjectParams>& tracks); // first - id, second - tracks
+    void clearData();
 
 private:
     // data

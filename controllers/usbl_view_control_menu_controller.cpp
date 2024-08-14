@@ -46,7 +46,7 @@ void UsblViewControlMenuController::onUpdateUsblViewButtonClicked()
         params.isTrackVisible_ = true;
         !j ? params.type_ = UsblView::UsblObjectType::kUsbl : params.type_ = UsblView::UsblObjectType::kBeacon;
         params.objectColor_ = QColor(std::rand() % 255,std::rand() % 255,std::rand() % 255);
-        params.lineWidth_ = static_cast<qreal>(std::rand() % 7);
+        params.lineWidth_ = static_cast<qreal>(std::rand() % 7 + 1);
         params.pointRadius_ = static_cast<float>(std::rand() % 20 + 15);
         QVector <QVector3D> data;
         int dataSize = std::rand() % 150 + 50;
@@ -61,6 +61,18 @@ void UsblViewControlMenuController::onUpdateUsblViewButtonClicked()
         tracks.insert(j, params);
     }
     m_graphicsSceneView->getUsblViewPtr()->setTrackRef(tracks);
+}
+
+
+void UsblViewControlMenuController::onClearUsblViewButtonClicked()
+{
+    qDebug() << "onClearUsblViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getUsblViewPtr()->clearData();
 }
 
 UsblView *UsblViewControlMenuController::getUsblViewPtr() const

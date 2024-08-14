@@ -18,6 +18,7 @@ public:
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     Q_INVOKABLE void onUsblViewVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateUsblViewButtonClicked();
+    Q_INVOKABLE void onClearUsblViewButtonClicked();
 
 Q_SIGNALS:
 

@@ -17,18 +17,6 @@ SceneObject::SceneObjectType UsblView::type() const
     return SceneObjectType::UsblView;
 }
 
-void UsblView::setData(const QVector<QVector3D>& data, int primitiveType)
-{
-    SceneObject::setData(data, primitiveType);
-
-    Q_EMIT changed();
-}
-
-void UsblView::clearData()
-{
-    SceneObject::clearData();
-}
-
 void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp,
                                                     const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
@@ -57,14 +45,10 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
     auto subPointColor = QVector4D(0.9f, 0.9f, 0.9f, 1.0f);
 
     for (auto &itm : tracks_) {
-
-        //qDebug() << itm.data_ ;
-
         auto lineColor = QVector4D(itm.objectColor_.redF(), itm.objectColor_.greenF(), itm.objectColor_.blueF(), 1.0f);
 
         // point
         bool isUsbl = itm.type_ == UsblView::UsblObjectType::kUsbl ? true : false;
-
         ctx->glEnable(GL_PROGRAM_POINT_SIZE);
         shaderProgram->setUniformValue(isPointLoc, !isUsbl);
         QVector<QVector3D> point{ itm.data_.last() };
@@ -80,13 +64,14 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
         ctx->glDisable(GL_PROGRAM_POINT_SIZE);
 
+        // line
         if (itm.isTrackVisible_) {
             shaderProgram->setUniformValue(colorLoc, lineColor);
             shaderProgram->setUniformValue(isPointLoc, false);
-            shaderProgram->setUniformValue(widthLoc, m_width);
+            shaderProgram->setUniformValue(widthLoc, itm.lineWidth_);
 
             shaderProgram->setAttributeArray(posLoc, itm.data_.constData());
-            ctx->glLineWidth(m_width);
+            ctx->glLineWidth(itm.lineWidth_);
             ctx->glDrawArrays(GL_LINE_STRIP, 0, itm.data_.size());
             ctx->glLineWidth(1.0f);
         }
@@ -94,6 +79,39 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
+}
+
+void UsblView::UsblViewRenderImplementation::createBounds()
+{
+    m_bounds = Cube();
+
+    if (tracks_.isEmpty()) {
+        return;
+    }
+
+    for (auto &itmI : tracks_) {
+        Cube curr_bounds;
+
+        float z_max{ !std::isfinite(itmI.data_.first().z()) ? 0.f : itmI.data_.first().z() };
+        float z_min{ z_max };
+        float x_max{ !std::isfinite(itmI.data_.first().x()) ? 0.f : itmI.data_.first().x() };
+        float x_min{ x_max };
+        float y_max{ !std::isfinite(itmI.data_.first().y()) ? 0.f : itmI.data_.first().y() };
+        float y_min{ y_max };
+
+        for (const auto& itmJ : qAsConst(itmI.data_)){
+            z_min = std::min(z_min, !std::isfinite(itmJ.z()) ? 0.f : itmJ.z());
+            z_max = std::max(z_max, !std::isfinite(itmJ.z()) ? 0.f : itmJ.z());
+            x_min = std::min(x_min, !std::isfinite(itmJ.x()) ? 0.f : itmJ.x());
+            x_max = std::max(x_max, !std::isfinite(itmJ.x()) ? 0.f : itmJ.x());
+            y_min = std::min(y_min, !std::isfinite(itmJ.y()) ? 0.f : itmJ.y());
+            y_max = std::max(y_max, !std::isfinite(itmJ.y()) ? 0.f : itmJ.y());
+        }
+
+        curr_bounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);
+
+        m_bounds = m_bounds.merge(curr_bounds);
+    }
 }
 
 void UsblView::setTrackRef(QMap<int, UsblObjectParams>& tracks)
@@ -159,6 +177,19 @@ void UsblView::setTrackRef(QMap<int, UsblObjectParams>& tracks)
     // refresh in render only needed
     if (beenRefreshed) {
         RENDER_IMPL(UsblView)->tracks_ = tracks_;
+        RENDER_IMPL(UsblView)->createBounds();
+
         Q_EMIT changed();
+        Q_EMIT boundsChanged();
     }
+}
+
+void UsblView::clearData()
+{
+    tracks_.clear();
+    RENDER_IMPL(UsblView)->tracks_.clear();
+    RENDER_IMPL(UsblView)->createBounds();
+
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
