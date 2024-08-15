@@ -68,6 +68,7 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         shaderProgram->setUniformValue(widthLoc, itm.pointRadius_ + 3.0f);
         shaderProgram->setAttributeArray(posLoc, point.constData());
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
+        shaderProgram->setUniformValue(isPointLoc, false);
 
 #ifndef Q_OS_ANDROID
         ctx->glDisable(GL_PROGRAM_POINT_SIZE);
@@ -78,9 +79,7 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
         // line
         if (itm.isTrackVisible_) {
             shaderProgram->setUniformValue(colorLoc, lineColor);
-            shaderProgram->setUniformValue(isPointLoc, false);
             shaderProgram->setUniformValue(widthLoc, itm.lineWidth_);
-
             shaderProgram->setAttributeArray(posLoc, itm.data_.constData());
             ctx->glLineWidth(itm.lineWidth_);
             ctx->glDrawArrays(GL_LINE_STRIP, 0, itm.data_.size());

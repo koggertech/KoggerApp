@@ -43,7 +43,7 @@ void UsblViewControlMenuController::onUpdateUsblViewButtonClicked()
 
     for (int j = 0; j < 5; ++j) {
         UsblView::UsblObjectParams params;
-        params.isTrackVisible_ = true;
+        params.isTrackVisible_ = static_cast<bool>(std::rand() % 2);
         !j ? params.type_ = UsblView::UsblObjectType::kUsbl : params.type_ = UsblView::UsblObjectType::kBeacon;
         params.objectColor_ = QColor(std::rand() % 255,std::rand() % 255,std::rand() % 255);
         params.lineWidth_ = static_cast<qreal>(std::rand() % 7 + 1);
