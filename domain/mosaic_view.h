@@ -38,6 +38,7 @@ public:
     virtual SceneObjectType type() const override;
     void setTextureId(GLuint textureId);
     void updateData();
+    void clear();
 
 private:
     void generateRandomVertices(int width, int height, float cellSize);

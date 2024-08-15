@@ -92,7 +92,7 @@ public:
     public:
         InFboRenderer();
         virtual ~InFboRenderer();
-        void setTextureImage(const QImage &image);
+        void setTextureImage(const QImage &image, bool usingFilters = true);
 
     protected:
         virtual void render() override;
@@ -106,6 +106,7 @@ public:
         GLuint textureId_;
         QImage textureImage_;
         bool needToInitializeTexture_;
+        bool usingFilters_;
     };
 
     enum ActiveMode{
@@ -158,7 +159,7 @@ public:
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
-    Q_INVOKABLE void setTextureImage(const QImage &image);
+    Q_INVOKABLE void setTextureImage(const QImage &image, bool usingFilters = true);
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);

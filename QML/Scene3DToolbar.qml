@@ -263,14 +263,51 @@ ColumnLayout {
                 mosaicViewCheckButton.longPressTriggered = false
             }
         }
-
         ColumnLayout {
             CButton {
-                text: "Update"
+                text: "Use filters"
                 Layout.fillWidth: true
-                icon.source: "./icons/refresh.svg"
+                Layout.preferredWidth: 200
+                checkable: true
+                onClicked: {
+                    MosaicViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+
+            CButton {
+                text: "Image"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
                 onClicked: {
                     MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+            CButton {
+                text: "Rnd pixels"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                onClicked: {
+                    MosaicViewControlMenuController.onUpdate2MosaicViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+            CButton {
+                text: "Clear"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                onClicked: {
+                    MosaicViewControlMenuController.onClearMosaicViewButtonClicked()
                 }
 
                 onFocusChanged: {

@@ -9,7 +9,8 @@
 
 
 MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent) :
-    QmlComponentController(parent)
+    QmlComponentController(parent),
+    usingFilters_(false)
 {
 
 }
@@ -34,6 +35,17 @@ void MosaicViewControlMenuController::onMosaicViewVisibilityCheckBoxCheckedChang
     m_graphicsSceneView->getMosaicViewPtr()->setVisible(checked);
 }
 
+void MosaicViewControlMenuController::onUseFilterMosaicViewButtonClicked(bool state)
+{
+    qDebug() << "onUseFilterMosaicViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    usingFilters_ = state;
+}
+
 void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
 {
     qDebug() << "onUpdateMosaicViewButtonClicked";
@@ -42,18 +54,30 @@ void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
         return;
     }
 
-    auto generateImage  = [](int width, int height) -> QImage
+    auto generateImage  = []() -> QImage
     {
-         Q_UNUSED(width);
-         Q_UNUSED(height);
-         QString imagePath = "C:/Users/salty/Desktop/textures/7.jpg";
+         QString imagePath = "C:/Users/salty/Desktop/textures/echo.png";
          QImage image;
          if (!image.load(imagePath)) {
              qDebug() << "failed to load image: " << imagePath;
          }
          return image;
+    };
 
-/*
+    m_graphicsSceneView->setTextureImage(generateImage(), usingFilters_);
+    m_graphicsSceneView->getMosaicViewPtr()->updateData();
+}
+
+void MosaicViewControlMenuController::onUpdate2MosaicViewButtonClicked()
+{
+    qDebug() << "onUpdate2MosaicViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    auto generateImage  = [](int width, int height) -> QImage
+    {
         QImage texture(width, height, QImage::Format_RGB32);
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
@@ -65,11 +89,22 @@ void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
         }
 
         return texture;
-*/
+
     };
 
-    m_graphicsSceneView->setTextureImage(generateImage(10000,10000));
+    m_graphicsSceneView->setTextureImage(generateImage(5000,5000), usingFilters_);
     m_graphicsSceneView->getMosaicViewPtr()->updateData();
+}
+
+void MosaicViewControlMenuController::onClearMosaicViewButtonClicked()
+{
+    qDebug() << "onClearMosaicViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getMosaicViewPtr()->clear();
 }
 
 MosaicView *MosaicViewControlMenuController::getMosaicViewPtr() const

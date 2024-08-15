@@ -320,9 +320,9 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::setTextureImage(const QImage &image) {
+void GraphicsScene3dView::setTextureImage(const QImage &image, bool usingFilters) {
     if (renderer_) {
-        renderer_->setTextureImage(image);
+        renderer_->setTextureImage(image, usingFilters);
     }
 
     QQuickFramebufferObject::update();
@@ -513,6 +513,7 @@ GraphicsScene3dView::InFboRenderer::InFboRenderer()
     , m_renderer(new GraphicsScene3dRenderer)
     , textureId_(0)
     , needToInitializeTexture_(false)
+    , usingFilters_(true)
 {
     m_renderer->initialize();
 }
@@ -524,9 +525,11 @@ GraphicsScene3dView::InFboRenderer::~InFboRenderer()
     }
 }
 
-void GraphicsScene3dView::InFboRenderer::setTextureImage(const QImage &image)
+void GraphicsScene3dView::InFboRenderer::setTextureImage(const QImage &image, bool usingFilters)
 {
     textureImage_ = image;
+    usingFilters_ = usingFilters;
+
     needToInitializeTexture_ = true;
 }
 
@@ -581,41 +584,41 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
 
 void GraphicsScene3dView::InFboRenderer::initializeTexture()
 {
-    /*
-    // without mipmap
-    if (textureId_) {
-        glDeleteTextures(1, &textureId_);
+    if (!usingFilters_) { // without mipmap
+        if (textureId_) {
+            glDeleteTextures(1, &textureId_);
+        }
+
+        glGenTextures(1, &textureId_);
+        glBindTexture(GL_TEXTURE_2D, textureId_);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888).mirrored();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
     }
+    else {
+        QOpenGLContext* context = QOpenGLContext::currentContext();
+        QOpenGLFunctions* functions = context->functions();
 
-    glGenTextures(1, &textureId_);
-    glBindTexture(GL_TEXTURE_2D, textureId_);
+        if (textureId_) {
+            functions->glDeleteTextures(1, &textureId_);
+        }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        functions->glGenTextures(1, &textureId_);
+        functions->glBindTexture(GL_TEXTURE_2D, textureId_);
 
-    QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888).mirrored();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-    */
+        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    QOpenGLContext* context = QOpenGLContext::currentContext();
-    QOpenGLFunctions* functions = context->functions();
+        QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888).mirrored();
+        functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 
-    if (textureId_) {
-        functions->glDeleteTextures(1, &textureId_);
+        functions->glGenerateMipmap(GL_TEXTURE_2D);
     }
-
-    functions->glGenTextures(1, &textureId_);
-    functions->glBindTexture(GL_TEXTURE_2D, textureId_);
-
-    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888).mirrored();
-    functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-
-    functions->glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 GraphicsScene3dView::Camera::Camera()

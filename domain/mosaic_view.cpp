@@ -87,8 +87,23 @@ void MosaicView::updateData()
     Q_EMIT changed();
 }
 
+void MosaicView::clear()
+{
+    grid_->clearData();
+    RENDER_IMPL(MosaicView)->gridRenderImpl_.clearData();
+    RENDER_IMPL(MosaicView)->indices_.clear();
+    RENDER_IMPL(MosaicView)->texCoords_.clear();
+    RENDER_IMPL(MosaicView)->m_data.clear();
+    RENDER_IMPL(MosaicView)->textureId_ = 0;
+
+    Q_EMIT changed();
+}
+
 void MosaicView::generateRandomVertices(int width, int height, float cellSize)
 {
+    int localWidth = width + 1;
+    int localHeight = height + 1;
+
     auto perlinNoise = [](float x, float y, int octaves, float scale, float persistence, float lacunarity) {
         float amplitude = 1.0f;
         float frequency = 1.0f;
@@ -112,21 +127,21 @@ void MosaicView::generateRandomVertices(int width, int height, float cellSize)
     QVector<QVector2D> texCoords;
     QVector<int> indices;
 
-    for (int i = 0; i < height; ++i) {
-        for (int j = 0; j < width; ++j) {
+    for (int i = 0; i < localHeight; ++i) {
+        for (int j = 0; j < localWidth; ++j) {
             float x = j * cellSize;
             float y = i * cellSize;
             float z = perlinNoise(x, y, 1, 0.1f, 0.5f, 2.0f) * 3.0f + (dis_(gen_));
             vertices.append(QVector3D(x, y, z));
-            texCoords.append(QVector2D(float(j) / width, float(i) / height));
+            texCoords.append(QVector2D(float(j) / localWidth, float(i) / localHeight));
         }
     }
 
-    for (int i = 0; i < height - 1; ++i) {
-        for (int j = 0; j < width - 1; ++j) {
-            int topLeft = i * width + j;
+    for (int i = 0; i < localHeight - 1; ++i) {
+        for (int j = 0; j < localWidth - 1; ++j) {
+            int topLeft = i * localWidth + j;
             int topRight = topLeft + 1;
-            int bottomLeft = (i + 1) * width + j;
+            int bottomLeft = (i + 1) * localWidth + j;
             int bottomRight = bottomLeft + 1;
 
             indices.append(topLeft);
