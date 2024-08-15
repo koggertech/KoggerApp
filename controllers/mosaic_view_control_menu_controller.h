@@ -1,7 +1,5 @@
 #pragma once
 
-#include <QColor>
-#include <QThread>
 #include "qmlcomponentcontroller.h"
 #include "mosaic_view.h"
 
@@ -22,7 +20,6 @@ public:
     Q_INVOKABLE void onUpdateMosaicViewButtonClicked();
     Q_INVOKABLE void onUpdate2MosaicViewButtonClicked();
     Q_INVOKABLE void onClearMosaicViewButtonClicked();
-
 
 Q_SIGNALS:
 

@@ -20,7 +20,6 @@ public:
 
 private:
     friend class Surface;
-    friend class MosaicView;
 };
 
 #endif // SURFACEGRID_H

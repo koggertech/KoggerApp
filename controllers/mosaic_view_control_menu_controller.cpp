@@ -1,11 +1,5 @@
 #include "mosaic_view_control_menu_controller.h"
-
-//#include "QmlObjectNames.h"
 #include "graphicsscene3dview.h"
-
-// #include <bottomtrack.h>
-// #include <nearestpointfilter.h>
-// #include <maxpointsfilter.h>
 
 
 MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent) :
@@ -22,15 +16,16 @@ void MosaicViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *
 
 void MosaicViewControlMenuController::findComponent()
 {
-    m_component = m_engine->findChild<QObject*>("activeObjectParamsMenuLoader"); // ?
+    m_component = m_engine->findChild<QObject*>("mosaicViewControlMenu");
 }
 
 void MosaicViewControlMenuController::onMosaicViewVisibilityCheckBoxCheckedChanged(bool checked)
 {
     qDebug() << "onMosaicViewVisibilityCheckBoxCheckedChanged: " << checked;
 
-    if (!m_graphicsSceneView)
+    if (!m_graphicsSceneView) {
         return;
+    }
 
     m_graphicsSceneView->getMosaicViewPtr()->setVisible(checked);
 }
@@ -109,8 +104,9 @@ void MosaicViewControlMenuController::onClearMosaicViewButtonClicked()
 
 MosaicView *MosaicViewControlMenuController::getMosaicViewPtr() const
 {
-    if(!m_graphicsSceneView)
+    if (!m_graphicsSceneView) {
         return nullptr;
+    }
 
     return m_graphicsSceneView->getMosaicViewPtr().get();
 }
