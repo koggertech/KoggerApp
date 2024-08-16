@@ -51,7 +51,7 @@ void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
 
     auto generateImage  = []() -> QImage
     {
-         QString imagePath = "C:/Users/salty/Desktop/textures/echo.png";
+         QString imagePath = "C:/Users/salty/Desktop/textures/bres.png";
          QImage image;
          if (!image.load(imagePath)) {
              qDebug() << "failed to load image: " << imagePath;

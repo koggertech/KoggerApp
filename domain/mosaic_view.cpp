@@ -102,7 +102,7 @@ void MosaicView::updateData()
             float y = i * cellSize_;
             float z = perlinNoise(x, y, 1, 0.1f, 0.5f, 2.0f) * 3.0f + (dis_(gen_));
             vertices.append(QVector3D(x, y, z));
-            texCoords.append(QVector2D(float(j) / localWidth, float(i) / localHeight));
+            texCoords.append(QVector2D(float(j) / (localWidth - 1), float(i) / (localHeight - 1)));
         }
     }
 
