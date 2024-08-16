@@ -56,11 +56,14 @@ void SideScanView::updateData()
         return;
     }
 
+    isOdd_.clear();
+
     auto renderImpl = RENDER_IMPL(SideScanView);
 
     QVector<QVector3D> vertices;
     QVector<int> evenIndices;
     QVector<int> oddIndices;
+
     if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
         auto it = chList.begin();
         int fCh = it.key();
@@ -97,6 +100,8 @@ void SideScanView::updateData()
                     evenIndices.append(currIndx++);
                     vertices.append(QVector3D(pos.n, pos.e, pos.d));
                     evenIndices.append(currIndx++);
+
+                    isOdd_.append(false);
                 }
 
                 if (sChartsPrt) {
@@ -111,10 +116,16 @@ void SideScanView::updateData()
                     oddIndices.append(currIndx++);
                     vertices.append(QVector3D(rX, rY, rZ));
                     oddIndices.append(currIndx++);
+
+                    isOdd_.append(true);
                 }
             }
         }
     }
+
+    renderImpl->m_data = vertices;
+    renderImpl->evenIndices_ = evenIndices;
+    renderImpl->oddIndices_ = oddIndices;
 
     updatePixelMatrix(vertices, matrixScaleFactor_);
     QImage image = pixelMatrixToImage(pixelMatrix_);
@@ -127,9 +138,6 @@ void SideScanView::updateData()
         qDebug() << "Image saved successfully at" << imagePath;
     }
 
-    renderImpl->m_data = vertices;
-    renderImpl->evenIndices_ = evenIndices;
-    renderImpl->oddIndices_ = oddIndices;
 
     Q_EMIT changed();
 }
@@ -171,6 +179,10 @@ void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float s
 
     for (int i = 0; i < vertices.size(); i += 2) {
         if (i + 1 < vertices.size()) {
+
+            bool isEven = isOdd_[i / 2];
+            QColor currColor = isEven ? QColor(255, 0, 0) : QColor(0, 255, 0);
+
             QVector3D start = vertices[i];
             QVector3D end = vertices[i + 1];
 
@@ -187,7 +199,7 @@ void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float s
             int err = dx - dy;
 
             while (true) {
-                pixelMatrix_[y1][x1].isFilled = true;
+                pixelMatrix_[y1][x1].color = currColor;
 
                 if (x1 == x2 && y1 == y2)
                     break;
@@ -220,9 +232,7 @@ QImage SideScanView::pixelMatrixToImage(const QVector<QVector<Point>> &pixelMatr
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            if (pixelMatrix[y][x].isFilled) {
-                image.setPixel(x, y, qRgb(0, 0, 0));
-            }
+            image.setPixel(x, y, pixelMatrix[y][x].color.rgb());
         }
     }
 

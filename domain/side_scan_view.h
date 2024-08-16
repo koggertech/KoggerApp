@@ -2,10 +2,11 @@
 
 #include "sceneobject.h"
 #include <QVector>
+#include <QColor>
 #include "plotcash.h"
 
 struct Point {
-    bool isFilled = false;
+    QColor color;
 };
 
 class SideScanView : public SceneObject
@@ -39,4 +40,6 @@ private:
     const float matrixScaleFactor_ = 5.0f;
     Dataset* datasetPtr_ = nullptr;
     QVector<QVector<Point>> pixelMatrix_;
+
+    QVector<bool> isOdd_;
 };
