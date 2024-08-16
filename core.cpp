@@ -40,6 +40,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",  bottomTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",      surfaceControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MosaicViewControlMenuController",   mosaicViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController", sideScanViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("PointGroupControlMenuController",   pointGroupControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("PolygonGroupControlMenuController", polygonGroupControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MpcFilterControlMenuController",    mpcFilterControlMenuController_.get());
@@ -816,6 +817,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     mosaicViewControlMenuController_->setQmlEngine(object);
     mosaicViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
+    sideScanViewControlMenuController_->setQmlEngine(object);
+    sideScanViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
     npdFilterControlMenuController_->setQmlEngine(object);
     npdFilterControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
@@ -914,6 +918,7 @@ void Core::createControllers()
     npdFilterControlMenuController_    = std::make_shared<NpdFilterControlMenuController>();
     surfaceControlMenuController_      = std::make_shared<SurfaceControlMenuController>();
     mosaicViewControlMenuController_   = std::make_shared<MosaicViewControlMenuController>();
+    sideScanViewControlMenuController_ = std::make_shared<SideScanViewControlMenuController>();
     pointGroupControlMenuController_   = std::make_shared<PointGroupControlMenuController>();
     polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
     scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();

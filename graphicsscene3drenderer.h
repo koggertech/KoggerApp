@@ -6,6 +6,7 @@
 #include <bottomtrack.h>
 #include <surface.h>
 #include "mosaic_view.h"
+#include "side_scan_view.h"
 #include <pointgroup.h>
 #include <polygongroup.h>
 #include <graphicsscene3dview.h>
@@ -64,6 +65,7 @@ private:
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
     Surface::SurfaceRenderImplementation m_surfaceRenderImpl;
     MosaicView::MosaicViewRenderImplementation mosaicViewRenderImpl_;
+    SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;

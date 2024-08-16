@@ -12,8 +12,8 @@ HEADERS += \
     $$PWD/scene3dcontrolmenucontroller.h \
     $$PWD/scene3dtoolbarcontroller.h \
     $$PWD/surfacecontrolmenucontroller.h \
-    $$PWD/mosaic_view_control_menu_controller.h
-
+    $$PWD/mosaic_view_control_menu_controller.h \
+    $$PWD/side_scan_view_control_menu_controller.h
 
 SOURCES += \
     $$PWD/boattrackcontrolmenucontroller.cpp \
@@ -26,4 +26,5 @@ SOURCES += \
     $$PWD/scene3dcontrolmenucontroller.cpp \
     $$PWD/scene3dtoolbarcontroller.cpp \
     $$PWD/surfacecontrolmenucontroller.cpp \
-    $$PWD/mosaic_view_control_menu_controller.cpp
+    $$PWD/mosaic_view_control_menu_controller.cpp \
+    $$PWD/side_scan_view_control_menu_controller.cpp

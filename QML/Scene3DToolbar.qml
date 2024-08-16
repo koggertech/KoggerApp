@@ -263,55 +263,84 @@ ColumnLayout {
                 mosaicViewCheckButton.longPressTriggered = false
             }
         }
-        ColumnLayout {
-            CButton {
-                text: "Use filters"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                onClicked: {
-                    MosaicViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+
+        RowLayout {
+            ColumnLayout { // mosaic
+                CButton {
+                    text: "Use filters"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    onClicked: {
+                        MosaicViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
 
-                onFocusChanged: {
-                    surfaceSettings.focus = true
+                CButton {
+                    text: "Image"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    onClicked: {
+                        MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked()
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Rnd pixels"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    onClicked: {
+                        MosaicViewControlMenuController.onUpdate2MosaicViewButtonClicked()
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Clear"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    onClicked: {
+                        MosaicViewControlMenuController.onClearMosaicViewButtonClicked()
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
+            ColumnLayout { // side scan
+                CButton {
+                    text: "Update ss"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    onClicked: {
+                        SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked()
+                    }
 
-            CButton {
-                text: "Image"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                onClicked: {
-                    MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked()
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
+                CButton {
+                    text: "Clear"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    onClicked: {
+                        SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
+                    }
 
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Rnd pixels"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                onClicked: {
-                    MosaicViewControlMenuController.onUpdate2MosaicViewButtonClicked()
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Clear"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                onClicked: {
-                    MosaicViewControlMenuController.onClearMosaicViewButtonClicked()
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
                 }
             }
         }
@@ -468,10 +497,12 @@ ColumnLayout {
 
             onCheckedChanged: {
                 MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
+                SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
             }
 
             Component.onCompleted: {
                 MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
+                SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
             }
 
             property bool longPressTriggered: false

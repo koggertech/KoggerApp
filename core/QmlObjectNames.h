@@ -8,6 +8,7 @@ namespace QmlObjectNames{
     inline QString bottomTrackControlMenu           () { return QStringLiteral("bottomTrackControlMenu"); };
     inline QString surfaceControlMenu               () { return QStringLiteral("surfaceControlMenu"); };
     inline QString mosaicViewControlMenu            () { return QStringLiteral("mosaicViewControlMenu"); };
+    inline QString sideScanViewControlMenu          () { return QStringLiteral("sideScanViewControlMenu"); };
     inline QString npdFilterControlMenu             () { return QStringLiteral("npdFilterControlMenu"); };
     inline QString mpcFilterControlMenu             () { return QStringLiteral("mpcFilterControlMenu"); };
     inline QString bottomTrackParamsMenu            () { return QStringLiteral("bottomTrackParamsMenu"); };

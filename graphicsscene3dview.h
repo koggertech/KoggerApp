@@ -6,6 +6,7 @@
 #include <raycaster.h>
 #include <surface.h>
 #include "mosaic_view.h"
+#include "side_scan_view.h"
 #include <boattrack.h>
 #include <bottomtrack.h>
 #include <polygongroup.h>
@@ -140,6 +141,7 @@ public:
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Surface> surface() const;
     std::shared_ptr<MosaicView> getMosaicViewPtr() const;
+    std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::weak_ptr <Camera> camera() const;
@@ -191,6 +193,7 @@ private:
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Surface> m_surface;
     std::shared_ptr<MosaicView> mosaicView_;
+    std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<BoatTrack> m_boatTrack;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;

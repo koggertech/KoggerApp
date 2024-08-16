@@ -86,7 +86,8 @@ public:
         PolygonGroup = 6,
         Unknown      = 7,
         BoatTrack    = 8,
-        MosaicView   = 9
+        MosaicView   = 9,
+        SideScanView = 10
     };
 
     Q_ENUM(SceneObjectType)

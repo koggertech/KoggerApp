@@ -30,7 +30,8 @@ HEADERS += \
     $$PWD/surfacegrid.h \
     $$PWD/vertexeditingdecorator.h \
     $$PWD/navigation_arrow.h \
-    $$PWD/mosaic_view.h
+    $$PWD/mosaic_view.h \
+    $$PWD/side_scan_view.h
 
 SOURCES += \
     $$PWD/boattrack.cpp \
@@ -48,4 +49,5 @@ SOURCES += \
     $$PWD/surfacegrid.cpp \
     $$PWD/vertexeditingdecorator.cpp \
     $$PWD/navigation_arrow.cpp \
-    $$PWD/mosaic_view.cpp
+    $$PWD/mosaic_view.cpp \
+    $$PWD/side_scan_view.cpp
