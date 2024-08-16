@@ -58,13 +58,16 @@ void SideScanView::updateData()
     }
 
     auto renderImpl = RENDER_IMPL(SideScanView);
-    QVector<QVector3D> vertices;
 
+    QVector<QVector3D> vertices;
+    QVector<int> evenIndices;
+    QVector<int> oddIndices;
     if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
         auto it = chList.begin();
         int fCh = it.key();
         ++it;
         int sCh = it.key();
+        uint64_t currIndx = 0;
 
         for (int i = 0; i < datasetPtr_->size(); ++i) {
             auto epoch = datasetPtr_->fromIndex(i);
@@ -90,8 +93,11 @@ void SideScanView::updateData()
                     float lX = pos.n + lDistance * qCos(leftAzimuthRad);
                     float lY = pos.e + lDistance * qSin(leftAzimuthRad);
                     float lZ = pos.d;
+
                     vertices.append(QVector3D(lX, lY, lZ));
+                    evenIndices.append(currIndx++);
                     vertices.append(QVector3D(pos.n, pos.e, pos.d));
+                    evenIndices.append(currIndx++);
                 }
 
                 if (sChartsPrt) {
@@ -101,30 +107,17 @@ void SideScanView::updateData()
                     float rX = pos.n + rDistance * qCos(rightAzimuthRad);
                     float rY = pos.e + rDistance * qSin(rightAzimuthRad);
                     float rZ = pos.d;
+
                     vertices.append(QVector3D(pos.n, pos.e, pos.d));
+                    oddIndices.append(currIndx++);
                     vertices.append(QVector3D(rX, rY, rZ));
+                    oddIndices.append(currIndx++);
                 }
             }
         }
     }
 
     renderImpl->m_data = vertices;
-
-    QVector<int> evenIndices;
-    QVector<int> oddIndices;
-
-    for (int i = 0; i < vertices.size(); i += 2) {
-        if (i + 1 < vertices.size()) {
-            if ((i / 2) % 2 == 0) {
-                evenIndices.append(i);
-                evenIndices.append(i + 1);
-            } else {
-                oddIndices.append(i);
-                oddIndices.append(i + 1);
-            }
-        }
-    }
-
     renderImpl->evenIndices_ = evenIndices;
     renderImpl->oddIndices_ = oddIndices;
 
