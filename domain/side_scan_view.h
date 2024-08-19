@@ -34,12 +34,15 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
 
 private:
-    void updatePixelMatrix(const QVector<QVector3D> &vertices, float scaleFactor);
+    void updatePixelMatrix(const QVector<QVector3D> &vertices, float scaleFactor, int lineThickness);
     QImage pixelMatrixToImage(const QVector<QVector<Point>> &pixelMatrix);
     /*data*/
-    const float matrixScaleFactor_ = 5.0f;
+    const float matrixScaleFactor_ = 20.0f;
+    const int lineThickness_ = 5;
+
     Dataset* datasetPtr_ = nullptr;
     QVector<QVector<Point>> pixelMatrix_;
 
-    QVector<bool> isOdd_;
+    QVector<bool> isOdd_; // for left/right echograms
+    QVector<int> usedIndx_; // for epoch
 };

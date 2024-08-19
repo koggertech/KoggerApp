@@ -57,6 +57,7 @@ void SideScanView::updateData()
     }
 
     isOdd_.clear();
+    usedIndx_.clear();
 
     auto renderImpl = RENDER_IMPL(SideScanView);
 
@@ -66,9 +67,7 @@ void SideScanView::updateData()
 
     if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
         auto it = chList.begin();
-        int fCh = it.key();
-        ++it;
-        int sCh = it.key();
+        int fCh{ it.key() }, sCh { (++it).key() };
         uint64_t currIndx = 0;
 
         for (int i = 0; i < datasetPtr_->size(); ++i) {
@@ -89,7 +88,7 @@ void SideScanView::updateData()
                 double azimuthRad = qDegreesToRadians(yaw);
 
                 if (fChartsPrt) {
-                    double leftAzimuthRad = azimuthRad + M_PI_2;
+                    double leftAzimuthRad = azimuthRad - M_PI_2;
 
                     float lDistance = fChartsPrt->range();
                     float lX = pos.n + lDistance * qCos(leftAzimuthRad);
@@ -102,10 +101,11 @@ void SideScanView::updateData()
                     evenIndices.append(currIndx++);
 
                     isOdd_.append(false);
+                    usedIndx_.append(i);
                 }
 
                 if (sChartsPrt) {
-                    double rightAzimuthRad = azimuthRad - M_PI_2;
+                    double rightAzimuthRad = azimuthRad + M_PI_2;
 
                     float rDistance = sChartsPrt->range();
                     float rX = pos.n + rDistance * qCos(rightAzimuthRad);
@@ -118,6 +118,7 @@ void SideScanView::updateData()
                     oddIndices.append(currIndx++);
 
                     isOdd_.append(true);
+                    usedIndx_.append(i);
                 }
             }
         }
@@ -127,7 +128,8 @@ void SideScanView::updateData()
     renderImpl->evenIndices_ = evenIndices;
     renderImpl->oddIndices_ = oddIndices;
 
-    updatePixelMatrix(vertices, matrixScaleFactor_);
+    updatePixelMatrix(vertices, matrixScaleFactor_, lineThickness_);
+
     QImage image = pixelMatrixToImage(pixelMatrix_);
     QString imagePath = "C:/Users/salty/Desktop/textures/bres.png";
 
@@ -158,7 +160,7 @@ void SideScanView::setDatasetPtr(Dataset* datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float scaleFactor)
+void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float scaleFactor, int lineThickness)
 {
     if (vertices.isEmpty()) {
         return;
@@ -166,11 +168,8 @@ void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float s
 
     pixelMatrix_.clear();
 
-    auto [minX, maxX] = std::minmax_element(vertices.begin(), vertices.end(),
-                                            [](const QVector3D &a, const QVector3D &b) { return a.x() < b.x(); });
-
-    auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(),
-                                            [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
+    auto [minX, maxX] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.x() < b.x(); });
+    auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
 
     int width = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor)) + 1;
     int height = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor)) + 1;
@@ -178,41 +177,90 @@ void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float s
     pixelMatrix_ = QVector<QVector<Point>>(height, QVector<Point>(width));
 
     for (int i = 0; i < vertices.size(); i += 2) {
-        if (i + 1 < vertices.size()) {
+        if (i + 1 >= vertices.size()) {
+            break;
+        }
 
-            bool isEven = isOdd_[i / 2];
-            QColor currColor = isEven ? QColor(255, 0, 0) : QColor(0, 255, 0);
+        auto epoch = datasetPtr_->fromIndex(usedIndx_[i / 2]);
+        bool isOdd = isOdd_[i / 2];
 
-            QVector3D start = vertices[i];
-            QVector3D end = vertices[i + 1];
+        auto chList = datasetPtr_->channelsList();
+        auto it = chList.begin();
+        int fCh{ it.key() }, sCh{ (++it).key() };
+        auto charts = epoch->chart(isOdd ? sCh : fCh);
 
-            int x1 = static_cast<int>(std::round((start.x() - minX->x()) * scaleFactor));
-            int y1 = static_cast<int>(std::round((start.y() - minY->y()) * scaleFactor));
-            int x2 = static_cast<int>(std::round((end.x() - minX->x()) * scaleFactor));
-            int y2 = static_cast<int>(std::round((end.y() - minY->y()) * scaleFactor));
+        if (!charts) {
+            continue;
+        }
 
-            // Bresenham's algorhitm
-            int dx = std::abs(x2 - x1);
-            int dy = std::abs(y2 - y1);
-            int sx = (x1 < x2) ? 1 : -1;
-            int sy = (y1 < y2) ? 1 : -1;
-            int err = dx - dy;
+        uint64_t chartsSize = charts->amplitude.size();
 
-            while (true) {
-                pixelMatrix_[y1][x1].color = currColor;
+        QVector3D start = vertices[i];
+        QVector3D end = vertices[i + 1];
 
-                if (x1 == x2 && y1 == y2)
-                    break;
+        // from, to pixel points
+        int x1 = static_cast<int>(std::round((start.x() - minX->x()) * scaleFactor));
+        int y1 = static_cast<int>(std::round((start.y() - minY->y()) * scaleFactor));
+        int x2 = static_cast<int>(std::round((end.x() - minX->x()) * scaleFactor));
+        int y2 = static_cast<int>(std::round((end.y() - minY->y()) * scaleFactor));
 
-                int e2 = 2 * err;
-                if (e2 > -dy) {
-                    err -= dy;
-                    x1 += sx;
+        float totalDistance = std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
+
+        // Bresenham's algorhitm
+        int dx = std::abs(x2 - x1);
+        int dy = std::abs(y2 - y1);
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+        int err = dx - dy;
+
+        while (true) { // line passing
+            float currentDistance = std::sqrt(std::pow(x1 - static_cast<int>(std::round((start.x() - minX->x()) * scaleFactor)), 2) +
+                                              std::pow(y1 - static_cast<int>(std::round((start.y() - minY->y()) * scaleFactor)), 2));
+            float progress = currentDistance / totalDistance;
+
+            // pixel point
+            QVector3D pixelPos( start.x() + progress * (end.x() - start.x()),
+                                start.y() + progress * (end.y() - start.y()),
+                                -1.f * static_cast<float>(epoch->distProccesing(isOdd ? fCh : sCh)));
+
+            // boat point
+            QVector3D boatPos(  epoch->getPositionGNSS().ned.n,
+                                epoch->getPositionGNSS().ned.e,
+                                0.0f);
+
+            float beamDist = pixelPos.distanceToPoint(boatPos);
+            uint64_t ampIndx = static_cast<uint64_t>(std::floor(beamDist * 100.0f));
+
+            // coloring
+            for (int dx = -lineThickness; dx <= lineThickness; ++dx) {
+                for (int dy = -lineThickness; dy <= lineThickness; ++dy) {
+                    int nx = x1 + dx;
+                    int ny = y1 + dy;
+                    if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
+
+                        if ((!isOdd && progress > 0.995f) || (isOdd && progress < 0.005f)) { // red line
+                            pixelMatrix_[ny][nx].color = QColor(255, 0, 0);
+                        }
+                        else if (chartsSize > ampIndx) {
+                            int cVal = charts->amplitude[ampIndx] * (1.5 + ampIndx * 0.0002f);
+                            cVal = std::min(255, cVal);
+                            pixelMatrix_[ny][nx].color = QColor(cVal, cVal, cVal);
+                        }
+                    }
                 }
-                if (e2 < dx) {
-                    err += dx;
-                    y1 += sy;
-                }
+            }
+
+            if (x1 == x2 && y1 == y2)
+                break;
+
+            int e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x1 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y1 += sy;
             }
         }
     }
@@ -229,12 +277,21 @@ QImage SideScanView::pixelMatrixToImage(const QVector<QVector<Point>> &pixelMatr
 
     QImage image(width, height, QImage::Format_RGB32);
     image.fill(Qt::white);
-
+    QColor white(0, 0, 0, 255);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            image.setPixel(x, y, pixelMatrix[y][x].color.rgb());
+
+            if (pixelMatrix[y][x].color != QColor()) {
+                image.setPixel(x, y, pixelMatrix[y][x].color.rgb());
+            }
+            else {
+                image.setPixel(x, y, white.rgb());
+            }
         }
     }
 
-    return image;
+    QTransform transform;
+    transform.rotate(-90.0f);
+
+    return image.transformed(transform);
 }
