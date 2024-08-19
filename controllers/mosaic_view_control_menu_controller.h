@@ -20,6 +20,7 @@ public:
     Q_INVOKABLE void onUpdateMosaicViewButtonClicked();
     Q_INVOKABLE void onUpdate2MosaicViewButtonClicked();
     Q_INVOKABLE void onClearMosaicViewButtonClicked();
+    Q_INVOKABLE void onGridVisibleMosaicViewButtonClicked(bool state);
 
 Q_SIGNALS:
 

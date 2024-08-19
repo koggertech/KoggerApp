@@ -23,6 +23,7 @@ public:
         QVector<int> indices_;
         QVector<QVector2D> texCoords_;
         GLuint textureId_;
+        bool gridVisible_;
     };
 
     explicit MosaicView(QObject* parent = nullptr);
@@ -30,6 +31,7 @@ public:
     void setTextureId(GLuint textureId);
     void updateData();
     void clear();
+    void setGridVisible(bool state);
 
 private:
     /*data*/

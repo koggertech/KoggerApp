@@ -281,6 +281,22 @@ ColumnLayout {
                 }
 
                 CButton {
+                    text: "Grid visible"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: true
+
+                    onClicked: {
+                        MosaicViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+
+                CButton {
                     text: "Image"
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200

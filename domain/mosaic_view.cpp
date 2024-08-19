@@ -15,7 +15,8 @@ MosaicView::~MosaicView()
 }
 
 MosaicView::MosaicViewRenderImplementation::MosaicViewRenderImplementation() :
-    textureId_(0)
+    textureId_(0),
+    gridVisible_(true)
 {
 
 }
@@ -28,7 +29,9 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx, c
     if (indices_.isEmpty())
         return;
 
-    gridRenderImpl_.render(ctx, mvp, shaderProgramMap);
+    if (gridVisible_) {
+        gridRenderImpl_.render(ctx, mvp, shaderProgramMap);
+    }
 
     auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
     if (!shaderProgram) {
@@ -151,11 +154,20 @@ void MosaicView::updateData()
 
 void MosaicView::clear()
 {
-    RENDER_IMPL(MosaicView)->gridRenderImpl_.clearData();
-    RENDER_IMPL(MosaicView)->indices_.clear();
-    RENDER_IMPL(MosaicView)->texCoords_.clear();
-    RENDER_IMPL(MosaicView)->m_data.clear();
-    RENDER_IMPL(MosaicView)->textureId_ = 0;
+    auto renderImpl = RENDER_IMPL(MosaicView);
+
+    renderImpl->gridRenderImpl_.clearData();
+    renderImpl->indices_.clear();
+    renderImpl->texCoords_.clear();
+    renderImpl->m_data.clear();
+    renderImpl->textureId_ = 0;
+
+    Q_EMIT changed();
+}
+
+void MosaicView::setGridVisible(bool state)
+{
+    RENDER_IMPL(MosaicView)->gridVisible_ = state;
 
     Q_EMIT changed();
 }

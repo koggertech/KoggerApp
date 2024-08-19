@@ -102,6 +102,17 @@ void MosaicViewControlMenuController::onClearMosaicViewButtonClicked()
     m_graphicsSceneView->getMosaicViewPtr()->clear();
 }
 
+void MosaicViewControlMenuController::onGridVisibleMosaicViewButtonClicked(bool state)
+{
+    qDebug() << "onGridVisibleMosaicViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getMosaicViewPtr()->setGridVisible(state);
+}
+
 MosaicView *MosaicViewControlMenuController::getMosaicViewPtr() const
 {
     if (!m_graphicsSceneView) {
