@@ -4,7 +4,10 @@
 
 
 SideScanView::SideScanView(QObject* parent) :
-    SceneObject(new SideScanViewRenderImplementation, parent)
+    SceneObject(new SideScanViewRenderImplementation, parent),
+    datasetPtr_(nullptr),
+    segFChannelId_(-1),
+    segSChannelId_(-1)
 {
 
 }
@@ -56,101 +59,74 @@ void SideScanView::updateData()
         return;
     }
 
-    isOdd_.clear();
-    usedIndx_.clear();
+    updateChannelsIds();
+    clear();
 
+    QVector<char> isOdds;
+    QVector<int> epochIndxs;
+    auto epochCount = datasetPtr_->size();
     auto renderImpl = RENDER_IMPL(SideScanView);
 
-    QVector<QVector3D> vertices;
-    QVector<int> evenIndices;
-    QVector<int> oddIndices;
+    renderImpl->m_data.reserve(epochCount * 4);
+    renderImpl->evenIndices_.reserve(epochCount * 2);
+    renderImpl->oddIndices_.reserve(epochCount * 2);
+    isOdds.reserve(epochCount * 2);
+    epochIndxs.reserve(epochCount * 2);
+    uint64_t currIndx = 0;
 
-    if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
-        auto it = chList.begin();
-        int fCh{ it.key() }, sCh { (++it).key() };
-        uint64_t currIndx = 0;
+    for (int i = 0; i < epochCount; ++i) {
+        auto epoch = datasetPtr_->fromIndex(i);
+        if (!epoch) {
+            continue;
+        }
 
-        for (int i = 0; i < datasetPtr_->size(); ++i) {
-            auto epoch = datasetPtr_->fromIndex(i);
+        auto pos = epoch->getPositionGNSS().ned;
+        auto yaw = epoch->yaw();
 
-            if (!epoch) {
-                continue;
+        if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
+            double azRad = qDegreesToRadians(yaw);
+            if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
+                double leftAzRad = azRad - M_PI_2;
+                float lDist = segFCharts->range();
+                renderImpl->m_data.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad),  0.0f));
+                renderImpl->m_data.append(QVector3D(pos.n, pos.e, 0.0f));
+                renderImpl->evenIndices_.append(currIndx++);
+                renderImpl->evenIndices_.append(currIndx++);
+                isOdds.append('0');
+                epochIndxs.append(i);
             }
 
-            auto pos = epoch->getPositionGNSS().ned;
-            pos.d = 0.0f;
-            auto yaw = epoch->yaw();
-
-            auto fChartsPrt = epoch->chart(fCh);
-            auto sChartsPrt = epoch->chart(sCh);
-
-            if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
-                double azimuthRad = qDegreesToRadians(yaw);
-
-                if (fChartsPrt) {
-                    double leftAzimuthRad = azimuthRad - M_PI_2;
-
-                    float lDistance = fChartsPrt->range();
-                    float lX = pos.n + lDistance * qCos(leftAzimuthRad);
-                    float lY = pos.e + lDistance * qSin(leftAzimuthRad);
-                    float lZ = pos.d;
-
-                    vertices.append(QVector3D(lX, lY, lZ));
-                    evenIndices.append(currIndx++);
-                    vertices.append(QVector3D(pos.n, pos.e, pos.d));
-                    evenIndices.append(currIndx++);
-
-                    isOdd_.append(false);
-                    usedIndx_.append(i);
-                }
-
-                if (sChartsPrt) {
-                    double rightAzimuthRad = azimuthRad + M_PI_2;
-
-                    float rDistance = sChartsPrt->range();
-                    float rX = pos.n + rDistance * qCos(rightAzimuthRad);
-                    float rY = pos.e + rDistance * qSin(rightAzimuthRad);
-                    float rZ = pos.d;
-
-                    vertices.append(QVector3D(pos.n, pos.e, pos.d));
-                    oddIndices.append(currIndx++);
-                    vertices.append(QVector3D(rX, rY, rZ));
-                    oddIndices.append(currIndx++);
-
-                    isOdd_.append(true);
-                    usedIndx_.append(i);
-                }
+            if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
+                double rightAzRad = azRad + M_PI_2;
+                float rDist = segSCharts ->range();
+                renderImpl->m_data.append(QVector3D(pos.n, pos.e, 0.0f));
+                renderImpl->m_data.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                renderImpl->oddIndices_.append(currIndx++);
+                renderImpl->oddIndices_.append(currIndx++);
+                isOdds.append('1');
+                epochIndxs.append(i);
             }
         }
     }
 
-    renderImpl->m_data = vertices;
-    renderImpl->evenIndices_ = evenIndices;
-    renderImpl->oddIndices_ = oddIndices;
-
-    updatePixelMatrix(vertices, matrixScaleFactor_, lineThickness_);
-
-    QImage image = pixelMatrixToImage(pixelMatrix_);
-    QString imagePath = "C:/Users/salty/Desktop/textures/bres.png";
-
-    if (!image.save(imagePath)) {
-        qWarning() << "Failed to save image at" << imagePath;
-    }
-    else {
-        qDebug() << "Image saved successfully at" << imagePath;
-    }
-
-
     Q_EMIT changed();
+
+    // texture processing
+    updateMatrix(renderImpl->m_data, isOdds, epochIndxs, matrixScaleFactor_);
+    QImage image = getImageFromMatrix();
+    QString path = "C:/Users/salty/Desktop/textures/bres.png";
+    saveImageToFile(image, path);
 }
 
 void SideScanView::clear()
 {
     auto renderImpl = RENDER_IMPL(SideScanView);
-
+    renderImpl->m_data.clear();
     renderImpl->evenIndices_.clear();
     renderImpl->oddIndices_.clear();
-    renderImpl->m_data.clear();
+
+    pixelMatrix_.clear();
+    pixelMatrix_.shrink_to_fit();
 
     Q_EMIT changed();
 }
@@ -160,132 +136,194 @@ void SideScanView::setDatasetPtr(Dataset* datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void SideScanView::updatePixelMatrix(const QVector<QVector3D> &vertices, float scaleFactor, int lineThickness)
+void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds, QVector<int> epochIndxs, float scaleFactor, int interpLineWidth, bool sideScanLineDrawing)
 {
     if (vertices.isEmpty()) {
         return;
     }
 
-    pixelMatrix_.clear();
-
     auto [minX, maxX] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.x() < b.x(); });
     auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
+    int matWidth = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor)) + 1;
+    int matHeight = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor)) + 1;
+    pixelMatrix_ = QVector<QVector<Point>>(matHeight, QVector<Point>(matWidth));
 
-    int width = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor)) + 1;
-    int height = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor)) + 1;
-
-    pixelMatrix_ = QVector<QVector<Point>>(height, QVector<Point>(width));
-
-    for (int i = 0; i < vertices.size(); i += 2) {
-        if (i + 1 >= vertices.size()) {
+    // interpolation only to the next epoch, when the segment side matches
+    for (int i = 0; i < vertices.size(); i += 2) { // step for 1 line
+        if (i + 8 >= vertices.size()) {
             break;
         }
+        //qDebug() << "i: " << i;
+        int segFBegVertIndx = i;
+        int segFEndVertIndx = i + 1;
+        int segSBegVertIndx = i + 2;
+        int segSEndVertIndx = i + 3;
+        int segFIndx = i / 2;
+        int segSIndx = (i + 2) / 2;
+        // going to next epoch if needed
+        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] ||
+            isOdds[segFIndx] != isOdds[segSIndx]) {
+            ++segSIndx;
+            segSBegVertIndx += 2;
+            segSEndVertIndx += 2;
+        }
 
-        auto epoch = datasetPtr_->fromIndex(usedIndx_[i / 2]);
-        bool isOdd = isOdd_[i / 2];
-
-        auto chList = datasetPtr_->channelsList();
-        auto it = chList.begin();
-        int fCh{ it.key() }, sCh{ (++it).key() };
-        auto charts = epoch->chart(isOdd ? sCh : fCh);
-
-        if (!charts) {
+        // compliance check
+        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] ||
+            isOdds[segFIndx] != isOdds[segSIndx]) {
+            continue;
+        }
+        // epochs checking
+        auto segFEpoch = datasetPtr_->fromIndex(epochIndxs[segFIndx]);
+        auto segSEpoch = datasetPtr_->fromIndex(epochIndxs[segSIndx]);
+        if (!segFEpoch || !segSEpoch) {
+            continue;
+        }
+        // isOdd checking
+        bool segFIsOdd = isOdds[segFIndx] == '1' ? true : false;
+        bool segSIsOdd = isOdds[segSIndx] == '1' ? true : false;
+        if (segFIsOdd != segSIsOdd) {
+            continue;
+        }
+        // segments checking
+        auto segFCharts = segFEpoch->chart(segFIsOdd ? segSChannelId_ : segFChannelId_);
+        auto segSCharts = segSEpoch->chart(segSIsOdd ? segSChannelId_ : segFChannelId_);
+        if (!segFCharts || !segSCharts) {
+            continue;
+        }
+        // dist procs checking
+        if (!isfinite(segFEpoch->distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_)) ||
+            !isfinite(segSEpoch->distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_))) {
             continue;
         }
 
-        uint64_t chartsSize = charts->amplitude.size();
+        // Bresenham
+        // first segment
+        QVector3D segFBegPoint = !segFIsOdd ? vertices[segFBegVertIndx] : vertices[segFEndVertIndx];
+        QVector3D segSEngPoint = !segFIsOdd ? vertices[segFEndVertIndx] : vertices[segFBegVertIndx];
+        int segFX1 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segFBegPoint.x() - minX->x()) * scaleFactor))));
+        int segFY1 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - minY->y()) * scaleFactor))));
+        int segFX2 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSEngPoint.x() - minX->x()) * scaleFactor))));
+        int segFY2 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - minY->y()) * scaleFactor))));
+        float segFPixTotDist = std::sqrt(std::pow(segFX2 - segFX1, 2) + std::pow(segFY2 - segFY1, 2));
+        int segFDx = std::abs(segFX2 - segFX1);
+        int segFDy = std::abs(segFY2 - segFY1);
+        int segFSx = (segFX1 < segFX2) ? 1 : -1;
+        int segFSy = (segFY1 < segFY2) ? 1 : -1;
+        int segFErr = segFDx - segFDy;
+        // second segment
+        QVector3D segSBegPoint = !segSIsOdd ? vertices[segSBegVertIndx] : vertices[segSEndVertIndx];
+        QVector3D segSEndPoint = !segSIsOdd ? vertices[segSEndVertIndx] : vertices[segSBegVertIndx];
+        int segSX1 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSBegPoint.x() - minX->x()) * scaleFactor))));
+        int segSY1 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - minY->y()) * scaleFactor))));
+        int segSX2 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSEndPoint.x() - minX->x()) * scaleFactor))));
+        int segSY2 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - minY->y()) * scaleFactor))));
+        float segSPixTotDist = std::sqrt(std::pow(segSX2 - segSX1, 2) + std::pow(segSY2 - segSY1, 2));
+        int segSDx = std::abs(segSX2 - segSX1);
+        int segSDy = std::abs(segSY2 - segSY1);
+        int segSSx = (segSX1 < segSX2) ? 1 : -1;
+        int segSSy = (segSY1 < segSY2) ? 1 : -1;
+        int segSErr = segSDx - segSDy;
 
-        QVector3D start = vertices[i];
-        QVector3D end = vertices[i + 1];
-
-        // from, to pixel points
-        int x1 = static_cast<int>(std::round((start.x() - minX->x()) * scaleFactor));
-        int y1 = static_cast<int>(std::round((start.y() - minY->y()) * scaleFactor));
-        int x2 = static_cast<int>(std::round((end.x() - minX->x()) * scaleFactor));
-        int y2 = static_cast<int>(std::round((end.y() - minY->y()) * scaleFactor));
-
-        float totalDistance = std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
-
-        // Bresenham's algorhitm
-        int dx = std::abs(x2 - x1);
-        int dy = std::abs(y2 - y1);
-        int sx = (x1 < x2) ? 1 : -1;
-        int sy = (y1 < y2) ? 1 : -1;
-        int err = dx - dy;
+        // pixel length checking
+        if (!checkLength(segFPixTotDist) ||
+            !checkLength(segSPixTotDist)) {
+            continue;
+        }
 
         while (true) { // line passing
-            float currentDistance = std::sqrt(std::pow(x1 - static_cast<int>(std::round((start.x() - minX->x()) * scaleFactor)), 2) +
-                                              std::pow(y1 - static_cast<int>(std::round((start.y() - minY->y()) * scaleFactor)), 2));
-            float progress = currentDistance / totalDistance;
+            // first segment
+            float segFPixCurrDist = std::sqrt(std::pow(segFX1 - segFX2, 2) + std::pow(segFY1 - segFY2, 2));
+            float segFPerc = segFPixCurrDist / segFPixTotDist;
+            QVector3D segFPixPos(segFBegPoint.x() + segFPerc * (segSEngPoint.x() - segFBegPoint.x()),
+                                 segFBegPoint.y() + segFPerc * (segSEngPoint.y() - segFBegPoint.y()),
+                                 -1.0f * static_cast<float>(segFEpoch->distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_)));
+            QVector3D segFBoatPos(segFEpoch->getPositionGNSS().ned.n, segFEpoch->getPositionGNSS().ned.e, 0.0f);
+            float segFBeamDist = segFPixPos.distanceToPoint(segFBoatPos);
+            QColor segFColor = getFixedColor(segFCharts, static_cast<int>(std::floor(segFBeamDist * amplitudeCoeff_)));
 
-            // pixel point
-            QVector3D pixelPos( start.x() + progress * (end.x() - start.x()),
-                                start.y() + progress * (end.y() - start.y()),
-                                -1.f * static_cast<float>(epoch->distProccesing(isOdd ? fCh : sCh)));
+            // second segment, calc corresponding progress using smoothed interpolation
+            float segSCorrPerc = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
+            QVector3D segSPixPos(segSBegPoint.x() + segSCorrPerc * (segSEndPoint.x() - segSBegPoint.x()),
+                                 segSBegPoint.y() + segSCorrPerc * (segSEndPoint.y() - segSBegPoint.y()),
+                                 -1.0f * static_cast<float>(segSEpoch->distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_)));
+            QVector3D segSBoatPos(segSEpoch->getPositionGNSS().ned.n, segSEpoch->getPositionGNSS().ned.e, 0.0f);
+            float segSBeamDist = segSPixPos.distanceToPoint(segSBoatPos);
+            QColor secondColor = getFixedColor(segSCharts, static_cast<int>(std::floor(segSBeamDist * amplitudeCoeff_)));
 
-            // boat point
-            QVector3D boatPos(  epoch->getPositionGNSS().ned.n,
-                                epoch->getPositionGNSS().ned.e,
-                                0.0f);
+            if (sideScanLineDrawing) {
+                pixelMatrix_[segFY1][segFX1].color = segFColor;
+            }
 
-            float beamDist = pixelPos.distanceToPoint(boatPos);
-            uint64_t ampIndx = static_cast<uint64_t>(std::floor(beamDist * 100.0f));
+            // interpolation between two pixels
+            int interpX1 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segFPixPos.x() - minX->x()) * scaleFactor))));
+            int interpY1 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - minY->y()) * scaleFactor))));
+            int interpX2 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSPixPos.x() - minX->x()) * scaleFactor))));
+            int interpY2 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - minY->y()) * scaleFactor))));
+            float interpPixTotDist = std::sqrt(std::pow(interpX2 - interpX1, 2) + std::pow(interpY2 - interpY1, 2));
 
-            // coloring
-            for (int dx = -lineThickness; dx <= lineThickness; ++dx) {
-                for (int dy = -lineThickness; dy <= lineThickness; ++dy) {
-                    int nx = x1 + dx;
-                    int ny = y1 + dy;
-                    if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
+            if (checkLength(interpPixTotDist)) {
+                for (int step = 0; step <= interpPixTotDist; ++step) {
+                    float interpPerc = static_cast<float>(step) / interpPixTotDist;
+                    int interpX = interpX1 + interpPerc * (interpX2 - interpX1);
+                    int interpY = interpY1 + interpPerc * (interpY2 - interpY1);
+                    QColor interpColor = QColor::fromRgbF((1 - interpPerc) * segFColor.redF()   + interpPerc * secondColor.redF(),
+                                                          (1 - interpPerc) * segFColor.greenF() + interpPerc * secondColor.greenF(),
+                                                          (1 - interpPerc) * segFColor.blueF()  + interpPerc * secondColor.blueF());
 
-                        if ((!isOdd && progress > 0.995f) || (isOdd && progress < 0.005f)) { // red line
-                            pixelMatrix_[ny][nx].color = QColor(255, 0, 0);
-                        }
-                        else if (chartsSize > ampIndx) {
-                            int cVal = charts->amplitude[ampIndx] * (1.5 + ampIndx * 0.0002f);
-                            cVal = std::min(255, cVal);
-                            pixelMatrix_[ny][nx].color = QColor(cVal, cVal, cVal);
+                    for (int offsetX = -interpLineWidth; offsetX <= interpLineWidth; ++offsetX) {
+                        for (int offsetY = -interpLineWidth; offsetY <= interpLineWidth; ++offsetY) {
+                            int applyInterpX = std::min(matWidth - 1,  std::max(0, interpX + offsetX));
+                            int applyInterpY = std::min(matHeight - 1, std::max(0, interpY + offsetY));
+                            pixelMatrix_[applyInterpY][applyInterpX].color = interpColor;
                         }
                     }
                 }
             }
 
-            if (x1 == x2 && y1 == y2)
+            // break at the end of the first segment
+            if (segFX1 == segFX2 && segFY1 == segFY2)
                 break;
 
-            int e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                x1 += sx;
+            // Bresenham
+            int segFE2 = 2 * segFErr;
+            if (segFE2 > -segFDy) {
+                segFErr -= segFDy;
+                segFX1 += segFSx;
             }
-            if (e2 < dx) {
-                err += dx;
-                y1 += sy;
+            if (segFE2 < segFDx) {
+                segFErr += segFDx;
+                segFY1 += segFSy;
+            }
+            int segSE2 = 2 * segSErr;
+            if (segSE2 > -segSDy) {
+                segSErr -= segSDy;
+                segSX1 += segSSx;
+            }
+            if (segSE2 < segSDx) {
+                segSErr += segSDx;
+                segSY1 += segSSy;
             }
         }
     }
 }
 
-QImage SideScanView::pixelMatrixToImage(const QVector<QVector<Point>> &pixelMatrix)
+QImage SideScanView::getImageFromMatrix() const
 {
-    if (pixelMatrix.isEmpty() || pixelMatrix[0].isEmpty()) {
+    if (pixelMatrix_.isEmpty() || pixelMatrix_[0].isEmpty()) {
         return QImage();
     }
 
-    int width = pixelMatrix[0].size();
-    int height = pixelMatrix.size();
+    int width = pixelMatrix_[0].size();
+    int height = pixelMatrix_.size();
 
     QImage image(width, height, QImage::Format_RGB32);
-    image.fill(Qt::white);
-    QColor white(0, 0, 0, 255);
+    image.fill(Qt::black);
+
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-
-            if (pixelMatrix[y][x].color != QColor()) {
-                image.setPixel(x, y, pixelMatrix[y][x].color.rgb());
-            }
-            else {
-                image.setPixel(x, y, white.rgb());
+            if (pixelMatrix_[y][x].color != QColor()) {
+                image.setPixel(x, y, pixelMatrix_[y][x].color.rgb());
             }
         }
     }
@@ -294,4 +332,50 @@ QImage SideScanView::pixelMatrixToImage(const QVector<QVector<Point>> &pixelMatr
     transform.rotate(-90.0f);
 
     return image.transformed(transform);
+}
+
+void SideScanView::saveImageToFile(QImage &image, QString& path) const
+{
+    if (!image.save(path)) {
+        qWarning() << "failed to save image at" << path;
+    }
+    else {
+        qDebug() << "saved successfully at" << path;
+    }
+}
+
+void SideScanView::updateChannelsIds()
+{
+    segFChannelId_ = -1;
+    segSChannelId_ = -1;
+
+    if (datasetPtr_) {
+        if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
+            auto it = chList.begin();
+            segFChannelId_ = it.key();
+            segSChannelId_ = (++it).key();
+        }
+    }
+}
+
+QColor SideScanView::getFixedColor(Epoch::Echogram* charts, int ampIndx) const
+{
+    QColor retVal;
+    if (charts->amplitude.size() > ampIndx) {
+        int cVal = charts->amplitude[ampIndx] * (1.5 + ampIndx * 0.0002f);
+        cVal = std::min(255, cVal);
+        retVal =  QColor(cVal, cVal, cVal);
+    }
+    else {
+        retVal = QColor(0, 0, 0);
+    }
+    return retVal;
+}
+
+bool SideScanView::checkLength(float dist) const
+{
+    if (qFuzzyCompare(1.0f, 1.0f + dist) || (dist < 0.0f)) {
+        return false;
+    }
+    return true;
 }

@@ -34,15 +34,20 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
 
 private:
-    void updatePixelMatrix(const QVector<QVector3D> &vertices, float scaleFactor, int lineThickness);
-    QImage pixelMatrixToImage(const QVector<QVector<Point>> &pixelMatrix);
+    void updateMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds, QVector<int> epochIndxs, float scaleFactor, int interpLineWidth = 1, bool sideScanLineDrawing = false);
+    QImage getImageFromMatrix() const;
+    void saveImageToFile(QImage& image, QString& path) const;
+    void updateChannelsIds();
+    QColor getFixedColor(Epoch::Echogram* charts, int ampIndx) const;
+    bool checkLength(float dist) const;
+
     /*data*/
     const float matrixScaleFactor_ = 20.0f;
+    const float amplitudeCoeff_ = 100.0f;
     const int lineThickness_ = 5;
 
-    Dataset* datasetPtr_ = nullptr;
+    Dataset* datasetPtr_;
     QVector<QVector<Point>> pixelMatrix_;
-
-    QVector<bool> isOdd_; // for left/right echograms
-    QVector<int> usedIndx_; // for epoch
+    int segFChannelId_;
+    int segSChannelId_;
 };
