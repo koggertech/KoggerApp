@@ -146,14 +146,13 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
     auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
     int matWidth = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor)) + 1;
     int matHeight = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor)) + 1;
-    pixelMatrix_ = QVector<QVector<Point>>(matHeight, QVector<Point>(matWidth));
+    pixelMatrix_ = QVector<QVector<Point>>(matHeight + 1, QVector<Point>(matWidth + 1));
 
     // interpolation only to the next epoch, when the segment side matches
     for (int i = 0; i < vertices.size(); i += 2) { // step for 1 line
         if (i + 8 >= vertices.size()) {
             break;
         }
-        //qDebug() << "i: " << i;
         int segFBegVertIndx = i;
         int segFEndVertIndx = i + 1;
         int segSBegVertIndx = i + 2;
@@ -201,10 +200,10 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
         // first segment
         QVector3D segFBegPoint = !segFIsOdd ? vertices[segFBegVertIndx] : vertices[segFEndVertIndx];
         QVector3D segSEngPoint = !segFIsOdd ? vertices[segFEndVertIndx] : vertices[segFBegVertIndx];
-        int segFX1 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segFBegPoint.x() - minX->x()) * scaleFactor))));
-        int segFY1 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - minY->y()) * scaleFactor))));
-        int segFX2 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSEngPoint.x() - minX->x()) * scaleFactor))));
-        int segFY2 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - minY->y()) * scaleFactor))));
+        int segFX1 = std::min(matWidth,  std::max(0, static_cast<int>(std::round((segFBegPoint.x() - minX->x()) * scaleFactor))));
+        int segFY1 = std::min(matHeight, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - minY->y()) * scaleFactor))));
+        int segFX2 = std::min(matWidth,  std::max(0, static_cast<int>(std::round((segSEngPoint.x() - minX->x()) * scaleFactor))));
+        int segFY2 = std::min(matHeight, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - minY->y()) * scaleFactor))));
         float segFPixTotDist = std::sqrt(std::pow(segFX2 - segFX1, 2) + std::pow(segFY2 - segFY1, 2));
         int segFDx = std::abs(segFX2 - segFX1);
         int segFDy = std::abs(segFY2 - segFY1);
@@ -214,10 +213,10 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
         // second segment
         QVector3D segSBegPoint = !segSIsOdd ? vertices[segSBegVertIndx] : vertices[segSEndVertIndx];
         QVector3D segSEndPoint = !segSIsOdd ? vertices[segSEndVertIndx] : vertices[segSBegVertIndx];
-        int segSX1 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSBegPoint.x() - minX->x()) * scaleFactor))));
-        int segSY1 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - minY->y()) * scaleFactor))));
-        int segSX2 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSEndPoint.x() - minX->x()) * scaleFactor))));
-        int segSY2 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - minY->y()) * scaleFactor))));
+        int segSX1 = std::min(matWidth,  std::max(0, static_cast<int>(std::round((segSBegPoint.x() - minX->x()) * scaleFactor))));
+        int segSY1 = std::min(matHeight, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - minY->y()) * scaleFactor))));
+        int segSX2 = std::min(matWidth,  std::max(0, static_cast<int>(std::round((segSEndPoint.x() - minX->x()) * scaleFactor))));
+        int segSY2 = std::min(matHeight, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - minY->y()) * scaleFactor))));
         float segSPixTotDist = std::sqrt(std::pow(segSX2 - segSX1, 2) + std::pow(segSY2 - segSY1, 2));
         int segSDx = std::abs(segSX2 - segSX1);
         int segSDy = std::abs(segSY2 - segSY1);
@@ -256,10 +255,10 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
             }
 
             // interpolation between two pixels
-            int interpX1 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segFPixPos.x() - minX->x()) * scaleFactor))));
-            int interpY1 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - minY->y()) * scaleFactor))));
-            int interpX2 = std::min(matWidth - 1,  std::max(0, static_cast<int>(std::round((segSPixPos.x() - minX->x()) * scaleFactor))));
-            int interpY2 = std::min(matHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - minY->y()) * scaleFactor))));
+            int interpX1 = std::min(matWidth,  std::max(0, static_cast<int>(std::round((segFPixPos.x() - minX->x()) * scaleFactor))));
+            int interpY1 = std::min(matHeight, std::max(0, static_cast<int>(std::round((segFPixPos.y() - minY->y()) * scaleFactor))));
+            int interpX2 = std::min(matWidth,  std::max(0, static_cast<int>(std::round((segSPixPos.x() - minX->x()) * scaleFactor))));
+            int interpY2 = std::min(matHeight, std::max(0, static_cast<int>(std::round((segSPixPos.y() - minY->y()) * scaleFactor))));
             float interpPixTotDist = std::sqrt(std::pow(interpX2 - interpX1, 2) + std::pow(interpY2 - interpY1, 2));
 
             if (checkLength(interpPixTotDist)) {
@@ -273,8 +272,8 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
 
                     for (int offsetX = -interpLineWidth; offsetX <= interpLineWidth; ++offsetX) {
                         for (int offsetY = -interpLineWidth; offsetY <= interpLineWidth; ++offsetY) {
-                            int applyInterpX = std::min(matWidth - 1,  std::max(0, interpX + offsetX));
-                            int applyInterpY = std::min(matHeight - 1, std::max(0, interpY + offsetY));
+                            int applyInterpX = std::min(matWidth,  std::max(0, interpX + offsetX));
+                            int applyInterpY = std::min(matHeight, std::max(0, interpY + offsetY));
                             pixelMatrix_[applyInterpY][applyInterpX].color = interpColor;
                         }
                     }

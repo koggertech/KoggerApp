@@ -42,7 +42,7 @@ private:
     bool checkLength(float dist) const;
 
     /*data*/
-    const float matrixScaleFactor_ = 20.0f;
+    const float matrixScaleFactor_ = 10.0f;
     const float amplitudeCoeff_ = 100.0f;
     const int lineThickness_ = 5;
 
