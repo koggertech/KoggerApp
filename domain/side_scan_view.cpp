@@ -116,6 +116,7 @@ void SideScanView::updateData()
     updateMatrix(renderImpl->m_data, isOdds, epochIndxs, matrixScaleFactor_);
     QString path = "C:/Users/salty/Desktop/textures/bres.png";
     saveImageToFile(image_, path);
+    image_ = QImage();
 }
 
 void SideScanView::clear()
