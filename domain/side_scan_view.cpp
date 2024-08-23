@@ -9,7 +9,7 @@ SideScanView::SideScanView(QObject* parent) :
     segFChannelId_(-1),
     segSChannelId_(-1)
 {
-
+    updateColorTable();
 }
 
 SideScanView::~SideScanView()
@@ -22,7 +22,8 @@ SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation
 
 }
 
-void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
+void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp,
+                                                            const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     if (!m_isVisible) {
         return;
@@ -134,7 +135,8 @@ void SideScanView::setDatasetPtr(Dataset* datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds, QVector<int> epochIndxs, float scaleFactor, int interpLineWidth, bool sideScanLineDrawing)
+void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds,
+                                QVector<int> epochIndxs, float scaleFactor, int interpLineWidth, bool sideScanLineDrawing)
 {
     if (vertices.isEmpty()) {
         return;
@@ -145,7 +147,7 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
     int matWidth = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor)) + 1;
     int matHeight = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor)) + 1;
 
-    image_ = QImage( matWidth + 1, matHeight + 1,  QImage::Format_RGB32);
+    image_ = QImage( matWidth + 1, matHeight + 1,  QImage::Format_Indexed8);
     uchar* imageData = image_.bits();
     int bytesPerLine = image_.bytesPerLine();
     int bytesInPix = bytesPerLine / image_.width();
@@ -181,8 +183,8 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
             continue;
         }
         // isOdd checking
-        bool segFIsOdd = isOdds[segFIndx] == '1' ? true : false;
-        bool segSIsOdd = isOdds[segSIndx] == '1' ? true : false;
+        bool segFIsOdd = isOdds[segFIndx] == '1';
+        bool segSIsOdd = isOdds[segSIndx] == '1';
         if (segFIsOdd != segSIsOdd) {
             continue;
         }
@@ -235,26 +237,24 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
         while (true) { // line passing
             // first segment
             float segFPixCurrDist = std::sqrt(std::pow(segFX1 - segFX2, 2) + std::pow(segFY1 - segFY2, 2));
-            float segFPerc = segFPixCurrDist / segFPixTotDist;
-            QVector3D segFPixPos(segFBegPoint.x() + segFPerc * (segSEngPoint.x() - segFBegPoint.x()),
-                                 segFBegPoint.y() + segFPerc * (segSEngPoint.y() - segFBegPoint.y()),
+            float segFProgress = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
+            QVector3D segFPixPos(segFBegPoint.x() + segFProgress * (segSEngPoint.x() - segFBegPoint.x()),
+                                 segFBegPoint.y() + segFProgress * (segSEngPoint.y() - segFBegPoint.y()),
                                  -1.0f * static_cast<float>(segFEpoch->distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_)));
             QVector3D segFBoatPos(segFEpoch->getPositionGNSS().ned.n, segFEpoch->getPositionGNSS().ned.e, 0.0f);
-            float segFBeamDist = segFPixPos.distanceToPoint(segFBoatPos);
-            QColor segFColor = getFixedColor(segFCharts, static_cast<int>(std::floor(segFBeamDist * amplitudeCoeff_)));
+            auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFPixPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
 
             // second segment, calc corresponding progress using smoothed interpolation
-            float segSCorrPerc = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSPixPos(segSBegPoint.x() + segSCorrPerc * (segSEndPoint.x() - segSBegPoint.x()),
-                                 segSBegPoint.y() + segSCorrPerc * (segSEndPoint.y() - segSBegPoint.y()),
+            float segSCorrProgress = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
+            QVector3D segSPixPos(segSBegPoint.x() + segSCorrProgress * (segSEndPoint.x() - segSBegPoint.x()),
+                                 segSBegPoint.y() + segSCorrProgress * (segSEndPoint.y() - segSBegPoint.y()),
                                  -1.0f * static_cast<float>(segSEpoch->distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_)));
             QVector3D segSBoatPos(segSEpoch->getPositionGNSS().ned.n, segSEpoch->getPositionGNSS().ned.e, 0.0f);
-            float segSBeamDist = segSPixPos.distanceToPoint(segSBoatPos);
-            QColor secondColor = getFixedColor(segSCharts, static_cast<int>(std::floor(segSBeamDist * amplitudeCoeff_)));
+            auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSPixPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
 
             if (sideScanLineDrawing) {
-                uchar* pixelPtr = imageData + segFY1 * bytesPerLine + segFX1 * bytesInPix;
-                *reinterpret_cast<QRgb*>(pixelPtr) = segFColor.rgb();
+                uchar* pixPtr = imageData + segFY1 * bytesPerLine + segFX1 * bytesInPix;
+                *pixPtr = colorTable_[segFColorIndx];
             }
 
             // interpolation between two pixels
@@ -266,19 +266,17 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
 
             if (checkLength(interpPixTotDist)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
-                    float interpPerc = static_cast<float>(step) / interpPixTotDist;
-                    int interpX = interpX1 + interpPerc * (interpX2 - interpX1);
-                    int interpY = interpY1 + interpPerc * (interpY2 - interpY1);
-                    QColor interpColor = QColor::fromRgbF((1 - interpPerc) * segFColor.redF()   + interpPerc * secondColor.redF(),
-                                                          (1 - interpPerc) * segFColor.greenF() + interpPerc * secondColor.greenF(),
-                                                          (1 - interpPerc) * segFColor.blueF()  + interpPerc * secondColor.blueF());
+                    float interpProgress = static_cast<float>(step) / interpPixTotDist;
+                    int interpX = interpX1 + interpProgress * (interpX2 - interpX1);
+                    int interpY = interpY1 + interpProgress * (interpY2 - interpY1);
+                    auto interpColorIndx = static_cast<int>((1 - interpProgress) * segFColorIndx + interpProgress * segSColorIndx);
 
                     for (int offsetX = -interpLineWidth; offsetX <= interpLineWidth; ++offsetX) {
                         for (int offsetY = -interpLineWidth; offsetY <= interpLineWidth; ++offsetY) {
                             int applyInterpX = std::min(matWidth,  std::max(0, interpX + offsetX));
                             int applyInterpY = std::min(matHeight, std::max(0, interpY + offsetY));
                             uchar* pixelPtr = imageData + applyInterpY * bytesPerLine + applyInterpX * bytesInPix;
-                            *reinterpret_cast<QRgb*>(pixelPtr) = interpColor.rgb();
+                            *pixelPtr = colorTable_[interpColorIndx];
                         }
                     }
                 }
@@ -310,7 +308,6 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
         }
     }
 
-
     QTransform transform;
     transform.rotate(-90.0f);
     image_ = image_.transformed(transform);
@@ -340,18 +337,14 @@ void SideScanView::updateChannelsIds()
     }
 }
 
-QColor SideScanView::getFixedColor(Epoch::Echogram* charts, int ampIndx) const
+int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 {
-    QColor retVal;
     if (charts->amplitude.size() > ampIndx) {
         int cVal = charts->amplitude[ampIndx] * (1.5 + ampIndx * 0.0002f);
-        cVal = std::min(255, cVal);
-        retVal =  QColor(cVal, cVal, cVal);
+        cVal = std::min(colorTableSize_, cVal);
+        return cVal;
     }
-    else {
-        retVal = QColor(0, 0, 0);
-    }
-    return retVal;
+    return 0;
 }
 
 bool SideScanView::checkLength(float dist) const
@@ -360,4 +353,14 @@ bool SideScanView::checkLength(float dist) const
         return false;
     }
     return true;
+}
+
+void SideScanView::updateColorTable()
+{
+    int numColors = 256;
+    colorTable_.resize(numColors);
+    for (int i = 0; i < numColors; ++i) {
+        int grayValue = i * 255 / (numColors - 1);
+        colorTable_[i] = qRgb(grayValue, grayValue, grayValue);
+    }
 }
