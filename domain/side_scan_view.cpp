@@ -113,9 +113,8 @@ void SideScanView::updateData()
 
     // texture processing
     updateMatrix(renderImpl->m_data, isOdds, epochIndxs, matrixScaleFactor_);
-    QImage image = getImageFromMatrix();
     QString path = "C:/Users/salty/Desktop/textures/bres.png";
-    saveImageToFile(image, path);
+    saveImageToFile(image_, path);
 }
 
 void SideScanView::clear()
@@ -125,8 +124,7 @@ void SideScanView::clear()
     renderImpl->evenIndices_.clear();
     renderImpl->oddIndices_.clear();
 
-    pixelMatrix_.clear();
-    pixelMatrix_.shrink_to_fit();
+    image_ = QImage();
 
     Q_EMIT changed();
 }
@@ -146,7 +144,11 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
     auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
     int matWidth = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor)) + 1;
     int matHeight = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor)) + 1;
-    pixelMatrix_ = QVector<QVector<Point>>(matHeight + 1, QVector<Point>(matWidth + 1));
+
+    image_ = QImage( matWidth + 1, matHeight + 1,  QImage::Format_RGB32);
+    uchar* imageData = image_.bits();
+    int bytesPerLine = image_.bytesPerLine();
+    int bytesInPix = bytesPerLine / image_.width();
 
     // interpolation only to the next epoch, when the segment side matches
     for (int i = 0; i < vertices.size(); i += 2) { // step for 1 line
@@ -251,7 +253,8 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
             QColor secondColor = getFixedColor(segSCharts, static_cast<int>(std::floor(segSBeamDist * amplitudeCoeff_)));
 
             if (sideScanLineDrawing) {
-                pixelMatrix_[segFY1][segFX1].color = segFColor;
+                uchar* pixelPtr = imageData + segFY1 * bytesPerLine + segFX1 * bytesInPix;
+                *reinterpret_cast<QRgb*>(pixelPtr) = segFColor.rgb();
             }
 
             // interpolation between two pixels
@@ -274,7 +277,8 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
                         for (int offsetY = -interpLineWidth; offsetY <= interpLineWidth; ++offsetY) {
                             int applyInterpX = std::min(matWidth,  std::max(0, interpX + offsetX));
                             int applyInterpY = std::min(matHeight, std::max(0, interpY + offsetY));
-                            pixelMatrix_[applyInterpY][applyInterpX].color = interpColor;
+                            uchar* pixelPtr = imageData + applyInterpY * bytesPerLine + applyInterpX * bytesInPix;
+                            *reinterpret_cast<QRgb*>(pixelPtr) = interpColor.rgb();
                         }
                     }
                 }
@@ -305,32 +309,11 @@ void SideScanView::updateMatrix(const QVector<QVector3D> &vertices, QVector<char
             }
         }
     }
-}
 
-QImage SideScanView::getImageFromMatrix() const
-{
-    if (pixelMatrix_.isEmpty() || pixelMatrix_[0].isEmpty()) {
-        return QImage();
-    }
-
-    int width = pixelMatrix_[0].size();
-    int height = pixelMatrix_.size();
-
-    QImage image(width, height, QImage::Format_RGB32);
-    image.fill(Qt::black);
-
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            if (pixelMatrix_[y][x].color != QColor()) {
-                image.setPixel(x, y, pixelMatrix_[y][x].color.rgb());
-            }
-        }
-    }
 
     QTransform transform;
     transform.rotate(-90.0f);
-
-    return image.transformed(transform);
+    image_ = image_.transformed(transform);
 }
 
 void SideScanView::saveImageToFile(QImage &image, QString& path) const

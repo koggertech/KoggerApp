@@ -35,7 +35,6 @@ public:
 
 private:
     void updateMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds, QVector<int> epochIndxs, float scaleFactor, int interpLineWidth = 1, bool sideScanLineDrawing = false);
-    QImage getImageFromMatrix() const;
     void saveImageToFile(QImage& image, QString& path) const;
     void updateChannelsIds();
     QColor getFixedColor(Epoch::Echogram* charts, int ampIndx) const;
@@ -47,7 +46,7 @@ private:
     const int lineThickness_ = 5;
 
     Dataset* datasetPtr_;
-    QVector<QVector<Point>> pixelMatrix_;
+    QImage image_;
     int segFChannelId_;
     int segSChannelId_;
 };
