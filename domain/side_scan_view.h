@@ -28,28 +28,51 @@ public:
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
-    void updateData();
-    void clear();
+    Q_INVOKABLE void updateData();
+    Q_INVOKABLE void clear();
+    Q_INVOKABLE void setScaleFactor(float scaleFactor);
     void setDatasetPtr(Dataset* datasetPtr);
 
 private:
+    struct MatrixParams {
+        MatrixParams() : width_(-1), height_(-1), minX(0.0f), maxX(0.0f), minY(0.0f), maxY(0.0f) {};
+        int width_;
+        int height_;
+        float minX;
+        float maxX;
+        float minY;
+        float maxY;
+        bool isValid() const {
+            if (width_ == -1 ||
+                height_ == -1 ||
+                qFuzzyCompare(minX, maxX) ||
+                qFuzzyCompare(minY, maxY)) {
+                return false;
+            }
+            return true;
+        }
+    };
+
     void updateColorTable();
     void updateChannelsIds();
-    void updateMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds,
-                      QVector<int> epochIndxs, float scaleFactor, int interpLineWidth = 1, bool sideScanLineDrawing = false);
+    void updateColorMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds,
+                      QVector<int> epochIndxs, int interpLineWidth = 1, bool sideScanLineDrawing = false);
+
+    MatrixParams getMatrixParams(const QVector<QVector3D> &vertices);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
     inline bool checkLength(float dist) const;
     void saveImageToFile(QImage& image, QString& path) const;
 
     /*data*/
-    const float matrixScaleFactor_ = 10.0f;
     const float amplitudeCoeff_ = 100.0f;
     const int lineThickness_ = 5;    
     const int colorTableSize_ = 255;
     QVector<QRgb> colorTable_;
 
     Dataset* datasetPtr_;
+    MatrixParams matParams_;
     QImage image_;
+    float scaleFactor_;
     int segFChannelId_;
     int segSChannelId_;
 };
