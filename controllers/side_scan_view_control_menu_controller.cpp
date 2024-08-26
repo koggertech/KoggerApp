@@ -51,6 +51,17 @@ void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
     m_graphicsSceneView->getSideScanViewPtr()->clear();
 }
 
+void SideScanViewControlMenuController::onScaleSideScanViewSpinBoxValueChanged(int scaleFactor)
+{
+    qDebug() << "onScaleSideScanViewSpinBoxValueChanged";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->setScaleFactor(scaleFactor);
+}
+
 SideScanView* SideScanViewControlMenuController::getSideScanViewPtr() const
 {
     if (!m_graphicsSceneView) {

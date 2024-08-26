@@ -4,6 +4,7 @@
 #include <QVector>
 #include <QVector2D>
 #include <random>
+#include "surfaceprocessor.h"
 
 
 class MosaicView : public SceneObject
@@ -28,10 +29,12 @@ public:
 
     explicit MosaicView(QObject* parent = nullptr);
     virtual ~MosaicView();
+
     void setTextureId(GLuint textureId);
     void updateData();
     void clear();
     void setGridVisible(bool state);
+    void setProcTask(const SurfaceProcessorTask& task);
 
 private:
     /*data*/
@@ -41,4 +44,6 @@ private:
     const int width_ = 25;
     const int height_ = 25;
     const float cellSize_ = 7.0f;
+
+    SurfaceProcessorTask surfaceProcTask_;
 };

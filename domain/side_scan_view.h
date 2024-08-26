@@ -5,6 +5,7 @@
 #include <QVector>
 #include "sceneobject.h"
 #include "plotcash.h"
+#include "surfaceprocessor.h"
 
 
 class SideScanView : public SceneObject
@@ -13,6 +14,7 @@ class SideScanView : public SceneObject
     QML_NAMED_ELEMENT(SideScanView)
 
 public:
+    /*structures*/
     class SideScanViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
@@ -25,26 +27,33 @@ public:
         QVector<int> oddIndices_;
     };
 
+    /*methods*/
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
     Q_INVOKABLE void updateData(const QString& imagePath, const QString& heightMatrixPath);
     Q_INVOKABLE void clear();
-    Q_INVOKABLE void setScaleFactor(float scaleFactor);
+    Q_INVOKABLE void setScaleFactor(int scaleFactor);
+
     void setDatasetPtr(Dataset* datasetPtr);
+    void setProcTask(const SurfaceProcessorTask& task);
+
+public Q_SLOTS:
+    Q_INVOKABLE void setSurfaceData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS);
 
 private:
+    /*structures*/
     struct MatrixParams {
-        MatrixParams() : width_(-1), height_(-1), minX(0.0f), maxX(0.0f), minY(0.0f), maxY(0.0f) {};
-        int width_;
-        int height_;
+        MatrixParams() : width(-1), height(-1), minX(0.0f), maxX(0.0f), minY(0.0f), maxY(0.0f) {};
+        int width;
+        int height;
         float minX;
         float maxX;
         float minY;
         float maxY;
         bool isValid() const {
-            if (width_ == -1 ||
-                height_ == -1 ||
+            if (width == -1 ||
+                height == -1 ||
                 qFuzzyCompare(minX, maxX) ||
                 qFuzzyCompare(minY, maxY)) {
                 return false;
@@ -53,11 +62,13 @@ private:
         }
     };
 
+    /*methods*/
     void updateColorTable();
     void updateChannelsIds();
+
     void updateColorMatrix(const QVector<QVector3D> &vertices, const QVector<char>& isOdds,
                       const QVector<int>& epochIndxs, int interpLineWidth = 1, bool sideScanLineDrawing = false);
-    void updateHeightMatrix(const QVector<QVector3D> &vertices,const QVector<int>& epochIndxs);
+    void updateHeightMatrix();
 
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
@@ -79,4 +90,8 @@ private:
     float scaleFactor_;
     int segFChannelId_;
     int segSChannelId_;
+
+    QVector<QVector3D> surfaceData_;
+    int surfacePrimitiveType_;
+    SurfaceProcessorTask surfaceProcTask_;
 };

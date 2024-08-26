@@ -74,9 +74,6 @@ void MosaicView::updateData()
 {
     auto renderImpl = RENDER_IMPL(MosaicView);
 
-    int localWidth = width_ + 1;
-    int localHeight = height_ + 1;
-
     auto perlinNoise = [](float x, float y, int octaves, float scale, float persistence, float lacunarity) {
         float amplitude = 1.0f;
         float frequency = 1.0f;
@@ -99,27 +96,38 @@ void MosaicView::updateData()
     // vertices, texCoords
     QVector<QVector3D> vertices;
     QVector<QVector2D> texCoords;
-    for (int i = 0; i < localHeight; ++i) {
-        for (int j = 0; j < localWidth; ++j) {
+    for (int i = 0; i < height_; ++i) {
+        for (int j = 0; j < width_; ++j) {
             float x = j * cellSize_;
             float y = i * cellSize_;
             float z = perlinNoise(x, y, 1, 0.1f, 0.5f, 2.0f) * 3.0f + (dis_(gen_));
             vertices.append(QVector3D(x, y, z));
-            texCoords.append(QVector2D(float(j) / (localWidth - 1), float(i) / (localHeight - 1)));
+            texCoords.append(QVector2D(float(j) / (width_ - 1), float(i) / (height_ - 1)));
         }
     }
 
     // indices
     QVector<int> indices;
-    for (int i = 0; i < localHeight - 1; ++i) {
-        for (int j = 0; j < localWidth - 1; ++j) {
-            int topLeft = i * localWidth + j;
+    for (int i = 0; i < height_ - 1; ++i) {
+        for (int j = 0; j < width_ - 1; ++j) {
+            if (i == 2 && j == 2) {
+                continue;
+            }
+            int topLeft = i * width_ + j;
             int topRight = topLeft + 1;
-            int bottomLeft = (i + 1) * localWidth + j;
+            int bottomLeft = (i + 1) * width_ + j;
             int bottomRight = bottomLeft + 1;
+            // 1--3
+            // | /
+            // |/
+            // 2
             indices.append(topLeft);
             indices.append(bottomLeft);
             indices.append(topRight);
+            //    1
+            //   /|
+            //  / |
+            // 2--3
             indices.append(topRight);
             indices.append(bottomLeft);
             indices.append(bottomRight);
@@ -170,4 +178,9 @@ void MosaicView::setGridVisible(bool state)
     RENDER_IMPL(MosaicView)->gridVisible_ = state;
 
     Q_EMIT changed();
+}
+
+void MosaicView::setProcTask(const SurfaceProcessorTask &task)
+{
+    surfaceProcTask_ = task;
 }

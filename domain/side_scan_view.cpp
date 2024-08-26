@@ -10,7 +10,8 @@ SideScanView::SideScanView(QObject* parent) :
     datasetPtr_(nullptr),
     scaleFactor_(10.0f),
     segFChannelId_(-1),
-    segSChannelId_(-1)
+    segSChannelId_(-1),
+    surfacePrimitiveType_(GL_POINTS)
 {
     updateColorTable();
 }
@@ -84,7 +85,7 @@ void SideScanView::updateData(const QString& imagePath, const QString& heightMat
     matParams_ = getMatrixParams(renderImpl->m_data);
     // height matrix
     Q_UNUSED(heightMatrixPath);
-    updateHeightMatrix(renderImpl->m_data, epochIndxs);
+    updateHeightMatrix();
     writeHeightMatrixToFile(heightMatrixPath);
     heightMatrix_.clear();
 
@@ -108,14 +109,26 @@ void SideScanView::clear()
     Q_EMIT changed();
 }
 
-void SideScanView::setScaleFactor(float scaleFactor)
+void SideScanView::setScaleFactor(int scaleFactor)
 {
-    scaleFactor_ = scaleFactor;
+    scaleFactor_ = static_cast<float>(scaleFactor);
 }
 
 void SideScanView::setDatasetPtr(Dataset* datasetPtr)
 {
     datasetPtr_ = datasetPtr;
+}
+
+void SideScanView::setProcTask(const SurfaceProcessorTask &task)
+{
+    surfaceProcTask_ = task;
+}
+
+void SideScanView::setSurfaceData(const QVector<QVector3D> &data, int primitiveType)
+{
+    qDebug() << "SideScanView::setSurfaceData";
+    surfaceData_ = data;
+    surfacePrimitiveType_ = primitiveType;
 }
 
 void SideScanView::updateColorTable()
@@ -153,7 +166,7 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
         return;
     }
 
-    image_ = QImage(matParams_.width_, matParams_.height_,  QImage::Format_Indexed8);
+    image_ = QImage(matParams_.width, matParams_.height,  QImage::Format_Indexed8);
     uchar* imageData = image_.bits();
     int bytesPerLine = image_.bytesPerLine();
     int bytesInPix = bytesPerLine / image_.width();
@@ -210,10 +223,10 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
         // first segment
         QVector3D segFBegPoint = !segFIsOdd ? vertices[segFBegVertIndx] : vertices[segFEndVertIndx];
         QVector3D segSEngPoint = !segFIsOdd ? vertices[segFEndVertIndx] : vertices[segFBegVertIndx];
-        int segFX1 = std::min(matParams_.width_ - 1,  std::max(0, static_cast<int>(std::round((segFBegPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segFY1 = std::min(matParams_.height_ - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - matParams_.minY) * scaleFactor_))));
-        int segFX2 = std::min(matParams_.width_ - 1,  std::max(0, static_cast<int>(std::round((segSEngPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segFY2 = std::min(matParams_.height_ - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - matParams_.minY) * scaleFactor_))));
+        int segFX1 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.x() - matParams_.minX) * scaleFactor_))));
+        int segFY1 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - matParams_.minY) * scaleFactor_))));
+        int segFX2 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.x() - matParams_.minX) * scaleFactor_))));
+        int segFY2 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - matParams_.minY) * scaleFactor_))));
         float segFPixTotDist = std::sqrt(std::pow(segFX2 - segFX1, 2) + std::pow(segFY2 - segFY1, 2));
         int segFDx = std::abs(segFX2 - segFX1);
         int segFDy = std::abs(segFY2 - segFY1);
@@ -223,10 +236,10 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
         // second segment
         QVector3D segSBegPoint = !segSIsOdd ? vertices[segSBegVertIndx] : vertices[segSEndVertIndx];
         QVector3D segSEndPoint = !segSIsOdd ? vertices[segSEndVertIndx] : vertices[segSBegVertIndx];
-        int segSX1 = std::min(matParams_.width_ - 1,  std::max(0, static_cast<int>(std::round((segSBegPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segSY1 = std::min(matParams_.height_ - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - matParams_.minY) * scaleFactor_))));
-        int segSX2 = std::min(matParams_.width_ - 1,  std::max(0, static_cast<int>(std::round((segSEndPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segSY2 = std::min(matParams_.height_ - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - matParams_.minY) * scaleFactor_))));
+        int segSX1 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.x() - matParams_.minX) * scaleFactor_))));
+        int segSY1 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - matParams_.minY) * scaleFactor_))));
+        int segSX2 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.x() - matParams_.minX) * scaleFactor_))));
+        int segSY2 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - matParams_.minY) * scaleFactor_))));
         float segSPixTotDist = std::sqrt(std::pow(segSX2 - segSX1, 2) + std::pow(segSY2 - segSY1, 2));
         int segSDx = std::abs(segSX2 - segSX1);
         int segSDy = std::abs(segSY2 - segSY1);
@@ -264,10 +277,10 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
             }
 
             // interpolation between two pixels
-            int interpX1 = std::min(matParams_.width_ - 1,  std::max(0, static_cast<int>(std::round((segFPixPos.x() - matParams_.minX) * scaleFactor_))));
-            int interpY1 = std::min(matParams_.height_ - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - matParams_.minY) * scaleFactor_))));
-            int interpX2 = std::min(matParams_.width_ - 1,  std::max(0, static_cast<int>(std::round((segSPixPos.x() - matParams_.minX) * scaleFactor_))));
-            int interpY2 = std::min(matParams_.height_ - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - matParams_.minY) * scaleFactor_))));
+            int interpX1 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - matParams_.minX) * scaleFactor_))));
+            int interpY1 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - matParams_.minY) * scaleFactor_))));
+            int interpX2 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - matParams_.minX) * scaleFactor_))));
+            int interpY2 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - matParams_.minY) * scaleFactor_))));
             float interpPixTotDist = std::sqrt(std::pow(interpX2 - interpX1, 2) + std::pow(interpY2 - interpY1, 2));
 
             if (checkLength(interpPixTotDist)) {
@@ -279,10 +292,10 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
 
                     for (int offsetX = -interpLineWidth; offsetX <= interpLineWidth; ++offsetX) {
                         for (int offsetY = -interpLineWidth; offsetY <= interpLineWidth; ++offsetY) {
-                            int applyInterpX = std::min(matParams_.width_ - 1,  std::max(0, interpX + offsetX));
-                            int applyInterpY = std::min(matParams_.height_ - 1, std::max(0, interpY + offsetY));
-                            uchar* pixelPtr = imageData + applyInterpY * bytesPerLine + applyInterpX * bytesInPix;
-                            *pixelPtr = colorTable_[interpColorIndx];
+                            int applyInterpX = std::min(matParams_.width  - 1, std::max(0, interpX + offsetX));
+                            int applyInterpY = std::min(matParams_.height - 1, std::max(0, interpY + offsetY));
+                            uchar* pixPtr = imageData + applyInterpY * bytesPerLine + applyInterpX * bytesInPix;
+                            *pixPtr = colorTable_[interpColorIndx];
                         }
                     }
                 }
@@ -319,19 +332,16 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
     image_ = image_.transformed(transform);
 }
 
-void SideScanView::updateHeightMatrix(const QVector<QVector3D> &vertices, const QVector<int> &epochIndxs)
+void SideScanView::updateHeightMatrix()
 {
-    if (vertices.isEmpty()) {
+    if (surfaceProcTask_.interpGridCellSize() == -1 ||
+        !matParams_.isValid()) {
         return;
     }
 
-    if (!matParams_.isValid()) {
-        return;
-    }
+    //surfaceProcTask_.interpGridCellSize(); // used step in surface step
 
-    Q_UNUSED(epochIndxs);
-
-    heightMatrix_ = QVector(matParams_.width_, QVector(matParams_.height_, 0.0f));
+    heightMatrix_ = QVector(matParams_.width, QVector(matParams_.height, 0.0f));
 }
 
 SideScanView::MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D> &vertices)
@@ -349,8 +359,8 @@ SideScanView::MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D
     retVal.maxX = maxX->x();
     retVal.minY = minY->y();
     retVal.maxY = maxY->y();
-    retVal.width_  = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor_)) + 1;
-    retVal.height_ = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor_)) + 1;
+    retVal.width  = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor_)) + 1;
+    retVal.height = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor_)) + 1;
 
     return retVal;
 }
@@ -394,7 +404,7 @@ void SideScanView::writeHeightMatrixToFile(const QString& path) const
     if (file.open(QIODevice::WriteOnly)) {
         QDataStream out(&file);
 
-        out << matParams_.height_ << matParams_.width_;
+        out << matParams_.height << matParams_.width;
 
         for (const auto& row : heightMatrix_) {
             out.writeRawData(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));

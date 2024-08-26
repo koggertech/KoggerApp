@@ -19,6 +19,7 @@ public:
 
     Q_INVOKABLE void onUpdateSideScanViewButtonClicked(const QString& imagePath, const QString& heightMatrixPath);
     Q_INVOKABLE void onClearSideScanViewButtonClicked();
+    Q_INVOKABLE void onScaleSideScanViewSpinBoxValueChanged(int scaleFactor);
 
 Q_SIGNALS:
 

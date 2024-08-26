@@ -415,6 +415,28 @@ ColumnLayout {
                     CText {
                         text: "Side-Scan"
                     }
+                    MenuRow {
+                        spacing: 4
+                        CText {
+                            text: "scale factor:"
+                        }
+                        SpinBoxCustom {
+                            id: sideScanScaleSpinBox
+                            implicitWidth: 100
+                            from: 1
+                            to: 50
+                            stepSize: 1
+                            value: 10
+
+                            onValueChanged: {
+                                SideScanViewControlMenuController.onScaleSideScanViewSpinBoxValueChanged(sideScanScaleSpinBox.value)
+                            }
+
+                            Settings {
+                               property alias sideScanScaleSpinBox: sideScanScaleSpinBox.value
+                            }
+                        }
+                    }
                     CButton {
                         text: "Update"
                         Layout.fillWidth: true

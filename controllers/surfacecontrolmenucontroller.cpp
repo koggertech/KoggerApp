@@ -28,6 +28,15 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
                                                                         Q_ARG(int, result.primitiveType));
 
                                               m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
+
+                                              QMetaObject::invokeMethod(m_graphicsSceneView->getSideScanViewPtr().get(),
+                                                                        "setSurfaceData",
+                                                                        Qt::QueuedConnection,
+                                                                        Q_ARG(QVector<QVector3D>, result.data),
+                                                                        Q_ARG(int, result.primitiveType));
+                                              m_graphicsSceneView->getSideScanViewPtr()->setProcTask(m_surfaceProcessor.ctask());
+                                              m_graphicsSceneView->getMosaicViewPtr()->setProcTask(m_surfaceProcessor.ctask());
+
                                               if (!result.data.empty()) {
                                                   m_graphicsSceneView->bottomTrack()->surfaceUpdated();
                                               }
