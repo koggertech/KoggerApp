@@ -41,7 +41,7 @@ void MosaicViewControlMenuController::onUseFilterMosaicViewButtonClicked(bool st
     usingFilters_ = state;
 }
 
-void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
+void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked(const QString& imagePath)
 {
     qDebug() << "onUpdateMosaicViewButtonClicked";
 
@@ -49,18 +49,14 @@ void MosaicViewControlMenuController::onUpdateMosaicViewButtonClicked()
         return;
     }
 
-    auto generateImage  = []() -> QImage
-    {
-         QString imagePath = "C:/Users/salty/Desktop/textures/bres.png";
-         QImage image;
-         if (!image.load(imagePath)) {
-             qDebug() << "failed to load image: " << imagePath;
-         }
-         return image;
-    };
-
-    m_graphicsSceneView->setTextureImage(generateImage(), usingFilters_);
-    m_graphicsSceneView->getMosaicViewPtr()->updateData();
+    QImage image;
+    if (!image.load(imagePath)) {
+        qDebug() << "failed to load image: " << imagePath;
+    }
+    else {
+        m_graphicsSceneView->setTextureImage(image, usingFilters_);
+        m_graphicsSceneView->getMosaicViewPtr()->updateData();
+    }
 }
 
 void MosaicViewControlMenuController::onUpdate2MosaicViewButtonClicked()

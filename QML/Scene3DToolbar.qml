@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import Qt.labs.settings 1.1
+import QtQuick.Dialogs 1.2
 
 
 ColumnLayout {
@@ -264,98 +266,178 @@ ColumnLayout {
             }
         }
 
-        RowLayout {
-            ColumnLayout { // mosaic
-                CButton {
-                    text: "Use filters"
+        ColumnLayout {
+            MenuRow {
+                spacing: 4
+                CText {
+                    text: "image:"
+                }
+                CTextField {
+                    id: sideScanImagePathText
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    checkable: true
-                    onClicked: {
-                        MosaicViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
-                    }
-
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
+                    placeholderText: qsTr("Enter image path")
+                    Settings {
+                        property alias sideScanImagePathText: sideScanImagePathText.text
                     }
                 }
-
-                CButton {
-                    text: "Grid visible"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    checkable: true
-                    checked: true
-
+                CheckButton {
+                    icon.source: "./icons/file.svg"
+                    checkable: false
+                    backColor: theme.controlSolidBackColor
+                    borderWidth: 0
+                    implicitWidth: theme.controlHeight
                     onClicked: {
-                        MosaicViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
+                        saveImageFileDialog.open()
                     }
-
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
+                    FileDialog {
+                        id: saveImageFileDialog
+                        title: "Please choose a location to save the image"
+                        folder: shortcuts.home
+                        selectExisting: false
+                        nameFilters: ["Image (*.png)"]
+                        onAccepted: {
+                            sideScanImagePathText.text = saveImageFileDialog.fileUrl.toString().replace("file:///", "")
+                        }
                     }
-                }
-
-                CButton {
-                    text: "Image"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    onClicked: {
-                        MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked()
-                    }
-
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
-                    }
-                }
-                CButton {
-                    text: "Rnd pixels"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    onClicked: {
-                        MosaicViewControlMenuController.onUpdate2MosaicViewButtonClicked()
-                    }
-
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
-                    }
-                }
-                CButton {
-                    text: "Clear"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    onClicked: {
-                        MosaicViewControlMenuController.onClearMosaicViewButtonClicked()
-                    }
-
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
+                    Settings {
+                        property alias saveImageFolder: saveImageFileDialog.folder
                     }
                 }
             }
-            ColumnLayout { // side scan
-                CButton {
-                    text: "Update ss"
+            MenuRow {
+                spacing: 4
+                CText {
+                    text: "height:"
+                }
+                CTextField {
+                    id: sideScanHeightPathText
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    onClicked: {
-                        SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked()
-                    }
-
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
+                    placeholderText: qsTr("Enter path")
+                    Settings {
+                        property alias sideScanHeightPathText: sideScanHeightPathText.text
                     }
                 }
-                CButton {
-                    text: "Clear"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
+                CheckButton {
+                    icon.source: "./icons/file.svg"
+                    checkable: false
+                    backColor: theme.controlSolidBackColor
+                    borderWidth: 0
+                    implicitWidth: theme.controlHeight
                     onClicked: {
-                        SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
+                        saveHeightFileDialog.open()
                     }
+                    FileDialog {
+                        id: saveHeightFileDialog
+                        title: "Please choose a location to save the height matrix"
+                        folder: shortcuts.home
+                        selectExisting: false
+                        nameFilters: ["Binary file (*.bin)"]
+                        onAccepted: {
+                            sideScanHeightPathText.text = saveHeightFileDialog.fileUrl.toString().replace("file:///", "")
+                        }
+                    }
+                    Settings {
+                        property alias saveHeightFolder: saveHeightFileDialog.folder
+                    }
+                }
+            }
+            RowLayout {
+                ColumnLayout { // mosaic
+                    CText {
+                        text: "MosaicView"
+                    }
+                    CButton {
+                        text: "Use filters"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        checkable: true
+                        onClicked: {
+                            MosaicViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+                        }
 
-                    onFocusChanged: {
-                        surfaceSettings.focus = true
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                    CButton {
+                        text: "Grid visible"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        checkable: true
+                        checked: false
+
+                        onClicked: {
+                            MosaicViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                    CButton {
+                        text: "Image"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        onClicked: {
+                            MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked(sideScanImagePathText.text)
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                    CButton {
+                        text: "Random pixels"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        onClicked: {
+                            MosaicViewControlMenuController.onUpdate2MosaicViewButtonClicked()
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                    CButton {
+                        text: "Clear"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        onClicked: {
+                            MosaicViewControlMenuController.onClearMosaicViewButtonClicked()
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                }
+                ColumnLayout { // side scan
+                    CText {
+                        text: "Side-Scan"
+                    }
+                    CButton {
+                        text: "Update"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        onClicked: {
+                            SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(sideScanImagePathText.text, sideScanHeightPathText.text)
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                    CButton {
+                        text: "Clear"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+                        onClicked: {
+                            SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
                     }
                 }
             }

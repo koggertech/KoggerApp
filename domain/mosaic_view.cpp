@@ -16,7 +16,7 @@ MosaicView::~MosaicView()
 
 MosaicView::MosaicViewRenderImplementation::MosaicViewRenderImplementation() :
     textureId_(0),
-    gridVisible_(true)
+    gridVisible_(false)
 {
 
 }

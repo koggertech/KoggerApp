@@ -28,7 +28,7 @@ public:
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
-    Q_INVOKABLE void updateData();
+    Q_INVOKABLE void updateData(const QString& imagePath, const QString& heightMatrixPath);
     Q_INVOKABLE void clear();
     Q_INVOKABLE void setScaleFactor(float scaleFactor);
     void setDatasetPtr(Dataset* datasetPtr);
@@ -55,13 +55,16 @@ private:
 
     void updateColorTable();
     void updateChannelsIds();
-    void updateColorMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds,
-                      QVector<int> epochIndxs, int interpLineWidth = 1, bool sideScanLineDrawing = false);
+    void updateColorMatrix(const QVector<QVector3D> &vertices, const QVector<char>& isOdds,
+                      const QVector<int>& epochIndxs, int interpLineWidth = 1, bool sideScanLineDrawing = false);
+    void updateHeightMatrix(const QVector<QVector3D> &vertices,const QVector<int>& epochIndxs);
 
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
     inline bool checkLength(float dist) const;
-    void saveImageToFile(QImage& image, QString& path) const;
+    void saveImageToFile(const QString& path) const;
+    void writeHeightMatrixToFile(const QString& path) const;
+    void readHeightMatrixFromFile(const QString& path);
 
     /*data*/
     const float amplitudeCoeff_ = 100.0f;
@@ -72,6 +75,7 @@ private:
     Dataset* datasetPtr_;
     MatrixParams matParams_;
     QImage image_;
+    QVector<QVector<float>> heightMatrix_;
     float scaleFactor_;
     int segFChannelId_;
     int segSChannelId_;

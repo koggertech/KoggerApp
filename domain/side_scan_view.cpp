@@ -1,6 +1,8 @@
 #include "side_scan_view.h"
 
 #include <QtMath>
+#include <QFile>
+#include <QDataStream>
 
 
 SideScanView::SideScanView(QObject* parent) :
@@ -18,7 +20,7 @@ SideScanView::~SideScanView()
 
 }
 
-void SideScanView::updateData()
+void SideScanView::updateData(const QString& imagePath, const QString& heightMatrixPath)
 {
     if (!datasetPtr_) {
         qDebug() << "dataset is nullptr!";
@@ -81,11 +83,14 @@ void SideScanView::updateData()
     // processing
     matParams_ = getMatrixParams(renderImpl->m_data);
     // height matrix
-    //
+    Q_UNUSED(heightMatrixPath);
+    updateHeightMatrix(renderImpl->m_data, epochIndxs);
+    writeHeightMatrixToFile(heightMatrixPath);
+    heightMatrix_.clear();
+
     // texture
     updateColorMatrix(renderImpl->m_data, isOdds, epochIndxs);
-    QString path = "C:/Users/salty/Desktop/textures/bres.png";
-    saveImageToFile(image_, path);
+    saveImageToFile(imagePath);
     image_ = QImage();
 }
 
@@ -96,8 +101,9 @@ void SideScanView::clear()
     renderImpl->evenIndices_.clear();
     renderImpl->oddIndices_.clear();
 
-    image_ = QImage();
     matParams_ = MatrixParams();
+    image_ = QImage();
+    heightMatrix_.clear();
 
     Q_EMIT changed();
 }
@@ -136,8 +142,8 @@ void SideScanView::updateChannelsIds()
     }
 }
 
-void SideScanView::updateColorMatrix(const QVector<QVector3D> &vertices, QVector<char>& isOdds,
-                                     QVector<int> epochIndxs, int interpLineWidth, bool sideScanLineDrawing)
+void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const QVector<char>& isOdds,
+                                     const QVector<int>& epochIndxs, int interpLineWidth, bool sideScanLineDrawing)
 {
     if (vertices.isEmpty()) {
         return;
@@ -313,6 +319,21 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D> &vertices, QVector
     image_ = image_.transformed(transform);
 }
 
+void SideScanView::updateHeightMatrix(const QVector<QVector3D> &vertices, const QVector<int> &epochIndxs)
+{
+    if (vertices.isEmpty()) {
+        return;
+    }
+
+    if (!matParams_.isValid()) {
+        return;
+    }
+
+    Q_UNUSED(epochIndxs);
+
+    heightMatrix_ = QVector(matParams_.width_, QVector(matParams_.height_, 0.0f));
+}
+
 SideScanView::MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D> &vertices)
 {
     MatrixParams retVal;
@@ -352,17 +373,67 @@ bool SideScanView::checkLength(float dist) const
     return true;
 }
 
-void SideScanView::saveImageToFile(QImage &image, QString& path) const
+void SideScanView::saveImageToFile(const QString& path) const
 {
-    if (!image.save(path)) {
-        qWarning() << "failed to save image at" << path;
+    if (image_ == QImage()) {
+        qWarning() << "image was not processed";
+        return;
+    }
+
+    if (!image_.save(path)) {
+        qWarning() << "failed to save image at:" << path;
     }
     else {
-        qDebug() << "saved successfully at" << path;
+        qDebug() << "image saved successfully at:" << path;
     }
 }
 
+void SideScanView::writeHeightMatrixToFile(const QString& path) const
+{
+    QFile file(path);
+    if (file.open(QIODevice::WriteOnly)) {
+        QDataStream out(&file);
 
+        out << matParams_.height_ << matParams_.width_;
+
+        for (const auto& row : heightMatrix_) {
+            out.writeRawData(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
+        }
+
+        file.close();
+
+        qDebug() << "height matrix saved successfully at:" << path;
+    }
+    else {
+        qWarning() << "could not open file:" << path << "for writing";
+    }
+}
+
+void SideScanView::readHeightMatrixFromFile(const QString& path)
+{
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly)) {
+        QDataStream in(&file);
+
+        quint32 rows, cols;
+        in >> rows >> cols;
+
+        heightMatrix_.resize(rows);
+        for (quint32 i = 0; i < rows; ++i) {
+            heightMatrix_[i].resize(cols);
+            in.readRawData(reinterpret_cast<char*>(heightMatrix_[i].data()), cols * sizeof(float));
+        }
+
+        file.close();
+
+        qDebug() << "height matrix loaded successfully from:" << path;
+    }
+    else {
+        qWarning() << "could not open file" << path << "for reading";
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 // SideScanViewRenderImplementation
 SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation()
 {

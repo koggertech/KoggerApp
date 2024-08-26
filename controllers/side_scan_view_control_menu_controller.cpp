@@ -29,7 +29,7 @@ void SideScanViewControlMenuController::onSideScanViewVisibilityCheckBoxCheckedC
     m_graphicsSceneView->getSideScanViewPtr()->setVisible(checked);
 }
 
-void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked()
+void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(const QString& imagePath, const QString& heightMatrixPath)
 {
     qDebug() << "onUpdateSideScanViewButtonClicked";
 
@@ -37,7 +37,7 @@ void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked()
         return;
     }
 
-    m_graphicsSceneView->getSideScanViewPtr()->updateData();
+    m_graphicsSceneView->getSideScanViewPtr()->updateData(imagePath, heightMatrixPath);
 }
 
 void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()

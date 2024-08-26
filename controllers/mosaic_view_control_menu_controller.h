@@ -17,7 +17,7 @@ public:
     Q_INVOKABLE void onMosaicViewVisibilityCheckBoxCheckedChanged(bool checked);
 
     Q_INVOKABLE void onUseFilterMosaicViewButtonClicked(bool state);
-    Q_INVOKABLE void onUpdateMosaicViewButtonClicked();
+    Q_INVOKABLE void onUpdateMosaicViewButtonClicked(const QString& imagePath);
     Q_INVOKABLE void onUpdate2MosaicViewButtonClicked();
     Q_INVOKABLE void onClearMosaicViewButtonClicked();
     Q_INVOKABLE void onGridVisibleMosaicViewButtonClicked(bool state);
