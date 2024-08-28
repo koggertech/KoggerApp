@@ -1,8 +1,6 @@
 #include "side_scan_view.h"
 
 #include <QtMath>
-#include <QFile>
-#include <QDataStream>
 
 
 SideScanView::SideScanView(QObject* parent) :
@@ -10,8 +8,7 @@ SideScanView::SideScanView(QObject* parent) :
     datasetPtr_(nullptr),
     scaleFactor_(10.0f),
     segFChannelId_(-1),
-    segSChannelId_(-1),
-    surfacePrimitiveType_(GL_POINTS)
+    segSChannelId_(-1)
 {
     updateColorTable();
 }
@@ -21,24 +18,26 @@ SideScanView::~SideScanView()
 
 }
 
-void SideScanView::updateData(const QString& imagePath, const QString& heightMatrixPath)
+void SideScanView::updateData(bool sideScanLineDrawing, const QString& imagePath)
 {
     if (!datasetPtr_) {
         qDebug() << "dataset is nullptr!";
         return;
     }
 
-    updateChannelsIds();
     clear();
+    updateChannelsIds();
 
+    ////////////////////////////////////////////////////////////////////
+    // prepairing
     QVector<char> isOdds;
     QVector<int> epochIndxs;
     auto epochCount = datasetPtr_->size();
     auto renderImpl = RENDER_IMPL(SideScanView);
 
-    renderImpl->m_data.reserve(epochCount * 4);
-    renderImpl->evenIndices_.reserve(epochCount * 2);
-    renderImpl->oddIndices_.reserve(epochCount * 2);
+    renderImpl->measLinesVertices_.reserve(epochCount * 4);
+    renderImpl->measLinesEvenIndices_.reserve(epochCount * 2);
+    renderImpl->measLinesOddIndices_.reserve(epochCount * 2);
     isOdds.reserve(epochCount * 2);
     epochIndxs.reserve(epochCount * 2);
     uint64_t currIndx = 0;
@@ -57,10 +56,10 @@ void SideScanView::updateData(const QString& imagePath, const QString& heightMat
             if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
                 double leftAzRad = azRad - M_PI_2;
                 float lDist = segFCharts->range();
-                renderImpl->m_data.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad),  0.0f));
-                renderImpl->m_data.append(QVector3D(pos.n, pos.e, 0.0f));
-                renderImpl->evenIndices_.append(currIndx++);
-                renderImpl->evenIndices_.append(currIndx++);
+                renderImpl->measLinesVertices_.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad),  0.0f));
+                renderImpl->measLinesVertices_.append(QVector3D(pos.n, pos.e, 0.0f));
+                renderImpl->measLinesEvenIndices_.append(currIndx++);
+                renderImpl->measLinesEvenIndices_.append(currIndx++);
                 isOdds.append('0');
                 epochIndxs.append(i);
             }
@@ -68,112 +67,41 @@ void SideScanView::updateData(const QString& imagePath, const QString& heightMat
             if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
                 double rightAzRad = azRad + M_PI_2;
                 float rDist = segSCharts ->range();
-                renderImpl->m_data.append(QVector3D(pos.n, pos.e, 0.0f));
-                renderImpl->m_data.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
-                renderImpl->oddIndices_.append(currIndx++);
-                renderImpl->oddIndices_.append(currIndx++);
+                renderImpl->measLinesVertices_.append(QVector3D(pos.n, pos.e, 0.0f));
+                renderImpl->measLinesVertices_.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                renderImpl->measLinesOddIndices_.append(currIndx++);
+                renderImpl->measLinesOddIndices_.append(currIndx++);
                 isOdds.append('1');
                 epochIndxs.append(i);
             }
         }
     }
 
-    Q_EMIT changed();
 
-
+    ////////////////////////////////////////////////////////////////////
     // processing
-    matParams_ = getMatrixParams(renderImpl->m_data);
-    // height matrix
-    Q_UNUSED(heightMatrixPath);
-    updateHeightMatrix();
-    writeHeightMatrixToFile(heightMatrixPath);
-    heightMatrix_.clear();
-
-    // texture
-    updateColorMatrix(renderImpl->m_data, isOdds, epochIndxs);
-    saveImageToFile(imagePath);
-    image_ = QImage();
-}
-
-void SideScanView::clear()
-{
-    auto renderImpl = RENDER_IMPL(SideScanView);
-    renderImpl->m_data.clear();
-    renderImpl->evenIndices_.clear();
-    renderImpl->oddIndices_.clear();
-
-    matParams_ = MatrixParams();
-    image_ = QImage();
-    heightMatrix_.clear();
-
-    Q_EMIT changed();
-}
-
-void SideScanView::setScaleFactor(int scaleFactor)
-{
-    scaleFactor_ = static_cast<float>(scaleFactor);
-}
-
-void SideScanView::setDatasetPtr(Dataset* datasetPtr)
-{
-    datasetPtr_ = datasetPtr;
-}
-
-void SideScanView::setProcTask(const SurfaceProcessorTask &task)
-{
-    surfaceProcTask_ = task;
-}
-
-void SideScanView::setSurfaceData(const QVector<QVector3D> &data, int primitiveType)
-{
-    qDebug() << "SideScanView::setSurfaceData";
-    surfaceData_ = data;
-    surfacePrimitiveType_ = primitiveType;
-}
-
-void SideScanView::updateColorTable()
-{
-    int numColors = 256;
-    colorTable_.resize(numColors);
-    for (int i = 0; i < numColors; ++i) {
-        int grayValue = i * 255 / (numColors - 1);
-        colorTable_[i] = qRgb(grayValue, grayValue, grayValue);
-    }
-}
-
-void SideScanView::updateChannelsIds()
-{
-    segFChannelId_ = -1;
-    segSChannelId_ = -1;
-
-    if (datasetPtr_) {
-        if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
-            auto it = chList.begin();
-            segFChannelId_ = it.key();
-            segSChannelId_ = (++it).key();
-        }
-    }
-}
-
-void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const QVector<char>& isOdds,
-                                     const QVector<int>& epochIndxs, int interpLineWidth, bool sideScanLineDrawing)
-{
-    if (vertices.isEmpty()) {
-        return;
-    }
-
-    if (!matParams_.isValid()) {
-        return;
-    }
-
-    image_ = QImage(matParams_.width, matParams_.height,  QImage::Format_Indexed8);
+    // image
+    auto imageMatParams = getMatrixParams(renderImpl->measLinesVertices_);
+    image_ = QImage(imageMatParams.width, imageMatParams.height,  QImage::Format_Indexed8);
+    image_.fill(Qt::black);
     uchar* imageData = image_.bits();
     int bytesPerLine = image_.bytesPerLine();
     int bytesInPix = bytesPerLine / image_.width();
+    // height matrix
+    const int hMatWidth = imageMatParams.unscaledWidth / heightStep_ + 1;
+    const int hMatHeight = imageMatParams.unscaledHeight / heightStep_  + 1;
+    QVector<QVector3D> heightVertices(hMatWidth * hMatHeight, QVector3D());
+    for (int i = 0; i < hMatHeight; ++i) {
+        for (int j = 0; j < hMatWidth; ++j) {
+            float x = imageMatParams.minX + j * heightStep_;
+            float y = imageMatParams.minY + i * heightStep_;
+            heightVertices[i * hMatWidth + j] = QVector3D(x, y, 0.0f);
+        }
+    }
 
-    // interpolation only to the next epoch, when the segment side matches
-    for (int i = 0; i < vertices.size(); i += 2) { // step for 1 line
-        if (i + 8 >= vertices.size()) {
+    // main cycle, interpolation only to the next epoch, when the segment side matches
+    for (int i = 0; i < renderImpl->measLinesVertices_.size(); i += 2) { // 2 - step for 1 segment
+        if (i + 8 >= renderImpl->measLinesVertices_.size()) {
             break;
         }
         int segFBegVertIndx = i;
@@ -221,12 +149,12 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
 
         // Bresenham
         // first segment
-        QVector3D segFBegPoint = !segFIsOdd ? vertices[segFBegVertIndx] : vertices[segFEndVertIndx];
-        QVector3D segSEngPoint = !segFIsOdd ? vertices[segFEndVertIndx] : vertices[segFBegVertIndx];
-        int segFX1 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segFY1 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - matParams_.minY) * scaleFactor_))));
-        int segFX2 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segFY2 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - matParams_.minY) * scaleFactor_))));
+        QVector3D segFBegPoint = !segFIsOdd ? renderImpl->measLinesVertices_[segFBegVertIndx] : renderImpl->measLinesVertices_[segFEndVertIndx];
+        QVector3D segSEngPoint = !segFIsOdd ? renderImpl->measLinesVertices_[segFEndVertIndx] : renderImpl->measLinesVertices_[segFBegVertIndx];
+        int segFX1 = std::min(imageMatParams.width  - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.x() - imageMatParams.minX) * scaleFactor_))));
+        int segFY1 = std::min(imageMatParams.height - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - imageMatParams.minY) * scaleFactor_))));
+        int segFX2 = std::min(imageMatParams.width  - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.x() - imageMatParams.minX) * scaleFactor_))));
+        int segFY2 = std::min(imageMatParams.height - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - imageMatParams.minY) * scaleFactor_))));
         float segFPixTotDist = std::sqrt(std::pow(segFX2 - segFX1, 2) + std::pow(segFY2 - segFY1, 2));
         int segFDx = std::abs(segFX2 - segFX1);
         int segFDy = std::abs(segFY2 - segFY1);
@@ -234,12 +162,12 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
         int segFSy = (segFY1 < segFY2) ? 1 : -1;
         int segFErr = segFDx - segFDy;
         // second segment
-        QVector3D segSBegPoint = !segSIsOdd ? vertices[segSBegVertIndx] : vertices[segSEndVertIndx];
-        QVector3D segSEndPoint = !segSIsOdd ? vertices[segSEndVertIndx] : vertices[segSBegVertIndx];
-        int segSX1 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segSY1 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - matParams_.minY) * scaleFactor_))));
-        int segSX2 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.x() - matParams_.minX) * scaleFactor_))));
-        int segSY2 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - matParams_.minY) * scaleFactor_))));
+        QVector3D segSBegPoint = !segSIsOdd ? renderImpl->measLinesVertices_[segSBegVertIndx] : renderImpl->measLinesVertices_[segSEndVertIndx];
+        QVector3D segSEndPoint = !segSIsOdd ? renderImpl->measLinesVertices_[segSEndVertIndx] : renderImpl->measLinesVertices_[segSBegVertIndx];
+        int segSX1 = std::min(imageMatParams.width  - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.x() - imageMatParams.minX) * scaleFactor_))));
+        int segSY1 = std::min(imageMatParams.height - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - imageMatParams.minY) * scaleFactor_))));
+        int segSX2 = std::min(imageMatParams.width  - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.x() - imageMatParams.minX) * scaleFactor_))));
+        int segSY2 = std::min(imageMatParams.height - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - imageMatParams.minY) * scaleFactor_))));
         float segSPixTotDist = std::sqrt(std::pow(segSX2 - segSX1, 2) + std::pow(segSY2 - segSY1, 2));
         int segSDx = std::abs(segSX2 - segSX1);
         int segSDy = std::abs(segSY2 - segSY1);
@@ -253,21 +181,24 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
             continue;
         }
 
+        float segFDistProc = -1.0f * static_cast<float>(segFEpoch->distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_));
+        float segSDistProc = -1.0f * static_cast<float>(segSEpoch->distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_));
+        float segFDistX = segSEngPoint.x() - segFBegPoint.x();
+        float segFDistY = segSEngPoint.y() - segFBegPoint.y();
+        float segSDistX = segSEndPoint.x() - segSBegPoint.x();
+        float segSDistY = segSEndPoint.y() - segSBegPoint.y();
+
         while (true) { // line passing
             // first segment
             float segFPixCurrDist = std::sqrt(std::pow(segFX1 - segFX2, 2) + std::pow(segFY1 - segFY2, 2));
             float segFProgress = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
-            QVector3D segFPixPos(segFBegPoint.x() + segFProgress * (segSEngPoint.x() - segFBegPoint.x()),
-                                 segFBegPoint.y() + segFProgress * (segSEngPoint.y() - segFBegPoint.y()),
-                                 -1.0f * static_cast<float>(segFEpoch->distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_)));
+            QVector3D segFPixPos(segFBegPoint.x() + segFProgress * segFDistX, segFBegPoint.y() + segFProgress * segFDistY, segFDistProc);
             QVector3D segFBoatPos(segFEpoch->getPositionGNSS().ned.n, segFEpoch->getPositionGNSS().ned.e, 0.0f);
             auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFPixPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
 
             // second segment, calc corresponding progress using smoothed interpolation
             float segSCorrProgress = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSPixPos(segSBegPoint.x() + segSCorrProgress * (segSEndPoint.x() - segSBegPoint.x()),
-                                 segSBegPoint.y() + segSCorrProgress * (segSEndPoint.y() - segSBegPoint.y()),
-                                 -1.0f * static_cast<float>(segSEpoch->distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_)));
+            QVector3D segSPixPos(segSBegPoint.x() + segSCorrProgress * segSDistX, segSBegPoint.y() + segSCorrProgress * segSDistY, segSDistProc);
             QVector3D segSBoatPos(segSEpoch->getPositionGNSS().ned.n, segSEpoch->getPositionGNSS().ned.e, 0.0f);
             auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSPixPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
 
@@ -276,34 +207,52 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
                 *pixPtr = colorTable_[segFColorIndx];
             }
 
-            // interpolation between two pixels
-            int interpX1 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - matParams_.minX) * scaleFactor_))));
-            int interpY1 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - matParams_.minY) * scaleFactor_))));
-            int interpX2 = std::min(matParams_.width  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - matParams_.minX) * scaleFactor_))));
-            int interpY2 = std::min(matParams_.height - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - matParams_.minY) * scaleFactor_))));
+            // color interpolation between two pixels
+            int interpX1 = std::min(imageMatParams.width  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - imageMatParams.minX) * scaleFactor_))));
+            int interpY1 = std::min(imageMatParams.height - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - imageMatParams.minY) * scaleFactor_))));
+            int interpX2 = std::min(imageMatParams.width  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - imageMatParams.minX) * scaleFactor_))));
+            int interpY2 = std::min(imageMatParams.height - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - imageMatParams.minY) * scaleFactor_))));
+            int interpDistX = interpX2 - interpX1;
+            int interpDistY = interpY2 - interpY1;
             float interpPixTotDist = std::sqrt(std::pow(interpX2 - interpX1, 2) + std::pow(interpY2 - interpY1, 2));
+            // height matrix
+            int uinterpX1 = std::min(imageMatParams.unscaledWidth  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - imageMatParams.minX)))));
+            int uinterpY1 = std::min(imageMatParams.unscaledHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - imageMatParams.minY)))));
+            int uinterpX2 = std::min(imageMatParams.unscaledWidth  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - imageMatParams.minX)))));
+            int uinterpY2 = std::min(imageMatParams.unscaledHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - imageMatParams.minY)))));
+            int uinterpDistX = uinterpX2 - uinterpX1;
+            int uinterpDistY = uinterpY2 - uinterpY1;
 
             if (checkLength(interpPixTotDist)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
                     float interpProgress = static_cast<float>(step) / interpPixTotDist;
-                    int interpX = interpX1 + interpProgress * (interpX2 - interpX1);
-                    int interpY = interpY1 + interpProgress * (interpY2 - interpY1);
-                    auto interpColorIndx = static_cast<int>((1 - interpProgress) * segFColorIndx + interpProgress * segSColorIndx);
+                    int interpX = interpX1 + interpProgress * interpDistX;
+                    int interpY = interpY1 + interpProgress * interpDistY;
+                    auto interpColorIndx = static_cast<int>((1 - interpProgress) * segFColorIndx + interpProgress * segSColorIndx);                    
+                    // height matrix
+                    int uinterpX = uinterpX1 + interpProgress * uinterpDistX;
+                    int uinterpY = uinterpY1 + interpProgress * uinterpDistY;
 
-                    for (int offsetX = -interpLineWidth; offsetX <= interpLineWidth; ++offsetX) {
-                        for (int offsetY = -interpLineWidth; offsetY <= interpLineWidth; ++offsetY) {
-                            int applyInterpX = std::min(matParams_.width  - 1, std::max(0, interpX + offsetX));
-                            int applyInterpY = std::min(matParams_.height - 1, std::max(0, interpY + offsetY));
+                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) {
+                        for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
+                            int applyInterpX = std::min(imageMatParams.width  - 1, std::max(0, interpX + offsetX));
+                            int applyInterpY = std::min(imageMatParams.height - 1, std::max(0, interpY + offsetY));
                             uchar* pixPtr = imageData + applyInterpY * bytesPerLine + applyInterpX * bytesInPix;
-                            *pixPtr = colorTable_[interpColorIndx];
+                            *pixPtr = colorTable_[interpColorIndx];                            
+                            // height matrix
+                            int uApplyInterpX = std::min(imageMatParams.unscaledWidth  - 1, std::max(0, uinterpX + offsetX));
+                            int uApplyInterpY = std::min(imageMatParams.unscaledHeight - 1, std::max(0, uinterpY + offsetY));
+                            int heightVerticesIndx = (uApplyInterpY / heightStep_) * hMatWidth + (uApplyInterpX / heightStep_);
+                            heightVertices[heightVerticesIndx][2] = segSPixPos.z();
                         }
                     }
                 }
             }
 
             // break at the end of the first segment
-            if (segFX1 == segFX2 && segFY1 == segFY2)
+            if (segFX1 == segFX2 && segFY1 == segFY2) {
                 break;
+            }
 
             // Bresenham
             int segFE2 = 2 * segFErr;
@@ -327,24 +276,145 @@ void SideScanView::updateColorMatrix(const QVector<QVector3D>& vertices, const Q
         }
     }
 
+    // textureVertices, heightIndices
+    QVector<QVector2D> textureVertices;
+    QVector<int> heightIndices;
+    for (int i = 0; i < hMatHeight ; ++i) {
+        for (int j = 0; j < hMatWidth ; ++j) {
+            textureVertices.append(QVector2D(float(j) / (hMatWidth - 1), float(i) / (hMatHeight - 1)));
+
+            int topLeft = i * hMatWidth + j;
+            int topRight = topLeft + 1;
+            int bottomLeft = (i + 1) * hMatWidth + j;
+            int bottomRight = bottomLeft + 1;
+
+            if (qFuzzyCompare(1.0f, 1.0f + heightVertices[topLeft].z()) || // someone zero
+                qFuzzyCompare(1.0f, 1.0f + heightVertices[topRight].z()) ||
+                qFuzzyCompare(1.0f, 1.0f + heightVertices[bottomLeft].z()) ||
+                qFuzzyCompare(1.0f, 1.0f + heightVertices[bottomRight].z())) {
+                continue;
+            }
+
+            heightIndices.append(topLeft);     // 1--3
+            heightIndices.append(bottomLeft);  // | /
+            heightIndices.append(topRight);    // 2
+            heightIndices.append(topRight);    //    1
+            heightIndices.append(bottomLeft);  //  / |
+            heightIndices.append(bottomRight); // 2--3
+        }
+    }
+
+    // grid
+    QVector<QVector3D> grid;
+    for (int i = 0; i < heightIndices.size(); i += 6) {
+        QVector3D A = heightVertices[heightIndices[i]];
+        QVector3D B = heightVertices[heightIndices[i + 1]];
+        QVector3D C = heightVertices[heightIndices[i + 2]];
+        QVector3D D = heightVertices[heightIndices[i + 5]];
+        A.setZ(A.z() + 0.02);
+        B.setZ(B.z() + 0.02);
+        C.setZ(C.z() + 0.02);
+        D.setZ(D.z() + 0.02);
+        grid.append({ A, B,
+                      B, D,
+                      A, C,
+                      C, D });
+    }
+
+    renderImpl->heightVertices_ = heightVertices;
+    renderImpl->textureVertices_ = textureVertices;
+    renderImpl->heightIndices_ = heightIndices;
+    renderImpl->gridRenderImpl_.setColor(QColor(0, 255, 0));
+    renderImpl->gridRenderImpl_.setData(grid, GL_LINES);
+
     QTransform transform;
     transform.rotate(-90.0f);
     image_ = image_.transformed(transform);
-}
-
-void SideScanView::updateHeightMatrix()
-{
-    if (surfaceProcTask_.interpGridCellSize() == -1 ||
-        !matParams_.isValid()) {
-        return;
+    if (image_.save(imagePath)) {
+        qDebug() << "image saved successfully at:" << imagePath;
     }
 
-    //surfaceProcTask_.interpGridCellSize(); // used step in surface step
-
-    heightMatrix_ = QVector(matParams_.width, QVector(matParams_.height, 0.0f));
+    Q_EMIT changed();    
 }
 
-SideScanView::MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D> &vertices)
+void SideScanView::clear()
+{
+    auto renderImpl = RENDER_IMPL(SideScanView);
+
+    renderImpl->measLinesVertices_.clear();
+    renderImpl->measLinesEvenIndices_.clear();
+    renderImpl->measLinesOddIndices_.clear();
+    renderImpl->heightVertices_.clear();
+    renderImpl->heightIndices_.clear();
+    renderImpl->textureVertices_.clear();
+    renderImpl->gridRenderImpl_.clearData();
+
+    image_ = QImage();
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setScaleFactor(int scaleFactor)
+{
+    scaleFactor_ = static_cast<float>(scaleFactor);
+}
+
+void SideScanView::setMeasLineVisible(bool state)
+{
+    RENDER_IMPL(SideScanView)->measLineVisible_ = state;
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setDatasetPtr(Dataset* datasetPtr)
+{
+    datasetPtr_ = datasetPtr;
+}
+
+void SideScanView::setTextureId(GLuint textureId)
+{
+    RENDER_IMPL(SideScanView)->textureId_= textureId;
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setGridVisible(bool state)
+{
+    RENDER_IMPL(SideScanView)->gridVisible_ = state;
+
+    Q_EMIT changed();
+}
+
+QImage& SideScanView::getImagePtr()
+{
+    return image_;
+}
+
+void SideScanView::updateColorTable()
+{
+    int numColors = 256;
+    colorTable_.resize(numColors);
+    for (int i = 0; i < numColors; ++i) {
+        int grayValue = i * 255 / (numColors - 1);
+        colorTable_[i] = qRgb(grayValue, grayValue, grayValue);
+    }
+}
+
+void SideScanView::updateChannelsIds()
+{
+    segFChannelId_ = -1;
+    segSChannelId_ = -1;
+
+    if (datasetPtr_) {
+        if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
+            auto it = chList.begin();
+            segFChannelId_ = it.key();
+            segSChannelId_ = (++it).key();
+        }
+    }
+}
+
+SideScanView::MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D> &vertices) const
 {
     MatrixParams retVal;
 
@@ -359,8 +429,20 @@ SideScanView::MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D
     retVal.maxX = maxX->x();
     retVal.minY = minY->y();
     retVal.maxY = maxY->y();
-    retVal.width  = static_cast<int>(std::ceil((maxX->x() - minX->x()) * scaleFactor_)) + 1;
-    retVal.height = static_cast<int>(std::ceil((maxY->y() - minY->y()) * scaleFactor_)) + 1;
+
+    retVal.unscaledWidth = static_cast<int>(std::ceil(maxX->x() - minX->x()));
+    int ost = retVal.unscaledWidth % heightStep_;
+    if (ost) {
+        retVal.unscaledWidth = retVal.unscaledWidth - ost + heightStep_;
+    }
+    retVal.width = retVal.unscaledWidth * scaleFactor_;
+
+    retVal.unscaledHeight = static_cast<int>(std::ceil(maxY->y() - minY->y()));
+    ost = retVal.unscaledHeight % heightStep_;
+    if (ost) {
+        retVal.unscaledHeight = retVal.unscaledHeight - ost + heightStep_;
+    }
+    retVal.height = retVal.unscaledHeight * scaleFactor_;
 
     return retVal;
 }
@@ -383,69 +465,13 @@ bool SideScanView::checkLength(float dist) const
     return true;
 }
 
-void SideScanView::saveImageToFile(const QString& path) const
-{
-    if (image_ == QImage()) {
-        qWarning() << "image was not processed";
-        return;
-    }
-
-    if (!image_.save(path)) {
-        qWarning() << "failed to save image at:" << path;
-    }
-    else {
-        qDebug() << "image saved successfully at:" << path;
-    }
-}
-
-void SideScanView::writeHeightMatrixToFile(const QString& path) const
-{
-    QFile file(path);
-    if (file.open(QIODevice::WriteOnly)) {
-        QDataStream out(&file);
-
-        out << matParams_.height << matParams_.width;
-
-        for (const auto& row : heightMatrix_) {
-            out.writeRawData(reinterpret_cast<const char*>(row.data()), row.size() * sizeof(float));
-        }
-
-        file.close();
-
-        qDebug() << "height matrix saved successfully at:" << path;
-    }
-    else {
-        qWarning() << "could not open file:" << path << "for writing";
-    }
-}
-
-void SideScanView::readHeightMatrixFromFile(const QString& path)
-{
-    QFile file(path);
-    if (file.open(QIODevice::ReadOnly)) {
-        QDataStream in(&file);
-
-        quint32 rows, cols;
-        in >> rows >> cols;
-
-        heightMatrix_.resize(rows);
-        for (quint32 i = 0; i < rows; ++i) {
-            heightMatrix_[i].resize(cols);
-            in.readRawData(reinterpret_cast<char*>(heightMatrix_[i].data()), cols * sizeof(float));
-        }
-
-        file.close();
-
-        qDebug() << "height matrix loaded successfully from:" << path;
-    }
-    else {
-        qWarning() << "could not open file" << path << "for reading";
-    }
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // SideScanViewRenderImplementation
-SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation()
+SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation() :
+    textureId_(0),
+    measLineVisible_(true),
+    gridVisible_(false)
 {
 
 }
@@ -457,26 +483,65 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
         return;
     }
 
-    auto shaderProgram = shaderProgramMap.value("static", nullptr);
+    if (gridVisible_) {
+        gridRenderImpl_.render(ctx, mvp, shaderProgramMap);
+    }
 
-    if (!shaderProgram) {
-        qWarning() << "Shader program 'static' not found!";
+    // measure lines
+    if (measLineVisible_) {
+        // static
+        auto staticProgram = shaderProgramMap.value("static", nullptr);
+
+        if (!staticProgram) {
+            qWarning() << "Shader program 'static' not found!";
+            return;
+        }
+
+        staticProgram->bind();
+        staticProgram->setUniformValue("mvp", mvp);
+
+        int posLoc = staticProgram->attributeLocation("position");
+        staticProgram->enableAttributeArray(posLoc);
+
+        staticProgram->setAttributeArray(posLoc, measLinesVertices_.constData());
+
+        staticProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
+        ctx->glDrawElements(GL_LINES, measLinesEvenIndices_.size(), GL_UNSIGNED_INT, measLinesEvenIndices_.constData());
+
+        staticProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
+        ctx->glDrawElements(GL_LINES, measLinesOddIndices_.size(), GL_UNSIGNED_INT, measLinesOddIndices_.constData());
+
+        staticProgram->disableAttributeArray(posLoc);
+        staticProgram->release();
+    }
+
+    // surface
+    auto mosaicProgram = shaderProgramMap.value("mosaic", nullptr);
+
+    if (!mosaicProgram) {
+        qWarning() << "Shader program 'mosaic' not found!";
         return;
     }
 
-    shaderProgram->bind();
-    shaderProgram->setUniformValue("mvp", mvp);
+    mosaicProgram->bind();
+    mosaicProgram->setUniformValue("mvp", mvp);
 
-    int posLoc = shaderProgram->attributeLocation("position");
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, m_data.constData());
+    int newPosLoc = mosaicProgram->attributeLocation("position");
+    int texCoordLoc = mosaicProgram->attributeLocation("texCoord");
 
-    shaderProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
-    ctx->glDrawElements(GL_LINES, evenIndices_.size(), GL_UNSIGNED_INT, evenIndices_.constData());
+    mosaicProgram->enableAttributeArray(newPosLoc);
+    mosaicProgram->enableAttributeArray(texCoordLoc);
 
-    shaderProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
-    ctx->glDrawElements(GL_LINES, oddIndices_.size(), GL_UNSIGNED_INT, oddIndices_.constData());
+    mosaicProgram->setAttributeArray(newPosLoc , heightVertices_.constData());
+    mosaicProgram->setAttributeArray(texCoordLoc, textureVertices_.constData());
 
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
+    if (textureId_) {
+        glBindTexture(GL_TEXTURE_2D, textureId_);
+    }
+
+    ctx->glDrawElements(GL_TRIANGLES, heightIndices_.size(), GL_UNSIGNED_INT, heightIndices_.constData());
+
+    mosaicProgram->disableAttributeArray(texCoordLoc);
+    mosaicProgram->disableAttributeArray(newPosLoc);
+    mosaicProgram->release();
 }

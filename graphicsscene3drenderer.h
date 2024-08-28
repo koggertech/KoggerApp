@@ -5,7 +5,6 @@
 #include <planegrid.h>
 #include <bottomtrack.h>
 #include <surface.h>
-#include "mosaic_view.h"
 #include "side_scan_view.h"
 #include <pointgroup.h>
 #include <polygongroup.h>
@@ -64,7 +63,6 @@ private:
     CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
     Surface::SurfaceRenderImplementation m_surfaceRenderImpl;
-    MosaicView::MosaicViewRenderImplementation mosaicViewRenderImpl_;
     SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;

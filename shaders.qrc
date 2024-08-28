@@ -8,7 +8,7 @@
         <file>shaders/text.vsh</file>
         <file>shaders/texture.fsh</file>
         <file>shaders/texture.vsh</file>
-        <file>shaders/mosaic_view.fsh</file>
-        <file>shaders/mosaic_view.vsh</file>
+        <file>shaders/mosaic.fsh</file>
+        <file>shaders/mosaic.vsh</file>
     </qresource>
 </RCC>

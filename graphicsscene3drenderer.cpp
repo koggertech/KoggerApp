@@ -59,9 +59,9 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error linking shaders in shader program.";
 
     // mosaic
-    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mosaic_view.vsh"))
+    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mosaic.vsh"))
         qCritical() << "Error adding mosaic vertex shader from source file.";
-    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/mosaic_view.fsh"))
+    if (!m_shaderProgramMap["mosaic"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/mosaic.fsh"))
         qCritical() << "Error adding mosaic fragment shader from source file.";
     if (!m_shaderProgramMap["mosaic"]->link())
         qCritical() << "Error linking mosaic shaders in shader program.";
@@ -94,7 +94,6 @@ void GraphicsScene3dRenderer::drawObjects()
     m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
-    mosaicViewRenderImpl_.render(this,       m_projection * view * m_model, m_shaderProgramMap);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);

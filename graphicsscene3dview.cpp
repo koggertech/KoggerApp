@@ -17,7 +17,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     m_surface(std::make_shared<Surface>()),
-    mosaicView_(std::make_shared<MosaicView>()),
     sideScanView_(std::make_shared<SideScanView>()),
     m_boatTrack(std::make_shared<BoatTrack>()),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
@@ -42,7 +41,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_navigationArrow->setColor({ 255, 0, 0 });
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(mosaicView_.get(), &MosaicView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
@@ -53,7 +51,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_navigationArrow.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(mosaicView_.get(), &MosaicView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -89,11 +86,6 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
 std::shared_ptr<Surface> GraphicsScene3dView::surface() const
 {
     return m_surface;
-}
-
-std::shared_ptr<MosaicView> GraphicsScene3dView::getMosaicViewPtr() const
-{
-    return mosaicView_;
 }
 
 std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
@@ -140,7 +132,6 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
-    mosaicView_->clearData();
     sideScanView_->clearData();
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
@@ -169,7 +160,7 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
 
 void GraphicsScene3dView::setTextureId(GLuint id)
 {
-    mosaicView_->setTextureId(id);
+    sideScanView_->setTextureId(id);
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -571,7 +562,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
-    m_renderer->mosaicViewRenderImpl_       = *(dynamic_cast<MosaicView::MosaicViewRenderImplementation*>(view->mosaicView_->m_renderImpl));
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));

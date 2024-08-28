@@ -234,11 +234,11 @@ ColumnLayout {
         }
     }
 
-    // mosaicView extra settings
+    // side-scan extra settings
     MenuFrame {
-        id: mosaicViewSettings
-        visible: mosaicViewCheckButton.hovered || isHovered || mosaicViewCheckButton.longPressTriggered
-        z: mosaicViewSettings.visible
+        id: sideScanViewSettings
+        visible: sideScanViewCheckButton.hovered || isHovered || sideScanViewCheckButton.longPressTriggered
+        z: sideScanViewSettings.visible
         Layout.alignment: Qt.AlignRight
 
         onIsHoveredChanged: {
@@ -248,8 +248,8 @@ ColumnLayout {
                 }
             }
             else {
-                if (!isHovered || !mosaicViewCheckButton.hovered) {
-                    mosaicViewCheckButton.longPressTriggered = false
+                if (!isHovered || !sideScanViewCheckButton.hovered) {
+                    sideScanViewCheckButton.longPressTriggered = false
                 }
             }
         }
@@ -262,16 +262,37 @@ ColumnLayout {
 
         onFocusChanged: {
             if (!focus) {
-                mosaicViewCheckButton.longPressTriggered = false
+                sideScanViewCheckButton.longPressTriggered = false
             }
         }
 
         ColumnLayout {
+            RowLayout {
+                CText {
+                    text: "scale factor:"
+                }
+
+                SpinBoxCustom {
+                    id: sideScanScaleSpinBox
+                    implicitWidth: 100
+                    from: 1
+                    to: 50
+                    stepSize: 1
+                    value: 10
+
+                    Settings {
+                       property alias sideScanScaleSpinBox: sideScanScaleSpinBox.value
+                    }
+                }
+            }
+
             MenuRow {
                 spacing: 4
+
                 CText {
-                    text: "image:"
+                    text: "image save path:"
                 }
+
                 CTextField {
                     id: sideScanImagePathText
                     Layout.fillWidth: true
@@ -280,6 +301,7 @@ ColumnLayout {
                         property alias sideScanImagePathText: sideScanImagePathText.text
                     }
                 }
+
                 CheckButton {
                     icon.source: "./icons/file.svg"
                     checkable: false
@@ -304,163 +326,87 @@ ColumnLayout {
                     }
                 }
             }
-            MenuRow {
-                spacing: 4
-                CText {
-                    text: "height:"
+
+            CButton {
+                text: "Use filters"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                onClicked: {
+                    SideScanViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
                 }
-                CTextField {
-                    id: sideScanHeightPathText
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("Enter path")
-                    Settings {
-                        property alias sideScanHeightPathText: sideScanHeightPathText.text
-                    }
-                }
-                CheckButton {
-                    icon.source: "./icons/file.svg"
-                    checkable: false
-                    backColor: theme.controlSolidBackColor
-                    borderWidth: 0
-                    implicitWidth: theme.controlHeight
-                    onClicked: {
-                        saveHeightFileDialog.open()
-                    }
-                    FileDialog {
-                        id: saveHeightFileDialog
-                        title: "Please choose a location to save the height matrix"
-                        folder: shortcuts.home
-                        selectExisting: false
-                        nameFilters: ["Binary file (*.bin)"]
-                        onAccepted: {
-                            sideScanHeightPathText.text = saveHeightFileDialog.fileUrl.toString().replace("file:///", "")
-                        }
-                    }
-                    Settings {
-                        property alias saveHeightFolder: saveHeightFileDialog.folder
-                    }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
                 }
             }
-            RowLayout {
-                ColumnLayout { // mosaic
-                    CText {
-                        text: "MosaicView"
-                    }
-                    CButton {
-                        text: "Use filters"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        checkable: true
-                        onClicked: {
-                            MosaicViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
-                        }
+            CButton {
+                id: interpMeasLinesButton
 
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
-                    CButton {
-                        text: "Grid visible"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        checkable: true
-                        checked: false
+                text: "Interp meas lines"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                checked: false
 
-                        onClicked: {
-                            MosaicViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
-                        }
-
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
-                    CButton {
-                        text: "Image"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        onClicked: {
-                            MosaicViewControlMenuController.onUpdateMosaicViewButtonClicked(sideScanImagePathText.text)
-                        }
-
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
-                    CButton {
-                        text: "Random pixels"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        onClicked: {
-                            MosaicViewControlMenuController.onUpdate2MosaicViewButtonClicked()
-                        }
-
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
-                    CButton {
-                        text: "Clear"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        onClicked: {
-                            MosaicViewControlMenuController.onClearMosaicViewButtonClicked()
-                        }
-
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
+                onFocusChanged: {
+                    surfaceSettings.focus = true
                 }
-                ColumnLayout { // side scan
-                    CText {
-                        text: "Side-Scan"
-                    }
-                    MenuRow {
-                        spacing: 4
-                        CText {
-                            text: "scale factor:"
-                        }
-                        SpinBoxCustom {
-                            id: sideScanScaleSpinBox
-                            implicitWidth: 100
-                            from: 1
-                            to: 50
-                            stepSize: 1
-                            value: 10
+            }
+            CButton {
+                text: "Grid visible"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                checked: false
 
-                            onValueChanged: {
-                                SideScanViewControlMenuController.onScaleSideScanViewSpinBoxValueChanged(sideScanScaleSpinBox.value)
-                            }
+                onClicked: {
+                    SideScanViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
+                }
 
-                            Settings {
-                               property alias sideScanScaleSpinBox: sideScanScaleSpinBox.value
-                            }
-                        }
-                    }
-                    CButton {
-                        text: "Update"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        onClicked: {
-                            SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(sideScanImagePathText.text, sideScanHeightPathText.text)
-                        }
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
 
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
-                    CButton {
-                        text: "Clear"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 200
-                        onClicked: {
-                            SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
-                        }
+            CButton {
+                text: "Meas line visible"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                checked: true
 
-                        onFocusChanged: {
-                            surfaceSettings.focus = true
-                        }
-                    }
+                onClicked: {
+                    SideScanViewControlMenuController.onMeasLineVisibleSideScanViewButtonClicked(checked)
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+            CButton {
+                text: "Update"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                onClicked: {
+                    SideScanViewControlMenuController.onScaleSideScanViewSpinBoxValueChanged(sideScanScaleSpinBox.value)
+                    SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(interpMeasLinesButton.checked, sideScanImagePathText.text)
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+            CButton {
+                text: "Clear"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                onClicked: {
+                    SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
                 }
             }
         }
@@ -605,9 +551,9 @@ ColumnLayout {
             }
         }
 
-        // mosaic view button
+        // side scan view button
         CheckButton {
-            id: mosaicViewCheckButton
+            id: sideScanViewCheckButton
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
@@ -616,44 +562,42 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
-                MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
                 SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
             }
 
             Component.onCompleted: {
-                MosaicViewControlMenuController.onMosaicViewVisibilityCheckBoxCheckedChanged(checked)
                 SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
             }
 
             property bool longPressTriggered: false
 
             MouseArea {
-                id: mosaicViewTouchArea
+                id: sideScanViewTouchArea
                 anchors.fill: parent
                 onPressed: {
-                    mosaicViewLongPressTimer.start()
-                    mosaicViewCheckButton.longPressTriggered = false
+                    sideScanViewLongPressTimer.start()
+                    sideScanViewCheckButton.longPressTriggered = false
                 }
 
                 onReleased: {
-                    if (!mosaicViewCheckButton.longPressTriggered) {
-                        mosaicViewCheckButton.checked = !mosaicViewCheckButton.checked
+                    if (!sideScanViewCheckButton.longPressTriggered) {
+                        sideScanViewCheckButton.checked = !sideScanViewCheckButton.checked
                     }
-                    mosaicViewLongPressTimer.stop()
+                    sideScanViewLongPressTimer.stop()
                 }
 
                 onCanceled: {
-                    mosaicViewLongPressTimer.stop()
+                    sideScanViewLongPressTimer.stop()
                 }
             }
 
             Timer {
-                id: mosaicViewLongPressTimer
+                id: sideScanViewLongPressTimer
                 interval: 100 // ms
                 repeat: false
 
                 onTriggered: {
-                    mosaicViewCheckButton.longPressTriggered = true;
+                    sideScanViewCheckButton.longPressTriggered = true;
                 }
             }
         }

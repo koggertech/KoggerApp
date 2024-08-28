@@ -3,7 +3,8 @@
 
 
 SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *parent) :
-    QmlComponentController(parent)
+    QmlComponentController(parent),
+    usingFilters_(false)
 {
 
 }
@@ -29,7 +30,12 @@ void SideScanViewControlMenuController::onSideScanViewVisibilityCheckBoxCheckedC
     m_graphicsSceneView->getSideScanViewPtr()->setVisible(checked);
 }
 
-void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(const QString& imagePath, const QString& heightMatrixPath)
+void SideScanViewControlMenuController::onUseFilterMosaicViewButtonClicked(bool state)
+{
+    usingFilters_ = state;
+}
+
+void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool interpMeasLines, const QString& imagePath)
 {
     qDebug() << "onUpdateSideScanViewButtonClicked";
 
@@ -37,7 +43,8 @@ void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(const 
         return;
     }
 
-    m_graphicsSceneView->getSideScanViewPtr()->updateData(imagePath, heightMatrixPath);
+    m_graphicsSceneView->getSideScanViewPtr()->updateData(interpMeasLines, imagePath);
+    m_graphicsSceneView->setTextureImage(m_graphicsSceneView->getSideScanViewPtr()->getImagePtr(), usingFilters_);
 }
 
 void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
@@ -60,6 +67,28 @@ void SideScanViewControlMenuController::onScaleSideScanViewSpinBoxValueChanged(i
     }
 
     m_graphicsSceneView->getSideScanViewPtr()->setScaleFactor(scaleFactor);
+}
+
+void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
+{
+    qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->setMeasLineVisible(state);
+}
+
+void SideScanViewControlMenuController::onGridVisibleMosaicViewButtonClicked(bool state)
+{
+    qDebug() << "onGridVisibleMosaicViewButtonClicked";
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->setGridVisible(state);
 }
 
 SideScanView* SideScanViewControlMenuController::getSideScanViewPtr() const
