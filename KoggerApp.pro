@@ -98,9 +98,13 @@ SOURCES += \
     qtandroidserialport/src/qserialportinfo_android.cpp \
 }
 
+TRANSLATIONS += languages/translation_en.ts \
+                languages/translation_ru.ts \
+                languages/translation_pl.ts
+
 RESOURCES += QML/qml.qrc \
-    icons.qrc \
-    resources.qrc
+             icons.qrc \
+             resources.qrc
 
 windows {
     RESOURCES += shaders.qrc
