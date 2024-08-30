@@ -119,7 +119,7 @@ ColumnLayout {
                         implicitWidth: theme.controlHeight
 
                         ToolTip.visible: hovered
-                        ToolTip.text: "Settings"
+                        ToolTip.text: qsTr("Settings")
                     }
 
                     CheckButton {
@@ -134,7 +134,7 @@ ColumnLayout {
                         }
 
                         ToolTip.visible: hovered
-                        ToolTip.text: checked ? "Unpin" : "Pin"
+                        ToolTip.text: checked ? qsTr("Unpin") : qsTr("Pin")
                     }
 
                     CheckButton {
@@ -150,7 +150,7 @@ ColumnLayout {
                         }
 
                         ToolTip.visible: hovered
-                        ToolTip.text: "Auto"
+                        ToolTip.text: qsTr("Auto")
                     }
 
                     CheckButton {
@@ -167,7 +167,7 @@ ColumnLayout {
                         }
 
                         ToolTip.visible: hovered
-                        ToolTip.text: "Delete"
+                        ToolTip.text: qsTr("Delete")
                     }
 
                     // CCheck {
@@ -234,7 +234,7 @@ ColumnLayout {
                         small: true
                         leftPadding: 6
                         rightPadding: 0
-                        text: "ip:"
+                        text: qsTr("ip:")
                     }
 
                     CTextField {
@@ -285,7 +285,7 @@ ColumnLayout {
                         small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: "src:"
+                        text: qsTr("src:")
                     }
 
                     CTextField {
@@ -338,7 +338,7 @@ ColumnLayout {
                         small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: "dst:"
+                        text: qsTr("dst:")
                     }
 
                     CTextField {
@@ -377,7 +377,7 @@ ColumnLayout {
 
                     CButton {
                         Layout.alignment: Qt.AlignRight
-                        text: ConnectionStatus ? "Close" : "Open"
+                        text: ConnectionStatus ? qsTr("Close") : qsTr("Open")
                         backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
                         borderRadius: 2
 
@@ -458,7 +458,7 @@ ColumnLayout {
         Layout.fillWidth: false
 
         CButton {
-            text: "+UDP"
+            text: qsTr("+UDP")
             Layout.fillWidth: false
 
             onClicked: {
@@ -470,7 +470,7 @@ ColumnLayout {
 
         CButton {
             id: mavlinkProxy
-            text: "MAVProxy"
+            text: qsTr("MAVProxy")
             Layout.fillWidth: false
             checkable: true
 
@@ -491,7 +491,7 @@ ColumnLayout {
 
         CheckButton {
             id: loggingCheck
-            text: "REC KLF"
+            text: qsTr("REC KLF")
             checkedColor: "red"
             color: "red"
 
@@ -512,7 +512,7 @@ ColumnLayout {
 
         CheckButton {
             id: loggingCheck2
-            text: "REC CSV"
+            text: qsTr("REC CSV")
             checkedColor: "red"
             color: "red"
 
@@ -598,7 +598,7 @@ ColumnLayout {
 
             FileDialog {
                 id: newFileDialog
-                title: "Please choose a file"
+                title: qsTr("Please choose a file")
                 folder: shortcuts.home
 
                 nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
@@ -632,7 +632,7 @@ ColumnLayout {
 
             FileDialog {
                 id: appendFileDialog
-                title: "Please choose a file"
+                title: qsTr("Please choose a file")
                 folder: shortcuts.home
 
                 nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
@@ -1180,7 +1180,7 @@ ColumnLayout {
 
         CButton {
             id: devTab0
-            text: devList[0] ? devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]" : "undefined"
+            text: devList[0] ? devList[0].devName + " " + devList[0].fwVersion + " [" + devList[0].devSN + "]" : qsTr("undefined")
             Layout.fillWidth: true
             opacity: dev === devList[0] ? 1 : 0.5
 
@@ -1191,7 +1191,7 @@ ColumnLayout {
 
         CButton {
             id: devTab1
-            text: devList[1] ? devList[1].devName + " " + devList[1].fwVersion + " [" + devList[1].devSN + "]" : "undefined"
+            text: devList[1] ? devList[1].devName + " " + devList[1].fwVersion + " [" + devList[1].devSN + "]" : qsTr("undefined")
             Layout.fillWidth: true
             opacity: dev === devList[1] ? 1 : 0.5
 
@@ -1202,7 +1202,7 @@ ColumnLayout {
 
         CButton {
             id: devTab2
-            text: devList[2] ? devList[2].devName + " " + devList[2].fwVersion + " [" + devList[2].devSN + "]" : "undefined"
+            text: devList[2] ? devList[2].devName + " " + devList[2].fwVersion + " [" + devList[2].devSN + "]" : qsTr("undefined")
             Layout.fillWidth: true
             opacity: dev === devList[2] ? 1 : 0.5
 

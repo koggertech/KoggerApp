@@ -964,8 +964,8 @@ void Dataset::updateBoatTrack(bool update_all) {
 QStringList Dataset::channelsNameList() {
     QStringList ch_names;
     QList<DatasetChannel> ch_list = channelsList().values();
-    ch_names.append(QString("None"));
-    ch_names.append(QString("First"));
+    ch_names.append(QString(tr("None")));
+    ch_names.append(QString(tr("First")));
     for (const auto& channel : ch_list) {
         ch_names.append(QString("%1").arg(channel.channel));
     }

@@ -144,7 +144,7 @@ public:
 
     void setConsoleVisible(bool vis) {
         _isConsoleVisible = vis;
-        interfaceChanged();
+        emit interfaceChanged();
     }
 
     bool consoleVisible()
@@ -160,7 +160,7 @@ public:
     void setInstrumentsGrade(int instrumentsGrade)
     {
         instrumentsGrade_ = instrumentsGrade;
-        instrumentsGradeChanged();
+        emit instrumentsGradeChanged();
     }
 
 signals:

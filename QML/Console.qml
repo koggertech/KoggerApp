@@ -27,7 +27,7 @@ Rectangle {
                 CCheck {
                     id: consScrollEnable
                     checked: true
-                    text: "auto scroll"
+                    text: qsTr("Auto scroll")
                     Layout.alignment: Qt.AlignRight
 
                     Settings {
@@ -38,7 +38,7 @@ Rectangle {
                 CCheck {
                     id: protoBinConsoled
                     checked: false
-                    text: "Binnary"
+                    text: qsTr("Binnary")
                     Layout.alignment: Qt.AlignRight
 
                     onCheckedChanged: deviceManagerWrapper.protoBinConsoled = protoBinConsoled.checked
