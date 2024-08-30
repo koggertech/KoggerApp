@@ -219,24 +219,25 @@ public class KoggerActivity extends QtActivity
         filter.addAction(ACTION_USB_PERMISSION);
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        _instance.registerReceiver(_instance._usbReceiver, filter);
+        _instance.registerReceiver(_instance._usbReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
 
         // Create intent for usb permission request
-        _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
 
-	// Workaround for QTBUG-73138
-	if (_wifiMulticastLock == null)
-            {
-                WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
-                _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
-                _wifiMulticastLock.setReferenceCounted(true);
-            }
+        // Registering another BroadcastReceiver
+        IntentFilter accessoryFilter = new IntentFilter(ACTION_USB_PERMISSION);
+        accessoryFilter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
+        _instance.registerReceiver(mOpenAccessoryReceiver, accessoryFilter, Context.RECEIVER_NOT_EXPORTED);
 
-	_wifiMulticastLock.acquire();
-	Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
+        // Workaround for QTBUG-73138
+        if (_wifiMulticastLock == null) {
+            WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
+            _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
+            _wifiMulticastLock.setReferenceCounted(true);
+        }
 
-
-
+        _wifiMulticastLock.acquire();
+        Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
     }
 
     @Override
@@ -722,23 +723,21 @@ public class KoggerActivity extends QtActivity
 
     Object probeAccessoriesLock = new Object();
 
-    private void probeAccessories()
-    {
-        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+    private void probeAccessories() {
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
         new Thread(new Runnable() {
             public void run() {
                 synchronized(openAccessoryLock) {
-//                    Log.i(TAG, "probeAccessories");
                     UsbAccessory[] accessories = _usbManager.getAccessoryList();
                     if (accessories != null) {
-                       for (UsbAccessory usbAccessory : accessories) {
-                           if (usbAccessory == null) {
-                               continue;
-                           }
-                           if (_usbManager.hasPermission(usbAccessory)) {
-                               openAccessory(usbAccessory);
-                           }
-                       }
+                        for (UsbAccessory usbAccessory : accessories) {
+                            if (usbAccessory == null) {
+                                continue;
+                            }
+                            if (_usbManager.hasPermission(usbAccessory)) {
+                                openAccessory(usbAccessory);
+                            }
+                        }
                     }
                 }
             }

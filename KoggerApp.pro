@@ -11,6 +11,8 @@ QT += qml
 }
 
 android {
+    ANDROID_TARGET_SDK_VERSION = 34
+
     QT += androidextras
     QT += core-private
     QT += gui-private
@@ -254,7 +256,7 @@ android {
 ##    ANDROID_ABIS = x86
 }
 
-ANDROID_ABIS = armeabi-v7a
+ANDROID_ABIS = armeabi-v7a arm64-v8a x86 x86_64
 
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
