@@ -41,8 +41,11 @@ void loadLanguage(QGuiApplication &app)
 
     if (savedLanguageIndex == -1) {
         currentLanguage = QLocale::system().name().split('_').first();
-        if (availableLanguages.indexOf(currentLanguage) == -1) {
+        if (auto indx = availableLanguages.indexOf(currentLanguage); indx == -1) {
             currentLanguage = availableLanguages.front();
+        }
+        else {
+            settings.setValue("appLanguage", indx);
         }
     }
     else {
