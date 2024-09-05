@@ -350,34 +350,46 @@ void LinkManager::onExpiredTimer()
     }
 }
 
-#ifdef MOTOR
-void LinkManager::openAsSerial(QUuid uuid, bool isMotorDevice)
+void LinkManager::openAsSerial(QUuid uuid, int attribute)
 {
     TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        linkPtr->setIsMotorDevice(isMotorDevice);
+        linkPtr->setAttribute(attribute);
         linkPtr->setIsForceStopped(false);
         linkPtr->openAsSerial();
     }
 }
-#else
-void LinkManager::openAsSerial(QUuid uuid)
+
+// #ifdef MOTOR
+// void LinkManager::openAsSerial(QUuid uuid, int attribute = 0)
+// {
+//     TimerController(timer_.get());
+
+//     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+//         linkPtr->setIsMotorDevice(isMotorDevice);
+//         linkPtr->setIsForceStopped(false);
+//         linkPtr->openAsSerial();
+//     }
+// }
+// #else
+// void LinkManager::openAsSerial(QUuid uuid)
+// {
+//     TimerController(timer_.get());
+
+//     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+//         linkPtr->setIsForceStopped(false);
+//         linkPtr->openAsSerial();
+//     }
+// }
+// #endif
+
+void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
 {
     TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
-        linkPtr->setIsForceStopped(false);
-        linkPtr->openAsSerial();
-    }
-}
-#endif
-
-void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort)
-{
-    TimerController(timer_.get());
-
-    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setAttribute(attribute);
         linkPtr->setIsForceStopped(false);
         linkPtr->updateUdpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsUdp();
@@ -386,11 +398,12 @@ void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int des
     }
 }
 
-void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort)
+void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
 {
     TimerController(timer_.get());
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setAttribute(attribute);
         linkPtr->setIsForceStopped(false);
         linkPtr->updateTcpParameters(address, sourcePort, destinationPort);
         linkPtr->openAsTcp();

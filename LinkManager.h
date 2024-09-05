@@ -30,14 +30,16 @@ public slots:
     void stopTimer();
     void onExpiredTimer();
 
-#ifdef MOTOR
-    void openAsSerial(QUuid uuid, bool isMotorDevice = false);
-#else
-    void openAsSerial(QUuid uuid);
-#endif
+    void openAsSerial(QUuid uuid, int attribute = 0);
 
-    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
-    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+// #ifdef MOTOR
+//     void openAsSerial(QUuid uuid, bool isMotorDevice = false);
+// #else
+//     void openAsSerial(QUuid uuid);
+// #endif
+
+    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
+    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
     void closeLink(QUuid uuid);
     void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);

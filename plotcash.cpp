@@ -228,6 +228,7 @@ void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg) {
     }
 
     last_epoch->setEncoders(angle1_deg, angle2_deg, angle3_deg);
+    qDebug("Encoder was added");
     emit dataUpdate();
 }
 
@@ -280,6 +281,7 @@ void Dataset::rawDataRecieved(RawData raw_data) {
         if(header.channelGroup == 0) {
             last_epoch = addNewEpoch();
         }
+
         ComplexSignals compex_signals = last_epoch->complexSignals();
 
         for(int ich = 0; ich < header.channelCount; ich++) {
@@ -373,6 +375,12 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         addNewEpoch();
         pool_index = endIndex();
     }
+
+    tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
+    tracks[-1].data_.append(QVector3D());
+    tracks[-1].objectColor_ = QColor(0, 255, 255);
+    std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
+    view->setTrackRef(tracks);
 
     _pool[endIndex()].set(data);
     emit dataUpdate();

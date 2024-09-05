@@ -103,14 +103,6 @@ public:
     void setDevDefAddress(int addr);
     int getDevDefAddress();
 
-    int dopplerVeloX();
-    int dopplerVeloY();
-    int dopplerVeloZ();
-    int dopplerDist();
-
-
-
-
     QString devName() { return m_devName; }
     uint32_t devSerialNumber();
     QString devPN();
@@ -174,7 +166,10 @@ signals:
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
+
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void beaconActivationComplete(uint8_t id);
+
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
     void dspSetupChanged();
@@ -226,10 +221,10 @@ public slots:
     void setUartState(bool state);
 
     void askBeaconPosition() {
-        IDBinUsblSolution::AskBeacon ask;
+        IDBinUsblSolution::USBLRequestBeacon ask;
         askBeaconPosition(ask);
     }
-    void askBeaconPosition(IDBinUsblSolution::AskBeacon ask);
+    void askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
 protected:

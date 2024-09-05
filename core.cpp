@@ -189,12 +189,12 @@ bool Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         scene3dViewPtr_->fitAllInView();
 
     datasetPtr_->setRefPositionByFirstValid();
-    datasetPtr_->usblProcessing();
+    // datasetPtr_->usblProcessing();
+    // if (scene3dViewPtr_) {
+    //     scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
+    //     scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
+    // }
 
-    if (scene3dViewPtr_) {
-        scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
-        scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
-    }
 
     QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
     for (int i = 0; i < plot2dList_.size(); i++) {
@@ -786,6 +786,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
     plot2dList_ = object->findChildren<qPlot2D*>();
     scene3dViewPtr_->setDataset(datasetPtr_);
+    datasetPtr_->setScene3D(scene3dViewPtr_);
 
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL) {

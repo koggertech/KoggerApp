@@ -24,7 +24,7 @@ public:
 
     struct UsblObjectParams
     {
-        UsblObjectParams() : isTrackVisible_(true), type_(UsblObjectType::kUndefined), lineWidth_(2.0f), pointRadius_(10.0f), objectColor_(255,55,55), data_() {};
+        UsblObjectParams() : isTrackVisible_(true), type_(UsblObjectType::kUndefined), lineWidth_(3.0f), pointRadius_(30.0f), objectColor_(255,55,55), data_() {};
         UsblObjectParams(bool isTrackVisisble, UsblObjectType type, float lineWidth, float pointRadius, QColor objectColor, QVector<QVector3D> data) :
             isTrackVisible_(isTrackVisisble), type_(type), lineWidth_(lineWidth), pointRadius_(pointRadius), objectColor_(objectColor), data_(data) {};
 

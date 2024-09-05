@@ -19,6 +19,11 @@ typedef enum {
 } LinkType;
 
 typedef enum {
+    LinkAttributeNone,
+    LinkAttributeMotor = 2
+} LinkAttribute;
+
+typedef enum {
     kManual = 0,
     kAuto,
     kAutoOnce
@@ -74,10 +79,10 @@ public:
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
 
-#ifdef MOTOR
-    void        setIsMotorDevice(bool isMotorDevice);
-    bool        getIsMotorDevice() const;
-#endif
+// #ifdef MOTOR
+    void        setAttribute(int attribute) { attribute_ = attribute; }
+    bool        getIsMotorDevice() { return attribute_ == LinkAttributeMotor; }
+// #endif
 
 
 public slots:
@@ -124,9 +129,11 @@ private:
     bool isProxy_;
     bool isForcedStopped_;
 
-#ifdef MOTOR
-    bool isMotorDevice_ = false;
-#endif
+
+    int attribute_ = 0;
+// #ifdef MOTOR
+//     bool isMotorDevice_ = false;
+// #endif
 
 private slots:
     void readyRead();

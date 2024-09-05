@@ -28,16 +28,19 @@ public:
 
 public slots:
 
-#ifdef MOTOR
-    void openAsSerial(QUuid uuid, bool isMotorDevice = false);
-#else
-    void openAsSerial(QUuid uuid);
-#endif
+// #ifdef MOTOR
+//     void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, bool isMotorDevice = false);
+//     void openAsSerial(QUuid uuid, bool isMotorDevice = false);
+// #else
+//     void openAsSerial(QUuid uuid);
+//     void createAsUdp(QString address, int sourcePort, int destinationPort);
+// #endif
 
+    void openAsSerial(QUuid uuid, int attribute = 0);
     void createAsUdp(QString address, int sourcePort, int destinationPort);
-    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
-    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
     void closeLink(QUuid uuid);
     void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);
@@ -49,16 +52,19 @@ public slots:
 signals:
     void modelChanged(); // Q_PROPERTY in .h
 
-#ifdef MOTOR
-    void sendOpenAsSerial(QUuid uuid, bool isMotorDevice = false);
-#else
-    void sendOpenAsSerial(QUuid uuid);
-#endif
+// #ifdef MOTOR
+//     void sendOpenAsSerial(QUuid uuid, bool isMotorDevice = false);
+//     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, bool isMotorDevice = false);
+// #else
+//     void sendOpenAsSerial(QUuid uuid);
+//     void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+// #endif
 
+    void sendOpenAsSerial(QUuid uuid, int attribute = 0);
     void sendCreateAsUdp(QString address, int sourcePort, int destinationPort);
-    void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void sendOpenAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
     void sendCreateAsTcp(QString address, int sourcePort, int destinationPort);
-    void sendOpenAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort);
+    void sendOpenAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
     void sendCloseLink(QUuid uuid);
     void sendFCloseLink(QUuid uuid);
     void sendDeleteLink(QUuid uuid);

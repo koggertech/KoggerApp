@@ -893,12 +893,11 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismod
 
 Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
-        if(static_cast<int16_t>(sizeof(UsblSolution)) <= proto.readAvailable()) {
-            _usblSolution = proto.read<UsblSolution>();
-            qInfo("USBL d: %f, a: %f,e: %f, p: %lld", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.carrier_counter);
-        } else {
-            return respErrorPayload;
-        }
+        _usblSolution = proto.read<UsblSolution>();
+        qInfo("USBL d: %f, a: %f,e: %f, p: %lld", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.carrier_counter);
+    } else if(proto.ver() == v1) {
+        _beaconResponcel = proto.read<BeaconActivationResponce>();
+        qInfo("Beacon responce: %d", _beaconResponcel.id);
     } else {
         return respErrorVersion;
     }
@@ -906,10 +905,10 @@ Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     return respOk;
 }
 
-void IDBinUsblSolution::askBeacon(AskBeacon ask) {
+void IDBinUsblSolution::askBeacon(USBLRequestBeacon ask) {
     ProtoBinOut req_out;
     req_out.create(GETTING, Version::v0, id(), m_address);
-    req_out.write<AskBeacon>(ask);
+    req_out.write<USBLRequestBeacon>(ask);
     req_out.end();
 
     emit binFrameOut(req_out);
@@ -917,7 +916,7 @@ void IDBinUsblSolution::askBeacon(AskBeacon ask) {
 
 void IDBinUsblSolution::enableBeaconOnce(float timeout) {
     ProtoBinOut req_out;
-    req_out.create(SETTING, Version::v1, id(), m_address);
+    req_out.create(GETTING, Version::v1, id(), m_address);
     req_out.write<F4>(timeout);
     req_out.end();
 

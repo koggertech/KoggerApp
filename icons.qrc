@@ -68,5 +68,11 @@
         <file>icons/direction.svg</file>
         <file>icons/direction-horizontal.svg</file>
         <file>icons/cone.svg</file>
+        <file>icons/access-point-off.svg</file>
+        <file>icons/access-point.svg</file>
+        <file>icons/radar-off.svg</file>
+        <file>icons/radar.svg</file>
+        <file>icons/submarine.svg</file>
+        <file>icons/arrow-bar-down.svg</file>
     </qresource>
 </RCC>

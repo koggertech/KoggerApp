@@ -4,7 +4,7 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
-# CONFIG += MOTOR # motor_control definition
+CONFIG += MOTOR # motor_control definition
 
 !android {
     QT += serialport

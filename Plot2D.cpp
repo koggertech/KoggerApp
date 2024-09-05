@@ -6,6 +6,7 @@ Plot2D::Plot2D()
 {
     _echogram.setVisible(true);
     _attitude.setVisible(true);
+    _encoder.setVisible(true);
     _DVLBeamVelocity.setVisible(true);
     _DVLSolution.setVisible(true);
     _usblSolution.setVisible(true);
@@ -38,6 +39,7 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
     _echogram.draw(_canvas, _dataset, _cursor);
 
     _attitude.draw(_canvas, _dataset, _cursor);
+    _encoder.draw(_canvas, _dataset, _cursor);
     _DVLBeamVelocity.draw(_canvas, _dataset, _cursor);
     _DVLSolution.draw(_canvas, _dataset, _cursor);
     _usblSolution.draw(_canvas, _dataset, _cursor);

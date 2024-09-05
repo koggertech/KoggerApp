@@ -53,6 +53,11 @@ public slots:
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
+    void beaconActivationReceive(uint8_t id);
+    void beaconDirectQueueAsk();
+    bool isbeaconDirectQueueAsk() { return isUSBLBeaconDirectAsk; }
+    void setUSBLBeaconDirectAsk(bool is_ask);
+
 #ifdef MOTOR
     float getFAngle();
     float getSAngle();
@@ -145,6 +150,9 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+
+    bool isUSBLBeaconDirectAsk = false;
+    QTimer beacon_timer;
 
 #ifdef MOTOR
     std::unique_ptr<MotorControl> motorControl_;

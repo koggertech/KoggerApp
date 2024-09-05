@@ -134,22 +134,6 @@ int DevDriver::getDevDefAddress() {
     return idUART->devDefAddress();
 }
 
-int DevDriver::dopplerVeloX() {
-    return idDVL->velX();
-}
-
-int DevDriver::dopplerVeloY() {
-    return idDVL->velY();
-}
-
-int DevDriver::dopplerVeloZ() {
-    return idDVL->velZ();
-}
-
-int DevDriver::dopplerDist() {
-    return idDVL->dist();
-}
-
 void DevDriver::dvlChangeMode(bool ismode1, bool ismode2, bool ismode3, bool ismode4, float range_mode4) {
     idDVLMode->setModes(ismode1, ismode2, ismode3, ismode4, range_mode4);
 }
@@ -345,7 +329,7 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
-void DevDriver::askBeaconPosition(IDBinUsblSolution::AskBeacon ask) {
+void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
     if(!m_state.connect) return;
     idUSBL->askBeacon(ask);
 }
@@ -1047,12 +1031,18 @@ void DevDriver::receivedDVLMode(Type type, Version ver, Resp resp) {
 
 void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
-    Q_UNUSED(ver);
-    Q_UNUSED(resp);
 
-    usblSolutionComplete(idUSBL->usblSolution());
-    // emit distComplete(idUSBL->usblSolution().distance_m*1000);
-    // emit attitudeComplete(idUSBL->usblSolution().azimuth_deg, idUSBL->usblSolution().elevation_deg, 0);
+
+
+    if(resp == respNone) {
+        if(ver == Parsers::v0) {
+            emit usblSolutionComplete(idUSBL->usblSolution());
+        } else if(ver == Parsers::v1) {
+            qDebug("usbl p.ver %d", ver);
+            emit beaconActivationComplete(0);
+        }
+    }
+
 }
 
 void DevDriver::process() {

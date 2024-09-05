@@ -20,6 +20,8 @@
 
 #include "time.h"
 
+#include "usbl_view.h"
+
 #if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 #define MAKETIME(t) mktime(t)
 #define GMTIME(t) gmtime(t)
@@ -346,6 +348,9 @@ public:
 
     void setEncoders(float enc1, float enc2, float enc3);
     bool isEncodersSeted() { return _encoder.isSeted();}
+    float encoder1() { return _encoder.e1; }
+    float encoder2() { return _encoder.e2; }
+    float encoder3() { return _encoder.e3; }
 
     void setDistProcessing(int16_t channel, float dist) {
         if(_charts.contains(channel)) {
@@ -826,6 +831,8 @@ public slots:
         return _beaconTrack1;
     }
 
+    void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
+
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
@@ -863,6 +870,8 @@ protected:
     QVector<QVector3D> _beaconTrack;
     QVector<QVector3D> _beaconTrack1;
 
+    QMap<int, UsblView::UsblObjectParams> tracks;
+
     enum {
         AutoRangeNone,
         AutoRangeLast,
@@ -882,6 +891,8 @@ protected:
         _pool.resize(_pool.size() + 1);
         return last();
     }
+
+    GraphicsScene3dView* scene3dViewPtr_ = nullptr;
 
 private:
     int lastBoatTrackEpoch_;

@@ -71,7 +71,7 @@ ColumnLayout {
 
                             CTextField {
                                 id: portName
-                                text: LinkType === 1 ? PortName : "some another port"
+                                text: LinkType === 1 ? PortName : SourcePort
                                 Layout.fillWidth: true
                                 readOnly: true
                                 background: Rectangle {
@@ -103,7 +103,7 @@ ColumnLayout {
                             CButton {
                                 text: ConnectionStatus ? "Close" : "Open"
                                 backColor: ConnectionStatus ? "#005000" : theme.controlSolidBackColor
-                                visible: LinkType === 1
+                                // visible: LinkType === 1
 
                                 onClicked: {
                                     motorsComboBox.currentIndex = 0
@@ -112,7 +112,11 @@ ColumnLayout {
                                         linkManagerWrapper.closeLink(Uuid)
                                     }
                                     else {
-                                        linkManagerWrapper.openAsSerial(Uuid, true)
+                                        if(LinkType === 1) {
+                                            linkManagerWrapper.openAsSerial(Uuid, 2)
+                                        } else if(LinkType === 2) {
+                                            linkManagerWrapper.openAsUdp(Uuid, Address, SourcePort, DestinationPort, 2)
+                                        }
                                     }
                                 }
                             }

@@ -904,30 +904,43 @@ public:
 
         float snr = 0;
 
-        // double latitude;
-        // double longitude;
-        // float depth;
+        float x_m = NAN;
+        float y_m = NAN;
+        double latitude_deg = NAN;
+        double longitude_deg = NAN;
+        float depth_m = NAN;
     } __attribute__((packed));
 
-    struct AskBeacon {
+    struct USBLRequestBeacon {
         uint8_t id = 0; // 0 is promisc mode
         uint8_t reserved = 0;
         uint16_t watermark = 0;
-        double latitude = NAN;
-        double longitude = NAN;
-        float external_heading = NAN;
-        float force_beacon_depth = NAN;
+        double latitude_deg = NAN;
+        double longitude_deg = NAN;
+        float external_heading_deg = NAN;
+        float force_beacon_depth_m = NAN;
+    }  __attribute__((packed));
+
+    struct BeaconActivationResponce {
+        uint8_t id = 0; // 0 is promisc mode
+        uint8_t reserved = 0;
+        uint16_t reserved1 = 0;
+    }  __attribute__((packed));
+
+    struct BeaconActivate {
+        float timeout_s = 2;
     }  __attribute__((packed));
 
     UsblSolution usblSolution() {
         return _usblSolution;
     }
 
-    void askBeacon(AskBeacon ask);
+    void askBeacon(USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
 protected:
     UsblSolution _usblSolution;
+    BeaconActivationResponce _beaconResponcel;
 };
 
 

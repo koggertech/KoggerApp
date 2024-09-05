@@ -344,14 +344,25 @@ public:
 
     template<typename T>
     T read() {
-        T *val = (T *)(&_frame[_readPosition]);
-        _readPosition += sizeof (T);
-        return *val;
+        T res = {};
+        read(&res);
+        return res;
     }
 
     template<typename T>
-    void read(T* data_struct) {
-        read((uint8_t*)(data_struct), sizeof (T));
+    int read(T* data_struct) {
+        int avail = readAvailable();
+        if(avail >= (int16_t)sizeof (T)) {
+            *data_struct = *(T *)(&_frame[_readPosition]);
+            _readPosition += (int16_t)sizeof (T);
+            return sizeof (T);
+        } else {
+            *data_struct = {};
+            read((uint8_t*)data_struct, avail);
+            return avail;
+        }
+
+        return 0;
     }
 
     void read(uint8_t* b, uint16_t len) {

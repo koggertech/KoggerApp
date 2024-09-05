@@ -28,7 +28,7 @@ MotorControl::~MotorControl()
 void MotorControl::addTask(QStringList tasks)
 {
     for (auto &itm : tasks) {
-        QStringList numbers = itm.split('\t');
+        QStringList numbers = itm.split(QLatin1Char(','));
 
         if (numbers.count() != 3)
             continue;
@@ -73,7 +73,7 @@ bool MotorControl::CheckPos(uint8_t addr, int32_t pos) const
 
     if (deg < 179.0f && deg > -179.0f && addr == fAddr_)
         return true;
-    if (deg < 49.0f && deg > -49.0f && addr == sAddr_)
+    if (deg < 179.0f && deg > -179.0f && addr == sAddr_)
         return true;
     else
         return false;

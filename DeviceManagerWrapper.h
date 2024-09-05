@@ -25,6 +25,8 @@ public:
     Q_PROPERTY(int                  pilotArmState       READ    pilotArmState           NOTIFY vruChanged)
     Q_PROPERTY(int                  pilotModeState      READ    pilotModeState          NOTIFY vruChanged)
 
+    Q_PROPERTY(bool                 isbeaconDirectQueueAsk    WRITE   setUSBLBeaconDirectAsk)
+
 #ifdef MOTOR
     // MotorControl on DeviceManager
     Q_PROPERTY(int countMotorDevices READ getMotorCountDevices NOTIFY motorDeviceChanged)
@@ -56,6 +58,7 @@ public:
 
     void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
 
+    void                 setUSBLBeaconDirectAsk(bool is_ask) { getWorker()->setUSBLBeaconDirectAsk(is_ask); }
 public slots:
 
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };

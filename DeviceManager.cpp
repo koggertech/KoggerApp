@@ -482,6 +482,35 @@ void DeviceManager::upgradeLastDev(QByteArray data)
     }
 }
 
+void DeviceManager::beaconActivationReceive(uint8_t id) {
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
+    if(usbl_devs.size() > 0) {
+        IDBinUsblSolution::USBLRequestBeacon ask = {};
+        usbl_devs[0]->askBeaconPosition(ask);
+    }
+}
+
+void DeviceManager::beaconDirectQueueAsk() {
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBLBeacon);
+    qDebug("Sent request to the Beacon # %d", -1);
+    if(usbl_devs.size() > 0) {
+        usbl_devs[0]->enableBeaconOnce(3);
+        qDebug("Sent request to the Beacon # %d", 0);
+    }
+}
+
+void DeviceManager::setUSBLBeaconDirectAsk(bool is_ask) {
+    isUSBLBeaconDirectAsk = is_ask;
+    qDebug("Beacon auto scan is: %d", is_ask);
+    if(is_ask == true) {
+        QObject::connect(&beacon_timer, &QTimer::timeout, this, &DeviceManager::beaconDirectQueueAsk);
+        beacon_timer.setInterval(3000);
+        beacon_timer.start();
+    } else {
+        beacon_timer.stop();
+    }
+}
+
 #ifdef MOTOR
 float DeviceManager::getFAngle()
 {
@@ -557,14 +586,14 @@ void DeviceManager::clearTasks()
 }
 
 void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle) {
+    emit encoderComplete(currFAngle, -currSAngle, NAN);
+    emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
+
     QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
     if(usbl_devs.size() > 0) {
-        IDBinUsblSolution::AskBeacon ask;
+        IDBinUsblSolution::USBLRequestBeacon ask;
         usbl_devs[0]->askBeaconPosition(ask);
     }
-
-    emit encoderComplete(currFAngle, currSAngle, NAN);
-    emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
 }
 #endif
 
@@ -659,6 +688,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
+    connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);

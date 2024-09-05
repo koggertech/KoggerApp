@@ -562,6 +562,44 @@ protected:
     PlotPen _penRoll = PlotPen(PlotColor(255, 0, 0), 2, PlotPen::LineStyleSolid);
 };
 
+class Plot2DEncoder : public Plot2DLine {
+public:
+    Plot2DEncoder() {}
+
+
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
+        if(!isVisible() || !cursor.attitude.isValid()) { return false; }
+
+        QVector<float> yaw(canvas.width());
+        QVector<float> pitch(canvas.width());
+        QVector<float> roll(canvas.width());
+
+        for(int i = 0; i < canvas.width(); i++) {
+            int pool_index = cursor.getIndex(i);
+            Epoch* data = dataset->fromIndex(pool_index);
+
+            if(data != NULL && data->isEncodersSeted()) {
+                yaw[i] = data->encoder1();
+                pitch[i] = data->encoder2();
+                roll[i] = data->encoder3();
+            } else {
+                yaw[i] = NAN;
+                pitch[i] = NAN;
+                roll[i] = NAN;
+            }
+        }
+
+        drawY(canvas, yaw, cursor.attitude.from, cursor.attitude.to, _penYaw);
+        drawY(canvas, pitch, cursor.attitude.from, cursor.attitude.to, _penPitch);
+
+        return true;
+    }
+
+protected:
+    PlotPen _penYaw = PlotPen(PlotColor(255, 255, 0), 2, PlotPen::LineStyleSolid);
+    PlotPen _penPitch = PlotPen(PlotColor(255, 0, 255), 2, PlotPen::LineStyleSolid);
+};
+
 class Plot2DGNSS : public Plot2DLine {
 public:
     Plot2DGNSS() {}
@@ -929,6 +967,7 @@ protected:
 
     Plot2DEchogram _echogram;
     Plot2DAttitude _attitude;
+    Plot2DEncoder _encoder;
     Plot2DDVLBeamVelocity _DVLBeamVelocity;
     Plot2DDVLSolution _DVLSolution;
     Plot2DUSBLSolution _usblSolution;

@@ -8,38 +8,88 @@ DevSettingsBox {
     id: control
     isActive: dev ? (dev.isUSBLBeacon || dev.isUSBL): false
 
+    property bool isUSBL: dev ? (dev.isUSBL) ? true : false : false
+    property bool isBeacon: dev ? (dev.isUSBLBeacon) ? true : false : false
+
     ColumnLayout {
         id: columnItem
-        spacing: 24
-        Layout.margins: 24
+        // spacing: 10
+        Layout.margins: 10
+        Layout.topMargin: 0
+        Layout.bottomMargin: 0
 
-        // ParamGroup {
-        //     id: modeChanger
-        //     groupName: "Range Modes"
-        //     CheckButton {
-        //         text: "One shot"
-        //         checkable: false
-        //         onClicked: {
-        //             dev.askBeaconPosition();
-        //         }
-        //     }
-        // }
+        RowLayout {
+            visible: isUSBL
+            CheckButton {
+                icon.source: checked ? "./icons/radar.svg" :  "./icons/radar-off.svg"
+                onCheckedChanged: {
+                    deviceManagerWrapper.isbeaconDirectQueueAsk = checked
+                }
+            }
 
-        CheckButton {
-            visible: dev ? (dev.isUSBL): false
-            text: "USBL One shot"
-            checkable: false
-            onClicked: {
-                dev.askBeaconPosition();
+            CheckButton {
+                Layout.leftMargin: 12
+                // enabled: false
+                checkable: false
+                borderColor: "transparent"
+                icon.source: "./icons/refresh.svg"
+
+                onClicked: {
+                    dev.askBeaconPosition();
+                }
+            }
+
+            CText {
+                Layout.fillWidth: true
+                text: "1"
+            }
+
+            CheckButton {
+                borderColor: "transparent"
+                icon.source: "./icons/settings.svg"
             }
         }
 
-        CheckButton {
-            visible: dev ? (dev.isUSBLBeacon): false
-            text: "Activate Beacon"
-            checkable: false
-            onClicked: {
-                dev.enableBeaconOnce(3);
+        RowLayout {
+            // visible: isBeacon
+            CheckButton {
+                icon.source: "./icons/submarine.svg"
+                // enabled: false
+                checkable: false
+                borderColor: "transparent"
+                text: "1"
+
+                onClicked: {
+                    dev.enableBeaconOnce(3);
+                }
+            }
+
+            CheckButton {
+                Layout.leftMargin: 12
+                enabled: false
+                borderColor: "transparent"
+                icon.source: "./icons/arrow-bar-down.svg"
+            }
+
+            CText {
+                text: "20.0 m"
+            }
+
+            CheckButton {
+                Layout.leftMargin: 12
+                enabled: false
+                borderColor: "transparent"
+                icon.source: "./icons/ruler-measure.svg"
+            }
+
+            CText {
+                Layout.fillWidth: true
+                text: "100.0 m"
+            }
+
+            CheckButton {
+                borderColor: "transparent"
+                icon.source: "./icons/settings.svg"
             }
         }
     }
