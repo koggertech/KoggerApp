@@ -89,6 +89,7 @@ void GraphicsScene3dRenderer::drawObjects()
     m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_projection * view * m_model, m_shaderProgramMap);
     m_navigationArrowRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+    usblViewRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     glDisable(GL_DEPTH_TEST);
 
     //-----------Draw axes-------------

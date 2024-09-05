@@ -24,6 +24,7 @@
 #include <npdfiltercontrolmenucontroller.h>
 #include <scene3dtoolbarcontroller.h>
 #include <scene3dcontrolmenucontroller.h>
+#include "usbl_view_control_menu_controller.h"
 #include <DeviceManagerWrapper.h>
 #include <LinkManagerWrapper.h>
 #include <FileReader.h>
@@ -130,6 +131,7 @@ private:
     std::shared_ptr<PolygonGroupControlMenuController> polygonGroupControlMenuController_;
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
+    std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     QQmlApplicationEngine* qmlAppEnginePtr_;

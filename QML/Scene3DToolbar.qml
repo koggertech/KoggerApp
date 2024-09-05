@@ -232,6 +232,66 @@ ColumnLayout {
         }
     }
 
+    MenuFrame {
+        id: usblViewSettings
+        visible: usblViewCheckButton.hovered || isHovered || usblViewCheckButton.longPressTriggered
+        z: usblViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !usblViewCheckButton.hovered) {
+                    usblViewCheckButton.longPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                usblViewCheckButton.longPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CButton {
+                text: "Update"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    UsblViewControlMenuController.onUpdateUsblViewButtonClicked()
+                }
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+
+            CButton {
+                text: "Clear"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    UsblViewControlMenuController.onClearUsblViewButtonClicked()
+                }
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+        }
+    }
+
     RowLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
@@ -369,7 +429,58 @@ ColumnLayout {
                     surfaceCheckButton.longPressTriggered = true;
                 }
             }
+        }        
+
+        CheckButton {
+            id: usblViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/gps.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                UsblViewControlMenuController.onUsblViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                UsblViewControlMenuController.onUsblViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            property bool longPressTriggered: false
+
+            MouseArea {
+                id: usblViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    usblViewLongPressTimer.start()
+                    usblViewCheckButton.longPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!usblViewCheckButton.longPressTriggered) {
+                        usblViewCheckButton.checked = !usblViewCheckButton.checked
+                    }
+                    usblViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    usblViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: usblViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    usblViewCheckButton.longPressTriggered = true;
+                }
+            }
         }
+
 
 
         ButtonGroup{

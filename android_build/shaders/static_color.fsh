@@ -9,9 +9,17 @@
 #endif
 
 uniform highp vec4 color;
-out highp vec4 fragColor; // Указываем точность для переменной fragColor
+uniform bool isPoint;
+
+out highp vec4 fragColor;
 
 void main()
 {
+    if (isPoint) {
+        highp vec2 coord = gl_PointCoord * 2.0 - 1.0;
+        if (dot(coord, coord) > 1.0) {
+            discard;
+        }
+    }
     fragColor = color;
 }

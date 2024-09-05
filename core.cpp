@@ -45,6 +45,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("NpdFilterControlMenuController",    npdFilterControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3DControlMenuController",      scene3dControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3dToolBarController",          scene3dToolBarController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("UsblViewControlMenuController",     usblViewControlMenuController_.get());
 }
 
 Console* Core::getConsolePtr()
@@ -829,6 +830,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     scene3dControlMenuController_->setQmlEngine(object);
     scene3dControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    usblViewControlMenuController_->setQmlEngine(object);
+    usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 }
 
 void Core::startFileReader(const QString& filePath)
@@ -913,6 +917,7 @@ void Core::createControllers()
     polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
     scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();
     scene3dToolBarController_          = std::make_shared<Scene3dToolBarController>();
+    usblViewControlMenuController_     = std::make_shared<UsblViewControlMenuController>();
 }
 
 void Core::createDeviceManagerConnections()
