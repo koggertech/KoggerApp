@@ -47,11 +47,11 @@ float Cube::height() const{
 
 Cube Cube::merge(const Cube &other)
 {
-    if (isEmpty())
-        return other;
+    //if (isEmpty()) // TODO: chacking
+    //    return other;
 
-    if (other.isEmpty())
-        return *this;
+    //if (other.isEmpty())
+    //    return *this;
 
     float n1{ m_xMin }, f1{ m_xMin }; // x borders
     m_xMax < m_xMin ? n1 = m_xMax : f1 = m_xMax;
