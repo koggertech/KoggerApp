@@ -17,6 +17,8 @@ Item {
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
 
+    signal languageChanged(string langStr)
+
     function itemChangeActive(currentItem) {
         if(currentItem) {
             currentItem.active = !(currentItem.active)
@@ -142,5 +144,13 @@ Item {
             implicitWidth: settingsWidth
             visible:            menu3DSettings.active
         }*/
+    }
+
+    function handleChildSignal(langStr) {
+        languageChanged(langStr)
+    }
+
+    Component.onCompleted: {
+        appSettings.languageChanged.connect(handleChildSignal)
     }
 }

@@ -22,11 +22,11 @@ Item {
             anchors.top:     parent.top
             anchors.margins: 24
             spacing:         24
-            groupName:       "Bottom track controls"
+            groupName:       qsTr("Bottom track controls")
 
             KCheck {
                 id:               visibilityCheckBox
-                text:             "Show"
+                text:             qsTr("Show")
                 checkState:       Qt.Checked
                 onCheckedChanged: root.controller.onVisibilityCheckBoxCheckedChanged(checked)
 

@@ -1,11 +1,14 @@
 <?xml version="1.0"?>
 <manifest package="org.kogger.koggerapp" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.10.2" android:versionCode="1" android:installLocation="auto">
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>
 
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
 
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="KoggerApp" android:extractNativeLibs="true" android:icon="@drawable/icon">
 
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.kogger.koggerapp.KoggerActivity" android:label="KoggerApp" android:screenOrientation="unspecified" android:launchMode="singleTop">
+        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.kogger.koggerapp.KoggerActivity" android:label="KoggerApp" android:screenOrientation="unspecified" 
+        android:launchMode="singleTop" 
+        android:exported="true">
             <!-- Main launcher intent -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -26,11 +29,10 @@
                 <data android:mimeType="*/*"/>
                 <data android:host="*"/>
                 <data android:pathPattern=".*\\.klf"/>
-                <data android:pathPattern=".*\\..*\\.klf" />
-                <data android:pathPattern=".*\\..*\\..*\\.klf" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.klf" />
+                <data android:pathPattern=".*\\..*\\.klf"/>
+                <data android:pathPattern=".*\\..*\\..*\\.klf"/>
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.klf"/>
             </intent-filter>
-            
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"/>
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"/>
