@@ -17,7 +17,7 @@ void Epoch::setEvent(int timestamp, int id, int unixt) {
     flags.eventAvail = true;
 }
 
-void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, int offset) {
+void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset) {
     _charts[channel].amplitude = data;
     _charts[channel].resolution = resolution;
     _charts[channel].offset = offset;

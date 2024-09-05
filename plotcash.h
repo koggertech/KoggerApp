@@ -321,7 +321,7 @@ public:
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
-    void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, int offset);
+    void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, float offset);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
