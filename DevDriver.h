@@ -230,7 +230,7 @@ public slots:
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
 
-    FrameParser* m_proto;
+    //FrameParser* m_proto;
 
     IDBinTimestamp* idTimestamp = NULL;
     IDBinDist* idDist = NULL;
