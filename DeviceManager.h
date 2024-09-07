@@ -29,7 +29,6 @@ public:
     Q_INVOKABLE int pilotModeState();
 
     QList<DevQProperty*> getDevList();
-    DevQProperty* getLastDev();
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
@@ -37,7 +36,11 @@ public slots:
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
     void openFile(const QString& filePath);
+#ifdef SEPARATE_READING
+    void closeFile(bool onOpen = false);
+#else
     void closeFile();
+#endif
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -71,6 +74,11 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
+#ifdef SEPARATE_READING
+    void fileOpened();
+    void fileBreaked(bool);
+    void onFileReadEnough();
+#endif
 
 private:
     /*methods*/
@@ -120,6 +128,9 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+#ifdef SEPARATE_READING
+    bool onOpen_{ false };
+#endif
 
 private slots:
     void readyReadProxy(Link* link);

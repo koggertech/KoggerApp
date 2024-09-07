@@ -58,6 +58,18 @@ public:
     void setAddress(uint8_t addr) { m_address = addr; }
     void setConsoleOut(bool is_console) { isConsoleOut = is_console; }
 
+#ifdef SEPARATE_READING
+    void initTimersConnects();
+
+    QTimer* getSetTimer() {
+        return &setTimer_;
+    }
+
+    QTimer* getColdStartTimer() {
+        return &coldStartTimer_;
+    }
+#endif
+
 signals:
     void updateContent(Type type, Version ver, Resp resp, uint8_t address);
     void dataSend(QByteArray data);

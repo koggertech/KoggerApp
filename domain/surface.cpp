@@ -63,6 +63,8 @@ void Surface::clearData()
 
     m_grid->clearData();
     m_contour->clearData();
+
+    Q_EMIT changed();
 }
 
 void Surface::updateGrid()

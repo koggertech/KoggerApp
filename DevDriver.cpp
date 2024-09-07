@@ -44,7 +44,9 @@ DevDriver::DevDriver(QObject *parent) :
 
     regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
 
+#ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
+#endif
 
     QObject::connect(idDataset, &IDBin::notifyDevDriver, this, &DevDriver::setDatasetState);
     QObject::connect(idDistSetup, &IDBin::notifyDevDriver, this, &DevDriver::setDistSetupState);
@@ -54,6 +56,122 @@ DevDriver::DevDriver(QObject *parent) :
     QObject::connect(idSoundSpeed, &IDBin::notifyDevDriver, this, &DevDriver::setSoundSpeedState);
     QObject::connect(idUART, &IDBin::notifyDevDriver, this, &DevDriver::setUartState);
 }
+
+DevDriver::~DevDriver()
+{
+#ifdef SEPARATE_READING
+    QList<QTimer*> timers = getChildTimers();
+    foreach (QTimer* timer, timers) {
+        if (timer->isActive()) {
+            timer->stop();
+        }
+    }
+
+    if (m_processTimer.isActive()) {
+        m_processTimer.stop();
+    }
+#endif
+}
+
+
+#ifdef SEPARATE_READING
+QTimer *DevDriver::getProcessTimer()
+{
+    return &m_processTimer;
+}
+
+QList<QTimer *> DevDriver::getChildTimers()
+{
+    QList<QTimer*> timers;
+
+    if (idTimestamp) {
+        timers.append(idTimestamp->getSetTimer());
+        timers.append(idTimestamp->getColdStartTimer());
+    }
+    if (idDist) {
+        timers.append(idDist->getSetTimer());
+        timers.append(idDist->getColdStartTimer());
+    }
+    if (idChart) {
+        timers.append(idChart->getSetTimer());
+        timers.append(idChart->getColdStartTimer());
+    }
+    if (idAtt) {
+        timers.append(idAtt->getSetTimer());
+        timers.append(idAtt->getColdStartTimer());
+    }
+    if (idTemp) {
+        timers.append(idTemp->getSetTimer());
+        timers.append(idTemp->getColdStartTimer());
+    }
+    if (idDataset) {
+        timers.append(idDataset->getSetTimer());
+        timers.append(idDataset->getColdStartTimer());
+    }
+    if (idDistSetup) {
+        timers.append(idDistSetup->getSetTimer());
+        timers.append(idDistSetup->getColdStartTimer());
+    }
+    if (idChartSetup) {
+        timers.append(idChartSetup->getSetTimer());
+        timers.append(idChartSetup->getColdStartTimer());
+    }
+    if (idDSPSetup) {
+        timers.append(idDSPSetup->getSetTimer());
+        timers.append(idDSPSetup->getColdStartTimer());
+    }
+    if (idTransc) {
+        timers.append(idTransc->getSetTimer());
+        timers.append(idTransc->getColdStartTimer());
+    }
+    if (idSoundSpeed) {
+        timers.append(idSoundSpeed->getSetTimer());
+        timers.append(idSoundSpeed->getColdStartTimer());
+    }
+    if (idUART) {
+        timers.append(idUART->getSetTimer());
+        timers.append(idUART->getColdStartTimer());
+    }
+    if (idVersion) {
+        timers.append(idVersion->getSetTimer());
+        timers.append(idVersion->getColdStartTimer());
+    }
+    if (idMark) {
+        timers.append(idMark->getSetTimer());
+        timers.append(idMark->getColdStartTimer());
+    }
+    if (idFlash) {
+        timers.append(idFlash->getSetTimer());
+        timers.append(idFlash->getColdStartTimer());
+    }
+    if (idBoot) {
+        timers.append(idBoot->getSetTimer());
+        timers.append(idBoot->getColdStartTimer());
+    }
+    if (idUpdate) {
+        timers.append(idUpdate->getSetTimer());
+        timers.append(idUpdate->getColdStartTimer());
+    }
+    if (idNav) {
+        timers.append(idNav->getSetTimer());
+        timers.append(idNav->getColdStartTimer());
+    }
+    if (idDVL) {
+        timers.append(idDVL->getSetTimer());
+        timers.append(idDVL->getColdStartTimer());
+    }
+    if (idDVLMode) {
+        timers.append(idDVLMode->getSetTimer());
+        timers.append(idDVLMode->getColdStartTimer());
+    }
+    if (idUSBL) {
+        timers.append(idUSBL->getSetTimer());
+        timers.append(idUSBL->getColdStartTimer());
+    }
+
+    return timers;
+}
+#endif
 
 void DevDriver::regID(IDBin* id_bin, ParseCallback method, bool is_setup) {
 //    hashIDParsing[id_bin->id()] = id_bin;
@@ -344,6 +462,80 @@ void DevDriver::setUartState(bool state) {
         emit UARTChanged();
     }
 }
+
+#ifdef SEPARATE_READING
+void DevDriver::initProcessTimerConnects()
+{
+    connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process, Qt::QueuedConnection);
+}
+
+void DevDriver::initChildsTimersConnects()
+{
+    if (idTimestamp) {
+        idTimestamp->initTimersConnects();
+    }
+    if (idDist) {
+        idDist->initTimersConnects();
+    }
+    if (idChart) {
+        idChart->initTimersConnects();
+    }
+    if (idAtt) {
+        idAtt->initTimersConnects();
+    }
+    if (idTemp) {
+        idTemp->initTimersConnects();
+    }
+    if (idDataset) {
+        idDataset->initTimersConnects();
+    }
+    if (idDistSetup) {
+        idDistSetup->initTimersConnects();
+    }
+    if (idChartSetup) {
+        idChartSetup->initTimersConnects();
+    }
+    if (idDSPSetup) {
+        idDSPSetup->initTimersConnects();
+    }
+    if (idTransc) {
+        idTransc->initTimersConnects();
+    }
+    if (idSoundSpeed) {
+        idSoundSpeed->initTimersConnects();
+    }
+    if (idUART) {
+        idUART->initTimersConnects();
+    }
+    if (idVersion) {
+        idVersion->initTimersConnects();
+    }
+    if (idMark) {
+        idMark->initTimersConnects();
+    }
+    if (idFlash) {
+        idFlash->initTimersConnects();
+    }
+    if (idBoot) {
+        idBoot->initTimersConnects();
+    }
+    if (idUpdate) {
+        idUpdate->initTimersConnects();
+    }
+    if (idNav) {
+        idNav->initTimersConnects();
+    }
+    if (idDVL) {
+        idDVL->initTimersConnects();
+    }
+    if (idDVLMode) {
+        idDVLMode->initTimersConnects();
+    }
+    if (idUSBL) {
+        idUSBL->initTimersConnects();
+    }
+}
+#endif
 
 uint32_t DevDriver::devSerialNumber() {
     return idVersion->serialNumber();

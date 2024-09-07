@@ -15,6 +15,9 @@ DeviceManager::DeviceManager() :
     break_(false)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+#ifdef SEPARATE_READING
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut&");
+#endif
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
@@ -71,10 +74,6 @@ QList<DevQProperty *> DeviceManager::getDevList()
     return devList_;
 }
 
-DevQProperty *DeviceManager::getLastDev()
-{
-    return lastDevs_;
-}
 
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
@@ -296,6 +295,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
 void DeviceManager::openFile(const QString &filePath)
 {
+#ifdef SEPARATE_READING
+    break_ = false;
+#endif
+
     QFile file;
     const QUrl url(filePath);
     url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
@@ -308,12 +311,28 @@ void DeviceManager::openFile(const QString &filePath)
     qint64 bytesRead = 0;
     Parsers::FrameParser frameParser;
     const QUuid someUuid;
+    delAllDev();
+
+#ifdef SEPARATE_READING
+    bool fileReadEnough{false};
+#endif
 
     while (true) {
+
+#ifdef SEPARATE_READING
+        QCoreApplication::processEvents();
+        if (break_) {
+            emit fileBreaked(onOpen_);
+            onOpen_ = false;
+            file.close();
+            return;
+        }
+#else
         if (break_) {
             file.close();
             return;
         }
+#endif
 
         QByteArray chunk = file.read(1024 * 1024);
         const qint64 chunkSize = chunk.size();
@@ -333,12 +352,38 @@ void DeviceManager::openFile(const QString &filePath)
 
         frameParser.setContext((uint8_t*)chunk.data(), chunk.size());
 
+#ifdef SEPARATE_READING
+        int sleepCnt = 0;
+#endif
+
         while (frameParser.availContext() > 0) {
+
+#ifdef SEPARATE_READING
+            QCoreApplication::processEvents();
+            if (break_) {
+                emit fileBreaked(onOpen_);
+                onOpen_ = false;
+                file.close();
+                return;
+            }
+            if (sleepCnt > 500) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                sleepCnt = 0;
+            }
+            ++sleepCnt;
+#endif
             frameParser.process();
             if (frameParser.isComplete()) {
                 frameInput(someUuid, NULL, frameParser);
             }
         }
+
+#ifdef SEPARATE_READING
+        if (!fileReadEnough) { // it's really that?
+            emit onFileReadEnough();
+            fileReadEnough = true;
+        }
+#endif
 
         chunk.clear();
     }
@@ -348,15 +393,29 @@ void DeviceManager::openFile(const QString &filePath)
     delAllDev();
     emit vruChanged();
 
-    file.close();
+#ifdef SEPARATE_READING
+    emit fileOpened();
+#endif
 }
 
+#ifdef SEPARATE_READING
+void DeviceManager::closeFile(bool onOpen)
+{
+    onOpen_ = onOpen;
+    break_ = true;
+
+    vru_.cleanVru();
+    delAllDev();
+    emit vruChanged();
+}
+#else
 void DeviceManager::closeFile()
 {
     delAllDev();
     vru_.cleanVru();
     emit vruChanged();
 }
+#endif
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
@@ -492,7 +551,12 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
                 lastDevice_ = NULL;
             }
             disconnect(i.value());
+
+#ifdef SEPARATE_READING
+            QMetaObject::invokeMethod(i.value(), "deleteLater", Qt::QueuedConnection);
+#else
             delete i.value();
+#endif
         }
         devTree_[uuid].clear();
         devTree_.remove(uuid);
@@ -506,6 +570,34 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     devTree_[uuid][addr] = dev;
     dev->setBusAddress(addr);
 
+#ifdef SEPARATE_READING
+    auto connType = Qt::AutoConnection;
+
+    if(link != NULL) {
+        connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
+        connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
+    }
+
+    connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
+    connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
+    connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete, connType);
+    connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete, connType);
+    connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete, connType);
+    connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete, connType);
+    connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete, connType);
+    connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
+
+    dev->moveToThread(qApp->thread());
+    dev->getProcessTimer()->moveToThread(qApp->thread());
+    QList<QTimer*> timers = dev->getChildTimers();
+    foreach (QTimer* timer, timers) {
+        timer->moveToThread(qApp->thread());
+    }
+
+    QMetaObject::invokeMethod(dev, "initProcessTimerConnects", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dev, "initChildsTimersConnects", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dev, "startConnection", Qt::QueuedConnection, Q_ARG(bool, link != NULL));
+#else
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
@@ -521,6 +613,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);
 
     dev->startConnection(link != NULL);
+#endif
 
     emit devChanged();
 

@@ -41,6 +41,8 @@ public:
     virtual ~SideScanView();
 
     void updateData(bool sideScanLineDrawing, const QString& imagePath);
+    void updateDataSec();
+
     void clear();
 
     void setDatasetPtr(Dataset* datasetPtr);
@@ -54,11 +56,13 @@ public:
 private:
     /*structures*/
     struct MatrixParams {
-        MatrixParams() : unscaledWidth(-1), unscaledHeight(-1), width(-1), height(-1), minX(0.0f), maxX(0.0f), minY(0.0f), maxY(0.0f) {};
+        MatrixParams() : unscaledWidth(-1), unscaledHeight(-1), width(-1), height(-1), hMatWidth(-1), hMatHeight(-1), minX(0.0f), maxX(0.0f), minY(0.0f), maxY(0.0f) {};
         int unscaledWidth;
         int unscaledHeight;
         int width;
         int height;
+        int hMatWidth;
+        int hMatHeight;
         float minX;
         float maxX;
         float minY;
@@ -81,6 +85,7 @@ private:
     void updateChannelsIds();
     inline bool checkLength(float dist) const;
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
+    MatrixParams concatenateMatrixParameters(const MatrixParams& mat1, const MatrixParams& mat2) const;
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
 
     /*data*/
@@ -89,10 +94,18 @@ private:
     static constexpr int heightStep_ = 1;
     static constexpr int interpLineWidth_ = 1;
 
+    QVector<char> isOdds_;
+    QVector<int> epochIndxs_;
+
     QImage image_;
+
     QVector<QRgb> colorTable_;
     Dataset* datasetPtr_;
     float scaleFactor_;
     int segFChannelId_;
     int segSChannelId_;
+
+    MatrixParams lastMatParams_;
+    int lastCalcEpoch_ = 0;
+    uint64_t currIndxSec_ = 0;
 };

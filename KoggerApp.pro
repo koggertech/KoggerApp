@@ -4,6 +4,7 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
+CONFIG += SEPARATE_READING
 
 !android {
     QT += serialport
@@ -55,7 +56,6 @@ SOURCES += \
     Link.cpp \
     LinkManager.cpp \
     LinkManagerWrapper.cpp \
-    FileReader.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
@@ -84,6 +84,10 @@ SOURCES += \
 FLASHER {
 DEFINES += FLASHER
 SOURCES += coreFlash.cpp
+}
+
+SEPARATE_READING {
+DEFINES += SEPARATE_READING
 }
 
 android {
@@ -132,7 +136,6 @@ HEADERS += \
     Link.h \
     LinkManager.h \
     LinkManagerWrapper.h \
-    FileReader.h \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \

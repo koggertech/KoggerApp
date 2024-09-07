@@ -132,7 +132,7 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
-    sideScanView_->clearData();
+    sideScanView_->clear();
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
@@ -142,6 +142,7 @@ void GraphicsScene3dView::clear()
     m_bounds = Cube();
 
     setMapView();
+    updateBounds();
 
     QQuickFramebufferObject::update();
 }
@@ -161,6 +162,11 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
 void GraphicsScene3dView::setTextureId(GLuint id)
 {
     sideScanView_->setTextureId(id);
+}
+
+void GraphicsScene3dView::resetBottomTrackWindowCount()
+{
+    bottomTrackWindowCounter_= -1;
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -457,8 +463,69 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                         m_navigationArrow->setPositionAndAngle(
                                             QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
                                     }
-                                }
-                     );
+                                },
+                     Qt::DirectConnection);
+
+
+/*
+    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
+                      this,      [this]() mutable -> void {
+                          m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+                          if (navigationArrowState_) {
+                              const Position pos = m_dataset->getLastPosition();
+                              m_navigationArrow->setPositionAndAngle(
+                                  QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
+                          }
+
+
+
+                                    ////////////////////////////////////////////////////////
+                                    // side scan feature
+                                    //if (navigationArrowState_) {
+
+                                        int firstChannelId = CHANNEL_NONE, secondChannelId = CHANNEL_FIRST;
+                                        bool canProcess = false;
+                                        if (auto chList = m_dataset->channelsList(); chList.size() == 2) {
+                                            auto it = chList.begin();
+                                            if (it.key() != CHANNEL_NONE) {
+                                                canProcess = true;
+                                                firstChannelId = it.key();
+                                            }
+                                            if ((++it).key() != CHANNEL_FIRST) {
+                                                canProcess = true;
+                                                secondChannelId = it.key();
+                                            }
+                                        }
+                                        if (!canProcess) {
+                                            return;
+                                        }
+
+                                        int currEpochIndx = m_dataset->endIndex();
+                                        auto btP = m_dataset->getBottomTrackParamPtr();
+                                        int currCount = std::floor(currEpochIndx / btP->windowSize);
+
+                                        if (windowCounter_ != currCount) {
+                                            // bottom track
+                                            btP->indexFrom = windowCounter_ * btP->windowSize;
+                                            btP->indexTo = currCount  * btP->windowSize;
+                                            m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
+                                            windowCounter_ = currCount;
+
+                                            // mosaic
+                                            //sideScanView_->updateData(false, nullptr);
+                                            sideScanView_->updateDataSec(); // realtime
+                                            setTextureImage(sideScanView_->getImagePtr(), false);
+                                            sideScanView_->setTextureId(renderer_->getTextureId());
+                                        }
+                                    //}
+                                    ////////////////////////////////////////////////////////
+
+
+
+                      },
+                      Qt::DirectConnection);
+*/
+
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {
@@ -534,6 +601,11 @@ void GraphicsScene3dView::InFboRenderer::setTextureImage(const QImage &image, bo
     needToInitializeTexture_ = true;
 }
 
+GLuint GraphicsScene3dView::InFboRenderer::getTextureId()
+{
+    return textureId_;
+}
+
 void GraphicsScene3dView::InFboRenderer::render()
 {
     m_renderer->render();
@@ -597,11 +669,7 @@ void GraphicsScene3dView::InFboRenderer::initializeTexture()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888);
-        QTransform transform;
-        transform.rotate(90);
-        QImage rotatedImage = glImage.transformed(transform);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rotatedImage.width(), rotatedImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, rotatedImage.bits());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
     }
     else {
         QOpenGLContext* context = QOpenGLContext::currentContext();
@@ -620,11 +688,7 @@ void GraphicsScene3dView::InFboRenderer::initializeTexture()
         functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888);
-        QTransform transform;
-        transform.rotate(90);
-        QImage rotatedImage = glImage.transformed(transform);
-
-        functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rotatedImage.width(), rotatedImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, rotatedImage.bits());
+        functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 
         functions->glGenerateMipmap(GL_TEXTURE_2D);
     }

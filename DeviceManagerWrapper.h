@@ -13,7 +13,7 @@ class DeviceManagerWrapper : public QObject
 
 public:
     /*methods*/
-    DeviceManagerWrapper(QObject* parent = 0);
+    DeviceManagerWrapper(QObject* parent = nullptr);
     ~DeviceManagerWrapper();
 
     Q_PROPERTY(QList<DevQProperty*> devs                READ    getDevList              NOTIFY devChanged)
@@ -40,19 +40,23 @@ public:
 public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
 
-private slots:
-
-
 signals:
     void sendOpenFile(QString path);
+#ifdef SEPARATE_READING
+    void sendCloseFile(bool);
+#else
     void sendCloseFile();
+#endif
 
     void devChanged();
     void streamChanged();
     void vruChanged();
 
 private:
-    std::unique_ptr<QThread> workerThread_;
     std::unique_ptr<DeviceManager> workerObject_;
+#ifdef SEPARATE_READING
+    std::unique_ptr<QThread> workerThread_;
+    QList<QMetaObject::Connection> deviceManagerConnections_;
+#endif
 
 }; // class DeviceWrapper

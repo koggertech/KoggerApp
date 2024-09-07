@@ -93,6 +93,7 @@ public:
         InFboRenderer();
         virtual ~InFboRenderer();
         void setTextureImage(const QImage &image, bool usingFilters = true);
+        GLuint getTextureId();
 
     protected:
         virtual void render() override;
@@ -150,6 +151,7 @@ public:
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setTextureId(GLuint id);
+    void resetBottomTrackWindowCount();
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -221,6 +223,7 @@ private:
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     mutable InFboRenderer* renderer_;
+    int bottomTrackWindowCounter_ = -1;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
