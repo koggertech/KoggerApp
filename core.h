@@ -62,6 +62,7 @@ public slots:
 #ifdef SEPARATE_READING
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile(bool onOpen = false);
+    void onFileStartOpening();
     void onFileOpened();
     void onFileReadEnough();
     void onFileOpenBreaked(bool onOpen);

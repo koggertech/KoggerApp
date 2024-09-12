@@ -314,6 +314,7 @@ void DeviceManager::openFile(const QString &filePath)
     delAllDev();
 
 #ifdef SEPARATE_READING
+    emit fileStartOpening();
     bool fileReadEnough{false};
 #endif
 
@@ -367,7 +368,7 @@ void DeviceManager::openFile(const QString &filePath)
                 return;
             }
             if (sleepCnt > 500) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 sleepCnt = 0;
             }
             ++sleepCnt;

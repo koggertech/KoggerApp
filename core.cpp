@@ -166,10 +166,8 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         datasetPtr_->resetDataset();
 
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->resetBottomTrackWindowCount();
         if (!isAppend) {
             scene3dViewPtr_->clear();
-            scene3dViewPtr_->resetBottomTrackWindowCount();
         }
 
         scene3dViewPtr_->setNavigationArrowState(false);
@@ -220,6 +218,14 @@ bool Core::closeLogFile(bool onOpen)
         return true;
     }
     return false;
+}
+
+void Core::onFileStartOpening()
+{
+    qDebug() << "file start opening!";
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->updateChannelsForSideScanView(); // TODO: not effect(
+    }
 }
 
 void Core::onFileOpened()
@@ -1002,6 +1008,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileBreaked,            this,        &Core::onFileOpenBreaked,  deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onFileReadEnough,       this,        &Core::onFileReadEnough,   deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(this, &Core::sendCloseLogFile,                       deviceManagerWrapperPtr_->getWorker(), &DeviceManager::closeFile, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStartOpening,       this,        &Core::onFileStartOpening, deviceManagerConnection));
 }
 
 void Core::removeDeviceManagerConnections()

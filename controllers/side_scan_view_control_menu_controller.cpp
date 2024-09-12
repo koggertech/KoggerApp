@@ -43,7 +43,7 @@ void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool i
         return;
     }
 
-    m_graphicsSceneView->getSideScanViewPtr()->updateData(interpMeasLines, imagePath);
+   // m_graphicsSceneView->getSideScanViewPtr()->updateData(interpMeasLines, imagePath); // TODO: temporary broken
     m_graphicsSceneView->setTextureImage(m_graphicsSceneView->getSideScanViewPtr()->getImagePtr(), usingFilters_);
 }
 

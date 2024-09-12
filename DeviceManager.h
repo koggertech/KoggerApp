@@ -75,6 +75,7 @@ signals:
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
 #ifdef SEPARATE_READING
+    void fileStartOpening();
     void fileOpened();
     void fileBreaked(bool);
     void onFileReadEnough();

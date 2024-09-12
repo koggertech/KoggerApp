@@ -133,6 +133,7 @@ void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
     sideScanView_->clear();
+    bottomTrackWindowCounter_ = -1;
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
@@ -141,7 +142,7 @@ void GraphicsScene3dView::clear()
     navigationArrowState_ = false;
     m_bounds = Cube();
 
-    setMapView();
+    //setMapView();
     updateBounds();
 
     QQuickFramebufferObject::update();
@@ -164,9 +165,11 @@ void GraphicsScene3dView::setTextureId(GLuint id)
     sideScanView_->setTextureId(id);
 }
 
-void GraphicsScene3dView::resetBottomTrackWindowCount()
+void GraphicsScene3dView::updateChannelsForSideScanView()
 {
-    bottomTrackWindowCounter_= -1;
+    if (sideScanView_) {
+        sideScanView_->updateChannelsIds();
+    }
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -455,7 +458,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
                                 }
                      );
-    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
+/*    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
                      this,      [this]() -> void {
                                     m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
                                     if (navigationArrowState_) {
@@ -466,10 +469,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                 },
                      Qt::DirectConnection);
 
+*/
 
-/*
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
-                      this,      [this]() mutable -> void {
+                      this,      [this]() -> void {
                           m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
                           if (navigationArrowState_) {
                               const Position pos = m_dataset->getLastPosition();
@@ -478,53 +481,52 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                           }
 
 
+                          ////////////////////////////////////////////////////////
+                          // side scan feature
+                          // ckeck channels
+                          int firstChannelId = CHANNEL_NONE, secondChannelId = CHANNEL_FIRST;
+                          bool canProcess = false;
+                          if (auto chList = m_dataset->channelsList(); chList.size() == 2) {
+                              auto it = chList.begin();
+                              if (it.key() != CHANNEL_NONE) {
+                                  canProcess = true;
+                                  firstChannelId = it.key();
+                              }
+                              if ((++it).key() != CHANNEL_FIRST) {
+                                  canProcess = true;
+                                  secondChannelId = it.key();
+                              }
+                          }
+                          if (!canProcess) {
+                              return;
+                          }
 
-                                    ////////////////////////////////////////////////////////
-                                    // side scan feature
-                                    //if (navigationArrowState_) {
 
-                                        int firstChannelId = CHANNEL_NONE, secondChannelId = CHANNEL_FIRST;
-                                        bool canProcess = false;
-                                        if (auto chList = m_dataset->channelsList(); chList.size() == 2) {
-                                            auto it = chList.begin();
-                                            if (it.key() != CHANNEL_NONE) {
-                                                canProcess = true;
-                                                firstChannelId = it.key();
-                                            }
-                                            if ((++it).key() != CHANNEL_FIRST) {
-                                                canProcess = true;
-                                                secondChannelId = it.key();
-                                            }
-                                        }
-                                        if (!canProcess) {
-                                            return;
-                                        }
+                          int currEpochIndx = m_dataset->endIndex();
+                          auto btP = m_dataset->getBottomTrackParamPtr();
+                          int currCount = std::floor(currEpochIndx / btP->windowSize);
 
-                                        int currEpochIndx = m_dataset->endIndex();
-                                        auto btP = m_dataset->getBottomTrackParamPtr();
-                                        int currCount = std::floor(currEpochIndx / btP->windowSize);
+                          if (bottomTrackWindowCounter_ != currCount) {
+                              // bottom track
+                              btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
+                              btP->indexTo = currCount  * btP->windowSize;
+                              m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
+                              bottomTrackWindowCounter_ = currCount;
 
-                                        if (windowCounter_ != currCount) {
-                                            // bottom track
-                                            btP->indexFrom = windowCounter_ * btP->windowSize;
-                                            btP->indexTo = currCount  * btP->windowSize;
-                                            m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
-                                            windowCounter_ = currCount;
-
-                                            // mosaic
-                                            //sideScanView_->updateData(false, nullptr);
-                                            sideScanView_->updateDataSec(); // realtime
-                                            setTextureImage(sideScanView_->getImagePtr(), false);
-                                            sideScanView_->setTextureId(renderer_->getTextureId());
-                                        }
-                                    //}
-                                    ////////////////////////////////////////////////////////
+                              // mosaic
+                              //sideScanView_->updateData(false, nullptr);
+                              sideScanView_->updateDataSec(); // realtime
+                              //setTextureImage(sideScanView_->getImagePtr(), false);
+                              //sideScanView_->setTextureId(renderer_->getTextureId());
+                          }
+                          ////////////////////////////////////////////////////////
 
 
 
+                          //setMapView();
                       },
                       Qt::DirectConnection);
-*/
+
 
 }
 
@@ -546,10 +548,12 @@ void GraphicsScene3dView::setQmlEngine(QObject* engine)
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
-                   .merge(m_surface->bounds())
+                    .merge(m_surface->bounds())
                     .merge(m_bottomTrack->bounds())
+                    .merge(m_boatTrack->bounds())
                     .merge(m_polygonGroup->bounds())
-                    .merge(m_pointGroup->bounds());
+                    .merge(m_pointGroup->bounds())
+                    .merge(sideScanView_->bounds());
 
     updatePlaneGrid();
 
