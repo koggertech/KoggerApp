@@ -10,7 +10,7 @@
 #include "tile.h"
 #include "drawutils.h"
 
-
+class GraphicsScene3dView;
 class SideScanView : public SceneObject
 {
     Q_OBJECT
@@ -47,13 +47,18 @@ public:
     void clear();
 
     void setDatasetPtr(Dataset* datasetPtr);
+
     void setTextureId(GLuint textureId);
+    void setTextureIdForTile(QUuid tileid, GLuint textureId);
+
     void setScaleFactor(int scaleFactor);
     void setMeasLineVisible(bool state);
     void setGridVisible(bool state);
 
     QImage& getImagePtr();
     void updateChannelsIds();
+
+    void setView(GraphicsScene3dView* viewPtr) { m_view = viewPtr; };
 
 private:
     /*methods*/

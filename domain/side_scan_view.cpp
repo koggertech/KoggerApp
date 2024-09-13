@@ -1,6 +1,7 @@
 #include "side_scan_view.h"
 
 #include <QtMath>
+#include "graphicsscene3dview.h"
 
 
 SideScanView::SideScanView(QObject* parent) :
@@ -124,12 +125,12 @@ void SideScanView::updateDataSec()
 
 
     if (meshUpdated) { // just debug messages
-        qDebug() << "/// inserted start ///";
-        qDebug() << "actual matrix:";
-        actualMatParams.print(qDebug());
-        qDebug() << "globalmesh :";
-        globalMesh_.printMatrix();
-        qDebug() << "/// inserted end ///";
+        // qDebug() << "/// inserted start ///";
+        // qDebug() << "actual matrix:";
+        // actualMatParams.print(qDebug());
+        // qDebug() << "globalmesh :";
+        // globalMesh_.printMatrix();
+        // qDebug() << "/// inserted end ///";
     }
 
 
@@ -422,9 +423,11 @@ void SideScanView::updateDataSec()
     for (auto& itmI : globalMesh_.getTileMatrixRef()) {
         for (auto& itmJ : itmI) {
             if (itmJ->getIsUpdate()) {
-
-                // copy to render
                 renderImpl->tiles_[itmJ->getUuid()] = *itmJ;
+
+                if (m_view) {
+                    m_view->updateTileTexture(itmJ->getUuid(), itmJ->getImageRef());
+                }
 
                 itmJ->setIsUpdate(false);
             }
@@ -493,6 +496,13 @@ void SideScanView::setDatasetPtr(Dataset* datasetPtr)
 void SideScanView::setTextureId(GLuint textureId)
 {
    // RENDER_IMPL(SideScanView)->textureId_= textureId;
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setTextureIdForTile(QUuid tileid, GLuint textureId)
+{
+    RENDER_IMPL(SideScanView)->tiles_[tileid].setTextureId(textureId);
 
     Q_EMIT changed();
 }
@@ -685,7 +695,14 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
         mosaicProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
 
 
+
+
+        //qDebug() << itm.getUuid() << itm.getTextureId();
+
+
         if (itm.getTextureId()) {
+
+            //qDebug() << "binded on render!: " << itm.getUuid() << ", with id: " << itm.getTextureId() << ", tex h size: " << itm.getTextureVerticesRef().size();
             glBindTexture(GL_TEXTURE_2D, itm.getTextureId());
         }
 

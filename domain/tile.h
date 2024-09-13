@@ -76,6 +76,8 @@ public:
 
 
     QImage& getImageRef();
+    QImage getImage();
+
     const QVector<QVector2D>& getTextureVerticesRef() const;
     const QVector<QVector3D>& getHeightVerticesRef() const;
     const QVector<int>& getHeightIndicesRef() const;

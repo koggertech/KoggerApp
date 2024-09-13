@@ -40,6 +40,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     m_navigationArrow->setColor({ 255, 0, 0 });
 
+    sideScanView_->setView(this);
+
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
@@ -163,6 +165,11 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
 void GraphicsScene3dView::setTextureId(GLuint id)
 {
     sideScanView_->setTextureId(id);
+}
+
+void GraphicsScene3dView::setTextureIdForSideScanTile(QUuid tileId, GLuint id)
+{
+    sideScanView_->setTextureIdForTile(tileId, id);
 }
 
 void GraphicsScene3dView::updateChannelsForSideScanView()
@@ -329,9 +336,19 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::setTextureImage(const QImage &image, bool usingFilters) {
+void GraphicsScene3dView::setTextureImage(const QImage &image, bool usingFilters)
+{
     if (renderer_) {
         renderer_->setTextureImage(image, usingFilters);
+    }
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::updateTileTexture(QUuid tileid, const QImage &image)
+{
+    if (renderer_) {
+        renderer_->appendUpdateTextureTask(tileid, image);
     }
 
     QQuickFramebufferObject::update();
@@ -599,10 +616,12 @@ GraphicsScene3dView::InFboRenderer::~InFboRenderer()
 
 void GraphicsScene3dView::InFboRenderer::setTextureImage(const QImage &image, bool usingFilters)
 {
-    textureImage_ = image;
-    usingFilters_ = usingFilters;
-
     needToInitializeTexture_ = true;
+}
+
+void GraphicsScene3dView::InFboRenderer::appendUpdateTextureTask(QUuid tileId, const QImage &image)
+{
+    updateTextureTasks_.enqueue(qMakePair(tileId, image));
 }
 
 GLuint GraphicsScene3dView::InFboRenderer::getTextureId()
@@ -626,11 +645,42 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
-    if (needToInitializeTexture_ && !textureImage_.isNull()) {
-        initializeTexture();
-        view->setTextureId(textureId_);
-        needToInitializeTexture_ = false;
+
+
+    while (!updateTextureTasks_.isEmpty()) {
+        auto task = updateTextureTasks_.dequeue();
+
+        auto textureId = tileTexureIds_[task.first];
+
+        if (textureId != 0) {
+            glDeleteTextures(1, &textureId);
+        }
+
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        QImage glImage = task.second.convertToFormat(QImage::Format_RGBA8888);
+
+        if (!glImage.isNull()) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+        }
+        else {
+            qDebug() << "Converted QImage is null!";
+        }
+
+        tileTexureIds_[task.first] = textureId;
+
+        view->setTextureIdForSideScanTile(task.first, textureId);
     }
+
+    //if (needToInitializeTexture_ && !textureImage_.isNull()) {
+    //    initializeTexture();
+    //    view->setTextureId(textureId_);
+    //    needToInitializeTexture_ = false;
+    //}
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));

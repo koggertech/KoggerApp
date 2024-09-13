@@ -16,6 +16,7 @@
 
 #include <QQuickFramebufferObject>
 #include <QtMath>
+#include <QQUeue>
 
 class Dataset;
 class GraphicsScene3dRenderer;
@@ -92,7 +93,10 @@ public:
     public:
         InFboRenderer();
         virtual ~InFboRenderer();
+
         void setTextureImage(const QImage &image, bool usingFilters = true);
+        void appendUpdateTextureTask(QUuid tileId, const QImage& image);
+
         GLuint getTextureId();
 
     protected:
@@ -104,7 +108,12 @@ public:
         friend class GraphicsScene3dView;
         void initializeTexture();
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
+
+        QQueue<QPair<QUuid, QImage>> updateTextureTasks_;
+        QHash<QUuid, GLuint> tileTexureIds_;
+
         GLuint textureId_;
+
         QImage textureImage_;
         bool needToInitializeTexture_;
         bool usingFilters_;
@@ -150,8 +159,11 @@ public:
     void setNavigationArrowState(bool state);
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
+
     void setTextureId(GLuint id);
     void updateChannelsForSideScanView();
+    void updateTileTexture(QUuid tileid, const QImage& image);
+    void setTextureIdForSideScanTile(QUuid tileId, GLuint id);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);

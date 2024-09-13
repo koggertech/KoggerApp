@@ -10,10 +10,10 @@ Tile::Tile() : id_(QUuid::createUuid()), someInt_(-1), textureId_(0), isUpdate_(
 
 void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::Format imageFormat)
 {
-    // image
-    image_ = QImage(tileSize, tileSize, imageFormat);
-    image_.fill(Qt::white);
-
+    QString imagePath = "C:/Users/salty/Desktop/1.png";
+    if (!image_.load(imagePath)) {
+        qWarning() << "Failed to load image from" << imagePath;
+    }
 
     // height mat
     int heightMatSideSize = tileSize / heightRatio + 1;
@@ -34,10 +34,17 @@ void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::For
         //qDebug() << sads;
     }
 
+
+
+    for (int i = 0; i < heightMatSideSize; ++i) {
+        for (int j = 0; j < heightMatSideSize; ++j) {
+            textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1), float(i) / (heightMatSideSize - 1)));
+        }
+    }
+
     for (int i = 0; i < heightMatSideSize - 1; ++i) { // -1 для норм прохода
         for (int j = 0; j < heightMatSideSize - 1; ++j) {
-
-            textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1), float(i) / (heightMatSideSize - 1)));
+            //textureVertices_.append( QVector2D(float(j) / (heightMatSideSize )   ,float(i) / (heightMatSideSize  )));
 
             int topLeft = i * heightMatSideSize + j;
             int topRight = topLeft + 1;
@@ -52,7 +59,6 @@ void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::For
             }
 
             // это для отрисовки
-
             heightIndices_.append(topLeft);     // 1--3
             heightIndices_.append(bottomLeft);  // | /
             heightIndices_.append(topRight);    // 2
@@ -101,6 +107,11 @@ int Tile::getIsUpdate() const
 }
 
 QImage& Tile::getImageRef()
+{
+    return image_;
+}
+
+QImage Tile::getImage()
 {
     return image_;
 }
