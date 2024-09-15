@@ -10,14 +10,25 @@
 
 class GlobalMesh {
 public:
-    GlobalMesh() = default;
+    GlobalMesh() {};
     ~GlobalMesh();
 
     bool concatenate(MatrixParams& actualMatParams);
     void printMatrix() const;
     int getPixelWidth() const;
     int getPixelHeight() const;
+
+    int getNumWidthTiles() const;
+    int getNumHeightTiles() const;
+
     std::vector<std::vector<Tile*>>& getTileMatrixRef();
+
+    int getTileSize() const;
+    int getHeightStep() const;
+
+
+    QVector3D getOrigin() const;
+
 
 private:
     /*methods*/
@@ -37,10 +48,8 @@ private:
     int numWidthTiles_ = 0;
     int numHeightTiles_ = 0;
 
-    const float pixelStep_ = 0.1;
     const int tileSize_ = 16; // px w,h
-    const int heightRatio_ = 4;
+    const int heightStep_ = 4;
 
     int count_ = 0; // debug
-
 };

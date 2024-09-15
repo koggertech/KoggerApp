@@ -42,9 +42,6 @@ void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool i
     if (!m_graphicsSceneView) {
         return;
     }
-
-   // m_graphicsSceneView->getSideScanViewPtr()->updateData(interpMeasLines, imagePath); // TODO: temporary broken
-    m_graphicsSceneView->setTextureImage(m_graphicsSceneView->getSideScanViewPtr()->getImagePtr(), usingFilters_);
 }
 
 void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
@@ -88,7 +85,7 @@ void SideScanViewControlMenuController::onGridVisibleMosaicViewButtonClicked(boo
         return;
     }
 
-    m_graphicsSceneView->getSideScanViewPtr()->setGridVisible(state);
+    m_graphicsSceneView->getSideScanViewPtr()->setTileGridVisible(state);
 }
 
 SideScanView* SideScanViewControlMenuController::getSideScanViewPtr() const

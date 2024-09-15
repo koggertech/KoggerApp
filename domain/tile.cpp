@@ -2,61 +2,56 @@
 
 #include <QDebug>
 
+#include "global_mesh.h"
 
-Tile::Tile() : id_(QUuid::createUuid()), someInt_(-1), textureId_(0), isUpdate_(false)
+
+Tile::Tile() :
+    id_(QUuid::createUuid()),
+    textureId_(0),
+    someInt_(-1),
+    isUpdate_(false),
+    isInited_(false)
 {
 
 }
 
 void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::Format imageFormat)
 {
-    QString imagePath = "C:/Users/salty/Desktop/1.png";
-    if (!image_.load(imagePath)) {
-        qWarning() << "Failed to load image from" << imagePath;
-    }
+    tileOrigin_ = origin;
 
-    // height mat
+    // image
+    image_ = QImage(tileSize, tileSize, imageFormat);
+    image_.fill(5);
+
+    // height vertices
     int heightMatSideSize = tileSize / heightRatio + 1;
     int heightVerticesSize = heightMatSideSize * heightMatSideSize;
     heightVertices_.resize(heightVerticesSize);
 
-    for (int i = 0; i < heightMatSideSize; ++i) {
+    float fakeHeight = 0.0f;
 
-        QString sads;
+    for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
             float x = origin.x() + j * heightRatio;
             float y = origin.y() + i * heightRatio;
-
-            heightVertices_[i * heightMatSideSize + j] = QVector3D(x, y, -4.0f);
-
-            sads += "[" + QString::number(x,'f',0) + "x" + QString::number(y,'f',0) + "] ";
-        }
-        //qDebug() << sads;
-    }
-
-
-
-    for (int i = 0; i < heightMatSideSize; ++i) {
-        for (int j = 0; j < heightMatSideSize; ++j) {
-            textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1), float(i) / (heightMatSideSize - 1)));
+            heightVertices_[i * heightMatSideSize + j] = QVector3D(x, y, fakeHeight);
         }
     }
 
+    // height indices
     for (int i = 0; i < heightMatSideSize - 1; ++i) { // -1 для норм прохода
         for (int j = 0; j < heightMatSideSize - 1; ++j) {
-            //textureVertices_.append( QVector2D(float(j) / (heightMatSideSize )   ,float(i) / (heightMatSideSize  )));
-
             int topLeft = i * heightMatSideSize + j;
             int topRight = topLeft + 1;
             int bottomLeft = (i + 1) * heightMatSideSize + j;
             int bottomRight = bottomLeft + 1;
 
-            if (qFuzzyCompare(1.0f, 1.0f + heightVertices_[topLeft].z()) || // someone zero
-                qFuzzyCompare(1.0f, 1.0f + heightVertices_[topRight].z()) ||
-                qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomLeft].z()) ||
-                qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomRight].z())) {
-                continue;
-            }
+            //if (qFuzzyCompare(1.0f, 1.0f + heightVertices_[topLeft].z()) || // someone zero
+            //    qFuzzyCompare(1.0f, 1.0f + heightVertices_[topRight].z()) ||
+            //    qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomLeft].z()) ||
+            //    qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomRight].z())) {
+            //    continue;
+            //}
 
             // это для отрисовки
             heightIndices_.append(topLeft);     // 1--3
@@ -68,7 +63,33 @@ void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::For
         }
     }
 
-    tileOrigin_ = origin;
+    // texture vertices
+    for (int i = 0; i < heightMatSideSize; ++i) {
+        for (int j = 0; j < heightMatSideSize; ++j) {
+            textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1), float(i) / (heightMatSideSize - 1)));
+        }
+    }
+
+    // grid
+    QVector<QVector3D> grid;
+    for (int i = 0; i < heightIndices_.size(); i += 6) {
+        QVector3D A = heightVertices_[heightIndices_[i]];
+        QVector3D B = heightVertices_[heightIndices_[i + 1]];
+        QVector3D C = heightVertices_[heightIndices_[i + 2]];
+        QVector3D D = heightVertices_[heightIndices_[i + 5]];
+        A.setZ(A.z() + 0.02);
+        B.setZ(B.z() + 0.02);
+        C.setZ(C.z() + 0.02);
+        D.setZ(D.z() + 0.02);
+        grid.append({ A, B,
+                     B, D,
+                     A, C,
+                     C, D });
+    }
+    gridRenderImpl_.setColor(QColor(0,255,100));
+    gridRenderImpl_.setData(grid, GL_LINES);
+
+    isInited_ = true;
 }
 
 void Tile::setSomeInt(int val)
@@ -89,6 +110,16 @@ void Tile::setIsUpdate(bool val)
 QUuid Tile::getUuid() const
 {
     return id_;
+}
+
+QVector3D Tile::getTileOrigin() const
+{
+    return tileOrigin_;
+}
+
+bool Tile::getIsInited() const
+{
+    return isInited_;
 }
 
 int Tile::getSomeInt() const
@@ -129,4 +160,9 @@ const QVector<QVector3D>& Tile::getHeightVerticesRef() const
 const QVector<int>& Tile::getHeightIndicesRef() const
 {
     return heightIndices_;
+}
+
+const SceneObject::RenderImplementation& Tile::getGridRenderImplRef() const
+{
+    return gridRenderImpl_;
 }

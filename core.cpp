@@ -225,6 +225,7 @@ void Core::onFileStartOpening()
     qDebug() << "file start opening!";
     if (scene3dViewPtr_) {
         scene3dViewPtr_->updateChannelsForSideScanView(); // TODO: not effect(
+        scene3dViewPtr_->setMapView();
     }
 }
 

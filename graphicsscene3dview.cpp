@@ -162,11 +162,6 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
-void GraphicsScene3dView::setTextureId(GLuint id)
-{
-    sideScanView_->setTextureId(id);
-}
-
 void GraphicsScene3dView::setTextureIdForSideScanTile(QUuid tileId, GLuint id)
 {
     sideScanView_->setTextureIdForTile(tileId, id);
@@ -332,15 +327,6 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent)
 {
     m_bottomTrack->actionEvent(actionEvent);
-
-    QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::setTextureImage(const QImage &image, bool usingFilters)
-{
-    if (renderer_) {
-        renderer_->setTextureImage(image, usingFilters);
-    }
 
     QQuickFramebufferObject::update();
 }
@@ -531,16 +517,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                               bottomTrackWindowCounter_ = currCount;
 
                               // mosaic
-                              //sideScanView_->updateData(false, nullptr);
-                              sideScanView_->updateDataSec(); // realtime
-                              //setTextureImage(sideScanView_->getImagePtr(), false);
-                              //sideScanView_->setTextureId(renderer_->getTextureId());
+                              sideScanView_->updateData(); // realtime
                           }
                           ////////////////////////////////////////////////////////
-
-
-
-                          //setMapView();
+                          setMapView();
                       },
                       Qt::DirectConnection);
 
@@ -600,33 +580,20 @@ void GraphicsScene3dView::clearComboSelectionRect()
 GraphicsScene3dView::InFboRenderer::InFboRenderer()
     :QQuickFramebufferObject::Renderer()
     , m_renderer(new GraphicsScene3dRenderer)
-    , textureId_(0)
-    , needToInitializeTexture_(false)
-    , usingFilters_(true)
 {
     m_renderer->initialize();
 }
 
 GraphicsScene3dView::InFboRenderer::~InFboRenderer()
 {
-    if (textureId_) {
-        glDeleteTextures(1, &textureId_);
+    for (auto& itm : tileTexureIds_) {
+        glDeleteTextures(1, &itm);
     }
-}
-
-void GraphicsScene3dView::InFboRenderer::setTextureImage(const QImage &image, bool usingFilters)
-{
-    needToInitializeTexture_ = true;
 }
 
 void GraphicsScene3dView::InFboRenderer::appendUpdateTextureTask(QUuid tileId, const QImage &image)
 {
-    updateTextureTasks_.enqueue(qMakePair(tileId, image));
-}
-
-GLuint GraphicsScene3dView::InFboRenderer::getTextureId()
-{
-    return textureId_;
+    processTextureTasks_.enqueue(qMakePair(tileId, image));
 }
 
 void GraphicsScene3dView::InFboRenderer::render()
@@ -646,41 +613,41 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
 
-
-    while (!updateTextureTasks_.isEmpty()) {
-        auto task = updateTextureTasks_.dequeue();
-
+    while (!processTextureTasks_.isEmpty()) {
+        auto task = processTextureTasks_.dequeue();
         auto textureId = tileTexureIds_[task.first];
 
         if (textureId != 0) {
             glDeleteTextures(1, &textureId);
         }
 
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        if (task.second.isNull()) {
+            tileTexureIds_.remove(task.first);
+            view->setTextureIdForSideScanTile(task.first, 0);
+            continue;
+        }
+
+        GLuint newTextureId = 0;
+        glGenTextures(1, &newTextureId);
+        glBindTexture(GL_TEXTURE_2D, newTextureId);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         QImage glImage = task.second.convertToFormat(QImage::Format_RGBA8888);
 
         if (!glImage.isNull()) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-        }
-        else {
+        } else {
             qDebug() << "Converted QImage is null!";
         }
 
-        tileTexureIds_[task.first] = textureId;
+        tileTexureIds_[task.first] = newTextureId;
 
-        view->setTextureIdForSideScanTile(task.first, textureId);
+        view->setTextureIdForSideScanTile(task.first, newTextureId);
     }
-
-    //if (needToInitializeTexture_ && !textureImage_.isNull()) {
-    //    initializeTexture();
-    //    view->setTextureId(textureId_);
-    //    needToInitializeTexture_ = false;
-    //}
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
@@ -707,45 +674,6 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(4);
     return new QOpenGLFramebufferObject(size, format);
-}
-
-void GraphicsScene3dView::InFboRenderer::initializeTexture()
-{
-    if (!usingFilters_) { // without mipmap
-        if (textureId_) {
-            glDeleteTextures(1, &textureId_);
-        }
-
-        glGenTextures(1, &textureId_);
-        glBindTexture(GL_TEXTURE_2D, textureId_);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-    }
-    else {
-        QOpenGLContext* context = QOpenGLContext::currentContext();
-        QOpenGLFunctions* functions = context->functions();
-
-        if (textureId_) {
-            functions->glDeleteTextures(1, &textureId_);
-        }
-
-        functions->glGenTextures(1, &textureId_);
-        functions->glBindTexture(GL_TEXTURE_2D, textureId_);
-
-        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        functions->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        QImage glImage = textureImage_.convertToFormat(QImage::Format_RGBA8888);
-        functions->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-
-        functions->glGenerateMipmap(GL_TEXTURE_2D);
-    }
 }
 
 GraphicsScene3dView::Camera::Camera()

@@ -94,7 +94,6 @@ public:
         InFboRenderer();
         virtual ~InFboRenderer();
 
-        void setTextureImage(const QImage &image, bool usingFilters = true);
         void appendUpdateTextureTask(QUuid tileId, const QImage& image);
 
         GLuint getTextureId();
@@ -106,17 +105,10 @@ public:
 
     private:
         friend class GraphicsScene3dView;
-        void initializeTexture();
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
 
-        QQueue<QPair<QUuid, QImage>> updateTextureTasks_;
+        QQueue<QPair<QUuid, QImage>> processTextureTasks_;
         QHash<QUuid, GLuint> tileTexureIds_;
-
-        GLuint textureId_;
-
-        QImage textureImage_;
-        bool needToInitializeTexture_;
-        bool usingFilters_;
     };
 
     enum ActiveMode{
@@ -160,7 +152,6 @@ public:
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
 
-    void setTextureId(GLuint id);
     void updateChannelsForSideScanView();
     void updateTileTexture(QUuid tileid, const QImage& image);
     void setTextureIdForSideScanTile(QUuid tileId, GLuint id);
@@ -173,7 +164,6 @@ public:
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
-    Q_INVOKABLE void setTextureImage(const QImage &image, bool usingFilters = true);
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);

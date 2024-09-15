@@ -37,28 +37,25 @@ public:
         QVector<int> measLinesEvenIndices_;
         QVector<int> measLinesOddIndices_;
         bool measLineVisible_;
+        bool tileGridVisible_ = false;
     };
 
     /*methods*/
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
-    void updateDataSec();
+    void updateData();
     void clear();
 
+    void setView(GraphicsScene3dView* viewPtr);
     void setDatasetPtr(Dataset* datasetPtr);
-
-    void setTextureId(GLuint textureId);
     void setTextureIdForTile(QUuid tileid, GLuint textureId);
-
     void setScaleFactor(int scaleFactor);
     void setMeasLineVisible(bool state);
-    void setGridVisible(bool state);
+    void setTileGridVisible(bool state);
 
-    QImage& getImagePtr();
     void updateChannelsIds();
 
-    void setView(GraphicsScene3dView* viewPtr) { m_view = viewPtr; };
 
 private:
     /*methods*/
@@ -74,10 +71,6 @@ private:
     static constexpr int heightStep_ = 1;
     static constexpr int interpLineWidth_ = 1;
 
-    QVector<char> isOdds_;
-    QVector<int> epochIndxs_;
-
-    QImage image_;
 
     QVector<QRgb> colorTable_;
 
@@ -94,5 +87,7 @@ private:
 
     MatrixParams lastMatParams_;
     int lastCalcEpoch_ = 0;
+    int lastAcceptedEpoch_ = 0;
+
     uint64_t currIndxSec_ = 0;
 };

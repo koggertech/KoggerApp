@@ -374,7 +374,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 200
                 checkable: true
-                checked: false
+                checked: true
 
                 onClicked: {
                     SideScanViewControlMenuController.onMeasLineVisibleSideScanViewButtonClicked(checked)
