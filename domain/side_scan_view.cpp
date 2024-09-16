@@ -380,8 +380,13 @@ void SideScanView::clear()
     renderImpl->createBounds();
 
     lastCalcEpoch_ = 0;
+    lastAcceptedEpoch_ = 0;
     currIndxSec_ = 0;
     lastMatParams_ = MatrixParams();
+
+    globalMesh_.clear();
+
+    origin_ = QVector3D();
 
     renderImpl->tiles_.clear();
 

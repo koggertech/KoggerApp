@@ -8,7 +8,7 @@ GlobalMesh::~GlobalMesh()
     }
 }
 
-bool GlobalMesh::concatenate(MatrixParams &actualMatParams)
+bool GlobalMesh::concatenate(MatrixParams &actualMatParams) // work with unscaled data (heightMatrix)
 {
     if (!actualMatParams.isValid()) {
         return false;
@@ -42,16 +42,12 @@ bool GlobalMesh::concatenate(MatrixParams &actualMatParams)
 
 
     if (columnsToAddLeft > 0) {
-        qDebug() << "columnsToAddLeft: " << columnsToAddLeft;
-
         // first change origin X
         origin_.setX(origin_.x() - columnsToAddLeft * tileSize_);
         resizeColumnsLeft(columnsToAddLeft);
         resized = true;
     }
     if (rowsToAddBottom > 0) {
-        qDebug() << "rowsToAddBottom: " << rowsToAddBottom;
-
         // first change origin Y
         origin_.setY(origin_.y() - rowsToAddBottom * tileSize_);
         resizeRowsBottom(rowsToAddBottom);
@@ -59,14 +55,10 @@ bool GlobalMesh::concatenate(MatrixParams &actualMatParams)
     }
 
     if (columnsToAddRight > 0) {
-        qDebug() << "columnsToAddRight: " << columnsToAddRight;
-
         resizeColumnsRight(columnsToAddRight);
         resized = true;
     }
     if (rowsToAddTop > 0) {
-        qDebug() << "rowsToAddTop: " << rowsToAddTop;
-
         resizeRowsTop(rowsToAddTop);
         resized = true;
     }
@@ -152,6 +144,24 @@ int GlobalMesh::getHeightStep() const
 QVector3D GlobalMesh::getOrigin() const
 {
     return origin_;
+}
+
+
+void GlobalMesh::clear()
+{
+    origin_ = QVector3D();
+    for (auto& itm: tiles_)
+    {
+        delete itm;
+    }
+    tiles_.clear();
+
+    tileMatrix_.clear();
+
+    numWidthTiles_ = 0;
+    numHeightTiles_ = 0;
+
+    count_ = 0;
 }
 
 void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const MatrixParams &matrixParams)

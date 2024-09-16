@@ -29,6 +29,8 @@ public:
 
     QVector3D getOrigin() const;
 
+    void clear();
+
 
 private:
     /*methods*/
@@ -48,8 +50,9 @@ private:
     int numWidthTiles_ = 0;
     int numHeightTiles_ = 0;
 
-    const int tileSize_ = 16; // px w,h
-    const int heightStep_ = 4;
+    const int tileSize_ = 10; // meterpx w,h
+    const int heightStep_ = 2;
 
     int count_ = 0; // debug
 };
+
