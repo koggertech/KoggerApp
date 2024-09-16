@@ -15,8 +15,8 @@ public:
 
     bool concatenate(MatrixParams& actualMatParams);
     void printMatrix() const;
-    int getPixelWidth() const;
-    int getPixelHeight() const;
+    int getWidthMeters() const;
+    int getHeightMeters() const;
 
     int getNumWidthTiles() const;
     int getNumHeightTiles() const;
@@ -51,7 +51,9 @@ private:
     int numWidthTiles_ = 0;
     int numHeightTiles_ = 0;
 
-    const int tileSize_ = 10; // meterpx w,h
+    const int tileSizeMeters_ = 10; // meterpx w,h
+    const float resolution = 0.1; // 0.1 метр - 1 пиксель
+
     const int heightVerticeRatio_ = 5; // в пять раз меньше чем пикселей
 
     int count_ = 0; // debug

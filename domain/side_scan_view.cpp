@@ -170,8 +170,8 @@ void SideScanView::updateData()
 
 
         auto globalMeshOrigin = globalMesh_.getOrigin();
-        auto globalWidth = globalMesh_.getPixelWidth();
-        auto globalHeight = globalMesh_.getPixelHeight();
+        auto globalWidth = globalMesh_.getWidthMeters();
+        auto globalHeight = globalMesh_.getHeightMeters();
 
 
         // Bresenham
