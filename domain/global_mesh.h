@@ -24,6 +24,7 @@ public:
     std::vector<std::vector<Tile*>>& getTileMatrixRef();
 
     int getTileSize() const;
+    int getHeightVerticeRatio() const;
     int getHeightStep() const;
 
 
@@ -51,7 +52,7 @@ private:
     int numHeightTiles_ = 0;
 
     const int tileSize_ = 10; // meterpx w,h
-    const int heightStep_ = 2;
+    const int heightVerticeRatio_ = 5; // в пять раз меньше чем пикселей
 
     int count_ = 0; // debug
 };

@@ -61,7 +61,7 @@ struct MatrixParams {
         stream << " originX:" << originX << "\n";
         stream << " originY:" << originY << "\n";
         stream << " heightMatrixWidth:" << heightMatrixWidth << "\n";
-        stream << " heightMatrixHeight:" << heightMatrixHeight;
+        stream << " heightMatrixHeight:" << heightMatrixHeight << "\n";
         stream << " imageWidth:" << imageWidth << "\n";
         stream << " imageHeight:" << imageHeight << "\n";
     }

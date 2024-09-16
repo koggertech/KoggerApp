@@ -107,13 +107,13 @@ void SideScanView::updateData()
     bool meshUpdated = globalMesh_.concatenate(actualMatParams);
 
     if (meshUpdated) {
-        // // just debug messages
-        // qDebug() << "/// inserted start ///";
-        // qDebug() << "actual matrix:";
-        // actualMatParams.print(qDebug());
-        // qDebug() << "globalmesh :";
-        // globalMesh_.printMatrix();
-        // qDebug() << "/// inserted end ///";
+        // just debug messages
+        qDebug() << "/// inserted start ///";
+        qDebug() << "actual matrix:";
+        actualMatParams.print(qDebug());
+        qDebug() << "globalmesh :";
+        globalMesh_.printMatrix();
+        qDebug() << "/// inserted end ///";
     }
 
 

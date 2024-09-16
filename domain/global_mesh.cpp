@@ -136,9 +136,14 @@ int GlobalMesh::getTileSize() const
     return tileSize_;
 }
 
+int GlobalMesh::getHeightVerticeRatio() const
+{
+    return heightVerticeRatio_;
+}
+
 int GlobalMesh::getHeightStep() const
 {
-    return heightStep_;
+    return tileSize_ / heightVerticeRatio_;
 }
 
 QVector3D GlobalMesh::getOrigin() const
@@ -185,8 +190,8 @@ void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const M
 
                 // init tile
                 tileMatrix_[i][j]->setSomeInt(count_);
-                QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + (numHeightTiles - 1) * tileSize_ -  i * tileSize_, 0.0f }; // reverse in mem
-                tileMatrix_[i][j]->initTile(tileOrigin, heightStep_, tileSize_);
+                QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSize_, 0.0f }; // reverse in mem
+                tileMatrix_[i][j]->initTile(tileOrigin, heightVerticeRatio_, tileSize_);
                 tileMatrix_[i][j]->setIsUpdate(true);
             }
         }
@@ -212,8 +217,8 @@ void GlobalMesh::resizeColumnsLeft(int columnsToAdd)
 
             // init tile
             tileMatrix_[i][j]->setSomeInt(count_);
-            QVector3D tileOrigin = { origin_.x() + j * tileSize_,   origin_.y() + (numHeightTiles_ - 1) * tileSize_ - i * tileSize_, 0.0f };
-            tileMatrix_[i][j]->initTile(tileOrigin, heightStep_, tileSize_);
+            QVector3D tileOrigin = { origin_.x() + j * tileSize_,   origin_.y() + ((numHeightTiles_ - 1) - i) * tileSize_, 0.0f };
+            tileMatrix_[i][j]->initTile(tileOrigin, heightVerticeRatio_, tileSize_);
             tileMatrix_[i][j]->setIsUpdate(true);
         }
     }
@@ -244,7 +249,7 @@ void GlobalMesh::resizeRowsBottom(int rowsToAdd)
             // init tile
             tileMatrix_[i][j]->setSomeInt(count_);            
             QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + cnt * tileSize_, 0.0f }; // т.к. ориджин обновился мы плюсуем по y
-            tileMatrix_[i][j]->initTile(tileOrigin, heightStep_, tileSize_);
+            tileMatrix_[i][j]->initTile(tileOrigin, heightVerticeRatio_, tileSize_);
             tileMatrix_[i][j]->setIsUpdate(true);
         }
         cnt++;
@@ -268,8 +273,8 @@ void GlobalMesh::resizeColumnsRight(int columnsToAdd)
 
             // init tile
             tileMatrix_[i][j]->setSomeInt(count_);
-            QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + (numHeightTiles_ - 1) * tileSize_ - i * tileSize_, 0.0f };
-            tileMatrix_[i][j]->initTile(tileOrigin, heightStep_, tileSize_);
+            QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSize_, 0.0f };
+            tileMatrix_[i][j]->initTile(tileOrigin, heightVerticeRatio_, tileSize_);
             tileMatrix_[i][j]->setIsUpdate(true);
         }
     }
@@ -297,8 +302,8 @@ void GlobalMesh::resizeRowsTop(int rowsToAdd)
 
             // init tile
             tileMatrix_[i][j]->setSomeInt(count_);
-            QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + (numHeightTiles_ + rowsToAdd - 1) * tileSize_ -  i * tileSize_, 0.0f };
-            tileMatrix_[i][j]->initTile(tileOrigin, heightStep_, tileSize_);
+            QVector3D tileOrigin = { origin_.x() + j * tileSize_, origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSize_, 0.0f };
+            tileMatrix_[i][j]->initTile(tileOrigin, heightVerticeRatio_, tileSize_);
             tileMatrix_[i][j]->setIsUpdate(true);
         }
     }
