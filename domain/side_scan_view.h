@@ -62,7 +62,7 @@ private:
     void updateColorTable();
     inline bool checkLength(float dist) const;
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
-    void concatenateMatrixParameters(MatrixParams& srcDst1, const MatrixParams& src2) const;
+    void concatenateMatrixParameters(MatrixParams& srcDst, const MatrixParams& src) const;
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
 
     /*data*/

@@ -11,10 +11,25 @@ constexpr float rgbMaxValue = 255.0f;
 
 
 struct MatrixParams {
-    MatrixParams() : hMatrixWidth(-1), hMatrixHeight(-1), imageWidth(-1), imageHeight(-1), originX(0.0f), originY(0.0f) { };
+    MatrixParams() :
+        rawWidth(-1),
+        rawHeight(-1),
+        heightMatrixWidth(-1),
+        heightMatrixHeight(-1),
+        imageWidth(-1),
+        imageHeight(-1),
+        originX(0.0f),
+        originY(0.0f)
+    {
 
-    int hMatrixWidth;
-    int hMatrixHeight;
+    };
+
+    int rawWidth;
+    int rawHeight;
+
+    int heightMatrixWidth;
+    int heightMatrixHeight;
+
     int imageWidth;
     int imageHeight;
 
@@ -22,8 +37,10 @@ struct MatrixParams {
     float originY;
 
     bool isValid() const {
-        if (hMatrixWidth == -1 ||
-            hMatrixHeight == -1 ||
+        if (rawWidth == -1 ||
+            rawHeight == -1 ||
+            heightMatrixWidth == -1 ||
+            heightMatrixHeight == -1 ||
             imageWidth == -1 ||
             imageHeight == -1) {
             return false;
@@ -37,14 +54,16 @@ struct MatrixParams {
         stream << " _____________\n";
         stream << " |           |\n";
         stream << " |           |\n";
-        stream << " |           |h =" << imageHeight << "\n";
+        stream << " |           |h =" << rawHeight << "\n";
         stream << " |           |\n";
         stream << " |___________|\n";
-        stream << "       w =" << imageWidth << "\n";
+        stream << "        w =" << rawWidth << "\n";
         stream << " originX:" << originX << "\n";
-        stream << " originY:" << originY;
-
-        stream << "\n";
+        stream << " originY:" << originY << "\n";
+        stream << " heightMatrixWidth:" << heightMatrixWidth << "\n";
+        stream << " heightMatrixHeight:" << heightMatrixHeight;
+        stream << " imageWidth:" << imageWidth << "\n";
+        stream << " imageHeight:" << imageHeight << "\n";
     }
 };
 

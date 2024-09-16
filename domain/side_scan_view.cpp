@@ -470,49 +470,46 @@ MatrixParams SideScanView::getMatrixParams(const QVector<QVector3D> &vertices) c
     auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
 
     retVal.originX = minX->x();
-    //retVal.maxX = maxX->x();
     retVal.originY  = minY->y();
-    //retVal.maxY = maxY->y();
 
-    retVal.hMatrixWidth = static_cast<int>(std::ceil(maxX->x() -  minX->x()));
-    retVal.imageWidth = retVal.hMatrixWidth;// * globalMesh_.heigtRatio_;
+    retVal.rawWidth = static_cast<int>(std::ceil(maxX->x() -  minX->x()));
+    retVal.heightMatrixWidth = retVal.rawWidth;
+    retVal.imageWidth        = retVal.rawWidth * scaleFactor_;
 
-
-    retVal.hMatrixHeight = static_cast<int>(std::ceil(maxY->y() - minY->y()));
-    retVal.imageHeight = retVal.hMatrixHeight;// * globalMesh_.heigtRatio_;
+    retVal.rawHeight = static_cast<int>(std::ceil(maxY->y() - minY->y()));
+    retVal.heightMatrixHeight = retVal.rawHeight;
+    retVal.imageHeight        = retVal.rawHeight * scaleFactor_;
 
     return retVal;
 }
 
-void SideScanView::concatenateMatrixParameters(MatrixParams &srcDst1, const MatrixParams &src2) const
+void SideScanView::concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams &src) const
 {
-    if (!srcDst1.isValid() && !src2.isValid())
+    if (!srcDst.isValid() && !src.isValid())
         return;
 
-    if (!srcDst1.isValid()) {
-        srcDst1 = src2;
-        return;
-    }
-
-    if (!src2.isValid()) {
+    if (!srcDst.isValid()) {
+        srcDst = src;
         return;
     }
 
+    if (!src.isValid()) {
+        return;
+    }
 
-    int maxX = std::max(srcDst1.originX + srcDst1.imageWidth, src2.originX + src2.imageWidth);
-    int maxY = std::max(srcDst1.originY + srcDst1.imageHeight, src2.originY + src2.imageHeight);
+    int maxX = std::max(srcDst.originX + srcDst.rawWidth, src.originX + src.rawWidth);
+    int maxY = std::max(srcDst.originY + srcDst.rawHeight, src.originY + src.rawHeight);
 
-    srcDst1.originX = std::min(srcDst1.originX, src2.originX);
-    //srcDst1.maxX = std::max(srcDst1.maxX, src2.maxX);
-    srcDst1.originY = std::min(srcDst1.originY, src2.originY);
-    //srcDst1.maxY = std::max(srcDst1.maxY, src2.maxY);
+    srcDst.originX = std::min(srcDst.originX, src.originX);
+    srcDst.originY = std::min(srcDst.originY, src.originY);
 
+    srcDst.rawWidth = static_cast<int>(std::ceil(maxX - srcDst.originX));
+    srcDst.heightMatrixWidth = srcDst.rawWidth;
+    srcDst.imageWidth = srcDst.rawWidth + scaleFactor_;
 
-    srcDst1.hMatrixWidth = static_cast<int>(std::ceil(maxX - srcDst1.originX));
-    srcDst1.imageWidth = srcDst1.hMatrixWidth;// * globalMesh_.heigtRatio_;
-
-    srcDst1.hMatrixHeight = static_cast<int>(std::ceil(maxY - srcDst1.originY));
-    srcDst1.imageHeight = srcDst1.hMatrixHeight;// * globalMesh_.heigtRatio_;
+    srcDst.rawHeight = static_cast<int>(std::ceil(maxY - srcDst.originY));
+    srcDst.heightMatrixHeight = srcDst.rawHeight;
+    srcDst.imageHeight = srcDst.rawHeight * scaleFactor_;
 }
 
 int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
