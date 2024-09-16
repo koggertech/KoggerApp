@@ -31,6 +31,7 @@ public:
     QImage                                      getImage();
     const QVector<QVector2D>&                   getTextureVerticesRef() const;
     const QVector<QVector3D>&                   getHeightVerticesRef() const;
+    QVector<QVector3D>&                   		getHeightVerticesRef();
     const QVector<int>&                         getHeightIndicesRef() const;
     const SceneObject::RenderImplementation&    getGridRenderImplRef() const;
 

@@ -520,7 +520,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                               sideScanView_->updateData(); // realtime
                           }
                           ////////////////////////////////////////////////////////
-                          setMapView();
+                          //setMapView();
                       },
                       Qt::DirectConnection);
 

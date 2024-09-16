@@ -157,6 +157,11 @@ const QVector<QVector3D>& Tile::getHeightVerticesRef() const
     return heightVertices_;
 }
 
+QVector<QVector3D>& Tile::getHeightVerticesRef()
+{
+    return heightVertices_;
+}
+
 const QVector<int>& Tile::getHeightIndicesRef() const
 {
     return heightIndices_;

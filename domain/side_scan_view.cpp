@@ -217,7 +217,7 @@ void SideScanView::updateData()
 
 
 
-        // follow the first segment and interpolate
+        // follow the first segment
         while (true) {
             // first segment
             float segFPixCurrDist = std::sqrt(std::pow(segFX1 - segFX2, 2) + std::pow(segFY1 - segFY2, 2));
@@ -242,54 +242,31 @@ void SideScanView::updateData()
 
 
             //// height matrix
-            //int uinterpX1 = std::min(actualMatParams.unscaledWidth  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - actualMatParams.minX)))));
-            //int uinterpY1 = std::min(actualMatParams.unscaledHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - actualMatParams.minY)))));
-            //int uinterpX2 = std::min(actualMatParams.unscaledWidth  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - actualMatParams.minX)))));
-            //int uinterpY2 = std::min(actualMatParams.unscaledHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - actualMatParams.minY)))));
+            //int uinterpX1 = std::min(globalWidth  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - globalMeshOrigin.x())))));
+            //int uinterpY1 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - globalMeshOrigin.y())))));
+            //int uinterpX2 = std::min(globalWidth  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - globalMeshOrigin.x())))));
+            //int uinterpY2 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - globalMeshOrigin.y())))));
             //int uinterpDistX = uinterpX2 - uinterpX1;
-            //int uinterpDistY = u
-
-            //interpY2 - uinterpY1;
-
-
-            //1
-            // int meshIndxX = segFY1 / globalMesh_.getTileSize();
-            // int meshIndxY = (globalMesh_.getNumHeightTiles() -1) - segFX1 / globalMesh_.getTileSize();
-            //2
+            //int uinterpDistY = uinterpY2 - uinterpY1;
 
 
 
-            int meshIndxX = segFX1 / globalMesh_.getTileSize();
-            int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - segFY1 / globalMesh_.getTileSize();
-
-            int tileIndxY = segFY1 % globalMesh_.getTileSize();
-            int tileIndxX = segFX1 % globalMesh_.getTileSize();
-
-
-            //qDebug() << segFX1 << segFY2 << meshIndxX << meshIndxY << tileIndxX << tileIndxY;
-
-
-            auto& imageRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getImageRef();
-
-
-
-            uchar* imageData = imageRef.bits();
-            int bytesPerLine = imageRef.bytesPerLine();
-            int bytesInPix = bytesPerLine / imageRef.width();
-
-            //int allSize = globalMesh_.getTileSize() * imageRef.bytesPerLine();
-
-            uchar* pixPtr = imageData + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
-
-            *pixPtr = colorTable_[segFColorIndx];
-
-            globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
+            //// meas line
+            //int meshIndxX = segFX1 / globalMesh_.getTileSize();
+            //int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - segFY1 / globalMesh_.getTileSize();
+            //int tileIndxY = segFY1 % globalMesh_.getTileSize();
+            //int tileIndxX = segFX1 % globalMesh_.getTileSize();
+            //auto& imageRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getImageRef();
+            //uchar* imageData = imageRef.bits();
+            //int bytesPerLine = imageRef.bytesPerLine();
+            //int bytesInPix = bytesPerLine / imageRef.width();
+            //uchar* pixPtr = imageData + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
+            //*pixPtr = colorTable_[segFColorIndx];
+            //globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
 
 
 
-
-
-
+            // interpolate
             if (checkLength(interpPixTotDist)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
                     float interpProgress = static_cast<float>(step) / interpPixTotDist;
@@ -302,74 +279,41 @@ void SideScanView::updateData()
                     //int uinterpX = uinterpX1 + interpProgress * uinterpDistX;
                     //int uinterpY = uinterpY1 + interpProgress * uinterpDistY;
 
-                    //for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) {
-                    //    for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
+                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) {
+                        for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
 
-                            //int applyInterpX = std::min(actualMatParams.imageWidth  - 1, std::max(0, interpX /*+ offsetX*/));
-                            //int applyInterpY = std::min(actualMatParams.imageHeight - 1, std::max(0, interpY /*+ offsetY*/));
-
-
-                    /*
-
-
-                            int applyInterpX = interpX;
-                            int applyInterpY = interpY;
+                            int applyInterpX = std::min(globalWidth - 1, std::max(0, interpX + offsetX));
+                            int applyInterpY = std::min(globalHeight - 1, std::max(0, interpY + offsetY));
 
 
 
                             int meshIndxX = applyInterpX / globalMesh_.getTileSize();
-                            int meshIndxY = applyInterpY / globalMesh_.getTileSize();
-
+                            int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - applyInterpY / globalMesh_.getTileSize();
                             int tileIndxX = applyInterpX % globalMesh_.getTileSize();
                             int tileIndxY = applyInterpY % globalMesh_.getTileSize();
 
-                            //diffOrigins;
 
-                            ////auto imageRef = ;
-                            ///
-
-
-*/
-
-                            /*
                             auto& imageRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getImageRef();
-
                             uchar* imageData = imageRef.bits();
                             int bytesPerLine = imageRef.bytesPerLine();
                             int bytesInPix = bytesPerLine / imageRef.width();
 
-
-                            auto shift =  tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
-                            uchar* pixPtr = imageData + shift;
-                            qDebug() << "bytes pre line: " << bytesPerLine<< "shift: " << shift;
+                            uchar* pixPtr = imageData + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
                             *pixPtr = colorTable_[interpColorIndx];
 
 
-                            qDebug() << tileIndxX << tileIndxY;
-
-
-                            */
-
-
-                            //qDebug() << meshIndxX << meshIndxY << applyInterpX << applyInterpY;
-
-
-                            //imageRef.setPixel(tileIndxY, tileIndxX, colorTable_[interpColorIndx]);
-                            //globalMesh_.getTileMatrixRef()[meshIndxX][meshIndxY]->setIsUpdate(true);
-
-
-                            // qDebug() << "setting color!: " << applyInterpX << applyInterpY;
-                            // qDebug() << meshIndxX << meshIndxY;
-                            // qDebug() << tileIndxX << tileIndxY;
+                            globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
 
 
                             //// height matrix
-                            //int uApplyInterpX = std::min(actualMatParams.unscaledWidth  - 1, std::max(0, uinterpX + offsetX));
-                            //int uApplyInterpY = std::min(actualMatParams.unscaledHeight - 1, std::max(0, uinterpY + offsetY));
-                            //int heightVerticesIndx = (uApplyInterpY / heightStep_) * actualMatParams.hMatWidth + (uApplyInterpX / heightStep_);
-                            //renderImpl->heightVertices_[heightVerticesIndx][2] = segSPixPos.z();
-                    //     }
-                    // }
+                            //int hStepsInRow = globalMesh_.getTileSize() / globalMesh_.getHeightStep();
+                            ////// height matrix
+                            //int uApplyInterpX = std::min(globalMesh_.getTileSize() - 1, std::max(0, tileIndxX + offsetX));
+                            //int uApplyInterpY = std::min(globalMesh_.getTileSize() - 1, std::max(0, tileIndxY + offsetY));
+                            //int heightVerticesIndx = (uApplyInterpY / globalMesh_.getHeightStep()) * hStepsInRow + (uApplyInterpX / globalMesh_.getHeightStep());
+                            //globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getHeightVerticesRef()[heightVerticesIndx][2] = segSPixPos.z();
+                         }
+                     }
                 }
             }
 
