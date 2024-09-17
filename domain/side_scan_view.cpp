@@ -136,6 +136,9 @@ void SideScanView::updateData()
         // qDebug() << "/// inserted end ///";
     }
 
+    auto gMeshWidthPixs = globalMesh_.getPixelWidth(); // for bypass
+    auto gMeshHeightPixs = globalMesh_.getPixelHeight();
+
     // processing
     for (int i = 0; i < measLinesVertices_.size(); i += 2) { // 2 - step for segment
         if (i + 8 >= measLinesVertices_.size()) {
@@ -187,8 +190,6 @@ void SideScanView::updateData()
             continue;
         }
 
-        auto gMeshWidthPixs = globalMesh_.getPixelWidth();
-        auto gMeshHeightPixs = globalMesh_.getPixelHeight();
 
         // Bresenham
         // first segment
@@ -196,10 +197,10 @@ void SideScanView::updateData()
         QVector3D segFPhEndPnt = !segFIsOdd ? measLinesVertices_[segFEndVertIndx] : measLinesVertices_[segFBegVertIndx];
         auto segFBegPixPos = globalMesh_.convertPhToPixCoords(segFPhBegPnt);
         auto segFEndPixPos = globalMesh_.convertPhToPixCoords(segFPhEndPnt);
-        int segFPixX1 = std::min(gMeshWidthPixs - 1,  std::max(0, static_cast<int>(std::round(segFBegPixPos.x()))));
-        int segFPixY1 = std::min(gMeshHeightPixs - 1, std::max(0, static_cast<int>(std::round(segFBegPixPos.y()))));
-        int segFPixX2 = std::min(gMeshWidthPixs - 1,  std::max(0, static_cast<int>(std::round(segFEndPixPos.x()))));
-        int segFPixY2 = std::min(gMeshHeightPixs - 1, std::max(0, static_cast<int>(std::round(segFEndPixPos.y()))));
+        int segFPixX1 = segFBegPixPos.x();
+        int segFPixY1 = segFBegPixPos.y();
+        int segFPixX2 = segFEndPixPos.x();
+        int segFPixY2 = segFEndPixPos.y();
         float segFPixTotDist = std::sqrt(std::pow(segFPixX2 - segFPixX1, 2) + std::pow(segFPixY2 - segFPixY1, 2));
         int segFPixDx = std::abs(segFPixX2 - segFPixX1);
         int segFPixDy = std::abs(segFPixY2 - segFPixY1);
@@ -211,10 +212,10 @@ void SideScanView::updateData()
         QVector3D segSPhEndPnt = !segSIsOdd ? measLinesVertices_[segSEndVertIndx] : measLinesVertices_[segSBegVertIndx];
         auto segSBegPixPos = globalMesh_.convertPhToPixCoords(segSPhBegPnt);
         auto segSEndPixPos = globalMesh_.convertPhToPixCoords(segSPhEndPnt);
-        int segSPixX1 = std::min(gMeshWidthPixs - 1,  std::max(0, static_cast<int>(std::round(segSBegPixPos.x()))));
-        int segSPixY1 = std::min(gMeshHeightPixs - 1, std::max(0, static_cast<int>(std::round(segSBegPixPos.y()))));
-        int segSPixX2 = std::min(gMeshWidthPixs - 1,  std::max(0, static_cast<int>(std::round(segSEndPixPos.x()))));
-        int segSPixY2 = std::min(gMeshHeightPixs - 1, std::max(0, static_cast<int>(std::round(segSEndPixPos.y()))));
+        int segSPixX1 = segSBegPixPos.x();
+        int segSPixY1 = segSBegPixPos.y();
+        int segSPixX2 = segSEndPixPos.x();
+        int segSPixY2 = segSEndPixPos.y();
         float segSPixTotDist = std::sqrt(std::pow(segSPixX2 - segSPixX1, 2) + std::pow(segSPixY2 - segSPixY1, 2));
         int segSPixDx = std::abs(segSPixX2 - segSPixX1);
         int segSPixDy = std::abs(segSPixY2 - segSPixY1);
@@ -235,28 +236,29 @@ void SideScanView::updateData()
         float segSPhDistX = segSPhEndPnt.x() - segSPhBegPnt.x();
         float segSPhDistY = segSPhEndPnt.y() - segSPhBegPnt.y();
 
+        QVector3D segFBoatPos(segFEpoch.getPositionGNSS().ned.n, segFEpoch.getPositionGNSS().ned.e, 0.0f);
+        QVector3D segSBoatPos(segSEpoch.getPositionGNSS().ned.n, segSEpoch.getPositionGNSS().ned.e, 0.0f);
+
         // follow the first segment
         while (true) {
             // first segment
             float segFPixCurrDist = std::sqrt(std::pow(segFPixX1 - segFPixX2, 2) + std::pow(segFPixY1 - segFPixY2, 2));
             float segFProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
             QVector3D segFCurrPhPos(segFPhBegPnt.x() + segFProgByPix * segFPhDistX, segFPhBegPnt.y() + segFProgByPix * segFPhDistY, segFDistProc);
-            QVector3D segFBoatPos(segFEpoch.getPositionGNSS().ned.n, segFEpoch.getPositionGNSS().ned.e, 0.0f);
             auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFCurrPhPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
             // second segment, calc corresponding progress using smoothed interpolation
             float segSCorrProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX,    segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY,     segSDistProc);
-            QVector3D segSBoatPos(segSEpoch.getPositionGNSS().ned.n, segSEpoch.getPositionGNSS().ned.e, 0.0f);
+            QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX, segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY, segSDistProc);
             auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSCurrPhPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
 
             auto segFCurrPixPos = globalMesh_.convertPhToPixCoords(segFCurrPhPos);
             auto segSCurrPixPos = globalMesh_.convertPhToPixCoords(segSCurrPhPos);
 
             // color interpolation between two pixels
-            int interpPixX1 = std::min(gMeshWidthPixs - 1,  std::max(0, static_cast<int>(std::round(segFCurrPixPos.x()))));
-            int interpPixY1 = std::min(gMeshHeightPixs - 1, std::max(0, static_cast<int>(std::round(segFCurrPixPos.y()))));
-            int interpPixX2 = std::min(gMeshWidthPixs - 1,  std::max(0, static_cast<int>(std::round(segSCurrPixPos.x()))));
-            int interpPixY2 = std::min(gMeshHeightPixs - 1, std::max(0, static_cast<int>(std::round(segSCurrPixPos.y()))));
+            int interpPixX1 = segFCurrPixPos.x();
+            int interpPixY1 = segFCurrPixPos.y();
+            int interpPixX2 = segSCurrPixPos.x();
+            int interpPixY2 = segSCurrPixPos.y();
             int interpPixDistX = interpPixX2 - interpPixX1;
             int interpPixDistY = interpPixY2 - interpPixY1;
             float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
@@ -294,9 +296,9 @@ void SideScanView::updateData()
                     //int uinterpX = uinterpX1 + interpProgress * uinterpDistX;
                     //int uinterpY = uinterpY1 + interpProgress * uinterpDistY;
 
-                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) {
+                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) { // bypass
                         for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
-                            int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX));
+                            int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
                             int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
 
                             int meshIndxX = bypassInterpX / globalMesh_.getTileSidePixelSize();
