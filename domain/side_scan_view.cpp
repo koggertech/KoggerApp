@@ -21,6 +21,13 @@ SideScanView::~SideScanView()
 
 void SideScanView::updateData()
 {
+    // TODO:
+    //  refactor (naming etc.)
+    //  perfomance optimizations
+    //  check epoch selection logic
+    //  height matrix
+
+
     if (!datasetPtr_) {
         qDebug() << "SideScanView::updateDataSec: dataset is nullptr!";
         return;
@@ -34,7 +41,7 @@ void SideScanView::updateData()
         return;
 
 
-    // prepare intermediate data
+    // prepare intermediate data (selecting epochs to process)
     MatrixParams actualMatParams(lastMatParams_);
     MatrixParams newMatrixParams;
 
@@ -107,14 +114,15 @@ void SideScanView::updateData()
     bool meshUpdated = globalMesh_.concatenate(actualMatParams);
 
     if (meshUpdated) {
-        // just debug messages
-        qDebug() << "/// inserted start ///";
-        qDebug() << "actual matrix:";
-        actualMatParams.print(qDebug());
-        qDebug() << "globalmesh :";
-        globalMesh_.printMatrix();
-        qDebug() << "/// inserted end ///";
+        // // just debug messages
+        // qDebug() << "/// inserted start ///";
+        // qDebug() << "actual matrix:";
+        // actualMatParams.print(qDebug());
+        // qDebug() << "globalmesh :";
+        // globalMesh_.printMatrix();
+        // qDebug() << "/// inserted end ///";
     }
+
 
 
     // processing
@@ -169,76 +177,84 @@ void SideScanView::updateData()
         }
 
 
-        auto globalMeshOrigin = globalMesh_.getOrigin();
-        auto globalWidth = globalMesh_.getWidthMeters();
-        auto globalHeight = globalMesh_.getHeightMeters();
+        //auto globalMeshOrigin = globalMesh_.getOrigin();
+        auto globalWidthPixels = globalMesh_.getWidthPixels();
+        auto globalHeightPixels = globalMesh_.getHeightPixels();
 
 
         // Bresenham
         // first segment
-        QVector3D segFBegPoint = !segFIsOdd ? measLinesVertices_[segFBegVertIndx] : measLinesVertices_[segFEndVertIndx];
-        QVector3D segSEngPoint = !segFIsOdd ? measLinesVertices_[segFEndVertIndx] : measLinesVertices_[segFBegVertIndx];
-        int segFX1 = std::min(globalWidth - 1,  std::max(0, static_cast<int>(std::round((segFBegPoint.x() - globalMeshOrigin.x()) * scaleFactor_))));
-        int segFY1 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segFBegPoint.y() - globalMeshOrigin.y()) * scaleFactor_))));
-        int segFX2 = std::min(globalWidth - 1,  std::max(0, static_cast<int>(std::round((segSEngPoint.x() - globalMeshOrigin.x()) * scaleFactor_))));
-        int segFY2 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSEngPoint.y() - globalMeshOrigin.y()) * scaleFactor_))));
-        float segFPixTotDist = std::sqrt(std::pow(segFX2 - segFX1, 2) + std::pow(segFY2 - segFY1, 2));
-        int segFDx = std::abs(segFX2 - segFX1);
-        int segFDy = std::abs(segFY2 - segFY1);
-        int segFSx = (segFX1 < segFX2) ? 1 : -1;
-        int segFSy = (segFY1 < segFY2) ? 1 : -1;
-        int segFErr = segFDx - segFDy;
+        QVector3D segFPhysicsBegPoint = !segFIsOdd ? measLinesVertices_[segFBegVertIndx] : measLinesVertices_[segFEndVertIndx]; // physics coordinates
+        QVector3D segFPhysicsEndPoint = !segFIsOdd ? measLinesVertices_[segFEndVertIndx] : measLinesVertices_[segFBegVertIndx];
+        auto segFBegPixelPos = globalMesh_.convertPhysicsCoordinateToPixel(segFPhysicsBegPoint);
+        auto segFEndPixelPos = globalMesh_.convertPhysicsCoordinateToPixel(segFPhysicsEndPoint);
+        int segFPixelX1 = std::min(globalWidthPixels - 1,  std::max(0, static_cast<int>(std::round(segFBegPixelPos.x()))));
+        int segFPixelY1 = std::min(globalHeightPixels - 1, std::max(0, static_cast<int>(std::round(segFBegPixelPos.y()))));
+        int segFPixelX2 = std::min(globalWidthPixels - 1,  std::max(0, static_cast<int>(std::round(segFEndPixelPos.x()))));
+        int segFPixelY2 = std::min(globalHeightPixels - 1, std::max(0, static_cast<int>(std::round(segFEndPixelPos.y()))));
+        float segFPixelTotDist = std::sqrt(std::pow(segFPixelX2 - segFPixelX1, 2) + std::pow(segFPixelY2 - segFPixelY1, 2));
+        int segFPixelDx = std::abs(segFPixelX2 - segFPixelX1);
+        int segFPixelDy = std::abs(segFPixelY2 - segFPixelY1);
+        int segFPixelSx = (segFPixelX1 < segFPixelX2) ? 1 : -1;
+        int segFPixelSy = (segFPixelY1 < segFPixelY2) ? 1 : -1;
+        int segFPixelErr = segFPixelDx - segFPixelDy;
+
         // second segment
-        QVector3D segSBegPoint = !segSIsOdd ? measLinesVertices_[segSBegVertIndx] : measLinesVertices_[segSEndVertIndx];
-        QVector3D segSEndPoint = !segSIsOdd ? measLinesVertices_[segSEndVertIndx] : measLinesVertices_[segSBegVertIndx];
-        int segSX1 = std::min(globalWidth - 1,  std::max(0, static_cast<int>(std::round((segSBegPoint.x() - globalMeshOrigin.x()) * scaleFactor_))));
-        int segSY1 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSBegPoint.y() - globalMeshOrigin.y()) * scaleFactor_))));
-        int segSX2 = std::min(globalWidth - 1,  std::max(0, static_cast<int>(std::round((segSEndPoint.x() - globalMeshOrigin.x()) * scaleFactor_))));
-        int segSY2 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSEndPoint.y() - globalMeshOrigin.y()) * scaleFactor_))));
-        float segSPixTotDist = std::sqrt(std::pow(segSX2 - segSX1, 2) + std::pow(segSY2 - segSY1, 2));
-        int segSDx = std::abs(segSX2 - segSX1);
-        int segSDy = std::abs(segSY2 - segSY1);
-        int segSSx = (segSX1 < segSX2) ? 1 : -1;
-        int segSSy = (segSY1 < segSY2) ? 1 : -1;
-        int segSErr = segSDx - segSDy;
+        QVector3D segSPhysicsBegPoint = !segSIsOdd ? measLinesVertices_[segSBegVertIndx] : measLinesVertices_[segSEndVertIndx];
+        QVector3D segSPhysicsEndPoint = !segSIsOdd ? measLinesVertices_[segSEndVertIndx] : measLinesVertices_[segSBegVertIndx];
+        auto segSBegPixelPos = globalMesh_.convertPhysicsCoordinateToPixel(segSPhysicsBegPoint);
+        auto segSEndPixelPos = globalMesh_.convertPhysicsCoordinateToPixel(segSPhysicsEndPoint);
+        int segSPixelX1 = std::min(globalWidthPixels - 1,  std::max(0, static_cast<int>(std::round(segSBegPixelPos.x()))));
+        int segSPixelY1 = std::min(globalHeightPixels - 1, std::max(0, static_cast<int>(std::round(segSBegPixelPos.y()))));
+        int segSPixelX2 = std::min(globalWidthPixels - 1,  std::max(0, static_cast<int>(std::round(segSEndPixelPos.x()))));
+        int segSPixelY2 = std::min(globalHeightPixels - 1, std::max(0, static_cast<int>(std::round(segSEndPixelPos.y()))));
+        float segSPixelTotDist = std::sqrt(std::pow(segSPixelX2 - segSPixelX1, 2) + std::pow(segSPixelY2 - segSPixelY1, 2));
+        int segSPixelDx = std::abs(segSPixelX2 - segSPixelX1);
+        int segSPixelDy = std::abs(segSPixelY2 - segSPixelY1);
+        int segSPixelSx = (segSPixelX1 < segSPixelX2) ? 1 : -1;
+        int segSPixelSy = (segSPixelY1 < segSPixelY2) ? 1 : -1;
+        int segSPixelErr = segSPixelDx - segSPixelDy;
 
         // pixel length checking
-        if (!checkLength(segFPixTotDist) ||
-            !checkLength(segSPixTotDist)) {
+        if (!checkLength(segFPixelTotDist) ||
+            !checkLength(segSPixelTotDist)) {
+            qDebug() << "pixel length checking: YOU SHALL NOT PASS!";
             continue;
         }
 
         float segFDistProc = -1.0f * static_cast<float>(segFEpoch.distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_));
         float segSDistProc = -1.0f * static_cast<float>(segSEpoch.distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_));
-        float segFDistX = segSEngPoint.x() - segFBegPoint.x();
-        float segFDistY = segSEngPoint.y() - segFBegPoint.y();
-        float segSDistX = segSEndPoint.x() - segSBegPoint.x();
-        float segSDistY = segSEndPoint.y() - segSBegPoint.y();
-
-
+        float segFMetersDistX = segFPhysicsEndPoint.x() - segFPhysicsBegPoint.x();
+        float segFMetersDistY = segFPhysicsEndPoint.y() - segFPhysicsBegPoint.y();
+        float segSMetersDistX = segSPhysicsEndPoint.x() - segSPhysicsBegPoint.x();
+        float segSMetersDistY = segSPhysicsEndPoint.y() - segSPhysicsBegPoint.y();
 
         // follow the first segment
         while (true) {
             // first segment
-            float segFPixCurrDist = std::sqrt(std::pow(segFX1 - segFX2, 2) + std::pow(segFY1 - segFY2, 2));
-            float segFProgress = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
-            QVector3D segFPixPos(segFBegPoint.x() + segFProgress * segFDistX, segFBegPoint.y() + segFProgress * segFDistY, segFDistProc);
+            float segFPixelCurrDist = std::sqrt(std::pow(segFPixelX1 - segFPixelX2, 2) + std::pow(segFPixelY1 - segFPixelY2, 2));
+            float segFProgressByPixels = std::min(1.0f, segFPixelCurrDist / segFPixelTotDist);
+            QVector3D segFCurrPhysicsPos(segFPhysicsBegPoint.x() + segFProgressByPixels * segFMetersDistX, segFPhysicsBegPoint.y() + segFProgressByPixels * segFMetersDistY, segFDistProc);
             QVector3D segFBoatPos(segFEpoch.getPositionGNSS().ned.n, segFEpoch.getPositionGNSS().ned.e, 0.0f);
-            auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFPixPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
+            auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFCurrPhysicsPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
             // second segment, calc corresponding progress using smoothed interpolation
-            float segSCorrProgress = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSPixPos(segSBegPoint.x() + segSCorrProgress * segSDistX,    segSBegPoint.y() + segSCorrProgress * segSDistY,     segSDistProc);
+            float segSCorrProgressByPixels = std::min(1.0f, segFPixelCurrDist / segFPixelTotDist * segSPixelTotDist / segFPixelTotDist);
+            QVector3D segSCurrPhysicsPos(segSPhysicsBegPoint.x() + segSCorrProgressByPixels * segSMetersDistX,    segSPhysicsBegPoint.y() + segSCorrProgressByPixels * segSMetersDistY,     segSDistProc);
             QVector3D segSBoatPos(segSEpoch.getPositionGNSS().ned.n, segSEpoch.getPositionGNSS().ned.e, 0.0f);
-            auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSPixPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
+            auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSCurrPhysicsPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
+
+            auto segFCurrPixelPos = globalMesh_.convertPhysicsCoordinateToPixel(segFCurrPhysicsPos);
+            auto segSCurrPixelPos = globalMesh_.convertPhysicsCoordinateToPixel(segSCurrPhysicsPos);
 
             // color interpolation between two pixels
-            int interpX1 = std::min(globalWidth - 1,  std::max(0, static_cast<int>(std::round((segFPixPos.x() - globalMeshOrigin.x()) * scaleFactor_))));
-            int interpY1 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - globalMeshOrigin.y()) * scaleFactor_))));
-            int interpX2 = std::min(globalWidth - 1,  std::max(0, static_cast<int>(std::round((segSPixPos.x() - globalMeshOrigin.x()) * scaleFactor_))));
-            int interpY2 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - globalMeshOrigin.y()) * scaleFactor_))));
-            int interpDistX = interpX2 - interpX1;
-            int interpDistY = interpY2 - interpY1;
-            float interpPixTotDist = std::sqrt(std::pow(interpX2 - interpX1, 2) + std::pow(interpY2 - interpY1, 2));
+            int interpPixelX1 = std::min(globalWidthPixels - 1,  std::max(0, static_cast<int>(std::round(segFCurrPixelPos.x()))));
+            int interpPixelY1 = std::min(globalHeightPixels - 1, std::max(0, static_cast<int>(std::round(segFCurrPixelPos.y()))));
+            int interpPixelX2 = std::min(globalWidthPixels - 1,  std::max(0, static_cast<int>(std::round(segSCurrPixelPos.x()))));
+            int interpPixelY2 = std::min(globalHeightPixels - 1, std::max(0, static_cast<int>(std::round(segSCurrPixelPos.y()))));
+
+            int interpPixelDistX = interpPixelX2 - interpPixelX1;
+            int interpPixelDistY = interpPixelY2 - interpPixelY1;
+            float interpPixelTotDist = std::sqrt(std::pow(interpPixelDistX, 2) + std::pow(interpPixelDistY, 2));
 
 
             //// height matrix
@@ -248,8 +264,6 @@ void SideScanView::updateData()
             //int uinterpY2 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - globalMeshOrigin.y())))));
             //int uinterpDistX = uinterpX2 - uinterpX1;
             //int uinterpDistY = uinterpY2 - uinterpY1;
-
-
 
             //// meas line
             //int meshIndxX = segFX1 / globalMesh_.getTileSize();
@@ -265,15 +279,13 @@ void SideScanView::updateData()
             //globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
 
 
-
             // interpolate
-            if (checkLength(interpPixTotDist)) {
-                for (int step = 0; step <= interpPixTotDist; ++step) {
-                    float interpProgress = static_cast<float>(step) / interpPixTotDist;
-                    int interpX = interpX1 + interpProgress * interpDistX;
-                    int interpY = interpY1 + interpProgress * interpDistY;
-                    auto interpColorIndx = static_cast<int>((1 - interpProgress) * segFColorIndx + interpProgress * segSColorIndx);
-
+            if (checkLength(interpPixelTotDist)) {
+                for (int step = 0; step <= interpPixelTotDist; ++step) {
+                    float interpProgressByPixel = static_cast<float>(step) / interpPixelTotDist;
+                    int interpX = interpPixelX1 + interpProgressByPixel * interpPixelDistX;
+                    int interpY = interpPixelY1 + interpProgressByPixel * interpPixelDistY;
+                    auto interpColorIndx = static_cast<int>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
 
                     //// height matrix
                     //int uinterpX = uinterpX1 + interpProgress * uinterpDistX;
@@ -282,16 +294,13 @@ void SideScanView::updateData()
                     for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) {
                         for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
 
-                            int applyInterpX = std::min(globalWidth - 1, std::max(0, interpX + offsetX));
-                            int applyInterpY = std::min(globalHeight - 1, std::max(0, interpY + offsetY));
+                            int applyInterpX = std::min(globalWidthPixels - 1, std::max(0, interpX + offsetX));
+                            int applyInterpY = std::min(globalHeightPixels - 1, std::max(0, interpY + offsetY));
 
-
-
-                            int meshIndxX = applyInterpX / globalMesh_.getTileSize();
-                            int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - applyInterpY / globalMesh_.getTileSize();
-                            int tileIndxX = applyInterpX % globalMesh_.getTileSize();
-                            int tileIndxY = applyInterpY % globalMesh_.getTileSize();
-
+                            int meshIndxX = applyInterpX / globalMesh_.getTilePixelSize();
+                            int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - applyInterpY / globalMesh_.getTilePixelSize();
+                            int tileIndxX = applyInterpX % globalMesh_.getTilePixelSize();
+                            int tileIndxY = applyInterpY % globalMesh_.getTilePixelSize();
 
                             auto& imageRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getImageRef();
                             uchar* imageData = imageRef.bits();
@@ -300,10 +309,7 @@ void SideScanView::updateData()
 
                             uchar* pixPtr = imageData + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
                             *pixPtr = colorTable_[interpColorIndx];
-
-
                             globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
-
 
                             //// height matrix
                             //int hStepsInRow = globalMesh_.getTileSize() / globalMesh_.getHeightStep();
@@ -318,28 +324,28 @@ void SideScanView::updateData()
             }
 
             // break at the end of the first segment
-            if (segFX1 == segFX2 && segFY1 == segFY2) {
+            if (segFPixelX1 == segFPixelX2 && segFPixelY1 == segFPixelY2) {
                 break;
             }
 
             // Bresenham
-            int segFE2 = 2 * segFErr;
-            if (segFE2 > -segFDy) {
-                segFErr -= segFDy;
-                segFX1 += segFSx;
+            int segFPixelE2 = 2 * segFPixelErr;
+            if (segFPixelE2 > -segFPixelDy) {
+                segFPixelErr -= segFPixelDy;
+                segFPixelX1 += segFPixelSx;
             }
-            if (segFE2 < segFDx) {
-                segFErr += segFDx;
-                segFY1 += segFSy;
+            if (segFPixelE2 < segFPixelDx) {
+                segFPixelErr += segFPixelDx;
+                segFPixelY1 += segFPixelSy;
             }
-            int segSE2 = 2 * segSErr;
-            if (segSE2 > -segSDy) {
-                segSErr -= segSDy;
-                segSX1 += segSSx;
+            int segSPixelE2 = 2 * segSPixelErr;
+            if (segSPixelE2 > -segSPixelDy) {
+                segSPixelErr -= segSPixelDy;
+                segSPixelX1 += segSPixelSx;
             }
-            if (segSE2 < segSDx) {
-                segSErr += segSDx;
-                segSY1 += segSSy;
+            if (segSPixelE2 < segSPixelDx) {
+                segSPixelErr += segSPixelDx;
+                segSPixelY1 += segSPixelSy;
             }
         }
     }

@@ -14,7 +14,7 @@ class Tile {
 public:
     Tile();
 
-    void initTile(QVector3D origin, int heightRatio, int tileSize, QImage::Format imageFormat = QImage::Format_Indexed8);
+    void initTile(QVector3D origin, int heightRatio, int tilePixelSize, float resolution, QImage::Format imageFormat = QImage::Format_Indexed8);
 
     void setSomeInt(int val);
     void setTextureId(GLuint val);

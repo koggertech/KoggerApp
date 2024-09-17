@@ -15,17 +15,17 @@ Tile::Tile() :
 
 }
 
-void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::Format imageFormat)
+void Tile::initTile(QVector3D origin, int heightRatio, int tilePixelSize, float resolution, QImage::Format imageFormat)
 {
     tileOrigin_ = origin;
 
     // image
-    image_ = QImage(tileSize, tileSize, imageFormat);
+    image_ = QImage(tilePixelSize, tilePixelSize, imageFormat);
     image_.fill(5);
 
     // height vertices
     int heightMatSideSize = heightRatio + 1;
-    int heightStep = tileSize / heightRatio;
+    float heightPixelStep = (tilePixelSize / heightRatio) * resolution;
 
     int heightVerticesSize = heightMatSideSize * heightMatSideSize;
     heightVertices_.resize(heightVerticesSize);
@@ -34,8 +34,8 @@ void Tile::initTile(QVector3D origin, int heightRatio, int tileSize, QImage::For
 
     for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
-            float x = origin.x() + j * heightStep;
-            float y = origin.y() + i * heightStep;
+            float x = origin.x() + j * heightPixelStep;
+            float y = origin.y() + i * heightPixelStep;
             heightVertices_[i * heightMatSideSize + j] = QVector3D(x, y, fakeHeight);
         }
     }

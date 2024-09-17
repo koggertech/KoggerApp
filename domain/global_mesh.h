@@ -15,23 +15,32 @@ public:
 
     bool concatenate(MatrixParams& actualMatParams);
     void printMatrix() const;
-    int getWidthMeters() const;
-    int getHeightMeters() const;
+
+    float getWidthMeters() const;
+    float getHeightMeters() const;
+
+    int getWidthPixels() const;
+    int getHeightPixels() const;
+
 
     int getNumWidthTiles() const;
     int getNumHeightTiles() const;
 
     std::vector<std::vector<Tile*>>& getTileMatrixRef();
 
-    int getTileSize() const;
-    int getHeightVerticeRatio() const;
-    int getHeightStep() const;
+    float getTileMetersSize() const;
+    int getTilePixelSize() const;
 
+    int getHeightVerticeRatio() const;
+
+    float getHeightMetersStep() const;
+    int getHeightPixelStep() const;
 
     QVector3D getOrigin() const;
 
     void clear();
 
+    QVector3D convertPhysicsCoordinateToPixel (QVector3D physicsCoordinate) const;
 
 private:
     /*methods*/
@@ -51,10 +60,11 @@ private:
     int numWidthTiles_ = 0;
     int numHeightTiles_ = 0;
 
-    const int tileSizeMeters_ = 10; // meterpx w,h
-    const float resolution = 0.1; // 0.1 метр - 1 пиксель
+    const int tileSizePixels_ = 256;
+    const float resolution_ = 0.1; // 0.1 метр - 1 пиксель
+    const float tileSizeMeters_ = tileSizePixels_ * resolution_;
 
-    const int heightVerticeRatio_ = 5; // в пять раз меньше чем пикселей
+    const int heightVerticeRatio_ = 16;
 
     int count_ = 0; // debug
 };
