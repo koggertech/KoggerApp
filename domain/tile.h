@@ -15,6 +15,7 @@ public:
     /*methods*/
     Tile();
     void initTile(QVector3D origin, int sidePixelSize, int heightMatrixRatio, float resolution, QImage::Format imageFormat = QImage::Format_Indexed8);
+    void updateHeightIndices();
 
     void setSomeInt(int val);
     void setTextureId(GLuint val);
@@ -33,6 +34,9 @@ public:
     const SceneObject::RenderImplementation& getGridRenderImplRef() const;
 
 private:
+    /*methods*/
+    bool checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const;
+
     /*data*/
     QUuid id_;
     QVector3D origin_;

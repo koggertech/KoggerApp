@@ -60,6 +60,7 @@ private:
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
     void concatenateMatrixParameters(MatrixParams& srcDst, const MatrixParams& src) const;
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
+    void postUpdate();
 
     /*data*/
     static constexpr float amplitudeCoeff_ = 100.0f;

@@ -24,6 +24,7 @@ public:
     int                              getTileSidePixelSize() const;
     int                              getNumWidthTiles() const;
     int                              getNumHeightTiles() const;
+    int                              getStepSizeHeightMatrix() const;
 
 private:
     /*methods*/

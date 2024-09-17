@@ -34,30 +34,8 @@ void Tile::initTile(QVector3D origin, int sidePixelSize, int heightMatrixRatio, 
         }
     }
 
-    // height indices TODO: recalc when heightVertices_ is updated
-    for (int i = 0; i < heightMatSideSize - 1; ++i) { // -1 для норм прохода
-        for (int j = 0; j < heightMatSideSize - 1; ++j) {
-            int topLeft = i * heightMatSideSize + j;
-            int topRight = topLeft + 1;
-            int bottomLeft = (i + 1) * heightMatSideSize + j;
-            int bottomRight = bottomLeft + 1;
-
-            //if (qFuzzyCompare(1.0f, 1.0f + heightVertices_[topLeft].z()) || // someone zero
-            //    qFuzzyCompare(1.0f, 1.0f + heightVertices_[topRight].z()) ||
-            //    qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomLeft].z()) ||
-            //    qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomRight].z())) {
-            //    continue;
-            //}
-
-            // это для отрисовки
-            heightIndices_.append(topLeft);     // 1--3
-            heightIndices_.append(bottomLeft);  // | /
-            heightIndices_.append(topRight);    // 2
-            heightIndices_.append(topRight);    //    1
-            heightIndices_.append(bottomLeft);  //  / |
-            heightIndices_.append(bottomRight); // 2--3
-        }
-    }
+    // height indices
+    updateHeightIndices();
 
     // texture vertices
     for (int i = 0; i < heightMatSideSize; ++i) {
@@ -86,6 +64,34 @@ void Tile::initTile(QVector3D origin, int sidePixelSize, int heightMatrixRatio, 
     gridRenderImpl_.setData(grid, GL_LINES);
 
     isInited_ = true;
+}
+
+void Tile::updateHeightIndices()
+{
+    heightIndices_.clear();
+
+    int heightMatSideSize = std::sqrt(static_cast<int>(heightVertices_.size()));
+
+    // height indices TODO: recalc when heightVertices_ is updated
+    for (int i = 0; i < heightMatSideSize - 1; ++i) { // -1 для норм прохода
+        for (int j = 0; j < heightMatSideSize - 1; ++j) {
+            int topLeft = i * heightMatSideSize + j;
+            int topRight = topLeft + 1;
+            int bottomLeft = (i + 1) * heightMatSideSize + j;
+            int bottomRight = bottomLeft + 1;
+
+            if (!checkVerticesDepth(topLeft, topRight, bottomLeft, bottomRight)) {
+                continue;
+            }
+
+            heightIndices_.append(topLeft);     // 1--3
+            heightIndices_.append(bottomLeft);  // | /
+            heightIndices_.append(topRight);    // 2
+            heightIndices_.append(topRight);    //    1
+            heightIndices_.append(bottomLeft);  //  / |
+            heightIndices_.append(bottomRight); // 2--3
+        }
+    }
 }
 
 void Tile::setSomeInt(int val)
@@ -161,4 +167,15 @@ const QVector<int>& Tile::getHeightIndicesRef() const
 const SceneObject::RenderImplementation& Tile::getGridRenderImplRef() const
 {
     return gridRenderImpl_;
+}
+
+bool Tile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
+{
+    if (qFuzzyCompare(1.0f, 1.0f + heightVertices_[topLeft].z()) || // someone zero
+        qFuzzyCompare(1.0f, 1.0f + heightVertices_[topRight].z()) ||
+        qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomLeft].z()) ||
+        qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomRight].z())) {
+        return false;
+    }
+    return true;
 }

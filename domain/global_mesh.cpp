@@ -176,6 +176,11 @@ int GlobalMesh::getNumHeightTiles() const
     return numHeightTiles_;
 }
 
+int GlobalMesh::getStepSizeHeightMatrix() const
+{
+    return tileSidePixelSize_ / tileHeightMatrixRatio_;
+}
+
 void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const MatrixParams &matrixParams)
 {
     numWidthTiles_ = numWidthTiles;

@@ -65,9 +65,9 @@ void SideScanView::updateData()
     // prepare intermediate data (selecting epochs to process)
     MatrixParams actualMatParams(lastMatParams_);
     MatrixParams newMatrixParams;
-    QVector<QVector3D> measLinesVertices_;
-    QVector<int> measLinesEvenIndices_;
-    QVector<int> measLinesOddIndices_;
+    QVector<QVector3D> measLinesVertices;
+    QVector<int> measLinesEvenIndices;
+    QVector<int> measLinesOddIndices;
     QVector<char> isOdds;
     QVector<int> epochIndxs;
 
@@ -84,10 +84,10 @@ void SideScanView::updateData()
                     double leftAzRad = azRad - M_PI_2;
                     float lDist = segFCharts->range();
 
-                    measLinesVertices_.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
-                    measLinesVertices_.append(QVector3D(pos.n, pos.e, 0.0f));
-                    measLinesEvenIndices_.append(currIndxSec_++);
-                    measLinesEvenIndices_.append(currIndxSec_++);
+                    measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
+                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                    measLinesEvenIndices.append(currIndxSec_++);
+                    measLinesEvenIndices.append(currIndxSec_++);
                     isOdds.append('0');
                     epochIndxs.append(i);
                     acceptedEven = true;
@@ -96,10 +96,10 @@ void SideScanView::updateData()
                     double rightAzRad = azRad + M_PI_2;
                     float rDist = segSCharts ->range();
 
-                    measLinesVertices_.append(QVector3D(pos.n, pos.e, 0.0f));
-                    measLinesVertices_.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
-                    measLinesOddIndices_.append(currIndxSec_++);
-                    measLinesOddIndices_.append(currIndxSec_++);
+                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                    measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                    measLinesOddIndices.append(currIndxSec_++);
+                    measLinesOddIndices.append(currIndxSec_++);
                     isOdds.append('1');
                     epochIndxs.append(i);
                     acceptedOdd = true;
@@ -118,7 +118,7 @@ void SideScanView::updateData()
 
     lastCalcEpoch_ = epochCount;
 
-    newMatrixParams = getMatrixParams(measLinesVertices_);
+    newMatrixParams = getMatrixParams(measLinesVertices);
     if (!newMatrixParams.isValid()) {
         return;
     }
@@ -127,21 +127,18 @@ void SideScanView::updateData()
 
     bool meshUpdated = globalMesh_.concatenate(actualMatParams);
     if (meshUpdated) {
-        // // just debug messages
-        // qDebug() << "/// inserted start ///";
         // qDebug() << "actual matrix:";
         // actualMatParams.print(qDebug());
-        // qDebug() << "globalmesh :";
+        // qDebug() << "globalmesh:";
         // globalMesh_.printMatrix();
-        // qDebug() << "/// inserted end ///";
     }
 
     auto gMeshWidthPixs = globalMesh_.getPixelWidth(); // for bypass
     auto gMeshHeightPixs = globalMesh_.getPixelHeight();
 
     // processing
-    for (int i = 0; i < measLinesVertices_.size(); i += 2) { // 2 - step for segment
-        if (i + 8 >= measLinesVertices_.size()) {
+    for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
+        if (i + 8 >= measLinesVertices.size()) {
             break;
         }
 
@@ -190,11 +187,10 @@ void SideScanView::updateData()
             continue;
         }
 
-
         // Bresenham
         // first segment
-        QVector3D segFPhBegPnt = !segFIsOdd ? measLinesVertices_[segFBegVertIndx] : measLinesVertices_[segFEndVertIndx]; // physics coordinates
-        QVector3D segFPhEndPnt = !segFIsOdd ? measLinesVertices_[segFEndVertIndx] : measLinesVertices_[segFBegVertIndx];
+        QVector3D segFPhBegPnt = !segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
+        QVector3D segFPhEndPnt = !segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
         auto segFBegPixPos = globalMesh_.convertPhToPixCoords(segFPhBegPnt);
         auto segFEndPixPos = globalMesh_.convertPhToPixCoords(segFPhEndPnt);
         int segFPixX1 = segFBegPixPos.x();
@@ -208,8 +204,8 @@ void SideScanView::updateData()
         int segFPixSy = (segFPixY1 < segFPixY2) ? 1 : -1;
         int segFPixErr = segFPixDx - segFPixDy;
         // second segment
-        QVector3D segSPhBegPnt = !segSIsOdd ? measLinesVertices_[segSBegVertIndx] : measLinesVertices_[segSEndVertIndx];
-        QVector3D segSPhEndPnt = !segSIsOdd ? measLinesVertices_[segSEndVertIndx] : measLinesVertices_[segSBegVertIndx];
+        QVector3D segSPhBegPnt = !segSIsOdd ? measLinesVertices[segSBegVertIndx] : measLinesVertices[segSEndVertIndx];
+        QVector3D segSPhEndPnt = !segSIsOdd ? measLinesVertices[segSEndVertIndx] : measLinesVertices[segSBegVertIndx];
         auto segSBegPixPos = globalMesh_.convertPhToPixCoords(segSPhBegPnt);
         auto segSEndPixPos = globalMesh_.convertPhToPixCoords(segSPhEndPnt);
         int segSPixX1 = segSBegPixPos.x();
@@ -263,27 +259,6 @@ void SideScanView::updateData()
             int interpPixDistY = interpPixY2 - interpPixY1;
             float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
 
-            //// height matrix
-            //int uinterpX1 = std::min(globalWidth  - 1, std::max(0, static_cast<int>(std::round((segFPixPos.x() - globalMeshOrigin.x())))));
-            //int uinterpY1 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segFPixPos.y() - globalMeshOrigin.y())))));
-            //int uinterpX2 = std::min(globalWidth  - 1, std::max(0, static_cast<int>(std::round((segSPixPos.x() - globalMeshOrigin.x())))));
-            //int uinterpY2 = std::min(globalHeight - 1, std::max(0, static_cast<int>(std::round((segSPixPos.y() - globalMeshOrigin.y())))));
-            //int uinterpDistX = uinterpX2 - uinterpX1;
-            //int uinterpDistY = uinterpY2 - uinterpY1;
-
-            //// meas line (old)
-            //int meshIndxX = segFX1 / globalMesh_.getTileSize();
-            //int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - segFY1 / globalMesh_.getTileSize();
-            //int tileIndxY = segFY1 % globalMesh_.getTileSize();
-            //int tileIndxX = segFX1 % globalMesh_.getTileSize();
-            //auto& imageRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getImageRef();
-            //uchar* imageData = imageRef.bits();
-            //int bytesPerLine = imageRef.bytesPerLine();
-            //int bytesInPix = bytesPerLine / imageRef.width();
-            //uchar* pixPtr = imageData + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
-            //*pixPtr = colorTable_[segFColorIndx];
-            //globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
-
             // interpolate
             if (checkLength(interpPixTotDist)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
@@ -292,34 +267,33 @@ void SideScanView::updateData()
                     int interpY = interpPixY1 + interpProgressByPixel * interpPixDistY;
                     auto interpColorIndx = static_cast<int>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
 
-                    //// height matrix
-                    //int uinterpX = uinterpX1 + interpProgress * uinterpDistX;
-                    //int uinterpY = uinterpY1 + interpProgress * uinterpDistY;
-
                     for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) { // bypass
                         for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
                             int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
                             int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
 
-                            int meshIndxX = bypassInterpX / globalMesh_.getTileSidePixelSize();
-                            int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - bypassInterpY / globalMesh_.getTileSidePixelSize();
-                            int tileIndxX = bypassInterpX % globalMesh_.getTileSidePixelSize();
-                            int tileIndxY = bypassInterpY % globalMesh_.getTileSidePixelSize();
 
-                            auto& imageRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getImageRef();
+                            int tileSidePixelSize = globalMesh_.getTileSidePixelSize();
+                            int meshIndxX = bypassInterpX / tileSidePixelSize;
+                            int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
+                            int tileIndxX = bypassInterpX % tileSidePixelSize;
+                            int tileIndxY = bypassInterpY % tileSidePixelSize;
+                            auto& tileRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX];
+
+                            // image
+                            auto& imageRef = tileRef->getImageRef();
                             int bytesPerLine = imageRef.bytesPerLine();
                             int bytesInPix = bytesPerLine / imageRef.width();
                             uchar* pixPtr = imageRef.bits() + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
                             *pixPtr = colorTable_[interpColorIndx];
-                            globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->setIsUpdate(true);
 
-                            //// height matrix
-                            //int hStepsInRow = globalMesh_.getTileSize() / globalMesh_.getHeightStep();
-                            ////// height matrix
-                            //int uApplyInterpX = std::min(globalMesh_.getTileSize() - 1, std::max(0, tileIndxX + offsetX));
-                            //int uApplyInterpY = std::min(globalMesh_.getTileSize() - 1, std::max(0, tileIndxY + offsetY));
-                            //int heightVerticesIndx = (uApplyInterpY / globalMesh_.getHeightStep()) * hStepsInRow + (uApplyInterpX / globalMesh_.getHeightStep());
-                            //globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX]->getHeightVerticesRef()[heightVerticesIndx][2] = segSPixPos.z();
+                            // height matrix
+                            int stepSizeHeightMatrix = globalMesh_.getStepSizeHeightMatrix();
+                            int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
+                            int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
+                            tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos.z();
+
+                            tileRef->setIsUpdate(true);
                          }
                      }
                 }
@@ -352,28 +326,14 @@ void SideScanView::updateData()
         }
     }
 
+    postUpdate();
+
     auto renderImpl = RENDER_IMPL(SideScanView);
-
-    // texture update
-    for (auto& itmI : globalMesh_.getTileMatrixRef()) {
-        for (auto& itmJ : itmI) {
-            if (itmJ->getIsUpdate()) {
-                renderImpl->tiles_[itmJ->getUuid()] = *itmJ; // copy data to render
-
-                if (m_view) {
-                    m_view->updateTileTexture(itmJ->getUuid(), itmJ->getImageRef());
-                }
-
-                itmJ->setIsUpdate(false);
-            }
-        }
-    }
-
-    renderImpl->measLinesVertices_.append(std::move(measLinesVertices_));
-    renderImpl->measLinesEvenIndices_.append(std::move(measLinesEvenIndices_));
-    renderImpl->measLinesOddIndices_.append(std::move(measLinesOddIndices_));
-
+    renderImpl->measLinesVertices_.append(std::move(measLinesVertices));
+    renderImpl->measLinesEvenIndices_.append(std::move(measLinesEvenIndices));
+    renderImpl->measLinesOddIndices_.append(std::move(measLinesOddIndices));
     renderImpl->createBounds();
+
     lastMatParams_ = actualMatParams;
 
     Q_EMIT changed();
@@ -525,6 +485,79 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         return cVal;
     }
     return 0;
+}
+
+void SideScanView::postUpdate()
+{
+    auto renderImpl = RENDER_IMPL(SideScanView);
+
+    // update texture, height matrix
+    auto updateTextureInView = [this](Tile* tilePtr){
+        if (m_view) {
+            m_view->updateTileTexture(tilePtr->getUuid(), tilePtr->getImageRef());
+        }
+    };
+
+    if (globalMesh_.getTileMatrixRef().empty() && globalMesh_.getTileMatrixRef().at(0).empty()) {
+        return;
+    }
+
+    int tileMatrixYSize = globalMesh_.getTileMatrixRef().size();
+    int tileMatrixXSize = globalMesh_.getTileMatrixRef().at(0).size();
+
+    for (int i = 0; i < tileMatrixYSize; ++i) {
+        for (int j = 0; j < tileMatrixXSize; ++j) {
+
+            auto& tileRef = globalMesh_.getTileMatrixRef()[i][j];
+
+            if (tileRef->getIsUpdate()) {
+                tileRef->updateHeightIndices();
+
+                // fix height matrixs
+                int numHeightVertBySide = std::sqrt(tileRef->getHeightVerticesRef().size());
+                int yIndx = i + 1; // rows
+                if (tileMatrixYSize > yIndx) {
+                    auto& topTileRef = globalMesh_.getTileMatrixRef()[yIndx][j];
+
+                    int topStartIndx = numHeightVertBySide * (numHeightVertBySide - 1) ;
+
+                    auto& tileVertRef = tileRef->getHeightVerticesRef();
+                    auto& topTileVertRef = topTileRef->getHeightVerticesRef();
+
+                    for (int k = 0; k < numHeightVertBySide - 1; ++k) {
+                        topTileVertRef[topStartIndx + k].setZ(tileVertRef[k].z());
+                    }
+
+                    // update and copy
+                    topTileRef->updateHeightIndices();
+                    renderImpl->tiles_[topTileRef->getUuid()] = *topTileRef;
+                    updateTextureInView(topTileRef);
+                }
+
+                int xIndx = j - 1; // colums
+                if (xIndx > -1 && tileMatrixXSize > xIndx) {
+                    auto& leftTileRef = globalMesh_.getTileMatrixRef()[i][xIndx];
+                    auto& tileVertRef = tileRef->getHeightVerticesRef();
+                    auto& leftTileVertRef = leftTileRef->getHeightVerticesRef();
+
+                    for (int k = 0; k < numHeightVertBySide; ++k) {
+                        leftTileVertRef[((k + 1) * numHeightVertBySide - 1)].setZ(tileVertRef[(k == 0 ? 0 : k * numHeightVertBySide)].z());
+                    }
+
+                    // update and copy
+                    leftTileRef->updateHeightIndices();
+                    renderImpl->tiles_[leftTileRef->getUuid()] = *leftTileRef;
+                    updateTextureInView(leftTileRef);
+                }
+
+
+                renderImpl->tiles_[tileRef->getUuid()] = *tileRef; // copy data to render
+                updateTextureInView(tileRef);
+
+                tileRef->setIsUpdate(false);
+            }
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
