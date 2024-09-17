@@ -12,58 +12,36 @@ constexpr float rgbMaxValue = 255.0f;
 
 struct MatrixParams {
     MatrixParams() :
-        rawWidth(-1),
-        rawHeight(-1),
-        heightMatrixWidth(-1),
-        heightMatrixHeight(-1),
-        imageWidth(-1),
-        imageHeight(-1),
         originX(0.0f),
-        originY(0.0f)
-    {
-
-    };
-
-    int rawWidth;
-    int rawHeight;
-
-    int heightMatrixWidth;
-    int heightMatrixHeight;
-
-    int imageWidth;
-    int imageHeight;
+        originY(0.0f),
+        width(-1),
+        height(-1)
+    { };
 
     float originX;
     float originY;
+    int width;
+    int height;
 
     bool isValid() const {
-        if (rawWidth == -1 ||
-            rawHeight == -1 ||
-            heightMatrixWidth == -1 ||
-            heightMatrixHeight == -1 ||
-            imageWidth == -1 ||
-            imageHeight == -1) {
+        if (width == -1 ||
+            height == -1) {
             return false;
         }
         return true;
     }
 
     void print(QDebug stream) const {
-
         stream << "\n";
         stream << " _____________\n";
         stream << " |           |\n";
         stream << " |           |\n";
-        stream << " |           |h =" << rawHeight << "\n";
+        stream << " |           |h =" << height << "\n";
         stream << " |           |\n";
         stream << " |___________|\n";
-        stream << "        w =" << rawWidth << "\n";
+        stream << "        w =" << width << "\n";
         stream << " originX:" << originX << "\n";
         stream << " originY:" << originY << "\n";
-        stream << " heightMatrixWidth:" << heightMatrixWidth << "\n";
-        stream << " heightMatrixHeight:" << heightMatrixHeight << "\n";
-        stream << " imageWidth:" << imageWidth << "\n";
-        stream << " imageHeight:" << imageHeight << "\n";
     }
 };
 

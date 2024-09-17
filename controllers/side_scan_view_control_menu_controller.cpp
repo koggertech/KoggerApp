@@ -63,7 +63,6 @@ void SideScanViewControlMenuController::onScaleSideScanViewSpinBoxValueChanged(i
         return;
     }
 
-    m_graphicsSceneView->getSideScanViewPtr()->setScaleFactor(scaleFactor);
 }
 
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)

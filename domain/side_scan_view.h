@@ -1,14 +1,13 @@
 #pragma once
 
-#include <QColor>
-#include <QImage>
 #include <QVector>
+#include <QVector3D>
 #include "sceneobject.h"
 #include "plotcash.h"
-
 #include "global_mesh.h"
 #include "tile.h"
 #include "drawutils.h"
+
 
 class GraphicsScene3dView;
 class SideScanView : public SceneObject
@@ -29,33 +28,30 @@ public:
         virtual void createBounds() override final;
 
         /*data*/
-        // tiles
         QHash<QUuid, Tile> tiles_;
-
-        // meas lines
         QVector<QVector3D> measLinesVertices_;
         QVector<int> measLinesEvenIndices_;
         QVector<int> measLinesOddIndices_;
+        bool tileGridVisible_;
         bool measLineVisible_;
-        bool tileGridVisible_ = false;
     };
 
     /*methods*/
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
+    void updateChannelsIds();
     void updateData();
     void clear();
 
     void setView(GraphicsScene3dView* viewPtr);
     void setDatasetPtr(Dataset* datasetPtr);
     void setTextureIdForTile(QUuid tileid, GLuint textureId);
-    void setScaleFactor(int scaleFactor);
     void setMeasLineVisible(bool state);
     void setTileGridVisible(bool state);
-
-    void updateChannelsIds();
-
+    void setTilePixelSize(int size);
+    void setTileHeightMatrixRatio(int ratio);
+    void setTileResolution(float resolution);
 
 private:
     /*methods*/
@@ -68,26 +64,18 @@ private:
     /*data*/
     static constexpr float amplitudeCoeff_ = 100.0f;
     static constexpr int colorTableSize_ = 255;
-    static constexpr int heightStep_ = 1;
     static constexpr int interpLineWidth_ = 1;
 
-
     QVector<QRgb> colorTable_;
-
-
+    MatrixParams lastMatParams_;
     Dataset* datasetPtr_;
-    float scaleFactor_;
+    float tileResolution_;
+    uint64_t currIndxSec_;
     int segFChannelId_;
     int segSChannelId_;
-
-    GlobalMesh  globalMesh_;
-    QVector3D  origin_;
-
-
-
-    MatrixParams lastMatParams_;
-    int lastCalcEpoch_ = 0;
-    int lastAcceptedEpoch_ = 0;
-
-    uint64_t currIndxSec_ = 0;
+    int tileSidePixelSize_;
+    int tileHeightMatrixRatio_;
+    int lastCalcEpoch_;
+    int lastAcceptedEpoch_;
+    GlobalMesh globalMesh_;
 };

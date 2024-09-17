@@ -1,31 +1,25 @@
 #include "tile.h"
 
-#include <QDebug>
-
-#include "global_mesh.h"
-
 
 Tile::Tile() :
     id_(QUuid::createUuid()),
     textureId_(0),
-    someInt_(-1),
     isUpdate_(false),
-    isInited_(false)
-{
+    isInited_(false),
+    someInt_(-1)
+{ }
 
-}
-
-void Tile::initTile(QVector3D origin, int heightRatio, int tilePixelSize, float resolution, QImage::Format imageFormat)
+void Tile::initTile(QVector3D origin, int sidePixelSize, int heightMatrixRatio, float resolution, QImage::Format imageFormat)
 {
-    tileOrigin_ = origin;
+    origin_ = origin;
 
     // image
-    image_ = QImage(tilePixelSize, tilePixelSize, imageFormat);
+    image_ = QImage(sidePixelSize, sidePixelSize, imageFormat);
     image_.fill(5);
 
     // height vertices
-    int heightMatSideSize = heightRatio + 1;
-    float heightPixelStep = (tilePixelSize / heightRatio) * resolution;
+    int heightMatSideSize = heightMatrixRatio + 1;
+    float heightPixelStep = (sidePixelSize / heightMatrixRatio) * resolution;
 
     int heightVerticesSize = heightMatSideSize * heightMatSideSize;
     heightVertices_.resize(heightVerticesSize);
@@ -40,7 +34,7 @@ void Tile::initTile(QVector3D origin, int heightRatio, int tilePixelSize, float 
         }
     }
 
-    // height indices
+    // height indices TODO: recalc when heightVertices_ is updated
     for (int i = 0; i < heightMatSideSize - 1; ++i) { // -1 для норм прохода
         for (int j = 0; j < heightMatSideSize - 1; ++j) {
             int topLeft = i * heightMatSideSize + j;
@@ -114,9 +108,9 @@ QUuid Tile::getUuid() const
     return id_;
 }
 
-QVector3D Tile::getTileOrigin() const
+QVector3D Tile::getOrigin() const
 {
-    return tileOrigin_;
+    return origin_;
 }
 
 bool Tile::getIsInited() const
@@ -144,9 +138,9 @@ QImage& Tile::getImageRef()
     return image_;
 }
 
-QImage Tile::getImage()
+QVector<QVector3D>& Tile::getHeightVerticesRef()
 {
-    return image_;
+    return heightVertices_;
 }
 
 const QVector<QVector2D>& Tile::getTextureVerticesRef() const
@@ -155,11 +149,6 @@ const QVector<QVector2D>& Tile::getTextureVerticesRef() const
 }
 
 const QVector<QVector3D>& Tile::getHeightVerticesRef() const
-{
-    return heightVertices_;
-}
-
-QVector<QVector3D>& Tile::getHeightVerticesRef()
 {
     return heightVertices_;
 }
