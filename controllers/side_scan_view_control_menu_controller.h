@@ -22,6 +22,7 @@ public:
     Q_INVOKABLE void onClearSideScanViewButtonClicked();
     Q_INVOKABLE void onReinitGlobalMeshSideScanViewButtonClicked(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     Q_INVOKABLE void onGenerateGridContourSideScanViewButtonClicked(bool state);
+    Q_INVOKABLE void onUpdateSideScanViewButtonClicked(bool state);
 
 Q_SIGNALS:
 

@@ -73,6 +73,17 @@ void SideScanViewControlMenuController::onGenerateGridContourSideScanViewButtonC
     m_graphicsSceneView->getSideScanViewPtr()->setGenerateGridContour(state);
 }
 
+void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool state)
+{
+    qDebug() << "onUpdateSideScanViewButtonClicked:" << state;
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->setSideScanState(state);
+}
+
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
 {
     qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";

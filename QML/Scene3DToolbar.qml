@@ -267,6 +267,21 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            CButton {
+                text: "Updating state"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                checked: true
+
+                onClicked: {
+                    SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(checked)
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
             ColumnLayout {
                 RowLayout {
                     CText {

@@ -26,6 +26,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     navigationArrowState_(true),
+    sideScanState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
@@ -172,6 +173,11 @@ void GraphicsScene3dView::setUseLinearFilterForTileTexture(bool state)
     if (renderer_) {
         renderer_->setUseLinearFilterForTileTexture(state);
     }
+}
+
+void GraphicsScene3dView::setSideScanState(bool state)
+{
+    sideScanState_ = state;
 }
 
 void GraphicsScene3dView::updateChannelsForSideScanView()
@@ -476,6 +482,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                          const Position pos = m_dataset->getLastPosition();
                                          m_navigationArrow->setPositionAndAngle(
                                              QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
+                                     }
+
+                                     if (!sideScanState_) {
+                                         return;
                                      }
 
                                      // bottom track, side scan

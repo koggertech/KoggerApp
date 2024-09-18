@@ -158,6 +158,7 @@ public:
     void updateTileTexture(QUuid tileid, const QImage& image);
     void setTextureIdForSideScanTile(QUuid tileId, GLuint id);
     void setUseLinearFilterForTileTexture(bool state);
+    void setSideScanState(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -218,6 +219,7 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+    bool sideScanState_;
 #if defined (Q_OS_ANDROID)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
