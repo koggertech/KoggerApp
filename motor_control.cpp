@@ -71,9 +71,9 @@ bool MotorControl::CheckPos(uint8_t addr, int32_t pos) const
 {
     auto deg = PosToAngle(pos);
 
-    if (deg < 179.0f && deg > -179.0f && addr == fAddr_)
+    if (deg < 181.0f && deg > -181.0f && addr == fAddr_)
         return true;
-    if (deg < 179.0f && deg > -179.0f && addr == sAddr_)
+    if (deg < 181.0f && deg > -181.0f && addr == sAddr_)
         return true;
     else
         return false;

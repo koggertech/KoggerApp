@@ -586,12 +586,14 @@ void DeviceManager::clearTasks()
 }
 
 void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle) {
-    emit encoderComplete(currFAngle, -currSAngle, NAN);
+    // emit encoderComplete(currFAngle, -currSAngle, NAN);
     emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
 
     QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
     if(usbl_devs.size() > 0) {
         IDBinUsblSolution::USBLRequestBeacon ask;
+        ask.external_heading_deg = currFAngle;
+        ask.external_pitch = currSAngle;
         usbl_devs[0]->askBeaconPosition(ask);
     }
 }

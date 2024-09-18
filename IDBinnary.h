@@ -909,6 +909,10 @@ public:
         double latitude_deg = NAN;
         double longitude_deg = NAN;
         float depth_m = NAN;
+
+        float yaw = NAN;
+        float pitch = NAN;
+        float roll = NAN;
     } __attribute__((packed));
 
     struct USBLRequestBeacon {
@@ -919,6 +923,8 @@ public:
         double longitude_deg = NAN;
         float external_heading_deg = NAN;
         float force_beacon_depth_m = NAN;
+        float external_pitch = NAN;
+        float external_roll = NAN;
     }  __attribute__((packed));
 
     struct BeaconActivationResponce {

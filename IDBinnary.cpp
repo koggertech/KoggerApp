@@ -894,7 +894,7 @@ void IDBinDVLMode::setModes(bool ismode1, bool ismode2, bool ismode3, bool ismod
 Resp IDBinUsblSolution::parsePayload(FrameParser &proto) {
     if(proto.ver() == v0) {
         _usblSolution = proto.read<UsblSolution>();
-        qInfo("USBL d: %f, a: %f,e: %f, p: %lld", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.carrier_counter);
+        qInfo("USBL d: %f, a: %f,e: %f, y: %f", _usblSolution.distance_m, _usblSolution.azimuth_deg, _usblSolution.elevation_deg, _usblSolution.yaw);
     } else if(proto.ver() == v1) {
         _beaconResponcel = proto.read<BeaconActivationResponce>();
         qInfo("Beacon responce: %d", _beaconResponcel.id);

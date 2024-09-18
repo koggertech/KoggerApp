@@ -196,8 +196,8 @@ ColumnLayout {
 
                 SpinBoxCustom { // small
                     id: spinBox1
-                    from: -179
-                    to: 179
+                    from: -180
+                    to: 180
                     stepSize: 1
                     value: 15
                 }
@@ -219,8 +219,8 @@ ColumnLayout {
 
                 SpinBoxCustom { // big
                     id: spinBox2
-                    from: -49
-                    to: 49
+                    from: -180
+                    to: 180
                     stepSize: 1
                     value: 15
                 }

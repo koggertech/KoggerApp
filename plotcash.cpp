@@ -382,6 +382,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
     view->setTrackRef(tracks);
 
+    _pool[endIndex()].setAtt(data.yaw, data.pitch, 0);
     _pool[endIndex()].set(data);
     emit dataUpdate();
 }
@@ -413,9 +414,10 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 
 void Dataset::addAtt(float yaw, float pitch, float roll) {
     Epoch* last_epoch = last();
-    if(!last_epoch->isAttAvail()) {
-        last_epoch->setAtt(yaw, pitch, roll);
+    if(last_epoch->isAttAvail()) {
     }
+
+    last_epoch->setAtt(yaw, pitch, roll);
 
     _lastYaw = yaw;
     _lastPitch = pitch;
