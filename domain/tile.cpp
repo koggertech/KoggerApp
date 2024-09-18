@@ -66,6 +66,7 @@ void Tile::updateHeightIndices()
 
     // grid
     QVector<QVector3D> grid;
+    grid.reserve((heightIndices_.size() / 6) * 8);
     for (int i = 0; i < heightIndices_.size(); i += 6) {
         QVector3D A = heightVertices_[heightIndices_[i]];
         QVector3D B = heightVertices_[heightIndices_[i + 1]];
@@ -76,57 +77,31 @@ void Tile::updateHeightIndices()
         C.setZ(C.z() + 0.02);
         D.setZ(D.z() + 0.02);
         grid.append({ A, B,
-                     B, D,
-                     A, C,
-                     C, D });
+                      B, D,
+                      A, C,
+                      C, D });
     }
     gridRenderImpl_.setData(grid, GL_LINES);
 
     // contour
-    QVector<QVector3D> contour;
     float zShift = 0.1f;
-
-    // Верхняя граница (первая строка)
-    for (int j = 0; j < heightMatSideSize - 1; ++j) {
-        QVector3D A = heightVertices_[j];
-        QVector3D B = heightVertices_[j + 1];
+    int lastIndex = heightMatSideSize - 1;
+    QVector<QVector3D> contour;
+    contour.reserve(lastIndex * 8);
+    auto addContourLine = [&](QVector3D A, QVector3D B) {
         A.setZ(A.z() + zShift);
         B.setZ(B.z() + zShift);
         contour.append(A);
-        contour.append(B); // линия между A и B
+        contour.append(B);
+    };
+    for (int i = 0; i < lastIndex; ++i) {
+        addContourLine(heightVertices_[i], heightVertices_[i + 1]); // top
+        addContourLine(heightVertices_[lastIndex * heightMatSideSize + i], // bottom
+                       heightVertices_[lastIndex * heightMatSideSize + (i + 1)]);
+        addContourLine(heightVertices_[(i + 1) * heightMatSideSize], heightVertices_[i * heightMatSideSize]); // left
+        addContourLine(heightVertices_[i * heightMatSideSize + lastIndex], // right
+                       heightVertices_[(i + 1) * heightMatSideSize + lastIndex]);
     }
-
-    // Правая граница (последний столбец)
-    for (int i = 0; i < heightMatSideSize - 1; ++i) {
-        QVector3D A = heightVertices_[i * heightMatSideSize + (heightMatSideSize - 1)];
-        QVector3D B = heightVertices_[(i + 1) * heightMatSideSize + (heightMatSideSize - 1)];
-        A.setZ(A.z() + zShift);
-        B.setZ(B.z() + zShift);
-        contour.append(A);
-        contour.append(B); // линия между A и B
-    }
-
-    // Нижняя граница (последняя строка)
-    for (int j = heightMatSideSize - 1; j > 0; --j) {
-        QVector3D A = heightVertices_[(heightMatSideSize - 1) * heightMatSideSize + j];
-        QVector3D B = heightVertices_[(heightMatSideSize - 1) * heightMatSideSize + (j - 1)];
-        A.setZ(A.z() + zShift);
-        B.setZ(B.z() + zShift);
-        contour.append(A);
-        contour.append(B); // линия между A и B
-    }
-
-    // Левая граница (первый столбец)
-    for (int i = heightMatSideSize - 1; i > 0; --i) {
-        QVector3D A = heightVertices_[i * heightMatSideSize];
-        QVector3D B = heightVertices_[(i - 1) * heightMatSideSize];
-        A.setZ(A.z() + zShift);
-        B.setZ(B.z() + zShift);
-        contour.append(A);
-        contour.append(B); // линия между A и B
-    }
-
-    // Установим данные для контурного рендера
     contourRenderImpl_.setData(contour, GL_LINES);
 }
 
