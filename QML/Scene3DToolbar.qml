@@ -267,87 +267,15 @@ ColumnLayout {
         }
 
         ColumnLayout {
-            RowLayout {
-                CText {
-                    text: "scale factor:"
-                }
-
-                SpinBoxCustom {
-                    id: sideScanScaleSpinBox
-                    implicitWidth: 100
-                    from: 1
-                    to: 50
-                    stepSize: 1
-                    value: 10
-
-                    Settings {
-                       property alias sideScanScaleSpinBox: sideScanScaleSpinBox.value
-                    }
-                }
-            }
-
-            MenuRow {
-                spacing: 4
-
-                CText {
-                    text: "image save path:"
-                }
-
-                CTextField {
-                    id: sideScanImagePathText
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("Enter image path")
-                    Settings {
-                        property alias sideScanImagePathText: sideScanImagePathText.text
-                    }
-                }
-
-                CheckButton {
-                    icon.source: "./icons/file.svg"
-                    checkable: false
-                    backColor: theme.controlSolidBackColor
-                    borderWidth: 0
-                    implicitWidth: theme.controlHeight
-                    onClicked: {
-                        saveImageFileDialog.open()
-                    }
-                    FileDialog {
-                        id: saveImageFileDialog
-                        title: "Please choose a location to save the image"
-                        folder: shortcuts.home
-                        selectExisting: false
-                        nameFilters: ["Image (*.png)"]
-                        onAccepted: {
-                            sideScanImagePathText.text = saveImageFileDialog.fileUrl.toString().replace("file:///", "")
-                        }
-                    }
-                    Settings {
-                        property alias saveImageFolder: saveImageFileDialog.folder
-                    }
-                }
-            }
-
             CButton {
-                text: "Use filters"
+                text: "Use linear filter"
                 Layout.fillWidth: true
                 Layout.preferredWidth: 200
                 checkable: true
+
                 onClicked: {
                     SideScanViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
                 }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                id: interpMeasLinesButton
-
-                text: "Interp meas lines"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                checked: false
 
                 onFocusChanged: {
                     surfaceSettings.focus = true
@@ -368,7 +296,6 @@ ColumnLayout {
                     surfaceSettings.focus = true
                 }
             }
-
             CButton {
                 text: "Meas line visible"
                 Layout.fillWidth: true
@@ -385,22 +312,10 @@ ColumnLayout {
                 }
             }
             CButton {
-                text: "Update"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                onClicked: {
-                    SideScanViewControlMenuController.onScaleSideScanViewSpinBoxValueChanged(sideScanScaleSpinBox.value)
-                    SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(interpMeasLinesButton.checked, sideScanImagePathText.text)
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
                 text: "Clear"
                 Layout.fillWidth: true
                 Layout.preferredWidth: 200
+
                 onClicked: {
                     SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
                 }

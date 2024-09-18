@@ -3,8 +3,7 @@
 
 
 SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *parent) :
-    QmlComponentController(parent),
-    usingFilters_(false)
+    QmlComponentController(parent)
 {
 
 }
@@ -32,16 +31,13 @@ void SideScanViewControlMenuController::onSideScanViewVisibilityCheckBoxCheckedC
 
 void SideScanViewControlMenuController::onUseFilterMosaicViewButtonClicked(bool state)
 {
-    usingFilters_ = state;
-}
-
-void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool interpMeasLines, const QString& imagePath)
-{
-    qDebug() << "onUpdateSideScanViewButtonClicked";
+    qDebug() << "onUseFilterMosaicViewButtonClicked: " << state;
 
     if (!m_graphicsSceneView) {
         return;
     }
+
+    m_graphicsSceneView->setUseLinearFilterForTileTexture(state);
 }
 
 void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
@@ -53,16 +49,6 @@ void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
     }
 
     m_graphicsSceneView->getSideScanViewPtr()->clear();
-}
-
-void SideScanViewControlMenuController::onScaleSideScanViewSpinBoxValueChanged(int scaleFactor)
-{
-    qDebug() << "onScaleSideScanViewSpinBoxValueChanged";
-
-    if (!m_graphicsSceneView) {
-        return;
-    }
-
 }
 
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)

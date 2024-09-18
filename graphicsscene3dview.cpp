@@ -167,6 +167,13 @@ void GraphicsScene3dView::setTextureIdForSideScanTile(QUuid tileId, GLuint id)
     sideScanView_->setTextureIdForTile(tileId, id);
 }
 
+void GraphicsScene3dView::setUseLinearFilterForTileTexture(bool state)
+{
+    if (renderer_) {
+        renderer_->setUseLinearFilterForTileTexture(state);
+    }
+}
+
 void GraphicsScene3dView::updateChannelsForSideScanView()
 {
     if (sideScanView_) {
@@ -461,18 +468,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
                                 }
                      );
-/*    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
-                     this,      [this]() -> void {
-                                    m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-                                    if (navigationArrowState_) {
-                                        const Position pos = m_dataset->getLastPosition();
-                                        m_navigationArrow->setPositionAndAngle(
-                                            QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
-                                    }
-                                },
-                     Qt::DirectConnection);
-
-*/
 
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
                       this,      [this]() -> void {
@@ -566,6 +561,7 @@ void GraphicsScene3dView::clearComboSelectionRect()
 GraphicsScene3dView::InFboRenderer::InFboRenderer()
     :QQuickFramebufferObject::Renderer()
     , m_renderer(new GraphicsScene3dRenderer)
+    , useLinearFilter_(false)
 {
     m_renderer->initialize();
 }
@@ -580,6 +576,11 @@ GraphicsScene3dView::InFboRenderer::~InFboRenderer()
 void GraphicsScene3dView::InFboRenderer::appendUpdateTextureTask(QUuid tileId, const QImage &image)
 {
     processTextureTasks_.enqueue(qMakePair(tileId, image));
+}
+
+void GraphicsScene3dView::InFboRenderer::setUseLinearFilterForTileTexture(bool state)
+{
+    useLinearFilter_ = state;
 }
 
 void GraphicsScene3dView::InFboRenderer::render()
@@ -617,8 +618,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
         glGenTextures(1, &newTextureId);
         glBindTexture(GL_TEXTURE_2D, newTextureId);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // GL_LINEAR
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, useLinearFilter_ ? GL_LINEAR : GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, useLinearFilter_ ? GL_LINEAR : GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 

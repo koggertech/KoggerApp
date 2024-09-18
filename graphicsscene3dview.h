@@ -95,6 +95,7 @@ public:
         virtual ~InFboRenderer();
 
         void appendUpdateTextureTask(QUuid tileId, const QImage& image);
+        void setUseLinearFilterForTileTexture(bool state);
 
         GLuint getTextureId();
 
@@ -109,6 +110,7 @@ public:
 
         QQueue<QPair<QUuid, QImage>> processTextureTasks_;
         QHash<QUuid, GLuint> tileTexureIds_;
+        bool useLinearFilter_;
     };
 
     enum ActiveMode{
@@ -155,6 +157,7 @@ public:
     void updateChannelsForSideScanView();
     void updateTileTexture(QUuid tileid, const QImage& image);
     void setTextureIdForSideScanTile(QUuid tileId, GLuint id);
+    void setUseLinearFilterForTileTexture(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);

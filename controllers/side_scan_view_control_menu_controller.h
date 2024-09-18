@@ -16,19 +16,10 @@ public:
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
     Q_INVOKABLE void onSideScanViewVisibilityCheckBoxCheckedChanged(bool checked);
-
-    Q_INVOKABLE void onScaleSideScanViewSpinBoxValueChanged(int scaleFactor);
-
     Q_INVOKABLE void onUseFilterMosaicViewButtonClicked(bool state);
-
     Q_INVOKABLE void onGridVisibleMosaicViewButtonClicked(bool state);
     Q_INVOKABLE void onMeasLineVisibleSideScanViewButtonClicked(bool state);
-
-    Q_INVOKABLE void onUpdateSideScanViewButtonClicked(bool interpMeasLines, const QString& imagePath);
     Q_INVOKABLE void onClearSideScanViewButtonClicked();
-
-
-
 
 Q_SIGNALS:
 
@@ -36,10 +27,6 @@ protected:
     virtual void findComponent() override;
 
 private:
-    SideScanView* getSideScanViewPtr() const;
-
+    SideScanView* getSideScanViewPtr() const;//
     GraphicsScene3dView* m_graphicsSceneView = nullptr;
-
-    bool usingFilters_;
-
 };
