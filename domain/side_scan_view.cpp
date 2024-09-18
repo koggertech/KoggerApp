@@ -340,6 +340,17 @@ void SideScanView::updateData()
     Q_EMIT changed();
 }
 
+void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
+{
+    //clear();
+
+    tileSidePixelSize_ = tileSidePixelSize;
+    tileHeightMatrixRatio_ = tileHeightMatrixRatio;
+    tileResolution_ = tileResolution;
+
+    globalMesh_.reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
+}
+
 void SideScanView::clear()
 {
     auto renderImpl = RENDER_IMPL(SideScanView);

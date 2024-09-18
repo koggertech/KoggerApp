@@ -12,7 +12,7 @@ public:
     GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     ~GlobalMesh();
 
-    void init(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
+    void reinit(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
     bool concatenate(MatrixParams& actualMatParams);    
     QVector3D convertPhToPixCoords(QVector3D phCoords) const;
     void printMatrix() const;

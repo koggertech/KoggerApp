@@ -267,6 +267,61 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            ColumnLayout {
+                RowLayout {
+                    CText {
+                        text: "Tile side pixel size:"
+                    }
+                    SpinBoxCustom {
+                        id: sideScanTileSidePixelSizeSpinBox
+                        implicitWidth: 150
+                        from: 32
+                        to: 2048
+                        stepSize: 1
+                        value: 256
+                    }
+                }
+                RowLayout {
+                    CText {
+                        text: "Tile height matrix ratio:"
+                    }
+                    SpinBoxCustom {
+                        id: sideScanTileHeightMatrixRatioSpinBox
+                        implicitWidth: 150
+                        from: 2
+                        to: 256
+                        stepSize: 1
+                        value: 16
+                    }
+                }
+                RowLayout {
+                    CText {
+                        text: "Tile resolution (px/m):"
+                    }
+                    SpinBoxCustom {
+                         id: sideScanTileResolutionSpinBox
+                         implicitWidth: 150
+                         from: 1
+                         to: 100
+                         stepSize: 1
+                         value: 10
+                     }
+                }
+                CButton {
+                    text: "Reinit global mesh"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onReinitGlobalMeshSideScanViewButtonClicked(
+                                    sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+            }
             CButton {
                 text: "Use linear filter"
                 Layout.fillWidth: true

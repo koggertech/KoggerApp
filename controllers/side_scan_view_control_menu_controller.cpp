@@ -51,6 +51,17 @@ void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
     m_graphicsSceneView->getSideScanViewPtr()->clear();
 }
 
+void SideScanViewControlMenuController::onReinitGlobalMeshSideScanViewButtonClicked(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
+{
+    qDebug() << "onReinitGlobalMeshSideScanViewButtonClicked:" << tileSidePixelSize << tileHeightMatrixRatio << tileResolution;
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->resetTileSettings(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
+}
+
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
 {
     qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";

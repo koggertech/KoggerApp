@@ -20,13 +20,15 @@ GlobalMesh::~GlobalMesh()
     }
 }
 
-void GlobalMesh::init(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
+void GlobalMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
     clear();
 
     tileSidePixelSize_ = tileSidePixelSize;
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
     tileResolution_ = tileResolution;
+
+    tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
 
 bool GlobalMesh::concatenate(MatrixParams &actualMatParams)

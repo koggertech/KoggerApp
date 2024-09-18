@@ -42,6 +42,7 @@ public:
 
     bool updateChannelsIds();
     void updateData();
+    void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void clear();
 
     void setView(GraphicsScene3dView* viewPtr);
