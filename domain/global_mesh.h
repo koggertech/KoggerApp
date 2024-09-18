@@ -25,6 +25,7 @@ public:
     int                              getNumWidthTiles() const;
     int                              getNumHeightTiles() const;
     int                              getStepSizeHeightMatrix() const;
+    bool                             getIsInited() const;
 
 private:
     /*methods*/
@@ -46,5 +47,4 @@ private:
     int numHeightTiles_;
     int tileSidePixelSize_;
     int tileHeightMatrixRatio_;
-    int count_; // debug
 };

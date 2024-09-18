@@ -278,7 +278,11 @@ void SideScanView::updateData()
                             int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
                             int tileIndxX = bypassInterpX % tileSidePixelSize;
                             int tileIndxY = bypassInterpY % tileSidePixelSize;
+
                             auto& tileRef = globalMesh_.getTileMatrixRef()[meshIndxY][meshIndxX];
+                            if (!tileRef->getIsInited()) {
+                                tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                            }
 
                             // image
                             auto& imageRef = tileRef->getImageRef();
@@ -489,18 +493,20 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 
 void SideScanView::postUpdate()
 {
-    auto renderImpl = RENDER_IMPL(SideScanView);
+    if (!globalMesh_.getIsInited()) {
+        return;
+    }
 
-    // update texture, height matrix
     auto updateTextureInView = [this](Tile* tilePtr){
+        auto renderImpl = RENDER_IMPL(SideScanView);
+
+        tilePtr->updateHeightIndices();
+        renderImpl->tiles_[tilePtr->getUuid()] = *tilePtr; // copy data to render
+
         if (m_view) {
             m_view->updateTileTexture(tilePtr->getUuid(), tilePtr->getImageRef());
         }
     };
-
-    if (globalMesh_.getTileMatrixRef().empty() && globalMesh_.getTileMatrixRef().at(0).empty()) {
-        return;
-    }
 
     int tileMatrixYSize = globalMesh_.getTileMatrixRef().size();
     int tileMatrixXSize = globalMesh_.getTileMatrixRef().at(0).size();
@@ -509,51 +515,44 @@ void SideScanView::postUpdate()
         for (int j = 0; j < tileMatrixXSize; ++j) {
 
             auto& tileRef = globalMesh_.getTileMatrixRef()[i][j];
-
             if (tileRef->getIsUpdate()) {
-                tileRef->updateHeightIndices();
+                auto& tileVertRef = tileRef->getHeightVerticesRef();
 
                 // fix height matrixs
                 int numHeightVertBySide = std::sqrt(tileRef->getHeightVerticesRef().size());
-                int yIndx = i + 1; // rows
+
+                int yIndx = i + 1; // by row
                 if (tileMatrixYSize > yIndx) {
-                    auto& topTileRef = globalMesh_.getTileMatrixRef()[yIndx][j];
+                    auto& rowTileRef = globalMesh_.getTileMatrixRef()[yIndx][j];
+                    if (!rowTileRef->getIsInited()) {
+                        rowTileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                    }
 
-                    int topStartIndx = numHeightVertBySide * (numHeightVertBySide - 1) ;
-
-                    auto& tileVertRef = tileRef->getHeightVerticesRef();
-                    auto& topTileVertRef = topTileRef->getHeightVerticesRef();
-
+                    int topStartIndx = numHeightVertBySide * (numHeightVertBySide - 1);
+                    auto& topTileVertRef = rowTileRef->getHeightVerticesRef();
                     for (int k = 0; k < numHeightVertBySide - 1; ++k) {
                         topTileVertRef[topStartIndx + k].setZ(tileVertRef[k].z());
                     }
 
-                    // update and copy
-                    topTileRef->updateHeightIndices();
-                    renderImpl->tiles_[topTileRef->getUuid()] = *topTileRef;
-                    updateTextureInView(topTileRef);
+                    updateTextureInView(rowTileRef);
                 }
 
-                int xIndx = j - 1; // colums
+                int xIndx = j - 1; // by column
                 if (xIndx > -1 && tileMatrixXSize > xIndx) {
-                    auto& leftTileRef = globalMesh_.getTileMatrixRef()[i][xIndx];
-                    auto& tileVertRef = tileRef->getHeightVerticesRef();
-                    auto& leftTileVertRef = leftTileRef->getHeightVerticesRef();
+                    auto& colTileRef = globalMesh_.getTileMatrixRef()[i][xIndx];
+                    if (!colTileRef->getIsInited()) {
+                        colTileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                    }
 
+                    auto& leftTileVertRef = colTileRef->getHeightVerticesRef();
                     for (int k = 0; k < numHeightVertBySide; ++k) {
                         leftTileVertRef[((k + 1) * numHeightVertBySide - 1)].setZ(tileVertRef[(k == 0 ? 0 : k * numHeightVertBySide)].z());
                     }
 
-                    // update and copy
-                    leftTileRef->updateHeightIndices();
-                    renderImpl->tiles_[leftTileRef->getUuid()] = *leftTileRef;
-                    updateTextureInView(leftTileRef);
-                }
+                    updateTextureInView(colTileRef);
+                }                
 
-
-                renderImpl->tiles_[tileRef->getUuid()] = *tileRef; // copy data to render
                 updateTextureInView(tileRef);
-
                 tileRef->setIsUpdate(false);
             }
         }
@@ -614,6 +613,7 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
     for (auto& itm : tiles_) {
         if (tileGridVisible_) {
             itm.getGridRenderImplRef().render(ctx, mvp, shaderProgramMap);
+            itm.getContourRenderImplRef().render(ctx, mvp, shaderProgramMap);
         }
 
         mosaicProgram->bind();
