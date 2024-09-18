@@ -40,7 +40,7 @@ public:
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
-    void updateChannelsIds();
+    bool updateChannelsIds();
     void updateData();
     void clear();
 

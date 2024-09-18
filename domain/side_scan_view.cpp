@@ -27,8 +27,10 @@ SideScanView::~SideScanView()
 
 }
 
-void SideScanView::updateChannelsIds()
+bool SideScanView::updateChannelsIds()
 {
+    bool retVal = false;
+
     segFChannelId_ = -1;
     segSChannelId_ = -1;
 
@@ -37,25 +39,20 @@ void SideScanView::updateChannelsIds()
             auto it = chList.begin();
             segFChannelId_ = it.key();
             segSChannelId_ = (++it).key();
+            retVal = true;
         }
     }
+
+    return retVal;
 }
 
 void SideScanView::updateData()
 {
-    // TODO:
-    //  refactor (naming etc.)
-    //  perfomance optimizations
-    //  check epoch selection logic
-    //  height matrix
+    // TODO: check epoch selection logic
 
-
-    if (!datasetPtr_) {
-        qDebug() << "SideScanView::updateDataSec: dataset is nullptr!";
+    if (!updateChannelsIds() || !datasetPtr_) {
         return;
     }
-
-    updateChannelsIds(); // cause we dont know when
 
     auto epochCount = datasetPtr_->size();
     if (epochCount < 4) {
