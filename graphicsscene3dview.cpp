@@ -27,6 +27,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     navigationArrowState_(true),
     sideScanState_(true),
+    sideScanTrackLastEpoch_(false),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
@@ -178,6 +179,11 @@ void GraphicsScene3dView::setUseLinearFilterForTileTexture(bool state)
 void GraphicsScene3dView::setSideScanState(bool state)
 {
     sideScanState_ = state;
+}
+
+void GraphicsScene3dView::setSideScanTrackLastEpoch(bool state)
+{
+    sideScanTrackLastEpoch_ = state;
 }
 
 void GraphicsScene3dView::updateChannelsForSideScanView()
@@ -399,6 +405,17 @@ void GraphicsScene3dView::setMapView() {
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setLastEpochFocusView()
+{
+    auto* epoch = m_dataset->last();
+    QVector3D currPos(epoch->getPositionGNSS().ned.n, epoch->getPositionGNSS().ned.e, 1);
+
+    m_camera->focusOnPosition(currPos);
+    updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setIdleMode()
 {
     m_mode = Idle; 
@@ -514,6 +531,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                          bottomTrackWindowCounter_ = currCount;
                                          // mosaic
                                          sideScanView_->updateData();
+                                     }
+
+                                     if (sideScanTrackLastEpoch_) {
+                                        setLastEpochFocusView();
                                      }
                                  }, Qt::DirectConnection);
 }

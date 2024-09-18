@@ -159,6 +159,7 @@ public:
     void setTextureIdForSideScanTile(QUuid tileId, GLuint id);
     void setUseLinearFilterForTileTexture(bool state);
     void setSideScanState(bool state);
+    void setSideScanTrackLastEpoch(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -174,6 +175,7 @@ public Q_SLOTS:
     void fitAllInView();
     void setIsometricView();
     void setMapView();
+    void setLastEpochFocusView();
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
@@ -220,6 +222,7 @@ private:
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
     bool sideScanState_;
+    bool sideScanTrackLastEpoch_;
 #if defined (Q_OS_ANDROID)
     static constexpr double mouseThreshold_{ 15.0 };
 #else

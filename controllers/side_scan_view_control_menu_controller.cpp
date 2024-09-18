@@ -84,6 +84,17 @@ void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool s
     m_graphicsSceneView->setSideScanState(state);
 }
 
+void SideScanViewControlMenuController::onTrackLastEpochSideScanViewButtonClicked(bool state)
+{
+    qDebug() << "onTrackLastEpochSideScanViewButtonClicked:" << state;
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->setSideScanTrackLastEpoch(state);
+}
+
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
 {
     qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";

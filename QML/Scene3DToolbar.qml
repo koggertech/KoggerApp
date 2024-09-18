@@ -282,6 +282,21 @@ ColumnLayout {
                     surfaceSettings.focus = true
                 }
             }
+            CButton {
+                text: "Track last epoch"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                checked: false
+
+                onClicked: {
+                    SideScanViewControlMenuController.onTrackLastEpochSideScanViewButtonClicked(checked)
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
             ColumnLayout {
                 RowLayout {
                     CText {
