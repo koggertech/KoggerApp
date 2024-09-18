@@ -226,7 +226,7 @@ void GlobalMesh::resizeRowsBottom(int rowsToAdd)
             tiles_.push_back(new Tile());
             tileMatrix_[i][j] = tiles_.back();
 
-            QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_, origin_.y() + cnt * tileSideMeterSize_, 0.0f }; // т.к. ориджин обновился мы плюсуем по y
+            QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_, origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }; // т.к. ориджин обновился мы плюсуем по y
             tileMatrix_[i][j]->setOrigin(tileOrigin);
         }
         cnt++;
