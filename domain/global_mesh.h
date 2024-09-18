@@ -18,6 +18,7 @@ public:
     void printMatrix() const;
     void clear();
 
+    void setGenerateGridContour(bool state);
     std::vector<std::vector<Tile*>>& getTileMatrixRef();
     int                              getPixelWidth() const;
     int                              getPixelHeight() const;
@@ -47,4 +48,5 @@ private:
     int numHeightTiles_;
     int tileSidePixelSize_;
     int tileHeightMatrixRatio_;
+    bool generateGridContour_;
 };

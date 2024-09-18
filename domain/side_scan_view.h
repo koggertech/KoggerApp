@@ -50,9 +50,7 @@ public:
     void setTextureIdForTile(QUuid tileid, GLuint textureId);
     void setMeasLineVisible(bool state);
     void setTileGridVisible(bool state);
-    void setTilePixelSize(int size);
-    void setTileHeightMatrixRatio(int ratio);
-    void setTileResolution(float resolution);
+    void setGenerateGridContour(bool state);
 
 private:
     /*methods*/

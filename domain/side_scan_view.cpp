@@ -393,9 +393,12 @@ void SideScanView::setDatasetPtr(Dataset* datasetPtr)
 
 void SideScanView::setTextureIdForTile(QUuid tileid, GLuint textureId)
 {
-    RENDER_IMPL(SideScanView)->tiles_[tileid].setTextureId(textureId);
+    auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileid);
 
-    Q_EMIT changed();
+    if (it != RENDER_IMPL(SideScanView)->tiles_.end()) {
+        it.value().setTextureId(textureId);
+        Q_EMIT changed();
+    }
 }
 
 void SideScanView::setMeasLineVisible(bool state)
@@ -412,19 +415,9 @@ void SideScanView::setTileGridVisible(bool state)
     Q_EMIT changed();
 }
 
-void SideScanView::setTilePixelSize(int size)
+void SideScanView::setGenerateGridContour(bool state)
 {
-    tileSidePixelSize_ = size;
-}
-
-void SideScanView::setTileHeightMatrixRatio(int ratio)
-{
-    tileHeightMatrixRatio_ = ratio;
-}
-
-void SideScanView::setTileResolution(float resolution)
-{
-    tileResolution_ = resolution;
+    globalMesh_.setGenerateGridContour(state);
 }
 
 void SideScanView::updateColorTable()
@@ -509,7 +502,7 @@ void SideScanView::postUpdate()
         auto renderImpl = RENDER_IMPL(SideScanView);
 
         tilePtr->updateHeightIndices();
-        renderImpl->tiles_[tilePtr->getUuid()] = *tilePtr; // copy data to render
+        renderImpl->tiles_.insert(tilePtr->getUuid(), *tilePtr); // copy data to render
 
         if (m_view) {
             m_view->updateTileTexture(tilePtr->getUuid(), tilePtr->getImageRef());

@@ -1,11 +1,13 @@
 #include "tile.h"
 
 
-Tile::Tile() :
+Tile::Tile(QVector3D origin, bool generateGridContour) :
     id_(QUuid::createUuid()),
+    origin_(origin),
     textureId_(0),
     isUpdate_(false),
-    isInited_(false)
+    isInited_(false),
+    generateGridContour_(generateGridContour)
 { }
 
 void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution, QImage::Format imageFormat)
@@ -64,50 +66,47 @@ void Tile::updateHeightIndices()
         }
     }
 
-    // grid
-    QVector<QVector3D> grid;
-    grid.reserve((heightIndices_.size() / 6) * 8);
-    for (int i = 0; i < heightIndices_.size(); i += 6) {
-        QVector3D A = heightVertices_[heightIndices_[i]];
-        QVector3D B = heightVertices_[heightIndices_[i + 1]];
-        QVector3D C = heightVertices_[heightIndices_[i + 2]];
-        QVector3D D = heightVertices_[heightIndices_[i + 5]];
-        A.setZ(A.z() + 0.02);
-        B.setZ(B.z() + 0.02);
-        C.setZ(C.z() + 0.02);
-        D.setZ(D.z() + 0.02);
-        grid.append({ A, B,
-                      B, D,
-                      A, C,
-                      C, D });
-    }
-    gridRenderImpl_.setData(grid, GL_LINES);
+    if (generateGridContour_) {
+        // grid
+        QVector<QVector3D> grid;
+        grid.reserve((heightIndices_.size() / 6) * 8);
+        for (int i = 0; i < heightIndices_.size(); i += 6) {
+            QVector3D A = heightVertices_[heightIndices_[i]];
+            QVector3D B = heightVertices_[heightIndices_[i + 1]];
+            QVector3D C = heightVertices_[heightIndices_[i + 2]];
+            QVector3D D = heightVertices_[heightIndices_[i + 5]];
+            A.setZ(A.z() + 0.02);
+            B.setZ(B.z() + 0.02);
+            C.setZ(C.z() + 0.02);
+            D.setZ(D.z() + 0.02);
+            grid.append({ A, B,
+                          B, D,
+                          A, C,
+                          C, D });
+        }
+        gridRenderImpl_.setData(grid, GL_LINES);
 
-    // contour
-    float zShift = 0.1f;
-    int lastIndex = heightMatSideSize - 1;
-    QVector<QVector3D> contour;
-    contour.reserve(lastIndex * 8);
-    auto addContourLine = [&](QVector3D A, QVector3D B) {
-        A.setZ(A.z() + zShift);
-        B.setZ(B.z() + zShift);
-        contour.append(A);
-        contour.append(B);
-    };
-    for (int i = 0; i < lastIndex; ++i) {
-        addContourLine(heightVertices_[i], heightVertices_[i + 1]); // top
-        addContourLine(heightVertices_[lastIndex * heightMatSideSize + i], // bottom
-                       heightVertices_[lastIndex * heightMatSideSize + (i + 1)]);
-        addContourLine(heightVertices_[(i + 1) * heightMatSideSize], heightVertices_[i * heightMatSideSize]); // left
-        addContourLine(heightVertices_[i * heightMatSideSize + lastIndex], // right
-                       heightVertices_[(i + 1) * heightMatSideSize + lastIndex]);
+        // contour
+        float zShift = 0.1f;
+        int lastIndex = heightMatSideSize - 1;
+        QVector<QVector3D> contour;
+        contour.reserve(lastIndex * 8);
+        auto addContourLine = [&](QVector3D A, QVector3D B) {
+            A.setZ(A.z() + zShift);
+            B.setZ(B.z() + zShift);
+            contour.append(A);
+            contour.append(B);
+        };
+        for (int i = 0; i < lastIndex; ++i) {
+            addContourLine(heightVertices_[i], heightVertices_[i + 1]); // top
+            addContourLine(heightVertices_[lastIndex * heightMatSideSize + i], // bottom
+                           heightVertices_[lastIndex * heightMatSideSize + (i + 1)]);
+            addContourLine(heightVertices_[(i + 1) * heightMatSideSize], heightVertices_[i * heightMatSideSize]); // left
+            addContourLine(heightVertices_[i * heightMatSideSize + lastIndex], // right
+                           heightVertices_[(i + 1) * heightMatSideSize + lastIndex]);
+        }
+        contourRenderImpl_.setData(contour, GL_LINES);
     }
-    contourRenderImpl_.setData(contour, GL_LINES);
-}
-
-void Tile::setOrigin(QVector3D origin)
-{
-    origin_ = origin;
 }
 
 void Tile::setTextureId(GLuint val)
@@ -115,9 +114,9 @@ void Tile::setTextureId(GLuint val)
     textureId_ = val;
 }
 
-void Tile::setIsUpdate(bool val)
+void Tile::setIsUpdate(bool state)
 {
-    isUpdate_ = val;
+    isUpdate_ = state;
 }
 
 QUuid Tile::getUuid() const

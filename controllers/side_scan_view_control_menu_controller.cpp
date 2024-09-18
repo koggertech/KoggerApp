@@ -62,6 +62,17 @@ void SideScanViewControlMenuController::onReinitGlobalMeshSideScanViewButtonClic
     m_graphicsSceneView->getSideScanViewPtr()->resetTileSettings(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
 }
 
+void SideScanViewControlMenuController::onGenerateGridContourSideScanViewButtonClicked(bool state)
+{
+    qDebug() << "onGenerateGridContourSideScanViewButtonClicked:" << state;
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->setGenerateGridContour(state);
+}
+
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
 {
     qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";

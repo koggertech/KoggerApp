@@ -337,7 +337,7 @@ ColumnLayout {
                 }
             }
             CButton {
-                text: "Grid visible"
+                text: "Grid/contour visible"
                 Layout.fillWidth: true
                 Layout.preferredWidth: 200
                 checkable: true
@@ -360,6 +360,21 @@ ColumnLayout {
 
                 onClicked: {
                     SideScanViewControlMenuController.onMeasLineVisibleSideScanViewButtonClicked(checked)
+                }
+
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+            CButton {
+                text: "Generate grid/contour"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+                checkable: true
+                checked: true
+
+                onClicked: {
+                    SideScanViewControlMenuController.onGenerateGridContourSideScanViewButtonClicked(checked)
                 }
 
                 onFocusChanged: {

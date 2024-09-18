@@ -8,7 +8,8 @@ GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float t
     numWidthTiles_(0),
     numHeightTiles_(0),
     tileSidePixelSize_(tileSidePixelSize),
-    tileHeightMatrixRatio_(tileHeightMatrixRatio)
+    tileHeightMatrixRatio_(tileHeightMatrixRatio),
+    generateGridContour_(true)
 {
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
@@ -127,6 +128,11 @@ void GlobalMesh::clear()
     numHeightTiles_ = 0;
 }
 
+void GlobalMesh::setGenerateGridContour(bool state)
+{
+    generateGridContour_ = state;
+}
+
 std::vector<std::vector<Tile *> > &GlobalMesh::getTileMatrixRef()
 {
     return tileMatrix_;
@@ -183,11 +189,8 @@ void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const M
         for (int j = 0; j < numWidthTiles_; ++j) {
 
             if (!tileMatrix_[i][j]) {
-                tiles_.push_back(new Tile());
+                tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_)); // reverse in mem
                 tileMatrix_[i][j] = tiles_.back();
-
-                QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }; // reverse in mem
-                tileMatrix_[i][j]->setOrigin(tileOrigin);
             }
         }
     }
@@ -204,11 +207,8 @@ void GlobalMesh::resizeColumnsLeft(int columnsToAdd)
         }
 
         for (int j = 0; j < columnsToAdd; ++j) { // инитим вставленное
-            tiles_.push_back(new Tile());
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,   origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
-
-            QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_,   origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f };
-            tileMatrix_[i][j]->setOrigin(tileOrigin);
         }
     }
 
@@ -225,11 +225,8 @@ void GlobalMesh::resizeRowsBottom(int rowsToAdd)
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            tiles_.push_back(new Tile());
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }, generateGridContour_)); // т.к. ориджин обновился мы плюсуем по y
             tileMatrix_[i][j] = tiles_.back();
-
-            QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_, origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }; // т.к. ориджин обновился мы плюсуем по y
-            tileMatrix_[i][j]->setOrigin(tileOrigin);
         }
         cnt++;
     }
@@ -244,12 +241,9 @@ void GlobalMesh::resizeColumnsRight(int columnsToAdd)
     for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) { // сверху вниз
         tileMatrix_[i].resize(oldNumWidthTiles + columnsToAdd); // ресайзаем строку
 
-        for (int j = oldNumWidthTiles; j < oldNumWidthTiles + columnsToAdd; ++j) { // просто по новым идём
-            tiles_.push_back(new Tile());
+        for (int j = oldNumWidthTiles; j < oldNumWidthTiles + columnsToAdd; ++j) { // просто по новым идём            
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
-
-            QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f };
-            tileMatrix_[i][j]->setOrigin(tileOrigin);
         }
     }
 
@@ -269,11 +263,8 @@ void GlobalMesh::resizeRowsTop(int rowsToAdd)
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            tiles_.push_back(new Tile());
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
-
-            QVector3D tileOrigin = { origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f };
-            tileMatrix_[i][j]->setOrigin(tileOrigin);
         }
     }
 

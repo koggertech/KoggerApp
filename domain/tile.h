@@ -13,13 +13,12 @@ class GlobalMesh;
 class Tile {
 public:
     /*methods*/
-    Tile();
+    Tile(QVector3D origin, bool generateGridContour);
     void init(int sidePixelSize, int heightMatrixRatio, float resolution, QImage::Format imageFormat = QImage::Format_Indexed8);
     void updateHeightIndices();
 
-    void setOrigin(QVector3D origin);
     void setTextureId(GLuint val);
-    void setIsUpdate(bool val);
+    void setIsUpdate(bool state);
     QUuid                                    getUuid() const;
     QVector3D                                getOrigin() const;
     bool                                     getIsInited() const;
@@ -49,4 +48,5 @@ private:
     GLuint textureId_;
     bool isUpdate_;
     bool isInited_;
+    bool generateGridContour_;
 };
