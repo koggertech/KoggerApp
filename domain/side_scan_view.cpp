@@ -46,15 +46,13 @@ bool SideScanView::updateChannelsIds()
     return retVal;
 }
 
-void SideScanView::updateData()
+void SideScanView::updateData(int endOffset)
 {
-    // TODO: check epoch selection logic
-
     if (!updateChannelsIds() || !datasetPtr_) {
         return;
     }
 
-    auto epochCount = datasetPtr_->size();
+    int epochCount = datasetPtr_->size() - endOffset;
     if (epochCount < 4) {
         return;
     }
@@ -135,7 +133,7 @@ void SideScanView::updateData()
 
     // processing
     for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
-        if (i + 8 >= measLinesVertices.size()) {
+        if (i + 5 > measLinesVertices.size() - 1) {
             break;
         }
 
