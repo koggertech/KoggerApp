@@ -2,12 +2,18 @@
 
 #include <QVector>
 #include <QVector3D>
+#include <QImage>
+#include <QPair>
+#include <QUuid>
+#include <QQueue>
 #include "sceneobject.h"
 #include "plotcash.h"
 #include "global_mesh.h"
 #include "tile.h"
-#include "drawutils.h"
+#include "draw_utils.h"
 
+
+using namespace sscan;
 
 class GraphicsScene3dView;
 class SideScanView : public SceneObject
@@ -47,26 +53,42 @@ public:
 
     void setView(GraphicsScene3dView* viewPtr);
     void setDatasetPtr(Dataset* datasetPtr);
-    void setTextureIdForTile(QUuid tileid, GLuint textureId);
     void setMeasLineVisible(bool state);
     void setTileGridVisible(bool state);
     void setGenerateGridContour(bool state);
+    void setColorTableThemeById(int id);
+    void setColorTableLowLevel(int val);
+    void setColorTableHighLevel(int val);
+
+
+    void setTextureIdByTileId(QUuid tileId, GLuint textureId);
+    GLuint  getTextureIdByTileId(QUuid tileId);
+
+    void setUseLinearFilter(bool state);
+    bool getUseLinearFilter() const;
+
+    void setTrackLastEpoch(bool state);
+    bool getTrackLastEpoch() const;
+
+    QVector<QRgb> getColorTable() const;
+    QHash<QUuid, QImage>& getProcessTextureTasksRef();
 
 private:
     /*methods*/
-    void updateColorTable();
     inline bool checkLength(float dist) const;
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
     void concatenateMatrixParameters(MatrixParams& srcDst, const MatrixParams& src) const;
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
     void postUpdate();
+    void updateTilesTexture();
 
     /*data*/
     static constexpr float amplitudeCoeff_ = 100.0f;
     static constexpr int colorTableSize_ = 255;
     static constexpr int interpLineWidth_ = 1;
 
-    QVector<QRgb> colorTable_;
+    QHash<QUuid, QImage> processTextureTasks_;
+    PlotColorTable colorTable_;
     MatrixParams lastMatParams_;
     Dataset* datasetPtr_;
     float tileResolution_;
@@ -78,4 +100,6 @@ private:
     int lastCalcEpoch_;
     int lastAcceptedEpoch_;
     GlobalMesh globalMesh_;
+    bool useLinearFilter_;
+    bool trackLastEpoch_;
 };

@@ -24,6 +24,7 @@ public:
     Q_INVOKABLE void onGenerateGridContourSideScanViewButtonClicked(bool state);
     Q_INVOKABLE void onUpdateSideScanViewButtonClicked(bool state);
     Q_INVOKABLE void onTrackLastEpochSideScanViewButtonClicked(bool state);
+    Q_INVOKABLE void onThemeSideScanViewButtonClicked(int val);
 
 Q_SIGNALS:
 

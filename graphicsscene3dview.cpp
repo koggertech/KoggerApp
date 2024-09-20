@@ -26,12 +26,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     navigationArrowState_(true),
-    sideScanState_(true),
-    sideScanTrackLastEpoch_(false),
+    sideScanCalcState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
-    switchedToBottomTrackVertexComboSelectionMode_(false),
-    renderer_(nullptr)
+    switchedToBottomTrackVertexComboSelectionMode_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -73,8 +71,7 @@ GraphicsScene3dView::~GraphicsScene3dView()
 
 QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
 {
-    renderer_ = new GraphicsScene3dView::InFboRenderer();
-    return renderer_;
+    return new GraphicsScene3dView::InFboRenderer();
 }
 
 std::shared_ptr<BoatTrack> GraphicsScene3dView::boatTrack() const
@@ -164,33 +161,9 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
-void GraphicsScene3dView::setTextureIdForSideScanTile(QUuid tileId, GLuint id)
+void GraphicsScene3dView::setCalcStateSideScanView(bool state)
 {
-    sideScanView_->setTextureIdForTile(tileId, id);
-}
-
-void GraphicsScene3dView::setUseLinearFilterForTileTexture(bool state)
-{
-    if (renderer_) {
-        renderer_->setUseLinearFilterForTileTexture(state);
-    }
-}
-
-void GraphicsScene3dView::setSideScanState(bool state)
-{
-    sideScanState_ = state;
-}
-
-void GraphicsScene3dView::setSideScanTrackLastEpoch(bool state)
-{
-    sideScanTrackLastEpoch_ = state;
-}
-
-void GraphicsScene3dView::updateChannelsForSideScanView()
-{
-    if (sideScanView_) {
-        sideScanView_->updateChannelsIds();
-    }
+    sideScanCalcState_ = state;
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -350,15 +323,6 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::updateTileTexture(QUuid tileid, const QImage &image)
-{
-    if (renderer_) {
-        renderer_->appendUpdateTextureTask(tileid, image);
-    }
-
-    QQuickFramebufferObject::update();
-}
-
 void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
 {
     m_isSceneBoundingBoxVisible = visible;
@@ -501,7 +465,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                              QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
                                      }
 
-                                     if (!sideScanState_) {
+                                     if (!sideScanCalcState_) {
                                          return;
                                      }
 
@@ -533,7 +497,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                          sideScanView_->updateData();
                                      }
 
-                                     if (sideScanTrackLastEpoch_) {
+                                     if (sideScanView_->getTrackLastEpoch()) {
                                         setLastEpochFocusView();
                                      }
                                  }, Qt::DirectConnection);
@@ -589,30 +553,15 @@ void GraphicsScene3dView::clearComboSelectionRect()
 }
 
 //---------------------Renderer---------------------------//
-GraphicsScene3dView::InFboRenderer::InFboRenderer()
-    :QQuickFramebufferObject::Renderer()
-    , m_renderer(new GraphicsScene3dRenderer)
-    , useLinearFilter_(false)
+GraphicsScene3dView::InFboRenderer::InFboRenderer() :
+    QQuickFramebufferObject::Renderer(),
+    m_renderer(new GraphicsScene3dRenderer)
 {
     m_renderer->initialize();
 }
 
 GraphicsScene3dView::InFboRenderer::~InFboRenderer()
-{
-    for (auto& itm : tileTexureIds_) {
-        glDeleteTextures(1, &itm);
-    }
-}
-
-void GraphicsScene3dView::InFboRenderer::appendUpdateTextureTask(QUuid tileId, const QImage &image)
-{
-    processTextureTasks_.enqueue(qMakePair(tileId, image));
-}
-
-void GraphicsScene3dView::InFboRenderer::setUseLinearFilterForTileTexture(bool state)
-{
-    useLinearFilter_ = state;
-}
+{ }
 
 void GraphicsScene3dView::InFboRenderer::render()
 {
@@ -631,40 +580,34 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
 
-    while (!processTextureTasks_.isEmpty()) {
-        auto task = processTextureTasks_.dequeue();
-        auto textureId = tileTexureIds_[task.first];
+    // side scan init/deinit textures
+    auto sideScanPtr = view->getSideScanViewPtr();
+    auto& tasks = sideScanPtr->getProcessTextureTasksRef();
+    for (auto it = tasks.begin(); it != tasks.end(); ) {
+        const QUuid& tileId = it.key();
+        QImage& image = it.value();
 
+        GLuint textureId = view->getSideScanViewPtr()->getTextureIdByTileId(tileId);
         if (textureId != 0) {
+            sideScanPtr->setTextureIdByTileId(tileId, 0);
             glDeleteTextures(1, &textureId);
         }
 
-        if (task.second.isNull()) {
-            tileTexureIds_.remove(task.first);
-            view->setTextureIdForSideScanTile(task.first, 0);
+        if (image.isNull()) {
+            sideScanPtr->setTextureIdByTileId(tileId, 0);
+            glDeleteTextures(1, &textureId);
+            it = tasks.erase(it);
             continue;
         }
 
-        GLuint newTextureId = 0;
-        glGenTextures(1, &newTextureId);
-        glBindTexture(GL_TEXTURE_2D, newTextureId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, useLinearFilter_ ? GL_LINEAR : GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, useLinearFilter_ ? GL_LINEAR : GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        QImage glImage = task.second.convertToFormat(QImage::Format_RGBA8888);
+        image.setColorTable(view->getSideScanViewPtr()->getColorTable());
+        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
 
         if (!glImage.isNull()) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-        } else {
-            qDebug() << "Converted QImage is null!";
+            updateTexture(view, sideScanPtr.get(), tileId, glImage);
         }
 
-        tileTexureIds_[task.first] = newTextureId;
-
-        view->setTextureIdForSideScanTile(task.first, newTextureId);
+        it = tasks.erase(it);
     }
 
     // write to renderer
@@ -692,6 +635,25 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(4);
     return new QOpenGLFramebufferObject(size, format);
+}
+
+void GraphicsScene3dView::InFboRenderer::updateTexture(GraphicsScene3dView* viewPtr, SideScanView* sideScanPtr, const QUuid& tileId, const QImage& image) const
+{
+    GLuint newTextureId = 0;
+    glGenTextures(1, &newTextureId);
+    glBindTexture(GL_TEXTURE_2D, newTextureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR  : GL_NEAREST_MIPMAP_NEAREST );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+
+    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+    glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+
+    sideScanPtr->setTextureIdByTileId(tileId, newTextureId);
 }
 
 GraphicsScene3dView::Camera::Camera()

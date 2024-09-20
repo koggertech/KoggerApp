@@ -14,7 +14,7 @@ void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution, QIma
 {
     // image
     image_ = QImage(sidePixelSize, sidePixelSize, imageFormat);
-    image_.fill(5);
+    image_.fill(0);
 
     // height vertices
     int heightMatSideSize = heightMatrixRatio + 1;

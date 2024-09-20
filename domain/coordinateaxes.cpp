@@ -1,5 +1,5 @@
 #include "coordinateaxes.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 //#include <textrenderer.h>
 
 CoordinateAxes::CoordinateAxes(QObject *parent)

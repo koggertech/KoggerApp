@@ -37,7 +37,7 @@ void SideScanViewControlMenuController::onUseFilterMosaicViewButtonClicked(bool 
         return;
     }
 
-    m_graphicsSceneView->setUseLinearFilterForTileTexture(state);
+    m_graphicsSceneView->getSideScanViewPtr()->setUseLinearFilter(state);
 }
 
 void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
@@ -81,7 +81,7 @@ void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool s
         return;
     }
 
-    m_graphicsSceneView->setSideScanState(state);
+    m_graphicsSceneView->setCalcStateSideScanView(state);
 }
 
 void SideScanViewControlMenuController::onTrackLastEpochSideScanViewButtonClicked(bool state)
@@ -92,7 +92,18 @@ void SideScanViewControlMenuController::onTrackLastEpochSideScanViewButtonClicke
         return;
     }
 
-    m_graphicsSceneView->setSideScanTrackLastEpoch(state);
+    m_graphicsSceneView->getSideScanViewPtr()->setTrackLastEpoch(state);
+}
+
+void SideScanViewControlMenuController::onThemeSideScanViewButtonClicked(int val)
+{
+    qDebug() << "onThemeSideScanViewButtonClicked:" << val;
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->setColorTableThemeById(val + 1);
 }
 
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)

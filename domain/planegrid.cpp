@@ -1,5 +1,5 @@
 #include "planegrid.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 //#include <textrenderer.h>
 
 PlaneGrid::PlaneGrid(QObject *parent)

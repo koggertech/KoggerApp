@@ -6,6 +6,8 @@
 #include "graphicsscene3dview.h"
 
 
+using namespace sscan;
+
 SideScanView::SideScanView(QObject* parent) :
     SceneObject(new SideScanViewRenderImplementation, parent),
     datasetPtr_(nullptr),
@@ -17,10 +19,10 @@ SideScanView::SideScanView(QObject* parent) :
     tileHeightMatrixRatio_(16),
     lastCalcEpoch_(0),
     lastAcceptedEpoch_(0),
-    globalMesh_(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_)
-{
-    updateColorTable();
-}
+    globalMesh_(this, tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_),
+    useLinearFilter_(false),
+    trackLastEpoch_(false)
+{ }
 
 SideScanView::~SideScanView()
 {
@@ -260,7 +262,7 @@ void SideScanView::updateData(int endOffset)
                     float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
                     int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
                     int interpY = interpPixY1 + interpProgressByPixel * interpPixDistY;
-                    auto interpColorIndx = static_cast<int>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
+                    auto interpColorIndx = static_cast<uint8_t>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
 
                     for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) { // bypass
                         for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
@@ -284,7 +286,7 @@ void SideScanView::updateData(int endOffset)
                             int bytesPerLine = imageRef.bytesPerLine();
                             int bytesInPix = bytesPerLine / imageRef.width();
                             uchar* pixPtr = imageRef.bits() + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
-                            *pixPtr = colorTable_[interpColorIndx];
+                            *pixPtr = interpColorIndx;
 
                             // height matrix
                             int stepSizeHeightMatrix = globalMesh_.getStepSizeHeightMatrix();
@@ -368,10 +370,7 @@ void SideScanView::clear()
 
     for (const auto &itmI : globalMesh_.getTileMatrixRef()) {
         for (const auto& itmJ : itmI) {
-
-            if (m_view) {
-                m_view->updateTileTexture(itmJ->getUuid(), QImage());
-            }
+            processTextureTasks_[itmJ->getUuid()] = QImage();
         }
     }
 
@@ -387,16 +386,6 @@ void SideScanView::setView(GraphicsScene3dView *viewPtr)
 void SideScanView::setDatasetPtr(Dataset* datasetPtr)
 {
     datasetPtr_ = datasetPtr;
-}
-
-void SideScanView::setTextureIdForTile(QUuid tileid, GLuint textureId)
-{
-    auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileid);
-
-    if (it != RENDER_IMPL(SideScanView)->tiles_.end()) {
-        it.value().setTextureId(textureId);
-        Q_EMIT changed();
-    }
 }
 
 void SideScanView::setMeasLineVisible(bool state)
@@ -418,14 +407,84 @@ void SideScanView::setGenerateGridContour(bool state)
     globalMesh_.setGenerateGridContour(state);
 }
 
-void SideScanView::updateColorTable()
+void SideScanView::setColorTableThemeById(int id)
 {
-    int numColors = 256;
-    colorTable_.resize(numColors);
-    for (int i = 0; i < numColors; ++i) {
-        int grayValue = i * 255 / (numColors - 1);
-        colorTable_[i] = qRgb(grayValue, grayValue, grayValue);
+    colorTable_.setThemeById(id);
+    updateTilesTexture();
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setColorTableLowLevel(int val)
+{
+    colorTable_.setLowLevel(val);
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setColorTableHighLevel(int val)
+{
+    colorTable_.setHighLevel(val);
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setTextureIdByTileId(QUuid tileId, GLuint textureId)
+{
+    // to tile in storage and render
+    // storage
+    if (auto* tilePtr = globalMesh_.getTilePtrById(tileId); tilePtr) {
+        tilePtr->setTextureId(textureId);
     }
+    // render
+    auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileId);
+    if (it != RENDER_IMPL(SideScanView)->tiles_.end()) {
+        it.value().setTextureId(textureId);
+        Q_EMIT changed();
+    }
+}
+
+void SideScanView::setUseLinearFilter(bool state)
+{
+    useLinearFilter_ = state;
+}
+
+GLuint SideScanView::getTextureIdByTileId(QUuid tileId)
+{
+    // from render
+    GLuint retVal = 0;
+    auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileId);
+
+    if (it != RENDER_IMPL(SideScanView)->tiles_.end()) {
+        retVal =  it.value().getTextureId();
+    }
+
+    return retVal;
+}
+
+bool SideScanView::getUseLinearFilter() const
+{
+    return useLinearFilter_;
+}
+
+void SideScanView::setTrackLastEpoch(bool state)
+{
+    trackLastEpoch_ = state;
+}
+
+bool SideScanView::getTrackLastEpoch() const
+{
+    return trackLastEpoch_;
+}
+
+QVector<QRgb> SideScanView::getColorTable() const
+{
+    return colorTable_.getColorTable();
+}
+
+QHash<QUuid, QImage>& SideScanView::getProcessTextureTasksRef()
+{
+    return processTextureTasks_;
 }
 
 bool SideScanView::checkLength(float dist) const
@@ -501,10 +560,7 @@ void SideScanView::postUpdate()
 
         tilePtr->updateHeightIndices();
         renderImpl->tiles_.insert(tilePtr->getUuid(), *tilePtr); // copy data to render
-
-        if (m_view) {
-            m_view->updateTileTexture(tilePtr->getUuid(), tilePtr->getImageRef());
-        }
+        processTextureTasks_[tilePtr->getUuid()] = tilePtr->getImageRef();
     };
 
     int tileMatrixYSize = globalMesh_.getTileMatrixRef().size();
@@ -549,11 +605,25 @@ void SideScanView::postUpdate()
                     }
 
                     updateTextureInView(colTileRef);
-                }                
+                }
 
                 updateTextureInView(tileRef);
                 tileRef->setIsUpdate(false);
             }
+        }
+    }
+}
+
+void SideScanView::updateTilesTexture()
+{
+    qDebug() << "update tiles texture";
+    if (!globalMesh_.getIsInited() || !m_view) {
+        return;
+    }
+
+    for (auto& itmI : globalMesh_.getTileMatrixRef()) {
+        for (auto& itmJ : itmI) {
+            processTextureTasks_[itmJ->getUuid()] = itmJ->getImageRef();
         }
     }
 }

@@ -1,22 +1,21 @@
 #ifndef GRAPHICSSCENE3DVIEW_H
 #define GRAPHICSSCENE3DVIEW_H
 
-#include <coordinateaxes.h>
-#include <planegrid.h>
-#include <raycaster.h>
-#include <surface.h>
-#include "side_scan_view.h"
-#include <boattrack.h>
-#include <bottomtrack.h>
-#include <polygongroup.h>
-#include <pointgroup.h>
-#include <vertexeditingdecorator.h>
-#include <ray.h>
-#include <navigation_arrow.h>
-
 #include <QQuickFramebufferObject>
 #include <QtMath>
-#include <QQUeue>
+#include "coordinateaxes.h"
+#include "planegrid.h"
+#include "raycaster.h"
+#include "surface.h"
+#include "side_scan_view.h"
+#include "boattrack.h"
+#include "bottomtrack.h"
+#include "polygongroup.h"
+#include "pointgroup.h"
+#include "vertexeditingdecorator.h"
+#include "ray.h"
+#include "navigation_arrow.h"
+
 
 class Dataset;
 class GraphicsScene3dRenderer;
@@ -94,11 +93,6 @@ public:
         InFboRenderer();
         virtual ~InFboRenderer();
 
-        void appendUpdateTextureTask(QUuid tileId, const QImage& image);
-        void setUseLinearFilterForTileTexture(bool state);
-
-        GLuint getTextureId();
-
     protected:
         virtual void render() override;
         virtual void synchronize(QQuickFramebufferObject * fbo) override;
@@ -106,11 +100,8 @@ public:
 
     private:
         friend class GraphicsScene3dView;
+        void updateTexture(GraphicsScene3dView* viewPtr, SideScanView* sideScanPtr, const QUuid& tileId, const QImage& image) const;
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
-
-        QQueue<QPair<QUuid, QImage>> processTextureTasks_;
-        QHash<QUuid, GLuint> tileTexureIds_;
-        bool useLinearFilter_;
     };
 
     enum ActiveMode{
@@ -153,13 +144,7 @@ public:
     void setNavigationArrowState(bool state);
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
-
-    void updateChannelsForSideScanView();
-    void updateTileTexture(QUuid tileid, const QImage& image);
-    void setTextureIdForSideScanTile(QUuid tileId, GLuint id);
-    void setUseLinearFilterForTileTexture(bool state);
-    void setSideScanState(bool state);
-    void setSideScanTrackLastEpoch(bool state);
+    void setCalcStateSideScanView(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -221,8 +206,7 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
-    bool sideScanState_;
-    bool sideScanTrackLastEpoch_;
+    bool sideScanCalcState_;
 #if defined (Q_OS_ANDROID)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -232,7 +216,6 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
-    mutable InFboRenderer* renderer_;
     int bottomTrackWindowCounter_ = -1;
 };
 

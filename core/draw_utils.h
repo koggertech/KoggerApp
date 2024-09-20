@@ -1,13 +1,50 @@
-#ifndef DRAWUTILS_H
-#define DRAWUTILS_H
+#pragma once
 
 #include <QColor>
+#include <QRgb>
 #include <QRectF>
+#include <QVector>
 #include <QVector4D>
 #include <QOpenGLFunctions>
 #include <QDebug>
 
+
 constexpr float rgbMaxValue = 255.0f;
+
+namespace sscan {
+class PlotColorTable // TODO: copy-paste from Plot2DEchogram
+{
+public:
+    /*structures*/
+    enum class ThemeId {
+        kUndefined,
+        kClassic,
+        kSepia,
+        kWRGBD,
+        kWB,
+        kBW
+    };
+
+    /*methods*/
+    PlotColorTable();
+
+    void setThemeById(int id); // emun ThemeId
+    void setLevels(float low, float high);
+    void setLowLevel(float val);
+    void setHighLevel(float val);
+    QVector<QRgb> getColorTable() const;
+
+private:
+    /*methods*/
+    void update();
+    void setColorScheme(const QVector<QColor>& colors, const QVector<int>& levels);
+
+    /*data*/
+    QVector<QRgb> colorTable_;
+    QVector<QRgb> colorTableWithLevels_;
+    float lowLevel_;
+    float highLevel_;
+};
 
 
 struct MatrixParams {
@@ -44,6 +81,7 @@ struct MatrixParams {
         stream << " originY:" << originY << "\n";
     }
 };
+} // namespace sscan
 
 namespace DrawUtils
 {
@@ -67,5 +105,3 @@ namespace DrawUtils
         return QRectF(viewport[0], viewport[1], viewport[2], viewport[3]);
     }
 }
-
-#endif // DRAWUTILS_H

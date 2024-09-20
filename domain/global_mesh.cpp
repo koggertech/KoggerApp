@@ -1,9 +1,13 @@
 #include "global_mesh.h"
 
 #include <cmath>
+#include "side_scan_view.h"
 
 
-GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
+using namespace sscan;
+
+GlobalMesh::GlobalMesh(SideScanView* ssPtr, int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
+    ssPtr_(ssPtr),
     tileResolution_(tileResolution),
     numWidthTiles_(0),
     numHeightTiles_(0),
@@ -17,6 +21,9 @@ GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float t
 GlobalMesh::~GlobalMesh()
 {
     for (auto& itm : tiles_) {
+        if (ssPtr_) {
+            ssPtr_->getProcessTextureTasksRef()[itm->getUuid()] = QImage();
+        }
         delete itm;
     }
 }
@@ -136,6 +143,16 @@ void GlobalMesh::setGenerateGridContour(bool state)
 std::vector<std::vector<Tile *> > &GlobalMesh::getTileMatrixRef()
 {
     return tileMatrix_;
+}
+
+Tile* GlobalMesh::getTilePtrById(QUuid tileId)
+{
+    for (auto& itm : tiles_) {
+        if (itm->getUuid() == tileId) {
+            return itm;
+        }
+    }
+    return nullptr;
 }
 
 int GlobalMesh::getPixelWidth() const

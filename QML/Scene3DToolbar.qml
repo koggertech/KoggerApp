@@ -297,6 +297,23 @@ ColumnLayout {
                     surfaceSettings.focus = true
                 }
             }
+            RowLayout {
+                CText {
+                    text: "Theme id:"
+                }
+                SpinBoxCustom  {
+                    id: sideScanTheme
+                    implicitWidth: 150
+                    from: 0
+                    to: 4
+                    stepSize: 1
+                    value: 0
+
+                    onValueChanged: {
+                        SideScanViewControlMenuController.onThemeSideScanViewButtonClicked(value)
+                    }
+                }
+            }
             ColumnLayout {
                 RowLayout {
                     CText {

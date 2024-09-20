@@ -2,14 +2,17 @@
 
 #include <vector>
 #include <QVector3D>
-#include "drawutils.h"
+#include "draw_utils.h"
 #include "tile.h"
 
 
+using namespace sscan;
+
+class SideScanView;
 class GlobalMesh {
 public:
     /*methods*/
-    GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
+    GlobalMesh(SideScanView* ssPtr, int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     ~GlobalMesh();
 
     void reinit(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
@@ -20,6 +23,7 @@ public:
 
     void setGenerateGridContour(bool state);
     std::vector<std::vector<Tile*>>& getTileMatrixRef();
+    Tile*                            getTilePtrById(QUuid tileId);
     int                              getPixelWidth() const;
     int                              getPixelHeight() const;
     int                              getTileSidePixelSize() const;
@@ -39,6 +43,7 @@ private:
     float getHeightMeters() const;
 
     /*data*/
+    SideScanView* ssPtr_;
     std::vector<Tile*> tiles_;
     std::vector<std::vector<Tile*>> tileMatrix_;
     QVector3D origin_;
