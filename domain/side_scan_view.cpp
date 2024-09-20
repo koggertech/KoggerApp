@@ -653,69 +653,80 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
         return;
     }
 
-    // measure lines
-    if (measLineVisible_) {
-        auto staticProgram = shaderProgramMap.value("static", nullptr);
-
-        if (!staticProgram) {
+    {
+        auto shaderProgram = shaderProgramMap.value("static", nullptr);
+        if (!shaderProgram) {
             qWarning() << "Shader program 'static' not found!";
             return;
         }
 
-        staticProgram->bind();
-        staticProgram->setUniformValue("mvp", mvp);
+        shaderProgram->bind();
+        shaderProgram->setUniformValue("mvp", mvp);
 
-        int posLoc = staticProgram->attributeLocation("position");
-        staticProgram->enableAttributeArray(posLoc);
+        int posLoc = shaderProgram->attributeLocation("position");
+        shaderProgram->enableAttributeArray(posLoc);
 
-        staticProgram->setAttributeArray(posLoc, measLinesVertices_.constData());
-
-        staticProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
-        ctx->glDrawElements(GL_LINES, measLinesEvenIndices_.size(), GL_UNSIGNED_INT, measLinesEvenIndices_.constData());
-
-        staticProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
-        ctx->glDrawElements(GL_LINES, measLinesOddIndices_.size(), GL_UNSIGNED_INT, measLinesOddIndices_.constData());
-
-        staticProgram->disableAttributeArray(posLoc);
-        staticProgram->release();
-    }
-
-    auto mosaicProgram = shaderProgramMap.value("mosaic", nullptr);
-
-    if (!mosaicProgram) {
-        qWarning() << "Shader program 'mosaic' not found!";
-        return;
-    }
-
-    // tiles
-    for (auto& itm : tiles_) {
-        if (tileGridVisible_) {
-            itm.getGridRenderImplRef().render(ctx, mvp, shaderProgramMap);
-            itm.getContourRenderImplRef().render(ctx, mvp, shaderProgramMap);
+        // main line
+        if (measLinesVertices_.size() >= 4) {
+            shaderProgram->setUniformValue("color", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
+            glLineWidth(3.0f);
+            QVector<QVector3D> lastFourVertices = measLinesVertices_.mid(measLinesVertices_.size() - 4, 4);
+            shaderProgram->setAttributeArray(posLoc, lastFourVertices.constData());
+            ctx->glDrawArrays(GL_LINES, 0, 4);
+            glLineWidth(1.0f);
         }
 
-        mosaicProgram->bind();
-        mosaicProgram->setUniformValue("mvp", mvp);
-
-        int newPosLoc = mosaicProgram->attributeLocation("position");
-        int texCoordLoc = mosaicProgram->attributeLocation("texCoord");
-
-        mosaicProgram->enableAttributeArray(newPosLoc);
-        mosaicProgram->enableAttributeArray(texCoordLoc);
-
-        mosaicProgram->setAttributeArray(newPosLoc , itm.getHeightVerticesRef().constData());
-        mosaicProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
-
-        if (itm.getTextureId()) {
-            glBindTexture(GL_TEXTURE_2D, itm.getTextureId());
+        // measure lines
+        if (measLineVisible_) {
+            shaderProgram->setAttributeArray(posLoc, measLinesVertices_.constData());
+            shaderProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
+            ctx->glDrawElements(GL_LINES, measLinesEvenIndices_.size(), GL_UNSIGNED_INT, measLinesEvenIndices_.constData());
+            shaderProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
+            ctx->glDrawElements(GL_LINES, measLinesOddIndices_.size(), GL_UNSIGNED_INT, measLinesOddIndices_.constData());
         }
 
-        ctx->glDrawElements(GL_TRIANGLES, itm.getHeightIndicesRef().size(), GL_UNSIGNED_INT, itm.getHeightIndicesRef().constData());
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
+    }
 
-        mosaicProgram->disableAttributeArray(texCoordLoc);
-        mosaicProgram->disableAttributeArray(newPosLoc);
+    {
+        auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
+        if (!shaderProgram) {
+            qWarning() << "Shader program 'mosaic' not found!";
+            return;
+        }
 
-        mosaicProgram->release();
+        // tiles
+        for (auto& itm : tiles_) {
+            // grid/contour
+            if (tileGridVisible_) {
+                itm.getGridRenderImplRef().render(ctx, mvp, shaderProgramMap);
+                itm.getContourRenderImplRef().render(ctx, mvp, shaderProgramMap);
+            }
+
+            shaderProgram->bind();
+            shaderProgram->setUniformValue("mvp", mvp);
+
+            int newPosLoc = shaderProgram->attributeLocation("position");
+            int texCoordLoc = shaderProgram->attributeLocation("texCoord");
+
+            shaderProgram->enableAttributeArray(newPosLoc);
+            shaderProgram->enableAttributeArray(texCoordLoc);
+
+            shaderProgram->setAttributeArray(newPosLoc , itm.getHeightVerticesRef().constData());
+            shaderProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
+
+            if (itm.getTextureId()) {
+                glBindTexture(GL_TEXTURE_2D, itm.getTextureId());
+            }
+
+            ctx->glDrawElements(GL_TRIANGLES, itm.getHeightIndicesRef().size(), GL_UNSIGNED_INT, itm.getHeightIndicesRef().constData());
+
+            shaderProgram->disableAttributeArray(texCoordLoc);
+            shaderProgram->disableAttributeArray(newPosLoc);
+
+            shaderProgram->release();
+        }
     }
 }
 
