@@ -13,7 +13,7 @@ GlobalMesh::GlobalMesh(SideScanView* ssPtr, int tileSidePixelSize, int tileHeigh
     numHeightTiles_(0),
     tileSidePixelSize_(tileSidePixelSize),
     tileHeightMatrixRatio_(tileHeightMatrixRatio),
-    generateGridContour_(true)
+    generateGridContour_(false)
 {
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }

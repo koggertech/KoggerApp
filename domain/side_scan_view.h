@@ -57,8 +57,9 @@ public:
     void setTileGridVisible(bool state);
     void setGenerateGridContour(bool state);
     void setColorTableThemeById(int id);
-    void setColorTableLowLevel(int val);
-    void setColorTableHighLevel(int val);
+    void setColorTableLevels(float lowVal, float highVal);
+    void setColorTableLowLevel(float val);
+    void setColorTableHighLevel(float val);
 
 
     void setTextureIdByTileId(QUuid tileId, GLuint textureId);

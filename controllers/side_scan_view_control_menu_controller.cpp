@@ -106,6 +106,17 @@ void SideScanViewControlMenuController::onThemeSideScanViewButtonClicked(int val
     m_graphicsSceneView->getSideScanViewPtr()->setColorTableThemeById(val + 1);
 }
 
+void SideScanViewControlMenuController::onSetLevelSideScanViewClicked(float lowLevel, float highLevel)
+{
+    qDebug() << "onSetLevelSideScanViewClicked:" << lowLevel << highLevel;
+
+    if (!m_graphicsSceneView) {
+        return;
+    }
+
+    m_graphicsSceneView->getSideScanViewPtr()->setColorTableLevels(lowLevel, highLevel);
+}
+
 void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
 {
     qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";

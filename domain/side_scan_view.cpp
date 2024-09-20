@@ -415,16 +415,26 @@ void SideScanView::setColorTableThemeById(int id)
     Q_EMIT changed();
 }
 
-void SideScanView::setColorTableLowLevel(int val)
+void SideScanView::setColorTableLevels(float lowVal, float highVal)
 {
-    colorTable_.setLowLevel(val);
+    colorTable_.setLevels(lowVal, highVal);
+    updateTilesTexture();
 
     Q_EMIT changed();
 }
 
-void SideScanView::setColorTableHighLevel(int val)
+void SideScanView::setColorTableLowLevel(float val)
+{
+    colorTable_.setLowLevel(val);
+    updateTilesTexture();
+
+    Q_EMIT changed();
+}
+
+void SideScanView::setColorTableHighLevel(float val)
 {
     colorTable_.setHighLevel(val);
+    updateTilesTexture();
 
     Q_EMIT changed();
 }
@@ -616,7 +626,6 @@ void SideScanView::postUpdate()
 
 void SideScanView::updateTilesTexture()
 {
-    qDebug() << "update tiles texture";
     if (!globalMesh_.getIsInited() || !m_view) {
         return;
     }
@@ -632,7 +641,7 @@ void SideScanView::updateTilesTexture()
 // SideScanViewRenderImplementation
 SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation() :
     tileGridVisible_(false),
-    measLineVisible_(true)
+    measLineVisible_(false)
 {
 
 }

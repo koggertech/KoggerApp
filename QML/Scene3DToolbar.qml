@@ -265,103 +265,176 @@ ColumnLayout {
                 sideScanViewCheckButton.longPressTriggered = false
             }
         }
-
-        ColumnLayout {
-            CButton {
-                text: "Updating state"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                checked: true
-
-                onClicked: {
-                    SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(checked)
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Track last epoch"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                checked: false
-
-                onClicked: {
-                    SideScanViewControlMenuController.onTrackLastEpochSideScanViewButtonClicked(checked)
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            RowLayout {
-                CText {
-                    text: "Theme id:"
-                }
-                SpinBoxCustom  {
-                    id: sideScanTheme
-                    implicitWidth: 150
-                    from: 0
-                    to: 4
-                    stepSize: 1
-                    value: 0
-
-                    onValueChanged: {
-                        SideScanViewControlMenuController.onThemeSideScanViewButtonClicked(value)
-                    }
-                }
-            }
+        RowLayout {
             ColumnLayout {
-                RowLayout {
-                    CText {
-                        text: "Tile side pixel size:"
+                CButton {
+                    text: "Updating state"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: true
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(checked)
                     }
-                    SpinBoxCustom {
-                        id: sideScanTileSidePixelSizeSpinBox
-                        implicitWidth: 150
-                        from: 32
-                        to: 2048
-                        stepSize: 1
-                        value: 256
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
                     }
-                }
-                RowLayout {
-                    CText {
-                        text: "Tile height matrix ratio:"
-                    }
-                    SpinBoxCustom {
-                        id: sideScanTileHeightMatrixRatioSpinBox
-                        implicitWidth: 150
-                        from: 2
-                        to: 256
-                        stepSize: 1
-                        value: 16
-                    }
-                }
-                RowLayout {
-                    CText {
-                        text: "Tile resolution (px/m):"
-                    }
-                    SpinBoxCustom {
-                         id: sideScanTileResolutionSpinBox
-                         implicitWidth: 150
-                         from: 1
-                         to: 100
-                         stepSize: 1
-                         value: 10
-                     }
                 }
                 CButton {
-                    text: "Reinit global mesh"
+                    text: "Track last epoch"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onTrackLastEpochSideScanViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                RowLayout {
+                    CText {
+                        text: "Theme id:"
+                    }
+                    SpinBoxCustom  {
+                        id: sideScanTheme
+                        implicitWidth: 150
+                        from: 0
+                        to: 4
+                        stepSize: 1
+                        value: 0
+
+                        onValueChanged: {
+                            SideScanViewControlMenuController.onThemeSideScanViewButtonClicked(value)
+                        }
+                    }
+                }
+                ColumnLayout {
+                    RowLayout {
+                        CText {
+                            text: "Tile side pixel size:"
+                        }
+                        SpinBoxCustom {
+                            id: sideScanTileSidePixelSizeSpinBox
+                            implicitWidth: 150
+                            from: 32
+                            to: 2048
+                            stepSize: 1
+                            value: 256
+                        }
+                    }
+                    RowLayout {
+                        CText {
+                            text: "Tile height matrix ratio:"
+                        }
+                        SpinBoxCustom {
+                            id: sideScanTileHeightMatrixRatioSpinBox
+                            implicitWidth: 150
+                            from: 2
+                            to: 256
+                            stepSize: 1
+                            value: 16
+                        }
+                    }
+                    RowLayout {
+                        CText {
+                            text: "Tile resolution (px/m):"
+                        }
+                        SpinBoxCustom {
+                             id: sideScanTileResolutionSpinBox
+                             implicitWidth: 150
+                             from: 1
+                             to: 100
+                             stepSize: 1
+                             value: 10
+                         }
+                    }
+                    CButton {
+                        text: "Reinit global mesh"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+
+                        onClicked: {
+                            SideScanViewControlMenuController.onReinitGlobalMeshSideScanViewButtonClicked(
+                                        sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
+                        }
+
+                        onFocusChanged: {
+                            surfaceSettings.focus = true
+                        }
+                    }
+                }
+                CButton {
+                    text: "Use linear filter"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Grid/contour visible"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Meas line visible"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onMeasLineVisibleSideScanViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Generate grid/contour"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onGenerateGridContourSideScanViewButtonClicked(checked)
+                    }
+
+                    onFocusChanged: {
+                        surfaceSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Clear"
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
 
                     onClicked: {
-                        SideScanViewControlMenuController.onReinitGlobalMeshSideScanViewButtonClicked(
-                                    sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
+                        SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
                     }
 
                     onFocusChanged: {
@@ -369,76 +442,41 @@ ColumnLayout {
                     }
                 }
             }
-            CButton {
-                text: "Use linear filter"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
 
-                onClicked: {
-                    SideScanViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+            // levels
+            ColumnLayout {
+                CText {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 0
+                    Layout.preferredWidth: theme.controlHeight*1.2
+                    horizontalAlignment: Text.AlignHCenter
+                    text: sideScanLevelsSlider.stopValue
+                    small: true
                 }
 
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Grid/contour visible"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                checked: false
+                ChartLevel {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    id: sideScanLevelsSlider
+                    Layout.alignment: Qt.AlignHCenter
 
-                onClicked: {
-                    SideScanViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
-                }
+                    onStartValueChanged: {
+                       SideScanViewControlMenuController.onSetLevelSideScanViewClicked(startValue, stopValue);
+                    }
 
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Meas line visible"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                checked: true
-
-                onClicked: {
-                    SideScanViewControlMenuController.onMeasLineVisibleSideScanViewButtonClicked(checked)
+                    onStopValueChanged: {
+                       SideScanViewControlMenuController.onSetLevelSideScanViewClicked(startValue, stopValue);
+                    }
                 }
 
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Generate grid/contour"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-                checkable: true
-                checked: true
+                CText {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    Layout.bottomMargin: 0
+                    horizontalAlignment: Text.AlignHCenter
 
-                onClicked: {
-                    SideScanViewControlMenuController.onGenerateGridContourSideScanViewButtonClicked(checked)
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
-                }
-            }
-            CButton {
-                text: "Clear"
-                Layout.fillWidth: true
-                Layout.preferredWidth: 200
-
-                onClicked: {
-                    SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
-                }
-
-                onFocusChanged: {
-                    surfaceSettings.focus = true
+                    text: sideScanLevelsSlider.startValue
+                    small: true
                 }
             }
         }
