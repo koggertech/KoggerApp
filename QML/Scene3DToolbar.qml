@@ -287,7 +287,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
                     checkable: true
-                    checked: false
+                    checked: true
 
                     onClicked: {
                         SideScanViewControlMenuController.onTrackLastEpochSideScanViewButtonClicked(checked)
@@ -646,9 +646,9 @@ ColumnLayout {
                 SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
             }
 
-            Component.onCompleted: {
-                SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
-            }
+            // Component.onCompleted: {
+            //     SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
+            // }
 
             property bool longPressTriggered: false
 

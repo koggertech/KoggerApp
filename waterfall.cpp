@@ -163,6 +163,36 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
     plotUpdate();
 }
 
+void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ)
+{
+    auto btPRefreshFunc = [this, preset, windowSize, verticalGap, rangeMin, rangeMax, gainSlope, threshold, offsetX, offsetY, offsetZ]() {
+        if (_dataset != nullptr) {
+            if (auto btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+                btpPtr->preset = static_cast<BottomTrackPreset>(preset);
+                btpPtr->gainSlope = gainSlope;
+                btpPtr->threshold = threshold;
+                btpPtr->windowSize = windowSize;
+                btpPtr->verticalGap = verticalGap;
+                btpPtr->minDistance = rangeMin;
+                btpPtr->maxDistance = rangeMax;
+                btpPtr->indexFrom = 0;
+                btpPtr->indexTo = _dataset->size();
+                btpPtr->offset.x = offsetX;
+                btpPtr->offset.y = offsetY;
+                btpPtr->offset.z = offsetZ;
+                qDebug() << "qPlot2D::refreshDistParams!";
+
+            }
+        }
+    };
+
+    if (_dataset == nullptr) {
+        pendingBtpLambda_ = btPRefreshFunc;
+    } else {
+        btPRefreshFunc();
+    }
+}
+
 void qPlot2D::plotMousePosition(int x, int y) {
     setAimEpochEventState(false);
     if(_isHorizontal) {

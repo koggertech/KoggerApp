@@ -852,6 +852,10 @@ public:
 
     void setDataset(Dataset* dataset) {
         _dataset = dataset;
+        if (pendingBtpLambda_) {
+            pendingBtpLambda_();
+            pendingBtpLambda_ = nullptr;
+        }
     }
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
@@ -943,6 +947,8 @@ protected:
 
     void reindexingCursor();
     void reRangeDistance();
+
+    std::function<void()> pendingBtpLambda_ = nullptr;
 };
 
 
