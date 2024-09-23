@@ -180,8 +180,6 @@ void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, f
                 btpPtr->offset.x = offsetX;
                 btpPtr->offset.y = offsetY;
                 btpPtr->offset.z = offsetZ;
-                qDebug() << "qPlot2D::refreshDistParams!";
-
             }
         }
     };
