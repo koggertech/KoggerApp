@@ -159,6 +159,7 @@ public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
     void setIsometricView();
+    void setCancelZoomView();
     void setMapView();
     void setLastEpochFocusView();
     void setIdleMode();

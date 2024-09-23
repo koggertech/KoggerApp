@@ -359,6 +359,13 @@ void GraphicsScene3dView::setIsometricView()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setCancelZoomView()
+{
+    m_verticalScale = 1.0f;
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setMapView() {
     m_camera->setMapView();
     m_axesThumbnailCamera->setMapView();
@@ -394,8 +401,8 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 {
     if(m_verticalScale == scale)
         return;
-    else if(scale < 1.f)
-        m_verticalScale = 1.0f;
+    else if(scale < 0.002f)
+        m_verticalScale = 0.002f;
     else if(scale > 10.f)
         m_verticalScale = 10.0f;
     else

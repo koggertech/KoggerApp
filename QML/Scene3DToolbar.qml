@@ -510,6 +510,17 @@ ColumnLayout {
         }
 
         CheckButton {
+            id: cancelZoomViewButton
+            iconSource: "./icons/ruler-measure.svg"
+            backColor: theme.controlBackColor
+            checkable: false
+            checked: false
+            implicitWidth: theme.controlHeight
+
+            onClicked: Scene3dToolBarController.onCancelZoomButtonClicked()
+        }
+
+        CheckButton {
             id: selectionToolButton
             objectName: "selectionToolButton"
             backColor: theme.controlBackColor
