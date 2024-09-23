@@ -237,7 +237,7 @@ ColumnLayout {
     // side-scan extra settings
     MenuFrame {
         id: sideScanViewSettings
-        visible: sideScanViewCheckButton.hovered || isHovered || sideScanViewCheckButton.longPressTriggered
+        visible: sideScanViewCheckButton.hovered || isHovered || sideScanViewCheckButton.sideScanLongPressTriggered
         z: sideScanViewSettings.visible
         Layout.alignment: Qt.AlignRight
 
@@ -249,7 +249,7 @@ ColumnLayout {
             }
             else {
                 if (!isHovered || !sideScanViewCheckButton.hovered) {
-                    sideScanViewCheckButton.longPressTriggered = false
+                    sideScanViewCheckButton.sideScanLongPressTriggered = false
                 }
             }
         }
@@ -262,9 +262,10 @@ ColumnLayout {
 
         onFocusChanged: {
             if (!focus) {
-                sideScanViewCheckButton.longPressTriggered = false
+                sideScanViewCheckButton.sideScanLongPressTriggered = false
             }
         }
+
         RowLayout {
             ColumnLayout {
                 CButton {
@@ -279,7 +280,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CButton {
@@ -294,7 +295,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
                 RowLayout {
@@ -365,7 +366,7 @@ ColumnLayout {
                         }
 
                         onFocusChanged: {
-                            surfaceSettings.focus = true
+                            sideScanViewSettings.focus = true
                         }
                     }
                 }
@@ -380,7 +381,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CButton {
@@ -395,7 +396,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CButton {
@@ -410,7 +411,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CButton {
@@ -425,7 +426,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CButton {
@@ -438,7 +439,7 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceSettings.focus = true
+                        sideScanViewSettings.focus = true
                     }
                 }
             }
@@ -650,18 +651,18 @@ ColumnLayout {
             //     SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
             // }
 
-            property bool longPressTriggered: false
+            property bool sideScanLongPressTriggered: false
 
             MouseArea {
                 id: sideScanViewTouchArea
                 anchors.fill: parent
                 onPressed: {
                     sideScanViewLongPressTimer.start()
-                    sideScanViewCheckButton.longPressTriggered = false
+                    sideScanViewCheckButton.sideScanLongPressTriggered = false
                 }
 
                 onReleased: {
-                    if (!sideScanViewCheckButton.longPressTriggered) {
+                    if (!sideScanViewCheckButton.sideScanLongPressTriggered) {
                         sideScanViewCheckButton.checked = !sideScanViewCheckButton.checked
                     }
                     sideScanViewLongPressTimer.stop()
@@ -678,7 +679,7 @@ ColumnLayout {
                 repeat: false
 
                 onTriggered: {
-                    sideScanViewCheckButton.longPressTriggered = true;
+                    sideScanViewCheckButton.sideScanLongPressTriggered = true;
                 }
             }
         }
