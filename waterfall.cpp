@@ -166,7 +166,7 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
 void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ)
 {
     auto btPRefreshFunc = [this, preset, windowSize, verticalGap, rangeMin, rangeMax, gainSlope, threshold, offsetX, offsetY, offsetZ]() {
-        if (_dataset != nullptr) {
+        if (_dataset) {
             if (auto btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
                 btpPtr->preset = static_cast<BottomTrackPreset>(preset);
                 btpPtr->gainSlope = gainSlope;
@@ -188,6 +188,96 @@ void qPlot2D::refreshDistParams(int preset, int windowSize, float verticalGap, f
         pendingBtpLambda_ = btPRefreshFunc;
     } else {
         btPRefreshFunc();
+    }
+}
+
+void qPlot2D::setPreset(int value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->preset = static_cast<BottomTrackPreset>(value);
+        }
+    }
+}
+
+void qPlot2D::setWindowSize(int value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->windowSize = value;
+        }
+    }
+}
+
+void qPlot2D::setVerticalGap(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->verticalGap = value;
+        }
+    }
+}
+
+void qPlot2D::setRangeMin(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->minDistance = value;
+        }
+    }
+}
+
+void qPlot2D::setRangeMax(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->maxDistance = value;
+        }
+    }
+}
+
+void qPlot2D::setGainSlope(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->gainSlope = value;
+        }
+    }
+}
+
+void qPlot2D::setThreshold(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->threshold = value;
+        }
+    }
+}
+
+void qPlot2D::setOffsetX(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->offset.x = value;
+        }
+    }
+}
+
+void qPlot2D::setOffsetY(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->offset.y = value;
+        }
+    }
+}
+
+void qPlot2D::setOffsetZ(float value)
+{
+    if (_dataset) {
+        if (auto* btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {
+            btpPtr->offset.z = value;
+        }
     }
 }
 

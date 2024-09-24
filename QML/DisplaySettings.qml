@@ -552,6 +552,10 @@ GridLayout {
 
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
 
+                        onCurrentIndexChanged: {
+                            targetPlot.setPreset(bottomTrackList.currentIndex)
+                        }
+
                         Settings {
                             property alias bottomTrackList: bottomTrackList.currentIndex
                         }
@@ -591,6 +595,12 @@ GridLayout {
 
                     valueFromText: function(text, locale) {
                         return Number.fromLocaleString(locale, text) * 100
+                    }
+
+                    onRealValueChanged: {
+                        if (bottomTrackGainSlope.checked) {
+                            targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                        }
                     }
 
                     Settings {
@@ -633,6 +643,12 @@ GridLayout {
                         return Number.fromLocaleString(locale, text) * 100
                     }
 
+                    onRealValueChanged: {
+                        if (bottomTrackThreshold.checked) {
+                            targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackThresholdValue: bottomTrackThresholdValue.value
                     }
@@ -656,6 +672,12 @@ GridLayout {
                     to: 100
                     stepSize: 2
                     value: 1
+
+                    onValueChanged: {
+                        if (bottomTrackWindow.checked) {
+                            targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                        }
+                    }
 
                     Settings {
                         property alias bottomTrackWindowValue: bottomTrackWindowValue.value
@@ -682,6 +704,13 @@ GridLayout {
                     stepSize: 2
                     value: 10
 //                    onValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onValueChanged: {
+                        if (bottomTrackVerticalGap.checked) {
+                            targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackVerticalGapValue: bottomTrackVerticalGapValue.value
                     }
@@ -724,6 +753,13 @@ GridLayout {
                     }
 
 //                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onRealValueChanged: {
+                        if (bottomTrackMinRange.checked) {
+                            targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackMinRangeValue: bottomTrackMinRangeValue.value
                     }
@@ -766,6 +802,12 @@ GridLayout {
 
 //                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
 
+                    onRealValueChanged: {
+                        if (bottomTrackMaxRange.checked) {
+                            targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackMaxRangeValue: bottomTrackMaxRangeValue.value
                     }
@@ -793,6 +835,12 @@ GridLayout {
 
 //                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
 
+                    onValueChanged: {
+                        if (bottomTrackSensorOffset.checked) {
+                            targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackSensorOffsetValueX: bottomTrackSensorOffsetValueX.value
                     }
@@ -808,6 +856,12 @@ GridLayout {
 
 //                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
 
+                    onValueChanged: {
+                        if (bottomTrackSensorOffset.checked) {
+                            targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackSensorOffsetValueY: bottomTrackSensorOffsetValueY.value
                     }
@@ -822,6 +876,12 @@ GridLayout {
                     stepSize: 50
 
 //                    onRealValueChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onValueChanged: {
+                        if (bottomTrackSensorOffset.checked) {
+                            targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                        }
+                    }
 
                     Settings {
                         property alias bottomTrackSensorOffsetValueZ: bottomTrackSensorOffsetValueZ.value
