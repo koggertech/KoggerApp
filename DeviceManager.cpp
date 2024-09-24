@@ -236,8 +236,18 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)frame;
 
-                if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
-                    MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                // if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
+                //     MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                //     if (pos.isValid()) {
+                //         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                //         emit gnssVelocityComplete(pos.velocityH(), 0);
+                //         vru_.velocityH = pos.velocityH();
+                //         emit vruChanged();
+                //     }
+                // }
+
+                if(mavlink_frame.msgId() == MAVLink_MSG_GLOBAL_POSITION_INT::getID()) {
+                    MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
                     if (pos.isValid()) {
                         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
                         emit gnssVelocityComplete(pos.velocityH(), 0);
