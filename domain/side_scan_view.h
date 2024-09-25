@@ -40,6 +40,8 @@ public:
         QVector<int> measLinesOddIndices_;
         bool tileGridVisible_;
         bool measLineVisible_;
+        GLuint colorTableTextureId_;
+        GLenum colorTableTextureType_;
     };
 
     /*methods*/
@@ -60,19 +62,18 @@ public:
     void setColorTableLevels(float lowVal, float highVal);
     void setColorTableLowLevel(float val);
     void setColorTableHighLevel(float val);
-
-
     void setTextureIdByTileId(QUuid tileId, GLuint textureId);
-    GLuint  getTextureIdByTileId(QUuid tileId);
-
     void setUseLinearFilter(bool state);
-    bool getUseLinearFilter() const;
-
     void setTrackLastEpoch(bool state);
-    bool getTrackLastEpoch() const;
+    void setColorTableTextureId(GLuint value);
 
-    QVector<QRgb> getColorTable() const;
-    QHash<QUuid, QImage>& getProcessTextureTasksRef();
+    GLuint                      getTextureIdByTileId(QUuid tileId) const;
+    bool                        getUseLinearFilter() const;
+    bool                        getTrackLastEpoch() const;
+    GLuint                      getColorTableTextureId() const;
+    QVector<QRgb>               getColorTable() const;
+    QHash<QUuid, QImage>&       getProcessTextureTasksRef();
+    std::vector<unsigned char>& getColorTableToProcessRef();
 
 private:
     /*methods*/
@@ -88,6 +89,7 @@ private:
     static constexpr int colorTableSize_ = 255;
     static constexpr int interpLineWidth_ = 1;
 
+    std::vector<uint8_t> colorTableToProcess_;
     QHash<QUuid, QImage> processTextureTasks_;
     PlotColorTable colorTable_;
     MatrixParams lastMatParams_;
@@ -103,4 +105,5 @@ private:
     GlobalMesh globalMesh_;
     bool useLinearFilter_;
     bool trackLastEpoch_;
+    GLuint colorMapTextureId_;
 };

@@ -100,7 +100,8 @@ public:
 
     private:
         friend class GraphicsScene3dView;
-        void updateTexture(GraphicsScene3dView* viewPtr, SideScanView* sideScanPtr, const QUuid& tileId, const QImage& image) const;
+        void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
+        void processTileTexture(GraphicsScene3dView* viewPtr) const;
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
 
@@ -217,7 +218,7 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
-    int bottomTrackWindowCounter_ = -1;
+    int bottomTrackWindowCounter_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

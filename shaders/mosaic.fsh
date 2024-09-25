@@ -3,11 +3,13 @@
 in vec2 vTexCoord;
 in float vHeight;
 
-uniform sampler2D texture1;
+uniform sampler2D indexedTexture;
+uniform sampler1D colorTable;
 
 out vec4 fragColor;
 
 void main()
 {
-    fragColor = texture(texture1, vTexCoord);
+    float index = texture(indexedTexture, vTexCoord).r;
+    fragColor = texture(colorTable, index);
 }

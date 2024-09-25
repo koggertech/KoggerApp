@@ -29,7 +29,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     sideScanCalcState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
-    switchedToBottomTrackVertexComboSelectionMode_(false)
+    switchedToBottomTrackVertexComboSelectionMode_(false),
+    bottomTrackWindowCounter_(-1)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -583,39 +584,13 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
         return;
     }
 
+    // process mosaic textures
+    processColorTableTexture(view);
+    processTileTexture(view);
+
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
-
-    // side scan init/deinit textures
-    auto sideScanPtr = view->getSideScanViewPtr();
-    auto& tasks = sideScanPtr->getProcessTextureTasksRef();
-    for (auto it = tasks.begin(); it != tasks.end(); ) {
-        const QUuid& tileId = it.key();
-        QImage& image = it.value();
-
-        GLuint textureId = view->getSideScanViewPtr()->getTextureIdByTileId(tileId);
-        if (textureId != 0) {
-            sideScanPtr->setTextureIdByTileId(tileId, 0);
-            glDeleteTextures(1, &textureId);
-        }
-
-        if (image.isNull()) {
-            sideScanPtr->setTextureIdByTileId(tileId, 0);
-            glDeleteTextures(1, &textureId);
-            it = tasks.erase(it);
-            continue;
-        }
-
-        image.setColorTable(view->getSideScanViewPtr()->getColorTable());
-        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
-
-        if (!glImage.isNull()) {
-            updateTexture(view, sideScanPtr.get(), tileId, glImage);
-        }
-
-        it = tasks.erase(it);
-    }
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
@@ -644,23 +619,99 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
     return new QOpenGLFramebufferObject(size, format);
 }
 
-void GraphicsScene3dView::InFboRenderer::updateTexture(GraphicsScene3dView* viewPtr, SideScanView* sideScanPtr, const QUuid& tileId, const QImage& image) const
+void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
 {
-    GLuint newTextureId = 0;
-    glGenTextures(1, &newTextureId);
-    glBindTexture(GL_TEXTURE_2D, newTextureId);
+    auto sideScanPtr = viewPtr->getSideScanViewPtr();
+    auto& colorTableRef = sideScanPtr->getColorTableToProcessRef();
+    if (!colorTableRef.empty()) {
+        GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR  : GL_NEAREST_MIPMAP_NEAREST );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(Q_OS_ANDROID)
+        if (colorTableTextureId) {
+            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, colorTableRef.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+        }
+        else {
+            glGenTextures(1, &colorTableTextureId);
+            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image.bits());
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-    glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, colorTableRef.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
 
-    sideScanPtr->setTextureIdByTileId(tileId, newTextureId);
+            sideScanPtr->setColorTableTextureId(colorTableTextureId);
+        }
+#else
+        if (colorTableTextureId) {
+            glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colorTableRef.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+        }
+        else {
+            glGenTextures(1, &colorTableTextureId);
+            glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+
+            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, colorTableRef.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+
+            sideScanPtr->setColorTableTextureId(colorTableTextureId);
+        }
+#endif
+
+        colorTableRef.clear();
+    }
+}
+
+void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const
+{
+    auto sideScanPtr = viewPtr->getSideScanViewPtr();
+
+    auto& tasks = sideScanPtr->getProcessTextureTasksRef();
+    for (auto it = tasks.begin(); it != tasks.end(); ) {
+        const QUuid& tileId = it.key();
+        QImage& image = it.value();
+        GLuint textureId = viewPtr->getSideScanViewPtr()->getTextureIdByTileId(tileId);
+
+        if (image.isNull()) { // delete
+            sideScanPtr->setTextureIdByTileId(tileId, 0);
+            glDeleteTextures(1, &textureId);
+            it = tasks.erase(it);
+            continue;
+        }
+
+        if (textureId) {
+            glBindTexture(GL_TEXTURE_2D, textureId);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(), GL_RED, GL_UNSIGNED_BYTE, image.bits());
+        }
+        else {
+            glGenTextures(1, &textureId);
+            glBindTexture(GL_TEXTURE_2D, textureId);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, image.width(), image.height(), 0, GL_RED, GL_UNSIGNED_BYTE, image.bits());
+
+            sideScanPtr->setTextureIdByTileId(tileId, textureId);
+        }
+
+        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+        glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+
+        it = tasks.erase(it);
+    }
 }
 
 GraphicsScene3dView::Camera::Camera()

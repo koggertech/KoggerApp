@@ -21,8 +21,11 @@ SideScanView::SideScanView(QObject* parent) :
     lastAcceptedEpoch_(0),
     globalMesh_(this, tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_),
     useLinearFilter_(false),
-    trackLastEpoch_(true)
-{ }
+    trackLastEpoch_(true),
+    colorMapTextureId_(0)
+{
+    colorTableToProcess_ = colorTable_.getRgbaColors();
+}
 
 SideScanView::~SideScanView()
 {
@@ -412,6 +415,8 @@ void SideScanView::setColorTableThemeById(int id)
     colorTable_.setThemeById(id);
     updateTilesTexture();
 
+    colorTableToProcess_ = colorTable_.getRgbaColors();
+
     Q_EMIT changed();
 }
 
@@ -419,6 +424,8 @@ void SideScanView::setColorTableLevels(float lowVal, float highVal)
 {
     colorTable_.setLevels(lowVal, highVal);
     updateTilesTexture();
+
+    colorTableToProcess_ = colorTable_.getRgbaColors();
 
     Q_EMIT changed();
 }
@@ -428,6 +435,8 @@ void SideScanView::setColorTableLowLevel(float val)
     colorTable_.setLowLevel(val);
     updateTilesTexture();
 
+    colorTableToProcess_ = colorTable_.getRgbaColors();
+
     Q_EMIT changed();
 }
 
@@ -435,6 +444,8 @@ void SideScanView::setColorTableHighLevel(float val)
 {
     colorTable_.setHighLevel(val);
     updateTilesTexture();
+
+    colorTableToProcess_ = colorTable_.getRgbaColors();
 
     Q_EMIT changed();
 }
@@ -459,7 +470,19 @@ void SideScanView::setUseLinearFilter(bool state)
     useLinearFilter_ = state;
 }
 
-GLuint SideScanView::getTextureIdByTileId(QUuid tileId)
+void SideScanView::setTrackLastEpoch(bool state)
+{
+    trackLastEpoch_ = state;
+}
+
+void SideScanView::setColorTableTextureId(GLuint value)
+{
+    colorMapTextureId_ = value;
+
+    RENDER_IMPL(SideScanView)->colorTableTextureId_ = colorMapTextureId_;
+}
+
+GLuint SideScanView::getTextureIdByTileId(QUuid tileId) const
 {
     // from render
     GLuint retVal = 0;
@@ -477,14 +500,15 @@ bool SideScanView::getUseLinearFilter() const
     return useLinearFilter_;
 }
 
-void SideScanView::setTrackLastEpoch(bool state)
-{
-    trackLastEpoch_ = state;
-}
-
 bool SideScanView::getTrackLastEpoch() const
 {
     return trackLastEpoch_;
+}
+
+
+GLuint SideScanView::getColorTableTextureId() const
+{
+    return colorMapTextureId_;
 }
 
 QVector<QRgb> SideScanView::getColorTable() const
@@ -495,6 +519,11 @@ QVector<QRgb> SideScanView::getColorTable() const
 QHash<QUuid, QImage>& SideScanView::getProcessTextureTasksRef()
 {
     return processTextureTasks_;
+}
+
+std::vector<unsigned char> &SideScanView::getColorTableToProcessRef()
+{
+    return colorTableToProcess_;
 }
 
 bool SideScanView::checkLength(float dist) const
@@ -641,9 +670,14 @@ void SideScanView::updateTilesTexture()
 // SideScanViewRenderImplementation
 SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation() :
     tileGridVisible_(false),
-    measLineVisible_(false)
+    measLineVisible_(false),
+    colorTableTextureId_(0)
 {
-
+#if defined(Q_OS_ANDROID)
+    colorTableTextureType_ = GL_TEXTURE_2D;
+#else
+    colorTableTextureType_ = GL_TEXTURE_1D;
+#endif
 }
 
 void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp,
@@ -707,23 +741,35 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
             shaderProgram->bind();
             shaderProgram->setUniformValue("mvp", mvp);
 
-            int newPosLoc = shaderProgram->attributeLocation("position");
+            int positionLoc = shaderProgram->attributeLocation("position");
             int texCoordLoc = shaderProgram->attributeLocation("texCoord");
 
-            shaderProgram->enableAttributeArray(newPosLoc);
+            shaderProgram->enableAttributeArray(positionLoc);
             shaderProgram->enableAttributeArray(texCoordLoc);
 
-            shaderProgram->setAttributeArray(newPosLoc , itm.getHeightVerticesRef().constData());
+            shaderProgram->setAttributeArray(positionLoc , itm.getHeightVerticesRef().constData());
             shaderProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
 
-            if (itm.getTextureId()) {
-                glBindTexture(GL_TEXTURE_2D, itm.getTextureId());
+            {
+                QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+
+                if (itm.getTextureId()) {
+                    glFuncs->glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, itm.getTextureId());
+                    shaderProgram->setUniformValue("indexedTexture", 0);
+                }
+
+                if (colorTableTextureId_) {
+                    glFuncs->glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(colorTableTextureType_, colorTableTextureId_);
+                    shaderProgram->setUniformValue("colorTable", 1);
+                }
             }
 
             ctx->glDrawElements(GL_TRIANGLES, itm.getHeightIndicesRef().size(), GL_UNSIGNED_INT, itm.getHeightIndicesRef().constData());
 
             shaderProgram->disableAttributeArray(texCoordLoc);
-            shaderProgram->disableAttributeArray(newPosLoc);
+            shaderProgram->disableAttributeArray(positionLoc);
 
             shaderProgram->release();
         }

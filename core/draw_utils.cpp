@@ -92,6 +92,11 @@ QVector<QRgb> sscan::PlotColorTable::getColorTable() const
     return colorTableWithLevels_;
 }
 
+std::vector<uint8_t> sscan::PlotColorTable::getRgbaColors() const
+{
+    return rgbaColors_;
+}
+
 void sscan::PlotColorTable::update()
 {
     int levelRange = highLevel_ - lowLevel_;
@@ -116,6 +121,16 @@ void sscan::PlotColorTable::update()
         }
 
         colorTableWithLevels_[i] = colorTable_[indexMap];
+    }
+
+    int colorCount = colorTableWithLevels_.size();
+    rgbaColors_.resize(colorCount * 4);
+    for (int i = 0; i < colorCount; ++i) {
+        QRgb color = colorTableWithLevels_[i];
+        rgbaColors_[i * 4 + 0] = static_cast<uint8_t>(qRed(color));
+        rgbaColors_[i * 4 + 1] = static_cast<uint8_t>(qGreen(color));
+        rgbaColors_[i * 4 + 2] = static_cast<uint8_t>(qBlue(color));
+        rgbaColors_[i * 4 + 3] = static_cast<uint8_t>(qAlpha(color));
     }
 }
 

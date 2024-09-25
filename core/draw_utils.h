@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+#include <stdint.h>
 #include <QColor>
 #include <QRgb>
 #include <QRectF>
@@ -33,6 +35,7 @@ public:
     void setLowLevel(float val);
     void setHighLevel(float val);
     QVector<QRgb> getColorTable() const;
+    std::vector<uint8_t> getRgbaColors() const;
 
 private:
     /*methods*/
@@ -44,6 +47,7 @@ private:
     QVector<QRgb> colorTableWithLevels_;
     float lowLevel_;
     float highLevel_;
+    std::vector<uint8_t> rgbaColors_;
 };
 
 
