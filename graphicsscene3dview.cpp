@@ -622,7 +622,7 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
 void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
 {
     auto sideScanPtr = viewPtr->getSideScanViewPtr();
-    auto& colorTableRef = sideScanPtr->getColorTableToProcessRef();
+    auto& colorTableRef = sideScanPtr->getColorTableTextureTaskRef();
     if (!colorTableRef.empty()) {
         GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
 
@@ -671,13 +671,13 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
 {
     auto sideScanPtr = viewPtr->getSideScanViewPtr();
 
-    auto& tasks = sideScanPtr->getProcessTextureTasksRef();
+    auto& tasks = sideScanPtr->getTileTextureTasksRef();
     for (auto it = tasks.begin(); it != tasks.end(); ) {
         const QUuid& tileId = it.key();
-        QImage& image = it.value();
+        std::vector<uint8_t> & image = it.value();
         GLuint textureId = viewPtr->getSideScanViewPtr()->getTextureIdByTileId(tileId);
 
-        if (image.isNull()) { // delete
+        if (image == std::vector<uint8_t>()) { // delete
             sideScanPtr->setTextureIdByTileId(tileId, 0);
             glDeleteTextures(1, &textureId);
             it = tasks.erase(it);
@@ -690,7 +690,7 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
 
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width(), image.height(), GL_RED, GL_UNSIGNED_BYTE, image.bits());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RED, GL_UNSIGNED_BYTE, image.data());
         }
         else {
             glGenTextures(1, &textureId);
@@ -702,7 +702,7 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, image.width(), image.height(), 0, GL_RED, GL_UNSIGNED_BYTE, image.bits());
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
 
             sideScanPtr->setTextureIdByTileId(tileId, textureId);
         }

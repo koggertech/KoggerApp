@@ -1,9 +1,8 @@
 #pragma once
 
+#include <vector>
 #include <QVector>
 #include <QVector3D>
-#include <QImage>
-#include <QPair>
 #include <QUuid>
 #include <QQueue>
 #include "sceneobject.h"
@@ -66,14 +65,12 @@ public:
     void setUseLinearFilter(bool state);
     void setTrackLastEpoch(bool state);
     void setColorTableTextureId(GLuint value);
-
-    GLuint                      getTextureIdByTileId(QUuid tileId) const;
-    bool                        getUseLinearFilter() const;
-    bool                        getTrackLastEpoch() const;
-    GLuint                      getColorTableTextureId() const;
-    QVector<QRgb>               getColorTable() const;
-    QHash<QUuid, QImage>&       getProcessTextureTasksRef();
-    std::vector<unsigned char>& getColorTableToProcessRef();
+    GLuint                              getTextureIdByTileId(QUuid tileId) const;
+    bool                                getUseLinearFilter() const;
+    bool                                getTrackLastEpoch() const;
+    GLuint                              getColorTableTextureId() const;
+    QHash<QUuid, std::vector<uint8_t>>& getTileTextureTasksRef();
+    std::vector<uint8_t>&               getColorTableTextureTaskRef();
 
 private:
     /*methods*/
@@ -89,8 +86,8 @@ private:
     static constexpr int colorTableSize_ = 255;
     static constexpr int interpLineWidth_ = 1;
 
-    std::vector<uint8_t> colorTableToProcess_;
-    QHash<QUuid, QImage> processTextureTasks_;
+    std::vector<uint8_t> colorTableTextureTask_;
+    QHash<QUuid, std::vector<uint8_t>> tileTextureTasks_;
     PlotColorTable colorTable_;
     MatrixParams lastMatParams_;
     Dataset* datasetPtr_;

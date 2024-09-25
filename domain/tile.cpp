@@ -10,11 +10,10 @@ Tile::Tile(QVector3D origin, bool generateGridContour) :
     generateGridContour_(generateGridContour)
 { }
 
-void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution, QImage::Format imageFormat)
+void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
 {
-    // image
-    image_ = QImage(sidePixelSize, sidePixelSize, imageFormat);
-    image_.fill(0);
+    // image data
+    imageData_.resize(sidePixelSize * sidePixelSize, 0);
 
     // height vertices
     int heightMatSideSize = heightMatrixRatio + 1;
@@ -144,9 +143,9 @@ int Tile::getIsUpdate() const
     return isUpdate_;
 }
 
-QImage& Tile::getImageRef()
+std::vector<uint8_t>& Tile::getImageDataRef()
 {
-    return image_;
+    return imageData_;
 }
 
 QVector<QVector3D>& Tile::getHeightVerticesRef()

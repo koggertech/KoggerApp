@@ -1,8 +1,6 @@
 #include "side_scan_view.h"
 
 #include <QtMath>
-#include <QImage>
-
 #include "graphicsscene3dview.h"
 
 
@@ -24,7 +22,7 @@ SideScanView::SideScanView(QObject* parent) :
     trackLastEpoch_(true),
     colorMapTextureId_(0)
 {
-    colorTableToProcess_ = colorTable_.getRgbaColors();
+    colorTableTextureTask_ = colorTable_.getRgbaColors();
 }
 
 SideScanView::~SideScanView()
@@ -285,11 +283,9 @@ void SideScanView::updateData(int endOffset)
                             }
 
                             // image
-                            auto& imageRef = tileRef->getImageRef();
-                            int bytesPerLine = imageRef.bytesPerLine();
-                            int bytesInPix = bytesPerLine / imageRef.width();
-                            uchar* pixPtr = imageRef.bits() + tileIndxY * bytesPerLine + tileIndxX * bytesInPix;
-                            *pixPtr = interpColorIndx;
+                            auto& imageRef = tileRef->getImageDataRef();
+                            int bytesPerLine = std::sqrt(imageRef.size());
+                            *(imageRef.data() + tileIndxY * bytesPerLine + tileIndxX) = interpColorIndx;
 
                             // height matrix
                             int stepSizeHeightMatrix = globalMesh_.getStepSizeHeightMatrix();
@@ -373,7 +369,7 @@ void SideScanView::clear()
 
     for (const auto &itmI : globalMesh_.getTileMatrixRef()) {
         for (const auto& itmJ : itmI) {
-            processTextureTasks_[itmJ->getUuid()] = QImage();
+            tileTextureTasks_[itmJ->getUuid()] = std::vector<uint8_t>();
         }
     }
 
@@ -415,7 +411,7 @@ void SideScanView::setColorTableThemeById(int id)
     colorTable_.setThemeById(id);
     updateTilesTexture();
 
-    colorTableToProcess_ = colorTable_.getRgbaColors();
+    colorTableTextureTask_ = colorTable_.getRgbaColors();
 
     Q_EMIT changed();
 }
@@ -425,7 +421,7 @@ void SideScanView::setColorTableLevels(float lowVal, float highVal)
     colorTable_.setLevels(lowVal, highVal);
     updateTilesTexture();
 
-    colorTableToProcess_ = colorTable_.getRgbaColors();
+    colorTableTextureTask_ = colorTable_.getRgbaColors();
 
     Q_EMIT changed();
 }
@@ -435,7 +431,7 @@ void SideScanView::setColorTableLowLevel(float val)
     colorTable_.setLowLevel(val);
     updateTilesTexture();
 
-    colorTableToProcess_ = colorTable_.getRgbaColors();
+    colorTableTextureTask_ = colorTable_.getRgbaColors();
 
     Q_EMIT changed();
 }
@@ -445,7 +441,7 @@ void SideScanView::setColorTableHighLevel(float val)
     colorTable_.setHighLevel(val);
     updateTilesTexture();
 
-    colorTableToProcess_ = colorTable_.getRgbaColors();
+    colorTableTextureTask_ = colorTable_.getRgbaColors();
 
     Q_EMIT changed();
 }
@@ -511,19 +507,14 @@ GLuint SideScanView::getColorTableTextureId() const
     return colorMapTextureId_;
 }
 
-QVector<QRgb> SideScanView::getColorTable() const
+QHash<QUuid, std::vector<uint8_t>>& SideScanView::getTileTextureTasksRef()
 {
-    return colorTable_.getColorTable();
+    return tileTextureTasks_;
 }
 
-QHash<QUuid, QImage>& SideScanView::getProcessTextureTasksRef()
+std::vector<uint8_t>& SideScanView::getColorTableTextureTaskRef()
 {
-    return processTextureTasks_;
-}
-
-std::vector<unsigned char> &SideScanView::getColorTableToProcessRef()
-{
-    return colorTableToProcess_;
+    return colorTableTextureTask_;
 }
 
 bool SideScanView::checkLength(float dist) const
@@ -599,7 +590,7 @@ void SideScanView::postUpdate()
 
         tilePtr->updateHeightIndices();
         renderImpl->tiles_.insert(tilePtr->getUuid(), *tilePtr); // copy data to render
-        processTextureTasks_[tilePtr->getUuid()] = tilePtr->getImageRef();
+        tileTextureTasks_[tilePtr->getUuid()] = tilePtr->getImageDataRef();
     };
 
     int tileMatrixYSize = globalMesh_.getTileMatrixRef().size();
@@ -661,7 +652,7 @@ void SideScanView::updateTilesTexture()
 
     for (auto& itmI : globalMesh_.getTileMatrixRef()) {
         for (auto& itmJ : itmI) {
-            processTextureTasks_[itmJ->getUuid()] = itmJ->getImageRef();
+            tileTextureTasks_[itmJ->getUuid()] = itmJ->getImageDataRef();
         }
     }
 }

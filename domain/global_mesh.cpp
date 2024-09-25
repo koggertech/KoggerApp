@@ -22,7 +22,7 @@ GlobalMesh::~GlobalMesh()
 {
     for (auto& itm : tiles_) {
         if (ssPtr_) {
-            ssPtr_->getProcessTextureTasksRef()[itm->getUuid()] = QImage();
+            ssPtr_->getTileTextureTasksRef()[itm->getUuid()] = std::vector<uint8_t>();
         }
         delete itm;
     }
@@ -111,7 +111,8 @@ void GlobalMesh::printMatrix() const
         for (auto& itmJ : itmI) {
             if (itmJ) {
                 auto tileOrigin = itmJ->getOrigin();
-                rowOutput += QString("[" + QString::number(tileOrigin.x(), 'f', 0) + "x" +  QString::number(tileOrigin.y(), 'f', 0) + "]").rightJustified(10);
+                rowOutput += QString("[" + QString::number(tileOrigin.x(), 'f', 0) +
+                                     "x" +  QString::number(tileOrigin.y(), 'f', 0) + "]").rightJustified(10);
             }
             else {
                 rowOutput += QString("[     ]").rightJustified(5);
@@ -206,7 +207,8 @@ void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const M
         for (int j = 0; j < numWidthTiles_; ++j) {
 
             if (!tileMatrix_[i][j]) {
-                tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_)); // reverse in mem
+                tiles_.push_back(new Tile( { origin_.x() + j * tileSideMeterSize_,
+                                           origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
                 tileMatrix_[i][j] = tiles_.back();
             }
         }
@@ -216,15 +218,16 @@ void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const M
 void GlobalMesh::resizeColumnsLeft(int columnsToAdd)
 {
     for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) {
-        int oldSize = tileMatrix_[i].size(); // width size
+        int oldSize = tileMatrix_[i].size();
         tileMatrix_[i].resize(oldSize + columnsToAdd);
 
-        for (int j = oldSize - 1; j >= 0; --j) { // перемещаем старое в новые ячейки
+        for (int j = oldSize - 1; j >= 0; --j) {
             tileMatrix_[i][j + columnsToAdd] = tileMatrix_[i][j];
         }
 
-        for (int j = 0; j < columnsToAdd; ++j) { // инитим вставленное
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,   origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+        for (int j = 0; j < columnsToAdd; ++j) {
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -238,11 +241,12 @@ void GlobalMesh::resizeRowsBottom(int rowsToAdd)
     tileMatrix_.resize(oldHeight + rowsToAdd);
 
     int cnt = 0;
-    for (int i = oldHeight; i < static_cast<int>(tileMatrix_.size()); ++i) { // просто по новым идём сверху вниз
+    for (int i = oldHeight; i < static_cast<int>(tileMatrix_.size()); ++i) {
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }, generateGridContour_)); // т.к. ориджин обновился мы плюсуем по y
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
         }
         cnt++;
@@ -255,11 +259,12 @@ void GlobalMesh::resizeColumnsRight(int columnsToAdd)
 {
     int oldNumWidthTiles = numWidthTiles_;
 
-    for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) { // сверху вниз
-        tileMatrix_[i].resize(oldNumWidthTiles + columnsToAdd); // ресайзаем строку
+    for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) {
+        tileMatrix_[i].resize(oldNumWidthTiles + columnsToAdd);
 
-        for (int j = oldNumWidthTiles; j < oldNumWidthTiles + columnsToAdd; ++j) { // просто по новым идём            
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+        for (int j = oldNumWidthTiles; j < oldNumWidthTiles + columnsToAdd; ++j) {
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -269,18 +274,19 @@ void GlobalMesh::resizeColumnsRight(int columnsToAdd)
 
 void GlobalMesh::resizeRowsTop(int rowsToAdd)
 {
-    tileMatrix_.resize(numHeightTiles_ + rowsToAdd); // by height
+    tileMatrix_.resize(numHeightTiles_ + rowsToAdd);
 
-    for (int i = tileMatrix_.size() - 1; i >= rowsToAdd; --i) { // смещаем старое
+    for (int i = tileMatrix_.size() - 1; i >= rowsToAdd; --i) {
         tileMatrix_[i] = tileMatrix_[i - rowsToAdd];
     }
 
-    for (int i = 0; i < rowsToAdd; ++i) { // инитим новое сверху вниз
+    for (int i = 0; i < rowsToAdd; ++i) {
 
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_, origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
             tileMatrix_[i][j] = tiles_.back();
         }
     }

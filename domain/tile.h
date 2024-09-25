@@ -1,7 +1,7 @@
 #pragma once
 
+#include <vector>
 #include <QUuid>
-#include <QImage>
 #include <QVector>
 #include <QVector3D>
 #include <QVector2D>
@@ -14,7 +14,7 @@ class Tile {
 public:
     /*methods*/
     Tile(QVector3D origin, bool generateGridContour);
-    void init(int sidePixelSize, int heightMatrixRatio, float resolution, QImage::Format imageFormat = QImage::Format_Indexed8);
+    void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices();
 
     void setTextureId(GLuint val);
@@ -24,7 +24,7 @@ public:
     bool                                     getIsInited() const;
     GLuint                                   getTextureId() const;
     int                                      getIsUpdate() const;
-    QImage&                                  getImageRef();
+    std::vector<uint8_t>&                    getImageDataRef();
     QVector<QVector3D>&                      getHeightVerticesRef();
     const QVector<QVector2D>&                getTextureVerticesRef() const;
     const QVector<QVector3D>&                getHeightVerticesRef() const;
@@ -39,7 +39,7 @@ private:
     /*data*/
     QUuid id_;
     QVector3D origin_;
-    QImage image_;
+    std::vector<uint8_t> imageData_;
     QVector<QVector3D> heightVertices_;
     QVector<int> heightIndices_;
     QVector<QVector2D> textureVertices_;
