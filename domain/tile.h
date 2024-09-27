@@ -26,8 +26,9 @@ public:
     int                                      getIsUpdate() const;
     std::vector<uint8_t>&                    getImageDataRef();
     QVector<QVector3D>&                      getHeightVerticesRef();
+    QVector<char>&                           getHeightMarkVerticesRef();
     const QVector<QVector2D>&                getTextureVerticesRef() const;
-    const QVector<QVector3D>&                getHeightVerticesRef() const;
+    const QVector<QVector3D>&                getHeightVerticesConstRef() const;
     const QVector<int>&                      getHeightIndicesRef() const;
     const SceneObject::RenderImplementation& getGridRenderImplRef() const;
     const SceneObject::RenderImplementation& getContourRenderImplRef() const;
@@ -41,6 +42,7 @@ private:
     QVector3D origin_;
     std::vector<uint8_t> imageData_;
     QVector<QVector3D> heightVertices_;
+    QVector<char> heightMarkVertices_;
     QVector<int> heightIndices_;
     QVector<QVector2D> textureVertices_;
     SceneObject::RenderImplementation gridRenderImpl_;

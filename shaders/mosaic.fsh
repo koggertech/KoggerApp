@@ -11,5 +11,11 @@ out vec4 fragColor;
 void main()
 {
     float index = texture(indexedTexture, vTexCoord).r;
-    fragColor = texture(colorTable, index);
+
+    if (index == 0.0) {
+        discard;
+    }
+    else {
+        fragColor = texture(colorTable, index);
+    }
 }

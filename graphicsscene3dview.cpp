@@ -499,9 +499,20 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                          // bottom track
                                          btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
                                          btP->indexTo = currCount  * btP->windowSize;
+
+                                         //// TODO: try fix bTP
+                                         //btP->indexFrom = btP->indexFrom - btP->windowSize;
+                                         //btP->indexTo = btP->indexTo - btP->windowSize / 2 - 1;
+                                         //if (btP->indexFrom < 0 || btP->indexTo < 0) {
+                                         //    bottomTrackWindowCounter_ = currCount;
+                                         //    return;
+                                         //}
+
                                          m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
                                          bottomTrackWindowCounter_ = currCount;
                                          // mosaic
+                                         // TODO: try fix bTP
+                                         //sideScanView_->updateData(btP->windowSize);
                                          sideScanView_->updateData();
                                      }
 

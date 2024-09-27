@@ -80,6 +80,7 @@ private:
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
     void postUpdate();
     void updateTilesTexture();
+    void updateUnmarkedHeightVertices(Tile* tilePtr) const;
 
     /*data*/
     static constexpr float amplitudeCoeff_ = 100.0f;

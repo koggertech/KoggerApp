@@ -18,12 +18,16 @@ void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
     // height vertices
     int heightMatSideSize = heightMatrixRatio + 1;
     float heightPixelStep = (sidePixelSize / heightMatrixRatio) * resolution;
-    heightVertices_.resize(std::pow(heightMatSideSize, 2));
+    int heightMatSize = std::pow(heightMatSideSize, 2);
+    heightVertices_.resize(heightMatSize);
+    heightMarkVertices_.resize(heightMatSize);
     for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
             float x = origin_.x() + j * heightPixelStep;
             float y = origin_.y() + i * heightPixelStep;
-            heightVertices_[i * heightMatSideSize + j] = QVector3D(x, y, 0.0f);
+            int currIndx = i * heightMatSideSize + j;
+            heightVertices_[currIndx] = QVector3D(x, y, 0.0f);
+            heightMarkVertices_[currIndx] = '0';
         }
     }
 
@@ -153,12 +157,17 @@ QVector<QVector3D>& Tile::getHeightVerticesRef()
     return heightVertices_;
 }
 
+QVector<char> &Tile::getHeightMarkVerticesRef()
+{
+    return heightMarkVertices_;
+}
+
 const QVector<QVector2D>& Tile::getTextureVerticesRef() const
 {
     return textureVertices_;
 }
 
-const QVector<QVector3D>& Tile::getHeightVerticesRef() const
+const QVector<QVector3D>& Tile::getHeightVerticesConstRef() const
 {
     return heightVertices_;
 }
@@ -179,10 +188,10 @@ const SceneObject::RenderImplementation& Tile::getContourRenderImplRef() const
 
 bool Tile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
 {
-    if (qFuzzyCompare(1.0f, 1.0f + heightVertices_[topLeft].z()) || // someone zero
-        qFuzzyCompare(1.0f, 1.0f + heightVertices_[topRight].z()) ||
-        qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomLeft].z()) ||
-        qFuzzyCompare(1.0f, 1.0f + heightVertices_[bottomRight].z())) {
+    if (qFuzzyIsNull(heightVertices_[topLeft].z()) || // someone zero
+        qFuzzyIsNull(heightVertices_[topRight].z()) ||
+        qFuzzyIsNull(heightVertices_[bottomLeft].z()) ||
+        qFuzzyIsNull(heightVertices_[bottomRight].z())) {
         return false;
     }
     return true;

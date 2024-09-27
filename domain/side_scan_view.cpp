@@ -51,7 +51,7 @@ bool SideScanView::updateChannelsIds()
 
 void SideScanView::updateData(int endOffset)
 {
-    if (!updateChannelsIds() || !datasetPtr_) {
+    if (!datasetPtr_ || !updateChannelsIds()) {
         return;
     }
 
@@ -166,7 +166,9 @@ void SideScanView::updateData(int endOffset)
             continue;
         }
         Epoch segFEpoch = *segFEpochPtr; // _plot might be reallocated
+        // TODO: try fix bTP
         Epoch segSEpoch = *segFEpochPtr;
+        //Epoch segSEpoch = *segSEpochPtr;
         // isOdd checking
         bool segFIsOdd = isOdds[segFIndx] == '1';
         bool segSIsOdd = isOdds[segSIndx] == '1';
@@ -270,7 +272,6 @@ void SideScanView::updateData(int endOffset)
                             int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
                             int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
 
-
                             int tileSidePixelSize = globalMesh_.getTileSidePixelSize();
                             int meshIndxX = bypassInterpX / tileSidePixelSize;
                             int meshIndxY = (globalMesh_.getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
@@ -291,11 +292,11 @@ void SideScanView::updateData(int endOffset)
                             int stepSizeHeightMatrix = globalMesh_.getStepSizeHeightMatrix();
                             int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
-                            tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos.z();
-
+                            tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
+                            tileRef->getHeightMarkVerticesRef()[hVIndx] = '1';
                             tileRef->setIsUpdate(true);
-                         }
-                     }
+                        }
+                    }
                 }
             }
 
@@ -519,7 +520,7 @@ std::vector<uint8_t>& SideScanView::getColorTableTextureTaskRef()
 
 bool SideScanView::checkLength(float dist) const
 {
-    if (qFuzzyCompare(1.0f, 1.0f + dist) || (dist < 0.0f)) {
+    if (qFuzzyIsNull(dist) || (dist < 0.0f)) {
         return false;
     }
     return true;
@@ -571,12 +572,19 @@ void SideScanView::concatenateMatrixParameters(MatrixParams &srcDst, const Matri
 
 int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 {
+    int retVal{ 0 };
+
     if (charts->amplitude.size() > ampIndx) {
         int cVal = charts->amplitude[ampIndx] * (1.5 + ampIndx * 0.0002f);
         cVal = std::min(colorTableSize_, cVal);
-        return cVal;
+        retVal = cVal;
     }
-    return 0;
+
+    if (!retVal) {
+        return ++retVal;
+    }
+
+    return retVal;
 }
 
 void SideScanView::postUpdate()
@@ -585,11 +593,12 @@ void SideScanView::postUpdate()
         return;
     }
 
-    auto updateTextureInView = [this](Tile* tilePtr){
-        auto renderImpl = RENDER_IMPL(SideScanView);
-
+    auto updateTextureInView = [this](Tile* tilePtr, bool isNew) -> void {
+        if (!isNew) {
+            updateUnmarkedHeightVertices(tilePtr);
+        }
         tilePtr->updateHeightIndices();
-        renderImpl->tiles_.insert(tilePtr->getUuid(), *tilePtr); // copy data to render
+        RENDER_IMPL(SideScanView)->tiles_.insert(tilePtr->getUuid(), *tilePtr); // copy data to render
         tileTextureTasks_[tilePtr->getUuid()] = tilePtr->getImageDataRef();
     };
 
@@ -601,10 +610,12 @@ void SideScanView::postUpdate()
 
             auto& tileRef = globalMesh_.getTileMatrixRef()[i][j];
             if (tileRef->getIsUpdate()) {
-                auto& tileVertRef = tileRef->getHeightVerticesRef();
+                updateTextureInView(tileRef, false);
+                tileRef->setIsUpdate(false);
 
                 // fix height matrixs
-                int numHeightVertBySide = std::sqrt(tileRef->getHeightVerticesRef().size());
+                auto& tileVertRef = tileRef->getHeightVerticesRef();
+                int numHeightVertBySide = std::sqrt(tileVertRef.size());
 
                 int yIndx = i + 1; // by row
                 if (tileMatrixYSize > yIndx) {
@@ -615,11 +626,17 @@ void SideScanView::postUpdate()
 
                     int topStartIndx = numHeightVertBySide * (numHeightVertBySide - 1);
                     auto& topTileVertRef = rowTileRef->getHeightVerticesRef();
-                    for (int k = 0; k < numHeightVertBySide - 1; ++k) {
-                        topTileVertRef[topStartIndx + k].setZ(tileVertRef[k].z());
+                    auto& topTileMarkVertRef = rowTileRef->getHeightMarkVerticesRef();
+                    for (int k = 0; k < numHeightVertBySide; ++k) {
+                        int rowIndxTo = topStartIndx + k;
+                        int rowIndxFrom = k;
+                        if (qFuzzyIsNull(tileVertRef[rowIndxFrom][2])) {
+                            continue;
+                        }
+                        topTileVertRef[rowIndxTo][2] = tileVertRef[rowIndxFrom][2];
+                        topTileMarkVertRef[rowIndxTo] = '1';
                     }
-
-                    updateTextureInView(rowTileRef);
+                    updateTextureInView(rowTileRef, true);
                 }
 
                 int xIndx = j - 1; // by column
@@ -630,15 +647,18 @@ void SideScanView::postUpdate()
                     }
 
                     auto& leftTileVertRef = colTileRef->getHeightVerticesRef();
+                    auto& leftTileMarkVertRef = colTileRef->getHeightMarkVerticesRef();
                     for (int k = 0; k < numHeightVertBySide; ++k) {
-                        leftTileVertRef[((k + 1) * numHeightVertBySide - 1)].setZ(tileVertRef[(k == 0 ? 0 : k * numHeightVertBySide)].z());
+                        int colIndxTo = ((k + 1) * numHeightVertBySide - 1);
+                        int colIndxFrom = (k == 0 ? 0 : k * numHeightVertBySide);
+                        if (qFuzzyIsNull(tileVertRef[colIndxFrom][2])) {
+                            continue;
+                        }
+                        leftTileVertRef[colIndxTo][2] = tileVertRef[colIndxFrom][2];
+                        leftTileMarkVertRef[colIndxTo] = '1';
                     }
-
-                    updateTextureInView(colTileRef);
+                    updateTextureInView(colTileRef, true);
                 }
-
-                updateTextureInView(tileRef);
-                tileRef->setIsUpdate(false);
             }
         }
     }
@@ -653,6 +673,56 @@ void SideScanView::updateTilesTexture()
     for (auto& itmI : globalMesh_.getTileMatrixRef()) {
         for (auto& itmJ : itmI) {
             tileTextureTasks_[itmJ->getUuid()] = itmJ->getImageDataRef();
+        }
+    }
+}
+
+void SideScanView::updateUnmarkedHeightVertices(Tile* tilePtr) const
+{
+    if (!tilePtr) {
+        return;
+    }
+
+    auto& heightVerticesRef = tilePtr->getHeightVerticesRef();
+    auto& heightMarkVerticesRef = tilePtr->getHeightMarkVerticesRef();
+    int hVSize = heightVerticesRef.size();
+    int hMVSize = heightMarkVerticesRef.size();
+
+    if (hVSize != hMVSize) {
+        return;
+    }
+
+    auto writeHeight = [&](int toIndx, int fromIndx) -> bool {
+        if (fromIndx >= 0 && fromIndx < hVSize) {
+            if (heightMarkVerticesRef[fromIndx] == '1') {
+                heightVerticesRef[toIndx][2] = heightVerticesRef[fromIndx][2];
+                return true;
+            }
+        }
+        return false;
+    };
+
+    int sideSize = std::sqrt(hVSize);
+    for (int i = 0; i < hVSize; ++i) {
+        if (heightMarkVerticesRef[i] == '0') {
+            if (i % sideSize) {
+                if (writeHeight(i, i - 1) ||
+                    writeHeight(i, (i - 1) - sideSize) ||
+                    writeHeight(i, (i - 1) + sideSize)) {
+                    continue;
+                }
+            }
+            if ((i % sideSize + 1) < sideSize) {
+                if (writeHeight(i, i + 1) ||
+                writeHeight(i, (i + 1) - sideSize)||
+                    writeHeight(i, (i + 1) + sideSize)) {
+                    continue;
+                }
+            }
+            if (writeHeight(i, i - sideSize) ||
+                writeHeight(i, i + sideSize)) {
+                continue;
+            }
         }
     }
 }
@@ -693,7 +763,7 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
 
         // main line
         if (measLinesVertices_.size() >= 4) {
-            shaderProgram->setUniformValue("color", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
+            shaderProgram->setUniformValue("color", QVector4D(0.031f, 0.69f, 0.98f, 1.0f));
             glLineWidth(3.0f);
             QVector<QVector3D> lastFourVertices = measLinesVertices_.mid(measLinesVertices_.size() - 4, 4);
             shaderProgram->setAttributeArray(posLoc, lastFourVertices.constData());
@@ -738,7 +808,7 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
             shaderProgram->enableAttributeArray(positionLoc);
             shaderProgram->enableAttributeArray(texCoordLoc);
 
-            shaderProgram->setAttributeArray(positionLoc , itm.getHeightVerticesRef().constData());
+            shaderProgram->setAttributeArray(positionLoc , itm.getHeightVerticesConstRef().constData());
             shaderProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
 
             {
