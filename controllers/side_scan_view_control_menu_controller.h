@@ -15,17 +15,17 @@ public:
     explicit SideScanViewControlMenuController(QObject *parent = nullptr);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 
-    Q_INVOKABLE void onSideScanViewVisibilityCheckBoxCheckedChanged(bool checked);
-    Q_INVOKABLE void onUseFilterMosaicViewButtonClicked(bool state);
-    Q_INVOKABLE void onGridVisibleMosaicViewButtonClicked(bool state);
-    Q_INVOKABLE void onMeasLineVisibleSideScanViewButtonClicked(bool state);
-    Q_INVOKABLE void onClearSideScanViewButtonClicked();
-    Q_INVOKABLE void onReinitGlobalMeshSideScanViewButtonClicked(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
-    Q_INVOKABLE void onGenerateGridContourSideScanViewButtonClicked(bool state);
-    Q_INVOKABLE void onUpdateSideScanViewButtonClicked(bool state);
-    Q_INVOKABLE void onTrackLastEpochSideScanViewButtonClicked(bool state);
-    Q_INVOKABLE void onThemeSideScanViewButtonClicked(int val);
-    Q_INVOKABLE void onSetLevelSideScanViewClicked(float lowLevel, float highLevel);
+    Q_INVOKABLE void onVisibilityChanged(bool state);
+    Q_INVOKABLE void onUseFilterChanged(bool state);
+    Q_INVOKABLE void onGridVisibleChanged(bool state);
+    Q_INVOKABLE void onMeasLineVisibleChanged(bool state);
+    Q_INVOKABLE void onClearClicked();
+    Q_INVOKABLE void onGlobalMeshChanged(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
+    Q_INVOKABLE void onGenerateGridContourChanged(bool state);
+    Q_INVOKABLE void onUpdateStateChanged(bool state);
+    Q_INVOKABLE void onTrackLastEpochChanged(bool state);
+    Q_INVOKABLE void onThemeChanged(int val);
+    Q_INVOKABLE void onLevelChanged(float lowLevel, float highLevel);
 
 Q_SIGNALS:
 
@@ -33,6 +33,6 @@ protected:
     virtual void findComponent() override;
 
 private:
-    SideScanView* getSideScanViewPtr() const;//
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
+    SideScanView* getSideScanViewPtr() const;
+    GraphicsScene3dView* m_graphicsSceneView;
 };

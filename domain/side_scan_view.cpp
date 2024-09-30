@@ -860,5 +860,5 @@ void SideScanView::SideScanViewRenderImplementation::createBounds()
         y_max = std::max(y_max, !std::isfinite(itm.y()) ? 0.f : itm.y());
     }
 
-    m_bounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);
+    m_bounds = Cube(x_min, x_max, y_min, y_max, z_min - 20.f, z_max);
 }

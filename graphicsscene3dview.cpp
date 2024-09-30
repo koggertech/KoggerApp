@@ -402,8 +402,8 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 {
     if(m_verticalScale == scale)
         return;
-    else if(scale < 0.002f)
-        m_verticalScale = 0.002f;
+    else if(scale < 0.05f)
+        m_verticalScale = 0.05f;
     else if(scale > 10.f)
         m_verticalScale = 10.0f;
     else

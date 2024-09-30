@@ -276,7 +276,7 @@ ColumnLayout {
                     checked: true
 
                     onClicked: {
-                        SideScanViewControlMenuController.onUpdateSideScanViewButtonClicked(checked)
+                        SideScanViewControlMenuController.onUpdateStateChanged(checked)
                     }
 
                     onFocusChanged: {
@@ -291,7 +291,7 @@ ColumnLayout {
                     checked: true
 
                     onClicked: {
-                        SideScanViewControlMenuController.onTrackLastEpochSideScanViewButtonClicked(checked)
+                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
                     }
 
                     onFocusChanged: {
@@ -311,7 +311,7 @@ ColumnLayout {
                         value: 0
 
                         onValueChanged: {
-                            SideScanViewControlMenuController.onThemeSideScanViewButtonClicked(value)
+                            SideScanViewControlMenuController.onThemeChanged(value)
                         }
                     }
                 }
@@ -361,7 +361,7 @@ ColumnLayout {
                         Layout.preferredWidth: 200
 
                         onClicked: {
-                            SideScanViewControlMenuController.onReinitGlobalMeshSideScanViewButtonClicked(
+                            SideScanViewControlMenuController.onGlobalMeshChanged(
                                         sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
                         }
 
@@ -377,7 +377,7 @@ ColumnLayout {
                     checkable: true
 
                     onClicked: {
-                        SideScanViewControlMenuController.onUseFilterMosaicViewButtonClicked(checked)
+                        SideScanViewControlMenuController.onUseFilterChanged(checked)
                     }
 
                     onFocusChanged: {
@@ -392,7 +392,7 @@ ColumnLayout {
                     checked: false
 
                     onClicked: {
-                        SideScanViewControlMenuController.onGridVisibleMosaicViewButtonClicked(checked)
+                        SideScanViewControlMenuController.onGridVisibleChanged(checked)
                     }
 
                     onFocusChanged: {
@@ -407,7 +407,7 @@ ColumnLayout {
                     checked: false
 
                     onClicked: {
-                        SideScanViewControlMenuController.onMeasLineVisibleSideScanViewButtonClicked(checked)
+                        SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
                     }
 
                     onFocusChanged: {
@@ -422,7 +422,7 @@ ColumnLayout {
                     checked: false
 
                     onClicked: {
-                        SideScanViewControlMenuController.onGenerateGridContourSideScanViewButtonClicked(checked)
+                        SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
                     }
 
                     onFocusChanged: {
@@ -435,7 +435,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
 
                     onClicked: {
-                        SideScanViewControlMenuController.onClearSideScanViewButtonClicked()
+                        SideScanViewControlMenuController.onClearClicked()
                     }
 
                     onFocusChanged: {
@@ -462,11 +462,11 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
 
                     onStartValueChanged: {
-                       SideScanViewControlMenuController.onSetLevelSideScanViewClicked(startValue, stopValue);
+                       SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
 
                     onStopValueChanged: {
-                       SideScanViewControlMenuController.onSetLevelSideScanViewClicked(startValue, stopValue);
+                       SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
                 }
 
@@ -644,12 +644,8 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
-                SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
+                SideScanViewControlMenuController.onVisibilityChanged(checked)
             }
-
-            // Component.onCompleted: {
-            //     SideScanViewControlMenuController.onSideScanViewVisibilityCheckBoxCheckedChanged(checked)
-            // }
 
             property bool sideScanLongPressTriggered: false
 

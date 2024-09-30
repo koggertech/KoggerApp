@@ -480,7 +480,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
-    ctx->glLineWidth(7.0);
+    ctx->glLineWidth(4.0);
     ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
     ctx->glLineWidth(1.0);
 

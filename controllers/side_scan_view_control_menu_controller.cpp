@@ -3,7 +3,8 @@
 
 
 SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *parent) :
-    QmlComponentController(parent)
+    QmlComponentController(parent),
+    m_graphicsSceneView(nullptr)
 {
 
 }
@@ -13,137 +14,92 @@ void SideScanViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView
     m_graphicsSceneView = sceneView;
 }
 
-void SideScanViewControlMenuController::findComponent()
+void SideScanViewControlMenuController::onVisibilityChanged(bool state)
 {
-    m_component = m_engine->findChild<QObject*>("sideScanViewControlMenu");
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setVisible(state);
+    }
 }
 
-void SideScanViewControlMenuController::onSideScanViewVisibilityCheckBoxCheckedChanged(bool checked)
+void SideScanViewControlMenuController::onUseFilterChanged(bool state)
 {
-    qDebug() << "onSideScanViewVisibilityCheckBoxCheckedChanged: " << checked;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setUseLinearFilter(state);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setVisible(checked);
 }
 
-void SideScanViewControlMenuController::onUseFilterMosaicViewButtonClicked(bool state)
+void SideScanViewControlMenuController::onGridVisibleChanged(bool state)
 {
-    qDebug() << "onUseFilterMosaicViewButtonClicked: " << state;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setTileGridVisible(state);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setUseLinearFilter(state);
 }
 
-void SideScanViewControlMenuController::onClearSideScanViewButtonClicked()
+void SideScanViewControlMenuController::onMeasLineVisibleChanged(bool state)
 {
-    qDebug() << "onClearSideScanViewButtonClicked";
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setMeasLineVisible(state);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->clear();
 }
 
-void SideScanViewControlMenuController::onReinitGlobalMeshSideScanViewButtonClicked(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
+void SideScanViewControlMenuController::onClearClicked()
 {
-    qDebug() << "onReinitGlobalMeshSideScanViewButtonClicked:" << tileSidePixelSize << tileHeightMatrixRatio << tileResolution;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->clear();
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->resetTileSettings(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
 }
 
-void SideScanViewControlMenuController::onGenerateGridContourSideScanViewButtonClicked(bool state)
+void SideScanViewControlMenuController::onGlobalMeshChanged(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
-    qDebug() << "onGenerateGridContourSideScanViewButtonClicked:" << state;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->resetTileSettings(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setGenerateGridContour(state);
 }
 
-void SideScanViewControlMenuController::onUpdateSideScanViewButtonClicked(bool state)
+void SideScanViewControlMenuController::onGenerateGridContourChanged(bool state)
 {
-    qDebug() << "onUpdateSideScanViewButtonClicked:" << state;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setGenerateGridContour(state);
     }
-
-    m_graphicsSceneView->setCalcStateSideScanView(state);
 }
 
-void SideScanViewControlMenuController::onTrackLastEpochSideScanViewButtonClicked(bool state)
+void SideScanViewControlMenuController::onUpdateStateChanged(bool state)
 {
-    qDebug() << "onTrackLastEpochSideScanViewButtonClicked:" << state;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->setCalcStateSideScanView(state);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setTrackLastEpoch(state);
 }
 
-void SideScanViewControlMenuController::onThemeSideScanViewButtonClicked(int val)
+void SideScanViewControlMenuController::onTrackLastEpochChanged(bool state)
 {
-    qDebug() << "onThemeSideScanViewButtonClicked:" << val;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setTrackLastEpoch(state);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setColorTableThemeById(val + 1);
 }
 
-void SideScanViewControlMenuController::onSetLevelSideScanViewClicked(float lowLevel, float highLevel)
+void SideScanViewControlMenuController::onThemeChanged(int val)
 {
-    qDebug() << "onSetLevelSideScanViewClicked:" << lowLevel << highLevel;
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setColorTableThemeById(val + 1);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setColorTableLevels(lowLevel, highLevel);
 }
 
-void SideScanViewControlMenuController::onMeasLineVisibleSideScanViewButtonClicked(bool state)
+void SideScanViewControlMenuController::onLevelChanged(float lowLevel, float highLevel)
 {
-    qDebug() << "onMeasLineVisibleSideScanViewButtonClicked";
-
-    if (!m_graphicsSceneView) {
-        return;
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setColorTableLevels(lowLevel, highLevel);
     }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setMeasLineVisible(state);
-}
-
-void SideScanViewControlMenuController::onGridVisibleMosaicViewButtonClicked(bool state)
-{
-    qDebug() << "onGridVisibleMosaicViewButtonClicked";
-
-    if (!m_graphicsSceneView) {
-        return;
-    }
-
-    m_graphicsSceneView->getSideScanViewPtr()->setTileGridVisible(state);
 }
 
 SideScanView* SideScanViewControlMenuController::getSideScanViewPtr() const
 {
-    if (!m_graphicsSceneView) {
-        return nullptr;
+    if (m_graphicsSceneView) {
+        return m_graphicsSceneView->getSideScanViewPtr().get();
     }
+    return nullptr;
+}
 
-    return m_graphicsSceneView->getSideScanViewPtr().get();
+void SideScanViewControlMenuController::findComponent()
+{
+    m_component = m_engine->findChild<QObject*>("sideScanViewControlMenu");
 }
