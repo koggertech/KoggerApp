@@ -48,7 +48,7 @@ public:
     virtual ~SideScanView();
 
     bool updateChannelsIds();
-    void updateData(int endOffset = 0);
+    void updateData(int endIndx, int endOffset = 0);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void clear();
 

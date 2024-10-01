@@ -49,13 +49,13 @@ bool SideScanView::updateChannelsIds()
     return retVal;
 }
 
-void SideScanView::updateData(int endOffset)
+void SideScanView::updateData(int endIndx, int endOffset)
 {
     if (!datasetPtr_ || !updateChannelsIds()) {
         return;
     }
 
-    int epochCount = datasetPtr_->size() - endOffset;
+    int epochCount = endIndx - endOffset;
     if (epochCount < 4) {
         return;
     }
@@ -73,8 +73,8 @@ void SideScanView::updateData(int endOffset)
         bool isAcceptedEpoch = false;
 
         if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            auto pos = epoch->getPositionGNSS().ned;
-            auto yaw = epoch->yaw();
+            auto pos = epoch->getInterpNED();
+            auto yaw = epoch->getInterpYaw();
             if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
                 bool acceptedEven = false, acceptedOdd = false;
                 double azRad = qDegreesToRadians(yaw);
@@ -166,9 +166,7 @@ void SideScanView::updateData(int endOffset)
             continue;
         }
         Epoch segFEpoch = *segFEpochPtr; // _plot might be reallocated
-        // TODO: try fix bTP
-        Epoch segSEpoch = *segFEpochPtr;
-        //Epoch segSEpoch = *segSEpochPtr;
+        Epoch segSEpoch = *segSEpochPtr;
         // isOdd checking
         bool segFIsOdd = isOdds[segFIndx] == '1';
         bool segSIsOdd = isOdds[segSIndx] == '1';
@@ -182,8 +180,9 @@ void SideScanView::updateData(int endOffset)
             continue;
         }
         // dist procs checking
-        if (!isfinite(segFEpoch.distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_)) ||
-            !isfinite(segSEpoch.distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_))) {
+        if (!isfinite(segFIsOdd ? segFEpoch.getInterpFirstChannelDist() : segFEpoch.getInterpSecondChannelDist()) ||
+            !isfinite(segSIsOdd ? segSEpoch.getInterpFirstChannelDist() : segSEpoch.getInterpSecondChannelDist())) {
+            qDebug() << "not interp dist!";
             continue;
         }
 
@@ -225,15 +224,17 @@ void SideScanView::updateData(int endOffset)
             continue;
         }
 
-        float segFDistProc = -1.0f * static_cast<float>(segFEpoch.distProccesing(segFIsOdd ? segFChannelId_ : segSChannelId_));
-        float segSDistProc = -1.0f * static_cast<float>(segSEpoch.distProccesing(segSIsOdd ? segFChannelId_ : segSChannelId_));
+        float segFDistProc = -1.0f * static_cast<float>(segFIsOdd ? segFEpoch.getInterpFirstChannelDist() : segFEpoch.getInterpSecondChannelDist());
+        float segSDistProc = -1.0f * static_cast<float>(segSIsOdd ? segSEpoch.getInterpFirstChannelDist() : segSEpoch.getInterpSecondChannelDist());
         float segFPhDistX = segFPhEndPnt.x() - segFPhBegPnt.x();
         float segFPhDistY = segFPhEndPnt.y() - segFPhBegPnt.y();
         float segSPhDistX = segSPhEndPnt.x() - segSPhBegPnt.x();
         float segSPhDistY = segSPhEndPnt.y() - segSPhBegPnt.y();
 
-        QVector3D segFBoatPos(segFEpoch.getPositionGNSS().ned.n, segFEpoch.getPositionGNSS().ned.e, 0.0f);
-        QVector3D segSBoatPos(segSEpoch.getPositionGNSS().ned.n, segSEpoch.getPositionGNSS().ned.e, 0.0f);
+        auto segFInterpNED = segFEpoch.getInterpNED();
+        auto segSInterpNED = segSEpoch.getInterpNED();
+        QVector3D segFBoatPos(segFInterpNED.n, segFInterpNED.e, 0.0f);
+        QVector3D segSBoatPos(segSInterpNED.n, segSInterpNED.e, 0.0f);
 
         // follow the first segment
         while (true) {

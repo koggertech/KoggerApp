@@ -461,65 +461,55 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                      this,      [this](int lEpoch, int rEpoch) -> void {
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                }
-                     );
+                                    if (m_dataset && sideScanCalcState_) {
+                                        m_dataset->interpolateData();
+                                    }
+                                }, Qt::DirectConnection);
 
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
-                      this,      [this]() -> void {
-                                     m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-                                     if (navigationArrowState_) {
-                                         const Position pos = m_dataset->getLastPosition();
-                                         m_navigationArrow->setPositionAndAngle(
-                                             QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
-                                     }
+                      this,     [this]() -> void {
+                                    m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+                                    if (navigationArrowState_) {
+                                        const Position pos = m_dataset->getLastPosition();
+                                        m_navigationArrow->setPositionAndAngle(
+                                            QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
+                                    }
 
-                                     if (!sideScanCalcState_) {
-                                         return;
-                                     }
+                                    if (!sideScanCalcState_) {
+                                        return;
+                                    }
 
-                                     // bottom track, side scan
-                                     // check channels
-                                     int firstChannelId = CHANNEL_NONE;
-                                     int secondChannelId = CHANNEL_FIRST;
-                                     if (m_dataset) {
-                                         if (auto chList = m_dataset->channelsList(); chList.size() == 2) {
-                                             auto it = chList.begin();
-                                             firstChannelId = it.key();
-                                             secondChannelId = (++it).key();
-                                         }
-                                     }
-                                     if (firstChannelId == CHANNEL_NONE || secondChannelId == CHANNEL_FIRST) {
-                                         return;
-                                     }
-                                     // process data
-                                     int currEpochIndx = m_dataset->endIndex();
-                                     auto btP = m_dataset->getBottomTrackParamPtr();
-                                     int currCount = std::floor(currEpochIndx / btP->windowSize);
-                                     if (bottomTrackWindowCounter_ != currCount) {
-                                         // bottom track
-                                         btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
-                                         btP->indexTo = currCount  * btP->windowSize;
+                                    // bottom track
+                                    int firstChannelId = CHANNEL_NONE;
+                                    int secondChannelId = CHANNEL_FIRST;
+                                    if (m_dataset) {
+                                        if (auto chList = m_dataset->channelsList(); chList.size() == 2) {
+                                            auto it = chList.begin();
+                                            firstChannelId = it.key();
+                                            secondChannelId = (++it).key();
+                                        }
+                                    }
+                                    if (firstChannelId == CHANNEL_NONE || secondChannelId == CHANNEL_FIRST) {
+                                        return;
+                                    }
+                                    int currEpochIndx = m_dataset->endIndex();
+                                    auto btP = m_dataset->getBottomTrackParamPtr();
+                                    int currCount = std::floor(currEpochIndx / btP->windowSize);
+                                    if (bottomTrackWindowCounter_ != currCount) {
+                                        btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
+                                        btP->indexTo = currCount  * btP->windowSize;
+                                        m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
+                                        bottomTrackWindowCounter_ = currCount;;
+                                    }
+                                }, Qt::DirectConnection);
 
-                                         //// TODO: try fix bTP
-                                         //btP->indexFrom = btP->indexFrom - btP->windowSize;
-                                         //btP->indexTo = btP->indexTo - btP->windowSize / 2 - 1;
-                                         //if (btP->indexFrom < 0 || btP->indexTo < 0) {
-                                         //    bottomTrackWindowCounter_ = currCount;
-                                         //    return;
-                                         //}
-
-                                         m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
-                                         bottomTrackWindowCounter_ = currCount;
-                                         // mosaic
-                                         // TODO: try fix bTP
-                                         //sideScanView_->updateData(btP->windowSize);
-                                         sideScanView_->updateData();
-                                     }
-
-                                     if (sideScanView_->getTrackLastEpoch()) {
+    QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
+                     this,      [this](int indx) -> void {
+                                    sideScanView_->updateData(indx);
+                                    if (sideScanView_->getTrackLastEpoch()) {
                                         setLastEpochFocusView();
-                                     }
-                                 }, Qt::DirectConnection);
+                                    }
+                                }, Qt::DirectConnection);
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {

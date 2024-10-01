@@ -107,7 +107,7 @@ typedef struct NED {
         return isfinite(n) && isfinite(e) && isfinite(d);
     }
 
-    bool isCoordinatesValid() {
+    bool isCoordinatesValid() const {
         return isfinite(n) && isfinite(e);
     }
 } NED;
@@ -537,6 +537,9 @@ public:
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
     DateTime* positionTime() {return &_positionGNSS.time; }
 
+    void setGNSSSec(time_t sec);
+    void setGNSSNanoSec(int nanoSec);
+
     double relPosN() { return _positionGNSS.ned.n; }
     double relPosE() { return _positionGNSS.ned.e; }
     double relPosD() { return _positionGNSS.ned.d; }
@@ -641,6 +644,14 @@ public:
 
     void moveComplexToEchogram(float offset_m);
 
+    void setInterpNED(NED ned);
+    void setInterpYaw(float yaw);
+    void setInterpFirstChannelDist(float dist);
+    void setInterpSecondChannelDist(float dist);
+    NED   getInterpNED() const;
+    float getInterpYaw() const;
+    float getInterpFirstChannelDist() const;
+    float getInterpSecondChannelDist() const;
 
 protected:
 
@@ -709,6 +720,22 @@ protected:
         bool isDVLSolutionAvail = false;
 
     } flags;
+
+private:
+    struct {
+        NED ned;
+        float yaw = NAN;
+        float distFirstChannel = NAN;
+        float distSecondChannel = NAN;
+
+        bool isValid() const {
+            if (ned.isCoordinatesValid()  &&
+                isfinite(yaw)) {
+                return true;
+            }
+            return false;
+        };
+    } interpData_;
 };
 
 class Dataset : public QObject {
@@ -836,12 +863,14 @@ public slots:
     void updateBoatTrack(bool update_all = false);
 
     QStringList channelsNameList();
+    void interpolateData();
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
     void bottomTrackUpdated(int lEpoch, int rEpoch);
     void boatTrackUpdated();
+    void updatedInterpolatedData(int indx);
 
 protected:
     QMutex mutex_;
@@ -892,6 +921,29 @@ protected:
     }
 
 private:
+    friend class Interpolator;
+
+    class Interpolator {
+    public:
+        explicit Interpolator(Dataset* datasetPtr);
+        void interpolateData();
+        void clear();
+    private:
+        bool updateChannelsIds();
+        float interpYaw(float start, float end, float progress) const;
+        NED interpNED(const NED& start, const NED& end, float progress) const;
+        float interpDist(float start, float end, float progress) const;
+        qint64 calcTimeDiffInNanoSecs(time_t startSecs, int startNanoSecs, time_t endSecs, int endNanoSecs) const;
+        qint64 convertToNanosecs(time_t secs, int nanoSecs) const;
+        std::pair<time_t, int> convertFromNanosecs(qint64 totalNanoSecs) const; // first - secs, second - nanosecs
+
+        Dataset* datasetPtr_;
+        int lastInterpIndx_;
+        int firstChannelId_;
+        int secondChannelId_;
+    };
+
+    Interpolator interpolator_;
     int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;
