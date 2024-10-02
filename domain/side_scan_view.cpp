@@ -576,7 +576,7 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
     int retVal{ 0 };
 
     if (charts->amplitude.size() > ampIndx) {
-        int cVal = charts->amplitude[ampIndx] * (1.5 + ampIndx * 0.0002f);
+        int cVal = charts->amplitude[ampIndx] ;
         cVal = std::min(colorTableSize_, cVal);
         retVal = cVal;
     }
