@@ -1049,7 +1049,6 @@ void Dataset::Interpolator::interpolateData()
     int startEpochIndx{ lastInterpIndx_ };
     int endEpochIndx = datasetPtr_->size() - 1 - shift;
     if ((endEpochIndx - startEpochIndx) < 2) {
-        qDebug() << "(endEpochIndx - startEpochIndx) < 2";
         return;
     }
 
@@ -1067,7 +1066,6 @@ void Dataset::Interpolator::interpolateData()
 
             int numInterpIndx = toIndx - startEpochIndx;
             if (!numInterpIndx) {
-                qDebug() << "!numInterpIndx";
                 continue;
             }
 
@@ -1077,35 +1075,15 @@ void Dataset::Interpolator::interpolateData()
             auto endPos = endEpoch->getPositionGNSS();
             auto startYaw = startEpoch->yaw();
             auto endYaw = endEpoch->yaw();
-
             auto startFirstChannelDist = startEpoch->distProccesing(firstChannelId_);
             auto startSecondChannelDist = startEpoch->distProccesing(secondChannelId_);
             auto endFirstChannelDist = endEpoch->distProccesing(firstChannelId_);
             auto endSecondChannelDist = endEpoch->distProccesing(secondChannelId_);
 
-
-
-
-            if (!isfinite(startFirstChannelDist)) {
-                qDebug() << "startFirstChannelDist: " << startFirstChannelDist;
-            }
-
-            if (!isfinite(startSecondChannelDist)) {
-                qDebug() << "startSecondChannelDist: " << startSecondChannelDist;
-            }
-            if (!isfinite(endFirstChannelDist)) {
-                qDebug() << "endFirstChannelDist: " << endFirstChannelDist;
-            }
-            if (!isfinite(endSecondChannelDist)) {
-                qDebug() << "endSecondChannelDist: " << endSecondChannelDist;
-            }
-
-
-
             auto timeDiffNano = calcTimeDiffInNanoSecs(startEpoch->getPositionGNSS().time.sec,
-                                                                     startEpoch->getPositionGNSS().time.nanoSec,
-                                                                     endEpoch->getPositionGNSS().time.sec,
-                                                                     endEpoch->getPositionGNSS().time.nanoSec);
+                                                       startEpoch->getPositionGNSS().time.nanoSec,
+                                                       endEpoch->getPositionGNSS().time.sec,
+                                                       endEpoch->getPositionGNSS().time.nanoSec);
             auto timeOnStep = static_cast<quint64>(timeDiffNano * 1.0f / static_cast<float>(numInterpIndx));
 
             // write time
@@ -1135,13 +1113,9 @@ void Dataset::Interpolator::interpolateData()
                 }
             }
 
-
-
-
-
             // write interp data for anchor epochs
             startEpoch->setInterpNED(startPos.ned);
-            startEpoch->setInterpYaw(startYaw);            
+            startEpoch->setInterpYaw(startYaw);
             if (firstChannelId_ != CHANNEL_NONE) {
                 startEpoch->setInterpFirstChannelDist(startFirstChannelDist);
             }
@@ -1157,19 +1131,8 @@ void Dataset::Interpolator::interpolateData()
                 endEpoch->setInterpSecondChannelDist(endSecondChannelDist);
             }
 
-
-
-
-
-
-
-
             somethingInterp = true;
-
-            //qDebug() << startEpochIndx << endEpochIndx << fromIndx << toIndx;
-
             lastInterpIndx_ = toIndx;
-
             break;
         }
     }

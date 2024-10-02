@@ -188,8 +188,8 @@ void SideScanView::updateData(int endIndx, int endOffset)
 
         // Bresenham
         // first segment
-        QVector3D segFPhBegPnt = !segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
-        QVector3D segFPhEndPnt = !segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
+        QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
+        QVector3D segFPhEndPnt = segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
         auto segFBegPixPos = globalMesh_.convertPhToPixCoords(segFPhBegPnt);
         auto segFEndPixPos = globalMesh_.convertPhToPixCoords(segFPhEndPnt);
         int segFPixX1 = segFBegPixPos.x();
@@ -203,8 +203,8 @@ void SideScanView::updateData(int endIndx, int endOffset)
         int segFPixSy = (segFPixY1 < segFPixY2) ? 1 : -1;
         int segFPixErr = segFPixDx - segFPixDy;
         // second segment
-        QVector3D segSPhBegPnt = !segSIsOdd ? measLinesVertices[segSBegVertIndx] : measLinesVertices[segSEndVertIndx];
-        QVector3D segSPhEndPnt = !segSIsOdd ? measLinesVertices[segSEndVertIndx] : measLinesVertices[segSBegVertIndx];
+        QVector3D segSPhBegPnt = segSIsOdd ? measLinesVertices[segSBegVertIndx] : measLinesVertices[segSEndVertIndx];
+        QVector3D segSPhEndPnt = segSIsOdd ? measLinesVertices[segSEndVertIndx] : measLinesVertices[segSBegVertIndx];
         auto segSBegPixPos = globalMesh_.convertPhToPixCoords(segSPhBegPnt);
         auto segSEndPixPos = globalMesh_.convertPhToPixCoords(segSPhEndPnt);
         int segSPixX1 = segSBegPixPos.x();
