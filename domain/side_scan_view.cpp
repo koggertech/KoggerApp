@@ -261,7 +261,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
             float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
 
             // interpolate
-            if (checkLength(interpPixTotDist)) {
+            if (checkLength(interpPixTotDist) && !(segSColorIndx == 0 && segSColorIndx == 0)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
                     float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
                     int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
@@ -579,6 +579,9 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         int cVal = charts->amplitude[ampIndx] ;
         cVal = std::min(colorTableSize_, cVal);
         retVal = cVal;
+    }
+    else {
+        return 0;
     }
 
     if (!retVal) {
