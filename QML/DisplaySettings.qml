@@ -569,6 +569,12 @@ GridLayout {
                     Layout.fillWidth: true
                     text: "Gain slope:"
 
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackGainSlope: bottomTrackGainSlope.checked
                     }
@@ -614,6 +620,12 @@ GridLayout {
                     id: bottomTrackThreshold
                     Layout.fillWidth: true
                     text: "Threshold:"
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                        }
+                    }
 
                     Settings {
                         property alias bottomTrackThreshold: bottomTrackThreshold.checked
@@ -661,6 +673,12 @@ GridLayout {
                     Layout.fillWidth: true
                     text: "Horizontal window:"
 
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackWindow: bottomTrackWindow.checked
                     }
@@ -692,6 +710,13 @@ GridLayout {
                     Layout.fillWidth: true
                     text: "Vertical gap, %:"
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackVerticalGap: bottomTrackVerticalGap.checked
                     }
@@ -723,6 +748,13 @@ GridLayout {
                     Layout.fillWidth: true
                     text: "Min range, m:"
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackMinRange: bottomTrackMinRange.checked
                     }
@@ -772,6 +804,13 @@ GridLayout {
                     Layout.fillWidth: true
                     text: "Max range, m:"
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackMaxRange: bottomTrackMaxRange.checked
                     }
@@ -820,6 +859,15 @@ GridLayout {
                     Layout.fillWidth: true
                     text: "Sonar offset XYZ, mm:"
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                            targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                            targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                        }
+                    }
+
                     Settings {
                         property alias bottomTrackSensorOffset: bottomTrackSensorOffset.checked
                     }
