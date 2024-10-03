@@ -382,7 +382,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
     view->setTrackRef(tracks);
 
-    _pool[endIndex()].setAtt(data.yaw, data.pitch, 0);
+    _pool[endIndex()].setAtt(data.usbl_yaw, data.usbl_pitch, data.usbl_roll);
     _pool[endIndex()].set(data);
     emit dataUpdate();
 }

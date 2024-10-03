@@ -910,9 +910,13 @@ public:
         double longitude_deg = NAN;
         float depth_m = NAN;
 
-        float yaw = NAN;
-        float pitch = NAN;
-        float roll = NAN;
+        float usbl_yaw = NAN;
+        float usbl_pitch = NAN;
+        float usbl_roll = NAN;
+
+        double usbl_latitude = NAN;
+        double usbl_longitude = NAN;
+        uint32_t last_iTOW = 0;
     } __attribute__((packed));
 
     struct USBLRequestBeacon {
