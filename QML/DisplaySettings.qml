@@ -119,8 +119,8 @@ GridLayout {
                     model: ["Raw", "Side-Scan"]
                     currentIndex: 0
 
-                    // onCurrentIndexChanged: targetPlot.plotEchogramType(currentIndex) // TODO
-                    // Component.onCompleted: targetPlot.plotEchogramType(currentIndex) // TODO
+                    onCurrentIndexChanged: targetPlot.plotEchogramCompensation(currentIndex) // TODO
+                    Component.onCompleted: targetPlot.plotEchogramCompensation(currentIndex) // TODO
 
                     Settings {
                         property alias echogramTypesList: echogramTypesList.currentIndex

@@ -59,6 +59,7 @@ public slots:
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
+    Q_INVOKABLE void plotEchogramCompensation(int compensation_id) { setEchogramCompensation(compensation_id); }
     void plotBottomTrackVisible(bool visible) { setBottomTrackVisible(visible); }
     void plotBottomTrackTheme(int theme_id) { setBottomTrackTheme(theme_id); }
 

@@ -303,7 +303,32 @@ public:
         float offset = 0; // m
         int type = 0;
 
-        QVector<int16_t> visual;
+        QVector<uint8_t> compensated;
+
+        void updateCompesated() {
+            int raw_size = amplitude.size();
+            if(compensated.size() != raw_size) {
+                compensated.resize(raw_size);
+            }
+
+            const uint8_t* src = amplitude.constData();
+            uint8_t* procData = compensated.data();
+
+            const float resol = resolution;
+
+            float avrg = 255;
+            for(int i = 0; i < raw_size; i ++) {
+                float val = src[i];
+
+                avrg += (val - avrg)*(0.05f + avrg*0.0006);
+                val = (val - avrg*0.55f)*(0.85f +float(i*resol)*0.006f)*2.f;
+
+                if(val < 0) { val = 0; }
+                else if(val > 255) { val = 255; }
+
+                procData[i] = val;
+            }
+        }
 
         DistProcessing bottomProcessing;
         Position sensorPosition;
@@ -311,6 +336,8 @@ public:
         float range() {
             return amplitude.size()*(resolution);
         }
+
+
 
     } Echogram;
 
@@ -575,13 +602,13 @@ public:
             return false;
         }
 
-        uint8_t* src = NULL;
+        uint8_t* src = _charts[channel].amplitude.data();
 
-        if(image_type == 1 && _charts[channel].visual.size() > 0) {
-//            src = _charts[channel].visual.data();
-            src = _charts[channel].amplitude.data();
-        } else {
-            src = _charts[channel].amplitude.data();
+        if(image_type == 1) {
+            if(_charts[channel].compensated.size() == 0) {
+                _charts[channel].updateCompesated();
+            }
+            src = _charts[channel].compensated.data();
         }
 
         if(raw_size == 0) {
@@ -589,8 +616,6 @@ public:
                 dst[i_to] = 0;
             }
         }
-
-//        if(m_chartResol == 0) { m_chartResol = 1; }
 
         start -= _charts[channel].offset;
         end -= _charts[channel].offset;
