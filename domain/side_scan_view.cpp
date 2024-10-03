@@ -180,6 +180,13 @@ void SideScanView::updateData(int endIndx, int endOffset)
         if (!segFCharts || !segSCharts) {
             continue;
         }
+        // update compensated TODO: to proc
+        if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
+            segFCharts->updateCompesated();
+        }
+        if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
+            segSCharts->updateCompesated();
+        }
         // dist procs checking
         if (!isfinite(segFIsOdd ? segFEpoch.getInterpFirstChannelDist() : segFEpoch.getInterpSecondChannelDist()) ||
             !isfinite(segSIsOdd ? segSEpoch.getInterpFirstChannelDist() : segSEpoch.getInterpSecondChannelDist())) {
@@ -587,8 +594,8 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 {
     int retVal{ 0 };
 
-    if (charts->amplitude.size() > ampIndx) {
-        int cVal = charts->amplitude[ampIndx] ;
+    if (charts->compensated.size() > ampIndx) {
+        int cVal = charts->compensated[ampIndx] ;
         cVal = std::min(colorTableSize_, cVal);
         retVal = cVal;
     }
