@@ -404,9 +404,7 @@ void DeviceManager::openFile(const QString &filePath)
     delAllDev();
     emit vruChanged();
 
-#ifdef SEPARATE_READING
     emit fileOpened();
-#endif
 }
 
 #ifdef SEPARATE_READING

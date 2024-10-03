@@ -63,13 +63,13 @@ public slots:
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile(bool onOpen = false);
     void onFileStartOpening();
-    void onFileOpened();
     void onFileReadEnough();
     void onFileOpenBreaked(bool onOpen);
 #else
     bool openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
 #endif
+    void onFileOpened();
     bool openXTF(QByteArray data);    
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
     bool openProxy(const QString& address, const int port, bool isTcp);

@@ -21,6 +21,12 @@ class SideScanView : public SceneObject
     QML_NAMED_ELEMENT(SideScanView)
 
 public:
+    enum class Mode {
+        kUndefined = 0,
+        kRealtime,
+        kPerformance
+    };
+
     /*structures*/
     class SideScanViewRenderImplementation : public SceneObject::RenderImplementation
     {
@@ -65,12 +71,14 @@ public:
     void setUseLinearFilter(bool state);
     void setTrackLastEpoch(bool state);
     void setColorTableTextureId(GLuint value);
+    void setWorkMode(Mode mode);
     GLuint                              getTextureIdByTileId(QUuid tileId) const;
     bool                                getUseLinearFilter() const;
     bool                                getTrackLastEpoch() const;
     GLuint                              getColorTableTextureId() const;
     QHash<QUuid, std::vector<uint8_t>>& getTileTextureTasksRef();
     std::vector<uint8_t>&               getColorTableTextureTaskRef();
+    Mode                                getWorkMode() const;
 
 private:
     /*methods*/
@@ -104,4 +112,5 @@ private:
     bool useLinearFilter_;
     bool trackLastEpoch_;
     GLuint colorMapTextureId_;
+    Mode workMode_;
 };

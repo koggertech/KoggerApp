@@ -20,7 +20,8 @@ SideScanView::SideScanView(QObject* parent) :
     globalMesh_(this, tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_),
     useLinearFilter_(false),
     trackLastEpoch_(true),
-    colorMapTextureId_(0)
+    colorMapTextureId_(0),
+    workMode_(Mode::kUndefined)
 {
     colorTableTextureTask_ = colorTable_.getRgbaColors();
 }
@@ -480,6 +481,12 @@ void SideScanView::setColorTableTextureId(GLuint value)
     RENDER_IMPL(SideScanView)->colorTableTextureId_ = colorMapTextureId_;
 }
 
+void SideScanView::setWorkMode(Mode mode)
+{
+    qDebug() << "setted mode: " << static_cast<int>(mode);
+    workMode_ = mode;
+}
+
 GLuint SideScanView::getTextureIdByTileId(QUuid tileId) const
 {
     // from render
@@ -517,6 +524,11 @@ QHash<QUuid, std::vector<uint8_t>>& SideScanView::getTileTextureTasksRef()
 std::vector<uint8_t>& SideScanView::getColorTableTextureTaskRef()
 {
     return colorTableTextureTask_;
+}
+
+SideScanView::Mode SideScanView::getWorkMode() const
+{
+    return workMode_;
 }
 
 bool SideScanView::checkLength(float dist) const

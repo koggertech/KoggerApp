@@ -76,10 +76,10 @@ signals:
     void attitudeComplete(float yaw, float pitch, float roll);
 #ifdef SEPARATE_READING
     void fileStartOpening();
-    void fileOpened();
     void fileBreaked(bool);
     void onFileReadEnough();
 #endif
+    void fileOpened();
 
 private:
     /*methods*/

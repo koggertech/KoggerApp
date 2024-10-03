@@ -195,6 +195,10 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
     fileIsCompleteOpened_ = false;
     openedfilePath_ = filePath;
 
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
+    }
+
     emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 }
 
@@ -209,6 +213,7 @@ bool Core::closeLogFile(bool onOpen)
         }
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
+            scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
         }
         if (!onOpen) {
             createLinkManagerConnections();
@@ -234,7 +239,11 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
 
     tryOpenedfilePath_.clear();
-    fileIsCompleteOpened_ = true;   
+    fileIsCompleteOpened_ = true;
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+    };
 }
 
 void Core::onFileReadEnough()
@@ -267,6 +276,7 @@ void Core::onFileOpenBreaked(bool onOpen)
     }
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
+        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
     if (onOpen && !tryOpenedfilePath_.isEmpty()) {
         openLogFile(tryOpenedfilePath_, false, false);
@@ -296,6 +306,7 @@ bool Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         if (!isAppend)
             scene3dViewPtr_->clear();
         scene3dViewPtr_->setNavigationArrowState(false);
+        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
     }
 
     QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
@@ -357,6 +368,7 @@ bool Core::closeLogFile()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->setNavigationArrowState(true);
+        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
 
     openedfilePath_.clear();
@@ -364,6 +376,15 @@ bool Core::closeLogFile()
     linkManagerWrapperPtr_->openClosedLinks();
 
     return true;
+}
+
+void Core::onFileOpened()
+{
+    qDebug() << "file opened!";
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+    };
 }
 #endif
 
@@ -1034,6 +1055,8 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
+
 }
 #endif
 
@@ -1052,14 +1075,21 @@ void Core::createLinkManagerConnections()
                                                                                                                                     }
                                                                                                                                  }, linkManagerConnection));
 
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this]() {
 #ifdef SEPARATE_READING
-    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this](){
-                                                                                                                                     tryOpenedfilePath_.clear();
+                                                                                                                                 tryOpenedfilePath_.clear();
+#endif
                                                                                                                                      if (scene3dViewPtr_) {
                                                                                                                                          scene3dViewPtr_->setNavigationArrowState(true);
+                                                                                                                                         scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
                                                                                                                                      }
-                                                                                                                                 },   linkManagerConnection));
-#endif
+                                                                                                                                 }, linkManagerConnection));
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this]() {
+                                                                                                                                     if (scene3dViewPtr_) {
+                                                                                                                                         scene3dViewPtr_->setNavigationArrowState(false);
+                                                                                                                                         scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+                                                                                                                                     }
+                                                                                                                                 }, linkManagerConnection));
 }
 
 void Core::removeLinkManagerConnections()
