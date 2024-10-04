@@ -49,6 +49,7 @@ public:
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     void stopLinkManagerTimer() const;
 #ifdef SEPARATE_READING
+    QString getTryOpenedfilePath() const;
     void stopDeviceManagerThread() const;
 #endif
     void consoleInfo(QString msg);

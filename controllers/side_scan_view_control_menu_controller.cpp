@@ -1,10 +1,12 @@
 #include "side_scan_view_control_menu_controller.h"
 #include "graphicsscene3dview.h"
+#include "core.h"
 
 
 SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *parent) :
     QmlComponentController(parent),
-    m_graphicsSceneView(nullptr)
+    m_graphicsSceneView(nullptr),
+    corePtr_(nullptr)
 {
 
 }
@@ -12,6 +14,11 @@ SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *pa
 void SideScanViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;
+}
+
+void SideScanViewControlMenuController::setCorePtr(Core* corePtr)
+{
+    corePtr_ = corePtr;
 }
 
 void SideScanViewControlMenuController::onVisibilityChanged(bool state)
@@ -88,6 +95,25 @@ void SideScanViewControlMenuController::onLevelChanged(float lowLevel, float hig
 {
     if (m_graphicsSceneView) {
         m_graphicsSceneView->getSideScanViewPtr()->setColorTableLevels(lowLevel, highLevel);
+    }
+}
+
+void SideScanViewControlMenuController::onUpdateClicked()
+{
+    if (m_graphicsSceneView) {
+#ifdef SEPARATE_READING
+        if (corePtr_) {
+            if (!corePtr_->getTryOpenedfilePath().isEmpty()) {
+                return;
+            }
+        }
+        else {
+            return;
+        }
+#endif
+        m_graphicsSceneView->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
+        m_graphicsSceneView->interpolateDatasetEpochs();
+        m_graphicsSceneView->getSideScanViewPtr()->updateData(0);
     }
 }
 

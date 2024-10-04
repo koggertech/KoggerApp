@@ -56,7 +56,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
         return;
     }
 
-    int epochCount = endIndx - endOffset;
+    int epochCount = (endIndx == 0 ? datasetPtr_->size() : endIndx) - endOffset;
     if (epochCount < 4) {
         return;
     }
@@ -347,6 +347,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
     lastMatParams_ = actualMatParams;
 
     Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)

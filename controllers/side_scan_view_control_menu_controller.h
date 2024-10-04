@@ -3,7 +3,7 @@
 #include "qmlcomponentcontroller.h"
 #include "side_scan_view.h"
 
-
+class Core;
 class SideScanView;
 class GraphicsScene3dView;
 class SideScanViewControlMenuController : public QmlComponentController
@@ -14,6 +14,7 @@ class SideScanViewControlMenuController : public QmlComponentController
 public:
     explicit SideScanViewControlMenuController(QObject *parent = nullptr);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
+    void setCorePtr(Core* corePtr);
 
     Q_INVOKABLE void onVisibilityChanged(bool state);
     Q_INVOKABLE void onUseFilterChanged(bool state);
@@ -26,6 +27,7 @@ public:
     Q_INVOKABLE void onTrackLastEpochChanged(bool state);
     Q_INVOKABLE void onThemeChanged(int val);
     Q_INVOKABLE void onLevelChanged(float lowLevel, float highLevel);
+    Q_INVOKABLE void onUpdateClicked();
 
 Q_SIGNALS:
 
@@ -35,4 +37,5 @@ protected:
 private:
     SideScanView* getSideScanViewPtr() const;
     GraphicsScene3dView* m_graphicsSceneView;
+    Core* corePtr_;
 };

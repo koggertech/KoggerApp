@@ -167,6 +167,13 @@ void GraphicsScene3dView::setCalcStateSideScanView(bool state)
     sideScanCalcState_ = state;
 }
 
+void GraphicsScene3dView::interpolateDatasetEpochs()
+{
+    if (m_dataset) {
+        m_dataset->interpolateData();
+    }
+}
+
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
 {
     switchedToBottomTrackVertexComboSelectionMode_ = true;
@@ -461,8 +468,8 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                      this,      [this](int lEpoch, int rEpoch) -> void {
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                    if (m_dataset && sideScanCalcState_) {
-                                        m_dataset->interpolateData();
+                                    if (sideScanCalcState_) {
+                                        interpolateDatasetEpochs();
                                     }
                                 }, Qt::DirectConnection);
 
@@ -475,7 +482,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                             QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
                                     }
 
-                                    if (!sideScanCalcState_) {
+                                    if (!sideScanCalcState_ || sideScanView_->getWorkMode() != SideScanView::Mode::kRealtime) {
                                         return;
                                     }
 
@@ -505,9 +512,11 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
                      this,      [this](int indx) -> void {
-                                    sideScanView_->updateData(indx);
-                                    if (sideScanView_->getTrackLastEpoch()) {
-                                        setLastEpochFocusView();
+                                    if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
+                                        sideScanView_->updateData(indx);
+                                        if (sideScanView_->getTrackLastEpoch()) {
+                                            setLastEpochFocusView();
+                                        }
                                     }
                                 }, Qt::DirectConnection);
 }

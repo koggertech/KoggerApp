@@ -442,6 +442,19 @@ ColumnLayout {
                         sideScanViewSettings.focus = true
                     }
                 }
+                CButton {
+                    text: "Update"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onUpdateClicked()
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
             }
 
             // levels

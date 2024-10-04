@@ -213,7 +213,7 @@ bool Core::closeLogFile(bool onOpen)
         }
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
-            scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+            //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
         }
         if (!onOpen) {
             createLinkManagerConnections();
@@ -242,7 +242,7 @@ void Core::onFileOpened()
     fileIsCompleteOpened_ = true;
 
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
 
@@ -276,7 +276,7 @@ void Core::onFileOpenBreaked(bool onOpen)
     }
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
-        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
     if (onOpen && !tryOpenedfilePath_.isEmpty()) {
         openLogFile(tryOpenedfilePath_, false, false);
@@ -368,7 +368,7 @@ bool Core::closeLogFile()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->setNavigationArrowState(true);
-        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
 
     openedfilePath_.clear();
@@ -383,7 +383,7 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
 
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
 #endif
@@ -986,6 +986,11 @@ void Core::UILoad(QObject* object, const QUrl& url)
 }
 
 #ifdef SEPARATE_READING
+QString Core::getTryOpenedfilePath() const
+{
+    return tryOpenedfilePath_;
+}
+
 void Core::stopDeviceManagerThread() const
 {
     emit deviceManagerWrapperPtr_->sendCloseFile(false);
@@ -1005,6 +1010,9 @@ void Core::createControllers()
     npdFilterControlMenuController_    = std::make_shared<NpdFilterControlMenuController>();
     surfaceControlMenuController_      = std::make_shared<SurfaceControlMenuController>();
     sideScanViewControlMenuController_ = std::make_shared<SideScanViewControlMenuController>();
+#ifdef SEPARATE_READING
+    sideScanViewControlMenuController_->setCorePtr(this);
+#endif
     pointGroupControlMenuController_   = std::make_shared<PointGroupControlMenuController>();
     polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
     scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();
@@ -1087,7 +1095,7 @@ void Core::createLinkManagerConnections()
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this]() {
                                                                                                                                      if (scene3dViewPtr_) {
                                                                                                                                          scene3dViewPtr_->setNavigationArrowState(false);
-                                                                                                                                         scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+                                                                                                                                         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
                                                                                                                                      }
                                                                                                                                  }, linkManagerConnection));
 }
