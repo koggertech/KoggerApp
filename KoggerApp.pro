@@ -4,7 +4,7 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
-#CONFIG += SEPARATE_READING
+CONFIG += SEPARATE_READING
 
 !android {
     QT += serialport
