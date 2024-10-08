@@ -58,6 +58,7 @@ GridLayout {
                         var ch2 = channel2Combo.currentText != "None" ? channel2Combo.currentText != "First" ? channel2Combo.currentText : 32767 : 32768
 
                         targetPlot.plotDatasetChannel(ch1, ch2)
+                        core.setSideScanChannels(ch1, ch2);
                     }
                 }
 
@@ -82,6 +83,7 @@ GridLayout {
                         var ch2 = channel2Combo.currentText != "None" ? channel2Combo.currentText != "First" ? channel2Combo.currentText : 32767 : 32768
 
                         targetPlot.plotDatasetChannel(ch1, ch2)
+                        core.setSideScanChannels(ch1, ch2);
                     }
                 }
             }

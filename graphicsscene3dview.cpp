@@ -490,14 +490,14 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     int firstChannelId = CHANNEL_NONE;
                                     int secondChannelId = CHANNEL_FIRST;
                                     if (m_dataset) {
-                                        if (auto chList = m_dataset->channelsList(); chList.size() == 2) {
+                                        if (auto chList = m_dataset->channelsList(); !chList.empty()) {
                                             auto it = chList.begin();
                                             firstChannelId = it.key();
-                                            secondChannelId = (++it).key();
+
+                                            if (++it != chList.end()) {
+                                                secondChannelId = it.key();
+                                            }
                                         }
-                                    }
-                                    if (firstChannelId == CHANNEL_NONE || secondChannelId == CHANNEL_FIRST) {
-                                        return;
                                     }
                                     int currEpochIndx = m_dataset->endIndex();
                                     auto btP = m_dataset->getBottomTrackParamPtr();

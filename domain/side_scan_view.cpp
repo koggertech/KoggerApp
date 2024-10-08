@@ -21,7 +21,8 @@ SideScanView::SideScanView(QObject* parent) :
     useLinearFilter_(false),
     trackLastEpoch_(true),
     colorMapTextureId_(0),
-    workMode_(Mode::kUndefined)
+    workMode_(Mode::kUndefined),
+    manualSettedChannels_(false)
 {
     colorTableTextureTask_ = colorTable_.getRgbaColors();
 }
@@ -39,10 +40,14 @@ bool SideScanView::updateChannelsIds()
     segSChannelId_ = -1;
 
     if (datasetPtr_) {
-        if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
+        if (auto chList = datasetPtr_->channelsList(); !chList.empty()) {
             auto it = chList.begin();
             segFChannelId_ = it.key();
-            segSChannelId_ = (++it).key();
+
+            if (++it != chList.end()) {
+                segSChannelId_ = it.key();
+            }
+
             retVal = true;
         }
     }
@@ -52,7 +57,18 @@ bool SideScanView::updateChannelsIds()
 
 void SideScanView::updateData(int endIndx, int endOffset)
 {
-    if (!datasetPtr_ || !updateChannelsIds()) {
+    if (!datasetPtr_) {
+        return;
+    }
+
+    if (!manualSettedChannels_ && !updateChannelsIds()) {
+        return;
+    }
+
+    bool segFIsValid = checkChannel(segFChannelId_);
+    bool segSIsValid = checkChannel(segSChannelId_);
+
+    if (!segFIsValid && !segSIsValid) {
         return;
     }
 
@@ -80,32 +96,38 @@ void SideScanView::updateData(int endIndx, int endOffset)
                 bool acceptedEven = false, acceptedOdd = false;
                 double azRad = qDegreesToRadians(yaw);
                 double angleOffsetRad = qDegreesToRadians(angleOffset_);
-                if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
-                    double leftAzRad = azRad - M_PI_2 + angleOffsetRad;
-                    float lDist = segFCharts->range();
 
-                    measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
-                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                    measLinesEvenIndices.append(currIndxSec_++);
-                    measLinesEvenIndices.append(currIndxSec_++);
-                    isOdds.append('0');
-                    epochIndxs.append(i);
-                    acceptedEven = true;
-                }
-                if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
-                    double rightAzRad = azRad + M_PI_2 - angleOffsetRad;
-                    float rDist = segSCharts ->range();
+                if (segFIsValid) {
+                    if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
+                        double leftAzRad = azRad - M_PI_2 + angleOffsetRad;
+                        float lDist = segFCharts->range();
 
-                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                    measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
-                    measLinesOddIndices.append(currIndxSec_++);
-                    measLinesOddIndices.append(currIndxSec_++);
-                    isOdds.append('1');
-                    epochIndxs.append(i);
-                    acceptedOdd = true;
+                        measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
+                        measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                        measLinesEvenIndices.append(currIndxSec_++);
+                        measLinesEvenIndices.append(currIndxSec_++);
+                        isOdds.append('0');
+                        epochIndxs.append(i);
+                        acceptedEven = true;
+                    }
                 }
 
-                if (acceptedEven && acceptedOdd) {
+                if (segSIsValid) {
+                    if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
+                        double rightAzRad = azRad + M_PI_2 - angleOffsetRad;
+                        float rDist = segSCharts ->range();
+
+                        measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                        measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                        measLinesOddIndices.append(currIndxSec_++);
+                        measLinesOddIndices.append(currIndxSec_++);
+                        isOdds.append('1');
+                        epochIndxs.append(i);
+                        acceptedOdd = true;
+                    }
+                }
+
+                if (acceptedEven || acceptedOdd) {
                     isAcceptedEpoch = true;
                 }
             }
@@ -140,7 +162,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
     for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
         if (i + 5 > measLinesVertices.size() - 1) {
             break;
-        }
+            }
 
         int segFBegVertIndx = i;
         int segFEndVertIndx = i + 1;
@@ -191,7 +213,6 @@ void SideScanView::updateData(int endIndx, int endOffset)
         // dist procs checking
         if (!isfinite(segFIsOdd ? segFEpoch.getInterpFirstChannelDist() : segFEpoch.getInterpSecondChannelDist()) ||
             !isfinite(segSIsOdd ? segSEpoch.getInterpFirstChannelDist() : segSEpoch.getInterpSecondChannelDist())) {
-            qDebug() << "not interp dist!";
             continue;
         }
 
@@ -374,6 +395,7 @@ void SideScanView::clear()
     lastAcceptedEpoch_ = 0;
     currIndxSec_ = 0;
     lastMatParams_ = MatrixParams();
+    manualSettedChannels_ = false;
 
     globalMesh_.clear();
 
@@ -503,6 +525,13 @@ void SideScanView::setAngleOffset(float val)
     }
 
     angleOffset_ = val;
+}
+
+void SideScanView::setChannels(int firstChId, int secondChId)
+{
+    segFChannelId_ = firstChId;
+    segSChannelId_ = secondChId;
+    manualSettedChannels_ = true;
 }
 
 GLuint SideScanView::getTextureIdByTileId(QUuid tileId) const
@@ -758,6 +787,16 @@ void SideScanView::updateUnmarkedHeightVertices(Tile* tilePtr) const
                 continue;
             }
         }
+    }
+}
+
+bool SideScanView::checkChannel(int val) const
+{
+    if (val == CHANNEL_NONE || val == CHANNEL_FIRST) {
+        return false;
+    }
+    else {
+        return true;
     }
 }
 

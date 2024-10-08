@@ -90,6 +90,7 @@ public slots:
     void setTimelinePosition(double position);
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
+    void setSideScanChannels(int firstChId, int secondChId);
 #ifdef FLASHER
     bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);

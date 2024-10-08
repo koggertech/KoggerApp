@@ -985,6 +985,13 @@ void Core::UILoad(QObject* object, const QUrl& url)
     scene3dControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 }
 
+void Core::setSideScanChannels(int firstChId, int secondChId)
+{
+    if (scene3dViewPtr_ && scene3dViewPtr_->getSideScanViewPtr()) {
+        scene3dViewPtr_->getSideScanViewPtr()->setChannels(firstChId, secondChId);
+    }
+}
+
 #ifdef SEPARATE_READING
 QString Core::getTryOpenedfilePath() const
 {

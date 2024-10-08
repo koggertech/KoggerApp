@@ -73,6 +73,7 @@ public:
     void setColorTableTextureId(GLuint value);
     void setWorkMode(Mode mode);
     void setAngleOffset(float val);
+    void setChannels(int firstChId, int secondChId);
     GLuint                              getTextureIdByTileId(QUuid tileId) const;
     bool                                getUseLinearFilter() const;
     bool                                getTrackLastEpoch() const;
@@ -90,6 +91,7 @@ private:
     void postUpdate();
     void updateTilesTexture();
     void updateUnmarkedHeightVertices(Tile* tilePtr) const;
+    bool checkChannel(int val) const;
 
     /*data*/
     static constexpr float amplitudeCoeff_ = 100.0f;
@@ -115,4 +117,5 @@ private:
     bool trackLastEpoch_;
     GLuint colorMapTextureId_;
     Mode workMode_;
+    bool manualSettedChannels_;
 };

@@ -1061,7 +1061,8 @@ void Dataset::Interpolator::interpolateData()
         while (firstValidIndex <= endEpochIndx) {
             auto* fEp = datasetPtr_->fromIndex(firstValidIndex);
             if (fEp->getPositionGNSS().ned.isCoordinatesValid() && isfinite(fEp->yaw()) &&
-                isfinite(fEp->distProccesing(firstChannelId_)) && isfinite(fEp->distProccesing(secondChannelId_))) {
+                (isfinite(fEp->distProccesing(firstChannelId_)) ||
+                isfinite(fEp->distProccesing(secondChannelId_))) ) {
                 break;
             }
             ++firstValidIndex;
@@ -1070,7 +1071,8 @@ void Dataset::Interpolator::interpolateData()
         while (secondValidIndex <= endEpochIndx) {
             auto* sEp = datasetPtr_->fromIndex(secondValidIndex);
             if (sEp->getPositionGNSS().ned.isCoordinatesValid() && isfinite(sEp->yaw()) &&
-                isfinite(sEp->distProccesing(firstChannelId_)) && isfinite(sEp->distProccesing(secondChannelId_))) {
+                (isfinite(sEp->distProccesing(firstChannelId_)) ||
+                isfinite(sEp->distProccesing(secondChannelId_))) ) {
                 break;
             }
             ++secondValidIndex;
@@ -1094,8 +1096,8 @@ void Dataset::Interpolator::interpolateData()
         auto startYaw = startEpoch->yaw();
         auto endYaw = endEpoch->yaw();
         auto startFirstChannelDist = startEpoch->distProccesing(firstChannelId_);
-        auto startSecondChannelDist = startEpoch->distProccesing(secondChannelId_);
         auto endFirstChannelDist = endEpoch->distProccesing(firstChannelId_);
+        auto startSecondChannelDist = startEpoch->distProccesing(secondChannelId_);
         auto endSecondChannelDist = endEpoch->distProccesing(secondChannelId_);
         auto timeDiffNano = calcTimeDiffInNanoSecs(startEpoch->getPositionGNSS().time.sec,
                                                    startEpoch->getPositionGNSS().time.nanoSec,
@@ -1119,23 +1121,26 @@ void Dataset::Interpolator::interpolateData()
             float progress = (currentTime - startTime) * 1.0f / static_cast<float>(timeDiffNano);
             interpEpoch->setInterpNED(interpNED(startPos.ned, endPos.ned, progress));
             interpEpoch->setInterpYaw(interpYaw(startYaw, endYaw, progress));
-            if (firstChannelId_ != CHANNEL_NONE) {
-                interpEpoch->setInterpFirstChannelDist(interpDist(startFirstChannelDist, endFirstChannelDist, progress));
+
+            float correctDist = 0.0f; //
+            if (correctDist = interpDist(startFirstChannelDist, endFirstChannelDist, progress); !isfinite(correctDist)) {
+                correctDist = interpDist(startSecondChannelDist, endSecondChannelDist, progress);
             }
-            if (secondChannelId_ != CHANNEL_FIRST) {
-                interpEpoch->setInterpSecondChannelDist(interpDist(startSecondChannelDist, endSecondChannelDist, progress));
-            }
+            interpEpoch->setInterpFirstChannelDist(correctDist);
+            interpEpoch->setInterpSecondChannelDist(correctDist);
         }
 
         // "interp" data to anchor epochs
         startEpoch->setInterpNED(startPos.ned);
         startEpoch->setInterpYaw(startYaw);
-        startEpoch->setInterpFirstChannelDist(startFirstChannelDist);
-        startEpoch->setInterpSecondChannelDist(startSecondChannelDist);
+        float correctDist = isfinite(startFirstChannelDist) ? startFirstChannelDist : startSecondChannelDist;
+        startEpoch->setInterpFirstChannelDist(correctDist);
+        startEpoch->setInterpSecondChannelDist(correctDist);
         endEpoch->setInterpNED(endPos.ned);
         endEpoch->setInterpYaw(endYaw);
-        endEpoch->setInterpFirstChannelDist(endFirstChannelDist);
-        endEpoch->setInterpSecondChannelDist(endSecondChannelDist);
+        correctDist = isfinite(endFirstChannelDist) ? endFirstChannelDist : endSecondChannelDist;
+        endEpoch->setInterpFirstChannelDist(correctDist);
+        endEpoch->setInterpSecondChannelDist(correctDist);
 
         somethingInterp = true;
         firstValidIndex = secondValidIndex;
@@ -1162,10 +1167,14 @@ bool Dataset::Interpolator::updateChannelsIds()
     secondChannelId_ = -1;
 
     if (datasetPtr_) {
-        if (auto chList = datasetPtr_->channelsList(); chList.size() == 2) {
+        if (auto chList = datasetPtr_->channelsList(); !chList.empty()) {
             auto it = chList.begin();
             firstChannelId_ = it.key();
-            secondChannelId_ = (++it).key();
+
+            if (++it != chList.end()) {
+                secondChannelId_ = it.key();
+            }
+
             retVal = true;
         }
     }
