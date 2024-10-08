@@ -22,7 +22,9 @@ SideScanView::SideScanView(QObject* parent) :
     trackLastEpoch_(true),
     colorMapTextureId_(0),
     workMode_(Mode::kUndefined),
-    manualSettedChannels_(false)
+    manualSettedChannels_(false),
+    lAngleOffset_(0.0f),
+    rAngleOffset_(0.0f)
 {
     colorTableTextureTask_ = colorTable_.getRgbaColors();
 }
@@ -95,11 +97,10 @@ void SideScanView::updateData(int endIndx, int endOffset)
             if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
                 bool acceptedEven = false, acceptedOdd = false;
                 double azRad = qDegreesToRadians(yaw);
-                double angleOffsetRad = qDegreesToRadians(angleOffset_);
 
                 if (segFIsValid) {
                     if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
-                        double leftAzRad = azRad - M_PI_2 + angleOffsetRad;
+                        double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                         float lDist = segFCharts->range();
 
                         measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
@@ -114,7 +115,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
 
                 if (segSIsValid) {
                     if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
-                        double rightAzRad = azRad + M_PI_2 - angleOffsetRad;
+                        double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                         float rDist = segSCharts ->range();
 
                         measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
@@ -518,13 +519,22 @@ void SideScanView::setWorkMode(Mode mode)
     workMode_ = mode;
 }
 
-void SideScanView::setAngleOffset(float val)
+void SideScanView::setLAngleOffset(float val)
 {
     if (val < -90.0f || val > 90.0f) {
         return;
     }
 
-    angleOffset_ = val;
+    lAngleOffset_ = val;
+}
+
+void SideScanView::setRAngleOffset(float val)
+{
+    if (val < -90.0f || val > 90.0f) {
+        return;
+    }
+
+    rAngleOffset_ = val;
 }
 
 void SideScanView::setChannels(int firstChId, int secondChId)

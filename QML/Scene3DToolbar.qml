@@ -317,18 +317,27 @@ ColumnLayout {
                 }
                 RowLayout {
                     CText {
-                        text: "Angle offset:"
+                        text: "Angle offset (l/r)°:"
                     }
                     SpinBoxCustom  {
-                        id: sideScanAngleOffset
                         implicitWidth: 150
                         from: -90
                         to: 90
                         stepSize: 1
                         value: 0
-
                         onValueChanged: {
-                            SideScanViewControlMenuController.onSetAngleOffset(value)
+                            SideScanViewControlMenuController.onSetLAngleOffset(value)
+                        }
+                    }
+
+                    SpinBoxCustom  {
+                        implicitWidth: 150
+                        from: -90
+                        to: 90
+                        stepSize: 1
+                        value: 0
+                        onValueChanged: {
+                            SideScanViewControlMenuController.onSetRAngleOffset(value)
                         }
                     }
                 }

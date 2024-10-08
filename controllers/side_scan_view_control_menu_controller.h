@@ -28,7 +28,9 @@ public:
     Q_INVOKABLE void onThemeChanged(int val);
     Q_INVOKABLE void onLevelChanged(float lowLevel, float highLevel);
     Q_INVOKABLE void onUpdateClicked();
-    Q_INVOKABLE void onSetAngleOffset(float val);
+    Q_INVOKABLE void onSetLAngleOffset(float val);
+    Q_INVOKABLE void onSetRAngleOffset(float val);
+
 
 Q_SIGNALS:
 

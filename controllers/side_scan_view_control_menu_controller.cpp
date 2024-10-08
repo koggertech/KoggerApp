@@ -117,10 +117,17 @@ void SideScanViewControlMenuController::onUpdateClicked()
     }
 }
 
-void SideScanViewControlMenuController::onSetAngleOffset(float val)
+void SideScanViewControlMenuController::onSetLAngleOffset(float val)
 {
     if (m_graphicsSceneView) {
-        m_graphicsSceneView->getSideScanViewPtr()->setAngleOffset(val);
+        m_graphicsSceneView->getSideScanViewPtr()->setLAngleOffset(val);
+    }
+}
+
+void SideScanViewControlMenuController::onSetRAngleOffset(float val)
+{
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getSideScanViewPtr()->setRAngleOffset(val);
     }
 }
 
