@@ -79,8 +79,9 @@ void SideScanView::updateData(int endIndx, int endOffset)
             if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
                 bool acceptedEven = false, acceptedOdd = false;
                 double azRad = qDegreesToRadians(yaw);
+                double angleOffsetRad = qDegreesToRadians(angleOffset_);
                 if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
-                    double leftAzRad = azRad - M_PI_2;
+                    double leftAzRad = azRad - M_PI_2 + angleOffsetRad;
                     float lDist = segFCharts->range();
 
                     measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
@@ -92,7 +93,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
                     acceptedEven = true;
                 }
                 if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
-                    double rightAzRad = azRad + M_PI_2;
+                    double rightAzRad = azRad + M_PI_2 - angleOffsetRad;
                     float rDist = segSCharts ->range();
 
                     measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
@@ -493,6 +494,15 @@ void SideScanView::setWorkMode(Mode mode)
 {
     qDebug() << "setted mode: " << static_cast<int>(mode);
     workMode_ = mode;
+}
+
+void SideScanView::setAngleOffset(float val)
+{
+    if (val < -90.0f || val > 90.0f) {
+        return;
+    }
+
+    angleOffset_ = val;
 }
 
 GLuint SideScanView::getTextureIdByTileId(QUuid tileId) const

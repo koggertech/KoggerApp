@@ -72,6 +72,7 @@ public:
     void setTrackLastEpoch(bool state);
     void setColorTableTextureId(GLuint value);
     void setWorkMode(Mode mode);
+    void setAngleOffset(float val);
     GLuint                              getTextureIdByTileId(QUuid tileId) const;
     bool                                getUseLinearFilter() const;
     bool                                getTrackLastEpoch() const;
@@ -94,6 +95,7 @@ private:
     static constexpr float amplitudeCoeff_ = 100.0f;
     static constexpr int colorTableSize_ = 255;
     static constexpr int interpLineWidth_ = 1;
+    float angleOffset_ = 0.0f;
 
     std::vector<uint8_t> colorTableTextureTask_;
     QHash<QUuid, std::vector<uint8_t>> tileTextureTasks_;

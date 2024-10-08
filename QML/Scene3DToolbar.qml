@@ -315,6 +315,23 @@ ColumnLayout {
                         }
                     }
                 }
+                RowLayout {
+                    CText {
+                        text: "Angle offset:"
+                    }
+                    SpinBoxCustom  {
+                        id: sideScanAngleOffset
+                        implicitWidth: 150
+                        from: -90
+                        to: 90
+                        stepSize: 1
+                        value: 0
+
+                        onValueChanged: {
+                            SideScanViewControlMenuController.onSetAngleOffset(value)
+                        }
+                    }
+                }
                 ColumnLayout {
                     RowLayout {
                         CText {
