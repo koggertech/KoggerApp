@@ -117,6 +117,7 @@ public:
 
 
     QString devName() { return m_devName; }
+    int devType() const { return static_cast<int>(idVersion->boardVersion()); }
     uint32_t devSerialNumber();
     QString devPN();
 
