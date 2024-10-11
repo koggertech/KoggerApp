@@ -778,7 +778,7 @@ protected:
 class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim() {}
-    bool draw(QPainter* painter, Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
 
     void setEpochEventState(bool state) {
         beenEpochEvent_ = state;
