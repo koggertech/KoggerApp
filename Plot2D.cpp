@@ -48,7 +48,7 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
 
     painter->setCompositionMode(QPainter::CompositionMode_Exclusion);
     _grid.draw(_canvas, _dataset, _cursor);
-    _aim.draw(painter, _canvas, _dataset, _cursor);
+    _aim.draw(_canvas, _dataset, _cursor);
 
     return true;
 }
@@ -516,7 +516,8 @@ void Plot2D::reRangeDistance() {
     }
 }
 
-bool Plot2DAim::draw(QPainter* painter, Canvas &canvas, Dataset *dataset, DatasetCursor cursor) {
+bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor) 
+{
     if((cursor.mouseX < 0 || cursor.mouseY < 0) && (cursor.selectEpochIndx == -1) ) {
         return false;
     }
@@ -562,19 +563,19 @@ bool Plot2DAim::draw(QPainter* painter, Canvas &canvas, Dataset *dataset, Datase
     float cursor_distance = value_scale*value_range + cursor.distance.from;
 
     // text & back
-    painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    p->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
     QString distanceText = QString("%1 m").arg(cursor_distance, 0, 'g', 4);
     QRect textRect = p->fontMetrics().boundingRect(distanceText);
 
-    bool onTheRight = (painter->window().width() - cursor.mouseX - 35) < textRect.width();
+    bool onTheRight = (p->window().width() - cursor.mouseX - 65) < textRect.width();
 
     QPoint shiftedPoint;
     if (cursor.mouseY > 60) {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 20 - textRect.width(), cursor.mouseY - 20) : QPoint(cursor.mouseX + 20, cursor.mouseY - 20);
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY - 20) : QPoint(cursor.mouseX + 50, cursor.mouseY - 20);
     }
     else {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 20 - textRect.width(), cursor.mouseY + 40) : QPoint(cursor.mouseX + 20, cursor.mouseY + 40);
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY + 40) : QPoint(cursor.mouseX + 50, cursor.mouseY + 40);
     }
 
     textRect.moveTopLeft(shiftedPoint);
