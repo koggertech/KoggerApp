@@ -778,61 +778,7 @@ protected:
 class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim() {}
-    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
-        if((cursor.mouseX < 0 || cursor.mouseY < 0) && (cursor.selectEpochIndx == -1) ) {
-            return false;
-        }
-
-        if (cursor.selectEpochIndx != -1) {
-            auto selectedEpoch = dataset->fromIndex(cursor.selectEpochIndx);
-            int offsetX = 0;
-            int halfCanvas = canvas.width() / 2;
-            int withoutHalf = dataset->size() - halfCanvas;
-            if (cursor.selectEpochIndx >= withoutHalf)
-                offsetX = cursor.selectEpochIndx - withoutHalf;
-            if (const auto keys{ dataset->channelsList().keys() }; !keys.empty()) {
-                if (const auto chartPtr{ selectedEpoch->chart(keys.at(0)) }; chartPtr) {
-                    const int x = canvas.width() / 2 + offsetX;
-                    const int y = keys.size() == 2 ? canvas.height() / 2 - canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()) :
-                                      canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range());
-                    cursor.setMouse(x, y);
-                }
-            }
-        }
-
-        QPen pen;
-        pen.setWidth(_lineWidth);
-        pen.setColor(_lineColor);
-
-
-        QPainter* p = canvas.painter();
-        p->setPen(pen);
-        QFont font = QFont("Asap", 14, QFont::Normal);
-        font.setPixelSize(18);
-        p->setFont(font);
-
-        const int image_height = canvas.height();
-        const int image_width = canvas.width();
-
-        if (cursor._tool == MouseToolNothing || beenEpochEvent_) {
-            p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
-            p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
-        }
-
-
-        const float canvas_height = canvas.height();
-        float value_range = cursor.distance.to - cursor.distance.from;
-        float value_scale = float(cursor.mouseY)/canvas_height;
-        float cursor_distance = value_scale*value_range + cursor.distance.from;
-
-        if(cursor.mouseY > 60) {
-            p->drawText(cursor.mouseX+20, cursor.mouseY-20, QString("%1 m").arg(cursor_distance, 0, 'g', 4));
-        } else {
-            p->drawText(cursor.mouseX+20, cursor.mouseY+40, QString("%1 m").arg(cursor_distance, 0, 'g', 4));
-        }
-
-        return true;
-    }
+    bool draw(QPainter* painter, Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
 
     void setEpochEventState(bool state) {
         beenEpochEvent_ = state;
