@@ -562,14 +562,14 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     QString distanceText = QString("%1 m").arg(cursor_distance, 0, 'g', 4);
     QRect textRect = p->fontMetrics().boundingRect(distanceText);
 
-    bool onTheRight = (p->window().width() - cursor.mouseX - 35) < textRect.width();
+    bool onTheRight = (p->window().width() - cursor.mouseX - 65) < textRect.width();
 
     QPoint shiftedPoint;
     if (cursor.mouseY > 60) {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 20 - textRect.width(), cursor.mouseY - 20) : QPoint(cursor.mouseX + 20, cursor.mouseY - 20);
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY - 20) : QPoint(cursor.mouseX + 50, cursor.mouseY - 20);
     }
     else {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 20 - textRect.width(), cursor.mouseY + 40) : QPoint(cursor.mouseX + 20, cursor.mouseY + 40);
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY + 40) : QPoint(cursor.mouseX + 50, cursor.mouseY + 40);
     }
 
     textRect.moveTopLeft(shiftedPoint);
