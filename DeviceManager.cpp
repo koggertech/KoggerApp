@@ -74,6 +74,30 @@ QList<DevQProperty *> DeviceManager::getDevList()
     return devList_;
 }
 
+QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
+    QList<DevQProperty *> list;
+
+    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+        QHash<int, DevQProperty*> devs = i.value();
+
+        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+            if(k.value()->boardVersion() == ver) {
+                list.append(k.value());
+            }
+        }
+    }
+
+    return list;
+}
+
+#ifdef MOTOR
+bool DeviceManager::isMotorControlCreated() const
+{
+    if (motorControl_)
+        return true;
+    return false;
+}
+#endif
 
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
@@ -436,7 +460,32 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         }
         else {
+#ifdef MOTOR
+            if (!link->getIsMotorDevice()) {
             getDevice(uuid, link, 0);
+        }
+            else { // create motor driver
+                if (motorControl_) {
+                    motorControl_.reset();
+    }
+                motorControl_ = std::make_unique<MotorControl>(this, link);
+
+                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::calibrationStandIn);
+                QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
+                    if (addr == 225) {
+                        fAngle_ = angle;
+                    }
+                    if (addr == 226) {
+                        sAngle_ = angle;
+                    }
+                    emit anglesHasChanged();
+                });
+
+                emit motorDeviceChanged();
+            }
+#else
+            getDevice(uuid, link, 0);
+#endif
         }
     }
 }
@@ -446,6 +495,13 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     Q_UNUSED(uuid);
 
     if (link) {
+#ifdef MOTOR
+        if (link->getIsMotorDevice()) {
+            motorControl_.reset();
+            emit motorDeviceChanged();
+        }
+#endif
+
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);
@@ -492,6 +548,92 @@ void DeviceManager::upgradeLastDev(QByteArray data)
         lastDevs_->sendUpdateFW(data);
     }
 }
+
+#ifdef MOTOR
+float DeviceManager::getFAngle()
+{
+    return fAngle_;
+}
+
+float DeviceManager::getSAngle()
+{
+    return sAngle_;
+}
+
+void DeviceManager::returnToZero(int id)
+{
+    if (!motorControl_) {
+        return;
+    }
+
+    if (id == 0) {
+        motorControl_->goZero(motorControl_->getFAddr());
+    }
+    if (id == 1) {
+        motorControl_->goZero(motorControl_->getSAddr());
+    }
+}
+
+void DeviceManager::runSteps(int id, int speed, int angle)
+{
+    if (!motorControl_) {
+        return;
+    }
+
+    if (id == 0) {
+        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle, false); // false - need waiting for curr pos
+    }
+    if (id == 1) {
+        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle, false);
+    }
+}
+
+void DeviceManager::openCsvFile(QString name)
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    QFile file;
+    QUrl url(name);
+    url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    QTextStream in(&file);
+    QStringList tasks;
+
+    while (!in.atEnd()) {
+        QString row = in.readLine();
+        tasks.append(row);
+    }
+
+    motorControl_->addTask(tasks);
+}
+
+void DeviceManager::clearTasks()
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    motorControl_->clearTasks();
+}
+
+void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle) {
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
+    if(usbl_devs.size() > 0) {
+        IDBinUsblSolution::AskBeacon ask;
+        usbl_devs[0]->askBeaconPosition(ask);
+    }
+
+    emit encoderComplete(currFAngle, currSAngle, NAN);
+    emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
+}
+#endif
 
 StreamListModel* DeviceManager::streamsList()
 {

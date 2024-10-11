@@ -4,7 +4,7 @@ import QtQuick.Controls 2.12
 Button {
     id: control
     property real progress: 0
-    text: "Ok"
+    text: qsTr("Ok")
 
     font.family: "Bahnschrift"; font.pointSize: 10;
 

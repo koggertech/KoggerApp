@@ -11,6 +11,7 @@
 #include <graphicsscene3dview.h>
 // #include <geometryengine.h>
 #include "navigation_arrow.h"
+#include "usbl_view.h"
 
 #include <QMatrix4x4>
 #include "qsystemdetection.h"
@@ -69,6 +70,7 @@ private:
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
     SceneObject::RenderImplementation m_boatTrackRenderImpl;
     NavigationArrow::NavigationArrowRenderImplementation navigationArrowRenderImpl_;
+    UsblView::UsblViewRenderImplementation usblViewRenderImpl_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

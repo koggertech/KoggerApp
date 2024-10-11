@@ -15,6 +15,17 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged, connectionType));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,    connectionType));
 
+
+#ifdef MOTOR
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::motorDeviceChanged,       this,                &DeviceManagerWrapper::motorDeviceChanged, connectionType));
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::anglesHasChanged,         this,                &DeviceManagerWrapper::angleChanged,       connectionType));
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::posIsConstant,            this,                &DeviceManagerWrapper::posIsConstant,      connectionType));
+    deviceManagerConnections_.append(QObject::connect(this,                &DeviceManagerWrapper::sendRunSteps,      workerObject_.get(), &DeviceManager::runSteps,                  connectionType));
+    deviceManagerConnections_.append(QObject::connect(this,                &DeviceManagerWrapper::sendReturnToZero,  workerObject_.get(), &DeviceManager::returnToZero,              connectionType));
+    deviceManagerConnections_.append(QObject::connect(this,                &DeviceManagerWrapper::sendOpenCsvFile,   workerObject_.get(), &DeviceManager::openCsvFile,               connectionType));
+    deviceManagerConnections_.append(QObject::connect(this,                &DeviceManagerWrapper::sendClearTasks,    workerObject_.get(), &DeviceManager::clearTasks,                connectionType));
+#endif
+
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();
 #else
@@ -24,6 +35,18 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,    connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged, connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,    connectionType);
+
+
+#ifdef MOTOR
+    QObject::connect(workerObject_.get(), &DeviceManager::motorDeviceChanged,       this,                &DeviceManagerWrapper::motorDeviceChanged, connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::anglesHasChanged,         this,                &DeviceManagerWrapper::angleChanged,       connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::posIsConstant,            this,                &DeviceManagerWrapper::posIsConstant,      connectionType);
+    QObject::connect(this,                &DeviceManagerWrapper::sendRunSteps,      workerObject_.get(), &DeviceManager::runSteps,                  connectionType);
+    QObject::connect(this,                &DeviceManagerWrapper::sendReturnToZero,  workerObject_.get(), &DeviceManager::returnToZero,              connectionType);
+    QObject::connect(this,                &DeviceManagerWrapper::sendOpenCsvFile,   workerObject_.get(), &DeviceManager::openCsvFile,               connectionType);
+    QObject::connect(this,                &DeviceManagerWrapper::sendClearTasks,    workerObject_.get(), &DeviceManager::clearTasks,                connectionType);
+#endif
+
 #endif
 }
 
@@ -46,3 +69,17 @@ DeviceManager* DeviceManagerWrapper::getWorker()
 {
     return workerObject_.get();
 }
+
+#ifdef MOTOR
+void DeviceManagerWrapper::posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle)
+{
+    qDebug() << "DeviceManagerWrapper::posIsConstant: currFAngle: " << currFAngle << ", taskFAngle: " << taskFAngle << ", currSAngle: " << currSAngle << ", taskSAngle: " << taskSAngle;
+
+    currFAngle_ = currFAngle;
+    currSAngle_ = currSAngle;
+    taskFAngle_ = taskFAngle;
+    taskSAngle_ = taskSAngle;
+
+    emit enginesStopped();
+}
+#endif

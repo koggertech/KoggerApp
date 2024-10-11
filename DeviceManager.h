@@ -12,6 +12,9 @@
 #include "ProtoBinnary.h"
 #include "IDBinnary.h"
 
+#ifdef MOTOR
+#include "motor_control.h"
+#endif
 
 class DeviceManager : public QObject
 {
@@ -29,6 +32,11 @@ public:
     Q_INVOKABLE int pilotModeState();
 
     QList<DevQProperty*> getDevList();
+    QList<DevQProperty*> getDevList(BoardVersion ver);
+
+#ifdef MOTOR
+    bool isMotorControlCreated() const;
+#endif
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
@@ -47,6 +55,16 @@ public slots:
     void binFrameOut(ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
+
+#ifdef MOTOR
+    float getFAngle();
+    float getSAngle();
+    void returnToZero(int id);
+    void runSteps(int id, int speed, int angle);
+    void openCsvFile(QString path);
+    void clearTasks();
+    void calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
+#endif
 
 signals:
     void dataSend(QByteArray data);
@@ -74,12 +92,20 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
+    void encoderComplete(float e1, float e2, float e3);
+
 #ifdef SEPARATE_READING
     void fileStartOpening();
     void fileBreaked(bool);
     void onFileReadEnough();
 #endif
     void fileOpened();
+
+#ifdef MOTOR
+    void motorDeviceChanged();
+    void anglesHasChanged();
+    void posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
+#endif
 
 private:
     /*methods*/
@@ -131,6 +157,12 @@ private:
     volatile bool break_;
 #ifdef SEPARATE_READING
     bool onOpen_{ false };
+#endif
+
+#ifdef MOTOR
+    std::unique_ptr<MotorControl> motorControl_;
+    float fAngle_ = 0.0f;
+    float sAngle_ = 0.0f;
 #endif
 
 private slots:

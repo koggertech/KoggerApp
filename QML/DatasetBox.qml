@@ -18,7 +18,7 @@ DevSettingsBox {
         width: control.width
 
         TitleMenuBox {
-            titleText: "Dataset"
+            titleText: qsTr("Dataset")
             Layout.fillWidth: true
         }
 
@@ -34,7 +34,7 @@ DevSettingsBox {
                     Text {
                         x: 35
                         y: height
-                        text: "Channel #1, ms:"
+                        text: qsTr("Channel #1, ms:")
                         padding: 10
                         color: "#808080"
                         font.pixelSize: 16
@@ -64,7 +64,7 @@ DevSettingsBox {
                     Text {
                         x: 35
                         y: height
-                        text: "Channel #2, ms:"
+                        text: qsTr("Channel #2, ms:")
                         padding: 10
                         color: "#808080"
                         font.pixelSize: 16

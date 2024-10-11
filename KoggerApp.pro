@@ -4,6 +4,7 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
+# CONFIG += MOTOR # motor_control definition
 CONFIG += SEPARATE_READING
 
 !android {
@@ -11,6 +12,8 @@ CONFIG += SEPARATE_READING
 }
 
 android {
+    ANDROID_TARGET_SDK_VERSION = 34
+
     QT += androidextras
     QT += core-private
     QT += gui-private
@@ -98,6 +101,10 @@ SOURCES += \
     qtandroidserialport/src/qserialportinfo.cpp \
     qtandroidserialport/src/qserialportinfo_android.cpp \
 }
+
+TRANSLATIONS += languages/translation_en.ts \
+                languages/translation_ru.ts \
+                languages/translation_pl.ts
 
 RESOURCES += QML/qml.qrc \
     icons.qrc \
@@ -256,9 +263,16 @@ android {
 ##    ANDROID_ABIS = x86
 }
 
-ANDROID_ABIS = armeabi-v7a
+ANDROID_ABIS = armeabi-v7a arm64-v8a x86 x86_64
 
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
     include($$OPENSSL_PATH)
+}
+
+MOTOR {
+DEFINES += MOTOR
+HEADERS += motor_control.h
+SOURCES += motor_control.cpp
+DISTFILES += QML/MotorViewer.qml
 }

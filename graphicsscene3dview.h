@@ -15,6 +15,7 @@
 #include "vertexeditingdecorator.h"
 #include "ray.h"
 #include "navigation_arrow.h"
+#include "usbl_view.h"
 
 
 class Dataset;
@@ -138,6 +139,7 @@ public:
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
+    std::shared_ptr<UsblView> getUsblViewPtr() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
@@ -197,6 +199,7 @@ private:
     std::shared_ptr<PlaneGrid> m_planeGrid;
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> m_navigationArrow;
+    std::shared_ptr<UsblView> usblView_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

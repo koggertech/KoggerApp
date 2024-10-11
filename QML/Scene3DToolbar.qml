@@ -44,7 +44,7 @@ ColumnLayout {
         ColumnLayout {
             //width: 300
             ParamSetup {
-                paramName: "Edge limit, m:"
+                paramName: qsTr("Edge limit, m:")
 
                 SpinBoxCustom {
                     id: triangleEdgeLengthLimitSpinBox
@@ -62,11 +62,11 @@ ColumnLayout {
             }
 
             ParamSetup {
-                paramName: "Decimation by:"
+                paramName: qsTr("Decimation by:")
 
                 CheckButton {
                     id: decimationCountCheck
-                    text: "Count"
+                    text: qsTr("Count")
                     checked: true
                     ButtonGroup.group: decimationGroup
 
@@ -77,7 +77,7 @@ ColumnLayout {
 
                 CheckButton {
                     id: decimationDistanceCheck
-                    text: "Distance"
+                    text: qsTr("Distance")
                     ButtonGroup.group: decimationGroup
 
                     onFocusChanged: {
@@ -97,7 +97,7 @@ ColumnLayout {
 
             ParamSetup {
                 visible: decimationCountCheck.checked
-                paramName: "Point count:"
+                paramName: qsTr("Point count:")
 
                 SpinBoxCustom {
                     id: decimationCountSpinBox
@@ -116,7 +116,7 @@ ColumnLayout {
             ParamSetup {
                 //id: decimationDistance
                 visible: decimationDistanceCheck.checked
-                paramName: "Decimation, m:"
+                paramName: qsTr("Decimation, m:")
 
                 SpinBoxCustom {
                     id: decimationDistanceSpinBox
@@ -134,11 +134,11 @@ ColumnLayout {
             }
 
             ParamSetup {
-                paramName: "Type:"
+                paramName: qsTr("Type:")
 
                 CheckButton {
                     id: triangleTypeCheck
-                    text: "Triangle"
+                    text: qsTr("Triangle")
                     checked: true
                     ButtonGroup.group: surfaceTypeGroup
 
@@ -149,7 +149,7 @@ ColumnLayout {
 
                 CheckButton {
                     id: gridTypeCheck
-                    text: "Grid"
+                    text: qsTr("Grid")
                     ButtonGroup.group: surfaceTypeGroup
 
                     onFocusChanged: {
@@ -164,7 +164,7 @@ ColumnLayout {
 
             ParamSetup {
                 visible: gridTypeCheck.checked
-                paramName: "Grid step, m:"
+                paramName: qsTr("Grid step, m:")
 
                 SpinBoxCustom {
                     id: gridCellSizeSpinBox
@@ -215,7 +215,7 @@ ColumnLayout {
             }
 
             CButton {
-                text: "Update"
+                text: qsTr("Update")
                 Layout.fillWidth: true
                 icon.source: "./icons/refresh.svg"
                 onClicked: {
@@ -227,6 +227,67 @@ ColumnLayout {
                     //BottomTrackControlMenuController.onSurfaceUpdated()
                 }
 
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+        }
+    }
+
+    // usbl settings
+    MenuFrame {
+        id: usblViewSettings
+        visible: usblViewCheckButton.hovered || isHovered || usblViewCheckButton.longPressTriggered
+        z: usblViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !usblViewCheckButton.hovered) {
+                    usblViewCheckButton.longPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                usblViewCheckButton.longPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CButton {
+                text: "Update"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    UsblViewControlMenuController.onUpdateUsblViewButtonClicked()
+                }
+                onFocusChanged: {
+                    surfaceSettings.focus = true
+                }
+            }
+
+            CButton {
+                text: "Clear"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    UsblViewControlMenuController.onClearUsblViewButtonClicked()
+                }
                 onFocusChanged: {
                     surfaceSettings.focus = true
                 }
@@ -317,7 +378,7 @@ ColumnLayout {
                 }
                 RowLayout {
                     CText {
-                        text: "Angle offset (l/r)°:"
+                        text: "Angle offset (l/r)Â°:"
                     }
                     SpinBoxCustom  {
                         implicitWidth: 150
@@ -668,6 +729,58 @@ ColumnLayout {
 
                 onTriggered: {
                     surfaceCheckButton.longPressTriggered = true;
+                }
+            }
+        }
+
+        // usbl view button
+        CheckButton {
+            id: usblViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/gps.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                UsblViewControlMenuController.onUsblViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                UsblViewControlMenuController.onUsblViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+
+            property bool longPressTriggered: false
+
+            MouseArea {
+                id: usblViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    usblViewLongPressTimer.start()
+                    usblViewCheckButton.longPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!usblViewCheckButton.longPressTriggered) {
+                        usblViewCheckButton.checked = !usblViewCheckButton.checked
+                    }
+                    usblViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    usblViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: usblViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    usblViewCheckButton.longPressTriggered = true;
                 }
             }
         }

@@ -12,13 +12,15 @@ GridLayout {
 
     property var targetPlot: null
 
+    signal languageChanged(string langStr)
+
     ColumnLayout {
         id: columnItem
         spacing: 24
         Layout.margins: 10
 
         ParamGroup {
-            groupName: "Plot"
+            groupName: qsTr("Plot")
 
             RowLayout {
                 id:rowDataset
@@ -32,7 +34,7 @@ GridLayout {
                     }
 
                     Component.onCompleted: {
-                        model = ["Dataset #1"]
+                        model = [qsTr("Dataset #1")]
                     }
                 }
 
@@ -54,8 +56,8 @@ GridLayout {
                     }
 
                     onCurrentTextChanged: {
-                        var ch1 = channel1Combo.currentText != "None" ? channel1Combo.currentText != "First" ? channel1Combo.currentText : 32767 : 32768
-                        var ch2 = channel2Combo.currentText != "None" ? channel2Combo.currentText != "First" ? channel2Combo.currentText : 32767 : 32768
+                        var ch1 = channel1Combo.currentText !== qsTr("None") ? channel1Combo.currentText !== qsTr("First") ? channel1Combo.currentText : 32767 : 32768
+                        var ch2 = channel2Combo.currentText !== qsTr("None") ? channel2Combo.currentText !== qsTr("First") ? channel2Combo.currentText : 32767 : 32768
 
                         targetPlot.plotDatasetChannel(ch1, ch2)
                         core.setSideScanChannels(ch1, ch2);
@@ -79,8 +81,8 @@ GridLayout {
                     }
 
                     onCurrentTextChanged: {
-                        var ch1 = channel1Combo.currentText != "None" ? channel1Combo.currentText != "First" ? channel1Combo.currentText : 32767 : 32768
-                        var ch2 = channel2Combo.currentText != "None" ? channel2Combo.currentText != "First" ? channel2Combo.currentText : 32767 : 32768
+                        var ch1 = channel1Combo.currentText !== qsTr("None") ? channel1Combo.currentText !== qsTr("First") ? channel1Combo.currentText : 32767 : 32768
+                        var ch2 = channel2Combo.currentText !== qsTr("None") ? channel2Combo.currentText !== qsTr("First") ? channel2Combo.currentText : 32767 : 32768
 
                         targetPlot.plotDatasetChannel(ch1, ch2)
                         core.setSideScanChannels(ch1, ch2);
@@ -94,7 +96,7 @@ GridLayout {
                     Layout.fillWidth: true
                     //                        Layout.preferredWidth: 150
                     checked: true
-                    text: "Echogram"
+                    text: qsTr("Echogram")
                     onCheckedChanged: targetPlot.plotEchogramVisible(checked)
                     Component.onCompleted: targetPlot.plotEchogramVisible(checked)
                 }
@@ -103,7 +105,7 @@ GridLayout {
                     id: echoTheme
                     //                        Layout.fillWidth: true
                     Layout.preferredWidth: 150
-                    model: ["Blue", "Sepia", "WRGBD", "WhiteBlack", "BlackWhite"]
+                    model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
                     currentIndex: 0
 
                     onCurrentIndexChanged: targetPlot.plotEchogramTheme(currentIndex)
@@ -118,7 +120,7 @@ GridLayout {
                     id: echogramTypesList
                     //                        Layout.fillWidth: true
                     Layout.preferredWidth: 150
-                    model: ["Raw", "Side-Scan"]
+                    model: [qsTr("Raw"), qsTr("Side-Scan")]
                     currentIndex: 0
 
                     onCurrentIndexChanged: targetPlot.plotEchogramCompensation(currentIndex) // TODO
@@ -135,7 +137,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackVisible
                     Layout.fillWidth: true
-                    text: "Bottom-Track"
+                    text: qsTr("Bottom-Track")
                     onCheckedChanged: targetPlot.plotBottomTrackVisible(checked)
                     Component.onCompleted: targetPlot.plotBottomTrackVisible(checked)
                 }
@@ -144,7 +146,7 @@ GridLayout {
                     id: bottomTrackThemeList
                     //                        Layout.fillWidth: true
                     //                        Layout.preferredWidth: 150
-                    model: ["Line1", "Line2", "Dot1", "Dot2", "DotLine"]
+                    model: [qsTr("Line1"), qsTr("Line2"), qsTr("Dot1"), qsTr("Dot2"), qsTr("DotLine")]
                     currentIndex: 1
 
                     onCurrentIndexChanged: targetPlot.plotBottomTrackTheme(currentIndex)
@@ -160,14 +162,14 @@ GridLayout {
                 CCheck {
                     id: rangefinderVisible
                     Layout.fillWidth: true
-                    text: "Rangefinder"
+                    text: qsTr("Rangefinder")
                     onCheckedChanged: targetPlot.plotRangefinderVisible(checked)
                     Component.onCompleted: targetPlot.plotRangefinderVisible(checked)
                 }
 
                 CCombo  {
                     id: rangefinderThemeList
-                    model: ["Text", "Line", "Dot"]
+                    model: [qsTr("Text"), qsTr("Line"), qsTr("Dot")]
                     currentIndex: 1
 
                     onCurrentIndexChanged: targetPlot.plotRangefinderTheme(currentIndex)
@@ -183,7 +185,7 @@ GridLayout {
             CCheck {
                 visible: instruments > 1
                 id: ahrsVisible
-                text: "Attitude"
+                text: qsTr("Attitude")
                 onCheckedChanged: targetPlot.plotAttitudeVisible(checked)
                 Component.onCompleted: targetPlot.plotAttitudeVisible(checked)
             }
@@ -201,7 +203,7 @@ GridLayout {
                 CCheck {
                     id: dopplerBeamVisible
                     Layout.fillWidth: true
-                    text: "Doppler Beams"
+                    text: qsTr("Doppler Beams")
                     onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
                     Component.onCompleted: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
                 }
@@ -266,7 +268,7 @@ GridLayout {
                 CCheck {
                     id: dopplerInstrumentVisible
                     Layout.fillWidth: true
-                    text: "Doppler Instrument"
+                    text: qsTr("Doppler Instrument")
                     onCheckedChanged: targetPlot.plotDopplerInstrumentVisible(checked)
                     Component.onCompleted: targetPlot.plotDopplerInstrumentVisible(checked)
                 }
@@ -305,7 +307,7 @@ GridLayout {
                     id: adcpVisible
                     enabled: false
                     Layout.fillWidth: true
-                    text: "Doppler Profiler"
+                    text: qsTr("Doppler Profiler")
                 }
             }
 
@@ -315,7 +317,7 @@ GridLayout {
                     id: gnssVisible
                     checked: false
                     Layout.fillWidth: true
-                    text: "GNSS data"
+                    text: qsTr("GNSS data")
 
                     onCheckedChanged: targetPlot.plotGNSSVisible(checked, 1)
                     Component.onCompleted: targetPlot.plotGNSSVisible(checked, 1)
@@ -331,14 +333,14 @@ GridLayout {
                 CCheck {
                     id: gridVisible
                     Layout.fillWidth: true
-                    text: "Grid"
+                    text: qsTr("Grid")
                     onCheckedChanged: targetPlot.plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
                 }
 
                 SpinBoxCustom {
                     id: gridNumber
                     from: 1
-                    to: 20
+                    to: 24
                     stepSize: 1
                     value: 5
 
@@ -357,7 +359,7 @@ GridLayout {
                 CCheck {
                     id: angleVisible
                     Layout.fillWidth: true
-                    text: "Angle range, °"
+                    text: qsTr("Angle range, °")
                     onCheckedChanged: targetPlot.plotAngleVisibility(checked)
                     Component.onCompleted: targetPlot.plotAngleVisibility(checked)
 
@@ -405,7 +407,7 @@ GridLayout {
                 CCheck {
                     id: velocityVisible
                     Layout.fillWidth: true
-                    text: "Velocity range, m/s"
+                    text: qsTr("Velocity range, m/s")
                     onCheckedChanged: targetPlot.plotVelocityVisible(checked)
                     Component.onCompleted: targetPlot.plotVelocityVisible(checked)
 
@@ -458,7 +460,7 @@ GridLayout {
                     id: distanceAutoRange
                     checked: true
                     Layout.fillWidth: true
-                    text: "Distance auto range"
+                    text: qsTr("Distance auto range")
 
                     onCheckedChanged: {
                         distanceAutoRangeRow.distanceAutorangeMode()
@@ -472,7 +474,7 @@ GridLayout {
 
                 CCombo  {
                     id: distanceAutoRangeList
-                    model: ["Last data       ", "Last on screen", "Max on screen"]
+                    model: [qsTr("Last data       "), qsTr("Last on screen"), qsTr("Max on screen")]
                     currentIndex: 0
                     onCurrentIndexChanged: distanceAutoRangeRow.distanceAutorangeMode()
                     Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
@@ -486,7 +488,7 @@ GridLayout {
             CCheck {
                 id: horisontalVertical
                 checked: true
-                text: "Horizontal"
+                text: qsTr("Horizontal")
             }
 
             Settings {
@@ -510,7 +512,7 @@ GridLayout {
         ParamGroup {
             visible: instruments > 0
             id: bottomTrackProcessingGroup
-            groupName: "Bottom-Track processing"
+            groupName: qsTr("Bottom-Track processing")
 
             property bool autoApplyChange: false
 
@@ -543,13 +545,13 @@ GridLayout {
 
             RowLayout {
                 ParamSetup {
-                    paramName: "Preset:"
+                    paramName: qsTr("Preset:")
 
                     CCombo  {
                         id: bottomTrackList
                         //                        Layout.fillWidth: true
                         Layout.preferredWidth: 250
-                        model: ["Normal 2D", "Narrow 2D", "Echogram Side-Scan"]
+                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Echogram Side-Scan")]
                         currentIndex: 0
 
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
@@ -569,7 +571,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackGainSlope
                     Layout.fillWidth: true
-                    text: "Gain slope:"
+                    text: qsTr("Gain slope:")
 
                     onCheckedChanged: {
                         if (checked) {
@@ -621,7 +623,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackThreshold
                     Layout.fillWidth: true
-                    text: "Threshold:"
+                    text: qsTr("Threshold:")
 
                     onCheckedChanged: {
                         if (checked) {
@@ -673,7 +675,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackWindow
                     Layout.fillWidth: true
-                    text: "Horizontal window:"
+                    text: qsTr("Horizontal window:")
 
                     onCheckedChanged: {
                         if (checked) {
@@ -710,7 +712,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackVerticalGap
                     Layout.fillWidth: true
-                    text: "Vertical gap, %:"
+                    text: qsTr("Vertical gap, %:")
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
 
                     onCheckedChanged: {
@@ -748,7 +750,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackMinRange
                     Layout.fillWidth: true
-                    text: "Min range, m:"
+                    text: qsTr("Min range, m:")
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
 
                     onCheckedChanged: {
@@ -804,7 +806,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackMaxRange
                     Layout.fillWidth: true
-                    text: "Max range, m:"
+                    text: qsTr("Max range, m:")
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
 
                     onCheckedChanged: {
@@ -859,7 +861,7 @@ GridLayout {
                 CCheck {
                     id: bottomTrackSensorOffset
                     Layout.fillWidth: true
-                    text: "Sonar offset XYZ, mm:"
+                    text: qsTr("Sonar offset XYZ, mm:")
 //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
 
                     onCheckedChanged: {
@@ -941,7 +943,7 @@ GridLayout {
 
             RowLayout {
                 CButton {
-                    text: "Processing"
+                    text: qsTr("Processing")
                     Layout.fillWidth: true
                     onClicked: bottomTrackProcessingGroup.updateProcessing()
                 }
@@ -950,7 +952,7 @@ GridLayout {
 
         ParamGroup {
             visible: instruments > 0
-            groupName: "Export"
+            groupName: qsTr("Export")
 
             ColumnLayout {
                 RowLayout {
@@ -999,7 +1001,7 @@ GridLayout {
                     CCheck {
                         id: exportDecimation
                         Layout.fillWidth: true
-                        text: "Decimation, m:"
+                        text: qsTr("Decimation, m:")
     //                    onCheckedChanged: bottomTrackProcessingGroup.updateProcessing()
                         Settings {
                             property alias exportDecimation: exportDecimation.checked
@@ -1019,7 +1021,7 @@ GridLayout {
                     }
 
                     CButton {
-                        text: "Export to CSV"
+                        text: qsTr("Export to CSV")
                         Layout.fillWidth: true
                         onClicked: core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
                     }
@@ -1027,7 +1029,7 @@ GridLayout {
 
                 RowLayout {
                     CButton {
-                        text: "Export to XTF"
+                        text: qsTr("Export to XTF")
                         Layout.fillWidth: true
                         onClicked: core.exportPlotAsXTF(exportPathText.text);
                     }
@@ -1035,7 +1037,7 @@ GridLayout {
 
                 RowLayout {
                     CButton {
-                        text: "Complex signal to CSV"
+                        text: qsTr("Complex signal to CSV")
                         Layout.fillWidth: true
                         onClicked: core.exportComplexToCSV(exportPathText.text);
                     }
@@ -1043,7 +1045,7 @@ GridLayout {
 
                 RowLayout {
                     CButton {
-                        text: "USBL to CSV"
+                        text: qsTr("USBL to CSV")
                         Layout.fillWidth: true
                         onClicked: core.exportUSBLToCSV(exportPathText.text);
                     }
@@ -1053,15 +1055,47 @@ GridLayout {
         }
 
         ParamGroup {
-            groupName: "Preference"
+            groupName: qsTr("Preference")
 
             ParamSetup {
-                paramName: "Display theme:"
+                paramName: qsTr("Language:")
+
+                CCombo  {
+                    id: appLanguage
+                    Layout.fillWidth: true
+                    model: [qsTr("English"), qsTr("Russian"), qsTr("Polish")]
+                    currentIndex: 0
+
+                    function getLanguageByIndex(index) {
+                            switch (index) {
+                                case 0:
+                                    return qsTr("English");
+                                case 1:
+                                    return qsTr("Russian");
+                                case 2:
+                                    return qsTr("Polish");
+                                default:
+                                    return qsTr("English");
+                            }
+                        }
+
+                    onCurrentIndexChanged: {
+                        control.languageChanged(getLanguageByIndex(currentIndex))
+                    }
+
+                    Settings {
+                        property alias appLanguage: appLanguage.currentIndex
+                    }
+                }
+            }
+
+            ParamSetup {
+                paramName: qsTr("Display theme:")
 
                 CCombo  {
                     id: appTheme
                     Layout.fillWidth: true
-                    model: ["Dark", "Super Dark", "Light", "Super Light"]
+                    model: [qsTr("Dark"), qsTr("Super Dark"), qsTr("Light"), qsTr("Super Light")]
                     currentIndex: 0
 
                     onCurrentIndexChanged: theme.themeID = currentIndex
@@ -1074,12 +1108,12 @@ GridLayout {
             }
 
             ParamSetup {
-                paramName: "Instrumets grade:"
+                paramName: qsTr("Instrumets grade:")
 
                 CCombo  {
                     id: instrumentsGradeList
                     Layout.fillWidth: true
-                    model: ["Fish Finders", "Bottom Tracking", "Maximum"]
+                    model: [qsTr("Fish Finders"), qsTr("Bottom Tracking"), qsTr("Maximum")]
                     currentIndex: 0
 
                     onCurrentIndexChanged: theme.instrumentsGrade = currentIndex
@@ -1094,11 +1128,11 @@ GridLayout {
 
         ParamGroup {
             visible: instruments > 1
-            groupName: "Interface"
+            groupName: qsTr("Interface")
 
             CCheck {
                 id: consoleVisible
-                text: "Console"
+                text: qsTr("Console")
 
                 onCheckedChanged: theme.consoleVisible = checked
                 Component.onCompleted: theme.consoleVisible = checked

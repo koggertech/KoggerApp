@@ -18,7 +18,7 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "Actions"
+            groupName: qsTr("Actions")
 
 
             RowLayout {
@@ -28,7 +28,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
-                    text: "Flash settings"
+                    text: qsTr("Flash settings")
 
                     onClicked: {
                         dev.flashSettings()
@@ -38,7 +38,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
-                    text: "Erase settings"
+                    text: qsTr("Erase settings")
 
                     onClicked: {
                         dev.resetSettings()
@@ -48,7 +48,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 60
-                    text: "Reboot"
+                    text: qsTr("Reboot")
 
                     onClicked: {
                         dev.reboot()
@@ -68,7 +68,7 @@ DevSettingsBox {
                 }
 
                 CButton {
-                    text: "Set baudrate"
+                    text: qsTr("Set baudrate")
 
                     onClicked: {
                         dev.baudrate = Number(baudrateCombo.currentText)
@@ -78,11 +78,11 @@ DevSettingsBox {
         }
 
         ParamGroup {
-            groupName: "Settings"
+            groupName: qsTr("Settings")
 
             FileDialog {
                 id: importFileDialog
-                title: "Open file"
+                title: qsTr("Open file")
                 selectExisting: true
                 nameFilters: ["XML files (*.xml)"]
 
@@ -99,7 +99,7 @@ DevSettingsBox {
 
             FileDialog {
                 id: exportFileDialog
-                title: "Save as file"
+                title: qsTr("Save as file")
                 selectExisting: false
                 nameFilters: ["XML files (*.xml)"]
 
@@ -117,14 +117,14 @@ DevSettingsBox {
             ColumnLayout {
                 RowLayout {
                     CButton {
-                        text: "Import"
+                        text: qsTr("Import")
                         Layout.fillWidth: true
                         onClicked: {
                             importFileDialog.open()
                         }
                     }
                     CButton {
-                        text: "Export"
+                        text: qsTr("Export")
                         Layout.fillWidth: true
                         onClicked: {
                             exportFileDialog.open()

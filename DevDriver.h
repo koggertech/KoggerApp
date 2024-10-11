@@ -127,6 +127,8 @@ public:
         return idVersion->boardVersion();
     }
 
+    bool isBoardInited() { return boardVersion() != BoardNone; }
+
     bool isSonar() {
         BoardVersion ver = boardVersion();
         return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced || ver == BoardSideEnhanced || ver == BoardEcho20;
@@ -140,6 +142,16 @@ public:
     bool isDoppler() {
         BoardVersion ver = boardVersion();
         return ver == BoardDVL;
+    }
+
+    bool isUSBLBeacon() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardUSBLBeacon;
+    }
+
+    bool isUSBL() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardUSBL;
     }
 
     bool isChartSupport() { return m_state.duplex && isSonar(); }
@@ -218,6 +230,13 @@ public slots:
     void setTranscState(bool state);
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
+
+    void askBeaconPosition() {
+        IDBinUsblSolution::AskBeacon ask;
+        askBeaconPosition(ask);
+    }
+    void askBeaconPosition(IDBinUsblSolution::AskBeacon ask);
+    void enableBeaconOnce(float timeout);
 
 #ifdef SEPARATE_READING
     void initProcessTimerConnects();

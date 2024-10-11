@@ -17,13 +17,6 @@ void Epoch::setEvent(int timestamp, int id, int unixt) {
     flags.eventAvail = true;
 }
 
-void Epoch::setEncoder(float encoder) {
-    _encoder.validMask |= 1;
-    _encoder.e1 = encoder;
-    flags.encoderAvail = true;
-}
-
-
 void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, int offset) {
     _charts[channel].amplitude = data;
     _charts[channel].resolution = resolution;
@@ -111,14 +104,10 @@ void Epoch::setTemp(float temp_c) {
     flags.tempAvail = true;
 }
 
-void Epoch::setEncoders(int16_t enc1, int16_t enc2, int16_t enc3, int16_t enc4, int16_t enc5, int16_t enc6) {
+void Epoch::setEncoders(float enc1, float enc2, float enc3) {
     _encoder.e1 = enc1;
     _encoder.e2 = enc2;
     _encoder.e3 = enc3;
-    _encoder.e4 = enc4;
-    _encoder.e5 = enc5;
-    _encoder.e6 = enc6;
-    _encoder.validMask = (uint16_t)0x111111;
 }
 
 void Epoch::setAtt(float yaw, float pitch, float roll) {
@@ -147,7 +136,7 @@ void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
     Q_UNUSED(is_update_dist);
 }
 
-void Epoch::moveComplexToEchogram(float offset_m) {
+void Epoch::moveComplexToEchogram(float offset_m, float levels_offset_db) {
     for (auto i = _complex.cbegin(), end = _complex.cend(); i != end; ++i) {
         // cout << qPrintable(i.key()) << ": " << i.value() << endl;
         QVector<ComplexF> data = i.value().data;
@@ -159,15 +148,19 @@ void Epoch::moveComplexToEchogram(float offset_m) {
         QVector<uint8_t> chart(size);
         uint8_t* chart_data = chart.data();
 
-        for(int i  = 0; i < size; i++) {
-            float amp = (compelex_data[i].logPow() - 86)*2.5;
+        if(i.key() >= 32 && i.key() < 36 ) {
+            levels_offset_db = 20;
+        }
+
+        for(int k  = 0; k < size; k++) {
+            float amp = (compelex_data[k].logPow() + levels_offset_db)*2.5;
 
             if(amp < 0) {
                 amp = 0;
             } else if(amp > 255) {
                 amp = 255;
             }
-            chart_data[i] = amp;
+            chart_data[k] = amp;
         }
 
         setChart(i.key(), chart, 1500.0f/i.value().sampleRate, offset_m);
@@ -282,13 +275,13 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
     emit dataUpdate();
 }
 
-void Dataset::addEncoder(float encoder) {
-    _lastEncoder = encoder;
-    if(endIndex() < 0) {
-        addNewEpoch();
+void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg) {
+    Epoch* last_epoch = last();
+    if(last_epoch->isEncodersSeted()) {
+        last_epoch = addNewEpoch();
     }
-    //    poolAppend();
-    _pool[endIndex()].setEncoder(_lastEncoder);
+
+    last_epoch->setEncoders(angle1_deg, angle2_deg, angle3_deg);
     emit dataUpdate();
 }
 
@@ -331,7 +324,13 @@ void Dataset::rawDataRecieved(RawData raw_data) {
         //     offset_m = last_epoch->usblSolution().distance_m;
         //     offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
         // }
-        last_epoch->moveComplexToEchogram(offset_m);
+        float offset_db = 0;
+        if(header.channelGroup == 0) {
+            offset_db = -86;
+        }
+
+        last_epoch->moveComplexToEchogram(offset_m, offset_db);
+
         if(header.channelGroup == 0) {
             last_epoch = addNewEpoch();
         }
@@ -1020,8 +1019,8 @@ void Dataset::updateBoatTrack(bool update_all) {
 QStringList Dataset::channelsNameList() {
     QStringList ch_names;
     QList<DatasetChannel> ch_list = channelsList().values();
-    ch_names.append(QString("None"));
-    ch_names.append(QString("First"));
+    ch_names.append(QString(tr("None")));
+    ch_names.append(QString(tr("First")));
     for (const auto& channel : ch_list) {
         ch_names.append(QString("%1").arg(channel.channel));
     }

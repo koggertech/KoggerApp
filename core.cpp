@@ -48,6 +48,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("NpdFilterControlMenuController",    npdFilterControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3DControlMenuController",      scene3dControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3dToolBarController",          scene3dToolBarController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("UsblViewControlMenuController",     usblViewControlMenuController_.get());
 }
 
 Console* Core::getConsolePtr()
@@ -983,6 +984,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     scene3dControlMenuController_->setQmlEngine(object);
     scene3dControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    usblViewControlMenuController_->setQmlEngine(object);
+    usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 }
 
 void Core::setSideScanChannels(int firstChId, int secondChId)
@@ -1024,6 +1028,7 @@ void Core::createControllers()
     polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
     scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();
     scene3dToolBarController_          = std::make_shared<Scene3dToolBarController>();
+    usblViewControlMenuController_     = std::make_shared<UsblViewControlMenuController>();
 }
 #ifdef SEPARATE_READING
 void Core::createDeviceManagerConnections()
@@ -1046,6 +1051,7 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onFileReadEnough,       this,        &Core::onFileReadEnough,   deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(this, &Core::sendCloseLogFile,                       deviceManagerWrapperPtr_->getWorker(), &DeviceManager::closeFile, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStartOpening,       this,        &Core::onFileStartOpening, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection));
 }
 
 void Core::removeDeviceManagerConnections()
@@ -1071,7 +1077,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
-
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection);
 }
 #endif
 
@@ -1125,6 +1131,15 @@ bool Core::isFactoryMode() const
         return true;
 #else
         return false;
+#endif
+}
+
+bool Core::isMotorControlMode() const
+{
+#ifdef MOTOR
+    return true;
+#else
+    return false;
 #endif
 }
 

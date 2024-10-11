@@ -18,6 +18,7 @@
 #include "bottomtrackcontrolmenucontroller.h"
 #include "surfacecontrolmenucontroller.h"
 #include "side_scan_view_control_menu_controller.h"
+#include "usbl_view_control_menu_controller.h"
 #include "pointgroupcontrolmenucontroller.h"
 #include "polygongroupcontrolmenucontroller.h"
 #include "mpcfiltercontrolmenucontroller.h"
@@ -26,6 +27,7 @@
 #include "scene3dcontrolmenucontroller.h"
 #include "DeviceManagerWrapper.h"
 #include "LinkManagerWrapper.h"
+//#include <FileReader.h>
 
 
 class Core : public QObject
@@ -37,6 +39,8 @@ public:
     ~Core();
 
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
+    Q_PROPERTY(bool isSupportedMotorControlMode READ isMotorControlMode CONSTANT)
+
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
@@ -121,6 +125,8 @@ private:
     void removeLinkManagerConnections();
     bool isOpenedFile() const;
     bool isFactoryMode() const;
+    bool isMotorControlMode() const;
+
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
 
@@ -137,7 +143,7 @@ private:
     std::shared_ptr<PolygonGroupControlMenuController> polygonGroupControlMenuController_;
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
-
+    std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
 
