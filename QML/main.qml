@@ -620,5 +620,30 @@ Window  {
         function onSurfaceProcessorTaskFinished() {
             surfaceProcessingProgressBar.visible = false
         }
+    }    
+
+    // banner on file opening
+    Rectangle {
+        id: fileOpeningOverlay
+        width: 300
+        height: 100
+        color: theme.controlBackColor
+        opacity: 0.8
+        radius: 10
+        anchors.centerIn: parent
+        visible: core.isFileOpening
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 10
+
+            Text {
+                text: qsTr("Please wait, the file is opening")
+                color: "white"
+                font.pixelSize: 20
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+            }
+        }
     }
 }
