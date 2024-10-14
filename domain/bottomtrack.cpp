@@ -213,8 +213,11 @@ void BottomTrack::selectEpoch(int epochIndex, int channelId)
     if (epochIndex < 0 || epochIndex >= datasetPtr_->size())
         return;
 
-    if (!datasetPtr_->fromIndex(epochIndex))
+    auto* epoch = datasetPtr_->fromIndex(epochIndex);
+
+    if (!epoch || !epoch->getPositionGNSS().ned.isCoordinatesValid()) {
         return;
+    }
 
     auto r = RENDER_IMPL(BottomTrack);
 
@@ -371,6 +374,7 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
         renderData_.clear();
     }
 
+    bool beenUpdated{ false };
     if (visibleChannel_.channel > -1) {
         int currMin = defMode ? 0 : lEpoch;
         int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
@@ -385,20 +389,29 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 
             if (pos.ned.isCoordinatesValid()) {
                 float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channel));
-                if (defMode || (!defMode && (renderData_.size() < currMax))) {
+                if (defMode) {
                     renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
                     epochIndexMatchingMap_.insert(renderData_.size() - 1, i);
+                    beenUpdated = true;
                 }
                 else {
-                    renderData_[i] = QVector3D(pos.ned.n,pos.ned.e,distance);
-                    epochIndexMatchingMap_[i] = i;
+                    for (int j = 0; j < renderData_.size(); ++j) { // find correct point by pos
+                        if (renderData_[j].x() == static_cast<float>(pos.ned.n) &&
+                            renderData_[j].y() == static_cast<float>(pos.ned.e)) {
+                            renderData_[j] = QVector3D(pos.ned.n, pos.ned.e, distance);
+                            epochIndexMatchingMap_[j] = i;
+                            beenUpdated = true;
+                            break;
+                        }
+                    }
                 }
             }
         }
     }
 
-    if (!renderData_.empty())
-        SceneObject::setData(renderData_,GL_LINE_STRIP);
+    if (beenUpdated && !renderData_.empty()) {
+        SceneObject::setData(renderData_, GL_LINE_STRIP);
+    }
 }
 
 QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceVector)
