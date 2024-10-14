@@ -217,12 +217,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="968"/>
+        <location filename="../plotcash.cpp" line="967"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="969"/>
+        <location filename="../plotcash.cpp" line="968"/>
         <source>First</source>
         <translation>Первый</translation>
     </message>
@@ -845,6 +845,14 @@
     </message>
 </context>
 <context>
+    <name>MotorViewer</name>
+    <message>
+        <location filename="../QML/MotorViewer.qml" line="248"/>
+        <source>Enter path</source>
+        <translation>Введите путь</translation>
+    </message>
+</context>
+<context>
     <name>MpcFilterControlMenu</name>
     <message>
         <location filename="../QML/MpcFilterControlMenu.qml" line="27"/>
@@ -1093,7 +1101,7 @@
     <name>SonarBox</name>
     <message>
         <location filename="../QML/SonarBox.qml" line="17"/>
-        <location filename="../QML/SonarBox.qml" line="295"/>
+        <location filename="../QML/SonarBox.qml" line="305"/>
         <source>Echogram</source>
         <translation>Эхограмма</translation>
     </message>
@@ -1103,186 +1111,186 @@
         <translation>Разрешение, мм</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="40"/>
+        <location filename="../QML/SonarBox.qml" line="50"/>
         <source>Number of Samples</source>
         <translation>Количество отсчётов</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="60"/>
+        <location filename="../QML/SonarBox.qml" line="70"/>
         <source>Offset of Samples</source>
         <translation>Оффсет отсчётов</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="81"/>
-        <location filename="../QML/SonarBox.qml" line="326"/>
+        <location filename="../QML/SonarBox.qml" line="91"/>
+        <location filename="../QML/SonarBox.qml" line="336"/>
         <source>Rangefinder</source>
         <translation>Глубиномер</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="84"/>
+        <location filename="../QML/SonarBox.qml" line="94"/>
         <source>Max distance, mm</source>
         <translation>Макс. дистанция, мм</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="104"/>
+        <location filename="../QML/SonarBox.qml" line="114"/>
         <source>Dead zone, mm</source>
         <translation>Мертвая зона, мм</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="124"/>
+        <location filename="../QML/SonarBox.qml" line="134"/>
         <source>Confidence threshold, %</source>
         <translation>Порог уверенности, %</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="145"/>
+        <location filename="../QML/SonarBox.qml" line="155"/>
         <source>Transducer</source>
         <translation>Трансдьюсер</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="148"/>
+        <location filename="../QML/SonarBox.qml" line="158"/>
         <source>Pulse count</source>
         <translation>Счётчик импульсов</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="168"/>
+        <location filename="../QML/SonarBox.qml" line="178"/>
         <source>Frequency, kHz</source>
         <translation>Частота, кГц</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="188"/>
+        <location filename="../QML/SonarBox.qml" line="198"/>
         <source>Booster</source>
         <translation>Усилитель</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="205"/>
-        <location filename="../QML/SonarBox.qml" line="318"/>
-        <location filename="../QML/SonarBox.qml" line="353"/>
-        <location filename="../QML/SonarBox.qml" line="384"/>
-        <location filename="../QML/SonarBox.qml" line="415"/>
-        <location filename="../QML/SonarBox.qml" line="446"/>
+        <location filename="../QML/SonarBox.qml" line="215"/>
+        <location filename="../QML/SonarBox.qml" line="328"/>
+        <location filename="../QML/SonarBox.qml" line="363"/>
+        <location filename="../QML/SonarBox.qml" line="394"/>
+        <location filename="../QML/SonarBox.qml" line="425"/>
+        <location filename="../QML/SonarBox.qml" line="456"/>
         <source>Off</source>
         <translation>Выкл</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="205"/>
-        <location filename="../QML/SonarBox.qml" line="353"/>
-        <location filename="../QML/SonarBox.qml" line="415"/>
-        <location filename="../QML/SonarBox.qml" line="446"/>
+        <location filename="../QML/SonarBox.qml" line="215"/>
+        <location filename="../QML/SonarBox.qml" line="363"/>
+        <location filename="../QML/SonarBox.qml" line="425"/>
+        <location filename="../QML/SonarBox.qml" line="456"/>
         <source>On</source>
         <translation>Вкл</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="227"/>
+        <location filename="../QML/SonarBox.qml" line="237"/>
         <source>DSP</source>
         <translation>ЦСП</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="230"/>
+        <location filename="../QML/SonarBox.qml" line="240"/>
         <source>Horizontal smoothing factor</source>
         <translation>Коэффициент горизонтального сглаживания</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="250"/>
+        <location filename="../QML/SonarBox.qml" line="260"/>
         <source>Speed of Sound, m/s</source>
         <translation>Скорость звука, м/с</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="272"/>
+        <location filename="../QML/SonarBox.qml" line="282"/>
         <source>Dataset</source>
         <translation>Набор данных</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="275"/>
+        <location filename="../QML/SonarBox.qml" line="285"/>
         <source>Period, ms</source>
         <translation>Период, мс</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="318"/>
+        <location filename="../QML/SonarBox.qml" line="328"/>
         <source>8-bit</source>
         <translation>8-бит</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="318"/>
+        <location filename="../QML/SonarBox.qml" line="328"/>
         <source>16-bit</source>
         <translation>16-бит</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="353"/>
+        <location filename="../QML/SonarBox.qml" line="363"/>
         <source>NMEA</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="361"/>
+        <location filename="../QML/SonarBox.qml" line="371"/>
         <source>AHRS</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="384"/>
+        <location filename="../QML/SonarBox.qml" line="394"/>
         <source>Euler</source>
         <translation>Эйлер</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="384"/>
+        <location filename="../QML/SonarBox.qml" line="394"/>
         <source>Quat.</source>
         <translation>Кват.</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="392"/>
+        <location filename="../QML/SonarBox.qml" line="402"/>
         <source>Temperature</source>
         <translation>Температура</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="423"/>
+        <location filename="../QML/SonarBox.qml" line="433"/>
         <source>Timestamp</source>
         <translation>Временная метка</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="455"/>
+        <location filename="../QML/SonarBox.qml" line="465"/>
         <source>Actions</source>
         <translation>Действия</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="532"/>
+        <location filename="../QML/SonarBox.qml" line="542"/>
         <source>Flash settings</source>
         <translation>Прошивка</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="542"/>
+        <location filename="../QML/SonarBox.qml" line="552"/>
         <source>Erase settings</source>
         <translation>Стереть прошивку</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="552"/>
+        <location filename="../QML/SonarBox.qml" line="562"/>
         <source>Reboot</source>
         <translation>Перезагрузить</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="572"/>
+        <location filename="../QML/SonarBox.qml" line="582"/>
         <source>Set baudrate</source>
         <translation>Установите скорость передачи</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="582"/>
+        <location filename="../QML/SonarBox.qml" line="592"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="586"/>
+        <location filename="../QML/SonarBox.qml" line="596"/>
         <source>Open file</source>
         <translation>Открыть файл</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="603"/>
+        <location filename="../QML/SonarBox.qml" line="613"/>
         <source>Save as file</source>
         <translation>Сохранить как файл</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="621"/>
+        <location filename="../QML/SonarBox.qml" line="631"/>
         <source>Import</source>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="628"/>
+        <location filename="../QML/SonarBox.qml" line="638"/>
         <source>Export</source>
         <translation>Экспорт</translation>
     </message>
@@ -1440,19 +1448,24 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="586"/>
+        <location filename="../QML/main.qml" line="592"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="586"/>
+        <location filename="../QML/main.qml" line="592"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="586"/>
+        <location filename="../QML/main.qml" line="592"/>
         <source> m/s</source>
         <translation> м/с</translation>
+    </message>
+    <message>
+        <location filename="../QML/main.qml" line="641"/>
+        <source>Please wait, the file is opening</source>
+        <translation>Пожалуйста подождите, файл открывается</translation>
     </message>
 </context>
 </TS>

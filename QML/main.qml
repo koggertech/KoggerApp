@@ -625,19 +625,20 @@ Window  {
     // banner on file opening
     Rectangle {
         id: fileOpeningOverlay
-        width: 300
-        height: 100
         color: theme.controlBackColor
         opacity: 0.8
         radius: 10
         anchors.centerIn: parent
         visible: core.isFileOpening
+        implicitWidth: textItem.implicitWidth + 40
+        implicitHeight: textItem.implicitHeight + 40
 
         Column {
             anchors.centerIn: parent
             spacing: 10
 
             Text {
+                id: textItem
                 text: qsTr("Please wait, the file is opening")
                 color: "white"
                 font.pixelSize: 20
