@@ -43,7 +43,7 @@ public slots:
     Q_INVOKABLE StreamListModel* streamsList();
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
-    void openFile(const QString& filePath);
+    void openFile(QString filePath);
 #ifdef SEPARATE_READING
     void closeFile(bool onOpen = false);
 #else
@@ -93,6 +93,7 @@ signals:
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
     void encoderComplete(float e1, float e2, float e3);
+    void fileStopsOpening();
 
 #ifdef SEPARATE_READING
     void fileStartOpening();

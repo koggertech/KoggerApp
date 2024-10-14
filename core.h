@@ -45,6 +45,7 @@ public:
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
+    Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -71,7 +72,7 @@ public slots:
     void onFileReadEnough();
     void onFileOpenBreaked(bool onOpen);
 #else
-    bool openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
+    void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
 #endif
     void onFileOpened();
@@ -99,10 +100,13 @@ public slots:
     bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
+    bool getIsFileOpening() const;
 
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
+    void sendIsFileOpening();
+
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
 #endif
@@ -179,4 +183,5 @@ private:
     } _factoryState = FactoryIdle;
     QByteArray _flashUID;
 #endif
+    bool isFileOpening_;
 };

@@ -18,7 +18,8 @@ Core::Core() :
     openedfilePath_(),
     isLoggingKlf_(false),
     isLoggingCsv_(false),
-    filePath_()
+    filePath_(),
+    isFileOpening_(false)
 {
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
@@ -285,73 +286,77 @@ void Core::onFileOpenBreaked(bool onOpen)
     }
 }
 #else
-bool Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEvent)
+void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEvent)
 {
-    QString localfilePath = filePath;
+    isFileOpening_ = true;
+    emit sendIsFileOpening();
 
-    if (onCustomEvent) {
-        fixFilePathString(localfilePath);
-        filePath_ = localfilePath;
-        emit filePathChanged();
-    }
+    QTimer::singleShot(15, this, [&]() ->void { // 15 ms delay
+        QString localfilePath = filePath;
 
-    linkManagerWrapperPtr_->closeOpenedLinks();
-    removeLinkManagerConnections();
+        if (onCustomEvent) {
+            fixFilePathString(localfilePath);
+            filePath_ = localfilePath;
+            emit filePathChanged();
+        }
 
-    QCoreApplication::processEvents(QEventLoop::AllEvents);
+        linkManagerWrapperPtr_->closeOpenedLinks();
+        removeLinkManagerConnections();
 
-    if (!isAppend)
-        datasetPtr_->resetDataset();
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
 
-    if (scene3dViewPtr_) {
         if (!isAppend)
-            scene3dViewPtr_->clear();
-        scene3dViewPtr_->setNavigationArrowState(false);
-        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
-    }
+            datasetPtr_->resetDataset();
 
-    QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
-
-    if (splitname.size() > 1) {
-        QString format = splitname.last();
-        if (format.contains("xtf", Qt::CaseInsensitive)) {
-            QFile file;
-            QUrl url(localfilePath);
-            url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
-            if (file.open(QIODevice::ReadOnly))
-                return openXTF(file.readAll());
-            return false;
+        if (scene3dViewPtr_) {
+            if (!isAppend)
+                scene3dViewPtr_->clear();
+            scene3dViewPtr_->setNavigationArrowState(false);
+            scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
         }
-    }
 
-    emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
+        QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
-    openedfilePath_ = localfilePath;
-
-    if (scene3dViewPtr_)
-        scene3dViewPtr_->fitAllInView();
-
-    datasetPtr_->setRefPositionByFirstValid();
-    datasetPtr_->usblProcessing();
-
-    if (scene3dViewPtr_) {
-        scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
-        scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
-    }
-
-    QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (i == 0 &&plot2dList_.at(i) != NULL) {
-            if (chs.size() >= 2) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+        if (splitname.size() > 1) {
+            QString format = splitname.last();
+            if (format.contains("xtf", Qt::CaseInsensitive)) {
+                QFile file;
+                QUrl url(localfilePath);
+                url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+                    if (file.open(QIODevice::ReadOnly)) {
+                        openXTF(file.readAll());
+                    }
+                    return;
+                }
             }
-            if (chs.size() == 1) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel);
+
+        emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
+
+        openedfilePath_ = localfilePath;
+
+        if (scene3dViewPtr_)
+            scene3dViewPtr_->fitAllInView();
+
+        datasetPtr_->setRefPositionByFirstValid();
+        datasetPtr_->usblProcessing();
+
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
+            scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
+        }
+
+        QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
+        for (int i = 0; i < plot2dList_.size(); i++) {
+            if (i == 0 &&plot2dList_.at(i) != NULL) {
+                if (chs.size() >= 2) {
+                    plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+                }
+                if (chs.size() == 1) {
+                    plot2dList_.at(i)->setDataChannel(chs[0].channel);
+                }
             }
         }
-    }
-
-    return true;
+    });
 }
 
 bool Core::closeLogFile()
@@ -1008,6 +1013,11 @@ void Core::stopDeviceManagerThread() const
 }
 #endif
 
+bool Core::getIsFileOpening() const
+{
+    return isFileOpening_;
+}
+
 ConsoleListModel* Core::consoleList()
 {
     return consolePtr_->listModel();
@@ -1078,6 +1088,11 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this, [this]() {
+                                                                                                              isFileOpening_ = false;
+                                                                                                              emit sendIsFileOpening();
+                                                                                                          }, deviceManagerConnection);
+
 }
 #endif
 

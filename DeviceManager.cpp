@@ -327,7 +327,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
     }
 }
 
-void DeviceManager::openFile(const QString &filePath)
+void DeviceManager::openFile(QString filePath)
 {
 #ifdef SEPARATE_READING
     break_ = false;
@@ -338,6 +338,7 @@ void DeviceManager::openFile(const QString &filePath)
     url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
 
     if (!file.open(QIODevice::ReadOnly)) {
+        emit fileStopsOpening();
         return;
     }
 
@@ -360,6 +361,7 @@ void DeviceManager::openFile(const QString &filePath)
             emit fileBreaked(onOpen_);
             onOpen_ = false;
             file.close();
+            emit fileStopsOpening();
             return;
         }
 #else
@@ -429,6 +431,7 @@ void DeviceManager::openFile(const QString &filePath)
     emit vruChanged();
 
     emit fileOpened();
+    emit fileStopsOpening();
 }
 
 #ifdef SEPARATE_READING
