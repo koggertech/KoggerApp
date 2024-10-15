@@ -39,6 +39,22 @@
     </message>
 </context>
 <context>
+    <name>CMouseOpacityArea</name>
+    <message>
+        <location filename="../QML/CMouseOpacityArea.qml" line="8"/>
+        <source>Tooltip</source>
+        <translation>Всплывающая подсказка</translation>
+    </message>
+</context>
+<context>
+    <name>CPopup</name>
+    <message>
+        <location filename="../QML/CPopup.qml" line="6"/>
+        <source>Custom popup</source>
+        <translation>Пользовательская всплывающая подсказка</translation>
+    </message>
+</context>
+<context>
     <name>CProgressButton</name>
     <message>
         <location filename="../QML/CProgressButton.qml" line="7"/>
@@ -845,6 +861,29 @@
     </message>
 </context>
 <context>
+    <name>MenuBar</name>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="64"/>
+        <source>Connections</source>
+        <translation>Подключения</translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="79"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="110"/>
+        <source>Display 3D</source>
+        <translation>Показать 3D</translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="128"/>
+        <source>Display 2D</source>
+        <translation>Показать 2D</translation>
+    </message>
+</context>
+<context>
     <name>MotorViewer</name>
     <message>
         <location filename="../QML/MotorViewer.qml" line="248"/>
@@ -1463,7 +1502,7 @@ Please wait...</source>
         <translation> м/с</translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="641"/>
+        <location filename="../QML/main.qml" line="642"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>
