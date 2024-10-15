@@ -2,7 +2,7 @@
 
 #include <QModelIndex>
 
-#include <drawutils.h>
+#include <draw_utils.h>
 #include <pointobject.h>
 
 PolygonObject::PolygonObject(QObject *parent)

@@ -1,5 +1,5 @@
 #include "pointgroup.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 
 PointGroup::PointGroup(QObject *parent)
     : SceneObject(new PointGroupRenderImplementation, parent)

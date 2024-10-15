@@ -79,6 +79,10 @@ void Plot2DEchogram::setThemeId(int theme_id) {
     setColorScheme(coloros, levels);
 }
 
+void Plot2DEchogram::setCompensation(int compensation_id) {
+    _compensation_id = compensation_id;
+}
+
 void Plot2DEchogram::updateColors() {
     float low = _levels.low;
     float high = _levels.high;
@@ -201,12 +205,12 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
                     int16_t cash_data_size = _cash[column].data.size();
 
                     if(cursor.channel2 == CHANNEL_NONE) {
-                        datasource->chartTo(cursor.channel1, from, to, cash_data, cash_data_size, 1);
+                        datasource->chartTo(cursor.channel1, from, to, cash_data, cash_data_size, _compensation_id);
                     } else {
                         int cash_data_size_part1 = cash_data_size*(range1/fullrange);
 
                         if(cash_data_size_part1 > 0) {
-                            datasource->chartTo(cursor.channel1, from1, to1, cash_data, cash_data_size_part1, 1, true);
+                            datasource->chartTo(cursor.channel1, from1, to1, cash_data, cash_data_size_part1, _compensation_id, true);
                         }
 
                         if(cash_data_size_part1 < 0) {
@@ -215,7 +219,7 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
 
                         const int cash_data_size_part2 = cash_data_size - cash_data_size_part1;
                         if(cash_data_size_part2 > 0) {
-                            datasource->chartTo(cursor.channel2, from2, to2, &cash_data[cash_data_size_part1], cash_data_size_part2, 1, false);
+                            datasource->chartTo(cursor.channel2, from2, to2, &cash_data[cash_data_size_part1], cash_data_size_part2, _compensation_id, false);
                         }
                     }
 

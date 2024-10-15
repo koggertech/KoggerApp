@@ -38,7 +38,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
                     default: break;
                 }
         }, Qt::QueuedConnection);
-    });
+    }, connectionType);
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();

@@ -1,5 +1,5 @@
 #include "planegrid.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 //#include <textrenderer.h>
 
 PlaneGrid::PlaneGrid(QObject *parent)
@@ -252,7 +252,7 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
 
     /*----------------------------grid----------------------------*/
     ctx->glLineWidth(1.0f);
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 0.0f, 0.0f, 200.0f)));
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(100.0f, 100.0f, 100.0f, 200.0f)));
     shaderProgram->setAttributeArray(posLoc, grid.constData());
     ctx->glDrawArrays(GL_LINES, 0, grid.size());
     ctx->glLineWidth(1.0f);

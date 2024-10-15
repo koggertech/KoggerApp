@@ -165,7 +165,9 @@ int main(int argc, char *argv[])
     QObject::connect(&app,  &QGuiApplication::aboutToQuit,
                      &core, [&]() {
                                 core.stopLinkManagerTimer();
-                                //core.stopFileReader();
+#ifdef SEPARATE_READING
+                                core.stopDeviceManagerThread();
+#endif
                             });
 
     engine.load(url);

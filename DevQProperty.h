@@ -57,6 +57,7 @@ public:
     Q_PROPERTY(int dopplerDist READ dopplerDist NOTIFY dopplerVeloComplete)
 
     Q_PROPERTY(QString devName READ devName NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int devType READ devType NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
 

@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import Qt.labs.settings 1.1
+import QtQuick.Dialogs 1.2
 
 
 ColumnLayout {
@@ -232,6 +234,7 @@ ColumnLayout {
         }
     }
 
+    // usbl settings
     MenuFrame {
         id: usblViewSettings
         visible: usblViewCheckButton.hovered || isHovered || usblViewCheckButton.longPressTriggered
@@ -292,6 +295,294 @@ ColumnLayout {
         }
     }
 
+    // side-scan extra settings
+    MenuFrame {
+        id: sideScanViewSettings
+        visible: sideScanViewCheckButton.hovered || isHovered || sideScanViewCheckButton.sideScanLongPressTriggered
+        z: sideScanViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !sideScanViewCheckButton.hovered) {
+                    sideScanViewCheckButton.sideScanLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                sideScanViewCheckButton.sideScanLongPressTriggered = false
+            }
+        }
+
+        RowLayout {
+            ColumnLayout {
+                CButton {
+                    text: "Updating state"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: true
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onUpdateStateChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Track last epoch"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: true
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                RowLayout {
+                    CText {
+                        text: "Theme id:"
+                    }
+                    SpinBoxCustom  {
+                        id: sideScanTheme
+                        implicitWidth: 150
+                        from: 0
+                        to: 4
+                        stepSize: 1
+                        value: 0
+
+                        onValueChanged: {
+                            SideScanViewControlMenuController.onThemeChanged(value)
+                        }
+                    }
+                }
+                RowLayout {
+                    CText {
+                        text: "Angle offset (l/r)°:"
+                    }
+                    SpinBoxCustom  {
+                        implicitWidth: 150
+                        from: -90
+                        to: 90
+                        stepSize: 1
+                        value: 0
+                        onValueChanged: {
+                            SideScanViewControlMenuController.onSetLAngleOffset(value)
+                        }
+                    }
+
+                    SpinBoxCustom  {
+                        implicitWidth: 150
+                        from: -90
+                        to: 90
+                        stepSize: 1
+                        value: 0
+                        onValueChanged: {
+                            SideScanViewControlMenuController.onSetRAngleOffset(value)
+                        }
+                    }
+                }
+                ColumnLayout {
+                    RowLayout {
+                        CText {
+                            text: "Tile side pixel size:"
+                        }
+                        SpinBoxCustom {
+                            id: sideScanTileSidePixelSizeSpinBox
+                            implicitWidth: 150
+                            from: 32
+                            to: 2048
+                            stepSize: 1
+                            value: 256
+                        }
+                    }
+                    RowLayout {
+                        CText {
+                            text: "Tile height matrix ratio:"
+                        }
+                        SpinBoxCustom {
+                            id: sideScanTileHeightMatrixRatioSpinBox
+                            implicitWidth: 150
+                            from: 2
+                            to: 256
+                            stepSize: 1
+                            value: 16
+                        }
+                    }
+                    RowLayout {
+                        CText {
+                            text: "Tile resolution (px/m):"
+                        }
+                        SpinBoxCustom {
+                             id: sideScanTileResolutionSpinBox
+                             implicitWidth: 150
+                             from: 1
+                             to: 100
+                             stepSize: 1
+                             value: 10
+                         }
+                    }
+                    CButton {
+                        text: "Reinit global mesh"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 200
+
+                        onClicked: {
+                            SideScanViewControlMenuController.onGlobalMeshChanged(
+                                        sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
+                        }
+
+                        onFocusChanged: {
+                            sideScanViewSettings.focus = true
+                        }
+                    }
+                }
+                CButton {
+                    text: "Use linear filter"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onUseFilterChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Grid/contour visible"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onGridVisibleChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Meas line visible"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Generate grid/contour"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    checkable: true
+                    checked: false
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Clear"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onClearClicked()
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+                CButton {
+                    text: "Update"
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+
+                    onClicked: {
+                        SideScanViewControlMenuController.onUpdateClicked()
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
+                }
+            }
+
+            // levels
+            ColumnLayout {
+                CText {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 0
+                    Layout.preferredWidth: theme.controlHeight*1.2
+                    horizontalAlignment: Text.AlignHCenter
+                    text: sideScanLevelsSlider.stopValue
+                    small: true
+                }
+
+                ChartLevel {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    id: sideScanLevelsSlider
+                    Layout.alignment: Qt.AlignHCenter
+
+                    onStartValueChanged: {
+                       SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                    }
+
+                    onStopValueChanged: {
+                       SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                    }
+                }
+
+                CText {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    Layout.bottomMargin: 0
+                    horizontalAlignment: Text.AlignHCenter
+
+                    text: sideScanLevelsSlider.startValue
+                    small: true
+                }
+            }
+        }
+    }
+
     RowLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
@@ -317,6 +608,17 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onClicked: Scene3dToolBarController.onFitAllInViewButtonClicked()
+        }
+
+        CheckButton {
+            id: cancelZoomViewButton
+            iconSource: "./icons/ruler-measure.svg"
+            backColor: theme.controlBackColor
+            checkable: false
+            checked: false
+            implicitWidth: theme.controlHeight
+
+            onClicked: Scene3dToolBarController.onCancelZoomButtonClicked()
         }
 
         CheckButton {
@@ -429,8 +731,9 @@ ColumnLayout {
                     surfaceCheckButton.longPressTriggered = true;
                 }
             }
-        }        
+        }
 
+        // usbl view button
         CheckButton {
             id: usblViewCheckButton
             backColor: theme.controlBackColor
@@ -447,6 +750,7 @@ ColumnLayout {
             Component.onCompleted: {
                 UsblViewControlMenuController.onUsblViewVisibilityCheckBoxCheckedChanged(checked)
             }
+
 
             property bool longPressTriggered: false
 
@@ -481,7 +785,52 @@ ColumnLayout {
             }
         }
 
+        // side scan view button
+        CheckButton {
+            id: sideScanViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/map-route.svg"
+            implicitWidth: theme.controlHeight
 
+            onCheckedChanged: {
+                SideScanViewControlMenuController.onVisibilityChanged(checked)
+            }
+
+            property bool sideScanLongPressTriggered: false
+
+            MouseArea {
+                id: sideScanViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    sideScanViewLongPressTimer.start()
+                    sideScanViewCheckButton.sideScanLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!sideScanViewCheckButton.sideScanLongPressTriggered) {
+                        sideScanViewCheckButton.checked = !sideScanViewCheckButton.checked
+                    }
+                    sideScanViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    sideScanViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: sideScanViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    sideScanViewCheckButton.sideScanLongPressTriggered = true;
+                }
+            }
+        }
 
         ButtonGroup{
             property bool buttonChangeFlag : false

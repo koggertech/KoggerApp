@@ -485,6 +485,10 @@ typedef struct   __attribute__((packed)) {
     int16_t vz; // cm/s
     uint16_t hdg; // cdeg
 
+    static uint32_t getID() {
+        return 33;
+    }
+
     double latitude() {
         return double(lat)/1.0e7;
     }
@@ -506,11 +510,15 @@ typedef struct   __attribute__((packed)) {
     }
 
     float velocityY() {
-        return float(vx)*0.01f;
+        return float(vy)*0.01f;
     }
 
     float velocityZ() {
-        return float(vx)*0.01f;
+        return float(vz)*0.01f;
+    }
+
+    float velocityH() {
+        return sqrtf(velocityX()*velocityX() + velocityY()*velocityY());
     }
 
 } MAVLink_MSG_GLOBAL_POSITION_INT;

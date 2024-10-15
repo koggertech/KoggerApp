@@ -141,6 +141,12 @@ void Plot2D::setEchogramTheme(int theme_id) {
     plotUpdate();
 }
 
+void Plot2D::setEchogramCompensation(int compensation_id) {
+    _echogram.setCompensation(compensation_id);
+    _echogram.resetCash();
+    plotUpdate();
+}
+
 void Plot2D::setBottomTrackVisible(bool visible) {
     _bottomProcessing.setVisible(visible);
     plotUpdate();

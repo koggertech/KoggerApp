@@ -2,7 +2,7 @@
 #include <graphicsscene3dview.h>
 #include <epochevent.h>
 //#include <textrenderer.h> TODO
-#include <drawutils.h>
+#include <draw_utils.h>
 #include <QtOpenGLExtensions/QOpenGLExtensions>
 
 #include <QHash>

@@ -1,5 +1,5 @@
 #include "vertexeditingdecorator.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 
 VertexEditingDecorator::VertexEditingDecorator(QObject *parent)
     : SceneObject(new VertexEditingDecoratorRenderImplementation, parent)

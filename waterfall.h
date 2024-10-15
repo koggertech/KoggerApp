@@ -59,6 +59,7 @@ public slots:
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
+    Q_INVOKABLE void plotEchogramCompensation(int compensation_id) { setEchogramCompensation(compensation_id); }
     void plotBottomTrackVisible(bool visible) { setBottomTrackVisible(visible); }
     void plotBottomTrackTheme(int theme_id) { setBottomTrackTheme(theme_id); }
 
@@ -85,7 +86,18 @@ public slots:
     }
 
     void doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz);
+    void refreshDistParams(int preset, int windowSize, float verticalGap, float rangeMin, float rangeMax, float gainSlope, float threshold, float offsetX, float offsetY, float offsetZ);
 
+    void setPreset(int value);
+    void setWindowSize(int value);
+    void setVerticalGap(float value);
+    void setRangeMin(float value);
+    void setRangeMax(float value);
+    void setGainSlope(float value);
+    void setThreshold(float value);
+    void setOffsetX(float value);
+    void setOffsetY(float value);
+    void setOffsetZ(float value);
 };
 
 #endif // WATERFALL_H

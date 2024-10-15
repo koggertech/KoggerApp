@@ -14,7 +14,7 @@ class DevDriver : public QObject
     Q_OBJECT
 public:
     explicit DevDriver(QObject *parent = nullptr);
-
+    ~DevDriver();
     typedef enum {
         DatasetOff = 0,
         DatasetCh1 = 1,
@@ -26,6 +26,11 @@ public:
         failUpgrade = -1,
         successUpgrade = 101
     };
+
+#ifdef SEPARATE_READING
+    QTimer* getProcessTimer();
+    QList<QTimer*> getChildTimers();
+#endif
 
     int distMax();
     void setDistMax(int dist);
@@ -112,6 +117,7 @@ public:
 
 
     QString devName() { return m_devName; }
+    int devType() const { return static_cast<int>(idVersion->boardVersion()); }
     uint32_t devSerialNumber();
     QString devPN();
 
@@ -231,6 +237,11 @@ public slots:
     }
     void askBeaconPosition(IDBinUsblSolution::AskBeacon ask);
     void enableBeaconOnce(float timeout);
+
+#ifdef SEPARATE_READING
+    void initProcessTimerConnects();
+    void initChildsTimersConnects();
+#endif
 
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
