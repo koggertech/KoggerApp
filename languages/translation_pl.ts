@@ -39,6 +39,22 @@
     </message>
 </context>
 <context>
+    <name>CMouseOpacityArea</name>
+    <message>
+        <location filename="../QML/CMouseOpacityArea.qml" line="8"/>
+        <source>Tooltip</source>
+        <translation>Tooltip</translation>
+    </message>
+</context>
+<context>
+    <name>CPopup</name>
+    <message>
+        <location filename="../QML/CPopup.qml" line="6"/>
+        <source>Custom popup</source>
+        <translation>Niestandardowe wyskakujące okienko</translation>
+    </message>
+</context>
+<context>
     <name>CProgressButton</name>
     <message>
         <location filename="../QML/CProgressButton.qml" line="7"/>
@@ -491,7 +507,7 @@
     <message>
         <location filename="../QML/DisplaySettings.qml" line="475"/>
         <source>Last data       </source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnie dane       </translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="489"/>
@@ -846,6 +862,29 @@
         <location filename="../QML/KoggerCommon/KWaitProgressBar.qml" line="6"/>
         <source>Please, wait...</source>
         <translation>Proszę czekać...</translation>
+    </message>
+</context>
+<context>
+    <name>MenuBar</name>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="64"/>
+        <source>Connections</source>
+        <translation>Połączenia</translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="79"/>
+        <source>Settings</source>
+        <translation>Właściwości</translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="110"/>
+        <source>Display 3D</source>
+        <translation>Wyświetlacz 3D</translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="128"/>
+        <source>Display 2D</source>
+        <translation>Wyświetlacz 2D</translation>
     </message>
 </context>
 <context>
@@ -1467,7 +1506,7 @@ Proszę czekać...</translation>
         <translation> m/s</translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="641"/>
+        <location filename="../QML/main.qml" line="642"/>
         <source>Please wait, the file is opening</source>
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>
