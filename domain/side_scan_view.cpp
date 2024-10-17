@@ -2,6 +2,7 @@
 
 #include <QtMath>
 #include "graphicsscene3dview.h"
+#include <QtConcurrent/QtConcurrent>
 
 
 using namespace sscan;
@@ -24,7 +25,8 @@ SideScanView::SideScanView(QObject* parent) :
     workMode_(Mode::kUndefined),
     manualSettedChannels_(false),
     lAngleOffset_(0.0f),
-    rAngleOffset_(0.0f)
+    rAngleOffset_(0.0f),
+    startedInThread_(false)
 {
     colorTableTextureTask_ = colorTable_.getRgbaColors();
 }
@@ -57,13 +59,42 @@ bool SideScanView::updateChannelsIds()
     return retVal;
 }
 
-void SideScanView::updateData(int endIndx, int endOffset)
+void SideScanView::startUpdateDataInThread(int endIndx, int endOffset)
 {
+    QThreadPool* threadPool = QThreadPool::globalInstance();
+
+    QtConcurrent::run(threadPool, [this, endIndx, endOffset]() {
+        updateData(endIndx, endOffset, true);
+    });
+
+    startedInThread_ = true;
+
+    if (workMode_ == Mode::kPerformance) {
+        emit sendStartedInThread(startedInThread_);
+    }
+}
+
+void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
+{
+    std::unique_ptr<QMutexLocker> locker;
+    std::function<void()> cleanFunc;
+    if (backgroundThread) {
+        cleanFunc = [&, this]() {
+            if (backgroundThread) {
+                startedInThread_ = false;
+                emit sendStartedInThread(startedInThread_);
+            }
+        };
+        locker = std::make_unique<QMutexLocker>(&mutex_);
+    }
+
     if (!datasetPtr_) {
+        if (cleanFunc) cleanFunc();
         return;
     }
 
     if (!manualSettedChannels_ && !updateChannelsIds()) {
+        if (cleanFunc) cleanFunc();
         return;
     }
 
@@ -71,11 +102,13 @@ void SideScanView::updateData(int endIndx, int endOffset)
     bool segSIsValid = checkChannel(segSChannelId_);
 
     if (!segFIsValid && !segSIsValid) {
+        if (cleanFunc) cleanFunc();
         return;
     }
 
     int epochCount = (endIndx == 0 ? datasetPtr_->size() : endIndx) - endOffset;
     if (epochCount < 4) {
+        if (cleanFunc) cleanFunc();
         return;
     }
 
@@ -143,6 +176,7 @@ void SideScanView::updateData(int endIndx, int endOffset)
 
     newMatrixParams = getMatrixParams(measLinesVertices);
     if (!newMatrixParams.isValid()) {
+        if (cleanFunc) cleanFunc();
         return;
     }
 
@@ -371,6 +405,8 @@ void SideScanView::updateData(int endIndx, int endOffset)
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
+
+    if (cleanFunc) cleanFunc();
 }
 
 void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)

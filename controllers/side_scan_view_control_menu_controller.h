@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QList>
 #include "qmlcomponentcontroller.h"
 #include "side_scan_view.h"
 
@@ -38,7 +39,9 @@ protected:
     virtual void findComponent() override;
 
 private:
+    void tryClearMakeConnections();
     SideScanView* getSideScanViewPtr() const;
     GraphicsScene3dView* m_graphicsSceneView;
     Core* corePtr_;
+    QList<QMetaObject::Connection> connections_;
 };

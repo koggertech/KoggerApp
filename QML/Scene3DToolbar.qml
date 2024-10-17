@@ -328,6 +328,8 @@ ColumnLayout {
         }
 
         RowLayout {
+            enabled: !core.isMosaicUpdatingInThread
+
             ColumnLayout {
                 CButton {
                     text: "Updating state"

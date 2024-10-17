@@ -14,11 +14,15 @@ SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *pa
 void SideScanViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     m_graphicsSceneView = sceneView;
+
+    tryClearMakeConnections();
 }
 
 void SideScanViewControlMenuController::setCorePtr(Core* corePtr)
 {
     corePtr_ = corePtr;
+
+    tryClearMakeConnections();
 }
 
 void SideScanViewControlMenuController::onVisibilityChanged(bool state)
@@ -113,7 +117,7 @@ void SideScanViewControlMenuController::onUpdateClicked()
 #endif
         m_graphicsSceneView->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
         m_graphicsSceneView->interpolateDatasetEpochs();
-        m_graphicsSceneView->getSideScanViewPtr()->updateData(0);
+        m_graphicsSceneView->getSideScanViewPtr()->startUpdateDataInThread(0, 0);
     }
 }
 
@@ -142,4 +146,16 @@ SideScanView* SideScanViewControlMenuController::getSideScanViewPtr() const
 void SideScanViewControlMenuController::findComponent()
 {
     m_component = m_engine->findChild<QObject*>("sideScanViewControlMenu");
+}
+
+void SideScanViewControlMenuController::tryClearMakeConnections()
+{
+    for (auto& itm : connections_) {
+        disconnect(itm);
+    }
+    connections_.clear();
+
+    if (m_graphicsSceneView && corePtr_) {
+        connections_.append(QObject::connect(m_graphicsSceneView->getSideScanViewPtr().get(), &SideScanView::sendStartedInThread, corePtr_, &Core::setIsMosaicUpdatingInThread, Qt::QueuedConnection));
+    }
 }

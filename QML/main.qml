@@ -198,9 +198,17 @@ Window  {
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
-                    text:      qsTr("Calculating surface.\nPlease wait...")
-                    textColor: "black"
+                    text:      qsTr("Calculating surface\nPlease wait...")
+                    textColor: "white"
                     visible:   false
+                }
+
+                KWaitProgressBar{
+                    id:        sideScanProcessingProgressBar
+                    objectName: "sideScanProcessingProgressBar"
+                    text:      qsTr("Calculating mosaic\nPlease wait...")
+                    textColor: "white"
+                    visible:  core.isMosaicUpdatingInThread
                 }
 
                 PinchArea {

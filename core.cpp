@@ -19,7 +19,8 @@ Core::Core() :
     isLoggingKlf_(false),
     isLoggingCsv_(false),
     filePath_(),
-    isFileOpening_(false)
+    isFileOpening_(false),
+    isMosaicUpdatingInThread_(false)
 {
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
@@ -1018,6 +1019,18 @@ bool Core::getIsFileOpening() const
     return isFileOpening_;
 }
 
+void Core::setIsMosaicUpdatingInThread(bool state)
+{
+    isMosaicUpdatingInThread_ = state;
+
+    emit isMosaicUpdatingInThreadUpdated();
+}
+
+bool Core::getIsMosaicUpdatingInThread() const
+{
+    return isMosaicUpdatingInThread_;
+}
+
 ConsoleListModel* Core::consoleList()
 {
     return consolePtr_->listModel();
@@ -1031,14 +1044,13 @@ void Core::createControllers()
     npdFilterControlMenuController_    = std::make_shared<NpdFilterControlMenuController>();
     surfaceControlMenuController_      = std::make_shared<SurfaceControlMenuController>();
     sideScanViewControlMenuController_ = std::make_shared<SideScanViewControlMenuController>();
-#ifdef SEPARATE_READING
-    sideScanViewControlMenuController_->setCorePtr(this);
-#endif
     pointGroupControlMenuController_   = std::make_shared<PointGroupControlMenuController>();
     polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
     scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();
     scene3dToolBarController_          = std::make_shared<Scene3dToolBarController>();
     usblViewControlMenuController_     = std::make_shared<UsblViewControlMenuController>();
+
+    sideScanViewControlMenuController_->setCorePtr(this);
 }
 #ifdef SEPARATE_READING
 void Core::createDeviceManagerConnections()

@@ -54,7 +54,8 @@ public:
     virtual ~SideScanView();
 
     bool updateChannelsIds();
-    void updateData(int endIndx, int endOffset = 0);
+    void startUpdateDataInThread(int endIndx, int endOffset = 0);
+    void updateData(int endIndx, int endOffset = 0, bool backgroungThread = false);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void clear();
 
@@ -82,6 +83,9 @@ public:
     QHash<QUuid, std::vector<uint8_t>>& getTileTextureTasksRef();
     std::vector<uint8_t>&               getColorTableTextureTaskRef();
     Mode                                getWorkMode() const;
+
+signals:
+    void sendStartedInThread(bool);
 
 private:
     /*methods*/
@@ -120,4 +124,6 @@ private:
     bool manualSettedChannels_;
     float lAngleOffset_;
     float rAngleOffset_;
+    QMutex mutex_;
+    bool startedInThread_;
 };

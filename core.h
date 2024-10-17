@@ -46,6 +46,7 @@ public:
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
     Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
+    Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -101,11 +102,14 @@ public slots:
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
     bool getIsFileOpening() const;
+    void setIsMosaicUpdatingInThread(bool state);
+    bool getIsMosaicUpdatingInThread() const;
 
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
     void sendIsFileOpening();
+    void isMosaicUpdatingInThreadUpdated();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -184,4 +188,5 @@ private:
     QByteArray _flashUID;
 #endif
     bool isFileOpening_;
+    bool isMosaicUpdatingInThread_;
 };
