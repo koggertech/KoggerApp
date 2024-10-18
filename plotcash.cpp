@@ -138,10 +138,6 @@ void Epoch::moveComplexToEchogram(float offset_m, float levels_offset_db) {
         QVector<uint8_t> chart(size);
         uint8_t* chart_data = chart.data();
 
-        if(i.key() >= 32 && i.key() < 36 ) {
-            levels_offset_db = 20;
-        }
-
         for(int k  = 0; k < size; k++) {
             float amp = (compelex_data[k].logPow() + levels_offset_db)*2.5;
 
@@ -272,9 +268,7 @@ void Dataset::rawDataRecieved(RawData raw_data) {
         //     offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
         // }
         float offset_db = 0;
-        if(header.channelGroup == 0) {
-            offset_db = -86;
-        }
+        offset_db = -86;
 
         last_epoch->moveComplexToEchogram(offset_m, offset_db);
 
@@ -376,9 +370,74 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         pool_index = endIndex();
     }
 
-    tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
+    // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
     tracks[-1].data_.append(QVector3D());
     tracks[-1].objectColor_ = QColor(0, 255, 255);
+
+
+
+    Position pos;
+    pos.lla = LLA(data.usbl_latitude, data.usbl_longitude);
+
+    static float dist_save = NAN;
+    static float angl_save = NAN;
+
+    // float angl = qDegreesToRadians(-data.usbl_yaw - data.azimuth_deg);
+    float angl_usbl = data.azimuth_deg;
+    float dist = data.distance_m;
+
+    // float x_beacon = dist*cosf(angl);
+    // float y_beacon = dist*sinf(angl);
+
+    // data.azimuth_deg = (data.usbl_yaw + data.azimuth_deg);
+
+
+    if(pos.lla.isCoordinatesValid()
+        // && abs(dist_save - dist) < 0.5
+        // && (abs(angl_save - angl_usbl) < 10)
+        // && x_beacon < 0
+        ) {
+        // qDebug("usbl lat %f, lon %f", data.usbl_latitude, data.usbl_longitude);
+
+        if(!_llaRef.isInit) {
+            _llaRef = LLARef(pos.lla);
+        }
+
+        pos.LLA2NED(&_llaRef);
+        // qDebug("usbl x %f, y %f", pos.ned.n, pos.ned.e);
+
+        tracks[-2].data_.append(QVector3D(pos.ned.n, pos.ned.e, 0));
+        tracks[-2].objectColor_ = QColor(0, 200, 0);
+
+        float beacon_n = data.beacon_n;
+        float beacon_e = data.beacon_e;
+
+        if(pos.ned.isCoordinatesValid()) {
+            beacon_n += pos.ned.n;
+            beacon_e += pos.ned.e;
+        }
+
+        tracks[-4].data_.append(QVector3D(beacon_n, beacon_e, 0));
+        tracks[-4].objectColor_ = QColor(200, 0, 0);
+        tracks[-4].lineWidth_ = 5;
+
+
+        // Position pos_beacon;
+        // pos_beacon.lla = LLA(data.latitude_deg, data.longitude_deg);
+        // if(pos_beacon.lla.isCoordinatesValid()) {
+        //     pos_beacon.LLA2NED(&_llaRef);
+        //     tracks[-5].data_.append(QVector3D(pos_beacon.ned.n, pos_beacon.ned.e, 0));
+        //     tracks[-5].objectColor_ = QColor(0, 200, 0);
+        //     tracks[-5].lineWidth_ = 5;
+        // }
+
+        // _pool[endIndex()].set(data);
+    } else {
+         tracks[-4].data_.append(QVector3D(NAN, NAN, 0));
+    }
+    dist_save = dist;
+    angl_save = angl_usbl;
+
     std::shared_ptr<UsblView> view = scene3dViewPtr_->getUsblViewPtr();
     view->setTrackRef(tracks);
 

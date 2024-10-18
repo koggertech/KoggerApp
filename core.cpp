@@ -449,6 +449,7 @@ bool Core::exportComplexToCSV(QString file_path) {
                 QString row_data;
                 row_data.append(QString("%1,%2").arg(i).arg(ch.key()));
                 row_data.append(QString(",%1").arg(signal.globalOffset));
+                row_data.append(QString(",%1").arg(signal.sampleRate));
 
                 if(data != NULL && data_size > 0) {
                     for(int ci = 0; ci < data_size; ci++) {

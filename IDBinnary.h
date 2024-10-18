@@ -917,6 +917,9 @@ public:
         double usbl_latitude = NAN;
         double usbl_longitude = NAN;
         uint32_t last_iTOW = 0;
+
+        float beacon_n = NAN;
+        float beacon_e = NAN;
     } __attribute__((packed));
 
     struct USBLRequestBeacon {
