@@ -6,6 +6,15 @@
 #include <QUuid>
 #include <QString>
 #include <QHostAddress>
+#include <QUdpSocket>
+#include <QTcpSocket>
+#if defined(Q_OS_ANDROID)
+#include "qtandroidserialport/src/qserialport.h"
+#include "qtandroidserialport/src/qserialportinfo.h"
+#else
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#endif
 #include "ProtoBinnary.h"
 
 using namespace Parsers;
@@ -131,4 +140,5 @@ private:
 private slots:
     void readyRead();
     void aboutToClose();
+    void handleSerialError(QSerialPort::SerialPortError error);
 };

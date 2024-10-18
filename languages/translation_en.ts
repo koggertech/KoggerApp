@@ -39,6 +39,22 @@
     </message>
 </context>
 <context>
+    <name>CMouseOpacityArea</name>
+    <message>
+        <location filename="../QML/CMouseOpacityArea.qml" line="8"/>
+        <source>Tooltip</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CPopup</name>
+    <message>
+        <location filename="../QML/CPopup.qml" line="6"/>
+        <source>Custom popup</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CProgressButton</name>
     <message>
         <location filename="../QML/CProgressButton.qml" line="7"/>
@@ -217,12 +233,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="968"/>
+        <location filename="../plotcash.cpp" line="967"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="969"/>
+        <location filename="../plotcash.cpp" line="968"/>
         <source>First</source>
         <translation type="unfinished"></translation>
     </message>
@@ -845,6 +861,37 @@
     </message>
 </context>
 <context>
+    <name>MenuBar</name>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="64"/>
+        <source>Connections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="79"/>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="110"/>
+        <source>Display 3D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../QML/MenuBar.qml" line="128"/>
+        <source>Display 2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MotorViewer</name>
+    <message>
+        <location filename="../QML/MotorViewer.qml" line="248"/>
+        <source>Enter path</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MpcFilterControlMenu</name>
     <message>
         <location filename="../QML/MpcFilterControlMenu.qml" line="27"/>
@@ -1093,7 +1140,7 @@
     <name>SonarBox</name>
     <message>
         <location filename="../QML/SonarBox.qml" line="17"/>
-        <location filename="../QML/SonarBox.qml" line="295"/>
+        <location filename="../QML/SonarBox.qml" line="305"/>
         <source>Echogram</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1103,186 +1150,186 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="40"/>
+        <location filename="../QML/SonarBox.qml" line="50"/>
         <source>Number of Samples</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="60"/>
+        <location filename="../QML/SonarBox.qml" line="70"/>
         <source>Offset of Samples</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="81"/>
-        <location filename="../QML/SonarBox.qml" line="326"/>
+        <location filename="../QML/SonarBox.qml" line="91"/>
+        <location filename="../QML/SonarBox.qml" line="336"/>
         <source>Rangefinder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="84"/>
+        <location filename="../QML/SonarBox.qml" line="94"/>
         <source>Max distance, mm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="104"/>
+        <location filename="../QML/SonarBox.qml" line="114"/>
         <source>Dead zone, mm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="124"/>
+        <location filename="../QML/SonarBox.qml" line="134"/>
         <source>Confidence threshold, %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="145"/>
+        <location filename="../QML/SonarBox.qml" line="155"/>
         <source>Transducer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="148"/>
+        <location filename="../QML/SonarBox.qml" line="158"/>
         <source>Pulse count</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="168"/>
+        <location filename="../QML/SonarBox.qml" line="178"/>
         <source>Frequency, kHz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="188"/>
+        <location filename="../QML/SonarBox.qml" line="198"/>
         <source>Booster</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="205"/>
-        <location filename="../QML/SonarBox.qml" line="318"/>
-        <location filename="../QML/SonarBox.qml" line="353"/>
-        <location filename="../QML/SonarBox.qml" line="384"/>
-        <location filename="../QML/SonarBox.qml" line="415"/>
-        <location filename="../QML/SonarBox.qml" line="446"/>
+        <location filename="../QML/SonarBox.qml" line="215"/>
+        <location filename="../QML/SonarBox.qml" line="328"/>
+        <location filename="../QML/SonarBox.qml" line="363"/>
+        <location filename="../QML/SonarBox.qml" line="394"/>
+        <location filename="../QML/SonarBox.qml" line="425"/>
+        <location filename="../QML/SonarBox.qml" line="456"/>
         <source>Off</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="205"/>
-        <location filename="../QML/SonarBox.qml" line="353"/>
-        <location filename="../QML/SonarBox.qml" line="415"/>
-        <location filename="../QML/SonarBox.qml" line="446"/>
+        <location filename="../QML/SonarBox.qml" line="215"/>
+        <location filename="../QML/SonarBox.qml" line="363"/>
+        <location filename="../QML/SonarBox.qml" line="425"/>
+        <location filename="../QML/SonarBox.qml" line="456"/>
         <source>On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="227"/>
+        <location filename="../QML/SonarBox.qml" line="237"/>
         <source>DSP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="230"/>
+        <location filename="../QML/SonarBox.qml" line="240"/>
         <source>Horizontal smoothing factor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="250"/>
+        <location filename="../QML/SonarBox.qml" line="260"/>
         <source>Speed of Sound, m/s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="272"/>
+        <location filename="../QML/SonarBox.qml" line="282"/>
         <source>Dataset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="275"/>
+        <location filename="../QML/SonarBox.qml" line="285"/>
         <source>Period, ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="318"/>
+        <location filename="../QML/SonarBox.qml" line="328"/>
         <source>8-bit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="318"/>
+        <location filename="../QML/SonarBox.qml" line="328"/>
         <source>16-bit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="353"/>
+        <location filename="../QML/SonarBox.qml" line="363"/>
         <source>NMEA</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="361"/>
+        <location filename="../QML/SonarBox.qml" line="371"/>
         <source>AHRS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="384"/>
+        <location filename="../QML/SonarBox.qml" line="394"/>
         <source>Euler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="384"/>
+        <location filename="../QML/SonarBox.qml" line="394"/>
         <source>Quat.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="392"/>
+        <location filename="../QML/SonarBox.qml" line="402"/>
         <source>Temperature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="423"/>
+        <location filename="../QML/SonarBox.qml" line="433"/>
         <source>Timestamp</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="455"/>
+        <location filename="../QML/SonarBox.qml" line="465"/>
         <source>Actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="532"/>
+        <location filename="../QML/SonarBox.qml" line="542"/>
         <source>Flash settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="542"/>
+        <location filename="../QML/SonarBox.qml" line="552"/>
         <source>Erase settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="552"/>
+        <location filename="../QML/SonarBox.qml" line="562"/>
         <source>Reboot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="572"/>
+        <location filename="../QML/SonarBox.qml" line="582"/>
         <source>Set baudrate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="582"/>
+        <location filename="../QML/SonarBox.qml" line="592"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="586"/>
+        <location filename="../QML/SonarBox.qml" line="596"/>
         <source>Open file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="603"/>
+        <location filename="../QML/SonarBox.qml" line="613"/>
         <source>Save as file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="621"/>
+        <location filename="../QML/SonarBox.qml" line="631"/>
         <source>Import</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/SonarBox.qml" line="628"/>
+        <location filename="../QML/SonarBox.qml" line="638"/>
         <source>Export</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1439,18 +1486,23 @@ Please wait...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="586"/>
+        <location filename="../QML/main.qml" line="592"/>
         <source> V   </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="586"/>
+        <location filename="../QML/main.qml" line="592"/>
         <source> A   </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="586"/>
+        <location filename="../QML/main.qml" line="592"/>
         <source> m/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../QML/main.qml" line="642"/>
+        <source>Please wait, the file is opening</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

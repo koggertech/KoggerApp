@@ -250,10 +250,10 @@ WaterFall {
         ButtonGroup { id: pencilbuttonGroup }
 
         CheckButton {
-            Layout.fillWidth: true
             icon.source: "./icons/direction-arrows.svg"
             checked: true
             backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 if (checked) {
@@ -265,9 +265,9 @@ WaterFall {
         }
 
         CheckButton {
-            Layout.fillWidth: true
             icon.source: "./icons/arrow-bar-to-down.svg"
             backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 if (checked) {
@@ -279,9 +279,9 @@ WaterFall {
         }
 
         CheckButton {
-            Layout.fillWidth: true
             icon.source: "./icons/pencil.svg"
             backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 if (checked) {
@@ -293,9 +293,9 @@ WaterFall {
         }
 
         CheckButton {
-            Layout.fillWidth: true
             icon.source: "./icons/arrow-bar-to-up.svg"
             backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 if (checked) {
@@ -307,9 +307,9 @@ WaterFall {
         }
 
         CheckButton {
-            Layout.fillWidth: true
             icon.source: "./icons/eraser.svg"
             backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 if (checked) {
@@ -321,10 +321,10 @@ WaterFall {
         }
 
         CheckButton {
-            Layout.fillWidth: true
             icon.source: "./icons/x.svg"
             backColor: theme.controlBackColor
             checkable: false
+            implicitWidth: theme.controlHeight
 
             onClicked: {
                 menuBlock.visible = false

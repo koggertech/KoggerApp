@@ -44,7 +44,7 @@ public slots:
     Q_INVOKABLE StreamListModel* streamsList();
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
-    void openFile(const QString& filePath);
+    void openFile(QString filePath);
     void closeFile();
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
@@ -90,6 +90,7 @@ signals:
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
     void encoderComplete(float e1, float e2, float e3);
+    void fileStopsOpening();
 
 #ifdef MOTOR
     void motorDeviceChanged();

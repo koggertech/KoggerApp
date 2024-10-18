@@ -93,5 +93,7 @@
         <file>MouseOpacityArea.qml</file>
         <file>MotorViewer.qml</file>
         <file>USBLBox.qml</file>
+        <file>CPopup.qml</file>
+        <file>CMouseOpacityArea.qml</file>
     </qresource>
 </RCC>

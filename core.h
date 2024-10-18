@@ -46,6 +46,7 @@ public:
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(int fileReaderProgress READ getFileReaderProgress NOTIFY fileReaderProgressChanged)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
+    Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -61,7 +62,7 @@ public:
 #endif
 
 public slots:
-    bool openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
+    void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
     bool openXTF(QByteArray data);    
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
@@ -91,6 +92,7 @@ public slots:
     bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
 #endif
+    bool getIsFileOpening() const;
 
 signals:
     void connectionChanged(bool duplex = false);
@@ -98,6 +100,7 @@ signals:
     void sendStopFileReader();
     void fileReaderProgressChanged();
     void filePathChanged();
+    void sendIsFileOpening();
 
 private slots:
 #ifdef FLASHER
@@ -165,4 +168,5 @@ private:
     } _factoryState = FactoryIdle;
     QByteArray _flashUID;
 #endif
+    bool isFileOpening_;
 };
