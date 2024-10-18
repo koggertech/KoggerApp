@@ -637,7 +637,7 @@ Window  {
         opacity: 0.8
         radius: 10
         anchors.centerIn: parent
-        visible: core.isFileOpening
+        visible: core.isFileOpening && !core.isSeparateReading
         implicitWidth: textItem.implicitWidth + 40
         implicitHeight: textItem.implicitHeight + 40
 

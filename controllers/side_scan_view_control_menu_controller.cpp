@@ -116,7 +116,7 @@ void SideScanViewControlMenuController::onUpdateClicked()
         }
 #endif
         m_graphicsSceneView->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
-        m_graphicsSceneView->interpolateDatasetEpochs();
+        m_graphicsSceneView->interpolateDatasetEpochs(true);
         m_graphicsSceneView->getSideScanViewPtr()->startUpdateDataInThread(0, 0);
     }
 }

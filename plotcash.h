@@ -888,7 +888,7 @@ public slots:
     void updateBoatTrack(bool update_all = false);
 
     QStringList channelsNameList();
-    void interpolateData();
+    void interpolateData(bool fromStart);
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
@@ -943,7 +943,7 @@ private:
     class Interpolator {
     public:
         explicit Interpolator(Dataset* datasetPtr);
-        void interpolateData();
+        void interpolateData(bool fromStart);
         void clear();
     private:
         bool updateChannelsIds();

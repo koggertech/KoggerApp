@@ -180,10 +180,10 @@ void GraphicsScene3dView::setCalcStateSideScanView(bool state)
     sideScanCalcState_ = state;
 }
 
-void GraphicsScene3dView::interpolateDatasetEpochs()
+void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
 {
     if (m_dataset) {
-        m_dataset->interpolateData();
+        m_dataset->interpolateData(fromStart);
     }
 }
 
@@ -482,7 +482,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
                                     if (sideScanCalcState_) {
-                                        interpolateDatasetEpochs();
+                                        interpolateDatasetEpochs(false);
                                     }
                                 }, Qt::DirectConnection);
 

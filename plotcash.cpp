@@ -1028,9 +1028,9 @@ QStringList Dataset::channelsNameList() {
 
 }
 
-void Dataset::interpolateData()
+void Dataset::interpolateData(bool fromStart)
 {
-    interpolator_.interpolateData();
+    interpolator_.interpolateData(fromStart);
 }
 
 Dataset::Interpolator::Interpolator(Dataset *datasetPtr) :
@@ -1040,14 +1040,14 @@ Dataset::Interpolator::Interpolator(Dataset *datasetPtr) :
     secondChannelId_(CHANNEL_FIRST)
 { }
 
-void Dataset::Interpolator::interpolateData()
+void Dataset::Interpolator::interpolateData(bool fromStart)
 {
     if (!updateChannelsIds()) {
         return;
     }
 
     int shift{ datasetPtr_->getBottomTrackParamPtr()->windowSize };
-    int startEpochIndx{ lastInterpIndx_ };
+    int startEpochIndx{ fromStart ? 0 : lastInterpIndx_ };
     int endEpochIndx = datasetPtr_->size() - 1 - shift;
     if ((endEpochIndx - startEpochIndx) < 2) {
         return;

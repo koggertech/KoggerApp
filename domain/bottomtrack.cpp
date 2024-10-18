@@ -214,15 +214,18 @@ void BottomTrack::selectEpoch(int epochIndex, int channelId)
         return;
 
     auto* epoch = datasetPtr_->fromIndex(epochIndex);
+    auto indxFromMap = epochIndexMatchingMap_.key(epochIndex);
 
-    if (!epoch || !epoch->getPositionGNSS().ned.isCoordinatesValid()) {
+    if (!epoch ||
+        !epoch->getPositionGNSS().ned.isCoordinatesValid() ||
+        (epochIndex && !indxFromMap)) {
         return;
     }
 
     auto r = RENDER_IMPL(BottomTrack);
 
     r->selectedVertexIndices_.clear();
-    r->selectedVertexIndices_.append(epochIndexMatchingMap_.key(epochIndex));
+    r->selectedVertexIndices_.append(indxFromMap);
 
     Q_EMIT changed();
 }
@@ -375,6 +378,12 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
     }
 
     bool beenUpdated{ false };
+    auto appendData = [&, this](Position& pos, float distance, int i) ->void {
+        renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
+        epochIndexMatchingMap_.insert(renderData_.size() - 1, i);
+        beenUpdated = true;
+    };
+
     if (visibleChannel_.channel > -1) {
         int currMin = defMode ? 0 : lEpoch;
         int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
@@ -390,18 +399,32 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
             if (pos.ned.isCoordinatesValid()) {
                 float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channel));
                 if (defMode) {
-                    renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
-                    epochIndexMatchingMap_.insert(renderData_.size() - 1, i);
-                    beenUpdated = true;
+                    appendData(pos, distance, i);
                 }
                 else {
-                    for (int j = 0; j < renderData_.size(); ++j) { // find correct point by pos
+                    for (int j = 0; j < renderData_.size(); ++j) { // first - find correct point by pos
                         if (renderData_[j].x() == static_cast<float>(pos.ned.n) &&
                             renderData_[j].y() == static_cast<float>(pos.ned.e)) {
                             renderData_[j] = QVector3D(pos.ned.n, pos.ned.e, distance);
                             epochIndexMatchingMap_[j] = i;
                             beenUpdated = true;
                             break;
+                        }
+                    }
+                    if (!beenUpdated) { // rewrite cause we have new undefined epoch (undef pos left, mid, right)
+                        epochIndexMatchingMap_.clear();
+                        renderData_.clear();
+                        int cCurrMin = 0;
+                        int cCurrMax = datasetPtr_->getLastBottomTrackEpoch();
+                        renderData_.reserve(cCurrMax);
+                        for (int k = cCurrMin; k < cCurrMax; ++k) {
+                            if (auto cEpoch = datasetPtr_->fromIndex(k); cEpoch) {
+                                auto cPos = cEpoch->getPositionGNSS();
+                                if (cPos.ned.isCoordinatesValid()) {
+                                    float cDistance = -1.f * static_cast<float>(cEpoch->distProccesing(visibleChannel_.channel));
+                                    appendData(cPos, cDistance, k);
+                                }
+                            }
                         }
                     }
                 }

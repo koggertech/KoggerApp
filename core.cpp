@@ -233,6 +233,8 @@ void Core::onFileStartOpening()
 {
     qDebug() << "file start opening!";
     isFileOpening_ = true;
+    emit sendIsFileOpening();
+
     if (scene3dViewPtr_) {
         scene3dViewPtr_->getSideScanViewPtr()->updateChannelsIds(); // TODO: not effect(
         //scene3dViewPtr_->setMapView();
