@@ -474,6 +474,7 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 void Dataset::addAtt(float yaw, float pitch, float roll) {
     Epoch* last_epoch = last();
     if(last_epoch->isAttAvail()) {
+        // last_epoch = addNewEpoch();
     }
 
     last_epoch->setAtt(yaw, pitch, roll);
@@ -493,7 +494,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
     if(pos.lla.isCoordinatesValid()) {
         if(last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
-            last_epoch = addNewEpoch();
+            // last_epoch = addNewEpoch();
         }
 
         if(!_llaRef.isInit) {
