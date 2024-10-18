@@ -4,13 +4,38 @@ MouseArea {
     id: hoverArea
     anchors.fill: parent
     hoverEnabled: true
-    property bool isMouseAccepted: false
-    property string toolTipText: qsTr("Tooltip")
+
     anchors.margins: -2
 
-    onPressed: mouse.accepted = isMouseAccepted
-    onReleased: mouse.accepted = isMouseAccepted
-    onClicked: mouse.accepted = isMouseAccepted
+    property bool isMouseAccepted: false
+    property string toolTipText: qsTr("Tooltip")
+
+    onPressed: {
+        if (mouse.source === 2) {
+             tooltipTimer.stop()
+             customToolTip.close()
+        }
+
+        mouse.accepted = isMouseAccepted
+    }
+    onReleased: {
+        mouse.accepted = isMouseAccepted
+    }
+    onClicked: {
+        if (mouse.source === 2) {
+             tooltipTimer.stop()
+             customToolTip.close()
+        }
+
+        mouse.accepted = isMouseAccepted
+    }
+    onEntered: {
+        tooltipTimer.start()
+    }
+    onExited: {
+        tooltipTimer.stop()
+        customToolTip.close()
+    }
 
     Timer {
         id: tooltipTimer
@@ -24,13 +49,5 @@ MouseArea {
     CPopup {
         id: customToolTip
         popupText: toolTipText
-    }
-
-    onEntered: {
-        tooltipTimer.start()
-    }
-    onExited: {
-        tooltipTimer.stop()
-        customToolTip.close()
     }
 }
