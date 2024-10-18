@@ -208,7 +208,7 @@ Window  {
                     objectName: "sideScanProcessingProgressBar"
                     text:      qsTr("Calculating mosaic\nPlease wait...")
                     textColor: "white"
-                    visible:  core.isMosaicUpdatingInThread
+                    visible:  core.isMosaicUpdatingInThread && core.isSideScanPerformanceMode
                 }
 
                 PinchArea {

@@ -86,6 +86,7 @@ public:
 
 signals:
     void sendStartedInThread(bool);
+    void sendUpdatedWorkMode(Mode);
 
 private:
     /*methods*/

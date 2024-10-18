@@ -298,7 +298,7 @@ ColumnLayout {
     // side-scan extra settings
     MenuFrame {
         id: sideScanViewSettings
-        visible: sideScanViewCheckButton.hovered || isHovered || sideScanViewCheckButton.sideScanLongPressTriggered
+        visible: sideScanViewCheckButton.hovered || isHovered || sideScanViewCheckButton.sideScanLongPressTriggered || sideScanTheme.activeFocus
         z: sideScanViewSettings.visible
         Layout.alignment: Qt.AlignRight
 
@@ -328,86 +328,106 @@ ColumnLayout {
         }
 
         RowLayout {
-            enabled: !core.isMosaicUpdatingInThread
-
             ColumnLayout {
-                CButton {
-                    text: "Updating state"
+                CheckButton {
+                    id: realtimeProcessingButton
+                    text: qsTr("Realtime processing")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
-                    checkable: true
-                    checked: true
 
-                    onClicked: {
+                    onToggled: {
                         SideScanViewControlMenuController.onUpdateStateChanged(checked)
                     }
 
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
+                    Component.onCompleted: {
+                        console.info("qml realtime proc:"+core.isSeparateReading)
+
+                        realtimeProcessingButton.checked = core.isSeparateReading
                     }
                 }
-                CButton {
-                    text: "Track last epoch"
+                CheckButton {
+                    text: qsTr("Track last data")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
-                    checkable: true
                     checked: true
 
-                    onClicked: {
+                    onToggled: {
                         SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
                     }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
                 }
                 RowLayout {
                     CText {
-                        text: "Theme id:"
+                        text: "Theme:"
                     }
-                    SpinBoxCustom  {
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    CCombo  {
                         id: sideScanTheme
-                        implicitWidth: 150
-                        from: 0
-                        to: 4
-                        stepSize: 1
-                        value: 0
-
-                        onValueChanged: {
-                            SideScanViewControlMenuController.onThemeChanged(value)
+                        Layout.preferredWidth: 150
+                        model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                        currentIndex: 0
+                        onCurrentIndexChanged: {
+                            SideScanViewControlMenuController.onThemeChanged(currentIndex)
                         }
                     }
                 }
                 RowLayout {
                     CText {
-                        text: "Angle offset (l/r)°:"
+                        text: "Angle offset, °"
                     }
-                    SpinBoxCustom  {
-                        implicitWidth: 150
-                        from: -90
-                        to: 90
-                        stepSize: 1
-                        value: 0
-                        onValueChanged: {
-                            SideScanViewControlMenuController.onSetLAngleOffset(value)
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    ColumnLayout {
+                        RowLayout {
+                            Item {
+                                Layout.fillWidth: true
+                            }
+                            CText {
+                                text: "left:"
+                            }
+                            SpinBoxCustom  {
+                                implicitWidth: 150
+                                from: -90
+                                to: 90
+                                stepSize: 1
+                                value: 0
+                                onValueChanged: {
+                                    SideScanViewControlMenuController.onSetLAngleOffset(value)
+                                }
+                            }
                         }
-                    }
-
-                    SpinBoxCustom  {
-                        implicitWidth: 150
-                        from: -90
-                        to: 90
-                        stepSize: 1
-                        value: 0
-                        onValueChanged: {
-                            SideScanViewControlMenuController.onSetRAngleOffset(value)
+                        RowLayout {
+                            Item {
+                                Layout.fillWidth: true
+                            }
+                            CText {
+                                text: "right:"
+                            }
+                            SpinBoxCustom  {
+                                implicitWidth: 150
+                                from: -90
+                                to: 90
+                                stepSize: 1
+                                value: 0
+                                onValueChanged: {
+                                    SideScanViewControlMenuController.onSetRAngleOffset(value)
+                                }
+                            }
                         }
                     }
                 }
+
                 ColumnLayout {
                     RowLayout {
+                        //visible: core.isSeparateReading
+
                         CText {
                             text: "Tile side pixel size:"
+                        }
+                        Item {
+                            Layout.fillWidth: true
                         }
                         SpinBoxCustom {
                             id: sideScanTileSidePixelSizeSpinBox
@@ -418,9 +438,15 @@ ColumnLayout {
                             value: 256
                         }
                     }
+
                     RowLayout {
+                        //visible: core.isSeparateReading
+
                         CText {
                             text: "Tile height matrix ratio:"
+                        }
+                        Item {
+                            Layout.fillWidth: true
                         }
                         SpinBoxCustom {
                             id: sideScanTileHeightMatrixRatioSpinBox
@@ -431,117 +457,102 @@ ColumnLayout {
                             value: 16
                         }
                     }
+
                     RowLayout {
                         CText {
-                            text: "Tile resolution (px/m):"
+                            text: "Tile resolution, pix/m:"
+                        }
+                        Item {
+                            Layout.fillWidth: true
                         }
                         SpinBoxCustom {
-                             id: sideScanTileResolutionSpinBox
-                             implicitWidth: 150
-                             from: 1
-                             to: 100
-                             stepSize: 1
-                             value: 10
-                         }
+                            id: sideScanTileResolutionSpinBox
+                            implicitWidth: 150
+                            from: 1
+                            to: 100
+                            stepSize: 1
+                            value: 10
+                        }
                     }
+
                     CButton {
                         text: "Reinit global mesh"
                         Layout.fillWidth: true
                         Layout.preferredWidth: 200
+                        enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
 
                         onClicked: {
                             SideScanViewControlMenuController.onGlobalMeshChanged(
                                         sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
                         }
-
-                        onFocusChanged: {
-                            sideScanViewSettings.focus = true
-                        }
                     }
                 }
-                CButton {
-                    text: "Use linear filter"
+                CheckButton {
+                    text: qsTr("Use linear filter")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
-                    checkable: true
+                    //visible: core.isSeparateReading
 
                     onClicked: {
                         SideScanViewControlMenuController.onUseFilterChanged(checked)
                     }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
                 }
-                CButton {
-                    text: "Grid/contour visible"
+                CheckButton {
+                    text: qsTr("Grid/contour visible")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
-                    checkable: true
                     checked: false
+                    //visible: core.isSeparateReading
 
                     onClicked: {
                         SideScanViewControlMenuController.onGridVisibleChanged(checked)
                     }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
                 }
-                CButton {
-                    text: "Meas line visible"
+                CheckButton {
+                    text: qsTr("Measuse lines visible")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
-                    checkable: true
                     checked: false
+                    //visible: core.isSeparateReading
 
                     onClicked: {
                         SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
                     }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
                 }
-                CButton {
-                    text: "Generate grid/contour"
+                CheckButton {
+                    text: qsTr("Generate grid/contour")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
-                    checkable: true
                     checked: false
+                    //visible: core.isSeparateReading
 
                     onClicked: {
                         SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
                     }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
                 }
+
                 CButton {
-                    text: "Clear"
+                    text: qsTr("Clear")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
+                    //visible: core.isSeparateReading
 
                     onClicked: {
                         SideScanViewControlMenuController.onClearClicked()
                     }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
                 }
+
+                Item {
+                    Layout.fillHeight: true
+                }
+
                 CButton {
-                    text: "Update"
+                    text: qsTr("Update")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
 
                     onClicked: {
                         SideScanViewControlMenuController.onUpdateClicked()
-                    }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
                     }
                 }
             }

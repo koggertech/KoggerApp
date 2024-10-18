@@ -157,5 +157,6 @@ void SideScanViewControlMenuController::tryClearMakeConnections()
 
     if (m_graphicsSceneView && corePtr_) {
         connections_.append(QObject::connect(m_graphicsSceneView->getSideScanViewPtr().get(), &SideScanView::sendStartedInThread, corePtr_, &Core::setIsMosaicUpdatingInThread, Qt::QueuedConnection));
+        connections_.append(QObject::connect(m_graphicsSceneView->getSideScanViewPtr().get(), &SideScanView::sendUpdatedWorkMode, corePtr_, &Core::setSideScanWorkMode, Qt::QueuedConnection));
     }
 }

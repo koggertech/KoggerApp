@@ -47,6 +47,8 @@ public:
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
     Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
+    Q_PROPERTY(bool isSideScanPerformanceMode READ getIsSideScanPerformanceMode NOTIFY isSideScanPerformanceModeUpdated)
+    Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -103,13 +105,18 @@ public slots:
 #endif
     bool getIsFileOpening() const;
     void setIsMosaicUpdatingInThread(bool state);
+    void setSideScanWorkMode(SideScanView::Mode mode);
+
     bool getIsMosaicUpdatingInThread() const;
+    bool getIsSideScanPerformanceMode() const;
+    bool getIsSeparateReading() const;
 
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
     void sendIsFileOpening();
     void isMosaicUpdatingInThreadUpdated();
+    void isSideScanPerformanceModeUpdated();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -189,4 +196,5 @@ private:
 #endif
     bool isFileOpening_;
     bool isMosaicUpdatingInThread_;
+    bool isSideScanPerformanceMode_;
 };

@@ -28,6 +28,7 @@ SideScanView::SideScanView(QObject* parent) :
     rAngleOffset_(0.0f),
     startedInThread_(false)
 {
+    qRegisterMetaType<Mode>("Mode");
     colorTableTextureTask_ = colorTable_.getRgbaColors();
 }
 
@@ -68,10 +69,7 @@ void SideScanView::startUpdateDataInThread(int endIndx, int endOffset)
     });
 
     startedInThread_ = true;
-
-    if (workMode_ == Mode::kPerformance) {
-        emit sendStartedInThread(startedInThread_);
-    }
+    emit sendStartedInThread(startedInThread_);
 }
 
 void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
@@ -411,13 +409,16 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
 
 void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
-    //clear();
+    clear();
 
     tileSidePixelSize_ = tileSidePixelSize;
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
     tileResolution_ = tileResolution;
 
     globalMesh_.reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
+
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void SideScanView::clear()
@@ -433,6 +434,8 @@ void SideScanView::clear()
     currIndxSec_ = 0;
     lastMatParams_ = MatrixParams();
     manualSettedChannels_ = false;
+    workMode_ = Mode::kUndefined;
+    emit sendUpdatedWorkMode(workMode_);
 
     globalMesh_.clear();
 
@@ -551,8 +554,9 @@ void SideScanView::setColorTableTextureId(GLuint value)
 
 void SideScanView::setWorkMode(Mode mode)
 {
-    qDebug() << "setted mode: " << static_cast<int>(mode);
     workMode_ = mode;
+
+    emit sendUpdatedWorkMode(workMode_);
 }
 
 void SideScanView::setLAngleOffset(float val)

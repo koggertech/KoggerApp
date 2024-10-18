@@ -20,7 +20,8 @@ Core::Core() :
     isLoggingCsv_(false),
     filePath_(),
     isFileOpening_(false),
-    isMosaicUpdatingInThread_(false)
+    isMosaicUpdatingInThread_(false),
+    isSideScanPerformanceMode_(false)
 {
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
@@ -231,6 +232,7 @@ bool Core::closeLogFile(bool onOpen)
 void Core::onFileStartOpening()
 {
     qDebug() << "file start opening!";
+    isFileOpening_ = true;
     if (scene3dViewPtr_) {
         scene3dViewPtr_->getSideScanViewPtr()->updateChannelsIds(); // TODO: not effect(
         //scene3dViewPtr_->setMapView();
@@ -1026,9 +1028,36 @@ void Core::setIsMosaicUpdatingInThread(bool state)
     emit isMosaicUpdatingInThreadUpdated();
 }
 
+void Core::setSideScanWorkMode(SideScanView::Mode mode)
+{
+    switch (mode) {
+    case SideScanView::Mode::kUndefined:   { isSideScanPerformanceMode_ = false; break; }
+    case SideScanView::Mode::kPerformance: { isSideScanPerformanceMode_ = true;  break; }
+    case SideScanView::Mode::kRealtime:    { isSideScanPerformanceMode_ = false; break; }
+    default:
+        break;
+    }
+
+    emit isSideScanPerformanceModeUpdated();
+}
+
 bool Core::getIsMosaicUpdatingInThread() const
 {
     return isMosaicUpdatingInThread_;
+}
+
+bool Core::getIsSideScanPerformanceMode() const
+{
+    return isSideScanPerformanceMode_;
+}
+
+bool Core::getIsSeparateReading() const
+{
+#ifdef SEPARATE_READING
+    return true;
+#else
+    return false;
+#endif
 }
 
 ConsoleListModel* Core::consoleList()
@@ -1074,6 +1103,10 @@ void Core::createDeviceManagerConnections()
     deviceManagerWrapperConnections_.append(QObject::connect(this, &Core::sendCloseLogFile,                       deviceManagerWrapperPtr_->getWorker(), &DeviceManager::closeFile, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStartOpening,       this,        &Core::onFileStartOpening, deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this, [this]() {
+                                                                                                                                                      isFileOpening_ = false;
+                                                                                                                                                      emit sendIsFileOpening();
+                                                                                                                                                  }, deviceManagerConnection));
 }
 
 void Core::removeDeviceManagerConnections()

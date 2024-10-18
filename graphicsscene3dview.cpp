@@ -44,6 +44,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     sideScanView_->setView(this);
 
+#ifdef SEPARATE_READING
+    sideScanCalcState_ = true;
+#endif
+
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
