@@ -2,7 +2,6 @@
 
 #include <QList>
 #include "qmlcomponentcontroller.h"
-#include "side_scan_view.h"
 
 class Core;
 class SideScanView;

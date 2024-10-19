@@ -87,7 +87,8 @@ public:
         Unknown      = 7,
         BoatTrack    = 8,
         UsblView     = 9,
-        SideScanView = 10
+        SideScanView = 10,
+        ImageView    = 11
     };
 
     Q_ENUM(SceneObjectType)

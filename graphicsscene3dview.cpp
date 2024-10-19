@@ -18,6 +18,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_rayCaster(std::make_shared<RayCaster>()),
     m_surface(std::make_shared<Surface>()),
     sideScanView_(std::make_shared<SideScanView>()),
+    imageView_(std::make_shared<ImageView>()),
     m_boatTrack(std::make_shared<BoatTrack>()),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -43,6 +44,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_navigationArrow->setColor({ 255, 0, 0 });
 
     sideScanView_->setView(this);
+    imageView_->setView(this);
 
 #ifdef SEPARATE_READING
     sideScanCalcState_ = true;
@@ -50,6 +52,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -61,6 +64,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -100,6 +104,11 @@ std::shared_ptr<Surface> GraphicsScene3dView::surface() const
 std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
 {
     return sideScanView_;
+}
+
+std::shared_ptr<ImageView> GraphicsScene3dView::getImageViewPtr() const
+{
+    return imageView_;
 }
 
 std::shared_ptr<PointGroup> GraphicsScene3dView::pointGroup() const
@@ -147,6 +156,7 @@ void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
     sideScanView_->clear();
+    imageView_->clear();//
     bottomTrackWindowCounter_ = -1;
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
@@ -558,6 +568,7 @@ void GraphicsScene3dView::updateBounds()
                     .merge(m_polygonGroup->bounds())
                     .merge(m_pointGroup->bounds())
                     .merge(sideScanView_->bounds())
+                    .merge(imageView_->bounds())
                     .merge(usblView_->bounds());
 
     updatePlaneGrid();
@@ -608,9 +619,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
         return;
     }
 
-    // process mosaic textures
+    // process textures
     processColorTableTexture(view);
     processTileTexture(view);
+    processImageTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -623,6 +635,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
+    m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
@@ -737,6 +750,41 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
 
         it = tasks.erase(it);
     }
+}
+
+void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView *viewPtr) const
+{
+    auto imagePtr = viewPtr->getImageViewPtr();
+    auto& task = imagePtr->getTextureTasksRef();
+
+    if (task.isNull())
+        return;
+
+    GLuint textureId = viewPtr->getImageViewPtr()->getTextureId();
+
+    if (textureId) {
+        glDeleteTextures(1, &textureId);
+    }
+
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getImageViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getImageViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    QImage glImage = task.convertToFormat(QImage::Format_RGBA8888).mirrored();
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+
+    imagePtr->setTextureId(textureId);
+
+    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+    glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+
+    task = QImage();
 }
 
 GraphicsScene3dView::Camera::Camera()

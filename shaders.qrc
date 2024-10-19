@@ -10,5 +10,7 @@
         <file>shaders/texture.vsh</file>
         <file>shaders/mosaic.fsh</file>
         <file>shaders/mosaic.vsh</file>
+        <file>shaders/image.vsh</file>
+        <file>shaders/image.fsh</file>
     </qresource>
 </RCC>

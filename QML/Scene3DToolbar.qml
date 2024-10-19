@@ -26,7 +26,6 @@ ColumnLayout {
                     surfaceCheckButton.longPressTriggered = false
                 }
             }
-            //console.debug("surface menu hovered " + isHovered.toString())
         }
 
         onVisibleChanged: {
@@ -42,13 +41,11 @@ ColumnLayout {
         }
 
         ColumnLayout {
-            //width: 300
             ParamSetup {
                 paramName: qsTr("Edge limit, m:")
 
                 SpinBoxCustom {
                     id: triangleEdgeLengthLimitSpinBox
-                    //implicitWidth: 110
                     from: 5
                     to: 200
                     stepSize: 5
@@ -85,11 +82,6 @@ ColumnLayout {
                     }
                 }
 
-                // CheckButton {
-                //     icon.source: "./icons/x.svg"
-                //     ButtonGroup.group: decimationGroup
-                // }
-
                 ButtonGroup{
                     id: decimationGroup
                 }
@@ -114,7 +106,6 @@ ColumnLayout {
             }
 
             ParamSetup {
-                //id: decimationDistance
                 visible: decimationDistanceCheck.checked
                 paramName: qsTr("Decimation, m:")
 
@@ -187,7 +178,6 @@ ColumnLayout {
                 CheckButton {
                     id: contourVisibilityCheckButton
                     text: qsTr("Show contour")
-                    //checked: true
                     Layout.fillWidth: true
 
                     onToggled: {
@@ -201,7 +191,6 @@ ColumnLayout {
                 CheckButton {
                     id: gridVisibilityCheckButton
                     text: qsTr("Show grid")
-                    //checked: true
                     Layout.fillWidth: true
 
                     onToggled: {
@@ -224,7 +213,6 @@ ColumnLayout {
                         !gridTypeCheck.checked ? -1: gridCellSizeSpinBox.value,
                         !decimationCountCheck.checked ? -1 : decimationCountSpinBox.value,
                         !decimationDistanceCheck.checked ? -1 : decimationDistanceSpinBox.value)
-                    //BottomTrackControlMenuController.onSurfaceUpdated()
                 }
 
                 onFocusChanged: {
@@ -268,7 +256,7 @@ ColumnLayout {
 
         ColumnLayout {
             CButton {
-                text: "Update"
+                text: qsTr("Update")
                 Layout.fillWidth: true
                 Layout.preferredWidth: 200
 
@@ -276,12 +264,12 @@ ColumnLayout {
                     UsblViewControlMenuController.onUpdateUsblViewButtonClicked()
                 }
                 onFocusChanged: {
-                    surfaceSettings.focus = true
+                    usblViewSettings.focus = true
                 }
             }
 
             CButton {
-                text: "Clear"
+                text: qsTr("Clear")
                 Layout.fillWidth: true
                 Layout.preferredWidth: 200
 
@@ -289,7 +277,7 @@ ColumnLayout {
                     UsblViewControlMenuController.onClearUsblViewButtonClicked()
                 }
                 onFocusChanged: {
-                    surfaceSettings.focus = true
+                    usblViewSettings.focus = true
                 }
             }
         }
@@ -340,9 +328,11 @@ ColumnLayout {
                     }
 
                     Component.onCompleted: {
-                        console.info("qml realtime proc:"+core.isSeparateReading)
-
                         realtimeProcessingButton.checked = core.isSeparateReading
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CheckButton {
@@ -354,27 +344,35 @@ ColumnLayout {
                     onToggled: {
                         SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
                     }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
                 }
                 RowLayout {
                     CText {
-                        text: "Theme:"
+                        text: qsTr("Theme:")
                     }
                     Item {
                         Layout.fillWidth: true
                     }
                     CCombo  {
                         id: sideScanTheme
-                        Layout.preferredWidth: 150
+                        Layout.preferredWidth: 300
                         model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
                         currentIndex: 0
                         onCurrentIndexChanged: {
                             SideScanViewControlMenuController.onThemeChanged(currentIndex)
                         }
+
+                        onFocusChanged: {
+                            sideScanViewSettings.focus = true
+                        }
                     }
                 }
                 RowLayout {
                     CText {
-                        text: "Angle offset, °"
+                        text: qsTr("Angle offset, °")
                     }
                     Item {
                         Layout.fillWidth: true
@@ -385,16 +383,22 @@ ColumnLayout {
                                 Layout.fillWidth: true
                             }
                             CText {
-                                text: "left:"
+                                text: qsTr("left:")
                             }
                             SpinBoxCustom  {
-                                implicitWidth: 150
+                                implicitWidth: 200
                                 from: -90
                                 to: 90
                                 stepSize: 1
                                 value: 0
+                                editable: false
+
                                 onValueChanged: {
                                     SideScanViewControlMenuController.onSetLAngleOffset(value)
+                                }
+
+                                onFocusChanged: {
+                                    sideScanViewSettings.focus = true
                                 }
                             }
                         }
@@ -403,16 +407,22 @@ ColumnLayout {
                                 Layout.fillWidth: true
                             }
                             CText {
-                                text: "right:"
+                                text: qsTr("right:")
                             }
                             SpinBoxCustom  {
-                                implicitWidth: 150
+                                implicitWidth: 200
                                 from: -90
                                 to: 90
                                 stepSize: 1
                                 value: 0
+                                editable: false
+
                                 onValueChanged: {
                                     SideScanViewControlMenuController.onSetRAngleOffset(value)
+                                }
+
+                                onFocusChanged: {
+                                    sideScanViewSettings.focus = true
                                 }
                             }
                         }
@@ -424,18 +434,23 @@ ColumnLayout {
                         //visible: core.isSeparateReading
 
                         CText {
-                            text: "Tile side pixel size:"
+                            text: qsTr("Tile side pixel size:")
                         }
                         Item {
                             Layout.fillWidth: true
                         }
                         SpinBoxCustom {
                             id: sideScanTileSidePixelSizeSpinBox
-                            implicitWidth: 150
+                            implicitWidth: 200
                             from: 32
                             to: 2048
                             stepSize: 1
                             value: 256
+                            editable: false
+
+                            onFocusChanged: {
+                                sideScanViewSettings.focus = true
+                            }
                         }
                     }
 
@@ -443,40 +458,50 @@ ColumnLayout {
                         //visible: core.isSeparateReading
 
                         CText {
-                            text: "Tile height matrix ratio:"
+                            text: qsTr("Tile height matrix ratio:")
                         }
                         Item {
                             Layout.fillWidth: true
                         }
                         SpinBoxCustom {
                             id: sideScanTileHeightMatrixRatioSpinBox
-                            implicitWidth: 150
+                            implicitWidth: 200
                             from: 2
                             to: 256
                             stepSize: 1
                             value: 16
+                            editable: false
+
+                            onFocusChanged: {
+                                sideScanViewSettings.focus = true
+                            }
                         }
                     }
 
                     RowLayout {
                         CText {
-                            text: "Tile resolution, pix/m:"
+                            text: qsTr("Tile resolution, pix/m:")
                         }
                         Item {
                             Layout.fillWidth: true
                         }
                         SpinBoxCustom {
                             id: sideScanTileResolutionSpinBox
-                            implicitWidth: 150
+                            implicitWidth: 200
                             from: 1
                             to: 100
                             stepSize: 1
                             value: 10
+                            editable: false
+
+                            onFocusChanged: {
+                                sideScanViewSettings.focus = true
+                            }
                         }
                     }
 
                     CButton {
-                        text: "Reinit global mesh"
+                        text: qsTr("Reinit global mesh")
                         Layout.fillWidth: true
                         Layout.preferredWidth: 200
                         enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
@@ -484,6 +509,10 @@ ColumnLayout {
                         onClicked: {
                             SideScanViewControlMenuController.onGlobalMeshChanged(
                                         sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
+                        }
+
+                        onFocusChanged: {
+                            sideScanViewSettings.focus = true
                         }
                     }
                 }
@@ -496,6 +525,10 @@ ColumnLayout {
                     onClicked: {
                         SideScanViewControlMenuController.onUseFilterChanged(checked)
                     }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
                 }
                 CheckButton {
                     text: qsTr("Grid/contour visible")
@@ -506,6 +539,10 @@ ColumnLayout {
 
                     onClicked: {
                         SideScanViewControlMenuController.onGridVisibleChanged(checked)
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
                     }
                 }
                 CheckButton {
@@ -518,6 +555,10 @@ ColumnLayout {
                     onClicked: {
                         SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
                     }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
                 }
                 CheckButton {
                     text: qsTr("Generate grid/contour")
@@ -529,6 +570,10 @@ ColumnLayout {
                     onClicked: {
                         SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
                     }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
+                    }
                 }
 
                 CButton {
@@ -539,6 +584,10 @@ ColumnLayout {
 
                     onClicked: {
                         SideScanViewControlMenuController.onClearClicked()
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
                     }
                 }
 
@@ -553,6 +602,10 @@ ColumnLayout {
 
                     onClicked: {
                         SideScanViewControlMenuController.onUpdateClicked()
+                    }
+
+                    onFocusChanged: {
+                        sideScanViewSettings.focus = true
                     }
                 }
             }
@@ -596,10 +649,238 @@ ColumnLayout {
         }
     }
 
+    // imageViewSettings extra settings
+    MenuFrame {
+        id: imageViewSettings
+        visible: imageViewCheckButton.hovered || isHovered || imageViewCheckButton.imageViewLongPressTriggered
+        z: imageViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !imageViewCheckButton.hovered) {
+                    imageViewCheckButton.imageViewLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                imageViewCheckButton.imageViewLongPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            RowLayout {
+                CTextField {
+                    id: imagePathText
+                    implicitWidth: 200
+
+                    placeholderText: qsTr("Select an image")
+                    Settings {
+                        property alias imagePathText: imagePathText.text
+                    }
+                }
+                CheckButton {
+                    icon.source: "./icons/file.svg"
+                    checkable: false
+                    backColor: theme.controlSolidBackColor
+                    borderWidth: 0
+                    implicitWidth: theme.controlHeight
+                    onClicked: {
+                        openImageFileDialog.open()
+                    }
+                    onFocusChanged: {
+                        imageViewSettings.focus = true
+                    }
+                    FileDialog {
+                        id: openImageFileDialog
+                        title: qsTr("Please choose an image file (.png, .jpg, .bmp)")
+                        folder: shortcuts.home
+                        selectExisting: true
+                        //nameFilters: ["Image (*.png)", "Image (*.jpg)", "Image (*.bmp)"]
+                        onAccepted: {
+                            imagePathText.text = openImageFileDialog.fileUrl.toString().replace("file:///", "")
+                        }
+                        onRejected: {
+                            console.log("File selection was canceled")
+                        }
+                    }
+                    Settings {
+                        property alias openImageFolder: openImageFileDialog.folder
+                    }
+                }
+            }
+
+            RowLayout {
+                CText {
+                    text: qsTr("lt")
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                ColumnLayout {
+                    RowLayout {
+                        CText {
+                            text: qsTr("x:")
+                        }
+                        SpinBoxCustom {
+                            id: ltXSpinBox
+                            implicitWidth: 200
+                            from: -1000
+                            to: 1000
+                            stepSize: 1
+                            value: 0
+                            editable: true
+                            onFocusChanged: {
+                                imageViewSettings.focus = true
+                            }
+                            Settings {
+                                property alias ltXSpinBox: ltXSpinBox.value
+                            }
+                        }
+                    }
+                    RowLayout {
+                        CText {
+                            text: qsTr("y:")
+                        }
+                        SpinBoxCustom {
+                            id: ltYSpinBox
+                            implicitWidth: 200
+                            from: -1000
+                            to: 1000
+                            stepSize: 1
+                            value: 0
+                            editable: true
+                            onFocusChanged: {
+                                imageViewSettings.focus = true
+                            }
+                            Settings {
+                                property alias ltYSpinBox: ltYSpinBox.value
+                            }
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                CText {
+                    text: qsTr("rb")
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                ColumnLayout {
+                    RowLayout {
+                        CText {
+                            text: qsTr("x:")
+                        }
+                        SpinBoxCustom {
+                            id: rbXSpinBox
+                            implicitWidth: 200
+                            from: -1000
+                            to: 1000
+                            stepSize: 1
+                            value: 0
+                            onFocusChanged: {
+                                imageViewSettings.focus = true
+                            }
+                            Settings {
+                                property alias rbXSpinBox: rbXSpinBox.value
+                            }
+                        }
+                    }
+                    RowLayout {
+                        CText {
+                            text: qsTr("y:")
+                        }
+                        SpinBoxCustom {
+                            id: rbYSpinBox
+                            implicitWidth: 200
+                            from: -1000
+                            to: 1000
+                            stepSize: 1
+                            value: 0
+                            onFocusChanged: {
+                                imageViewSettings.focus = true
+                            }
+                            Settings {
+                                property alias rbYSpinBox: rbYSpinBox.value
+                            }
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                CText {
+                    text: qsTr("z:")
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                SpinBoxCustom {
+                    id: zSpinBox
+                    implicitWidth: 200
+                    from: -1000
+                    to: 1000
+                    stepSize: 1
+                    value: -1
+                    onFocusChanged: {
+                        imageViewSettings.focus = true
+                    }
+                    Settings {
+                        property alias zSpinBox: zSpinBox.value
+                    }
+                }
+            }
+
+            CheckButton {
+                id: imageLinearFilter
+                text: qsTr("Use linear filter")
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    ImageViewControlMenuController.onUseFilterChanged(checked)
+                }
+
+                onFocusChanged: {
+                    imageViewSettings.focus = true
+                }
+
+                Settings {
+                    property alias imageLinearFilter: imageLinearFilter.checked
+                }
+            }
+            CButton {
+                text: qsTr("Update")
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    ImageViewControlMenuController.onUpdateClicked(imagePathText.text, ltXSpinBox.value, ltYSpinBox.value, rbXSpinBox.value, rbYSpinBox.value, zSpinBox.value)
+                }
+
+                onFocusChanged: {
+                    imageViewSettings.focus = true
+                }
+            }
+        }
+    }
+
     RowLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
-
 
         CheckButton {
             id: setCameraIsometricView
@@ -841,6 +1122,53 @@ ColumnLayout {
 
                 onTriggered: {
                     sideScanViewCheckButton.sideScanLongPressTriggered = true;
+                }
+            }
+        }
+
+        // image view button
+        CheckButton {
+            id: imageViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/photo.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                ImageViewControlMenuController.onVisibilityChanged(checked)
+            }
+
+            property bool imageViewLongPressTriggered: false
+
+            MouseArea {
+                id: imageViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    imageViewLongPressTimer.start()
+                    imageViewCheckButton.imageViewLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!imageViewCheckButton.imageViewLongPressTriggered) {
+                        imageViewCheckButton.checked = !imageViewCheckButton.checked
+                    }
+                    imageViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    imageViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: imageViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    imageViewCheckButton.imageViewLongPressTriggered = true;
                 }
             }
         }

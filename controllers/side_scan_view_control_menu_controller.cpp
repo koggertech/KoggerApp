@@ -1,5 +1,6 @@
 #include "side_scan_view_control_menu_controller.h"
 #include "graphicsscene3dview.h"
+#include "side_scan_view.h"
 #include "core.h"
 
 

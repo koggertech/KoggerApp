@@ -8,6 +8,7 @@
 #include "raycaster.h"
 #include "surface.h"
 #include "side_scan_view.h"
+#include "image_view.h"
 #include "boattrack.h"
 #include "bottomtrack.h"
 #include "polygongroup.h"
@@ -103,6 +104,8 @@ public:
         friend class GraphicsScene3dView;
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
+        void processImageTexture(GraphicsScene3dView* viewPtr) const;
+
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
 
@@ -137,6 +140,7 @@ public:
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Surface> surface() const;
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
+    std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
@@ -191,6 +195,7 @@ private:
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Surface> m_surface;
     std::shared_ptr<SideScanView> sideScanView_;
+    std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<BoatTrack> m_boatTrack;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;

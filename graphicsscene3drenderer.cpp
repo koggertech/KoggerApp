@@ -22,6 +22,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer()
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["texture"]    = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -65,6 +66,14 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding mosaic fragment shader from source file.";
     if (!m_shaderProgramMap["mosaic"]->link())
         qCritical() << "Error linking mosaic shaders in shader program.";
+
+    // image
+    if (!m_shaderProgramMap["image"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/image.vsh"))
+        qCritical() << "Error adding image vertex shader from source file.";
+    if (!m_shaderProgramMap["image"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/image.fsh"))
+        qCritical() << "Error adding image fragment shader from source file.";
+    if (!m_shaderProgramMap["image"]->link())
+        qCritical() << "Error linking image shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()
@@ -95,6 +104,7 @@ void GraphicsScene3dRenderer::drawObjects()
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
+    imageViewRenderImpl_.render(this,        m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_projection * view * m_model, m_shaderProgramMap);
