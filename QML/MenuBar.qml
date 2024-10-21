@@ -36,16 +36,34 @@ Item {
         spacing: 0
 
         ColumnLayout {
+            id: mainLayout
             Layout.alignment: Qt.AlignTop
             Layout.preferredWidth: theme.controlHeight*1.2
             Layout.topMargin: 6
             spacing: 4
             Layout.margins: 4
 
+            Component.onCompleted: {
+                resetButtonOpacity()
+            }
+
+            function highlightAllButtons() {
+                mainLayout.opacity = 1
+            }
+
+            function resetButtonOpacity() {
+                mainLayout.opacity = 0.5
+            }
+
             MenuButton {
                 id: menuSettings
                 icon.source: "./icons/plug.svg"
                 Layout.fillWidth: true
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Connections")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
 
                 onPressed: {
                     itemChangeActive(menuSettings)
@@ -56,6 +74,11 @@ Item {
                 id: menuDisplay
                 Layout.fillWidth: true
                 icon.source: "./settings-outline.svg"
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Settings")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
 
                 onPressed: {
                     itemChangeActive(menuDisplay)
@@ -83,6 +106,11 @@ Item {
                 borderColor:  theme.controlBackColor
                 checkedBorderColor: "black"
 
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Display 3D")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
+
                 onClicked: {
                     if(!settings3DButton.checked && !visible2dButton.checked) {
                         visible2dButton.checked = true
@@ -96,6 +124,11 @@ Item {
                 width: theme.controlHeight*1.2
                 icon.source: "./icons/ripple.svg"
 
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Display 2D")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
+
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
                 checkedBorderColor: "black"
@@ -108,9 +141,9 @@ Item {
                 }
             }
 
-            MouseOpacityArea {
-                id: menuMouseArea
-            }
+            //MouseOpacityArea {
+            //    id: menuMouseArea
+            //}
         }
 
         DeviceSettingsViewer {

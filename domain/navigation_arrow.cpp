@@ -1,7 +1,7 @@
 #include "navigation_arrow.h"
 
 #include <QtMath>
-#include <drawutils.h>
+#include <draw_utils.h>
 
 
 NavigationArrow::NavigationArrow(QObject *parent)

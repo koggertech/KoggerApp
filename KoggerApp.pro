@@ -4,7 +4,8 @@ QT += network
 QT += qml
 
 #CONFIG += FLASHER
-CONFIG += MOTOR # motor_control definition
+#CONFIG += MOTOR # motor_control definition
+#CONFIG += SEPARATE_READING
 
 !android {
     QT += serialport
@@ -58,7 +59,6 @@ SOURCES += \
     Link.cpp \
     LinkManager.cpp \
     LinkManagerWrapper.cpp \
-    FileReader.cpp \
     Plot2D.cpp \
     Plot2DEchogram.cpp \
     Plot2DGrid.cpp \
@@ -89,6 +89,10 @@ DEFINES += FLASHER
 SOURCES += coreFlash.cpp
 }
 
+SEPARATE_READING {
+DEFINES += SEPARATE_READING
+}
+
 android {
 SOURCES += \
     android.cpp \
@@ -103,8 +107,8 @@ TRANSLATIONS += languages/translation_en.ts \
                 languages/translation_pl.ts
 
 RESOURCES += QML/qml.qrc \
-             icons.qrc \
-             resources.qrc
+    icons.qrc \
+    resources.qrc
 
 windows {
     RESOURCES += shaders.qrc
@@ -139,7 +143,6 @@ HEADERS += \
     Link.h \
     LinkManager.h \
     LinkManagerWrapper.h \
-    FileReader.h \
     MAVLinkConf.h \
     Plot2D.h \
     ProtoBinnary.h \
@@ -260,7 +263,7 @@ android {
 ##    ANDROID_ABIS = x86
 }
 
-ANDROID_ABIS = armeabi-v7a arm64-v8a x86 x86_64
+ANDROID_ABIS = armeabi-v7a arm64-v8a
 
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri

@@ -1,5 +1,5 @@
 #include "sceneobject.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 
 
 SceneObject::SceneObject(QObject *parent)

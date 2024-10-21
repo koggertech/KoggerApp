@@ -5,11 +5,13 @@
 #include <planegrid.h>
 #include <bottomtrack.h>
 #include <surface.h>
+#include "side_scan_view.h"
+#include "image_view.h"
 #include <pointgroup.h>
 #include <polygongroup.h>
 #include <graphicsscene3dview.h>
 // #include <geometryengine.h>
-#include <navigation_arrow.h>
+#include "navigation_arrow.h"
 #include "usbl_view.h"
 
 #include <QMatrix4x4>
@@ -63,11 +65,13 @@ private:
     CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
     Surface::SurfaceRenderImplementation m_surfaceRenderImpl;
+    SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
+    ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;
     SceneObject::RenderImplementation m_boatTrackRenderImpl;
-    NavigationArrow::NavigationArrowRenderImplementation m_navigationArrowRenderImpl;
+    NavigationArrow::NavigationArrowRenderImplementation navigationArrowRenderImpl_;
     UsblView::UsblViewRenderImplementation usblViewRenderImpl_;
 
     QMatrix4x4 m_model;

@@ -1,15 +1,5 @@
 #include "Link.h"
 
-#include <QUdpSocket>
-#include <QTcpSocket>
-#if defined(Q_OS_ANDROID)
-#include "qtandroidserialport/src/qserialport.h"
-#include "qtandroidserialport/src/qserialportinfo.h"
-#else
-#include <QSerialPort>
-#include <QSerialPortInfo>
-#endif
-
 
 Link::Link() :
     ioDevice_(nullptr),
@@ -390,10 +380,19 @@ bool Link::write(QByteArray data)
 void Link::setDev(QIODevice *dev)
 {
     deleteDev();
-    if(dev != nullptr) {
+    if (dev != nullptr) {
         ioDevice_ = dev;
+
         connect(dev, &QAbstractSocket::readyRead, this, &Link::readyRead);
         connect(dev, &QAbstractSocket::aboutToClose, this, &Link::aboutToClose);
+
+        if (auto* socket = qobject_cast<QSerialPort*>(ioDevice_); socket) {
+#if defined(Q_OS_ANDROID)
+//    connect(m_serial, &QSerialPort::error, this, &Connection::handleSerialError);
+#else
+            connect(socket, &QSerialPort::errorOccurred, this, &Link::handleSerialError);
+#endif
+        }
     }
 }
 
@@ -509,5 +508,12 @@ void Link::aboutToClose()
         //emit changeState(); //
         emit connectionStatusChanged(uuid_);
         emit closed(uuid_, this);
+    }
+}
+
+void Link::handleSerialError(QSerialPort::SerialPortError error)
+{
+    if (error == QSerialPort::ResourceError) {
+        close();
     }
 }

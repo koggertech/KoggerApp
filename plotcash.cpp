@@ -116,6 +116,16 @@ void Epoch::setAtt(float yaw, float pitch, float roll) {
     _attitude.roll = roll;
 }
 
+void Epoch::setGNSSSec(time_t sec)
+{
+    _positionGNSS.time.sec = sec;
+}
+
+void Epoch::setGNSSNanoSec(int nanoSec)
+{
+    _positionGNSS.time.nanoSec = nanoSec;
+}
+
 void Epoch::doBottomTrack2D(Echogram &chart, bool is_update_dist) {
     Q_UNUSED(chart);
     Q_UNUSED(is_update_dist);
@@ -153,7 +163,51 @@ void Epoch::moveComplexToEchogram(float offset_m, float levels_offset_db) {
     }
 }
 
-Dataset::Dataset() : lastBoatTrackEpoch_(0), lastBottomTrackEpoch_(0) {
+void Epoch::setInterpNED(NED ned)
+{
+    interpData_.ned = ned;
+}
+
+void Epoch::setInterpYaw(float yaw)
+{
+    interpData_.yaw = yaw;
+}
+
+void Epoch::setInterpFirstChannelDist(float dist)
+{
+    interpData_.distFirstChannel = dist;
+}
+
+void Epoch::setInterpSecondChannelDist(float dist)
+{
+    interpData_.distSecondChannel = dist;
+}
+
+NED Epoch::getInterpNED() const
+{
+    return interpData_.ned;
+}
+
+float Epoch::getInterpYaw() const
+{
+    return interpData_.yaw;
+}
+
+float Epoch::getInterpFirstChannelDist() const
+{
+    return interpData_.distFirstChannel;
+}
+
+float Epoch::getInterpSecondChannelDist() const
+{
+    return interpData_.distSecondChannel;
+}
+
+Dataset::Dataset() :
+    interpolator_(this),
+    lastBoatTrackEpoch_(0),
+    lastBottomTrackEpoch_(0)
+{
     resetDataset();
 }
 
@@ -592,6 +646,7 @@ void Dataset::resetDataset() {
     _channelsSetup.clear();
     lastBottomTrackEpoch_ = 0;
     resetDistProcessing();
+    interpolator_.clear();
 
     clearBoatTrack();
     emit dataUpdate();
@@ -1040,4 +1095,212 @@ QStringList Dataset::channelsNameList() {
     }
     return ch_names;
 
+}
+
+void Dataset::interpolateData(bool fromStart)
+{
+    interpolator_.interpolateData(fromStart);
+}
+
+Dataset::Interpolator::Interpolator(Dataset *datasetPtr) :
+    datasetPtr_(datasetPtr),
+    lastInterpIndx_(0),
+    firstChannelId_(CHANNEL_NONE),
+    secondChannelId_(CHANNEL_FIRST)
+{ }
+
+void Dataset::Interpolator::interpolateData(bool fromStart)
+{
+    if (!updateChannelsIds()) {
+        return;
+    }
+
+    int shift{ datasetPtr_->getBottomTrackParamPtr()->windowSize };
+    int startEpochIndx{ fromStart ? 0 : lastInterpIndx_ };
+    int endEpochIndx = datasetPtr_->size() - 1 - shift;
+    if ((endEpochIndx - startEpochIndx) < 2) {
+        return;
+    }
+
+    bool somethingInterp{ false };
+    int firstValidIndex{ startEpochIndx };
+
+    while (firstValidIndex < endEpochIndx) {
+        while (firstValidIndex <= endEpochIndx) {
+            auto* fEp = datasetPtr_->fromIndex(firstValidIndex);
+            if (fEp->getPositionGNSS().ned.isCoordinatesValid() && isfinite(fEp->yaw()) &&
+                (isfinite(fEp->distProccesing(firstChannelId_)) ||
+                isfinite(fEp->distProccesing(secondChannelId_))) ) {
+                break;
+            }
+            ++firstValidIndex;
+        }
+        int secondValidIndex = firstValidIndex + 1;
+        while (secondValidIndex <= endEpochIndx) {
+            auto* sEp = datasetPtr_->fromIndex(secondValidIndex);
+            if (sEp->getPositionGNSS().ned.isCoordinatesValid() && isfinite(sEp->yaw()) &&
+                (isfinite(sEp->distProccesing(firstChannelId_)) ||
+                isfinite(sEp->distProccesing(secondChannelId_))) ) {
+                break;
+            }
+            ++secondValidIndex;
+        }
+        if (secondValidIndex > endEpochIndx) {
+            break;
+        }
+
+        int fromIndx = firstValidIndex + 1;
+        int toIndx = secondValidIndex;
+        int numInterpIndx = toIndx - firstValidIndex;
+        if (numInterpIndx <= 0) {
+            firstValidIndex = secondValidIndex;
+            continue;
+        }
+
+        auto* startEpoch = datasetPtr_->fromIndex(firstValidIndex);
+        auto* endEpoch = datasetPtr_->fromIndex(secondValidIndex);
+        auto startPos = startEpoch->getPositionGNSS();
+        auto endPos = endEpoch->getPositionGNSS();
+        auto startYaw = startEpoch->yaw();
+        auto endYaw = endEpoch->yaw();
+        auto startFirstChannelDist = startEpoch->distProccesing(firstChannelId_);
+        auto endFirstChannelDist = endEpoch->distProccesing(firstChannelId_);
+        auto startSecondChannelDist = startEpoch->distProccesing(secondChannelId_);
+        auto endSecondChannelDist = endEpoch->distProccesing(secondChannelId_);
+        auto timeDiffNano = calcTimeDiffInNanoSecs(startEpoch->getPositionGNSS().time.sec,
+                                                   startEpoch->getPositionGNSS().time.nanoSec,
+                                                   endEpoch->getPositionGNSS().time.sec,
+                                                   endEpoch->getPositionGNSS().time.nanoSec);
+        auto timeOnStep = static_cast<quint64>(timeDiffNano * 1.0f / static_cast<float>(numInterpIndx));
+
+        // time
+        int cnt{ 1 };
+        auto startTime = convertToNanosecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec);
+        for (int j = fromIndx; j < toIndx; ++j) {
+            auto pTime = convertFromNanosecs(startTime + cnt++ * timeOnStep);
+            auto* interpEpoch = datasetPtr_->fromIndex(j);
+            interpEpoch->setGNSSSec(pTime.first);
+            interpEpoch->setGNSSNanoSec(pTime.second);
+        }
+        // data
+        for (int j = fromIndx; j < toIndx; ++j) {
+            auto* interpEpoch = datasetPtr_->fromIndex(j);
+            auto currentTime = convertToNanosecs(interpEpoch->getPositionGNSS().time.sec, interpEpoch->getPositionGNSS().time.nanoSec);
+            float progress = (currentTime - startTime) * 1.0f / static_cast<float>(timeDiffNano);
+            interpEpoch->setInterpNED(interpNED(startPos.ned, endPos.ned, progress));
+            interpEpoch->setInterpYaw(interpYaw(startYaw, endYaw, progress));
+
+            float correctDist = 0.0f; //
+            if (correctDist = interpDist(startFirstChannelDist, endFirstChannelDist, progress); !isfinite(correctDist)) {
+                correctDist = interpDist(startSecondChannelDist, endSecondChannelDist, progress);
+            }
+            interpEpoch->setInterpFirstChannelDist(correctDist);
+            interpEpoch->setInterpSecondChannelDist(correctDist);
+        }
+
+        // "interp" data to anchor epochs
+        startEpoch->setInterpNED(startPos.ned);
+        startEpoch->setInterpYaw(startYaw);
+        float correctDist = isfinite(startFirstChannelDist) ? startFirstChannelDist : startSecondChannelDist;
+        startEpoch->setInterpFirstChannelDist(correctDist);
+        startEpoch->setInterpSecondChannelDist(correctDist);
+        endEpoch->setInterpNED(endPos.ned);
+        endEpoch->setInterpYaw(endYaw);
+        correctDist = isfinite(endFirstChannelDist) ? endFirstChannelDist : endSecondChannelDist;
+        endEpoch->setInterpFirstChannelDist(correctDist);
+        endEpoch->setInterpSecondChannelDist(correctDist);
+
+        somethingInterp = true;
+        firstValidIndex = secondValidIndex;
+        lastInterpIndx_ = toIndx;
+    }
+
+    if (somethingInterp) {
+        emit datasetPtr_->updatedInterpolatedData(endEpochIndx);
+    }
+}
+
+void Dataset::Interpolator::clear()
+{
+    lastInterpIndx_ = 0;
+    firstChannelId_ = CHANNEL_NONE;
+    secondChannelId_ = CHANNEL_FIRST;
+}
+
+bool Dataset::Interpolator::updateChannelsIds()
+{
+    bool retVal = false;
+
+    firstChannelId_ = -1;
+    secondChannelId_ = -1;
+
+    if (datasetPtr_) {
+        if (auto chList = datasetPtr_->channelsList(); !chList.empty()) {
+            auto it = chList.begin();
+            firstChannelId_ = it.key();
+
+            if (++it != chList.end()) {
+                secondChannelId_ = it.key();
+            }
+
+            retVal = true;
+        }
+    }
+
+    return retVal;
+}
+
+float Dataset::Interpolator::interpYaw(float start, float end, float progress) const
+{
+    float delta = end - start;
+    if (delta > 180.0f) {
+        delta -= 360.0f;
+    }
+    else if (delta < -180.0f) {
+        delta += 360.0f;
+    }
+
+    float interpolated = start + progress * delta;
+    if (interpolated < 0.0f) {
+        interpolated += 360.0f;
+    }
+    else if (interpolated >= 360.0f) {
+        interpolated -= 360.0f;
+    }
+    return interpolated;
+}
+
+NED Dataset::Interpolator::interpNED(const NED &start, const NED &end, float progress) const
+{
+    NED result;
+    result.n = (1.0 - progress) * start.n + progress * end.n;
+    result.e = (1.0 - progress) * start.e + progress * end.e;
+    result.d = (1.0 - progress) * start.d + progress * end.d;
+    return result;
+}
+
+float Dataset::Interpolator::interpDist(float start, float end, float progress) const
+{
+    return (1.0 - progress) * start + progress * end;
+}
+
+qint64 Dataset::Interpolator::calcTimeDiffInNanoSecs(time_t startSecs, int startNanoSecs, time_t endSecs, int endNanoSecs) const
+{
+    qint64 startTimeInNanoseconds = static_cast<qint64>(startSecs) * 1000000000 + startNanoSecs;
+    qint64 endTimeInNanoseconds = static_cast<qint64>(endSecs) * 1000000000 + endNanoSecs;
+
+    return endTimeInNanoseconds - startTimeInNanoseconds;
+}
+
+qint64 Dataset::Interpolator::convertToNanosecs(time_t secs, int nanoSecs) const
+{
+    return static_cast<qint64>(secs) * 1000000000 + nanoSecs;
+}
+
+std::pair<time_t, int> Dataset::Interpolator::convertFromNanosecs(qint64 totalNanoSecs) const
+{
+    time_t seconds = static_cast<time_t>(totalNanoSecs / 1000000000);
+    int nanoseconds = static_cast<int>(totalNanoSecs % 1000000000);
+
+    return { seconds, nanoseconds };
 }

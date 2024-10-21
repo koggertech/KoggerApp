@@ -21,12 +21,23 @@ IDBin::IDBin(QObject *parent) :
     coldStartTimer_.setInterval(timerPeriodMsec_);
     setTimer_.setInterval(timerPeriodMsec_);
 
+#ifndef SEPARATE_READING
     QObject::connect(&coldStartTimer_, &QTimer::timeout, this, &IDBin::onExpiredColdStartTimer);
     QObject::connect(&setTimer_, &QTimer::timeout, this, &IDBin::onExpiredSetTimer);
+#endif
 }
 
 IDBin::~IDBin()
-{}
+{
+#ifdef SEPARATE_READING
+    if (coldStartTimer_.isActive()) {
+        coldStartTimer_.stop();
+    }
+    if (setTimer_.isActive()) {
+        setTimer_.stop();
+    }
+#endif
+}
 
 Resp  IDBin::parse(FrameParser &proto) {
     Resp resp_parse = respNone;
@@ -92,6 +103,14 @@ void IDBin::simpleRequest(Version ver) {
     emit binFrameOut(req_out);
 }
 
+#ifdef SEPARATE_READING
+void IDBin::initTimersConnects()
+{
+    QObject::connect(&coldStartTimer_, &QTimer::timeout, this, &IDBin::onExpiredColdStartTimer, Qt::QueuedConnection);
+    QObject::connect(&setTimer_, &QTimer::timeout, this, &IDBin::onExpiredSetTimer, Qt::QueuedConnection);
+}
+#endif
+
 void IDBin::appendKey(ProtoBinOut &proto_out) {
     proto_out.write<U4>(m_key);
 }
@@ -110,12 +129,21 @@ void IDBin::hashBinFrameOut(ProtoBinOut &proto_out)
 void IDBin::interExecColdStartTimer()
 {
     isColdStart_ = true;
+
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(&coldStartTimer_, "start", Qt::QueuedConnection);
+#else
     coldStartTimer_.start();
+#endif
 }
 
 void IDBin::onExpiredColdStartTimer()
 {
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(&coldStartTimer_, "stop", Qt::QueuedConnection);
+#else
     coldStartTimer_.stop();
+#endif
 
     emit notifyDevDriver(!isColdStart_);
     if (isColdStart_ && (coldStartTimerCount_++ < repeatingCount_)) { // try request
@@ -128,13 +156,22 @@ void IDBin::onExpiredColdStartTimer()
 }
 
 void IDBin::onExpiredSetTimer()
-{
+{        
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(&setTimer_, "stop", Qt::QueuedConnection);
+#else
     setTimer_.stop();
+#endif
 
     emit notifyDevDriver(hashLastInfo_.isReaded);
     if (!hashLastInfo_.isReaded && (setTimerCount_++ < repeatingCount_)) { // try request
         requestAll();
+
+#ifdef SEPARATE_READING
+        QMetaObject::invokeMethod(&setTimer_, "start", Qt::QueuedConnection);
+#else
         setTimer_.start();
+#endif
     }
     else {
         setTimerCount_ = 0;

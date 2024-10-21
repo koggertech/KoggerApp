@@ -10,12 +10,15 @@
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 
+
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
     m_camera(std::make_shared<Camera>()),
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     m_surface(std::make_shared<Surface>()),
+    sideScanView_(std::make_shared<SideScanView>()),
+    imageView_(std::make_shared<ImageView>()),
     m_boatTrack(std::make_shared<BoatTrack>()),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -25,9 +28,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
     navigationArrowState_(true),
+    sideScanCalcState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
-    switchedToBottomTrackVertexComboSelectionMode_(false)
+    switchedToBottomTrackVertexComboSelectionMode_(false),
+    bottomTrackWindowCounter_(-1)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -38,7 +43,16 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     m_navigationArrow->setColor({ 255, 0, 0 });
 
+    sideScanView_->setView(this);
+    imageView_->setView(this);
+
+#ifdef SEPARATE_READING
+    sideScanCalcState_ = true;
+#endif
+
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -49,6 +63,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -61,7 +77,9 @@ GraphicsScene3dView::GraphicsScene3dView() :
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
-{}
+{
+
+}
 
 QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
 {
@@ -81,6 +99,16 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
 std::shared_ptr<Surface> GraphicsScene3dView::surface() const
 {
     return m_surface;
+}
+
+std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
+{
+    return sideScanView_;
+}
+
+std::shared_ptr<ImageView> GraphicsScene3dView::getImageViewPtr() const
+{
+    return imageView_;
 }
 
 std::shared_ptr<PointGroup> GraphicsScene3dView::pointGroup() const
@@ -127,6 +155,9 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
 void GraphicsScene3dView::clear()
 {
     m_surface->clearData();
+    sideScanView_->clear();
+    imageView_->clear();//
+    bottomTrackWindowCounter_ = -1;
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
@@ -136,7 +167,8 @@ void GraphicsScene3dView::clear()
     usblView_->clearData();
     m_bounds = Cube();
 
-    setMapView();
+    //setMapView();
+    updateBounds();
 
     QQuickFramebufferObject::update();
 }
@@ -151,6 +183,18 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     retVal = rayOrigin + rayDirection * t;
 
     return retVal;
+}
+
+void GraphicsScene3dView::setCalcStateSideScanView(bool state)
+{
+    sideScanCalcState_ = state;
+}
+
+void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
+{
+    if (m_dataset) {
+        m_dataset->interpolateData(fromStart);
+    }
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -346,11 +390,29 @@ void GraphicsScene3dView::setIsometricView()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setCancelZoomView()
+{
+    m_verticalScale = 1.0f;
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::setMapView() {
     m_camera->setMapView();
     m_axesThumbnailCamera->setMapView();
 
     fitAllInView();
+    updatePlaneGrid();
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setLastEpochFocusView()
+{
+    auto* epoch = m_dataset->last();
+    QVector3D currPos(epoch->getPositionGNSS().ned.n, epoch->getPositionGNSS().ned.e, 1);
+
+    m_camera->focusOnPosition(currPos);
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
@@ -370,8 +432,8 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 {
     if(m_verticalScale == scale)
         return;
-    else if(scale < 1.f)
-        m_verticalScale = 1.0f;
+    else if(scale < 0.05f)
+        m_verticalScale = 0.05f;
     else if(scale > 10.f)
         m_verticalScale = 10.0f;
     else
@@ -423,23 +485,63 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
         return;
 
     m_bottomTrack->setDatasetPtr(m_dataset);
+    sideScanView_->setDatasetPtr(m_dataset);
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](int lEpoch, int rEpoch) -> void {
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                }
-                     );
+                                    if (sideScanCalcState_) {
+                                        interpolateDatasetEpochs(false);
+                                    }
+                                }, Qt::DirectConnection);
+
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
-                     this,      [this]() -> void {
+                      this,     [this]() -> void {
                                     m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
                                     if (navigationArrowState_) {
                                         const Position pos = m_dataset->getLastPosition();
                                         m_navigationArrow->setPositionAndAngle(
                                             QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
                                     }
-                                }
-                     );
+
+                                    if (!sideScanCalcState_ || sideScanView_->getWorkMode() != SideScanView::Mode::kRealtime) {
+                                        return;
+                                    }
+
+                                    // bottom track
+                                    int firstChannelId = CHANNEL_NONE;
+                                    int secondChannelId = CHANNEL_FIRST;
+                                    if (m_dataset) {
+                                        if (auto chList = m_dataset->channelsList(); !chList.empty()) {
+                                            auto it = chList.begin();
+                                            firstChannelId = it.key();
+
+                                            if (++it != chList.end()) {
+                                                secondChannelId = it.key();
+                                            }
+                                        }
+                                    }
+                                    int currEpochIndx = m_dataset->endIndex();
+                                    auto btP = m_dataset->getBottomTrackParamPtr();
+                                    int currCount = std::floor(currEpochIndx / btP->windowSize);
+                                    if (bottomTrackWindowCounter_ != currCount) {
+                                        btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
+                                        btP->indexTo = currCount  * btP->windowSize;
+                                        m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
+                                        bottomTrackWindowCounter_ = currCount;;
+                                    }
+                                }, Qt::DirectConnection);
+
+    QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
+                     this,      [this](int indx) -> void {
+                                    if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
+                                        sideScanView_->startUpdateDataInThread(indx);
+                                        if (sideScanView_->getTrackLastEpoch()) {
+                                            setLastEpochFocusView();
+                                        }
+                                    }
+                                }, Qt::DirectConnection);
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {
@@ -459,12 +561,15 @@ void GraphicsScene3dView::setQmlEngine(QObject* engine)
 
 void GraphicsScene3dView::updateBounds()
 {
-    m_bounds =        m_boatTrack->bounds()
-               .merge(m_surface->bounds())
-               .merge(m_bottomTrack->bounds())
-               .merge(m_polygonGroup->bounds())
-               .merge(m_pointGroup->bounds())
-               .merge(usblView_->bounds());
+    m_bounds = m_boatTrack->bounds()
+                    .merge(m_surface->bounds())
+                    .merge(m_bottomTrack->bounds())
+                    .merge(m_boatTrack->bounds())
+                    .merge(m_polygonGroup->bounds())
+                    .merge(m_pointGroup->bounds())
+                    .merge(sideScanView_->bounds())
+                    .merge(imageView_->bounds())
+                    .merge(usblView_->bounds());
 
     updatePlaneGrid();
 
@@ -491,15 +596,15 @@ void GraphicsScene3dView::clearComboSelectionRect()
 }
 
 //---------------------Renderer---------------------------//
-GraphicsScene3dView::InFboRenderer::InFboRenderer()
-    :QQuickFramebufferObject::Renderer()
-    , m_renderer(new GraphicsScene3dRenderer)
+GraphicsScene3dView::InFboRenderer::InFboRenderer() :
+    QQuickFramebufferObject::Renderer(),
+    m_renderer(new GraphicsScene3dRenderer)
 {
     m_renderer->initialize();
 }
 
 GraphicsScene3dView::InFboRenderer::~InFboRenderer()
-{}
+{ }
 
 void GraphicsScene3dView::InFboRenderer::render()
 {
@@ -510,8 +615,18 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
 {
     auto view = qobject_cast<GraphicsScene3dView*>(fbo);
 
-    if(!view)
+    if (!view) {
         return;
+    }
+
+    // process textures
+    processColorTableTexture(view);
+    processTileTexture(view);
+    processImageTexture(view);
+
+    //read from renderer
+    view->m_model = m_renderer->m_model;
+    view->m_projection = m_renderer->m_projection;
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
@@ -519,9 +634,11 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
+    m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
+    m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
-    m_renderer->m_navigationArrowRenderImpl = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
+    m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
     m_renderer->usblViewRenderImpl_         = *(dynamic_cast<UsblView::UsblViewRenderImplementation*>(view->usblView_->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
@@ -530,10 +647,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_verticalScale             = view->m_verticalScale;
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
-
-    //read from renderer
-    view->m_model = m_renderer->m_model;
-    view->m_projection = m_renderer->m_projection;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
@@ -542,6 +655,136 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(4);
     return new QOpenGLFramebufferObject(size, format);
+}
+
+void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
+{
+    auto sideScanPtr = viewPtr->getSideScanViewPtr();
+    auto& colorTableRef = sideScanPtr->getColorTableTextureTaskRef();
+    if (!colorTableRef.empty()) {
+        GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
+
+#if defined(Q_OS_ANDROID)
+        if (colorTableTextureId) {
+            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, colorTableRef.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+        }
+        else {
+            glGenTextures(1, &colorTableTextureId);
+            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, colorTableRef.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+
+            sideScanPtr->setColorTableTextureId(colorTableTextureId);
+        }
+#else
+        if (colorTableTextureId) {
+            glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colorTableRef.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+        }
+        else {
+            glGenTextures(1, &colorTableTextureId);
+            glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+
+            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, colorTableRef.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+
+            sideScanPtr->setColorTableTextureId(colorTableTextureId);
+        }
+#endif
+
+        colorTableRef.clear();
+    }
+}
+
+void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const
+{
+    auto sideScanPtr = viewPtr->getSideScanViewPtr();
+
+    auto& tasks = sideScanPtr->getTileTextureTasksRef();
+    for (auto it = tasks.begin(); it != tasks.end(); ) {
+        const QUuid& tileId = it.key();
+        std::vector<uint8_t> & image = it.value();
+        GLuint textureId = viewPtr->getSideScanViewPtr()->getTextureIdByTileId(tileId);
+
+        if (image == std::vector<uint8_t>()) { // delete
+            sideScanPtr->setTextureIdByTileId(tileId, 0);
+            glDeleteTextures(1, &textureId);
+            it = tasks.erase(it);
+            continue;
+        }
+
+        if (textureId) {
+            glBindTexture(GL_TEXTURE_2D, textureId);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RED, GL_UNSIGNED_BYTE, image.data());
+        }
+        else {
+            glGenTextures(1, &textureId);
+            glBindTexture(GL_TEXTURE_2D, textureId);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
+
+            sideScanPtr->setTextureIdByTileId(tileId, textureId);
+        }
+
+        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+        glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+
+        it = tasks.erase(it);
+    }
+}
+
+void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView *viewPtr) const
+{
+    auto imagePtr = viewPtr->getImageViewPtr();
+    auto& task = imagePtr->getTextureTasksRef();
+
+    if (task.isNull())
+        return;
+
+    GLuint textureId = viewPtr->getImageViewPtr()->getTextureId();
+
+    if (textureId) {
+        glDeleteTextures(1, &textureId);
+    }
+
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getImageViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getImageViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    QImage glImage = task.convertToFormat(QImage::Format_RGBA8888).mirrored();
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+
+    imagePtr->setTextureId(textureId);
+
+    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+    glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+
+    task = QImage();
 }
 
 GraphicsScene3dView::Camera::Camera()

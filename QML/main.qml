@@ -198,9 +198,17 @@ Window  {
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
-                    text:      qsTr("Calculating surface.\nPlease wait...")
-                    textColor: "black"
+                    text:      qsTr("Calculating surface\nPlease wait...")
+                    textColor: "white"
                     visible:   false
+                }
+
+                KWaitProgressBar{
+                    id:        sideScanProcessingProgressBar
+                    objectName: "sideScanProcessingProgressBar"
+                    text:      qsTr("Calculating mosaic\nPlease wait...")
+                    textColor: "white"
+                    visible:  core.isMosaicUpdatingInThread && core.isSideScanPerformanceMode
                 }
 
                 PinchArea {
@@ -349,10 +357,10 @@ Window  {
                     ButtonGroup { id: pencilbuttonGroup }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/arrow-bar-to-down.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.MinDistProc)
@@ -363,10 +371,10 @@ Window  {
                     }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/arrow-bar-to-up.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.MaxDistProc)
@@ -377,10 +385,10 @@ Window  {
                     }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/eraser.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.ClearDistProc)
@@ -391,10 +399,10 @@ Window  {
                     }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/x.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.Undefined)
@@ -498,6 +506,7 @@ Window  {
                     // checkedBackColor: "transparent"
                     borderColor: "transparent"
                     checkedBorderColor: theme.textColor
+                    implicitWidth: theme.controlHeight
                 }
 
                 ButtonGroup { id: autopilotModeGroup }
@@ -509,6 +518,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -518,6 +528,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -527,6 +538,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -536,6 +548,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -545,6 +558,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 // CCombo  {
@@ -613,6 +627,32 @@ Window  {
 
         function onSurfaceProcessorTaskFinished() {
             surfaceProcessingProgressBar.visible = false
+        }
+    }    
+
+    // banner on file opening
+    Rectangle {
+        id: fileOpeningOverlay
+        color: theme.controlBackColor
+        opacity: 0.8
+        radius: 10
+        anchors.centerIn: parent
+        visible: core.isFileOpening && !core.isSeparateReading
+        implicitWidth: textItem.implicitWidth + 40
+        implicitHeight: textItem.implicitHeight + 40
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 10
+
+            Text {
+                id: textItem
+                text: qsTr("Please wait, the file is opening")
+                color: "white"
+                font.pixelSize: 20
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+            }
         }
     }
 }

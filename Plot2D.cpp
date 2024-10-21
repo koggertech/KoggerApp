@@ -143,6 +143,12 @@ void Plot2D::setEchogramTheme(int theme_id) {
     plotUpdate();
 }
 
+void Plot2D::setEchogramCompensation(int compensation_id) {
+    _echogram.setCompensation(compensation_id);
+    _echogram.resetCash();
+    plotUpdate();
+}
+
 void Plot2D::setBottomTrackVisible(bool visible) {
     _bottomProcessing.setVisible(visible);
     plotUpdate();
@@ -510,4 +516,80 @@ void Plot2D::reRangeDistance() {
         }
         _cursor.distance.to = ceil(max_range);
     }
+}
+
+bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor) 
+{
+    if((cursor.mouseX < 0 || cursor.mouseY < 0) && (cursor.selectEpochIndx == -1) ) {
+        return false;
+    }
+
+    if (cursor.selectEpochIndx != -1) {
+        auto selectedEpoch = dataset->fromIndex(cursor.selectEpochIndx);
+        int offsetX = 0;
+        int halfCanvas = canvas.width() / 2;
+        int withoutHalf = dataset->size() - halfCanvas;
+        if (cursor.selectEpochIndx >= withoutHalf)
+            offsetX = cursor.selectEpochIndx - withoutHalf;
+        if (const auto keys{ dataset->channelsList().keys() }; !keys.empty()) {
+            if (const auto chartPtr{ selectedEpoch->chart(keys.at(0)) }; chartPtr) {
+                const int x = canvas.width() / 2 + offsetX;
+                const int y = keys.size() == 2 ? canvas.height() / 2 - canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()) :
+                                  canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range());
+                cursor.setMouse(x, y);
+            }
+        }
+    }
+
+    QPen pen;
+    pen.setWidth(_lineWidth);
+    pen.setColor(_lineColor);
+
+    QPainter* p = canvas.painter();
+    p->setPen(pen);
+    QFont font = QFont("Asap", 14, QFont::Normal);
+    font.setPixelSize(18);
+    p->setFont(font);
+
+    const int image_height = canvas.height();
+    const int image_width = canvas.width();
+
+    if (cursor._tool == MouseToolNothing || beenEpochEvent_) {
+        p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
+        p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
+    }
+
+    const float canvas_height = canvas.height();
+    float value_range = cursor.distance.to - cursor.distance.from;
+    float value_scale = float(cursor.mouseY)/canvas_height;
+    float cursor_distance = value_scale*value_range + cursor.distance.from;
+
+    // text & back
+    p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    QString distanceText = QString("%1 m").arg(cursor_distance, 0, 'g', 4);
+    QRect textRect = p->fontMetrics().boundingRect(distanceText);
+
+    bool onTheRight = (p->window().width() - cursor.mouseX - 65) < textRect.width();
+
+    QPoint shiftedPoint;
+    if (cursor.mouseY > 60) {
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY - 20) : QPoint(cursor.mouseX + 50, cursor.mouseY - 20);
+    }
+    else {
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY + 40) : QPoint(cursor.mouseX + 50, cursor.mouseY + 40);
+    }
+
+    textRect.moveTopLeft(shiftedPoint);
+
+    // back
+    p->setPen(Qt::NoPen);
+    p->setBrush(QColor(45,45,45));
+    p->drawRect(textRect.adjusted(-5, -20, 5, -15));
+
+    // text
+    p->setPen(QColor(255,255,255));
+    p->drawText(textRect.topLeft(), distanceText);
+
+    return true;
 }

@@ -52,6 +52,7 @@ public:
     Q_PROPERTY(int upgradeFWStatus READ upgradeFWStatus NOTIFY upgradeChanged)
 
     Q_PROPERTY(QString devName READ devName NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int devType READ devType NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
 
