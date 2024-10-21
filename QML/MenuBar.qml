@@ -100,7 +100,7 @@ Item {
             CheckButton {
                 id: settings3DButton
                 visible: instruments > 0
-                width: theme.controlHeight*1.2
+                implicitWidth: theme.controlHeight*1.2
                 icon.source: "./icons/map.svg"
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
@@ -121,7 +121,7 @@ Item {
             CheckButton {
                 id: visible2dButton
                 visible: instruments > 0
-                width: theme.controlHeight*1.2
+                implicitWidth: theme.controlHeight*1.2
                 icon.source: "./icons/ripple.svg"
 
                 CMouseOpacityArea {
