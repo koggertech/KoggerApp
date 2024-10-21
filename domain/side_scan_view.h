@@ -76,12 +76,14 @@ public:
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
     void setChannels(int firstChId, int secondChId);
-    GLuint                              getTextureIdByTileId(QUuid tileId) const;
+    GLuint                              getTextureIdByTileId(QUuid tileId);
     bool                                getUseLinearFilter() const;
     bool                                getTrackLastEpoch() const;
     GLuint                              getColorTableTextureId() const;
-    QHash<QUuid, std::vector<uint8_t>>& getTileTextureTasksRef();
-    std::vector<uint8_t>&               getColorTableTextureTaskRef();
+    QHash<QUuid, std::vector<uint8_t>>  getTileTextureTasks();
+    void                                clearTileTextureTasks();
+    std::vector<uint8_t>                getColorTableTextureTask();
+    void                                clearColorTableTextureTask();
     Mode                                getWorkMode() const;
 
 signals:

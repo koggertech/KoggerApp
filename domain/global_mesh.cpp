@@ -19,14 +19,7 @@ GlobalMesh::GlobalMesh(SideScanView* ssPtr, int tileSidePixelSize, int tileHeigh
 }
 
 GlobalMesh::~GlobalMesh()
-{
-    for (auto& itm : tiles_) {
-        if (ssPtr_) {
-            ssPtr_->getTileTextureTasksRef()[itm->getUuid()] = std::vector<uint8_t>();
-        }
-        delete itm;
-    }
-}
+{ }
 
 void GlobalMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
