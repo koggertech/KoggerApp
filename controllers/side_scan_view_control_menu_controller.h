@@ -43,4 +43,7 @@ private:
     GraphicsScene3dView* m_graphicsSceneView;
     Core* corePtr_;
     QList<QMetaObject::Connection> connections_;
+    std::function<void()> pendingLambda_ = nullptr;
+    float lowLevel_;
+    float highLevel_;
 };

@@ -638,6 +638,15 @@ ColumnLayout {
                     onStopValueChanged: {
                        SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                    }
+
+                    Settings {
+                        property alias sideScanLevelsStart: sideScanLevelsSlider.startValue
+                        property alias sideScanLevelsStop: sideScanLevelsSlider.stopValue
+                    }
                 }
 
                 CText {
