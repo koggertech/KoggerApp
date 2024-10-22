@@ -34,7 +34,11 @@ SideScanView::SideScanView(QObject* parent) :
 
 SideScanView::~SideScanView()
 {
-
+    for (const auto &itmI : globalMesh_.getTileMatrixRef()) {
+        for (const auto& itmJ : itmI) {
+            tileTextureTasks_[itmJ->getUuid()] = std::vector<uint8_t>();
+        }
+    }
 }
 
 bool SideScanView::updateChannelsIds()
@@ -391,6 +395,8 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
         }
     }
 
+    lastMatParams_ = actualMatParams;
+
     postUpdate();
 
     auto renderImpl = RENDER_IMPL(SideScanView);
@@ -398,8 +404,6 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
     renderImpl->measLinesEvenIndices_.append(std::move(measLinesEvenIndices));
     renderImpl->measLinesOddIndices_.append(std::move(measLinesOddIndices));
     renderImpl->createBounds();
-
-    lastMatParams_ = actualMatParams;
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -423,6 +427,8 @@ void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrix
 
 void SideScanView::clear()
 {
+    QMutexLocker locker(&mutex_);
+
     auto renderImpl = RENDER_IMPL(SideScanView);
     renderImpl->measLinesVertices_.clear();
     renderImpl->measLinesEvenIndices_.clear();
@@ -527,6 +533,9 @@ void SideScanView::setTextureIdByTileId(QUuid tileId, GLuint textureId)
     if (auto* tilePtr = globalMesh_.getTilePtrById(tileId); tilePtr) {
         tilePtr->setTextureId(textureId);
     }
+
+    QMutexLocker locker(&mutex_);
+
     // render
     auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileId);
     if (it != RENDER_IMPL(SideScanView)->tiles_.end()) {
@@ -584,8 +593,10 @@ void SideScanView::setChannels(int firstChId, int secondChId)
     manualSettedChannels_ = true;
 }
 
-GLuint SideScanView::getTextureIdByTileId(QUuid tileId) const
+GLuint SideScanView::getTextureIdByTileId(QUuid tileId)
 {
+    QMutexLocker locker(&mutex_);
+
     // from render
     GLuint retVal = 0;
     auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileId);
@@ -613,14 +624,22 @@ GLuint SideScanView::getColorTableTextureId() const
     return colorMapTextureId_;
 }
 
-QHash<QUuid, std::vector<uint8_t>>& SideScanView::getTileTextureTasksRef()
+QHash<QUuid, std::vector<uint8_t>> SideScanView::getTileTextureTasks()
 {
-    return tileTextureTasks_;
+    QWriteLocker locker(&rWLocker_);
+
+    auto retVal = std::move(tileTextureTasks_);
+
+    return retVal;
 }
 
-std::vector<uint8_t>& SideScanView::getColorTableTextureTaskRef()
+std::vector<uint8_t> SideScanView::getColorTableTextureTask()
 {
-    return colorTableTextureTask_;
+    QWriteLocker locker(&rWLocker_);
+
+    auto retVal = std::move(colorTableTextureTask_);
+
+    return retVal;
 }
 
 SideScanView::Mode SideScanView::getWorkMode() const
@@ -782,6 +801,7 @@ void SideScanView::updateTilesTexture()
     if (!globalMesh_.getIsInited() || !m_view) {
         return;
     }
+    QMutexLocker locker(&mutex_);
 
     for (auto& itmI : globalMesh_.getTileMatrixRef()) {
         for (auto& itmJ : itmI) {
@@ -916,6 +936,9 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
 
         // tiles
         for (auto& itm : tiles_) {
+            if (!itm.getIsInited()) {
+                continue;
+            }
             // grid/contour
             if (tileGridVisible_) {
                 itm.getGridRenderImplRef().render(ctx, mvp, shaderProgramMap);

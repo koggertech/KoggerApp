@@ -660,14 +660,14 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
 void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
 {
     auto sideScanPtr = viewPtr->getSideScanViewPtr();
-    auto& colorTableRef = sideScanPtr->getColorTableTextureTaskRef();
-    if (!colorTableRef.empty()) {
+    auto task = sideScanPtr->getColorTableTextureTask();
+    if (!task.empty()) {
         GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
 
 #if defined(Q_OS_ANDROID)
         if (colorTableTextureId) {
             glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, colorTableRef.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
         }
         else {
             glGenTextures(1, &colorTableTextureId);
@@ -678,14 +678,14 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, colorTableRef.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
 
             sideScanPtr->setColorTableTextureId(colorTableTextureId);
         }
 #else
         if (colorTableTextureId) {
             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, colorTableRef.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
         }
         else {
             glGenTextures(1, &colorTableTextureId);
@@ -695,13 +695,11 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, colorTableRef.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorTableRef.data());
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
 
             sideScanPtr->setColorTableTextureId(colorTableTextureId);
         }
 #endif
-
-        colorTableRef.clear();
     }
 }
 
@@ -709,16 +707,16 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
 {
     auto sideScanPtr = viewPtr->getSideScanViewPtr();
 
-    auto& tasks = sideScanPtr->getTileTextureTasksRef();
-    for (auto it = tasks.begin(); it != tasks.end(); ) {
+    auto tasks = sideScanPtr->getTileTextureTasks();
+
+    for (auto it = tasks.begin(); it != tasks.end(); ++it) {
         const QUuid& tileId = it.key();
-        std::vector<uint8_t> & image = it.value();
+        const std::vector<uint8_t>& image = it.value();
         GLuint textureId = viewPtr->getSideScanViewPtr()->getTextureIdByTileId(tileId);
 
         if (image == std::vector<uint8_t>()) { // delete
             sideScanPtr->setTextureIdByTileId(tileId, 0);
             glDeleteTextures(1, &textureId);
-            it = tasks.erase(it);
             continue;
         }
 
@@ -747,8 +745,6 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
 
         QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
         glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
-
-        it = tasks.erase(it);
     }
 }
 

@@ -366,7 +366,9 @@ ColumnLayout {
                         }
 
                         onFocusChanged: {
-                            sideScanViewSettings.focus = true
+                            if (Qt.platform.os === 'android') {
+                                sideScanViewSettings.focus = true
+                            }
                         }
                     }
                 }
@@ -581,6 +583,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
                     //visible: core.isSeparateReading
+                    enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
 
                     onClicked: {
                         SideScanViewControlMenuController.onClearClicked()
@@ -599,6 +602,7 @@ ColumnLayout {
                     text: qsTr("Update")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
+                    enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
 
                     onClicked: {
                         SideScanViewControlMenuController.onUpdateClicked()
