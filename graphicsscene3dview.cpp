@@ -700,8 +700,6 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
             sideScanPtr->setColorTableTextureId(colorTableTextureId);
         }
 #endif
-
-        sideScanPtr->clearColorTableTextureTask();
     }
 }
 
@@ -747,10 +745,6 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
 
         QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
         glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    if (!tasks.empty()) {
-        sideScanPtr->clearTileTextureTasks();
     }
 }
 

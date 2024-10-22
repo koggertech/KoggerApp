@@ -34,7 +34,11 @@ SideScanView::SideScanView(QObject* parent) :
 
 SideScanView::~SideScanView()
 {
-    clear();
+    for (const auto &itmI : globalMesh_.getTileMatrixRef()) {
+        for (const auto& itmJ : itmI) {
+            tileTextureTasks_[itmJ->getUuid()] = std::vector<uint8_t>();
+        }
+    }
 }
 
 bool SideScanView::updateChannelsIds()
@@ -391,6 +395,8 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
         }
     }
 
+    lastMatParams_ = actualMatParams;
+
     postUpdate();
 
     auto renderImpl = RENDER_IMPL(SideScanView);
@@ -398,8 +404,6 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
     renderImpl->measLinesEvenIndices_.append(std::move(measLinesEvenIndices));
     renderImpl->measLinesOddIndices_.append(std::move(measLinesOddIndices));
     renderImpl->createBounds();
-
-    lastMatParams_ = actualMatParams;
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -622,30 +626,20 @@ GLuint SideScanView::getColorTableTextureId() const
 
 QHash<QUuid, std::vector<uint8_t>> SideScanView::getTileTextureTasks()
 {
-    QMutexLocker locker(&mutex_);
+    QWriteLocker locker(&rWLocker_);
 
-    return tileTextureTasks_;
-}
+    auto retVal = std::move(tileTextureTasks_);
 
-void SideScanView::clearTileTextureTasks()
-{
-    QMutexLocker locker(&mutex_);
-
-    tileTextureTasks_.clear();
+    return retVal;
 }
 
 std::vector<uint8_t> SideScanView::getColorTableTextureTask()
 {
-    QMutexLocker locker(&mutex_);
+    QWriteLocker locker(&rWLocker_);
 
-    return colorTableTextureTask_;
-}
+    auto retVal = std::move(colorTableTextureTask_);
 
-void SideScanView::clearColorTableTextureTask()
-{
-    QMutexLocker locker(&mutex_);
-
-    colorTableTextureTask_.clear();
+    return retVal;
 }
 
 SideScanView::Mode SideScanView::getWorkMode() const
@@ -942,6 +936,9 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
 
         // tiles
         for (auto& itm : tiles_) {
+            if (!itm.getIsInited()) {
+                continue;
+            }
             // grid/contour
             if (tileGridVisible_) {
                 itm.getGridRenderImplRef().render(ctx, mvp, shaderProgramMap);

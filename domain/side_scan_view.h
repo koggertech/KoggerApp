@@ -5,6 +5,7 @@
 #include <QVector3D>
 #include <QUuid>
 #include <QQueue>
+#include <QReadWriteLock>
 #include "sceneobject.h"
 #include "plotcash.h"
 #include "global_mesh.h"
@@ -81,9 +82,7 @@ public:
     bool                                getTrackLastEpoch() const;
     GLuint                              getColorTableTextureId() const;
     QHash<QUuid, std::vector<uint8_t>>  getTileTextureTasks();
-    void                                clearTileTextureTasks();
     std::vector<uint8_t>                getColorTableTextureTask();
-    void                                clearColorTableTextureTask();
     Mode                                getWorkMode() const;
 
 signals:
@@ -128,5 +127,6 @@ private:
     float lAngleOffset_;
     float rAngleOffset_;
     QMutex mutex_;
+    QReadWriteLock rWLocker_;
     bool startedInThread_;
 };
