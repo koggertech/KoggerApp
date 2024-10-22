@@ -245,6 +245,7 @@ public:
 
     void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
     void setThemeId(int theme_id);
+    void setCompensation(int compensation_id);
 
     void updateColors();
 
@@ -279,6 +280,7 @@ protected:
     QPixmap _pixmap;
     bool _flagColorChanged = true;
 
+    int _compensation_id = 0;
 
     struct {
         bool resetCash = true;
@@ -798,6 +800,10 @@ public:
 
     void setDataset(Dataset* dataset) {
         _dataset = dataset;
+        if (pendingBtpLambda_) {
+            pendingBtpLambda_();
+            pendingBtpLambda_ = nullptr;
+        }
     }
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
@@ -822,6 +828,7 @@ public:
     void setEchogramHightLevel(float high);
     void setEchogramVisible(bool visible);
     void setEchogramTheme(int theme_id);
+    void setEchogramCompensation(int compensation_id);
 
     void setBottomTrackVisible(bool visible);
     void setBottomTrackTheme(int theme_id);
@@ -889,6 +896,8 @@ protected:
 
     void reindexingCursor();
     void reRangeDistance();
+
+    std::function<void()> pendingBtpLambda_ = nullptr;
 };
 
 

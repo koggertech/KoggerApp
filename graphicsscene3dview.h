@@ -1,21 +1,23 @@
 #ifndef GRAPHICSSCENE3DVIEW_H
 #define GRAPHICSSCENE3DVIEW_H
 
-#include <coordinateaxes.h>
-#include <planegrid.h>
-#include <raycaster.h>
-#include <surface.h>
-#include <boattrack.h>
-#include <bottomtrack.h>
-#include <polygongroup.h>
-#include <pointgroup.h>
-#include <vertexeditingdecorator.h>
-#include <ray.h>
-#include <navigation_arrow.h>
-#include "usbl_view.h"
-
 #include <QQuickFramebufferObject>
 #include <QtMath>
+#include "coordinateaxes.h"
+#include "planegrid.h"
+#include "raycaster.h"
+#include "surface.h"
+#include "side_scan_view.h"
+#include "image_view.h"
+#include "boattrack.h"
+#include "bottomtrack.h"
+#include "polygongroup.h"
+#include "pointgroup.h"
+#include "vertexeditingdecorator.h"
+#include "ray.h"
+#include "navigation_arrow.h"
+#include "usbl_view.h"
+
 
 class Dataset;
 class GraphicsScene3dRenderer;
@@ -100,6 +102,10 @@ public:
 
     private:
         friend class GraphicsScene3dView;
+        void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
+        void processTileTexture(GraphicsScene3dView* viewPtr) const;
+        void processImageTexture(GraphicsScene3dView* viewPtr) const;
+
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
 
@@ -133,6 +139,8 @@ public:
     std::shared_ptr<BoatTrack> boatTrack() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Surface> surface() const;
+    std::shared_ptr<SideScanView> getSideScanViewPtr() const;
+    std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
@@ -143,6 +151,8 @@ public:
     void setNavigationArrowState(bool state);
     void clear();
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
+    void setCalcStateSideScanView(bool state);
+    void interpolateDatasetEpochs(bool fromStart);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -157,7 +167,9 @@ public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
     void setIsometricView();
+    void setCancelZoomView();
     void setMapView();
+    void setLastEpochFocusView();
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
@@ -182,6 +194,8 @@ private:
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<SideScanView> sideScanView_;
+    std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<BoatTrack> m_boatTrack;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;
@@ -203,6 +217,7 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
+    bool sideScanCalcState_;
 #if defined (Q_OS_ANDROID)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -212,6 +227,7 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
+    int bottomTrackWindowCounter_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

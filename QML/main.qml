@@ -198,9 +198,17 @@ Window  {
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
-                    text:      qsTr("Calculating surface.\nPlease wait...")
-                    textColor: "black"
+                    text:      qsTr("Calculating surface\nPlease wait...")
+                    textColor: "white"
                     visible:   false
+                }
+
+                KWaitProgressBar{
+                    id:        sideScanProcessingProgressBar
+                    objectName: "sideScanProcessingProgressBar"
+                    text:      qsTr("Calculating mosaic\nPlease wait...")
+                    textColor: "white"
+                    visible:  core.isMosaicUpdatingInThread && core.isSideScanPerformanceMode
                 }
 
                 PinchArea {
@@ -629,7 +637,7 @@ Window  {
         opacity: 0.8
         radius: 10
         anchors.centerIn: parent
-        visible: core.isFileOpening
+        visible: core.isFileOpening && !core.isSeparateReading
         implicitWidth: textItem.implicitWidth + 40
         implicitHeight: textItem.implicitHeight + 40
 

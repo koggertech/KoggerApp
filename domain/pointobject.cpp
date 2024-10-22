@@ -1,5 +1,5 @@
 #include "pointobject.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 
 PointObject::PointObject(QObject *parent)
     : SceneObject(new PointObjectRenderImplementation, parent)

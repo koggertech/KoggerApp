@@ -33,7 +33,6 @@ public:
 
     QList<DevQProperty*> getDevList();
     QList<DevQProperty*> getDevList(BoardVersion ver);
-    DevQProperty* getLastDev();
 
 #ifdef MOTOR
     bool isMotorControlCreated() const;
@@ -45,7 +44,11 @@ public slots:
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
     void openFile(QString filePath);
+#ifdef SEPARATE_READING
+    void closeFile(bool onOpen = false);
+#else
     void closeFile();
+#endif
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
@@ -91,6 +94,13 @@ signals:
     void attitudeComplete(float yaw, float pitch, float roll);
     void encoderComplete(float e1, float e2, float e3);
     void fileStopsOpening();
+
+#ifdef SEPARATE_READING
+    void fileStartOpening();
+    void fileBreaked(bool);
+    void onFileReadEnough();
+#endif
+    void fileOpened();
 
 #ifdef MOTOR
     void motorDeviceChanged();
@@ -146,6 +156,9 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+#ifdef SEPARATE_READING
+    bool onOpen_{ false };
+#endif
 
 #ifdef MOTOR
     std::unique_ptr<MotorControl> motorControl_;

@@ -1,5 +1,5 @@
 #include "surfacegrid.h"
-#include <drawutils.h>
+#include <draw_utils.h>
 
 SurfaceGrid::SurfaceGrid(QObject *parent)
 : SceneObject(parent)

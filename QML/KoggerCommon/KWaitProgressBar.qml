@@ -24,15 +24,16 @@ Rectangle{
         Text{
             text:                root.text
             color:               textColor
+            font:                theme.textFont
             horizontalAlignment: Text.AlignHCenter
         }
 
-        ProgressBar{
-            id:               surfaceProcessingProgressBar
-            value:            0.0
-            indeterminate:    true
-            Layout.fillWidth: true
-        }
+        //ProgressBar{
+        //    id:               surfaceProcessingProgressBar
+        //    value:            0.0
+        //    indeterminate:    true
+        //    Layout.fillWidth: true
+        //}
 
         anchors.bottom:           parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter

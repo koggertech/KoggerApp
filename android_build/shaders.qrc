@@ -4,5 +4,9 @@
         <file>shaders/base_sec.vsh</file>
         <file>shaders/height_color.fsh</file>
         <file>shaders/static_color.fsh</file>
+        <file>shaders/mosaic.vsh</file>
+        <file>shaders/mosaic.fsh</file>
+        <file>shaders/image.vsh</file>
+        <file>shaders/image.fsh</file>
     </qresource>
 </RCC>
