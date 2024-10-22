@@ -78,6 +78,9 @@ void ImageView::updateTexture(const QString& imagePath, QVector3D lt, QVector3D 
         return;
     }
 
+    QTransform trans;
+    trans.rotate(-90.0);
+    textureTask_ = textureTask_.transformed(trans);
     lt_ = lt;
     rb_ = rb;
 

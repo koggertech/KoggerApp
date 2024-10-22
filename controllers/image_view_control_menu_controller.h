@@ -15,7 +15,7 @@ public:
 
     Q_INVOKABLE void onVisibilityChanged(bool state);
     Q_INVOKABLE void onUseFilterChanged(bool state);
-    Q_INVOKABLE void onUpdateClicked(const QString& imagePath, int x1, int y1, int x2, int y2, int z);
+    Q_INVOKABLE void onUpdateClicked(const QString& imagePath, double lat_lt, double lon_lt, double lat_rb, double lon_rb, float z);
 
 Q_SIGNALS:
 

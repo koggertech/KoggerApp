@@ -885,6 +885,9 @@ public slots:
 
     void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
 
+    LLARef getRef() {
+        return _llaRef;
+    }
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);

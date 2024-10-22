@@ -100,7 +100,7 @@ void GraphicsScene3dRenderer::drawObjects()
     m_projection = std::move(projection);
 
     glEnable(GL_DEPTH_TEST);
-    m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
+    // m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
