@@ -868,7 +868,8 @@ ColumnLayout {
                 Layout.preferredWidth: 200
 
                 onClicked: {
-                    ImageViewControlMenuController.onUpdateClicked(imagePathText.text, ltXSpinBox.value, ltYSpinBox.value, rbXSpinBox.value, rbYSpinBox.value, zSpinBox.value)
+                    // ImageViewControlMenuController.onUpdateClicked(imagePathText.text, ltXSpinBox.value, ltYSpinBox.value, rbXSpinBox.value, rbYSpinBox.value, zSpinBox.value)
+                    ImageViewControlMenuController.onUpdateClicked(imagePathText.text,  40.165167,  44.469925,  40.155800, 44.486353, zSpinBox.value)
                 }
 
                 onFocusChanged: {
