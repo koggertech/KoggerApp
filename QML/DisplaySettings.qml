@@ -330,11 +330,27 @@ GridLayout {
 
 
             RowLayout {
-                CCheck {
-                    id: gridVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Grid")
-                    onCheckedChanged: targetPlot.plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
+                RowLayout {
+                    CCheck {
+                        id: gridVisible
+                        Layout.fillWidth: true
+                        text: qsTr("Grid")
+                        onCheckedChanged: targetPlot.plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
+                    }
+                    CCheck {
+                        id: fillWidthGrid
+                        Layout.fillWidth: true
+                        text: qsTr("fill")
+                        onCheckedChanged: targetPlot.plotGridFillWidth(checked)
+                        visible: gridVisible.checked
+
+                        Component.onCompleted: {
+                            targetPlot.plotGridFillWidth(checked)
+                        }
+                        Settings {
+                            property alias fillWidthGrid: fillWidthGrid.checked
+                        }
+                    }
                 }
 
                 SpinBoxCustom {

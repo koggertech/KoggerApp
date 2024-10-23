@@ -198,6 +198,12 @@ void Plot2D::setGridVetricalNumber(int grids) {
     plotUpdate();
 }
 
+void Plot2D::setGridFillWidth(bool state)
+{
+    _grid.setFillWidth(state);
+    plotUpdate();
+}
+
 void Plot2D::setAngleVisibility(bool state)
 {
     _grid.setAngleVisibility(state);

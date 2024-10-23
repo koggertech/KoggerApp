@@ -24,7 +24,6 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
 
     for (int i = 1; i < linesCount; ++i) {
         const int posY = i * imageHeight / linesCount;
-        p->drawLine(0, posY, imageWidth, posY); // line
 
         QString lineText;
 
@@ -44,6 +43,11 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
                 distRange{ distTo - distFrom }, rangeVal{ distRange * i / linesCount + distFrom };
             lineText.append( { QString::number(rangeVal, 'f', 2) + QObject::tr(" m") } );
         }
+
+        if (isFillWidth())
+            p->drawLine(0, posY, imageWidth, posY);
+        else
+            p->drawLine(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY, imageWidth, posY); // line
 
         if (!lineText.isEmpty())
             p->drawText(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY - textYOffset, lineText);

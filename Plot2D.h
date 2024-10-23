@@ -212,7 +212,9 @@ class PlotLayer {
 public:
     PlotLayer() {}
     bool isVisible() { return _isVisible; }
+    bool isFillWidth() {return fillWidth_; }
     void setVisible(bool visible) { _isVisible = visible; }
+    void setFillWidth(bool state) { fillWidth_ = state; }
 
     virtual bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
     {
@@ -224,6 +226,9 @@ public:
 
 protected:
     bool _isVisible = false;
+
+private:
+    bool fillWidth_;
 };
 
 class Plot2DEchogram : public PlotLayer {
@@ -880,6 +885,7 @@ public:
     void setGNSSVisible(bool visible, int flags);
 
     void setGridVetricalNumber(int grids);
+    void setGridFillWidth(bool state);
     void setAngleVisibility(bool state);
     void setAngleRange(int angleRange);
 
