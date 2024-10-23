@@ -28,7 +28,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
     navigationArrowState_(true),
-    sideScanCalcState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
@@ -48,6 +47,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
 #ifdef SEPARATE_READING
     sideScanCalcState_ = true;
+#else
+    sideScanCalcState_ = false;
 #endif
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
