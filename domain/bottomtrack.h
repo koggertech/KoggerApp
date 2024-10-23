@@ -41,6 +41,7 @@ public:
         QVector<int> selectedVertexIndices_;
         bool surfaceUpdated_;
         bool surfaceState_;
+        bool sideScanVisibleState_;
     };
 
     explicit BottomTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
@@ -63,6 +64,7 @@ public Q_SLOTS:
     void selectEpoch(int epochIndex, int channelId);
     void surfaceUpdated();
     void surfaceStateChanged(bool state);
+    void setSideScanVisibleState(bool state);
 
 Q_SIGNALS:
     void epochHovered(int epochIndex);

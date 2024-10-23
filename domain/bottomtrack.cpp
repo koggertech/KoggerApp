@@ -240,6 +240,11 @@ void BottomTrack::surfaceStateChanged(bool state)
     RENDER_IMPL(BottomTrack)->surfaceState_ = state;
 }
 
+void BottomTrack::setSideScanVisibleState(bool state)
+{
+    RENDER_IMPL(BottomTrack)->sideScanVisibleState_ = state;
+}
+
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     Q_UNUSED(buttons)
@@ -466,7 +471,8 @@ QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceV
 //-----------------------RenderImplementation-----------------------------//
 BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation() :
     surfaceUpdated_(false),
-    surfaceState_(true)
+    surfaceState_(true),
+    sideScanVisibleState_(true)
 {}
 
 BottomTrack::BottomTrackRenderImplementation::~BottomTrackRenderImplementation()
@@ -494,7 +500,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     QOpenGLShaderProgram* shaderProgram = nullptr;
     int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    if (surfaceUpdated_ && surfaceState_) {
+    if ((surfaceUpdated_ && surfaceState_) || sideScanVisibleState_) {
         shaderProgram = shaderProgramMap["static"].get();
         shaderProgram->bind();
         colorLoc = shaderProgram->uniformLocation("color");

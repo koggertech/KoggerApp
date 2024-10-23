@@ -38,6 +38,7 @@ void SideScanViewControlMenuController::onVisibilityChanged(bool state)
 {
     if (m_graphicsSceneView) {
         m_graphicsSceneView->getSideScanViewPtr()->setVisible(state);
+        m_graphicsSceneView->bottomTrack()->setSideScanVisibleState(state);
     }
 }
 

@@ -5,7 +5,7 @@ QT += qml
 
 #CONFIG += FLASHER
 #CONFIG += MOTOR # motor_control definition
-#CONFIG += SEPARATE_READING
+#CONFIG += SEPARATE_READING # data reception in a separate thread
 
 !android {
     QT += serialport
