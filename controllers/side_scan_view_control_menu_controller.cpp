@@ -7,7 +7,10 @@
 SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *parent) :
     QmlComponentController(parent),
     m_graphicsSceneView(nullptr),
-    corePtr_(nullptr)
+    corePtr_(nullptr),
+    pendingLambda_(nullptr),
+    lowLevel_(0.0f),
+    highLevel_(0.0f)
 {
 
 }
@@ -17,6 +20,10 @@ void SideScanViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView
     m_graphicsSceneView = sceneView;
 
     tryClearMakeConnections();
+
+    if (pendingLambda_) {
+        pendingLambda_();
+    }
 }
 
 void SideScanViewControlMenuController::setCorePtr(Core* corePtr)
@@ -100,6 +107,16 @@ void SideScanViewControlMenuController::onLevelChanged(float lowLevel, float hig
 {
     if (m_graphicsSceneView) {
         m_graphicsSceneView->getSideScanViewPtr()->setColorTableLevels(lowLevel, highLevel);
+    }
+    else {
+        lowLevel_ = lowLevel;
+        highLevel_ = highLevel;
+
+        pendingLambda_ = [this](){
+            if (m_graphicsSceneView) {
+                m_graphicsSceneView->getSideScanViewPtr()->setColorTableLevels(lowLevel_, highLevel_);
+            }
+        };
     }
 }
 

@@ -222,7 +222,7 @@ ColumnLayout {
         }
     }
 
-    // usbl settings
+    /*// usbl settings
     MenuFrame {
         id: usblViewSettings
         visible: usblViewCheckButton.hovered || isHovered || usblViewCheckButton.longPressTriggered
@@ -281,7 +281,7 @@ ColumnLayout {
                 }
             }
         }
-    }
+    }*/
 
     // side-scan extra settings
     MenuFrame {
@@ -638,6 +638,15 @@ ColumnLayout {
                     onStopValueChanged: {
                        SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                    }
+
+                    Settings {
+                        property alias sideScanLevelsStart: sideScanLevelsSlider.startValue
+                        property alias sideScanLevelsStop: sideScanLevelsSlider.stopValue
+                    }
                 }
 
                 CText {
@@ -653,7 +662,7 @@ ColumnLayout {
         }
     }
 
-    // imageViewSettings extra settings
+/*    // imageViewSettings extra settings
     MenuFrame {
         id: imageViewSettings
         visible: imageViewCheckButton.hovered || isHovered || imageViewCheckButton.imageViewLongPressTriggered
@@ -881,7 +890,7 @@ ColumnLayout {
                 }
             }
         }
-    }
+    }*/
 
     RowLayout {
         spacing: 2
@@ -1032,7 +1041,7 @@ ColumnLayout {
             }
         }
 
-        // usbl view button
+/*        // usbl view button
         CheckButton {
             id: usblViewCheckButton
             backColor: theme.controlBackColor
@@ -1082,7 +1091,7 @@ ColumnLayout {
                     usblViewCheckButton.longPressTriggered = true;
                 }
             }
-        }
+        }*/
 
         // side scan view button
         CheckButton {
@@ -1131,7 +1140,7 @@ ColumnLayout {
             }
         }
 
-        // image view button
+/*        // image view button
         CheckButton {
             id: imageViewCheckButton
             backColor: theme.controlBackColor
@@ -1176,7 +1185,7 @@ ColumnLayout {
                     imageViewCheckButton.imageViewLongPressTriggered = true;
                 }
             }
-        }
+        }*/
 
         ButtonGroup{
             property bool buttonChangeFlag : false

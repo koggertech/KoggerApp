@@ -7,7 +7,6 @@ QT += qml
 #CONFIG += MOTOR # motor_control definition
 #CONFIG += SEPARATE_READING
 
-
 !android {
     QT += serialport
 }
