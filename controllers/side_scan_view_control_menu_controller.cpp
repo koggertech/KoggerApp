@@ -23,6 +23,7 @@ void SideScanViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView
 
     if (pendingLambda_) {
         pendingLambda_();
+        pendingLambda_ = nullptr;
     }
 }
 
