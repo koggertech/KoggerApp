@@ -1,4 +1,5 @@
 #include "Plot2D.h"
+#include <QObject>
 
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
@@ -23,14 +24,13 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
 
     for (int i = 1; i < linesCount; ++i) {
         const int posY = i * imageHeight / linesCount;
-        p->drawLine(0, posY, imageWidth, posY); // line
 
         QString lineText;
 
         if (_velocityVisible && cursor.velocity.isValid()) { // velocity
             const float velFrom{ cursor.velocity.from }, velTo{ cursor.velocity.to },
                 velRange{ velTo - velFrom }, attVal{ velRange * i / linesCount + velFrom };
-            lineText.append({ QString::number(attVal , 'f', 2) + QStringLiteral(" m/s    ") });
+            lineText.append({ QString::number(attVal , 'f', 2) + QObject::tr(" m/s    ")});
         }
         if (angleVisibility_ && cursor.attitude.isValid()) { // angle
             const float attFrom{ cursor.attitude.from }, attTo{ cursor.attitude.to },
@@ -41,8 +41,13 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
         if (cursor.distance.isValid()) { // depth
             const float distFrom{ cursor.distance.from }, distTo{ cursor.distance.to },
                 distRange{ distTo - distFrom }, rangeVal{ distRange * i / linesCount + distFrom };
-            lineText.append( { QString::number(rangeVal, 'f', 2) + QStringLiteral(" m") } );
+            lineText.append( { QString::number(rangeVal, 'f', 2) + QObject::tr(" m") } );
         }
+
+        if (isFillWidth())
+            p->drawLine(0, posY, imageWidth, posY);
+        else
+            p->drawLine(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY, imageWidth, posY); // line
 
         if (!lineText.isEmpty())
             p->drawText(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY - textYOffset, lineText);
@@ -51,7 +56,7 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
     if (cursor.distance.isValid()) {
         p->setFont(QFont("Asap", 26, QFont::Normal));
         float val{ cursor.distance.to };
-        QString range_text = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QStringLiteral(" m");
+        QString range_text = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QObject::tr(" m");
         p->drawText(imageWidth - textXOffset / 2 - range_text.count() * 25, imageHeight - 10, range_text);
     }
 
@@ -70,7 +75,7 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
             p->setPen(pen);
             p->setFont(QFont("Asap", 40, QFont::Normal));
             float val{ round(distance * 100.f) / 100.f };
-            QString rangeText = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QStringLiteral(" m");
+            QString rangeText = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QObject::tr(" m");
             p->drawText(imageWidth / 2 - rangeText.count() * 32, imageHeight - 15, rangeText);
         }
     }

@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.12
 import QtQuick.Controls 2.15
 
 Rectangle{
-    property string text : "Please, wait..."
+    property string text : qsTr("Please, wait...")
     property string textColor : "black"
 
     id:      root
@@ -24,15 +24,16 @@ Rectangle{
         Text{
             text:                root.text
             color:               textColor
+            font:                theme.textFont
             horizontalAlignment: Text.AlignHCenter
         }
 
-        ProgressBar{
-            id:               surfaceProcessingProgressBar
-            value:            0.0
-            indeterminate:    true
-            Layout.fillWidth: true
-        }
+        //ProgressBar{
+        //    id:               surfaceProcessingProgressBar
+        //    value:            0.0
+        //    indeterminate:    true
+        //    Layout.fillWidth: true
+        //}
 
         anchors.bottom:           parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter

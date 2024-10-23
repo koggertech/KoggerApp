@@ -7,7 +7,7 @@ import Qt.labs.settings 1.1
 ColumnLayout {
 
     ParamSetup {
-        paramName: "TIN edge length limit:"
+        paramName: qsTr("TIN edge length limit:")
 
         SpinBoxCustom {
             id: maxTriEdgeLengthSpinBox

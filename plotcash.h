@@ -20,6 +20,8 @@
 
 #include "time.h"
 
+#include "usbl_view.h"
+
 #if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 #define MAKETIME(t) mktime(t)
 #define GMTIME(t) gmtime(t)
@@ -107,7 +109,7 @@ typedef struct NED {
         return isfinite(n) && isfinite(e) && isfinite(d);
     }
 
-    bool isCoordinatesValid() {
+    bool isCoordinatesValid() const {
         return isfinite(n) && isfinite(e);
     }
 } NED;
@@ -303,7 +305,32 @@ public:
         float offset = 0; // m
         int type = 0;
 
-        QVector<int16_t> visual;
+        QVector<uint8_t> compensated;
+
+        void updateCompesated() {
+            int raw_size = amplitude.size();
+            if(compensated.size() != raw_size) {
+                compensated.resize(raw_size);
+            }
+
+            const uint8_t* src = amplitude.constData();
+            uint8_t* procData = compensated.data();
+
+            const float resol = resolution;
+
+            float avrg = 255;
+            for(int i = 0; i < raw_size; i ++) {
+                float val = src[i];
+
+                avrg += (val - avrg)*(0.05f + avrg*0.0006);
+                val = (val - avrg*0.55f)*(0.85f +float(i*resol)*0.006f)*2.f;
+
+                if(val < 0) { val = 0; }
+                else if(val > 255) { val = 255; }
+
+                procData[i] = val;
+            }
+        }
 
         DistProcessing bottomProcessing;
         Position sensorPosition;
@@ -312,6 +339,8 @@ public:
             return amplitude.size()*(resolution);
         }
 
+
+
     } Echogram;
 
 
@@ -319,8 +348,7 @@ public:
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
-    void setEncoder(float encoder);
-    void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, int offset);
+    void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, float offset);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -343,8 +371,13 @@ public:
     void setTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0);
 
     void setTemp(float temp_c);
-    void setEncoders(int16_t enc1, int16_t enc2 = 0xFFFF, int16_t enc3 = 0xFFFF, int16_t = 0xFFFF, int16_t = 0xFFFF, int16_t enc6 = 0xFFFF);
     void setAtt(float yaw, float pitch, float roll);
+
+    void setEncoders(float enc1, float enc2, float enc3);
+    bool isEncodersSeted() { return _encoder.isSeted();}
+    float encoder1() { return _encoder.e1; }
+    float encoder2() { return _encoder.e2; }
+    float encoder3() { return _encoder.e3; }
 
     void setDistProcessing(int16_t channel, float dist) {
         if(_charts.contains(channel)) {
@@ -537,6 +570,9 @@ public:
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
     DateTime* positionTime() {return &_positionGNSS.time; }
 
+    void setGNSSSec(time_t sec);
+    void setGNSSNanoSec(int nanoSec);
+
     double relPosN() { return _positionGNSS.ned.n; }
     double relPosE() { return _positionGNSS.ned.e; }
     double relPosD() { return _positionGNSS.ned.d; }
@@ -572,13 +608,13 @@ public:
             return false;
         }
 
-        uint8_t* src = NULL;
+        uint8_t* src = _charts[channel].amplitude.data();
 
-        if(image_type == 1 && _charts[channel].visual.size() > 0) {
-//            src = _charts[channel].visual.data();
-            src = _charts[channel].amplitude.data();
-        } else {
-            src = _charts[channel].amplitude.data();
+        if(image_type == 1) {
+            if(_charts[channel].compensated.size() == 0) {
+                _charts[channel].updateCompesated();
+            }
+            src = _charts[channel].compensated.data();
         }
 
         if(raw_size == 0) {
@@ -586,8 +622,6 @@ public:
                 dst[i_to] = 0;
             }
         }
-
-//        if(m_chartResol == 0) { m_chartResol = 1; }
 
         start -= _charts[channel].offset;
         end -= _charts[channel].offset;
@@ -639,8 +673,16 @@ public:
         return true;
     }
 
-    void moveComplexToEchogram(float offset_m);
+    void moveComplexToEchogram(float offset_m, float levels_offset_db);
 
+    void setInterpNED(NED ned);
+    void setInterpYaw(float yaw);
+    void setInterpFirstChannelDist(float dist);
+    void setInterpSecondChannelDist(float dist);
+    NED   getInterpNED() const;
+    float getInterpYaw() const;
+    float getInterpFirstChannelDist() const;
+    float getInterpSecondChannelDist() const;
 
 protected:
 
@@ -681,13 +723,12 @@ protected:
     float m_temp_c = 0;
 
     struct {
-        uint16_t validMask = 0;
-        int16_t e1 = 0;
-        int16_t e2 = 0;
-        int16_t e3 = 0;
-        int16_t e4 = 0;
-        int16_t e5 = 0;
-        int16_t e6 = 0;
+        float e1 = NAN;
+        float e2 = NAN;
+        float e3 = NAN;
+        bool isSeted() {
+            return isfinite(e1) || isfinite(e2) || isfinite(e3);
+        }
     } _encoder;
 
     struct {
@@ -709,6 +750,22 @@ protected:
         bool isDVLSolutionAvail = false;
 
     } flags;
+
+private:
+    struct {
+        NED ned;
+        float yaw = NAN;
+        float distFirstChannel = NAN;
+        float distSecondChannel = NAN;
+
+        bool isValid() const {
+            if (ned.isCoordinatesValid()  &&
+                isfinite(yaw)) {
+                return true;
+            }
+            return false;
+        };
+    } interpData_;
 };
 
 class Dataset : public QObject {
@@ -779,7 +836,7 @@ public:
 
 public slots:
     void addEvent(int timestamp, int id, int unixt = 0);
-    void addEncoder(float encoder);
+    void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
     void addTimestamp(int timestamp);
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
@@ -826,6 +883,11 @@ public slots:
         return _beaconTrack1;
     }
 
+    void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
+
+    LLARef getRef() {
+        return _llaRef;
+    }
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
@@ -836,12 +898,14 @@ public slots:
     void updateBoatTrack(bool update_all = false);
 
     QStringList channelsNameList();
+    void interpolateData(bool fromStart);
 
 signals:
     void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
     void bottomTrackUpdated(int lEpoch, int rEpoch);
     void boatTrackUpdated();
+    void updatedInterpolatedData(int indx);
 
 protected:
     QMutex mutex_;
@@ -859,13 +923,11 @@ protected:
 
     LLARef _llaRef;
 
-
     QVector<QVector3D> _boatTrack;
     QVector<QVector3D> _beaconTrack;
     QVector<QVector3D> _beaconTrack1;
 
-
-//    FboInSGRenderer* _render3D;
+    QMap<int, UsblView::UsblObjectParams> tracks;
 
     enum {
         AutoRangeNone,
@@ -882,16 +944,37 @@ protected:
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
     Position _lastPositionGNSS;
 
-
     Epoch* addNewEpoch() {
-        //mutex_.lock();
         _pool.resize(_pool.size() + 1);
-
-        //mutex_.unlock();
         return last();
     }
 
+    GraphicsScene3dView* scene3dViewPtr_ = nullptr;
+
 private:
+    friend class Interpolator;
+
+    class Interpolator {
+    public:
+        explicit Interpolator(Dataset* datasetPtr);
+        void interpolateData(bool fromStart);
+        void clear();
+    private:
+        bool updateChannelsIds();
+        float interpYaw(float start, float end, float progress) const;
+        NED interpNED(const NED& start, const NED& end, float progress) const;
+        float interpDist(float start, float end, float progress) const;
+        qint64 calcTimeDiffInNanoSecs(time_t startSecs, int startNanoSecs, time_t endSecs, int endNanoSecs) const;
+        qint64 convertToNanosecs(time_t secs, int nanoSecs) const;
+        std::pair<time_t, int> convertFromNanosecs(qint64 totalNanoSecs) const; // first - secs, second - nanosecs
+
+        Dataset* datasetPtr_;
+        int lastInterpIndx_;
+        int firstChannelId_;
+        int secondChannelId_;
+    };
+
+    Interpolator interpolator_;
     int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;

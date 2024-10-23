@@ -11,7 +11,7 @@ DevSettingsBox {
 
     FileDialog {
         id: fileDialog
-        title: "Please choose a file"
+        title: qsTr("Please choose a file")
         folder: shortcuts.home
         nameFilters: ["Upgrade files (*.ufw)"]
         onAccepted: {
@@ -30,7 +30,7 @@ DevSettingsBox {
         width: control.width
 
         TitleMenuBox {
-            titleText: "Upgrade"
+            titleText: qsTr("Upgrade")
 
             CProgress {
                 Layout.leftMargin: 20
@@ -66,7 +66,7 @@ DevSettingsBox {
             }
 
             CButton {
-                text: "UPGRADE"
+                text: qsTr("UPGRADE")
                 Layout.fillWidth: false
                 Layout.leftMargin: 10
                 visible: pathText.text != ""

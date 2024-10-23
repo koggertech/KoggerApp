@@ -44,10 +44,10 @@ QList<QPair<QUuid, LinkType>> LinkListModel::getOpenedUuids() const
 {
     QList<QPair<QUuid, ::LinkType>> retVal;
 
-    for (auto& itm : index_.keys()) {
-        int line = index_[itm];
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        int line = it.value();
         if (vectors_[LinkListModel::ConnectionStatus][line].toBool()) {
-            retVal.append(qMakePair(itm, static_cast<::LinkType>(vectors_[LinkListModel::LinkType][line].toInt())));
+            retVal.append(qMakePair(it.key(), static_cast<::LinkType>(vectors_[LinkListModel::LinkType][line].toInt())));
         }
     }
 

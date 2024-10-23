@@ -11,8 +11,10 @@ HEADERS += \
     $$PWD/qmlcomponentcontroller.h \
     $$PWD/scene3dcontrolmenucontroller.h \
     $$PWD/scene3dtoolbarcontroller.h \
-    $$PWD/surfacecontrolmenucontroller.h
-
+    $$PWD/surfacecontrolmenucontroller.h \
+    $$PWD/usbl_view_control_menu_controller.h \
+    $$PWD/side_scan_view_control_menu_controller.h \
+    $$PWD/image_view_control_menu_controller.h
 
 SOURCES += \
     $$PWD/boattrackcontrolmenucontroller.cpp \
@@ -24,4 +26,7 @@ SOURCES += \
     $$PWD/qmlcomponentcontroller.cpp \
     $$PWD/scene3dcontrolmenucontroller.cpp \
     $$PWD/scene3dtoolbarcontroller.cpp \
-    $$PWD/surfacecontrolmenucontroller.cpp
+    $$PWD/surfacecontrolmenucontroller.cpp \
+    $$PWD/usbl_view_control_menu_controller.cpp \
+    $$PWD/side_scan_view_control_menu_controller.cpp \
+    $$PWD/image_view_control_menu_controller.cpp

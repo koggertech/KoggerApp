@@ -78,7 +78,7 @@ DevSettingsBox {
 
                         CTextField {
                             Layout.fillWidth: true
-                            text: Math.ceil(doneSize/(1024*1024)) + "MB / " + Math.ceil(size/(1024*1024)) + " MB"
+                            text: Math.ceil(doneSize/(1024*1024)) + qsTr("MB / ") + Math.ceil(size/(1024*1024)) + qsTr(" MB")
                             background:  Item {
 
                                 Rectangle {
@@ -158,7 +158,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
-                    text: "Update list"
+                    text: qsTr("Update list")
 
                     onClicked: {
                         dev.requestStreamList();
@@ -168,7 +168,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 100
-                    text: "Download"
+                    text: qsTr("Download")
 
                     onClicked: {
 //                        dev.resetSettings()
@@ -178,7 +178,7 @@ DevSettingsBox {
                 CButton {
                     Layout.fillWidth: true
                     Layout.preferredWidth: 60
-                    text: "Pause"
+                    text: qsTr("Pause")
 
                     onClicked: {
 //                        dev.reboot()
@@ -200,7 +200,7 @@ DevSettingsBox {
             }
 
             CButton {
-                text: "Set baudrate"
+                text: qsTr("Set baudrate")
 
                 onClicked: {
                     dev.baudrate = Number(baudrateCombo.currentText)
@@ -215,7 +215,7 @@ DevSettingsBox {
             CButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 100
-                text: "Flash settings"
+                text: qsTr("Flash settings")
 
                 onClicked: {
                     dev.flashSettings()
@@ -225,7 +225,7 @@ DevSettingsBox {
             CButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 100
-                text: "Erase settings"
+                text: qsTr("Erase settings")
 
                 onClicked: {
                     dev.resetSettings()
@@ -235,7 +235,7 @@ DevSettingsBox {
             CButton {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 60
-                text: "Reboot"
+                text: qsTr("Reboot")
 
                 onClicked: {
                     dev.reboot()

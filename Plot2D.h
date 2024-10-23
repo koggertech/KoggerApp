@@ -212,7 +212,9 @@ class PlotLayer {
 public:
     PlotLayer() {}
     bool isVisible() { return _isVisible; }
+    bool isFillWidth() {return fillWidth_; }
     void setVisible(bool visible) { _isVisible = visible; }
+    void setFillWidth(bool state) { fillWidth_ = state; }
 
     virtual bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
     {
@@ -224,6 +226,9 @@ public:
 
 protected:
     bool _isVisible = false;
+
+private:
+    bool fillWidth_;
 };
 
 class Plot2DEchogram : public PlotLayer {
@@ -245,6 +250,7 @@ public:
 
     void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
     void setThemeId(int theme_id);
+    void setCompensation(int compensation_id);
 
     void updateColors();
 
@@ -279,6 +285,7 @@ protected:
     QPixmap _pixmap;
     bool _flagColorChanged = true;
 
+    int _compensation_id = 0;
 
     struct {
         bool resetCash = true;
@@ -562,6 +569,44 @@ protected:
     PlotPen _penRoll = PlotPen(PlotColor(255, 0, 0), 2, PlotPen::LineStyleSolid);
 };
 
+class Plot2DEncoder : public Plot2DLine {
+public:
+    Plot2DEncoder() {}
+
+
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
+        if(!isVisible() || !cursor.attitude.isValid()) { return false; }
+
+        QVector<float> yaw(canvas.width());
+        QVector<float> pitch(canvas.width());
+        QVector<float> roll(canvas.width());
+
+        for(int i = 0; i < canvas.width(); i++) {
+            int pool_index = cursor.getIndex(i);
+            Epoch* data = dataset->fromIndex(pool_index);
+
+            if(data != NULL && data->isEncodersSeted()) {
+                yaw[i] = data->encoder1();
+                pitch[i] = data->encoder2();
+                roll[i] = data->encoder3();
+            } else {
+                yaw[i] = NAN;
+                pitch[i] = NAN;
+                roll[i] = NAN;
+            }
+        }
+
+        drawY(canvas, yaw, cursor.attitude.from, cursor.attitude.to, _penYaw);
+        drawY(canvas, pitch, cursor.attitude.from, cursor.attitude.to, _penPitch);
+
+        return true;
+    }
+
+protected:
+    PlotPen _penYaw = PlotPen(PlotColor(255, 255, 0), 2, PlotPen::LineStyleSolid);
+    PlotPen _penPitch = PlotPen(PlotColor(255, 0, 255), 2, PlotPen::LineStyleSolid);
+};
+
 class Plot2DGNSS : public Plot2DLine {
 public:
     Plot2DGNSS() {}
@@ -778,61 +823,7 @@ protected:
 class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim() {}
-    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
-        if((cursor.mouseX < 0 || cursor.mouseY < 0) && (cursor.selectEpochIndx == -1) ) {
-            return false;
-        }
-
-        if (cursor.selectEpochIndx != -1) {
-            auto selectedEpoch = dataset->fromIndex(cursor.selectEpochIndx);
-            int offsetX = 0;
-            int halfCanvas = canvas.width() / 2;
-            int withoutHalf = dataset->size() - halfCanvas;
-            if (cursor.selectEpochIndx >= withoutHalf)
-                offsetX = cursor.selectEpochIndx - withoutHalf;
-            if (const auto keys{ dataset->channelsList().keys() }; !keys.empty()) {
-                if (const auto chartPtr{ selectedEpoch->chart(keys.at(0)) }; chartPtr) {
-                    const int x = canvas.width() / 2 + offsetX;
-                    const int y = keys.size() == 2 ? canvas.height() / 2 - canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()) :
-                                      canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range());
-                    cursor.setMouse(x, y);
-                }
-            }
-        }
-
-        QPen pen;
-        pen.setWidth(_lineWidth);
-        pen.setColor(_lineColor);
-
-
-        QPainter* p = canvas.painter();
-        p->setPen(pen);
-        QFont font = QFont("Asap", 14, QFont::Normal);
-        font.setPixelSize(18);
-        p->setFont(font);
-
-        const int image_height = canvas.height();
-        const int image_width = canvas.width();
-
-        if (cursor._tool == MouseToolNothing || beenEpochEvent_) {
-            p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
-            p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
-        }
-
-
-        const float canvas_height = canvas.height();
-        float value_range = cursor.distance.to - cursor.distance.from;
-        float value_scale = float(cursor.mouseY)/canvas_height;
-        float cursor_distance = value_scale*value_range + cursor.distance.from;
-
-        if(cursor.mouseY > 60) {
-            p->drawText(cursor.mouseX+20, cursor.mouseY-20, QString("%1 m").arg(cursor_distance, 0, 'g', 4));
-        } else {
-            p->drawText(cursor.mouseX+20, cursor.mouseY+40, QString("%1 m").arg(cursor_distance, 0, 'g', 4));
-        }
-
-        return true;
-    }
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
 
     void setEpochEventState(bool state) {
         beenEpochEvent_ = state;
@@ -852,6 +843,10 @@ public:
 
     void setDataset(Dataset* dataset) {
         _dataset = dataset;
+        if (pendingBtpLambda_) {
+            pendingBtpLambda_();
+            pendingBtpLambda_ = nullptr;
+        }
     }
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
@@ -876,6 +871,7 @@ public:
     void setEchogramHightLevel(float high);
     void setEchogramVisible(bool visible);
     void setEchogramTheme(int theme_id);
+    void setEchogramCompensation(int compensation_id);
 
     void setBottomTrackVisible(bool visible);
     void setBottomTrackTheme(int theme_id);
@@ -889,6 +885,7 @@ public:
     void setGNSSVisible(bool visible, int flags);
 
     void setGridVetricalNumber(int grids);
+    void setGridFillWidth(bool state);
     void setAngleVisibility(bool state);
     void setAngleRange(int angleRange);
 
@@ -929,6 +926,7 @@ protected:
 
     Plot2DEchogram _echogram;
     Plot2DAttitude _attitude;
+    Plot2DEncoder _encoder;
     Plot2DDVLBeamVelocity _DVLBeamVelocity;
     Plot2DDVLSolution _DVLSolution;
     Plot2DUSBLSolution _usblSolution;
@@ -943,6 +941,8 @@ protected:
 
     void reindexingCursor();
     void reRangeDistance();
+
+    std::function<void()> pendingBtpLambda_ = nullptr;
 };
 
 

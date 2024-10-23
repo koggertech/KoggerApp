@@ -12,6 +12,9 @@
 #include "ProtoBinnary.h"
 #include "IDBinnary.h"
 
+#ifdef MOTOR
+#include "motor_control.h"
+#endif
 
 class DeviceManager : public QObject
 {
@@ -29,21 +32,44 @@ public:
     Q_INVOKABLE int pilotModeState();
 
     QList<DevQProperty*> getDevList();
-    DevQProperty* getLastDev();
+    QList<DevQProperty*> getDevList(BoardVersion ver);
+
+#ifdef MOTOR
+    bool isMotorControlCreated() const;
+#endif
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
 
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
-    void openFile(const QString& filePath);
+    void openFile(QString filePath);
+#ifdef SEPARATE_READING
+    void closeFile(bool onOpen = false);
+#else
     void closeFile();
+#endif
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
     void binFrameOut(ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
+
+    void beaconActivationReceive(uint8_t id);
+    void beaconDirectQueueAsk();
+    bool isbeaconDirectQueueAsk() { return isUSBLBeaconDirectAsk; }
+    void setUSBLBeaconDirectAsk(bool is_ask);
+
+#ifdef MOTOR
+    float getFAngle();
+    float getSAngle();
+    void returnToZero(int id);
+    void runSteps(int id, int speed, int angle);
+    void openCsvFile(QString path);
+    void clearTasks();
+    void calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
+#endif
 
 signals:
     void dataSend(QByteArray data);
@@ -71,6 +97,21 @@ signals:
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
+    void encoderComplete(float e1, float e2, float e3);
+    void fileStopsOpening();
+
+#ifdef SEPARATE_READING
+    void fileStartOpening();
+    void fileBreaked(bool);
+    void onFileReadEnough();
+#endif
+    void fileOpened();
+
+#ifdef MOTOR
+    void motorDeviceChanged();
+    void anglesHasChanged();
+    void posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
+#endif
 
 private:
     /*methods*/
@@ -120,6 +161,18 @@ private:
     int progress_;
     bool isConsoled_;
     volatile bool break_;
+#ifdef SEPARATE_READING
+    bool onOpen_{ false };
+#endif
+
+    bool isUSBLBeaconDirectAsk = false;
+    QTimer beacon_timer;
+
+#ifdef MOTOR
+    std::unique_ptr<MotorControl> motorControl_;
+    float fAngle_ = 0.0f;
+    float sAngle_ = 0.0f;
+#endif
 
 private slots:
     void readyReadProxy(Link* link);

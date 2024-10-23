@@ -29,8 +29,12 @@ HEADERS += \
     $$PWD/gridgenerator.h \
     $$PWD/surfacegrid.h \
     $$PWD/vertexeditingdecorator.h \
-    $$PWD/navigation_arrow.h
-
+    $$PWD/navigation_arrow.h \
+    $$PWD/usbl_view.h \
+    $$PWD/side_scan_view.h \
+    $$PWD/global_mesh.h \
+    $$PWD/tile.h \
+    $$PWD/image_view.h
 SOURCES += \
     $$PWD/boattrack.cpp \
     $$PWD/bottomtrack.cpp \
@@ -46,4 +50,9 @@ SOURCES += \
     $$PWD/surface.cpp \
     $$PWD/surfacegrid.cpp \
     $$PWD/vertexeditingdecorator.cpp \
-    $$PWD/navigation_arrow.cpp
+    $$PWD/navigation_arrow.cpp \
+    $$PWD/usbl_view.cpp \
+    $$PWD/side_scan_view.cpp \
+    $$PWD/global_mesh.cpp \
+    $$PWD/tile.cpp \
+    $$PWD/image_view.cpp

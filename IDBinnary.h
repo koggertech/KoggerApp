@@ -20,6 +20,8 @@ typedef enum {
     BoardRecorderMini = 9,
     BoardDVL = 10,
     BoardEcho20 = 12,
+    BoardUSBL = 15,
+    BoardUSBLBeacon = 16,
 
 } BoardVersion;
 
@@ -57,6 +59,18 @@ public:
 
     void setAddress(uint8_t addr) { m_address = addr; }
     void setConsoleOut(bool is_console) { isConsoleOut = is_console; }
+
+#ifdef SEPARATE_READING
+    void initTimersConnects();
+
+    QTimer* getSetTimer() {
+        return &setTimer_;
+    }
+
+    QTimer* getColdStartTimer() {
+        return &coldStartTimer_;
+    }
+#endif
 
 signals:
     void updateContent(Type type, Version ver, Resp resp, uint8_t address);
@@ -885,7 +899,7 @@ public:
     struct UsblSolution {
         uint8_t id = 0;
         uint8_t role = 0;
-        uint16_t reserved = 0;
+        uint16_t watermark = 0;
 
         int64_t timestamp_us = 0;
         uint32_t ping_counter = 0;
@@ -901,15 +915,57 @@ public:
         float elevation_unc = 0;
 
         float snr = 0;
+
+        float x_m = NAN;
+        float y_m = NAN;
+        double latitude_deg = NAN;
+        double longitude_deg = NAN;
+        float depth_m = NAN;
+
+        float usbl_yaw = NAN;
+        float usbl_pitch = NAN;
+        float usbl_roll = NAN;
+
+        double usbl_latitude = NAN;
+        double usbl_longitude = NAN;
+        uint32_t last_iTOW = 0;
+
+        float beacon_n = NAN;
+        float beacon_e = NAN;
     } __attribute__((packed));
 
+    struct USBLRequestBeacon {
+        uint8_t id = 0; // 0 is promisc mode
+        uint8_t reserved = 0;
+        uint16_t watermark = 0;
+        double latitude_deg = NAN;
+        double longitude_deg = NAN;
+        float external_heading_deg = NAN;
+        float force_beacon_depth_m = NAN;
+        float external_pitch = NAN;
+        float external_roll = NAN;
+    }  __attribute__((packed));
+
+    struct BeaconActivationResponce {
+        uint8_t id = 0; // 0 is promisc mode
+        uint8_t reserved = 0;
+        uint16_t reserved1 = 0;
+    }  __attribute__((packed));
+
+    struct BeaconActivate {
+        float timeout_s = 2;
+    }  __attribute__((packed));
 
     UsblSolution usblSolution() {
         return _usblSolution;
     }
 
+    void askBeacon(USBLRequestBeacon ask);
+    void enableBeaconOnce(float timeout);
+
 protected:
     UsblSolution _usblSolution;
+    BeaconActivationResponce _beaconResponcel;
 };
 
 

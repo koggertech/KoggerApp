@@ -15,6 +15,9 @@ DeviceManager::DeviceManager() :
     break_(false)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+#ifdef SEPARATE_READING
+    qRegisterMetaType<ProtoBinOut>("ProtoBinOut&");
+#endif
     qRegisterMetaType<int16_t>("int16_t");
     qRegisterMetaType<QVector<uint8_t>>("QVector<uint8_t>");
     qRegisterMetaType<QByteArray>("QByteArray");
@@ -71,10 +74,30 @@ QList<DevQProperty *> DeviceManager::getDevList()
     return devList_;
 }
 
-DevQProperty *DeviceManager::getLastDev()
-{
-    return lastDevs_;
+QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
+    QList<DevQProperty *> list;
+
+    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+        QHash<int, DevQProperty*> devs = i.value();
+
+        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+            if(k.value()->boardVersion() == ver) {
+                list.append(k.value());
+            }
+        }
+    }
+
+    return list;
 }
+
+#ifdef MOTOR
+bool DeviceManager::isMotorControlCreated() const
+{
+    if (motorControl_)
+        return true;
+    return false;
+}
+#endif
 
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
@@ -211,13 +234,13 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                 }
 
-                if (isConsoled_) {
+                // if (isConsoled_) {
                     core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
                                          .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
-                }
+                // }
             }
             else {
-                if (isConsoled_)
+                // if (isConsoled_)
                     core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
             }
         }
@@ -237,8 +260,18 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 ProtoMAVLink& mavlink_frame = (ProtoMAVLink&)frame;
 
-                if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
-                    MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                // if (mavlink_frame.msgId() == 24) { // GLOBAL_POSITION_INT
+                //     MAVLink_MSG_GPS_RAW_INT pos = mavlink_frame.read<MAVLink_MSG_GPS_RAW_INT>();
+                //     if (pos.isValid()) {
+                //         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
+                //         emit gnssVelocityComplete(pos.velocityH(), 0);
+                //         vru_.velocityH = pos.velocityH();
+                //         emit vruChanged();
+                //     }
+                // }
+
+                if(mavlink_frame.msgId() == MAVLink_MSG_GLOBAL_POSITION_INT::getID()) {
+                    MAVLink_MSG_GLOBAL_POSITION_INT pos = mavlink_frame.read<MAVLink_MSG_GLOBAL_POSITION_INT>();
                     if (pos.isValid()) {
                         emit positionComplete(pos.latitude(), pos.longitude(), pos.time_boot_msec()/1000, (pos.time_boot_msec()%1000)*1e6);
                         emit gnssVelocityComplete(pos.velocityH(), 0);
@@ -294,13 +327,18 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
     }
 }
 
-void DeviceManager::openFile(const QString &filePath)
+void DeviceManager::openFile(QString filePath)
 {
+#ifdef SEPARATE_READING
+    break_ = false;
+#endif
+
     QFile file;
     const QUrl url(filePath);
     url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
 
     if (!file.open(QIODevice::ReadOnly)) {
+        emit fileStopsOpening();
         return;
     }
 
@@ -308,12 +346,30 @@ void DeviceManager::openFile(const QString &filePath)
     qint64 bytesRead = 0;
     Parsers::FrameParser frameParser;
     const QUuid someUuid;
+    delAllDev();
+
+#ifdef SEPARATE_READING
+    emit fileStartOpening();
+    bool fileReadEnough{false};
+#endif
 
     while (true) {
+
+#ifdef SEPARATE_READING
+        QCoreApplication::processEvents();
+        if (break_) {
+            emit fileBreaked(onOpen_);
+            onOpen_ = false;
+            file.close();
+            emit fileStopsOpening();
+            return;
+        }
+#else
         if (break_) {
             file.close();
             return;
         }
+#endif
 
         QByteArray chunk = file.read(1024 * 1024);
         const qint64 chunkSize = chunk.size();
@@ -333,12 +389,38 @@ void DeviceManager::openFile(const QString &filePath)
 
         frameParser.setContext((uint8_t*)chunk.data(), chunk.size());
 
+#ifdef SEPARATE_READING
+        int sleepCnt = 0;
+#endif
+
         while (frameParser.availContext() > 0) {
+
+#ifdef SEPARATE_READING
+            QCoreApplication::processEvents();
+            if (break_) {
+                emit fileBreaked(onOpen_);
+                onOpen_ = false;
+                file.close();
+                return;
+            }
+            if (sleepCnt > 500) {
+                QThread::msleep(50);
+                sleepCnt = 0;
+            }
+            ++sleepCnt;
+#endif
             frameParser.process();
             if (frameParser.isComplete()) {
                 frameInput(someUuid, NULL, frameParser);
             }
         }
+
+#ifdef SEPARATE_READING
+        if (!fileReadEnough) { // it's really that?
+            emit onFileReadEnough();
+            fileReadEnough = true;
+        }
+#endif
 
         chunk.clear();
     }
@@ -348,15 +430,28 @@ void DeviceManager::openFile(const QString &filePath)
     delAllDev();
     emit vruChanged();
 
-    file.close();
+    emit fileOpened();
+    emit fileStopsOpening();
 }
 
+#ifdef SEPARATE_READING
+void DeviceManager::closeFile(bool onOpen)
+{
+    onOpen_ = onOpen;
+    break_ = true;
+
+    vru_.cleanVru();
+    delAllDev();
+    emit vruChanged();
+}
+#else
 void DeviceManager::closeFile()
 {
     delAllDev();
     vru_.cleanVru();
     emit vruChanged();
 }
+#endif
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
@@ -368,7 +463,32 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         }
         else {
+#ifdef MOTOR
+            if (!link->getIsMotorDevice()) {
             getDevice(uuid, link, 0);
+        }
+            else { // create motor driver
+                if (motorControl_) {
+                    motorControl_.reset();
+    }
+                motorControl_ = std::make_unique<MotorControl>(this, link);
+
+                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::calibrationStandIn);
+                QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
+                    if (addr == 225) {
+                        fAngle_ = angle;
+                    }
+                    if (addr == 226) {
+                        sAngle_ = angle;
+                    }
+                    emit anglesHasChanged();
+                });
+
+                emit motorDeviceChanged();
+            }
+#else
+            getDevice(uuid, link, 0);
+#endif
         }
     }
 }
@@ -378,6 +498,13 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     Q_UNUSED(uuid);
 
     if (link) {
+#ifdef MOTOR
+        if (link->getIsMotorDevice()) {
+            motorControl_.reset();
+            emit motorDeviceChanged();
+        }
+#endif
+
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);
@@ -424,6 +551,123 @@ void DeviceManager::upgradeLastDev(QByteArray data)
         lastDevs_->sendUpdateFW(data);
     }
 }
+
+void DeviceManager::beaconActivationReceive(uint8_t id) {
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
+    if(usbl_devs.size() > 0) {
+        IDBinUsblSolution::USBLRequestBeacon ask = {};
+        usbl_devs[0]->askBeaconPosition(ask);
+    }
+}
+
+void DeviceManager::beaconDirectQueueAsk() {
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBLBeacon);
+    qDebug("Sent request to the Beacon # %d", -1);
+    if(usbl_devs.size() > 0) {
+        usbl_devs[0]->enableBeaconOnce(3);
+        qDebug("Sent request to the Beacon # %d", 0);
+    }
+}
+
+void DeviceManager::setUSBLBeaconDirectAsk(bool is_ask) {
+    isUSBLBeaconDirectAsk = is_ask;
+    qDebug("Beacon auto scan is: %d", is_ask);
+    if(is_ask == true) {
+        QObject::connect(&beacon_timer, &QTimer::timeout, this, &DeviceManager::beaconDirectQueueAsk);
+        beacon_timer.setInterval(3000);
+        beacon_timer.start();
+    } else {
+        beacon_timer.stop();
+    }
+}
+
+#ifdef MOTOR
+float DeviceManager::getFAngle()
+{
+    return fAngle_;
+}
+
+float DeviceManager::getSAngle()
+{
+    return sAngle_;
+}
+
+void DeviceManager::returnToZero(int id)
+{
+    if (!motorControl_) {
+        return;
+    }
+
+    if (id == 0) {
+        motorControl_->goZero(motorControl_->getFAddr());
+    }
+    if (id == 1) {
+        motorControl_->goZero(motorControl_->getSAddr());
+    }
+}
+
+void DeviceManager::runSteps(int id, int speed, int angle)
+{
+    if (!motorControl_) {
+        return;
+    }
+
+    if (id == 0) {
+        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle, false); // false - need waiting for curr pos
+    }
+    if (id == 1) {
+        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle, false);
+    }
+}
+
+void DeviceManager::openCsvFile(QString name)
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    QFile file;
+    QUrl url(name);
+    url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
+
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    QTextStream in(&file);
+    QStringList tasks;
+
+    while (!in.atEnd()) {
+        QString row = in.readLine();
+        tasks.append(row);
+    }
+
+    motorControl_->addTask(tasks);
+}
+
+void DeviceManager::clearTasks()
+{
+    if (!motorControl_) {
+        qDebug() << "motorControl is not inited";
+        return;
+    }
+
+    motorControl_->clearTasks();
+}
+
+void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle) {
+    // emit encoderComplete(currFAngle, -currSAngle, NAN);
+    emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
+
+    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
+    if(usbl_devs.size() > 0) {
+        IDBinUsblSolution::USBLRequestBeacon ask;
+        ask.external_heading_deg = currFAngle;
+        ask.external_pitch = currSAngle;
+        usbl_devs[0]->askBeaconPosition(ask);
+    }
+}
+#endif
 
 StreamListModel* DeviceManager::streamsList()
 {
@@ -492,7 +736,12 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
                 lastDevice_ = NULL;
             }
             disconnect(i.value());
+
+#ifdef SEPARATE_READING
+            QMetaObject::invokeMethod(i.value(), "deleteLater", Qt::QueuedConnection);
+#else
             delete i.value();
+#endif
         }
         devTree_[uuid].clear();
         devTree_.remove(uuid);
@@ -506,6 +755,34 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     devTree_[uuid][addr] = dev;
     dev->setBusAddress(addr);
 
+#ifdef SEPARATE_READING
+    auto connType = Qt::AutoConnection;
+
+    if(link != NULL) {
+        connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
+        connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
+    }
+
+    connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
+    connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
+    connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete, connType);
+    connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete, connType);
+    connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete, connType);
+    connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete, connType);
+    connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete, connType);
+    connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
+
+    dev->moveToThread(qApp->thread());
+    dev->getProcessTimer()->moveToThread(qApp->thread());
+    QList<QTimer*> timers = dev->getChildTimers();
+    foreach (QTimer* timer, timers) {
+        timer->moveToThread(qApp->thread());
+    }
+
+    QMetaObject::invokeMethod(dev, "initProcessTimerConnects", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dev, "initChildsTimersConnects", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dev, "startConnection", Qt::QueuedConnection, Q_ARG(bool, link != NULL));
+#else
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
@@ -516,11 +793,13 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
+    connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);
 
     dev->startConnection(link != NULL);
+#endif
 
     emit devChanged();
 

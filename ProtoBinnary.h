@@ -344,18 +344,29 @@ public:
 
     template<typename T>
     T read() {
-        T *val = (T *)(&_frame[_readPosition]);
-        _readPosition += sizeof (T);
-        return *val;
+        T res = {};
+        read(&res);
+        return res;
     }
 
     template<typename T>
-    void read(T* data_struct) {
-        read((uint8_t*)(data_struct), sizeof (T));
+    int read(T* data_struct) {
+        int16_t avail = readAvailable();
+        if(avail >= (int16_t)sizeof (T)) {
+            *data_struct = *(T *)(&_frame[_readPosition]);
+            _readPosition += (int16_t)sizeof (T);
+            return sizeof (T);
+        } else {
+            *data_struct = {};
+            read((uint8_t*)data_struct, avail);
+            return avail;
+        }
+
+        return 0;
     }
 
-    void read(uint8_t* b, uint16_t len) {
-        for(uint16_t i = 0; i < len; i++) {
+    void read(uint8_t* b, int16_t len) {
+        for(int16_t i = 0; i < len; i++) {
             b[i] = _frame[_readPosition];
             _readPosition++;
         }
@@ -654,7 +665,11 @@ protected:
         if(res) {
             _readPosition = 4;
 
-            _optionsLen = read<U1>();
+            _optionsLen = _frame[_readPosition];
+            ++_readPosition;
+            _readMaxPosition = _readPosition + _optionsLen + 4;
+            _payloadLen = _optionsLen + 4;
+
             _optionFlags.val = 0;
             if(_optionsLen >= 3) {
                 _optionFlags.val = read<U2>();

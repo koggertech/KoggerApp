@@ -38,7 +38,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
                     default: break;
                 }
         }, Qt::QueuedConnection);
-    });
+    }, connectionType);
 
     workerObject_->moveToThread(workerThread_.get());
     workerThread_->start();
@@ -76,19 +76,31 @@ void LinkManagerWrapper::openClosedLinks()
     emit sendOpenFLinks();
 }
 
-void LinkManagerWrapper::openAsSerial(QUuid uuid)
+void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
 {
-    emit sendOpenAsSerial(uuid);
+    emit sendOpenAsSerial(uuid, attribute);
 }
+
+// #ifdef MOTOR
+// void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
+// {
+//     emit sendOpenAsSerial(uuid, isMotorDevice);
+// }
+// #else
+// void LinkManagerWrapper::openAsSerial(QUuid uuid)
+// {
+//     emit sendOpenAsSerial(uuid);
+// }
+// #endif
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
     emit sendCreateAsUdp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort)
+void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
 {
-    emit sendOpenAsUdp(uuid, address, sourcePort, destinationPort);
+    emit sendOpenAsUdp(uuid, address, sourcePort, destinationPort, attribute);
 }
 
 void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destinationPort)
@@ -96,9 +108,9 @@ void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destin
     emit sendCreateAsTcp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort)
+void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
 {
-    emit sendOpenAsTcp(uuid, address, sourcePort, destinationPort);
+    emit sendOpenAsTcp(uuid, address, sourcePort, destinationPort, attribute);
 }
 
 void LinkManagerWrapper::closeLink(QUuid uuid)

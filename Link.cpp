@@ -1,15 +1,5 @@
 #include "Link.h"
 
-#include <QUdpSocket>
-#include <QTcpSocket>
-#if defined(Q_OS_ANDROID)
-#include "qtandroidserialport/src/qserialport.h"
-#include "qtandroidserialport/src/qserialportinfo.h"
-#else
-#include <QSerialPort>
-#include <QSerialPortInfo>
-#endif
-
 
 Link::Link() :
     ioDevice_(nullptr),
@@ -356,6 +346,18 @@ bool Link::getIsForceStopped() const
     return isForcedStopped_;
 }
 
+// #ifdef MOTOR
+// void Link::setIsMotorDevice(bool isMotorDevice)
+// {
+//     isMotorDevice_ = isMotorDevice;
+// }
+
+// bool Link::getIsMotorDevice() const
+// {
+//     return isMotorDevice_;
+// }
+// #endif
+
 bool Link::writeFrame(FrameParser frame)
 {
     return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
@@ -378,10 +380,19 @@ bool Link::write(QByteArray data)
 void Link::setDev(QIODevice *dev)
 {
     deleteDev();
-    if(dev != nullptr) {
+    if (dev != nullptr) {
         ioDevice_ = dev;
+
         connect(dev, &QAbstractSocket::readyRead, this, &Link::readyRead);
         connect(dev, &QAbstractSocket::aboutToClose, this, &Link::aboutToClose);
+
+        if (auto* socket = qobject_cast<QSerialPort*>(ioDevice_); socket) {
+#if defined(Q_OS_ANDROID)
+//    connect(m_serial, &QSerialPort::error, this, &Connection::handleSerialError);
+#else
+            connect(socket, &QSerialPort::errorOccurred, this, &Link::handleSerialError);
+#endif
+        }
     }
 }
 
@@ -421,6 +432,51 @@ void Link::toParser(const QByteArray data)
 
 void Link::readyRead()
 {
+
+#ifdef MOTOR
+    QIODevice* dev = device();
+    if (dev != nullptr) {
+
+        if (attribute_ == LinkAttributeNone) {
+            if (linkType_ == LinkType::LinkIPUDP) {
+                QUdpSocket* socsUpd = (QUdpSocket*)dev;
+                while (socsUpd->hasPendingDatagrams()) {
+                    QByteArray datagram;
+                    datagram.resize(socsUpd->pendingDatagramSize());
+                    QHostAddress sender;
+                    quint16 senderPort;
+                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                    if (slen == -1) {
+                        break;
+                    }
+                    toParser(datagram);
+                }
+            }
+            else {
+                toParser(dev->readAll());
+            }
+        }
+        else {
+            if (linkType_ == LinkType::LinkIPUDP) {
+                QUdpSocket* socsUpd = (QUdpSocket*)dev;
+                while (socsUpd->hasPendingDatagrams()) {
+                    QByteArray datagram;
+                    datagram.resize(socsUpd->pendingDatagramSize());
+                    QHostAddress sender;
+                    quint16 senderPort;
+                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+                    if (slen == -1) {
+                        break;
+                    }
+                    emit dataReady(datagram);
+                }
+            }
+            else {
+                emit dataReady(dev->readAll());
+            }
+        }
+    }
+#else
     QIODevice* dev = device();
     if (dev != nullptr) {
         if (linkType_ == LinkType::LinkIPUDP) {
@@ -441,6 +497,8 @@ void Link::readyRead()
             toParser(dev->readAll());
         }
     }
+#endif
+
 }
 
 void Link::aboutToClose()
@@ -450,5 +508,12 @@ void Link::aboutToClose()
         //emit changeState(); //
         emit connectionStatusChanged(uuid_);
         emit closed(uuid_, this);
+    }
+}
+
+void Link::handleSerialError(QSerialPort::SerialPortError error)
+{
+    if (error == QSerialPort::ResourceError) {
+        close();
     }
 }

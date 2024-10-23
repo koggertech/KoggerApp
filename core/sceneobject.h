@@ -85,7 +85,10 @@ public:
         PointGroup   = 5,
         PolygonGroup = 6,
         Unknown      = 7,
-        BoatTrack    = 8
+        BoatTrack    = 8,
+        UsblView     = 9,
+        SideScanView = 10,
+        ImageView    = 11
     };
 
     Q_ENUM(SceneObjectType)

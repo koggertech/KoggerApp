@@ -18,7 +18,7 @@ DevSettingsBox {
         width: control.width
 
         TitleMenuBox {
-            titleText: "Chart"
+            titleText: qsTr("Chart")
             Layout.fillWidth: true
 
             RowLayout {
@@ -27,7 +27,7 @@ DevSettingsBox {
 
                 CCheck {
                     id:switch_ch1
-                    text: "On"
+                    text: qsTr("On")
                     checked: dev.datasetChart > 0
                     onCheckedChanged: {
                         if(checked == true && dev.datasetChart === 0) {
@@ -40,7 +40,7 @@ DevSettingsBox {
                 }
 
                 CButton {
-                    text: "Shot"
+                    text: qsTr("Shot")
                     Layout.preferredWidth: 48
                     Layout.preferredHeight: 22
                     Layout.leftMargin: 10
@@ -95,7 +95,7 @@ DevSettingsBox {
                 Text {
                     x: borderCanvas.offsetRight + 25
                     y: borderCanvas.posSliderResol - height - 5
-                    text: "Resolution, mm"
+                    text: qsTr("Resolution, mm")
                     padding: 10
                     color: "#808080"
                     font.pixelSize: 14
@@ -117,7 +117,7 @@ DevSettingsBox {
                 Text {
                     x: borderCanvas.offsetRight + 340
                     y: borderCanvas.posSliderSamples - height - 5
-                    text: "Number of Samples"
+                    text: qsTr("Number of Samples")
                     padding: 10
                     color: "#808080"
                     font.pixelSize: 14
@@ -139,7 +139,7 @@ DevSettingsBox {
                 Text {
                     x: borderCanvas.offsetRight + 10
                     y: borderCanvas.posSliderOffset - height - 5
-                    text: "Offset of Samples"
+                    text: qsTr("Offset of Samples")
                     padding: 10
                     color: "#808080"
                     font.pixelSize: 14

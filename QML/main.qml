@@ -1,17 +1,13 @@
 import QtQuick 2.15
 import SceneGraphRendering 1.0
 import QtQuick.Window 2.15
-
 import QtQuick.Layouts 1.15
-
 import Qt.labs.settings 1.1
 import QtQuick.Dialogs 1.2
-
 import QtQuick.Controls 2.15
-
 import WaterFall 1.0
-
 import KoggerCommon 1.0
+
 
 Window  {
     id:            mainview
@@ -27,13 +23,6 @@ Window  {
     readonly property int _activeObjectParamsMenuHeight: 500
     readonly property int _sceneObjectsListHeight:       300
 
-    //    Settings {
-    //        property alias x: mainview.x
-    //        property alias y: mainview.y
-    //        property alias width: mainview.width
-    //        property alias height: mainview.height
-    //    }
-
     Settings {
             id: appSettings
             property bool isFullScreen: false
@@ -42,6 +31,40 @@ Window  {
     Component.onCompleted: {
         if (appSettings.isFullScreen) {
             mainview.showFullScreen();
+        }
+        menuBar.languageChanged.connect(handleChildSignal)
+    }
+
+    // banner on languageChanged
+    property bool showBanner: false
+    property string selectedLanguageStr: qsTr("Undefined")
+
+    Rectangle {
+        id: banner
+        anchors.fill: parent
+        color: "black"
+        opacity: 0.8
+        visible: showBanner
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+
+            Text {
+                text: qsTr("Please restart the application to apply the language change") + " (" + selectedLanguageStr + ")"
+                color: "white"
+                font.pixelSize: 24
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+            }
+
+            CButton {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: qsTr("Ok")
+                onClicked: {
+                    mainview.showBanner = false
+                }
+            }
         }
     }
 
@@ -66,42 +89,48 @@ Window  {
         anchors.fill: parent
 
         onEntered: {
-            draggedFilePath = ""
-            if (drag.hasUrls) {
-                for (var i = 0; i < drag.urls.length; ++i) {
-                    var url = drag.urls[i]
-                    var filePath = url.replace("file:///", "").toLowerCase()
-                    if (filePath.endsWith(".klf")) {
-                        draggedFilePath = filePath
-                        overlay.opacity = 0.3
-                        break
+            if (!showBanner) {
+                draggedFilePath = ""
+                if (drag.hasUrls) {
+                    for (var i = 0; i < drag.urls.length; ++i) {
+                        var url = drag.urls[i]
+                        var filePath = url.replace("file:///", "").toLowerCase()
+                        if (filePath.endsWith(".klf")) {
+                            draggedFilePath = filePath
+                            overlay.opacity = 0.3
+                            break
+                        }
                     }
                 }
             }
         }
 
         onExited: {
-            overlay.opacity = 0
-            draggedFilePath = ""
-        }
-
-        onDropped: {
-            if (draggedFilePath !== "") {
-                core.openLogFile(draggedFilePath, false, true)
+            if (!showBanner) {
                 overlay.opacity = 0
                 draggedFilePath = ""
             }
-            overlay.opacity = 0
+        }
+
+        onDropped: {
+            if (!showBanner) {
+                if (draggedFilePath !== "") {
+                    core.openLogFile(draggedFilePath, false, true)
+                    overlay.opacity = 0
+                    draggedFilePath = ""
+                }
+                overlay.opacity = 0
+            }
         }
     }
     // drag-n-drop <-
 
     SplitView {
+        visible: !showBanner
         Layout.fillHeight: true
         Layout.fillWidth:  true
         anchors.fill:      parent
         orientation:       Qt.Vertical
-        visible:           true
 
         handle: Rectangle {
             // implicitWidth:  5
@@ -169,9 +198,17 @@ Window  {
                 KWaitProgressBar{
                     id:        surfaceProcessingProgressBar
                     objectName: "surfaceProcessingProgressBar"
-                    text:      "Calculating surface.\nPlease wait..."
-                    textColor: "black"
+                    text:      qsTr("Calculating surface\nPlease wait...")
+                    textColor: "white"
                     visible:   false
+                }
+
+                KWaitProgressBar{
+                    id:        sideScanProcessingProgressBar
+                    objectName: "sideScanProcessingProgressBar"
+                    text:      qsTr("Calculating mosaic\nPlease wait...")
+                    textColor: "white"
+                    visible:  core.isMosaicUpdatingInThread && core.isSideScanPerformanceMode
                 }
 
                 PinchArea {
@@ -320,10 +357,10 @@ Window  {
                     ButtonGroup { id: pencilbuttonGroup }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/arrow-bar-to-down.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.MinDistProc)
@@ -334,10 +371,10 @@ Window  {
                     }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/arrow-bar-to-up.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.MaxDistProc)
@@ -348,10 +385,10 @@ Window  {
                     }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/eraser.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.ClearDistProc)
@@ -362,10 +399,10 @@ Window  {
                     }
 
                     CheckButton {
-                        Layout.fillWidth: true
                         icon.source: "./icons/x.svg"
                         backColor: theme.controlBackColor
                         checkable: false
+                        implicitWidth: theme.controlHeight
 
                         onClicked: {
                             renderer.bottomTrackActionEvent(BottomTrack.Undefined)
@@ -452,7 +489,7 @@ Window  {
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: deviceManagerWrapper.pilotArmState >= 0
+        visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
         isDraggable: true
         isOpacityControlled: true
 
@@ -469,6 +506,7 @@ Window  {
                     // checkedBackColor: "transparent"
                     borderColor: "transparent"
                     checkedBorderColor: theme.textColor
+                    implicitWidth: theme.controlHeight
                 }
 
                 ButtonGroup { id: autopilotModeGroup }
@@ -480,6 +518,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -489,6 +528,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -498,6 +538,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -507,6 +548,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 CheckButton {
@@ -516,6 +558,7 @@ Window  {
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
+                    implicitWidth: theme.controlHeight
                 }
 
                 // CCombo  {
@@ -554,7 +597,7 @@ Window  {
                     visible: isFinite(deviceManagerWrapper.vruVoltage)
                     rightPadding: 4
                     leftPadding: 4
-                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + " V   " + deviceManagerWrapper.vruCurrent.toFixed(1) + " A   " + deviceManagerWrapper.vruVelocityH.toFixed(2) + " m/s"
+                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + qsTr(" V   ") + deviceManagerWrapper.vruCurrent.toFixed(1) + qsTr(" A   ") + deviceManagerWrapper.vruVelocityH.toFixed(2) + qsTr(" m/s")
                 }
             }
         }
@@ -567,10 +610,13 @@ Window  {
         Keys.forwardTo:    [mousearea3D]
         height: visualisationLayout.height
         targetPlot: waterView
-
+        visible: !showBanner
     }
 
-
+    function handleChildSignal(langStr) {
+        mainview.showBanner = true
+        selectedLanguageStr = langStr
+    }
 
     Connections {
         target: SurfaceControlMenuController
@@ -581,6 +627,32 @@ Window  {
 
         function onSurfaceProcessorTaskFinished() {
             surfaceProcessingProgressBar.visible = false
+        }
+    }    
+
+    // banner on file opening
+    Rectangle {
+        id: fileOpeningOverlay
+        color: theme.controlBackColor
+        opacity: 0.8
+        radius: 10
+        anchors.centerIn: parent
+        visible: core.isFileOpening && !core.isSeparateReading
+        implicitWidth: textItem.implicitWidth + 40
+        implicitHeight: textItem.implicitHeight + 40
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 10
+
+            Text {
+                id: textItem
+                text: qsTr("Please wait, the file is opening")
+                color: "white"
+                font.pixelSize: 20
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+            }
         }
     }
 }

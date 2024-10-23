@@ -21,6 +21,21 @@ MenuScroll {
             }
         }
 
+        Loader {
+            id: menuLoader
+            sourceComponent: core.isSupportedMotorControlMode ? menuComponent : null
+        }
+
+        Component {
+            id: menuComponent
+            MenuFrame {
+                MotorViewer {
+                    id: motorView
+                    width: menuWidth
+                }
+            }
+        }
+
         MenuFrame {
             visible: false
             FactoryBox {
@@ -42,6 +57,16 @@ MenuScroll {
             visible: dopplerBox.isActive
             DopplerBox {
                 id: dopplerBox
+                visible: isActive
+                dev: devConnection.dev
+                width: menuWidth
+            }
+        }
+
+        MenuFrame {
+            visible: usblBox.isActive
+            USBLBox {
+                id: usblBox
                 visible: isActive
                 dev: devConnection.dev
                 width: menuWidth

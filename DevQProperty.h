@@ -51,18 +51,16 @@ public:
 
     Q_PROPERTY(int upgradeFWStatus READ upgradeFWStatus NOTIFY upgradeChanged)
 
-    Q_PROPERTY(int dopplerVeloX READ dopplerVeloX NOTIFY dopplerVeloComplete)
-    Q_PROPERTY(int dopplerVeloY READ dopplerVeloY NOTIFY dopplerVeloComplete)
-    Q_PROPERTY(int dopplerVeloZ READ dopplerVeloZ NOTIFY dopplerVeloComplete)
-    Q_PROPERTY(int dopplerDist READ dopplerDist NOTIFY dopplerVeloComplete)
-
     Q_PROPERTY(QString devName READ devName NOTIFY deviceVersionChanged)
+    Q_PROPERTY(int devType READ devType NOTIFY deviceVersionChanged)
     Q_PROPERTY(int devSN READ devSerialNumber NOTIFY deviceVersionChanged)
     Q_PROPERTY(QString fwVersion READ fwVersion NOTIFY deviceVersionChanged)
 
     Q_PROPERTY(bool isSonar READ isSonar NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isRecorder READ isRecorder NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isDoppler READ isDoppler NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isUSBLBeacon READ isUSBLBeacon NOTIFY deviceVersionChanged)
+    Q_PROPERTY(bool isUSBL READ isUSBL NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isChartSupport READ isChartSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isDistSupport READ isDistSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isDSPSupport READ isDSPSupport NOTIFY deviceVersionChanged)

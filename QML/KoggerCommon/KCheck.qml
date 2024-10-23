@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 
 CheckBox {
      id: control
-     text: "Check"
+     text: qsTr("Check")
      implicitHeight: theme.controlHeight
 
      indicator: Rectangle {

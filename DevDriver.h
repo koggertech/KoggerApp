@@ -14,7 +14,7 @@ class DevDriver : public QObject
     Q_OBJECT
 public:
     explicit DevDriver(QObject *parent = nullptr);
-
+    ~DevDriver();
     typedef enum {
         DatasetOff = 0,
         DatasetCh1 = 1,
@@ -26,6 +26,11 @@ public:
         failUpgrade = -1,
         successUpgrade = 101
     };
+
+#ifdef SEPARATE_READING
+    QTimer* getProcessTimer();
+    QList<QTimer*> getChildTimers();
+#endif
 
     int distMax();
     void setDistMax(int dist);
@@ -103,15 +108,8 @@ public:
     void setDevDefAddress(int addr);
     int getDevDefAddress();
 
-    int dopplerVeloX();
-    int dopplerVeloY();
-    int dopplerVeloZ();
-    int dopplerDist();
-
-
-
-
     QString devName() { return m_devName; }
+    int devType() const { return static_cast<int>(idVersion->boardVersion()); }
     uint32_t devSerialNumber();
     QString devPN();
 
@@ -120,6 +118,8 @@ public:
     BoardVersion boardVersion() {
         return idVersion->boardVersion();
     }
+
+    bool isBoardInited() { return boardVersion() != BoardNone; }
 
     bool isSonar() {
         BoardVersion ver = boardVersion();
@@ -134,6 +134,16 @@ public:
     bool isDoppler() {
         BoardVersion ver = boardVersion();
         return ver == BoardDVL;
+    }
+
+    bool isUSBLBeacon() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardUSBLBeacon;
+    }
+
+    bool isUSBL() {
+        BoardVersion ver = boardVersion();
+        return ver == BoardUSBL;
     }
 
     bool isChartSupport() { return m_state.duplex && isSonar(); }
@@ -162,7 +172,10 @@ signals:
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
     void distComplete(int dist);
+
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
+    void beaconActivationComplete(uint8_t id);
+
     void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
     void chartSetupChanged();
     void dspSetupChanged();
@@ -213,10 +226,22 @@ public slots:
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
 
+    void askBeaconPosition() {
+        IDBinUsblSolution::USBLRequestBeacon ask;
+        askBeaconPosition(ask);
+    }
+    void askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask);
+    void enableBeaconOnce(float timeout);
+
+#ifdef SEPARATE_READING
+    void initProcessTimerConnects();
+    void initChildsTimersConnects();
+#endif
+
 protected:
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
 
-    FrameParser* m_proto;
+    //FrameParser* m_proto;
 
     IDBinTimestamp* idTimestamp = NULL;
     IDBinDist* idDist = NULL;

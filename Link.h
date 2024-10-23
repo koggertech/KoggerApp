@@ -6,6 +6,15 @@
 #include <QUuid>
 #include <QString>
 #include <QHostAddress>
+#include <QUdpSocket>
+#include <QTcpSocket>
+#if defined(Q_OS_ANDROID)
+#include "qtandroidserialport/src/qserialport.h"
+#include "qtandroidserialport/src/qserialportinfo.h"
+#else
+#include <QSerialPort>
+#include <QSerialPortInfo>
+#endif
 #include "ProtoBinnary.h"
 
 using namespace Parsers;
@@ -17,6 +26,11 @@ typedef enum {
     LinkIPUDP, // also is proxy
     LinkIPTCP,
 } LinkType;
+
+typedef enum {
+    LinkAttributeNone,
+    LinkAttributeMotor = 2
+} LinkAttribute;
 
 typedef enum {
     kManual = 0,
@@ -74,6 +88,12 @@ public:
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
 
+// #ifdef MOTOR
+    void        setAttribute(int attribute) { attribute_ = attribute; }
+    bool        getIsMotorDevice() { return attribute_ == LinkAttributeMotor; }
+// #endif
+
+
 public slots:
     bool writeFrame(FrameParser frame);
     bool write(QByteArray data);
@@ -84,7 +104,12 @@ signals:
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
+
+#ifdef MOTOR
+    void dataReady(QByteArray data);
+#else
     void dataReady();
+#endif
 
 private:
     /*methods*/
@@ -113,7 +138,14 @@ private:
     bool isProxy_;
     bool isForcedStopped_;
 
+
+    int attribute_ = 0;
+// #ifdef MOTOR
+//     bool isMotorDevice_ = false;
+// #endif
+
 private slots:
     void readyRead();
     void aboutToClose();
+    void handleSerialError(QSerialPort::SerialPortError error);
 };

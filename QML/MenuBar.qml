@@ -17,6 +17,8 @@ Item {
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
 
+    signal languageChanged(string langStr)
+
     function itemChangeActive(currentItem) {
         if(currentItem) {
             currentItem.active = !(currentItem.active)
@@ -34,16 +36,34 @@ Item {
         spacing: 0
 
         ColumnLayout {
+            id: mainLayout
             Layout.alignment: Qt.AlignTop
             Layout.preferredWidth: theme.controlHeight*1.2
             Layout.topMargin: 6
             spacing: 4
             Layout.margins: 4
 
+            Component.onCompleted: {
+                resetButtonOpacity()
+            }
+
+            function highlightAllButtons() {
+                mainLayout.opacity = 1
+            }
+
+            function resetButtonOpacity() {
+                mainLayout.opacity = 0.5
+            }
+
             MenuButton {
                 id: menuSettings
                 icon.source: "./icons/plug.svg"
                 Layout.fillWidth: true
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Connections")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
 
                 onPressed: {
                     itemChangeActive(menuSettings)
@@ -54,6 +74,11 @@ Item {
                 id: menuDisplay
                 Layout.fillWidth: true
                 icon.source: "./settings-outline.svg"
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Settings")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
 
                 onPressed: {
                     itemChangeActive(menuDisplay)
@@ -75,11 +100,16 @@ Item {
             CheckButton {
                 id: settings3DButton
                 visible: instruments > 0
-                width: theme.controlHeight*1.2
+                implicitWidth: theme.controlHeight*1.2
                 icon.source: "./icons/map.svg"
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
                 checkedBorderColor: "black"
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Display 3D")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
 
                 onClicked: {
                     if(!settings3DButton.checked && !visible2dButton.checked) {
@@ -91,8 +121,13 @@ Item {
             CheckButton {
                 id: visible2dButton
                 visible: instruments > 0
-                width: theme.controlHeight*1.2
+                implicitWidth: theme.controlHeight*1.2
                 icon.source: "./icons/ripple.svg"
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Display 2D")
+                    onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
+                }
 
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
@@ -106,9 +141,9 @@ Item {
                 }
             }
 
-            MouseOpacityArea {
-                id: menuMouseArea
-            }
+            //MouseOpacityArea {
+            //    id: menuMouseArea
+            //}
         }
 
         DeviceSettingsViewer {
@@ -142,5 +177,13 @@ Item {
             implicitWidth: settingsWidth
             visible:            menu3DSettings.active
         }*/
+    }
+
+    function handleChildSignal(langStr) {
+        languageChanged(langStr)
+    }
+
+    Component.onCompleted: {
+        appSettings.languageChanged.connect(handleChildSignal)
     }
 }
