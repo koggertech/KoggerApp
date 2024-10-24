@@ -79,6 +79,20 @@ WaterFall {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             property int lastMouseX: -1
+            property bool wasMoved: false
+            property point startMousePos: Qt.point(-1, -1)
+            property real mouseThreshold: 15
+
+            Timer {
+                id: longPressTimer
+                interval: 500
+                repeat: false
+                onTriggered: {
+                    if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0 && !mousearea.wasMoved) {
+                        menuBlock.position(mousearea.mouseX, mousearea.mouseY)
+                    }
+                }
+            }
 
             onClicked: {
                 lastMouseX = mouse.x
@@ -88,37 +102,62 @@ WaterFall {
                 if (mouse.button === Qt.RightButton && theme.instrumentsGrade !== 0) {
                     menuBlock.position(mouse.x, mouse.y)
                 }
+
+                wasMoved = false
             }
 
             onPressed: {
                 lastMouseX = mouse.x
 
-                if (mouse.button === Qt.LeftButton) {
-                    menuBlock.visible = false
+                if (Qt.platform.os === "android") {
+                    startMousePos = Qt.point(mouse.x, mouse.y)
+                    longPressTimer.start()
                 }
 
                 if (mouse.button === Qt.LeftButton) {
+                    menuBlock.visible = false
                     plot.plotMousePosition(mouse.x, mouse.y)
                 }
+
+                wasMoved = false
             }
 
             onReleased: {
                 lastMouseX = -1
 
+                if (Qt.platform.os === "android") {
+                    longPressTimer.stop()
+                }
+
                 if (mouse.button === Qt.LeftButton) {
                     plot.plotMousePosition(-1, -1)
                 }
 
-                if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0) {
-                    menuBlock.position(mouse.x, mouse.y)
-                }
+                wasMoved = false
+                startMousePos = Qt.point(-1, -1)
             }
 
             onCanceled: {
                 lastMouseX = -1
+
+                if (Qt.platform.os === "android") {
+                    longPressTimer.stop()
+                }
+
+                wasMoved = false
+                startMousePos = Qt.point(-1, -1)
             }
 
             onPositionChanged: {
+                if (Qt.platform.os === "android") {
+                    if (!wasMoved) {
+                        var currDelta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
+                        if (currDelta > mouseThreshold) {
+                            wasMoved = true;
+                        }
+                    }
+                }
+
                 var delta = mouse.x - lastMouseX
                 lastMouseX = mouse.x
 
