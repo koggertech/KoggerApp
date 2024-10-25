@@ -322,20 +322,28 @@ ColumnLayout {
                     text: qsTr("Realtime processing")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
+                    checked: false
 
                     onToggled: {
                         SideScanViewControlMenuController.onUpdateStateChanged(checked)
                     }
 
-                    Component.onCompleted: {
-                        realtimeProcessingButton.checked = core.isSeparateReading
-                    }
-
                     onFocusChanged: {
                         sideScanViewSettings.focus = true
                     }
+
+                    Component.onCompleted: {
+                        //realtimeProcessingButton.checked = core.isSeparateReading
+                        SideScanViewControlMenuController.onUpdateStateChanged(checked)
+
+                    }
+
+                    Settings {
+                        property alias realtimeProcessingButton: realtimeProcessingButton.checked
+                    }
                 }
                 CheckButton {
+                    id: sideScanTrackLastData
                     text: qsTr("Track last data")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
@@ -347,6 +355,14 @@ ColumnLayout {
 
                     onFocusChanged: {
                         sideScanViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
+                    }
+
+                    Settings {
+                        property alias sideScanTrackLastData: sideScanTrackLastData.checked
                     }
                 }
                 RowLayout {
@@ -370,6 +386,14 @@ ColumnLayout {
                                 sideScanViewSettings.focus = true
                             }
                         }
+
+                        Component.onCompleted: {
+                            SideScanViewControlMenuController.onThemeChanged(currentIndex)
+                        }
+
+                        Settings {
+                            property alias sideScanTheme: sideScanTheme.currentIndex
+                        }
                     }
                 }
                 RowLayout {
@@ -388,6 +412,7 @@ ColumnLayout {
                                 text: qsTr("left:")
                             }
                             SpinBoxCustom  {
+                                id: sideScanLAngleOffset
                                 implicitWidth: 200
                                 from: -90
                                 to: 90
@@ -402,6 +427,14 @@ ColumnLayout {
                                 onFocusChanged: {
                                     sideScanViewSettings.focus = true
                                 }
+
+                                Component.onCompleted: {
+                                    SideScanViewControlMenuController.onSetLAngleOffset(value)
+                                }
+
+                                Settings {
+                                    property alias sideScanLAngleOffset: sideScanLAngleOffset.value
+                                }
                             }
                         }
                         RowLayout {
@@ -412,6 +445,7 @@ ColumnLayout {
                                 text: qsTr("right:")
                             }
                             SpinBoxCustom  {
+                                id: sideScanRAngleOffset
                                 implicitWidth: 200
                                 from: -90
                                 to: 90
@@ -425,6 +459,14 @@ ColumnLayout {
 
                                 onFocusChanged: {
                                     sideScanViewSettings.focus = true
+                                }
+
+                                Component.onCompleted: {
+                                    SideScanViewControlMenuController.onSetRAngleOffset(value)
+                                }
+
+                                Settings {
+                                    property alias sideScanRAngleOffset: sideScanRAngleOffset.value
                                 }
                             }
                         }
@@ -519,6 +561,7 @@ ColumnLayout {
                     }
                 }
                 CheckButton {
+                    id: sideScanUseLinearFilter
                     text: qsTr("Use linear filter")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
@@ -531,8 +574,17 @@ ColumnLayout {
                     onFocusChanged: {
                         sideScanViewSettings.focus = true
                     }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onUseFilterChanged(checked)
+                    }
+
+                    Settings {
+                        property alias sideScanUseLinearFilter: sideScanUseLinearFilter.checked
+                    }
                 }
                 CheckButton {
+                    id: sideScanGridContourVisible
                     text: qsTr("Grid/contour visible")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
@@ -546,8 +598,17 @@ ColumnLayout {
                     onFocusChanged: {
                         sideScanViewSettings.focus = true
                     }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onGridVisibleChanged(checked)
+                    }
+
+                    Settings {
+                        property alias sideScanGridContourVisible: sideScanGridContourVisible.checked
+                    }
                 }
                 CheckButton {
+                    id: sideScanMeasLinesVisible
                     text: qsTr("Measuse lines visible")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
@@ -561,8 +622,17 @@ ColumnLayout {
                     onFocusChanged: {
                         sideScanViewSettings.focus = true
                     }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
+                    }
+
+                    Settings {
+                        property alias sideScanMeasLinesVisible: sideScanMeasLinesVisible.checked
+                    }
                 }
                 CheckButton {
+                    id: sideScanGenerateGridContour
                     text: qsTr("Generate grid/contour")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200
@@ -575,6 +645,14 @@ ColumnLayout {
 
                     onFocusChanged: {
                         sideScanViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
+                    }
+
+                    Settings {
+                        property alias sideScanGenerateGridContour: sideScanGenerateGridContour.checked
                     }
                 }
 
@@ -1137,6 +1215,14 @@ ColumnLayout {
                 onTriggered: {
                     sideScanViewCheckButton.sideScanLongPressTriggered = true;
                 }
+            }
+
+            Component.onCompleted: {
+                SideScanViewControlMenuController.onVisibilityChanged(checked)
+            }
+
+            Settings {
+                property alias sideScanViewCheckButton: sideScanViewCheckButton.checked
             }
         }
 

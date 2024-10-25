@@ -40,10 +40,26 @@ protected:
 private:
     void tryClearMakeConnections();
     SideScanView* getSideScanViewPtr() const;
+    void tryInitPendingLambda();
+
+    /*data*/
     GraphicsScene3dView* m_graphicsSceneView;
     Core* corePtr_;
     QList<QMetaObject::Connection> connections_;
     std::function<void()> pendingLambda_;
+    bool visibility_;
+    bool usingFilter_;
+    bool gridVisible_;
+    bool measLineVisible_;
+    //int tileSidePixelSize_;
+    //int tileHeightMatrixRatio_;
+    //float tileResolution_;
+    bool generateGridContour_;
+    bool updateState_;
+    bool trackLastEpoch_;
+    int themeId_;
     float lowLevel_;
     float highLevel_;
+    float lAngleOffset_;
+    float rAngleOffset_;
 };

@@ -547,6 +547,10 @@ void SideScanView::setTextureIdByTileId(QUuid tileId, GLuint textureId)
 void SideScanView::setUseLinearFilter(bool state)
 {
     useLinearFilter_ = state;
+
+    updateTilesTexture();
+
+    Q_EMIT changed();
 }
 
 void SideScanView::setTrackLastEpoch(bool state)
