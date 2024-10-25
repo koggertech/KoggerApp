@@ -704,6 +704,7 @@ ColumnLayout {
                 }
 
                 ChartLevel {
+                    Layout.fillHeight: true
                     Layout.fillWidth: true
                     Layout.preferredWidth: theme.controlHeight * 1.2
                     id: sideScanLevelsSlider
