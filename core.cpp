@@ -496,6 +496,7 @@ bool Core::exportUSBLToCSV(QString filePath)
             row_data.append(QString(",%1,%2").arg(pos.ned.n).arg(pos.ned.e));
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().ping_counter).arg(epoch->usblSolution().carrier_counter).arg(epoch->usblSolution().snr));
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
+            row_data.append(QString(",%1").arg(epoch->usblSolution().watermark));
 
             row_data.append("\n");
             logger_.dataExport(row_data);
