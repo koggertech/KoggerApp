@@ -219,8 +219,6 @@ SideScanView* SideScanViewControlMenuController::getSideScanViewPtr() const
 
 void SideScanViewControlMenuController::tryInitPendingLambda()
 {
-    qDebug() << "tryInitPendingLambda";
-
     if (!pendingLambda_) {
         pendingLambda_ = [this](){
             if (m_graphicsSceneView) {

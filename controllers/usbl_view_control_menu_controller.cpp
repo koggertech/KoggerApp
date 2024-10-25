@@ -22,8 +22,6 @@ void UsblViewControlMenuController::findComponent()
 
 void UsblViewControlMenuController::onUsblViewVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    qDebug() << "onUsblViewVisibilityCheckBoxCheckedChanged: " << checked;
-
     if (!m_graphicsSceneView) {
         return;
     }
@@ -33,8 +31,6 @@ void UsblViewControlMenuController::onUsblViewVisibilityCheckBoxCheckedChanged(b
 
 void UsblViewControlMenuController::onUpdateUsblViewButtonClicked()
 {
-    qDebug() << "onUpdateUsblViewButtonClicked";
-
     if (!m_graphicsSceneView) {
         return;
     }
@@ -66,8 +62,6 @@ void UsblViewControlMenuController::onUpdateUsblViewButtonClicked()
 
 void UsblViewControlMenuController::onClearUsblViewButtonClicked()
 {
-    qDebug() << "onClearUsblViewButtonClicked";
-
     if (!m_graphicsSceneView) {
         return;
     }
