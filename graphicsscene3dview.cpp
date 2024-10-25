@@ -19,7 +19,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_surface(std::make_shared<Surface>()),
     sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
-    m_boatTrack(std::make_shared<BoatTrack>()),
+    m_boatTrack(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
     m_pointGroup(std::make_shared<PointGroup>()),
@@ -203,6 +203,7 @@ void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, q
     switchedToBottomTrackVertexComboSelectionMode_ = true;
 
     m_bottomTrack->resetVertexSelection();
+    m_boatTrack->clearSelectedEpoch();
     lastMode_ = m_mode;
     m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
     m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
@@ -300,6 +301,7 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
     if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
         m_bottomTrack->resetVertexSelection();
+        m_boatTrack->clearSelectedEpoch();
         m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
     }
 
@@ -425,6 +427,7 @@ void GraphicsScene3dView::setIdleMode()
 
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
+    m_boatTrack->clearSelectedEpoch();
 
     QQuickFramebufferObject::update();
 }
@@ -485,6 +488,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     if (!m_dataset)
         return;
 
+    m_boatTrack->setDatasetPtr(m_dataset);
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
 

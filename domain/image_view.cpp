@@ -14,13 +14,13 @@ ImageView::~ImageView()
 
 void ImageView::clear()
 {
-    auto renderImpl = RENDER_IMPL(ImageView);
+    // auto renderImpl = RENDER_IMPL(ImageView);
 
     // clear texture
 
 
-    Q_EMIT changed();
-    Q_EMIT boundsChanged();
+    // Q_EMIT changed();
+    // Q_EMIT boundsChanged();
 }
 
 void ImageView::setView(GraphicsScene3dView *viewPtr)
@@ -66,15 +66,11 @@ QImage& ImageView::getTextureTasksRef()
 
 void ImageView::updateTexture(const QString& imagePath, QVector3D lt, QVector3D rb)
 {
-    qDebug() << "ImageView::updateTexture:" << imagePath << lt << rb;
-
+    //qDebug() << "ImageView::updateTexture:" << imagePath << lt << rb;
     if (imagePath.isEmpty() || lt == rb) {
-        qDebug() << "imagePath.isEmpty() || lt == rb";
         return;
     }
-
     if (!textureTask_.load(imagePath)) {
-        qDebug() << "failed to load image: " << imagePath;
         return;
     }
 

@@ -102,12 +102,12 @@ void GraphicsScene3dRenderer::drawObjects()
     glEnable(GL_DEPTH_TEST);
     m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
+    m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     imageViewRenderImpl_.render(this,        m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
-    m_boatTrackRenderImpl.render(this,       m_projection * view * m_model, m_shaderProgramMap);
     navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
     usblViewRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     glDisable(GL_DEPTH_TEST);

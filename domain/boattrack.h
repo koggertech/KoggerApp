@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sceneobject.h>
+#include "plotcash.h"
 
 
 class GraphicsScene3dView;
@@ -28,15 +29,20 @@ public:
 
     private:
         friend class BoatTrack;
+        QVector3D selectedVertice_;
     };
 
     explicit BoatTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
     virtual ~BoatTrack();
     virtual SceneObjectType type() const override final;
+    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
+    void setDatasetPtr(Dataset* datasetPtr);
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override final;
     virtual void clearData() override final;
+    void selectEpoch(int epochIndex);
+    void clearSelectedEpoch();
 
 Q_SIGNALS:
 
@@ -45,5 +51,5 @@ protected:
 
 
 private:
-
+    Dataset* datasetPtr_;
 };

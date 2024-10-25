@@ -956,7 +956,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
         if (plot2dList_.at(i) != NULL) {
             plot2dList_.at(i)->setPlot(datasetPtr_);
             scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));
-            plot2dList_.at(i)->installEventFilter( scene3dViewPtr_->bottomTrack().get());
+            scene3dViewPtr_->boatTrack()->installEventFilter(plot2dList_.at(i));
+            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->bottomTrack().get());
+            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->boatTrack().get());
         }
     }
 

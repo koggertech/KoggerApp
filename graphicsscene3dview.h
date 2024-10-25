@@ -187,6 +187,7 @@ private:
 
 private:
     friend class BottomTrack;
+    friend class BoatTrack;
 
     std::shared_ptr<Camera> m_camera;
     std::shared_ptr<Camera> m_axesThumbnailCamera;
