@@ -42,6 +42,11 @@ void BoatTrack::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
+void BoatTrack::setSelectedIndices(const QHash<int, int> &selectedIndices)
+{
+    selectedIndices_ = selectedIndices;
+}
+
 void BoatTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 {
     SceneObject::setData(data, primitiveType);
@@ -52,6 +57,8 @@ void BoatTrack::clearData()
     auto r = RENDER_IMPL(BoatTrack);
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
+
+    selectedIndices_.clear();
 
     SceneObject::clearData();
 }
@@ -96,6 +103,44 @@ void BoatTrack::clearSelectedEpoch()
     auto r = RENDER_IMPL(BoatTrack);
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
+}
+
+void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons)
+    Q_UNUSED(x)
+    Q_UNUSED(y)
+
+    if (!m_view)
+        return;
+
+    if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode) {
+        if (buttons.testFlag(Qt::LeftButton)) {
+            if (m_view->bottomTrack()->data().empty()) {
+                auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
+                if (!hits.isEmpty()) {
+                    auto indice = hits.first().indices().first;
+                    if (selectedIndices_.size() > (indice + 1)) {
+                        auto epochIndx = selectedIndices_[indice];
+                        if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {
+                            auto epNed = epoch->getPositionGNSS().ned;
+                            QVector3D pos(epNed.n, epNed.e, 0.0f);
+                            RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
+                            DatasetChannel visibleChannel;
+                            if (auto channelMap = datasetPtr_->channelsList(); !channelMap.isEmpty()) {
+                                if (visibleChannel.channel < channelMap.first().channel ||
+                                    visibleChannel.channel > channelMap.last().channel) {
+                                    visibleChannel = channelMap.first();
+                                }
+                            }
+                            auto epochEvent = new EpochEvent(EpochSelected3d, epoch, epochIndx, visibleChannel);
+                            QCoreApplication::postEvent(this, epochEvent);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 //-----------------------RenderImplementation-----------------------------//

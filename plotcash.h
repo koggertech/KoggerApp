@@ -820,6 +820,7 @@ public:
     }
 
     QVector<QVector3D> boatTrack() const;
+    QHash<int, int> getSelectedIndicesBoatTrack() const;
     int getLastBottomTrackEpoch() const;
 
     float getLastYaw() {
@@ -924,6 +925,7 @@ protected:
     LLARef _llaRef;
 
     QVector<QVector3D> _boatTrack;
+    QHash<int, int> selectedBoatTrackVertexIndices_; // first - vertice indx, second - epoch indx
     QVector<QVector3D> _beaconTrack;
     QVector<QVector3D> _beaconTrack1;
 
@@ -978,6 +980,7 @@ private:
     int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;
+    uint64_t boatTrackValidPosCounter_;
 };
 
 #endif // PLOT_CASH_H

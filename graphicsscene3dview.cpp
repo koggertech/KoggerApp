@@ -303,6 +303,7 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
         m_bottomTrack->resetVertexSelection();
         m_boatTrack->clearSelectedEpoch();
         m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
+        m_boatTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
     }
 
     switchedToBottomTrackVertexComboSelectionMode_ = false;
@@ -504,6 +505,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
                       this,     [this]() -> void {
                                     m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+                                    m_boatTrack->setSelectedIndices(m_dataset->getSelectedIndicesBoatTrack());
                                     if (navigationArrowState_) {
                                         const Position pos = m_dataset->getLastPosition();
                                         m_navigationArrow->setPositionAndAngle(

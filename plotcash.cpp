@@ -206,7 +206,8 @@ float Epoch::getInterpSecondChannelDist() const
 Dataset::Dataset() :
     interpolator_(this),
     lastBoatTrackEpoch_(0),
-    lastBottomTrackEpoch_(0)
+    lastBottomTrackEpoch_(0),
+    boatTrackValidPosCounter_(0)
 {
     resetDataset();
 }
@@ -252,6 +253,11 @@ void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int chan
 QVector<QVector3D> Dataset::boatTrack() const
 {
     return _boatTrack;
+}
+
+QHash<int, int> Dataset::getSelectedIndicesBoatTrack() const
+{
+    return selectedBoatTrackVertexIndices_;
 }
 
 int Dataset::getLastBottomTrackEpoch() const
@@ -1049,6 +1055,8 @@ Epoch *Dataset::getFirstEpochByValidPosition() {
 void Dataset::clearBoatTrack() {
     lastBoatTrackEpoch_ = 0;
     _boatTrack.clear();
+    selectedBoatTrackVertexIndices_.clear();
+    boatTrackValidPosCounter_ = 0;
     emit dataUpdate();
 }
 
@@ -1058,6 +1066,8 @@ void Dataset::updateBoatTrack(bool update_all) {
 
     if(update_all) {
         _boatTrack.clear();
+        selectedBoatTrackVertexIndices_.clear();
+        boatTrackValidPosCounter_ = 0;
     } else {
         from_index = lastBoatTrackEpoch_;
     }
@@ -1077,6 +1087,7 @@ void Dataset::updateBoatTrack(bool update_all) {
 
         if(pos.ned.isCoordinatesValid()) {
             _boatTrack.append(QVector3D(pos.ned.n,pos.ned.e, 0));
+            selectedBoatTrackVertexIndices_.insert(boatTrackValidPosCounter_++, i);
         }
     }
 
