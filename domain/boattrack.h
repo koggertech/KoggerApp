@@ -49,7 +49,7 @@ Q_SIGNALS:
 
 protected:
     friend class GraphicsScene3dView;
-
+    friend class BottomTrack;
 
 private:
     Dataset* datasetPtr_;

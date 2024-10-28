@@ -69,9 +69,9 @@ void BoatTrack::selectEpoch(int epochIndex)
             // channel select logic from bottomTrack
             DatasetChannel visibleChannel;
             bool beenBottomSelected{ false };
-            if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
-                auto channelMap = datasetPtr_->channelsList();
-                if (!channelMap.isEmpty()) {
+
+            if (datasetPtr_) {
+                if (auto channelMap = datasetPtr_->channelsList(); !channelMap.isEmpty()) {
                     if (visibleChannel.channel < channelMap.first().channel ||
                         visibleChannel.channel > channelMap.last().channel) {
                         visibleChannel = channelMap.first();

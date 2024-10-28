@@ -3,6 +3,7 @@
 #include <epochevent.h>
 //#include <textrenderer.h> TODO
 #include <draw_utils.h>
+#include "boattrack.h"
 #include <QtOpenGLExtensions/QOpenGLExtensions>
 
 #include <QHash>
@@ -302,6 +303,7 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
             if (!hits.isEmpty()) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
                 auto epochIndex = epochIndexMatchingMap_.value({hits.first().indices().first});
+                m_view->boatTrack()->selectEpoch(epochIndex);
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
                 QCoreApplication::postEvent(this, epochEvent);
             }
