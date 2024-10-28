@@ -175,6 +175,10 @@ void BottomTrack::clearData()
     epochIndexMatchingMap_.clear();
     renderData_.clear();
     visibleChannel_ = DatasetChannel();
+
+    auto r = RENDER_IMPL(BottomTrack);
+    r->selectedVertexIndices_.clear();
+
     SceneObject::clearData();
 }
 

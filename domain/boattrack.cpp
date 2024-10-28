@@ -49,6 +49,10 @@ void BoatTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 
 void BoatTrack::clearData()
 {
+    auto r = RENDER_IMPL(BoatTrack);
+    r->boatTrackVertice_ = QVector3D();
+    r->bottomTrackVertice_ = QVector3D();
+
     SceneObject::clearData();
 }
 
@@ -60,7 +64,27 @@ void BoatTrack::selectEpoch(int epochIndex)
     if (auto* epoch = datasetPtr_->fromIndex(epochIndex); epoch) {
         if (auto ned = epoch->getPositionGNSS().ned; ned.isCoordinatesValid()) {
             auto r = RENDER_IMPL(BoatTrack);
-            r->selectedVertice_ = QVector3D(ned.n, ned.e, 0.0f);
+            r->boatTrackVertice_ = QVector3D(ned.n, ned.e, 0.0f);
+
+            // channel select logic from bottomTrack
+            DatasetChannel visibleChannel;
+            bool beenBottomSelected{ false };
+            if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
+                auto channelMap = datasetPtr_->channelsList();
+                if (!channelMap.isEmpty()) {
+                    if (visibleChannel.channel < channelMap.first().channel ||
+                        visibleChannel.channel > channelMap.last().channel) {
+                        visibleChannel = channelMap.first();
+                        if (float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel.channel)); isfinite(distance)) {
+                            r->bottomTrackVertice_ = QVector3D(ned.n, ned.e, distance);
+                            beenBottomSelected = true;
+                        }
+                    }
+                }
+            }
+            if (!beenBottomSelected) {
+                r->bottomTrackVertice_ = QVector3D();
+            }
         }
     }
 
@@ -70,7 +94,8 @@ void BoatTrack::selectEpoch(int epochIndex)
 void BoatTrack::clearSelectedEpoch()
 {
     auto r = RENDER_IMPL(BoatTrack);
-    r->selectedVertice_ = QVector3D();
+    r->boatTrackVertice_ = QVector3D();
+    r->bottomTrackVertice_ = QVector3D();
 }
 
 //-----------------------RenderImplementation-----------------------------//
@@ -99,15 +124,15 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
                                                       const QMatrix4x4 &model,
                                                       const QMatrix4x4 &view,
                                                       const QMatrix4x4 &projection,
-                                                      const QMap<QString,std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
+                                                      const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
-    if(!m_isVisible)
+    if (!m_isVisible)
         return;
 
     SceneObject::RenderImplementation::render(ctx, model, view, projection, shaderProgramMap);
 
     //------------->Drawing selected vertice<<---------------//
-    if (selectedVertice_.isNull()) {
+    if (boatTrackVertice_.isNull()) {
         return;
     }
 
@@ -125,25 +150,30 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->setUniformValue(widthLoc, 10.0f);
     shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, &selectedVertice_);
+    shaderProgram->setAttributeArray(posLoc, &boatTrackVertice_);
 
-#ifndef Q_OS_ANDROID
-    ctx->glEnable(GL_PROGRAM_POINT_SIZE);
-#else
     ctx->glEnable(34370);
-#endif
-
-    ctx->glLineWidth(4.0);
     ctx->glDrawArrays(GL_POINTS, 0, 1);
-    ctx->glLineWidth(1.0);
-
-#ifndef Q_OS_ANDROID
-    ctx->glDisable(GL_PROGRAM_POINT_SIZE);
-#else
     ctx->glDisable(34370);
-#endif
+
+    shaderProgram->disableAttributeArray(posLoc);
+
+    //------------->Drawing line boatTrack -> bottomTrack<<---------------//
+    if (bottomTrackVertice_.isNull()) {
+        return;
+    }
+
+    QVector4D lineColor(0.0f, 1.0f, 0.0f, 1.0f);
+    shaderProgram->setUniformValue(colorLoc, lineColor);
+
+    QVector<QVector3D> vertices{ boatTrackVertice_, bottomTrackVertice_ };
+
+    ctx->glLineWidth(2);
+    shaderProgram->enableAttributeArray(posLoc);
+    shaderProgram->setAttributeArray(posLoc, vertices.constData(), sizeof(QVector3D));
+
+    ctx->glDrawArrays(GL_LINES, 0, 2);
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
-
 }

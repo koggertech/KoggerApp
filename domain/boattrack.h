@@ -29,7 +29,8 @@ public:
 
     private:
         friend class BoatTrack;
-        QVector3D selectedVertice_;
+        QVector3D boatTrackVertice_;
+        QVector3D bottomTrackVertice_;
     };
 
     explicit BoatTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
