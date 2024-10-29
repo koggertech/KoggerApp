@@ -34,7 +34,9 @@ HEADERS += \
     $$PWD/side_scan_view.h \
     $$PWD/global_mesh.h \
     $$PWD/tile.h \
-    $$PWD/image_view.h
+    $$PWD/image_view.h \
+    $$PWD/map_view.h
+
 SOURCES += \
     $$PWD/boattrack.cpp \
     $$PWD/bottomtrack.cpp \
@@ -55,4 +57,5 @@ SOURCES += \
     $$PWD/side_scan_view.cpp \
     $$PWD/global_mesh.cpp \
     $$PWD/tile.cpp \
-    $$PWD/image_view.cpp
+    $$PWD/image_view.cpp \
+    $$PWD/map_view.cpp

@@ -971,6 +971,55 @@ ColumnLayout {
         }
     }*/
 
+    // mapViewSettings extra settings
+    MenuFrame {
+        id: mapViewSettings
+        visible: mapViewCheckButton.hovered || isHovered || mapViewCheckButton.mapViewLongPressTriggered
+        z: mapViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !mapViewCheckButton.hovered) {
+                    mapViewCheckButton.mapViewLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                mapViewCheckButton.mapViewLongPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CButton {
+                text: qsTr("Update")
+                Layout.fillWidth: true
+                Layout.preferredWidth: 200
+
+                onClicked: {
+                    MapViewControlMenuController.onUpdateClicked()
+                }
+
+                onFocusChanged: {
+                    mapViewSettings.focus = true
+                }
+            }
+        }
+    }
+
     RowLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
@@ -1273,6 +1322,53 @@ ColumnLayout {
                 }
             }
         }*/
+
+        // mapView button
+        CheckButton {
+            id: mapViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/map.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                MapViewControlMenuController.onVisibilityChanged(checked)
+            }
+
+            property bool mapViewLongPressTriggered: false
+
+            MouseArea {
+                id: mapViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    mapViewLongPressTimer.start()
+                    mapViewCheckButton.mapViewLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!mapViewCheckButton.mapViewLongPressTriggered) {
+                        mapViewCheckButton.checked = !mapViewCheckButton.checked
+                    }
+                    mapViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    mapViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: mapViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    mapViewCheckButton.mapViewLongPressTriggered = true;
+                }
+            }
+        }
 
         ButtonGroup{
             property bool buttonChangeFlag : false

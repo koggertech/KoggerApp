@@ -19,6 +19,7 @@
 #include "surfacecontrolmenucontroller.h"
 #include "side_scan_view_control_menu_controller.h"
 #include "image_view_control_menu_controller.h"
+#include "map_view_control_menu_controller.h"
 #include "usbl_view_control_menu_controller.h"
 #include "pointgroupcontrolmenucontroller.h"
 #include "polygongroupcontrolmenucontroller.h"
@@ -156,6 +157,7 @@ private:
     std::shared_ptr<SurfaceControlMenuController> surfaceControlMenuController_;
     std::shared_ptr<SideScanViewControlMenuController> sideScanViewControlMenuController_;
     std::shared_ptr<ImageViewControlMenuController> imageViewControlMenuController_;
+    std::shared_ptr<MapViewControlMenuController> mapViewControlMenuController_;
     std::shared_ptr<PointGroupControlMenuController> pointGroupControlMenuController_;
     std::shared_ptr<PolygonGroupControlMenuController> polygonGroupControlMenuController_;
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
