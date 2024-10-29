@@ -543,6 +543,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
                      this,      [this](int indx) -> void {
                                     if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
+                                        m_bottomTrack->sideScanUpdated();
                                         sideScanView_->startUpdateDataInThread(indx);
                                         if (sideScanView_->getTrackLastEpoch()) {
                                             setLastEpochFocusView();

@@ -40,6 +40,7 @@ public:
         friend class BottomTrack;
         QVector<int> selectedVertexIndices_;
         bool surfaceUpdated_;
+        bool sideScanUpdated_;
         bool surfaceState_;
         bool sideScanVisibleState_;
     };
@@ -63,6 +64,7 @@ public Q_SLOTS:
     void setVisibleChannel(const DatasetChannel& channel);
     void selectEpoch(int epochIndex, int channelId);
     void surfaceUpdated();
+    void sideScanUpdated();
     void surfaceStateChanged(bool state);
     void setSideScanVisibleState(bool state);
 
