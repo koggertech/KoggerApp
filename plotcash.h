@@ -820,7 +820,7 @@ public:
     }
 
     QVector<QVector3D> boatTrack() const;
-    QHash<int, int> getSelectedIndicesBoatTrack() const;
+    const QHash<int, int>& getSelectedIndicesBoatTrack() const;
     int getLastBottomTrackEpoch() const;
 
     float getLastYaw() {

@@ -120,6 +120,9 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
                 if (!hits.isEmpty()) {
                     auto indice = hits.first().indices().first;
+                    if (selectedIndices_.size() != datasetPtr_->getSelectedIndicesBoatTrack().size()) {
+                        selectedIndices_ = datasetPtr_->getSelectedIndicesBoatTrack();
+                    }
                     if (selectedIndices_.size() > (indice + 1)) {
                         auto epochIndx = selectedIndices_[indice];
                         if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {

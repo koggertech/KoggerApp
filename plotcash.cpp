@@ -255,7 +255,7 @@ QVector<QVector3D> Dataset::boatTrack() const
     return _boatTrack;
 }
 
-QHash<int, int> Dataset::getSelectedIndicesBoatTrack() const
+const QHash<int, int>& Dataset::getSelectedIndicesBoatTrack() const
 {
     return selectedBoatTrackVertexIndices_;
 }
