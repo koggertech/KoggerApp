@@ -553,7 +553,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     posLoc    = shaderProgram->attributeLocation("position");
     int widthLoc  = shaderProgram->uniformLocation("width");
 
-    QVector4D vertexColor(0.0f, 0.3f, 1.0f, 1.0f);
+    QVector4D vertexColor(0.03f, 0.69f, 0.98f, 1.0f);
 
     //TODO: Needs to optimize data preparing
     QVector<QVector3D> selectedVertices;
@@ -566,25 +566,13 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
 
     shaderProgram->setUniformValue(colorLoc,vertexColor);
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
-    shaderProgram->setUniformValue(widthLoc, 10.0f);
+    shaderProgram->setUniformValue(widthLoc, 12.0f);
     shaderProgram->enableAttributeArray(posLoc);
     shaderProgram->setAttributeArray(posLoc, selectedVertices.constData());
 
-#ifndef Q_OS_ANDROID
-    ctx->glEnable(GL_PROGRAM_POINT_SIZE);
-#else
     ctx->glEnable(34370);
-#endif
-
-    ctx->glLineWidth(4.0);
     ctx->glDrawArrays(GL_POINTS, 0, selectedVertices.size());
-    ctx->glLineWidth(1.0);
-
-#ifndef Q_OS_ANDROID
-    ctx->glDisable(GL_PROGRAM_POINT_SIZE);
-#else
     ctx->glDisable(34370);
-#endif
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
