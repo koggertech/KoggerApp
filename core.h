@@ -146,6 +146,8 @@ private:
 
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
+    void saveLLARefToSettings();
+    void loadLLARefFromSettings();
 
     /*data*/
     Console* consolePtr_;

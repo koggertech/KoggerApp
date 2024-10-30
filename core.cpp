@@ -23,6 +23,10 @@ Core::Core() :
     isMosaicUpdatingInThread_(false),
     isSideScanPerformanceMode_(false)
 {
+    loadLLARefFromSettings();
+    auto ref = datasetPtr_->getRef();
+    qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
+
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
@@ -31,6 +35,10 @@ Core::Core() :
 
 Core::~Core()
 {
+    saveLLARefToSettings();
+    auto ref = datasetPtr_->getRef();
+    qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
+
     removeLinkManagerConnections();
 #ifdef SEPARATE_READING
     removeDeviceManagerConnections();
@@ -1240,4 +1248,41 @@ void Core::fixFilePathString(QString& filePath) const
 
     filePath.replace("\\", "/");
 #endif
+}
+
+void Core::saveLLARefToSettings()
+{
+    auto ref = datasetPtr_->getRef();
+
+    QSettings settings("KOGGER", "KoggerApp");
+    QString group{"LLARef"};
+
+    settings.beginGroup(group);
+    settings.setValue("refLatSin", ref.refLatSin);
+    settings.setValue("refLatCos", ref.refLatCos);
+    settings.setValue("refLatRad", ref.refLatRad);
+    settings.setValue("refLonRad", ref.refLonRad);
+    settings.setValue("refLlaLatitude", ref.refLla.latitude);
+    settings.setValue("refLlaLongitude", ref.refLla.longitude);
+    settings.setValue("isInit", ref.isInit);
+    settings.endGroup();
+}
+
+void Core::loadLLARefFromSettings()
+{
+    QSettings settings("KOGGER", "KoggerApp");
+    QString group{"LLARef"};
+
+    settings.beginGroup(group);
+    LLARef ref;
+    ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
+    ref.refLatCos = settings.value("refLatCos", NAN).toDouble();
+    ref.refLatRad = settings.value("refLatRad", NAN).toDouble();
+    ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
+    ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
+    ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
+    ref.isInit = settings.value("isInit", false).toBool();
+    settings.endGroup();
+
+    datasetPtr_->setRef(ref);
 }

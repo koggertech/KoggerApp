@@ -889,6 +889,11 @@ public slots:
     LLARef getRef() {
         return _llaRef;
     }
+
+    void setRef(const LLARef& val) {
+         _llaRef = val;
+    }
+
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
