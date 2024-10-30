@@ -1,5 +1,6 @@
 #include "core.h"
 
+#include <QSettings>
 #include <ctime>
 #include "bottomtrack.h"
 #ifdef Q_OS_WINDOWS
