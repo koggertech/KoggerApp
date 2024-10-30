@@ -13,7 +13,7 @@
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
-    m_camera(std::make_shared<Camera>()),
+    m_camera(std::make_shared<Camera>(this)),
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     m_surface(std::make_shared<Surface>()),
@@ -185,11 +185,15 @@ void GraphicsScene3dView::clear()
 
 QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) {
     QVector3D retVal;
-    if (qAbs(rayDirection.z()) < 1e-6)
+
+    if (qAbs(rayDirection.z()) < 1e-6) {
         return retVal;
+    }
     const float t = (planeZ - rayOrigin.z()) / rayDirection.z();
-    if (t < 0)
+
+    if (t < 0) {
         return retVal;
+    }
     retVal = rayOrigin + rayDirection * t;
 
     return retVal;
@@ -365,6 +369,19 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     m_bottomTrack->actionEvent(actionEvent);
 
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
+{
+    QQuickFramebufferObject::geometryChanged(newGeometry, oldGeometry);
+
+    if (newGeometry.size() != oldGeometry.size()) {
+        QMatrix4x4 currProj;
+        currProj.perspective(m_camera->fov(), static_cast<float>(width() / height()), 1.0f, 11000.0f);
+        m_projection = std::move(currProj);
+
+        updateMapView();
+     }
 }
 
 void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
@@ -611,6 +628,58 @@ void GraphicsScene3dView::clearComboSelectionRect()
     m_comboSelectionRect = { 0, 0, 0, 0 };
 }
 
+void GraphicsScene3dView::updateMapView()
+{
+    updateMapBounds();
+}
+
+void GraphicsScene3dView::updateMapBounds()
+{
+    if (!m_camera || !mapView_) {
+        return;
+    }
+
+    QVector<QVector3D> rectF;
+    float cutCoeff = 0.1f;
+
+    float customX = 0.0f + width() * cutCoeff;
+    float customY = 0.0f + height() * cutCoeff;
+    auto toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    auto toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    auto toD = (toE - toOr).normalized();
+    auto too = calculateIntersectionPoint(toOr, toD, 0);
+    rectF.append(too);
+
+
+    customX = 0.0f + width() * cutCoeff;
+    customY = height() - height() * cutCoeff;
+    toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    toD = (toE - toOr).normalized();
+    too = calculateIntersectionPoint(toOr, toD, 0);
+    rectF.append(too);
+
+
+    customX = width() - width() * cutCoeff;
+    customY = height() - height() * cutCoeff;
+    toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    toD = (toE - toOr).normalized();
+    too = calculateIntersectionPoint(toOr, toD, 0);
+    rectF.append(too);
+
+
+    customX = width() - width() * cutCoeff;
+    customY = 0.0f + height() * cutCoeff;
+    toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+    toD = (toE - toOr).normalized();
+    too = calculateIntersectionPoint(toOr, toD, 0);
+    rectF.append(too);
+
+    mapView_->setVec(rectF);
+}
+
 //---------------------Renderer---------------------------//
 GraphicsScene3dView::InFboRenderer::InFboRenderer() :
     QQuickFramebufferObject::Renderer(),
@@ -800,7 +869,8 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
     task = QImage();
 }
 
-GraphicsScene3dView::Camera::Camera()
+GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :
+    viewPtr_(viewPtr)
 {
     setIsometricView();
 }
@@ -1027,6 +1097,10 @@ void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
     view.scale(1.0f,1.0f,-1.0f);
 
     m_view = std::move(view);
+
+    if (viewPtr_) {
+        viewPtr_->updateMapView();
+    }
 }
 
 void GraphicsScene3dView::Camera::checkRotateAngle()

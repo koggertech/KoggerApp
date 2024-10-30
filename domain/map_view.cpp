@@ -24,50 +24,55 @@ void MapView::setView(GraphicsScene3dView *viewPtr)
     SceneObject::m_view = viewPtr;
 }
 
+void MapView::setVec(const QVector<QVector3D> &vec)
+{
+    auto r = RENDER_IMPL(MapView);
+    r->vec_ = vec;
+
+    Q_EMIT changed();
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MapViewRenderImplementation
 MapView::MapViewRenderImplementation::MapViewRenderImplementation()
 { }
 
-void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
+
+void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
+                                                      const QMatrix4x4 &model,
+                                                      const QMatrix4x4 &view,
+                                                      const QMatrix4x4 &projection,
+                                                      const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
     if (!m_isVisible)
         return;
 
-    /*
-    auto shaderProgram = shaderProgramMap.value("image", nullptr);
-    if (!shaderProgram) {
-        qWarning() << "Shader program 'image' not found!";
+    //------------->Drawing selected vertice<<---------------//
+    if (vec_.empty()) {
         return;
     }
 
+    auto shaderProgram = shaderProgramMap["static"].get();
     shaderProgram->bind();
 
-    shaderProgram->setUniformValue("mvp", mvp);
+    auto colorLoc  = shaderProgram->uniformLocation("color");
+    auto matrixLoc = shaderProgram->uniformLocation("matrix");
+    auto posLoc    = shaderProgram->attributeLocation("position");
 
-    int posLoc = shaderProgram->attributeLocation("position");
-    int texCoordLoc = shaderProgram->attributeLocation("texCoord");
+    QVector4D vertexColor(1.0f, 0.0f, 0.0f, 1.0f);
 
+    //qDebug() << vec_;
+
+    shaderProgram->setUniformValue(colorLoc,vertexColor);
+    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->enableAttributeArray(texCoordLoc);
-
-    shaderProgram->setAttributeArray(posLoc, m_data.constData());
-    shaderProgram->setAttributeArray(texCoordLoc, texCoords_.constData());
+    shaderProgram->setAttributeArray(posLoc, vec_.constData());
 
 
-    if (textureId_) {
-        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-        glFuncs->glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureId_);
-        shaderProgram->setUniformValue("imageTexture", 0);
-    }
-
-    ctx->glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, indices_.constData());
+    ctx->glLineWidth(4);
+    ctx->glDrawArrays(GL_LINE_LOOP, 0, vec_.size());
 
     shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->disableAttributeArray(texCoordLoc);
 
     shaderProgram->release();
-    */
-
 }

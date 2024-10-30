@@ -32,7 +32,7 @@ public:
     class Camera
     {
     public:
-        Camera();
+        explicit Camera(GraphicsScene3dView* viewPtr = nullptr);
         Camera(qreal pitch,
                qreal yaw,
                qreal distToFocusPoint,
@@ -87,6 +87,8 @@ public:
         qreal m_sensivity = 4.f;
 
         QVector2D m_rotAngle;
+
+        GraphicsScene3dView* viewPtr_;
     };
 
     //Renderer
@@ -165,6 +167,9 @@ public:
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
+protected:
+    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
+
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
     void fitAllInView();
@@ -186,6 +191,8 @@ private:
     void updateBounds();
     void updatePlaneGrid();
     void clearComboSelectionRect();
+    void updateMapView();
+    void updateMapBounds();
 
 private:
     friend class BottomTrack;
