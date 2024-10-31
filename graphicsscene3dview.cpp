@@ -10,6 +10,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 
+#include "map_utils.h"
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
@@ -635,49 +636,156 @@ void GraphicsScene3dView::updateMapView()
 
 void GraphicsScene3dView::updateMapBounds()
 {
+    /*
     if (!m_camera || !mapView_) {
         return;
     }
 
-    QVector<QVector3D> rectF;
+    QVector<QVector3D> trapezoid;
     float cutCoeff = 0.1f;
 
-    float customX = 0.0f + width() * cutCoeff;
-    float customY = 0.0f + height() * cutCoeff;
-    auto toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    auto toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    auto toD = (toE - toOr).normalized();
-    auto too = calculateIntersectionPoint(toOr, toD, 0);
-    rectF.append(too);
+    QVector<QPair<float, float>> cornerMultipliers = {
+        {cutCoeff, cutCoeff},               // lt
+        {cutCoeff, 1.0f - cutCoeff},        // lb
+        {1.0f - cutCoeff, 1.0f - cutCoeff}, // rb
+        {1.0f - cutCoeff, cutCoeff}         // rt
+    };
 
 
-    customX = 0.0f + width() * cutCoeff;
-    customY = height() - height() * cutCoeff;
-    toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    toD = (toE - toOr).normalized();
-    too = calculateIntersectionPoint(toOr, toD, 0);
-    rectF.append(too);
+    auto calculateTrapezoidVertex = [&](float customX, float customY) -> QVector3D {
+        QVector3D screenPoint(customX, customY, -1.0f);
+        QVector3D toOr = screenPoint.unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+
+        screenPoint.setZ(1.0f);
+        QVector3D toE = screenPoint.unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+
+        QVector3D toD = (toE - toOr).normalized();
+        QVector3D intersectionPoint = calculateIntersectionPoint(toOr, toD, 0);
+
+        return intersectionPoint;
+    };
 
 
-    customX = width() - width() * cutCoeff;
-    customY = height() - height() * cutCoeff;
-    toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    toD = (toE - toOr).normalized();
-    too = calculateIntersectionPoint(toOr, toD, 0);
-    rectF.append(too);
+    for (const auto& multiplier : cornerMultipliers) {
+        float customX = width() * multiplier.first;
+        float customY = height() * multiplier.second;
+
+        QVector3D intersectionPoint = calculateTrapezoidVertex(customX, customY);
 
 
-    customX = width() - width() * cutCoeff;
-    customY = 0.0f + height() * cutCoeff;
-    toOr = QVector3D(customX, customY, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    toE  = QVector3D(customX, customY,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-    toD = (toE - toOr).normalized();
-    too = calculateIntersectionPoint(toOr, toD, 0);
-    rectF.append(too);
+        if (intersectionPoint == QVector3D()) {
+            break;
+        }
 
-    mapView_->setVec(rectF);
+        trapezoid.append(intersectionPoint);
+    }
+
+    float trapezoidArea = 0.0f;
+    for(int i = 0; i < 4; ++i) {
+        int next = (i + 1) % 4;
+        trapezoidArea += trapezoid[i].x() * trapezoid[next].y() - trapezoid[next].x() * trapezoid[i].y();
+    }
+    trapezoidArea = std::abs(trapezoidArea) / 2.0f;
+
+
+    qDebug()<<trapezoidArea;
+    if (trapezoid.size() != 4 || trapezoidArea > 250000.0f) {
+        trapezoid.clear();
+    }
+
+    mapView_->setVec(trapezoid);
+
+    map::TileCalculator tileCalc(5.0f);
+    tileCalc.setTrapezoid(trapezoid);
+    QVector<map::Tile> tiles = tileCalc.calculateTiles();
+
+    mapView_->setTiles(tiles);
+*/
+
+    if (!m_camera || !mapView_) {
+        return;
+    }
+
+    QRectF rectF;
+    float cutCoeff = 0.0f;
+
+    QVector<QPair<float, float>> cornerMultipliers = {
+        {cutCoeff, cutCoeff},               // lt
+        {cutCoeff, 1.0f - cutCoeff},        // lb
+        {1.0f - cutCoeff, 1.0f - cutCoeff}, // rb
+        {1.0f - cutCoeff, cutCoeff}         // rt
+    };
+
+    float minX = std::numeric_limits<float>::max();
+    float minY = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float maxY = std::numeric_limits<float>::lowest();
+
+    bool breaked{false};
+    for (const auto& multiplier : cornerMultipliers) {
+        float customX = width() * multiplier.first;
+        float customY = height() * multiplier.second;
+
+        auto toOrigin = QVector3D(customX, customY, -1.0f).unproject(
+            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto toEnd = QVector3D(customX, customY, 1.0f).unproject(
+            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto toDist = (toEnd - toOrigin).normalized();
+        auto point = calculateIntersectionPoint(toOrigin, toDist, 0);
+
+        if (point == QVector3D()) {
+            breaked = true;
+            break;
+        }
+
+        minX = std::min(minX, point.x());
+        minY = std::min(minY, point.y());
+        maxX = std::max(maxX, point.x());
+        maxY = std::max(maxY, point.y());
+    }
+
+    rectF.setLeft(minX);
+    rectF.setTop(minY);
+    rectF.setRight(maxX);
+    rectF.setBottom(maxY);
+
+    qDebug() << rectF;
+    QVector<QVector3D> rectVertices;
+
+    if (!breaked) {
+        rectVertices.append(QVector3D(rectF.left(),  rectF.top(),    0.0f));
+        rectVertices.append(QVector3D(rectF.left(),  rectF.bottom(), 0.0f));
+        rectVertices.append(QVector3D(rectF.right(), rectF.bottom(), 0.0f));
+        rectVertices.append(QVector3D(rectF.right(), rectF.top(),    0.0f));
+    }
+
+    if (rectVertices.size() == 4) {
+        float trapezoidArea = 0.0f;
+        for(int i = 0; i < 4; ++i) {
+            int next = (i + 1) % 4;
+            trapezoidArea += rectVertices[i].x() * rectVertices[next].y() - rectVertices[next].x() * rectVertices[i].y();
+        }
+        trapezoidArea = std::abs(trapezoidArea) / 2.0f;
+
+        qDebug()<<trapezoidArea;
+        if (trapezoidArea > 250000.0f) {
+            rectVertices.clear();
+        }
+    }
+
+    if (rectVertices.size() != 4) {
+        rectVertices.clear();
+
+    }
+
+    mapView_->setVec(rectVertices);
+
+    map::TileCalculator tileCalc(5.0f);
+    tileCalc.setTrapezoid(rectVertices);
+    QVector<map::Tile> tiles = tileCalc.calculateTiles();
+
+    mapView_->setTiles(tiles);
+
 }
 
 //---------------------Renderer---------------------------//

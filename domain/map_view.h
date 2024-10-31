@@ -5,6 +5,7 @@
 #include <QImage>
 
 #include "sceneobject.h"
+#include "map_utils.h"
 
 
 class GraphicsScene3dView;
@@ -29,6 +30,7 @@ public:
     private:
         friend class MapView;
         QVector<QVector3D> vec_;
+        QVector<map::Tile> tiles_;
     };
 
     /*methods*/
@@ -38,6 +40,7 @@ public:
     void setView(GraphicsScene3dView* viewPtr);
 
     void setVec(const QVector<QVector3D>& vec);
+    void setTiles(const QVector<map::Tile>& tiles);
 private:
 
 };
