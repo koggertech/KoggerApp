@@ -636,13 +636,14 @@ void GraphicsScene3dView::updateMapView()
 
 void GraphicsScene3dView::updateMapBounds()
 {
-    /*
+/*
+    // трапеция
     if (!m_camera || !mapView_) {
         return;
     }
 
-    QVector<QVector3D> trapezoid;
-    float cutCoeff = 0.1f;
+    QRectF rect;
+    float cutCoeff = 0.05f;
 
     QVector<QPair<float, float>> cornerMultipliers = {
         {cutCoeff, cutCoeff},               // lt
@@ -651,63 +652,109 @@ void GraphicsScene3dView::updateMapBounds()
         {1.0f - cutCoeff, cutCoeff}         // rt
     };
 
+    float minX = std::numeric_limits<float>::max();
+    float minY = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float maxY = std::numeric_limits<float>::lowest();
 
-    auto calculateTrapezoidVertex = [&](float customX, float customY) -> QVector3D {
-        QVector3D screenPoint(customX, customY, -1.0f);
-        QVector3D toOr = screenPoint.unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-
-        screenPoint.setZ(1.0f);
-        QVector3D toE = screenPoint.unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-
-        QVector3D toD = (toE - toOr).normalized();
-        QVector3D intersectionPoint = calculateIntersectionPoint(toOr, toD, 0);
-
-        return intersectionPoint;
-    };
-
-
+    bool breaked{false};
+    QVector<QVector3D> rectVertices;
     for (const auto& multiplier : cornerMultipliers) {
         float customX = width() * multiplier.first;
         float customY = height() * multiplier.second;
 
-        QVector3D intersectionPoint = calculateTrapezoidVertex(customX, customY);
+        QVector3D toOrigin = QVector3D(customX, customY, -1.0f).unproject(
+            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        QVector3D toEnd = QVector3D(customX, customY, 1.0f).unproject(
+            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        QVector3D toDist = (toEnd - toOrigin).normalized();
+        QVector3D point = calculateIntersectionPoint(toOrigin, toDist, 0);
 
-
-        if (intersectionPoint == QVector3D()) {
+        if (point == QVector3D()) {
+            breaked = true;
             break;
         }
 
-        trapezoid.append(intersectionPoint);
+        minX = std::min(minX, point.x());
+        minY = std::min(minY, point.y());
+        maxX = std::max(maxX, point.x());
+        maxY = std::max(maxY, point.y());
+
+        rectVertices.append(point);
     }
 
-    float trapezoidArea = 0.0f;
-    for(int i = 0; i < 4; ++i) {
-        int next = (i + 1) % 4;
-        trapezoidArea += trapezoid[i].x() * trapezoid[next].y() - trapezoid[next].x() * trapezoid[i].y();
+    rect.setLeft(minX);
+    rect.setTop(minY);
+    rect.setRight(maxX);
+    rect.setBottom(maxY);
+
+    qDebug() << "NED Rectangle:" << rect;
+
+    if (!breaked && rectVertices.size() == 4) {
+        float trapezoidArea = 0.0f;
+        for(int i = 0; i < 4; ++i) {
+            int next = (i + 1) % 4;
+            trapezoidArea += rectVertices[i].x() * rectVertices[next].y() - rectVertices[next].x() * rectVertices[i].y();
+        }
+        trapezoidArea = std::abs(trapezoidArea) / 2.0f;
+
+        qDebug() << "Trapezoid Area:" << trapezoidArea << "m^2";
+
+        if (trapezoidArea > 250000.0f) {
+            rectVertices.clear();
+        }
     }
-    trapezoidArea = std::abs(trapezoidArea) / 2.0f;
 
-
-    qDebug()<<trapezoidArea;
-    if (trapezoid.size() != 4 || trapezoidArea > 250000.0f) {
-        trapezoid.clear();
+    if (rectVertices.size() != 4) {
+        rectVertices.clear();
     }
 
-    mapView_->setVec(trapezoid);
+    QRectF llaRect;
+    auto ref = m_dataset->getRef();
 
-    map::TileCalculator tileCalc(5.0f);
-    tileCalc.setTrapezoid(trapezoid);
-    QVector<map::Tile> tiles = tileCalc.calculateTiles();
+    if (!rectVertices.isEmpty()) {
+        double minLat = std::numeric_limits<double>::max();
+        double maxLat = std::numeric_limits<double>::lowest();
+        double minLon = std::numeric_limits<double>::max();
+        double maxLon = std::numeric_limits<double>::lowest();
+        double refAlt = ref.refLla.altitude;
 
-    mapView_->setTiles(tiles);
+        for (const auto& itm : rectVertices) {
+            NED temp;
+            temp.n = itm.x();
+            temp.e = itm.y();
+            temp.d = itm.z();
+            LLA lla(&temp, &ref);
+
+            qDebug() << "calc lla:" << lla.latitude << lla.longitude;
+
+            if (lla.isCoordinatesValid()) {
+                minLat = std::min(minLat, lla.latitude);
+                maxLat = std::max(maxLat, lla.latitude);
+                minLon = std::min(minLon, lla.longitude);
+                maxLon = std::max(maxLon, lla.longitude);
+            }
+        }
+
+        llaRect.setLeft(minLon);
+        llaRect.setTop(minLat);
+        llaRect.setRight(maxLon);
+        llaRect.setBottom(maxLat);
+
+        qDebug() << "LLA Rectangle:" << llaRect;
+    }
+    else {
+        qDebug() << "No valid rectVertices to create LLA Rectangle.";
+    }
 */
 
+    // прямоугольник
     if (!m_camera || !mapView_) {
         return;
     }
 
-    QRectF rectF;
-    float cutCoeff = 0.0f;
+    QRectF rect;
+    float cutCoeff = 0.05f;
 
     QVector<QPair<float, float>> cornerMultipliers = {
         {cutCoeff, cutCoeff},               // lt
@@ -744,21 +791,18 @@ void GraphicsScene3dView::updateMapBounds()
         maxY = std::max(maxY, point.y());
     }
 
-    rectF.setLeft(minX);
-    rectF.setTop(minY);
-    rectF.setRight(maxX);
-    rectF.setBottom(maxY);
+    rect.setLeft(minX);
+    rect.setTop(minY);
+    rect.setRight(maxX);
+    rect.setBottom(maxY);
 
-    qDebug() << rectF;
     QVector<QVector3D> rectVertices;
-
     if (!breaked) {
-        rectVertices.append(QVector3D(rectF.left(),  rectF.top(),    0.0f));
-        rectVertices.append(QVector3D(rectF.left(),  rectF.bottom(), 0.0f));
-        rectVertices.append(QVector3D(rectF.right(), rectF.bottom(), 0.0f));
-        rectVertices.append(QVector3D(rectF.right(), rectF.top(),    0.0f));
+        rectVertices.append(QVector3D(rect.left(),  rect.top(),    0.0f));
+        rectVertices.append(QVector3D(rect.left(),  rect.bottom(), 0.0f));
+        rectVertices.append(QVector3D(rect.right(), rect.bottom(), 0.0f));
+        rectVertices.append(QVector3D(rect.right(), rect.top(),    0.0f));
     }
-
     if (rectVertices.size() == 4) {
         float trapezoidArea = 0.0f;
         for(int i = 0; i < 4; ++i) {
@@ -767,25 +811,36 @@ void GraphicsScene3dView::updateMapBounds()
         }
         trapezoidArea = std::abs(trapezoidArea) / 2.0f;
 
-        qDebug()<<trapezoidArea;
         if (trapezoidArea > 250000.0f) {
             rectVertices.clear();
         }
     }
-
     if (rectVertices.size() != 4) {
         rectVertices.clear();
-
     }
 
-    mapView_->setVec(rectVertices);
+    // LLA RECT
+    qDebug() << "///";
+    qDebug() << "rect:";
+    auto ref = m_dataset->getRef();
+    if (!rectVertices.isEmpty()) {
+        for (auto& itm : rectVertices) {
+            NED temp;
+            temp.n = itm.x();
+            temp.e = itm.y();
+            temp.d = itm.z();
+            LLA lla(&temp, &ref);
+            qDebug() << lla.latitude << lla.longitude;
+        }
+    }
+    qDebug() << "///";
 
+    // view
+    mapView_->setVec(rectVertices);
     map::TileCalculator tileCalc(5.0f);
     tileCalc.setTrapezoid(rectVertices);
     QVector<map::Tile> tiles = tileCalc.calculateTiles();
-
     mapView_->setTiles(tiles);
-
 }
 
 //---------------------Renderer---------------------------//

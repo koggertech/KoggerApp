@@ -82,7 +82,9 @@ SOURCES += \
     raycaster.cpp \
     streamlist.cpp \
     textrenderer.cpp \
-    waterfall.cpp
+    waterfall.cpp \
+    tile_manager.cpp \
+    tile_provider.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -168,7 +170,9 @@ HEADERS += \
     streamlist.h \
     textrenderer.h \ # TODO
     waterfall.h \
-    waterfallproxy.h
+    waterfallproxy.h \
+    tile_manager.h \
+    tile_provider.h
 
 android {
 HEADERS += \

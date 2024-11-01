@@ -38,6 +38,8 @@
 #define M_RAD_TO_DEG 57.29577951308232087679f
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
+typedef struct NED NED;
+typedef struct LLARef LLARef;
 
 typedef struct LLA {
     double latitude = NAN, longitude = NAN;
@@ -48,6 +50,7 @@ typedef struct LLA {
         longitude = lon;
         altitude = alt;
     }
+    inline LLA(const NED* ned, const LLARef* ref);
 
     bool isValid() {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
@@ -113,6 +116,27 @@ typedef struct NED {
         return isfinite(n) && isfinite(e);
     }
 } NED;
+
+LLA::LLA(const NED* ned, const LLARef* ref)
+{
+    if (!ned || !ref ||
+        !std::isfinite(ned->n) ||
+        !std::isfinite(ned->e) ||
+        !std::isfinite(ned->d)) {
+        return;
+    }
+
+    double delta_lat = ned->n / CONSTANTS_RADIUS_OF_EARTH;
+    double delta_lon = ned->e / (CONSTANTS_RADIUS_OF_EARTH * ref->refLatCos);
+    double delta_alt = -ned->d;
+
+    double lat_rad = ref->refLatRad + delta_lat;
+    double lon_rad = ref->refLonRad + delta_lon;
+
+    latitude = lat_rad * 180.0 / M_PI;
+    longitude = lon_rad * 180.0 / M_PI;
+    altitude = ref->refLla.altitude + delta_alt;
+}
 
 typedef struct XYZ {
     double x = 0, y = 0, z = 0;

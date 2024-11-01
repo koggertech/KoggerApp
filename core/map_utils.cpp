@@ -9,7 +9,7 @@ namespace map {
 
 
 TileCalculator::TileCalculator(float tileSize)
-    : m_tileSize(tileSize)
+    : tileSize_(tileSize)
 {
 }
 
@@ -18,26 +18,26 @@ void TileCalculator::setTrapezoid(const QVector<QVector3D>& trapezoidVertices)
     if (trapezoidVertices.size() != 4) {
         return;
     }
-    m_trapezoid = trapezoidVertices;
+    trapezoid_ = trapezoidVertices;
 }
 
 QVector<Tile> TileCalculator::calculateTiles() const
 {
     QVector<Tile> tiles;
 
-    if (m_trapezoid.size() != 4) {
+    if (trapezoid_.size() != 4) {
         return tiles;
     }
 
-    QVector<QVector3D> bbox = getBoundingBox();
-    float minX = bbox[0].x();
-    float minY = bbox[0].y();
-    float maxX = bbox[1].x();
-    float maxY = bbox[1].y();
+    QVector<QVector3D> bBox = getBoundingBox();
+    float minX = bBox[0].x();
+    float minY = bBox[0].y();
+    float maxX = bBox[1].x();
+    float maxY = bBox[1].y();
 
-    for (float x = std::floor(minX); x <= (maxX + m_tileSize); x += m_tileSize) {
-        for (float y = std::floor(minY); y <= (maxY + m_tileSize); y += m_tileSize) {
-            QVector3D tileCenter(x + m_tileSize / 2, y + m_tileSize / 2, 0.0f);
+    for (float x = std::floor(minX); x <= (maxX + tileSize_); x += tileSize_) {
+        for (float y = std::floor(minY); y <= (maxY + tileSize_); y += tileSize_) {
+            QVector3D tileCenter(x + tileSize_ / 2, y + tileSize_ / 2, 0.0f);
             if (isPointInsideTrapezoid(tileCenter)) {
                 Tile tile;
                 tile.position = tileCenter;
@@ -52,7 +52,7 @@ QVector<Tile> TileCalculator::calculateTiles() const
 bool TileCalculator::isPointInsideTrapezoid(const QVector3D& point) const
 {
     QPolygonF polygon;
-    for (const auto& vertex : m_trapezoid) {
+    for (const auto& vertex : trapezoid_) {
         polygon << QPointF(vertex.x(), vertex.y());
     }
 
@@ -66,7 +66,7 @@ QVector<QVector3D> TileCalculator::getBoundingBox() const
     float maxX = std::numeric_limits<float>::lowest();
     float maxY = std::numeric_limits<float>::lowest();
 
-    for (const auto& vertex : m_trapezoid) {
+    for (const auto& vertex : trapezoid_) {
         if (vertex.x() < minX) minX = vertex.x();
         if (vertex.y() < minY) minY = vertex.y();
         if (vertex.x() > maxX) maxX = vertex.x();
