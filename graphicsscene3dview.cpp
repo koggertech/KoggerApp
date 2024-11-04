@@ -10,7 +10,8 @@
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
 
-#include "map_utils.h"
+#include "map_defs.h"
+
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
@@ -29,6 +30,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     m_navigationArrow(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
+    tileManager_(std::make_shared<map::TileManager>(this)),
     navigationArrowState_(true),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
@@ -77,6 +79,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_navigationArrow.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+
+
+    // map
+    QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
     updatePlaneGrid();
 }
@@ -796,49 +802,49 @@ void GraphicsScene3dView::updateMapBounds()
     rect.setRight(maxX);
     rect.setBottom(maxY);
 
-    QVector<QVector3D> rectVertices;
+    QVector<QVector3D> nedVertices;
     if (!breaked) {
-        rectVertices.append(QVector3D(rect.left(),  rect.top(),    0.0f));
-        rectVertices.append(QVector3D(rect.left(),  rect.bottom(), 0.0f));
-        rectVertices.append(QVector3D(rect.right(), rect.bottom(), 0.0f));
-        rectVertices.append(QVector3D(rect.right(), rect.top(),    0.0f));
+        nedVertices.append(QVector3D(rect.left(),  rect.top(),    0.0f));
+        nedVertices.append(QVector3D(rect.left(),  rect.bottom(), 0.0f));
+        nedVertices.append(QVector3D(rect.right(), rect.bottom(), 0.0f));
+        nedVertices.append(QVector3D(rect.right(), rect.top(),    0.0f));
     }
-    if (rectVertices.size() == 4) {
+    if (nedVertices.size() == 4) {
         float trapezoidArea = 0.0f;
         for(int i = 0; i < 4; ++i) {
             int next = (i + 1) % 4;
-            trapezoidArea += rectVertices[i].x() * rectVertices[next].y() - rectVertices[next].x() * rectVertices[i].y();
+            trapezoidArea += nedVertices[i].x() * nedVertices[next].y() - nedVertices[next].x() * nedVertices[i].y();
         }
         trapezoidArea = std::abs(trapezoidArea) / 2.0f;
 
         if (trapezoidArea > 250000.0f) {
-            rectVertices.clear();
+            nedVertices.clear();
         }
     }
-    if (rectVertices.size() != 4) {
-        rectVertices.clear();
+    if (nedVertices.size() != 4) {
+        nedVertices.clear();
     }
 
     // LLA RECT
-    qDebug() << "///";
-    qDebug() << "rect:";
     auto ref = m_dataset->getRef();
-    if (!rectVertices.isEmpty()) {
-        for (auto& itm : rectVertices) {
+    QVector<QVector3D> llaVertices;
+    if (!nedVertices.isEmpty()) {
+        llaVertices.reserve(nedVertices.size());
+        for (auto& itm : nedVertices) {
             NED temp;
             temp.n = itm.x();
             temp.e = itm.y();
             temp.d = itm.z();
             LLA lla(&temp, &ref);
-            qDebug() << lla.latitude << lla.longitude;
+            llaVertices.append(QVector3D(lla.latitude, lla.longitude, m_camera->distToFocusPoint()));
         }
+        emit sendRectRequest(llaVertices);
     }
-    qDebug() << "///";
 
     // view
-    mapView_->setVec(rectVertices);
+    mapView_->setVec(nedVertices);
     map::TileCalculator tileCalc(5.0f);
-    tileCalc.setTrapezoid(rectVertices);
+    tileCalc.setTrapezoid(nedVertices);
     QVector<map::Tile> tiles = tileCalc.calculateTiles();
     mapView_->setTiles(tiles);
 }

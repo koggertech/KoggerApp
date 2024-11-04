@@ -1,4 +1,4 @@
-#include "map_utils.h"
+#include "map_defs.h"
 
 #include <QPolygonF>
 #include <QPointF>
@@ -40,7 +40,7 @@ QVector<Tile> TileCalculator::calculateTiles() const
             QVector3D tileCenter(x + tileSize_ / 2, y + tileSize_ / 2, 0.0f);
             if (isPointInsideTrapezoid(tileCenter)) {
                 Tile tile;
-                tile.position = tileCenter;
+                tile.setVertexNed(tileCenter);
                 tiles.append(tile);
             }
         }
@@ -73,11 +73,12 @@ QVector<QVector3D> TileCalculator::getBoundingBox() const
         if (vertex.y() > maxY) maxY = vertex.y();
     }
 
-    QVector<QVector3D> bbox;
-    bbox.append(QVector3D(minX, minY, 0.0f));
-    bbox.append(QVector3D(maxX, maxY, 0.0f));
+    QVector<QVector3D> bBox;
+    bBox.append(QVector3D(minX, minY, 0.0f));
+    bBox.append(QVector3D(maxX, maxY, 0.0f));
 
-    return bbox;
+    return bBox;
 }
 
-}
+
+} // namespace map

@@ -18,6 +18,7 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
+#include "tile_manager.h"
 
 
 class Dataset;
@@ -187,6 +188,9 @@ public Q_SLOTS:
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlEngine(QObject* engine);
 
+signals:
+    void sendRectRequest(QVector<QVector3D> rect);
+
 private:
     void updateBounds();
     void updatePlaneGrid();
@@ -216,6 +220,8 @@ private:
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> m_navigationArrow;
     std::shared_ptr<UsblView> usblView_;
+
+    std::shared_ptr<map::TileManager> tileManager_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

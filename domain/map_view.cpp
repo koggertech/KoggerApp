@@ -89,10 +89,11 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         for (const auto& tile : tiles_) {
 
             float halfSize = 2.5f;
-            tileVertices.append(QVector3D(tile.position.x() - halfSize, tile.position.y() - halfSize, tile.position.z()));
-            tileVertices.append(QVector3D(tile.position.x() + halfSize, tile.position.y() - halfSize, tile.position.z()));
-            tileVertices.append(QVector3D(tile.position.x() + halfSize, tile.position.y() + halfSize, tile.position.z()));
-            tileVertices.append(QVector3D(tile.position.x() - halfSize, tile.position.y() + halfSize, tile.position.z()));
+            auto vertexNed = tile.getVertexNed();
+            tileVertices.append(QVector3D(vertexNed.x() - halfSize, vertexNed.y() - halfSize, vertexNed.z()));
+            tileVertices.append(QVector3D(vertexNed.x() + halfSize, vertexNed.y() - halfSize, vertexNed.z()));
+            tileVertices.append(QVector3D(vertexNed.x() + halfSize, vertexNed.y() + halfSize, vertexNed.z()));
+            tileVertices.append(QVector3D(vertexNed.x() - halfSize, vertexNed.y() + halfSize, vertexNed.z()));
         }
 
         QVector4D tileColor(0.0f, 1.0f, 0.0f, 0.5f);

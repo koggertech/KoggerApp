@@ -84,7 +84,9 @@ SOURCES += \
     textrenderer.cpp \
     waterfall.cpp \
     tile_manager.cpp \
-    tile_provider.cpp
+    tile_provider.cpp \
+    tile_google_provider.cpp \
+    map_defs.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -172,7 +174,9 @@ HEADERS += \
     waterfall.h \
     waterfallproxy.h \
     tile_manager.h \
-    tile_provider.h
+    tile_provider.h \
+    tile_google_provider.h \
+    map_defs.h
 
 android {
 HEADERS += \

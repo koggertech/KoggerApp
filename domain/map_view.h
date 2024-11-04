@@ -5,7 +5,7 @@
 #include <QImage>
 
 #include "sceneobject.h"
-#include "map_utils.h"
+#include "map_defs.h"
 
 
 class GraphicsScene3dView;
