@@ -80,5 +80,90 @@ QVector<QVector3D> TileCalculator::getBoundingBox() const
     return bBox;
 }
 
+void Tile::setVertexNed(const QVector3D &vertexNed)
+{
+    vertexNed_ = vertexNed;
+}
 
+QVector3D Tile::getVertexNed() const
+{
+    return vertexNed_;
+}
+
+void Tile::setIndex(const TileIndex &index)
+{
+    index_ = index;
+}
+
+TileIndex Tile::getIndex() const
+{
+    return index_;
+}
+
+bool Tile::operator==(const Tile &other) const
+{
+    return index_ == other.index_;
+}
+
+bool Tile::operator!=(const Tile &other) const
+{
+    return !(*this == other);
+}
+
+bool Tile::operator<(const Tile &other) const
+{
+    if (index_ != other.index_) {
+        return index_ < other.index_;
+    }
+    return false;
+}
+
+Tile::Tile(TileIndex* index) :
+    state_(State::kNone),
+    inUse_(false),
+    interpolated_(false)
+{
+    if (index) {
+        index_ = *index;
+    }
+};
+
+TileIndex::TileIndex() :
+    x_(-1),
+    y_(-1),
+    z_(-1),
+    providerId_(-1)
+{
+
+}
+
+TileIndex::TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId) :
+    x_(x),
+    y_(y),
+    z_(z),
+    providerId_(providerId)
+{
+
+}
+
+bool TileIndex::operator==(const TileIndex &other) const
+{
+    return x_ == other.x_ &&
+           y_ == other.y_ &&
+           z_ == other.z_ &&
+           providerId_ == other.providerId_;
+}
+
+bool TileIndex::operator!=(const TileIndex &other) const
+{
+    return !(*this == other);
+}
+
+bool TileIndex::operator<(const TileIndex &other) const
+{
+    if (z_ != other.z_) return z_ < other.z_;
+    if (x_ != other.x_) return x_ < other.x_;
+    if (y_ != other.y_) return y_ < other.y_;
+    return providerId_ < other.providerId_;
+}
 } // namespace map

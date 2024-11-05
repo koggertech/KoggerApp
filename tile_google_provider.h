@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tile_provider.h"
+#include "map_defs.h"
 
 
 namespace map {
@@ -20,16 +21,15 @@ class TileGoogleProvider : public TileProvider
 public:
     TileGoogleProvider();
 
-    int32_t heightToTileZ(const float height) override final;
-    int32_t lonToTileX(const double lon, const int z) override final;
-    int32_t latToTileY(const double lat, const int z) override final;
-
-    int generateNum(int x, int y) const;
-    void generateWords(const int x, const int y, QString& sec1, QString& sec2) const;
-    QString createURL(const int x, const int y, const int zoom) const;
+    int32_t heightToTileZ(float height) const override final;
+    int32_t lonToTileX(double lon, int z) const override final;
+    int32_t latToTileY(double lat, int z) const override final;
+    TileInfo indexToTileInfo(TileIndex tileIndx) const override final;
+    QString createURL(const TileIndex& tileIndx) const override final;
 
 private:
-
+    int generateNum(int x, int y) const;
+    void generateWords(const int x, const int y, QString& sec1, QString& sec2) const;
 };
 
 

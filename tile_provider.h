@@ -8,14 +8,17 @@
 
 namespace map {
 
+
 class TileProvider
 {
 public:
     TileProvider(int32_t providerId);
 
-    virtual int32_t heightToTileZ(const float height) = 0;
-    virtual int32_t lonToTileX(const double lon, const int z) = 0;
-    virtual int32_t latToTileY(const double lat, const int z) = 0;
+    virtual int32_t heightToTileZ(float height)          const = 0;
+    virtual int32_t lonToTileX(double lon, int z)        const = 0;
+    virtual int32_t latToTileY(double lat, int z)        const = 0;
+    virtual TileInfo indexToTileInfo(TileIndex tileIndx) const = 0;
+    virtual QString createURL(const TileIndex& tileIndx) const = 0;
 
     TileIndex llaToTileIndex(LLA lla, int32_t z);
 

@@ -4,14 +4,12 @@
 #include <QVector>
 #include <QVector3D>
 #include <QDateTime>
-
-
 #include <memory>
 
-
-#include "map_defs.h"
-#include "tile_google_provider.h"
-
+#include "tile_set.h"
+#include "tile_provider.h"
+#include "tile_downloader.h"
+#include "tile_db.h"
 
 
 namespace map {
@@ -28,11 +26,11 @@ public slots:
     void getRectRequest(QVector<QVector3D> rect);
 
 private:
-    std::unique_ptr<TileGoogleProvider> tileGoogleProvider_;
-    std::unordered_map<TileIndex, Tile> tiles_; // Использование std::unordered_map с TileIndex как ключ
-
+    std::unique_ptr<TileSet> tileSet_;
+    std::shared_ptr<TileProvider> tileProvider_;
+    std::unique_ptr<TileDownloader> tileDownloader_;
+    std::unique_ptr<TileDB> tileDB_;
 };
-
 
 
 } // namespace map

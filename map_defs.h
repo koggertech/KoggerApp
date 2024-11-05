@@ -7,6 +7,7 @@
 #include <QImage>
 #include <QPair>
 #include <QHash>
+#include <QMetaType>
 #include <functional>
 
 #include "plotcash.h"
@@ -15,37 +16,32 @@
 namespace map {
 
 
-struct TileIndex {
-    TileIndex() : x_(-1), y_(-1), z_(-1), providerId_(-1) {};
-    TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId) :
-        x_(x), y_(y), z_(z), providerId_(providerId)
-    { };
-
-    int32_t x_;
-    int32_t y_;
-    int32_t z_;
-    int32_t providerId_;
-
-    bool operator==(const TileIndex& other) const {
-        return x_ == other.x_ &&
-               y_ == other.y_ &&
-               z_ == other.z_ &&
-               providerId_ == other.providerId_;
-    }
-
-    bool operator!=(const TileIndex& other) const {
-        return !(*this == other);
-    }
-
-    bool operator<(const TileIndex& other) const {
-        if (z_ != other.z_) return z_ < other.z_;
-        if (x_ != other.x_) return x_ < other.x_;
-        if (y_ != other.y_) return y_ < other.y_;
-        return providerId_ < other.providerId_;
-    }
-
+struct GeoBounds {
+    double north;
+    double south;
+    double east;
+    double west;
 };
 
+struct TileInfo {
+    GeoBounds bounds;
+    double tileSizeMeters;
+};
+
+struct TileIndex {
+    TileIndex();;
+    TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId);;
+
+    int32_t x_; // indx x
+    int32_t y_; // indx y
+    int32_t z_; // zoom value
+
+    int32_t providerId_;
+
+    bool operator==(const TileIndex& other) const;
+    bool operator!=(const TileIndex &other) const;
+    bool operator<(const TileIndex& other) const;
+};
 
 inline QDebug operator<<(QDebug dbg, const TileIndex& index) {
     dbg.nospace() << "TileIndex(x=" << index.x_
@@ -56,58 +52,22 @@ inline QDebug operator<<(QDebug dbg, const TileIndex& index) {
     return dbg.space();
 }
 
-
-
-
 class Tile {
 public:
     enum class State {
         kNone = 0, kReady, kWaitDB, kWaitServer, kErrorServer
     };
 
-    Tile() :
-        state_(State::kNone),
-        inUse_(false),
-        interpolated_(false)
-    {};
+    Tile(TileIndex* index = nullptr);
 
-   /* bool operator==(const Tile& other) const {
-        return index_ == other.index_;
-    }
+    void      setVertexNed(const QVector3D& vertexNed);
+    void      setIndex(const TileIndex &index);
+    QVector3D getVertexNed() const;
+    TileIndex getIndex() const;
 
-    bool operator!=(const Tile& other) const {
-        return !(*this == other);
-    }
-
-    bool operator<(const Tile& other) const {
-        if (index_ != other.index_)
-            return index_ < other.index_;
-        return false;
-    }*/
-
-
-    void setVertexNed(const QVector3D& vertexNed) {
-        vertexNed_ = vertexNed;
-    }
-
-    QVector3D getVertexNed() const {
-        return vertexNed_;
-    }
-
-
-
-/*
-    void setIndex(const TileIndex& index) {
-        index_ = index;
-    }
-
-    TileIndex getIndex() const {
-        return index_;
-    }
-
-*/
-
-
+    bool operator==(const Tile& other) const;
+    bool operator!=(const Tile &other) const;
+    bool operator<(const Tile &other) const;
 
 private:
     /*data*/
@@ -116,10 +76,11 @@ private:
     bool  interpolated_;
     QImage img_;
     QVector3D vertexNed_;
-   // TileIndex index_;
+    TileIndex index_;
     QDateTime useLastTime_;
     QDateTime requestLastTime_;
 };
+
 
 class TileCalculator
 {
@@ -140,7 +101,7 @@ private:
 
 } // namespace map
 
-
+Q_DECLARE_METATYPE(map::TileIndex)
 
 namespace std {
 template <>
