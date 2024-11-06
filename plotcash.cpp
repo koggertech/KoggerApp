@@ -268,12 +268,13 @@ void Dataset::rawDataRecieved(RawData raw_data) {
         //     offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
         // }
         float offset_db = 0;
-        offset_db = -86;
+        offset_db = -0;
 
         last_epoch->moveComplexToEchogram(offset_m, offset_db);
 
         if(header.channelGroup == 0) {
             last_epoch = addNewEpoch();
+            qDebug("add new epoch");
         }
 
         ComplexSignals compex_signals = last_epoch->complexSignals();

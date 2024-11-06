@@ -920,6 +920,8 @@ public:
 
         float beacon_n = NAN;
         float beacon_e = NAN;
+
+        float code_snr[8] = {};
     } __attribute__((packed));
 
     struct USBLRequestBeacon {

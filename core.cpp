@@ -498,6 +498,11 @@ bool Core::exportUSBLToCSV(QString filePath)
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
             row_data.append(QString(",%1").arg(epoch->usblSolution().watermark));
 
+            for(uint8_t icode = 0; icode < 8; icode++) {
+                row_data.append(QString(",%1").arg(epoch->usblSolution().code_snr[icode]));
+            }
+
+
             row_data.append("\n");
             logger_.dataExport(row_data);
         }
