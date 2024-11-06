@@ -8,6 +8,7 @@
 #include <QPair>
 #include <QHash>
 #include <QMetaType>
+#include <QOpenGLFunctions>
 #include <functional>
 
 #include "plotcash.h"
@@ -60,10 +61,31 @@ public:
 
     Tile(TileIndex* index = nullptr);
 
+    void updateVertices(const LLARef& llaRef);
+    bool isValid() const;
+
+    void      setTileInfo(const TileInfo& info);
+    void      setState(State state);
+    void      setInUse(bool val);
+    void      setInterpolated(bool val);
+    void      setImage(const QImage& image);
+    void      setTextureId(GLuint textureId);
     void      setVertexNed(const QVector3D& vertexNed);
     void      setIndex(const TileIndex &index);
+
+    TileInfo  getTileInfo() const;
+    State     getState() const;
+    bool      getInUse() const;
+    bool      getInterpolated() const;
+    QImage    getImage() const;
+    GLuint    getTextureId() const;
     QVector3D getVertexNed() const;
     TileIndex getIndex() const;
+
+
+    QVector<QVector3D>& getVerticesRef();
+    QVector<QVector2D>& getTexCoordsRef();
+    QVector<int>& getIndicesRef();
 
     bool operator==(const Tile& other) const;
     bool operator!=(const Tile &other) const;
@@ -71,10 +93,19 @@ public:
 
 private:
     /*data*/
+    TileInfo info_;
+
     State state_;
     bool  inUse_;
     bool  interpolated_;
-    QImage img_;
+
+    QImage image_;
+    GLuint textureId_;
+
+    QVector<QVector3D> vertices_;
+    QVector<QVector2D> texCoords_;
+    QVector<int> indices_;
+
     QVector3D vertexNed_;
     TileIndex index_;
     QDateTime useLastTime_;

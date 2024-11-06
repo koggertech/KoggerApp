@@ -22,12 +22,13 @@ public:
     explicit TileManager(QObject *parent = nullptr);
     virtual ~TileManager();
 
+    std::shared_ptr<TileSet> getTileSetPtr() const;
 public slots:
     void getRectRequest(QVector<QVector3D> rect);
 
 private:
-    std::unique_ptr<TileSet> tileSet_;
     std::shared_ptr<TileProvider> tileProvider_;
+    std::shared_ptr<TileSet> tileSet_;
     std::unique_ptr<TileDownloader> tileDownloader_;
     std::unique_ptr<TileDB> tileDB_;
 };

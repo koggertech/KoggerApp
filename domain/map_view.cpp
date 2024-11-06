@@ -24,6 +24,12 @@ void MapView::setView(GraphicsScene3dView *viewPtr)
     SceneObject::m_view = viewPtr;
 }
 
+void MapView::setTileSetPtr(std::shared_ptr<map::TileSet> ptr)
+{
+    auto r = RENDER_IMPL(MapView);
+    r->tileSetPtr_ = ptr;
+}
+
 void MapView::setVec(const QVector<QVector3D> &vec)
 {
     auto r = RENDER_IMPL(MapView);
@@ -81,7 +87,9 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glDrawArrays(GL_LINE_LOOP, 0, vec_.size());
 
     shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
 
+/*
     // ------------->Отрисовка тайлов внутри трапеции<<--------------- //
     if (!tiles_.empty()) {
 
@@ -109,8 +117,9 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         shaderProgram->disableAttributeArray(posLoc);
     }
+*/
 
-    /*
+/*
     // ------------->Отрисовка заполнения с тонкими штриховыми линиями<<---------------//
 
     if (vec_.size() >= 4) {
@@ -142,5 +151,55 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
     }
 */
 
-    shaderProgram->release();
+    if (tileSetPtr_) {
+        auto& tilesRef = tileSetPtr_->getTilesRef();
+
+        auto shaderProgram = shaderProgramMap.value("image", nullptr);
+        if (!shaderProgram) {
+            qWarning() << "Shader program 'image' not found!";
+            return;
+        }
+
+        shaderProgram->bind();
+        shaderProgram->setUniformValue("mvp", projection * view * model);
+
+        int posLoc = shaderProgram->attributeLocation("position");
+        int texCoordLoc = shaderProgram->attributeLocation("texCoord");
+
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->enableAttributeArray(texCoordLoc);
+
+        for (auto& itm : tilesRef) {
+            if (itm.second.getInUse() && itm.second.getState() == map::Tile::State::kReady) {
+
+                auto textureId = itm.second.getTextureId();
+
+                if (!textureId) {
+                    continue;
+                }
+
+                //qDebug() << "draw" << textureId;
+
+                auto& indices = itm.second.getIndicesRef();
+                auto& vertices = itm.second.getVerticesRef();
+                auto& texCoords = itm.second.getTexCoordsRef();
+
+                shaderProgram->setAttributeArray(posLoc, vertices.constData());
+                shaderProgram->setAttributeArray(texCoordLoc, texCoords.constData());
+
+                QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+                glFuncs->glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, textureId);
+                shaderProgram->setUniformValue("imageTexture", 0);
+
+                ctx->glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, indices.constData());
+            }
+        }
+
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->disableAttributeArray(texCoordLoc);
+
+        shaderProgram->release();
+    }
+
 }

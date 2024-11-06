@@ -1,30 +1,41 @@
 #pragma once
 
+#include <QObject>
 #include <QVector>
 #include <QReadWriteLock>
 
 #include "map_defs.h"
 #include "plotcash.h"
-#include "tile_downloader.h"
+#include "tile_provider.h"
 
 
 namespace map {
 
-class TileSet
+class TileSet : public QObject
 {
-public:
-    TileSet();
-    std::unordered_map<TileIndex, Tile> getTiles();
+    Q_OBJECT
 
+public:
+    explicit TileSet(std::weak_ptr<TileProvider> provider);
+
+    std::unordered_map<TileIndex, Tile> getTiles();
+    void setDatesetPtr(Dataset* datasetPtr);
+    bool isTileContains(const TileIndex& tileIndex) const;
+    std::unordered_map<TileIndex, Tile>& getTilesRef();
+    void addTile(const TileIndex& tileIndx);
 
 public slots:
-    void addTile(TileIndex tileIndx);
+    void onTileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
 
 protected:
 
 private:
     std::unordered_map<TileIndex, Tile> tiles_;
     QReadWriteLock rwLocker_;
+
+    Dataset* datasetPtr_;
+    std::weak_ptr<TileProvider> tileProvider_;
 };
 
 

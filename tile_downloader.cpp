@@ -7,12 +7,12 @@
 
 namespace map {
 
-TileDownloader::TileDownloader(std::shared_ptr<TileProvider> provider, int maxConcurrentDownloads, QObject *parent)
-    : QObject(parent),
-      networkManager_(new QNetworkAccessManager(this)),
-      activeDownloads_(0),
-      maxConcurrentDownloads_(maxConcurrentDownloads),
-      tileProvider_(provider)
+TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConcurrentDownloads) :
+    QObject(nullptr),
+    networkManager_(new QNetworkAccessManager(this)),
+    activeDownloads_(0),
+    maxConcurrentDownloads_(maxConcurrentDownloads),
+    tileProvider_(std::move(provider))
 {
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded);
 }
@@ -25,7 +25,7 @@ TileDownloader::~TileDownloader()
 void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
 {
     if (tileIndices.isEmpty()) {
-        qDebug() << "No TileIndices to download.";
+        //qDebug() << "No TileIndices to download.";
         emit allDownloadsFinished();
         return;
     }
@@ -58,7 +58,7 @@ void TileDownloader::startNextDownload()
 
     auto index = downloadQueue_.dequeue();
 
-    QUrl url = tileProvider_->createURL(index);
+    QUrl url = tileProvider_.lock()->createURL(index);
 
     if (!url.isValid()) {
         qWarning() << "Constructed invalid URL for TileIndex:" << index.x_ << index.y_ << index.z_;
@@ -72,7 +72,9 @@ void TileDownloader::startNextDownload()
     reply->setProperty("tileIndex", QVariant::fromValue(index));
 
     activeDownloads_++;
-    qDebug() << "Started downloading tile from:" << url.toString();
+    //qDebug() << "Started downloading tile from:" << url.toString();
+    qDebug() << "Started downloading tile from:" << index.x_ << index.y_ << index.z_;
+
 }
 
 void TileDownloader::onTileDownloaded(QNetworkReply *reply)
@@ -86,14 +88,14 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 
     if (reply->error() != QNetworkReply::NoError) {
         emit downloadFailed(index, reply->errorString());
-        qWarning() << "Failed to download tile from:" << tileProvider_->createURL(index) << "Error:" << reply->errorString();
+        qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(index) << "Error:" << reply->errorString();
     }
     else {
         QByteArray imageData = reply->readAll();
         QImage image;
 
         if (image.loadFromData(imageData)) {
-            TileInfo info = tileProvider_->indexToTileInfo(index);
+            TileInfo info = tileProvider_.lock()->indexToTileInfo(index);
             emit tileDownloaded(index, image, info);
         }
         else {

@@ -20,14 +20,14 @@ class TileDownloader : public QObject
 {
     Q_OBJECT
 public:
-    explicit TileDownloader(std::shared_ptr<TileProvider> provider, int maxConcurrentDownloads = 5, QObject *parent = nullptr);
+    explicit TileDownloader(std::weak_ptr<TileProvider> provider, int maxConcurrentDownloads = 5);
     ~TileDownloader();
 
     void downloadTiles(const QList<TileIndex>& tiles);
 
 signals:
-    void tileDownloaded(const TileIndex& url, const QImage& image, const TileInfo& info);
-    void downloadFailed(const TileIndex& url, const QString& errorString);
+    void tileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void downloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void allDownloadsFinished();
 
 private slots:
@@ -41,7 +41,7 @@ private:
     QQueue<TileIndex> downloadQueue_;
     int activeDownloads_;
     int maxConcurrentDownloads_;
-    std::shared_ptr<TileProvider> tileProvider_;
+    std::weak_ptr<TileProvider> tileProvider_;
 };
 
 

@@ -6,6 +6,7 @@
 
 #include "sceneobject.h"
 #include "map_defs.h"
+#include "tile_set.h"
 
 
 class GraphicsScene3dView;
@@ -31,6 +32,7 @@ public:
         friend class MapView;
         QVector<QVector3D> vec_;
         QVector<map::Tile> tiles_;
+        std::shared_ptr<map::TileSet> tileSetPtr_;
     };
 
     /*methods*/
@@ -39,6 +41,7 @@ public:
     void clear();
     void setView(GraphicsScene3dView* viewPtr);
 
+    void setTileSetPtr(std::shared_ptr<map::TileSet> ptr);
     void setVec(const QVector<QVector3D>& vec);
     void setTiles(const QVector<map::Tile>& tiles);
 private:

@@ -84,6 +84,9 @@ GraphicsScene3dView::GraphicsScene3dView() :
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
+
+    mapView_->setTileSetPtr(tileManager_->getTileSetPtr());
+
     updatePlaneGrid();
 }
 
@@ -525,6 +528,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_boatTrack->setDatasetPtr(m_dataset);
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
+    tileManager_->getTileSetPtr()->setDatesetPtr(m_dataset);
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](int lEpoch, int rEpoch) -> void {
@@ -817,7 +821,7 @@ void GraphicsScene3dView::updateMapBounds()
         }
         trapezoidArea = std::abs(trapezoidArea) / 2.0f;
 
-        if (trapezoidArea > 250000.0f) {
+        if (trapezoidArea > 1000000.0f) {
             nedVertices.clear();
         }
     }
@@ -874,6 +878,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     }
 
     // process textures
+    processMapTextures(view);
     processColorTableTexture(view);
     processTileTexture(view);
     processImageTexture(view);
@@ -910,6 +915,45 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(4);
     return new QOpenGLFramebufferObject(size, format);
+}
+
+void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView *viewPtr) const
+{
+    auto tileSetPtr = viewPtr->tileManager_->getTileSetPtr();
+    auto& tilesRef = tileSetPtr->getTilesRef();
+
+    if (tilesRef.empty()) {
+        return;
+    }
+
+    for (auto& itm : tilesRef) {
+        if (!itm.second.getInUse() && itm.second.getState() == map::Tile::State::kReady) {
+
+            GLuint textureId;
+
+            glGenTextures(1, &textureId);
+            glBindTexture(GL_TEXTURE_2D, textureId);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            QImage glImage = itm.second.getImage().convertToFormat(QImage::Format_RGBA8888);
+
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+
+            itm.second.setTextureId(textureId);
+
+            QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+            glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+
+            itm.second.setInUse(true);
+
+            qDebug() << "OpenGL initialized texture " << textureId;
+        }
+    }
 }
 
 void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const

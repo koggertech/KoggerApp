@@ -21,6 +21,7 @@ public:
     virtual QString createURL(const TileIndex& tileIndx) const = 0;
 
     TileIndex llaToTileIndex(LLA lla, int32_t z);
+    int32_t getProviderId() const;
 
 protected:
     int32_t providerId_;

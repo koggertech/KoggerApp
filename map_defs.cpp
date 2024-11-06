@@ -95,9 +95,54 @@ void Tile::setIndex(const TileIndex &index)
     index_ = index;
 }
 
+TileInfo Tile::getTileInfo() const
+{
+    return info_;
+}
+
+Tile::State Tile::getState() const
+{
+    return state_;
+}
+
+bool Tile::getInUse() const
+{
+    return inUse_;
+}
+
+bool Tile::getInterpolated() const
+{
+    return interpolated_;
+}
+
+QImage Tile::getImage() const
+{
+    return image_;
+}
+
+GLuint Tile::getTextureId() const
+{
+    return textureId_;
+}
+
 TileIndex Tile::getIndex() const
 {
     return index_;
+}
+
+QVector<QVector3D> &Tile::getVerticesRef()
+{
+    return vertices_;
+}
+
+QVector<QVector2D> &Tile::getTexCoordsRef()
+{
+    return texCoords_;
+}
+
+QVector<int> &Tile::getIndicesRef()
+{
+    return indices_;
 }
 
 bool Tile::operator==(const Tile &other) const
@@ -121,12 +166,103 @@ bool Tile::operator<(const Tile &other) const
 Tile::Tile(TileIndex* index) :
     state_(State::kNone),
     inUse_(false),
-    interpolated_(false)
+    interpolated_(false),
+    textureId_(0)
 {
     if (index) {
         index_ = *index;
     }
-};
+}
+
+void Tile::updateVertices(const LLARef& llaRef)
+{
+    auto ref = llaRef;
+
+    if (ref.isInit) {
+        vertices_.clear();
+        texCoords_.clear();
+        indices_.clear();
+
+        // p 1
+        LLA lla1(info_.bounds.south, info_.bounds.west, 0.0f);
+        NED ned1(&lla1, &ref);
+        // p 2
+        LLA lla2(info_.bounds.north, info_.bounds.west, 0.0f);
+        NED ned2(&lla2, &ref);
+        // p 3
+        LLA lla3(info_.bounds.north, info_.bounds.east, 0.0f);
+        NED ned3(&lla3, &ref);
+        // p 4
+        LLA lla4(info_.bounds.south, info_.bounds.east, 0.0f);
+        NED ned4(&lla4, &ref);
+
+/*
+        //it->second.setVertexNed(QVector3D(ned.n,ned.e,0.0f));
+        qDebug () << "ned1:" << ned1.n << ned1.e;
+        qDebug () << "ned2:" << ned2.n << ned2.e;
+        qDebug () << "ned3:" << ned3.n << ned3.e;
+        qDebug () << "ned4:" << ned4.n << ned4.e;
+        qDebug () << "tileInfo.tileSizeMeters:" << info_.tileSizeMeters;
+*/
+        // texture vertices
+        vertices_ = {
+            QVector3D(ned1.n, ned1.e, 0.0f),
+            QVector3D(ned2.n, ned2.e, 0.0f),
+            QVector3D(ned3.n, ned3.e, 0.0f),
+            QVector3D(ned4.n, ned4.e, 0.0f)
+        };
+
+        texCoords_ = {
+            {0.0f, 0.0f},
+            {1.0f, 0.0f},
+            {1.0f, 1.0f},
+            {0.0f, 1.0f}
+        };
+
+        indices_ = {
+            0, 1, 2,
+            0, 2, 3
+        };
+    }
+}
+
+bool Tile::isValid() const
+{
+    if (index_ != TileIndex()) {
+        return true;
+    }
+    return false;
+}
+
+void Tile::setTileInfo(const TileInfo &info)
+{
+    info_ = info;
+}
+
+void Tile::setState(State state)
+{
+    state_ = state;
+}
+
+void Tile::setInUse(bool val)
+{
+    inUse_ = val;
+}
+
+void Tile::setInterpolated(bool val)
+{
+    interpolated_ = val;
+}
+
+void Tile::setImage(const QImage &image)
+{
+    image_ = image;
+}
+
+void Tile::setTextureId(GLuint textureId)
+{
+    textureId_ = textureId;
+}
 
 TileIndex::TileIndex() :
     x_(-1),

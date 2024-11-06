@@ -3,7 +3,9 @@
 
 namespace map {
 
-TileSet::TileSet()
+TileSet::TileSet(std::weak_ptr<TileProvider> provider) :
+    QObject(nullptr),
+    tileProvider_(std::move(provider))
 {
 
 }
@@ -15,12 +17,54 @@ std::unordered_map<TileIndex, Tile> TileSet::getTiles()
     auto retVal = std::move(tiles_);
 
     return retVal;
-
-
-    return std::move(tiles_);
 }
 
-void TileSet::addTile(TileIndex tileIndx)
+void TileSet::setDatesetPtr(Dataset *datasetPtr)
+{
+    datasetPtr_ = datasetPtr;
+}
+
+bool TileSet::isTileContains(const TileIndex &tileIndex) const
+{
+    if (auto it = tiles_.find(tileIndex); it != tiles_.end()) {
+        return true;
+    }
+    return false;
+}
+
+std::unordered_map<TileIndex, Tile> &TileSet::getTilesRef()
+{
+    return tiles_;
+}
+
+void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, const TileInfo &info)
+{
+    if (auto it = tiles_.find(tileIndx); it != tiles_.end()) {
+
+        // image
+
+        QImage temp = image;
+        QTransform trans;
+        trans.rotate(90);
+        temp = temp.transformed(trans);
+
+        it->second.setImage(temp);
+        it->second.setTileInfo(info);
+
+        if (datasetPtr_) {
+            it->second.updateVertices(datasetPtr_->getRef());
+        }
+
+        it->second.setState(Tile::State::kReady);
+    }
+}
+
+void TileSet::onTileDownloadFailed(const TileIndex &tileIndx, const QString &errorString)
+{
+    qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(tileIndx) << "Error:" << errorString;
+}
+
+void TileSet::addTile(const TileIndex& tileIndx)
 {
     auto it = tiles_.find(tileIndx);
     if (it == tiles_.end()) {
