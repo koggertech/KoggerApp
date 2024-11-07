@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QVector>
 #include <QReadWriteLock>
+#include <unordered_map>
 
 #include "map_defs.h"
 #include "plotcash.h"

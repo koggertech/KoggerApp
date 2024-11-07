@@ -764,7 +764,7 @@ void GraphicsScene3dView::updateMapBounds()
     }
 
     QRectF rect;
-    float cutCoeff = 0.05f;
+    float cutCoeff = 0.0f;
 
     QVector<QPair<float, float>> cornerMultipliers = {
         {cutCoeff, cutCoeff},               // lt
@@ -840,7 +840,7 @@ void GraphicsScene3dView::updateMapBounds()
             temp.e = itm.y();
             temp.d = itm.z();
             LLA lla(&temp, &ref);
-            llaVertices.append(QVector3D(lla.latitude, lla.longitude, m_camera->distToFocusPoint()));
+            llaVertices.append(QVector3D(lla.latitude, lla.longitude, m_camera->getHeightAboveGround()));
         }
         emit sendRectRequest(llaVertices);
     }
@@ -1287,6 +1287,8 @@ void GraphicsScene3dView::Camera::reset()
     m_fov = 45.f;
     m_distToFocusPoint = 50.f;
 
+    distToGround_ = 0.0f;
+
     updateViewMatrix();
 }
 
@@ -1311,6 +1313,8 @@ void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
 
     m_view = std::move(view);
 
+    distToGround_ = std::max(0.0f, std::fabs(cf.z()));
+
     if (viewPtr_) {
         viewPtr_->updateMapView();
     }
@@ -1324,6 +1328,10 @@ void GraphicsScene3dView::Camera::checkRotateAngle()
         m_rotAngle[1] = 0;
 }
 
+float GraphicsScene3dView::Camera::getHeightAboveGround() const
+{    
+    return distToGround_;
+}
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const
 {
