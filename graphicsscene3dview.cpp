@@ -83,6 +83,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::dataUpdated, mapView_.get(), &MapView::onTileSetUpdated, Qt::DirectConnection);
 
 
     mapView_->setTileSetPtr(tileManager_->getTileSetPtr());
@@ -646,152 +647,35 @@ void GraphicsScene3dView::updateMapView()
 
 void GraphicsScene3dView::updateMapBounds()
 {
-/*
-    // трапеция
     if (!m_camera || !mapView_) {
         return;
     }
 
-    QRectF rect;
-    float cutCoeff = 0.05f;
-
+    float reductorFactor = 0.03f;
     QVector<QPair<float, float>> cornerMultipliers = {
-        {cutCoeff, cutCoeff},               // lt
-        {cutCoeff, 1.0f - cutCoeff},        // lb
-        {1.0f - cutCoeff, 1.0f - cutCoeff}, // rb
-        {1.0f - cutCoeff, cutCoeff}         // rt
+        {reductorFactor , reductorFactor },               // lt
+        {reductorFactor , 1.0f - reductorFactor },        // lb
+        {1.0f - reductorFactor , 1.0f - reductorFactor }, // rb
+        {1.0f - reductorFactor , reductorFactor }         // rt
     };
 
     float minX = std::numeric_limits<float>::max();
     float minY = std::numeric_limits<float>::max();
     float maxX = std::numeric_limits<float>::lowest();
     float maxY = std::numeric_limits<float>::lowest();
+    bool solidRect{ true };
 
-    bool breaked{false};
-    QVector<QVector3D> rectVertices;
     for (const auto& multiplier : cornerMultipliers) {
-        float customX = width() * multiplier.first;
-        float customY = height() * multiplier.second;
+        float currWidth  = width() * multiplier.first;
+        float currHeight = height() * multiplier.second;
 
-        QVector3D toOrigin = QVector3D(customX, customY, -1.0f).unproject(
-            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        QVector3D toEnd = QVector3D(customX, customY, 1.0f).unproject(
-            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        QVector3D toDist = (toEnd - toOrigin).normalized();
-        QVector3D point = calculateIntersectionPoint(toOrigin, toDist, 0);
+        auto toOrigin = QVector3D(currWidth, currHeight, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto toEnd    = QVector3D(currWidth, currHeight,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        auto toDist   = (toEnd - toOrigin).normalized();
+        auto point    = calculateIntersectionPoint(toOrigin, toDist, 0);
 
         if (point == QVector3D()) {
-            breaked = true;
-            break;
-        }
-
-        minX = std::min(minX, point.x());
-        minY = std::min(minY, point.y());
-        maxX = std::max(maxX, point.x());
-        maxY = std::max(maxY, point.y());
-
-        rectVertices.append(point);
-    }
-
-    rect.setLeft(minX);
-    rect.setTop(minY);
-    rect.setRight(maxX);
-    rect.setBottom(maxY);
-
-    qDebug() << "NED Rectangle:" << rect;
-
-    if (!breaked && rectVertices.size() == 4) {
-        float trapezoidArea = 0.0f;
-        for(int i = 0; i < 4; ++i) {
-            int next = (i + 1) % 4;
-            trapezoidArea += rectVertices[i].x() * rectVertices[next].y() - rectVertices[next].x() * rectVertices[i].y();
-        }
-        trapezoidArea = std::abs(trapezoidArea) / 2.0f;
-
-        qDebug() << "Trapezoid Area:" << trapezoidArea << "m^2";
-
-        if (trapezoidArea > 250000.0f) {
-            rectVertices.clear();
-        }
-    }
-
-    if (rectVertices.size() != 4) {
-        rectVertices.clear();
-    }
-
-    QRectF llaRect;
-    auto ref = m_dataset->getRef();
-
-    if (!rectVertices.isEmpty()) {
-        double minLat = std::numeric_limits<double>::max();
-        double maxLat = std::numeric_limits<double>::lowest();
-        double minLon = std::numeric_limits<double>::max();
-        double maxLon = std::numeric_limits<double>::lowest();
-        double refAlt = ref.refLla.altitude;
-
-        for (const auto& itm : rectVertices) {
-            NED temp;
-            temp.n = itm.x();
-            temp.e = itm.y();
-            temp.d = itm.z();
-            LLA lla(&temp, &ref);
-
-            qDebug() << "calc lla:" << lla.latitude << lla.longitude;
-
-            if (lla.isCoordinatesValid()) {
-                minLat = std::min(minLat, lla.latitude);
-                maxLat = std::max(maxLat, lla.latitude);
-                minLon = std::min(minLon, lla.longitude);
-                maxLon = std::max(maxLon, lla.longitude);
-            }
-        }
-
-        llaRect.setLeft(minLon);
-        llaRect.setTop(minLat);
-        llaRect.setRight(maxLon);
-        llaRect.setBottom(maxLat);
-
-        qDebug() << "LLA Rectangle:" << llaRect;
-    }
-    else {
-        qDebug() << "No valid rectVertices to create LLA Rectangle.";
-    }
-*/
-
-    // прямоугольник
-    if (!m_camera || !mapView_) {
-        return;
-    }
-
-    QRectF rect;
-    float cutCoeff = 0.0f;
-
-    QVector<QPair<float, float>> cornerMultipliers = {
-        {cutCoeff, cutCoeff},               // lt
-        {cutCoeff, 1.0f - cutCoeff},        // lb
-        {1.0f - cutCoeff, 1.0f - cutCoeff}, // rb
-        {1.0f - cutCoeff, cutCoeff}         // rt
-    };
-
-    float minX = std::numeric_limits<float>::max();
-    float minY = std::numeric_limits<float>::max();
-    float maxX = std::numeric_limits<float>::lowest();
-    float maxY = std::numeric_limits<float>::lowest();
-
-    bool breaked{false};
-    for (const auto& multiplier : cornerMultipliers) {
-        float customX = width() * multiplier.first;
-        float customY = height() * multiplier.second;
-
-        auto toOrigin = QVector3D(customX, customY, -1.0f).unproject(
-            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto toEnd = QVector3D(customX, customY, 1.0f).unproject(
-            m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto toDist = (toEnd - toOrigin).normalized();
-        auto point = calculateIntersectionPoint(toOrigin, toDist, 0);
-
-        if (point == QVector3D()) {
-            breaked = true;
+            solidRect = false;
             break;
         }
 
@@ -801,56 +685,41 @@ void GraphicsScene3dView::updateMapBounds()
         maxY = std::max(maxY, point.y());
     }
 
-    rect.setLeft(minX);
-    rect.setTop(minY);
-    rect.setRight(maxX);
-    rect.setBottom(maxY);
+    if (solidRect) {
+        float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
 
-    QVector<QVector3D> nedVertices;
-    if (!breaked) {
-        nedVertices.append(QVector3D(rect.left(),  rect.top(),    0.0f));
-        nedVertices.append(QVector3D(rect.left(),  rect.bottom(), 0.0f));
-        nedVertices.append(QVector3D(rect.right(), rect.bottom(), 0.0f));
-        nedVertices.append(QVector3D(rect.right(), rect.top(),    0.0f));
-    }
-    if (nedVertices.size() == 4) {
-        float trapezoidArea = 0.0f;
-        for(int i = 0; i < 4; ++i) {
-            int next = (i + 1) % 4;
-            trapezoidArea += nedVertices[i].x() * nedVertices[next].y() - nedVertices[next].x() * nedVertices[i].y();
+        if (rectArea < std::pow(8000.0f, 2.0f)) {
+            QVector<QVector3D> nedVertices;
+            QVector<QVector3D> llaVertices;
+
+            auto ref = m_dataset->getRef();
+            float cameraHeight = m_camera->getHeightAboveGround();
+
+            NED ltNed(minX, minY, 0.0);
+            NED lbNed(minX, maxY, 0.0);
+            NED rbNed(maxX, maxY, 0.0);
+            NED rtNed(maxX, minY, 0.0);
+            LLA ltLla(&ltNed, &ref);
+            LLA lbLla(&lbNed, &ref);
+            LLA rbLla(&rbNed, &ref);
+            LLA rtLla(&rtNed, &ref);
+
+            nedVertices.append(QVector3D(ltNed.n, ltNed.e, 0.0f));
+            nedVertices.append(QVector3D(lbNed.n, lbNed.e, 0.0f));
+            nedVertices.append(QVector3D(rbNed.n, rbNed.e, 0.0f));
+            nedVertices.append(QVector3D(rtNed.n, rtNed.e, 0.0f));
+
+            llaVertices.append(QVector3D(ltLla.latitude, ltLla.longitude, cameraHeight));
+            llaVertices.append(QVector3D(lbLla.latitude, lbLla.longitude, cameraHeight));
+            llaVertices.append(QVector3D(rbLla.latitude, rbLla.longitude, cameraHeight));
+            llaVertices.append(QVector3D(rtLla.latitude, rtLla.longitude, cameraHeight));
+
+            emit sendRectRequest(llaVertices);
+
+            // view
+            mapView_->setRectVertices(nedVertices);
         }
-        trapezoidArea = std::abs(trapezoidArea) / 2.0f;
-
-        if (trapezoidArea > 1000000.0f) {
-            nedVertices.clear();
-        }
     }
-    if (nedVertices.size() != 4) {
-        nedVertices.clear();
-    }
-
-    // LLA RECT
-    auto ref = m_dataset->getRef();
-    QVector<QVector3D> llaVertices;
-    if (!nedVertices.isEmpty()) {
-        llaVertices.reserve(nedVertices.size());
-        for (auto& itm : nedVertices) {
-            NED temp;
-            temp.n = itm.x();
-            temp.e = itm.y();
-            temp.d = itm.z();
-            LLA lla(&temp, &ref);
-            llaVertices.append(QVector3D(lla.latitude, lla.longitude, m_camera->getHeightAboveGround()));
-        }
-        emit sendRectRequest(llaVertices);
-    }
-
-    // view
-    mapView_->setVec(nedVertices);
-    map::TileCalculator tileCalc(5.0f);
-    tileCalc.setTrapezoid(nedVertices);
-    QVector<map::Tile> tiles = tileCalc.calculateTiles();
-    mapView_->setTiles(tiles);
 }
 
 //---------------------Renderer---------------------------//
@@ -927,7 +796,17 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
     }
 
     for (auto& itm : tilesRef) {
-        if (!itm.second.getInUse() && itm.second.getState() == map::Tile::State::kReady) {
+        if (itm.second.getNeedToDeinit()) { // !itm.second.getTextureId() && itm.second.getState() == map::Tile::State::kReady) {
+                GLuint textureId = itm.second.getTextureId();
+                glDeleteTextures(1, &textureId);
+                itm.second.setTextureId(0);
+                itm.second.setNeedToDeinit(false);
+        }
+
+        if (itm.second.getNeedToInit()) {
+            if (itm.second.getImageIsNull()) {
+                continue;
+            };
 
             GLuint textureId;
 
@@ -949,9 +828,8 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
             QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
             glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
-            itm.second.setInUse(true);
-
-            qDebug() << "OpenGL initialized texture " << textureId;
+            //qDebug() << "OpenGL initialized texture " << textureId;
+            itm.second.setNeedToInit(false);
         }
     }
 }

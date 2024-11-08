@@ -19,7 +19,7 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
 
 TileDownloader::~TileDownloader()
 {
-
+    stopAndClearRequests();
 }
 
 void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
@@ -38,16 +38,49 @@ void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
         }
     }
 
-    qDebug() << downloadQueue_.size() << "tiles for downloading.";
+    //qDebug() << downloadQueue_.size() << "tiles for downloading.";
 
     while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
         startNextDownload();
     }
 
     if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        qDebug() << "All downloads are already finished.";
+        //qDebug() << "All downloads are already finished.";
         emit allDownloadsFinished();
     }
+}
+
+void TileDownloader::stopAndClearRequests()
+{
+    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
+
+    for (QNetworkReply* reply : repliesToStop) {
+        TileIndex index = reply->property("tileIndex").value<TileIndex>();
+        emit downloadStopped(index);
+        reply->abort();
+        reply->deleteLater();
+    }
+
+    //qDebug() << "CLEAR: " << activeReplies_.size() << " replies before clear!";
+    activeReplies_.clear();
+
+    while (!downloadQueue_.isEmpty()) {
+        TileIndex index = downloadQueue_.dequeue();
+        emit downloadStopped(index);
+    }
+
+    activeDownloads_ = 0;
+    emit allDownloadsFinished();
+}
+
+uint64_t TileDownloader::getActiveRepliesSize() const
+{
+    return activeReplies_.values().size();
+}
+
+uint64_t TileDownloader::getDownloadQueueSize() const
+{
+    return downloadQueue_.size();
 }
 
 void TileDownloader::startNextDownload()
@@ -57,7 +90,6 @@ void TileDownloader::startNextDownload()
     }
 
     auto index = downloadQueue_.dequeue();
-
     QUrl url = tileProvider_.lock()->createURL(index);
 
     if (!url.isValid()) {
@@ -68,12 +100,12 @@ void TileDownloader::startNextDownload()
 
     QNetworkRequest request(url);
     QNetworkReply* reply = networkManager_->get(request);
-
     reply->setProperty("tileIndex", QVariant::fromValue(index));
 
+    activeReplies_.insert(reply);
     activeDownloads_++;
     //qDebug() << "Started downloading tile from:" << url.toString();
-    qDebug() << "Started downloading tile from:" << index.x_ << index.y_ << index.z_;
+    //qDebug() << "Started downloading tile from:" << index.x_ << index.y_ << index.z_;
 
 }
 
@@ -88,7 +120,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 
     if (reply->error() != QNetworkReply::NoError) {
         emit downloadFailed(index, reply->errorString());
-        qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(index) << "Error:" << reply->errorString();
+        //qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(index) << "Error:" << reply->errorString();
     }
     else {
         QByteArray imageData = reply->readAll();
@@ -103,13 +135,14 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
         }
     }
 
+    activeReplies_.remove(reply);
     reply->deleteLater();
     activeDownloads_--;
 
     startNextDownload();
 
     if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        qDebug() << "All downloads finished.";
+        //qDebug() << "All downloads finished.";
         emit allDownloadsFinished();
     }
 }

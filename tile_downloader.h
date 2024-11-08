@@ -8,6 +8,7 @@
 #include <QNetworkReply>
 #include <QQueue>
 #include <QPair>
+#include <QSet>
 
 #include "map_defs.h"
 #include "tile_provider.h"
@@ -24,10 +25,14 @@ public:
     ~TileDownloader();
 
     void downloadTiles(const QList<TileIndex>& tiles);
+    void stopAndClearRequests();
+    uint64_t getActiveRepliesSize() const;
+    uint64_t getDownloadQueueSize() const;
 
 signals:
     void tileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void downloadFailed(const TileIndex& tileIndx, const QString& errorString);
+    void downloadStopped(const TileIndex& tileIndx);
     void allDownloadsFinished();
 
 private slots:
@@ -39,6 +44,7 @@ private:
     /*data*/
     QNetworkAccessManager* networkManager_;
     QQueue<TileIndex> downloadQueue_;
+    QSet<QNetworkReply*> activeReplies_;
     int activeDownloads_;
     int maxConcurrentDownloads_;
     std::weak_ptr<TileProvider> tileProvider_;

@@ -25,9 +25,16 @@ public:
     std::unordered_map<TileIndex, Tile>& getTilesRef();
     void addTile(const TileIndex& tileIndx);
 
+    void onNewRequest(const QList<TileIndex>& request);
+    void deleteAllTextures();
+
+signals:
+    void dataUpdated();
+
 public slots:
     void onTileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
+    void onTileDownloadStopped(const TileIndex& tileIndx);
 
 protected:
 

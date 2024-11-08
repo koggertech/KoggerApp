@@ -72,16 +72,20 @@ public:
     void      setTextureId(GLuint textureId);
     void      setVertexNed(const QVector3D& vertexNed);
     void      setIndex(const TileIndex &index);
+    void      setNeedToInit(bool state);
+    void      setNeedToDeinit(bool state);
 
     TileInfo  getTileInfo() const;
     State     getState() const;
     bool      getInUse() const;
     bool      getInterpolated() const;
     QImage    getImage() const;
+    bool      getImageIsNull() const;
     GLuint    getTextureId() const;
     QVector3D getVertexNed() const;
     TileIndex getIndex() const;
-
+    bool      getNeedToInit() const;
+    bool      getNeedToDeinit() const;
 
     QVector<QVector3D>& getVerticesRef();
     QVector<QVector2D>& getTexCoordsRef();
@@ -93,6 +97,9 @@ public:
 
 private:
     /*data*/
+    bool needToInitT_ = false;
+    bool needToDeinitT_ = false;
+
     TileInfo info_;
 
     State state_;
@@ -111,24 +118,6 @@ private:
     QDateTime useLastTime_;
     QDateTime requestLastTime_;
 };
-
-
-class TileCalculator
-{
-public:
-    TileCalculator(float tileSize = 1.0f);
-    void setTrapezoid(const QVector<QVector3D>& trapezoidVertices);
-    QVector<Tile> calculateTiles() const;
-
-private:
-    bool isPointInsideTrapezoid(const QVector3D& point) const;
-    QVector<QVector3D> getBoundingBox() const;
-
-    /*data*/
-    float tileSize_;
-    QVector<QVector3D> trapezoid_;
-};
-
 
 } // namespace map
 

@@ -30,8 +30,8 @@ public:
 
     private:
         friend class MapView;
-        QVector<QVector3D> vec_;
-        QVector<map::Tile> tiles_;
+        QVector<QVector3D> rectVertices_;
+
         std::shared_ptr<map::TileSet> tileSetPtr_;
     };
 
@@ -42,8 +42,12 @@ public:
     void setView(GraphicsScene3dView* viewPtr);
 
     void setTileSetPtr(std::shared_ptr<map::TileSet> ptr);
-    void setVec(const QVector<QVector3D>& vec);
-    void setTiles(const QVector<map::Tile>& tiles);
+    void setRectVertices(const QVector<QVector3D>& vertices);
+
+public slots:
+    void onTileSetUpdated();
+
+
 private:
 
 };

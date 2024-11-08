@@ -83,7 +83,7 @@ typedef struct  LLARef {
 typedef struct NED {
     double n = NAN, e = NAN, d = NAN;
     NED() {}
-
+    NED(double _n, double _e, double _d) : n(_n), e(_e), d(_d) { };
     NED(LLA* lla, LLARef* ref) {
         double lat_rad = lla->latitude * M_DEG_TO_RAD;
         double lon_rad = lla->longitude * M_DEG_TO_RAD;
