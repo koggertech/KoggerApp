@@ -83,10 +83,9 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::dataUpdated, mapView_.get(), &MapView::onTileSetUpdated, Qt::DirectConnection);
 
-
-    mapView_->setTileSetPtr(tileManager_->getTileSetPtr());
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal, mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal, mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
 
     updatePlaneGrid();
 }
@@ -788,49 +787,32 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
 
 void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView *viewPtr) const
 {
-    auto tileSetPtr = viewPtr->tileManager_->getTileSetPtr();
-    auto& tilesRef = tileSetPtr->getTilesRef();
+    auto mapViewPtr = viewPtr->getMapViewPtr();
 
-    if (tilesRef.empty()) {
-        return;
+    // appending
+    auto appendTasks = mapViewPtr->getInitTileTextureTasks();
+    for (auto it = appendTasks.begin(); it != appendTasks.end(); ++it) {
+        const map::TileIndex& tileIndx = it->first;
+        const QImage& image = it->second;
+        GLuint textureId = 0;
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+        mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId); // for drawing, deleting
+        //qDebug() << "APPENDING:" << textureId;
     }
 
-    for (auto& itm : tilesRef) {
-        if (itm.second.getNeedToDeinit()) { // !itm.second.getTextureId() && itm.second.getState() == map::Tile::State::kReady) {
-                GLuint textureId = itm.second.getTextureId();
-                glDeleteTextures(1, &textureId);
-                itm.second.setTextureId(0);
-                itm.second.setNeedToDeinit(false);
-        }
 
-        if (itm.second.getNeedToInit()) {
-            if (itm.second.getImageIsNull()) {
-                continue;
-            };
-
-            GLuint textureId;
-
-            glGenTextures(1, &textureId);
-            glBindTexture(GL_TEXTURE_2D, textureId);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            QImage glImage = itm.second.getImage().convertToFormat(QImage::Format_RGBA8888);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-
-            itm.second.setTextureId(textureId);
-
-            QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-            glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
-
-            //qDebug() << "OpenGL initialized texture " << textureId;
-            itm.second.setNeedToInit(false);
-        }
+    // deleting
+    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
+    for (GLuint textureId : deleteTasks) {
+        glDeleteTextures(1, &textureId);
+        //qDebug() << " DELETING:" << textureId;
     }
 }
 

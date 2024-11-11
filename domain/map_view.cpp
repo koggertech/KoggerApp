@@ -10,8 +10,9 @@ MapView::MapView(GraphicsScene3dView *view, QObject *parent) :
 }
 
 MapView::~MapView()
-{ }
+{
 
+}
 
 void MapView::clear()
 {
@@ -24,12 +25,6 @@ void MapView::setView(GraphicsScene3dView *viewPtr)
     SceneObject::m_view = viewPtr;
 }
 
-void MapView::setTileSetPtr(std::shared_ptr<map::TileSet> ptr)
-{
-    auto r = RENDER_IMPL(MapView);
-    r->tileSetPtr_ = ptr;
-}
-
 void MapView::setRectVertices(const QVector<QVector3D> &vertices)
 {
     auto r = RENDER_IMPL(MapView);
@@ -38,16 +33,67 @@ void MapView::setRectVertices(const QVector<QVector3D> &vertices)
     Q_EMIT changed();
 }
 
-void MapView::onTileSetUpdated()
+void MapView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
 {
+    auto r = RENDER_IMPL(MapView);
+    if (auto tile = r->tilesHash_.find(tileIndx); tile != r->tilesHash_.end()) {
+        tile->second.setTextureId(textureId);
+    }
+}
+
+std::unordered_map<map::TileIndex, QImage> MapView::getInitTileTextureTasks()
+{
+    QWriteLocker locker(&rWLocker_);
+
+    auto retVal = std::move(appendTasks_);
+
+    return retVal;
+}
+
+QList<GLuint> MapView::getDeinitTileTextureTasks()
+{
+    QWriteLocker locker(&rWLocker_);
+
+    auto retVal = std::move(deleteTasks_);
+
+    return retVal;
+}
+
+void MapView::onTileAppend(const map::Tile &tile)
+{
+    // append to render
+    auto r = RENDER_IMPL(MapView);
+
+    auto tileIndx = tile.getIndex();
+    r->tilesHash_.emplace(tileIndx, tile);
+
+    // append task
+    appendTasks_[tileIndx] = tile.getImage();
+
+    Q_EMIT changed();
+}
+
+void MapView::onTileDelete(const map::Tile &tile)
+{
+    // delete task
+    auto r = RENDER_IMPL(MapView);
+
+    if (auto tileIndx = r->tilesHash_.find(tile.getIndex()); tileIndx != r->tilesHash_.end()) {
+        deleteTasks_.append(tileIndx->second.getTextureId());
+    }
+
+    // delete from render
+    r->tilesHash_.erase(tile.getIndex());
+
     Q_EMIT changed();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MapViewRenderImplementation
 MapView::MapViewRenderImplementation::MapViewRenderImplementation()
-{ }
+{
 
+}
 
 void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
                                                       const QMatrix4x4 &model,
@@ -57,7 +103,6 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
 {
     if (!m_isVisible)
         return;
-
 
     // rect
     if (!rectVertices_.empty()) {
@@ -82,11 +127,8 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram->release();
     }
 
-
-
-    if (tileSetPtr_) {
-        auto& tilesRef = tileSetPtr_->getTilesRef();
-
+    // tiles
+    if (!tilesHash_.empty()) {
         auto shaderProgram = shaderProgramMap.value("image", nullptr);
         if (!shaderProgram) {
             qWarning() << "Shader program 'image' not found!";
@@ -102,12 +144,11 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram->enableAttributeArray(posLoc);
         shaderProgram->enableAttributeArray(texCoordLoc);
 
-        for (auto& itm : tilesRef) {
-
+        for (auto& itm : tilesHash_) {
             if (auto textureId = itm.second.getTextureId(); textureId) {
-                auto& indices = itm.second.getIndicesRef();
-                auto& vertices = itm.second.getVerticesRef();
-                auto& texCoords = itm.second.getTexCoordsRef();
+                const auto& indices = itm.second.getIndicesRef();
+                const auto& vertices = itm.second.getVerticesRef();
+                const auto& texCoords = itm.second.getTexCoordsRef();
 
                 shaderProgram->setAttributeArray(posLoc, vertices.constData());
                 shaderProgram->setAttributeArray(texCoordLoc, texCoords.constData());
@@ -123,8 +164,6 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         shaderProgram->disableAttributeArray(posLoc);
         shaderProgram->disableAttributeArray(texCoordLoc);
-
         shaderProgram->release();
     }
-
 }

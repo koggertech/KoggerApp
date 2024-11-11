@@ -3,20 +3,13 @@
 
 namespace map {
 
-TileSet::TileSet(std::weak_ptr<TileProvider> provider) :
+TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader) :
     QObject(nullptr),
-    tileProvider_(std::move(provider))
+    tileProvider_(provider),
+    tileDB_(db),
+    tileDownloader_(downloader)
 {
 
-}
-
-std::unordered_map<TileIndex, Tile> TileSet::getTiles()
-{
-    QWriteLocker locker(&rwLocker_);
-
-    auto retVal = std::move(tiles_);
-
-    return retVal;
 }
 
 void TileSet::setDatesetPtr(Dataset *datasetPtr)
@@ -32,17 +25,41 @@ bool TileSet::isTileContains(const TileIndex &tileIndex) const
     return false;
 }
 
-std::unordered_map<TileIndex, Tile> &TileSet::getTilesRef()
+void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const TileInfo &info)
 {
-    return tiles_;
+    if (image.isNull()) {
+        qWarning() << "TileSet::onTileLoaded: loaded 'null' image";
+        return;
+    }
+
+    if (auto it = tiles_.find(tileIndx); it != tiles_.end()) {
+        // write image
+    }
+}
+
+void TileSet::onTileLoadFailed(const TileIndex &tileIndx, const QString &errorString)
+{
+    //qWarning() << "Failed to load tile: " << tileIndx << ", error:" << errorString;
+
+    // try to load
+}
+
+void TileSet::onTileLoadStopped(const TileIndex &tileIndx)
+{
+    //qDebug() << "Tile load stopped:" << tileIndx;
+
+    // try to load
 }
 
 void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, const TileInfo &info)
 {
+    if (image.isNull()) {
+        qWarning() << "TileSet::onTileDownloaded: downloaded 'null' image";
+        return;
+    }
+
     if (auto it = tiles_.find(tileIndx); it != tiles_.end()) {
-
         // image
-
         QImage temp = image;
         QTransform trans;
         trans.rotate(90);
@@ -54,74 +71,106 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
         if (datasetPtr_) {
             it->second.updateVertices(datasetPtr_->getRef());
         }
+        else {
+            qWarning() << "TileSet::onTileDownloaded: error: datasetPtr_ is nullptr, tile vertices is not updated";
+        }
 
         it->second.setState(Tile::State::kReady);
-        emit dataUpdated();
+
+        if (!it->second.getInUse()) {
+            emit appendSignal(it->second); // инициализируем в OpenGL что пришло
+            it->second.setInUse(true);
+        }
     }
 }
 
 void TileSet::onTileDownloadFailed(const TileIndex &tileIndx, const QString &errorString)
 {
-    qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(tileIndx) << "Error:" << errorString;
+    //qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(tileIndx) << "Error:" << errorString;
 }
 
 void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
 {
-    qDebug() << "Tile download stopped from:" << tileProvider_.lock()->createURL(tileIndx);
+    //qDebug() << "Tile download stopped from:" << tileProvider_.lock()->createURL(tileIndx);
 }
 
-void TileSet::addTile(const TileIndex& tileIndx)
+bool TileSet::addTile(const TileIndex& tileIndx)
 {
     auto it = tiles_.find(tileIndx);
     if (it == tiles_.end()) {
-        Tile newTile;
-        //newTile.setIndex(tileIndx);
+        Tile newTile(tileIndx);
         tiles_.emplace(tileIndx, std::move(newTile));
+        return true;
+    }
 
-        //qDebug() << "added:" << tileIndx;
-        // download
-    }
-    else {
-        //qDebug() << "exists:" << tileIndx;
-    }
+    return false;
 }
 
 void TileSet::onNewRequest(const QList<TileIndex> &request)
-{
+{    
+    // stop work db
+    tileDB_.lock()->stopAndClearRequests(); // ?
+    // stop work downloader
+    tileDownloader_.lock()->stopAndClearRequests(); // ?
+
+
+    // добавление тайлов
+    for (auto& itm : request) {
+        addTile(itm);
+    }
+
+
     // удалить текстуры тех кто был активен и стал неактивен
     // добавить текстуры новых
     // тех кто был оставить
 
-    //qDebug() <<  "tiles_.size() << resps.size() " << tiles_.size() << request.size();
+    // инициализируем в OpenGL на onLoaded/onDownloaded
+    // а удаляем тут
 
-    for (auto& [index, tile] : tiles_) {
+    // поиск в tileSet (RAM) на удаление
+    for (auto& [index, tile] : tiles_) {        
         bool been = false;
 
-        for (const auto& indexSec : request) {
+        for (auto& indexSec : request) {
             if (indexSec == index) {
-                if (!tile.getTextureId()) {
-                    tile.setNeedToInit(true);
-                }
                 been = true;
                 break;
             }
         }
 
-        if (!been) {
-            if (tile.getTextureId()) {
-                tile.setNeedToDeinit(true);
-            }
+        if (been) {
+            continue;
         }
 
-        tile.setInUse(been);
+        if (tile.getInUse()) { // был в использовании но сейчас нет
+            tile.setInUse(false);
+            emit deleteSignal(tile);
+        }
     }
 
-    emit dataUpdated();
+    // формируем запрос на загрузку/закачку изображения
+    // все тайлы были созданы до
+    QList<TileIndex> filtReq;
+    for (auto& itm: request) {
+        if (auto tile = tiles_.find(itm); tile != tiles_.end()) {
+            if (tile->second.getImageIsNull()) { // для тайлов с 'null' image ДОБАВЛЯЕМ в запрос, в OpenGL позже проинитится
+                filtReq.append(itm);
+            }
+            else {
+                if (!tile->second.getInUse()) { // если у тайла есть изобрадение, сразу инитим в OpenGL и НЕ добавляем в запрос
+                    tile->second.setInUse(true);
+                    emit appendSignal(tile->second);
+                }
+            }
+        }
+    }
+
+
+    // в db
+
+    // в downloader
+    tileDownloader_.lock()->downloadTiles(filtReq);
 }
 
-void TileSet::deleteAllTextures()
-{
-
-}
 
 } // namespace map

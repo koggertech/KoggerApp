@@ -32,6 +32,16 @@ void Tile::setNeedToDeinit(bool state)
     needToDeinitT_ = state;
 }
 
+void Tile::setUseLastTime(const QDateTime &val)
+{
+    useLastTime_ = val;
+}
+
+void Tile::setRequestLastTime(const QDateTime &val)
+{
+    requestLastTime_ = val;
+}
+
 TileInfo Tile::getTileInfo() const
 {
     return info_;
@@ -82,17 +92,27 @@ bool Tile::getNeedToDeinit() const
     return needToDeinitT_;
 }
 
-QVector<QVector3D> &Tile::getVerticesRef()
+QDateTime Tile::getUseLastTime() const
+{
+    return useLastTime_;
+}
+
+QDateTime Tile::getRequestLastTime() const
+{
+    return requestLastTime_;
+}
+
+const QVector<QVector3D> &Tile::getVerticesRef() const
 {
     return vertices_;
 }
 
-QVector<QVector2D> &Tile::getTexCoordsRef()
+const QVector<QVector2D> &Tile::getTexCoordsRef() const
 {
     return texCoords_;
 }
 
-QVector<int> &Tile::getIndicesRef()
+const QVector<int> &Tile::getIndicesRef() const
 {
     return indices_;
 }
@@ -115,15 +135,14 @@ bool Tile::operator<(const Tile &other) const
     return false;
 }
 
-Tile::Tile(TileIndex* index) :
+Tile::Tile(TileIndex index) :
     state_(State::kNone),
     inUse_(false),
     interpolated_(false),
-    textureId_(0)
+    textureId_(0),
+    index_(index)
 {
-    if (index) {
-        index_ = *index;
-    }
+
 }
 
 void Tile::updateVertices(const LLARef& llaRef)

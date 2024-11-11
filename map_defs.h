@@ -59,14 +59,14 @@ public:
         kNone = 0, kReady, kWaitDB, kWaitServer, kErrorServer
     };
 
-    Tile(TileIndex* index = nullptr);
+    Tile(TileIndex index);
 
     void updateVertices(const LLARef& llaRef);
     bool isValid() const;
 
     void      setTileInfo(const TileInfo& info);
     void      setState(State state);
-    void      setInUse(bool val);
+    void      setInUse(bool val); // for tileSet
     void      setInterpolated(bool val);
     void      setImage(const QImage& image);
     void      setTextureId(GLuint textureId);
@@ -74,10 +74,12 @@ public:
     void      setIndex(const TileIndex &index);
     void      setNeedToInit(bool state);
     void      setNeedToDeinit(bool state);
+    void      setUseLastTime(const QDateTime& val);
+    void      setRequestLastTime(const QDateTime& val);
 
     TileInfo  getTileInfo() const;
     State     getState() const;
-    bool      getInUse() const;
+    bool      getInUse() const; // for tileSet
     bool      getInterpolated() const;
     QImage    getImage() const;
     bool      getImageIsNull() const;
@@ -86,10 +88,12 @@ public:
     TileIndex getIndex() const;
     bool      getNeedToInit() const;
     bool      getNeedToDeinit() const;
+    QDateTime getUseLastTime() const;
+    QDateTime getRequestLastTime() const;
 
-    QVector<QVector3D>& getVerticesRef();
-    QVector<QVector2D>& getTexCoordsRef();
-    QVector<int>& getIndicesRef();
+    const QVector<QVector3D>& getVerticesRef() const;
+    const QVector<QVector2D>& getTexCoordsRef() const;
+    const QVector<int>& getIndicesRef() const;
 
     bool operator==(const Tile& other) const;
     bool operator!=(const Tile &other) const;

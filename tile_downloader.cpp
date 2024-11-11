@@ -12,7 +12,7 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
     networkManager_(new QNetworkAccessManager(this)),
     activeDownloads_(0),
     maxConcurrentDownloads_(maxConcurrentDownloads),
-    tileProvider_(std::move(provider))
+    tileProvider_(provider)
 {
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded);
 }

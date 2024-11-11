@@ -13,11 +13,16 @@ namespace map {
 TileManager::TileManager(QObject *parent) :
     QObject(parent),
     tileProvider_(std::make_shared<TileGoogleProvider>()),
-    tileSet_(std::make_shared<TileSet>(tileProvider_)),
-    tileDownloader_(std::make_unique<TileDownloader>(tileProvider_,  10)),
-    tileDB_(std::make_unique<TileDB>())
+    tileDownloader_(std::make_shared<TileDownloader>(tileProvider_,  10)),
+    tileDB_(std::make_shared<TileDB>(tileProvider_)),
+    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_))
 {
+    // db
+    QObject::connect(tileDB_.get(), &TileDB::tileLoaded, tileSet_.get(), &TileSet::onTileDownloaded, Qt::AutoConnection);
+
+    // downloader
     QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded, tileSet_.get(), &TileSet::onTileDownloaded, Qt::AutoConnection);
+
     QObject::connect(tileDownloader_.get(), &TileDownloader::downloadFailed, tileSet_.get(), &TileSet::onTileDownloadFailed, Qt::AutoConnection);
     QObject::connect(tileDownloader_.get(), &TileDownloader::downloadStopped, tileSet_.get(), &TileSet::onTileDownloadStopped, Qt::AutoConnection);
 }
@@ -33,16 +38,13 @@ std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
 
 void TileManager::getRectRequest(QVector<QVector3D> request)
 {
-    tileDownloader_->stopAndClearRequests(); // ?
-
-    QList<TileIndex> resps;
+    QList<TileIndex> indxRequest;
 
     int minX = std::numeric_limits<int>::max();
     int maxX = std::numeric_limits<int>::min();
     int minY = std::numeric_limits<int>::max();
     int maxY = std::numeric_limits<int>::min();
     int zoomLevel = -1;
-    bool zoomChanged{false}; //
 
     // dimensions
     for (auto& itm : request) {
@@ -55,32 +57,25 @@ void TileManager::getRectRequest(QVector<QVector3D> request)
         minY = std::min(minY, tileIndx.y_);
         maxY = std::max(maxY, tileIndx.y_);
 
-        if (zoomLevel == -1) { // for first elem
+        if (zoomLevel == -1) { // for the first element
             zoomLevel = tileIndx.z_;
             if (zoomLevel != lastZoomLevel_) {
-                qDebug() << "zoomLevel chaged to:" << zoomLevel;
+                qDebug() << "zoom level chaged to:" << zoomLevel;
                 lastZoomLevel_ = zoomLevel;
-                zoomChanged = true;
             }
         }
     }
 
-    // TileIndx responses
+    // creating TileIndx requests
     for (int x = minX; x <= maxX; ++x) {
         for (int y = minY; y <= maxY; ++y) {
             TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-            tileSet_->addTile(tileIndx);
-            resps.append(tileIndx);
+            indxRequest.append(tileIndx);
         }
     }
 
-    tileSet_->onNewRequest(resps);
-
-    //qDebug() << "getActiveRepliesSize()" << tileDownloader_->getActiveRepliesSize();
-    //qDebug() << "getDownloadQueueSize()" << tileDownloader_->getDownloadQueueSize();
-
-    // async
-    tileDownloader_->downloadTiles(resps);
+    tileSet_->onNewRequest(indxRequest);
 }
+
 
 } // namespace map
