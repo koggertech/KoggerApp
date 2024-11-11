@@ -303,12 +303,12 @@ void Core::onFileOpenBreaked(bool onOpen)
     }
 }
 #else
-void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEvent)
+void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEvent)
 {
     isFileOpening_ = true;
     emit sendIsFileOpening();
 
-    QTimer::singleShot(15, this, [&]() ->void { // 15 ms delay
+    QTimer::singleShot(15, this, [this, filePath, isAppend, onCustomEvent]() ->void { // 15 ms delay
         QString localfilePath = filePath;
 
         if (onCustomEvent) {
