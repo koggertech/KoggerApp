@@ -101,17 +101,22 @@ void GraphicsScene3dRenderer::drawObjects()
 
     glEnable(GL_DEPTH_TEST);
     m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
-    m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
-    m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     mapViewRenderImpl_.render(this,          m_model, view, m_projection, m_shaderProgramMap);
-    m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
-    sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     imageViewRenderImpl_.render(this,        m_projection * view * m_model, m_shaderProgramMap);
     m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
     m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
-    navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
     usblViewRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     glDisable(GL_DEPTH_TEST);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
+    m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+    m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
+    m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
+    navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
+    glDisable(GL_BLEND);
+
 
     //-----------Draw axes-------------
     GLint viewport[4];

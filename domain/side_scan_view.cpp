@@ -896,42 +896,6 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
     }
 
     {
-        auto shaderProgram = shaderProgramMap.value("static", nullptr);
-        if (!shaderProgram) {
-            qWarning() << "Shader program 'static' not found!";
-            return;
-        }
-
-        shaderProgram->bind();
-        shaderProgram->setUniformValue("mvp", mvp);
-
-        int posLoc = shaderProgram->attributeLocation("position");
-        shaderProgram->enableAttributeArray(posLoc);
-
-        // main line
-        if (measLinesVertices_.size() >= 4) {
-            shaderProgram->setUniformValue("color", QVector4D(0.031f, 0.69f, 0.98f, 1.0f));
-            glLineWidth(3.0f);
-            QVector<QVector3D> lastFourVertices = measLinesVertices_.mid(measLinesVertices_.size() - 4, 4);
-            shaderProgram->setAttributeArray(posLoc, lastFourVertices.constData());
-            ctx->glDrawArrays(GL_LINES, 0, 4);
-            glLineWidth(1.0f);
-        }
-
-        // measure lines
-        if (measLineVisible_) {
-            shaderProgram->setAttributeArray(posLoc, measLinesVertices_.constData());
-            shaderProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
-            ctx->glDrawElements(GL_LINES, measLinesEvenIndices_.size(), GL_UNSIGNED_INT, measLinesEvenIndices_.constData());
-            shaderProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
-            ctx->glDrawElements(GL_LINES, measLinesOddIndices_.size(), GL_UNSIGNED_INT, measLinesOddIndices_.constData());
-        }
-
-        shaderProgram->disableAttributeArray(posLoc);
-        shaderProgram->release();
-    }
-
-    {
         auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
         if (!shaderProgram) {
             qWarning() << "Shader program 'mosaic' not found!";
@@ -984,6 +948,42 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
 
             shaderProgram->release();
         }
+    }
+
+    {
+        auto shaderProgram = shaderProgramMap.value("static", nullptr);
+        if (!shaderProgram) {
+            qWarning() << "Shader program 'static' not found!";
+            return;
+        }
+
+        shaderProgram->bind();
+        shaderProgram->setUniformValue("mvp", mvp);
+
+        int posLoc = shaderProgram->attributeLocation("position");
+        shaderProgram->enableAttributeArray(posLoc);
+
+        // main line
+        if (measLinesVertices_.size() >= 4) {
+            shaderProgram->setUniformValue("color", QVector4D(0.031f, 0.69f, 0.98f, 1.0f));
+            glLineWidth(3.0f);
+            QVector<QVector3D> lastFourVertices = measLinesVertices_.mid(measLinesVertices_.size() - 4, 4);
+            shaderProgram->setAttributeArray(posLoc, lastFourVertices.constData());
+            ctx->glDrawArrays(GL_LINES, 0, 4);
+            glLineWidth(1.0f);
+        }
+
+        // measure lines
+        if (measLineVisible_) {
+            shaderProgram->setAttributeArray(posLoc, measLinesVertices_.constData());
+            shaderProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
+            ctx->glDrawElements(GL_LINES, measLinesEvenIndices_.size(), GL_UNSIGNED_INT, measLinesEvenIndices_.constData());
+            shaderProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
+            ctx->glDrawElements(GL_LINES, measLinesOddIndices_.size(), GL_UNSIGNED_INT, measLinesOddIndices_.constData());
+        }
+
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
     }
 }
 
