@@ -9,6 +9,9 @@
 #include <QQueue>
 #include <QPair>
 #include <QSet>
+#include <QTcpSocket>
+#include <QHostInfo>
+#include <QTimer>
 
 #include "map_defs.h"
 #include "tile_provider.h"
@@ -35,6 +38,8 @@ signals:
 
 private slots:
     void onTileDownloaded(QNetworkReply *reply);
+    void checkNetworkAvailabilityAsync();
+    void onHostLookupFinished(QHostInfo hostInfo);
 
 private:
     void startNextDownload();
@@ -46,6 +51,9 @@ private:
     QSet<QNetworkReply*> activeReplies_;
     int activeDownloads_;
     int maxConcurrentDownloads_;
+    bool networkAvailable_;
+    QTimer* networkCheckTimer_;
+    int hostLookupId_;
 };
 
 

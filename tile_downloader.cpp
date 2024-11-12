@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QNetworkProxy>
 
 
 namespace map {
@@ -13,9 +14,16 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
     networkManager_(new QNetworkAccessManager(this)),
     tileProvider_(provider),
     activeDownloads_(0),
-    maxConcurrentDownloads_(maxConcurrentDownloads)
+    maxConcurrentDownloads_(maxConcurrentDownloads),
+    networkAvailable_(false),
+    hostLookupId_(-1)
 {
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded, Qt::AutoConnection);
+
+    checkNetworkAvailabilityAsync();
+    networkCheckTimer_ = new QTimer(this);
+    connect(networkCheckTimer_, &QTimer::timeout, this, &TileDownloader::checkNetworkAvailabilityAsync);
+    networkCheckTimer_->start(10000);
 }
 
 TileDownloader::~TileDownloader()
@@ -25,6 +33,11 @@ TileDownloader::~TileDownloader()
 
 void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
 {
+    if (!networkAvailable_) {
+        emit allDownloadsFinished();
+        return;
+    }
+
     if (tileIndices.isEmpty()) {
         emit allDownloadsFinished();
         return;
@@ -122,6 +135,55 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
     if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
         emit allDownloadsFinished();
     }
+}
+
+void TileDownloader::checkNetworkAvailabilityAsync()
+{
+#ifdef Q_OS_ANDROID
+    QTcpSocket socket;
+    socket.connectToHost("8.8.8.8", 53);
+    if (socket.waitForConnected(2000)) {
+        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
+        emit internetStatus(true);
+        return;
+    }
+    qWarning() << "No Internet Access";
+    emit internetStatus(false);
+#else
+    if (hostLookupId_ == -1) {
+        hostLookupId_ = QHostInfo::lookupHost("www.google.com", this, &TileDownloader::onHostLookupFinished);
+    }
+#endif
+}
+
+void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
+{
+#ifdef Q_OS_ANDROID
+    Q_UNUSED(hostInfo);
+#else
+    hostLookupId_ = -1;
+    auto adresses = hostInfo.addresses();
+    if (hostInfo.error() == QHostInfo::NoError && adresses.size()) {
+        auto socket = new QTcpSocket();
+        socket->setProxy(QNetworkProxy::DefaultProxy);
+        socket->connectToHost(adresses.first(), 80);
+        connect(socket, &QTcpSocket::connected,
+                this, [this, socket]() {
+                          networkAvailable_ = true;
+                          socket->deleteLater();
+                      }, Qt::AutoConnection);
+
+        connect(socket, &QAbstractSocket::errorOccurred,
+                this, [this, socket](QAbstractSocket::SocketError error) {
+                          Q_UNUSED(error);
+                          networkAvailable_ = false;
+                          socket->deleteLater();
+                      }, Qt::AutoConnection);
+    }
+    else {
+        networkAvailable_ = false;
+    }
+#endif
 }
 
 
