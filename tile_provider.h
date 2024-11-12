@@ -12,7 +12,7 @@ namespace map {
 class TileProvider
 {
 public:
-    TileProvider(int32_t providerId);
+    explicit TileProvider(int32_t providerId);
 
     virtual int32_t heightToTileZ(float height)          const = 0;
     virtual int32_t lonToTileX(double lon, int z)        const = 0;

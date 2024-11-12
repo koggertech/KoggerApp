@@ -7,14 +7,15 @@
 
 namespace map {
 
+
 TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConcurrentDownloads) :
     QObject(nullptr),
     networkManager_(new QNetworkAccessManager(this)),
+    tileProvider_(provider),
     activeDownloads_(0),
-    maxConcurrentDownloads_(maxConcurrentDownloads),
-    tileProvider_(provider)
+    maxConcurrentDownloads_(maxConcurrentDownloads)
 {
-    QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded);
+    QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded, Qt::AutoConnection);
 }
 
 TileDownloader::~TileDownloader()
@@ -25,12 +26,9 @@ TileDownloader::~TileDownloader()
 void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
 {
     if (tileIndices.isEmpty()) {
-        //qDebug() << "No TileIndices to download.";
         emit allDownloadsFinished();
         return;
     }
-
-    //downloadQueue_.clear();
 
     for (const TileIndex& index : tileIndices) {
         if (!downloadQueue_.contains(index)) {
@@ -38,14 +36,11 @@ void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
         }
     }
 
-    //qDebug() << downloadQueue_.size() << "tiles for downloading.";
-
     while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
         startNextDownload();
     }
 
     if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        //qDebug() << "All downloads are already finished.";
         emit allDownloadsFinished();
     }
 }
@@ -58,29 +53,11 @@ void TileDownloader::stopAndClearRequests()
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
         emit downloadStopped(index);
         reply->abort();
-        reply->deleteLater();
     }
 
-    //qDebug() << "CLEAR: " << activeReplies_.size() << " replies before clear!";
-    activeReplies_.clear();
-
-    while (!downloadQueue_.isEmpty()) {
-        TileIndex index = downloadQueue_.dequeue();
-        emit downloadStopped(index);
-    }
-
+    downloadQueue_.clear();
     activeDownloads_ = 0;
     emit allDownloadsFinished();
-}
-
-uint64_t TileDownloader::getActiveRepliesSize() const
-{
-    return activeReplies_.values().size();
-}
-
-uint64_t TileDownloader::getDownloadQueueSize() const
-{
-    return downloadQueue_.size();
 }
 
 void TileDownloader::startNextDownload()
@@ -104,23 +81,24 @@ void TileDownloader::startNextDownload()
 
     activeReplies_.insert(reply);
     activeDownloads_++;
-    //qDebug() << "Started downloading tile from:" << url.toString();
-    //qDebug() << "Started downloading tile from:" << index.x_ << index.y_ << index.z_;
-
 }
 
 void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 {
-    if (!reply) {
-        qWarning() << "Received a finished signal from a non-QNetworkReply sender.";
+    if (!reply || !activeReplies_.contains(reply)) {
+        qWarning() << "Received a signal from an unknown or inactive reply"; // TODO
         return;
     }
 
     TileIndex index = reply->property("tileIndex").value<TileIndex>();
 
     if (reply->error() != QNetworkReply::NoError) {
-        emit downloadFailed(index, reply->errorString());
-        //qWarning() << "Failed to download tile from:" << tileProvider_.lock()->createURL(index) << "Error:" << reply->errorString();
+        if (reply->error() == QNetworkReply::OperationCanceledError) {
+            emit downloadStopped(index);
+        }
+        else {
+            emit downloadFailed(index, reply->errorString());
+        }
     }
     else {
         QByteArray imageData = reply->readAll();
@@ -142,9 +120,9 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
     startNextDownload();
 
     if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        //qDebug() << "All downloads finished.";
         emit allDownloadsFinished();
     }
 }
+
 
 } // namespace map

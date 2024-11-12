@@ -19,30 +19,31 @@ class TileSet : public QObject
 {
     Q_OBJECT
 public:
-    explicit TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader);
+    TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader);
 
     void setDatesetPtr(Dataset* datasetPtr);
     bool isTileContains(const TileIndex& tileIndex) const;
     bool addTile(const TileIndex& tileIndx);
-
     void onNewRequest(const QList<TileIndex>& request);
 
 signals:
+    // OpenGL
     void appendSignal(const Tile& tile);
     void deleteSignal(const Tile& tile);
+    // db
+    void requestLoadTiles(const QList<TileIndex>& tileIndices);
+    void requestStopAndClear();
+    void requestSaveTile(const TileIndex& tileIndx, const QImage& image);
 
 public slots:
     // db
     void onTileLoaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void onTileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileLoadStopped(const TileIndex& tileIndx);
-
     // downloader
     void onTileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileDownloadStopped(const TileIndex& tileIndx);
-
-protected:
 
 private:
     std::unordered_map<TileIndex, Tile> tiles_;

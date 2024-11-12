@@ -26,8 +26,6 @@ public:
 
     void downloadTiles(const QList<TileIndex>& tiles);
     void stopAndClearRequests();
-    uint64_t getActiveRepliesSize() const;
-    uint64_t getDownloadQueueSize() const;
 
 signals:
     void tileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
@@ -43,11 +41,11 @@ private:
 
     /*data*/
     QNetworkAccessManager* networkManager_;
+    std::weak_ptr<TileProvider> tileProvider_;
     QQueue<TileIndex> downloadQueue_;
     QSet<QNetworkReply*> activeReplies_;
     int activeDownloads_;
     int maxConcurrentDownloads_;
-    std::weak_ptr<TileProvider> tileProvider_;
 };
 
 

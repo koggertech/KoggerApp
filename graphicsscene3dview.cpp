@@ -654,7 +654,7 @@ void GraphicsScene3dView::updateMapBounds()
         return;
     }
 
-    float reductorFactor = 0.03f; // 0.03f (debug)
+    float reductorFactor = 0.0f; // 0.03f (debug)
     QVector<QPair<float, float>> cornerMultipliers = {
         {reductorFactor , reductorFactor },               // lt
         {reductorFactor , 1.0f - reductorFactor },        // lb
@@ -691,7 +691,7 @@ void GraphicsScene3dView::updateMapBounds()
     if (solidRect) {
         float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
 
-        if (rectArea < std::pow(8000.0f, 2.0f)) {
+        if (rectArea < std::pow(12000.0f, 2.0f)) {
             QVector<QVector3D> nedVertices;
             QVector<QVector3D> llaVertices;
 

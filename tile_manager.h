@@ -23,6 +23,7 @@ public:
     virtual ~TileManager();
 
     std::shared_ptr<TileSet> getTileSetPtr() const;
+
 public slots:
     void getRectRequest(QVector<QVector3D> request);
 
@@ -31,7 +32,6 @@ private:
     std::shared_ptr<TileDownloader> tileDownloader_;
     std::shared_ptr<TileDB> tileDB_;
     std::shared_ptr<TileSet> tileSet_;
-
     int lastZoomLevel_ = -1;
 };
 

@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QUrl>
+#include <QThread>
 
 #include "map_defs.h"
 #include "tile_google_provider.h"
@@ -17,18 +18,31 @@ TileManager::TileManager(QObject *parent) :
     tileDB_(std::make_shared<TileDB>(tileProvider_)),
     tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_))
 {
-    // db
-    QObject::connect(tileDB_.get(), &TileDB::tileLoaded, tileSet_.get(), &TileSet::onTileDownloaded, Qt::AutoConnection);
-
-    // downloader
-    QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded, tileSet_.get(), &TileSet::onTileDownloaded, Qt::AutoConnection);
-
-    QObject::connect(tileDownloader_.get(), &TileDownloader::downloadFailed, tileSet_.get(), &TileSet::onTileDownloadFailed, Qt::AutoConnection);
+    // tileDownloader_ -> tileSet_
+    QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded,  tileSet_.get(), &TileSet::onTileDownloaded,      Qt::AutoConnection);
     QObject::connect(tileDownloader_.get(), &TileDownloader::downloadStopped, tileSet_.get(), &TileSet::onTileDownloadStopped, Qt::AutoConnection);
+    QObject::connect(tileDownloader_.get(), &TileDownloader::downloadFailed,  tileSet_.get(), &TileSet::onTileDownloadFailed,  Qt::AutoConnection);
+
+    QThread* dbThread = new QThread();
+    tileDB_->moveToThread(dbThread);
+
+    // tileDB_ <-> tileSet_
+    QObject::connect(tileDB_.get(), &TileDB::tileLoaded,     tileSet_.get(), &TileSet::onTileLoaded, Qt::AutoConnection);
+    QObject::connect(tileDB_.get(), &TileDB::tileLoadFailed, tileSet_.get(), &TileSet::onTileLoadFailed, Qt::AutoConnection);
+    QObject::connect(tileSet_.get(), &TileSet::requestLoadTiles,    tileDB_.get(), &TileDB::loadTiles, Qt::AutoConnection);
+    QObject::connect(tileSet_.get(), &TileSet::requestStopAndClear, tileDB_.get(), &TileDB::stopAndClearRequests, Qt::AutoConnection);
+    QObject::connect(tileSet_.get(), &TileSet::requestSaveTile,     tileDB_.get(), &TileDB::saveTile, Qt::AutoConnection);
+
+    QObject::connect(dbThread, &QThread::started, tileDB_.get(), &TileDB::init, Qt::AutoConnection);
+    QObject::connect(dbThread, &QThread::finished, tileDB_.get(), &QObject::deleteLater, Qt::AutoConnection);
+    QObject::connect(dbThread, &QThread::finished, dbThread, &QThread::deleteLater, Qt::AutoConnection);
+
+    dbThread->start();
 }
 
 TileManager::~TileManager()
 {
+
 }
 
 std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
