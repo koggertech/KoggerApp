@@ -74,7 +74,7 @@ public:
     void      setIndex(const TileIndex &index);
     void      setNeedToInit(bool state);
     void      setNeedToDeinit(bool state);
-    void      setUseLastTime(const QDateTime& val);
+    void      setCreationTime(const QDateTime& val);
     void      setRequestLastTime(const QDateTime& val);
 
     TileInfo  getTileInfo() const;
@@ -88,7 +88,7 @@ public:
     TileIndex getIndex() const;
     bool      getNeedToInit() const;
     bool      getNeedToDeinit() const;
-    QDateTime getUseLastTime() const;
+    QDateTime getCreationTime() const;
     QDateTime getRequestLastTime() const;
 
     const QVector<QVector3D>& getVerticesRef() const;
@@ -119,8 +119,8 @@ private:
 
     QVector3D vertexNed_;
     TileIndex index_;
-    QDateTime useLastTime_;
     QDateTime requestLastTime_;
+    QDateTime creationTime_;
 };
 
 } // namespace map

@@ -32,9 +32,9 @@ void Tile::setNeedToDeinit(bool state)
     needToDeinitT_ = state;
 }
 
-void Tile::setUseLastTime(const QDateTime &val)
+void Tile::setCreationTime(const QDateTime &val)
 {
-    useLastTime_ = val;
+    creationTime_ = val;
 }
 
 void Tile::setRequestLastTime(const QDateTime &val)
@@ -92,9 +92,9 @@ bool Tile::getNeedToDeinit() const
     return needToDeinitT_;
 }
 
-QDateTime Tile::getUseLastTime() const
+QDateTime Tile::getCreationTime() const
 {
-    return useLastTime_;
+    return creationTime_;
 }
 
 QDateTime Tile::getRequestLastTime() const
@@ -140,7 +140,8 @@ Tile::Tile(TileIndex index) :
     inUse_(false),
     interpolated_(false),
     textureId_(0),
-    index_(index)
+    index_(index),
+    creationTime_(QDateTime::currentDateTimeUtc())
 {
 
 }

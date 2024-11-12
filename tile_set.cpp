@@ -140,8 +140,12 @@ bool TileSet::addTile(const TileIndex& tileIndx)
 {
     if (auto it = tiles_.find(tileIndx); it == tiles_.end()) {
         Tile newTile(tileIndx);
+        newTile.setRequestLastTime(QDateTime::currentDateTimeUtc());
         tiles_.emplace(tileIndx, std::move(newTile));
         return true;
+    }
+    else {
+        it->second.setRequestLastTime(QDateTime::currentDateTimeUtc());
     }
 
     return false;
@@ -153,7 +157,7 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
     emit requestStopAndClear();
     tileDownloader_.lock()->stopAndClearRequests();
 
-    // добавление тайлов
+    // добавление тайлов в tileSet
     for (auto& itm : request) {
         addTile(itm);
     }
