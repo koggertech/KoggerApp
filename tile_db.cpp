@@ -38,7 +38,7 @@ void TileDB::saveTile(const TileIndex &tileIndx, const QImage &image)
     QByteArray imageData;
     QBuffer buffer(&imageData);
     buffer.open(QIODevice::WriteOnly);
-    image.save(&buffer, "PNG");
+    image.save(&buffer, "JPEG");
 
     QSqlQuery query(db_);
     query.prepare("REPLACE INTO tiles (x, y, z, image) VALUES (:x, :y, :z, :image)");

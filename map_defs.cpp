@@ -157,16 +157,16 @@ void Tile::updateVertices(const LLARef& llaRef)
 
         // p 1
         LLA lla1(info_.bounds.south, info_.bounds.west, 0.0f);
-        NED ned1(&lla1, &ref);
+        NED ned1(&lla1, &ref, false);
         // p 2
         LLA lla2(info_.bounds.north, info_.bounds.west, 0.0f);
-        NED ned2(&lla2, &ref);
+        NED ned2(&lla2, &ref, false);
         // p 3
         LLA lla3(info_.bounds.north, info_.bounds.east, 0.0f);
-        NED ned3(&lla3, &ref);
+        NED ned3(&lla3, &ref, false);
         // p 4
         LLA lla4(info_.bounds.south, info_.bounds.east, 0.0f);
-        NED ned4(&lla4, &ref);
+        NED ned4(&lla4, &ref, false);
 
 /*
         //it->second.setVertexNed(QVector3D(ned.n,ned.e,0.0f));

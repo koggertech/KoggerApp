@@ -17,6 +17,7 @@
 namespace map {
 
 
+///////*structures*///////
 struct GeoBounds {
     double north;
     double south;

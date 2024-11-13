@@ -50,7 +50,7 @@ typedef struct LLA {
         longitude = lon;
         altitude = alt;
     }
-    inline LLA(const NED* ned, const LLARef* ref);
+    inline LLA(const NED* ned, const LLARef* ref, bool spherical = true);
 
     bool isValid() {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
@@ -84,29 +84,50 @@ typedef struct NED {
     double n = NAN, e = NAN, d = NAN;
     NED() {}
     NED(double _n, double _e, double _d) : n(_n), e(_e), d(_d) { };
-    NED(LLA* lla, LLARef* ref) {
-        double lat_rad = lla->latitude * M_DEG_TO_RAD;
-        double lon_rad = lla->longitude * M_DEG_TO_RAD;
+    NED(LLA* lla, LLARef* ref, bool spherical = true) {
+        if (spherical) {
+            double lat_rad = lla->latitude * M_DEG_TO_RAD;
+            double lon_rad = lla->longitude * M_DEG_TO_RAD;
 
-        double sin_lat = sin(lat_rad);
-        double cos_lat = cos(lat_rad);
-        double cos_d_lon = cos(lon_rad - ref->refLonRad);
+            double sin_lat = sin(lat_rad);
+            double cos_lat = cos(lat_rad);
+            double cos_d_lon = cos(lon_rad - ref->refLonRad);
 
-        double arg = ref->refLatSin * sin_lat + ref->refLatCos * cos_lat * cos_d_lon;
+            double arg = ref->refLatSin * sin_lat + ref->refLatCos * cos_lat * cos_d_lon;
 
-        if (arg > 1.0) {
-            arg = 1.0;
+            if (arg > 1.0) {
+                arg = 1.0;
 
-        } else if (arg < -1.0) {
-            arg = -1.0;
+            } else if (arg < -1.0) {
+                arg = -1.0;
+            }
+
+            double c = acos(arg);
+            double k = (fabs(c) < __DBL_EPSILON__) ? 1.0 : (c / sin(c));
+
+            n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
+            e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
         }
+        else { // merсator
+            double R = CONSTANTS_RADIUS_OF_EARTH;
 
-        double c = acos(arg);
-        double k = (fabs(c) < __DBL_EPSILON__) ? 1.0 : (c / sin(c));
+            double lat_rad = lla->latitude * M_DEG_TO_RAD;
+            double ref_lat_rad = ref->refLla.latitude * M_DEG_TO_RAD;
 
-        n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
-        e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
+            double y = R * log(tan(M_PI / 4.0 + lat_rad / 2.0));
+            double y_ref = R * log(tan(M_PI / 4.0 + ref_lat_rad / 2.0));
+
+            double delta_y = y - y_ref;
+
+            double delta_lon = (lla->longitude - ref->refLla.longitude) * M_DEG_TO_RAD;
+            double x = R * delta_lon;
+
+            n = delta_y;
+            e = x;
+            d = -(lla->altitude - ref->refLla.altitude);
+        }
     }
+
 
     bool isValid() {
         return isfinite(n) && isfinite(e) && isfinite(d);
@@ -117,25 +138,72 @@ typedef struct NED {
     }
 } NED;
 
-LLA::LLA(const NED* ned, const LLARef* ref)
+LLA::LLA(const NED* ned, const LLARef* ref, bool spherical)
 {
-    if (!ned || !ref ||
-        !std::isfinite(ned->n) ||
-        !std::isfinite(ned->e) ||
-        !std::isfinite(ned->d)) {
-        return;
+    if (spherical) {
+        if (!ned || !ref ||
+            !std::isfinite(ned->n) ||
+            !std::isfinite(ned->e) ||
+            !std::isfinite(ned->d)) {
+            return;
+        }
+
+        double R = CONSTANTS_RADIUS_OF_EARTH;
+        double n = ned->n;
+        double e = ned->e;
+
+        double c = sqrt(n * n + e * e) / R;
+
+        if (qFuzzyIsNull(c)) {
+            latitude = ref->refLla.latitude;
+            longitude = ref->refLla.longitude;
+            altitude = ref->refLla.altitude - ned->d;
+            return;
+        }
+
+        double lat0 = ref->refLatRad;
+        double lon0 = ref->refLonRad;
+
+        double sin_c = sin(c);
+        double cos_c = cos(c);
+
+        double alpha = atan2(e, n);
+
+        double sin_lat = sin(lat0) * cos_c + cos(lat0) * sin_c * cos(alpha);
+        double lat_rad = asin(sin_lat);
+
+        double y = sin(alpha) * sin_c * cos(lat0);
+        double x = cos_c - sin(lat0) * sin_lat;
+        double lon_rad = lon0 + atan2(y, x);
+
+        latitude = lat_rad * 180.0 / M_PI;
+        longitude = lon_rad * 180.0 / M_PI;
+        altitude = ref->refLla.altitude - ned->d;
     }
+    else { // mercator
+        if (!ned || !ref ||
+            !std::isfinite(ned->n) ||
+            !std::isfinite(ned->e) ||
+            !std::isfinite(ned->d)) {
+            return;
+        }
 
-    double delta_lat = ned->n / CONSTANTS_RADIUS_OF_EARTH;
-    double delta_lon = ned->e / (CONSTANTS_RADIUS_OF_EARTH * ref->refLatCos);
-    double delta_alt = -ned->d;
+        double R = CONSTANTS_RADIUS_OF_EARTH;
 
-    double lat_rad = ref->refLatRad + delta_lat;
-    double lon_rad = ref->refLonRad + delta_lon;
+        double ref_lat_rad = ref->refLla.latitude * M_DEG_TO_RAD;
+        double y_ref = R * log(tan(M_PI / 4.0 + ref_lat_rad / 2.0));
 
-    latitude = lat_rad * 180.0 / M_PI;
-    longitude = lon_rad * 180.0 / M_PI;
-    altitude = ref->refLla.altitude + delta_alt;
+        double y = y_ref + ned->n;
+
+        double lat_rad = 2.0 * atan(exp(y / R)) - M_PI / 2.0;
+
+        double ref_lon_rad = ref->refLla.longitude * M_DEG_TO_RAD;
+        double lon_rad = ref_lon_rad + (ned->e / R);
+
+        latitude = lat_rad * M_RAD_TO_DEG;
+        longitude = lon_rad * M_RAD_TO_DEG;
+        altitude = ref->refLla.altitude - ned->d;
+    }
 }
 
 typedef struct XYZ {

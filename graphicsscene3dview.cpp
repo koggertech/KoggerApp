@@ -460,7 +460,7 @@ void GraphicsScene3dView::setLastEpochFocusView()
 
 void GraphicsScene3dView::setIdleMode()
 {
-    m_mode = Idle; 
+    m_mode = Idle;
 
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
@@ -689,9 +689,17 @@ void GraphicsScene3dView::updateMapBounds()
     }
 
     if (solidRect) {
-        float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
+        bool canRequest{ true };
+        if (m_camera->getAngleToGround() > 5.0f) {
+            const float maxSideSize = 14000.f;
+            float maxS = std::pow(maxSideSize, 2.0f);
+            float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
+            if (rectArea > maxS) { // TODO: using Z coeff
+                canRequest = false;
+            }
+        }
 
-        if (rectArea < std::pow(12000.0f, 2.0f)) {
+        if (canRequest) {
             QVector<QVector3D> nedVertices;
             QVector<QVector3D> llaVertices;
 
@@ -702,10 +710,10 @@ void GraphicsScene3dView::updateMapBounds()
             NED lbNed(minX, maxY, 0.0);
             NED rbNed(maxX, maxY, 0.0);
             NED rtNed(maxX, minY, 0.0);
-            LLA ltLla(&ltNed, &ref);
-            LLA lbLla(&lbNed, &ref);
-            LLA rbLla(&rbNed, &ref);
-            LLA rtLla(&rtNed, &ref);
+            LLA ltLla(&ltNed, &ref, false);
+            LLA lbLla(&lbNed, &ref, false);
+            LLA rbLla(&rbNed, &ref, false);
+            LLA rtLla(&rtNed, &ref, false);
 
             nedVertices.append(QVector3D(ltNed.n, ltNed.e, 0.0f));
             nedVertices.append(QVector3D(lbNed.n, lbNed.e, 0.0f));
@@ -718,9 +726,19 @@ void GraphicsScene3dView::updateMapBounds()
             llaVertices.append(QVector3D(rtLla.latitude, rtLla.longitude, cameraHeight));
 
             emit sendRectRequest(llaVertices);
-
-            // view (debug)
-            //mapView_->setRectVertices(nedVertices);
+            /*
+            // debug
+            NED ltN(&ltLla, &ref, false);
+            NED lbN(&lbLla, &ref, false);
+            NED rbN(&rbLla, &ref, false);
+            NED rtN(&rtLla, &ref, false);
+            QVector<QVector3D> newNed;
+            newNed.append(QVector3D(ltN.n, ltN.e, 0.0f));
+            newNed.append(QVector3D(lbN.n, lbN.e, 0.0f));
+            newNed.append(QVector3D(rbN.n, rbN.e, 0.0f));
+            newNed.append(QVector3D(rtN.n, rtN.e, 0.0f));
+            mapView_->setRectVertices(newNed);
+            */
         }
     }
 }
@@ -1081,7 +1099,7 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
 #endif
 
     const float minFocusDist = 2.0f;
-    const float maxFocusDist = 10000.0f;
+    const float maxFocusDist = 80000.0f;
     if (m_distToFocusPoint < minFocusDist)
         m_distToFocusPoint = minFocusDist;
     if (m_distToFocusPoint >= maxFocusDist)
@@ -1178,6 +1196,7 @@ void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
     m_view = std::move(view);
 
     distToGround_ = std::max(0.0f, std::fabs(cf.z()));
+    angleToGround_ = 90.f * std::fabs(cu.z());
 
     if (viewPtr_) {
         viewPtr_->updateMapView();
@@ -1193,8 +1212,13 @@ void GraphicsScene3dView::Camera::checkRotateAngle()
 }
 
 float GraphicsScene3dView::Camera::getHeightAboveGround() const
-{    
+{
     return distToGround_;
+}
+
+float GraphicsScene3dView::Camera::getAngleToGround() const
+{
+    return angleToGround_;
 }
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const

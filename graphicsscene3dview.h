@@ -62,6 +62,7 @@ public:
         void setMapView();
         void reset();
         float getHeightAboveGround() const;
+        float getAngleToGround() const;
 
     private:
         void updateViewMatrix(QVector3D* lookAt = nullptr);
@@ -88,6 +89,7 @@ public:
         float m_distToFocusPoint = 50.f;
         qreal m_sensivity = 4.f;
         float distToGround_ = 0.0f;
+        float angleToGround_ = 0.0f;
 
         QVector2D m_rotAngle;
 

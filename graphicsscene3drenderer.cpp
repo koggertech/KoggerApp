@@ -93,7 +93,7 @@ void GraphicsScene3dRenderer::drawObjects()
     QMatrix4x4 model, view, projection;
 
     view = m_camera.m_view;
-    projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 11000.0f);
+    projection.perspective(m_camera.fov(), m_viewSize.width() / m_viewSize.height(), 1.0f, 81000.0f);
     model.scale(1.0f, 1.0f, m_verticalScale);
 
     m_model = std::move(model);
