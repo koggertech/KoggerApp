@@ -61,15 +61,23 @@ void TileDB::stopAndClearRequests()
 void TileDB::init()
 {
     QString dbName;
-    switch (tileProvider_.lock()->getProviderId()) {
-    case 1: {
-        dbName = "tiles_google";
-        break;
+
+    if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
+        switch (sharedProvider->getProviderId()) {
+        case 1: {
+            dbName = "tiles_google";
+            break;
+        }
+        default: {
+            dbName = "tiles_undefined";
+            break;
+        }
+        }
     }
-    default: {
-        dbName = "tiles_undefined";
-        break;
-    }
+
+    if (dbName.isEmpty()) {
+        qWarning() << "TileDB::init: Failed to init, tileProvider is 'nullptr'";
+        return;
     }
 
     QString dbPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/" + dbName + ".db";

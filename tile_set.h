@@ -2,7 +2,6 @@
 
 #include <QObject>
 #include <QVector>
-#include <QReadWriteLock>
 #include <unordered_map>
 
 #include "map_defs.h"
@@ -19,7 +18,7 @@ class TileSet : public QObject
 {
     Q_OBJECT
 public:
-    TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader);
+    TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity = 1000);
 
     void setDatesetPtr(Dataset* datasetPtr);
     bool isTileContains(const TileIndex& tileIndex) const;
@@ -46,8 +45,9 @@ public slots:
     void onTileDownloadStopped(const TileIndex& tileIndx);
 
 private:
-    std::unordered_map<TileIndex, Tile> tiles_;
-    QReadWriteLock rwLocker_;
+    size_t maxCapacity_;
+    std::list<Tile> tileList_; // лист тайлов
+    std::unordered_map<TileIndex, std::list<Tile>::iterator> tileMap_; // хэш итераторов (least recently used)
     Dataset* datasetPtr_;
     std::weak_ptr<TileProvider> tileProvider_;
     std::weak_ptr<TileDB> tileDB_;

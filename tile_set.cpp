@@ -3,8 +3,9 @@
 
 namespace map {
 
-TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader) :
+TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity) :
     QObject(nullptr),
+    maxCapacity_(maxCapacity),
     tileProvider_(provider),
     tileDB_(db),
     tileDownloader_(downloader)
@@ -18,7 +19,7 @@ void TileSet::setDatesetPtr(Dataset *datasetPtr)
 
 bool TileSet::isTileContains(const TileIndex &tileIndex) const
 {
-    if (auto it = tiles_.find(tileIndex); it != tiles_.end()) {
+    if (auto it = tileMap_.find(tileIndex); it != tileMap_.end()) {
         return true;
     }
     return false;
@@ -31,8 +32,9 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const
         return;
     }
 
-    if (auto it = tiles_.find(tileIndx); it != tiles_.end()) {
-        Tile& tile = it->second;
+    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+        tileList_.splice(tileList_.begin(), tileList_, it->second);
+        Tile& tile = *(it->second);
 
         if (tile.getInUse() || !tile.getImageIsNull()) {
             //qDebug() << "TileSet::onTileLoaded: tile.getInUse():" << tile.getInUse() << ", !tile.getImageIsNull()" << !tile.getImageIsNull(); // TODO
@@ -70,7 +72,9 @@ void TileSet::onTileLoadFailed(const TileIndex &tileIndx, const QString &errorSt
     // try to load
     QList<TileIndex> tilesToDownload;
     tilesToDownload.append(tileIndx);
-    tileDownloader_.lock()->downloadTiles(tilesToDownload);
+    if (auto sharedDownloader = tileDownloader_.lock(); sharedDownloader) {
+        sharedDownloader->downloadTiles(tilesToDownload);
+    }
 }
 
 void TileSet::onTileLoadStopped(const TileIndex &tileIndx)
@@ -85,8 +89,9 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
         return;
     }
 
-    if (auto it = tiles_.find(tileIndx); it != tiles_.end()) {
-        Tile& tile = it->second;
+    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+        tileList_.splice(tileList_.begin(), tileList_, it->second);
+        Tile& tile = *(it->second);
 
         // skip
         if (tile.getInUse() || !tile.getImageIsNull()) {
@@ -138,24 +143,41 @@ void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
 
 bool TileSet::addTile(const TileIndex& tileIndx)
 {
-    if (auto it = tiles_.find(tileIndx); it == tiles_.end()) {
-        Tile newTile(tileIndx);
-        newTile.setRequestLastTime(QDateTime::currentDateTimeUtc());
-        tiles_.emplace(tileIndx, std::move(newTile));
-        return true;
+    bool retVal{ false };
+    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+        tileList_.splice(tileList_.begin(), tileList_, it->second); // move to front
+        it->second->setRequestLastTime(QDateTime::currentDateTimeUtc());
+        retVal =  false;
     }
     else {
-        it->second.setRequestLastTime(QDateTime::currentDateTimeUtc());
+        Tile newTile(tileIndx);
+        newTile.setRequestLastTime(QDateTime::currentDateTimeUtc());
+        tileList_.push_front(std::move(newTile));
+        tileMap_[tileIndx] = tileList_.begin();
+
+        if (tileMap_.size() > maxCapacity_) {
+            while (tileMap_.size() > maxCapacity_) { // remove from back (map and list)
+                auto lastIt = std::prev(tileList_.end());
+                const TileIndex& indexToRemove = lastIt->getIndex();
+                emit deleteSignal(*lastIt);
+                tileMap_.erase(indexToRemove);
+                tileList_.erase(lastIt);
+            }
+        }
+
+        retVal = true;
     }
 
-    return false;
+    return retVal;
 }
 
 void TileSet::onNewRequest(const QList<TileIndex> &request)
-{    
+{
     // остановить работу db, downloader
     emit requestStopAndClear();
-    tileDownloader_.lock()->stopAndClearRequests();
+    if (auto sharedDownloader = tileDownloader_.lock(); sharedDownloader) {
+        sharedDownloader->stopAndClearRequests();
+    }
 
     // добавление тайлов в tileSet
     for (auto& itm : request) {
@@ -170,11 +192,11 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
     // а удаляем тут
 
     // поиск в tileSet (RAM) на удаление в OpenGL
-    for (auto& [index, tile] : tiles_) {
+    for (auto& [index, tile] : tileMap_) {
         if (!request.contains(index)) {
-            if (tile.getInUse()) { // был в использовании но сейчас нет
-                tile.setInUse(false);
-                emit deleteSignal(tile);
+            if (tile->getInUse()) { // был в использовании но сейчас нет
+                tile->setInUse(false);
+                emit deleteSignal(*tile);
             }
         }
     }
@@ -183,14 +205,14 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
     // все тайлы были созданы до
     QList<TileIndex> filtReq;
     for (const auto& itm : request) {
-        if (auto tile = tiles_.find(itm); tile != tiles_.end()) {
-            if (tile->second.getImageIsNull()) { // для тайлов с 'null' image ДОБАВЛЯЕМ в запрос, в OpenGL позже проинитится
+        if (auto tile = tileMap_.find(itm); tile != tileMap_.end()) {
+            if (tile->second->getImageIsNull()) { // для тайлов с 'null' image ДОБАВЛЯЕМ в запрос, в OpenGL позже проинитится
                 filtReq.append(itm);
             }
             else { // если у тайла есть изобрадение, сразу инитим в OpenGL и НЕ добавляем в запрос
-                if (!tile->second.getInUse()) {
-                    tile->second.setInUse(true);
-                    emit appendSignal(tile->second);
+                if (!tile->second->getInUse()) {
+                    tile->second->setInUse(true);
+                    emit appendSignal(*(tile->second));
                 }
             }
         }

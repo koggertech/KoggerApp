@@ -62,7 +62,7 @@ void TileDownloader::stopAndClearRequests()
 {
     QList<QNetworkReply*> repliesToStop = activeReplies_.values();
 
-    for (QNetworkReply* reply : repliesToStop) {
+    for (auto* reply : repliesToStop) {
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
         emit downloadStopped(index);
         reply->abort();
@@ -80,7 +80,11 @@ void TileDownloader::startNextDownload()
     }
 
     auto index = downloadQueue_.dequeue();
-    QUrl url = tileProvider_.lock()->createURL(index);
+
+    QUrl url;
+    if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
+        url = sharedProvider->createURL(index);
+    }
 
     if (!url.isValid()) {
         qWarning() << "Constructed invalid URL for TileIndex:" << index.x_ << index.y_ << index.z_;
@@ -118,8 +122,10 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
         QImage image;
 
         if (image.loadFromData(imageData)) {
-            TileInfo info = tileProvider_.lock()->indexToTileInfo(index);
-            emit tileDownloaded(index, image, info);
+            if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
+                TileInfo info = sharedProvider->indexToTileInfo(index);
+                emit tileDownloaded(index, image, info);
+            }
         }
         else {
             emit downloadFailed(index, "Failed to load image from data");

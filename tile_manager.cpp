@@ -16,7 +16,7 @@ TileManager::TileManager(QObject *parent) :
     tileProvider_(std::make_shared<TileGoogleProvider>()),
     tileDownloader_(std::make_shared<TileDownloader>(tileProvider_,  10)),
     tileDB_(std::make_shared<TileDB>(tileProvider_)),
-    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_))
+    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, 250))
 {
     // tileDownloader_ -> tileSet_
     QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded,  tileSet_.get(), &TileSet::onTileDownloaded,      Qt::AutoConnection);
