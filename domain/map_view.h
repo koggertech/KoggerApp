@@ -30,7 +30,12 @@ public:
 
     private:
         friend class MapView;
-        QVector<QVector3D> rectVertices_;
+
+        QVector<QVector3D> firstVertices_;
+        QVector<QVector3D> secondVertices_;
+        bool isGreen_;
+        bool isPerspective_;
+        QVector3D point_;
         std::unordered_map<map::TileIndex, map::Tile> tilesHash_;
     };
 
@@ -39,9 +44,10 @@ public:
     virtual ~MapView();
 
     void clear();
+    void update();
 
     void setView(GraphicsScene3dView* viewPtr);
-    void setRectVertices(const QVector<QVector3D>& vertices);
+    void setRectVertices(const QVector<LLA>& vertices, const QVector<LLA>& vertices2, bool green, bool isPerspective_, QVector3D centralPoint);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
     std::unordered_map<map::TileIndex, QImage> getInitTileTextureTasks();
@@ -50,6 +56,7 @@ public:
 public slots:
     void onTileAppend(const map::Tile& tile);
     void onTileDelete(const map::Tile& tile);
+    void onTileVerticesUpdated(const map::Tile& tile);
 
 signals:
     void updatedTextureId(const map::TileIndex& tileIndx, GLuint textureId);

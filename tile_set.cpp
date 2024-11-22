@@ -8,13 +8,9 @@ TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db,
     maxCapacity_(maxCapacity),
     tileProvider_(provider),
     tileDB_(db),
-    tileDownloader_(downloader)
+    tileDownloader_(downloader),
+    isPerspective_(false)
 {
-}
-
-void TileSet::setDatesetPtr(Dataset *datasetPtr)
-{
-    datasetPtr_ = datasetPtr;
 }
 
 bool TileSet::isTileContains(const TileIndex &tileIndex) const
@@ -37,7 +33,6 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const
         Tile& tile = *(it->second);
 
         if (tile.getInUse() || !tile.getImageIsNull()) {
-            //qDebug() << "TileSet::onTileLoaded: tile.getInUse():" << tile.getInUse() << ", !tile.getImageIsNull()" << !tile.getImageIsNull(); // TODO
             return;
         }
 
@@ -48,14 +43,7 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const
 
         tile.setImage(temp);
         tile.setTileInfo(info);
-
-        if (datasetPtr_) {
-            tile.updateVertices(datasetPtr_->getRef());
-        }
-        else {
-            qWarning() << "TileSet::onTileLoaded: datasetPtr_ equals nullptr, tile vertices not updated";
-        }
-
+        tile.updateVertices(viewLlaRef_, isPerspective_);
         tile.setState(Tile::State::kReady);
 
         if (!tile.getInUse()) {
@@ -95,7 +83,6 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
 
         // skip
         if (tile.getInUse() || !tile.getImageIsNull()) {
-            //qDebug() << "TileSet::onTileDownloaded: " << tileIndx<< "tile.getInUse():" << tile.getInUse() << ", !tile.getImageIsNull()" << !tile.getImageIsNull();
             return;
         }
 
@@ -107,14 +94,7 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
 
         tile.setImage(temp);
         tile.setTileInfo(info);
-
-        if (datasetPtr_) {
-            tile.updateVertices(datasetPtr_->getRef());
-        }
-        else {
-            qWarning() << "TileSet::onTileDownloaded: datasetPtr_ equals nullptr, tile vertices not updated";
-        }
-
+        tile.updateVertices(viewLlaRef_, isPerspective_);
         tile.setState(Tile::State::kReady);
 
         if (!tile.getInUse()) {
@@ -171,6 +151,16 @@ bool TileSet::addTile(const TileIndex& tileIndx)
     return retVal;
 }
 
+void TileSet::setIsPerspective(bool state)
+{
+    isPerspective_ = state;
+}
+
+void TileSet::setViewLla(LLARef viewLlaRef)
+{
+    viewLlaRef_ = viewLlaRef;
+}
+
 void TileSet::onNewRequest(const QList<TileIndex> &request)
 {
     // остановить работу db, downloader
@@ -197,6 +187,14 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
             if (tile->getInUse()) { // был в использовании но сейчас нет
                 tile->setInUse(false);
                 emit deleteSignal(*tile);
+            }
+        }
+
+        // обновить вершины
+        if (request.contains(index)) {
+            if (viewLlaRef_ != tile->getUsedLlaRef()) {
+                tile->updateVertices(viewLlaRef_, isPerspective_);
+                emit updVertSignal(*tile);
             }
         }
     }

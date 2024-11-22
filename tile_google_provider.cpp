@@ -27,12 +27,14 @@ int32_t TileGoogleProvider::lonToTileX(const double lon, const int z) const
         qWarning() << "Invalid zoom level:" << z;
         return -1;
     }
-    if (lon < -180.0 || lon > 180.0) {
-        qWarning() << "Invalid longitude:" << lon;
-        return -1;
-    }
 
-    return static_cast<int32_t>(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
+    double normalizedLon = fmod(lon + 180.0, 360.0);
+    if (normalizedLon < 0) {
+        normalizedLon += 360.0;
+    }
+    normalizedLon -= 180.0;
+
+    return static_cast<int32_t>(floor((normalizedLon + 180.0) / 360.0 * pow(2.0, z)));
 }
 
 int32_t TileGoogleProvider::latToTileY(const double lat, const int z) const
@@ -41,12 +43,11 @@ int32_t TileGoogleProvider::latToTileY(const double lat, const int z) const
         qWarning() << "Invalid zoom level:" << z;
         return -1;
     }
-    if (lat < -90.0 || lat > 90.0) {
-        qWarning() << "Invalid latitude:" << lat;
-        return -1;
-    }
 
-    return static_cast<int32_t>(floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
+    double clampedLat = std::clamp(lat, -90.0, 90.0);
+
+    double sinLat = sin(clampedLat * M_PI / 180.0);
+    return static_cast<int32_t>(floor((1.0 - log((1.0 + sinLat) / (1.0 - sinLat)) / (2.0 * M_PI)) * pow(2.0, z - 1)));
 }
 
 TileInfo TileGoogleProvider::indexToTileInfo(TileIndex tileIndx) const

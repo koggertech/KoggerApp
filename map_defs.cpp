@@ -42,6 +42,11 @@ void Tile::setRequestLastTime(const QDateTime &val)
     requestLastTime_ = val;
 }
 
+void Tile::setVertices(const QVector<QVector3D> &vertices)
+{
+    vertices_ = vertices;
+}
+
 TileInfo Tile::getTileInfo() const
 {
     return info_;
@@ -102,6 +107,11 @@ QDateTime Tile::getRequestLastTime() const
     return requestLastTime_;
 }
 
+LLARef Tile::getUsedLlaRef() const
+{
+    return usedLlaRef_;
+}
+
 const QVector<QVector3D> &Tile::getVerticesRef() const
 {
     return vertices_;
@@ -146,7 +156,7 @@ Tile::Tile(TileIndex index) :
 
 }
 
-void Tile::updateVertices(const LLARef& llaRef)
+void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
 {
     auto ref = llaRef;
 
@@ -155,28 +165,15 @@ void Tile::updateVertices(const LLARef& llaRef)
         texCoords_.clear();
         indices_.clear();
 
-        // p 1
         LLA lla1(info_.bounds.south, info_.bounds.west, 0.0f);
-        NED ned1(&lla1, &ref, false);
-        // p 2
+        NED ned1(&lla1, &ref, isPerspective);
         LLA lla2(info_.bounds.north, info_.bounds.west, 0.0f);
-        NED ned2(&lla2, &ref, false);
-        // p 3
+        NED ned2(&lla2, &ref, isPerspective);
         LLA lla3(info_.bounds.north, info_.bounds.east, 0.0f);
-        NED ned3(&lla3, &ref, false);
-        // p 4
+        NED ned3(&lla3, &ref, isPerspective);
         LLA lla4(info_.bounds.south, info_.bounds.east, 0.0f);
-        NED ned4(&lla4, &ref, false);
+        NED ned4(&lla4, &ref, isPerspective);
 
-/*
-        //it->second.setVertexNed(QVector3D(ned.n,ned.e,0.0f));
-        qDebug () << "ned1:" << ned1.n << ned1.e;
-        qDebug () << "ned2:" << ned2.n << ned2.e;
-        qDebug () << "ned3:" << ned3.n << ned3.e;
-        qDebug () << "ned4:" << ned4.n << ned4.e;
-        qDebug () << "tileInfo.tileSizeMeters:" << info_.tileSizeMeters;
-*/
-        // texture vertices
         vertices_ = {
             QVector3D(ned1.n, ned1.e, 0.0f),
             QVector3D(ned2.n, ned2.e, 0.0f),
@@ -195,6 +192,8 @@ void Tile::updateVertices(const LLARef& llaRef)
             0, 1, 2,
             0, 2, 3
         };
+
+        usedLlaRef_ = ref;
     }
 }
 
@@ -274,4 +273,6 @@ bool TileIndex::operator<(const TileIndex &other) const
     if (y_ != other.y_) return y_ < other.y_;
     return providerId_ < other.providerId_;
 }
+
+
 } // namespace map

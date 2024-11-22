@@ -9,6 +9,7 @@
 #include <QHash>
 #include <QMetaType>
 #include <QOpenGLFunctions>
+#include <QtMath>
 #include <functional>
 
 #include "plotcash.h"
@@ -62,7 +63,7 @@ public:
 
     Tile(TileIndex index);
 
-    void updateVertices(const LLARef& llaRef);
+    void updateVertices(const LLARef& llaRef, bool isPerspective);
     bool isValid() const;
 
     void      setTileInfo(const TileInfo& info);
@@ -77,6 +78,7 @@ public:
     void      setNeedToDeinit(bool state);
     void      setCreationTime(const QDateTime& val);
     void      setRequestLastTime(const QDateTime& val);
+    void      setVertices(const QVector<QVector3D>& vertices);
 
     TileInfo  getTileInfo() const;
     State     getState() const;
@@ -91,6 +93,7 @@ public:
     bool      getNeedToDeinit() const;
     QDateTime getCreationTime() const;
     QDateTime getRequestLastTime() const;
+    LLARef    getUsedLlaRef() const;
 
     const QVector<QVector3D>& getVerticesRef() const;
     const QVector<QVector2D>& getTexCoordsRef() const;
@@ -122,7 +125,68 @@ private:
     TileIndex index_;
     QDateTime requestLastTime_;
     QDateTime creationTime_;
+
+    LLARef usedLlaRef_;
 };
+
+inline float calculateDistance(const LLARef &llaRef1, const LLARef &llaRef2)
+{
+    constexpr double R = 6371000.0;
+
+    double lat1 = qDegreesToRadians(llaRef1.refLla.latitude);
+    double lon1 = qDegreesToRadians(llaRef1.refLla.longitude);
+    double lat2 = qDegreesToRadians(llaRef2.refLla.latitude);
+    double lon2 = qDegreesToRadians(llaRef2.refLla.longitude);
+
+    double dLat = lat2 - lat1;
+    double dLon = lon2 - lon1;
+
+    double a = qPow(qSin(dLat / 2), 2) +
+               qCos(lat1) * qCos(lat2) * qPow(qSin(dLon / 2), 2);
+    double c = 2 * qAtan2(qSqrt(a), qSqrt(1 - a));
+    double distance2D = R * c;
+
+    double dAlt = 0;
+    double distance = qSqrt(qPow(distance2D, 2) + qPow(dAlt, 2));
+
+    return distance;
+}
+
+inline LLARef findCentralLLA(const QVector<QVector3D> &llaVertices)
+{
+    if (llaVertices.isEmpty()) {
+        return LLARef();
+    }
+
+    QVector3D sumXYZ(0.0, 0.0, 0.0);
+
+    for (const auto& lla : llaVertices) {
+        double latRad = qDegreesToRadians(lla.x());
+        double lonRad = qDegreesToRadians(lla.y());
+
+        double x = cos(latRad) * cos(lonRad);
+        double y = cos(latRad) * sin(lonRad);
+        double z = sin(latRad);
+
+        sumXYZ += QVector3D(x, y, z);
+    }
+
+    sumXYZ /= static_cast<double>(llaVertices.size());
+
+    double length = sumXYZ.length();
+    if (length == 0.0) {
+        return LLARef();
+    }
+
+    QVector3D normalized = sumXYZ / length;
+
+    double centralLat = qRadiansToDegrees(asin(normalized.z()));
+    double centralLon = qRadiansToDegrees(atan2(normalized.y(), normalized.x()));
+
+    LLA resLla(centralLat, centralLon, 0.0f);
+    return LLARef(resLla);
+}
+
 
 } // namespace map
 
@@ -138,4 +202,4 @@ struct hash<::map::TileIndex> {
                (std::hash<int32_t>()(index.providerId_) << 3);
     }
 };
-}
+} // namespace std

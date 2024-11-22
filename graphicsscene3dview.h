@@ -14,7 +14,6 @@
 #include "bottomtrack.h"
 #include "polygongroup.h"
 #include "pointgroup.h"
-#include "vertexeditingdecorator.h"
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
@@ -40,6 +39,7 @@ public:
                qreal fov,
                qreal sensivity);
 
+        float distForMapView() const;
         qreal distToFocusPoint() const;
         qreal fov() const;
         qreal pitch() const;
@@ -52,6 +52,7 @@ public:
         void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
         void move(const QVector2D &lastMouse, const QVector2D &mousePos);
+        void resetZAxis();
         void moveZAxis(float z);
         void zoom(qreal delta);
         void commitMovement();
@@ -61,11 +62,16 @@ public:
         void setIsometricView();
         void setMapView();
         void reset();
+
         float getHeightAboveGround() const;
         float getAngleToGround() const;
+        bool getIsPerspective() const;
+        bool getIsFarAwayFromOriginLla() const;
 
     private:
-        void updateViewMatrix(QVector3D* lookAt = nullptr);
+        void updateCameraParams();
+        void tryToChangeViewLlaRef();
+        void updateViewMatrix();
         void checkRotateAngle();
     private:
         friend class GraphicsScene3dView;
@@ -74,6 +80,7 @@ public:
         QVector3D m_eye = {0.0f, 0.0f, 0.0f};
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
         QVector3D m_lookAt = {0.0f, 0.0f, 0.0f};
+        QVector3D m_lookAtSave = {0.0f, 0.0f, 0.0f};
         QVector3D m_relativeOrbitPos = {0.0f, 0.0f, 0.0f};
 
         QMatrix4x4 m_view;
@@ -87,13 +94,18 @@ public:
         qreal m_yaw = 0.f;
         qreal m_fov = 45.f;
         float m_distToFocusPoint = 50.f;
+        float distForMapView_ = m_distToFocusPoint;
         qreal m_sensivity = 4.f;
         float distToGround_ = 0.0f;
         float angleToGround_ = 0.0f;
-
+        bool isPerspective_ = false;
+        float highDistThreshold_ = 500.0f;
+        float lowDistThreshold_ = highDistThreshold_ * 0.9f;
         QVector2D m_rotAngle;
-
         GraphicsScene3dView* viewPtr_;
+        LLARef datasetLlaRef_;
+        LLA yerevanLla = LLA(40.1852f, 44.5149f, 0.0f);
+        LLARef viewLlaRef_ = LLARef(yerevanLla);
     };
 
     //Renderer
@@ -163,6 +175,8 @@ public:
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setCalcStateSideScanView(bool state);
     void interpolateDatasetEpochs(bool fromStart);
+    void updateProjection();
+    void setNeedToResetStartPos(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -192,16 +206,16 @@ public Q_SLOTS:
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlEngine(QObject* engine);
+    void updateMapView();
 
 signals:
-    void sendRectRequest(QVector<QVector3D> rect);
+    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef);
+    void cameraIsMoved();
 
 private:
     void updateBounds();
     void updatePlaneGrid();
     void clearComboSelectionRect();
-    void updateMapView();
-    void updateMapBounds();
 
 private:
     friend class BottomTrack;
@@ -245,11 +259,19 @@ private:
 #else
     static constexpr double mouseThreshold_{ 10.0 };
 #endif
+
+    static constexpr float perspectiveEdge_{ 5000.0f };
+    static constexpr float nearPlanePersp_{ 1.0f };
+    static constexpr float farPlanePersp_{ 20000.0f };
+    static constexpr float nearPlaneOrthoCoeff_{ 0.05f };
+    static constexpr float farPlaneOrthoCoeff_{ 1.2f };
+
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     int bottomTrackWindowCounter_;
+    bool needToResetStartPos_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

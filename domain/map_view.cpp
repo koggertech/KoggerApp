@@ -16,6 +16,26 @@ MapView::~MapView()
 
 void MapView::clear()
 {
+    QWriteLocker locker(&rWLocker_);
+    auto r = RENDER_IMPL(MapView);
+
+    // append tasks
+    appendTasks_.clear();
+    // delete tasks
+    for (const auto& [tileIndx, tile] : r->tilesHash_) {
+        deleteTasks_.append(tile.getTextureId());
+    }
+    // renderHash
+    r->tilesHash_.clear();
+    r->firstVertices_.clear();
+    r->secondVertices_.clear();
+
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
+}
+
+void MapView::update()
+{
     Q_EMIT changed();
     Q_EMIT boundsChanged();
 }
@@ -25,10 +45,23 @@ void MapView::setView(GraphicsScene3dView *viewPtr)
     SceneObject::m_view = viewPtr;
 }
 
-void MapView::setRectVertices(const QVector<QVector3D> &vertices)
+void MapView::setRectVertices(const QVector<LLA> &firstVertices, const QVector<LLA>& secondVertices, bool green, bool isPerspective, QVector3D centralPoint)
 {
     auto r = RENDER_IMPL(MapView);
-    r->rectVertices_ = vertices;
+
+    r->firstVertices_.clear();
+    r->secondVertices_.clear();
+
+    for (const auto& itm : firstVertices) {
+        r->firstVertices_.append(QVector3D(itm.latitude, itm.longitude, 0.0f));
+    }
+    for (const auto& itm : secondVertices) {
+        r->secondVertices_.append(QVector3D(itm.latitude, itm.longitude, 0.0f));
+    }
+
+    r->isGreen_ = green;
+    r->isPerspective_ = isPerspective;
+    r->point_ = centralPoint;
 
     Q_EMIT changed();
 }
@@ -88,9 +121,22 @@ void MapView::onTileDelete(const map::Tile &tile)
     Q_EMIT changed();
 }
 
+void MapView::onTileVerticesUpdated(const map::Tile &tile)
+{
+    auto r = RENDER_IMPL(MapView);
+
+    if (auto it = r->tilesHash_.find(tile.getIndex()); it != r->tilesHash_.end()) {
+        it->second.setVertices(tile.getVerticesRef());
+    }
+
+    Q_EMIT changed();
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MapViewRenderImplementation
-MapView::MapViewRenderImplementation::MapViewRenderImplementation()
+MapView::MapViewRenderImplementation::MapViewRenderImplementation() :
+    isGreen_(false),
+    isPerspective_(false)
 {
 
 }
@@ -104,8 +150,8 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
     if (!m_isVisible)
         return;
 
-    // rect
-    if (!rectVertices_.empty()) {
+    // first vertices
+    if (!firstVertices_.empty()) {
         auto shaderProgram = shaderProgramMap["static"].get();
         shaderProgram->bind();
 
@@ -113,18 +159,90 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         auto matrixLoc = shaderProgram->uniformLocation("matrix");
         auto posLoc    = shaderProgram->attributeLocation("position");
 
-        QVector4D vertexColor(1.0f, 0.0f, 0.0f, 1.0f);
+        QVector4D vertexColor = isGreen_ ? QVector4D(0.0f, 1.0f, isPerspective_ ? 1.0f : 0.0f, 1.0f) : QVector4D(1.0f, 0.0f, isPerspective_ ? 1.0f : 0.0f, 1.0f);
 
         shaderProgram->setUniformValue(colorLoc,vertexColor);
         shaderProgram->setUniformValue(matrixLoc, projection * view * model);
         shaderProgram->enableAttributeArray(posLoc);
-        shaderProgram->setAttributeArray(posLoc, rectVertices_.constData());
+        shaderProgram->setAttributeArray(posLoc, firstVertices_.constData());
 
-        ctx->glLineWidth(4);
-        ctx->glDrawArrays(GL_LINE_LOOP, 0, rectVertices_.size());
+        ctx->glLineWidth(2);
+        ctx->glDrawArrays(GL_LINE_LOOP, 0, firstVertices_.size());
 
         shaderProgram->disableAttributeArray(posLoc);
         shaderProgram->release();
+    }
+
+    // second vertices
+    if (!secondVertices_.empty()) {
+        auto shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
+
+        auto colorLoc  = shaderProgram->uniformLocation("color");
+        auto matrixLoc = shaderProgram->uniformLocation("matrix");
+        auto posLoc    = shaderProgram->attributeLocation("position");
+
+        QVector4D vertexColor = isGreen_ ? QVector4D(0.0f, 1.0f, isPerspective_ ? 0.5f : 0.0f, 1.0f) : QVector4D(1.0f, 0.0f, isPerspective_ ? 0.5f : 0.0f, 1.0f);
+
+        shaderProgram->setUniformValue(colorLoc,vertexColor);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, secondVertices_.constData());
+
+        ctx->glLineWidth(2);
+        ctx->glDrawArrays(GL_LINE_LOOP, 0, secondVertices_.size());
+
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
+    }
+
+    // first point
+    {
+        auto shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
+
+        auto colorLoc  = shaderProgram->uniformLocation("color");
+        auto matrixLoc = shaderProgram->uniformLocation("matrix");
+        auto posLoc    = shaderProgram->attributeLocation("position");
+        int widthLoc   = shaderProgram->uniformLocation("width");
+
+        QVector4D vertexColor(0.0f, 1.0f, 0.0f, 1.0f);
+
+        shaderProgram->setUniformValue(colorLoc,vertexColor);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->setUniformValue(widthLoc, 12.0f);
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, &point_);
+
+        ctx->glEnable(34370);
+        ctx->glDrawArrays(GL_POINTS, 0, 1);
+        ctx->glDisable(34370);
+
+        shaderProgram->disableAttributeArray(posLoc);
+    }
+
+    // second point
+    {
+        auto shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
+
+        auto colorLoc  = shaderProgram->uniformLocation("color");
+        auto matrixLoc = shaderProgram->uniformLocation("matrix");
+        auto posLoc    = shaderProgram->attributeLocation("position");
+        int widthLoc   = shaderProgram->uniformLocation("width");
+
+        QVector4D vertexColor(1.f, 0.0f, 0.0f, 1.0f);
+
+        shaderProgram->setUniformValue(colorLoc,vertexColor);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->setUniformValue(widthLoc, 12.0f);
+        shaderProgram->enableAttributeArray(posLoc);
+        QVector3D point(0.0f, 0.0f, 0.0f);
+        shaderProgram->setAttributeArray(posLoc, &point);
+
+        ctx->glEnable(34370);
+        ctx->glDrawArrays(GL_POINTS, 0, 1);
+        ctx->glDisable(34370);
     }
 
     // tiles
