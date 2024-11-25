@@ -52,7 +52,6 @@ std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
 
 void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef)
 {
-    QList<TileIndex> indxRequest;
 
     int minX = std::numeric_limits<int>::max();
     int maxX = std::numeric_limits<int>::min();
@@ -60,16 +59,27 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     int maxY = std::numeric_limits<int>::min();
     int zoomLevel = -1;
 
+    double minLat = std::numeric_limits<double>::max();
+    double maxLat = std::numeric_limits<double>::lowest();
+    double minLon = std::numeric_limits<double>::max();
+    double maxLon = std::numeric_limits<double>::lowest();
+
     // dimensions
     for (auto& itm : request) {
         // LLARect -> tileIndx
         LLA lla(itm.latitude, itm.longitude, 0.0f);
+
         auto tileIndx = tileProvider_.get()->llaToTileIndex(lla, tileProvider_.get()->heightToTileZ(itm.altitude));
 
         minX = std::min(minX, tileIndx.x_);
         maxX = std::max(maxX, tileIndx.x_);
         minY = std::min(minY, tileIndx.y_);
         maxY = std::max(maxY, tileIndx.y_);
+
+        if (itm.latitude > maxLat) maxLat = itm.latitude;
+        if (itm.latitude < minLat) minLat = itm.latitude;
+        if (itm.longitude > maxLon) maxLon = itm.longitude;
+        if (itm.longitude < minLon) minLon = itm.longitude;
 
         if (zoomLevel == -1) { // for the first element
             zoomLevel = tileIndx.z_;
@@ -80,17 +90,48 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         }
     }
 
-    uint64_t reqSize = (maxX - minX) * (maxY - minY);
-    if (reqSize < numRequests_) {
-        for (int x = minX; x <= maxX; ++x) {
-            for (int y = minY; y <= maxY; ++y) {
-                TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-                indxRequest.append(tileIndx);
+    auto [lonStartTile, lonEndTile, boundaryTile] = tileProvider_.get()->lonToTileXWithWrapAndBoundary(minLon, maxLon, zoomLevel);
+
+    uint64_t reqSize = 0;
+    QList<TileIndex> indxRequest;
+
+    if (boundaryTile == -1) {
+        reqSize = (lonEndTile - lonStartTile + 1) * (maxY - minY + 1);
+
+        if (reqSize < numRequests_) {
+            for (int x = lonStartTile; x <= lonEndTile; ++x) {
+                for (int y = minY; y <= maxY; ++y) {
+                    TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
+                    indxRequest.append(tileIndx);
+                }
             }
         }
+    }
+    else {
+        reqSize = (boundaryTile - lonStartTile + 1) * (maxY - minY + 1) +
+                  (lonEndTile + 1) * (maxY - minY + 1);
 
+        if (reqSize < numRequests_) {
+            for (int x = lonStartTile; x <= boundaryTile; ++x) {
+                for (int y = minY; y <= maxY; ++y) {
+                    TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
+                    indxRequest.append(tileIndx);
+                }
+            }
+
+            for (int x = 0; x <= lonEndTile; ++x) {
+                for (int y = minY; y <= maxY; ++y) {
+                    TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
+                    indxRequest.append(tileIndx);
+                }
+            }
+        }
+    }
+
+    if (!indxRequest.isEmpty()) {
         tileSet_->setViewLla(viewLlaRef);
         tileSet_->setIsPerspective(isPerspective);
+        tileSet_->setEyeView(minLat, maxLat, minLon, maxLon);
         tileSet_->onNewRequest(indxRequest);
     }
 }

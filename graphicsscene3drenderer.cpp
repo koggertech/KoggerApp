@@ -101,14 +101,13 @@ void GraphicsScene3dRenderer::drawObjects()
     float nearPlaneOrthoCoeff{ 0.05f };
     float farPlaneOrthoCoeff{ 1.2f };
 
-
     if (m_camera.getIsPerspective()) {
         float coeff = m_camera.getHeightAboveGround() /  perspectiveEdge;
         qreal fixFov = m_camera.fov() + m_camera.fov() * coeff;
         projection.perspective(fixFov, m_viewSize.width() / m_viewSize.height(), nearPlanePersp, farPlanePersp);
     }
     else {
-        float orth_v = m_camera.getHeightAboveGround();// distToFocusPoint();
+        float orth_v = m_camera.getHeightAboveGround();
         float aspect_ratio = m_viewSize.width() / m_viewSize.height();
         projection.ortho(-orth_v*aspect_ratio, orth_v*aspect_ratio, -orth_v, orth_v, orth_v * nearPlaneOrthoCoeff, orth_v * farPlaneOrthoCoeff);
     }

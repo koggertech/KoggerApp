@@ -99,7 +99,7 @@ public:
         float distToGround_ = 0.0f;
         float angleToGround_ = 0.0f;
         bool isPerspective_ = false;
-        float highDistThreshold_ = 500.0f;
+        float highDistThreshold_ = 10000.0f;
         float lowDistThreshold_ = highDistThreshold_ * 0.9f;
         QVector2D m_rotAngle;
         GraphicsScene3dView* viewPtr_;
@@ -177,6 +177,7 @@ public:
     void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
+    void forceUpdateDatasetRef();
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);

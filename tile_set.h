@@ -26,6 +26,7 @@ public:
     void setIsPerspective(bool state);
     void setViewLla(LLARef viewLlaRef);
     void onNewRequest(const QList<TileIndex>& request);
+    void setEyeView(double minLat, double maxLat, double minLon, double maxLon);
 
 signals:
     // OpenGL
@@ -57,6 +58,11 @@ private:
     std::weak_ptr<TileDownloader> tileDownloader_;
     bool isPerspective_;
     LLARef viewLlaRef_;
+
+    double minLat_ = 0.0;
+    double maxLat_ = 0.0;
+    double minLon_ = 0.0;
+    double maxLon_ = 0.0;
 };
 
 

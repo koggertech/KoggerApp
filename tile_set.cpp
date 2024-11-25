@@ -42,7 +42,11 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const
         temp = temp.transformed(trans);
 
         tile.setImage(temp);
-        tile.setTileInfo(info);
+
+        auto updatedInfo = tileProvider_.lock()->indexToTileInfo(tile.getIndex(), getTilePosition(minLon_, maxLon_, info));
+        tile.setTileInfo(updatedInfo);
+        //tile.setTileInfo(info);
+
         tile.updateVertices(viewLlaRef_, isPerspective_);
         tile.setState(Tile::State::kReady);
 
@@ -93,7 +97,11 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
         temp = temp.transformed(trans);
 
         tile.setImage(temp);
-        tile.setTileInfo(info);
+
+        auto updatedInfo = tileProvider_.lock()->indexToTileInfo(tile.getIndex(), getTilePosition(minLon_, maxLon_, info));
+        tile.setTileInfo(updatedInfo);
+        //tile.setTileInfo(info);
+
         tile.updateVertices(viewLlaRef_, isPerspective_);
         tile.setState(Tile::State::kReady);
 
@@ -192,10 +200,14 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
 
         // обновить вершины
         if (request.contains(index)) {
-            if (viewLlaRef_ != tile->getUsedLlaRef()) {
+          //  if (viewLlaRef_ != tile->getUsedLlaRef()) { // TODO: persp<->ortho
+
+                auto updatedInfo = tileProvider_.lock()->indexToTileInfo(tile->getIndex(), getTilePosition(minLon_, maxLon_, tile->getTileInfo()));
+                tile->setTileInfo(updatedInfo);
+
                 tile->updateVertices(viewLlaRef_, isPerspective_);
                 emit updVertSignal(*tile);
-            }
+           // }
         }
     }
 
@@ -218,6 +230,14 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
 
     // запрос в DB
     emit requestLoadTiles(filtReq);
+}
+
+void TileSet::setEyeView(double minLat, double maxLat, double minLon, double maxLon)
+{
+    minLat_ = minLat;
+    maxLat_ = maxLat;
+    minLon_ = minLon;
+    maxLon_ = maxLon;
 }
 
 

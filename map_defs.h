@@ -19,6 +19,12 @@ namespace map {
 
 
 ///////*structures*///////
+enum class TilePosition {
+    kFits = 0,
+    kOnLeft,
+    kOnRight
+};
+
 struct GeoBounds {
     double north;
     double south;
@@ -29,6 +35,16 @@ struct GeoBounds {
 struct TileInfo {
     GeoBounds bounds;
     double tileSizeMeters;
+
+    friend QDebug operator<<(QDebug dbg, const TileInfo& info) {
+        dbg.nospace() << "TileInfo(tileSizeMeters=" << info.tileSizeMeters
+                      << ", bounds.west=" << info.bounds.west
+                      << ", bounds.east=" << info.bounds.east
+                      << ", bounds.bounds.south=" << info.bounds.south
+                      << ", bounds.bounds.north=" << info.bounds.north
+                      << ")";
+        return dbg.space();
+    }
 };
 
 struct TileIndex {
@@ -44,16 +60,16 @@ struct TileIndex {
     bool operator==(const TileIndex& other) const;
     bool operator!=(const TileIndex &other) const;
     bool operator<(const TileIndex& other) const;
-};
 
-inline QDebug operator<<(QDebug dbg, const TileIndex& index) {
-    dbg.nospace() << "TileIndex(x=" << index.x_
-                  << ", y=" << index.y_
-                  << ", z=" << index.z_
-                  << ", providerId=" << index.providerId_
-                  << ")";
-    return dbg.space();
-}
+    friend QDebug operator<<(QDebug dbg, const TileIndex& index) {
+        dbg.nospace() << "TileIndex(x=" << index.x_
+                      << ", y=" << index.y_
+                      << ", z=" << index.z_
+                      << ", providerId=" << index.providerId_
+                      << ")";
+        return dbg.space();
+    }
+};
 
 class Tile {
 public:
@@ -185,6 +201,34 @@ inline LLARef findCentralLLA(const QVector<QVector3D> &llaVertices)
 
     LLA resLla(centralLat, centralLon, 0.0f);
     return LLARef(resLla);
+}
+
+inline double clampLatitude(double lat)
+{
+    double maxLat = 85.05112878;
+    return std::max(-maxLat, std::min(maxLat, lat));
+}
+
+inline double normalizeLongitude(double lon)
+{
+    lon = std::fmod(lon + 180.0, 360.0);
+    if (lon < 0) {
+        lon += 360.0;
+    }
+    return lon - 180.0;
+}
+
+inline TilePosition getTilePosition(double minLon, double maxLon, const TileInfo &info)
+{
+    if (info.bounds.east < minLon) {
+        return TilePosition::kOnLeft;
+    }
+
+    if (info.bounds.west > maxLon) {
+        return TilePosition::kOnRight;
+    }
+
+    return TilePosition::kFits;
 }
 
 

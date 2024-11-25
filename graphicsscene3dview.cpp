@@ -312,7 +312,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         }
         else if (mouseButton.testFlag(Qt::LeftButton)) {
             auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-            auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());            
+            auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
             auto fromDir = (fromEnd - fromOrig).normalized();
             auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
             m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
@@ -435,6 +435,18 @@ void GraphicsScene3dView::updateProjection()
 void GraphicsScene3dView::setNeedToResetStartPos(bool state)
 {
     needToResetStartPos_ = state;
+}
+
+void GraphicsScene3dView::forceUpdateDatasetRef()
+{
+    if (m_dataset) {
+        auto ref = m_dataset->getRef();
+        m_camera->datasetLlaRef_ = ref.isInit ? ref : LLARef(m_camera->yerevanLla);
+    }
+
+    m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
+
+    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -715,7 +727,7 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    float reductorFactor = 0.01f; // debug
+    float reductorFactor = 0.0f; // debug
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
@@ -781,6 +793,21 @@ void GraphicsScene3dView::updateMapView()
         LLA rbLla(&rbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
         LLA rtLla(&rtNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
 
+        ltLla.latitude = map::clampLatitude(ltLla.latitude);
+        lbLla.latitude = map::clampLatitude(lbLla.latitude);
+        rbLla.latitude = map::clampLatitude(rbLla.latitude);
+        rtLla.latitude = map::clampLatitude(rtLla.latitude);
+
+        double edge = 180.0;
+        if (ltLla.longitude >  edge) ltLla.longitude =  edge;
+        if (ltLla.longitude < -edge) ltLla.longitude = -edge;
+        if (lbLla.longitude >  edge) lbLla.longitude =  edge;
+        if (lbLla.longitude < -edge) lbLla.longitude = -edge;
+        if (rbLla.longitude >  edge) rbLla.longitude =  edge;
+        if (rbLla.longitude < -edge) rbLla.longitude = -edge;
+        if (rtLla.longitude >  edge) rtLla.longitude =  edge;
+        if (rtLla.longitude < -edge) rtLla.longitude = -edge;
+
         llaVerts.append(LLA(ltLla.latitude, ltLla.longitude, dist));
         llaVerts.append(LLA(lbLla.latitude, lbLla.longitude, dist));
         llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
@@ -790,10 +817,10 @@ void GraphicsScene3dView::updateMapView()
             emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_);
         }
 
-        //qDebug() << "llaVerts";
-        //for (auto& itm : llaVerts) {
-        //    qDebug() << itm.latitude << ","<< itm.longitude;
-        //}
+        // qDebug() << "llaVerts";
+        // for (auto& itm : llaVerts) {
+        //     qDebug() << itm.latitude << ","<< itm.longitude;
+        // }
 
         // debug
         LLA debugltLla(llaVerts[0].latitude, llaVerts[0].longitude, 0.0f);
