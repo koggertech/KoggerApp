@@ -431,6 +431,18 @@ ColumnLayout {
         }
 
         CheckButton {
+            id: importCVSCheck
+            icon.source: "./icons/file-type-csv.svg"
+            // checkable: false
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+            implicitWidth: theme.controlHeight
+
+            onClicked: {
+            }
+        }
+
+        CheckButton {
             id: loggingCheck
             text: qsTr("REC KLF")
             checkedColor: "red"
@@ -471,6 +483,10 @@ ColumnLayout {
             // ToolTip.visible: hovered
             // ToolTip.text: "Recording"
         }
+    }
+
+    ImportPPK {
+        visible: importCVSCheck.checked
     }
 
     MenuRow {
@@ -594,4 +610,6 @@ ColumnLayout {
             }
         }
     }
+
+
 }

@@ -317,7 +317,8 @@ Q_DECLARE_METATYPE(DatasetChannel)
 enum class BottomTrackPreset {
     BottomTrackOneBeam = 0,
     BottomTrackOneBeamNarrow,
-    BottomTrackSideScan
+    BottomTrackSideScan,
+    BottomTrackOneBeamEdge,
 };
 
 struct BottomTrackParam {

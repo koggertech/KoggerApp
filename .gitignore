@@ -6,3 +6,4 @@ out_x64
 *.bkp
 coreFlash.cpp
 *.user
+DOA.h

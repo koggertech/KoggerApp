@@ -717,6 +717,16 @@ void Dataset::bottomTrackProcessing(int channel1, int channel2)
         t1 = 1.2;
     }
 
+    if(bottomTrackParam_.preset == BottomTrackPreset::BottomTrackOneBeamEdge) {
+        istart = 4;
+        init_win = 6;
+        scale_win = 34;
+
+        c1 = -5, c2 = -5, c3 = 5, c4 = 10, c5 = 4;
+        s2 = 1.015f, s3 = 1.035f, s4 = 1.042f, s5 = 1.050f;
+        t1 = 1.050;
+    }
+
     const int gain_slope_inv = 1000/(gain_slope);
     const int threshold_int = 10*gain_slope_inv*1000*threshold;
 

@@ -567,7 +567,7 @@ GridLayout {
                         id: bottomTrackList
                         //                        Layout.fillWidth: true
                         Layout.preferredWidth: 250
-                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Echogram Side-Scan")]
+                        model: [qsTr("Normal 2D"), qsTr("Narrow 2D"), qsTr("Echogram Side-Scan"), qsTr("Edge 2D")]
                         currentIndex: 0
 
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()

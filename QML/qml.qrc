@@ -95,5 +95,7 @@
         <file>USBLBox.qml</file>
         <file>DeviceItem.qml</file>
         <file>CPopup.qml</file>
-        <file>CMouseOpacityArea.qml</file>    </qresource>
+        <file>CMouseOpacityArea.qml</file>
+        <file>ImportPPK.qml</file>
+    </qresource>
 </RCC>
