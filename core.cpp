@@ -406,6 +406,7 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
 
     if (scene3dViewPtr_) {
+        scene3dViewPtr_->forceUpdateDatasetRef();
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
@@ -1188,6 +1189,12 @@ void Core::createLinkManagerConnections()
                                                                                                                                  tryOpenedfilePath_.clear();
 #endif
                                                                                                                                      if (scene3dViewPtr_) {
+                                                                                                                                        QTimer::singleShot(5000, this, [this]() { // TODO: correct llaref updating
+                                                                                                                                            if (scene3dViewPtr_) {
+                                                                                                                                                scene3dViewPtr_->forceUpdateDatasetRef();
+                                                                                                                                            }
+                                                                                                                                        });
+
                                                                                                                                          scene3dViewPtr_->setNavigationArrowState(true);
                                                                                                                                          scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
                                                                                                                                      }

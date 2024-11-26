@@ -10,6 +10,7 @@
 #include "tile_provider.h"
 #include "tile_downloader.h"
 #include "tile_db.h"
+#include "plotcash.h"
 
 
 namespace map {
@@ -25,7 +26,7 @@ public:
     std::shared_ptr<TileSet> getTileSetPtr() const;
 
 public slots:
-    void getRectRequest(QVector<QVector3D> request);
+    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef);
 
 private:
     std::shared_ptr<TileProvider> tileProvider_;
@@ -33,6 +34,9 @@ private:
     std::shared_ptr<TileDB> tileDB_;
     std::shared_ptr<TileSet> tileSet_;
     int lastZoomLevel_ = -1;
+
+    static constexpr int numRequests_{ 500 };
+    static constexpr int maxConcurrentDownloads_{ 10 };
 };
 
 

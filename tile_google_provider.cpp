@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <tuple>
 
 
 namespace map {
@@ -27,12 +28,33 @@ int32_t TileGoogleProvider::lonToTileX(const double lon, const int z) const
         qWarning() << "Invalid zoom level:" << z;
         return -1;
     }
-    if (lon < -180.0 || lon > 180.0) {
-        qWarning() << "Invalid longitude:" << lon;
-        return -1;
+
+    double normalizedLon = std::fmod(lon + 180.0, 360.0);
+
+    return static_cast<int32_t>(floor(normalizedLon / 360.0 * pow(2.0, z)));
+}
+
+std::tuple<int32_t, int32_t, int32_t> TileGoogleProvider::lonToTileXWithWrapAndBoundary(const double lonStart, const double lonEnd, const int z) const
+{
+    if (z < 0 || z > 21) {
+        qWarning() << "Invalid zoom level:" << z;
+        return {-1, -1, -1};
     }
 
-    return static_cast<int32_t>(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
+    int32_t numTiles = static_cast<int32_t>(std::pow(2.0, z));
+
+    int32_t tileStart = lonToTileX(lonStart, z);
+    int32_t tileEnd = lonToTileX(lonEnd - 1e-9, z);
+
+    bool crossesBoundary = (lonStart < -180.0 || lonEnd > 180.0 || lonStart > lonEnd);
+
+    if (crossesBoundary) {
+        int32_t boundaryTile = numTiles - 1;
+        return {tileStart, tileEnd, boundaryTile};
+    }
+    else {
+        return {tileStart, tileEnd, -1};
+    }
 }
 
 int32_t TileGoogleProvider::latToTileY(const double lat, const int z) const
@@ -41,31 +63,41 @@ int32_t TileGoogleProvider::latToTileY(const double lat, const int z) const
         qWarning() << "Invalid zoom level:" << z;
         return -1;
     }
-    if (lat < -90.0 || lat > 90.0) {
-        qWarning() << "Invalid latitude:" << lat;
-        return -1;
-    }
 
-    return static_cast<int32_t>(floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
+    double maxLat = 85.05112878;
+    double clampedLat = std::max(-maxLat, std::min(maxLat, lat));
+    double sinLat = sin(clampedLat * M_PI / 180.0);
+    int32_t numTiles = 1 << z;
+    double y = (0.5 - std::log((1 + sinLat) / (1 - sinLat)) / (4 * M_PI)) * numTiles;
+    int32_t tileY = static_cast<int32_t>(floor(y));
+    tileY = std::max(0, std::min(tileY, numTiles - 1));
+    return tileY;
 }
 
-TileInfo TileGoogleProvider::indexToTileInfo(TileIndex tileIndx) const
+TileInfo TileGoogleProvider::indexToTileInfo(TileIndex tileIndx, TilePosition pos) const
 {
     TileInfo info;
     GeoBounds bounds;
 
-    double n = pow(2.0, tileIndx.z_);
+    double numTiles = pow(2.0, tileIndx.z_);
 
-    bounds.west = (tileIndx.x_ / n) * 360.0 - 180.0;
-    bounds.east = ((tileIndx.x_ + 1) / n) * 360.0 - 180.0;
-    double lat_rad_north = atan(sinh(M_PI * (1 - 2.0 * tileIndx.y_ / n)));
+    bounds.west = (tileIndx.x_ / numTiles) * 360.0 - 180.0;
+    bounds.east = ((tileIndx.x_ + 1) / numTiles) * 360.0 - 180.0;
+    double lat_rad_north = atan(sinh(M_PI * (1 - 2.0 * tileIndx.y_ / numTiles)));
     bounds.north = lat_rad_north * (180.0 / M_PI);
-    double lat_rad_south = atan(sinh(M_PI * (1 - 2.0 * (tileIndx.y_ + 1) / n)));
+    double lat_rad_south = atan(sinh(M_PI * (1 - 2.0 * (tileIndx.y_ + 1) / numTiles)));
     bounds.south = lat_rad_south * (180.0 / M_PI);
+
+    if (pos == TilePosition::kOnLeft) {
+        bounds.west += 360.0;
+        bounds.east += 360.0;
+    } else if (pos == TilePosition::kOnRight) {
+        bounds.west -= 360.0;
+        bounds.east -= 360.0;
+    }
 
     double lat_center = (bounds.north + bounds.south) / 2.0;
     double resolution = (156543.03392804062 * cos(lat_center * M_PI / 180.0)) / pow(2.0, tileIndx.z_);
-
     double tileSizePixels = 256.0;
     info.tileSizeMeters = resolution * tileSizePixels;
 

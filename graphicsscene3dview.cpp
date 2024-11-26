@@ -35,7 +35,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
-    bottomTrackWindowCounter_(-1)
+    bottomTrackWindowCounter_(-1),
+    needToResetStartPos_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -84,10 +85,12 @@ GraphicsScene3dView::GraphicsScene3dView() :
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal, mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal, mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal,  mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal,  mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::updVertSignal, mapView_.get(), &MapView::onTileVerticesUpdated, Qt::DirectConnection);
 
     updatePlaneGrid();
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::AutoConnection);
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
@@ -193,7 +196,8 @@ void GraphicsScene3dView::clear()
     QQuickFramebufferObject::update();
 }
 
-QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) {
+QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ)
+{
     QVector3D retVal;
 
     if (qAbs(rayDirection.z()) < 1e-6) {
@@ -251,12 +255,21 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
         switchToBottomTrackVertexComboSelectionMode(x, y);
     }
 
+    m_camera->m_lookAtSave = m_camera->m_lookAt;
+
     m_startMousePos = { x, y };
     QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
 {
+    bool cameraWasMoved{ false };
+    if (needToResetStartPos_) {
+        m_camera->m_lookAtSave = m_camera->m_lookAt;
+        m_startMousePos = QPointF(x, y);
+        needToResetStartPos_ = false;
+    }
+
     // movement threshold for sync
     if (!wasMoved_) {
         double dist{ std::sqrt(std::pow(x - m_startMousePos.x(), 2) + std::pow(y - m_startMousePos.y(), 2)) };
@@ -287,12 +300,15 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         auto fromDir = (fromEnd - fromOrig).normalized();
         auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
         m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+        cameraWasMoved = true;
 #else
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
-            m_camera->commitMovement();
-            m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
-            m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
-            m_startMousePos = { x, y };
+            if (m_camera->getIsPerspective()) {
+                m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+                m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+                m_startMousePos = { x, y };
+                cameraWasMoved = true;
+            }
         }
         else if (mouseButton.testFlag(Qt::LeftButton)) {
             auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
@@ -300,12 +316,17 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
             auto fromDir = (fromEnd - fromOrig).normalized();
             auto from = calculateIntersectionPoint(fromOrig, fromDir , 0);
             m_camera->move(QVector2D(from.x(), from.y()), QVector2D(to.x() ,to.y()));
+            cameraWasMoved = true;
         }
 #endif
     }
 
     m_lastMousePos = { x, y };
     QQuickFramebufferObject::update();
+
+    if (cameraWasMoved) {
+        emit cameraIsMoved();
+    }
 }
 
 void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey)
@@ -314,7 +335,6 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
     clearComboSelectionRect();
 
-    m_camera->commitMovement(); //TODO: Commit only if camera in movement state
     m_lastMousePos = { x, y };
 
     if (switchedToBottomTrackVertexComboSelectionMode_) {
@@ -338,6 +358,7 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
 void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, QPointF angleDelta, Qt::Key keyboardKey)
 {
+    bool cameraWasMoved{ false };
     Q_UNUSED(mouseButton)
     Q_UNUSED(x)
     Q_UNUSED(y)
@@ -347,13 +368,21 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
         setVerticalScale(tempVerticalScale);
     }
-    else if (keyboardKey == Qt::Key_Shift)
+    else if (keyboardKey == Qt::Key_Shift) {
         angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
-    else
+        cameraWasMoved = true;
+    }
+    else {
         m_camera->zoom(angleDelta.y());
+        cameraWasMoved = true;
+    }
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
+
+    if (cameraWasMoved) {
+        emit cameraIsMoved();
+    }
 }
 
 void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta)
@@ -365,6 +394,8 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
+
+    emit cameraIsMoved();
 }
 
 void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
@@ -381,17 +412,51 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::updateProjection()
+{
+    QMatrix4x4 currProj;
+
+    if (m_camera) {
+        if (m_camera->getIsPerspective()) {
+            float coeff = m_camera->getHeightAboveGround() / perspectiveEdge_;
+            qreal fixFov = m_camera->fov() + m_camera->fov() * coeff;
+            currProj.perspective(fixFov, static_cast<float>(width() / height()), nearPlanePersp_, farPlanePersp_);
+        }
+        else {
+            float orthV = m_camera->getHeightAboveGround();
+            float aspectRatio = width() / height();
+            currProj.ortho(-orthV * aspectRatio, orthV * aspectRatio, -orthV, orthV, orthV * nearPlaneOrthoCoeff_, orthV * farPlaneOrthoCoeff_);
+        }
+
+        m_projection = std::move(currProj);
+    }
+}
+
+void GraphicsScene3dView::setNeedToResetStartPos(bool state)
+{
+    needToResetStartPos_ = state;
+}
+
+void GraphicsScene3dView::forceUpdateDatasetRef()
+{
+    if (m_dataset) {
+        auto ref = m_dataset->getRef();
+        m_camera->datasetLlaRef_ = ref.isInit ? ref : LLARef(m_camera->yerevanLla);
+    }
+
+    m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickFramebufferObject::geometryChanged(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
-        QMatrix4x4 currProj;
-        currProj.perspective(m_camera->fov(), static_cast<float>(width() / height()), 1.0f, 11000.0f);
-        m_projection = std::move(currProj);
-
-        updateMapView();
-     }
+       updateProjection();
+       emit cameraIsMoved();
+    }
 }
 
 void GraphicsScene3dView::setSceneBoundingBoxVisible(bool visible)
@@ -417,6 +482,8 @@ void GraphicsScene3dView::fitAllInView()
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
+
+    emit cameraIsMoved();
 }
 
 void GraphicsScene3dView::setIsometricView()
@@ -428,6 +495,8 @@ void GraphicsScene3dView::setIsometricView()
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
+
+    emit cameraIsMoved();
 }
 
 void GraphicsScene3dView::setCancelZoomView()
@@ -445,6 +514,8 @@ void GraphicsScene3dView::setMapView() {
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
+
+    emit cameraIsMoved();
 }
 
 void GraphicsScene3dView::setLastEpochFocusView()
@@ -456,6 +527,8 @@ void GraphicsScene3dView::setLastEpochFocusView()
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
+
+    emit cameraIsMoved();
 }
 
 void GraphicsScene3dView::setIdleMode()
@@ -486,6 +559,8 @@ void GraphicsScene3dView::setVerticalScale(float scale)
 void GraphicsScene3dView::shiftCameraZAxis(float shift)
 {
     m_camera->moveZAxis(shift);
+
+    emit cameraIsMoved();
 }
 
 void GraphicsScene3dView::setBottomTrackVertexSelectionMode()
@@ -528,7 +603,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_boatTrack->setDatasetPtr(m_dataset);
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
-    tileManager_->getTileSetPtr()->setDatesetPtr(m_dataset);
+
+    auto ref = dataset->getRef();
+    ref.isInit ? m_camera->datasetLlaRef_ = ref : m_camera->datasetLlaRef_ = LLARef(m_camera->yerevanLla);
+    m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](int lEpoch, int rEpoch) -> void {
@@ -641,11 +719,6 @@ void GraphicsScene3dView::clearComboSelectionRect()
 
 void GraphicsScene3dView::updateMapView()
 {
-    updateMapBounds();
-}
-
-void GraphicsScene3dView::updateMapBounds()
-{
     if (!m_camera || !mapView_) {
         return;
     }
@@ -654,31 +727,39 @@ void GraphicsScene3dView::updateMapBounds()
         return;
     }
 
-    float reductorFactor = 0.0f; // 0.03f (debug)
+    float reductorFactor = 0.0f; // debug
     QVector<QPair<float, float>> cornerMultipliers = {
-        {reductorFactor , reductorFactor },               // lt
-        {reductorFactor , 1.0f - reductorFactor },        // lb
+        {       reductorFactor,         reductorFactor }, // lt
+        {       reductorFactor,  1.0f - reductorFactor }, // lb
         {1.0f - reductorFactor , 1.0f - reductorFactor }, // rb
-        {1.0f - reductorFactor , reductorFactor }         // rt
+        {1.0f - reductorFactor ,        reductorFactor }  // rt
     };
 
+    updateProjection();
+
+    // calc ned
     float minX = std::numeric_limits<float>::max();
     float minY = std::numeric_limits<float>::max();
     float maxX = std::numeric_limits<float>::lowest();
     float maxY = std::numeric_limits<float>::lowest();
-    bool solidRect{ true };
-
+    bool isReqRect{ true };
     for (const auto& multiplier : cornerMultipliers) {
-        float currWidth  = width() * multiplier.first;
+        float currWidth  = width()  * multiplier.first;
         float currHeight = height() * multiplier.second;
 
-        auto toOrigin = QVector3D(currWidth, currHeight, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto toEnd    = QVector3D(currWidth, currHeight,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
-        auto toDist   = (toEnd - toOrigin).normalized();
-        auto point    = calculateIntersectionPoint(toOrigin, toDist, 0);
+        QVector3D point;
+        if (m_camera->getIsPerspective()) {
+            auto toOrigin = QVector3D(currWidth, currHeight, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto toEnd = QVector3D(currWidth, currHeight,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto toDist = (toEnd - toOrigin).normalized();
+            point = calculateIntersectionPoint(toOrigin, toDist, 0);
+        }
+        else {
+            point = QVector3D(currWidth, currHeight, 0.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        }
 
         if (point == QVector3D()) {
-            solidRect = false;
+            isReqRect = false;
             break;
         }
 
@@ -688,7 +769,7 @@ void GraphicsScene3dView::updateMapBounds()
         maxY = std::max(maxY, point.y());
     }
 
-    if (solidRect) {
+    if (isReqRect) {
         bool canRequest{ true };
         if (m_camera->getAngleToGround() > 5.0f) {
             const float maxSideSize = 14000.f;
@@ -699,48 +780,71 @@ void GraphicsScene3dView::updateMapBounds()
             }
         }
 
+        QVector<LLA> llaVerts;
+
+        float dist = m_camera->distForMapView();
+
+        NED ltNed(minX, minY, 0.0);
+        NED lbNed(minX, maxY, 0.0);
+        NED rbNed(maxX, maxY, 0.0);
+        NED rtNed(maxX, minY, 0.0);
+        LLA ltLla(&ltNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        LLA lbLla(&lbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        LLA rbLla(&rbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        LLA rtLla(&rtNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+
+        ltLla.latitude = map::clampLatitude(ltLla.latitude);
+        lbLla.latitude = map::clampLatitude(lbLla.latitude);
+        rbLla.latitude = map::clampLatitude(rbLla.latitude);
+        rtLla.latitude = map::clampLatitude(rtLla.latitude);
+
+        double edge = 180.0;
+        if (ltLla.longitude >  edge) ltLla.longitude =  edge;
+        if (ltLla.longitude < -edge) ltLla.longitude = -edge;
+        if (lbLla.longitude >  edge) lbLla.longitude =  edge;
+        if (lbLla.longitude < -edge) lbLla.longitude = -edge;
+        if (rbLla.longitude >  edge) rbLla.longitude =  edge;
+        if (rbLla.longitude < -edge) rbLla.longitude = -edge;
+        if (rtLla.longitude >  edge) rtLla.longitude =  edge;
+        if (rtLla.longitude < -edge) rtLla.longitude = -edge;
+
+        llaVerts.append(LLA(ltLla.latitude, ltLla.longitude, dist));
+        llaVerts.append(LLA(lbLla.latitude, lbLla.longitude, dist));
+        llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
+        llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
+
         if (canRequest) {
-            QVector<QVector3D> nedVertices;
-            QVector<QVector3D> llaVertices;
-
-            auto ref = m_dataset->getRef();
-            float cameraHeight = m_camera->getHeightAboveGround();
-
-            NED ltNed(minX, minY, 0.0);
-            NED lbNed(minX, maxY, 0.0);
-            NED rbNed(maxX, maxY, 0.0);
-            NED rtNed(maxX, minY, 0.0);
-            LLA ltLla(&ltNed, &ref, false);
-            LLA lbLla(&lbNed, &ref, false);
-            LLA rbLla(&rbNed, &ref, false);
-            LLA rtLla(&rtNed, &ref, false);
-
-            nedVertices.append(QVector3D(ltNed.n, ltNed.e, 0.0f));
-            nedVertices.append(QVector3D(lbNed.n, lbNed.e, 0.0f));
-            nedVertices.append(QVector3D(rbNed.n, rbNed.e, 0.0f));
-            nedVertices.append(QVector3D(rtNed.n, rtNed.e, 0.0f));
-
-            llaVertices.append(QVector3D(ltLla.latitude, ltLla.longitude, cameraHeight));
-            llaVertices.append(QVector3D(lbLla.latitude, lbLla.longitude, cameraHeight));
-            llaVertices.append(QVector3D(rbLla.latitude, rbLla.longitude, cameraHeight));
-            llaVertices.append(QVector3D(rtLla.latitude, rtLla.longitude, cameraHeight));
-
-            emit sendRectRequest(llaVertices);
-            /*
-            // debug
-            NED ltN(&ltLla, &ref, false);
-            NED lbN(&lbLla, &ref, false);
-            NED rbN(&rbLla, &ref, false);
-            NED rtN(&rtLla, &ref, false);
-            QVector<QVector3D> newNed;
-            newNed.append(QVector3D(ltN.n, ltN.e, 0.0f));
-            newNed.append(QVector3D(lbN.n, lbN.e, 0.0f));
-            newNed.append(QVector3D(rbN.n, rbN.e, 0.0f));
-            newNed.append(QVector3D(rtN.n, rtN.e, 0.0f));
-            mapView_->setRectVertices(newNed);
-            */
+            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_);
         }
-    }
+
+        // qDebug() << "llaVerts";
+        // for (auto& itm : llaVerts) {
+        //     qDebug() << itm.latitude << ","<< itm.longitude;
+        // }
+
+        // debug
+        LLA debugltLla(llaVerts[0].latitude, llaVerts[0].longitude, 0.0f);
+        LLA debuglbLla(llaVerts[1].latitude, llaVerts[1].longitude, 0.0f);
+        LLA debugrbLla(llaVerts[2].latitude, llaVerts[2].longitude, 0.0f);
+        LLA debugrtLla(llaVerts[3].latitude, llaVerts[3].longitude, 0.0f);
+        NED ltN(&debugltLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        NED lbN(&debuglbLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        NED rbN(&debugrbLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        NED rtN(&debugrtLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+        QVector<LLA> requestNed;
+        requestNed.append(LLA(ltN.n, ltN.e, 0.0f));
+        requestNed.append(LLA(lbN.n, lbN.e, 0.0f));
+        requestNed.append(LLA(rbN.n, rbN.e, 0.0f));
+        requestNed.append(LLA(rtN.n, rtN.e, 0.0f));
+        QVector<LLA> windowNed;
+        windowNed.append(LLA(ltNed.n, ltNed.e, 0.0f));
+        windowNed.append(LLA(lbNed.n, lbNed.e, 0.0f));
+        windowNed.append(LLA(rbNed.n, rbNed.e, 0.0f));
+        windowNed.append(LLA(rtNed.n, rtNed.e, 0.0f));
+        mapView_->setRectVertices(requestNed, windowNed, canRequest, m_camera->getIsPerspective(), QVector3D(m_camera->m_lookAt.x(), m_camera->m_lookAt.y(), 0.0f));
+    } // is rect
+
+    QQuickFramebufferObject::update();
 }
 
 //---------------------Renderer---------------------------//
@@ -979,9 +1083,15 @@ GraphicsScene3dView::Camera::Camera(qreal pitch,
     ,m_yaw(std::move(yaw))
     ,m_fov(std::move(fov))
     ,m_distToFocusPoint(std::move(distToFocusPoint))
+    ,distForMapView_(m_distToFocusPoint)
     ,m_sensivity(std::move(sensivity))
 {
    setIsometricView();
+}
+
+float GraphicsScene3dView::Camera::distForMapView() const
+{
+    return distForMapView_;
 }
 
 qreal GraphicsScene3dView::Camera::fov() const
@@ -1043,7 +1153,7 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
     m_rotAngle += r;
 
     checkRotateAngle();
-
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1056,6 +1166,7 @@ void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPoint
     m_rotAngle.setY(m_rotAngle.y() + qDegreesToRadians(angleDeltaY * increaseCoeff));
 
     checkRotateAngle();
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1067,14 +1178,41 @@ void GraphicsScene3dView::Camera::move(const QVector2D &startPos, const QVector2
     m_deltaOffset = ((horizontalAxis * (float)(endPos.x() - startPos.x()) +
                       verticalAxis * (float)(endPos.y() - startPos.y()))).toVector3D();
 
-    auto lookAt = m_lookAt + m_deltaOffset;
+    m_lookAt = m_lookAtSave + m_deltaOffset;
 
-    updateViewMatrix(&lookAt);
+    updateCameraParams();
+    tryToChangeViewLlaRef();
+    updateViewMatrix();
+}
+
+void GraphicsScene3dView::Camera::resetZAxis()
+{
+    m_lookAt.setZ(0);
+
+    updateCameraParams();
+    updateViewMatrix();
 }
 
 void GraphicsScene3dView::Camera::moveZAxis(float z)
 {
+    float xCamera = -sinf(m_rotAngle.y()) * cosf(-m_rotAngle.x()) * m_distToFocusPoint;
+    float yCamera = -sinf(m_rotAngle.y()) * sinf(-m_rotAngle.x()) * m_distToFocusPoint;
+    float zCamera = cosf(m_rotAngle.y()) * m_distToFocusPoint;
+    float currLookAtHeight = -(m_lookAt.z() + z);
+    float currCameraHeight = zCamera + currLookAtHeight;
+
+    if (currCameraHeight > 0) {
+        float cathetus = std::sqrt(std::pow(xCamera, 2) + std::pow(yCamera, 2));
+        float hypotenuse = std::sqrt(std::pow(cathetus, 2) + std::pow(currCameraHeight, 2));
+        distForMapView_ = hypotenuse;
+    }
+    else {
+        distForMapView_ = 0.0f;
+    }
+
     m_lookAt.setZ(m_lookAt.z() + z);
+
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1094,17 +1232,41 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
 #ifdef Q_OS_ANDROID
     const float increaseCoeff{ 0.95f };
     m_distToFocusPoint -= delta * m_distToFocusPoint * increaseCoeff;
+    distForMapView_ = m_distToFocusPoint;
 #else
     m_distToFocusPoint = delta > 0.f ? m_distToFocusPoint / 1.15f : m_distToFocusPoint * 1.15f;
+    distForMapView_ = m_distToFocusPoint;
 #endif
 
     const float minFocusDist = 2.0f;
-    const float maxFocusDist = 80000.0f;
-    if (m_distToFocusPoint < minFocusDist)
+    const float maxFocusDist = 100000.0f * 100.0f;
+    if (m_distToFocusPoint < minFocusDist) {
         m_distToFocusPoint = minFocusDist;
-    if (m_distToFocusPoint >= maxFocusDist)
+        distForMapView_ = m_distToFocusPoint;
+    }
+    if (m_distToFocusPoint >= maxFocusDist) {
         m_distToFocusPoint = maxFocusDist;
+        distForMapView_ = m_distToFocusPoint;
+    }
 
+    updateCameraParams();
+
+    if (!isPerspective_) {
+        NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
+        LLA mLookAtLLa(&lookAtNed, &viewLlaRef_, isPerspective_);
+        LLARef lookAtLlaRef(mLookAtLLa);
+
+        float viewDist = map::calculateDistance(viewLlaRef_, lookAtLlaRef);
+
+        if (viewDist > highDistThreshold_) {
+            viewPtr_->setNeedToResetStartPos(true);
+            viewLlaRef_ = LLARef(lookAtLlaRef);
+            m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
+        }
+    }
+    //else {
+    //    tryToChangeViewLlaRef();
+    //}
     updateViewMatrix();
 }
 
@@ -1113,6 +1275,7 @@ void GraphicsScene3dView::Camera::commitMovement()
     m_lookAt += m_deltaOffset;
     m_deltaOffset = QVector3D();
 
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1125,13 +1288,16 @@ void GraphicsScene3dView::Camera::focusOnPosition(const QVector3D &point)
 {
     m_lookAt = point;
 
+    updateCameraParams();
     updateViewMatrix();
 }
 
 void GraphicsScene3dView::Camera::setDistance(qreal distance)
 {
     m_distToFocusPoint = distance;
+    distForMapView_ = m_distToFocusPoint;
 
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1142,6 +1308,7 @@ void GraphicsScene3dView::Camera::setIsometricView()
     m_rotAngle.setX(qDegreesToRadians(135.0f));
     m_rotAngle.setY(qDegreesToRadians(45.0f));
 
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1168,39 +1335,76 @@ void GraphicsScene3dView::Camera::reset()
     m_yaw = 0.f;
     m_fov = 45.f;
     m_distToFocusPoint = 50.f;
+    distForMapView_ = m_distToFocusPoint;
 
     distToGround_ = 0.0f;
+    angleToGround_ = 0.0f;
+    isPerspective_ = false;
 
+    updateCameraParams();
     updateViewMatrix();
 }
 
-void GraphicsScene3dView::Camera::updateViewMatrix(QVector3D* lookAt)
+void GraphicsScene3dView::Camera::updateCameraParams()
 {
-    auto _lookAt = lookAt ? *lookAt : m_lookAt;
-    _lookAt.setZ(-_lookAt.z());
+    distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
 
+    float perspEdge = 5000.f;
+    if (viewPtr_) {
+        perspEdge = viewPtr_->perspectiveEdge_;
+    }
+
+    isPerspective_ = distToGround_ < perspEdge;
+}
+
+void GraphicsScene3dView::Camera::tryToChangeViewLlaRef()
+{
+    if (isPerspective_ && viewPtr_) {
+        NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
+        LLA lookAtLla(&lookAtNed, &viewLlaRef_, isPerspective_);
+        LLARef lookAtLlaRef(lookAtLla);
+
+        float viewDist = map::calculateDistance(lookAtLlaRef, viewLlaRef_);
+        float datasetDist = map::calculateDistance(lookAtLlaRef, datasetLlaRef_);
+
+        if (datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla()) {
+            viewPtr_->setNeedToResetStartPos(true);
+            LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
+            NED datasetNed(&datasetLla, &viewLlaRef_, isPerspective_);
+            m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
+            viewLlaRef_ = datasetLlaRef_;
+        }
+        else if (viewDist > highDistThreshold_) {
+            viewPtr_->setNeedToResetStartPos(true);
+            viewLlaRef_ = lookAtLlaRef;
+            m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
+        }
+    }
+}
+
+void GraphicsScene3dView::Camera::updateViewMatrix()
+{
     QVector3D cf;
     cf[0] = -sinf(m_rotAngle.y())*cosf(-m_rotAngle.x())*m_distToFocusPoint;
     cf[1] = -sinf(m_rotAngle.y())*sinf(-m_rotAngle.x())*m_distToFocusPoint;
     cf[2] = -cosf(m_rotAngle.y())*m_distToFocusPoint;
+
+    if (!isPerspective_) {
+        m_rotAngle = QVector2D();
+    }
 
     QVector3D cu;
     cu[0] = cosf(m_rotAngle.y())*cosf(-m_rotAngle.x());
     cu[1] = cosf(m_rotAngle.y())*sinf(-m_rotAngle.x());
     cu[2] = -sinf(m_rotAngle.y());
 
+    angleToGround_ = 90.f * std::fabs(cu.z());
+
     QMatrix4x4 view;
-    view.lookAt(cf + _lookAt, _lookAt, cu.normalized());
+    view.lookAt(cf + m_lookAt, m_lookAt, cu.normalized());
     view.scale(1.0f,1.0f,-1.0f);
 
     m_view = std::move(view);
-
-    distToGround_ = std::max(0.0f, std::fabs(cf.z()));
-    angleToGround_ = 90.f * std::fabs(cu.z());
-
-    if (viewPtr_) {
-        viewPtr_->updateMapView();
-    }
 }
 
 void GraphicsScene3dView::Camera::checkRotateAngle()
@@ -1219,6 +1423,16 @@ float GraphicsScene3dView::Camera::getHeightAboveGround() const
 float GraphicsScene3dView::Camera::getAngleToGround() const
 {
     return angleToGround_;
+}
+
+bool GraphicsScene3dView::Camera::getIsPerspective() const
+{
+    return isPerspective_;
+}
+
+bool GraphicsScene3dView::Camera::getIsFarAwayFromOriginLla() const
+{
+    return !isPerspective_ || (viewLlaRef_ != datasetLlaRef_);
 }
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const

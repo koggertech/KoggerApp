@@ -78,6 +78,19 @@ typedef struct  LLARef {
         refLla = lla;
         isInit = true;
     }
+
+    friend bool operator==(const LLARef& lhs, const LLARef& rhs) {
+        if (!std::isfinite(lhs.refLla.latitude) || !std::isfinite(lhs.refLla.longitude) ||
+            !std::isfinite(rhs.refLla.latitude) || !std::isfinite(rhs.refLla.longitude)) {
+            return false;
+        }
+        return qFuzzyCompare(1.0 + lhs.refLla.latitude, 1.0 + rhs.refLla.latitude) &&
+               qFuzzyCompare(1.0 + lhs.refLla.longitude, 1.0 + rhs.refLla.longitude);
+    }
+
+    friend bool operator!=(const LLARef& lhs, const LLARef& rhs) {
+        return !(lhs == rhs);
+    }
 } LLARef;
 
 typedef struct NED {

@@ -24,6 +24,10 @@ void MapViewControlMenuController::onVisibilityChanged(bool state)
 void MapViewControlMenuController::onUpdateClicked()
 {
     qDebug() << "MapViewControlMenuController::onUpdateClicked";
+
+    if (m_graphicsSceneView) {
+        m_graphicsSceneView->getMapViewPtr()->update();
+    }
 }
 
 MapView* MapViewControlMenuController::getMapViewPtr() const

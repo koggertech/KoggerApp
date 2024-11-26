@@ -7,7 +7,7 @@
 namespace map {
 
 
-constexpr double GOOGLE_TILE_CONSTANT = 156543000.03392 * 2.50;
+constexpr double GOOGLE_TILE_CONSTANT = 156543000.03392 ;
 const int GOOGLE_PROVIDER_ID = 1;
 const int googleSat = 988;
 const QString secGoogleWord = QStringLiteral("Galileo");
@@ -23,8 +23,9 @@ public:
 
     int32_t heightToTileZ(float height) const override final;
     int32_t lonToTileX(double lon, int z) const override final;
+    std::tuple<int32_t, int32_t, int32_t> lonToTileXWithWrapAndBoundary(const double lonStart, const double lonEnd, const int z) const override final;
     int32_t latToTileY(double lat, int z) const override final;
-    TileInfo indexToTileInfo(TileIndex tileIndx) const override final;
+    TileInfo indexToTileInfo(TileIndex tileIndx, TilePosition pos = TilePosition::kFits) const override final;
     QString createURL(const TileIndex& tileIndx) const override final;
 
 private:
