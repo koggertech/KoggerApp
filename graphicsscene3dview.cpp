@@ -727,7 +727,7 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    float reductorFactor = 0.0f; // debug
+    float reductorFactor = 0.02f; // debug
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
@@ -1258,11 +1258,11 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
 
         float viewDist = map::calculateDistance(viewLlaRef_, lookAtLlaRef);
 
-        if (viewDist > highDistThreshold_) {
+        //if (viewDist > highDistThreshold_) {
             viewPtr_->setNeedToResetStartPos(true);
             viewLlaRef_ = LLARef(lookAtLlaRef);
             m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
-        }
+        //}
     }
     //else {
     //    tryToChangeViewLlaRef();

@@ -149,7 +149,7 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
 {
     if (!m_isVisible)
         return;
-/*
+
     // first vertices
     if (!firstVertices_.empty()) {
         auto shaderProgram = shaderProgramMap["static"].get();
@@ -244,7 +244,7 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         ctx->glDrawArrays(GL_POINTS, 0, 1);
         ctx->glDisable(34370);
     }
-*/
+
     // tiles
     if (!tilesHash_.empty()) {
         auto shaderProgram = shaderProgramMap.value("image", nullptr);
