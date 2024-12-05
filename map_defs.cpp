@@ -165,6 +165,11 @@ void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
         texCoords_.clear();
         indices_.clear();
 
+        //   4 <--- 3
+        //          |
+        //          |
+        //   1 ---> 2
+
         LLA lla1(info_.bounds.south, info_.bounds.west, 0.0f);
         NED ned1(&lla1, &ref, isPerspective);
         LLA lla2(info_.bounds.north, info_.bounds.west, 0.0f);
@@ -253,6 +258,31 @@ TileIndex::TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId) :
 
 }
 
+TileIndex TileIndex::getParent() const
+{
+    if (z_ > 0) {
+        return TileIndex{x_ / 2, y_ / 2, z_ - 1, providerId_};
+    }
+    else {
+        return *this;
+    }
+}
+
+std::vector<TileIndex> TileIndex::getChildren() const
+{
+    if (z_ < 21) {
+        return {
+            TileIndex{x_ * 2,     y_ * 2,     z_ + 1, providerId_},
+            TileIndex{x_ * 2 + 1, y_ * 2,     z_ + 1, providerId_},
+            TileIndex{x_ * 2,     y_ * 2 + 1, z_ + 1, providerId_},
+            TileIndex{x_ * 2 + 1, y_ * 2 + 1, z_ + 1, providerId_}
+        };
+    }
+    else {
+        return {};
+    }
+}
+
 bool TileIndex::operator==(const TileIndex &other) const
 {
     return x_ == other.x_ &&
@@ -272,6 +302,16 @@ bool TileIndex::operator<(const TileIndex &other) const
     if (x_ != other.x_) return x_ < other.x_;
     if (y_ != other.y_) return y_ < other.y_;
     return providerId_ < other.providerId_;
+}
+
+void Tile::setPendingRemoval(bool value)
+{
+    pendingRemoval_ = value;
+}
+
+bool Tile::getPendingRemoval() const
+{
+    return pendingRemoval_;
 }
 
 

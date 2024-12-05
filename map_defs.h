@@ -57,6 +57,9 @@ struct TileIndex {
 
     int32_t providerId_;
 
+    TileIndex              getParent()   const;
+    std::vector<TileIndex> getChildren() const;
+
     bool operator==(const TileIndex& other) const;
     bool operator!=(const TileIndex &other) const;
     bool operator<(const TileIndex& other) const;
@@ -77,7 +80,8 @@ public:
         kNone = 0, kReady, kWaitDB, kWaitServer, kErrorServer
     };
 
-    Tile(TileIndex index);
+    Tile() = default;
+    explicit Tile(TileIndex index);
 
     void updateVertices(const LLARef& llaRef, bool isPerspective);
     bool isValid() const;
@@ -95,6 +99,7 @@ public:
     void      setCreationTime(const QDateTime& val);
     void      setRequestLastTime(const QDateTime& val);
     void      setVertices(const QVector<QVector3D>& vertices);
+    void      setPendingRemoval(bool value);
 
     TileInfo  getTileInfo() const;
     State     getState() const;
@@ -110,6 +115,7 @@ public:
     QDateTime getCreationTime() const;
     QDateTime getRequestLastTime() const;
     LLARef    getUsedLlaRef() const;
+    bool      getPendingRemoval() const;
 
     const QVector<QVector3D>& getVerticesRef() const;
     const QVector<QVector2D>& getTexCoordsRef() const;
@@ -143,6 +149,8 @@ private:
     QDateTime creationTime_;
 
     LLARef usedLlaRef_;
+
+    bool pendingRemoval_ = false;
 };
 
 inline float calculateDistance(const LLARef &llaRef1, const LLARef &llaRef2)

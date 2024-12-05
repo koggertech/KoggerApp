@@ -58,6 +58,8 @@ public slots:
     void onTileDelete(const map::Tile& tile);
     void onTileVerticesUpdated(const map::Tile& tile);
 
+    void onClearAppendTasks();
+
 signals:
     void updatedTextureId(const map::TileIndex& tileIndx, GLuint textureId);
 

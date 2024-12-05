@@ -19,10 +19,11 @@ class TileSet : public QObject
 {
     Q_OBJECT
 public:
-    TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity = 1000);
+    TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity = 1000, size_t minCapacity = 500);
 
     bool isTileContains(const TileIndex& tileIndex) const;
     bool addTile(const TileIndex& tileIndx);
+    void checkTileSetSize();
     void setIsPerspective(bool state);
     void setViewLla(LLARef viewLlaRef);
     void onNewRequest(const QList<TileIndex>& request);
@@ -33,6 +34,8 @@ signals:
     void appendSignal(const Tile& tile);
     void deleteSignal(const Tile& tile);
     void updVertSignal(const Tile& tile);
+
+    void clearAppendTasks();
 
     // db
     void requestLoadTiles(const QList<TileIndex>& tileIndices);
@@ -49,8 +52,13 @@ public slots:
     void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileDownloadStopped(const TileIndex& tileIndx);
 
+    void onUpdatedTextureId(const map::TileIndex& tileIndx, GLuint textureId);
+
 private:
+    void removeOverlappingTiles(const Tile& newTile);
+    bool tilesOverlap(const TileIndex &index1, const TileIndex &index2) const;
     size_t maxCapacity_;
+    size_t minCapacity_;
     std::list<Tile> tileList_; // лист тайлов
     std::unordered_map<TileIndex, std::list<Tile>::iterator> tileMap_; // хэш итераторов (least recently used)
     std::weak_ptr<TileProvider> tileProvider_;

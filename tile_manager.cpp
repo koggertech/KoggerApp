@@ -16,7 +16,7 @@ TileManager::TileManager(QObject *parent) :
     tileProvider_(std::make_shared<TileGoogleProvider>()),
     tileDownloader_(std::make_shared<TileDownloader>(tileProvider_, maxConcurrentDownloads_)),
     tileDB_(std::make_shared<TileDB>(tileProvider_)),
-    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, numRequests_))
+    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, maxTilesCapacity_, minTilesCapacity_))
 {
     // tileDownloader_ -> tileSet_
     QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded,  tileSet_.get(), &TileSet::onTileDownloaded,      Qt::AutoConnection);
@@ -98,7 +98,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     if (boundaryTile == -1) {
         reqSize = (lonEndTile - lonStartTile + 1) * (maxY - minY + 1);
 
-        if (reqSize < numRequests_) {
+        if (reqSize < maxTilesCapacity_) {
             for (int x = lonStartTile; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
@@ -111,7 +111,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         reqSize = (boundaryTile - lonStartTile + 1) * (maxY - minY + 1) +
                   (lonEndTile + 1) * (maxY - minY + 1);
 
-        if (reqSize < numRequests_) {
+        if (reqSize < maxTilesCapacity_) {
             for (int x = lonStartTile; x <= boundaryTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());

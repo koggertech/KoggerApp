@@ -171,7 +171,7 @@ public:
     bool sceneBoundingBoxVisible() const;
     Dataset* dataset() const;
     void setNavigationArrowState(bool state);
-    void clear();
+    void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setCalcStateSideScanView(bool state);
     void interpolateDatasetEpochs(bool fromStart);

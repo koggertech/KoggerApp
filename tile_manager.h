@@ -35,7 +35,8 @@ private:
     std::shared_ptr<TileSet> tileSet_;
     int lastZoomLevel_ = -1;
 
-    static constexpr int numRequests_{ 500 };
+    static constexpr int maxTilesCapacity_{ 500 };
+    static constexpr int minTilesCapacity_{ 300 };
     static constexpr int maxConcurrentDownloads_{ 10 };
 };
 

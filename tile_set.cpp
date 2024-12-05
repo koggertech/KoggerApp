@@ -3,9 +3,10 @@
 
 namespace map {
 
-TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity) :
+TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity, size_t minCapacity) :
     QObject(nullptr),
     maxCapacity_(maxCapacity),
+    minCapacity_(minCapacity),
     tileProvider_(provider),
     tileDB_(db),
     tileDownloader_(downloader),
@@ -54,6 +55,7 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const
             tile.setInUse(true);
             emit appendSignal(tile);
         }
+        //removeOverlappingTiles(tile);
     }
 }
 
@@ -111,6 +113,7 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
         }
 
         emit requestSaveTile(tileIndx, image);
+        //removeOverlappingTiles(tile);
     }
 }
 
@@ -129,9 +132,95 @@ void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
     //qDebug() << "Tile download stopped from:" << tileProvider_.lock()->createURL(tileIndx);
 }
 
+void TileSet::onUpdatedTextureId(const TileIndex &tileIndx, GLuint textureId)
+{
+    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+        it->second->setTextureId(textureId);
+    }
+}
+
+void TileSet::removeOverlappingTiles(const Tile &newTile)
+{
+    for (auto it = tileList_.begin(); it != tileList_.end(); )
+    {
+        Tile &existingTile = *it;
+
+        if (&existingTile == &newTile) {
+            ++it;
+            continue;
+        }
+
+        if (existingTile.getPendingRemoval() && existingTile.getInUse()) {
+            if (tilesOverlap(existingTile.getIndex(), newTile.getIndex())) {
+                existingTile.setInUse(false);
+
+                emit deleteSignal(existingTile);
+
+                tileMap_.erase(existingTile.getIndex());
+                it = tileList_.erase(it);
+            }
+            else {
+                ++it;
+            }
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
+bool TileSet::tilesOverlap(const TileIndex &index1, const TileIndex &index2) const
+{
+    /*   int minZoom = std::min(index1.z_, index2.z_);
+
+    TileIndex idx1 = index1;
+    TileIndex idx2 = index2;
+
+    while (idx1.z_ > minZoom) {
+        idx1 = idx1.getParent();
+    }
+    while (idx2.z_ > minZoom) {
+        idx2 = idx2.getParent();
+    }
+
+    bool retVal = idx1.x_ == idx2.x_ && idx1.y_ == idx2.y_ && idx1.z_ == idx2.z_;
+    //qDebug() << "tilesOverlap" << retVal;
+    return retVal;*/
+
+    int minZoom = std::min(index1.z_, index2.z_);
+    int maxZoom = std::max(index1.z_, index2.z_);
+
+    int zoomDifference = maxZoom - minZoom;
+    int scale = 1 << zoomDifference; // 2^zoomDifference
+
+    const TileIndex* lowerZoomTile;
+    const TileIndex* higherZoomTile;
+
+    if (index1.z_ < index2.z_) {
+        lowerZoomTile = &index1;
+        higherZoomTile = &index2;
+    } else {
+        lowerZoomTile = &index2;
+        higherZoomTile = &index1;
+    }
+
+    int lowerXMin = lowerZoomTile->x_ * scale;
+    int lowerXMax = lowerXMin + scale - 1;
+    int lowerYMin = lowerZoomTile->y_ * scale;
+    int lowerYMax = lowerYMin + scale - 1;
+
+    int higherX = higherZoomTile->x_;
+    int higherY = higherZoomTile->y_;
+
+    bool xOverlap = (higherX >= lowerXMin) && (higherX <= lowerXMax);
+    bool yOverlap = (higherY >= lowerYMin) && (higherY <= lowerYMax);
+
+    return xOverlap && yOverlap;
+}
 bool TileSet::addTile(const TileIndex& tileIndx)
 {
     bool retVal{ false };
+
     if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
         tileList_.splice(tileList_.begin(), tileList_, it->second); // move to front
         it->second->setRequestLastTime(QDateTime::currentDateTimeUtc());
@@ -142,21 +231,27 @@ bool TileSet::addTile(const TileIndex& tileIndx)
         newTile.setRequestLastTime(QDateTime::currentDateTimeUtc());
         tileList_.push_front(std::move(newTile));
         tileMap_[tileIndx] = tileList_.begin();
-
-        if (tileMap_.size() > maxCapacity_) {
-            while (tileMap_.size() > maxCapacity_) { // remove from back (map and list)
-                auto lastIt = std::prev(tileList_.end());
-                const TileIndex& indexToRemove = lastIt->getIndex();
-                emit deleteSignal(*lastIt);
-                tileMap_.erase(indexToRemove);
-                tileList_.erase(lastIt);
-            }
-        }
-
         retVal = true;
     }
 
+    checkTileSetSize();
+
     return retVal;
+}
+
+void TileSet::checkTileSetSize()
+{
+    if (tileMap_.size() > maxCapacity_) {
+        while (tileMap_.size() > minCapacity_) { // remove from back (map and list)
+            auto lastIt = std::prev(tileList_.end());
+            const TileIndex& indexToRemove = lastIt->getIndex();
+
+            emit deleteSignal(*lastIt);
+
+            tileMap_.erase(indexToRemove);
+            tileList_.erase(lastIt);
+        }
+    }
 }
 
 void TileSet::setIsPerspective(bool state)
@@ -177,6 +272,11 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
         sharedDownloader->stopAndClearRequests();
     }
 
+    // очистить очередь иинициализации текстур
+    emit clearAppendTasks();
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents);
+
     // добавление тайлов в tileSet
     for (auto& itm : request) {
         addTile(itm);
@@ -189,7 +289,7 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
     // инициализируем в OpenGL на onLoaded/onDownloaded
     // а удаляем тут
 
-    // поиск в tileSet (RAM) на удаление в OpenGL
+    // удалить неиспользуемые
     for (auto& [index, tile] : tileMap_) {
         if (!request.contains(index)) {
             if (tile->getInUse()) { // был в использовании но сейчас нет
@@ -197,31 +297,28 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
                 emit deleteSignal(*tile);
             }
         }
-
-        // обновить вершины
-        if (request.contains(index)) {
-          //  if (viewLlaRef_ != tile->getUsedLlaRef()) { // TODO: persp<->ortho
-
-                auto updatedInfo = tileProvider_.lock()->indexToTileInfo(tile->getIndex(), getTilePosition(minLon_, maxLon_, tile->getTileInfo()));
-                tile->setTileInfo(updatedInfo);
-
-                tile->updateVertices(viewLlaRef_, isPerspective_);
-                emit updVertSignal(*tile);
-           // }
-        }
     }
 
-    // формируем запрос на загрузку/закачку изображения
-    // все тайлы были созданы до
+    // формируем запрос на загрузку/закачку изображение, все тайлы были созданы до
     QList<TileIndex> filtReq;
     for (const auto& itm : request) {
         if (auto tile = tileMap_.find(itm); tile != tileMap_.end()) {
             if (tile->second->getImageIsNull()) { // для тайлов с 'null' image ДОБАВЛЯЕМ в запрос, в OpenGL позже проинитится
                 filtReq.append(itm);
             }
-            else { // если у тайла есть изобрадение, сразу инитим в OpenGL и НЕ добавляем в запрос
+            else {
+                // обновить вершины
+                auto updatedInfo = tileProvider_.lock()->indexToTileInfo(tile->second->getIndex(), getTilePosition(minLon_, maxLon_, tile->second->getTileInfo()));
+                tile->second->setTileInfo(updatedInfo);
+                tile->second->updateVertices(viewLlaRef_, isPerspective_);
+                emit updVertSignal(*(tile->second));
+
+                // отдать на инит текстуры
                 if (!tile->second->getInUse()) {
                     tile->second->setInUse(true);
+                    emit appendSignal(*(tile->second));
+                }
+                else if (!tile->second->getTextureId()) {
                     emit appendSignal(*(tile->second));
                 }
             }

@@ -81,16 +81,17 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_navigationArrow.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
-
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal,  mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal,  mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::updVertSignal, mapView_.get(), &MapView::onTileVerticesUpdated, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal,     mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal,     mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::updVertSignal,    mapView_.get(), &MapView::onTileVerticesUpdated, Qt::DirectConnection);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::clearAppendTasks, mapView_.get(), &MapView::onClearAppendTasks, Qt::DirectConnection);
+    QObject::connect(mapView_.get(),                      &MapView::updatedTextureId,       tileManager_->getTileSetPtr().get(), &map::TileSet::onUpdatedTextureId, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::AutoConnection);
 
     updatePlaneGrid();
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::AutoConnection);
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
@@ -174,12 +175,14 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
     navigationArrowState_ = state;
 }
 
-void GraphicsScene3dView::clear()
+void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
     sideScanView_->clear();
     imageView_->clear();//
-    mapView_->clear();
+    if (cleanMap) {
+        mapView_->clear();
+    }
     bottomTrackWindowCounter_ = -1;
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
@@ -727,7 +730,7 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    float reductorFactor = 0.02f; // debug
+    float reductorFactor = 0.0f; // debug
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
@@ -915,6 +918,14 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
 {
     auto mapViewPtr = viewPtr->getMapViewPtr();
 
+    // deleting
+    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
+    for (GLuint textureId : deleteTasks) {
+        if (textureId != 0) {
+            glDeleteTextures(1, &textureId);
+        }
+    }
+
     // appending
     auto appendTasks = mapViewPtr->getInitTileTextureTasks();
     for (auto it = appendTasks.begin(); it != appendTasks.end(); ++it) {
@@ -930,15 +941,6 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
         QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
         mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId); // for drawing, deleting
-        //qDebug() << "APPENDING:" << textureId;
-    }
-
-
-    // deleting
-    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
-    for (GLuint textureId : deleteTasks) {
-        glDeleteTextures(1, &textureId);
-        //qDebug() << " DELETING:" << textureId;
     }
 }
 

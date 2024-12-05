@@ -72,6 +72,8 @@ void MapView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint text
     if (auto tile = r->tilesHash_.find(tileIndx); tile != r->tilesHash_.end()) {
         tile->second.setTextureId(textureId);
     }
+
+    emit updatedTextureId(tileIndx, textureId);
 }
 
 std::unordered_map<map::TileIndex, QImage> MapView::getInitTileTextureTasks()
@@ -132,6 +134,11 @@ void MapView::onTileVerticesUpdated(const map::Tile &tile)
     Q_EMIT changed();
 }
 
+void MapView::onClearAppendTasks()
+{
+    appendTasks_.clear();
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // MapViewRenderImplementation
 MapView::MapViewRenderImplementation::MapViewRenderImplementation() :
@@ -149,7 +156,7 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
 {
     if (!m_isVisible)
         return;
-
+/*
     // first vertices
     if (!firstVertices_.empty()) {
         auto shaderProgram = shaderProgramMap["static"].get();
@@ -244,7 +251,7 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         ctx->glDrawArrays(GL_POINTS, 0, 1);
         ctx->glDisable(34370);
     }
-
+*/
     // tiles
     if (!tilesHash_.empty()) {
         auto shaderProgram = shaderProgramMap.value("image", nullptr);
