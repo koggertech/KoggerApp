@@ -22,6 +22,16 @@ bool TileSet::isTileContains(const TileIndex &tileIndex) const
     return false;
 }
 
+bool TileSet::addTiles(const QList<TileIndex> &request)
+{
+    bool retVal{ false };
+    for (auto& itm : request) {
+        addTile(itm);
+        retVal = true;
+    }
+    return retVal;
+}
+
 void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const TileInfo &info)
 {
     if (image.isNull()) {
@@ -234,8 +244,6 @@ bool TileSet::addTile(const TileIndex& tileIndx)
         retVal = true;
     }
 
-    checkTileSetSize();
-
     return retVal;
 }
 
@@ -246,7 +254,7 @@ void TileSet::checkTileSetSize()
             auto lastIt = std::prev(tileList_.end());
             const TileIndex& indexToRemove = lastIt->getIndex();
 
-            emit deleteSignal(*lastIt);
+            //emit deleteSignal(*lastIt);
 
             tileMap_.erase(indexToRemove);
             tileList_.erase(lastIt);
@@ -264,8 +272,14 @@ void TileSet::setViewLla(LLARef viewLlaRef)
     viewLlaRef_ = viewLlaRef;
 }
 
-void TileSet::onNewRequest(const QList<TileIndex> &request)
+void TileSet::onNewRequest(const QList<TileIndex> &request, ZoomState zoomState)
 {
+    if (request.isEmpty()) {
+        return;
+    }
+
+    lastZoomState_ = zoomState;
+
     // остановить работу db, downloader
     emit requestStopAndClear();
     if (auto sharedDownloader = tileDownloader_.lock(); sharedDownloader) {
@@ -278,22 +292,17 @@ void TileSet::onNewRequest(const QList<TileIndex> &request)
     QCoreApplication::processEvents(QEventLoop::AllEvents);
 
     // добавление тайлов в tileSet
-    for (auto& itm : request) {
-        addTile(itm);
-    }
+    addTiles(request);
 
-    // удалить текстуры тех кто был активен и стал неактивен
-    // добавить текстуры новых
-    // тех кто был оставить
-
-    // инициализируем в OpenGL на onLoaded/onDownloaded
-    // а удаляем тут
+    // обрезать размер
+    checkTileSetSize();
 
     // удалить неиспользуемые
     for (auto& [index, tile] : tileMap_) {
         if (!request.contains(index)) {
             if (tile->getInUse()) { // был в использовании но сейчас нет
                 tile->setInUse(false);
+                //tile->setPendingRemoval(true);
                 emit deleteSignal(*tile);
             }
         }

@@ -64,6 +64,8 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     double minLon = std::numeric_limits<double>::max();
     double maxLon = std::numeric_limits<double>::lowest();
 
+    ZoomState zoomState;
+
     // dimensions
     for (auto& itm : request) {
         // LLARect -> tileIndx
@@ -84,8 +86,12 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         if (zoomLevel == -1) { // for the first element
             zoomLevel = tileIndx.z_;
             if (zoomLevel != lastZoomLevel_) {
-                qDebug() << "zoom level chaged to:" << zoomLevel << "isPerspective" << isPerspective;
+                zoomState = lastZoomLevel_ > zoomLevel ? ZoomState::kOut : ZoomState::kIn;
+                qDebug() << "zoom level chaged to:" << zoomLevel << "isPerspective" << isPerspective << "zoomState" << static_cast<int>(zoomState);
                 lastZoomLevel_ = zoomLevel;
+            }
+            else {
+                zoomState = ZoomState::kUnchanged;
             }
         }
     }
@@ -132,7 +138,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         tileSet_->setViewLla(viewLlaRef);
         tileSet_->setIsPerspective(isPerspective);
         tileSet_->setEyeView(minLat, maxLat, minLon, maxLon);
-        tileSet_->onNewRequest(indxRequest);
+        tileSet_->onNewRequest(indxRequest, zoomState);
     }
 }
 

@@ -19,6 +19,13 @@ namespace map {
 
 
 ///////*structures*///////
+enum class ZoomState {
+    kUndefined = 0,
+    kOut,
+    kUnchanged,
+    kIn
+};
+
 enum class TilePosition {
     kFits = 0,
     kOnLeft,

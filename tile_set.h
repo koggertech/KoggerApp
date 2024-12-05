@@ -22,11 +22,12 @@ public:
     TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity = 1000, size_t minCapacity = 500);
 
     bool isTileContains(const TileIndex& tileIndex) const;
+    bool addTiles(const QList<TileIndex> &request);
     bool addTile(const TileIndex& tileIndx);
     void checkTileSetSize();
     void setIsPerspective(bool state);
     void setViewLla(LLARef viewLlaRef);
-    void onNewRequest(const QList<TileIndex>& request);
+    void onNewRequest(const QList<TileIndex>& request, ZoomState zoomState);
     void setEyeView(double minLat, double maxLat, double minLon, double maxLon);
 
 signals:
@@ -66,6 +67,8 @@ private:
     std::weak_ptr<TileDownloader> tileDownloader_;
     bool isPerspective_;
     LLARef viewLlaRef_;
+
+    ZoomState lastZoomState_ = ZoomState::kUndefined;
 
     double minLat_ = 0.0;
     double maxLat_ = 0.0;
