@@ -7,6 +7,12 @@
 
 class BottomTrack;
 class GraphicsScene3dView;
+
+#ifndef OPAQUE_BottomTrack
+#define OPAQUE_BottomTrack
+Q_DECLARE_OPAQUE_POINTER(BottomTrack*)
+#endif
+
 class BottomTrackControlMenuController : public QmlComponentController
 {
     Q_OBJECT

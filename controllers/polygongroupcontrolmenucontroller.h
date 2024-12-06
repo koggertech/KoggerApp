@@ -11,6 +11,12 @@
 class PolygonGroup;
 class GraphicsScene3dView;
 class PointObject;
+
+#ifndef OPAQUE_PolygonGroup
+#define OPAQUE_PolygonGroup
+Q_DECLARE_OPAQUE_POINTER(PolygonGroup*)
+#endif
+
 class PolygonGroupControlMenuController : public QmlComponentController
 {
     Q_OBJECT

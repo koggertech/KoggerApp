@@ -9,6 +9,12 @@
 
 class Surface;
 class GraphicsScene3dView;
+
+#ifndef OPAQUE_SurfaceGroup
+#define OPAQUE_SurfaceGroup
+Q_DECLARE_OPAQUE_POINTER(Surface*)
+#endif
+
 class SurfaceControlMenuController : public QmlComponentController
 {
     Q_OBJECT

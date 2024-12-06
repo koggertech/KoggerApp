@@ -5,6 +5,12 @@
 
 class BoatTrack;
 class GraphicsScene3dView;
+
+#ifndef OPAQUE_BoatTrack
+#define OPAQUE_BoatTrack
+Q_DECLARE_OPAQUE_POINTER(BoatTrack*)
+#endif
+
 class BoatTrackControlMenuController : public QmlComponentController
 {
     Q_OBJECT

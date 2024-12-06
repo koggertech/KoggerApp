@@ -6,6 +6,13 @@
 class Core;
 class SideScanView;
 class GraphicsScene3dView;
+
+#ifndef OPAQUE_SideScanView
+#define OPAQUE_SideScanView
+Q_DECLARE_OPAQUE_POINTER(SideScanView*)
+#endif
+
+
 class SideScanViewControlMenuController : public QmlComponentController
 {
     Q_OBJECT

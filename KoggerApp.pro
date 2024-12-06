@@ -2,6 +2,7 @@ QT += quick
 QT += widgets
 QT += network
 QT += qml
+QT += opengl openglwidgets
 
 #CONFIG += FLASHER
 #CONFIG += MOTOR # motor_control definition

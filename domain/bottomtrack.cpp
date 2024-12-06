@@ -4,7 +4,7 @@
 //#include <textrenderer.h> TODO
 #include <draw_utils.h>
 #include "boattrack.h"
-#include <QtOpenGLExtensions/QOpenGLExtensions>
+#include <QOpenGLFunctions>
 
 #include <QHash>
 

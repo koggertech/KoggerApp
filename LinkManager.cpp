@@ -254,10 +254,10 @@ void LinkManager::importPinnedLinksFromXML()
         const QXmlStreamReader::TokenType token = xmlReader.readNext();
 
         if (token == QXmlStreamReader::StartElement) {
-            if (xmlReader.name() == "link") {
+            if (xmlReader.name().toString() == "link") {
                 Link* link = createNewLink();
 
-                while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name() == "link")) {
+                while (!(xmlReader.tokenType() == QXmlStreamReader::EndElement && xmlReader.name().toString() == "link")) {
                     if (xmlReader.tokenType() == QXmlStreamReader::StartElement) {
                         if (xmlReader.name().toString() == "uuid") {
                             link->setUuid(QUuid(xmlReader.readElementText()));

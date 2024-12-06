@@ -4,6 +4,12 @@
 
 class ImageView;
 class GraphicsScene3dView;
+
+#ifndef OPAQUE_ImageView
+#define OPAQUE_ImageView
+Q_DECLARE_OPAQUE_POINTER(ImageView*)
+#endif
+
 class ImageViewControlMenuController : public QmlComponentController
 {
     Q_OBJECT
