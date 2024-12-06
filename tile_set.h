@@ -56,8 +56,12 @@ public slots:
     void onUpdatedTextureId(const map::TileIndex& tileIndx, GLuint textureId);
 
 private:
-    void removeOverlappingTiles(const Tile& newTile);
+    void removeOverlappingTilesFromRender(const Tile& newTile);
     bool tilesOverlap(const TileIndex &index1, const TileIndex &index2) const;
+    void processIn(const TileIndex& tileIndex);
+    void processOut(const TileIndex& tileIndex);
+    void removeFarTiles(const QList<TileIndex>&  request);
+
     size_t maxCapacity_;
     size_t minCapacity_;
     std::list<Tile> tileList_; // лист тайлов

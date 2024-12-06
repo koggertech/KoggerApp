@@ -99,7 +99,7 @@ public:
         float distToGround_ = 0.0f;
         float angleToGround_ = 0.0f;
         bool isPerspective_ = false;
-        float highDistThreshold_ = 10000.0f;
+        float highDistThreshold_ = 5000.0f;
         float lowDistThreshold_ = highDistThreshold_ * 0.9f;
         QVector2D m_rotAngle;
         GraphicsScene3dView* viewPtr_;

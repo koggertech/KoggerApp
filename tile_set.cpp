@@ -65,7 +65,8 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image, const
             tile.setInUse(true);
             emit appendSignal(tile);
         }
-        //removeOverlappingTiles(tile);
+
+        removeOverlappingTilesFromRender(tile);
     }
 }
 
@@ -122,8 +123,9 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image, c
             emit appendSignal(tile);
         }
 
+        removeOverlappingTilesFromRender(tile);
+
         emit requestSaveTile(tileIndx, image);
-        //removeOverlappingTiles(tile);
     }
 }
 
@@ -149,39 +151,30 @@ void TileSet::onUpdatedTextureId(const TileIndex &tileIndx, GLuint textureId)
     }
 }
 
-void TileSet::removeOverlappingTiles(const Tile &newTile)
+void TileSet::removeOverlappingTilesFromRender(const Tile &newTile)
 {
-    for (auto it = tileList_.begin(); it != tileList_.end(); )
-    {
-        Tile &existingTile = *it;
-
-        if (&existingTile == &newTile) {
-            ++it;
-            continue;
-        }
-
-        if (existingTile.getPendingRemoval() && existingTile.getInUse()) {
-            if (tilesOverlap(existingTile.getIndex(), newTile.getIndex())) {
-                existingTile.setInUse(false);
-
-                emit deleteSignal(existingTile);
-
-                tileMap_.erase(existingTile.getIndex());
-                it = tileList_.erase(it);
-            }
-            else {
-                ++it;
-            }
-        }
-        else {
-            ++it;
-        }
+    switch (lastZoomState_) {
+    case map::ZoomState::kOut: {
+        processOut(newTile.getIndex());
+        break;
+    }
+    case map::ZoomState::kIn: {
+        processIn(newTile.getIndex());
+        break;
+    }
+    case map::ZoomState::kUnchanged: {
+        processOut(newTile.getIndex());
+        processIn(newTile.getIndex());
+        break;
+    }
+    default:
+        break;
     }
 }
 
 bool TileSet::tilesOverlap(const TileIndex &index1, const TileIndex &index2) const
 {
-    /*   int minZoom = std::min(index1.z_, index2.z_);
+    int minZoom = std::min(index1.z_, index2.z_);
 
     TileIndex idx1 = index1;
     TileIndex idx2 = index2;
@@ -194,39 +187,69 @@ bool TileSet::tilesOverlap(const TileIndex &index1, const TileIndex &index2) con
     }
 
     bool retVal = idx1.x_ == idx2.x_ && idx1.y_ == idx2.y_ && idx1.z_ == idx2.z_;
-    //qDebug() << "tilesOverlap" << retVal;
-    return retVal;*/
 
-    int minZoom = std::min(index1.z_, index2.z_);
-    int maxZoom = std::max(index1.z_, index2.z_);
+    return retVal;
+}
 
-    int zoomDifference = maxZoom - minZoom;
-    int scale = 1 << zoomDifference; // 2^zoomDifference
+void TileSet::processIn(const TileIndex &tileIndex)
+{
+    auto parent = tileIndex.getParent();
 
-    const TileIndex* lowerZoomTile;
-    const TileIndex* higherZoomTile;
+    bool allChildrensAreInited{ true };
+    auto childs = parent.getChildren();
 
-    if (index1.z_ < index2.z_) {
-        lowerZoomTile = &index1;
-        higherZoomTile = &index2;
-    } else {
-        lowerZoomTile = &index2;
-        higherZoomTile = &index1;
+    for (auto& itm : childs) {
+        if (auto it = tileMap_.find(itm); it != tileMap_.end()) {
+            if (it->second->getImageIsNull()) {
+                allChildrensAreInited = false;
+                break;
+            }
+        }
+        else {
+            allChildrensAreInited = false;
+            break;
+        }
     }
 
-    int lowerXMin = lowerZoomTile->x_ * scale;
-    int lowerXMax = lowerXMin + scale - 1;
-    int lowerYMin = lowerZoomTile->y_ * scale;
-    int lowerYMax = lowerYMin + scale - 1;
-
-    int higherX = higherZoomTile->x_;
-    int higherY = higherZoomTile->y_;
-
-    bool xOverlap = (higherX >= lowerXMin) && (higherX <= lowerXMax);
-    bool yOverlap = (higherY >= lowerYMin) && (higherY <= lowerYMax);
-
-    return xOverlap && yOverlap;
+    if (allChildrensAreInited) {
+        if (auto it = tileMap_.find(parent); it != tileMap_.end()) {
+            //qDebug() << "deleting PARENT" << parent;
+            it->second->setInUse(false);
+            emit deleteSignal(*(it->second));
+        }
+    }
 }
+
+void TileSet::processOut(const TileIndex &tileIndex)
+{
+    auto childs = tileIndex.getChildren();
+    for (auto& itm : childs) {
+        if (auto it = tileMap_.find(itm); it != tileMap_.end()) {
+            //qDebug() << "deleting CHILDREN" << itm;
+            it->second->setInUse(false);
+            emit deleteSignal(*(it->second));
+        }
+    }
+}
+
+void TileSet::removeFarTiles(const QList<TileIndex>& request)
+{
+    for (auto& itmI : tileList_) {
+        bool overLap = false;
+        for (auto& itmJ : request) {
+            if (tilesOverlap(itmJ,  itmI.getIndex())) {
+                overLap = true;
+                break;
+            }
+        }
+
+        if (!overLap) {
+            itmI.setInUse(false);
+            emit deleteSignal(itmI);
+        }
+    }
+}
+
 bool TileSet::addTile(const TileIndex& tileIndx)
 {
     bool retVal{ false };
@@ -254,7 +277,7 @@ void TileSet::checkTileSetSize()
             auto lastIt = std::prev(tileList_.end());
             const TileIndex& indexToRemove = lastIt->getIndex();
 
-            //emit deleteSignal(*lastIt);
+            emit deleteSignal(*lastIt);
 
             tileMap_.erase(indexToRemove);
             tileList_.erase(lastIt);
@@ -297,21 +320,11 @@ void TileSet::onNewRequest(const QList<TileIndex> &request, ZoomState zoomState)
     // обрезать размер
     checkTileSetSize();
 
-    // удалить неиспользуемые
-    for (auto& [index, tile] : tileMap_) {
-        if (!request.contains(index)) {
-            if (tile->getInUse()) { // был в использовании но сейчас нет
-                tile->setInUse(false);
-                //tile->setPendingRemoval(true);
-                emit deleteSignal(*tile);
-            }
-        }
-    }
-
     // формируем запрос на загрузку/закачку изображение, все тайлы были созданы до
     QList<TileIndex> filtReq;
     for (const auto& itm : request) {
         if (auto tile = tileMap_.find(itm); tile != tileMap_.end()) {
+
             if (tile->second->getImageIsNull()) { // для тайлов с 'null' image ДОБАВЛЯЕМ в запрос, в OpenGL позже проинитится
                 filtReq.append(itm);
             }
@@ -326,13 +339,17 @@ void TileSet::onNewRequest(const QList<TileIndex> &request, ZoomState zoomState)
                 if (!tile->second->getInUse()) {
                     tile->second->setInUse(true);
                     emit appendSignal(*(tile->second));
+                    removeOverlappingTilesFromRender(*(tile->second));
                 }
                 else if (!tile->second->getTextureId()) {
                     emit appendSignal(*(tile->second));
+                    removeOverlappingTilesFromRender(*(tile->second));
                 }
             }
         }
     }
+
+    removeFarTiles(request);
 
     // запрос в DB
     emit requestLoadTiles(filtReq);
