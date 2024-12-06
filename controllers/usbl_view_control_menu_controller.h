@@ -8,6 +8,12 @@
 
 class UsblView;
 class GraphicsScene3dView;
+
+#ifndef OPAQUE_UsblView
+#define OPAQUE_UsblView
+Q_DECLARE_OPAQUE_POINTER(UsblView*)
+#endif
+
 class UsblViewControlMenuController : public QmlComponentController
 {
     Q_OBJECT

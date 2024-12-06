@@ -1,6 +1,6 @@
 #include "boattrack.h"
 
-#include <QtOpenGLExtensions/QOpenGLExtensions>
+#include <QOpenGLFunctions>
 #include <QHash>
 #include "graphicsscene3dview.h"
 #include <epochevent.h>

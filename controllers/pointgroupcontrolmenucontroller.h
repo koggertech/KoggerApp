@@ -9,6 +9,12 @@
 class GraphicsScene3dView;
 class PointGroup;
 class PointObject;
+
+#ifndef OPAQUE_PointGroup
+#define OPAQUE_PointGroup
+Q_DECLARE_OPAQUE_POINTER(PointGroup*)
+#endif
+
 class PointGroupControlMenuController : public QmlComponentController
 {
     Q_OBJECT

@@ -3,10 +3,11 @@ import SceneGraphRendering 1.0
 import QtQuick.Window 2.15
 import QtQuick.Layouts 1.15
 import Qt.labs.settings 1.1
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
 import QtQuick.Controls 2.15
 import WaterFall 1.0
 import KoggerCommon 1.0
+import '.' as KControls
 
 
 Window  {
@@ -603,7 +604,7 @@ Window  {
         }
     }
 
-    MenuBar {
+    KControls.MenuBar {
         id:                menuBar
         objectName:        "menuBar"
         Layout.fillHeight: true

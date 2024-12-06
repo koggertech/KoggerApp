@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
 import Qt.labs.settings 1.1
 
 ColumnLayout {
@@ -276,7 +276,7 @@ ColumnLayout {
             FileDialog {
                 id: newFileDialog
                 title: "Please choose a CSV file"
-                folder: shortcuts.home
+                currentFolder: shortcuts.home
 
                 nameFilters: ["CSV (*.csv)"]
 
@@ -291,7 +291,7 @@ ColumnLayout {
             }
 
             Settings {
-                property alias logFolder: newFileDialog.folder
+                property alias logFolder: newFileDialog.currentFolder
             }
         }
 

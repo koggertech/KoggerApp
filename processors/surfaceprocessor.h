@@ -23,6 +23,12 @@
 #include <abstractentitydatafilter.h>
 
 class BottomTrack;
+
+#ifndef OPAQUE_BottomTrack
+#define OPAQUE_BottomTrack
+Q_DECLARE_OPAQUE_POINTER(BottomTrack*)
+#endif
+
 class SurfaceProcessorTask{
     Q_GADGET
     Q_PROPERTY(BottomTrack*              bottomTrack           READ bottomTrack           CONSTANT)

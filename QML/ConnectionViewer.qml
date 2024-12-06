@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
 import Qt.labs.settings 1.1
 
 ColumnLayout {
@@ -508,7 +508,7 @@ ColumnLayout {
             FileDialog {
                 id: newFileDialog
                 title: qsTr("Please choose a file")
-                folder: shortcuts.home
+                currentFolder: shortcuts.home
 
                 nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
 
@@ -524,7 +524,7 @@ ColumnLayout {
             }
 
             Settings {
-                property alias logFolder: newFileDialog.folder
+                property alias logFolder: newFileDialog.currentFolder
             }
         }
 
@@ -542,7 +542,7 @@ ColumnLayout {
             FileDialog {
                 id: appendFileDialog
                 title: qsTr("Please choose a file")
-                folder: shortcuts.home
+                currentFolder: shortcuts.home
 
                 nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
 
@@ -559,7 +559,7 @@ ColumnLayout {
             }
 
             Settings {
-                property alias logFolder: appendFileDialog.folder
+                property alias logFolder: appendFileDialog.currentFolder
             }
         }
 

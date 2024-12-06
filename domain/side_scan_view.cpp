@@ -78,7 +78,7 @@ void SideScanView::startUpdateDataInThread(int endIndx, int endOffset)
 
 void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
 {
-    std::unique_ptr<QMutexLocker> locker;
+    QMutexLocker<QMutex> locker(nullptr);
     std::function<void()> cleanFunc;
     if (backgroundThread) {
         cleanFunc = [&, this]() {
@@ -87,7 +87,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
                 emit sendStartedInThread(startedInThread_);
             }
         };
-        locker = std::make_unique<QMutexLocker>(&mutex_);
+        locker = QMutexLocker(&mutex_);
     }
 
     if (!datasetPtr_) {
