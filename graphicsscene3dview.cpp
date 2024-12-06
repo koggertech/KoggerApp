@@ -366,6 +366,12 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     Q_UNUSED(x)
     Q_UNUSED(y)
 
+    if (needToResetStartPos_) {
+        m_camera->m_lookAtSave = m_camera->m_lookAt;
+        m_startMousePos = QPointF(x, y);
+        needToResetStartPos_ = false;
+    }
+
     if (keyboardKey == Qt::Key_Control) {
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
@@ -1251,24 +1257,51 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
         distForMapView_ = m_distToFocusPoint;
     }
 
-    updateCameraParams();
+    //
+    bool preIsPersp{ false };
+    distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
+    float perspEdge = viewPtr_ ? viewPtr_->perspectiveEdge_ : 5000.0f;
+    preIsPersp = distToGround_ < perspEdge;
+    //bool changedToOrtho       =  isPerspective_ && !preIsPersp;
+    //bool changedToPerspective = !isPerspective_ &&  preIsPersp;
+    bool projectionChanged    =  isPerspective_ !=  preIsPersp;
 
-    if (!isPerspective_) {
-        NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
-        LLA mLookAtLLa(&lookAtNed, &viewLlaRef_, isPerspective_);
-        LLARef lookAtLlaRef(mLookAtLLa);
+    //if (projectionChanged) qDebug() << "CHANGED!";
+    //if (changedToOrtho) qDebug() << "changed to ORTHO";
+    //if (changedToPerspective) qDebug() << "changed to PERSP";
 
-        float viewDist = map::calculateDistance(viewLlaRef_, lookAtLlaRef);
+    NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
+    LLA lookAtLla(&lookAtNed, &viewLlaRef_, isPerspective_);
+    LLARef lookAtLlaRef(lookAtLla);
 
-        //if (viewDist > highDistThreshold_) {
-            viewPtr_->setNeedToResetStartPos(true);
-            viewLlaRef_ = LLARef(lookAtLlaRef);
-            m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
-        //}
+    float datasetDist = map::calculateDistance(lookAtLlaRef, datasetLlaRef_);
+
+
+    if (isPerspective_ && !projectionChanged) { // do nothing
     }
-    //else {
-    //    tryToChangeViewLlaRef();
+    //else if (isPerspective_ && !projectionChanged && datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla()) {
+    //    qDebug() << "2";
+
+    //    viewPtr_->setNeedToResetStartPos(true);
+    //    LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
+    //    NED datasetNed(&datasetLla, &viewLlaRef_, isPerspective_);
+    //    m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
+    //    viewLlaRef_ = datasetLlaRef_;
     //}
+    else if ( (!isPerspective_ && projectionChanged && datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla())) { // catching when ortho->persp trans and near place
+        viewPtr_->setNeedToResetStartPos(true);
+        LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
+        NED datasetNed(&datasetLla, &viewLlaRef_, !isPerspective_);
+        m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
+        viewLlaRef_ = datasetLlaRef_;
+    }
+    else if ((isPerspective_ && projectionChanged) || (!isPerspective_ && !projectionChanged)) { // pers -> ortho OR ortho without transfer
+        viewPtr_->setNeedToResetStartPos(true);
+        viewLlaRef_ = lookAtLlaRef;
+        m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
+    }
+
+    updateCameraParams();
     updateViewMatrix();
 }
 
