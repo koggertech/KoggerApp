@@ -24,7 +24,7 @@ Core::Core() :
     isMosaicUpdatingInThread_(false),
     isSideScanPerformanceMode_(false)
 {
-    loadLLARefFromSettings();
+
     auto ref = datasetPtr_->getRef();
     qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
 
@@ -960,6 +960,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 {
     Q_UNUSED(url)
 
+    loadLLARefFromSettings();
+
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
     plot2dList_ = object->findChildren<qPlot2D*>();
     scene3dViewPtr_->setDataset(datasetPtr_);
@@ -1276,6 +1278,8 @@ void Core::saveLLARefToSettings()
     settings.setValue("refLlaLongitude", ref.refLla.longitude);
     settings.setValue("isInit", ref.isInit);
     settings.endGroup();
+
+    settings.sync();
 }
 
 void Core::loadLLARefFromSettings()

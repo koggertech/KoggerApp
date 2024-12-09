@@ -9,8 +9,9 @@
 #include <QQueue>
 #include <QPair>
 #include <QSet>
-#include <QTcpSocket>
+#ifdef Q_OS_WINDOWS
 #include <QHostInfo>
+#endif
 #include <QTimer>
 
 #include "map_defs.h"
@@ -39,7 +40,9 @@ signals:
 private slots:
     void onTileDownloaded(QNetworkReply *reply);
     void checkNetworkAvailabilityAsync();
+#ifdef Q_OS_WINDOWS
     void onHostLookupFinished(QHostInfo hostInfo);
+#endif
 
 private:
     void startNextDownload();

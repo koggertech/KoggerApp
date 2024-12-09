@@ -3,7 +3,12 @@
 #include <QDebug>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+
+#ifdef Q_OS_WINDOWS
+#include <QTcpSocket>
 #include <QNetworkProxy>
+#endif
+
 
 
 namespace map {
@@ -21,7 +26,7 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded, Qt::AutoConnection);
 
     checkNetworkAvailabilityAsync();
-    networkCheckTimer_ = new QTimer(this);
+    networkCheckTimer_ = new QTimer();
     connect(networkCheckTimer_, &QTimer::timeout, this, &TileDownloader::checkNetworkAvailabilityAsync);
     networkCheckTimer_->start(10000);
 }
@@ -146,15 +151,16 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 void TileDownloader::checkNetworkAvailabilityAsync()
 {
 #ifdef Q_OS_ANDROID
-    QTcpSocket socket;
-    socket.connectToHost("8.8.8.8", 53);
-    if (socket.waitForConnected(2000)) {
-        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
-        emit internetStatus(true);
-        return;
-    }
-    qWarning() << "No Internet Access";
-    emit internetStatus(false);
+    networkAvailable_ = true; // TODO
+    // QTcpSocket socket; 
+    // socket.connectToHost("8.8.8.8", 53);
+    // if (socket.waitForConnected(2000)) {
+    //     //qDebug() << "internet available";
+    //     networkAvailable_ = true;
+    //     return;
+    // }
+    // qDebug() << "internet UNavailable";
+    // networkAvailable_= false;
 #else
     if (hostLookupId_ == -1) {
         hostLookupId_ = QHostInfo::lookupHost("www.google.com", this, &TileDownloader::onHostLookupFinished);
@@ -162,6 +168,7 @@ void TileDownloader::checkNetworkAvailabilityAsync()
 #endif
 }
 
+#ifndef Q_OS_ANDROID
 void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
 {
 #ifdef Q_OS_ANDROID
@@ -191,6 +198,7 @@ void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
     }
 #endif
 }
+#endif
 
 
 } // namespace map

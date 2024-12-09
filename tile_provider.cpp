@@ -10,6 +10,11 @@ TileProvider::TileProvider(int32_t providerId) :
 
 }
 
+TileProvider::~TileProvider()
+{
+
+}
+
 TileIndex TileProvider::llaToTileIndex(LLA lla, int32_t z)
 {
     return TileIndex(lonToTileX(lla.longitude, z), latToTileY(lla.latitude, z), z, providerId_);

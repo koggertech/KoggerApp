@@ -21,7 +21,7 @@ class TileManager : public QObject
     Q_OBJECT
 public:
     explicit TileManager(QObject *parent = nullptr);
-    virtual ~TileManager();
+    ~TileManager();
 
     std::shared_ptr<TileSet> getTileSetPtr() const;
 
