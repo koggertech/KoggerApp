@@ -15,7 +15,6 @@ TileDB::TileDB(std::weak_ptr<TileProvider> tileProvider) :
     tileProvider_(tileProvider),
     stopRequested_(false)
 {
-    qRegisterMetaType<QList<TileIndex>>("QList<TileIndex>");
     qRegisterMetaType<TileIndex>("TileIndex");
     qRegisterMetaType<TileInfo>("TileInfo");
 }

@@ -18,24 +18,26 @@ TileManager::TileManager(QObject *parent) :
     tileDB_(std::make_shared<TileDB>(tileProvider_)),
     tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, maxTilesCapacity_, minTilesCapacity_))
 {
+    auto downloaderConnType = Qt::AutoConnection;
     // tileDownloader_ -> tileSet_
-    QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded,  tileSet_.get(), &TileSet::onTileDownloaded,      Qt::AutoConnection);
-    QObject::connect(tileDownloader_.get(), &TileDownloader::downloadStopped, tileSet_.get(), &TileSet::onTileDownloadStopped, Qt::AutoConnection);
-    QObject::connect(tileDownloader_.get(), &TileDownloader::downloadFailed,  tileSet_.get(), &TileSet::onTileDownloadFailed,  Qt::AutoConnection);
+    QObject::connect(tileDownloader_.get(), &TileDownloader::tileDownloaded,  tileSet_.get(), &TileSet::onTileDownloaded,      downloaderConnType);
+    QObject::connect(tileDownloader_.get(), &TileDownloader::downloadStopped, tileSet_.get(), &TileSet::onTileDownloadStopped, downloaderConnType);
+    QObject::connect(tileDownloader_.get(), &TileDownloader::downloadFailed,  tileSet_.get(), &TileSet::onTileDownloadFailed,  downloaderConnType);
 
     QThread* dbThread = new QThread();
     tileDB_->moveToThread(dbThread);
 
+    auto dbConnType = Qt::AutoConnection;
     // tileDB_ <-> tileSet_
-    QObject::connect(tileDB_.get(), &TileDB::tileLoaded,     tileSet_.get(), &TileSet::onTileLoaded, Qt::AutoConnection);
-    QObject::connect(tileDB_.get(), &TileDB::tileLoadFailed, tileSet_.get(), &TileSet::onTileLoadFailed, Qt::AutoConnection);
-    QObject::connect(tileSet_.get(), &TileSet::requestLoadTiles,    tileDB_.get(), &TileDB::loadTiles, Qt::AutoConnection);
-    QObject::connect(tileSet_.get(), &TileSet::requestStopAndClear, tileDB_.get(), &TileDB::stopAndClearRequests, Qt::AutoConnection);
-    QObject::connect(tileSet_.get(), &TileSet::requestSaveTile,     tileDB_.get(), &TileDB::saveTile, Qt::AutoConnection);
+    QObject::connect(tileDB_.get(),  &TileDB::tileLoaded,           tileSet_.get(), &TileSet::onTileLoaded,        dbConnType);
+    QObject::connect(tileDB_.get(),  &TileDB::tileLoadFailed,       tileSet_.get(), &TileSet::onTileLoadFailed,    dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::requestLoadTiles,    tileDB_.get(),  &TileDB::loadTiles,            dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::requestStopAndClear, tileDB_.get(),  &TileDB::stopAndClearRequests, dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::requestSaveTile,     tileDB_.get(),  &TileDB::saveTile,             dbConnType);
 
-    QObject::connect(dbThread, &QThread::started, tileDB_.get(), &TileDB::init, Qt::AutoConnection);
-    QObject::connect(dbThread, &QThread::finished, tileDB_.get(), &QObject::deleteLater, Qt::AutoConnection);
-    QObject::connect(dbThread, &QThread::finished, dbThread, &QThread::deleteLater, Qt::AutoConnection);
+    QObject::connect(dbThread, &QThread::started,  tileDB_.get(), &TileDB::init,         dbConnType);
+    QObject::connect(dbThread, &QThread::finished, tileDB_.get(), &QObject::deleteLater, dbConnType);
+    QObject::connect(dbThread, &QThread::finished, dbThread,      &QThread::deleteLater, dbConnType);
 
     dbThread->start();
 }

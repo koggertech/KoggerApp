@@ -12,6 +12,8 @@ TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db,
     tileDownloader_(downloader),
     isPerspective_(false)
 {
+    qRegisterMetaType<Tile>("Tile");
+    qRegisterMetaType<QList<TileIndex>>("QList<TileIndex>");
 }
 
 bool TileSet::isTileContains(const TileIndex &tileIndex) const
@@ -312,7 +314,6 @@ void TileSet::onNewRequest(const QList<TileIndex> &request, ZoomState zoomState)
     // очистить очередь иинициализации текстур
     emit clearAppendTasks();
 
-    QCoreApplication::processEvents(QEventLoop::AllEvents);
 
     // добавление тайлов в tileSet
     addTiles(request);

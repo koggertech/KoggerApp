@@ -6,7 +6,8 @@
 MapView::MapView(GraphicsScene3dView *view, QObject *parent) :
     SceneObject(new MapViewRenderImplementation, view, parent)
 {
-
+    qRegisterMetaType<map::TileIndex>("map::TileIndex");
+    qRegisterMetaType<GLuint>("GLuint");
 }
 
 MapView::~MapView()

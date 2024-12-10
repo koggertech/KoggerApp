@@ -23,6 +23,9 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
     networkAvailable_(false),
     hostLookupId_(-1)
 {
+    qRegisterMetaType<TileIndex>("TileIndex");
+    qRegisterMetaType<TileInfo>("TileInfo");
+
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded, Qt::AutoConnection);
 
     checkNetworkAvailabilityAsync();

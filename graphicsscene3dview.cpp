@@ -84,12 +84,15 @@ GraphicsScene3dView::GraphicsScene3dView() :
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal,     mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal,     mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::updVertSignal,    mapView_.get(), &MapView::onTileVerticesUpdated, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::clearAppendTasks, mapView_.get(), &MapView::onClearAppendTasks, Qt::DirectConnection);
-    QObject::connect(mapView_.get(),                      &MapView::updatedTextureId,       tileManager_->getTileSetPtr().get(), &map::TileSet::onUpdatedTextureId, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::AutoConnection);
+    auto connType = Qt::DirectConnection;
+
+
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal, mapView_.get(), &MapView::onTileAppend, connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal, mapView_.get(), &MapView::onTileDelete, connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::updVertSignal, mapView_.get(), &MapView::onTileVerticesUpdated, connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::clearAppendTasks, mapView_.get(), &MapView::onClearAppendTasks, connType);
+    QObject::connect(mapView_.get(), &MapView::updatedTextureId, tileManager_->getTileSetPtr().get(), &map::TileSet::onUpdatedTextureId, connType);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, connType);
 
     updatePlaneGrid();
 }
@@ -830,7 +833,7 @@ void GraphicsScene3dView::updateMapView()
         // for (auto& itm : llaVerts) {
         //     qDebug() << itm.latitude << ","<< itm.longitude;
         // }
-
+/*
         // debug
         LLA debugltLla(llaVerts[0].latitude, llaVerts[0].longitude, 0.0f);
         LLA debuglbLla(llaVerts[1].latitude, llaVerts[1].longitude, 0.0f);
@@ -851,6 +854,7 @@ void GraphicsScene3dView::updateMapView()
         windowNed.append(LLA(rbNed.n, rbNed.e, 0.0f));
         windowNed.append(LLA(rtNed.n, rtNed.e, 0.0f));
         mapView_->setRectVertices(requestNed, windowNed, canRequest, m_camera->getIsPerspective(), QVector3D(m_camera->m_lookAt.x(), m_camera->m_lookAt.y(), 0.0f));
+*/
     } // is rect
 
     QQuickFramebufferObject::update();
@@ -1473,4 +1477,40 @@ bool GraphicsScene3dView::Camera::getIsFarAwayFromOriginLla() const
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const
 {
     return m_distToFocusPoint;
+}
+
+QString GraphicsScene3dView::InFboRenderer::checkOpenGLError() const {
+    GLenum errorCode = glGetError();
+    QString retVal;
+
+    if (errorCode != GL_NO_ERROR) {
+        switch (errorCode) {
+        case GL_INVALID_ENUM:
+            retVal = "GL_INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            retVal = "GL_INVALID_VALUE";
+            break;
+        case GL_INVALID_OPERATION:
+            retVal = "GL_INVALID_OPERATION";
+            break;
+        case GL_STACK_OVERFLOW:
+            retVal = "GL_STACK_OVERFLOW";
+            break;
+        case GL_STACK_UNDERFLOW:
+            retVal = "GL_STACK_UNDERFLOW";
+            break;
+        case GL_OUT_OF_MEMORY:
+            retVal = "GL_OUT_OF_MEMORY";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            retVal = "GL_INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        default:
+            retVal = QString("Unknown error: 0x%1").arg(errorCode, 0, 16);
+            break;
+        }
+    }
+
+    return retVal;
 }
