@@ -31,9 +31,11 @@ TileManager::TileManager(QObject *parent) :
     // tileDB_ <-> tileSet_
     QObject::connect(tileDB_.get(),  &TileDB::tileLoaded,           tileSet_.get(), &TileSet::onTileLoaded,        dbConnType);
     QObject::connect(tileDB_.get(),  &TileDB::tileLoadFailed,       tileSet_.get(), &TileSet::onTileLoadFailed,    dbConnType);
-    QObject::connect(tileSet_.get(), &TileSet::requestLoadTiles,    tileDB_.get(),  &TileDB::loadTiles,            dbConnType);
-    QObject::connect(tileSet_.get(), &TileSet::requestStopAndClear, tileDB_.get(),  &TileDB::stopAndClearRequests, dbConnType);
-    QObject::connect(tileSet_.get(), &TileSet::requestSaveTile,     tileDB_.get(),  &TileDB::saveTile,             dbConnType);
+    QObject::connect(tileDB_.get(),  &TileDB::tileLoadStopped,      tileSet_.get(), &TileSet::onTileLoadStopped,   dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::dbLoadTiles,         tileDB_.get(),  &TileDB::loadTiles,            dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::dbStopAndClearTasks, tileDB_.get(),  &TileDB::stopAndClearRequests, dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::dbStopLoadingTile,   tileDB_.get(),  &TileDB::stopLoading,          dbConnType);
+    QObject::connect(tileSet_.get(), &TileSet::dbSaveTile,          tileDB_.get(),  &TileDB::saveTile,             dbConnType);
 
     QObject::connect(dbThread, &QThread::started,  tileDB_.get(), &TileDB::init,         dbConnType);
     QObject::connect(dbThread, &QThread::finished, tileDB_.get(), &QObject::deleteLater, dbConnType);
@@ -101,7 +103,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     auto [lonStartTile, lonEndTile, boundaryTile] = tileProvider_.get()->lonToTileXWithWrapAndBoundary(minLon, maxLon, zoomLevel);
 
     uint64_t reqSize = 0;
-    QList<TileIndex> indxRequest;
+    QSet<TileIndex> indxRequest;
 
     if (boundaryTile == -1) {
         reqSize = (lonEndTile - lonStartTile + 1) * (maxY - minY + 1);
@@ -110,7 +112,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
             for (int x = lonStartTile; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-                    indxRequest.append(tileIndx);
+                    indxRequest.insert(tileIndx);
                 }
             }
         }
@@ -123,24 +125,21 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
             for (int x = lonStartTile; x <= boundaryTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-                    indxRequest.append(tileIndx);
+                    indxRequest.insert(tileIndx);
                 }
             }
 
             for (int x = 0; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-                    indxRequest.append(tileIndx);
+                    indxRequest.insert(tileIndx);
                 }
             }
         }
     }
 
     if (!indxRequest.isEmpty()) {
-        tileSet_->setViewLla(viewLlaRef);
-        tileSet_->setIsPerspective(isPerspective);
-        tileSet_->setEyeView(minLat, maxLat, minLon, maxLon);
-        tileSet_->onNewRequest(indxRequest, zoomState);
+        tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLat, maxLat, minLon, maxLon);
     }
 }
 

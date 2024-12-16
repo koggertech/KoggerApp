@@ -28,8 +28,9 @@ public:
     explicit TileDownloader(std::weak_ptr<TileProvider> provider, int maxConcurrentDownloads = 5);
     ~TileDownloader();
 
-    void downloadTiles(const QList<TileIndex>& tiles);
+    void downloadTile(const TileIndex& tile);
     void stopAndClearRequests();
+    void deleteRequest(TileIndex tileIndx);
 
 signals:
     void tileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);

@@ -39,23 +39,18 @@ TileDownloader::~TileDownloader()
     stopAndClearRequests();
 }
 
-void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
-{
+void TileDownloader::downloadTile(const TileIndex& tileIndx)
+{    
+    if (downloadQueue_.contains(tileIndx)) {
+        return;
+    }
+
     if (!networkAvailable_) {
         emit allDownloadsFinished();
         return;
     }
 
-    if (tileIndices.isEmpty()) {
-        emit allDownloadsFinished();
-        return;
-    }
-
-    for (const TileIndex& index : tileIndices) {
-        if (!downloadQueue_.contains(index)) {
-            downloadQueue_.enqueue(index);
-        }
-    }
+    downloadQueue_.enqueue(tileIndx);
 
     while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
         startNextDownload();
@@ -79,6 +74,32 @@ void TileDownloader::stopAndClearRequests()
     downloadQueue_.clear();
     activeDownloads_ = 0;
     emit allDownloadsFinished();
+}
+
+void TileDownloader::deleteRequest(TileIndex tileIndx)
+{
+    QList<QNetworkReply*> activeReplies = activeReplies_.values();
+    QNetworkReply* netRep = nullptr;
+
+
+    for (auto* reply : activeReplies) {
+        TileIndex index = reply->property("tileIndex").value<TileIndex>();
+
+        if (index == tileIndx) {
+            //emit downloadStopped(index);
+            reply->abort();
+            netRep = reply;
+            break;
+        }
+    }
+
+    if (netRep) {
+        activeReplies_.remove(netRep);
+        auto num = downloadQueue_.removeAll(tileIndx);
+        activeDownloads_ -= num;
+
+        emit downloadStopped(tileIndx);
+    }
 }
 
 void TileDownloader::startNextDownload()

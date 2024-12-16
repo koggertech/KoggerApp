@@ -47,9 +47,14 @@ void Tile::setVertices(const QVector<QVector3D> &vertices)
     vertices_ = vertices;
 }
 
-TileInfo Tile::getTileInfo() const
+TileInfo Tile::getOriginTileInfo() const
 {
-    return info_;
+    return originInfo_;
+}
+
+TileInfo Tile::getModifiedTileInfo() const
+{
+    return modifiedInfo_;
 }
 
 Tile::State Tile::getState() const
@@ -170,13 +175,13 @@ void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
         //          |
         //   1 ---> 2
 
-        LLA lla1(info_.bounds.south, info_.bounds.west, 0.0f);
+        LLA lla1(modifiedInfo_.bounds.south, modifiedInfo_.bounds.west, 0.0f);
         NED ned1(&lla1, &ref, isPerspective);
-        LLA lla2(info_.bounds.north, info_.bounds.west, 0.0f);
+        LLA lla2(modifiedInfo_.bounds.north, modifiedInfo_.bounds.west, 0.0f);
         NED ned2(&lla2, &ref, isPerspective);
-        LLA lla3(info_.bounds.north, info_.bounds.east, 0.0f);
+        LLA lla3(modifiedInfo_.bounds.north, modifiedInfo_.bounds.east, 0.0f);
         NED ned3(&lla3, &ref, isPerspective);
-        LLA lla4(info_.bounds.south, info_.bounds.east, 0.0f);
+        LLA lla4(modifiedInfo_.bounds.south, modifiedInfo_.bounds.east, 0.0f);
         NED ned4(&lla4, &ref, isPerspective);
 
         vertices_ = {
@@ -210,9 +215,14 @@ bool Tile::isValid() const
     return false;
 }
 
-void Tile::setTileInfo(const TileInfo &info)
+void Tile::setOriginTileInfo(const TileInfo &info)
 {
-    info_ = info;
+    originInfo_ = info;
+}
+
+void Tile::setModifiedTileInfo(const TileInfo &info)
+{
+    modifiedInfo_ = info;
 }
 
 void Tile::setState(State state)

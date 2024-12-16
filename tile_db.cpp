@@ -24,11 +24,16 @@ TileDB::~TileDB()
     db_.close();
 }
 
-void TileDB::loadTiles(const QList<TileIndex> &tileIndices)
+void TileDB::loadTiles(const QSet<TileIndex> &tileIndices)
 {
     stopRequested_ = false;
 
-    pendingLoadRequests_.append(tileIndices);
+    for (const auto& itm : tileIndices) {
+        if (!pendingLoadRequests_.contains(itm)) {
+            pendingLoadRequests_.insert(itm);
+        }
+    }
+
     processNextTile();
 }
 
@@ -51,9 +56,21 @@ void TileDB::saveTile(const TileIndex &tileIndx, const QImage &image)
     }
 }
 
+void TileDB::stopLoading(const TileIndex& tileIndex)
+{
+    pendingLoadRequests_.remove(tileIndex);
+
+    emit tileLoadStopped(tileIndex);
+}
+
 void TileDB::stopAndClearRequests()
 {
     stopRequested_ = true;
+
+    for (auto& itm : pendingLoadRequests_) {
+        emit tileLoadStopped(itm);
+    }
+
     pendingLoadRequests_.clear();
 }
 
@@ -114,7 +131,9 @@ void TileDB::processNextTile()
         return;
     }
 
-    TileIndex index = pendingLoadRequests_.takeFirst();
+    auto it = pendingLoadRequests_.begin();
+    TileIndex index = *it;
+    pendingLoadRequests_.erase(it);
 
     QSqlQuery query(db_);
     query.prepare("SELECT image FROM tiles WHERE x = :x AND y = :y AND z = :z");

@@ -4,7 +4,6 @@
 #include <QVector3D>
 #include <QImage>
 #include <unordered_map>
-#include <QReadWriteLock>
 
 #include "sceneobject.h"
 #include "map_defs.h"
@@ -40,16 +39,14 @@ public:
     };
 
     /*methods*/
-    explicit MapView(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
+    explicit MapView(QObject* parent = nullptr);
     virtual ~MapView();
 
     void clear();
     void update();
 
-    void setView(GraphicsScene3dView* viewPtr);
     void setRectVertices(const QVector<LLA>& vertices, const QVector<LLA>& vertices2, bool green, bool isPerspective_, QVector3D centralPoint);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
-
     std::unordered_map<map::TileIndex, QImage> getInitTileTextureTasks();
     QList<GLuint> getDeinitTileTextureTasks();
 
@@ -57,14 +54,13 @@ public slots:
     void onTileAppend(const map::Tile& tile);
     void onTileDelete(const map::Tile& tile);
     void onTileVerticesUpdated(const map::Tile& tile);
-
     void onClearAppendTasks();
 
 signals:
-    void updatedTextureId(const map::TileIndex& tileIndx, GLuint textureId);
+    void sendTextureId(const map::TileIndex& tileIndx, GLuint textureId);
+    void sendNotUsed(const map::TileIndex& tileIndx);
 
 private:
     std::unordered_map<map::TileIndex, QImage> appendTasks_;
     QList<GLuint> deleteTasks_;
-    QReadWriteLock rWLocker_;
 };

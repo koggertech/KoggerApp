@@ -93,7 +93,8 @@ public:
     void updateVertices(const LLARef& llaRef, bool isPerspective);
     bool isValid() const;
 
-    void      setTileInfo(const TileInfo& info);
+    void      setOriginTileInfo(const TileInfo& info);
+    void      setModifiedTileInfo(const TileInfo& info);
     void      setState(State state);
     void      setInUse(bool val); // for tileSet
     void      setInterpolated(bool val);
@@ -108,7 +109,8 @@ public:
     void      setVertices(const QVector<QVector3D>& vertices);
     void      setPendingRemoval(bool value);
 
-    TileInfo  getTileInfo() const;
+    TileInfo  getOriginTileInfo() const;
+    TileInfo  getModifiedTileInfo() const;
     State     getState() const;
     bool      getInUse() const; // for tileSet
     bool      getInterpolated() const;
@@ -137,7 +139,8 @@ private:
     bool needToInitT_ = false;
     bool needToDeinitT_ = false;
 
-    TileInfo info_;
+    TileInfo originInfo_;
+    TileInfo modifiedInfo_;
 
     State state_;
     bool  inUse_;
@@ -249,16 +252,40 @@ inline TilePosition getTilePosition(double minLon, double maxLon, const TileInfo
 
 } // namespace map
 
+
 Q_DECLARE_METATYPE(map::TileIndex)
+Q_DECLARE_METATYPE(map::Tile)
+
 
 namespace std {
+
 template <>
 struct hash<::map::TileIndex> {
     std::size_t operator()(const ::map::TileIndex& index) const noexcept {
-        return (std::hash<int32_t>()(index.x_)        ) ^
-               (std::hash<int32_t>()(index.y_) << 1) ^
-               (std::hash<int32_t>()(index.z_) << 2) ^
-               (std::hash<int32_t>()(index.providerId_) << 3);
+        auto hash_combine = [](std::size_t& seed, std::size_t value) {
+            static const std::size_t kMagic = 0x9e3779b97f4a7c16ULL; // boost::hash_combine
+            seed ^= value + kMagic + (seed << 6) + (seed >> 2);
+        };
+
+        std::size_t h = 0;
+        hash<int32_t> hasher;
+
+        hash_combine(h, hasher(index.x_));
+        hash_combine(h, hasher(index.y_));
+        hash_combine(h, hasher(index.z_));
+        hash_combine(h, hasher(index.providerId_));
+
+        return h;
     }
 };
+
+
 } // namespace std
+
+
+namespace map {
+inline uint qHash(const ::map::TileIndex& key, uint seed = 0) {
+    std::size_t stlHash = std::hash<::map::TileIndex>()(key);
+    return static_cast<uint>(stlHash ^ (seed * 0x9e3779b9));
+}
+} // namespace map
