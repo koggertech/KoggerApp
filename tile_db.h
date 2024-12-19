@@ -31,6 +31,7 @@ signals:
     void tileLoaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void tileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
     void tileLoadStopped(const TileIndex& tileIndx);
+    void tileSaved(const TileIndex& tileIndx);
 
 private slots:
     void processNextTile();

@@ -54,6 +54,8 @@ void TileDB::saveTile(const TileIndex &tileIndx, const QImage &image)
     if (!query.exec()) {
         qWarning() << "Failed to save the tile to the database:" << query.lastError().text();
     }
+
+    emit tileSaved(tileIndx);
 }
 
 void TileDB::stopLoading(const TileIndex& tileIndex)

@@ -41,6 +41,7 @@ public slots:
     void onTileLoaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void onTileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileLoadStopped(const TileIndex& tileIndx);
+    void onTileSaved(const TileIndex& tileIndx);
     // TileDownloader
     void onTileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
     void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
@@ -53,16 +54,19 @@ private:
     bool addTiles(const QSet<TileIndex>& request);
     bool addTile(const TileIndex& tileIndx);
     void tryShrinkSetSize();
-    void removeOverlappingTilesFromRender(const Tile& newTile);
     bool tilesOverlap(const TileIndex& index1, const TileIndex& index2, int zoomStepEdge = -1) const;
-    void processIn(const TileIndex& tileIndex);
-    void processOut(const TileIndex& tileIndex);
+    void processIn(const TileIndex& tileIndx);
+    void processOut(const TileIndex& tileIndx);
+    void processUnchanged(const TileIndex& tileIndx);
     void removeFarTilesFromRender(const QSet<TileIndex>&  request);
     void updateTileVerticesInRender(const QSet<TileIndex>& request);
     void drawNumberOnImage(QImage& image, const TileIndex& tileIndx, const QColor& color = Qt::yellow) const;
-
+    void tryRenderTile(Tile& tile);
+    Tile* getTileByIndx(const TileIndex& tileIndx);
     void removeFarDBRequests(const QSet<TileIndex>& request);
     void removeFarDownloaderRequests(const QSet<TileIndex>& request);
+    void removeOverlappingTiles();
+    QImage extractRegion(const QImage& image, int dimension, int x, int y);
 
     /*data*/
     size_t maxCapacity_;
@@ -84,6 +88,7 @@ private:
     int32_t diffLevels_;
     QSet<TileIndex> dbReq_;
     QSet<TileIndex> dwReq_;
+    QSet<TileIndex> dbSvd_;
 
     const int propagationLevel_ = 2;
 };

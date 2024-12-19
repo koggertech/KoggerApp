@@ -268,29 +268,66 @@ TileIndex::TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId) :
 
 }
 
-TileIndex TileIndex::getParent() const
+bool TileIndex::isValid() const
 {
-    if (z_ > 0) {
-        return TileIndex{x_ / 2, y_ / 2, z_ - 1, providerId_};
-    }
-    else {
-        return *this;
-    }
+    return !(x_ == -1 || y_ == -1 || z_ == -1 || providerId_ == -1);
 }
 
-std::vector<TileIndex> TileIndex::getChildren() const
+std::pair<TileIndex, bool> TileIndex::getParent(int depth) const
 {
-    if (z_ < 21) {
-        return {
-            TileIndex{x_ * 2,     y_ * 2,     z_ + 1, providerId_},
-            TileIndex{x_ * 2 + 1, y_ * 2,     z_ + 1, providerId_},
-            TileIndex{x_ * 2,     y_ * 2 + 1, z_ + 1, providerId_},
-            TileIndex{x_ * 2 + 1, y_ * 2 + 1, z_ + 1, providerId_}
-        };
+    if (depth < 0) {
+        depth = 0;
     }
-    else {
-        return {};
+
+    int targetZ = z_ - depth;
+
+    if (targetZ < 1) {
+        return {*this, false};
     }
+
+    int shift = depth;
+
+    TileIndex parent{
+        x_ >> shift,
+        y_ >> shift,
+        targetZ,
+        providerId_
+    };
+
+    return { parent, true };
+}
+
+std::pair<std::vector<TileIndex>, bool> TileIndex::getChilds(int depth) const
+{
+    if (depth < 1) {
+        depth = 1;
+    }
+
+    int targetZ = z_ + depth;
+
+    if (targetZ > 21) {
+        return {{}, false};
+    }
+
+    std::vector<TileIndex> children = {
+        TileIndex{x_ * 2,     y_ * 2,     z_ + 1, providerId_},
+        TileIndex{x_ * 2 + 1, y_ * 2,     z_ + 1, providerId_},
+        TileIndex{x_ * 2,     y_ * 2 + 1, z_ + 1, providerId_},
+        TileIndex{x_ * 2 + 1, y_ * 2 + 1, z_ + 1, providerId_}
+    };
+
+    for (int currentDepth = 2; currentDepth <= depth; ++currentDepth) {
+        std::vector<TileIndex> nextGeneration;
+        for (const auto& child : children) {
+            nextGeneration.push_back(TileIndex{child.x_ * 2,     child.y_ * 2,     child.z_ + 1, providerId_});
+            nextGeneration.push_back(TileIndex{child.x_ * 2 + 1, child.y_ * 2,     child.z_ + 1, providerId_});
+            nextGeneration.push_back(TileIndex{child.x_ * 2,     child.y_ * 2 + 1, child.z_ + 1, providerId_});
+            nextGeneration.push_back(TileIndex{child.x_ * 2 + 1, child.y_ * 2 + 1, child.z_ + 1, providerId_});
+        }
+        children = std::move(nextGeneration);
+    }
+
+    return { children, true };
 }
 
 bool TileIndex::operator==(const TileIndex &other) const

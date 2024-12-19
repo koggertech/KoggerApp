@@ -84,13 +84,14 @@ GraphicsScene3dView::GraphicsScene3dView() :
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
-    auto connType = Qt::AutoConnection;
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile, mapView_.get(), &MapView::onTileAppend, connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,  mapView_.get(), &MapView::onTileDelete,          connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(), &MapView::onTileVerticesUpdated, connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks, mapView_.get(), &MapView::onClearAppendTasks, connType);
-    QObject::connect(mapView_.get(), &MapView::sendNotUsed, tileManager_->getTileSetPtr().get(), &map::TileSet::onNotUsed, connType);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, connType);
+    auto connType = Qt::DirectConnection;
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,          connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,          connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated, connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,    connType);
+    QObject::connect(mapView_.get(),                      &MapView::sendNotUsed,               tileManager_->getTileSetPtr().get(), &map::TileSet::onNotUsed,        connType);
+
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
 
     updatePlaneGrid();
 }

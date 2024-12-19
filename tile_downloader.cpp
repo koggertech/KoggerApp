@@ -45,8 +45,14 @@ void TileDownloader::downloadTile(const TileIndex& tileIndx)
         return;
     }
 
+    for (QNetworkReply* reply : activeReplies_) {
+        TileIndex activeIndex = reply->property("tileIndex").value<TileIndex>();
+        if (activeIndex == tileIndx) {
+            return;
+        }
+    }
+
     if (!networkAvailable_) {
-        emit allDownloadsFinished();
         return;
     }
 
@@ -55,49 +61,49 @@ void TileDownloader::downloadTile(const TileIndex& tileIndx)
     while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
         startNextDownload();
     }
-
-    if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        emit allDownloadsFinished();
-    }
 }
 
 void TileDownloader::stopAndClearRequests()
 {
-    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
+    QSet<TileIndex> stoppedDownloads;
 
+    for (const auto& itm : downloadQueue_) {
+        stoppedDownloads.insert(itm);
+    }
+    downloadQueue_.clear();
+
+    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
     for (auto* reply : repliesToStop) {
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
-        emit downloadStopped(index);
+        stoppedDownloads.insert(index);
         reply->abort();
     }
 
-    downloadQueue_.clear();
-    activeDownloads_ = 0;
-    emit allDownloadsFinished();
+    for (auto& itm : stoppedDownloads) {
+        emit downloadStopped(itm);
+    }
 }
 
-void TileDownloader::deleteRequest(TileIndex tileIndx)
+void TileDownloader::deleteRequest(const TileIndex& tileIndx)
 {
-    QList<QNetworkReply*> activeReplies = activeReplies_.values();
-    QNetworkReply* netRep = nullptr;
+    bool beenDeleted = false;
 
+    int removedFromQueue = downloadQueue_.removeAll(tileIndx);
+    if (removedFromQueue > 0) {
+        beenDeleted = true;
+    }
 
-    for (auto* reply : activeReplies) {
+    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
+    for (auto* reply : repliesToStop) {
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
-
         if (index == tileIndx) {
-            //emit downloadStopped(index);
+            beenDeleted = true;
             reply->abort();
-            netRep = reply;
-            break;
+            break; // cause origin - set
         }
     }
 
-    if (netRep) {
-        activeReplies_.remove(netRep);
-        auto num = downloadQueue_.removeAll(tileIndx);
-        activeDownloads_ -= num;
-
+    if (beenDeleted) {
         emit downloadStopped(tileIndx);
     }
 }
@@ -166,10 +172,6 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
     activeDownloads_--;
 
     startNextDownload();
-
-    if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        emit allDownloadsFinished();
-    }
 }
 
 void TileDownloader::checkNetworkAvailabilityAsync()

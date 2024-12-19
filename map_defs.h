@@ -55,8 +55,10 @@ struct TileInfo {
 };
 
 struct TileIndex {
-    TileIndex();;
-    TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId);;
+    TileIndex();
+    TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId);
+
+    bool isValid() const;
 
     int32_t x_; // indx x
     int32_t y_; // indx y
@@ -64,8 +66,8 @@ struct TileIndex {
 
     int32_t providerId_;
 
-    TileIndex              getParent()   const;
-    std::vector<TileIndex> getChildren() const;
+    std::pair<TileIndex, bool> getParent(int depth = 1) const;
+    std::pair<std::vector<TileIndex>, bool> getChilds(int depth = 1) const;
 
     bool operator==(const TileIndex& other) const;
     bool operator!=(const TileIndex &other) const;
@@ -258,28 +260,15 @@ Q_DECLARE_METATYPE(map::Tile)
 
 
 namespace std {
-
 template <>
 struct hash<::map::TileIndex> {
     std::size_t operator()(const ::map::TileIndex& index) const noexcept {
-        auto hash_combine = [](std::size_t& seed, std::size_t value) {
-            static const std::size_t kMagic = 0x9e3779b97f4a7c16ULL; // boost::hash_combine
-            seed ^= value + kMagic + (seed << 6) + (seed >> 2);
-        };
-
-        std::size_t h = 0;
-        hash<int32_t> hasher;
-
-        hash_combine(h, hasher(index.x_));
-        hash_combine(h, hasher(index.y_));
-        hash_combine(h, hasher(index.z_));
-        hash_combine(h, hasher(index.providerId_));
-
-        return h;
+        return (std::hash<int32_t>()(index.x_)              ) ^
+               (std::hash<int32_t>()(index.y_)          << 1) ^
+               (std::hash<int32_t>()(index.z_)          << 2) ^
+               (std::hash<int32_t>()(index.providerId_) << 3);
     }
 };
-
-
 } // namespace std
 
 
