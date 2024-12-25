@@ -211,7 +211,7 @@ public Q_SLOTS:
     void updateMapView();
 
 signals:
-    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef);
+    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp);
     void cameraIsMoved();
 
 private:
@@ -274,6 +274,7 @@ private:
     bool switchedToBottomTrackVertexComboSelectionMode_;
     int bottomTrackWindowCounter_;
     bool needToResetStartPos_;
+    float lastCameraDist_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

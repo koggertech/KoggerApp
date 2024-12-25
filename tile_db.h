@@ -28,7 +28,7 @@ public slots:
     void stopAndClearRequests();
 
 signals:
-    void tileLoaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void tileLoaded(const TileIndex& tileIndx, const QImage& image);
     void tileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
     void tileLoadStopped(const TileIndex& tileIndx);
     void tileSaved(const TileIndex& tileIndx);

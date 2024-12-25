@@ -21,7 +21,7 @@ class TileSet : public QObject
 public:
     TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db, std::weak_ptr<TileDownloader> downloader, size_t maxCapacity = 1000, size_t minCapacity = 500);
 
-    void onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, LLARef viewLlaRef, bool isPerspective, double minLat, double maxLat, double minLon, double maxLon);
+    void onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, LLARef viewLlaRef, bool isPerspective, double minLat, double maxLat, double minLon, double maxLon, bool moveUp);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 signals:
@@ -38,16 +38,16 @@ signals:
 
 public slots:
     // TileDB
-    void onTileLoaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void onTileLoaded(const TileIndex& tileIndx, const QImage& image);
     void onTileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileLoadStopped(const TileIndex& tileIndx);
     void onTileSaved(const TileIndex& tileIndx);
     // TileDownloader
-    void onTileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void onTileDownloaded(const TileIndex& tileIndx, const QImage& image);
     void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileDownloadStopped(const TileIndex& tileIndx);
     // MapView
-    void onNotUsed(const TileIndex& tileIndx);
+    void onDeleteFromAppend(const TileIndex& tileIndx);
 
 private:
     /*methods*/
@@ -55,24 +55,23 @@ private:
     bool addTile(const TileIndex& tileIndx);
     void tryShrinkSetSize();
     bool tilesOverlap(const TileIndex& index1, const TileIndex& index2, int zoomStepEdge = -1) const;
-    void processIn(const TileIndex& tileIndx);
-    void processOut(const TileIndex& tileIndx);
-    void processUnchanged(const TileIndex& tileIndx);
+    bool processIn(Tile* tile);
+    bool processOut(Tile* tile);
     void removeFarTilesFromRender(const QSet<TileIndex>&  request);
-    void updateTileVerticesInRender(const QSet<TileIndex>& request);
+    void updateTileVerticesInRender();
     void drawNumberOnImage(QImage& image, const TileIndex& tileIndx, const QColor& color = Qt::yellow) const;
-    void tryRenderTile(Tile& tile);
+    bool tryRenderTile(Tile& tile, bool force = false);
     Tile* getTileByIndx(const TileIndex& tileIndx);
     void removeFarDBRequests(const QSet<TileIndex>& request);
     void removeFarDownloaderRequests(const QSet<TileIndex>& request);
-    void removeOverlappingTiles();
-    QImage extractRegion(const QImage& image, int dimension, int x, int y);
+    bool tryCopyImage(Tile* tileIndx);
+    bool updateTileVertices(Tile* tile);
 
     /*data*/
     size_t maxCapacity_;
     size_t minCapacity_;
-    std::list<Tile> tileList_; // лист тайлов
-    std::unordered_map<TileIndex, std::list<Tile>::iterator> tileMap_; // хэш итераторов (least recently used)
+    std::list<Tile> tileList_; // LRU
+    std::unordered_map<TileIndex, std::list<Tile>::iterator> tileMap_;
     std::weak_ptr<TileProvider> tileProvider_;
     std::weak_ptr<TileDB> tileDB_;
     std::weak_ptr<TileDownloader> tileDownloader_;
@@ -89,6 +88,7 @@ private:
     QSet<TileIndex> dbReq_;
     QSet<TileIndex> dwReq_;
     QSet<TileIndex> dbSvd_;
+    bool moveUp_;
 
     const int propagationLevel_ = 2;
 };

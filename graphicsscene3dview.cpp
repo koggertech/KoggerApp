@@ -36,7 +36,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     bottomTrackWindowCounter_(-1),
-    needToResetStartPos_(false)
+    needToResetStartPos_(false),
+    lastCameraDist_(m_camera->distForMapView())
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -85,11 +86,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
     auto connType = Qt::DirectConnection;
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,          connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,          connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated, connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,    connType);
-    QObject::connect(mapView_.get(),                      &MapView::sendNotUsed,               tileManager_->getTileSetPtr().get(), &map::TileSet::onNotUsed,        connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,            connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,            connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated,   connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,      connType);
+    QObject::connect(mapView_.get(),                      &MapView::deleteFromAppend,          tileManager_->getTileSetPtr().get(), &map::TileSet::onDeleteFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
 
@@ -738,7 +739,7 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    float reductorFactor = -0.02f; // debug
+    float reductorFactor = -0.05f; // debug
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
@@ -794,6 +795,8 @@ void GraphicsScene3dView::updateMapView()
         QVector<LLA> llaVerts;
 
         float dist = m_camera->distForMapView();
+        bool moveUp = dist > lastCameraDist_;
+        lastCameraDist_ = dist;
 
         NED ltNed(minX, minY, 0.0);
         NED lbNed(minX, maxY, 0.0);
@@ -825,7 +828,7 @@ void GraphicsScene3dView::updateMapView()
         llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
 
         if (canRequest) {
-            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_);
+            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp);
         }
 
         // qDebug() << "llaVerts";

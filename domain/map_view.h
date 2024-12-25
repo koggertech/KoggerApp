@@ -58,7 +58,7 @@ public slots:
 
 signals:
     void sendTextureId(const map::TileIndex& tileIndx, GLuint textureId);
-    void sendNotUsed(const map::TileIndex& tileIndx);
+    void deleteFromAppend(const map::TileIndex& tileIndx);
 
 private:
     std::unordered_map<map::TileIndex, QImage> appendTasks_;

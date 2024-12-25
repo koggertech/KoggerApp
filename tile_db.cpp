@@ -151,8 +151,7 @@ void TileDB::processNextTile()
         QImage image;
         if (image.loadFromData(imageData)) {
             if (!stopRequested_) {
-                TileInfo info = tileProvider_.lock()->indexToTileInfo(index);
-                emit tileLoaded(index, image, info);
+                emit tileLoaded(index, image);
             }
         }
         else {

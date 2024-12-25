@@ -77,6 +77,11 @@ QImage Tile::getImage() const
     return image_;
 }
 
+QImage& Tile::getImageRef()
+{
+    return image_;
+}
+
 bool Tile::getImageIsNull() const
 {
     return image_.isNull();
@@ -359,6 +364,11 @@ void Tile::setPendingRemoval(bool value)
 bool Tile::getPendingRemoval() const
 {
     return pendingRemoval_;
+}
+
+bool Tile::getHasValidImage() const
+{
+    return (!image_.isNull() && !interpolated_);
 }
 
 

@@ -157,10 +157,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
         QImage image;
 
         if (image.loadFromData(imageData)) {
-            if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
-                TileInfo info = sharedProvider->indexToTileInfo(index);
-                emit tileDownloaded(index, image, info);
-            }
+                emit tileDownloaded(index, image);
         }
         else {
             emit downloadFailed(index, "Failed to load image from data");

@@ -100,8 +100,8 @@ void MapView::onTileDelete(const map::Tile &tile)
     // delete task
     auto r = RENDER_IMPL(MapView);
 
-    if (auto tileIndx = r->tilesHash_.find(tile.getIndex()); tileIndx != r->tilesHash_.end()) {
-        deleteTasks_.append(tileIndx->second.getTextureId());
+    if (auto it = r->tilesHash_.find(tile.getIndex()); it != r->tilesHash_.end()) {
+        deleteTasks_.append(it->second.getTextureId());
     }
 
     // delete from render
@@ -124,11 +124,17 @@ void MapView::onTileVerticesUpdated(const map::Tile &tile)
 
 void MapView::onClearAppendTasks()
 {
-    for (auto it = appendTasks_.begin(); it != appendTasks_.end(); ++it) {
-        emit sendNotUsed(it->first);
-    }
-
+    auto copyAppendTasks = std::move(appendTasks_);
     appendTasks_.clear();
+    auto r = RENDER_IMPL(MapView);
+
+    for (auto it = copyAppendTasks.begin(); it != copyAppendTasks.end(); ++it) {
+        if (auto itSec = r->tilesHash_.find(it->first); itSec != r->tilesHash_.end()) {
+            r->tilesHash_.erase(itSec->first);
+        }
+
+        emit deleteFromAppend(it->first);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

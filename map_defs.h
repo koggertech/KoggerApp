@@ -117,6 +117,7 @@ public:
     bool      getInUse() const; // for tileSet
     bool      getInterpolated() const;
     QImage    getImage() const;
+    QImage&   getImageRef();
     bool      getImageIsNull() const;
     GLuint    getTextureId() const;
     QVector3D getVertexNed() const;
@@ -127,6 +128,7 @@ public:
     QDateTime getRequestLastTime() const;
     LLARef    getUsedLlaRef() const;
     bool      getPendingRemoval() const;
+    bool      getHasValidImage() const;
 
     const QVector<QVector3D>& getVerticesRef() const;
     const QVector<QVector2D>& getTexCoordsRef() const;

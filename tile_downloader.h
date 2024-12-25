@@ -33,7 +33,7 @@ public:
     void deleteRequest(const TileIndex& tileIndx);
 
 signals:
-    void tileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void tileDownloaded(const TileIndex& tileIndx, const QImage& image);
     void downloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void downloadStopped(const TileIndex& tileIndx);
 

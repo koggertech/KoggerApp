@@ -55,9 +55,8 @@ std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
     return tileSet_;
 }
 
-void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef)
+void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp)
 {
-
     int minX = std::numeric_limits<int>::max();
     int maxX = std::numeric_limits<int>::min();
     int minY = std::numeric_limits<int>::max();
@@ -69,13 +68,12 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     double minLon = std::numeric_limits<double>::max();
     double maxLon = std::numeric_limits<double>::lowest();
 
-    ZoomState zoomState;
+    ZoomState zoomState = ZoomState::kUndefined;
 
     // dimensions
     for (auto& itm : request) {
         // LLARect -> tileIndx
         LLA lla(itm.latitude, itm.longitude, 0.0f);
-
         auto tileIndx = tileProvider_.get()->llaToTileIndex(lla, tileProvider_.get()->heightToTileZ(itm.altitude));
 
         minX = std::min(minX, tileIndx.x_);
@@ -92,7 +90,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
             zoomLevel = tileIndx.z_;
             if (zoomLevel != lastZoomLevel_) {
                 zoomState = lastZoomLevel_ > zoomLevel ? ZoomState::kOut : ZoomState::kIn;
-                qDebug() << "zoom level chaged to:" << zoomLevel << "isPerspective" << isPerspective << "zoomState" << static_cast<int>(zoomState);
+                //qDebug() << "zoom level chaged to:" << zoomLevel << "isPerspective" << isPerspective << "zoomState" << static_cast<int>(zoomState);
                 lastZoomLevel_ = zoomLevel;
             }
             else {
@@ -140,7 +138,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     }
 
     if (!indxRequest.isEmpty()) {
-        tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLat, maxLat, minLon, maxLon);
+        tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLat, maxLat, minLon, maxLon, moveUp);
     }
 }
 
