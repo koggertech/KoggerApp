@@ -452,7 +452,7 @@ void GraphicsScene3dView::setNeedToResetStartPos(bool state)
 void GraphicsScene3dView::forceUpdateDatasetRef()
 {
     if (m_dataset) {
-        auto ref = m_dataset->getRef();
+        auto ref = m_dataset->getLlaRef();
         m_camera->datasetLlaRef_ = ref.isInit ? ref : LLARef(m_camera->yerevanLla);
     }
 
@@ -616,9 +616,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
 
-    auto ref = dataset->getRef();
-    ref.isInit ? m_camera->datasetLlaRef_ = ref : m_camera->datasetLlaRef_ = LLARef(m_camera->yerevanLla);
-    m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
+    forceUpdateDatasetRef();
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](int lEpoch, int rEpoch) -> void {
@@ -675,6 +673,12 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                             setLastEpochFocusView();
                                         }
                                     }
+                                }, Qt::DirectConnection);
+
+    QObject::connect(m_dataset, &Dataset::updatedLlaRef,
+                     this,      [this]() -> void {
+                                   forceUpdateDatasetRef();
+                                   fitAllInView();
                                 }, Qt::DirectConnection);
 }
 

@@ -212,6 +212,16 @@ Dataset::Dataset() :
     resetDataset();
 }
 
+void Dataset::setState(DatasetState state)
+{
+    state_ = state;
+}
+
+Dataset::DatasetState Dataset::getState() const
+{
+    return state_;
+}
+
 void Dataset::getMaxDistanceRange(float *from, float *to, int channel1, int channel2) {
     const int sz = size();
     float channel1_max = 0;
@@ -263,6 +273,40 @@ const QHash<int, int>& Dataset::getSelectedIndicesBoatTrack() const
 int Dataset::getLastBottomTrackEpoch() const
 {
     return lastBottomTrackEpoch_;
+}
+
+LLARef Dataset::getLlaRef() const
+{
+    return _llaRef;
+}
+
+void Dataset::setLlaRef(const LLARef &val, LlaRefState state)
+{
+    if ((llaRefState_ == LlaRefState::kUndefined) ||
+        (llaRefState_ == LlaRefState::kSettings   && (state == LlaRefState::kConnection  || state == LlaRefState::kFile)) ||
+        (llaRefState_ == LlaRefState::kFile       &&  state == LlaRefState::kConnection) ||
+        (llaRefState_ == LlaRefState::kConnection &&  state == LlaRefState::kFile)) {
+
+        _llaRef = val;
+        llaRefState_ = state;
+
+        emit updatedLlaRef();
+        qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
+    }
+}
+
+
+Dataset::LlaRefState Dataset::getCurrentLlaRefState() const
+{
+    LlaRefState retVal = llaRefState_;
+
+    switch (state_) {
+    case DatasetState::kConnection: { retVal = LlaRefState::kConnection; break; }
+    case DatasetState::kFile:       { retVal = LlaRefState::kFile;       break; }
+    default: break;
+    }
+
+    return retVal;
 }
 
 void Dataset::addEvent(int timestamp, int id, int unixt) {
@@ -459,9 +503,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
         ) {
         // qDebug("usbl lat %f, lon %f", data.usbl_latitude, data.usbl_longitude);
 
-        if(!_llaRef.isInit) {
-            _llaRef = LLARef(pos.lla);
-        }
+        setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
 
         pos.LLA2NED(&_llaRef);
         // qDebug("usbl x %f, y %f", pos.ned.n, pos.ned.e);
@@ -556,9 +598,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
             last_epoch = addNewEpoch();
         }
 
-        if(!_llaRef.isInit) {
-            _llaRef = LLARef(pos.lla);
-        }
+        setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
 
         last_epoch->setPositionLLA(pos);
         last_epoch->setPositionRef(&_llaRef);
@@ -653,7 +693,8 @@ void Dataset::resetDataset() {
     lastBottomTrackEpoch_ = 0;
     resetDistProcessing();
     interpolator_.clear();
-
+    llaRefState_ = LlaRefState::kUndefined;
+    state_ = DatasetState::kUndefined;
     clearBoatTrack();
     emit dataUpdate();
 }
@@ -1021,8 +1062,7 @@ void Dataset::setRefPosition(Epoch* epoch) {
 
 void Dataset::setRefPosition(Position ref_pos) {
     if(ref_pos.lla.isCoordinatesValid()) {
-        _llaRef = LLARef(ref_pos.lla);
-
+        setLlaRef(LLARef(ref_pos.lla), getCurrentLlaRefState());
         for(int iepoch = 0; iepoch < size(); iepoch++) {
             Epoch* epoch = fromIndex(iepoch);
             if(epoch == NULL) { continue; }

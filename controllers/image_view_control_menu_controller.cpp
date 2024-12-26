@@ -38,7 +38,7 @@ void ImageViewControlMenuController::onUpdateClicked(const QString& imagePath, d
 
         Dataset * dataset = m_graphicsSceneView->dataset();
         if(dataset) {
-            LLARef ref = dataset->getRef();
+            LLARef ref = dataset->getLlaRef();
             Position pos_lt;
             pos_lt.lla = LLA(lat_lt, lon_lt);
 

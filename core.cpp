@@ -24,10 +24,6 @@ Core::Core() :
     isMosaicUpdatingInThread_(false),
     isSideScanPerformanceMode_(false)
 {
-
-    auto ref = datasetPtr_->getRef();
-    qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
-
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
@@ -37,9 +33,6 @@ Core::Core() :
 Core::~Core()
 {
     saveLLARefToSettings();
-    auto ref = datasetPtr_->getRef();
-    qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
-
     removeLinkManagerConnections();
 #ifdef SEPARATE_READING
     removeDeviceManagerConnections();
@@ -214,6 +207,8 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
     }
 
+    datasetPtr_->setState(Dataset::DatasetState::kFile);
+
     emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 }
 
@@ -342,12 +337,14 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 QFile file;
                 QUrl url(localfilePath);
                 url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
-                    if (file.open(QIODevice::ReadOnly)) {
-                        openXTF(file.readAll());
-                    }
-                    return;
+                if (file.open(QIODevice::ReadOnly)) {
+                    openXTF(file.readAll());
                 }
+                return;
             }
+        }
+
+        datasetPtr_->setState(Dataset::DatasetState::kFile);
 
         emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 
@@ -408,7 +405,6 @@ void Core::onFileOpened()
     qDebug() << "file opened!";
 
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->forceUpdateDatasetRef();
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
@@ -417,6 +413,7 @@ void Core::onFileOpened()
 bool Core::openXTF(QByteArray data)
 {
     datasetPtr_->resetDataset();
+    datasetPtr_->setState(Dataset::DatasetState::kFile);
     converterXtf_.toDataset(data, getDatasetPtr());
 
     consoleInfo("XTF note:" + QString(converterXtf_.header.NoteString));
@@ -1190,15 +1187,10 @@ void Core::createLinkManagerConnections()
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this]() {
 #ifdef SEPARATE_READING
-                                                                                                                                 tryOpenedfilePath_.clear();
+                                                                                                                                     tryOpenedfilePath_.clear();
 #endif
+                                                                                                                                     datasetPtr_->setState(Dataset::DatasetState::kConnection);
                                                                                                                                      if (scene3dViewPtr_) {
-                                                                                                                                        QTimer::singleShot(5000, this, [this]() { // TODO: correct llaref updating
-                                                                                                                                            if (scene3dViewPtr_) {
-                                                                                                                                                scene3dViewPtr_->forceUpdateDatasetRef();
-                                                                                                                                            }
-                                                                                                                                        });
-
                                                                                                                                          scene3dViewPtr_->setNavigationArrowState(true);
                                                                                                                                          scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
                                                                                                                                      }
@@ -1264,7 +1256,7 @@ void Core::fixFilePathString(QString& filePath) const
 
 void Core::saveLLARefToSettings()
 {
-    auto ref = datasetPtr_->getRef();
+    auto ref = datasetPtr_->getLlaRef();
 
     QSettings settings("KOGGER", "KoggerApp");
     QString group{"LLARef"};
@@ -1280,6 +1272,8 @@ void Core::saveLLARefToSettings()
     settings.endGroup();
 
     settings.sync();
+
+    qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
 }
 
 void Core::loadLLARefFromSettings()
@@ -1298,5 +1292,7 @@ void Core::loadLLARefFromSettings()
     ref.isInit = settings.value("isInit", false).toBool();
     settings.endGroup();
 
-    datasetPtr_->setRef(ref);
+    datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kSettings);
+
+    qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
 }

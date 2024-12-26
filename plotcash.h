@@ -876,7 +876,26 @@ private:
 class Dataset : public QObject {
     Q_OBJECT
 public:
+    /*structures*/
+    enum class DatasetState {
+        kUndefined = 0,
+        kFile,
+        kConnection
+    };
+    enum class LlaRefState {
+        kUndefined = 0,
+        kSettings,
+        kFile,
+        kConnection
+    };
+
+    /*methods*/
     Dataset();
+
+    void setState(DatasetState state);
+    DatasetState getState() const;
+    LLARef getLlaRef() const;
+    void setLlaRef(const LLARef& val, LlaRefState state);
 
     inline int size() const {
 
@@ -991,14 +1010,6 @@ public slots:
 
     void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
 
-    LLARef getRef() {
-        return _llaRef;
-    }
-
-    void setRef(const LLARef& val) {
-         _llaRef = val;
-    }
-
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
@@ -1017,10 +1028,9 @@ signals:
     void bottomTrackUpdated(int lEpoch, int rEpoch);
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);
+    void updatedLlaRef();
 
 protected:
-    QMutex mutex_;
-
     int lastEventTimestamp = 0;
     int lastEventId = 0;
     float _lastEncoder = 0;
@@ -1031,8 +1041,6 @@ protected:
         _channelsSetup[ch].channel = ch;
         _channelsSetup[ch].counter();
     }
-
-    LLARef _llaRef;
 
     QVector<QVector3D> _boatTrack;
     QHash<int, int> selectedBoatTrackVertexIndices_; // first - vertice indx, second - epoch indx
@@ -1066,6 +1074,7 @@ protected:
 private:
     friend class Interpolator;
 
+    /*structures*/
     class Interpolator {
     public:
         explicit Interpolator(Dataset* datasetPtr);
@@ -1086,6 +1095,13 @@ private:
         int secondChannelId_;
     };
 
+    /*methods*/
+    LlaRefState getCurrentLlaRefState() const;
+
+    /*data*/
+    LLARef _llaRef;
+    LlaRefState llaRefState_ = LlaRefState::kUndefined;
+    DatasetState state_ = DatasetState::kUndefined;
     Interpolator interpolator_;
     int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;
