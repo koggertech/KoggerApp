@@ -33,6 +33,7 @@ signals:
     // MapView
     void mvAppendTile(const Tile& tile);
     void mvDeleteTile(const Tile& tile);
+    void mvUpdateTileImage(const Tile& tile);
     void mvUpdateTileVertices(const Tile& tile);
     void mvClearAppendTasks();
 
@@ -47,7 +48,7 @@ public slots:
     void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void onTileDownloadStopped(const TileIndex& tileIndx);
     // MapView
-    void onDeleteFromAppend(const TileIndex& tileIndx);
+    void onDeletedFromAppend(const TileIndex& tileIndx);
 
 private:
     /*methods*/

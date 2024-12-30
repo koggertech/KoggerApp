@@ -99,6 +99,19 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         }
     }
 
+    double lonEdge = 180.0;
+    if (maxLon > lonEdge)
+        maxLon = lonEdge;
+    if (maxLon < -lonEdge)
+        maxLon = -lonEdge;
+    if (minLon > lonEdge)
+        minLon = lonEdge;
+    if (minLon < -lonEdge)
+        minLon = -lonEdge;
+    if (qFuzzyCompare(minLon, maxLon)) {
+        return;
+    }
+
     auto [lonStartTile, lonEndTile, boundaryTile] = tileProvider_.get()->lonToTileXWithWrapAndBoundary(minLon, maxLon, zoomLevel);
 
     uint64_t reqSize = 0;
@@ -107,7 +120,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     if (boundaryTile == -1) {
         reqSize = (lonEndTile - lonStartTile + 1) * (maxY - minY + 1);
 
-        if (reqSize < maxTilesCapacity_) {
+        if (reqSize < minTilesCapacity_) {
             for (int x = lonStartTile; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
@@ -120,7 +133,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
         reqSize = (boundaryTile - lonStartTile + 1) * (maxY - minY + 1) +
                   (lonEndTile + 1) * (maxY - minY + 1);
 
-        if (reqSize < maxTilesCapacity_) {
+        if (reqSize < minTilesCapacity_) {
             for (int x = lonStartTile; x <= boundaryTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
                     TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());

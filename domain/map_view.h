@@ -49,18 +49,22 @@ public:
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     std::unordered_map<map::TileIndex, QImage> getInitTileTextureTasks();
     QList<GLuint> getDeinitTileTextureTasks();
+    std::unordered_map<map::TileIndex, QImage> getUpdateTileTextureTasks();
+    GLuint getTextureIdByTileIndex(const map::TileIndex& tileIndx) const;
 
 public slots:
     void onTileAppend(const map::Tile& tile);
     void onTileDelete(const map::Tile& tile);
+    void onTileImageUpdated(const map::Tile& tile);
     void onTileVerticesUpdated(const map::Tile& tile);
     void onClearAppendTasks();
 
 signals:
     void sendTextureId(const map::TileIndex& tileIndx, GLuint textureId);
-    void deleteFromAppend(const map::TileIndex& tileIndx);
+    void deletedFromAppend(const map::TileIndex& tileIndx);
 
 private:
     std::unordered_map<map::TileIndex, QImage> appendTasks_;
     QList<GLuint> deleteTasks_;
+    std::unordered_map<map::TileIndex, QImage> updateImageTasks_;
 };
