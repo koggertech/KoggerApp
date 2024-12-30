@@ -553,6 +553,8 @@ void DeviceManager::upgradeLastDev(QByteArray data)
 }
 
 void DeviceManager::beaconActivationReceive(uint8_t id) {
+    Q_UNUSED(id)
+
     QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
     if(usbl_devs.size() > 0) {
         IDBinUsblSolution::USBLRequestBeacon ask = {};

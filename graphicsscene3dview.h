@@ -9,14 +9,15 @@
 #include "surface.h"
 #include "side_scan_view.h"
 #include "image_view.h"
+#include "map_view.h"
 #include "boattrack.h"
 #include "bottomtrack.h"
 #include "polygongroup.h"
 #include "pointgroup.h"
-#include "vertexeditingdecorator.h"
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
+#include "tile_manager.h"
 
 
 class Dataset;
@@ -31,13 +32,14 @@ public:
     class Camera
     {
     public:
-        Camera();
+        explicit Camera(GraphicsScene3dView* viewPtr = nullptr);
         Camera(qreal pitch,
                qreal yaw,
                qreal distToFocusPoint,
                qreal fov,
                qreal sensivity);
 
+        float distForMapView() const;
         qreal distToFocusPoint() const;
         qreal fov() const;
         qreal pitch() const;
@@ -50,6 +52,7 @@ public:
         void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
         void move(const QVector2D &lastMouse, const QVector2D &mousePos);
+        void resetZAxis();
         void moveZAxis(float z);
         void zoom(qreal delta);
         void commitMovement();
@@ -60,8 +63,15 @@ public:
         void setMapView();
         void reset();
 
+        float getHeightAboveGround() const;
+        float getAngleToGround() const;
+        bool getIsPerspective() const;
+        bool getIsFarAwayFromOriginLla() const;
+
     private:
-        void updateViewMatrix(QVector3D* lookAt = nullptr);
+        void updateCameraParams();
+        void tryToChangeViewLlaRef();
+        void updateViewMatrix();
         void checkRotateAngle();
     private:
         friend class GraphicsScene3dView;
@@ -70,6 +80,7 @@ public:
         QVector3D m_eye = {0.0f, 0.0f, 0.0f};
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
         QVector3D m_lookAt = {0.0f, 0.0f, 0.0f};
+        QVector3D m_lookAtSave = {0.0f, 0.0f, 0.0f};
         QVector3D m_relativeOrbitPos = {0.0f, 0.0f, 0.0f};
 
         QMatrix4x4 m_view;
@@ -83,9 +94,18 @@ public:
         qreal m_yaw = 0.f;
         qreal m_fov = 45.f;
         float m_distToFocusPoint = 50.f;
+        float distForMapView_ = m_distToFocusPoint;
         qreal m_sensivity = 4.f;
-
+        float distToGround_ = 0.0f;
+        float angleToGround_ = 0.0f;
+        bool isPerspective_ = false;
+        float highDistThreshold_ = 5000.0f;
+        float lowDistThreshold_ = highDistThreshold_ * 0.9f;
         QVector2D m_rotAngle;
+        GraphicsScene3dView* viewPtr_;
+        LLARef datasetLlaRef_;
+        LLA yerevanLla = LLA(40.1852f, 44.5149f, 0.0f);
+        LLARef viewLlaRef_ = LLARef(yerevanLla);
     };
 
     //Renderer
@@ -102,9 +122,11 @@ public:
 
     private:
         friend class GraphicsScene3dView;
+        void processMapTextures(GraphicsScene3dView* viewPtr) const;
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
+        QString checkOpenGLError() const;
 
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
@@ -141,6 +163,7 @@ public:
     std::shared_ptr<Surface> surface() const;
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
+    std::shared_ptr<MapView> getMapViewPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
@@ -149,10 +172,13 @@ public:
     bool sceneBoundingBoxVisible() const;
     Dataset* dataset() const;
     void setNavigationArrowState(bool state);
-    void clear();
+    void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setCalcStateSideScanView(bool state);
     void interpolateDatasetEpochs(bool fromStart);
+    void updateProjection();
+    void setNeedToResetStartPos(bool state);
+    void forceUpdateDatasetRef();
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -162,6 +188,9 @@ public:
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
+
+protected:
+    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
@@ -179,6 +208,11 @@ public Q_SLOTS:
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlEngine(QObject* engine);
+    void updateMapView();
+
+signals:
+    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp);
+    void cameraIsMoved();
 
 private:
     void updateBounds();
@@ -197,6 +231,7 @@ private:
     std::shared_ptr<Surface> m_surface;
     std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<ImageView> imageView_;
+    std::shared_ptr<MapView> mapView_;
     std::shared_ptr<BoatTrack> m_boatTrack;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;
@@ -206,6 +241,8 @@ private:
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> m_navigationArrow;
     std::shared_ptr<UsblView> usblView_;
+
+    std::shared_ptr<map::TileManager> tileManager_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
@@ -224,11 +261,20 @@ private:
 #else
     static constexpr double mouseThreshold_{ 10.0 };
 #endif
+
+    static constexpr float perspectiveEdge_{ 5000.0f };
+    static constexpr float nearPlanePersp_{ 1.0f };
+    static constexpr float farPlanePersp_{ 20000.0f };
+    static constexpr float nearPlaneOrthoCoeff_{ 0.05f };
+    static constexpr float farPlaneOrthoCoeff_{ 1.2f };
+
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* engine_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     int bottomTrackWindowCounter_;
+    bool needToResetStartPos_;
+    float lastCameraDist_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

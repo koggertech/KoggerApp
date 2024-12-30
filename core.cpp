@@ -1,5 +1,6 @@
 #include "core.h"
 
+#include <QSettings>
 #include <ctime>
 #include "bottomtrack.h"
 #ifdef Q_OS_WINDOWS
@@ -31,6 +32,7 @@ Core::Core() :
 
 Core::~Core()
 {
+    saveLLARefToSettings();
     removeLinkManagerConnections();
 #ifdef SEPARATE_READING
     removeDeviceManagerConnections();
@@ -46,6 +48,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",      surfaceControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController", sideScanViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",    imageViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",      mapViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("PointGroupControlMenuController",   pointGroupControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("PolygonGroupControlMenuController", polygonGroupControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MpcFilterControlMenuController",    mpcFilterControlMenuController_.get());
@@ -204,6 +207,8 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
     }
 
+    datasetPtr_->setState(Dataset::DatasetState::kFile);
+
     emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 }
 
@@ -238,6 +243,7 @@ void Core::onFileStartOpening()
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->getSideScanViewPtr()->updateChannelsIds(); // TODO: not effect(
+        scene3dViewPtr_->forceUpdateDatasetRef();
         //scene3dViewPtr_->setMapView();
     }
 }
@@ -250,6 +256,7 @@ void Core::onFileOpened()
     fileIsCompleteOpened_ = true;
 
     if (scene3dViewPtr_) {
+        scene3dViewPtr_->forceUpdateDatasetRef();
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
@@ -258,11 +265,11 @@ void Core::onFileReadEnough()
 {
     datasetPtr_->setRefPositionByFirstValid();
     // datasetPtr_->usblProcessing();
-    // if (scene3dViewPtr_) {
-    //     scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
-    //     scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
-    // }
-
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->forceUpdateDatasetRef();
+        //scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
+        //scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
+    }
 
     QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
     for (int i = 0; i < plot2dList_.size(); i++) {
@@ -330,12 +337,14 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 QFile file;
                 QUrl url(localfilePath);
                 url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
-                    if (file.open(QIODevice::ReadOnly)) {
-                        openXTF(file.readAll());
-                    }
-                    return;
+                if (file.open(QIODevice::ReadOnly)) {
+                    openXTF(file.readAll());
                 }
+                return;
             }
+        }
+
+        datasetPtr_->setState(Dataset::DatasetState::kFile);
 
         emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
 
@@ -404,6 +413,7 @@ void Core::onFileOpened()
 bool Core::openXTF(QByteArray data)
 {
     datasetPtr_->resetDataset();
+    datasetPtr_->setState(Dataset::DatasetState::kFile);
     converterXtf_.toDataset(data, getDatasetPtr());
 
     consoleInfo("XTF note:" + QString(converterXtf_.header.NoteString));
@@ -947,6 +957,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 {
     Q_UNUSED(url)
 
+    loadLLARefFromSettings();
+
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
     plot2dList_ = object->findChildren<qPlot2D*>();
     scene3dViewPtr_->setDataset(datasetPtr_);
@@ -985,6 +997,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     imageViewControlMenuController_->setQmlEngine(object);
     imageViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    mapViewControlMenuController_->setQmlEngine(object);
+    mapViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     npdFilterControlMenuController_->setQmlEngine(object);
     npdFilterControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
@@ -1085,6 +1100,7 @@ void Core::createControllers()
     surfaceControlMenuController_      = std::make_shared<SurfaceControlMenuController>();
     sideScanViewControlMenuController_ = std::make_shared<SideScanViewControlMenuController>();
     imageViewControlMenuController_    = std::make_shared<ImageViewControlMenuController>();
+    mapViewControlMenuController_      = std::make_shared<MapViewControlMenuController>();
     pointGroupControlMenuController_   = std::make_shared<PointGroupControlMenuController>();
     polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
     scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();
@@ -1093,6 +1109,7 @@ void Core::createControllers()
 
     sideScanViewControlMenuController_->setCorePtr(this);
 }
+
 #ifdef SEPARATE_READING
 void Core::createDeviceManagerConnections()
 {
@@ -1170,8 +1187,9 @@ void Core::createLinkManagerConnections()
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this]() {
 #ifdef SEPARATE_READING
-                                                                                                                                 tryOpenedfilePath_.clear();
+                                                                                                                                     tryOpenedfilePath_.clear();
 #endif
+                                                                                                                                     datasetPtr_->setState(Dataset::DatasetState::kConnection);
                                                                                                                                      if (scene3dViewPtr_) {
                                                                                                                                          scene3dViewPtr_->setNavigationArrowState(true);
                                                                                                                                          scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
@@ -1234,4 +1252,47 @@ void Core::fixFilePathString(QString& filePath) const
 
     filePath.replace("\\", "/");
 #endif
+}
+
+void Core::saveLLARefToSettings()
+{
+    auto ref = datasetPtr_->getLlaRef();
+
+    QSettings settings("KOGGER", "KoggerApp");
+    QString group{"LLARef"};
+
+    settings.beginGroup(group);
+    settings.setValue("refLatSin", ref.refLatSin);
+    settings.setValue("refLatCos", ref.refLatCos);
+    settings.setValue("refLatRad", ref.refLatRad);
+    settings.setValue("refLonRad", ref.refLonRad);
+    settings.setValue("refLlaLatitude", ref.refLla.latitude);
+    settings.setValue("refLlaLongitude", ref.refLla.longitude);
+    settings.setValue("isInit", ref.isInit);
+    settings.endGroup();
+
+    settings.sync();
+
+    qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
+}
+
+void Core::loadLLARefFromSettings()
+{
+    QSettings settings("KOGGER", "KoggerApp");
+    QString group{"LLARef"};
+
+    settings.beginGroup(group);
+    LLARef ref;
+    ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
+    ref.refLatCos = settings.value("refLatCos", NAN).toDouble();
+    ref.refLatRad = settings.value("refLatRad", NAN).toDouble();
+    ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
+    ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
+    ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
+    ref.isInit = settings.value("isInit", false).toBool();
+    settings.endGroup();
+
+    datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kSettings);
+
+    qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
 }

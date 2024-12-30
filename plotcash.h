@@ -38,6 +38,8 @@
 #define M_RAD_TO_DEG 57.29577951308232087679f
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
+typedef struct NED NED;
+typedef struct LLARef LLARef;
 
 typedef struct LLA {
     double latitude = NAN, longitude = NAN;
@@ -48,6 +50,7 @@ typedef struct LLA {
         longitude = lon;
         altitude = alt;
     }
+    inline LLA(const NED* ned, const LLARef* ref, bool spherical = true);
 
     bool isValid() {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
@@ -75,35 +78,69 @@ typedef struct  LLARef {
         refLla = lla;
         isInit = true;
     }
+
+    friend bool operator==(const LLARef& lhs, const LLARef& rhs) {
+        if (!std::isfinite(lhs.refLla.latitude) || !std::isfinite(lhs.refLla.longitude) ||
+            !std::isfinite(rhs.refLla.latitude) || !std::isfinite(rhs.refLla.longitude)) {
+            return false;
+        }
+        return qFuzzyCompare(1.0 + lhs.refLla.latitude, 1.0 + rhs.refLla.latitude) &&
+               qFuzzyCompare(1.0 + lhs.refLla.longitude, 1.0 + rhs.refLla.longitude);
+    }
+
+    friend bool operator!=(const LLARef& lhs, const LLARef& rhs) {
+        return !(lhs == rhs);
+    }
 } LLARef;
 
 typedef struct NED {
     double n = NAN, e = NAN, d = NAN;
     NED() {}
+    NED(double _n, double _e, double _d) : n(_n), e(_e), d(_d) { };
+    NED(LLA* lla, LLARef* ref, bool spherical = true) {
+        if (spherical) {
+            double lat_rad = lla->latitude * M_DEG_TO_RAD;
+            double lon_rad = lla->longitude * M_DEG_TO_RAD;
 
-    NED(LLA* lla, LLARef* ref) {
-        double lat_rad = lla->latitude * M_DEG_TO_RAD;
-        double lon_rad = lla->longitude * M_DEG_TO_RAD;
+            double sin_lat = sin(lat_rad);
+            double cos_lat = cos(lat_rad);
+            double cos_d_lon = cos(lon_rad - ref->refLonRad);
 
-        double sin_lat = sin(lat_rad);
-        double cos_lat = cos(lat_rad);
-        double cos_d_lon = cos(lon_rad - ref->refLonRad);
+            double arg = ref->refLatSin * sin_lat + ref->refLatCos * cos_lat * cos_d_lon;
 
-        double arg = ref->refLatSin * sin_lat + ref->refLatCos * cos_lat * cos_d_lon;
+            if (arg > 1.0) {
+                arg = 1.0;
 
-        if (arg > 1.0) {
-            arg = 1.0;
+            } else if (arg < -1.0) {
+                arg = -1.0;
+            }
 
-        } else if (arg < -1.0) {
-            arg = -1.0;
+            double c = acos(arg);
+            double k = (fabs(c) < __DBL_EPSILON__) ? 1.0 : (c / sin(c));
+
+            n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
+            e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
         }
+        else { // merсator
+            double R = CONSTANTS_RADIUS_OF_EARTH;
 
-        double c = acos(arg);
-        double k = (fabs(c) < __DBL_EPSILON__) ? 1.0 : (c / sin(c));
+            double lat_rad = lla->latitude * M_DEG_TO_RAD;
+            double ref_lat_rad = ref->refLla.latitude * M_DEG_TO_RAD;
 
-        n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
-        e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
+            double y = R * log(tan(M_PI / 4.0 + lat_rad / 2.0));
+            double y_ref = R * log(tan(M_PI / 4.0 + ref_lat_rad / 2.0));
+
+            double delta_y = y - y_ref;
+
+            double delta_lon = (lla->longitude - ref->refLla.longitude) * M_DEG_TO_RAD;
+            double x = R * delta_lon;
+
+            n = delta_y;
+            e = x;
+            d = -(lla->altitude - ref->refLla.altitude);
+        }
     }
+
 
     bool isValid() {
         return isfinite(n) && isfinite(e) && isfinite(d);
@@ -113,6 +150,74 @@ typedef struct NED {
         return isfinite(n) && isfinite(e);
     }
 } NED;
+
+LLA::LLA(const NED* ned, const LLARef* ref, bool spherical)
+{
+    if (spherical) {
+        if (!ned || !ref ||
+            !std::isfinite(ned->n) ||
+            !std::isfinite(ned->e) ||
+            !std::isfinite(ned->d)) {
+            return;
+        }
+
+        double R = CONSTANTS_RADIUS_OF_EARTH;
+        double n = ned->n;
+        double e = ned->e;
+
+        double c = sqrt(n * n + e * e) / R;
+
+        if (qFuzzyIsNull(c)) {
+            latitude = ref->refLla.latitude;
+            longitude = ref->refLla.longitude;
+            altitude = ref->refLla.altitude - ned->d;
+            return;
+        }
+
+        double lat0 = ref->refLatRad;
+        double lon0 = ref->refLonRad;
+
+        double sin_c = sin(c);
+        double cos_c = cos(c);
+
+        double alpha = atan2(e, n);
+
+        double sin_lat = sin(lat0) * cos_c + cos(lat0) * sin_c * cos(alpha);
+        double lat_rad = asin(sin_lat);
+
+        double y = sin(alpha) * sin_c * cos(lat0);
+        double x = cos_c - sin(lat0) * sin_lat;
+        double lon_rad = lon0 + atan2(y, x);
+
+        latitude = lat_rad * 180.0 / M_PI;
+        longitude = lon_rad * 180.0 / M_PI;
+        altitude = ref->refLla.altitude - ned->d;
+    }
+    else { // mercator
+        if (!ned || !ref ||
+            !std::isfinite(ned->n) ||
+            !std::isfinite(ned->e) ||
+            !std::isfinite(ned->d)) {
+            return;
+        }
+
+        double R = CONSTANTS_RADIUS_OF_EARTH;
+
+        double ref_lat_rad = ref->refLla.latitude * M_DEG_TO_RAD;
+        double y_ref = R * log(tan(M_PI / 4.0 + ref_lat_rad / 2.0));
+
+        double y = y_ref + ned->n;
+
+        double lat_rad = 2.0 * atan(exp(y / R)) - M_PI / 2.0;
+
+        double ref_lon_rad = ref->refLla.longitude * M_DEG_TO_RAD;
+        double lon_rad = ref_lon_rad + (ned->e / R);
+
+        latitude = lat_rad * M_RAD_TO_DEG;
+        longitude = lon_rad * M_RAD_TO_DEG;
+        altitude = ref->refLla.altitude - ned->d;
+    }
+}
 
 typedef struct XYZ {
     double x = 0, y = 0, z = 0;
@@ -771,7 +876,26 @@ private:
 class Dataset : public QObject {
     Q_OBJECT
 public:
+    /*structures*/
+    enum class DatasetState {
+        kUndefined = 0,
+        kFile,
+        kConnection
+    };
+    enum class LlaRefState {
+        kUndefined = 0,
+        kSettings,
+        kFile,
+        kConnection
+    };
+
+    /*methods*/
     Dataset();
+
+    void setState(DatasetState state);
+    DatasetState getState() const;
+    LLARef getLlaRef() const;
+    void setLlaRef(const LLARef& val, LlaRefState state);
 
     inline int size() const {
 
@@ -886,9 +1010,6 @@ public slots:
 
     void setScene3D(GraphicsScene3dView* scene3dViewPtr) { scene3dViewPtr_ = scene3dViewPtr; };
 
-    LLARef getRef() {
-        return _llaRef;
-    }
     void setRefPosition(int epoch_index);
     void setRefPosition(Epoch* ref_epoch);
     void setRefPosition(Position position);
@@ -907,10 +1028,9 @@ signals:
     void bottomTrackUpdated(int lEpoch, int rEpoch);
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);
+    void updatedLlaRef();
 
 protected:
-    QMutex mutex_;
-
     int lastEventTimestamp = 0;
     int lastEventId = 0;
     float _lastEncoder = 0;
@@ -921,8 +1041,6 @@ protected:
         _channelsSetup[ch].channel = ch;
         _channelsSetup[ch].counter();
     }
-
-    LLARef _llaRef;
 
     QVector<QVector3D> _boatTrack;
     QHash<int, int> selectedBoatTrackVertexIndices_; // first - vertice indx, second - epoch indx
@@ -956,6 +1074,7 @@ protected:
 private:
     friend class Interpolator;
 
+    /*structures*/
     class Interpolator {
     public:
         explicit Interpolator(Dataset* datasetPtr);
@@ -976,6 +1095,13 @@ private:
         int secondChannelId_;
     };
 
+    /*methods*/
+    LlaRefState getCurrentLlaRefState() const;
+
+    /*data*/
+    LLARef _llaRef;
+    LlaRefState llaRefState_ = LlaRefState::kUndefined;
+    DatasetState state_ = DatasetState::kUndefined;
     Interpolator interpolator_;
     int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;

@@ -2,6 +2,7 @@ QT += quick
 QT += widgets
 QT += network
 QT += qml
+QT += sql
 
 #CONFIG += FLASHER
 #CONFIG += MOTOR # motor_control definition
@@ -82,7 +83,14 @@ SOURCES += \
     raycaster.cpp \
     streamlist.cpp \
     textrenderer.cpp \
-    waterfall.cpp
+    waterfall.cpp \
+    tile_manager.cpp \
+    tile_set.cpp \
+    tile_provider.cpp \
+    tile_google_provider.cpp \
+    tile_downloader.cpp \
+    tile_db.cpp \
+    map_defs.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -168,7 +176,14 @@ HEADERS += \
     streamlist.h \
     textrenderer.h \ # TODO
     waterfall.h \
-    waterfallproxy.h
+    waterfallproxy.h \
+    tile_manager.h \
+    tile_set.h \
+    tile_provider.h \
+    tile_google_provider.h \
+    tile_downloader.h \
+    tile_db.h \
+    map_defs.h
 
 android {
 HEADERS += \

@@ -12,7 +12,7 @@ class SideScanView;
 class GlobalMesh {
 public:
     /*methods*/
-    GlobalMesh(SideScanView* ssPtr, int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
+    GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     ~GlobalMesh();
 
     void reinit(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
@@ -43,7 +43,6 @@ private:
     float getHeightMeters() const;
 
     /*data*/
-    SideScanView* ssPtr_;
     std::vector<Tile*> tiles_;
     std::vector<std::vector<Tile*>> tileMatrix_;
     QVector3D origin_;
