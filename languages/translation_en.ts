@@ -189,23 +189,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/ConnectionViewer.qml" line="435"/>
+        <location filename="../QML/ConnectionViewer.qml" line="447"/>
         <source>REC KLF</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/ConnectionViewer.qml" line="456"/>
+        <location filename="../QML/ConnectionViewer.qml" line="468"/>
         <source>REC CSV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/ConnectionViewer.qml" line="484"/>
+        <location filename="../QML/ConnectionViewer.qml" line="500"/>
         <source>Enter path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../QML/ConnectionViewer.qml" line="510"/>
-        <location filename="../QML/ConnectionViewer.qml" line="544"/>
+        <location filename="../QML/ConnectionViewer.qml" line="526"/>
+        <location filename="../QML/ConnectionViewer.qml" line="560"/>
         <source>Please choose a file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -226,12 +226,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1142"/>
+        <location filename="../plotcash.cpp" line="1152"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1143"/>
+        <location filename="../plotcash.cpp" line="1153"/>
         <source>First</source>
         <translation type="unfinished"></translation>
     </message>
@@ -534,6 +534,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../QML/DisplaySettings.qml" line="570"/>
+        <source>Edge 2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../QML/DisplaySettings.qml" line="590"/>
         <source>Gain slope:</source>
         <translation type="unfinished"></translation>
@@ -807,6 +812,14 @@
     <message>
         <location filename="../QML/FlashBox.qml" line="48"/>
         <source>Reboot</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ImportPPK</name>
+    <message>
+        <location filename="../QML/ImportPPK.qml" line="226"/>
+        <source>Enter path</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1416,7 +1429,7 @@
     <message>
         <location filename="../QML/main.qml" line="20"/>
         <source>KoggerApp, KOGGER</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">MOL&apos;TBoat KoggerApp</translation>
     </message>
     <message>
         <location filename="../QML/main.qml" line="40"/>
