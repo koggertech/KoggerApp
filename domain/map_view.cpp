@@ -81,6 +81,25 @@ QList<GLuint> MapView::getDeinitTileTextureTasks()
     return retVal;
 }
 
+std::unordered_map<map::TileIndex, QImage> MapView::getUpdateTileTextureTasks()
+{
+    auto retVal = std::move(updateImageTasks_);
+    updateImageTasks_.clear();
+    return retVal;
+}
+
+GLuint MapView::getTextureIdByTileIndex(const map::TileIndex& tileIndx) const
+{
+    // from render
+    GLuint retVal = 0;
+    auto r = RENDER_IMPL(MapView);
+    if (auto it = r->tilesHash_.find(tileIndx); it != r->tilesHash_.end()) {
+        retVal =  it->second.getTextureId();
+    }
+
+    return retVal;
+}
+
 void MapView::onTileAppend(const map::Tile &tile)
 {
     // append to render
@@ -110,6 +129,13 @@ void MapView::onTileDelete(const map::Tile &tile)
     Q_EMIT changed();
 }
 
+void MapView::onTileImageUpdated(const map::Tile &tile)
+{
+    auto tileIndx = tile.getIndex(); 
+    updateImageTasks_[tileIndx] = tile.getImage();
+    Q_EMIT changed();
+}
+
 void MapView::onTileVerticesUpdated(const map::Tile &tile)
 {
     auto r = RENDER_IMPL(MapView);
@@ -133,7 +159,7 @@ void MapView::onClearAppendTasks()
             r->tilesHash_.erase(itSec->first);
         }
 
-        emit deleteFromAppend(it->first);
+        emit deletedFromAppend(it->first);
     }
 }
 

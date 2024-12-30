@@ -86,11 +86,12 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
     auto connType = Qt::DirectConnection;
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,            connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,            connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated,   connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,      connType);
-    QObject::connect(mapView_.get(),                      &MapView::deleteFromAppend,          tileManager_->getTileSetPtr().get(), &map::TileSet::onDeleteFromAppend, connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,             connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,             connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileImage,    mapView_.get(),                      &MapView::onTileImageUpdated,       connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated,    connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,       connType);
+    QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
 
@@ -934,30 +935,50 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
 {
     auto mapViewPtr = viewPtr->getMapViewPtr();
 
-    // deleting
-    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
-    for (GLuint textureId : deleteTasks) {
-        if (textureId != 0) {
-            glDeleteTextures(1, &textureId);
-        }
-    }
-
     // appending
     auto appendTasks = mapViewPtr->getInitTileTextureTasks();
     for (auto it = appendTasks.begin(); it != appendTasks.end(); ++it) {
         const map::TileIndex& tileIndx = it->first;
         const QImage& image = it->second;
         GLuint textureId = 0;
+        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-        mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId); // for drawing, deleting
+        mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId);
         viewPtr->tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
+    }
+
+    // update image
+    auto refreshTasks = mapViewPtr->getUpdateTileTextureTasks();
+    for (auto it = refreshTasks.begin(); it != refreshTasks.end(); ++it) {
+        const map::TileIndex& tileIndx = it->first;
+        GLuint textureId = viewPtr->getMapViewPtr()->getTextureIdByTileIndex(tileIndx);
+
+        if (!textureId) {
+            continue;
+        }
+
+        const QImage& image = it->second;
+        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    }
+
+    // deleting
+    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
+    for (GLuint textureId : deleteTasks) {
+        if (textureId != 0) {
+            glDeleteTextures(1, &textureId);
+        }
     }
 }
 

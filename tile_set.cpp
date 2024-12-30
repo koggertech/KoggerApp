@@ -46,34 +46,33 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
     diffLevels_    = std::abs(request.begin()->z_ - currZoom_);
     currZoom_      = request.begin()->z_;
 
-    //qDebug() << "ON NEW REQ" << currZoom_ << diffLevels_ << "size:" << request.size();
+    //QString state = (zoomState_ == ZoomState::kIn ? "IN" : zoomState_ == ZoomState::kOut ? "OUT" : "---");
+    //qDebug() << "ON NEW REQ" << currZoom_ << state << request.size();
 
     addTiles(request);
-    updateTileVerticesInRender();
-
     removeFarDBRequests(request);
     removeFarDownloaderRequests(request);
     emit mvClearAppendTasks();
 
-
     QSet<TileIndex> filtDbReq;
     for (const auto& reqTileIndx : request) {
         if (auto* rTile = getTileByIndx(reqTileIndx); rTile) {
-            if (rTile->getHasValidImage()) {
-                updateTileVertices(rTile);
-                tryRenderTile(*rTile);
+            bool inLoading = dbReq_.contains(reqTileIndx) ||
+                             dwReq_.contains(reqTileIndx) ||
+                             dbSvd_.contains(reqTileIndx);
+
+            if (!rTile->getHasValidImage() && !inLoading) {
+                filtDbReq.insert(reqTileIndx);
+                tryCopyImage(rTile);
+            }
+
+            updateTileVertices(rTile);
+
+            if (rTile->getInUse()) {
+                emit mvUpdateTileVertices(*rTile);
             }
             else {
-                if (tryCopyImage(rTile)) {
-                    updateTileVertices(rTile);
-                    tryRenderTile(*rTile);
-                }
-
-                if (rTile->getInterpolated() || rTile->getImageIsNull()) {
-                    if (!dbReq_.contains(reqTileIndx) && !dwReq_.contains(reqTileIndx) && !dbSvd_.contains(reqTileIndx)) {
-                        filtDbReq.insert(reqTileIndx);
-                    }
-                }
+                tryRenderTile(*rTile);
             }
         }
     }
@@ -107,19 +106,17 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image)
         tileList_.splice(tileList_.begin(), tileList_, it->second);
         Tile& tile = *(it->second);
 
-        if (!tile.getHasValidImage()) {
-            QImage rImage = image;
-            //drawNumberOnImage(rImage, tileIndx);
-            QTransform trans;
-            trans.rotate(90);
-            rImage = rImage.transformed(trans);
-            tile.setImage(rImage);
-            tile.setState(Tile::State::kReady);
-            tile.setInterpolated(false);
+        QImage rImage = image;
+        //drawNumberOnImage(rImage, tileIndx);
+        QTransform trans;
+        trans.rotate(90);
+        rImage = rImage.transformed(trans);
+        tile.setImage(rImage);
+        tile.setState(Tile::State::kReady);
+        tile.setInterpolated(false);
 
-            updateTileVertices(&tile);
-            tryRenderTile(tile, true);
-        }
+        updateTileVertices(&tile);
+        tryRenderTile(tile, true);
     }
 }
 
@@ -163,19 +160,17 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image)
         tileList_.splice(tileList_.begin(), tileList_, it->second);
         Tile& tile = *(it->second);
 
-        if (!tile.getHasValidImage()) {
-            QImage rImage = image;
-            //drawNumberOnImage(rImage, tileIndx);
-            QTransform trans;
-            trans.rotate(90);
-            rImage = rImage.transformed(trans);
-            tile.setImage(rImage);
-            tile.setState(Tile::State::kReady);
-            tile.setInterpolated(false);
+        QImage rImage = image;
+        //drawNumberOnImage(rImage, tileIndx);
+        QTransform trans;
+        trans.rotate(90);
+        rImage = rImage.transformed(trans);
+        tile.setImage(rImage);
+        tile.setState(Tile::State::kReady);
+        tile.setInterpolated(false);
 
-            updateTileVertices(&tile);
-            tryRenderTile(tile, true);
-        }
+        updateTileVertices(&tile);
+        tryRenderTile(tile, true);
     }
 }
 
@@ -186,7 +181,7 @@ void TileSet::onTileDownloadFailed(const TileIndex &tileIndx, const QString &err
     Q_UNUSED(tileIndx);
     Q_UNUSED(errorString);
 
-    qWarning() << "Failed to download tile" << tileIndx << "from:" << tileProvider_.lock()->createURL(tileIndx) << "Error:" << errorString;
+    //qWarning() << "Failed to download tile" << tileIndx << "from:" << tileProvider_.lock()->createURL(tileIndx) << "Error:" << errorString;
 }
 
 void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
@@ -194,7 +189,7 @@ void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
     dwReq_.remove(tileIndx);
 }
 
-void TileSet::onDeleteFromAppend(const TileIndex &tileIndx)
+void TileSet::onDeletedFromAppend(const TileIndex &tileIndx)
 {
     if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
         it->second->setInUse(false);
@@ -215,7 +210,6 @@ bool TileSet::addTiles(const QSet<TileIndex>& request)
 bool TileSet::addTile(const TileIndex& tileIndx)
 {
     bool retVal{ false };
-    auto sharedProvider = tileProvider_.lock();
 
     if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
         it->second->setRequestLastTime(QDateTime::currentDateTimeUtc());
@@ -224,7 +218,7 @@ bool TileSet::addTile(const TileIndex& tileIndx)
     else {
         Tile newTile(tileIndx);
 
-        if (sharedProvider) {
+        if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
             TileInfo info = sharedProvider->indexToTileInfo(newTile.getIndex());
             newTile.setOriginTileInfo(info);
         }
@@ -360,7 +354,7 @@ bool TileSet::processOut(Tile *tile)
 
     TileIndex originTileIndx = tile->getIndex();
     int depth = std::min(std::max(1, diffLevels_), propagationLevel_);
-    bool beenCatched = false;
+    bool beenCopied = false;
 
     for (int currDepth = 1; currDepth <= depth; ++currDepth) {
         auto childTilesResult = originTileIndx.getChilds(currDepth);
@@ -421,21 +415,21 @@ bool TileSet::processOut(Tile *tile)
             painter.drawImage(targetRect, scaledChildImage);
             painter.end();
 
-            beenCatched = true;
+            beenCopied = true;
         }
 
-        if (beenCatched) {
+        if (beenCopied) {
             break;
         }
     }
 
-    if (beenCatched) {
+    if (beenCopied) {
         tile->setImage(currImage);
         tile->setInterpolated(true);
         tile->setState(Tile::State::kReady);
     }
 
-    return beenCatched;
+    return beenCopied;
 }
 
 void TileSet::removeFarTilesFromRender(const QSet<TileIndex>& request)
@@ -446,11 +440,7 @@ void TileSet::removeFarTilesFromRender(const QSet<TileIndex>& request)
         }
 
         auto lTileIndx = lTile.getIndex();
-
-        int32_t diff = std::abs(lTileIndx.z_ - currZoom_);
-
-        if (diff > 0 ||
-            !request.contains(lTileIndx)) { //
+        if (!request.contains(lTileIndx)) {
             lTile.setInUse(false);
             emit mvDeleteTile(lTile);
         }
@@ -462,9 +452,9 @@ void TileSet::updateTileVerticesInRender()
     for (auto& tile : tileList_) {
         if (tile.getInUse()) {
             if (updateTileVertices(&tile)) {
-                emit mvUpdateTileVertices(tile);
-            }
+            emit mvUpdateTileVertices(tile);
         }
+    }
     }
 }
 
@@ -531,16 +521,16 @@ bool TileSet::tryRenderTile(Tile &tile, bool force)
         return false;
     }
 
-    if (tile.getInUse()) {
-        if (!force) {
-            return false;
-        }
-
-        emit mvDeleteTile(tile);
+    if (tile.getInUse() && !force) {
+        return false;
     }
-
-    tile.setInUse(true);
-    emit mvAppendTile(tile);
+    else if (tile.getInUse() && force) {
+        emit mvUpdateTileImage(tile);
+    }
+    else {
+        tile.setInUse(true);
+        emit mvAppendTile(tile);
+    }
 
     return true;
 }
@@ -558,14 +548,7 @@ void TileSet::removeFarDBRequests(const QSet<TileIndex>& request)
     auto dbReqCopy = dbReq_;
 
     for (auto dbTileIndx : dbReqCopy) {
-
-        bool overLap = false;
-
-        if (request.contains(dbTileIndx)) {
-            overLap = true;
-        }
-
-        if (!overLap) {
+        if (!request.contains(dbTileIndx)) {
             emit dbStopLoadingTile(dbTileIndx);
         }
     }
@@ -575,14 +558,7 @@ void TileSet::removeFarDownloaderRequests(const QSet<TileIndex>& request)
 {
     auto dwReqCopy = dwReq_;
     for (auto dwTileIndx : dwReqCopy) {
-
-        bool overLap = false;
-
-        if (request.contains(dwTileIndx)) {
-            overLap = true;
-        }
-
-        if (!overLap) {
+        if (!request.contains(dwTileIndx)) {
             tileDownloader_.lock()->deleteRequest(dwTileIndx);
         }
     }
@@ -592,10 +568,6 @@ bool TileSet::tryCopyImage(Tile* tile)
 {
     bool retVal = false;
 
-    if (tile->getHasValidImage()) {
-        return retVal;
-    }
-
     switch (zoomState_) {
     case map::ZoomState::kIn: {
         retVal = processIn(tile);
@@ -603,15 +575,6 @@ bool TileSet::tryCopyImage(Tile* tile)
     }
     case map::ZoomState::kOut: {
         retVal = processOut(tile);
-        break;
-    }
-    case map::ZoomState::kUnchanged: {
-        if (moveUp_) {
-            retVal = processOut(tile);
-        }
-        else {
-            retVal = processIn(tile);
-        }
         break;
     }
 

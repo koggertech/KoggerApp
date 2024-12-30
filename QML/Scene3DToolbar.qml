@@ -971,6 +971,7 @@ ColumnLayout {
         }
     }*/
 
+/*
     // mapViewSettings extra settings
     MenuFrame {
         id: mapViewSettings
@@ -1019,7 +1020,7 @@ ColumnLayout {
             }
         }
     }
-
+*/
     RowLayout {
         spacing: 2
         Layout.alignment: Qt.AlignHCenter
@@ -1336,7 +1337,7 @@ ColumnLayout {
             onCheckedChanged: {
                 MapViewControlMenuController.onVisibilityChanged(checked)
             }
-
+/*
             property bool mapViewLongPressTriggered: false
 
             MouseArea {
@@ -1368,6 +1369,7 @@ ColumnLayout {
                     mapViewCheckButton.mapViewLongPressTriggered = true;
                 }
             }
+*/
         }
 
         ButtonGroup{
