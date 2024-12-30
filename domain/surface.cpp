@@ -237,9 +237,6 @@ void Surface::updateContour()
 
 void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
-    m_gridRenderImpl.render(ctx, mvp, shaderProgramMap);
-    m_contourRenderImpl.render(ctx, mvp, shaderProgramMap);
-
     if(!m_isVisible)
         return;
 
@@ -279,4 +276,7 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
+
+    m_gridRenderImpl.render(ctx, mvp, shaderProgramMap);
+    m_contourRenderImpl.render(ctx, mvp, shaderProgramMap);
 }

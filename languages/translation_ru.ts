@@ -230,12 +230,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1091"/>
+        <location filename="../plotcash.cpp" line="1142"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1092"/>
+        <location filename="../plotcash.cpp" line="1143"/>
         <source>First</source>
         <translation>Первый</translation>
     </message>
@@ -1111,12 +1111,12 @@
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="207"/>
-        <location filename="../QML/Scene3DToolbar.qml" line="602"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="680"/>
         <source>Update</source>
         <translation>Обновить</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="582"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="660"/>
         <source>Clear</source>
         <translation>Очистить</translation>
     </message>
@@ -1126,92 +1126,92 @@
         <translation>Расчёт в реальном времени</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="339"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="347"/>
         <source>Track last data</source>
         <translation>Следить за последними данными</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="354"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="370"/>
         <source>Theme:</source>
         <translation>Тема:</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="362"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
         <source>Blue</source>
         <translation>Синий</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="362"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
         <source>Sepia</source>
         <translation>Сепия</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="362"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
         <source>WRGBD</source>
         <translation>WRGBD</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="362"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
         <source>WhiteBlack</source>
         <translation>Бело-черный</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="362"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
         <source>BlackWhite</source>
         <translation>Черно-белый</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="377"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="401"/>
         <source>Angle offset, °</source>
         <translation>Оффсет угла, °</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="388"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="412"/>
         <source>left:</source>
         <translation>слева:</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="412"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="445"/>
         <source>right:</source>
         <translation>справа:</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="439"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="481"/>
         <source>Tile side pixel size:</source>
         <translation>Размер стороны тайла в пикселях:</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="463"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="505"/>
         <source>Tile height matrix ratio:</source>
         <translation>Коэффициент матрицы высот:</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="485"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="527"/>
         <source>Tile resolution, pix/m:</source>
         <translation>Разрешение тайла, пикс/м:</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="506"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="548"/>
         <source>Reinit global mesh</source>
         <translation>Переинициализировать глобальную сетку</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="522"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="565"/>
         <source>Use linear filter</source>
         <translation>Линейный фильтр</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="536"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="588"/>
         <source>Grid/contour visible</source>
         <translation>Видимость сетки/контура</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="551"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="612"/>
         <source>Measuse lines visible</source>
         <translation>Видимость линий промера</translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="566"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="636"/>
         <source>Generate grid/contour</source>
         <translation>Расчитывать сетку/контур</translation>
     </message>

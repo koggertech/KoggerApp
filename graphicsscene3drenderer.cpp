@@ -92,25 +92,58 @@ void GraphicsScene3dRenderer::drawObjects()
 {
     QMatrix4x4 model, view, projection;
 
+
+    float perspectiveEdge{ 5000.0f };
+
+    float nearPlanePersp{ 1.0f };
+    float farPlanePersp{ 20000.0f };
+
+    float nearPlaneOrthoCoeff{ 0.05f };
+    float farPlaneOrthoCoeff{ 1.2f };
+
+    if (m_camera.getIsPerspective()) {
+        float coeff = m_camera.getHeightAboveGround() /  perspectiveEdge;
+        qreal fixFov = m_camera.fov() + m_camera.fov() * coeff;
+        projection.perspective(fixFov, m_viewSize.width() / m_viewSize.height(), nearPlanePersp, farPlanePersp);
+    }
+    else {
+        float orth_v = m_camera.getHeightAboveGround();
+        float aspect_ratio = m_viewSize.width() / m_viewSize.height();
+        projection.ortho(-orth_v*aspect_ratio, orth_v*aspect_ratio, -orth_v, orth_v, orth_v * nearPlaneOrthoCoeff, orth_v * farPlaneOrthoCoeff);
+    }
+
     view = m_camera.m_view;
-    projection.perspective(m_camera.fov(), m_viewSize.width()/m_viewSize.height(), 1.0f, 11000.0f);
     model.scale(1.0f, 1.0f, m_verticalScale);
 
     m_model = std::move(model);
     m_projection = std::move(projection);
 
+    bool isOut = m_camera.getIsFarAwayFromOriginLla();
+
     glEnable(GL_DEPTH_TEST);
-    m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
+    mapViewRenderImpl_.render(this,          m_model, view, m_projection, m_shaderProgramMap);
+    if (!isOut) {
+        m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
+        imageViewRenderImpl_.render(this,        m_projection * view * m_model, m_shaderProgramMap);
+        m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
+        m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
+        usblViewRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+    }
+    glDisable(GL_DEPTH_TEST);
+
+    if (isOut) {
+        return;
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
+    m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
-    m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
-    sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
-    imageViewRenderImpl_.render(this,        m_projection * view * m_model, m_shaderProgramMap);
-    m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
-    m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
     navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
-    usblViewRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
-    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+
 
     //-----------Draw axes-------------
     GLint viewport[4];

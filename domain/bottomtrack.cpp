@@ -553,7 +553,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     posLoc    = shaderProgram->attributeLocation("position");
     int widthLoc  = shaderProgram->uniformLocation("width");
 
-    QVector4D vertexColor(0.03f, 0.69f, 0.98f, 1.0f);
+    QVector4D vertexColor(0.91f, 0.25f, 0.2f, 1.0f);
 
     //TODO: Needs to optimize data preparing
     QVector<QVector3D> selectedVertices;

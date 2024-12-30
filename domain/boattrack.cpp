@@ -192,7 +192,8 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     auto posLoc    = shaderProgram->attributeLocation("position");
     int widthLoc   = shaderProgram->uniformLocation("width");
 
-    QVector4D vertexColor(0.03f, 0.69f, 0.98f, 1.0f);
+    //QVector4D vertexColor(0.03f, 0.69f, 0.98f, 1.0f);
+    QVector4D vertexColor(0.91f, 0.25f, 0.2f, 1.0f);
 
     shaderProgram->setUniformValue(colorLoc,vertexColor);
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
@@ -211,7 +212,7 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
-    QVector4D lineColor(0.03f, 0.69f, 0.98f, 1.0f);
+    QVector4D lineColor(0.91f, 0.25f, 0.2f, 1.0f);
     shaderProgram->setUniformValue(colorLoc, lineColor);
 
     QVector<QVector3D> vertices{ boatTrackVertice_, bottomTrackVertice_ };
