@@ -20,13 +20,13 @@ class TileManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit TileManager(QObject *parent = nullptr);
-    virtual ~TileManager();
+    explicit TileManager(QObject* parent = nullptr);
+    ~TileManager();
 
     std::shared_ptr<TileSet> getTileSetPtr() const;
 
 public slots:
-    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef);
+    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp);
 
 private:
     std::shared_ptr<TileProvider> tileProvider_;
@@ -35,7 +35,8 @@ private:
     std::shared_ptr<TileSet> tileSet_;
     int lastZoomLevel_ = -1;
 
-    static constexpr int numRequests_{ 500 };
+    static constexpr int maxTilesCapacity_{ 700 };
+    static constexpr int minTilesCapacity_{ 500 };
     static constexpr int maxConcurrentDownloads_{ 10 };
 };
 

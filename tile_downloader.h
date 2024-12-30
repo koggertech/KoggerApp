@@ -9,8 +9,9 @@
 #include <QQueue>
 #include <QPair>
 #include <QSet>
-#include <QTcpSocket>
+#ifdef Q_OS_WINDOWS
 #include <QHostInfo>
+#endif
 #include <QTimer>
 
 #include "map_defs.h"
@@ -27,19 +28,21 @@ public:
     explicit TileDownloader(std::weak_ptr<TileProvider> provider, int maxConcurrentDownloads = 5);
     ~TileDownloader();
 
-    void downloadTiles(const QList<TileIndex>& tiles);
+    void downloadTile(const TileIndex& tile);
     void stopAndClearRequests();
+    void deleteRequest(const TileIndex& tileIndx);
 
 signals:
-    void tileDownloaded(const TileIndex& tileIndx, const QImage& image, const TileInfo& info);
+    void tileDownloaded(const TileIndex& tileIndx, const QImage& image);
     void downloadFailed(const TileIndex& tileIndx, const QString& errorString);
     void downloadStopped(const TileIndex& tileIndx);
-    void allDownloadsFinished();
 
 private slots:
     void onTileDownloaded(QNetworkReply *reply);
     void checkNetworkAvailabilityAsync();
+#ifdef Q_OS_WINDOWS
     void onHostLookupFinished(QHostInfo hostInfo);
+#endif
 
 private:
     void startNextDownload();

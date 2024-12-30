@@ -1,12 +1,11 @@
 #include "map_view.h"
 
-#include "graphicsscene3dview.h"
 
-
-MapView::MapView(GraphicsScene3dView *view, QObject *parent) :
-    SceneObject(new MapViewRenderImplementation, view, parent)
+MapView::MapView(QObject *parent) :
+    SceneObject(new MapViewRenderImplementation, parent)
 {
-
+    qRegisterMetaType<map::TileIndex>("map::TileIndex");
+    qRegisterMetaType<GLuint>("GLuint");
 }
 
 MapView::~MapView()
@@ -16,7 +15,6 @@ MapView::~MapView()
 
 void MapView::clear()
 {
-    QWriteLocker locker(&rWLocker_);
     auto r = RENDER_IMPL(MapView);
 
     // append tasks
@@ -38,11 +36,6 @@ void MapView::update()
 {
     Q_EMIT changed();
     Q_EMIT boundsChanged();
-}
-
-void MapView::setView(GraphicsScene3dView *viewPtr)
-{
-    SceneObject::m_view = viewPtr;
 }
 
 void MapView::setRectVertices(const QVector<LLA> &firstVertices, const QVector<LLA>& secondVertices, bool green, bool isPerspective, QVector3D centralPoint)
@@ -76,19 +69,15 @@ void MapView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint text
 
 std::unordered_map<map::TileIndex, QImage> MapView::getInitTileTextureTasks()
 {
-    QWriteLocker locker(&rWLocker_);
-
     auto retVal = std::move(appendTasks_);
-
+    appendTasks_.clear();
     return retVal;
 }
 
 QList<GLuint> MapView::getDeinitTileTextureTasks()
 {
-    QWriteLocker locker(&rWLocker_);
-
     auto retVal = std::move(deleteTasks_);
-
+    deleteTasks_.clear();
     return retVal;
 }
 
@@ -111,8 +100,8 @@ void MapView::onTileDelete(const map::Tile &tile)
     // delete task
     auto r = RENDER_IMPL(MapView);
 
-    if (auto tileIndx = r->tilesHash_.find(tile.getIndex()); tileIndx != r->tilesHash_.end()) {
-        deleteTasks_.append(tileIndx->second.getTextureId());
+    if (auto it = r->tilesHash_.find(tile.getIndex()); it != r->tilesHash_.end()) {
+        deleteTasks_.append(it->second.getTextureId());
     }
 
     // delete from render
@@ -127,9 +116,25 @@ void MapView::onTileVerticesUpdated(const map::Tile &tile)
 
     if (auto it = r->tilesHash_.find(tile.getIndex()); it != r->tilesHash_.end()) {
         it->second.setVertices(tile.getVerticesRef());
+
     }
 
     Q_EMIT changed();
+}
+
+void MapView::onClearAppendTasks()
+{
+    auto copyAppendTasks = std::move(appendTasks_);
+    appendTasks_.clear();
+    auto r = RENDER_IMPL(MapView);
+
+    for (auto it = copyAppendTasks.begin(); it != copyAppendTasks.end(); ++it) {
+        if (auto itSec = r->tilesHash_.find(it->first); itSec != r->tilesHash_.end()) {
+            r->tilesHash_.erase(itSec->first);
+        }
+
+        emit deleteFromAppend(it->first);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -262,11 +267,11 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram->enableAttributeArray(posLoc);
         shaderProgram->enableAttributeArray(texCoordLoc);
 
-        for (auto& itm : tilesHash_) {
-            if (auto textureId = itm.second.getTextureId(); textureId) {
-                const auto& indices = itm.second.getIndicesRef();
-                const auto& vertices = itm.second.getVerticesRef();
-                const auto& texCoords = itm.second.getTexCoordsRef();
+        for (auto& [tileIndx, tile] : tilesHash_) {
+            if (auto textureId = tile.getTextureId(); textureId) {
+                const auto& indices = tile.getIndicesRef();
+                const auto& vertices = tile.getVerticesRef();
+                const auto& texCoords = tile.getTexCoordsRef();
 
                 shaderProgram->setAttributeArray(posLoc, vertices.constData());
                 shaderProgram->setAttributeArray(texCoordLoc, texCoords.constData());

@@ -15,7 +15,6 @@ TileDB::TileDB(std::weak_ptr<TileProvider> tileProvider) :
     tileProvider_(tileProvider),
     stopRequested_(false)
 {
-    qRegisterMetaType<QList<TileIndex>>("QList<TileIndex>");
     qRegisterMetaType<TileIndex>("TileIndex");
     qRegisterMetaType<TileInfo>("TileInfo");
 }
@@ -25,11 +24,16 @@ TileDB::~TileDB()
     db_.close();
 }
 
-void TileDB::loadTiles(const QList<TileIndex> &tileIndices)
+void TileDB::loadTiles(const QSet<TileIndex> &tileIndices)
 {
     stopRequested_ = false;
 
-    pendingLoadRequests_.append(tileIndices);
+    for (const auto& itm : tileIndices) {
+        if (!pendingLoadRequests_.contains(itm)) {
+            pendingLoadRequests_.insert(itm);
+        }
+    }
+
     processNextTile();
 }
 
@@ -50,11 +54,25 @@ void TileDB::saveTile(const TileIndex &tileIndx, const QImage &image)
     if (!query.exec()) {
         qWarning() << "Failed to save the tile to the database:" << query.lastError().text();
     }
+
+    emit tileSaved(tileIndx);
+}
+
+void TileDB::stopLoading(const TileIndex& tileIndex)
+{
+    pendingLoadRequests_.remove(tileIndex);
+
+    emit tileLoadStopped(tileIndex);
 }
 
 void TileDB::stopAndClearRequests()
 {
     stopRequested_ = true;
+
+    for (auto& itm : pendingLoadRequests_) {
+        emit tileLoadStopped(itm);
+    }
+
     pendingLoadRequests_.clear();
 }
 
@@ -115,7 +133,9 @@ void TileDB::processNextTile()
         return;
     }
 
-    TileIndex index = pendingLoadRequests_.takeFirst();
+    auto it = pendingLoadRequests_.begin();
+    TileIndex index = *it;
+    pendingLoadRequests_.erase(it);
 
     QSqlQuery query(db_);
     query.prepare("SELECT image FROM tiles WHERE x = :x AND y = :y AND z = :z");
@@ -131,8 +151,7 @@ void TileDB::processNextTile()
         QImage image;
         if (image.loadFromData(imageData)) {
             if (!stopRequested_) {
-                TileInfo info = tileProvider_.lock()->indexToTileInfo(index);
-                emit tileLoaded(index, image, info);
+                emit tileLoaded(index, image);
             }
         }
         else {

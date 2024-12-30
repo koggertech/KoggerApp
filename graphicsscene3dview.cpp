@@ -21,7 +21,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_surface(std::make_shared<Surface>()),
     sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
-    mapView_(std::make_shared<MapView>(this, this)),
+    mapView_(std::make_shared<MapView>(this)),
     m_boatTrack(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -36,7 +36,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     bottomTrackWindowCounter_(-1),
-    needToResetStartPos_(false)
+    needToResetStartPos_(false),
+    lastCameraDist_(m_camera->distForMapView())
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -81,16 +82,19 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_navigationArrow.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
-
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
 
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::appendSignal,  mapView_.get(), &MapView::onTileAppend, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::deleteSignal,  mapView_.get(), &MapView::onTileDelete, Qt::DirectConnection);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::updVertSignal, mapView_.get(), &MapView::onTileVerticesUpdated, Qt::DirectConnection);
+    auto connType = Qt::DirectConnection;
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,            connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,            connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated,   connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,      connType);
+    QObject::connect(mapView_.get(),                      &MapView::deleteFromAppend,          tileManager_->getTileSetPtr().get(), &map::TileSet::onDeleteFromAppend, connType);
+
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
 
     updatePlaneGrid();
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::AutoConnection);
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
@@ -174,12 +178,14 @@ void GraphicsScene3dView::setNavigationArrowState(bool state)
     navigationArrowState_ = state;
 }
 
-void GraphicsScene3dView::clear()
+void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
     sideScanView_->clear();
     imageView_->clear();//
-    mapView_->clear();
+    if (cleanMap) {
+        mapView_->clear();
+    }
     bottomTrackWindowCounter_ = -1;
     m_boatTrack->clearData();
     m_bottomTrack->clearData();
@@ -363,6 +369,12 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
     Q_UNUSED(x)
     Q_UNUSED(y)
 
+    if (needToResetStartPos_) {
+        m_camera->m_lookAtSave = m_camera->m_lookAt;
+        m_startMousePos = QPointF(x, y);
+        needToResetStartPos_ = false;
+    }
+
     if (keyboardKey == Qt::Key_Control) {
         float tempVerticalScale = m_verticalScale;
         angleDelta.y() > 0.0f ? tempVerticalScale += 0.3f : tempVerticalScale -= 0.3f;
@@ -440,7 +452,7 @@ void GraphicsScene3dView::setNeedToResetStartPos(bool state)
 void GraphicsScene3dView::forceUpdateDatasetRef()
 {
     if (m_dataset) {
-        auto ref = m_dataset->getRef();
+        auto ref = m_dataset->getLlaRef();
         m_camera->datasetLlaRef_ = ref.isInit ? ref : LLARef(m_camera->yerevanLla);
     }
 
@@ -604,9 +616,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
 
-    auto ref = dataset->getRef();
-    ref.isInit ? m_camera->datasetLlaRef_ = ref : m_camera->datasetLlaRef_ = LLARef(m_camera->yerevanLla);
-    m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
+    forceUpdateDatasetRef();
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](int lEpoch, int rEpoch) -> void {
@@ -663,6 +673,12 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                             setLastEpochFocusView();
                                         }
                                     }
+                                }, Qt::DirectConnection);
+
+    QObject::connect(m_dataset, &Dataset::updatedLlaRef,
+                     this,      [this]() -> void {
+                                   forceUpdateDatasetRef();
+                                   fitAllInView();
                                 }, Qt::DirectConnection);
 }
 
@@ -727,7 +743,7 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    float reductorFactor = 0.0f; // debug
+    float reductorFactor = -0.05f; // debug
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
@@ -783,6 +799,8 @@ void GraphicsScene3dView::updateMapView()
         QVector<LLA> llaVerts;
 
         float dist = m_camera->distForMapView();
+        bool moveUp = dist > lastCameraDist_;
+        lastCameraDist_ = dist;
 
         NED ltNed(minX, minY, 0.0);
         NED lbNed(minX, maxY, 0.0);
@@ -814,14 +832,14 @@ void GraphicsScene3dView::updateMapView()
         llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
 
         if (canRequest) {
-            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_);
+            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp);
         }
 
         // qDebug() << "llaVerts";
         // for (auto& itm : llaVerts) {
         //     qDebug() << itm.latitude << ","<< itm.longitude;
         // }
-
+/*
         // debug
         LLA debugltLla(llaVerts[0].latitude, llaVerts[0].longitude, 0.0f);
         LLA debuglbLla(llaVerts[1].latitude, llaVerts[1].longitude, 0.0f);
@@ -842,6 +860,7 @@ void GraphicsScene3dView::updateMapView()
         windowNed.append(LLA(rbNed.n, rbNed.e, 0.0f));
         windowNed.append(LLA(rtNed.n, rtNed.e, 0.0f));
         mapView_->setRectVertices(requestNed, windowNed, canRequest, m_camera->getIsPerspective(), QVector3D(m_camera->m_lookAt.x(), m_camera->m_lookAt.y(), 0.0f));
+*/
     } // is rect
 
     QQuickFramebufferObject::update();
@@ -915,6 +934,14 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
 {
     auto mapViewPtr = viewPtr->getMapViewPtr();
 
+    // deleting
+    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
+    for (GLuint textureId : deleteTasks) {
+        if (textureId != 0) {
+            glDeleteTextures(1, &textureId);
+        }
+    }
+
     // appending
     auto appendTasks = mapViewPtr->getInitTileTextureTasks();
     for (auto it = appendTasks.begin(); it != appendTasks.end(); ++it) {
@@ -930,15 +957,7 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
         QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
         mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId); // for drawing, deleting
-        //qDebug() << "APPENDING:" << textureId;
-    }
-
-
-    // deleting
-    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
-    for (GLuint textureId : deleteTasks) {
-        glDeleteTextures(1, &textureId);
-        //qDebug() << " DELETING:" << textureId;
+        viewPtr->tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
     }
 }
 
@@ -1249,24 +1268,51 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
         distForMapView_ = m_distToFocusPoint;
     }
 
-    updateCameraParams();
+    //
+    bool preIsPersp{ false };
+    distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
+    float perspEdge = viewPtr_ ? viewPtr_->perspectiveEdge_ : 5000.0f;
+    preIsPersp = distToGround_ < perspEdge;
+    //bool changedToOrtho       =  isPerspective_ && !preIsPersp;
+    //bool changedToPerspective = !isPerspective_ &&  preIsPersp;
+    bool projectionChanged    =  isPerspective_ !=  preIsPersp;
 
-    if (!isPerspective_) {
-        NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
-        LLA mLookAtLLa(&lookAtNed, &viewLlaRef_, isPerspective_);
-        LLARef lookAtLlaRef(mLookAtLLa);
+    //if (projectionChanged) qDebug() << "CHANGED!";
+    //if (changedToOrtho) qDebug() << "changed to ORTHO";
+    //if (changedToPerspective) qDebug() << "changed to PERSP";
 
-        float viewDist = map::calculateDistance(viewLlaRef_, lookAtLlaRef);
+    NED lookAtNed(m_lookAt.x(), m_lookAt.y(), 0.0f);
+    LLA lookAtLla(&lookAtNed, &viewLlaRef_, isPerspective_);
+    LLARef lookAtLlaRef(lookAtLla);
 
-        if (viewDist > highDistThreshold_) {
-            viewPtr_->setNeedToResetStartPos(true);
-            viewLlaRef_ = LLARef(lookAtLlaRef);
-            m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
-        }
+    float datasetDist = map::calculateDistance(lookAtLlaRef, datasetLlaRef_);
+
+
+    if (isPerspective_ && !projectionChanged) { // do nothing
     }
-    //else {
-    //    tryToChangeViewLlaRef();
+    //else if (isPerspective_ && !projectionChanged && datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla()) {
+    //    qDebug() << "2";
+
+    //    viewPtr_->setNeedToResetStartPos(true);
+    //    LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
+    //    NED datasetNed(&datasetLla, &viewLlaRef_, isPerspective_);
+    //    m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
+    //    viewLlaRef_ = datasetLlaRef_;
     //}
+    else if ( (!isPerspective_ && projectionChanged && datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla())) { // catching when ortho->persp trans and near place
+        viewPtr_->setNeedToResetStartPos(true);
+        LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
+        NED datasetNed(&datasetLla, &viewLlaRef_, !isPerspective_);
+        m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
+        viewLlaRef_ = datasetLlaRef_;
+    }
+    else if ((isPerspective_ && projectionChanged) || (!isPerspective_ && !projectionChanged)) { // pers -> ortho OR ortho without transfer
+        viewPtr_->setNeedToResetStartPos(true);
+        viewLlaRef_ = lookAtLlaRef;
+        m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
+    }
+
+    updateCameraParams();
     updateViewMatrix();
 }
 
@@ -1438,4 +1484,40 @@ bool GraphicsScene3dView::Camera::getIsFarAwayFromOriginLla() const
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const
 {
     return m_distToFocusPoint;
+}
+
+QString GraphicsScene3dView::InFboRenderer::checkOpenGLError() const {
+    GLenum errorCode = glGetError();
+    QString retVal;
+
+    if (errorCode != GL_NO_ERROR) {
+        switch (errorCode) {
+        case GL_INVALID_ENUM:
+            retVal = "GL_INVALID_ENUM";
+            break;
+        case GL_INVALID_VALUE:
+            retVal = "GL_INVALID_VALUE";
+            break;
+        case GL_INVALID_OPERATION:
+            retVal = "GL_INVALID_OPERATION";
+            break;
+        case GL_STACK_OVERFLOW:
+            retVal = "GL_STACK_OVERFLOW";
+            break;
+        case GL_STACK_UNDERFLOW:
+            retVal = "GL_STACK_UNDERFLOW";
+            break;
+        case GL_OUT_OF_MEMORY:
+            retVal = "GL_OUT_OF_MEMORY";
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            retVal = "GL_INVALID_FRAMEBUFFER_OPERATION";
+            break;
+        default:
+            retVal = QString("Unknown error: 0x%1").arg(errorCode, 0, 16);
+            break;
+        }
+    }
+
+    return retVal;
 }

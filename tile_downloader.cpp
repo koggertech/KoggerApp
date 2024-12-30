@@ -3,7 +3,12 @@
 #include <QDebug>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+
+#ifdef Q_OS_WINDOWS
+#include <QTcpSocket>
 #include <QNetworkProxy>
+#endif
+
 
 
 namespace map {
@@ -18,10 +23,13 @@ TileDownloader::TileDownloader(std::weak_ptr<TileProvider> provider, int maxConc
     networkAvailable_(false),
     hostLookupId_(-1)
 {
+    qRegisterMetaType<TileIndex>("TileIndex");
+    qRegisterMetaType<TileInfo>("TileInfo");
+
     QObject::connect(networkManager_, &QNetworkAccessManager::finished, this, &TileDownloader::onTileDownloaded, Qt::AutoConnection);
 
     checkNetworkAvailabilityAsync();
-    networkCheckTimer_ = new QTimer(this);
+    networkCheckTimer_ = new QTimer();
     connect(networkCheckTimer_, &QTimer::timeout, this, &TileDownloader::checkNetworkAvailabilityAsync);
     networkCheckTimer_->start(10000);
 }
@@ -31,46 +39,73 @@ TileDownloader::~TileDownloader()
     stopAndClearRequests();
 }
 
-void TileDownloader::downloadTiles(const QList<TileIndex>& tileIndices)
-{
-    if (!networkAvailable_) {
-        emit allDownloadsFinished();
+void TileDownloader::downloadTile(const TileIndex& tileIndx)
+{    
+    if (downloadQueue_.contains(tileIndx)) {
         return;
     }
 
-    if (tileIndices.isEmpty()) {
-        emit allDownloadsFinished();
-        return;
-    }
-
-    for (const TileIndex& index : tileIndices) {
-        if (!downloadQueue_.contains(index)) {
-            downloadQueue_.enqueue(index);
+    for (QNetworkReply* reply : activeReplies_) {
+        TileIndex activeIndex = reply->property("tileIndex").value<TileIndex>();
+        if (activeIndex == tileIndx) {
+            return;
         }
     }
 
-    while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
-        startNextDownload();
+    if (!networkAvailable_) {
+        return;
     }
 
-    if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        emit allDownloadsFinished();
+    downloadQueue_.enqueue(tileIndx);
+
+    while (activeDownloads_ < maxConcurrentDownloads_ && !downloadQueue_.isEmpty()) {
+        startNextDownload();
     }
 }
 
 void TileDownloader::stopAndClearRequests()
 {
-    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
+    QSet<TileIndex> stoppedDownloads;
 
+    for (const auto& itm : downloadQueue_) {
+        stoppedDownloads.insert(itm);
+    }
+    downloadQueue_.clear();
+
+    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
     for (auto* reply : repliesToStop) {
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
-        emit downloadStopped(index);
+        stoppedDownloads.insert(index);
         reply->abort();
     }
 
-    downloadQueue_.clear();
-    activeDownloads_ = 0;
-    emit allDownloadsFinished();
+    for (auto& itm : stoppedDownloads) {
+        emit downloadStopped(itm);
+    }
+}
+
+void TileDownloader::deleteRequest(const TileIndex& tileIndx)
+{
+    bool beenDeleted = false;
+
+    int removedFromQueue = downloadQueue_.removeAll(tileIndx);
+    if (removedFromQueue > 0) {
+        beenDeleted = true;
+    }
+
+    QList<QNetworkReply*> repliesToStop = activeReplies_.values();
+    for (auto* reply : repliesToStop) {
+        TileIndex index = reply->property("tileIndex").value<TileIndex>();
+        if (index == tileIndx) {
+            beenDeleted = true;
+            reply->abort();
+            break; // cause origin - set
+        }
+    }
+
+    if (beenDeleted) {
+        emit downloadStopped(tileIndx);
+    }
 }
 
 void TileDownloader::startNextDownload()
@@ -122,10 +157,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
         QImage image;
 
         if (image.loadFromData(imageData)) {
-            if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
-                TileInfo info = sharedProvider->indexToTileInfo(index);
-                emit tileDownloaded(index, image, info);
-            }
+                emit tileDownloaded(index, image);
         }
         else {
             emit downloadFailed(index, "Failed to load image from data");
@@ -137,24 +169,21 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
     activeDownloads_--;
 
     startNextDownload();
-
-    if (downloadQueue_.isEmpty() && activeDownloads_ == 0) {
-        emit allDownloadsFinished();
-    }
 }
 
 void TileDownloader::checkNetworkAvailabilityAsync()
 {
 #ifdef Q_OS_ANDROID
-    QTcpSocket socket;
-    socket.connectToHost("8.8.8.8", 53);
-    if (socket.waitForConnected(2000)) {
-        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
-        emit internetStatus(true);
-        return;
-    }
-    qWarning() << "No Internet Access";
-    emit internetStatus(false);
+    networkAvailable_ = true; // TODO
+    // QTcpSocket socket; 
+    // socket.connectToHost("8.8.8.8", 53);
+    // if (socket.waitForConnected(2000)) {
+    //     //qDebug() << "internet available";
+    //     networkAvailable_ = true;
+    //     return;
+    // }
+    // qDebug() << "internet UNavailable";
+    // networkAvailable_= false;
 #else
     if (hostLookupId_ == -1) {
         hostLookupId_ = QHostInfo::lookupHost("www.google.com", this, &TileDownloader::onHostLookupFinished);
@@ -162,6 +191,7 @@ void TileDownloader::checkNetworkAvailabilityAsync()
 #endif
 }
 
+#ifndef Q_OS_ANDROID
 void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
 {
 #ifdef Q_OS_ANDROID
@@ -191,6 +221,7 @@ void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
     }
 #endif
 }
+#endif
 
 
 } // namespace map

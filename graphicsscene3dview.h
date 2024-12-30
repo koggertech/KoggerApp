@@ -99,7 +99,7 @@ public:
         float distToGround_ = 0.0f;
         float angleToGround_ = 0.0f;
         bool isPerspective_ = false;
-        float highDistThreshold_ = 10000.0f;
+        float highDistThreshold_ = 5000.0f;
         float lowDistThreshold_ = highDistThreshold_ * 0.9f;
         QVector2D m_rotAngle;
         GraphicsScene3dView* viewPtr_;
@@ -126,6 +126,7 @@ public:
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
+        QString checkOpenGLError() const;
 
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
     };
@@ -171,7 +172,7 @@ public:
     bool sceneBoundingBoxVisible() const;
     Dataset* dataset() const;
     void setNavigationArrowState(bool state);
-    void clear();
+    void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setCalcStateSideScanView(bool state);
     void interpolateDatasetEpochs(bool fromStart);
@@ -210,7 +211,7 @@ public Q_SLOTS:
     void updateMapView();
 
 signals:
-    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef);
+    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp);
     void cameraIsMoved();
 
 private:
@@ -273,6 +274,7 @@ private:
     bool switchedToBottomTrackVertexComboSelectionMode_;
     int bottomTrackWindowCounter_;
     bool needToResetStartPos_;
+    float lastCameraDist_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

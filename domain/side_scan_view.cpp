@@ -18,7 +18,7 @@ SideScanView::SideScanView(QObject* parent) :
     tileHeightMatrixRatio_(16),
     lastCalcEpoch_(0),
     lastAcceptedEpoch_(0),
-    globalMesh_(this, tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_),
+    globalMesh_(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_),
     useLinearFilter_(false),
     trackLastEpoch_(true),
     colorMapTextureId_(0),

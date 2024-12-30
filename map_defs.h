@@ -19,6 +19,13 @@ namespace map {
 
 
 ///////*structures*///////
+enum class ZoomState {
+    kUndefined = 0,
+    kOut,
+    kUnchanged,
+    kIn
+};
+
 enum class TilePosition {
     kFits = 0,
     kOnLeft,
@@ -48,14 +55,19 @@ struct TileInfo {
 };
 
 struct TileIndex {
-    TileIndex();;
-    TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId);;
+    TileIndex();
+    TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId);
+
+    bool isValid() const;
 
     int32_t x_; // indx x
     int32_t y_; // indx y
     int32_t z_; // zoom value
 
     int32_t providerId_;
+
+    std::pair<TileIndex, bool> getParent(int depth = 1) const;
+    std::pair<std::vector<TileIndex>, bool> getChilds(int depth = 1) const;
 
     bool operator==(const TileIndex& other) const;
     bool operator!=(const TileIndex &other) const;
@@ -77,12 +89,14 @@ public:
         kNone = 0, kReady, kWaitDB, kWaitServer, kErrorServer
     };
 
-    Tile(TileIndex index);
+    Tile() = default;
+    explicit Tile(TileIndex index);
 
     void updateVertices(const LLARef& llaRef, bool isPerspective);
     bool isValid() const;
 
-    void      setTileInfo(const TileInfo& info);
+    void      setOriginTileInfo(const TileInfo& info);
+    void      setModifiedTileInfo(const TileInfo& info);
     void      setState(State state);
     void      setInUse(bool val); // for tileSet
     void      setInterpolated(bool val);
@@ -95,12 +109,15 @@ public:
     void      setCreationTime(const QDateTime& val);
     void      setRequestLastTime(const QDateTime& val);
     void      setVertices(const QVector<QVector3D>& vertices);
+    void      setPendingRemoval(bool value);
 
-    TileInfo  getTileInfo() const;
+    TileInfo  getOriginTileInfo() const;
+    TileInfo  getModifiedTileInfo() const;
     State     getState() const;
     bool      getInUse() const; // for tileSet
     bool      getInterpolated() const;
     QImage    getImage() const;
+    QImage&   getImageRef();
     bool      getImageIsNull() const;
     GLuint    getTextureId() const;
     QVector3D getVertexNed() const;
@@ -110,6 +127,8 @@ public:
     QDateTime getCreationTime() const;
     QDateTime getRequestLastTime() const;
     LLARef    getUsedLlaRef() const;
+    bool      getPendingRemoval() const;
+    bool      getHasValidImage() const;
 
     const QVector<QVector3D>& getVerticesRef() const;
     const QVector<QVector2D>& getTexCoordsRef() const;
@@ -124,7 +143,8 @@ private:
     bool needToInitT_ = false;
     bool needToDeinitT_ = false;
 
-    TileInfo info_;
+    TileInfo originInfo_;
+    TileInfo modifiedInfo_;
 
     State state_;
     bool  inUse_;
@@ -143,6 +163,8 @@ private:
     QDateTime creationTime_;
 
     LLARef usedLlaRef_;
+
+    bool pendingRemoval_ = false;
 };
 
 inline float calculateDistance(const LLARef &llaRef1, const LLARef &llaRef2)
@@ -234,16 +256,27 @@ inline TilePosition getTilePosition(double minLon, double maxLon, const TileInfo
 
 } // namespace map
 
+
 Q_DECLARE_METATYPE(map::TileIndex)
+Q_DECLARE_METATYPE(map::Tile)
+
 
 namespace std {
 template <>
 struct hash<::map::TileIndex> {
     std::size_t operator()(const ::map::TileIndex& index) const noexcept {
-        return (std::hash<int32_t>()(index.x_)        ) ^
-               (std::hash<int32_t>()(index.y_) << 1) ^
-               (std::hash<int32_t>()(index.z_) << 2) ^
+        return (std::hash<int32_t>()(index.x_)              ) ^
+               (std::hash<int32_t>()(index.y_)          << 1) ^
+               (std::hash<int32_t>()(index.z_)          << 2) ^
                (std::hash<int32_t>()(index.providerId_) << 3);
     }
 };
 } // namespace std
+
+
+namespace map {
+inline uint qHash(const ::map::TileIndex& key, uint seed = 0) {
+    std::size_t stlHash = std::hash<::map::TileIndex>()(key);
+    return static_cast<uint>(stlHash ^ (seed * 0x9e3779b9));
+}
+} // namespace map

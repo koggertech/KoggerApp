@@ -47,9 +47,14 @@ void Tile::setVertices(const QVector<QVector3D> &vertices)
     vertices_ = vertices;
 }
 
-TileInfo Tile::getTileInfo() const
+TileInfo Tile::getOriginTileInfo() const
 {
-    return info_;
+    return originInfo_;
+}
+
+TileInfo Tile::getModifiedTileInfo() const
+{
+    return modifiedInfo_;
 }
 
 Tile::State Tile::getState() const
@@ -68,6 +73,11 @@ bool Tile::getInterpolated() const
 }
 
 QImage Tile::getImage() const
+{
+    return image_;
+}
+
+QImage& Tile::getImageRef()
 {
     return image_;
 }
@@ -165,13 +175,18 @@ void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
         texCoords_.clear();
         indices_.clear();
 
-        LLA lla1(info_.bounds.south, info_.bounds.west, 0.0f);
+        //   4 <--- 3
+        //          |
+        //          |
+        //   1 ---> 2
+
+        LLA lla1(modifiedInfo_.bounds.south, modifiedInfo_.bounds.west, 0.0f);
         NED ned1(&lla1, &ref, isPerspective);
-        LLA lla2(info_.bounds.north, info_.bounds.west, 0.0f);
+        LLA lla2(modifiedInfo_.bounds.north, modifiedInfo_.bounds.west, 0.0f);
         NED ned2(&lla2, &ref, isPerspective);
-        LLA lla3(info_.bounds.north, info_.bounds.east, 0.0f);
+        LLA lla3(modifiedInfo_.bounds.north, modifiedInfo_.bounds.east, 0.0f);
         NED ned3(&lla3, &ref, isPerspective);
-        LLA lla4(info_.bounds.south, info_.bounds.east, 0.0f);
+        LLA lla4(modifiedInfo_.bounds.south, modifiedInfo_.bounds.east, 0.0f);
         NED ned4(&lla4, &ref, isPerspective);
 
         vertices_ = {
@@ -205,9 +220,14 @@ bool Tile::isValid() const
     return false;
 }
 
-void Tile::setTileInfo(const TileInfo &info)
+void Tile::setOriginTileInfo(const TileInfo &info)
 {
-    info_ = info;
+    originInfo_ = info;
+}
+
+void Tile::setModifiedTileInfo(const TileInfo &info)
+{
+    modifiedInfo_ = info;
 }
 
 void Tile::setState(State state)
@@ -253,6 +273,68 @@ TileIndex::TileIndex(int32_t x, int32_t y, int32_t z, int32_t providerId) :
 
 }
 
+bool TileIndex::isValid() const
+{
+    return !(x_ == -1 || y_ == -1 || z_ == -1 || providerId_ == -1);
+}
+
+std::pair<TileIndex, bool> TileIndex::getParent(int depth) const
+{
+    if (depth < 0) {
+        depth = 0;
+    }
+
+    int targetZ = z_ - depth;
+
+    if (targetZ < 1) {
+        return {*this, false};
+    }
+
+    int shift = depth;
+
+    TileIndex parent{
+        x_ >> shift,
+        y_ >> shift,
+        targetZ,
+        providerId_
+    };
+
+    return { parent, true };
+}
+
+std::pair<std::vector<TileIndex>, bool> TileIndex::getChilds(int depth) const
+{
+    if (depth < 1) {
+        depth = 1;
+    }
+
+    int targetZ = z_ + depth;
+
+    if (targetZ > 21) {
+        return {{}, false};
+    }
+
+    std::vector<TileIndex> children = {
+        TileIndex{x_ * 2,     y_ * 2,     z_ + 1, providerId_},
+        TileIndex{x_ * 2 + 1, y_ * 2,     z_ + 1, providerId_},
+        TileIndex{x_ * 2,     y_ * 2 + 1, z_ + 1, providerId_},
+        TileIndex{x_ * 2 + 1, y_ * 2 + 1, z_ + 1, providerId_}
+    };
+
+    for (int currentDepth = 2; currentDepth <= depth; ++currentDepth) {
+        std::vector<TileIndex> nextGeneration;
+        for (const auto& child : children) {
+            nextGeneration.push_back(TileIndex{child.x_ * 2,     child.y_ * 2,     child.z_ + 1, providerId_});
+            nextGeneration.push_back(TileIndex{child.x_ * 2 + 1, child.y_ * 2,     child.z_ + 1, providerId_});
+            nextGeneration.push_back(TileIndex{child.x_ * 2,     child.y_ * 2 + 1, child.z_ + 1, providerId_});
+            nextGeneration.push_back(TileIndex{child.x_ * 2 + 1, child.y_ * 2 + 1, child.z_ + 1, providerId_});
+        }
+        children = std::move(nextGeneration);
+    }
+
+    return { children, true };
+}
+
 bool TileIndex::operator==(const TileIndex &other) const
 {
     return x_ == other.x_ &&
@@ -272,6 +354,21 @@ bool TileIndex::operator<(const TileIndex &other) const
     if (x_ != other.x_) return x_ < other.x_;
     if (y_ != other.y_) return y_ < other.y_;
     return providerId_ < other.providerId_;
+}
+
+void Tile::setPendingRemoval(bool value)
+{
+    pendingRemoval_ = value;
+}
+
+bool Tile::getPendingRemoval() const
+{
+    return pendingRemoval_;
+}
+
+bool Tile::getHasValidImage() const
+{
+    return (!image_.isNull() && !interpolated_);
 }
 
 

@@ -6,8 +6,7 @@
 
 using namespace sscan;
 
-GlobalMesh::GlobalMesh(SideScanView* ssPtr, int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
-    ssPtr_(ssPtr),
+GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
     tileResolution_(tileResolution),
     numWidthTiles_(0),
     numHeightTiles_(0),
