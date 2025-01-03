@@ -33,7 +33,7 @@ private:
     std::shared_ptr<TileDownloader> tileDownloader_;
     std::shared_ptr<TileDB> tileDB_;
     std::shared_ptr<TileSet> tileSet_;
-    int lastZoomLevel_ = -1;
+    int lastZoomLevel_;
 
     static constexpr int maxTilesCapacity_{ 800 };
     static constexpr int minTilesCapacity_{ 400 };

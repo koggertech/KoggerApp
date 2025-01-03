@@ -114,35 +114,33 @@ void MapView::onTileAppend(const map::Tile &tile)
     Q_EMIT changed();
 }
 
-void MapView::onTileDelete(const map::Tile &tile)
+void MapView::onTileDelete(const map::TileIndex& tileIndx)
 {
     // delete task
     auto r = RENDER_IMPL(MapView);
 
-    if (auto it = r->tilesHash_.find(tile.getIndex()); it != r->tilesHash_.end()) {
+    if (auto it = r->tilesHash_.find(tileIndx); it != r->tilesHash_.end()) {
         deleteTasks_.append(it->second.getTextureId());
     }
 
     // delete from render
-    r->tilesHash_.erase(tile.getIndex());
+    r->tilesHash_.erase(tileIndx);
 
     Q_EMIT changed();
 }
 
-void MapView::onTileImageUpdated(const map::Tile &tile)
+void MapView::onTileImageUpdated(const map::TileIndex& tileIndx, const QImage& image)
 {
-    auto tileIndx = tile.getIndex(); 
-    updateImageTasks_[tileIndx] = tile.getImage();
+    updateImageTasks_[tileIndx] = image;
     Q_EMIT changed();
 }
 
-void MapView::onTileVerticesUpdated(const map::Tile &tile)
+void MapView::onTileVerticesUpdated(const map::TileIndex& tileIndx, const QVector<QVector3D>& vertices)
 {
     auto r = RENDER_IMPL(MapView);
 
-    if (auto it = r->tilesHash_.find(tile.getIndex()); it != r->tilesHash_.end()) {
-        it->second.setVertices(tile.getVerticesRef());
-
+    if (auto it = r->tilesHash_.find(tileIndx); it != r->tilesHash_.end()) {
+        it->second.setVertices(vertices);
     }
 
     Q_EMIT changed();
@@ -167,7 +165,9 @@ void MapView::onClearAppendTasks()
 // MapViewRenderImplementation
 MapView::MapViewRenderImplementation::MapViewRenderImplementation() :
     isGreen_(false),
-    isPerspective_(false)
+    isPerspective_(false),
+    textureCoords_(map::kTextureCoords),
+    indices_(map::kIndices)
 {
 
 }
@@ -295,19 +295,17 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         for (auto& [tileIndx, tile] : tilesHash_) {
             if (auto textureId = tile.getTextureId(); textureId) {
-                const auto& indices = tile.getIndicesRef();
                 const auto& vertices = tile.getVerticesRef();
-                const auto& texCoords = tile.getTexCoordsRef();
 
                 shaderProgram->setAttributeArray(posLoc, vertices.constData());
-                shaderProgram->setAttributeArray(texCoordLoc, texCoords.constData());
+                shaderProgram->setAttributeArray(texCoordLoc, textureCoords_.constData());
 
                 QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
                 glFuncs->glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, textureId);
                 shaderProgram->setUniformValue("imageTexture", 0);
 
-                ctx->glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, indices.constData());
+                ctx->glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, indices_.constData());
             }
         }
 

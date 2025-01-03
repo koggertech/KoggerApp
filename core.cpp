@@ -1273,7 +1273,7 @@ void Core::saveLLARefToSettings()
 
     settings.sync();
 
-    qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
+    //qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
 }
 
 void Core::loadLLARefFromSettings()
@@ -1294,5 +1294,5 @@ void Core::loadLLARefFromSettings()
 
     datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kSettings);
 
-    qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
+    //qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
 }

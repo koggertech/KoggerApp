@@ -291,7 +291,7 @@ void Dataset::setLlaRef(const LLARef &val, LlaRefState state)
         llaRefState_ = state;
 
         emit updatedLlaRef();
-        qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
+        //qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
     }
 }
 

@@ -16,7 +16,8 @@ TileManager::TileManager(QObject *parent) :
     tileProvider_(std::make_shared<TileGoogleProvider>()),
     tileDownloader_(std::make_shared<TileDownloader>(tileProvider_, maxConcurrentDownloads_)),
     tileDB_(std::make_shared<TileDB>(tileProvider_)),
-    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, maxTilesCapacity_, minTilesCapacity_))
+    tileSet_(std::make_shared<TileSet>(tileProvider_, tileDB_, tileDownloader_, maxTilesCapacity_, minTilesCapacity_)),
+    lastZoomLevel_(-1)
 {
     auto downloaderConnType = Qt::AutoConnection;
     // tileDownloader_ -> tileSet_
@@ -151,7 +152,7 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
     }
 
     if (!indxRequest.isEmpty()) {
-        tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLat, maxLat, minLon, maxLon, moveUp);
+        tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLon, maxLon, moveUp);
     }
 }
 
