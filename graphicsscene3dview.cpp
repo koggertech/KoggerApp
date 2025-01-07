@@ -1326,11 +1326,13 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
         NED datasetNed(&datasetLla, &viewLlaRef_, !isPerspective_);
         m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
         viewLlaRef_ = datasetLlaRef_;
+        m_rotAngle = QVector2D(0.0f, 0.0f);
     }
     else if ((isPerspective_ && projectionChanged) || (!isPerspective_ && !projectionChanged)) { // pers -> ortho OR ortho without transfer
         viewPtr_->setNeedToResetStartPos(true);
         viewLlaRef_ = lookAtLlaRef;
         m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
+        m_rotAngle = QVector2D(0.0f, 0.0f);
     }
 
     updateCameraParams();
