@@ -19,6 +19,9 @@ void MapViewControlMenuController::onVisibilityChanged(bool state)
 
     if (m_graphicsSceneView) {
         m_graphicsSceneView->getMapViewPtr()->setVisible(state);
+        if (state) {
+            m_graphicsSceneView->updateMapView();
+        }
     }
 }
 void MapViewControlMenuController::onUpdateClicked()
