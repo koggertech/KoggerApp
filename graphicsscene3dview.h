@@ -67,12 +67,15 @@ public:
         float getAngleToGround() const;
         bool getIsPerspective() const;
         bool getIsFarAwayFromOriginLla() const;
+        map::CameraTilt getCameraTilt() const;
 
     private:
         void updateCameraParams();
         void tryToChangeViewLlaRef();
         void updateViewMatrix();
         void checkRotateAngle();
+        void tryResetRotateAngle();
+
     private:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
@@ -211,7 +214,8 @@ public Q_SLOTS:
     void updateMapView();
 
 signals:
-    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp);
+    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
+    void sendLlaRef(LLARef viewLlaRef);
     void cameraIsMoved();
 
 private:

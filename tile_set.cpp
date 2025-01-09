@@ -81,6 +81,19 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
     }
 }
 
+void TileSet::onNewLlaRef(LLARef viewLlaRef)
+{
+    viewLlaRef_ = viewLlaRef;
+
+    for (auto& tile : tileList_) {
+        if (tile.getInUse()) {
+            if (updateVertices(&tile)) {
+                emit mvUpdateTileVertices(tile.getIndex(), tile.getVerticesRef());
+            }
+        }
+    }
+}
+
 void TileSet::setTextureIdByTileIndx(const TileIndex &tileIndx, GLuint textureId)
 {
     if (auto* tile = getTileByIndx(tileIndx); tile) {

@@ -32,6 +32,13 @@ inline const QVector<int> kIndices = {
 };
 
 /*structures*/
+enum class CameraTilt {
+    Up = 0,
+    Down,
+    Left,
+    Right
+};
+
 enum class ZoomState {
     kUndefined = 0,
     kOut,

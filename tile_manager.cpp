@@ -56,7 +56,7 @@ std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
     return tileSet_;
 }
 
-void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp)
+void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, CameraTilt tiltCam)
 {
     int minX = std::numeric_limits<int>::max();
     int maxX = std::numeric_limits<int>::min();
@@ -120,7 +120,6 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
 
     if (boundaryTile == -1) {
         reqSize = (lonEndTile - lonStartTile + 1) * (maxY - minY + 1);
-
         if (reqSize < minTilesCapacity_) {
             for (int x = lonStartTile; x <= lonEndTile; ++x) {
                 for (int y = minY; y <= maxY; ++y) {
@@ -129,31 +128,92 @@ void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARe
                 }
             }
         }
-    }
-    else {
-        reqSize = (boundaryTile - lonStartTile + 1) * (maxY - minY + 1) +
-                  (lonEndTile + 1) * (maxY - minY + 1);
 
-        if (reqSize < minTilesCapacity_) {
-            for (int x = lonStartTile; x <= boundaryTile; ++x) {
-                for (int y = minY; y <= maxY; ++y) {
-                    TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-                    indxRequest.insert(tileIndx);
-                }
+        /*
+        // using camera tilt TODO: sec break
+        auto addFunc = [&](int x, int y) -> bool {
+            if (cntReq > reqSize) {
+                return false;
             }
 
-            for (int x = 0; x <= lonEndTile; ++x) {
-                for (int y = minY; y <= maxY; ++y) {
-                    TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
-                    indxRequest.insert(tileIndx);
+            TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
+            indxRequest.insert(tileIndx);
+            ++cntReq;
+
+            return true;
+        };
+
+        switch (tiltCam)
+        {
+        case CameraTilt::Up: {
+            for (int y = minY; y <= maxY; ++y) {
+                for (int x = lonStartTile; x <= lonEndTile; ++x) {
+                    if (!addFunc(x,y)) {
+                        break;
+                    }
                 }
             }
+            break;
         }
+        case CameraTilt::Down: {
+            for (int y = maxY; y >= minY; --y) {
+                for (int x = lonStartTile; x <= lonEndTile; ++x) {
+                    if (!addFunc(x,y)) {
+                        break;
+                    }
+                }
+            }
+            break;
+
+        case CameraTilt::Left:
+            for (int x = lonStartTile; x <= lonEndTile; ++x) {
+                for (int y = minY; y <= maxY; ++y) {
+                    if (!addFunc(x,y)) {
+                        break;
+                    }
+                }
+            }
+            break;
+
+        case CameraTilt::Right:
+            for (int x = lonEndTile; x >= lonStartTile; --x) {
+                for (int y = minY; y <= maxY; ++y) {
+                    if (!addFunc(x,y)) {
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        }*/
     }
+    //else {
+    //    reqSize = (boundaryTile - lonStartTile + 1) * (maxY - minY + 1) +
+    //              (lonEndTile + 1) * (maxY - minY + 1);
+    //    if (reqSize < minTilesCapacity_) {
+    //        for (int x = lonStartTile; x <= boundaryTile; ++x) {
+    //            for (int y = minY; y <= maxY; ++y) {
+    //                TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
+    //                indxRequest.insert(tileIndx);
+    //            }
+    //        }
+    //        for (int x = 0; x <= lonEndTile; ++x) {
+    //            for (int y = minY; y <= maxY; ++y) {
+    //                TileIndex tileIndx(x, y, zoomLevel, tileProvider_->getProviderId());
+    //                indxRequest.insert(tileIndx);
+    //            }
+    //        }
+    //    }
+    //}
 
     if (!indxRequest.isEmpty()) {
         tileSet_->onNewRequest(indxRequest, zoomState, viewLlaRef, isPerspective, minLon, maxLon, moveUp);
     }
+}
+
+void TileManager::getLlaRef(LLARef viewLlaRef)
+{
+    tileSet_->onNewLlaRef(viewLlaRef);
 }
 
 

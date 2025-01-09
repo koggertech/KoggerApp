@@ -26,7 +26,8 @@ public:
     std::shared_ptr<TileSet> getTileSetPtr() const;
 
 public slots:
-    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp);
+    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, CameraTilt tiltCam);
+    void getLlaRef(LLARef viewLlaRef);
 
 private:
     std::shared_ptr<TileProvider> tileProvider_;
