@@ -50,9 +50,25 @@ typedef struct LLA {
         longitude = lon;
         altitude = alt;
     }
+
+    LLA(const LLA& other) {
+        latitude = other.latitude;
+        longitude = other.longitude;
+        altitude = other.altitude;
+    }
+
+    LLA& operator=(const LLA& other) {
+        if (this != &other) {
+            latitude = other.latitude;
+            longitude = other.longitude;
+            altitude = other.altitude;
+        }
+        return *this;
+    }
+
     inline LLA(const NED* ned, const LLARef* ref, bool spherical = true);
 
-    bool isValid() {
+    bool isValid() const {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
     }
     bool isCoordinatesValid() {
@@ -77,6 +93,26 @@ typedef struct  LLARef {
         refLatCos = cos(refLatRad);
         refLla = lla;
         isInit = true;
+    }
+
+    LLARef(const LLARef& other)
+        : refLatSin(other.refLatSin),
+        refLatCos(other.refLatCos),
+        refLatRad(other.refLatRad),
+        refLonRad(other.refLonRad),
+        refLla(other.refLla),
+        isInit(other.isInit) {}
+
+    LLARef& operator=(const LLARef& other) {
+        if (this != &other) {
+            refLatSin = other.refLatSin;
+            refLatCos = other.refLatCos;
+            refLatRad = other.refLatRad;
+            refLonRad = other.refLonRad;
+            refLla = other.refLla;
+            isInit = other.isInit;
+        }
+        return *this;
     }
 
     friend bool operator==(const LLARef& lhs, const LLARef& rhs) {

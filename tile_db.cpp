@@ -69,8 +69,8 @@ void TileDB::stopAndClearRequests()
 {
     stopRequested_ = true;
 
-    for (auto& itm : pendingLoadRequests_) {
-        emit tileLoadStopped(itm);
+    for (auto it = pendingLoadRequests_.begin(); it != pendingLoadRequests_.end(); ++it) {
+        emit tileLoadStopped(*it);
     }
 
     pendingLoadRequests_.clear();

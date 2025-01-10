@@ -26,14 +26,15 @@ public:
     std::shared_ptr<TileSet> getTileSetPtr() const;
 
 public slots:
-    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp);
+    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, CameraTilt tiltCam);
+    void getLlaRef(LLARef viewLlaRef);
 
 private:
     std::shared_ptr<TileProvider> tileProvider_;
     std::shared_ptr<TileDownloader> tileDownloader_;
     std::shared_ptr<TileDB> tileDB_;
     std::shared_ptr<TileSet> tileSet_;
-    int lastZoomLevel_ = -1;
+    int lastZoomLevel_;
 
     static constexpr int maxTilesCapacity_{ 800 };
     static constexpr int minTilesCapacity_{ 400 };
