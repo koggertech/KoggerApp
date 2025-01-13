@@ -399,6 +399,22 @@ typedef QMap<int, ComplexSignal> ComplexSignals;
 
 class Epoch {
 public:
+    struct Contact {
+        int x = -1;
+        int y = -1;
+        float lat = 0.0f;
+        float lon = 0.0f;
+        QString info;
+
+        float distance = 0.0f;
+
+        bool isValid() const {
+            return !info.isEmpty() &&
+                    x != -1 &&
+                    y != -1;
+        }
+    };
+
     typedef struct {
         typedef enum {
             DistanceSourceNone = 0,
@@ -824,6 +840,8 @@ public:
     float getInterpYaw() const;
     float getInterpFirstChannelDist() const;
     float getInterpSecondChannelDist() const;
+
+    Contact contact_;
 
 protected:
 

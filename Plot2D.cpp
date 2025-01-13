@@ -52,6 +52,8 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
     _grid.draw(_canvas, _dataset, _cursor);
     _aim.draw(_canvas, _dataset, _cursor);
 
+    contacts_.draw(_canvas, _dataset, _cursor);
+
     return true;
 }
 
@@ -340,6 +342,9 @@ void Plot2D::setMousePosition(int x, int y) {
 
     if(x == -1) {
         _mouse.x = -1;
+        _cursor.selectEpochIndx = -1;
+        _cursor.currentEpochIndx = -1;
+        _cursor.lastEpochIndx = -1;
         plotUpdate();
         return;
     }
@@ -376,6 +381,8 @@ void Plot2D::setMousePosition(int x, int y) {
 
     //qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
     int epoch_index = _cursor.getIndex(x_start);
+    _cursor.currentEpochIndx = epoch_index;
+    _cursor.lastEpochIndx = _cursor.currentEpochIndx;
 
     sendSyncEvent(epoch_index);
 
@@ -426,8 +433,84 @@ void Plot2D::setMousePosition(int x, int y) {
     plotUpdate();
 }
 
+void Plot2D::simpleSetMousePosition(int x, int y)
+{
+    const int image_width = _canvas.width();
+    const int image_height = _canvas.height();
+    int mouseX = -1;
+
+    if (x < -1) {
+        x = -1;
+    }
+    if (x >= image_width) {
+        x = image_width - 1;
+    }
+    if (y < 0) {
+        y = 0;
+    }
+    if (y >= image_height) {
+        x = image_height - 1;
+    }
+
+    if (x == -1) {
+        //_cursor.selectEpochIndx = -1;
+        _cursor.currentEpochIndx = -1;
+        _cursor.lastEpochIndx = -1;
+        return;
+    }
+
+    _cursor.setContactPos(x, y);
+
+    int x_start = 0;
+    if(mouseX != -1) {
+        if(mouseX < x) {
+            x_start = mouseX;
+        }
+        else if (mouseX > x) {
+            x_start = x;
+        }
+        else {
+            x_start = x;
+        }
+    }
+    else {
+        x_start = x;
+    }
+
+    _cursor.currentEpochIndx = _cursor.getIndex(x_start);
+    _cursor.lastEpochIndx = _cursor.currentEpochIndx;
+
+    //sendSyncEvent(epoch_index);
+    //plotUpdate();
+}
+
 void Plot2D::setMouseTool(MouseTool tool) {
     _cursor.setTool(tool);
+}
+
+void Plot2D::setContact()
+{
+    if (!_dataset) {
+        return;
+    }
+
+    auto* ep = _dataset->fromIndex(_cursor.lastEpochIndx);
+    if (!ep) {
+        return;
+    }
+
+    ep->contact_.info = "contact";
+    ep->contact_.x = _cursor.contactX;
+    ep->contact_.y = _cursor.contactY;
+
+    const float canvas_height = _canvas.height();
+    float value_range = _cursor.distance.to - _cursor.distance.from;
+    float value_scale = float(_cursor.contactY) / canvas_height;
+    float cursor_distance = value_scale * value_range + _cursor.distance.from;
+
+    ep->contact_.distance = cursor_distance;
+
+    plotUpdate();
 }
 
 void Plot2D::resetCash() {
@@ -464,14 +547,17 @@ void Plot2D::reindexingCursor() {
 
     int head_data_index = round(position*float(data_width));
 
+    int cntZeros = 0;
     for(int i = 0; i < image_width; i++) {
         int data_index = head_data_index + round((i - image_width)/hor_ratio) - 1;
         if(data_index >= 0 && data_index < data_width) {
              _cursor.indexes[i] = data_index;
         } else {
+            ++cntZeros;
              _cursor.indexes[i] = -1;
         }
     }
+    _cursor.numZeroEpoch = cntZeros;
 }
 
 void Plot2D::reRangeDistance() {
@@ -596,6 +682,56 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     // text
     p->setPen(QColor(255,255,255));
     p->drawText(textRect.topLeft(), distanceText);
+
+    return true;
+}
+
+Plot2DContact::Plot2DContact()
+{
+
+}
+
+bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
+{
+    QPen pen;
+    pen.setWidth(lineWidth_);
+    pen.setColor(lineColor_);
+
+    QPainter* p = canvas.painter();
+    p->setPen(pen);
+    QFont font = QFont("Asap", 14, QFont::Normal);
+    font.setPixelSize(18);
+    p->setFont(font);
+    p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+
+    for (auto& indx : cursor.indexes) {
+        auto* epoch = dataset->fromIndex(indx);
+
+        if (!epoch) {
+            continue;
+        }
+
+        if (epoch->contact_.isValid()) {
+            QString infoText = epoch->contact_.info;
+            QRectF textRect = p->fontMetrics().boundingRect(infoText);
+
+            float xPos = static_cast<float>(cursor.numZeroEpoch + indx - cursor.indexes[0]);
+
+            const float canvasHeight = canvas.height();
+            float valueRange = cursor.distance.to - cursor.distance.from;
+            float valueScale = canvasHeight / valueRange;
+            float yPos = (epoch->contact_.distance - cursor.distance.from) * valueScale;
+
+            textRect.moveTopLeft({ xPos, yPos });
+
+            p->setPen(Qt::NoPen);
+            p->setBrush(QColor(45,45,45));
+            p->drawRect(textRect.adjusted(-5, -20, 5, -15));
+
+            p->setPen(QColor(255,255,255));
+            p->drawText( textRect.topLeft(), infoText);
+        }
+    }
 
     return true;
 }

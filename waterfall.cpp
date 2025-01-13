@@ -140,6 +140,10 @@ void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
 
+void qPlot2D::setContact()
+{
+    Plot2D::setContact();
+}
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
     if (_dataset != nullptr) {
@@ -292,6 +296,22 @@ void qPlot2D::plotMousePosition(int x, int y) {
             setMousePosition(-1, -1);
         }
 
+    }
+}
+
+void qPlot2D::simplePlotMousePosition(int x, int y) {
+    setAimEpochEventState(false);
+
+    if(_isHorizontal) {
+        simpleSetMousePosition(x, y);
+    } 
+    else {
+        if(x >=0 && y >= 0) {
+            simpleSetMousePosition(height() - y, x);
+        }
+        else {
+            simpleSetMousePosition(-1, -1);
+        }
     }
 }
 

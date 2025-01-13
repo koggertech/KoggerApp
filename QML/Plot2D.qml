@@ -96,11 +96,14 @@ WaterFall {
 
             onClicked: {
                 lastMouseX = mouse.x
-
                 plot.focus = true
 
-                if (mouse.button === Qt.RightButton && theme.instrumentsGrade !== 0) {
-                    menuBlock.position(mouse.x, mouse.y)
+                if (mouse.button === Qt.RightButton) {
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
+
+                    if (theme.instrumentsGrade !== 0) {
+                        menuBlock.position(mouse.x, mouse.y)
+                    }
                 }
 
                 wasMoved = false
@@ -119,6 +122,10 @@ WaterFall {
                     plot.plotMousePosition(mouse.x, mouse.y)
                 }
 
+                if (mouse.button === Qt.RightButton) {
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
+                }
+
                 wasMoved = false
             }
 
@@ -131,6 +138,10 @@ WaterFall {
 
                 if (mouse.button === Qt.LeftButton) {
                     plot.plotMousePosition(-1, -1)
+                }
+
+                if (mouse.button === Qt.RightButton) {
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
 
                 wasMoved = false
@@ -167,6 +178,10 @@ WaterFall {
                     if (theme.instrumentsGrade === 0) {
                         plot.horScrollEvent(delta)
                     }
+                }
+
+                if (mouse.button === Qt.RightButton) {
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
             }
 
@@ -354,6 +369,21 @@ WaterFall {
                 if (checked) {
                     plot.plotMouseTool(5)
                 }
+            }
+
+            ButtonGroup.group: pencilbuttonGroup
+        }
+
+        CheckButton {
+            icon.source: "./icons/anchor.svg"
+            backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
+
+            checkable: false
+
+            onClicked: {
+                plot.setContact()
+                menuBlock.visible = false
             }
 
             ButtonGroup.group: pencilbuttonGroup

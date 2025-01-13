@@ -51,7 +51,9 @@ public slots:
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
     Q_INVOKABLE void plotMousePosition(int x, int y);
+    Q_INVOKABLE void simplePlotMousePosition(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
+    Q_INVOKABLE void setContact();
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }
