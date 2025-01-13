@@ -52,6 +52,7 @@ public slots:
     void verScrollEvent(int delta);
     Q_INVOKABLE void plotMousePosition(int x, int y);
     Q_INVOKABLE void simplePlotMousePosition(int x, int y);
+    Q_INVOKABLE void onCursorMoved(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
     Q_INVOKABLE void setContact();
 

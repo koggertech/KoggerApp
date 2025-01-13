@@ -513,6 +513,13 @@ void Plot2D::setContact()
     plotUpdate();
 }
 
+void Plot2D::onCursorMoved(int x, int y)
+{
+    contacts_.setMousePos(x, y);
+
+    plotUpdate();
+}
+
 void Plot2D::resetCash() {
     _echogram.resetCash();
 }
@@ -712,9 +719,6 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
         }
 
         if (epoch->contact_.isValid()) {
-            QString infoText = epoch->contact_.info;
-            QRectF textRect = p->fontMetrics().boundingRect(infoText);
-
             float xPos = static_cast<float>(cursor.numZeroEpoch + indx - cursor.indexes[0]);
 
             const float canvasHeight = canvas.height();
@@ -722,16 +726,36 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
             float valueScale = canvasHeight / valueRange;
             float yPos = (epoch->contact_.distance - cursor.distance.from) * valueScale;
 
+            auto rect = epoch->contact_.rect;
+            if (!rect.isEmpty()) {
+                QRectF locRect = rect.translated(QPointF(xPos, yPos) - rect.bottomLeft());
+                if (locRect.contains(QPointF(mouseX_, mouseY_))) {
+                    qDebug() << "catch" << mouseX_ << mouseY_;
+                    continue;
+                }
+            }
+
+            QString infoText = epoch->contact_.info;
+            QRectF textRect = p->fontMetrics().boundingRect(infoText);
             textRect.moveTopLeft({ xPos, yPos });
+            if (epoch->contact_.rect.isEmpty()) {
+                epoch->contact_.rect = textRect.adjusted( 5, 5, 5, 5);
+            }
 
             p->setPen(Qt::NoPen);
             p->setBrush(QColor(45,45,45));
-            p->drawRect(textRect.adjusted(-5, -20, 5, -15));
+            p->drawRect(textRect.adjusted( -5, -20, 5, -15));
 
             p->setPen(QColor(255,255,255));
-            p->drawText( textRect.topLeft(), infoText);
+            p->drawText(textRect.topLeft(), infoText);
         }
     }
 
     return true;
+}
+
+void Plot2DContact::setMousePos(int x, int y)
+{
+    mouseX_ = x;
+    mouseY_ = y;
 }

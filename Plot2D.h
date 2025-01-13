@@ -831,10 +831,14 @@ class Plot2DContact : public PlotLayer {
 public:
     Plot2DContact();
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
+    void setMousePos(int x, int y);
 
 private:
     int lineWidth_ = 1;
     QColor lineColor_ = { 255, 255, 255, 255 };
+
+    int mouseX_ = -1;
+    int mouseY_ = -1;
 };
 
 class Plot2DAim : public PlotLayer {
@@ -918,6 +922,8 @@ public:
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
     void setContact();
+
+    void onCursorMoved(int x, int y);
 
     void resetCash();
 

@@ -300,19 +300,24 @@ void qPlot2D::plotMousePosition(int x, int y) {
 }
 
 void qPlot2D::simplePlotMousePosition(int x, int y) {
-    setAimEpochEventState(false);
+    Plot2D::setAimEpochEventState(false);
 
     if(_isHorizontal) {
-        simpleSetMousePosition(x, y);
+        Plot2D::simpleSetMousePosition(x, y);
     } 
     else {
         if(x >=0 && y >= 0) {
-            simpleSetMousePosition(height() - y, x);
+            Plot2D::simpleSetMousePosition(height() - y, x);
         }
         else {
-            simpleSetMousePosition(-1, -1);
+            Plot2D::simpleSetMousePosition(-1, -1);
         }
     }
+}
+
+void qPlot2D::onCursorMoved(int x, int y)
+{
+    Plot2D::onCursorMoved(x, y);
 }
 
 void qPlot2D::timerUpdater() {

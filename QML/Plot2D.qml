@@ -83,6 +83,8 @@ WaterFall {
             property point startMousePos: Qt.point(-1, -1)
             property real mouseThreshold: 15
 
+            hoverEnabled: true
+
             Timer {
                 id: longPressTimer
                 interval: 500
@@ -160,6 +162,8 @@ WaterFall {
             }
 
             onPositionChanged: {
+                plot.onCursorMoved(mouse.x, mouse.y)
+
                 if (Qt.platform.os === "android") {
                     if (!wasMoved) {
                         var currDelta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));

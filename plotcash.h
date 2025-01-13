@@ -406,6 +406,8 @@ public:
         float lon = 0.0f;
         QString info;
 
+        QRectF rect;
+
         float distance = 0.0f;
 
         bool isValid() const {
