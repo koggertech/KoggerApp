@@ -21,6 +21,7 @@ Plot2D::Plot2D()
 
     _cursor.distance.set(0, 20);
 //    _cursor.velocity.set(-1, 1);
+    contacts_.proxy_ = &proxyContacts_;
 }
 
 bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizontal) {
@@ -488,9 +489,9 @@ void Plot2D::setMouseTool(MouseTool tool) {
     _cursor.setTool(tool);
 }
 
-void Plot2D::setContact()
+void Plot2D::setContact(const QString& text)
 {
-    if (!_dataset) {
+    if (!_dataset || text.isEmpty()) {
         return;
     }
 
@@ -499,7 +500,7 @@ void Plot2D::setContact()
         return;
     }
 
-    ep->contact_.info = "contact";
+    ep->contact_.info = text;
     ep->contact_.x = _cursor.contactX;
     ep->contact_.y = _cursor.contactY;
 
@@ -710,6 +711,7 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     font.setPixelSize(18);
     p->setFont(font);
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    qreal adjPix = 3;
 
     for (auto& indx : cursor.indexes) {
         auto* epoch = dataset->fromIndex(indx);
@@ -719,35 +721,48 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
         }
 
         if (epoch->contact_.isValid()) {
-            float xPos = static_cast<float>(cursor.numZeroEpoch + indx - cursor.indexes[0]);
-
+            float xPos = cursor.numZeroEpoch + indx - cursor.indexes[0];
             const float canvasHeight = canvas.height();
             float valueRange = cursor.distance.to - cursor.distance.from;
             float valueScale = canvasHeight / valueRange;
             float yPos = (epoch->contact_.distance - cursor.distance.from) * valueScale;
 
-            auto rect = epoch->contact_.rect;
+            auto& rect = epoch->contact_.rect;
             if (!rect.isEmpty()) {
-                QRectF locRect = rect.translated(QPointF(xPos, yPos) - rect.bottomLeft());
+                QRectF locRect = rect.translated(QPointF(xPos + adjPix, yPos + adjPix) - rect.topLeft());
+                locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
+
                 if (locRect.contains(QPointF(mouseX_, mouseY_))) {
                     qDebug() << "catch" << mouseX_ << mouseY_;
+                    // emit show QML contact
+
+                    if (proxy_) {
+                        proxy_->checkHover();
+                    }
+
                     continue;
+                }
+                else {
+                    // emit do NOT show QML contact
                 }
             }
 
             QString infoText = epoch->contact_.info;
             QRectF textRect = p->fontMetrics().boundingRect(infoText);
-            textRect.moveTopLeft({ xPos, yPos });
-            if (epoch->contact_.rect.isEmpty()) {
-                epoch->contact_.rect = textRect.adjusted( 5, 5, 5, 5);
+            textRect.moveTopLeft(QPointF(xPos + adjPix ,yPos + adjPix));
+
+            if (rect.isEmpty()) {
+                rect = textRect;
             }
 
+            // back
             p->setPen(Qt::NoPen);
             p->setBrush(QColor(45,45,45));
-            p->drawRect(textRect.adjusted( -5, -20, 5, -15));
+            p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
 
+            // text
             p->setPen(QColor(255,255,255));
-            p->drawText(textRect.topLeft(), infoText);
+            p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, infoText);
         }
     }
 

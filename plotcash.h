@@ -400,6 +400,8 @@ typedef QMap<int, ComplexSignal> ComplexSignals;
 class Epoch {
 public:
     struct Contact {
+        // id ?
+
         int x = -1;
         int y = -1;
         float lat = 0.0f;

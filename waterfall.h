@@ -54,7 +54,7 @@ public slots:
     Q_INVOKABLE void simplePlotMousePosition(int x, int y);
     Q_INVOKABLE void onCursorMoved(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
-    Q_INVOKABLE void setContact();
+    Q_INVOKABLE void setContact(const QString& text);
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }

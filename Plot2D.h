@@ -827,11 +827,30 @@ protected:
 
 };
 
+class Plot2DContactProxy : public QObject
+{
+    Q_OBJECT
+public:
+    explicit Plot2DContactProxy(QObject* parent = nullptr) :
+        QObject(parent)
+    {}
+
+signals:
+    void contactHovered();
+
+public slots:
+    void checkHover() {
+        emit contactHovered();
+    }
+};
+
 class Plot2DContact : public PlotLayer {
 public:
     Plot2DContact();
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
     void setMousePos(int x, int y);
+
+    Plot2DContactProxy* proxy_;
 
 private:
     int lineWidth_ = 1;
@@ -921,7 +940,7 @@ public:
     void setMousePosition(int x, int y);
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
-    void setContact();
+    void setContact(const QString& text);
 
     void onCursorMoved(int x, int y);
 
@@ -962,6 +981,7 @@ protected:
     Plot2DGrid _grid;
     Plot2DAim _aim;
     Plot2DContact contacts_;
+    Plot2DContactProxy proxyContacts_;
 
     Canvas image(int width, int height);
 

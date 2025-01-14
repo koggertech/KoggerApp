@@ -82,6 +82,8 @@ WaterFall {
             property bool wasMoved: false
             property point startMousePos: Qt.point(-1, -1)
             property real mouseThreshold: 15
+            property int contactMouseX: -1
+            property int contactMouseY: -1
 
             hoverEnabled: true
 
@@ -101,6 +103,9 @@ WaterFall {
                 plot.focus = true
 
                 if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
                     plot.simplePlotMousePosition(mouse.x, mouse.y)
 
                     if (theme.instrumentsGrade !== 0) {
@@ -125,6 +130,9 @@ WaterFall {
                 }
 
                 if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
                     plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
 
@@ -143,6 +151,9 @@ WaterFall {
                 }
 
                 if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
                     plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
 
@@ -185,6 +196,9 @@ WaterFall {
                 }
 
                 if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
                     plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
             }
@@ -273,6 +287,22 @@ WaterFall {
 
                 text: echogramLevelsSlider.startValue
                 small: true
+            }
+        }
+    }
+
+    CContact {
+        id: inputDialog
+        visible: false
+
+        onVisibleChanged: {
+            if (!visible) {
+                if (accepted) {
+                    plot.setContact(text);
+                }
+                else {
+                    //
+                }
             }
         }
     }
@@ -382,11 +412,13 @@ WaterFall {
             icon.source: "./icons/anchor.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
-
             checkable: false
 
             onClicked: {
-                plot.setContact()
+                inputDialog.x = mousearea.contactMouseX
+                inputDialog.y = mousearea.contactMouseY
+
+                inputDialog.visible = true;
                 menuBlock.visible = false
             }
 

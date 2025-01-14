@@ -140,9 +140,9 @@ void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
 
-void qPlot2D::setContact()
+void qPlot2D::setContact(const QString& text)
 {
-    Plot2D::setContact();
+    Plot2D::setContact(text);
 }
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
