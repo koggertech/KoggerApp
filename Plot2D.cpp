@@ -566,6 +566,31 @@ bool Plot2D::setContact(int indx, const QString& text)
 
         ep->contact_.distance_ = cursor_distance;
     }
+    else {
+        // update rect
+    }
+
+    plotUpdate();
+
+    return true;
+}
+
+bool Plot2D::deleteContact(int indx)
+{
+    if (!_dataset) {
+        qDebug() << "Plot2D::deleteContact returned: !_dataset";
+        return false;
+    }
+
+    //qDebug() << "indx" << indx << "currIndx" << currIndx << text;
+
+    auto* ep = _dataset->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Plot2D::deleteContact returned: !ep";
+        return false;
+    }
+
+    ep->contact_.clear();
 
     plotUpdate();
 
@@ -814,7 +839,8 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
             QRectF textRect = p->fontMetrics().boundingRect(infoText);
             textRect.moveTopLeft(QPointF(xPos + adjPix ,yPos + adjPix));
 
-            if (rect.isEmpty()) {
+            if (rect.height() != textRect.height() ||
+                rect.width() != textRect.width()) {
                 rect = textRect;
             }
 

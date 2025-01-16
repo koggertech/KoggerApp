@@ -967,6 +967,7 @@ public:
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
     bool setContact(int indx, const QString& text);
+    bool deleteContact(int indx);
 
     void onCursorMoved(int x, int y);
 

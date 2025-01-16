@@ -27,6 +27,7 @@ Item {
 
         RowLayout {
             CheckButton {
+                id: setButton
                 icon.source: "./icons/plus.svg"
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
@@ -39,13 +40,15 @@ Item {
             }
 
             CheckButton {
+                id: deleteButton
                 icon.source: "./icons/x.svg"
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
                 checkable: false
 
                 onClicked: {
-                    inputDialog.accepted = false;
+                    contactDialog.deleteButtonClicked();
+                    //inputDialog.accepted = false;
                     inputDialog.visible = false;
                 }
             }

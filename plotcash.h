@@ -413,6 +413,16 @@ public:
                    y_ != -1;
         }
 
+        void clear() {
+            x_ = -1;
+            y_ = -1;
+            info_.clear();
+            lat_ = 0.0f;
+            lon_ = 0.0f;
+            rect_ = QRectF();
+            distance_ = 0.0f;
+        }
+
     //private:
         int x_;
         int y_;
