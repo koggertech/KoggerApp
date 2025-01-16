@@ -24,8 +24,9 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-
         RowLayout {
+            spacing: 0
+
             CheckButton {
                 id: setButton
                 icon.source: "./icons/plus.svg"
@@ -48,7 +49,6 @@ Item {
 
                 onClicked: {
                     contactDialog.deleteButtonClicked();
-                    //inputDialog.accepted = false;
                     inputDialog.visible = false;
                 }
             }
@@ -58,10 +58,12 @@ Item {
                 placeholderText: qsTr("Enter text")
                 Layout.fillWidth: true
                 text: info
+
+                onAccepted: {
+                    inputDialog.accepted = true;
+                    inputDialog.visible = false;
+                }
             }
         }
-
-
-
     }
 }
