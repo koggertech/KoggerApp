@@ -292,18 +292,33 @@ WaterFall {
     }
 
     CContact {
-        id: inputDialog
-        visible: false
+        id: contactDialog
 
         onVisibleChanged: {
             if (!visible) {
                 if (accepted) {
-                    plot.setContact(text);
-                }
-                else {
-                    //
+                    if (!plot.setContact(contactDialog.indx, contactDialog.inputFieldText)) {
+                        contactDialog.info = ""
+                    }
+
+                    // reset
+                    accepted = false
                 }
             }
+        }
+    }
+
+    onContactVisibleChanged: {
+        contactDialog.visible = plot.contactVisible;
+        contactDialog.info = plot.contactInfo
+
+        contactDialog.x = plot.contactPositionX
+        contactDialog.y = plot.contactPositionY
+
+        contactDialog.indx = plot.contactIndx
+
+        if (!contactDialog.visible) {
+            contactDialog.info = ""
         }
     }
 
@@ -415,10 +430,12 @@ WaterFall {
             checkable: false
 
             onClicked: {
-                inputDialog.x = mousearea.contactMouseX
-                inputDialog.y = mousearea.contactMouseY
+                contactDialog.x = mousearea.contactMouseX
+                contactDialog.y = mousearea.contactMouseY
+                contactDialog.visible = true;
 
-                inputDialog.visible = true;
+                contactDialog.indx = -1
+
                 menuBlock.visible = false
             }
 

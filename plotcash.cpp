@@ -1355,3 +1355,13 @@ std::pair<time_t, int> Dataset::Interpolator::convertFromNanosecs(qint64 totalNa
 
     return { seconds, nanoseconds };
 }
+
+Epoch::Contact::Contact() :
+    x_(-1),
+    y_(-1),
+    lat_(0.0f),
+    lon_(0.0f),
+    distance_(0.0f)
+{
+
+}

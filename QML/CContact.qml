@@ -5,8 +5,10 @@ import QtQuick.Layouts 1.15
 
 Item {
     id: inputDialog
-    property alias text: inputField.text
+    property alias inputFieldText: inputField.text
     property bool accepted: false
+    property string info: ""
+    property int indx: -1
 
     width: 185
     visible: false
@@ -52,6 +54,7 @@ Item {
                 id: inputField
                 placeholderText: qsTr("Enter text")
                 Layout.fillWidth: true
+                text: info
             }
         }
 

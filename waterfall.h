@@ -18,6 +18,12 @@ public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
 
+    Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
+    Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionY READ getContactPositionY /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactIndx      READ getContactIndx /*WRITE setContactIndx*/ NOTIFY contactChanged)
+
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
 //    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
@@ -40,6 +46,7 @@ protected:
 
 signals:
     void timelinePositionChanged();
+    void contactChanged();
 
 protected slots:
     void timerUpdater();
@@ -54,7 +61,7 @@ public slots:
     Q_INVOKABLE void simplePlotMousePosition(int x, int y);
     Q_INVOKABLE void onCursorMoved(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
-    Q_INVOKABLE void setContact(const QString& text);
+    Q_INVOKABLE bool setContact(int indx, const QString& text);
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }

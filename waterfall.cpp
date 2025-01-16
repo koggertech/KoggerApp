@@ -27,8 +27,11 @@ qPlot2D::qPlot2D(QQuickItem* parent)
 void qPlot2D::paint(QPainter *painter) {
     clock_t start = clock();
 
-    if(m_plot != nullptr && painter != nullptr) {
+    if (m_plot != nullptr && painter != nullptr) {
         Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
+        if (Plot2D::getIsContactChanged()) {
+            emit contactChanged();
+        }
     }
 
     clock_t end = clock();
@@ -140,9 +143,9 @@ void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
 
-void qPlot2D::setContact(const QString& text)
+bool qPlot2D::setContact(int indx, const QString& text)
 {
-    Plot2D::setContact(text);
+    return Plot2D::setContact(indx, text);
 }
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {

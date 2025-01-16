@@ -827,22 +827,8 @@ protected:
 
 };
 
-class Plot2DContactProxy : public QObject
-{
-    Q_OBJECT
-public:
-    explicit Plot2DContactProxy(QObject* parent = nullptr) :
-        QObject(parent)
-    {}
 
-signals:
-    void contactHovered();
 
-public slots:
-    void checkHover() {
-        emit contactHovered();
-    }
-};
 
 class Plot2DContact : public PlotLayer {
 public:
@@ -850,7 +836,23 @@ public:
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
     void setMousePos(int x, int y);
 
-    Plot2DContactProxy* proxy_;
+    bool isChanged() {
+        if (visibleChanged_) {
+            visibleChanged_ = false;
+            return true;
+        }
+        return false;
+    }
+
+    QString getInfo();
+    void setInfo(const QString& info);
+
+    bool getVisible();
+    void setVisible(bool visible);
+
+    QPoint getPosition();
+
+    int getIndx();
 
 private:
     int lineWidth_ = 1;
@@ -858,6 +860,21 @@ private:
 
     int mouseX_ = -1;
     int mouseY_ = -1;
+
+    int indx_ = -1;
+    QPoint position_;
+
+    QString info_;
+    bool visible_ = false;
+
+    bool visibleChanged_ = false;
+
+    void setVisibleContact(bool val) {
+        if(visible_ != val) {
+            visibleChanged_ = true;
+        }
+        visible_ = val;
+    }
 };
 
 class Plot2DAim : public PlotLayer {
@@ -906,6 +923,15 @@ public:
 
     void setDataChannel(int channel, int channel2 = CHANNEL_NONE);
 
+    bool getIsContactChanged();
+
+    QString getContactInfo();
+    void    setContactInfo(const QString& str);
+    bool    getContactVisible();
+    void    setContactVisible(bool state);
+    int     getContactPositionX();
+    int     getContactPositionY();
+    int     getContactIndx();
 
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);
@@ -940,7 +966,7 @@ public:
     void setMousePosition(int x, int y);
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
-    void setContact(const QString& text);
+    bool setContact(int indx, const QString& text);
 
     void onCursorMoved(int x, int y);
 
@@ -981,7 +1007,6 @@ protected:
     Plot2DGrid _grid;
     Plot2DAim _aim;
     Plot2DContact contacts_;
-    Plot2DContactProxy proxyContacts_;
 
     Canvas image(int width, int height);
 

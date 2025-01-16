@@ -399,24 +399,28 @@ typedef QMap<int, ComplexSignal> ComplexSignals;
 
 class Epoch {
 public:
-    struct Contact {
-        // id ?
+    class Contact {
+    public:
+        Contact();
 
-        int x = -1;
-        int y = -1;
-        float lat = 0.0f;
-        float lon = 0.0f;
-        QString info;
+        void updateCoords() {
 
-        QRectF rect;
-
-        float distance = 0.0f;
+        };
 
         bool isValid() const {
-            return !info.isEmpty() &&
-                    x != -1 &&
-                    y != -1;
+            return !info_.isEmpty() &&
+                   x_ != -1 &&
+                   y_ != -1;
         }
+
+    //private:
+        int x_;
+        int y_;
+        QString info_;
+        float lat_;
+        float lon_;
+        QRectF rect_;
+        float distance_;
     };
 
     typedef struct {
