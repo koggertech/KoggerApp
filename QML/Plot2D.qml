@@ -93,6 +93,11 @@ WaterFall {
                 repeat: false
                 onTriggered: {
                     if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0 && !mousearea.wasMoved) {
+                        plot.onCursorMoved(mousearea.mouseX, mousearea.mouseY)
+                        mousearea.contactMouseX = mousearea.mouseX
+                        mousearea.contactMouseY = mousearea.mouseY
+                        plot.simplePlotMousePosition(mousearea.mouseX, mousearea.mouseY)
+
                         menuBlock.position(mousearea.mouseX, mousearea.mouseY)
                     }
                 }

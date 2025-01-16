@@ -384,7 +384,7 @@ void Plot2D::setMousePosition(int x, int y) {
         _mouse.x = -1;
         _cursor.selectEpochIndx = -1;
         _cursor.currentEpochIndx = -1;
-        _cursor.lastEpochIndx = -1;
+        //_cursor.lastEpochIndx = -1; // ?
         plotUpdate();
         return;
     }
@@ -495,7 +495,7 @@ void Plot2D::simpleSetMousePosition(int x, int y)
     if (x == -1) {
         //_cursor.selectEpochIndx = -1;
         _cursor.currentEpochIndx = -1;
-        _cursor.lastEpochIndx = -1;
+        //_cursor.lastEpochIndx = -1; // ?
         return;
     }
 
