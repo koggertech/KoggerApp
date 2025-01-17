@@ -82,14 +82,15 @@ public:
         Surface      = 1,
         Point        = 2,
         Polygon      = 3,
-        PointGroup   = 5,
-        PolygonGroup = 6,
-        Unknown      = 7,
-        BoatTrack    = 8,
-        UsblView     = 9,
-        SideScanView = 10,
-        ImageView    = 11,
-        MapView      = 12
+        PointGroup   = 4,
+        PolygonGroup = 5,
+        Unknown      = 6,
+        BoatTrack    = 7,
+        UsblView     = 8,
+        SideScanView = 9,
+        ImageView    = 10,
+        MapView      = 11,
+        Contacts     = 12
     };
 
     Q_ENUM(SceneObjectType)

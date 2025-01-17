@@ -8,6 +8,7 @@
 #include "side_scan_view.h"
 #include "image_view.h"
 #include "map_view.h"
+#include "contacts.h"
 #include <pointgroup.h>
 #include <polygongroup.h>
 #include <graphicsscene3dview.h>
@@ -69,6 +70,7 @@ private:
     SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
+    Contacts::ContactsRenderImplementation contactsRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;

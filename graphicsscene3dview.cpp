@@ -22,6 +22,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
+    contacts_(std::make_shared<Contacts>(this)),
     m_boatTrack(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -61,6 +62,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -74,6 +76,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(contacts_.get(), &Contacts::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -139,6 +142,11 @@ std::shared_ptr<MapView> GraphicsScene3dView::getMapViewPtr() const
     return mapView_;
 }
 
+std::shared_ptr<Contacts> GraphicsScene3dView::getContactsPtr() const
+{
+    return contacts_;
+}
+
 std::shared_ptr<PointGroup> GraphicsScene3dView::pointGroup() const
 {
     return m_pointGroup;
@@ -184,6 +192,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
     sideScanView_->clear();
+    contacts_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
@@ -914,6 +923,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
+    m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
