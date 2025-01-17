@@ -128,7 +128,6 @@ void GraphicsScene3dRenderer::drawObjects()
         m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
         m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
         usblViewRenderImpl_.render(this, m_projection * view * m_model, m_shaderProgramMap);
-        contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     }
     glDisable(GL_DEPTH_TEST);
 
@@ -143,6 +142,7 @@ void GraphicsScene3dRenderer::drawObjects()
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
+    contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 
 
