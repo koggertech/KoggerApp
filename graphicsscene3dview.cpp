@@ -626,6 +626,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_boatTrack->setDatasetPtr(m_dataset);
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
+    contacts_->setDatasetPtr(m_dataset);
 
     forceUpdateDatasetRef();
 

@@ -2,6 +2,9 @@
 
 #include "sceneobject.h"
 
+#include <QEvent>
+#include "plotcash.h"
+
 
 class Contacts : public SceneObject
 {
@@ -22,6 +25,10 @@ public:
 
     private:
         friend class Contacts;
+
+        /*data*/
+        QVector<int> indexes_;      // related
+        QVector<QVector3D> points_; //
     };
 
     /*methods*/
@@ -29,13 +36,16 @@ public:
     virtual ~Contacts();
 
     void clear();
+    void setDatasetPtr(Dataset* datasetPtr);
 
+    /*QObject*/
+    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
 
 public slots:
-
 
 signals:
 
 private:
+    Dataset* datasetPtr_;
 
 };

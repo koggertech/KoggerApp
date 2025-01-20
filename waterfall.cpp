@@ -110,10 +110,13 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
-void qPlot2D::sendSyncEvent(int epoch_index) {
+void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType) {
     //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
-    _cursor.selectEpochIndx = -1;
-    auto epochEvent = new EpochEvent(EpochSelected2d, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
+    if (eventType == EpochSelected2d) {
+        _cursor.selectEpochIndx = -1;
+    }
+
+    auto epochEvent = new EpochEvent(eventType, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
     QCoreApplication::postEvent(this, epochEvent);
 }
 

@@ -975,8 +975,9 @@ public:
 
     virtual void plotUpdate() {}
 
-    virtual void sendSyncEvent(int epoch_index) {
+    virtual void sendSyncEvent(int epoch_index, QEvent::Type eventType) {
         Q_UNUSED(epoch_index);
+        Q_UNUSED(eventType);
     }
 
 protected:

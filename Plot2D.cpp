@@ -424,7 +424,7 @@ void Plot2D::setMousePosition(int x, int y) {
     _cursor.currentEpochIndx = epoch_index;
     _cursor.lastEpochIndx = _cursor.currentEpochIndx;
 
-    sendSyncEvent(epoch_index);
+    sendSyncEvent(epoch_index, EpochSelected2d);
 
     if(_cursor.tool() > MouseToolNothing) {
 
@@ -565,6 +565,16 @@ bool Plot2D::setContact(int indx, const QString& text)
         float cursor_distance = value_scale * value_range + _cursor.distance.from;
 
         ep->contact_.distance_ = cursor_distance;
+
+        auto pos = ep->getPositionGNSS();
+
+        ep->contact_.decX_ = pos.ned.n;
+        ep->contact_.decY_ = pos.ned.e;
+
+        ep->contact_.lat_ = pos.lla.latitude;
+        ep->contact_.lon_ = pos.lla.longitude;
+
+        sendSyncEvent(currIndx, ContactCreated);
     }
     else {
         // update rect
@@ -591,6 +601,8 @@ bool Plot2D::deleteContact(int indx)
     }
 
     ep->contact_.clear();
+
+    sendSyncEvent(indx, ContactDeleted);
 
     plotUpdate();
 

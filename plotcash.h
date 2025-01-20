@@ -419,6 +419,8 @@ public:
             info_.clear();
             lat_ = 0.0f;
             lon_ = 0.0f;
+            decX_ = 0.0f;
+            decY_ = 0.0f;
             rect_ = QRectF();
             distance_ = 0.0f;
         }
@@ -429,6 +431,8 @@ public:
         QString info_;
         float lat_;
         float lon_;
+        float decX_;
+        float decY_;
         QRectF rect_;
         float distance_;
     };

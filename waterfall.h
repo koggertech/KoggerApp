@@ -34,9 +34,8 @@ public:
 
     void plotUpdate() override;
 
-    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
-
-    void sendSyncEvent(int epoch_index) override final;
+    bool eventFilter(QObject *watched, QEvent *event) override final;
+    void sendSyncEvent(int epoch_index, QEvent::Type eventType) override final;
 
 protected:
     Dataset* m_plot = nullptr;

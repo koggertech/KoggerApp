@@ -1361,6 +1361,8 @@ Epoch::Contact::Contact() :
     y_(-1),
     lat_(0.0f),
     lon_(0.0f),
+    decX_(0.0f),
+    decY_(0.0f),
     distance_(0.0f)
 {
 

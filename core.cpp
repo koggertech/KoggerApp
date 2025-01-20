@@ -969,8 +969,10 @@ void Core::UILoad(QObject* object, const QUrl& url)
             plot2dList_.at(i)->setPlot(datasetPtr_);
             scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));
             scene3dViewPtr_->boatTrack()->installEventFilter(plot2dList_.at(i));
+            scene3dViewPtr_->getContactsPtr()->installEventFilter(plot2dList_.at(i));
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->bottomTrack().get());
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->boatTrack().get());
+            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getContactsPtr().get());
         }
     }
 
