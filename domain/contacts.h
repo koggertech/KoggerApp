@@ -27,8 +27,7 @@ public:
         friend class Contacts;
 
         /*data*/
-        QVector<int> indexes_;      // related
-        QVector<QVector3D> points_; //
+        QMap<int, QPair<QVector3D, QString>> points_; // first - epoch index, second - position and text
     };
 
     /*methods*/

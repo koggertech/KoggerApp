@@ -573,12 +573,12 @@ bool Plot2D::setContact(int indx, const QString& text)
 
         ep->contact_.lat_ = pos.lla.latitude;
         ep->contact_.lon_ = pos.lla.longitude;
-
-        sendSyncEvent(currIndx, ContactCreated);
     }
     else {
         // update rect
     }
+
+    sendSyncEvent(currIndx, ContactCreated);
 
     plotUpdate();
 

@@ -46,29 +46,22 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
     int epIndx = epochEvent->epochIndex();
 
     if (event->type() == ContactCreated) {
-        if (!r->indexes_.contains(epIndx)) {
-            if (datasetPtr_) {
-                if (auto* epoch = datasetPtr_->fromIndex(epIndx); epoch) {
-                    auto& contact = epoch->contact_;
-                    if (contact.isValid()) {
-                        r->indexes_.push_back(epIndx);
-                        r->points_.push_back({contact.decX_, contact.decY_, 0});
-                        beenUpdated = true;
-                    }
-                }
+        if (!datasetPtr_) {
+            return false;
+        }
+
+        if (auto* epoch = datasetPtr_->fromIndex(epIndx); epoch) {
+            auto& contact = epoch->contact_;
+            if (contact.isValid()) {
+                r->points_.insert(epIndx, { {contact.decX_, contact.decY_, 0}, contact.info_});
+                beenUpdated = true;
             }
         }
     }
 
     if (event->type() == ContactDeleted) {
-        int size = r->indexes_.size();
-        for (int i = 0; i < size; ++i) {
-            if (epIndx == r->indexes_[i]) {
-                r->indexes_.erase(r->indexes_.begin() + i);
-                r->points_.erase(r->points_.begin() + i);
-                beenUpdated = true;
-                break;
-            }
+        if (r->points_.remove(epIndx)) {
+            beenUpdated = true;
         }
     }
 
@@ -92,6 +85,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
                                                     const QMatrix4x4 &projection,
                                                     const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
+    // points
     auto shaderProgram = shaderProgramMap.value("static", nullptr);
 
     if (!shaderProgram) {
@@ -107,18 +101,20 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     int widthLoc   = shaderProgram->uniformLocation   ("width");
     int isTriangleLoc = shaderProgram->uniformLocation   ("isTriangle");
 
-    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->enableAttributeArray(posLoc);
 
-    // test point
-    ctx->glEnable(34370);
-
+    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
     shaderProgram->setUniformValue(isTriangleLoc, true);
     shaderProgram->setUniformValue(colorLoc, QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
     shaderProgram->setUniformValue(widthLoc, 35.f);
 
-    shaderProgram->setAttributeArray(posLoc, points_.constData());
-    ctx->glDrawArrays(GL_POINTS, 0, points_.size());
+    ctx->glEnable(34370);
+
+    for (auto it = points_.begin(); it != points_.end(); ++it) {
+        QVector<QVector3D> point = { it.value().first };
+        shaderProgram->setAttributeArray(posLoc, point.constData());
+        ctx->glDrawArrays(GL_POINTS, 0, point.size());
+    }
 
     ctx->glDisable(34370);
 
@@ -126,20 +122,23 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setUniformValue(isTriangleLoc, false);
     shaderProgram->release();
 
-    // test text
-    QVector3D p = { 0.0f, 0.0f, 0.0f };
-    QRectF vport = DrawUtils::viewportRect(ctx);
 
-    QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
-    p_screen.setY(vport.height() - p_screen.y());
+    // text on points
+    for (auto it = points_.begin(); it != points_.end(); ++it) {
+        // test text
+        QVector3D p = it.value().first;
+        QRectF vport = DrawUtils::viewportRect(ctx);
 
-    QMatrix4x4 textProjection;
-    textProjection.ortho(vport.toRect());
+        QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
+        p_screen.setY(vport.height() - p_screen.y());
 
-    TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()),
-                                    0.3f,
-                                    p_screen,
-                                    ctx,
-                                    textProjection
-                                    );
+        QMatrix4x4 textProjection;
+        textProjection.ortho(vport.toRect());
+
+        TextRenderer::instance().render(it.value().second,
+                                        0.3f,
+                                        p_screen,
+                                        ctx,
+                                        textProjection);
+    }
 }
