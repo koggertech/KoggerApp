@@ -174,7 +174,7 @@ HEADERS += \
     ray.h \
     raycaster.h \
     streamlist.h \
-    textrenderer.h \ # TODO
+    textrenderer.h \
     waterfall.h \
     waterfallproxy.h \
     tile_manager.h \
@@ -258,12 +258,12 @@ windows {
 
 win32:RC_FILE = file.rc
 
-#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-#else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
+else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
 
-#INCLUDEPATH += $$PWD/libs/freetype/include
-#DEPENDPATH += $$PWD/libs/freetype/include
+INCLUDEPATH += $$PWD/libs/freetype/include
+DEPENDPATH += $$PWD/libs/freetype/include
 
 include ($$PWD/core/core.pri)
 include ($$PWD/processors/processors.pri)

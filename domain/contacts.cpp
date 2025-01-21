@@ -2,6 +2,7 @@
 
 #include "draw_utils.h"
 #include "epochevent.h"
+#include "textrenderer.h"
 
 
 Contacts::Contacts(QObject *parent) :
@@ -125,4 +126,20 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setUniformValue(isTriangleLoc, false);
     shaderProgram->release();
 
+    // test text
+    QVector3D p = { 0.0f, 0.0f, 0.0f };
+    QRectF vport = DrawUtils::viewportRect(ctx);
+
+    QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
+    p_screen.setY(vport.height() - p_screen.y());
+
+    QMatrix4x4 textProjection;
+    textProjection.ortho(vport.toRect());
+
+    TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()),
+                                    0.3f,
+                                    p_screen,
+                                    ctx,
+                                    textProjection
+                                    );
 }

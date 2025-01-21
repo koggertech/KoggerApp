@@ -1,14 +1,13 @@
 #include "textrenderer.h"
-/*#include <draw_utils.h>
+#include <draw_utils.h>
 #include <QDebug>
-#include <QCoreApplication>
 #include <QFile>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 namespace {
-    static const QString vertexShader = R"shader(
+static const QString vertexShader = R"shader(
                                             #version 330 core
                                             #ifdef GL_ES
                                             precision mediump int;
@@ -30,29 +29,29 @@ namespace {
 
                                       )shader";
 
-
-    ////Default blending shader implementation
-    //static const QString fragmentShader = R"shader(
-    //                                        #version 330 core
-    //                                        #ifdef GL_ES
-    //                                        precision mediump int;
-    //                                        precision mediump float;
-    //                                        #endif
-
-    //                                        uniform sampler2D tex;
-    //                                        varying vec2 v_texcoord;
-    //                                        out vec4 color;
-
-    //                                        void main()
-    //                                        {
-    //                                            vec4 sampled = vec4(1.0,1.0,1.0, texture(tex, v_texcoord).r);
-    //                                            color = vec4(vec3(0.1,0.1,1.0),1.0) * sampled;
-    //                                        };
-
-    //                                    )shader";
-
-    //Signed distance fields shader implementation
+/*
+    //Default blending shader implementation
     static const QString fragmentShader = R"shader(
+                                            #version 330 core
+                                            #ifdef GL_ES
+                                            precision mediump int;
+                                            precision mediump float;
+                                            #endif
+
+                                            uniform sampler2D tex;
+                                            varying vec2 v_texcoord;
+                                            out vec4 color;
+
+                                            void main()
+                                            {
+                                                vec4 sampled = vec4(1.0,1.0,1.0, texture(tex, v_texcoord).r);
+                                                color = vec4(vec3(0.1,0.1,1.0),1.0) * sampled;
+                                            };
+
+                                        )shader";
+    */
+//Signed distance fields shader implementation
+static const QString fragmentShader = R"shader(
                                             #version 330 core
                                             #ifdef GL_ES
                                             precision mediump int;
@@ -98,6 +97,12 @@ void TextRenderer::setColor(const QColor &color)
         m_color = color;
 }
 
+void TextRenderer::setBackgroundColor(const QColor &color)
+{
+    if (m_backgroundColor != color)
+        m_backgroundColor = color;
+}
+
 void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpenGLFunctions *ctx, const QMatrix4x4 &projection)
 {
     if (!m_shaderProgram->bind()){
@@ -125,7 +130,7 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpen
         auto ch = m_chars[c];
 
         float pen_x = pos.x() + ch.bearing.x() * scale;
-        float pen_y = pos.y() - (ch.size.y()) * scale; // "ch.bearing.y()" instead ch.size.y()
+        float pen_y = pos.y() - (ch.size.y()/* - ch.bearing.y()*/) * scale;
 
         const float w = ch.size.x() * scale;
         const float h = ch.size.y() * scale;
@@ -243,6 +248,20 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
     m_arrayBuffer.release();
 }
 
+void TextRenderer::cleanup()
+{
+    if (QOpenGLContext::currentContext()) {
+        for (auto& ch : m_chars) {
+            if (ch.texture) {
+                ch.texture->destroy();
+            }
+        }
+    }
+    m_chars.clear();
+
+    m_arrayBuffer.destroy();
+}
+
 TextRenderer::TextRenderer()
     :m_shaderProgram(std::unique_ptr<QOpenGLShaderProgram>(new QOpenGLShaderProgram))
 {
@@ -253,7 +272,7 @@ TextRenderer::TextRenderer()
 
 TextRenderer::~TextRenderer()
 {
-    m_arrayBuffer.destroy();
+    // cleanup
 }
 
 void TextRenderer::initShaders()
@@ -300,14 +319,21 @@ void TextRenderer::initFont()
         return;
     }
 
-    QFile::copy(":/assets/fonts/arial.ttf", "/arial.ttf");
+    QString resourcePath  = ":/assets/fonts/arial.ttf";
 
-    if (FT_New_Face(ft, "/arial.ttf", 0, &face)){
-        qDebug().noquote() << "ERROR::FREETYPE: Failed to load font";
+    QFile fontFile(resourcePath);
+    if (!fontFile.open(QIODevice::ReadOnly)) {
+        qDebug() << "ERROR::FREETYPE: Failed to open font file from resources:" << resourcePath;
         return;
     }
 
+    QByteArray fontData = fontFile.readAll();
+    fontFile.close();
 
+    if (FT_New_Memory_Face(ft, reinterpret_cast<const FT_Byte*>(fontData.constData()), fontData.size(), 0, &face)) {
+        qDebug().noquote() << "ERROR::FREETYPE: Failed to load font from memory";
+        return;
+    }
 
     FT_Set_Pixel_Sizes(face, 0, m_fontPixelSize);
 
@@ -331,7 +357,7 @@ void TextRenderer::initFont()
         character.bearing = QVector2D(face->glyph->bitmap_left, face->glyph->bitmap_top);
         character.advance = face->glyph->advance.x;
 
-        character.texture = std::make_shared<QOpenGLTexture>(image,QOpenGLTexture::GenerateMipMaps);
+        character.texture = std::make_shared<QOpenGLTexture>(image, QOpenGLTexture::GenerateMipMaps);
         character.texture->create();
 
         character.texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
@@ -342,9 +368,13 @@ void TextRenderer::initFont()
         m_chars.insert(c, character);
     }
 
-    qDebug() << "ch ------> " << m_chars['c'].size;
+    //qDebug() << "ch ------> " << m_chars['c'].size;
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 }
-*/
+
+void TextRenderer::drawBackground(QVector2D pos, QVector2D size, QOpenGLFunctions *ctx)
+{
+
+}

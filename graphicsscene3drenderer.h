@@ -1,5 +1,4 @@
-#ifndef GRAPHICSSCENE3D_H
-#define GRAPHICSSCENE3D_H
+#pragma once
 
 #include <coordinateaxes.h>
 #include <planegrid.h>
@@ -86,5 +85,3 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     GLuint VAO, VBO;
 };
-
-#endif // GRAPHICSSCENE3D_H

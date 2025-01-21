@@ -1,5 +1,4 @@
-#pragma once
-/*#ifndef TEXTRENDERER_H
+#ifndef TEXTRENDERER_H
 #define TEXTRENDERER_H
 
 #include <sceneobject.h>
@@ -18,20 +17,21 @@ public:
 
     void setFontPixelSize(int size);
     void setColor(const QColor& color);
+    void setBackgroundColor(const QColor& color);
 
     void render(const QString& text,
                 float scale,
                 QVector2D pos,
                 QOpenGLFunctions* ctx,
                 const QMatrix4x4& projection);
-
-    // @brief Rebders text somewhere in the world
-    // @param text - text
-    // @param pos - text rect position
-    // @param dir - text rect front direction
-    // @param ctx - render context
-    // @param pvm - project * view * model matrix
-
+    /**
+     * @brief Rebders text somewhere in the world
+     * @param text - text
+     * @param pos - text rect position
+     * @param dir - text rect front direction
+     * @param ctx - render context
+     * @param pvm - project * view * model matrix
+     */
     void render3D(const QString& text,
                   float scale,
                   QVector3D pos,
@@ -39,15 +39,22 @@ public:
                   QOpenGLFunctions* ctx,
                   const QMatrix4x4& pvm);
 
+    void cleanup();
+
+
 private:
     Q_DISABLE_COPY(TextRenderer)
 
     TextRenderer();
     virtual ~TextRenderer();
 
+
     void initShaders();
     void initBuffers();
     void initFont();
+
+    void drawBackground(QVector2D pos, QVector2D size, QOpenGLFunctions* ctx);
+
 
 private:
     struct Character
@@ -76,6 +83,7 @@ private:
     QOpenGLBuffer m_arrayBuffer;
     QOpenGLBuffer m_indexBuffer;
     QColor m_color = {0,0,0};
+    QColor m_backgroundColor = {255, 255, 255};
     int m_fontPixelSize = 64;
 
     static constexpr int stride3d = 5 * sizeof(float);
@@ -83,4 +91,3 @@ private:
 };
 
 #endif // TEXTRENDERER_H
-*/

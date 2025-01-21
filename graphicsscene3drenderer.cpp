@@ -9,9 +9,9 @@
 #include <QThread>
 #include <QDebug>
 
-//#include <textrenderer.h> // TODO
-//#include <ft2build.h>
-//#include FT_FREETYPE_H
+#include <textrenderer.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 
 GraphicsScene3dRenderer::GraphicsScene3dRenderer()
@@ -26,7 +26,9 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer()
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
-{}
+{
+    TextRenderer::instance().cleanup(); // using working ctx
+}
 
 void GraphicsScene3dRenderer::initialize()
 {
@@ -85,7 +87,8 @@ void GraphicsScene3dRenderer::render()
 
     drawObjects();
 
-    //TextRenderer::instance(); TODO
+    TextRenderer::instance();
+    TextRenderer::instance().setColor("pink");
 }
 
 void GraphicsScene3dRenderer::drawObjects()
