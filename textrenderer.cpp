@@ -6,76 +6,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-namespace {
-static const QString vertexShader = R"shader(
-                                            #version 330 core
-                                            #ifdef GL_ES
-                                            precision mediump int;
-                                            precision mediump float;
-                                            #endif
-
-                                            uniform mat4 mvp_matrix;
-
-                                            attribute vec4 a_position;
-                                            attribute vec2 a_texcoord;
-
-                                            varying vec2 v_texcoord;
-
-                                            void main()
-                                            {
-                                                gl_Position = mvp_matrix * a_position;
-                                                v_texcoord = a_texcoord;
-                                            }
-
-                                      )shader";
-
-/*
-    //Default blending shader implementation
-    static const QString fragmentShader = R"shader(
-                                            #version 330 core
-                                            #ifdef GL_ES
-                                            precision mediump int;
-                                            precision mediump float;
-                                            #endif
-
-                                            uniform sampler2D tex;
-                                            varying vec2 v_texcoord;
-                                            out vec4 color;
-
-                                            void main()
-                                            {
-                                                vec4 sampled = vec4(1.0,1.0,1.0, texture(tex, v_texcoord).r);
-                                                color = vec4(vec3(0.1,0.1,1.0),1.0) * sampled;
-                                            };
-
-                                        )shader";
-    */
-//Signed distance fields shader implementation
-static const QString fragmentShader = R"shader(
-                                            #version 330 core
-                                            #ifdef GL_ES
-                                            precision mediump int;
-                                            precision mediump float;
-                                            #endif
-
-                                            uniform vec4 textColor;
-                                            uniform sampler2D tex;
-                                            varying vec2 v_texcoord;
-                                            out vec4 color;
-
-                                            float width = 0.51;
-                                            float edge = 0.02;
-
-                                            void main()
-                                            {
-                                                float distance = 1.0 - texture(tex,v_texcoord).r;
-                                                float alpha = 1.0 - smoothstep(width, width + edge, distance);
-                                                color = vec4(vec3(textColor.r,textColor.g,textColor.b), alpha);
-                                            };
-
-                                        )shader";
-
-}
 
 TextRenderer& TextRenderer::instance()
 {
@@ -103,9 +33,16 @@ void TextRenderer::setBackgroundColor(const QColor &color)
         m_backgroundColor = color;
 }
 
-void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpenGLFunctions *ctx, const QMatrix4x4 &projection)
+void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpenGLFunctions *ctx, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
 {
-    if (!m_shaderProgram->bind()){
+    auto shaderProgram = shaderProgramMap.value("text", nullptr);
+
+    if (!shaderProgram) {
+        qWarning() << "Shader program 'static' not found!";
+        return;
+    }
+
+    if (!shaderProgram->bind()) {
         qCritical() << "Error binding text shader program.";
         return;
     }
@@ -118,7 +55,7 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpen
     ctx->glEnable(GL_BLEND);
     ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    m_shaderProgram->setUniformValue("mvp_matrix", projection);
+    shaderProgram->setUniformValue("mvp_matrix", projection);
 
     auto it = text.begin();
     while(it != text.end()){
@@ -146,18 +83,18 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpen
         };
 
         ch.texture->bind();
-        m_shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
-        m_shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
+        shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
+        shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
 
         m_arrayBuffer.write(0,vertices, 6 * 4 * sizeof(float));
 
-        int vertexLocation = m_shaderProgram->attributeLocation("a_position");
-        m_shaderProgram->enableAttributeArray(vertexLocation);
-        m_shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 2, stride2d);
+        int vertexLocation = shaderProgram->attributeLocation("a_position");
+        shaderProgram->enableAttributeArray(vertexLocation);
+        shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 2, stride2d);
 
-        int texcoordLocation = m_shaderProgram->attributeLocation("a_texcoord");
-        m_shaderProgram->enableAttributeArray(texcoordLocation);
-        m_shaderProgram->setAttributeBuffer(texcoordLocation, GL_FLOAT, 2 * sizeof(float), 2, stride2d);
+        int texcoordLocation = shaderProgram->attributeLocation("a_texcoord");
+        shaderProgram->enableAttributeArray(texcoordLocation);
+        shaderProgram->setAttributeBuffer(texcoordLocation, GL_FLOAT, 2 * sizeof(float), 2, stride2d);
 
         ctx->glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -170,13 +107,22 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpen
 
     ctx->glDisable(GL_BLEND);
 
-    m_shaderProgram->release();
+    shaderProgram->release();
     m_arrayBuffer.release();
 }
 
-void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, const QVector3D &dir, QOpenGLFunctions *ctx, const QMatrix4x4 &pvm)
+void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, const QVector3D &dir, QOpenGLFunctions *ctx, const QMatrix4x4 &pvm, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
 {
-    if (!m_shaderProgram->bind()){
+    Q_UNUSED(dir);
+
+    auto shaderProgram = shaderProgramMap.value("text", nullptr);
+
+    if (!shaderProgram) {
+        qWarning() << "Shader program 'static' not found!";
+        return;
+    }
+
+    if (!shaderProgram->bind()) {
         qCritical() << "Error binding text shader program.";
         return;
     }
@@ -189,7 +135,7 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
     ctx->glEnable(GL_BLEND);
     ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    m_shaderProgram->setUniformValue("mvp_matrix", pvm);
+    shaderProgram->setUniformValue("mvp_matrix", pvm);
 
     auto it = text.begin();
     while(it != text.end()){
@@ -220,18 +166,18 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
         };
 
         ch.texture->bind();
-        m_shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
-        m_shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
+        shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
+        shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
 
         m_arrayBuffer.write(0,vertices, 6 * 5 * sizeof(float));
 
-        int vertexLocation = m_shaderProgram->attributeLocation("a_position");
-        m_shaderProgram->enableAttributeArray(vertexLocation);
-        m_shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3, stride3d);
+        int vertexLocation = shaderProgram->attributeLocation("a_position");
+        shaderProgram->enableAttributeArray(vertexLocation);
+        shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3, stride3d);
 
-        int texcoordLocation = m_shaderProgram->attributeLocation("a_texcoord");
-        m_shaderProgram->enableAttributeArray(texcoordLocation);
-        m_shaderProgram->setAttributeBuffer(texcoordLocation, GL_FLOAT, 3 * sizeof(float), 2, stride3d);
+        int texcoordLocation = shaderProgram->attributeLocation("a_texcoord");
+        shaderProgram->enableAttributeArray(texcoordLocation);
+        shaderProgram->setAttributeBuffer(texcoordLocation, GL_FLOAT, 3 * sizeof(float), 2, stride3d);
 
         ctx->glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -244,7 +190,7 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
 
     ctx->glDisable(GL_BLEND);
 
-    m_shaderProgram->release();
+    shaderProgram->release();
     m_arrayBuffer.release();
 }
 
@@ -263,40 +209,14 @@ void TextRenderer::cleanup()
 }
 
 TextRenderer::TextRenderer()
-    :m_shaderProgram(std::unique_ptr<QOpenGLShaderProgram>(new QOpenGLShaderProgram))
 {
     initBuffers();
-    initShaders();
     initFont();
 }
 
 TextRenderer::~TextRenderer()
 {
     // cleanup
-}
-
-void TextRenderer::initShaders()
-{
-    bool success = m_shaderProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Vertex, ::vertexShader);
-
-    if (!success){
-        qCritical() << "Error adding text vertex shader from source code.";
-        return;
-    }
-
-    success = m_shaderProgram->addCacheableShaderFromSourceCode(QOpenGLShader::Fragment, ::fragmentShader);
-
-    if (!success){
-        qCritical() << "Error adding text fragment shader from source code.";
-        return;
-    }
-
-    success = m_shaderProgram->link();
-
-    if (!success){
-        qCritical() << "Error linking text shaders from source code in shader program.";
-        return;
-    }
 }
 
 void TextRenderer::initBuffers()
@@ -376,5 +296,7 @@ void TextRenderer::initFont()
 
 void TextRenderer::drawBackground(QVector2D pos, QVector2D size, QOpenGLFunctions *ctx)
 {
-
+    Q_UNUSED(pos);
+    Q_UNUSED(size);
+    Q_UNUSED(ctx);
 }

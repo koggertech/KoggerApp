@@ -258,6 +258,11 @@ windows {
 
 win32:RC_FILE = file.rc
 
+android {
+    LIBS += -L$$PWD/libs/freetype/lib/arm64-v8a -lfreetype
+    LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
+}
+
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype

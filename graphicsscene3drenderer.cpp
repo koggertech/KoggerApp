@@ -76,6 +76,14 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding image fragment shader from source file.";
     if (!m_shaderProgramMap["image"]->link())
         qCritical() << "Error linking image shaders in shader program.";
+
+    // text
+    if (!m_shaderProgramMap["text"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/text.vsh"))
+        qCritical() << "Error adding text vertex shader from source file.";
+    if (!m_shaderProgramMap["text"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/text.fsh"))
+        qCritical() << "Error adding text fragment shader from source file.";
+    if (!m_shaderProgramMap["text"]->link())
+        qCritical() << "Error linking text shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()

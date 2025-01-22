@@ -10,6 +10,7 @@
 
 uniform highp vec4 color;
 uniform bool isPoint;
+uniform bool isTriangle;
 
 out highp vec4 fragColor;
 
@@ -21,5 +22,14 @@ void main()
             discard;
         }
     }
+    if (isTriangle) {
+        highp vec2 coord = gl_PointCoord * 2.0 - 1.0;
+        coord.y += 2.0;
+
+        if (coord.y < 0.0 || coord.y > 2.0 || abs(coord.x) > (1.0 - coord.y / 2.0)) {
+            discard;
+        }
+    }
+
     fragColor = color;
 }

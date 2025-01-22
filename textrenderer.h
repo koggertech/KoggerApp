@@ -23,7 +23,8 @@ public:
                 float scale,
                 QVector2D pos,
                 QOpenGLFunctions* ctx,
-                const QMatrix4x4& projection);
+                const QMatrix4x4& projection,
+                const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
     /**
      * @brief Rebders text somewhere in the world
      * @param text - text
@@ -37,7 +38,8 @@ public:
                   QVector3D pos,
                   const QVector3D& dir,
                   QOpenGLFunctions* ctx,
-                  const QMatrix4x4& pvm);
+                  const QMatrix4x4& pvm,
+                  const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
 
     void cleanup();
 
@@ -49,7 +51,6 @@ private:
     virtual ~TextRenderer();
 
 
-    void initShaders();
     void initBuffers();
     void initFont();
 
@@ -79,7 +80,6 @@ private:
     };
 
     QMap<char,Character> m_chars;
-    std::unique_ptr <QOpenGLShaderProgram> m_shaderProgram;
     QOpenGLBuffer m_arrayBuffer;
     QOpenGLBuffer m_indexBuffer;
     QColor m_color = {0,0,0};

@@ -139,6 +139,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
                                         0.3f,
                                         p_screen,
                                         ctx,
-                                        textProjection);
+                                        textProjection,
+                                        shaderProgramMap);
     }
 }
