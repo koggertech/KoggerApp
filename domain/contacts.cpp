@@ -53,7 +53,13 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
         if (auto* epoch = datasetPtr_->fromIndex(epIndx); epoch) {
             auto& contact = epoch->contact_;
             if (contact.isValid()) {
-                r->points_.insert(epIndx, { {contact.decX_, contact.decY_, 0}, contact.info_});
+                ContactInfo cInfo;
+                cInfo.info = contact.info_;
+                cInfo.nedPos = {contact.decX_, contact.decY_, 0};
+                cInfo.lat = contact.lat_;
+                cInfo.lon = contact.lon_;
+
+                r->points_.insert(epIndx, cInfo);
                 beenUpdated = true;
             }
         }
@@ -150,7 +156,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glEnable(34370);
 
     for (auto it = points_.begin(); it != points_.end(); ++it) {
-        QVector<QVector3D> point = { it.value().first };
+        QVector<QVector3D> point = { it.value().nedPos };
         shaderProgram->setAttributeArray(posLoc, point.constData());
         ctx->glDrawArrays(GL_POINTS, 0, point.size());
     }
@@ -165,22 +171,24 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     // text, textback
     for (auto it = points_.begin(); it != points_.end(); ++it) {
         // test text
-        QVector3D p = it.value().first;
+        QVector3D p = it.value().nedPos;
         QRectF vport = DrawUtils::viewportRect(ctx);
 
         QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
-        p_screen.setY(vport.height() - p_screen.y());
+
+        p_screen.setY(vport.height() - p_screen.y() - 25);
         p_screen.setX(p_screen.x() + 10.0f);
 
         QMatrix4x4 textProjection;
         textProjection.ortho(vport.toRect());
 
-        TextRenderer::instance().render(it.value().second,
-                                        0.3f,
-                                        p_screen,
-                                        true,
-                                        ctx,
-                                        textProjection,
-                                        shaderProgramMap);
+        TextRenderer::instance().render(it.value().info, 1.0f, p_screen, true, ctx, textProjection, shaderProgramMap);
+
+        p_screen.setY(p_screen.y() + 18);
+        QString coordStr = "lat: " + QString::number(it.value().lat,'f',4);
+        TextRenderer::instance().render(coordStr, 0.8f, p_screen, true, ctx, textProjection, shaderProgramMap);
+        coordStr = "lon: " + QString::number(it.value().lon,'f',4);
+        p_screen.setY(p_screen.y() + 18);
+        TextRenderer::instance().render(coordStr, 0.8f, p_screen, true, ctx, textProjection, shaderProgramMap);
     }
 }

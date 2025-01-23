@@ -12,6 +12,13 @@ class Contacts : public SceneObject
     QML_NAMED_ELEMENT(Contacts)
 
 public:
+    struct ContactInfo {
+        QString info;
+        float lat = 0.0f;
+        float lon = 0.0f;
+        QVector3D nedPos;
+    };
+
     /*structures*/
     class ContactsRenderImplementation : public SceneObject::RenderImplementation
     {
@@ -27,7 +34,7 @@ public:
         friend class Contacts;
 
         /*data*/
-        QMap<int, QPair<QVector3D, QString>> points_; // first - epoch index, second - position and text
+        QMap<int, ContactInfo> points_; // first - epoch index, second - position and text
     };
 
     /*methods*/

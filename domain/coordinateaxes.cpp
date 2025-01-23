@@ -112,8 +112,7 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     QMatrix4x4 textProjection;
     textProjection.ortho(vport.toRect());
 
-    const float scale = 0.4;
-    Q_UNUSED(scale);
+    const float scale = 1.0;
 
     QVector2D xLabelPos = axis_x.last().project(view * model, projection, vport.toRect()).toVector2D();
     QVector2D yLabelPos = axis_y.last().project(view * model, projection, vport.toRect()).toVector2D();
