@@ -20,6 +20,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer()
     m_shaderProgramMap["static"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["texture"]    = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
@@ -84,6 +85,15 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding text fragment shader from source file.";
     if (!m_shaderProgramMap["text"]->link())
         qCritical() << "Error linking text shaders in shader program.";
+
+    // text back
+    if (!m_shaderProgramMap["text_back"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/text_back.vsh"))
+        qCritical() << "Error adding text_back vertex shader from source file.";
+    if (!m_shaderProgramMap["text_back"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/text_back.fsh"))
+        qCritical() << "Error adding text_back fragment shader from source file.";
+    if (!m_shaderProgramMap["text_back"]->link())
+        qCritical() << "Error linking text_back shaders in shader program.";
+
 }
 
 void GraphicsScene3dRenderer::render()
@@ -96,7 +106,7 @@ void GraphicsScene3dRenderer::render()
     drawObjects();
 
     TextRenderer::instance();
-    TextRenderer::instance().setColor("pink");
+    TextRenderer::instance().setColor("white");
 }
 
 void GraphicsScene3dRenderer::drawObjects()

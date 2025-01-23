@@ -840,11 +840,6 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
 
                     continue;
                 }
-                else {
-                    //setVisibleContact(true);
-
-                    // emit do NOT show QML contact
-                }
             }
 
             QString infoText = epoch->contact_.info_;

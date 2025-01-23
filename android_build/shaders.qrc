@@ -10,5 +10,7 @@
         <file>shaders/image.fsh</file>
         <file>shaders/text.vsh</file>
         <file>shaders/text.fsh</file>
+		<file>shaders/text_back.vsh</file>
+        <file>shaders/text_back.fsh</file>
     </qresource>
 </RCC>

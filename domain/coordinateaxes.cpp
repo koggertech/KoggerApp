@@ -123,7 +123,7 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     yLabelPos.setY(vport.height() - yLabelPos.y());
     zLabelPos.setY(vport.height() - zLabelPos.y());
 
-    TextRenderer::instance().render("n", scale, xLabelPos, ctx, textProjection,shaderProgramMap);
-    TextRenderer::instance().render("e", scale, yLabelPos, ctx, textProjection,shaderProgramMap);
-    TextRenderer::instance().render("a", scale, zLabelPos, ctx, textProjection,shaderProgramMap);
+    TextRenderer::instance().render("n", scale, xLabelPos, false, ctx, textProjection,shaderProgramMap);
+    TextRenderer::instance().render("e", scale, yLabelPos, false, ctx, textProjection,shaderProgramMap);
+    TextRenderer::instance().render("a", scale, zLabelPos, false, ctx, textProjection,shaderProgramMap);
 }

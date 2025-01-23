@@ -33,82 +33,148 @@ void TextRenderer::setBackgroundColor(const QColor &color)
         m_backgroundColor = color;
 }
 
-void TextRenderer::render(const QString &text, float scale, QVector2D pos, QOpenGLFunctions *ctx, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
+void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool drawBackground, QOpenGLFunctions *ctx, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
 {
-    auto shaderProgram = shaderProgramMap.value("text", nullptr);
+    const float padding = 3.0f;
 
-    if (!shaderProgram) {
-        qWarning() << "Shader program 'static' not found!";
-        return;
-    }
+    // text_back
+    if (drawBackground) {
+        auto backgroundShader = shaderProgramMap.value("text_back", nullptr);
 
-    if (!shaderProgram->bind()) {
-        qCritical() << "Error binding text shader program.";
-        return;
-    }
+        if (!backgroundShader) {
+            qWarning() << "Shader program 'text_back' not found!";
+            return;
+        }
 
-    if(!m_arrayBuffer.bind()){
-        qCritical() << "Error binding vertex array buffer!";
-        return;
-    }
+        if (!backgroundShader->bind()) {
+            qCritical() << "Error binding background shader program.";
+            return;
+        }
 
-    ctx->glEnable(GL_BLEND);
-    ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (!m_arrayBuffer.bind()) {
+            qCritical() << "Error binding vertex array buffer!";
+            return;
+        }
 
-    shaderProgram->setUniformValue("mvp_matrix", projection);
+        QVector2D bgTopLeft = pos - QVector2D(padding, -padding);
+        QVector2D bgBottomRight = pos;
+        float maxHeight = 0.0f;
 
-    auto it = text.begin();
-    while(it != text.end()){
-        auto c = it->toLatin1();
+        for (auto it = text.begin(); it != text.end(); ++it) {
+            auto c = it->toLatin1();
+            if (!m_chars.contains(c))
+                continue;
 
-        if(!m_chars.contains(c))
-            continue;
+            auto ch = m_chars[c];
+            bgBottomRight.setX(bgBottomRight.x() + (ch.advance >> 6) * scale);
+            maxHeight = qMax(maxHeight, ch.size.y() * scale);
+        }
+        bgBottomRight.setY(pos.y() - maxHeight);
+        bgBottomRight += QVector2D(padding, -padding);
 
-        auto ch = m_chars[c];
+        float bgVertices[6][3] = {
+            { bgTopLeft.x(), bgTopLeft.y(), 0.0f },
+            { bgTopLeft.x(), bgBottomRight.y(), 0.0f },
+            { bgBottomRight.x(), bgBottomRight.y(), 0.0f },
 
-        float pen_x = pos.x() + ch.bearing.x() * scale;
-        float pen_y = pos.y() - (ch.size.y()/* - ch.bearing.y()*/) * scale;
-
-        const float w = ch.size.x() * scale;
-        const float h = ch.size.y() * scale;
-
-        float vertices[6][4] = {
-            { pen_x,     pen_y,     0.0, 0.0 },
-            { pen_x,     pen_y + h, 0.0, 1.0 },
-            { pen_x + w, pen_y + h, 1.0, 1.0 },
-
-            { pen_x,     pen_y ,    0.0, 0.0 },
-            { pen_x + w, pen_y + h, 1.0, 1.0 },
-            { pen_x + w, pen_y,     1.0, 0.0 }
+            { bgTopLeft.x(), bgTopLeft.y(), 0.0f },
+            { bgBottomRight.x(), bgBottomRight.y(), 0.0f },
+            { bgBottomRight.x(), bgTopLeft.y(), 0.0f }
         };
 
-        ch.texture->bind();
-        shaderProgram->setUniformValue("texture", m_chars[c].texture->textureId());
-        shaderProgram->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
+        backgroundShader->setUniformValue("mvp_matrix", projection);
+        backgroundShader->setUniformValue("color", QVector4D(0.18f, 0.18f, 0.18f, 1.0f));
 
-        m_arrayBuffer.write(0,vertices, 6 * 4 * sizeof(float));
+        m_arrayBuffer.write(0, bgVertices, 6 * 3 * sizeof(float));
 
-        int vertexLocation = shaderProgram->attributeLocation("a_position");
-        shaderProgram->enableAttributeArray(vertexLocation);
-        shaderProgram->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 2, stride2d);
-
-        int texcoordLocation = shaderProgram->attributeLocation("a_texcoord");
-        shaderProgram->enableAttributeArray(texcoordLocation);
-        shaderProgram->setAttributeBuffer(texcoordLocation, GL_FLOAT, 2 * sizeof(float), 2, stride2d);
+        int vertexLocation = backgroundShader->attributeLocation("a_position");
+        backgroundShader->enableAttributeArray(vertexLocation);
+        backgroundShader->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 3);
 
         ctx->glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        pos.setX(pos.x() + (ch.advance >> 6) * scale);
-
-        ch.texture->release();
-
-        it++;
+        backgroundShader->release();
+        m_arrayBuffer.release();
     }
 
-    ctx->glDisable(GL_BLEND);
+    // text
+    {
+        auto textShader = shaderProgramMap.value("text", nullptr);
 
-    shaderProgram->release();
-    m_arrayBuffer.release();
+        if (!textShader) {
+            qWarning() << "Shader program 'text' not found!";
+            return;
+        }
+
+        if (!textShader->bind()) {
+            qCritical() << "Error binding text shader program.";
+            return;
+        }
+
+        if (!m_arrayBuffer.bind()) {
+            qCritical() << "Error binding vertex array buffer!";
+            return;
+        }
+
+        ctx->glEnable(GL_BLEND);
+        ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        textShader->setUniformValue("mvp_matrix", projection);
+
+        auto it = text.begin();
+        while (it != text.end()) {
+            auto c = it->toLatin1();
+
+            if (!m_chars.contains(c)) {
+                ++it;
+                continue;
+            }
+
+            auto ch = m_chars[c];
+
+            float pen_x = pos.x() + ch.bearing.x() * scale;
+            float pen_y = pos.y() - (ch.bearing.y() * scale);
+
+            const float w = ch.size.x() * scale;
+            const float h = ch.size.y() * scale;
+
+            float vertices[6][4] = {
+                { pen_x,     pen_y,     0.0, 0.0 },
+                { pen_x,     pen_y + h, 0.0, 1.0 },
+                { pen_x + w, pen_y + h, 1.0, 1.0 },
+
+                { pen_x,     pen_y,     0.0, 0.0 },
+                { pen_x + w, pen_y + h, 1.0, 1.0 },
+                { pen_x + w, pen_y,     1.0, 0.0 }
+            };
+
+            ch.texture->bind();
+            textShader->setUniformValue("texture", m_chars[c].texture->textureId());
+            textShader->setUniformValue("textColor", DrawUtils::colorToVector4d(m_color));
+
+            m_arrayBuffer.write(0, vertices, 6 * 4 * sizeof(float));
+
+            int vertexLocation = textShader->attributeLocation("a_position");
+            textShader->enableAttributeArray(vertexLocation);
+            textShader->setAttributeBuffer(vertexLocation, GL_FLOAT, 0, 2, stride2d);
+
+            int texcoordLocation = textShader->attributeLocation("a_texcoord");
+            textShader->enableAttributeArray(texcoordLocation);
+            textShader->setAttributeBuffer(texcoordLocation, GL_FLOAT, 2 * sizeof(float), 2, stride2d);
+
+            ctx->glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            pos.setX(pos.x() + (ch.advance >> 6) * scale);
+
+            ch.texture->release();
+            ++it;
+        }
+
+        ctx->glDisable(GL_BLEND);
+
+        textShader->release();
+        m_arrayBuffer.release();
+    }
 }
 
 void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, const QVector3D &dir, QOpenGLFunctions *ctx, const QMatrix4x4 &pvm, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
@@ -239,7 +305,7 @@ void TextRenderer::initFont()
         return;
     }
 
-    QString resourcePath  = ":/assets/fonts/arial.ttf";
+    QString resourcePath  = ":/assets/fonts/PTSansCaption-Regular.ttf";
 
     QFile fontFile(resourcePath);
     if (!fontFile.open(QIODevice::ReadOnly)) {
@@ -292,11 +358,4 @@ void TextRenderer::initFont()
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
-}
-
-void TextRenderer::drawBackground(QVector2D pos, QVector2D size, QOpenGLFunctions *ctx)
-{
-    Q_UNUSED(pos);
-    Q_UNUSED(size);
-    Q_UNUSED(ctx);
 }

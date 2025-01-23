@@ -131,6 +131,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
         QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
         p_screen.setY(vport.height() - p_screen.y());
+        p_screen.setX(p_screen.x() + 10.0f);
 
         QMatrix4x4 textProjection;
         textProjection.ortho(vport.toRect());
@@ -138,6 +139,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         TextRenderer::instance().render(it.value().second,
                                         0.3f,
                                         p_screen,
+                                        true,
                                         ctx,
                                         textProjection,
                                         shaderProgramMap);

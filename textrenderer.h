@@ -22,6 +22,7 @@ public:
     void render(const QString& text,
                 float scale,
                 QVector2D pos,
+                bool drawBackground,
                 QOpenGLFunctions* ctx,
                 const QMatrix4x4& projection,
                 const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
@@ -50,12 +51,8 @@ private:
     TextRenderer();
     virtual ~TextRenderer();
 
-
     void initBuffers();
     void initFont();
-
-    void drawBackground(QVector2D pos, QVector2D size, QOpenGLFunctions* ctx);
-
 
 private:
     struct Character
