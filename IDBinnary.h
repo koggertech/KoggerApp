@@ -22,6 +22,7 @@ typedef enum {
     BoardEcho20 = 12,
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
+    BoardNanoSSS = 17,
 
 } BoardVersion;
 

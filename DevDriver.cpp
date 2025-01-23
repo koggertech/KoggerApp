@@ -1088,6 +1088,10 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 m_devName = "ECHO20";
                 break;
 
+            case BoardNanoSSS:
+                m_devName = "NanoSSS";
+                break;
+
             case BoardUSBL:
                 m_devName = "USBL";
                 break;
