@@ -44,6 +44,15 @@ public slots:
 
 signals:
 
+protected:
+    friend class GraphicsScene3dView;
+
+    void mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
+    void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
+    void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
+    void mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta) override final;
+    void keyPressEvent(Qt::Key key) override final;
+
 private:
     Dataset* datasetPtr_;
 

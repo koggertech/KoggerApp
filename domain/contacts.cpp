@@ -72,6 +72,45 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
+void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    //qDebug() << "Contacts::mouseMoveEvent" << buttons << x << y;
+}
+
+void Contacts::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    //qDebug() << "Contacts::mousePressEvent" << buttons << x << y;
+}
+
+void Contacts::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
+{
+    Q_UNUSED(buttons);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    //qDebug() << "Contacts::mouseReleaseEvent" << buttons << x << y;
+}
+
+void Contacts::mouseWheelEvent(Qt::MouseButtons buttons, qreal x, qreal y, QPointF angleDelta)
+{
+    Q_UNUSED(buttons);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(angleDelta);
+   // qDebug() << "Contacts::mouseWheelEvent" << buttons << x << y << angleDelta;
+}
+
+void Contacts::keyPressEvent(Qt::Key key)
+{
+    Q_UNUSED(key);
+   // qDebug() << "Contacts::keyPressEvent" << key;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // ContactsRenderImplementation
 Contacts::ContactsRenderImplementation::ContactsRenderImplementation()
@@ -85,7 +124,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
                                                     const QMatrix4x4 &projection,
                                                     const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
-    // points
+    // marker
     auto shaderProgram = shaderProgramMap.value("static", nullptr);
 
     if (!shaderProgram) {
@@ -123,7 +162,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->release();
 
 
-    // text on points
+    // text, textback
     for (auto it = points_.begin(); it != points_.end(); ++it) {
         // test text
         QVector3D p = it.value().first;
