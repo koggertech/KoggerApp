@@ -30,6 +30,8 @@ public:
                             const QMatrix4x4& projection,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
 
+        void clear();
+
         /*data*/
         QHash<int, QRectF> contactBounds_;
 

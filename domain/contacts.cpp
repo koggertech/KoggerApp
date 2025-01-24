@@ -19,13 +19,12 @@ Contacts::~Contacts()
 
 void Contacts::clear()
 {
+    contactBounds_.clear();
+    //datasetPtr_ = nullptr;
 
-    auto renderImpl = RENDER_IMPL(Contacts);
-
-    //
-
-    renderImpl->createBounds();
-
+    auto* r = RENDER_IMPL(Contacts);
+    r->clear();
+    r->createBounds();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -55,7 +54,7 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
             if (contact.isValid()) {
                 ContactInfo cInfo;
                 cInfo.info = contact.info_;
-                cInfo.nedPos = {contact.decX_, contact.decY_, 0};
+                cInfo.nedPos = { contact.decX_, contact.decY_, -contact.distance_ };
                 cInfo.lat = contact.lat_;
                 cInfo.lon = contact.lon_;
 
@@ -156,7 +155,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
     shaderProgram->bind();
 
-    float pointSize = 35.0f;
+    float pointSize = 50.0f;
     int posLoc        = shaderProgram->attributeLocation ("position");
     int matrixLoc     = shaderProgram->uniformLocation   ("matrix");
     int colorLoc      = shaderProgram->uniformLocation   ("color");
@@ -169,14 +168,23 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setUniformValue(isTriangleLoc, true);
     shaderProgram->setUniformValue(widthLoc, pointSize);
 
+
+    QRectF vport = DrawUtils::viewportRect(ctx);
+
     ctx->glEnable(34370);
 
     for (auto it = points_.begin(); it != points_.end(); ++it) {
+        QVector3D p = { it.value().nedPos };
+        QVector2D pScreen = p.project(view * model, projection, vport.toRect()).toVector2D();
+        float correctedY = vport.height() - pScreen.y();
+        QRectF markerRect( pScreen.x() - pointSize * 0.125f, correctedY - pointSize * 0.5f, pointSize / 4.0f, pointSize / 2.0f);
+        const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
+
         bool isIntersects = it.key() == intersectedEpochIndx_;
         shaderProgram->setUniformValue(colorLoc, isIntersects ? QVector4D(0.0f, 1.0f, 0.0f, 1.0f) : QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
-        QVector<QVector3D> point = { it.value().nedPos };
-        shaderProgram->setAttributeArray(posLoc, point.constData());
-        ctx->glDrawArrays(GL_POINTS, 0, point.size());
+        QVector<QVector3D> vecP = { p };
+        shaderProgram->setAttributeArray(posLoc, vecP.constData());
+        ctx->glDrawArrays(GL_POINTS, 0, vecP.size());
     }
 
     ctx->glDisable(34370);
@@ -185,29 +193,46 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->setUniformValue(isTriangleLoc, false);
     shaderProgram->release();
 
-    QRectF vport = DrawUtils::viewportRect(ctx);
     // text, textback
     for (auto it = points_.begin(); it != points_.end(); ++it) {
+        bool isIntersects = it.key() == intersectedEpochIndx_;
+
         QVector3D p = it.value().nedPos;
-        QVector2D pScreen   = p.project(view * model, projection, vport.toRect()).toVector2D();
-        float correctedY = vport.height() - pScreen.y();
+        QVector2D pScreen = p.project(view * model, projection, vport.toRect()).toVector2D();
 
-        QRectF markerRect(pScreen.x() - pointSize / 2, correctedY - pointSize / 2, pointSize, pointSize);
-        const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
+        pScreen.setX(pScreen.x() + 15.0f);
 
-        pScreen.setY(vport.height() - pScreen.y() - 25);
-        pScreen.setX(pScreen.x() + 10.0f);
+        if (isIntersects) {
+            pScreen.setY(vport.height() - pScreen.y() - 25);
 
-        QMatrix4x4 textProjection;
-        textProjection.ortho(vport.toRect());
+            QMatrix4x4 textProjection;
+            textProjection.ortho(vport.toRect());
 
-        TextRenderer::instance().render(it.value().info, 1.0f, pScreen, true, ctx, textProjection, shaderProgramMap);
+            TextRenderer::instance().render(it.value().info, 1.0f, pScreen, true, ctx, textProjection, shaderProgramMap);
 
-        pScreen.setY(pScreen.y() + 20);
-        QString coordStr = "lat: " + QString::number(it.value().lat,'f',4);
-        TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
-        coordStr = "lon: " + QString::number(it.value().lon,'f',4);
-        pScreen.setY(pScreen.y() + 20);
-        TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
+            pScreen.setY(pScreen.y() + 20);
+            QString coordStr = "lat: " + QString::number(it.value().lat,'f',4);
+            TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
+            coordStr = "lon: " + QString::number(it.value().lon,'f',4);
+            pScreen.setY(pScreen.y() + 20);
+            TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
+        }
+        else {
+            pScreen.setY(vport.height() - pScreen.y() - 5);
+
+            QMatrix4x4 textProjection;
+            textProjection.ortho(vport.toRect());
+
+            TextRenderer::instance().render(it.value().info, 1.0f, pScreen, true, ctx, textProjection, shaderProgramMap);
+
+
+
+        }
     }
+}
+
+void Contacts::ContactsRenderImplementation::clear()
+{
+    intersectedEpochIndx_ = -1;
+    points_.clear();
 }
