@@ -30,11 +30,14 @@ public:
                             const QMatrix4x4& projection,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override final;
 
+        /*data*/
+        QHash<int, QRectF> contactBounds_;
+
     private:
         friend class Contacts;
-
         /*data*/
         QMap<int, ContactInfo> points_; // first - epoch index, second - position and text
+        int intersectedEpochIndx_;
     };
 
     /*methods*/
@@ -61,6 +64,10 @@ protected:
     void keyPressEvent(Qt::Key key) override final;
 
 private:
+    void setInterEpIndx(int indx);
+
+    /*data*/
+    QHash<int, QRectF> contactBounds_;
     Dataset* datasetPtr_;
 
 };

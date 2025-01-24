@@ -305,7 +305,7 @@ void TextRenderer::initFont()
         return;
     }
 
-    QString resourcePath  = ":/assets/fonts/PTSansCaption-Regular.ttf";
+    QString resourcePath  = ":/assets/fonts/Asap-Regular.ttf";
 
     QFile fontFile(resourcePath);
     if (!fontFile.open(QIODevice::ReadOnly)) {

@@ -287,6 +287,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         needToResetStartPos_ = false;
     }
 
+    contacts_->mouseMoveEvent(mouseButton, x, y);
+
     // movement threshold for sync
     if (!wasMoved_) {
         double dist{ std::sqrt(std::pow(x - m_startMousePos.x(), 2) + std::pow(y - m_startMousePos.y(), 2)) };
@@ -914,6 +916,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
+    view->contacts_->contactBounds_ = m_renderer->contactsRenderImpl_.contactBounds_;
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
