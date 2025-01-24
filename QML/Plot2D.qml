@@ -305,12 +305,14 @@ WaterFall {
             if (!visible) {
                 if (accepted) {
                     if (!plot.setContact(contactDialog.indx, contactDialog.inputFieldText)) {
-                        contactDialog.info = ""
+                        // 
                     }
 
                     // reset
                     accepted = false
                 }
+
+                contactDialog.info = ""
             }
         }
 
@@ -321,7 +323,10 @@ WaterFall {
 
     onContactVisibleChanged: {
         contactDialog.visible = plot.contactVisible;
-        contactDialog.info = plot.contactInfo
+
+        if (contactDialog.visible) {
+            contactDialog.info = plot.contactInfo
+        }
 
         contactDialog.x = plot.contactPositionX
         contactDialog.y = plot.contactPositionY
