@@ -44,6 +44,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
+    m_camera->setCameraListener(m_axesThumbnailCamera.get());
+
     m_boatTrack->setColor({80,0,180});
     m_boatTrack->setWidth(6.0f);
 
@@ -1341,6 +1343,11 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
     //    viewLlaRef_ = datasetLlaRef_;
     //}
     else if ( (!isPerspective_ && projectionChanged && datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla())) { // catching when ortho->persp trans and near place
+
+        if (cameraListener_) {
+            cameraListener_->resetRotationAngle();
+        }
+
         viewPtr_->setNeedToResetStartPos(true);
         LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
         NED datasetNed(&datasetLla, &viewLlaRef_, !isPerspective_);
@@ -1429,6 +1436,14 @@ void GraphicsScene3dView::Camera::reset()
     distToGround_ = 0.0f;
     angleToGround_ = 0.0f;
     isPerspective_ = false;
+
+    updateCameraParams();
+    updateViewMatrix();
+}
+
+void GraphicsScene3dView::Camera::resetRotationAngle()
+{
+    m_rotAngle = {0.0f, 0.0f};
 
     updateCameraParams();
     updateViewMatrix();

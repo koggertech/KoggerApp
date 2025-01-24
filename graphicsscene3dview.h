@@ -47,6 +47,10 @@ public:
         qreal yaw() const;
         QMatrix4x4 viewMatrix() const;
 
+        void setCameraListener(Camera* cameraListener) {
+            cameraListener_ = cameraListener;
+        };
+
         //TODO! Process this method later
         //void rotate(qreal yaw, qreal pitch);
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
@@ -63,6 +67,7 @@ public:
         void setIsometricView();
         void setMapView();
         void reset();
+        void resetRotationAngle();
 
         float getHeightAboveGround() const;
         float getAngleToGround() const;
@@ -80,6 +85,8 @@ public:
     private:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
+
+        Camera* cameraListener_ = nullptr;
 
         QVector3D m_eye = {0.0f, 0.0f, 0.0f};
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
