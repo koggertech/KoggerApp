@@ -164,6 +164,16 @@ int Plot2D::getContactIndx()
     return contacts_.getIndx();
 }
 
+double Plot2D::getContactLat()
+{
+    return contacts_.getLat();
+}
+
+double Plot2D::getContactLon()
+{
+    return contacts_.getLon();
+}
+
 void Plot2D::setEchogramLowLevel(float low) {
     _echogram.setLowLevel(low);
     plotUpdate();
@@ -835,6 +845,8 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
                     indx_ = indx;
                     position_ = QPoint(xPos, yPos);
                     info_ = epoch->contact_.info_;
+                    lat_ = epoch->contact_.lat_;
+                    lon_ = epoch->contact_.lon_;
 
                     setVisibleContact(true);
 
@@ -902,4 +914,14 @@ QPoint Plot2DContact::getPosition()
 int Plot2DContact::getIndx()
 {
     return indx_;
+}
+
+double Plot2DContact::getLat()
+{
+    return lat_;
+}
+
+double Plot2DContact::getLon()
+{
+    return lon_;
 }

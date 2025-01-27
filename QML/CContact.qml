@@ -9,6 +9,8 @@ Item {
     property bool accepted: false
     property string info: ""
     property int indx: -1
+    property double lat: 0.0
+    property double lon: 0.0
 
     width: 185
     visible: false
@@ -22,8 +24,14 @@ Item {
         }
     }
 
+    function formatNumber(value, decimals) {
+        return value.toFixed(decimals);
+    }
+
     ColumnLayout {
         anchors.fill: parent
+        spacing: 0
+
         RowLayout {
             spacing: 0
 
@@ -64,6 +72,13 @@ Item {
                     inputDialog.visible = false;
                 }
             }
+        }
+
+        CTextField {
+            id: latText
+            Layout.fillWidth: true
+            text:  + inputDialog.formatNumber(lat, 4) + " " + inputDialog.formatNumber(lon, 4)
+            visible: info.length != 0
         }
     }
 }

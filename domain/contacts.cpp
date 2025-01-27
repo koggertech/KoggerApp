@@ -224,9 +224,6 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
             textProjection.ortho(vport.toRect());
 
             TextRenderer::instance().render(it.value().info, 1.0f, pScreen, true, ctx, textProjection, shaderProgramMap);
-
-
-
         }
     }
 }

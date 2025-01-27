@@ -23,6 +23,8 @@ public:
     Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
     Q_PROPERTY(int     contactPositionY READ getContactPositionY /*WRITE setContactPosition*/ NOTIFY contactChanged)
     Q_PROPERTY(int     contactIndx      READ getContactIndx /*WRITE setContactIndx*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLat       READ getContactLat /*WRITE setContactLat*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLon       READ getContactLon /*WRITE setContactLon*/ NOTIFY contactChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
