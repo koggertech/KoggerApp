@@ -3,7 +3,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 
 
-Item {
+MenuFrame {
     id: inputDialog
     property alias inputFieldText: inputField.text
     property bool accepted: false
@@ -13,9 +13,9 @@ Item {
     property double lon: 0.0
     property double depth: 0.0
 
-    width: 185
     visible: false
 
+    width: 185
 
     Connections {
         target: plot
@@ -30,19 +30,15 @@ Item {
     }
 
     ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
+        Layout.fillWidth: true
 
         RowLayout {
-            spacing: 0
-
             CheckButton {
                 id: setButton
                 icon.source: "./icons/plus.svg"
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
                 checkable: false
-
                 onClicked: {
                     inputDialog.accepted = true;
                     inputDialog.visible = false;
@@ -55,19 +51,27 @@ Item {
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
                 checkable: false
-
                 onClicked: {
                     contactDialog.deleteButtonClicked();
                     inputDialog.visible = false;
                 }
             }
+        }
 
+        RowLayout {
+            CheckButton {
+                icon.source: "./icons/tag.svg"
+                backColor: theme.menuBackColor
+                borderColor: theme.menuBackColor
+                implicitWidth: theme.controlHeight
+                checkable: false
+                enabled: false
+            }
             CTextField {
                 id: inputField
                 placeholderText: qsTr("Enter text")
                 Layout.fillWidth: true
                 text: info
-
                 onAccepted: {
                     inputDialog.accepted = true;
                     inputDialog.visible = false;
@@ -75,17 +79,59 @@ Item {
             }
         }
 
-        CTextField {
-            id: latText
-            Layout.fillWidth: true
-            text:  inputDialog.formatNumber(lat, 4) + " " + inputDialog.formatNumber(lon, 4)
+        RowLayout {
             visible: info.length != 0
+            CheckButton {
+                icon.source: "./icons/gps.svg"
+                backColor: theme.menuBackColor
+                borderColor: theme.menuBackColor
+                implicitWidth: theme.controlHeight
+                checkable: false
+                enabled: false
+            }
+            CTextField {
+                id: latLonText
+                Layout.fillWidth: true
+                text:  inputDialog.formatNumber(lat, 4) + " " + inputDialog.formatNumber(lon, 4)
+                readOnly: true
+            }
+            TextEdit {
+                id: textEdit
+                visible: false
+            }
+            CheckButton {
+                id: copyButton
+                icon.source: "./icons/click.svg"
+                backColor: theme.controlBackColor
+
+                implicitWidth: theme.controlHeight
+                checkable: false
+
+                onClicked: {
+                    textEdit.text = latLonText.text
+                    textEdit.selectAll()
+                    textEdit.copy()
+                    inputDialog.visible = false
+                }
+            }
         }
-        CTextField {
-            id: depthText
-            Layout.fillWidth: true
-            text: inputDialog.formatNumber(depth, 4)
+
+        RowLayout {
             visible: info.length != 0
+            CheckButton {
+                icon.source: "./icons/arrow-bar-down.svg"
+                backColor: theme.menuBackColor
+                borderColor: theme.menuBackColor
+                implicitWidth: theme.controlHeight
+                checkable: false
+                enabled: false
+            }
+            CTextField {
+                id: depthText
+                Layout.fillWidth: true
+                text: inputDialog.formatNumber(depth, 4)
+                readOnly: true
+            }
         }
     }
 }
