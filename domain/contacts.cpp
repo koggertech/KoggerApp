@@ -57,6 +57,7 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
                 cInfo.nedPos = { contact.decX_, contact.decY_, -contact.distance_ };
                 cInfo.lat = contact.lat_;
                 cInfo.lon = contact.lon_;
+                cInfo.depth = contact.distance_;
 
                 r->points_.insert(epIndx, cInfo);
                 beenUpdated = true;
@@ -214,6 +215,9 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
             QString coordStr = "lat: " + QString::number(it.value().lat,'f',4);
             TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
             coordStr = "lon: " + QString::number(it.value().lon,'f',4);
+            pScreen.setY(pScreen.y() + 20);
+            TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
+            coordStr = "depth: " + QString::number(it.value().depth, 'f', 4);
             pScreen.setY(pScreen.y() + 20);
             TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
         }

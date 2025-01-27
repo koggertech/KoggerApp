@@ -336,6 +336,8 @@ WaterFall {
         contactDialog.lat = plot.contactLat
         contactDialog.lon = plot.contactLon
 
+        contactDialog.depth = plot.contactDepth
+
         if (!contactDialog.visible) {
             contactDialog.info = ""
         }

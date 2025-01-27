@@ -11,6 +11,7 @@ Item {
     property int indx: -1
     property double lat: 0.0
     property double lon: 0.0
+    property double depth: 0.0
 
     width: 185
     visible: false
@@ -77,7 +78,13 @@ Item {
         CTextField {
             id: latText
             Layout.fillWidth: true
-            text:  + inputDialog.formatNumber(lat, 4) + " " + inputDialog.formatNumber(lon, 4)
+            text:  inputDialog.formatNumber(lat, 4) + " " + inputDialog.formatNumber(lon, 4)
+            visible: info.length != 0
+        }
+        CTextField {
+            id: depthText
+            Layout.fillWidth: true
+            text: inputDialog.formatNumber(depth, 4)
             visible: info.length != 0
         }
     }

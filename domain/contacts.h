@@ -16,6 +16,7 @@ public:
         QString info;
         float lat = 0.0f;
         float lon = 0.0f;
+        float depth = 0.0f;
         QVector3D nedPos;
     };
 

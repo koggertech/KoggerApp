@@ -857,6 +857,8 @@ public:
     double getLat();
     double getLon();
 
+    double getDepth();
+
 private:
     int lineWidth_ = 1;
     QColor lineColor_ = { 255, 255, 255, 255 };
@@ -874,6 +876,8 @@ private:
 
     double lat_ = 0.0;
     double lon_ = 0.0;
+
+    double depth_ = 0.0;
 
     void setVisibleContact(bool val) {
         if(visible_ != val) {
@@ -940,6 +944,7 @@ public:
     int     getContactIndx();
     double  getContactLat();
     double  getContactLon();
+    double  getContactDepth();
 
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);

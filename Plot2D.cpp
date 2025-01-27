@@ -174,6 +174,11 @@ double Plot2D::getContactLon()
     return contacts_.getLon();
 }
 
+double Plot2D::getContactDepth()
+{
+    return contacts_.getDepth();
+}
+
 void Plot2D::setEchogramLowLevel(float low) {
     _echogram.setLowLevel(low);
     plotUpdate();
@@ -847,6 +852,7 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
                     info_ = epoch->contact_.info_;
                     lat_ = epoch->contact_.lat_;
                     lon_ = epoch->contact_.lon_;
+                    depth_ = epoch->contact_.distance_;
 
                     setVisibleContact(true);
 
@@ -924,4 +930,9 @@ double Plot2DContact::getLat()
 double Plot2DContact::getLon()
 {
     return lon_;
+}
+
+double Plot2DContact::getDepth()
+{
+    return depth_;
 }
