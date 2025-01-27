@@ -15,13 +15,9 @@ void main()
     }
 
     if (isTriangle) {
-        float verticalOffset = 0.0;
-        coord.y += verticalOffset;
-
         // top half circle
         vec2 circleCenter = vec2(0.0, -0.75);
         float radius = 0.25;
-
         bool insideCircle = dot(coord - circleCenter, coord - circleCenter) <= radius * radius;
 
         // bot triangle
