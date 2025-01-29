@@ -314,6 +314,10 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glEnable(34370);
 
     for (auto it = points_.begin(); it != points_.end(); ++it) {
+        if (!isfinite(it->lat) || !isfinite(it->lon)) {
+            continue;
+        }
+
         QVector3D p = { it.value().nedPos };
         QVector2D pScreen = p.project(view * model, projection, vport.toRect()).toVector2D();
         float correctedY = vport.height() - pScreen.y();
