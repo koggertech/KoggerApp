@@ -119,6 +119,7 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool 
 
         ctx->glEnable(GL_BLEND);
         ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        ctx->glActiveTexture(GL_TEXTURE0);
 
         textShader->setUniformValue("mvp_matrix", projection);
 
