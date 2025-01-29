@@ -33,7 +33,8 @@ void TextRenderer::setBackgroundColor(const QColor &color)
         m_backgroundColor = color;
 }
 
-void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool drawBackground, QOpenGLFunctions *ctx, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
+void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool drawBackground,
+                          QOpenGLFunctions *ctx, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
 {
     const float padding = 3.0f;
 

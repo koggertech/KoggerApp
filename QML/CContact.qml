@@ -34,6 +34,24 @@ MenuFrame {
 
         RowLayout {
             CheckButton {
+                icon.source: "./icons/tag.svg"
+                backColor: theme.menuBackColor
+                borderColor: theme.menuBackColor
+                implicitWidth: theme.controlHeight
+                checkable: false
+                enabled: false
+            }
+            CTextField {
+                id: inputField
+                placeholderText: qsTr("Enter text")
+                Layout.fillWidth: true
+                text: info
+                onAccepted: {
+                    inputDialog.accepted = true;
+                    inputDialog.visible = false;
+                }
+            }
+            CheckButton {
                 id: setButton
                 icon.source: "./icons/plus.svg"
                 backColor: theme.controlBackColor
@@ -53,27 +71,6 @@ MenuFrame {
                 checkable: false
                 onClicked: {
                     contactDialog.deleteButtonClicked();
-                    inputDialog.visible = false;
-                }
-            }
-        }
-
-        RowLayout {
-            CheckButton {
-                icon.source: "./icons/tag.svg"
-                backColor: theme.menuBackColor
-                borderColor: theme.menuBackColor
-                implicitWidth: theme.controlHeight
-                checkable: false
-                enabled: false
-            }
-            CTextField {
-                id: inputField
-                placeholderText: qsTr("Enter text")
-                Layout.fillWidth: true
-                text: info
-                onAccepted: {
-                    inputDialog.accepted = true;
                     inputDialog.visible = false;
                 }
             }
