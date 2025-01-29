@@ -983,7 +983,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
     //        });
     //}
 
-    scene3dViewPtr_->setQmlEngine(object);
+    scene3dViewPtr_->setQmlRootObject(object);
+    scene3dViewPtr_->setQmlAppEngine(qmlAppEnginePtr_);
 
     boatTrackControlMenuController_->setQmlEngine(object);
     boatTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);

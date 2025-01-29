@@ -219,7 +219,8 @@ public Q_SLOTS:
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
-    void setQmlEngine(QObject* engine);
+    void setQmlRootObject(QObject* object);
+    void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
 
 signals:
@@ -284,7 +285,7 @@ private:
 
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
-    QObject* engine_ = nullptr;
+    QObject* qmlRootObject_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     int bottomTrackWindowCounter_;
     bool needToResetStartPos_;

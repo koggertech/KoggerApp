@@ -299,8 +299,6 @@ WaterFall {
     CContact {
         id: contactDialog
 
-        signal deleteButtonClicked
-
         onVisibleChanged: {
             if (!visible) {
                 if (accepted) {
@@ -314,6 +312,10 @@ WaterFall {
 
         onDeleteButtonClicked: {
             plot.deleteContact(contactDialog.indx)
+        }
+
+        onCopyButtonClicked: {
+            plot.updateContact()
         }
     }
 

@@ -17,6 +17,51 @@ Contacts::~Contacts()
 
 }
 
+QString Contacts::getContactInfo() const
+{
+    return info_;
+}
+
+bool Contacts::getContactVisible() const
+{
+    return contactVisible_;
+}
+
+int Contacts::getContactPositionX() const
+{
+    return positionX_;
+}
+
+int Contacts::getContactPositionY() const
+{
+    return positionY_;
+}
+
+int Contacts::getContactIndx() const
+{
+    return indx_;
+}
+
+double Contacts::getContactLat() const
+{
+    return lat_;
+}
+
+double Contacts::getContactLon() const
+{
+    return lon_;
+}
+
+double Contacts::getContactDepth() const
+{
+    return depth_;
+}
+
+void Contacts::setContactVisible(bool state)
+{
+    contactVisible_ = state;
+}
+
 void Contacts::clear()
 {
     contactBounds_.clear();
@@ -78,6 +123,76 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
+bool Contacts::setContact(int indx, const QString& text)
+{
+    if (!datasetPtr_) {
+        qDebug() << "Contacts::setContact returned: !_dataset";
+        return false;
+    }
+
+    if (text.isEmpty()) {
+        qDebug() << "Contacts::setContact returned: text.isEmpty()";
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Contacts::setContact returned: !ep";
+        return false;
+    }
+
+    ep->contact_.info_ = text;
+    //qDebug() << "Plot2D::setContact: setted to epoch:" << indx << text;
+
+    emit datasetPtr_->dataUpdate();
+
+    auto* r = RENDER_IMPL(Contacts);
+
+    if (auto it = r->points_.find(indx); it != r->points_.end()) {
+        it.value().info = text;
+    }
+
+    setInterEpIndx(-1);
+
+    Q_EMIT changed();
+
+    return true;
+}
+
+bool Contacts::deleteContact(int indx)
+{
+    if (!datasetPtr_) {
+        qDebug() << "Contacts::deleteContact: !datasetPtr_";
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Contacts::deleteContact returned: !ep";
+        return false;
+    }
+
+    ep->contact_.clear();
+
+    emit datasetPtr_->dataUpdate();
+
+    auto* r = RENDER_IMPL(Contacts);
+    r->points_.remove(indx);
+
+    contactBounds_.remove(indx);
+
+    Q_EMIT changed();
+
+    return true;
+}
+
+void Contacts::update()
+{
+    setInterEpIndx(-1);
+
+    Q_EMIT changed();
+}
+
 void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 {
     Q_UNUSED(buttons);
@@ -90,6 +205,27 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
             break;
         }
     }
+
+    if (intersectedEpochIndx != -1) {
+        contactVisible_ = true;
+        indx_ = intersectedEpochIndx;
+        positionX_ = x;
+        positionY_ = y;
+
+        if (auto* ep = datasetPtr_->fromIndex(indx_); ep) {
+            if (ep->contact_.isValid()) {
+                info_ = ep->contact_.info_;
+                lat_ = ep->contact_.lat_;
+                lon_ = ep->contact_.lon_;
+                depth_ = ep->contact_.distance_;
+            }
+        }
+    }
+    else {
+        contactVisible_ = false;
+    }
+
+    Q_EMIT contactChanged();
 
     setInterEpIndx(intersectedEpochIndx);
 }
@@ -128,8 +264,11 @@ void Contacts::keyPressEvent(Qt::Key key)
 void Contacts::setInterEpIndx(int indx)
 {
     auto* r = RENDER_IMPL(Contacts);
-    r->intersectedEpochIndx_ = indx;
-    Q_EMIT changed();
+
+    if (r->intersectedEpochIndx_ != indx) {
+        r->intersectedEpochIndx_ = indx;
+        Q_EMIT changed();
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,7 +317,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         QVector3D p = { it.value().nedPos };
         QVector2D pScreen = p.project(view * model, projection, vport.toRect()).toVector2D();
         float correctedY = vport.height() - pScreen.y();
-        QRectF markerRect( pScreen.x() - pointSize * 0.125f, correctedY - pointSize * 0.5f, pointSize / 4.0f, pointSize / 2.0f);
+        QRectF markerRect( pScreen.x() - pointSize * 0.125f, correctedY - pointSize * 0.5f, pointSize / 4.0f, pointSize / 2.0f);        
         const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
 
         bool isIntersects = it.key() == intersectedEpochIndx_;
@@ -203,31 +342,13 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
         pScreen.setX(pScreen.x() + 15.0f);
 
-        if (isIntersects) {
-            pScreen.setY(vport.height() - pScreen.y() - 25);
-
-            QMatrix4x4 textProjection;
-            textProjection.ortho(vport.toRect());
-
-            TextRenderer::instance().render(it.value().info, 1.0f, pScreen, true, ctx, textProjection, shaderProgramMap);
-
-            pScreen.setY(pScreen.y() + 20);
-            QString coordStr = "lat: " + QString::number(it.value().lat,'f',4);
-            TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
-            coordStr = "lon: " + QString::number(it.value().lon,'f',4);
-            pScreen.setY(pScreen.y() + 20);
-            TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
-            coordStr = "depth: " + QString::number(it.value().depth, 'f', 4);
-            pScreen.setY(pScreen.y() + 20);
-            TextRenderer::instance().render(coordStr, 0.8f, pScreen, true, ctx, textProjection, shaderProgramMap);
-        }
-        else {
+        if (!isIntersects) {
             pScreen.setY(vport.height() - pScreen.y() - 5);
 
             QMatrix4x4 textProjection;
             textProjection.ortho(vport.toRect());
 
-            TextRenderer::instance().render(it.value().info, 1.0f, pScreen, true, ctx, textProjection, shaderProgramMap);
+            TextRenderer::instance().render(it.value().info, 0.9f, pScreen, true, ctx, textProjection, shaderProgramMap);
         }
     }
 }

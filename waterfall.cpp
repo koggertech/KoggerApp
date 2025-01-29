@@ -156,6 +156,11 @@ bool qPlot2D::deleteContact(int indx)
     return Plot2D::deleteContact(indx);
 }
 
+void qPlot2D::updateContact()
+{
+    Plot2D::updateContact();
+}
+
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
     if (_dataset != nullptr) {
         if (auto btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {

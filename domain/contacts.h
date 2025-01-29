@@ -3,6 +3,8 @@
 #include "sceneobject.h"
 
 #include <QEvent>
+#include <QQmlContext>
+#include <QQmlApplicationEngine>
 #include "plotcash.h"
 
 
@@ -12,6 +14,21 @@ class Contacts : public SceneObject
     QML_NAMED_ELEMENT(Contacts)
 
 public:
+    static void setQmlInstance(Contacts* instance, QQmlApplicationEngine* engine) {
+        if (instance) {
+            engine->rootContext()->setContextProperty("contacts", instance);
+        }
+    }
+
+    Q_PROPERTY(QString contactInfo      READ getContactInfo      /*WRITE setContactInfo*/    NOTIFY contactChanged)
+    Q_PROPERTY(bool    contactVisible   READ getContactVisible   /*WRITE setContactVisible*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionX READ getContactPositionX                         NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionY READ getContactPositionY                         NOTIFY contactChanged)
+    Q_PROPERTY(int     contactIndx      READ getContactIndx                              NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLat       READ getContactLat                               NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLon       READ getContactLon                               NOTIFY contactChanged)
+    Q_PROPERTY(double  contactDepth     READ getContactDepth                             NOTIFY contactChanged)
+
     struct ContactInfo {
         QString info;
         float lat = 0.0f;
@@ -47,6 +64,16 @@ public:
     explicit Contacts(QObject* parent = nullptr);
     virtual ~Contacts();
 
+    QString getContactInfo() const;
+    bool    getContactVisible() const;
+    int     getContactPositionX() const;
+    int     getContactPositionY() const;
+    int     getContactIndx() const;
+    double  getContactLat() const;
+    double  getContactLon() const;
+    double  getContactDepth() const;
+
+    void setContactVisible(bool state);
     void clear();
     void setDatasetPtr(Dataset* datasetPtr);
 
@@ -54,8 +81,12 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override final;
 
 public slots:
+    Q_INVOKABLE bool setContact(int indx, const QString& text);
+    Q_INVOKABLE bool deleteContact(int indx);
+    Q_INVOKABLE void update();
 
 signals:
+    void contactChanged();
 
 protected:
     friend class GraphicsScene3dView;
@@ -73,4 +104,13 @@ private:
     QHash<int, QRectF> contactBounds_;
     Dataset* datasetPtr_;
 
+    // qproperty
+    bool contactVisible_ = false;
+    int indx_ = -1;
+    int positionX_ = -1;
+    int positionY_ = -1;
+    QString info_;
+    double lat_ = 0.0;
+    double lon_ = 0.0;
+    double depth_ = 0.0;
 };

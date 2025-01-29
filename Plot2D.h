@@ -846,17 +846,12 @@ public:
 
     QString getInfo();
     void setInfo(const QString& info);
-
     bool getVisible();
     void setVisible(bool visible);
-
     QPoint getPosition();
-
     int getIndx();
-
     double getLat();
     double getLon();
-
     double getDepth();
 
 private:
@@ -865,18 +860,13 @@ private:
 
     int mouseX_ = -1;
     int mouseY_ = -1;
-
     int indx_ = -1;
     QPoint position_;
-
     QString info_;
     bool visible_ = false;
-
     bool visibleChanged_ = false;
-
     double lat_ = 0.0;
     double lon_ = 0.0;
-
     double depth_ = 0.0;
 
     void setVisibleContact(bool val) {
@@ -981,7 +971,7 @@ public:
     void setMouseTool(MouseTool tool);
     bool setContact(int indx, const QString& text);
     bool deleteContact(int indx);
-
+    void updateContact();
     void onCursorMoved(int x, int y);
 
     void resetCash();

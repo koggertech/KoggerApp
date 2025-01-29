@@ -4,6 +4,11 @@ import QtQuick.Layouts 1.15
 
 
 MenuFrame {
+    signal inputAccepted
+    signal setButtonClicked
+    signal deleteButtonClicked
+    signal copyButtonClicked
+
     id: inputDialog
     visible: false
     width: 185
@@ -38,6 +43,7 @@ MenuFrame {
                 Layout.fillWidth: true
                 text: info
                 onAccepted: {
+                    contactDialog.inputAccepted()
                     inputDialog.accepted = true;
                     inputDialog.visible = false;
                 }
@@ -49,6 +55,7 @@ MenuFrame {
                 implicitWidth: theme.controlHeight
                 checkable: false
                 onClicked: {
+                    contactDialog.setButtonClicked()
                     inputDialog.accepted = true;
                     inputDialog.visible = false;
                 }
@@ -61,7 +68,7 @@ MenuFrame {
                 implicitWidth: theme.controlHeight
                 checkable: false
                 onClicked: {
-                    contactDialog.deleteButtonClicked();
+                    contactDialog.deleteButtonClicked()
                     inputDialog.visible = false;
                 }
             }
@@ -91,15 +98,14 @@ MenuFrame {
                 id: copyButton
                 icon.source: "./icons/click.svg"
                 backColor: theme.controlBackColor
-
                 implicitWidth: theme.controlHeight
                 checkable: false
-
                 onClicked: {
                     textEdit.text = latLonText.text
                     textEdit.selectAll()
                     textEdit.copy()
                     inputDialog.visible = false
+                    contactDialog.copyButtonClicked()
                 }
             }
         }

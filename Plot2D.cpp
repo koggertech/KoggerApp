@@ -567,7 +567,7 @@ bool Plot2D::setContact(int indx, const QString& text)
     }
 
     ep->contact_.info_ = text;
-    qDebug() << "Plot2D::setContact: setted to epoch:" <<  currIndx << text;
+    //qDebug() << "Plot2D::setContact: setted to epoch:" <<  currIndx << text;
 
 
     if (primary) {
@@ -622,6 +622,12 @@ bool Plot2D::deleteContact(int indx)
     plotUpdate();
 
     return true;
+}
+
+void Plot2D::updateContact()
+{
+    contacts_.setMousePos(-1,-1);
+    plotUpdate();
 }
 
 void Plot2D::onCursorMoved(int x, int y)

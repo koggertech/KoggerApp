@@ -264,8 +264,8 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
 
-    if (engine_) { // maybe this will be removed
-        if (auto selectionToolButton = engine_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
+    if (qmlRootObject_) { // maybe this will be removed
+        if (auto selectionToolButton = qmlRootObject_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
             selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
         }
     }
@@ -708,9 +708,14 @@ void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, 
     }
 }
 
-void GraphicsScene3dView::setQmlEngine(QObject* engine)
+void GraphicsScene3dView::setQmlRootObject(QObject* object)
 {
-    engine_ = engine;
+    qmlRootObject_ = object;
+}
+
+void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
+{
+    Contacts::setQmlInstance(contacts_.get(), engine);
 }
 
 void GraphicsScene3dView::updateBounds()
@@ -918,7 +923,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
-    view->contacts_->contactBounds_ = m_renderer->contactsRenderImpl_.contactBounds_;
+    view->contacts_->contactBounds_ = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
