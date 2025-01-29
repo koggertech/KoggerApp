@@ -340,6 +340,10 @@ void TextRenderer::initFont()
 
         Character character;
 
+        if (image.isNull()) {
+            continue;
+        }
+
         character.num     = c;
         character.size    = QVector2D(face->glyph->bitmap.width, face->glyph->bitmap.rows);
         character.bearing = QVector2D(face->glyph->bitmap_left, face->glyph->bitmap_top);
