@@ -5,6 +5,9 @@ import QtQuick.Layouts 1.15
 
 MenuFrame {
     id: inputDialog
+    visible: false
+    width: 185
+
     property alias inputFieldText: inputField.text
     property bool accepted: false
     property string info: ""
@@ -12,18 +15,6 @@ MenuFrame {
     property double lat: 0.0
     property double lon: 0.0
     property double depth: 0.0
-
-    visible: false
-
-    width: 185
-
-    Connections {
-        target: plot
-        onContactHovered: {
-            console.log("Hovered in QML!")
-            // ...
-        }
-    }
 
     function formatNumber(value, decimals) {
         return value.toFixed(decimals);

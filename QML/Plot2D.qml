@@ -308,6 +308,7 @@ WaterFall {
                     accepted = false
                 }
                 contactDialog.info = ""
+                contactDialog.inputFieldText = ""
             }
         }
 
@@ -321,9 +322,11 @@ WaterFall {
 
         if (contactDialog.visible) {
             contactDialog.info = plot.contactInfo
+            contactDialog.inputFieldText =  plot.contactInfo
         }
         else {
             contactDialog.info = ""
+            contactDialog.inputFieldText = ""
         }
 
         contactDialog.x = plot.contactPositionX
