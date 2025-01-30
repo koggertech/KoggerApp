@@ -700,6 +700,9 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
     bool ext_pos_lla_find = false;
     bool ext_pos_ned_find = false;
 
+    bool contactInfo = true;
+    bool contactDistance = true;
+
     int row_cnt = datasetPtr_->size();
     datasetPtr_->spatialProcessing();
 
@@ -754,6 +757,13 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
     if (bottom_height)
         logger_.dataExport("BottomHeight,");
 
+    if (contactInfo) {
+        logger_.dataExport("ContactTitle,");
+    }
+    if (contactDistance) {
+        logger_.dataExport("ContactDistance");
+    }
+
     logger_.dataExport("\n");
 
     int prev_timestamp = 0;
@@ -770,31 +780,33 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
     for (int i = 0; i < row_cnt; i++) {
         Epoch* epoch = datasetPtr_->fromIndex(i);
 
-        if (decimation_m > 0) {
-            if (!epoch->isPosAvail())
-                continue;
+        if (!epoch->contact_.isValid()) {
+            if (decimation_m > 0) {
+                if (!epoch->isPosAvail())
+                    continue;
 
-            Position pos = epoch->getPositionGNSS();
+                Position pos = epoch->getPositionGNSS();
 
-            if (pos.lla.isCoordinatesValid()) {
-                if (!lla_ref.isInit) {
-                    lla_ref = LLARef(pos.lla);
-                    pos.LLA2NED(&lla_ref);
-                    last_pos_ned = pos.ned;
+                if (pos.lla.isCoordinatesValid()) {
+                    if (!lla_ref.isInit) {
+                        lla_ref = LLARef(pos.lla);
+                        pos.LLA2NED(&lla_ref);
+                        last_pos_ned = pos.ned;
+                    }
+                    else {
+                        pos.LLA2NED(&lla_ref);
+                        float dif_n = pos.ned.n - last_pos_ned.n;
+                        float dif_e = pos.ned.e - last_pos_ned.e;
+                        last_pos_ned = pos.ned;
+                        decimation_path += sqrtf(dif_n*dif_n + dif_e*dif_e);
+                        if(decimation_path < decimation_m)
+                            continue;
+                        decimation_path -= decimation_m;
+                    }
                 }
                 else {
-                    pos.LLA2NED(&lla_ref);
-                    float dif_n = pos.ned.n - last_pos_ned.n;
-                    float dif_e = pos.ned.e - last_pos_ned.e;
-                    last_pos_ned = pos.ned;
-                    decimation_path += sqrtf(dif_n*dif_n + dif_e*dif_e);
-                    if(decimation_path < decimation_m)
-                        continue;
-                    decimation_path -= decimation_m;
+                    continue;
                 }
-            }
-            else {
-                continue;
             }
         }
 
@@ -897,6 +909,17 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
                 row_data.append(QString::number(sensor->bottomProcessing.bottomPoint.lla.altitude, 'f', 3));
             }
             row_data.append(",");
+        }
+
+        auto& contact = epoch->contact_;
+        if (contact.isValid()) {
+            if (contactInfo) {
+                row_data.append(contact.info_);
+                row_data.append(",");
+            }
+            if (contactDistance) {
+                row_data.append(QString::number(contact.distance_, 'f', 4));
+            }
         }
 
         row_data.append("\n");
