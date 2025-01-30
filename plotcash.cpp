@@ -486,6 +486,9 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     static float dist_save = NAN;
     static float angl_save = NAN;
 
+    Q_UNUSED(dist_save);
+    Q_UNUSED(angl_save);
+
     // float angl = qDegreesToRadians(-data.usbl_yaw - data.azimuth_deg);
     float angl_usbl = data.azimuth_deg;
     float dist = data.distance_m;

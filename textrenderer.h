@@ -1,5 +1,4 @@
-#pragma once
-/*#ifndef TEXTRENDERER_H
+#ifndef TEXTRENDERER_H
 #define TEXTRENDERER_H
 
 #include <sceneobject.h>
@@ -18,26 +17,33 @@ public:
 
     void setFontPixelSize(int size);
     void setColor(const QColor& color);
+    void setBackgroundColor(const QColor& color);
 
     void render(const QString& text,
                 float scale,
                 QVector2D pos,
+                bool drawBackground,
                 QOpenGLFunctions* ctx,
-                const QMatrix4x4& projection);
-
-    // @brief Rebders text somewhere in the world
-    // @param text - text
-    // @param pos - text rect position
-    // @param dir - text rect front direction
-    // @param ctx - render context
-    // @param pvm - project * view * model matrix
-
+                const QMatrix4x4& projection,
+                const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
+    /**
+     * @brief Rebders text somewhere in the world
+     * @param text - text
+     * @param pos - text rect position
+     * @param dir - text rect front direction
+     * @param ctx - render context
+     * @param pvm - project * view * model matrix
+     */
     void render3D(const QString& text,
                   float scale,
                   QVector3D pos,
                   const QVector3D& dir,
                   QOpenGLFunctions* ctx,
-                  const QMatrix4x4& pvm);
+                  const QMatrix4x4& pvm,
+                  const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap);
+
+    void cleanup();
+
 
 private:
     Q_DISABLE_COPY(TextRenderer)
@@ -45,7 +51,6 @@ private:
     TextRenderer();
     virtual ~TextRenderer();
 
-    void initShaders();
     void initBuffers();
     void initFont();
 
@@ -72,15 +77,14 @@ private:
     };
 
     QMap<char,Character> m_chars;
-    std::unique_ptr <QOpenGLShaderProgram> m_shaderProgram;
     QOpenGLBuffer m_arrayBuffer;
     QOpenGLBuffer m_indexBuffer;
     QColor m_color = {0,0,0};
-    int m_fontPixelSize = 64;
+    QColor m_backgroundColor = {255, 255, 255};
+    int m_fontPixelSize = 22;
 
     static constexpr int stride3d = 5 * sizeof(float);
     static constexpr int stride2d = 4 * sizeof(float);
 };
 
 #endif // TEXTRENDERER_H
-*/

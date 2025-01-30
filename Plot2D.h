@@ -31,8 +31,11 @@ typedef enum {
 
 typedef struct DatasetCursor {
     int selectEpochIndx = -1;
+    int currentEpochIndx = -1;
+    int lastEpochIndx = -1;
     int channel1 = CHANNEL_FIRST;
     int channel2 = CHANNEL_NONE;
+    int numZeroEpoch = 0;
 
     bool isChannelDoubled() {
         return (CHANNEL_NONE != channel1 && CHANNEL_NONE != channel2);
@@ -51,6 +54,8 @@ typedef struct DatasetCursor {
     int last_dataset_size = 0;
 
     int mouseX = -1, mouseY = -1;
+    int contactX = -1, contactY = -1;
+
     MouseTool _tool = MouseToolNothing;
 
     struct {
@@ -98,7 +103,9 @@ typedef struct DatasetCursor {
         return (cursor.channel1 == channel1 && cursor.channel2 == channel2);
     }
 
-    void setMouse(int x, int y) { mouseX = x; mouseY = y;  }
+    void setMouse(int x, int y) { mouseX = x; mouseY = y; }
+    void setContactPos(int x, int y) { contactX = x; contactY = y; }
+
     void setTool(MouseTool tool) { _tool = tool; }
     MouseTool tool() { return _tool; }
 
@@ -163,7 +170,7 @@ public:
     int width() { return _width; }
     int height() { return _height; }
 
-    void drawY(QVector<float> y, PlotPen pen) {
+    void drawY(QVector<float> y, const PlotPen& pen) {
         if(_painter == NULL) { return; }
         QPen qpen;
         qpen.setWidth(pen.width);
@@ -316,7 +323,7 @@ public:
     Plot2DLine() {}
 
 protected:
-    bool drawY(Canvas& canvas, QVector<float> data, float value_from, float value_to, PlotPen pen) {
+    bool drawY(Canvas& canvas, QVector<float> data, float value_from, float value_to, const PlotPen& pen) {
         if(canvas.width() != data.size()) { return false; }
 
         QVector<float> data_maped(data.size());
@@ -820,6 +827,56 @@ protected:
 
 };
 
+
+
+
+class Plot2DContact : public PlotLayer {
+public:
+    Plot2DContact();
+    bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
+    void setMousePos(int x, int y);
+
+    bool isChanged() {
+        if (visibleChanged_) {
+            visibleChanged_ = false;
+            return true;
+        }
+        return false;
+    }
+
+    QString getInfo();
+    void setInfo(const QString& info);
+    bool getVisible();
+    void setVisible(bool visible);
+    QPoint getPosition();
+    int getIndx();
+    double getLat();
+    double getLon();
+    double getDepth();
+
+private:
+    int lineWidth_ = 1;
+    QColor lineColor_ = { 255, 255, 255, 255 };
+
+    int mouseX_ = -1;
+    int mouseY_ = -1;
+    int indx_ = -1;
+    QPoint position_;
+    QString info_;
+    bool visible_ = false;
+    bool visibleChanged_ = false;
+    double lat_ = 0.0;
+    double lon_ = 0.0;
+    double depth_ = 0.0;
+
+    void setVisibleContact(bool val) {
+        if(visible_ != val) {
+            visibleChanged_ = true;
+        }
+        visible_ = val;
+    }
+};
+
 class Plot2DAim : public PlotLayer {
 public:
     Plot2DAim() {}
@@ -866,6 +923,18 @@ public:
 
     void setDataChannel(int channel, int channel2 = CHANNEL_NONE);
 
+    bool getIsContactChanged();
+
+    QString getContactInfo();
+    void    setContactInfo(const QString& str);
+    bool    getContactVisible();
+    void    setContactVisible(bool state);
+    int     getContactPositionX();
+    int     getContactPositionY();
+    int     getContactIndx();
+    double  getContactLat();
+    double  getContactLon();
+    double  getContactDepth();
 
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);
@@ -898,14 +967,20 @@ public:
     void scrollDistance(float ratio);
 
     void setMousePosition(int x, int y);
+    void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
+    bool setContact(int indx, const QString& text);
+    bool deleteContact(int indx);
+    void updateContact();
+    void onCursorMoved(int x, int y);
 
     void resetCash();
 
     virtual void plotUpdate() {}
 
-    virtual void sendSyncEvent(int epoch_index) {
+    virtual void sendSyncEvent(int epoch_index, QEvent::Type eventType) {
         Q_UNUSED(epoch_index);
+        Q_UNUSED(eventType);
     }
 
 protected:
@@ -936,6 +1011,7 @@ protected:
     Plot2DQuadrature _quadrature;
     Plot2DGrid _grid;
     Plot2DAim _aim;
+    Plot2DContact contacts_;
 
     Canvas image(int width, int height);
 

@@ -1,6 +1,6 @@
 #include "coordinateaxes.h"
 #include <draw_utils.h>
-//#include <textrenderer.h>
+#include <textrenderer.h>
 
 CoordinateAxes::CoordinateAxes(QObject *parent)
     : SceneObject(new CoordinateAxesRenderImplementation,parent)
@@ -60,9 +60,9 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
 
-    //TextRenderer::instance().render3D(QString('x'), 0.07, axis_x.last(), QVector3D(0.0f,1.0f,0.0f),ctx,mvp); // TODO
-    //TextRenderer::instance().render3D(QString('y'), 0.07, axis_y.last(), QVector3D(0.0f,1.0f,0.0f),ctx,mvp);
-    //TextRenderer::instance().render3D(QString('z'), 0.07, axis_z.last(), QVector3D(0.0f,1.0f,0.0f),ctx,mvp);
+    TextRenderer::instance().render3D(QString('x'), 0.07, axis_x.last(), QVector3D(0.0f,1.0f,0.0f),ctx,mvp,shaderProgramMap);
+    TextRenderer::instance().render3D(QString('y'), 0.07, axis_y.last(), QVector3D(0.0f,1.0f,0.0f),ctx,mvp,shaderProgramMap);
+    TextRenderer::instance().render3D(QString('z'), 0.07, axis_z.last(), QVector3D(0.0f,1.0f,0.0f),ctx,mvp,shaderProgramMap);
 }
 
 void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions *ctx,
@@ -112,8 +112,7 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     QMatrix4x4 textProjection;
     textProjection.ortho(vport.toRect());
 
-    const float scale = 0.4;
-    Q_UNUSED(scale);
+    const float scale = 1.0;
 
     QVector2D xLabelPos = axis_x.last().project(view * model, projection, vport.toRect()).toVector2D();
     QVector2D yLabelPos = axis_y.last().project(view * model, projection, vport.toRect()).toVector2D();
@@ -123,7 +122,7 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     yLabelPos.setY(vport.height() - yLabelPos.y());
     zLabelPos.setY(vport.height() - zLabelPos.y());
 
-    //TextRenderer::instance().render("N", scale, xLabelPos, ctx, textProjection); TODO
-    //TextRenderer::instance().render("E", scale, yLabelPos, ctx, textProjection);
-    //TextRenderer::instance().render("A", scale, zLabelPos, ctx, textProjection);
+    TextRenderer::instance().render("n", scale, xLabelPos, false, ctx, textProjection,shaderProgramMap);
+    TextRenderer::instance().render("e", scale, yLabelPos, false, ctx, textProjection,shaderProgramMap);
+    TextRenderer::instance().render("a", scale, zLabelPos, false, ctx, textProjection,shaderProgramMap);
 }
