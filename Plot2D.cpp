@@ -52,6 +52,8 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
     _grid.draw(_canvas, _dataset, _cursor);
     _aim.draw(_canvas, _dataset, _cursor);
 
+    contacts_.draw(_canvas, _dataset, _cursor);
+
     return true;
 }
 
@@ -120,6 +122,61 @@ void Plot2D::setDataChannel(int channel, int channel2) {
     resetCash();
 
     plotUpdate();
+}
+
+bool Plot2D::getIsContactChanged()
+{
+    return contacts_.isChanged();
+}
+
+QString Plot2D::getContactInfo()
+{
+    return contacts_.getInfo();
+}
+
+void Plot2D::setContactInfo(const QString& str)
+{
+    contacts_.setInfo(str);
+}
+
+bool Plot2D::getContactVisible()
+{
+    return contacts_.getVisible();
+}
+
+void Plot2D::setContactVisible(bool state)
+{
+    contacts_.setVisible(state);
+}
+
+int Plot2D::getContactPositionX()
+{
+    return contacts_.getPosition().x();
+}
+
+int Plot2D::getContactPositionY()
+{
+    return contacts_.getPosition().y();
+}
+
+int Plot2D::getContactIndx()
+{
+    return contacts_.getIndx();
+}
+
+double Plot2D::getContactLat()
+{
+    return contacts_.getLat();
+}
+
+double Plot2D::getContactLon()
+{
+    return contacts_.getLon();
+}
+
+double Plot2D::getContactDepth()
+{
+    return contacts_.getDepth();
 }
 
 void Plot2D::setEchogramLowLevel(float low) {
@@ -340,6 +397,9 @@ void Plot2D::setMousePosition(int x, int y) {
 
     if(x == -1) {
         _mouse.x = -1;
+        _cursor.selectEpochIndx = -1;
+        _cursor.currentEpochIndx = -1;
+        //_cursor.lastEpochIndx = -1; // ?
         plotUpdate();
         return;
     }
@@ -376,8 +436,10 @@ void Plot2D::setMousePosition(int x, int y) {
 
     //qDebug() << "Cursor epoch" << _cursor.getIndex(x_start);
     int epoch_index = _cursor.getIndex(x_start);
+    _cursor.currentEpochIndx = epoch_index;
+    _cursor.lastEpochIndx = _cursor.currentEpochIndx;
 
-    sendSyncEvent(epoch_index);
+    sendSyncEvent(epoch_index, EpochSelected2d);
 
     if(_cursor.tool() > MouseToolNothing) {
 
@@ -426,8 +488,153 @@ void Plot2D::setMousePosition(int x, int y) {
     plotUpdate();
 }
 
+void Plot2D::simpleSetMousePosition(int x, int y)
+{
+    const int image_width = _canvas.width();
+    const int image_height = _canvas.height();
+    int mouseX = -1;
+
+    if (x < -1) {
+        x = -1;
+    }
+    if (x >= image_width) {
+        x = image_width - 1;
+    }
+    if (y < 0) {
+        y = 0;
+    }
+    if (y >= image_height) {
+        x = image_height - 1;
+    }
+
+    if (x == -1) {
+        //_cursor.selectEpochIndx = -1;
+        _cursor.currentEpochIndx = -1;
+        //_cursor.lastEpochIndx = -1; // ?
+        return;
+    }
+
+    _cursor.setContactPos(x, y);
+
+    int x_start = 0;
+    if(mouseX != -1) {
+        if(mouseX < x) {
+            x_start = mouseX;
+        }
+        else if (mouseX > x) {
+            x_start = x;
+        }
+        else {
+            x_start = x;
+        }
+    }
+    else {
+        x_start = x;
+    }
+
+    _cursor.currentEpochIndx = _cursor.getIndex(x_start);
+    _cursor.lastEpochIndx = _cursor.currentEpochIndx;
+
+    //sendSyncEvent(epoch_index);
+    //plotUpdate();
+}
+
 void Plot2D::setMouseTool(MouseTool tool) {
     _cursor.setTool(tool);
+}
+
+bool Plot2D::setContact(int indx, const QString& text)
+{
+    if (!_dataset) {
+        qDebug() << "Plot2D::setContact returned: !_dataset";
+        return false;
+    }
+
+    if (text.isEmpty()) {
+        qDebug() << "Plot2D::setContact returned: text.isEmpty()";
+        return false;
+    }
+
+    bool primary = indx == -1;
+    int currIndx = primary ? _cursor.lastEpochIndx : indx;
+
+    //qDebug() << "indx" << indx << "currIndx" << currIndx << text;
+
+    auto* ep = _dataset->fromIndex(currIndx);
+    if (!ep) {
+        qDebug() << "Plot2D::setContact returned: !ep";
+        return false;
+    }
+
+    ep->contact_.info_ = text;
+    //qDebug() << "Plot2D::setContact: setted to epoch:" <<  currIndx << text;
+
+
+    if (primary) {
+        ep->contact_.cursorX_ = _cursor.contactX;
+        ep->contact_.cursorY_ = _cursor.contactY;
+
+        const float canvas_height = _canvas.height();
+        float value_range = _cursor.distance.to - _cursor.distance.from;
+        float value_scale = float(_cursor.contactY) / canvas_height;
+        float cursor_distance = value_scale * value_range + _cursor.distance.from;
+
+        ep->contact_.distance_ = cursor_distance;
+
+        auto pos = ep->getPositionGNSS();
+
+        ep->contact_.nedX_ = pos.ned.n;
+        ep->contact_.nedY_ = pos.ned.e;
+
+        ep->contact_.lat_ = pos.lla.latitude;
+        ep->contact_.lon_ = pos.lla.longitude;
+    }
+    else {
+        // update rect
+    }
+
+    sendSyncEvent(currIndx, ContactCreated);
+
+    plotUpdate();
+
+    return true;
+}
+
+bool Plot2D::deleteContact(int indx)
+{
+    if (!_dataset) {
+        qDebug() << "Plot2D::deleteContact returned: !_dataset";
+        return false;
+    }
+
+    //qDebug() << "indx" << indx << "currIndx" << currIndx << text;
+
+    auto* ep = _dataset->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Plot2D::deleteContact returned: !ep";
+        return false;
+    }
+
+    ep->contact_.clear();
+
+    sendSyncEvent(indx, ContactDeleted);
+
+    plotUpdate();
+
+    return true;
+}
+
+void Plot2D::updateContact()
+{
+    contacts_.setMousePos(-1,-1);
+    plotUpdate();
+}
+
+void Plot2D::onCursorMoved(int x, int y)
+{
+    contacts_.setMousePos(x, y);
+
+    plotUpdate();
 }
 
 void Plot2D::resetCash() {
@@ -464,14 +671,17 @@ void Plot2D::reindexingCursor() {
 
     int head_data_index = round(position*float(data_width));
 
+    int cntZeros = 0;
     for(int i = 0; i < image_width; i++) {
         int data_index = head_data_index + round((i - image_width)/hor_ratio) - 1;
         if(data_index >= 0 && data_index < data_width) {
              _cursor.indexes[i] = data_index;
         } else {
+            ++cntZeros;
              _cursor.indexes[i] = -1;
         }
     }
+    _cursor.numZeroEpoch = cntZeros;
 }
 
 void Plot2D::reRangeDistance() {
@@ -598,4 +808,151 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     p->drawText(textRect.topLeft(), distanceText);
 
     return true;
+}
+
+Plot2DContact::Plot2DContact()
+{
+
+}
+
+bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
+{
+    QPen pen;
+    pen.setWidth(lineWidth_);
+    pen.setColor(lineColor_);
+
+    QPainter* p = canvas.painter();
+    p->setPen(pen);
+    QFont font = QFont("Asap", 14, QFont::Normal);
+    font.setPixelSize(18);
+    p->setFont(font);
+    p->setCompositionMode(QPainter::CompositionMode_SourceOver);
+    qreal adjPix = 5;
+    qreal shiftXY = 20;
+
+    setVisibleContact(false);
+
+    for (auto& indx : cursor.indexes) {
+        auto* epoch = dataset->fromIndex(indx);
+
+        if (!epoch) {
+            continue;
+        }
+
+        if (epoch->contact_.isValid()) {
+            float xPos = cursor.numZeroEpoch + indx - cursor.indexes[0];
+            const float canvasHeight = canvas.height();
+            float valueRange = cursor.distance.to - cursor.distance.from;
+            float valueScale = canvasHeight / valueRange;
+            float yPos = (epoch->contact_.distance_ - cursor.distance.from) * valueScale;
+            bool intersects = false;
+
+            auto& epRect = epoch->contact_.rectEcho_;
+            if (!epRect.isEmpty()) {
+                QRectF locRect = epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
+                locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
+
+                if (locRect.contains(QPointF(mouseX_, mouseY_))) {
+                    indx_ = indx;
+                    position_ = QPoint(xPos + shiftXY * 0.75, yPos + shiftXY *0.75);
+                    info_ = epoch->contact_.info_;
+                    lat_ = epoch->contact_.lat_;
+                    lon_ = epoch->contact_.lon_;
+                    depth_ = epoch->contact_.distance_;
+                    setVisibleContact(true);
+                    intersects = true;
+                }
+            }
+
+            QString infoText = epoch->contact_.info_;
+            QRectF textRect = p->fontMetrics().boundingRect(infoText);
+            textRect.moveTopLeft(QPointF(xPos + shiftXY, yPos + shiftXY));
+
+            // write rect
+            if (epRect.height() != textRect.height() ||
+                epRect.width() != textRect.width()) {
+                epRect = textRect;
+            }
+
+            if (intersects) {
+                QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
+                p->setPen(QPen(QColor(0,190,0), 2));
+                p->drawLine(topLeft, topLeft + QPointF(-30, 0));
+                p->drawLine(topLeft, topLeft + QPointF(0, -30));
+            }
+            else {
+                // red back
+                p->setPen(Qt::NoPen);
+                p->setBrush(QColor(190, 0, 0));
+                p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
+                // lines
+                QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
+                p->setPen(QPen(QColor(190,0,0), 2));
+                p->drawLine(topLeft, topLeft + QPointF(-30, 0));
+                p->drawLine(topLeft, topLeft + QPointF(0, -30));
+                // gray back
+                p->setPen(Qt::NoPen);
+                p->setBrush(QColor(45,45,45));
+                p->drawRect(textRect.adjusted(-3, -3, 3, 3));
+                // text
+                p->setPen(QColor(255,255,255));
+                p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, infoText);
+            }
+        }
+    }
+
+    return true;
+}
+
+void Plot2DContact::setMousePos(int x, int y)
+{
+    mouseX_ = x;
+    mouseY_ = y;
+}
+
+QString Plot2DContact::getInfo()
+{
+    return info_;
+}
+
+void Plot2DContact::setInfo(const QString &info)
+{
+    //qDebug() << "Plot2DContact::setInfo";
+
+    info_ = info;
+}
+
+bool Plot2DContact::getVisible()
+{
+    return visible_;
+}
+
+void Plot2DContact::setVisible(bool visible)
+{
+    visible_ = visible;
+}
+
+QPoint Plot2DContact::getPosition()
+{
+    return position_;
+}
+
+int Plot2DContact::getIndx()
+{
+    return indx_;
+}
+
+double Plot2DContact::getLat()
+{
+    return lat_;
+}
+
+double Plot2DContact::getLon()
+{
+    return lon_;
+}
+
+double Plot2DContact::getDepth()
+{
+    return depth_;
 }

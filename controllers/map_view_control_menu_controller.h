@@ -23,6 +23,11 @@ protected:
     virtual void findComponent() override;
 
 private:
+    void tryInitPendingLambda();
+
+    /*data*/
     MapView* getMapViewPtr() const;
     GraphicsScene3dView* m_graphicsSceneView;
+    std::function<void()> pendingLambda_;
+    bool visibility_;
 };

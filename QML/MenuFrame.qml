@@ -5,6 +5,7 @@ import QtQuick.Controls 2.15
 Item {
     id: control
 
+    property int offsetOpacityArea: 0
     property int margins: 5
     property int horizontalMargins: margins
     property int verticalMargins: margins
@@ -58,7 +59,7 @@ Item {
         // enabled: control.visible
         propagateComposedEvents: true
         anchors.fill: columnItem
-        anchors.margins: -10
+        anchors.margins: -10 - control.offsetOpacityArea
         hoverEnabled: true
         onPressed: mouse.accepted = false
         onReleased: mouse.accepted = false

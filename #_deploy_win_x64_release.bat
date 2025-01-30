@@ -1,5 +1,9 @@
 @echo off
 
+REM add to path (default loc):
+REM C:\Qt\5.15.2\mingw81_64\bin
+REM C:\Program Files\7-Zip
+
 REM ask if user wants to archive
 set /p archive=Do you want to archive the output directory? (y/n): 
 

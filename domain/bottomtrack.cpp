@@ -28,7 +28,9 @@ SceneObject::SceneObjectType BottomTrack::type() const
 bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched);
-
+    if (m_view->m_mode == GraphicsScene3dView::ActiveMode::Idle) {
+        return false;
+    }
     if (event->type() == EpochSelected2d) {
         auto epochEvent = static_cast<EpochEvent*>(event);
         resetVertexSelection();

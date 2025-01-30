@@ -14,6 +14,7 @@ TextField {
 
     font: small ? theme.textFontS : theme.textFont
     color: theme.textColor
+    selectionColor: theme.hoveredBackColor
 
     background:  Rectangle {
         id: backRect
@@ -21,5 +22,22 @@ TextField {
         color: control.down ? theme.controlSolidBackColor : theme.controlBackColor
         border.color: control.down ? theme.controlSolidBorderColor : theme.controlBorderColor
         border.width: 0
+    }
+
+    MouseArea {
+        id: doubleClickArea
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton
+        propagateComposedEvents: true
+
+        onDoubleClicked: {
+            control.selectAll();
+        }
+
+        onClicked: {
+            let cursorPosition = control.positionAt(mouse.x, mouse.y);
+            control.cursorPosition = cursorPosition;
+            control.forceActiveFocus();
+        }
     }
 }

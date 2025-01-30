@@ -18,6 +18,15 @@ public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
 
+    Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
+    Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionY READ getContactPositionY /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactIndx      READ getContactIndx /*WRITE setContactIndx*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLat       READ getContactLat /*WRITE setContactLat*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLon       READ getContactLon /*WRITE setContactLon*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactDepth     READ getContactDepth /*WRITE setContactLon*/ NOTIFY contactChanged)
+
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
 //    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
@@ -28,9 +37,8 @@ public:
 
     void plotUpdate() override;
 
-    virtual bool eventFilter(QObject *watched, QEvent *event) override final;
-
-    void sendSyncEvent(int epoch_index) override final;
+    bool eventFilter(QObject *watched, QEvent *event) override final;
+    void sendSyncEvent(int epoch_index, QEvent::Type eventType) override final;
 
 protected:
     Dataset* m_plot = nullptr;
@@ -40,6 +48,7 @@ protected:
 
 signals:
     void timelinePositionChanged();
+    void contactChanged();
 
 protected slots:
     void timerUpdater();
@@ -51,7 +60,12 @@ public slots:
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
     Q_INVOKABLE void plotMousePosition(int x, int y);
+    Q_INVOKABLE void simplePlotMousePosition(int x, int y);
+    Q_INVOKABLE void onCursorMoved(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
+    Q_INVOKABLE bool setContact(int indx, const QString& text);
+    Q_INVOKABLE bool deleteContact(int indx);
+    Q_INVOKABLE void updateContact();
 
     void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
     int plotDatasetChannel() { return _cursor.channel1; }
