@@ -61,9 +61,9 @@ MenuFrame {
                 Layout.fillWidth: true
                 text: info
                 onAccepted: {
-                    contactDialog.inputAccepted()
                     inputDialog.accepted = true;
                     inputDialog.visible = false;
+                    contactDialog.inputAccepted()
                 }
             }
             CheckButton {
@@ -73,9 +73,9 @@ MenuFrame {
                 implicitWidth: theme.controlHeight
                 checkable: false
                 onClicked: {
-                    contactDialog.setButtonClicked()
                     inputDialog.accepted = true;
                     inputDialog.visible = false;
+                    contactDialog.setButtonClicked()
                 }
             }
 
@@ -86,8 +86,8 @@ MenuFrame {
                 implicitWidth: theme.controlHeight
                 checkable: false
                 onClicked: {
-                    contactDialog.deleteButtonClicked()
                     inputDialog.visible = false;
+                    contactDialog.deleteButtonClicked()
                 }
             }
         }

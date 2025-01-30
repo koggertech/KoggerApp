@@ -317,6 +317,16 @@ WaterFall {
         onCopyButtonClicked: {
             plot.updateContact()
         }
+
+        onInputAccepted: {
+            contactDialog.visible = false
+            plot.updateContact()
+        }
+
+        onSetButtonClicked: {
+            contactDialog.visible = false
+            plot.updateContact()
+        }
     }
 
     onContactVisibleChanged: {
