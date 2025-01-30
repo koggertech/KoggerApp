@@ -27,8 +27,11 @@ qPlot2D::qPlot2D(QQuickItem* parent)
 void qPlot2D::paint(QPainter *painter) {
     clock_t start = clock();
 
-    if(m_plot != nullptr && painter != nullptr) {
+    if (m_plot != nullptr && painter != nullptr) {
         Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
+        if (Plot2D::getIsContactChanged()) {
+            emit contactChanged();
+        }
     }
 
     clock_t end = clock();
@@ -107,10 +110,13 @@ bool qPlot2D::eventFilter(QObject *watched, QEvent *event)
     return false;
 }
 
-void qPlot2D::sendSyncEvent(int epoch_index) {
+void qPlot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType) {
     //qDebug() << "qPlot2D::sendSyncEvent: epoch_index: " << epoch_index;
-    _cursor.selectEpochIndx = -1;
-    auto epochEvent = new EpochEvent(EpochSelected2d, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
+    if (eventType == EpochSelected2d) {
+        _cursor.selectEpochIndx = -1;
+    }
+
+    auto epochEvent = new EpochEvent(eventType, _dataset->fromIndex(epoch_index), epoch_index, _cursor.channel1);
     QCoreApplication::postEvent(this, epochEvent);
 }
 
@@ -140,6 +146,20 @@ void qPlot2D::plotMouseTool(int mode) {
     setMouseTool((MouseTool)mode);
 }
 
+bool qPlot2D::setContact(int indx, const QString& text)
+{
+    return Plot2D::setContact(indx, text);
+}
+
+bool qPlot2D::deleteContact(int indx)
+{
+    return Plot2D::deleteContact(indx);
+}
+
+void qPlot2D::updateContact()
+{
+    Plot2D::updateContact();
+}
 
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
     if (_dataset != nullptr) {
@@ -293,6 +313,27 @@ void qPlot2D::plotMousePosition(int x, int y) {
         }
 
     }
+}
+
+void qPlot2D::simplePlotMousePosition(int x, int y) {
+    Plot2D::setAimEpochEventState(false);
+
+    if(_isHorizontal) {
+        Plot2D::simpleSetMousePosition(x, y);
+    } 
+    else {
+        if(x >=0 && y >= 0) {
+            Plot2D::simpleSetMousePosition(height() - y, x);
+        }
+        else {
+            Plot2D::simpleSetMousePosition(-1, -1);
+        }
+    }
+}
+
+void qPlot2D::onCursorMoved(int x, int y)
+{
+    Plot2D::onCursorMoved(x, y);
 }
 
 void qPlot2D::timerUpdater() {

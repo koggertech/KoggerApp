@@ -33,6 +33,18 @@ Window  {
             mainview.showFullScreen();
         }
         menuBar.languageChanged.connect(handleChildSignal)
+
+        // contacts
+        function setupConnections() {
+            if (typeof contacts !== "undefined") {
+                contactConnections.target = contacts;
+            }
+            else {
+                Qt.callLater(setupConnections);
+            }
+        }
+
+        Qt.callLater(setupConnections);
     }
 
     // banner on languageChanged
@@ -328,6 +340,43 @@ Window  {
                     anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
+                }
+
+                CContact {
+                    id: contactDialog
+                    visible: false
+                    offsetOpacityArea: 20 // increase in 3D
+
+                    onInputAccepted: {
+                        contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
+                    }
+                    onSetButtonClicked: {
+                        contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
+                    }
+                    onDeleteButtonClicked: {
+                        contacts.deleteContact(contactDialog.indx)
+                    }
+                    onCopyButtonClicked: {
+                        contacts.update()
+                    }
+                }
+
+                Connections {
+                    id: contactConnections
+                    target: null // contacts will init later
+                    function onContactChanged() {
+                        contactDialog.visible = contacts.contactVisible
+                        if (contacts.contactVisible) {
+                            contactDialog.info           = contacts.contactInfo
+                            contactDialog.inputFieldText = contacts.contactInfo
+                            contactDialog.x              = contacts.contactPositionX
+                            contactDialog.y              = contacts.contactPositionY
+                            contactDialog.indx           = contacts.contactIndx
+                            contactDialog.lat            = contacts.contactLat
+                            contactDialog.lon            = contacts.contactLon
+                            contactDialog.depth          = contacts.contactDepth
+                        }
+                    }
                 }
 
                 RowLayout {
