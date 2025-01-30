@@ -99,7 +99,7 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
             if (contact.isValid()) {
                 ContactInfo cInfo;
                 cInfo.info = contact.info_;
-                cInfo.nedPos = { contact.decX_, contact.decY_, -contact.distance_ };
+                cInfo.nedPos = { contact.nedX_, contact.nedY_, -contact.distance_ };
                 cInfo.lat = contact.lat_;
                 cInfo.lon = contact.lon_;
                 cInfo.depth = contact.distance_;

@@ -571,8 +571,8 @@ bool Plot2D::setContact(int indx, const QString& text)
 
 
     if (primary) {
-        ep->contact_.x_ = _cursor.contactX;
-        ep->contact_.y_ = _cursor.contactY;
+        ep->contact_.cursorX_ = _cursor.contactX;
+        ep->contact_.cursorY_ = _cursor.contactY;
 
         const float canvas_height = _canvas.height();
         float value_range = _cursor.distance.to - _cursor.distance.from;
@@ -583,8 +583,8 @@ bool Plot2D::setContact(int indx, const QString& text)
 
         auto pos = ep->getPositionGNSS();
 
-        ep->contact_.decX_ = pos.ned.n;
-        ep->contact_.decY_ = pos.ned.e;
+        ep->contact_.nedX_ = pos.ned.n;
+        ep->contact_.nedY_ = pos.ned.e;
 
         ep->contact_.lat_ = pos.lla.latitude;
         ep->contact_.lon_ = pos.lla.longitude;
@@ -847,7 +847,7 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
             float yPos = (epoch->contact_.distance_ - cursor.distance.from) * valueScale;
             bool intersects = false;
 
-            auto& epRect = epoch->contact_.rect_;
+            auto& epRect = epoch->contact_.rectEcho_;
             if (!epRect.isEmpty()) {
                 QRectF locRect = epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
                 locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
