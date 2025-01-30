@@ -36,6 +36,8 @@ public:
         bool isPerspective_;
         QVector3D point_;
         std::unordered_map<map::TileIndex, map::Tile> tilesHash_;
+        QVector<QVector2D> textureCoords_;
+        QVector<int> indices_;
     };
 
     /*methods*/
@@ -54,9 +56,9 @@ public:
 
 public slots:
     void onTileAppend(const map::Tile& tile);
-    void onTileDelete(const map::Tile& tile);
-    void onTileImageUpdated(const map::Tile& tile);
-    void onTileVerticesUpdated(const map::Tile& tile);
+    void onTileDelete(const map::TileIndex& tileIndx);
+    void onTileImageUpdated(const map::TileIndex& tileIndx, const QImage& image);
+    void onTileVerticesUpdated(const map::TileIndex& tileIndx, const QVector<QVector3D>& vertices);
     void onClearAppendTasks();
 
 signals:

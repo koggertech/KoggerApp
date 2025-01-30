@@ -1,12 +1,20 @@
 #version 330 core
+#ifdef GL_ES
+precision mediump int;
+precision mediump float;
+#endif
 
-in vec2 TexCoords;
+uniform vec4 textColor;
+uniform sampler2D tex;
+in vec2 v_texcoord;
 out vec4 color;
-uniform sampler2D text;
-uniform vec3 textColor;
+
+float width = 0.5;
+float edge = 0.5;
 
 void main()
 {
-    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
-    color = vec4(textColor, 1.0) * sampled;
-}
+    float distance = 1.0 - texture(tex,v_texcoord).r;
+    float alpha = 1.0 - smoothstep(width, width + edge, distance);
+    color = vec4(textColor.rgb, alpha);
+};

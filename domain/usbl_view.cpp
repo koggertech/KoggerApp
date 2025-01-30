@@ -27,7 +27,7 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
     auto shaderProgram = shaderProgramMap.value("static", nullptr);
 
     if (!shaderProgram) {
-        qWarning() << "Shader program 'mosaic' not found!";
+        qWarning() << "Shader program 'static' not found!";
         return;
     }
 
@@ -86,6 +86,8 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
             ctx->glLineWidth(1.0f);
         }
     }
+
+    shaderProgram->setUniformValue(isPointLoc, false);
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();

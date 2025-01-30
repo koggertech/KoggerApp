@@ -45,7 +45,8 @@ void TileDownloader::downloadTile(const TileIndex& tileIndx)
         return;
     }
 
-    for (QNetworkReply* reply : activeReplies_) {
+    for (auto it = activeReplies_.begin(); it != activeReplies_.end(); ++it) {
+        QNetworkReply* reply = *it;
         TileIndex activeIndex = reply->property("tileIndex").value<TileIndex>();
         if (activeIndex == tileIndx) {
             return;
@@ -67,8 +68,8 @@ void TileDownloader::stopAndClearRequests()
 {
     QSet<TileIndex> stoppedDownloads;
 
-    for (const auto& itm : downloadQueue_) {
-        stoppedDownloads.insert(itm);
+    for (auto it = downloadQueue_.cbegin(); it != downloadQueue_.cend(); ++it) {
+        stoppedDownloads.insert(*it);
     }
     downloadQueue_.clear();
 

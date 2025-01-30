@@ -18,7 +18,27 @@
 namespace map {
 
 
-///////*structures*///////
+/*data*/
+inline const QVector<QVector2D> kTextureCoords = {
+    {0.0f, 0.0f},
+    {1.0f, 0.0f},
+    {1.0f, 1.0f},
+    {0.0f, 1.0f}
+};
+
+inline const QVector<int> kIndices = {
+    0, 1, 2,
+    0, 2, 3
+};
+
+/*structures*/
+enum class CameraTilt {
+    Up = 0,
+    Down,
+    Left,
+    Right
+};
+
 enum class ZoomState {
     kUndefined = 0,
     kOut,
@@ -99,40 +119,30 @@ public:
     void      setModifiedTileInfo(const TileInfo& info);
     void      setState(State state);
     void      setInUse(bool val); // for tileSet
-    void      setInterpolated(bool val);
+    void      setIsCopied(bool val);
     void      setImage(const QImage& image);
     void      setTextureId(GLuint textureId);
-    void      setVertexNed(const QVector3D& vertexNed);
     void      setIndex(const TileIndex &index);
-    void      setNeedToInit(bool state);
-    void      setNeedToDeinit(bool state);
     void      setCreationTime(const QDateTime& val);
     void      setRequestLastTime(const QDateTime& val);
     void      setVertices(const QVector<QVector3D>& vertices);
-    void      setPendingRemoval(bool value);
 
     TileInfo  getOriginTileInfo() const;
     TileInfo  getModifiedTileInfo() const;
     State     getState() const;
     bool      getInUse() const; // for tileSet
-    bool      getInterpolated() const;
+    bool      getIsCopied() const;
     QImage    getImage() const;
     QImage&   getImageRef();
     bool      getImageIsNull() const;
     GLuint    getTextureId() const;
-    QVector3D getVertexNed() const;
     TileIndex getIndex() const;
-    bool      getNeedToInit() const;
-    bool      getNeedToDeinit() const;
     QDateTime getCreationTime() const;
     QDateTime getRequestLastTime() const;
     LLARef    getUsedLlaRef() const;
-    bool      getPendingRemoval() const;
     bool      getHasValidImage() const;
 
     const QVector<QVector3D>& getVerticesRef() const;
-    const QVector<QVector2D>& getTexCoordsRef() const;
-    const QVector<int>& getIndicesRef() const;
 
     bool operator==(const Tile& other) const;
     bool operator!=(const Tile &other) const;
@@ -140,31 +150,18 @@ public:
 
 private:
     /*data*/
-    bool needToInitT_ = false;
-    bool needToDeinitT_ = false;
-
     TileInfo originInfo_;
     TileInfo modifiedInfo_;
-
     State state_;
     bool  inUse_;
-    bool  interpolated_;
-
+    bool  copied_;
     QImage image_;
     GLuint textureId_;
-
     QVector<QVector3D> vertices_;
-    QVector<QVector2D> texCoords_;
-    QVector<int> indices_;
-
-    QVector3D vertexNed_;
     TileIndex index_;
     QDateTime requestLastTime_;
     QDateTime creationTime_;
-
     LLARef usedLlaRef_;
-
-    bool pendingRemoval_ = false;
 };
 
 inline float calculateDistance(const LLARef &llaRef1, const LLARef &llaRef2)
@@ -179,8 +176,7 @@ inline float calculateDistance(const LLARef &llaRef1, const LLARef &llaRef2)
     double dLat = lat2 - lat1;
     double dLon = lon2 - lon1;
 
-    double a = qPow(qSin(dLat / 2), 2) +
-               qCos(lat1) * qCos(lat2) * qPow(qSin(dLon / 2), 2);
+    double a = qPow(qSin(dLat / 2), 2) + qCos(lat1) * qCos(lat2) * qPow(qSin(dLon / 2), 2);
     double c = 2 * qAtan2(qSqrt(a), qSqrt(1 - a));
     double distance2D = R * c;
 

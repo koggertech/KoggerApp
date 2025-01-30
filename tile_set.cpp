@@ -12,20 +12,20 @@ TileSet::TileSet(std::weak_ptr<TileProvider> provider, std::weak_ptr<TileDB> db,
     tileDownloader_(downloader),
     isPerspective_(false),
     zoomState_(ZoomState::kUndefined),
-    minLat_(0.0),
-    maxLat_(0.0),
     minLon_(0.0),
     maxLon_(0.0),
     currZoom_(-1),
     diffLevels_(std::numeric_limits<int32_t>::max()),
-    moveUp_(false)
+    moveUp_(false),
+    defaultSize_(256, 256),
+    defaultImageFormat_(QImage::Format_RGB32)
 {
     qRegisterMetaType<Tile>("Tile");
     qRegisterMetaType<QSet<TileIndex>>("QSet<TileIndex>");
 }
 
 void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, LLARef viewLlaRef,
-                           bool isPerspective, double minLat, double maxLat, double minLon, double maxLon, bool moveUp)
+                           bool isPerspective, double minLon, double maxLon, bool moveUp)
 {
     if (request.isEmpty()) {
         return;
@@ -33,14 +33,9 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
 
     viewLlaRef_    = viewLlaRef;
     isPerspective_ = isPerspective;
-
-    minLat_        = minLat;
-    maxLat_        = maxLat;
     minLon_        = minLon;
     maxLon_        = maxLon;
-
     moveUp_        = moveUp;
-
     request_       = request;
     zoomState_     = zoomState;
     diffLevels_    = std::abs(request.begin()->z_ - currZoom_);
@@ -51,7 +46,7 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
 
     addTiles(request);
     removeFarDBRequests(request);
-    removeFarDownloaderRequests(request);
+    removeFarDWRequests(request);
     emit mvClearAppendTasks();
 
     QSet<TileIndex> filtDbReq;
@@ -66,10 +61,10 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
                 tryCopyImage(rTile);
             }
 
-            updateTileVertices(rTile);
+            updateVertices(rTile);
 
             if (rTile->getInUse()) {
-                emit mvUpdateTileVertices(*rTile);
+                emit mvUpdateTileVertices(rTile->getIndex(), rTile->getVerticesRef());
             }
             else {
                 tryRenderTile(*rTile);
@@ -78,7 +73,7 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
     }
 
     removeFarTilesFromRender(request);
-    tryShrinkSetSize();
+    tryReduceSetSize();
 
     if (!filtDbReq.empty()) {
         dbReq_.unite(filtDbReq);
@@ -86,10 +81,23 @@ void TileSet::onNewRequest(const QSet<TileIndex>& request, ZoomState zoomState, 
     }
 }
 
+void TileSet::onNewLlaRef(LLARef viewLlaRef)
+{
+    viewLlaRef_ = viewLlaRef;
+
+    for (auto& tile : tileList_) {
+        if (tile.getInUse()) {
+            if (updateVertices(&tile)) {
+                emit mvUpdateTileVertices(tile.getIndex(), tile.getVerticesRef());
+            }
+        }
+    }
+}
+
 void TileSet::setTextureIdByTileIndx(const TileIndex &tileIndx, GLuint textureId)
 {
-    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
-        it->second->setTextureId(textureId);
+    if (auto* tile = getTileByIndx(tileIndx); tile) {
+        tile->setTextureId(textureId);
     }
 }
 
@@ -102,7 +110,7 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image)
         return;
     }
 
-    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+    if (auto it = tileHash_.find(tileIndx); it != tileHash_.end()) {
         tileList_.splice(tileList_.begin(), tileList_, it->second);
         Tile& tile = *(it->second);
 
@@ -113,9 +121,9 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image)
         rImage = rImage.transformed(trans);
         tile.setImage(rImage);
         tile.setState(Tile::State::kReady);
-        tile.setInterpolated(false);
+        tile.setIsCopied(false);
 
-        updateTileVertices(&tile);
+        updateVertices(&tile);
         tryRenderTile(tile, true);
     }
 }
@@ -156,7 +164,7 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image)
     dbSvd_.insert(tileIndx);
     emit dbSaveTile(tileIndx, image);
 
-    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+    if (auto it = tileHash_.find(tileIndx); it != tileHash_.end()) {
         tileList_.splice(tileList_.begin(), tileList_, it->second);
         Tile& tile = *(it->second);
 
@@ -167,9 +175,9 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image)
         rImage = rImage.transformed(trans);
         tile.setImage(rImage);
         tile.setState(Tile::State::kReady);
-        tile.setInterpolated(false);
+        tile.setIsCopied(false);
 
-        updateTileVertices(&tile);
+        updateVertices(&tile);
         tryRenderTile(tile, true);
     }
 }
@@ -191,8 +199,8 @@ void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
 
 void TileSet::onDeletedFromAppend(const TileIndex &tileIndx)
 {
-    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
-        it->second->setInUse(false);
+    if (auto* tile = getTileByIndx(tileIndx); tile) {
+        tile->setInUse(false);
     }
 }
 
@@ -211,7 +219,7 @@ bool TileSet::addTile(const TileIndex& tileIndx)
 {
     bool retVal{ false };
 
-    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+    if (auto it = tileHash_.find(tileIndx); it != tileHash_.end()) {
         it->second->setRequestLastTime(QDateTime::currentDateTimeUtc());
         tileList_.splice(tileList_.begin(), tileList_, it->second); // move to front
     }
@@ -225,72 +233,43 @@ bool TileSet::addTile(const TileIndex& tileIndx)
 
         newTile.setRequestLastTime(QDateTime::currentDateTimeUtc());
         tileList_.push_front(std::move(newTile));
-        tileMap_[tileIndx] = tileList_.begin();
+        tileHash_[tileIndx] = tileList_.begin();
         retVal = true;
     }
 
     return retVal;
 }
 
-void TileSet::tryShrinkSetSize()
+void TileSet::tryReduceSetSize()
 {
-    if (tileMap_.size() > maxCapacity_) {
-        while (tileMap_.size() > minCapacity_) { // remove from back (map and list)
+    if (tileHash_.size() > maxCapacity_) {
+        while (tileHash_.size() > minCapacity_) { // remove from back (map and list)
             auto lastIt = std::prev(tileList_.end());
             const TileIndex& indexToRemove = lastIt->getIndex();
 
             if (lastIt->getInUse()) {
-                emit mvDeleteTile(*lastIt);
+                emit mvDeleteTile(indexToRemove);
             }
 
-            tileMap_.erase(indexToRemove);
+            tileHash_.erase(indexToRemove);
             tileList_.erase(lastIt);
         }
     }
 }
 
-bool TileSet::tilesOverlap(const TileIndex &index1, const TileIndex &index2, int zoomStepEdge) const
-{
-    int minZoom = std::min(index1.z_, index2.z_);
-
-    TileIndex idx1 = index1;
-    TileIndex idx2 = index2;
-
-    if (zoomStepEdge != -1) {
-        int zDiff = std::abs(idx1.z_ - idx2.z_);
-        if (std::abs(zoomStepEdge) < zDiff) {
-            return false;
-        }
-    }
-
-    while (idx1.z_ > minZoom) {
-        idx1 = idx1.getParent().first;
-    }
-    while (idx2.z_ > minZoom) {
-        idx2 = idx2.getParent().first;
-    }
-
-    bool retVal = idx1.x_ == idx2.x_ && idx1.y_ == idx2.y_ && idx1.z_ == idx2.z_;
-
-    return retVal;
-}
-
-bool TileSet::processIn(Tile *tile)
+bool TileSet::processIn(Tile* tile) const
 {
     QImage currImage;
-    QSize defaultSize(256, 256);
-    QImage::Format imageFormat = QImage::Format_RGB32;
 
     auto getCurrImageRef = [&]() -> QImage& {
         if (!currImage.isNull()) {
             return currImage;
         }
-        currImage = QImage(defaultSize, imageFormat);
-        currImage.fill(Qt::red);
+        currImage = QImage(defaultSize_, defaultImageFormat_);
         return currImage;
     };
 
-    TileIndex originTileIndx = tile->getIndex();
+    auto originTileIndx = tile->getIndex();
     int depth = std::min(std::max(1, diffLevels_), propagationLevel_);
     bool beenCopied = false;
 
@@ -307,7 +286,6 @@ bool TileSet::processIn(Tile *tile)
             int tileY = originTileIndx.y_ % parentSize;
             int newTileX = parentSize - 1 - tileY;
             int newTileY = tileX;
-
             int cellWidth = parentImage.width() / parentSize;
             int cellHeight = parentImage.height() / parentSize;
 
@@ -318,9 +296,8 @@ bool TileSet::processIn(Tile *tile)
 
             QPainter painter(&getCurrImageRef());
             painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-            QImage croppedImage = parentImage.copy(regionToCopy);
             QRect targetRect(0, 0, currImage.width(), currImage.height());
-            painter.drawImage(targetRect, croppedImage);
+            painter.drawImage(targetRect, parentImage, regionToCopy);
             painter.end();
 
             beenCopied = true;
@@ -330,29 +307,26 @@ bool TileSet::processIn(Tile *tile)
 
     if (beenCopied) {
         tile->setImage(currImage);
-        tile->setInterpolated(true);
+        tile->setIsCopied(true);
         tile->setState(Tile::State::kReady);
     }
 
     return beenCopied;
 }
 
-bool TileSet::processOut(Tile *tile)
+bool TileSet::processOut(Tile* tile) const
 {
     QImage currImage;
-    QSize defaultSize(256, 256);
-    QImage::Format imageFormat = QImage::Format_RGB32;
 
     auto getCurrImageRef = [&]() -> QImage& {
         if (!currImage.isNull()) {
             return currImage;
         }
-        currImage = QImage(defaultSize, imageFormat);
-        currImage.fill(Qt::blue);
+        currImage = QImage(defaultSize_, defaultImageFormat_);
         return currImage;
     };
 
-    TileIndex originTileIndx = tile->getIndex();
+    auto originTileIndx = tile->getIndex();
     int depth = std::min(std::max(1, diffLevels_), propagationLevel_);
     bool beenCopied = false;
 
@@ -366,7 +340,7 @@ bool TileSet::processOut(Tile *tile)
             continue;
         }
         int numChildren = static_cast<int>(childIndices.size());
-        int gridSize = std::sqrt(numChildren);
+        int gridSize = static_cast<int>(std::sqrt(numChildren));
         if (gridSize <= 0) {
             continue;
         }
@@ -374,16 +348,17 @@ bool TileSet::processOut(Tile *tile)
         int cellWidth = getCurrImageRef().width() / gridSize;
         int cellHeight = getCurrImageRef().height() / gridSize;
 
-
         bool allChildsHasAnImage = true;
-        QList<Tile*> choosedChildsPtr;
+        QList<Tile*> choosedChildPtrs;
+        choosedChildPtrs.reserve(childIndices.size());
+
         for (const auto& childIndex : childIndices) {
             if (auto* childTile = getTileByIndx(childIndex); childTile) {
                 if (childTile->getImageIsNull()) {
                     allChildsHasAnImage = false;
                     break;
                 }
-                choosedChildsPtr.append(childTile);
+                choosedChildPtrs.append(childTile);
             }
             else {
                 allChildsHasAnImage = false;
@@ -395,7 +370,10 @@ bool TileSet::processOut(Tile *tile)
             continue;
         }
 
-        for (auto& childTile : choosedChildsPtr) {
+        QPainter painter(&getCurrImageRef());
+        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+        for (auto& childTile : choosedChildPtrs) {
             QImage& childImage = childTile->getImageRef();
             auto childIndx = childTile->getIndex();
             int tileX = childIndx.x_ % gridSize;
@@ -404,19 +382,17 @@ bool TileSet::processOut(Tile *tile)
             int newTileY = tileX;
 
             QRect targetRect(newTileX * cellWidth, newTileY * cellHeight, cellWidth, cellHeight);
+
             if (!getCurrImageRef().rect().contains(targetRect)) {
                 continue;
             }
 
-            QImage scaledChildImage = childImage.scaled(targetRect.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-
-            QPainter painter(&getCurrImageRef());
-            painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-            painter.drawImage(targetRect, scaledChildImage);
-            painter.end();
+            painter.drawImage(targetRect, childImage, childImage.rect());
 
             beenCopied = true;
         }
+
+        painter.end();
 
         if (beenCopied) {
             break;
@@ -425,7 +401,7 @@ bool TileSet::processOut(Tile *tile)
 
     if (beenCopied) {
         tile->setImage(currImage);
-        tile->setInterpolated(true);
+        tile->setIsCopied(true);
         tile->setState(Tile::State::kReady);
     }
 
@@ -442,19 +418,8 @@ void TileSet::removeFarTilesFromRender(const QSet<TileIndex>& request)
         auto lTileIndx = lTile.getIndex();
         if (!request.contains(lTileIndx)) {
             lTile.setInUse(false);
-            emit mvDeleteTile(lTile);
+            emit mvDeleteTile(lTileIndx);
         }
-    }
-}
-
-void TileSet::updateTileVerticesInRender()
-{
-    for (auto& tile : tileList_) {
-        if (tile.getInUse()) {
-            if (updateTileVertices(&tile)) {
-            emit mvUpdateTileVertices(tile);
-        }
-    }
     }
 }
 
@@ -525,7 +490,7 @@ bool TileSet::tryRenderTile(Tile &tile, bool force)
         return false;
     }
     else if (tile.getInUse() && force) {
-        emit mvUpdateTileImage(tile);
+        emit mvUpdateTileImage(tileIndx, tile.getImageRef());
     }
     else {
         tile.setInUse(true);
@@ -535,9 +500,9 @@ bool TileSet::tryRenderTile(Tile &tile, bool force)
     return true;
 }
 
-Tile* TileSet::getTileByIndx(const TileIndex &tileIndx)
+Tile* TileSet::getTileByIndx(const TileIndex &tileIndx) const
 {
-    if (auto it = tileMap_.find(tileIndx); it != tileMap_.end()) {
+    if (auto it = tileHash_.find(tileIndx); it != tileHash_.end()) {
         return &(*(it->second));
     }
     return nullptr;
@@ -554,7 +519,7 @@ void TileSet::removeFarDBRequests(const QSet<TileIndex>& request)
     }
 }
 
-void TileSet::removeFarDownloaderRequests(const QSet<TileIndex>& request)
+void TileSet::removeFarDWRequests(const QSet<TileIndex>& request)
 {
     auto dwReqCopy = dwReq_;
     for (auto dwTileIndx : dwReqCopy) {
@@ -564,7 +529,7 @@ void TileSet::removeFarDownloaderRequests(const QSet<TileIndex>& request)
     }
 }
 
-bool TileSet::tryCopyImage(Tile* tile)
+bool TileSet::tryCopyImage(Tile* tile) const
 {
     bool retVal = false;
 
@@ -585,7 +550,7 @@ bool TileSet::tryCopyImage(Tile* tile)
     return retVal;
 }
 
-bool TileSet::updateTileVertices(Tile* tile)
+bool TileSet::updateVertices(Tile* tile) const
 {
     if (tile) {
         if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {

@@ -50,9 +50,25 @@ typedef struct LLA {
         longitude = lon;
         altitude = alt;
     }
+
+    LLA(const LLA& other) {
+        latitude = other.latitude;
+        longitude = other.longitude;
+        altitude = other.altitude;
+    }
+
+    LLA& operator=(const LLA& other) {
+        if (this != &other) {
+            latitude = other.latitude;
+            longitude = other.longitude;
+            altitude = other.altitude;
+        }
+        return *this;
+    }
+
     inline LLA(const NED* ned, const LLARef* ref, bool spherical = true);
 
-    bool isValid() {
+    bool isValid() const {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
     }
     bool isCoordinatesValid() {
@@ -77,6 +93,26 @@ typedef struct  LLARef {
         refLatCos = cos(refLatRad);
         refLla = lla;
         isInit = true;
+    }
+
+    LLARef(const LLARef& other)
+        : refLatSin(other.refLatSin),
+        refLatCos(other.refLatCos),
+        refLatRad(other.refLatRad),
+        refLonRad(other.refLonRad),
+        refLla(other.refLla),
+        isInit(other.isInit) {}
+
+    LLARef& operator=(const LLARef& other) {
+        if (this != &other) {
+            refLatSin = other.refLatSin;
+            refLatCos = other.refLatCos;
+            refLatRad = other.refLatRad;
+            refLonRad = other.refLonRad;
+            refLla = other.refLla;
+            isInit = other.isInit;
+        }
+        return *this;
     }
 
     friend bool operator==(const LLARef& lhs, const LLARef& rhs) {
@@ -364,6 +400,36 @@ typedef QMap<int, ComplexSignal> ComplexSignals;
 
 class Epoch {
 public:
+    struct Contact {
+    public:
+        bool isValid() const {
+            return !info_.isEmpty() &&
+                   cursorX_ != -1 &&
+                   cursorY_ != -1;
+        }
+        void clear() {
+            cursorX_ = -1;
+            cursorY_ = -1;
+            info_.clear();
+            lat_ = 0.0f;
+            lon_ = 0.0f;
+            nedX_ = 0.0f;
+            nedY_ = 0.0f;
+            rectEcho_ = QRectF();
+            distance_ = 0.0f;
+        }        
+
+        QString info_;
+        float lat_ = 0.0f;
+        float lon_ = 0.0f;
+        float distance_ = 0.0f;
+        float nedX_ = 0.0f;
+        float nedY_ = 0.0f;
+        int cursorX_ = -1;
+        int cursorY_ = -1;
+        QRectF rectEcho_;
+    };
+
     typedef struct {
         typedef enum {
             DistanceSourceNone = 0,
@@ -789,6 +855,8 @@ public:
     float getInterpYaw() const;
     float getInterpFirstChannelDist() const;
     float getInterpSecondChannelDist() const;
+
+    Contact contact_;
 
 protected:
 

@@ -10,6 +10,7 @@
 #include "side_scan_view.h"
 #include "image_view.h"
 #include "map_view.h"
+#include "contacts.h"
 #include "boattrack.h"
 #include "bottomtrack.h"
 #include "polygongroup.h"
@@ -46,6 +47,10 @@ public:
         qreal yaw() const;
         QMatrix4x4 viewMatrix() const;
 
+        void setCameraListener(Camera* cameraListener) {
+            cameraListener_ = cameraListener;
+        };
+
         //TODO! Process this method later
         //void rotate(qreal yaw, qreal pitch);
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
@@ -62,20 +67,26 @@ public:
         void setIsometricView();
         void setMapView();
         void reset();
+        void resetRotationAngle();
 
         float getHeightAboveGround() const;
         float getAngleToGround() const;
         bool getIsPerspective() const;
         bool getIsFarAwayFromOriginLla() const;
+        map::CameraTilt getCameraTilt() const;
 
     private:
         void updateCameraParams();
         void tryToChangeViewLlaRef();
         void updateViewMatrix();
         void checkRotateAngle();
+        void tryResetRotateAngle();
+
     private:
         friend class GraphicsScene3dView;
         friend class GraphicsScene3dRenderer;
+
+        Camera* cameraListener_ = nullptr;
 
         QVector3D m_eye = {0.0f, 0.0f, 0.0f};
         QVector3D m_up = {0.0f, 1.0f, 0.0f};
@@ -164,6 +175,7 @@ public:
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
+    std::shared_ptr<Contacts> getContactsPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
@@ -207,11 +219,13 @@ public Q_SLOTS:
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
-    void setQmlEngine(QObject* engine);
+    void setQmlRootObject(QObject* object);
+    void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
 
 signals:
-    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp);
+    void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
+    void sendLlaRef(LLARef viewLlaRef);
     void cameraIsMoved();
 
 private:
@@ -232,6 +246,7 @@ private:
     std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
+    std::shared_ptr<Contacts> contacts_;
     std::shared_ptr<BoatTrack> m_boatTrack;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;
@@ -270,7 +285,7 @@ private:
 
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
-    QObject* engine_ = nullptr;
+    QObject* qmlRootObject_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     int bottomTrackWindowCounter_;
     bool needToResetStartPos_;

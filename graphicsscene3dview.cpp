@@ -22,6 +22,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
+    contacts_(std::make_shared<Contacts>(this)),
     m_boatTrack(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -43,6 +44,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
 
+    m_camera->setCameraListener(m_axesThumbnailCamera.get());
+
     m_boatTrack->setColor({80,0,180});
     m_boatTrack->setWidth(6.0f);
 
@@ -61,6 +64,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -74,6 +78,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(contacts_.get(), &Contacts::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -84,6 +89,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
 
     auto connType = Qt::DirectConnection;
     QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,             connType);
@@ -138,6 +144,11 @@ std::shared_ptr<MapView> GraphicsScene3dView::getMapViewPtr() const
     return mapView_;
 }
 
+std::shared_ptr<Contacts> GraphicsScene3dView::getContactsPtr() const
+{
+    return contacts_;
+}
+
 std::shared_ptr<PointGroup> GraphicsScene3dView::pointGroup() const
 {
     return m_pointGroup;
@@ -183,6 +194,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
     sideScanView_->clear();
+    contacts_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
@@ -252,8 +264,8 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
 
-    if (engine_) { // maybe this will be removed
-        if (auto selectionToolButton = engine_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
+    if (qmlRootObject_) { // maybe this will be removed
+        if (auto selectionToolButton = qmlRootObject_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
             selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
         }
     }
@@ -276,6 +288,8 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         m_startMousePos = QPointF(x, y);
         needToResetStartPos_ = false;
     }
+
+    contacts_->mouseMoveEvent(mouseButton, x, y);
 
     // movement threshold for sync
     if (!wasMoved_) {
@@ -616,6 +630,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_boatTrack->setDatasetPtr(m_dataset);
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
+    contacts_->setDatasetPtr(m_dataset);
 
     forceUpdateDatasetRef();
 
@@ -693,9 +708,14 @@ void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, 
     }
 }
 
-void GraphicsScene3dView::setQmlEngine(QObject* engine)
+void GraphicsScene3dView::setQmlRootObject(QObject* object)
 {
-    engine_ = engine;
+    qmlRootObject_ = object;
+}
+
+void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
+{
+    Contacts::setQmlInstance(contacts_.get(), engine);
 }
 
 void GraphicsScene3dView::updateBounds()
@@ -759,9 +779,10 @@ void GraphicsScene3dView::updateMapView()
     float minY = std::numeric_limits<float>::max();
     float maxX = std::numeric_limits<float>::lowest();
     float maxY = std::numeric_limits<float>::lowest();
-    bool isReqRect{ true };
+
+    bool allPointsAreValid{ true };
     for (const auto& multiplier : cornerMultipliers) {
-        float currWidth  = width()  * multiplier.first;
+        float currWidth  = width() * multiplier.first;
         float currHeight = height() * multiplier.second;
 
         QVector3D point;
@@ -776,7 +797,7 @@ void GraphicsScene3dView::updateMapView()
         }
 
         if (point == QVector3D()) {
-            isReqRect = false;
+            allPointsAreValid = false;
             break;
         }
 
@@ -786,7 +807,7 @@ void GraphicsScene3dView::updateMapView()
         maxY = std::max(maxY, point.y());
     }
 
-    if (isReqRect) {
+    if (allPointsAreValid) {
         bool canRequest{ true };
         if (m_camera->getAngleToGround() > 5.0f) {
             const float maxSideSize = 14000.f;
@@ -833,14 +854,13 @@ void GraphicsScene3dView::updateMapView()
         llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
 
         if (canRequest) {
-            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp);
+            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp, m_camera->getCameraTilt());
+        }
+        else {
+            emit sendLlaRef(m_camera->viewLlaRef_);
         }
 
-        // qDebug() << "llaVerts";
-        // for (auto& itm : llaVerts) {
-        //     qDebug() << itm.latitude << ","<< itm.longitude;
-        // }
-/*
+        /*
         // debug
         LLA debugltLla(llaVerts[0].latitude, llaVerts[0].longitude, 0.0f);
         LLA debuglbLla(llaVerts[1].latitude, llaVerts[1].longitude, 0.0f);
@@ -861,8 +881,11 @@ void GraphicsScene3dView::updateMapView()
         windowNed.append(LLA(rbNed.n, rbNed.e, 0.0f));
         windowNed.append(LLA(rtNed.n, rtNed.e, 0.0f));
         mapView_->setRectVertices(requestNed, windowNed, canRequest, m_camera->getIsPerspective(), QVector3D(m_camera->m_lookAt.x(), m_camera->m_lookAt.y(), 0.0f));
-*/
+        */
     } // is rect
+    else {
+        emit sendLlaRef(m_camera->viewLlaRef_);
+    }
 
     QQuickFramebufferObject::update();
 }
@@ -900,6 +923,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     //read from renderer
     view->m_model = m_renderer->m_model;
     view->m_projection = m_renderer->m_projection;
+    view->contacts_->contactBounds_ = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
 
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
@@ -910,6 +934,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
+    m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->m_navigationArrow->m_renderImpl));
@@ -1192,6 +1217,7 @@ void GraphicsScene3dView::Camera::rotate(const QVector2D& lastMouse, const QVect
 
     m_rotAngle += r;
 
+    tryResetRotateAngle();
     checkRotateAngle();
     updateCameraParams();
     updateViewMatrix();
@@ -1205,6 +1231,7 @@ void GraphicsScene3dView::Camera::rotate(const QPointF& prevCenter, const QPoint
     m_rotAngle.setX(m_rotAngle.x() - qDegreesToRadians(angleDelta));
     m_rotAngle.setY(m_rotAngle.y() + qDegreesToRadians(angleDeltaY * increaseCoeff));
 
+    tryResetRotateAngle();
     checkRotateAngle();
     updateCameraParams();
     updateViewMatrix();
@@ -1321,16 +1348,23 @@ void GraphicsScene3dView::Camera::zoom(qreal delta)
     //    viewLlaRef_ = datasetLlaRef_;
     //}
     else if ( (!isPerspective_ && projectionChanged && datasetDist < lowDistThreshold_ && getIsFarAwayFromOriginLla())) { // catching when ortho->persp trans and near place
+
+        if (cameraListener_) {
+            cameraListener_->resetRotationAngle();
+        }
+
         viewPtr_->setNeedToResetStartPos(true);
         LLA datasetLla(datasetLlaRef_.refLla.latitude, datasetLlaRef_.refLla.longitude, 0.0);
         NED datasetNed(&datasetLla, &viewLlaRef_, !isPerspective_);
         m_lookAt -= QVector3D(datasetNed.n, datasetNed.e, 0.0f);
         viewLlaRef_ = datasetLlaRef_;
+        m_rotAngle = { 0.0f, 0.0f };
     }
     else if ((isPerspective_ && projectionChanged) || (!isPerspective_ && !projectionChanged)) { // pers -> ortho OR ortho without transfer
         viewPtr_->setNeedToResetStartPos(true);
         viewLlaRef_ = lookAtLlaRef;
         m_lookAt = QVector3D(0.0f, 0.0f, 0.0f);
+        m_rotAngle = { 0.0f, 0.0f };
     }
 
     updateCameraParams();
@@ -1412,6 +1446,14 @@ void GraphicsScene3dView::Camera::reset()
     updateViewMatrix();
 }
 
+void GraphicsScene3dView::Camera::resetRotationAngle()
+{
+    m_rotAngle = {0.0f, 0.0f};
+
+    updateCameraParams();
+    updateViewMatrix();
+}
+
 void GraphicsScene3dView::Camera::updateCameraParams()
 {
     distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
@@ -1478,8 +1520,20 @@ void GraphicsScene3dView::Camera::checkRotateAngle()
 {
     if (m_rotAngle[1] > M_PI_2)
         m_rotAngle[1] = M_PI_2;
-    else if (m_rotAngle[1] < 0)
-        m_rotAngle[1] = 0;
+    else if (m_rotAngle[1] < 0.0f)
+        m_rotAngle[1] = 0.0f;
+}
+
+void GraphicsScene3dView::Camera::tryResetRotateAngle()
+{
+    bool preIsPersp{ false };
+    distToGround_ = std::max(0.0f, std::fabs(-cosf(m_rotAngle.y()) * m_distToFocusPoint));
+    float perspEdge = viewPtr_ ? viewPtr_->perspectiveEdge_ : 5000.0f;
+    preIsPersp = distToGround_ < perspEdge;
+    bool projectionChanged = isPerspective_ != preIsPersp;
+    if (projectionChanged && isPerspective_) {
+        m_rotAngle = { 0.0f, 0.0f };
+    }
 }
 
 float GraphicsScene3dView::Camera::getHeightAboveGround() const
@@ -1500,6 +1554,33 @@ bool GraphicsScene3dView::Camera::getIsPerspective() const
 bool GraphicsScene3dView::Camera::getIsFarAwayFromOriginLla() const
 {
     return !isPerspective_ || (viewLlaRef_ != datasetLlaRef_);
+}
+
+map::CameraTilt GraphicsScene3dView::Camera::getCameraTilt() const
+{
+    float xRot = m_rotAngle.x();
+
+    while (xRot >  M_PI) {
+        xRot -= 2.f * M_PI;
+    }
+    while (xRot <= -M_PI) {
+        xRot += 2.f * M_PI;
+    }
+
+    float deg = qRadiansToDegrees(xRot);
+
+    if (deg > -45.f && deg <= 45.f) {
+        return map::CameraTilt::Down;
+    }
+    else if (deg > 45.f && deg <= 135.f) {
+        return map::CameraTilt::Right;
+    }
+    else if (deg >= -135.f && deg <= -45.f) {
+        return map::CameraTilt::Left;
+    }
+    else {
+        return map::CameraTilt::Up;
+    }
 }
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const

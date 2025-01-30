@@ -82,6 +82,10 @@ WaterFall {
             property bool wasMoved: false
             property point startMousePos: Qt.point(-1, -1)
             property real mouseThreshold: 15
+            property int contactMouseX: -1
+            property int contactMouseY: -1
+
+            hoverEnabled: true
 
             Timer {
                 id: longPressTimer
@@ -89,6 +93,11 @@ WaterFall {
                 repeat: false
                 onTriggered: {
                     if (Qt.platform.os === "android" && theme.instrumentsGrade !== 0 && !mousearea.wasMoved) {
+                        plot.onCursorMoved(mousearea.mouseX, mousearea.mouseY)
+                        mousearea.contactMouseX = mousearea.mouseX
+                        mousearea.contactMouseY = mousearea.mouseY
+                        plot.simplePlotMousePosition(mousearea.mouseX, mousearea.mouseY)
+
                         menuBlock.position(mousearea.mouseX, mousearea.mouseY)
                     }
                 }
@@ -96,11 +105,17 @@ WaterFall {
 
             onClicked: {
                 lastMouseX = mouse.x
-
                 plot.focus = true
 
-                if (mouse.button === Qt.RightButton && theme.instrumentsGrade !== 0) {
-                    menuBlock.position(mouse.x, mouse.y)
+                if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
+
+                    if (theme.instrumentsGrade !== 0) {
+                        menuBlock.position(mouse.x, mouse.y)
+                    }
                 }
 
                 wasMoved = false
@@ -119,6 +134,13 @@ WaterFall {
                     plot.plotMousePosition(mouse.x, mouse.y)
                 }
 
+                if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
+                }
+
                 wasMoved = false
             }
 
@@ -131,6 +153,13 @@ WaterFall {
 
                 if (mouse.button === Qt.LeftButton) {
                     plot.plotMousePosition(-1, -1)
+                }
+
+                if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
 
                 wasMoved = false
@@ -149,6 +178,8 @@ WaterFall {
             }
 
             onPositionChanged: {
+                plot.onCursorMoved(mouse.x, mouse.y)
+
                 if (Qt.platform.os === "android") {
                     if (!wasMoved) {
                         var currDelta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
@@ -167,6 +198,13 @@ WaterFall {
                     if (theme.instrumentsGrade === 0) {
                         plot.horScrollEvent(delta)
                     }
+                }
+
+                if (mouse.button === Qt.RightButton) {
+                    contactMouseX = mouse.x
+                    contactMouseY = mouse.y
+
+                    plot.simplePlotMousePosition(mouse.x, mouse.y)
                 }
             }
 
@@ -256,6 +294,59 @@ WaterFall {
                 small: true
             }
         }
+    }
+
+    CContact {
+        id: contactDialog
+
+        onVisibleChanged: {
+            if (!visible) {
+                if (accepted) {
+                    plot.setContact(contactDialog.indx, contactDialog.inputFieldText)
+                    accepted = false
+                }
+                contactDialog.info = ""
+                contactDialog.inputFieldText = ""
+            }
+        }
+
+        onDeleteButtonClicked: {
+            plot.deleteContact(contactDialog.indx)
+        }
+
+        onCopyButtonClicked: {
+            plot.updateContact()
+        }
+
+        onInputAccepted: {
+            contactDialog.visible = false
+            plot.updateContact()
+        }
+
+        onSetButtonClicked: {
+            contactDialog.visible = false
+            plot.updateContact()
+        }
+    }
+
+    onContactVisibleChanged: {
+        contactDialog.visible = plot.contactVisible;
+
+        if (contactDialog.visible) {
+            contactDialog.info = plot.contactInfo
+            contactDialog.inputFieldText =  plot.contactInfo
+        }
+        else {
+            contactDialog.info = ""
+            contactDialog.inputFieldText = ""
+        }
+
+        contactDialog.x = plot.contactPositionX
+        contactDialog.y = plot.contactPositionY
+        contactDialog.indx = plot.contactIndx
+        contactDialog.lat = plot.contactLat
+        contactDialog.lon = plot.contactLon
+        contactDialog.depth = plot.contactDepth
     }
 
     RowLayout {
@@ -354,6 +445,25 @@ WaterFall {
                 if (checked) {
                     plot.plotMouseTool(5)
                 }
+            }
+
+            ButtonGroup.group: pencilbuttonGroup
+        }
+
+        CheckButton {
+            icon.source: "./icons/anchor.svg"
+            backColor: theme.controlBackColor
+            implicitWidth: theme.controlHeight
+            checkable: false
+
+            onClicked: {
+                contactDialog.x = mousearea.contactMouseX
+                contactDialog.y = mousearea.contactMouseY
+                contactDialog.visible = true;
+
+                contactDialog.indx = -1
+
+                menuBlock.visible = false
             }
 
             ButtonGroup.group: pencilbuttonGroup

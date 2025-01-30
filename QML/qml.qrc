@@ -96,6 +96,7 @@
         <file>DeviceItem.qml</file>
         <file>CPopup.qml</file>
         <file>CMouseOpacityArea.qml</file>
+        <file>CContact.qml</file>
         <file>ImportPPK.qml</file>
     </qresource>
 </RCC>

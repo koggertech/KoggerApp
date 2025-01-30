@@ -291,7 +291,7 @@ void Dataset::setLlaRef(const LLARef &val, LlaRefState state)
         llaRefState_ = state;
 
         emit updatedLlaRef();
-        qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
+        //qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
     }
 }
 
@@ -485,6 +485,9 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
 
     static float dist_save = NAN;
     static float angl_save = NAN;
+
+    Q_UNUSED(dist_save);
+    Q_UNUSED(angl_save);
 
     // float angl = qDegreesToRadians(-data.usbl_yaw - data.azimuth_deg);
     float angl_usbl = data.azimuth_deg;

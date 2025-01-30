@@ -9,9 +9,9 @@
 #include <QThread>
 #include <QDebug>
 
-//#include <textrenderer.h> // TODO
-//#include <ft2build.h>
-//#include FT_FREETYPE_H
+#include <textrenderer.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 
 GraphicsScene3dRenderer::GraphicsScene3dRenderer()
@@ -20,13 +20,16 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer()
     m_shaderProgramMap["static"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["texture"]    = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
-{}
+{
+    TextRenderer::instance().cleanup(); // using working ctx
+}
 
 void GraphicsScene3dRenderer::initialize()
 {
@@ -74,6 +77,23 @@ void GraphicsScene3dRenderer::initialize()
         qCritical() << "Error adding image fragment shader from source file.";
     if (!m_shaderProgramMap["image"]->link())
         qCritical() << "Error linking image shaders in shader program.";
+
+    // text
+    if (!m_shaderProgramMap["text"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/text.vsh"))
+        qCritical() << "Error adding text vertex shader from source file.";
+    if (!m_shaderProgramMap["text"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/text.fsh"))
+        qCritical() << "Error adding text fragment shader from source file.";
+    if (!m_shaderProgramMap["text"]->link())
+        qCritical() << "Error linking text shaders in shader program.";
+
+    // text back
+    if (!m_shaderProgramMap["text_back"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/text_back.vsh"))
+        qCritical() << "Error adding text_back vertex shader from source file.";
+    if (!m_shaderProgramMap["text_back"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/text_back.fsh"))
+        qCritical() << "Error adding text_back fragment shader from source file.";
+    if (!m_shaderProgramMap["text_back"]->link())
+        qCritical() << "Error linking text_back shaders in shader program.";
+
 }
 
 void GraphicsScene3dRenderer::render()
@@ -85,7 +105,8 @@ void GraphicsScene3dRenderer::render()
 
     drawObjects();
 
-    //TextRenderer::instance(); TODO
+    TextRenderer::instance();
+    TextRenderer::instance().setColor("white");
 }
 
 void GraphicsScene3dRenderer::drawObjects()
@@ -121,13 +142,13 @@ void GraphicsScene3dRenderer::drawObjects()
     bool isOut = m_camera.getIsFarAwayFromOriginLla();
 
     glEnable(GL_DEPTH_TEST);
-    mapViewRenderImpl_.render(this,          m_model, view, m_projection, m_shaderProgramMap);
+    mapViewRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     if (!isOut) {
-        m_planeGridRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
-        imageViewRenderImpl_.render(this,        m_projection * view * m_model, m_shaderProgramMap);
-        m_pointGroupRenderImpl.render(this,      m_projection * view * m_model, m_shaderProgramMap);
-        m_polygonGroupRenderImpl.render(this,    m_projection * view * m_model, m_shaderProgramMap);
-        usblViewRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+        m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        imageViewRenderImpl_.render(this, m_projection * view * m_model, m_shaderProgramMap);
+        m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+        m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
+        usblViewRenderImpl_.render(this, m_projection * view * m_model, m_shaderProgramMap);
     }
     glDisable(GL_DEPTH_TEST);
 
@@ -142,6 +163,7 @@ void GraphicsScene3dRenderer::drawObjects()
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
     navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
+    contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 
 

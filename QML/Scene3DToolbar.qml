@@ -1370,6 +1370,15 @@ ColumnLayout {
                 }
             }
 */
+
+            Component.onCompleted: {
+                MapViewControlMenuController.onVisibilityChanged(checked)
+            }
+
+
+            Settings {
+                property alias mapViewCheckButton: mapViewCheckButton.checked
+            }
         }
 
         ButtonGroup{
