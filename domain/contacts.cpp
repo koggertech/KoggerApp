@@ -325,7 +325,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
 
         bool isIntersects = it.key() == intersectedEpochIndx_;
-        shaderProgram->setUniformValue(colorLoc, isIntersects ? QVector4D(0.0f, 1.0f, 0.0f, 1.0f) : QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
+        shaderProgram->setUniformValue(colorLoc, isIntersects ? QVector4D(0.0f, 0.67f, 0.0f, 1.0f) : QVector4D(0.67f, 0.0f, 0.0f, 1.0f));
         QVector<QVector3D> vecP = { p };
         shaderProgram->setAttributeArray(posLoc, vecP.constData());
         ctx->glDrawArrays(GL_POINTS, 0, vecP.size());

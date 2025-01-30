@@ -25,6 +25,24 @@ MenuFrame {
         return value.toFixed(decimals);
     }
 
+    onVisibleChanged: {
+        if (visible) {
+            inputField.forceActiveFocus();
+        }
+    }
+
+    onXChanged: {
+        if (visible) {
+            inputField.forceActiveFocus();
+        }
+    }
+
+    onYChanged: {
+        if (visible) {
+            inputField.forceActiveFocus();
+        }
+    }
+
     ColumnLayout {
         Layout.fillWidth: true
 

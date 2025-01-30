@@ -827,7 +827,8 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     font.setPixelSize(18);
     p->setFont(font);
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
-    qreal adjPix = 3;
+    qreal adjPix = 5;
+    qreal shiftXY = 20;
 
     setVisibleContact(false);
 
@@ -844,46 +845,59 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
             float valueRange = cursor.distance.to - cursor.distance.from;
             float valueScale = canvasHeight / valueRange;
             float yPos = (epoch->contact_.distance_ - cursor.distance.from) * valueScale;
+            bool intersects = false;
 
-            auto& rect = epoch->contact_.rect_;
-            if (!rect.isEmpty()) {
-                QRectF locRect = rect.translated(QPointF(xPos + adjPix, yPos + adjPix) - rect.topLeft());
+            auto& epRect = epoch->contact_.rect_;
+            if (!epRect.isEmpty()) {
+                QRectF locRect = epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
                 locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
 
                 if (locRect.contains(QPointF(mouseX_, mouseY_))) {
-                    //qDebug() << "catch" << mouseX_ << mouseY_;
-
                     indx_ = indx;
-                    position_ = QPoint(xPos, yPos);
+                    position_ = QPoint(xPos + shiftXY * 0.75, yPos + shiftXY *0.75);
                     info_ = epoch->contact_.info_;
                     lat_ = epoch->contact_.lat_;
                     lon_ = epoch->contact_.lon_;
                     depth_ = epoch->contact_.distance_;
-
                     setVisibleContact(true);
-
-                    continue;
+                    intersects = true;
                 }
             }
 
             QString infoText = epoch->contact_.info_;
             QRectF textRect = p->fontMetrics().boundingRect(infoText);
-            textRect.moveTopLeft(QPointF(xPos + adjPix ,yPos + adjPix));
+            textRect.moveTopLeft(QPointF(xPos + shiftXY, yPos + shiftXY));
 
-            if (rect.height() != textRect.height() ||
-                rect.width() != textRect.width()) {
-                rect = textRect;
+            // write rect
+            if (epRect.height() != textRect.height() ||
+                epRect.width() != textRect.width()) {
+                epRect = textRect;
             }
 
-            // back
-            p->setPen(Qt::NoPen);
-            p->setBrush(QColor(45,45,45));
-            p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
-
-            // text
-            p->setPen(QColor(255,255,255));
-            //qDebug() << "cpp draw" << infoText;
-            p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, infoText);
+            if (intersects) {
+                QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
+                p->setPen(QPen(QColor(0,190,0), 2));
+                p->drawLine(topLeft, topLeft + QPointF(-30, 0));
+                p->drawLine(topLeft, topLeft + QPointF(0, -30));
+            }
+            else {
+                // red back
+                p->setPen(Qt::NoPen);
+                p->setBrush(QColor(190, 0, 0));
+                p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
+                // lines
+                QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
+                p->setPen(QPen(QColor(190,0,0), 2));
+                p->drawLine(topLeft, topLeft + QPointF(-30, 0));
+                p->drawLine(topLeft, topLeft + QPointF(0, -30));
+                // gray back
+                p->setPen(Qt::NoPen);
+                p->setBrush(QColor(45,45,45));
+                p->drawRect(textRect.adjusted(-3, -3, 3, 3));
+                // text
+                p->setPen(QColor(255,255,255));
+                p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, infoText);
+            }
         }
     }
 
