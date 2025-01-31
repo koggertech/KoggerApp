@@ -59,7 +59,11 @@ void Surface::saveVerticesToFile(const QString& path)
         return;
     }
 
+#ifdef Q_OS_ANDROID
+    QString filePath = path;
+#else
     QString filePath = QUrl(path).toLocalFile();
+#endif
 
     auto* r = RENDER_IMPL(Surface);
     QSet<QVector3D> uniqueVertices(r->m_data.begin(), r->m_data.end());
