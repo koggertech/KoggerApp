@@ -2,11 +2,20 @@
 #define SURFACE_H
 
 #include <memory>
+#include <QVector3D>
+#include <QHash>
 
 #include <sceneobject.h>
 #include <contour.h>
 #include <surfacegrid.h>
 #include <surfaceprocessor.h>
+#include "plotcash.h"
+
+inline uint qHash(const QVector3D &key, uint seed = 0) {
+    return qHash(qRound(key.x() * 1000), seed) ^
+           qHash(qRound(key.y() * 1000), seed >> 1) ^
+           qHash(qRound(key.z() * 1000), seed << 1);
+}
 
 class Surface : public SceneObject
 {
@@ -43,7 +52,8 @@ public:
     Contour* contour() const;
     SurfaceGrid* grid() const;
     SurfaceProcessorTask processingTask() const;
-
+    void setLlaRef(LLARef llaRef);
+    void saveVerticesToFile(const QString& path);
 
 private:
     void updateContour();
@@ -58,6 +68,7 @@ private:
     std::shared_ptr <Contour> m_contour;
     std::shared_ptr <SurfaceGrid> m_grid;
     SurfaceProcessorTask m_processingTask;
+    LLARef llaRef_;
 };
 
 #endif // SURFACE_H

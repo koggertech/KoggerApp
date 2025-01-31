@@ -39,6 +39,7 @@ public:
 
     Q_INVOKABLE void onFilterTypeComboBoxIndexChanged(int index);
 
+    Q_INVOKABLE void onExportToCSVButtonClicked(const QString& path);
 
 
 Q_SIGNALS:

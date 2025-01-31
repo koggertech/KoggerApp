@@ -124,6 +124,21 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
         return;
 }
 
+void SurfaceControlMenuController::onExportToCSVButtonClicked(const QString& path)
+{
+    if (!m_graphicsSceneView) {
+        qDebug().noquote() << "m_graphicsSceneView is nullptr!";
+        return;
+    }
+
+    if (m_surfaceProcessor.isBusy()) {
+        qDebug().noquote() << "Surface processor is busy!";
+        return;
+    }
+
+    m_graphicsSceneView->surface()->saveVerticesToFile(path);
+}
+
 void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int triangleEdgeLengthLimitSpinBox,
                                                                 int gridCellSizeSpinBox,
                                                                 int decimationCountSpinBox,

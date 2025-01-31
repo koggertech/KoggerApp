@@ -47,6 +47,42 @@ SurfaceProcessorTask Surface::processingTask() const
     return m_processingTask;
 }
 
+void Surface::setLlaRef(LLARef llaRef)
+{
+    llaRef_ = llaRef;
+}
+
+void Surface::saveVerticesToFile(const QString& path)
+{
+    if (!llaRef_.isInit) {
+        qWarning() << "Surface::saveVerticesToFile: !llaRef_.isInit";
+        return;
+    }
+
+    QString filePath = QUrl(path).toLocalFile();
+
+    auto* r = RENDER_IMPL(Surface);
+    QSet<QVector3D> uniqueVertices(r->m_data.begin(), r->m_data.end());
+
+    QFile file(filePath);
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        qWarning() << "Failed to open file for writing:" << filePath;
+        return;
+    }
+
+    QTextStream out(&file);
+    out << "lat,lon,alt,x,y,z\n";
+    for (const QVector3D& vertex : uniqueVertices) {
+        NED tmpNed(vertex.x(), vertex.y(), vertex.z());
+        LLA lla(&tmpNed, &llaRef_);
+        if (isfinite(lla.latitude) && isfinite(lla.longitude) && isfinite(vertex.x()) && isfinite(vertex.y()) && isfinite(vertex.z())) {
+            out << lla.latitude << "," << lla.longitude << "," << vertex.z() << "," << vertex.x() << "," << vertex.y() << "," << vertex.z() << "\n";
+        }
+    }
+
+    file.close();
+}
+
 void Surface::setData(const QVector<QVector3D>& data, int primitiveType)
 {
     SceneObject::setData(data, primitiveType);
