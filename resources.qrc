@@ -5,7 +5,7 @@
         <file>languages/translation_pl.qm</file>
         <file>assets/fonts/arial.ttf</file>
         <file>assets/fonts/PTSansCaption-Regular.ttf</file>
-		<file>assets/fonts/Asap-Regular.ttf</file>
+		<file>assets/fonts/Roboto-VariableFont_wdth,wght.ttf</file>		
         <file>version.txt</file>
     </qresource>
 </RCC>

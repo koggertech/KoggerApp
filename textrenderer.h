@@ -1,12 +1,15 @@
-#ifndef TEXTRENDERER_H
-#define TEXTRENDERER_H
+#pragma once
 
 #include <sceneobject.h>
 
 #include <QOpenGLBuffer>
 #include <QOpenGLTexture>
 #include <QOpenGLShaderProgram>
-
+#include <QColor>
+#include <QMap>
+#include <QMatrix4x4>
+#include <QVector2D>
+#include <QVector3D>
 #include <memory>
 
 class QOpenGLFunctions;
@@ -58,8 +61,8 @@ private:
     struct Character
     {
         std::shared_ptr<QOpenGLTexture> texture;
-        char num          = 0;
-        GLuint    advance = 0; ///< horizontal offset of the next character
+        uint16_t num     = 0;
+        GLuint   advance = 0; ///< horizontal offset of the next character
         QVector2D size;        ///< glyph size
         QVector2D bearing;     ///< bottom left corner position on font atlas
 
@@ -76,7 +79,7 @@ private:
         }
     };
 
-    QMap<char,Character> m_chars;
+    QMap<uint16_t, Character> m_chars;
     QOpenGLBuffer m_arrayBuffer;
     QOpenGLBuffer m_indexBuffer;
     QColor m_color = {0,0,0};
@@ -86,5 +89,3 @@ private:
     static constexpr int stride3d = 5 * sizeof(float);
     static constexpr int stride2d = 4 * sizeof(float);
 };
-
-#endif // TEXTRENDERER_H
