@@ -1,6 +1,7 @@
 @echo off
 
 REM add to path (default loc):
+REM C:\Qt\Tools\mingw810_64\bin
 REM C:\Qt\5.15.2\mingw81_64\bin
 REM C:\Program Files\7-Zip
 
