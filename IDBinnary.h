@@ -22,6 +22,7 @@ typedef enum {
     BoardEcho20 = 12,
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
+    BoardNanoSSS = 17,
 
 } BoardVersion;
 
@@ -195,6 +196,7 @@ public:
     U2 offsetRange() {return m_absOffset*m_sampleResol; }
 
     uint8_t* logData8() { return m_completeChart; }
+    uint8_t* logData28() { return m_completeChart2; }
     // uint8_t* rawData() { return _rawDataSave; }
     // uint32_t rawDataSize() { return _rawDataSize; }
     // uint8_t rawType() { return type; }
@@ -205,6 +207,7 @@ protected:
     uint32_t m_chartSize = 0;
     uint8_t m_fillChart[20000];
     uint8_t m_completeChart[20000];
+    uint8_t m_completeChart2[20000];
 
     bool m_isCompleteChart = false;
 

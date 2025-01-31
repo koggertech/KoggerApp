@@ -960,12 +960,17 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
     Q_UNUSED(resp);
 
     if(idChart->isCompleteChart()) {
-        if(ver == v0) {
+        if(ver == v0 || ver == v1) {
             QVector<uint8_t> data(idChart->chartSize());
             memcpy(data.data(), idChart->logData8(), idChart->chartSize());
 
             emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
 
+            if(ver == v1) {
+                QVector<uint8_t> data2(idChart->chartSize());
+                memcpy(data2.data(), idChart->logData28(), idChart->chartSize());
+                emit chartComplete(_lastAddres+1, data2, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+            }
         }
         // else if(ver == v7) {
         //     QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
@@ -1081,6 +1086,10 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 break;
             case BoardEcho20:
                 m_devName = "ECHO20";
+                break;
+
+            case BoardNanoSSS:
+                m_devName = "NanoSSS";
                 break;
 
             case BoardUSBL:

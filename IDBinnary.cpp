@@ -199,7 +199,7 @@ Resp IDBinDist::parsePayload(FrameParser &proto) {
 }
 
 Resp IDBinChart::parsePayload(FrameParser &proto) {
-    if(proto.ver() == v0) {
+    if(proto.ver() == v0 || proto.ver() == v1) {
         U2 m_seqOffset = proto.read<U2>();
         U2 sampleResol = proto.read<U2>();
         U2 absOffset = proto.read<U2>();
@@ -208,8 +208,21 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
 //            for(uint16_t i = 0; i < m_chartSizeIncr; i++) {
 //                m_completeChart[i] = m_fillChart[i];
 //            }
-            memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
-            m_chartSize = m_chartSizeIncr;
+            // memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
+            // memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
+            // m_chartSize = m_chartSizeIncr;
+            if(proto.ver() == v0) {
+                memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
+                m_chartSize = m_chartSizeIncr;
+            } else if(proto.ver() == v1) {
+                for(uint32_t i = 0; i < m_chartSizeIncr/2; i++) {
+                    m_completeChart[i] = m_fillChart[i*2];
+                    m_completeChart2[i] = m_fillChart[i*2+1];
+                }
+                m_chartSize = m_chartSizeIncr/2;
+            }
+
+
             m_isCompleteChart = true;
         }
 
