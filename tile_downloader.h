@@ -40,9 +40,9 @@ signals:
 private slots:
     void onTileDownloaded(QNetworkReply *reply);
     void checkNetworkAvailabilityAsync();
-#ifdef Q_OS_WINDOWS
-    void onHostLookupFinished(QHostInfo hostInfo);
-#endif
+//#ifdef Q_OS_WINDOWS
+//    void onHostLookupFinished(QHostInfo hostInfo);
+//#endif
 
 private:
     void startNextDownload();

@@ -174,7 +174,7 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 
 void TileDownloader::checkNetworkAvailabilityAsync()
 {
-#ifdef Q_OS_ANDROID
+#ifndef Q_OS_ANDROID
     networkAvailable_ = true; // TODO
     // QTcpSocket socket; 
     // socket.connectToHost("8.8.8.8", 53);
@@ -186,12 +186,12 @@ void TileDownloader::checkNetworkAvailabilityAsync()
     // qDebug() << "internet UNavailable";
     // networkAvailable_= false;
 #else
-    if (hostLookupId_ == -1) {
-        hostLookupId_ = QHostInfo::lookupHost("www.google.com", this, &TileDownloader::onHostLookupFinished);
-    }
+    //if (hostLookupId_ == -1) {
+    //    hostLookupId_ = QHostInfo::lookupHost("www.google.com", this, &TileDownloader::onHostLookupFinished);
+    //}
 #endif
 }
-
+/*
 #ifndef Q_OS_ANDROID
 void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
 {
@@ -223,6 +223,6 @@ void TileDownloader::onHostLookupFinished(QHostInfo hostInfo)
 #endif
 }
 #endif
-
+*/
 
 } // namespace map
