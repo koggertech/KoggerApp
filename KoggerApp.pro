@@ -119,9 +119,24 @@ RESOURCES += QML/qml.qrc \
     resources.qrc
 
 windows {
+    message("Building for Windows with full OpenGL")
+    LIBS += -lopengl32
     RESOURCES += shaders.qrc
 }
+linux {
+    contains(QMAKE_HOST.arch, arm) {
+        message("Building for Raspberry Pi (ARM) with OpenGL ES")
+        DEFINES += USE_OPENGLES
+        LIBS += -lGLESv2
+        RESOURCES += android_build/shaders.qrc
+    } else {
+        message("Building for Ubuntu Desktop with full OpenGL")
+        LIBS += -lGL
+        RESOURCES += shaders.qrc
+    }
+}
 android {
+    message("Building for Android (ARM) with OpenGL ES")
     RESOURCES += android_build/shaders.qrc
 }
 
@@ -252,10 +267,6 @@ DISTFILES += \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
-windows {
-    LIBS += -lopengl32
-}
-
 win32:RC_FILE = file.rc
 
 android {
@@ -265,7 +276,8 @@ android {
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+#else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+else:unix:!android: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
 
 INCLUDEPATH += $$PWD/libs/freetype/include
 DEPENDPATH += $$PWD/libs/freetype/include
