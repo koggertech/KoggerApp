@@ -164,8 +164,11 @@ int main(int argc, char *argv[])
 
     QObject::connect(&app,  &QGuiApplication::aboutToQuit,
                      &core, [&]() {
+                                core.saveLLARefToSettings();
+                                core.removeLinkManagerConnections();
                                 core.stopLinkManagerTimer();
 #ifdef SEPARATE_READING
+                                void removeDeviceManagerConnections();
                                 core.stopDeviceManagerThread();
 #endif
                             });

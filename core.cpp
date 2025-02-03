@@ -32,11 +32,7 @@ Core::Core() :
 
 Core::~Core()
 {
-    saveLLARefToSettings();
-    removeLinkManagerConnections();
-#ifdef SEPARATE_READING
-    removeDeviceManagerConnections();
-#endif
+
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)
