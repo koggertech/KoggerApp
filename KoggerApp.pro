@@ -274,10 +274,21 @@ android {
     LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
 }
 
+linux {
+    contains(QMAKE_HOST.arch, arm) {
+        message("Using freetype for Raspberry Pi 4 (aarch64)")
+        LIBS += -L$$PWD/libs/freetype/lib/aarch64 -lfreetype
+        LIBS += -lpng -lbrotlidec
+    }
+    else {
+        LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+    }
+}
+
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 #else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
-else:unix:!android: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+#else:unix:!android: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
 
 INCLUDEPATH += $$PWD/libs/freetype/include
 DEPENDPATH += $$PWD/libs/freetype/include
