@@ -1,12 +1,12 @@
-#version 330 core
+#version 120
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec2 texCoord;
+attribute vec3 position;
+attribute vec2 texCoord;
 
 uniform mat4 mvp;
 
-out vec2 vTexCoord;
-out float vHeight;
+varying vec2 vTexCoord;
+varying float vHeight;
 
 void main()
 {

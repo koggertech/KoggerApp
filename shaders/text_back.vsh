@@ -1,8 +1,8 @@
-#version 330 core
+#version 120
 
 uniform mat4 mvp_matrix;
 
-layout(location = 0) in vec3 a_position;
+attribute vec3 a_position;
 
 void main()
 {
