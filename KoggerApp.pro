@@ -124,17 +124,21 @@ windows {
     RESOURCES += shaders.qrc
 }
 linux {
-    contains(QMAKE_HOST.arch, arm) {
+    PLATFORM_ARCH = $$system(uname -m)    
+    equals(PLATFORM_ARCH, aarch64) {
         message("Building for Raspberry Pi (ARM) with OpenGL ES")
-        DEFINES += USE_OPENGLES
+        #DEFINES += USE_OPENGLES
+        DEFINES += LINUX_ES
         LIBS += -lGLESv2
         RESOURCES += android_build/shaders.qrc
     } else {
         message("Building for Ubuntu Desktop with full OpenGL")
+        DEFINES += LINUX_DESKTOP
         LIBS += -lGL
         RESOURCES += shaders.qrc
     }
 }
+
 android {
     message("Building for Android (ARM) with OpenGL ES")
     RESOURCES += android_build/shaders.qrc

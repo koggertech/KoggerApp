@@ -178,6 +178,9 @@ void MapView::MapViewRenderImplementation::render(QOpenGLFunctions *ctx,
                                                       const QMatrix4x4 &projection,
                                                       const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
+    QOpenGLFunctions* glFuncss = QOpenGLContext::currentContext()->functions();
+    qDebug() << "GLVERSION:" << reinterpret_cast<const char*>(glFuncss->glGetString(GL_VERSION));
+
     if (!m_isVisible)
         return;
 /*
