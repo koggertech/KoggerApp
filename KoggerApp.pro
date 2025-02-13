@@ -123,8 +123,8 @@ windows {
     LIBS += -lopengl32
     RESOURCES += shaders.qrc
 }
-linux {
-    PLATFORM_ARCH = $$system(uname -m)    
+linux:!android {
+    PLATFORM_ARCH = $$system(uname -m)
     equals(PLATFORM_ARCH, aarch64) {
         message("Building for Raspberry Pi (ARM) with OpenGL ES")
         #DEFINES += USE_OPENGLES
@@ -278,7 +278,7 @@ android {
     LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
 }
 
-linux {
+linux:!android {
     contains(QMAKE_HOST.arch, arm) {
         message("Using freetype for Raspberry Pi 4 (aarch64)")
         LIBS += -L$$PWD/libs/freetype/lib/aarch64 -lfreetype

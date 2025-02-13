@@ -513,7 +513,7 @@ ColumnLayout {
                 nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
 
                 onAccepted: {
-                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", "/")
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
@@ -547,7 +547,7 @@ ColumnLayout {
                 nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
 
                 onAccepted: {
-                    pathText.text = appendFileDialog.fileUrl.toString().replace("file:///", "/")
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 
