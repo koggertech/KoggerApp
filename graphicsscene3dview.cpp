@@ -1015,7 +1015,7 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
     if (!task.empty()) {
         GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
 
-//#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
         if (colorTableTextureId) {
             glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
@@ -1033,24 +1033,24 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
 
             sideScanPtr->setColorTableTextureId(colorTableTextureId);
         }
-// #else
-//         if (colorTableTextureId) {
-//             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-//             glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-//         }
-//         else {
-//             glGenTextures(1, &colorTableTextureId);
-//             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+#else
+         if (colorTableTextureId) {
+             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+             glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+         }
+         else {
+             glGenTextures(1, &colorTableTextureId);
+             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
 
-//             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-//             glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+             glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
 
-//             sideScanPtr->setColorTableTextureId(colorTableTextureId);
-//         }
-// #endif
+             sideScanPtr->setColorTableTextureId(colorTableTextureId);
+         }
+#endif
     }
 }
 
