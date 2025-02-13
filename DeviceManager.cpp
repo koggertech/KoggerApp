@@ -742,7 +742,7 @@ void DeviceManager::deleteDevicesByLink(QUuid uuid)
 #ifdef SEPARATE_READING
             QMetaObject::invokeMethod(i.value(), "deleteLater", Qt::QueuedConnection);
 #else
-            delete i.value();
+            i.value()->deleteLater();
 #endif
         }
         devTree_[uuid].clear();
