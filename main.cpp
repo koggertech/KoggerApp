@@ -113,17 +113,13 @@ int main(int argc, char *argv[])
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 #endif
 
-#ifndef LINUX_ES
     QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
-#endif
 
     QSurfaceFormat format;
 #ifdef LINUX_ES
     format.setRenderableType(QSurfaceFormat::OpenGLES);
-    format.setSwapInterval(1);
-#else
-    format.setSwapInterval(0);
 #endif
+    format.setSwapInterval(0);
 
     QSurfaceFormat::setDefaultFormat(format);
 
