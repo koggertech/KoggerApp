@@ -174,8 +174,10 @@ void TileDownloader::onTileDownloaded(QNetworkReply *reply)
 
 void TileDownloader::checkNetworkAvailabilityAsync()
 {
-#ifndef Q_OS_ANDROID
     networkAvailable_ = true; // TODO
+
+#ifndef Q_OS_ANDROID
+    //networkAvailable_ = true; // TODO
     // QTcpSocket socket; 
     // socket.connectToHost("8.8.8.8", 53);
     // if (socket.waitForConnected(2000)) {
