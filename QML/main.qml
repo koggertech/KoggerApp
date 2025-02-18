@@ -137,12 +137,33 @@ Window  {
     }
     // drag-n-drop <-
 
+    Item  {
+        id: keyHandler
+
+        Keys.onReleased: {
+            console.info("Keys.onReleased")
+
+            // fullscreen mode
+            if (event.key === Qt.Key_F11) {
+                if (mainview.visibility === Window.FullScreen) {
+                    mainview.showNormal();
+                    appSettings.isFullScreen = false;
+                }
+                else {
+                    appSettings.isFullScreen = true;
+                    mainview.showFullScreen();
+                }
+            }
+        }
+    }
+
     SplitView {
         visible: !showBanner
         Layout.fillHeight: true
         Layout.fillWidth:  true
         anchors.fill:      parent
         orientation:       Qt.Vertical
+        Keys.forwardTo: [keyHandler]
 
         handle: Rectangle {
             // implicitWidth:  5
@@ -160,19 +181,6 @@ Window  {
                 width:  parent.width
                 height: 1
                 color:  "#A0A0A0"
-            }
-        }
-
-        Keys.onReleased: {
-            if (event.key === Qt.Key_F11) {
-                if (mainview.visibility === Window.FullScreen) {
-                    mainview.showNormal();
-                    appSettings.isFullScreen = false;
-                }
-                else {
-                    appSettings.isFullScreen = true;
-                    mainview.showFullScreen();
-                }
             }
         }
 
@@ -541,6 +549,7 @@ Window  {
         visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
         isDraggable: true
         isOpacityControlled: true
+        Keys.forwardTo: [keyHandler]
 
         ColumnLayout {
             RowLayout {
@@ -656,7 +665,7 @@ Window  {
         id:                menuBar
         objectName:        "menuBar"
         Layout.fillHeight: true
-        Keys.forwardTo:    [mousearea3D]
+        Keys.forwardTo:    [keyHandler, mousearea3D]
         height: visualisationLayout.height
         targetPlot: waterView
         visible: !showBanner
