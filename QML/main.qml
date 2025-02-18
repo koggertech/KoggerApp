@@ -203,6 +203,25 @@ Window  {
                 waterView.plotEchogramSetLevels(newLow, newHigh);
                 waterView.setLevels(newLow, newHigh);
             }
+            if (event.key === Qt.Key_C) {
+                let themeId = waterView.getThemeId();
+                if (themeId > 0) {
+                    waterView.plotEchogramTheme(themeId - 1)
+                }
+            }
+            if (event.key === Qt.Key_V) {
+                let themeId = waterView.getThemeId();
+                if (themeId < 4) {
+                    waterView.plotEchogramTheme(themeId + 1)
+                }
+            }
+            // on/off 2D/3D
+            if (event.key === Qt.Key_Z) {
+                menuBar.click3D();
+            }
+            if (event.key === Qt.Key_X) {
+                menuBar.click2D();
+            }
         }
     }
 
