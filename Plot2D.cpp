@@ -179,6 +179,16 @@ double Plot2D::getContactDepth()
     return contacts_.getDepth();
 }
 
+float Plot2D::getEchogramLowLevel() const
+{
+    return _echogram.getLowLevel();
+}
+
+float Plot2D::getEchogramHighLevel() const
+{
+    return _echogram.getHighLevel();
+}
+
 void Plot2D::setEchogramLowLevel(float low) {
     _echogram.setLowLevel(low);
     plotUpdate();

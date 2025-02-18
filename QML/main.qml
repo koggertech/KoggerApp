@@ -141,8 +141,6 @@ Window  {
         id: keyHandler
 
         Keys.onReleased: {
-            console.info("Keys.onReleased")
-
             // fullscreen mode
             if (event.key === Qt.Key_F11) {
                 if (mainview.visibility === Window.FullScreen) {
@@ -153,6 +151,57 @@ Window  {
                     appSettings.isFullScreen = true;
                     mainview.showFullScreen();
                 }
+            }
+
+            // echogram
+            let shift = 100
+            if (event.key === Qt.Key_Q) {
+                waterView.horScrollEvent(-shift)
+            }
+            if (event.key === Qt.Key_A) {
+                waterView.horScrollEvent(shift)
+            }
+            if (event.key === Qt.Key_W) {
+                waterView.verScrollEvent(-shift)
+            }
+            if (event.key === Qt.Key_S) {
+                waterView.verScrollEvent(shift)
+            }
+            if (event.key === Qt.Key_E) {
+                waterView.verZoomEvent(-shift)
+            }
+            if (event.key === Qt.Key_D) {
+                waterView.verZoomEvent(shift)
+            }
+            if (event.key === Qt.Key_R) {
+                let newLow = Math.min(120, waterView.getLowEchogramLevel() + 1);
+                let newHigh = waterView.getHighEchogramLevel();
+                if (newLow > newHigh) {
+                    newHigh = newLow;
+                }
+                waterView.plotEchogramSetLevels(newLow, newHigh);
+                waterView.setLevels(newLow, newHigh);
+            }
+            if (event.key === Qt.Key_F) {
+                let newLow = Math.max(0, waterView.getLowEchogramLevel() - 1);
+                let newHigh = waterView.getHighEchogramLevel();
+                waterView.plotEchogramSetLevels(newLow, newHigh);
+                waterView.setLevels(newLow, newHigh);
+            }
+            if (event.key === Qt.Key_T) {
+                let newHigh = Math.min(120, waterView.getHighEchogramLevel() + 1);
+                let newLow = waterView.getLowEchogramLevel();
+                waterView.plotEchogramSetLevels(newLow, newHigh);
+                waterView.setLevels(newLow, newHigh);
+            }
+            if (event.key === Qt.Key_G) {
+                let newHigh = Math.max(0, waterView.getHighEchogramLevel() - 1);
+                let newLow = waterView.getLowEchogramLevel();
+                if (newHigh < newLow) {
+                    newLow = newHigh;
+                }
+                waterView.plotEchogramSetLevels(newLow, newHigh);
+                waterView.setLevels(newLow, newHigh);
             }
         }
     }

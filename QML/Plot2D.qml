@@ -9,6 +9,12 @@ import WaterFall 1.0
 WaterFall {
     id: plot
 
+    function setLevels(low, high) {
+        echogramLevelsSlider.startValue = low
+        echogramLevelsSlider.stopValue = high
+        echogramLevelsSlider.update()
+    }
+
     PinchArea {
         id: pinch2D
         anchors.fill: parent

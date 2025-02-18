@@ -329,4 +329,12 @@ bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor
     return true;
 }
 
+float Plot2DEchogram::getLowLevel() const
+{
+    return _levels.low;
+}
 
+float Plot2DEchogram::getHighLevel() const
+{
+    return _levels.high;
+}

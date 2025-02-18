@@ -251,6 +251,8 @@ public:
     Plot2DEchogram();
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
 
+    float getLowLevel() const;
+    float getHighLevel() const;
     void setLowLevel(float low);
     void setHightLevel(float high);
     void setLevels(float low, float hight);
@@ -936,6 +938,8 @@ public:
     double  getContactLon();
     double  getContactDepth();
 
+    float getEchogramLowLevel() const;
+    float getEchogramHighLevel() const;
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);
     void setEchogramVisible(bool visible);
