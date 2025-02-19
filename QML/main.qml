@@ -141,96 +141,115 @@ Window  {
         id: keyHandler
 
         Keys.onReleased: {
-            // fullscreen mode
-            if (event.key === Qt.Key_F11) {
+            let sc = event.nativeScanCode.toString()
+            let hotkeyData = hotkeysMapScan[sc];
+            if (hotkeyData === undefined) {
+                return
+            }
+
+            let fn = hotkeyData["funcName"];
+            let p = hotkeyData["step"];
+
+            if (fn === "toggleFullScreen") {
                 if (mainview.visibility === Window.FullScreen) {
-                    mainview.showNormal();
-                    appSettings.isFullScreen = false;
+                    mainview.showNormal()
+                    appSettings.isFullScreen = false
                 }
                 else {
-                    appSettings.isFullScreen = true;
-                    mainview.showFullScreen();
+                    mainview.showFullScreen()
+                    appSettings.isFullScreen = true
                 }
 
                 // try redraw mainView
                 let oldGeometry = Qt.rect(mainview.x, mainview.y, mainview.width, mainview.height);
                 mainview.setGeometry(mainview.x, mainview.y, mainview.width - 1, mainview.height - 1);
                 Qt.callLater(() => mainview.setGeometry(oldGeometry.x, oldGeometry.y, oldGeometry.width, oldGeometry.height));
+
+                return;
             }
+
+            //console.info(mainview.activeFocusItem.toString())
 
             if (mainview.activeFocusItem &&
                 (mainview.activeFocusItem instanceof TextEdit || mainview.activeFocusItem instanceof TextField)) {
                 return;
             }
 
-            // echogram
-            let shift = 100
-            if (event.key === Qt.Key_Q) {
-                waterView.horScrollEvent(-shift)
-            }
-            if (event.key === Qt.Key_A) {
-                waterView.horScrollEvent(shift)
-            }
-            if (event.key === Qt.Key_W) {
-                waterView.verScrollEvent(-shift)
-            }
-            if (event.key === Qt.Key_S) {
-                waterView.verScrollEvent(shift)
-            }
-            if (event.key === Qt.Key_E) {
-                waterView.verZoomEvent(-shift)
-            }
-            if (event.key === Qt.Key_D) {
-                waterView.verZoomEvent(shift)
-            }
-            if (event.key === Qt.Key_R) {
-                let newLow = Math.min(120, waterView.getLowEchogramLevel() + 1);
-                let newHigh = waterView.getHighEchogramLevel();
-                if (newLow > newHigh) {
-                    newHigh = newLow;
+            if (fn !== undefined) {
+                if (p === undefined) {
+                    p = 5
                 }
-                waterView.plotEchogramSetLevels(newLow, newHigh);
-                waterView.setLevels(newLow, newHigh);
-            }
-            if (event.key === Qt.Key_F) {
-                let newLow = Math.max(0, waterView.getLowEchogramLevel() - 1);
-                let newHigh = waterView.getHighEchogramLevel();
-                waterView.plotEchogramSetLevels(newLow, newHigh);
-                waterView.setLevels(newLow, newHigh);
-            }
-            if (event.key === Qt.Key_T) {
-                let newHigh = Math.min(120, waterView.getHighEchogramLevel() + 1);
-                let newLow = waterView.getLowEchogramLevel();
-                waterView.plotEchogramSetLevels(newLow, newHigh);
-                waterView.setLevels(newLow, newHigh);
-            }
-            if (event.key === Qt.Key_G) {
-                let newHigh = Math.max(0, waterView.getHighEchogramLevel() - 1);
-                let newLow = waterView.getLowEchogramLevel();
-                if (newHigh < newLow) {
-                    newLow = newHigh;
+
+                switch (fn) {
+                case "horScrollLeft":
+                    waterView.horScrollEvent(-p)
+                    break
+                case "horScrollRight":
+                    waterView.horScrollEvent(p)
+                    break
+                case "verScrollUp":
+                    waterView.verScrollEvent(-p)
+                    break
+                case "verScrollDown":
+                    waterView.verScrollEvent(p)
+                    break
+                case "verZoomOut":
+                    waterView.verZoomEvent(-p)
+                    break
+                case "verZoomIn":
+                    waterView.verZoomEvent(p)
+                    break
+                case "increaseLowLevel": {
+                    let newLow = Math.min(120, waterView.getLowEchogramLevel() + p)
+                    let newHigh = waterView.getHighEchogramLevel()
+                    if (newLow > newHigh) newHigh = newLow
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
                 }
-                waterView.plotEchogramSetLevels(newLow, newHigh);
-                waterView.setLevels(newLow, newHigh);
-            }
-            if (event.key === Qt.Key_C) {
-                let themeId = waterView.getThemeId();
-                if (themeId > 0) {
-                    waterView.plotEchogramTheme(themeId - 1)
+                case "decreaseLowLevel": {
+                    let newLow = Math.max(0, waterView.getLowEchogramLevel() - p)
+                    let newHigh = waterView.getHighEchogramLevel()
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
                 }
-            }
-            if (event.key === Qt.Key_V) {
-                let themeId = waterView.getThemeId();
-                if (themeId < 4) {
-                    waterView.plotEchogramTheme(themeId + 1)
+                case "increaseHighLevel": {
+                    let newHigh = Math.min(120, waterView.getHighEchogramLevel() + p)
+                    let newLow = waterView.getLowEchogramLevel()
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
                 }
-            }
-            // on/off 2D/3D
-            if (event.key === Qt.Key_Z) {
-                menuBar.click3D();
-            }
-            if (event.key === Qt.Key_X) {
-                menuBar.click2D();
+                case "decreaseHighLevel": {
+                    let newHigh = Math.max(0, waterView.getHighEchogramLevel() - p)
+                    let newLow = waterView.getLowEchogramLevel()
+                    if (newHigh < newLow) newLow = newHigh
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
+                }
+                case "prevTheme": {
+                    let themeId = waterView.getThemeId()
+                    if (themeId > 0) waterView.plotEchogramTheme(themeId - 1)
+                    break
+                }
+                case "nextTheme": {
+                    let themeId = waterView.getThemeId()
+                    if (themeId < 4) waterView.plotEchogramTheme(themeId + 1)
+                    break
+                }
+                case "click3D":{
+                    menuBar.click3D()
+                    break
+                }
+                case "click2D":{
+                    menuBar.click2D()
+                    break
+                }
+                default:
+                    break
+                }
             }
         }
     }

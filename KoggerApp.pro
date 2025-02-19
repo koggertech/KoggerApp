@@ -90,7 +90,8 @@ SOURCES += \
     tile_google_provider.cpp \
     tile_downloader.cpp \
     tile_db.cpp \
-    map_defs.cpp
+    map_defs.cpp \
+    hotkeys_manager.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -202,7 +203,8 @@ HEADERS += \
     tile_google_provider.h \
     tile_downloader.h \
     tile_db.h \
-    map_defs.h
+    map_defs.h \
+    hotkeys_manager.h
 
 android {
 HEADERS += \

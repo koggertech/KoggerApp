@@ -3,6 +3,7 @@
 #include <QSettings>
 #include <ctime>
 #include "bottomtrack.h"
+#include "hotkeys_manager.h"
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>
 #endif
@@ -977,6 +978,11 @@ void Core::UILoad(QObject* object, const QUrl& url)
     Q_UNUSED(url)
 
     loadLLARefFromSettings();
+
+    HotkeysManager hotkeysManager;
+    auto hotkeysMap = hotkeysManager.loadHotkeysMapping();
+    auto hotkeysVariant = HotkeysManager::toVariantMap(hotkeysMap);
+    qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysMapScan", hotkeysVariant);
 
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
     plot2dList_ = object->findChildren<qPlot2D*>();
