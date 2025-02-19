@@ -151,6 +151,16 @@ Window  {
                     appSettings.isFullScreen = true;
                     mainview.showFullScreen();
                 }
+
+                // try redraw mainView
+                let oldGeometry = Qt.rect(mainview.x, mainview.y, mainview.width, mainview.height);
+                mainview.setGeometry(mainview.x, mainview.y, mainview.width - 1, mainview.height - 1);
+                Qt.callLater(() => mainview.setGeometry(oldGeometry.x, oldGeometry.y, oldGeometry.width, oldGeometry.height));
+            }
+
+            if (mainview.activeFocusItem &&
+                (mainview.activeFocusItem instanceof TextEdit || mainview.activeFocusItem instanceof TextField)) {
+                return;
             }
 
             // echogram
