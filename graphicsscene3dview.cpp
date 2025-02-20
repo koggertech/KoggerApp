@@ -314,7 +314,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         m_bottomTrack->mouseMoveEvent(mouseButton, x, y);
     }
     else {
-#ifdef Q_OS_ANDROID
+#if defined(Q_OS_ANDROID)
         Q_UNUSED(keyboardKey);
         auto fromOrig = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
         auto fromEnd = QVector3D(m_startMousePos.x(), height() - m_startMousePos.y(), 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
@@ -1297,7 +1297,7 @@ void GraphicsScene3dView::Camera::moveZAxis(float z)
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
-#ifdef Q_OS_ANDROID
+#ifdef Q_OS_ANDROID // LINUX_ES?
     const float increaseCoeff{ 0.95f };
     m_distToFocusPoint -= delta * m_distToFocusPoint * increaseCoeff;
     distForMapView_ = m_distToFocusPoint;

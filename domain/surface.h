@@ -33,7 +33,7 @@ public:
                             const QMatrix4x4& mvp,
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
-#if defined (Q_OS_ANDROID)
+#if defined (Q_OS_ANDROID) || defined(LINUX_ES)
         QVector<QVector3D> quadSurfaceVertices_;
 #endif
     private:

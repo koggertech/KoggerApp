@@ -4,7 +4,7 @@
 #include <QVector3D>
 
 #include "qsystemdetection.h"
-#if !defined(Q_OS_ANDROID)
+#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
 #include <GL/gl.h>
 #else
 #include <GLES2/gl2.h>
