@@ -307,6 +307,8 @@ WaterFall {
 
         onVisibleChanged: {
             if (!visible) {
+                parent.focus = true
+
                 if (accepted) {
                     plot.setContact(contactDialog.indx, contactDialog.inputFieldText)
                     accepted = false
