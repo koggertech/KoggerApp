@@ -6,7 +6,29 @@
 #include <QStandardPaths>
 #include <QXmlStreamReader>
 
+
 // default hotkeys template
+#if defined(Q_OS_LINUX)
+const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encoding="UTF-8"?>
+<Hotkeys>
+    <Hotkey scanCode="38" functionName="horScrollRight"    step="100" description="horizontal scroll of echogram to the right"/>
+    <Hotkey scanCode="24" functionName="horScrollLeft"     step="100" description="horizontal scroll of echogram to the left"/>
+    <Hotkey scanCode="25" functionName="verScrollUp"       step="100" description="vertical scroll of echogram up"/>
+    <Hotkey scanCode="39" functionName="verScrollDown"     step="100" description="vertical scroll of echogram down"/>
+    <Hotkey scanCode="40" functionName="verZoomIn"         step="100" description="echogram vertical zoom in"/>
+    <Hotkey scanCode="26" functionName="verZoomOut"        step="100" description="echogram vertical zoom out"/>
+    <Hotkey scanCode="27" functionName="increaseLowLevel"  step="1"   description="raise the lower slider of the echogram brightness"/>
+    <Hotkey scanCode="41" functionName="decreaseLowLevel"  step="1"   description="lower the lower slider of the echogram brightness"/>
+    <Hotkey scanCode="28" functionName="increaseHighLevel" step="1"   description="raise the upper slider of the echogram brightness"/>
+    <Hotkey scanCode="42" functionName="decreaseHighLevel" step="1"   description="lower the upper slider of the echogram brightness"/>
+    <Hotkey scanCode="52" functionName="click3D"                      description="click 3D button"/>
+    <Hotkey scanCode="53" functionName="click2D"                      description="click 2D button"/>
+    <Hotkey scanCode="54" functionName="prevTheme"                    description="switch the echogram theme to the previous one"/>
+    <Hotkey scanCode="55" functionName="nextTheme"                    description="switch the echogram theme to the next one"/>
+    <Hotkey scanCode="95" functionName="toggleFullScreen"             description="toggle fullscreen"/>
+</Hotkeys>
+)";
+#else
 const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encoding="UTF-8"?>
 <Hotkeys>
     <Hotkey scanCode="30" functionName="horScrollRight"    step="100" description="horizontal scroll of echogram to the right"/>
@@ -26,6 +48,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey scanCode="87" functionName="toggleFullScreen"             description="toggle fullscreen"/>
 </Hotkeys>
 )";
+#endif
 
 HotkeysManager::HotkeysManager()
 {
