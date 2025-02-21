@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 #endif
 
-    //QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
+    QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
 
     QSurfaceFormat format;
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)

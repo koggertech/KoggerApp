@@ -9,7 +9,7 @@ import WaterFall 1.0
 import KoggerCommon 1.0
 
 
-Window  {
+ApplicationWindow  {
     id:            mainview
     visible:       true
     width:         1024
@@ -26,6 +26,53 @@ Window  {
     Settings {
             id: appSettings
             property bool isFullScreen: false
+            property int savedX: 100
+            property int savedY: 100
+    }
+
+    StateGroup {
+        state: appSettings.isFullScreen ? "FullScreen" : "Windowed"
+
+        states: [
+            State {
+                name: "FullScreen"
+
+                StateChangeScript {
+                    script: {
+                        appSettings.savedX = mainview.x
+                        appSettings.savedY = mainview.y
+                    }
+                }
+
+                PropertyChanges {
+                    target: mainview
+                    visibility: "FullScreen"
+
+                    flags: Qt.FramelessWindowHint
+                    x: 0
+                    y: - 1
+                    width: Screen.width
+                    height: Screen.height + 1
+                }
+            },
+            State {
+                name: "Windowed"
+                StateChangeScript {
+                    script: {
+                        x: appSettings.savedX
+                        y: appSettings.savedY
+                        mainview.flags = Qt.Window
+                    }
+                }
+
+                PropertyChanges {
+                    target: mainview
+                    visibility: "Windowed"
+                    x: appSettings.savedX
+                    y: appSettings.savedY
+                }
+            }
+        ]
     }
 
     Component.onCompleted: {
@@ -156,15 +203,7 @@ Window  {
             let p = hotkeyData["step"];
 
             if (fn === "toggleFullScreen") {
-                if (mainview.visibility === Window.FullScreen) {
-                    mainview.showNormal()
-                    appSettings.isFullScreen = false
-                }
-                else {
-                    mainview.showFullScreen()
-                    appSettings.isFullScreen = true
-                }
-
+                appSettings.isFullScreen = !appSettings.isFullScreen
                 return;
             }
 
@@ -774,7 +813,7 @@ Window  {
         function onSurfaceProcessorTaskFinished() {
             surfaceProcessingProgressBar.visible = false
         }
-    }    
+    }
 
     // banner on file opening
     Rectangle {
