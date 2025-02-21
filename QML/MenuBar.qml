@@ -19,6 +19,16 @@ Item {
 
     signal languageChanged(string langStr)
 
+    function click2D() {
+        visible2dButton.checked = !visible2dButton.checked;
+        visible2dButton.clicked()
+    }
+
+    function click3D() {
+        settings3DButton.checked = !settings3DButton.checked;
+        settings3DButton.clicked()
+    }
+
     function itemChangeActive(currentItem) {
         if(currentItem) {
             currentItem.active = !(currentItem.active)

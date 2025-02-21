@@ -111,11 +111,7 @@ void VertexEditingDecorator::VertexEditingDecoratorRenderImplementation::render(
                        {m_data.at(0).x(), m_data.at(0).y() + 5, m_data.at(0).z()}};
     }
 
-#ifndef Q_OS_ANDROID
-    ctx->glEnable(GL_PROGRAM_POINT_SIZE);
-#else
     ctx->glEnable(34370);
-#endif
 
     int posLoc    = shaderProgram->attributeLocation("position");
     int matrixLoc = shaderProgram->uniformLocation("matrix");
@@ -133,11 +129,7 @@ void VertexEditingDecorator::VertexEditingDecoratorRenderImplementation::render(
     shaderProgram->setAttributeArray(posLoc, testLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, testLine.size());
 
-#ifndef Q_OS_ANDROID
-    ctx->glDisable(GL_PROGRAM_POINT_SIZE);
-#else
     ctx->glDisable(34370);
-#endif
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();

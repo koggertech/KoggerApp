@@ -70,6 +70,10 @@ Item {
         canvas.requestPaint()
     }
 
+    function update() {
+        canvas.requestPaint()
+    }
+
     MouseArea {
         id:mouseArea
         anchors.fill: parent

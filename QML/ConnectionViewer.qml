@@ -510,10 +510,10 @@ ColumnLayout {
                 title: qsTr("Please choose a file")
                 folder: shortcuts.home
 
-                nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
+                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
                 onAccepted: {
-                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", "")
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
@@ -544,10 +544,10 @@ ColumnLayout {
                 title: qsTr("Please choose a file")
                 folder: shortcuts.home
 
-                nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
+                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
                 onAccepted: {
-                    pathText.text = appendFileDialog.fileUrl.toString().replace("file:///", "")
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 

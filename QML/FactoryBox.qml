@@ -24,8 +24,8 @@ DevSettingsBox {
             property alias upgradeFolder: fileDialog.folder
         }
 
-    MenuBlock {
-    }
+    //MenuBlock {
+    //}
 
     ColumnLayout {
         id: columnItem

@@ -68,6 +68,11 @@ public:
 #ifdef FLASHER
     void getFlasherPtr() const;
 #endif
+    void saveLLARefToSettings();
+    void removeLinkManagerConnections();
+#ifdef SEPARATE_READING
+    void removeDeviceManagerConnections();
+#endif
 
 public slots:
 #ifdef SEPARATE_READING
@@ -135,18 +140,13 @@ private:
     ConsoleListModel* consoleList();
     void createControllers();
     void createDeviceManagerConnections();
-#ifdef SEPARATE_READING
-    void removeDeviceManagerConnections();
-#endif
     void createLinkManagerConnections();
-    void removeLinkManagerConnections();
     bool isOpenedFile() const;
     bool isFactoryMode() const;
     bool isMotorControlMode() const;
 
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
-    void saveLLARefToSettings();
     void loadLLARefFromSettings();
 
     /*data*/

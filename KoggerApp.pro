@@ -90,7 +90,8 @@ SOURCES += \
     tile_google_provider.cpp \
     tile_downloader.cpp \
     tile_db.cpp \
-    map_defs.cpp
+    map_defs.cpp \
+    hotkeys_manager.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -119,9 +120,28 @@ RESOURCES += QML/qml.qrc \
     resources.qrc
 
 windows {
+    message("Building for Windows with full OpenGL")
+    LIBS += -lopengl32
     RESOURCES += shaders.qrc
 }
+linux:!android {
+    PLATFORM_ARCH = $$system(uname -m)
+    equals(PLATFORM_ARCH, aarch64) {
+        message("Building for Raspberry Pi (ARM) with OpenGL ES")
+        #DEFINES += USE_OPENGLES
+        DEFINES += LINUX_ES
+        LIBS += -lGLESv2
+        RESOURCES += android_build/shaders.qrc
+    } else {
+        message("Building for Ubuntu Desktop with full OpenGL")
+        DEFINES += LINUX_DESKTOP
+        LIBS += -lGL
+        RESOURCES += shaders.qrc
+    }
+}
+
 android {
+    message("Building for Android (ARM) with OpenGL ES")
     RESOURCES += android_build/shaders.qrc
 }
 
@@ -183,7 +203,8 @@ HEADERS += \
     tile_google_provider.h \
     tile_downloader.h \
     tile_db.h \
-    map_defs.h
+    map_defs.h \
+    hotkeys_manager.h
 
 android {
 HEADERS += \
@@ -252,10 +273,6 @@ DISTFILES += \
     qtandroidserialport/src/qtandroidserialport.pri
 }
 
-windows {
-    LIBS += -lopengl32
-}
-
 win32:RC_FILE = file.rc
 
 android {
@@ -263,9 +280,21 @@ android {
     LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
 }
 
+linux:!android {
+    contains(QMAKE_HOST.arch, arm) {
+        message("Using freetype for Raspberry Pi 4 (aarch64)")
+        LIBS += -L$$PWD/libs/freetype/lib/aarch64 -lfreetype
+        LIBS += -lpng -lbrotlidec
+    }
+    else {
+        LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+    }
+}
+
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+#else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+#else:unix:!android: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
 
 INCLUDEPATH += $$PWD/libs/freetype/include
 DEPENDPATH += $$PWD/libs/freetype/include

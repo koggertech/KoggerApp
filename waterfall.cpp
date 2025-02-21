@@ -161,6 +161,21 @@ void qPlot2D::updateContact()
     Plot2D::updateContact();
 }
 
+float qPlot2D::getLowEchogramLevel() const
+{
+    return Plot2D::getEchogramLowLevel();
+}
+
+float qPlot2D::getHighEchogramLevel() const
+{
+    return Plot2D::getEchogramHighLevel();
+}
+
+int qPlot2D::getThemeId() const
+{
+    return Plot2D::getThemeId();
+}
+
 void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
     if (_dataset != nullptr) {
         if (auto btpPtr =_dataset->getBottomTrackParamPtr(); btpPtr) {

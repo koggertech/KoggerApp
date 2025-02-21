@@ -144,23 +144,16 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
     glDisable(GL_BLEND);
 
     /*----------------------------dimentions lines----------------------------*/
-#ifdef Q_OS_ANDROID
     glEnable(2852);
-#else
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(2,0X11FF);
-#endif
+    
     ctx->glLineWidth(4.0f);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
     shaderProgram->setAttributeArray(posLoc, horzSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, horzSizeLine.size());
     shaderProgram->setAttributeArray(posLoc, vertSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, vertSizeLine.size());
-#ifdef Q_OS_ANDROID
+
     glDisable(2852);
-#else
-    glDisable(GL_LINE_STIPPLE);
-#endif
 
     /*----------------------------dimentions lines reference----------------------------*/
     shaderProgram->setAttributeArray(posLoc, horzReferenceLines.constData());
@@ -268,23 +261,16 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
     glDisable(GL_BLEND);
 
     /*----------------------------dimentions lines----------------------------*/
-#ifdef Q_OS_ANDROID
     glEnable(2852);
-#else
-    glEnable(GL_LINE_STIPPLE);
-    glLineStipple(2,0X11FF);
-#endif
+    
     ctx->glLineWidth(4.0f);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
     shaderProgram->setAttributeArray(posLoc, horzSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, horzSizeLine.size());
     shaderProgram->setAttributeArray(posLoc, vertSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, vertSizeLine.size());
-#ifdef Q_OS_ANDROID
+
     glDisable(2852);
-#else
-    glDisable(GL_LINE_STIPPLE);
-#endif
 
     // TODO
     /*----------------------------dimentions lines reference----------------------------*/

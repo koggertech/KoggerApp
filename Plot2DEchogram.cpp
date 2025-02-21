@@ -47,7 +47,20 @@ void Plot2DEchogram::setColorScheme(QVector<QColor> coloros, QVector<int> levels
     updateColors();
 }
 
+int Plot2DEchogram::getThemeId() const
+{
+    return static_cast<int>(themeId_);
+}
+
 void Plot2DEchogram::setThemeId(int theme_id) {
+
+    if (theme_id >= ClassicTheme && theme_id <= BWTheme) {
+        themeId_ = static_cast<ThemeId>(theme_id);
+    }
+    else {
+        themeId_ = ClassicTheme;
+    }
+
     QVector<QColor> coloros;
     QVector<int> levels;
 
@@ -329,4 +342,12 @@ bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor
     return true;
 }
 
+float Plot2DEchogram::getLowLevel() const
+{
+    return _levels.low;
+}
 
+float Plot2DEchogram::getHighLevel() const
+{
+    return _levels.high;
+}

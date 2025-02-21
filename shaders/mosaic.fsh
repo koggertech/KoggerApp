@@ -1,21 +1,21 @@
-#version 330 core
+#version 120
 
-in vec2 vTexCoord;
-in float vHeight;
+varying vec2 vTexCoord;
+varying float vHeight;
 
 uniform sampler2D indexedTexture;
 uniform sampler1D colorTable;
 
-out vec4 fragColor;
+varying vec4 fragColor;
 
 void main()
 {
-    float index = texture(indexedTexture, vTexCoord).r;
+    float index = texture2D(indexedTexture, vTexCoord).r;
 
     if (index == 0.0) {
         discard;
     }
     else {
-        fragColor = texture(colorTable, index);
+        gl_FragColor = texture1D(colorTable, index);
     }
 }

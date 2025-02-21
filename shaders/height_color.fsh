@@ -1,6 +1,5 @@
-#version 140
-
-in vec3 vertice;
+#version 120
+varying vec3 vertice;
 uniform float max_z;
 uniform float min_z;
 uniform int selectedPrimitiveFirstIndex;
