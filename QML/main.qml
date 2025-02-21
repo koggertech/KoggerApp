@@ -137,8 +137,13 @@ Window  {
     }
     // drag-n-drop <-
 
-    Item  {
-        id: keyHandler
+    SplitView {
+        id: splitLayer
+        visible: !showBanner
+        Layout.fillHeight: true
+        Layout.fillWidth:  true
+        anchors.fill:      parent
+        orientation:       Qt.Vertical
 
         Keys.onReleased: {
             let sc = event.nativeScanCode.toString()
@@ -247,15 +252,6 @@ Window  {
                 }
             }
         }
-    }
-
-    SplitView {
-        visible: !showBanner
-        Layout.fillHeight: true
-        Layout.fillWidth:  true
-        anchors.fill:      parent
-        orientation:       Qt.Vertical
-        Keys.forwardTo: [keyHandler]
 
         handle: Rectangle {
             // implicitWidth:  5
@@ -641,7 +637,7 @@ Window  {
         visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
         isDraggable: true
         isOpacityControlled: true
-        Keys.forwardTo: [keyHandler]
+        Keys.forwardTo: [splitLayer]
 
         ColumnLayout {
             RowLayout {
@@ -757,7 +753,7 @@ Window  {
         id:                menuBar
         objectName:        "menuBar"
         Layout.fillHeight: true
-        Keys.forwardTo:    [keyHandler, mousearea3D]
+        Keys.forwardTo:    [splitLayer, mousearea3D]
         height: visualisationLayout.height
         targetPlot: waterView
         visible: !showBanner
