@@ -141,11 +141,16 @@ void Tile::updateVertices(const LLARef& llaRef,  bool isPerspective)
         LLA lla4(modifiedInfo_.bounds.south, modifiedInfo_.bounds.east, 0.0f);
         NED ned4(&lla4, &ref, isPerspective);
 
+        float zShift = 0.0f;
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
+        zShift = -0.1f;
+#endif
+
         vertices_ = {
-            QVector3D(ned1.n, ned1.e, 0.0f),
-            QVector3D(ned2.n, ned2.e, 0.0f),
-            QVector3D(ned3.n, ned3.e, 0.0f),
-            QVector3D(ned4.n, ned4.e, 0.0f)
+            QVector3D(ned1.n, ned1.e, zShift),
+            QVector3D(ned2.n, ned2.e, zShift),
+            QVector3D(ned3.n, ned3.e, zShift),
+            QVector3D(ned4.n, ned4.e, zShift)
         };
 
         usedLlaRef_ = ref;
