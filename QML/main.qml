@@ -199,8 +199,8 @@ ApplicationWindow  {
                 return
             }
 
-            let fn = hotkeyData["funcName"];
-            let p = hotkeyData["step"];
+            let fn = hotkeyData["functionName"];
+            let p = hotkeyData["parameter"];
 
             if (fn === "toggleFullScreen") {
                 appSettings.isFullScreen = !appSettings.isFullScreen
