@@ -61,6 +61,7 @@ ApplicationWindow  {
                     script: {
                         //mainview.x = appSettings.savedX
                         //mainview.y = appSettings.savedY
+                        mainview.flags = Qt.Window
                     }
                 }
 
@@ -68,7 +69,7 @@ ApplicationWindow  {
                     target: mainview
                     visibility: "Windowed"
 
-                    flags: Qt.Window
+                    //flags: Qt.Window
                     //x: appSettings.savedX
                     //y: appSettings.savedY
                 }
