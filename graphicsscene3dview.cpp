@@ -1297,7 +1297,7 @@ void GraphicsScene3dView::Camera::moveZAxis(float z)
 
 void GraphicsScene3dView::Camera::zoom(qreal delta)
 {
-#ifdef Q_OS_ANDROID // LINUX_ES?
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
     const float increaseCoeff{ 0.95f };
     m_distToFocusPoint -= delta * m_distToFocusPoint * increaseCoeff;
     distForMapView_ = m_distToFocusPoint;

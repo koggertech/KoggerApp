@@ -271,7 +271,7 @@ private:
     Dataset* m_dataset = nullptr;
     bool navigationArrowState_;
     bool sideScanCalcState_;
-#if defined (Q_OS_ANDROID)
+#if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
     static constexpr double mouseThreshold_{ 10.0 };
