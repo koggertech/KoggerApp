@@ -29,6 +29,15 @@ Item {
         settings3DButton.clicked()
     }
 
+    function closeMenus() {
+        if (menuSettings.active) {
+            menuSettings.active = false
+        }
+        if (menuDisplay.active) {
+            menuDisplay.active = false
+        }
+    }
+
     function itemChangeActive(currentItem) {
         if(currentItem) {
             currentItem.active = !(currentItem.active)

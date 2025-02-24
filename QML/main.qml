@@ -220,24 +220,34 @@ ApplicationWindow  {
                 }
 
                 switch (fn) {
-                case "horScrollLeft":
+                case "closeSettings": {
+                    menuBar.closeMenus()
+                    break
+                }
+                case "horScrollLeft": {
                     waterView.horScrollEvent(-p)
                     break
-                case "horScrollRight":
+                }
+                case "horScrollRight": {
                     waterView.horScrollEvent(p)
                     break
-                case "verScrollUp":
+                }
+                case "verScrollUp": {
                     waterView.verScrollEvent(-p)
                     break
-                case "verScrollDown":
+                }
+                case "verScrollDown": {
                     waterView.verScrollEvent(p)
                     break
-                case "verZoomOut":
+                }
+                case "verZoomOut": {
                     waterView.verZoomEvent(-p)
                     break
-                case "verZoomIn":
+                }
+                case "verZoomIn": {
                     waterView.verZoomEvent(p)
                     break
+                }
                 case "increaseLowLevel": {
                     let newLow = Math.min(120, waterView.getLowEchogramLevel() + p)
                     let newHigh = waterView.getHighEchogramLevel()
@@ -278,16 +288,17 @@ ApplicationWindow  {
                     if (themeId < 4) waterView.plotEchogramTheme(themeId + 1)
                     break
                 }
-                case "click3D":{
+                case "click3D": {
                     menuBar.click3D()
                     break
                 }
-                case "click2D":{
+                case "click2D": {
                     menuBar.click2D()
                     break
                 }
-                default:
+                default: {
                     break
+                }
                 }
             }
         }

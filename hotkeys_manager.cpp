@@ -11,6 +11,7 @@
 #if defined(Q_OS_LINUX)
 const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encoding="UTF-8"?>
 <Hotkeys>
+    <Hotkey scanCode="9"  functionName="closeSettings"                description="close connection/settings menu"/>
     <Hotkey scanCode="38" functionName="horScrollRight"    step="100" description="horizontal scroll of echogram to the right"/>
     <Hotkey scanCode="24" functionName="horScrollLeft"     step="100" description="horizontal scroll of echogram to the left"/>
     <Hotkey scanCode="25" functionName="verScrollUp"       step="100" description="vertical scroll of echogram up"/>
@@ -31,6 +32,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
 #else
 const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encoding="UTF-8"?>
 <Hotkeys>
+    <Hotkey scanCode="1"  functionName="closeSettings"                description="close connection/settings menu"/>
     <Hotkey scanCode="30" functionName="horScrollRight"    step="100" description="horizontal scroll of echogram to the right"/>
     <Hotkey scanCode="16" functionName="horScrollLeft"     step="100" description="horizontal scroll of echogram to the left"/>
     <Hotkey scanCode="17" functionName="verScrollUp"       step="100" description="vertical scroll of echogram up"/>
