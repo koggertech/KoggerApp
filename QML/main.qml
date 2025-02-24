@@ -205,12 +205,16 @@ ApplicationWindow  {
             let fn = hotkeyData["functionName"];
             let p = hotkeyData["parameter"];
 
+            // high priority
             if (fn === "toggleFullScreen") {
                 appSettings.isFullScreen = !appSettings.isFullScreen
                 return;
             }
-
-            //console.info(mainview.activeFocusItem.toString())
+            if (fn === "closeSettings") {
+                menuBar.closeMenus()
+                splitLayer.focus = true
+                return;
+            }
 
             if (mainview.activeFocusItem &&
                 (mainview.activeFocusItem instanceof TextEdit || mainview.activeFocusItem instanceof TextField)) {
@@ -223,10 +227,6 @@ ApplicationWindow  {
                 }
 
                 switch (fn) {
-                case "closeSettings": {
-                    menuBar.closeMenus()
-                    break
-                }
                 case "horScrollLeft": {
                     waterView.horScrollEvent(-p)
                     break
