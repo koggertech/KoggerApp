@@ -101,6 +101,11 @@ void Surface::clearData()
 {
     SceneObject::clearData();
 
+#if defined (Q_OS_ANDROID) || defined(LINUX_ES)
+    auto impl = RENDER_IMPL(Surface);
+    impl->quadSurfaceVertices_.clear();
+#endif
+
     m_grid->clearData();
     m_contour->clearData();
 
