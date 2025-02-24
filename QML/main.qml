@@ -26,8 +26,8 @@ ApplicationWindow  {
     Settings {
             id: appSettings
             property bool isFullScreen: false
-            property int savedX: 100
-            property int savedY: 100
+            //property int savedX: 100
+            //property int savedY: 100
     }
 
     StateGroup {
@@ -39,8 +39,8 @@ ApplicationWindow  {
 
                 StateChangeScript {
                     script: {
-                        appSettings.savedX = mainview.x
-                        appSettings.savedY = mainview.y
+                        //appSettings.savedX = mainview.x
+                        //appSettings.savedY = mainview.y
                     }
                 }
 
@@ -59,26 +59,29 @@ ApplicationWindow  {
                 name: "Windowed"
                 StateChangeScript {
                     script: {
-                        x: appSettings.savedX
-                        y: appSettings.savedY
-                        mainview.flags = Qt.Window
+                        //mainview.x = appSettings.savedX
+                        //mainview.y = appSettings.savedY
                     }
                 }
 
                 PropertyChanges {
                     target: mainview
                     visibility: "Windowed"
-                    x: appSettings.savedX
-                    y: appSettings.savedY
+
+                    flags: Qt.Window
+                    //x: appSettings.savedX
+                    //y: appSettings.savedY
                 }
             }
         ]
     }
 
     Component.onCompleted: {
-        if (appSettings.isFullScreen) {
-            mainview.showFullScreen();
+        if (!appSettings.isFullScreen) {
+            //mainview.x = appSettings.savedX
+            //mainview.y = appSettings.savedY
         }
+
         menuBar.languageChanged.connect(handleChildSignal)
 
         // contacts
