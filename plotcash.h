@@ -1103,6 +1103,10 @@ protected:
     int lastEventId = 0;
     float _lastEncoder = 0;
 
+#if defined(LINUX_ES)
+    uint64_t testTime_ = 1740466541;
+#endif
+
     QMap<int, DatasetChannel> _channelsSetup;
 
     void validateChannelList(int ch) {

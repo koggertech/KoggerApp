@@ -586,6 +586,28 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     _lastYaw = yaw;
     _lastPitch = pitch;
     _lastRoll = roll;
+
+#if defined(LINUX_ES)
+    ++testTime_;
+    double lat = 40.203792, lon = 44.497496;
+    Position pos;
+    pos.lla = LLA(lat, lon);
+    pos.time = DateTime(testTime_, 100);
+    if(pos.lla.isCoordinatesValid()) {
+        if(last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+            last_epoch = addNewEpoch();
+        }
+
+        setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
+
+        last_epoch->setPositionLLA(pos);
+        last_epoch->setPositionRef(&_llaRef);
+        _lastPositionGNSS = last_epoch->getPositionGNSS();
+    }
+
+    updateBoatTrack();
+#endif
+
     emit dataUpdate();
 }
 
