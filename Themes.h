@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QFont>
 #include <QColor>
+#include <QScreen>
+#include <QApplication>
+#include <QDebug>
 
 
 class Themes : public QObject
@@ -13,12 +16,14 @@ class Themes : public QObject
 public:
 
     Themes() :
-        instrumentsGrade_(-1)
+        instrumentsGrade_(-1),
+        resolutionCoeff_(1.0)
     {
         setTheme();
         _isConsoleVisible = false;
     }
 
+    Q_PROPERTY(qreal resCoeff READ getResolutionCoeff NOTIFY changed)
 
     Q_PROPERTY(QColor disabledTextColor READ disabledTextColor NOTIFY changed)
     Q_PROPERTY(QColor disabledBackColor READ disabledBackColor NOTIFY changed)
@@ -45,7 +50,16 @@ public:
     Q_PROPERTY(bool consoleVisible READ consoleVisible WRITE setConsoleVisible NOTIFY interfaceChanged)
     Q_PROPERTY(int instrumentsGrade READ getInstrumentsGrade WRITE setInstrumentsGrade NOTIFY instrumentsGradeChanged)
 
+    Q_INVOKABLE void updateResCoeff() {
+        qreal currCoeff = checkResolutionCoeff();
 
+        if (!qFuzzyCompare(1.0 + currCoeff, 1.0 + resolutionCoeff_)) {
+            resolutionCoeff_ = currCoeff;
+            emit changed();
+        }
+    };
+
+    qreal getResolutionCoeff() const { return resolutionCoeff_; };
     QColor textColor() { return *_textColor; }
     QColor textErrorColor() { return *_textErrorColor; }
     QColor disabledTextColor() { return *_disabledTextColor; }
@@ -134,6 +148,8 @@ public:
         }
 #if defined(Q_OS_ANDROID)
         _controlHeight = 48;
+#elif defined(LINUX_ES)
+        _controlHeight = 38;
 #else
         _controlHeight = 26;
 #endif
@@ -191,6 +207,31 @@ protected:
 
     bool _isConsoleVisible;
     int instrumentsGrade_;
+private:
+    qreal checkResolutionCoeff() const;
+    qreal resolutionCoeff_;
 };
+
+inline qreal Themes::checkResolutionCoeff() const
+{
+    qreal retVal = 1.0;
+
+    QScreen *screen = QApplication::primaryScreen();
+    if (screen) {
+        auto physDotsPerInch = screen->physicalDotsPerInch();
+
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
+        if (physDotsPerInch > 90.0) {
+            retVal = 2.0;
+        }
+#endif
+        // retVal = 2.0; // test
+        // qDebug() << "Logical DPI:" << screen->logicalDotsPerInch();
+        // qDebug() << "Physical DPI:" << screen->physicalDotsPerInch();
+        // qDebug() << "Device Pixel Ratio:" << screen->devicePixelRatio();
+    }
+
+    return retVal;
+}
 
 #endif // THEME_H
