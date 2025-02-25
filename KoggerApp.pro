@@ -7,6 +7,7 @@ QT += sql
 #CONFIG += FLASHER
 #CONFIG += MOTOR # motor_control definition
 #CONFIG += SEPARATE_READING # data reception in a separate thread
+CONFIG += FAKE_COORDS
 
 !android {
     QT += serialport
@@ -100,6 +101,9 @@ SOURCES += coreFlash.cpp
 
 SEPARATE_READING {
 DEFINES += SEPARATE_READING
+}
+FAKE_COORDS {
+DEFINES += FAKE_COORDS
 }
 
 android {

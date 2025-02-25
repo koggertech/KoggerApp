@@ -1103,7 +1103,7 @@ protected:
     int lastEventId = 0;
     float _lastEncoder = 0;
 
-#if defined(LINUX_ES)
+#if defined(FAKE_COORDS)
     uint64_t testTime_ = 1740466541;
 #endif
 
