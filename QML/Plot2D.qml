@@ -12,6 +12,8 @@ WaterFall {
     function setLevels(low, high) {
         echogramLevelsSlider.startValue = low
         echogramLevelsSlider.stopValue = high
+        echogramLevelsSlider.startPointY = echogramLevelsSlider.valueToPosition(low);
+        echogramLevelsSlider.stopPointY = echogramLevelsSlider.valueToPosition(high);
         echogramLevelsSlider.update()
     }
 
