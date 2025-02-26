@@ -95,7 +95,7 @@ void SideScanViewControlMenuController::onMeasLineVisibleChanged(bool state)
 void SideScanViewControlMenuController::onClearClicked()
 {
     if (m_graphicsSceneView) {
-        m_graphicsSceneView->getSideScanViewPtr()->clear();
+        m_graphicsSceneView->getSideScanViewPtr()->clear(false);
     }
 }
 

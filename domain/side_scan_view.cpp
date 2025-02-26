@@ -413,7 +413,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
 
 void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
-    clear();
+    clear(false);
 
     tileSidePixelSize_ = tileSidePixelSize;
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
@@ -425,7 +425,7 @@ void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrix
     Q_EMIT boundsChanged();
 }
 
-void SideScanView::clear()
+void SideScanView::clear(bool force)
 {
     QMutexLocker locker(&mutex_);
 
@@ -439,7 +439,9 @@ void SideScanView::clear()
     lastAcceptedEpoch_ = 0;
     currIndxSec_ = 0;
     lastMatParams_ = MatrixParams();
-    manualSettedChannels_ = false;
+    if (force) {
+        manualSettedChannels_ = false;
+    }
     workMode_ = Mode::kUndefined;
     emit sendUpdatedWorkMode(workMode_);
 
