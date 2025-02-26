@@ -19,6 +19,14 @@ Item {
 
     signal languageChanged(string langStr)
 
+    function clickConnections() {
+        itemChangeActive(menuSettings)
+    }
+
+    function clickSettings() {
+        itemChangeActive(menuDisplay)
+    }
+
     function click2D() {
         visible2dButton.checked = !visible2dButton.checked;
         visible2dButton.clicked()

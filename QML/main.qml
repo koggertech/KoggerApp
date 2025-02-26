@@ -306,6 +306,14 @@ ApplicationWindow  {
                     if (themeId < 4) waterView.plotEchogramTheme(themeId + 1)
                     break
                 }
+                case "clickConnections": {
+                    menuBar.clickConnections()
+                    break
+                }
+                case "clickSettings": {
+                    menuBar.clickSettings()
+                    break
+                }
                 case "click3D": {
                     menuBar.click3D()
                     break

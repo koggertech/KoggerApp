@@ -23,6 +23,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="decreaseLowLevel"  scanCode="41" parameter="1"   description="lower the lower slider of the echogram brightness"/>
     <Hotkey functionName="increaseHighLevel" scanCode="28" parameter="1"   description="raise the upper slider of the echogram brightness"/>
     <Hotkey functionName="decreaseHighLevel" scanCode="42" parameter="1"   description="lower the upper slider of the echogram brightness"/>
+    <Hotkey functionName="clickConnections"  scanCode="56"                 description="click connection button"/>
+    <Hotkey functionName="clickSettings"     scanCode="57"                 description="click settings button"/>
     <Hotkey functionName="click3D"           scanCode="52"                 description="click 3D button"/>
     <Hotkey functionName="click2D"           scanCode="53"                 description="click 2D button"/>
     <Hotkey functionName="prevTheme"         scanCode="54"                 description="switch the echogram theme to the previous one"/>
@@ -44,6 +46,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="decreaseLowLevel"  scanCode="33" parameter="1"   description="lower the lower slider of the echogram brightness"/>
     <Hotkey functionName="increaseHighLevel" scanCode="20" parameter="1"   description="raise the upper slider of the echogram brightness"/>
     <Hotkey functionName="decreaseHighLevel" scanCode="34" parameter="1"   description="lower the upper slider of the echogram brightness"/>
+    <Hotkey functionName="clickConnections"  scanCode="48"                 description="click connection button"/>
+    <Hotkey functionName="clickSettings"     scanCode="49"                 description="click settings button"/>
     <Hotkey functionName="click3D"           scanCode="44"                 description="click 3D button"/>
     <Hotkey functionName="click2D"           scanCode="45"                 description="click 2D button"/>
     <Hotkey functionName="prevTheme"         scanCode="46"                 description="switch the echogram theme to the previous one"/>
