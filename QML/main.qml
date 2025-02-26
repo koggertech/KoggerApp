@@ -30,51 +30,63 @@ ApplicationWindow  {
             //property int savedY: 100
     }
 
-    StateGroup {
-        state: appSettings.isFullScreen ? "FullScreen" : "Windowed"
+    Loader {
+        id: stateGroupLoader
+        active: (Qt.platform.os !== "android")
+        sourceComponent: stateGroupComp
+    }
 
-        states: [
-            State {
-                name: "FullScreen"
+    Component {
+        id: stateGroupComp
 
-                StateChangeScript {
-                    script: {
-                        //appSettings.savedX = mainview.x
-                        //appSettings.savedY = mainview.y
+        StateGroup {
+            state: appSettings.isFullScreen ? "FullScreen" : "Windowed"
+
+            states: [
+                State {
+                    name: "FullScreen"
+
+                    StateChangeScript {
+                        script: {
+                            //appSettings.savedX = mainview.x
+                            //appSettings.savedY = mainview.y
+                        }
+                    }
+
+                    PropertyChanges {
+                        target: mainview
+                        visibility: "FullScreen"
+
+                        flags: Qt.FramelessWindowHint
+                        x: 0
+                        y: - 1
+                        width: Screen.width
+                        height: Screen.height + 1
+                    }
+                },
+                State {
+                    name: "Windowed"
+                    StateChangeScript {
+                        script: {
+                            if (Qt.platform.os !== "android") {
+                                //mainview.x = appSettings.savedX
+                                //mainview.y = appSettings.savedY
+                                mainview.flags = Qt.Window
+                            }
+                        }
+                    }
+
+                    PropertyChanges {
+                        target: mainview
+                        visibility: "Windowed"
+
+                        //flags: Qt.Window
+                        //x: appSettings.savedX
+                        //y: appSettings.savedY
                     }
                 }
-
-                PropertyChanges {
-                    target: mainview
-                    visibility: "FullScreen"
-
-                    flags: Qt.FramelessWindowHint
-                    x: 0
-                    y: - 1
-                    width: Screen.width
-                    height: Screen.height + 1
-                }
-            },
-            State {
-                name: "Windowed"
-                StateChangeScript {
-                    script: {
-                        //mainview.x = appSettings.savedX
-                        //mainview.y = appSettings.savedY
-                        mainview.flags = Qt.Window
-                    }
-                }
-
-                PropertyChanges {
-                    target: mainview
-                    visibility: "Windowed"
-
-                    //flags: Qt.Window
-                    //x: appSettings.savedX
-                    //y: appSettings.savedY
-                }
-            }
-        ]
+            ]
+        }
     }
 
     Component.onCompleted: {
