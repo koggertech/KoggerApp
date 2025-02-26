@@ -58,7 +58,7 @@ public:
     void startUpdateDataInThread(int endIndx, int endOffset = 0);
     void updateData(int endIndx, int endOffset = 0, bool backgroungThread = false);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
-    void clear();
+    void clear(bool force = true);
 
     void setView(GraphicsScene3dView* viewPtr);
     void setDatasetPtr(Dataset* datasetPtr);
