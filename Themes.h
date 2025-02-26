@@ -17,12 +17,18 @@ public:
 
     Themes() :
         instrumentsGrade_(-1),
-        resolutionCoeff_(1.0)
+        resolutionCoeff_(1.0),
+        isFakeCoords_(false)
     {
+#if defined (FAKE_COORDS)
+        isFakeCoords_ = true;
+#endif
+
         setTheme();
         _isConsoleVisible = false;
     }
 
+    Q_PROPERTY(bool isFakeCoords READ getIsFakeCoords NOTIFY changed)
     Q_PROPERTY(qreal resCoeff READ getResolutionCoeff NOTIFY changed)
 
     Q_PROPERTY(QColor disabledTextColor READ disabledTextColor NOTIFY changed)
@@ -59,6 +65,7 @@ public:
         }
     };
 
+    bool getIsFakeCoords() const { return isFakeCoords_; };
     qreal getResolutionCoeff() const { return resolutionCoeff_; };
     QColor textColor() { return *_textColor; }
     QColor textErrorColor() { return *_textErrorColor; }
@@ -210,6 +217,7 @@ protected:
 private:
     qreal checkResolutionCoeff() const;
     qreal resolutionCoeff_;
+    bool isFakeCoords_;
 };
 
 inline qreal Themes::checkResolutionCoeff() const

@@ -217,6 +217,13 @@ void Dataset::setState(DatasetState state)
     state_ = state;
 }
 
+#if defined(FAKE_COORDS)
+void Dataset::setActiveZeroing(bool state)
+{
+    activeZeroing_ = state;
+}
+#endif
+
 Dataset::DatasetState Dataset::getState() const
 {
     return state_;
@@ -588,7 +595,7 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     _lastRoll = roll;
 
 #if defined(FAKE_COORDS)
-    if (state_ == DatasetState::kConnection) {
+    if (state_ == DatasetState::kConnection && activeZeroing_) {
         ++testTime_;
         double lat = 40.203792, lon = 44.497496;
         Position pos;

@@ -1114,6 +1114,13 @@ bool Core::getIsSeparateReading() const
 #endif
 }
 
+#if defined(FAKE_COORDS)
+void Core::setPosZeroing(bool state)
+{
+    datasetPtr_->setActiveZeroing(state);
+}
+#endif
+
 ConsoleListModel* Core::consoleList()
 {
     return consolePtr_->listModel();

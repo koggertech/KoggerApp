@@ -475,6 +475,27 @@ ColumnLayout {
 
     MenuRow {
         spacing: 4
+        CheckButton {
+            id: zeroingPosButton
+            icon.source: "./icons/propeller-off.svg"
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+            implicitWidth: theme.controlHeight
+            visible: theme.isFakeCoords
+
+            onCheckedChanged: {
+                core.setPosZeroing(checked);
+            }
+
+            Component.onCompleted: { // maybe need del
+                core.setPosZeroing(checked);
+            }
+
+            Settings {
+                property alias zeroingPosButtonCheched: zeroingPosButton.checked
+            }
+        }
+
         CTextField {
             id: pathText
             hoverEnabled: true

@@ -118,6 +118,10 @@ public slots:
     bool getIsSideScanPerformanceMode() const;
     bool getIsSeparateReading() const;
 
+#if defined(FAKE_COORDS)
+    Q_INVOKABLE void setPosZeroing(bool state);
+#endif
+
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();

@@ -961,6 +961,11 @@ public:
     Dataset();
 
     void setState(DatasetState state);
+
+#if defined(FAKE_COORDS)
+    void setActiveZeroing(bool state);
+#endif
+
     DatasetState getState() const;
     LLARef getLlaRef() const;
     void setLlaRef(const LLARef& val, LlaRefState state);
@@ -1104,6 +1109,7 @@ protected:
     float _lastEncoder = 0;
 
 #if defined(FAKE_COORDS)
+    bool activeZeroing_ = false;
     uint64_t testTime_ = 1740466541;
 #endif
 
