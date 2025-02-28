@@ -90,7 +90,7 @@ ApplicationWindow  {
     }
 
     Component.onCompleted: {
-        theme.updateResCoeff();
+        //theme.updateResCoeff();
 
         if (!appSettings.isFullScreen) {
             //mainview.x = appSettings.savedX

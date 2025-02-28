@@ -7,7 +7,7 @@ QT += sql
 #CONFIG += FLASHER
 #CONFIG += MOTOR # motor_control definition
 #CONFIG += SEPARATE_READING # data reception in a separate thread
-CONFIG += FAKE_COORDS
+#CONFIG += FAKE_COORDS
 
 !android {
     QT += serialport
