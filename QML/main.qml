@@ -32,27 +32,22 @@ ApplicationWindow  {
 
     Loader {
         id: stateGroupLoader
-        active: (Qt.platform.os !== "android")
+        active: (Qt.platform.os === "windows")
         sourceComponent: stateGroupComp
     }
 
     Component {
         id: stateGroupComp
-
         StateGroup {
             state: appSettings.isFullScreen ? "FullScreen" : "Windowed"
 
             states: [
                 State {
                     name: "FullScreen"
-
                     StateChangeScript {
-                        script: {
-                            //appSettings.savedX = mainview.x
-                            //appSettings.savedY = mainview.y
+                        script: { // empty
                         }
                     }
-
                     PropertyChanges {
                         target: mainview
                         visibility: "FullScreen"
@@ -69,20 +64,13 @@ ApplicationWindow  {
                     StateChangeScript {
                         script: {
                             if (Qt.platform.os !== "android") {
-                                //mainview.x = appSettings.savedX
-                                //mainview.y = appSettings.savedY
                                 mainview.flags = Qt.Window
                             }
                         }
                     }
-
                     PropertyChanges {
                         target: mainview
                         visibility: "Windowed"
-
-                        //flags: Qt.Window
-                        //x: appSettings.savedX
-                        //y: appSettings.savedY
                     }
                 }
             ]
@@ -90,14 +78,15 @@ ApplicationWindow  {
     }
 
     Component.onCompleted: {
-        //theme.updateResCoeff();
-
-        if (!appSettings.isFullScreen) {
-            //mainview.x = appSettings.savedX
-            //mainview.y = appSettings.savedY
-        }
+        //theme.updateResCoeff(); // for UI scaling
 
         menuBar.languageChanged.connect(handleChildSignal)
+
+        if (Qt.platform.os !== "windows") {
+            if (appSettings.isFullScreen) {
+                mainview.showFullScreen();
+            }
+        }
 
         // contacts
         function setupConnections() {
@@ -108,7 +97,6 @@ ApplicationWindow  {
                 Qt.callLater(setupConnections);
             }
         }
-
         Qt.callLater(setupConnections);
     }
 
@@ -222,7 +210,19 @@ ApplicationWindow  {
 
             // high priority
             if (fn === "toggleFullScreen") {
-                appSettings.isFullScreen = !appSettings.isFullScreen
+                if (Qt.platform.os === "windows") {
+                    appSettings.isFullScreen = !appSettings.isFullScreen
+                }
+                else if (Qt.platform.os === "linux") {
+                    if (mainview.visibility === Window.FullScreen) {
+                        mainview.showNormal();
+                        appSettings.isFullScreen = false;
+                    }
+                    else {
+                        appSettings.isFullScreen = true;
+                        mainview.showFullScreen();
+                    }
+                }
                 return;
             }
             if (fn === "closeSettings") {
