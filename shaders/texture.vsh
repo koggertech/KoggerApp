@@ -1,4 +1,4 @@
-#version 120
+#version 140
 
 #ifdef GL_ES
 precision mediump int;

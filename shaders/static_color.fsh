@@ -1,4 +1,4 @@
-#version 120
+#version 140
 
 uniform vec4 color;
 uniform bool isPoint;

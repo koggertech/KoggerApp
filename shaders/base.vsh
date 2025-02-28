@@ -1,8 +1,9 @@
-#version 120
-attribute vec3 position;
+#version 140
+
+in vec3 position;
 uniform mat4 matrix;
 uniform float width;
-varying vec3 vertice;
+out vec3 vertice;
 
 void main()
 {
