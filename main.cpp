@@ -98,6 +98,9 @@ int main(int argc, char *argv[])
 #if defined(Q_OS_LINUX)
     QApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
     ::qputenv("QT_SUPPORT_GL_CHILD_WIDGETS", "1");
+#ifdef LINUX_ES
+    ::qputenv("QT_OPENGL", "es2");
+#endif
 #endif
 
     QCoreApplication::setOrganizationName("KOGGER");
@@ -113,7 +116,13 @@ int main(int argc, char *argv[])
     QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
 
     QSurfaceFormat format;
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
+    format.setRenderableType(QSurfaceFormat::OpenGLES);
+#else
+    format.setRenderableType(QSurfaceFormat::OpenGL);
+#endif
     format.setSwapInterval(0);
+
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
@@ -164,8 +173,11 @@ int main(int argc, char *argv[])
 
     QObject::connect(&app,  &QGuiApplication::aboutToQuit,
                      &core, [&]() {
+                                core.saveLLARefToSettings();
+                                core.removeLinkManagerConnections();
                                 core.stopLinkManagerTimer();
 #ifdef SEPARATE_READING
+                                void removeDeviceManagerConnections();
                                 core.stopDeviceManagerThread();
 #endif
                             });

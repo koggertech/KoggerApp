@@ -101,6 +101,11 @@ void Surface::clearData()
 {
     SceneObject::clearData();
 
+#if defined (Q_OS_ANDROID) || defined(LINUX_ES)
+    auto impl = RENDER_IMPL(Surface);
+    impl->quadSurfaceVertices_.clear();
+#endif
+
     m_grid->clearData();
     m_contour->clearData();
 
@@ -118,7 +123,7 @@ void Surface::updateGrid()
     case GL_QUADS:{
         makeQuadGrid();
 
-#if defined (Q_OS_ANDROID)
+#if defined (Q_OS_ANDROID) || defined(LINUX_ES)
         auto impl = RENDER_IMPL(Surface);
         impl->quadSurfaceVertices_.clear();
         impl->quadSurfaceVertices_.reserve(impl->data().size() * 2);
@@ -300,7 +305,7 @@ void Surface::SurfaceRenderImplementation::render(QOpenGLFunctions *ctx, const Q
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
 
-#if defined (Q_OS_ANDROID)
+#if defined (Q_OS_ANDROID) || defined(LINUX_ES)
     if (primitiveType() == GL_TRIANGLES) {
         shaderProgram->setAttributeArray(posLoc, m_data.constData());
         ctx->glDrawArrays(m_primitiveType, 0, m_data.size());

@@ -19,6 +19,33 @@ Item {
 
     signal languageChanged(string langStr)
 
+    function clickConnections() {
+        itemChangeActive(menuSettings)
+    }
+
+    function clickSettings() {
+        itemChangeActive(menuDisplay)
+    }
+
+    function click2D() {
+        visible2dButton.checked = !visible2dButton.checked;
+        visible2dButton.clicked()
+    }
+
+    function click3D() {
+        settings3DButton.checked = !settings3DButton.checked;
+        settings3DButton.clicked()
+    }
+
+    function closeMenus() {
+        if (menuSettings.active) {
+            menuSettings.active = false
+        }
+        if (menuDisplay.active) {
+            menuDisplay.active = false
+        }
+    }
+
     function itemChangeActive(currentItem) {
         if(currentItem) {
             currentItem.active = !(currentItem.active)

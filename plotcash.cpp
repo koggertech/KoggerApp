@@ -217,6 +217,13 @@ void Dataset::setState(DatasetState state)
     state_ = state;
 }
 
+#if defined(FAKE_COORDS)
+void Dataset::setActiveZeroing(bool state)
+{
+    activeZeroing_ = state;
+}
+#endif
+
 Dataset::DatasetState Dataset::getState() const
 {
     return state_;
@@ -586,6 +593,27 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     _lastYaw = yaw;
     _lastPitch = pitch;
     _lastRoll = roll;
+
+#if defined(FAKE_COORDS)
+    if (state_ == DatasetState::kConnection && activeZeroing_) {
+        ++testTime_;
+        double lat = 40.203792, lon = 44.497496;
+        Position pos;
+        pos.lla = LLA(lat, lon);
+        pos.time = DateTime(testTime_, 100);
+        if(pos.lla.isCoordinatesValid()) {
+            if(last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+                last_epoch = addNewEpoch();
+            }
+            setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
+            last_epoch->setPositionLLA(pos);
+            last_epoch->setPositionRef(&_llaRef);
+            _lastPositionGNSS = last_epoch->getPositionGNSS();
+        }
+        updateBoatTrack();
+    }
+#endif
+
     emit dataUpdate();
 }
 
@@ -699,6 +727,11 @@ void Dataset::resetDataset() {
     llaRefState_ = LlaRefState::kUndefined;
     state_ = DatasetState::kUndefined;
     clearBoatTrack();
+
+#if defined(FAKE_COORDS)
+    testTime_ = 1740466541;
+#endif
+
     emit dataUpdate();
 }
 

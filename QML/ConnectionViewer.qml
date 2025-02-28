@@ -475,6 +475,27 @@ ColumnLayout {
 
     MenuRow {
         spacing: 4
+        CheckButton {
+            id: zeroingPosButton
+            icon.source: "./icons/propeller-off.svg"
+            backColor: theme.controlSolidBackColor
+            borderWidth: 0
+            implicitWidth: theme.controlHeight
+            visible: theme.isFakeCoords
+
+            onCheckedChanged: {
+                core.setPosZeroing(checked);
+            }
+
+            Component.onCompleted: { // maybe need del
+                core.setPosZeroing(checked);
+            }
+
+            Settings {
+                property alias zeroingPosButtonCheched: zeroingPosButton.checked
+            }
+        }
+
         CTextField {
             id: pathText
             hoverEnabled: true
@@ -510,10 +531,10 @@ ColumnLayout {
                 title: qsTr("Please choose a file")
                 folder: shortcuts.home
 
-                nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
+                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
                 onAccepted: {
-                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", "")
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
                     var name_parts = newFileDialog.fileUrl.toString().split('.')
 
@@ -544,10 +565,10 @@ ColumnLayout {
                 title: qsTr("Please choose a file")
                 folder: shortcuts.home
 
-                nameFilters: ["Logs (*.klf *.ubx *.xtf)", "Kogger log files (*.klf)", "U-blox (*.ubx)"]
+                nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
                 onAccepted: {
-                    pathText.text = appendFileDialog.fileUrl.toString().replace("file:///", "")
+                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
                     var name_parts = appendFileDialog.fileUrl.toString().split('.')
 

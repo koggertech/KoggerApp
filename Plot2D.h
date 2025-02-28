@@ -251,11 +251,14 @@ public:
     Plot2DEchogram();
     bool draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor);
 
+    float getLowLevel() const;
+    float getHighLevel() const;
     void setLowLevel(float low);
     void setHightLevel(float high);
     void setLevels(float low, float hight);
 
     void setColorScheme(QVector<QColor> coloros, QVector<int> levels);
+    int getThemeId() const;
     void setThemeId(int theme_id);
     void setCompensation(int compensation_id);
 
@@ -315,7 +318,8 @@ protected:
         _cashFlags.resetCash = false;
         return reset_cash;
     }
-
+private:
+    ThemeId themeId_;
 };
 
 class Plot2DLine : public PlotLayer {
@@ -936,6 +940,9 @@ public:
     double  getContactLon();
     double  getContactDepth();
 
+    float getEchogramLowLevel() const;
+    float getEchogramHighLevel() const;
+    int getThemeId() const;
     void setEchogramLowLevel(float low);
     void setEchogramHightLevel(float high);
     void setEchogramVisible(bool visible);

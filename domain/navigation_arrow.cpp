@@ -60,6 +60,10 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
                                                                   const QMatrix4x4 &mvp,
                                                                   const QMap<QString, std::shared_ptr<QOpenGLShaderProgram> > &shaderProgramMap) const
 {
+#if defined(FAKE_COORDS)
+    return;
+#endif
+
     if (!isEnabled_ || !shaderProgramMap.contains("static") || cubeVertices_.empty())
         return;
 

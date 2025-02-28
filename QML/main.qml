@@ -9,7 +9,7 @@ import WaterFall 1.0
 import KoggerCommon 1.0
 
 
-Window  {
+ApplicationWindow  {
     id:            mainview
     visible:       true
     width:         1024
@@ -26,13 +26,67 @@ Window  {
     Settings {
             id: appSettings
             property bool isFullScreen: false
+            //property int savedX: 100
+            //property int savedY: 100
+    }
+
+    Loader {
+        id: stateGroupLoader
+        active: (Qt.platform.os === "windows")
+        sourceComponent: stateGroupComp
+    }
+
+    Component {
+        id: stateGroupComp
+        StateGroup {
+            state: appSettings.isFullScreen ? "FullScreen" : "Windowed"
+
+            states: [
+                State {
+                    name: "FullScreen"
+                    StateChangeScript {
+                        script: { // empty
+                        }
+                    }
+                    PropertyChanges {
+                        target: mainview
+                        visibility: "FullScreen"
+
+                        flags: Qt.FramelessWindowHint
+                        x: 0
+                        y: - 1
+                        width: Screen.width
+                        height: Screen.height + 1
+                    }
+                },
+                State {
+                    name: "Windowed"
+                    StateChangeScript {
+                        script: {
+                            if (Qt.platform.os !== "android") {
+                                mainview.flags = Qt.Window
+                            }
+                        }
+                    }
+                    PropertyChanges {
+                        target: mainview
+                        visibility: "Windowed"
+                    }
+                }
+            ]
+        }
     }
 
     Component.onCompleted: {
-        if (appSettings.isFullScreen) {
-            mainview.showFullScreen();
-        }
+        //theme.updateResCoeff(); // for UI scaling
+
         menuBar.languageChanged.connect(handleChildSignal)
+
+        if (Qt.platform.os !== "windows") {
+            if (appSettings.isFullScreen) {
+                mainview.showFullScreen();
+            }
+        }
 
         // contacts
         function setupConnections() {
@@ -43,7 +97,6 @@ Window  {
                 Qt.callLater(setupConnections);
             }
         }
-
         Qt.callLater(setupConnections);
     }
 
@@ -138,11 +191,143 @@ Window  {
     // drag-n-drop <-
 
     SplitView {
+        id: splitLayer
         visible: !showBanner
         Layout.fillHeight: true
         Layout.fillWidth:  true
         anchors.fill:      parent
         orientation:       Qt.Vertical
+
+        Keys.onReleased: {
+            let sc = event.nativeScanCode.toString()
+            let hotkeyData = hotkeysMapScan[sc];
+            if (hotkeyData === undefined) {
+                return
+            }
+
+            let fn = hotkeyData["functionName"];
+            let p = hotkeyData["parameter"];
+
+            // high priority
+            if (fn === "toggleFullScreen") {
+                if (Qt.platform.os === "windows") {
+                    appSettings.isFullScreen = !appSettings.isFullScreen
+                }
+                else if (Qt.platform.os === "linux") {
+                    if (mainview.visibility === Window.FullScreen) {
+                        mainview.showNormal();
+                        appSettings.isFullScreen = false;
+                    }
+                    else {
+                        appSettings.isFullScreen = true;
+                        mainview.showFullScreen();
+                    }
+                }
+                return;
+            }
+            if (fn === "closeSettings") {
+                menuBar.closeMenus()
+                splitLayer.focus = true
+                return;
+            }
+
+            if (mainview.activeFocusItem &&
+                (mainview.activeFocusItem instanceof TextEdit || mainview.activeFocusItem instanceof TextField)) {
+                return;
+            }
+
+            if (fn !== undefined) {
+                if (p === undefined) {
+                    p = 5
+                }
+
+                switch (fn) {
+                case "horScrollLeft": {
+                    waterView.horScrollEvent(-p)
+                    break
+                }
+                case "horScrollRight": {
+                    waterView.horScrollEvent(p)
+                    break
+                }
+                case "verScrollUp": {
+                    waterView.verScrollEvent(-p)
+                    break
+                }
+                case "verScrollDown": {
+                    waterView.verScrollEvent(p)
+                    break
+                }
+                case "verZoomOut": {
+                    waterView.verZoomEvent(-p)
+                    break
+                }
+                case "verZoomIn": {
+                    waterView.verZoomEvent(p)
+                    break
+                }
+                case "increaseLowLevel": {
+                    let newLow = Math.min(120, waterView.getLowEchogramLevel() + p)
+                    let newHigh = waterView.getHighEchogramLevel()
+                    if (newLow > newHigh) newHigh = newLow
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
+                }
+                case "decreaseLowLevel": {
+                    let newLow = Math.max(0, waterView.getLowEchogramLevel() - p)
+                    let newHigh = waterView.getHighEchogramLevel()
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
+                }
+                case "increaseHighLevel": {
+                    let newHigh = Math.min(120, waterView.getHighEchogramLevel() + p)
+                    let newLow = waterView.getLowEchogramLevel()
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
+                }
+                case "decreaseHighLevel": {
+                    let newHigh = Math.max(0, waterView.getHighEchogramLevel() - p)
+                    let newLow = waterView.getLowEchogramLevel()
+                    if (newHigh < newLow) newLow = newHigh
+                    waterView.plotEchogramSetLevels(newLow, newHigh)
+                    waterView.setLevels(newLow, newHigh)
+                    break
+                }
+                case "prevTheme": {
+                    let themeId = waterView.getThemeId()
+                    if (themeId > 0) waterView.plotEchogramTheme(themeId - 1)
+                    break
+                }
+                case "nextTheme": {
+                    let themeId = waterView.getThemeId()
+                    if (themeId < 4) waterView.plotEchogramTheme(themeId + 1)
+                    break
+                }
+                case "clickConnections": {
+                    menuBar.clickConnections()
+                    break
+                }
+                case "clickSettings": {
+                    menuBar.clickSettings()
+                    break
+                }
+                case "click3D": {
+                    menuBar.click3D()
+                    break
+                }
+                case "click2D": {
+                    menuBar.click2D()
+                    break
+                }
+                default: {
+                    break
+                }
+                }
+            }
+        }
 
         handle: Rectangle {
             // implicitWidth:  5
@@ -160,19 +345,6 @@ Window  {
                 width:  parent.width
                 height: 1
                 color:  "#A0A0A0"
-            }
-        }
-
-        Keys.onReleased: {
-            if (event.key === Qt.Key_F11) {
-                if (mainview.visibility === Window.FullScreen) {
-                    mainview.showNormal();
-                    appSettings.isFullScreen = false;
-                }
-                else {
-                    appSettings.isFullScreen = true;
-                    mainview.showFullScreen();
-                }
             }
         }
 
@@ -541,6 +713,7 @@ Window  {
         visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
         isDraggable: true
         isOpacityControlled: true
+        Keys.forwardTo: [splitLayer]
 
         ColumnLayout {
             RowLayout {
@@ -656,7 +829,7 @@ Window  {
         id:                menuBar
         objectName:        "menuBar"
         Layout.fillHeight: true
-        Keys.forwardTo:    [mousearea3D]
+        Keys.forwardTo:    [splitLayer, mousearea3D]
         height: visualisationLayout.height
         targetPlot: waterView
         visible: !showBanner
@@ -677,7 +850,7 @@ Window  {
         function onSurfaceProcessorTaskFinished() {
             surfaceProcessingProgressBar.visible = false
         }
-    }    
+    }
 
     // banner on file opening
     Rectangle {

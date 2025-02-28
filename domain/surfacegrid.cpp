@@ -17,7 +17,7 @@ bool SurfaceGrid::isQuad() const
 {
     bool retVal{ false };
 
-#ifndef Q_OS_ANDROID
+#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
     retVal = RENDER_IMPL()->primitiveType() == GL_QUADS;
 #endif
 

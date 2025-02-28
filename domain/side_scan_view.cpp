@@ -883,7 +883,7 @@ SideScanView::SideScanViewRenderImplementation::SideScanViewRenderImplementation
     measLineVisible_(false),
     colorTableTextureId_(0)
 {
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
     colorTableTextureType_ = GL_TEXTURE_2D;
 #else
     colorTableTextureType_ = GL_TEXTURE_1D;
