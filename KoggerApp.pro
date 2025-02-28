@@ -280,8 +280,13 @@ DISTFILES += \
 win32:RC_FILE = file.rc
 
 android {
-    LIBS += -L$$PWD/libs/freetype/lib/arm64-v8a -lfreetype
-    LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
+    equals(ANDROID_TARGET_ARCH, arm64-v8a) {
+        message("Adding FreeType Lib for arm64-v8a arch")
+        LIBS += -L$$PWD/libs/freetype/lib/arm64-v8a -lfreetype
+    } else:equals(ANDROID_TARGET_ARCH, armeabi-v7a) {
+        message("Adding FreeType Lib for armeabi-v7a arch")
+        LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
+    }
 }
 
 linux:!android {
