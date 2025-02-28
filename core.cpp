@@ -979,10 +979,12 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     loadLLARefFromSettings();
 
+#if !defined(Q_OS_ANDROID)
     HotkeysManager hotkeysManager;
     auto hotkeysMap = hotkeysManager.loadHotkeysMapping();
     auto hotkeysVariant = HotkeysManager::toVariantMap(hotkeysMap);
     qmlAppEnginePtr_->rootContext()->setContextProperty("hotkeysMapScan", hotkeysVariant);
+#endif
 
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
     plot2dList_ = object->findChildren<qPlot2D*>();
