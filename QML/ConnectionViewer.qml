@@ -484,11 +484,15 @@ ColumnLayout {
             visible: theme.isFakeCoords
 
             onCheckedChanged: {
-                core.setPosZeroing(checked);
+                if (theme.isFakeCoords) {
+                    core.setPosZeroing(checked);
+                }
             }
 
             Component.onCompleted: { // maybe need del
-                core.setPosZeroing(checked);
+                if (theme.isFakeCoords) {
+                    core.setPosZeroing(checked);
+                }
             }
 
             Settings {
