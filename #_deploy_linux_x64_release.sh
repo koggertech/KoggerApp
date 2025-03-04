@@ -7,6 +7,7 @@ set -e  # exit on any error
 ############################################
 # 1. Project parameters
 # 1.1. Source files
+USER_NAME="username"                                            # !!! set your user name
 BIN_PATH="build/Desktop_Qt_5_15_2_GCC_64bit-Release/KoggerApp"  # binary file
 QML_DIR="QML"                                                   # QML path
 ICON_SOURCE="assets/icons/kogger.png"                           # icon (256x256)
@@ -17,7 +18,7 @@ APPDIR="$OUT_DIR/AppDir"                                        # AppDir
 DESKTOP_FILE="$OUT_DIR/KoggerApp.desktop"                       # automatically generated if not
 ICON_DEST="$APPDIR/usr/share/icons/hicolor/256x256/apps/kogger.png"
 # 1.4. Qt system path
-export QTDIR="/home/architect/Qt/5.15.2/gcc_64"
+export QTDIR="/home/$USER_NAME/Qt/5.15.2/gcc_64"
 export PATH="$QTDIR/bin:$PATH"
 export QML2_IMPORT_PATH="$QTDIR/qml"
 export QT_PLUGIN_PATH="$QTDIR/plugins"
@@ -85,15 +86,15 @@ echo "==> Copy binary file $BIN_PATH -> $APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/bin"
 cp "$BIN_PATH" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/KoggerApp"
-# 5.1 Copy QML modules manually // check paths!
+# 5.1 Copy QML modules manually # !!! check QML paths
 echo "==> Copy QML modules manually"
 mkdir -p $OUT_DIR/AppDir/usr/qml/QtQuick
-cp -r /home/architect/Qt/5.15.2/gcc_64/qml/QtQuick/Controls.2     $OUT_DIR/AppDir/usr/qml/QtQuick/
-cp -r /home/architect/Qt/5.15.2/gcc_64/qml/QtQuick/Dialogs        $OUT_DIR/AppDir/usr/qml/QtQuick/
-cp -r /home/architect/Qt/5.15.2/gcc_64/qml/QtQuick/Layouts        $OUT_DIR/AppDir/usr/qml/QtQuick/
-cp -r /home/architect/Qt/5.15.2/gcc_64/qml/QtQuick/Window.2       $OUT_DIR/AppDir/usr/qml/QtQuick/
+cp -r /home/$USER_NAME/Qt/5.15.2/gcc_64/qml/QtQuick/Controls.2     $OUT_DIR/AppDir/usr/qml/QtQuick/
+cp -r /home/$USER_NAME/Qt/5.15.2/gcc_64/qml/QtQuick/Dialogs        $OUT_DIR/AppDir/usr/qml/QtQuick/
+cp -r /home/$USER_NAME/Qt/5.15.2/gcc_64/qml/QtQuick/Layouts        $OUT_DIR/AppDir/usr/qml/QtQuick/
+cp -r /home/$USER_NAME/Qt/5.15.2/gcc_64/qml/QtQuick/Window.2       $OUT_DIR/AppDir/usr/qml/QtQuick/
 mkdir -p $OUT_DIR/AppDir/usr/qml/Qt/labs
-cp -r /home/architect/Qt/5.15.2/gcc_64/qml/Qt/labs/settings       $OUT_DIR/AppDir/usr/qml/Qt/labs/
+cp -r /home/$USER_NAME/Qt/5.15.2/gcc_64/qml/Qt/labs/settings       $OUT_DIR/AppDir/usr/qml/Qt/labs/
 
 
 ##########################################
