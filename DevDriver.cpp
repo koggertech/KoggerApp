@@ -415,6 +415,7 @@ void DevDriver::setDistSetupState(bool state) {
 void DevDriver::setChartSetupState(bool state) {
     if (state != chartSetupState_) {
         chartSetupState_ = state;
+        emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -748,7 +749,10 @@ void DevDriver::setChartSamples(int smpls) {
     if(!m_state.connect) return;
     bool is_changed = smpls != chartSamples();
     idChartSetup->setCount((U2)smpls);
-    if(is_changed) { emit chartSetupChanged(); }
+    if (is_changed) {
+        emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), smpls, idChartSetup->offset());
+        emit chartSetupChanged();
+    }
 }
 
 int DevDriver::chartResolution() {
@@ -759,7 +763,10 @@ void DevDriver::setChartResolution(int resol) {
     if(!m_state.connect) return;
     bool is_changed = resol != chartResolution();
     idChartSetup->setResolution((U2)resol);
-    if(is_changed) { emit chartSetupChanged(); }
+    if (is_changed) {
+        emit channelChartSetupChanged(_lastAddres, resol, idChartSetup->count(), idChartSetup->offset());
+        emit chartSetupChanged();
+    }
 }
 
 int DevDriver::chartOffset() {
@@ -770,7 +777,10 @@ void DevDriver::setChartOffset(int offset) {
     if(!m_state.connect) return;
     bool is_changed = offset != chartOffset();
     idChartSetup->setOffset((U2)offset);
-    if(is_changed) { emit chartSetupChanged(); }
+    if (is_changed) {
+        emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), offset);
+        emit chartSetupChanged();
+    }
 }
 
 int DevDriver::dspSmoothFactor() {
@@ -1012,7 +1022,15 @@ void DevDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
 
-    if(resp == respNone) {  emit chartSetupChanged();  }
+    if(resp == respNone) {
+        //if(ver == v0 || ver == v1) {
+            emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+        //    if(ver == v1) {
+          //  emit channelChartSetupChanged(_lastAddres+1, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+        //    }
+        //}
+        emit chartSetupChanged();
+    }
 }
 
 void DevDriver::receivedDSPSetup(Type type, Version ver, Resp resp) {

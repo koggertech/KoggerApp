@@ -207,7 +207,12 @@ Dataset::Dataset() :
     interpolator_(this),
     lastBoatTrackEpoch_(0),
     lastBottomTrackEpoch_(0),
-    boatTrackValidPosCounter_(0)
+    boatTrackValidPosCounter_(0),
+    lastMostFreqChartSize_(-1),
+    chartResolution_(0),
+    chartCount_(0),
+    chartOffset_(0),
+    fixBlackStripes_(false)
 {
     resetDataset();
 }
@@ -343,8 +348,22 @@ void Dataset::addTimestamp(int timestamp) {
     Q_UNUSED(timestamp);
 }
 
+void Dataset::setChartSetup(int16_t channel, uint16_t resol, int count, uint16_t offset)
+{
+    chartResolution_ = resol;
+    chartCount_ = count;
+    chartOffset_ = offset;
+}
+
+void Dataset::setFixBlackStripes(bool state)
+{
+    fixBlackStripes_ = state;
+}
+
 void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset) {
-    if(data.size() <= 0 || resolution == 0) { return; }
+    auto dataSize = data.size();
+
+    if(dataSize <= 0 || resolution == 0) { return; }
 
     int pool_index = endIndex();
 
@@ -355,10 +374,94 @@ void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution,
         pool_index = endIndex();
     }
 
-    _pool[endIndex()].setChart(channel, data, resolution, offset);
+    auto setChartByDefault = [&]() -> void {
+        _pool[endIndex()].setChart(channel, data, resolution, offset);
+        lastMostFreqChartSize_ = data.size();
+    };
+
+    if (!fixBlackStripes_) {
+        setChartByDefault();
+    }
+    else {
+        const int windowSize = 25; // adjust
+
+        bool isChannelDoubled = _channelsSetup.size() == 2;
+        int chartCount = chartCount_ / (isChannelDoubled ? 2 : 1);
+
+        bool needToCopy = (endIndex() > windowSize) &&
+                          ((state_ == DatasetState::kConnection && dataSize != chartCount) ||
+                           (state_ == DatasetState::kFile       && dataSize != lastMostFreqChartSize_));
+
+        if (needToCopy) {
+            int startIndx = endIndex() - windowSize;
+            int endIndx = endIndex();
+            int preEndIndx = endIndex() - 1;
+
+            if (startIndx < 0) {
+                startIndx = 0;
+            }
+
+            QHash<int, int> frequencyCount;
+            for (int i = preEndIndx; i > startIndx; --i) {
+                frequencyCount[_pool[i].chartSize(channel)]++;
+            }
+
+            int mostFrequentSize = _pool[preEndIndx].chartSize(channel);
+            int maxCount = 0;
+            for (auto it = frequencyCount.constBegin(); it != frequencyCount.constEnd(); ++it) {
+                if (it.value() > maxCount) {
+                    maxCount = it.value();
+                    mostFrequentSize = it.key();
+                }
+            }
+
+            int leftFreqIndx = -1;
+            for (int i = preEndIndx; i > startIndx; --i) {
+                int currChartSize = _pool[i].chartSize(channel);
+                if (currChartSize == mostFrequentSize) {
+                    leftFreqIndx = i;
+                    break;
+                }
+            }
+
+            if (leftFreqIndx != -1) {
+                QVector<uint8_t> fixData(mostFrequentSize, 0);
+
+                if (dataSize < mostFrequentSize) {
+                    memcpy(fixData.data(), data.data(), dataSize);
+                    auto copyFrom = _pool[leftFreqIndx].chartData(channel);
+                    memcpy(fixData.data() + dataSize , copyFrom.data() + dataSize, mostFrequentSize - dataSize);
+                    _pool[endIndx].setChart(channel, fixData, resolution, offset);
+                }
+                else {
+                    _pool[endIndx].setChart(channel, _pool[leftFreqIndx].chartData(channel), resolution, offset);
+                }
+
+                lastMostFreqChartSize_ = mostFrequentSize;
+            }
+            else {
+                lastMostFreqChartSize_ = dataSize;
+            }
+        }
+        else {
+            setChartByDefault();
+
+            int checkSize = 5;
+            int startIndx = endIndex() - checkSize;
+            int endIndx = endIndex();
+            int preEndIndx = endIndx - 1;
+            if (startIndx < 0) {
+                startIndx = 0;
+            }
+            for (int i = preEndIndx; i >= startIndx; --i) {
+                if (_pool[i].chartSize(channel) != dataSize) {
+                    _pool[i].setChart(channel, data, resolution, offset);
+                }
+            }
+        }
+    } // test area
 
     validateChannelList(channel);
-
     emit dataUpdate();
 }
 
@@ -731,6 +834,13 @@ void Dataset::resetDataset() {
 #if defined(FAKE_COORDS)
     testTime_ = 1740466541;
 #endif
+
+    lastMostFreqChartSize_ = -1;
+    chartResolution_ = 0;
+    chartCount_ = 0;
+    chartOffset_ = 0;
+
+    //fixBlackStripes_ = false;
 
     emit dataUpdate();
 }

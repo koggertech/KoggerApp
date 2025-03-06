@@ -166,6 +166,9 @@ public:
 signals:
     void binFrameOut(ProtoBinOut proto_out);
 
+    //
+    void channelChartSetupChanged(int16_t channel, uint16_t resol, int count, uint16_t offset);
+
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
 

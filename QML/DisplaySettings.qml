@@ -507,6 +507,19 @@ GridLayout {
                 text: qsTr("Horizontal")
             }
 
+            CCheck {
+                id: fixBlackStripes
+                checked: false
+                text: qsTr("Fix black stripes")
+
+                onCheckedChanged: core.fixBlackStripes = fixBlackStripes.checked
+                Component.onCompleted: core.fixBlackStripes = fixBlackStripes.checked
+
+                Settings {
+                    property alias fixBlackStripes: fixBlackStripes.checked
+                }
+            }
+
             Settings {
                 property alias echogramVisible: echogramVisible.checked
                 property alias rangefinderVisible: rangefinderVisible.checked

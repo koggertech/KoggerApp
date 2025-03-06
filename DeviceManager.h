@@ -72,6 +72,9 @@ public slots:
 #endif
 
 signals:
+    //
+    void channelChartSetupChanged(int16_t channel, uint16_t resol, int count, uint16_t offset);
+
     void dataSend(QByteArray data);
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData rawData);

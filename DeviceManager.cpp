@@ -765,6 +765,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
     }
 
+    //
+    connect(dev, &DevQProperty::channelChartSetupChanged, this, &DeviceManager::channelChartSetupChanged, connType);
+
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete, connType);
@@ -789,6 +792,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
     }
+
+    //
+    connect(dev, &DevQProperty::channelChartSetupChanged, this, &DeviceManager::channelChartSetupChanged);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved);
