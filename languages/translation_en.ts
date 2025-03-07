@@ -6,7 +6,7 @@
     <message>
         <location filename="../QML/AdjBox.qml" line="9"/>
         <source>VALUE NAME:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -14,12 +14,12 @@
     <message>
         <location filename="../QML/BottomTrackControlMenu.qml" line="25"/>
         <source>Bottom track controls</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/BottomTrackControlMenu.qml" line="29"/>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -27,7 +27,7 @@
     <message>
         <location filename="../QML/CButton.qml" line="6"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -35,7 +35,15 @@
     <message>
         <location filename="../QML/CCheck.qml" line="6"/>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
+    </message>
+</context>
+<context>
+    <name>CContact</name>
+    <message>
+        <location filename="../QML/CContact.qml" line="60"/>
+        <source>Enter text</source>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -43,7 +51,7 @@
     <message>
         <location filename="../QML/CMouseOpacityArea.qml" line="11"/>
         <source>Tooltip</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -51,7 +59,7 @@
     <message>
         <location filename="../QML/CPopup.qml" line="6"/>
         <source>Custom popup</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -59,7 +67,7 @@
     <message>
         <location filename="../QML/CProgressButton.qml" line="7"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -67,7 +75,7 @@
     <message>
         <location filename="../QML/CalcMethodTINSettings.qml" line="10"/>
         <source>TIN edge length limit:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -75,32 +83,32 @@
     <message>
         <location filename="../QML/ChartBox.qml" line="21"/>
         <source>Chart</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ChartBox.qml" line="30"/>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ChartBox.qml" line="43"/>
         <source>Shot</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ChartBox.qml" line="98"/>
         <source>Resolution, mm</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ChartBox.qml" line="120"/>
         <source>Number of Samples</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ChartBox.qml" line="142"/>
         <source>Offset of Samples</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -108,17 +116,17 @@
     <message>
         <location filename="../QML/ConnectionButton.qml" line="11"/>
         <source>Serial</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionButton.qml" line="13"/>
         <source>IP</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionButton.qml" line="14"/>
         <source>TCP</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -126,37 +134,37 @@
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="65"/>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="80"/>
         <source>Unpin</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="80"/>
         <source>Pin</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="96"/>
         <source>Auto</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="113"/>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="180"/>
         <source>ip:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="231"/>
         <source>src:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="310"/>
@@ -166,48 +174,48 @@
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="284"/>
         <source>dst:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="323"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="323"/>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="404"/>
         <source>+UDP</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="414"/>
         <source>MAVProxy</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="435"/>
         <source>REC KLF</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ConnectionViewer.qml" line="456"/>
         <source>REC CSV</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/ConnectionViewer.qml" line="484"/>
+        <location filename="../QML/ConnectionViewer.qml" line="509"/>
         <source>Enter path</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/ConnectionViewer.qml" line="510"/>
-        <location filename="../QML/ConnectionViewer.qml" line="544"/>
+        <location filename="../QML/ConnectionViewer.qml" line="535"/>
+        <location filename="../QML/ConnectionViewer.qml" line="569"/>
         <source>Please choose a file</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -215,25 +223,25 @@
     <message>
         <location filename="../QML/Console.qml" line="30"/>
         <source>Auto scroll</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Console.qml" line="41"/>
         <source>Binnary</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1142"/>
+        <location filename="../plotcash.cpp" line="1288"/>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1143"/>
+        <location filename="../plotcash.cpp" line="1289"/>
         <source>First</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -241,17 +249,17 @@
     <message>
         <location filename="../QML/DatasetBox.qml" line="21"/>
         <source>Dataset</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetBox.qml" line="37"/>
         <source>Channel #1, ms:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetBox.qml" line="67"/>
         <source>Channel #2, ms:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -259,37 +267,37 @@
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="13"/>
         <source>Chart</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="27"/>
         <source>Distance</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="41"/>
         <source>Dist. NMEA</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="55"/>
         <source>Dist. NMEA#2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="70"/>
         <source>Timestamp</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="84"/>
         <source>Temper.</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DatasetCheckBox.qml" line="100"/>
         <source>Euler</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -297,27 +305,27 @@
     <message>
         <location filename="../QML/DevAddrBox.qml" line="19"/>
         <source>Bus settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DevAddrBox.qml" line="32"/>
         <source>Bus address:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DevAddrBox.qml" line="67"/>
         <source>Set Device&apos;s address</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DevAddrBox.qml" line="88"/>
         <source>Set baudrate</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DevAddrBox.qml" line="104"/>
         <source>Set default device&apos;s address:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -325,12 +333,12 @@
     <message>
         <location filename="../QML/DisplaySettings.qml" line="23"/>
         <source>Plot</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="37"/>
         <source>Dataset #1</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="59"/>
@@ -338,7 +346,7 @@
         <location filename="../QML/DisplaySettings.qml" line="84"/>
         <location filename="../QML/DisplaySettings.qml" line="85"/>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="59"/>
@@ -346,351 +354,356 @@
         <location filename="../QML/DisplaySettings.qml" line="84"/>
         <location filename="../QML/DisplaySettings.qml" line="85"/>
         <source>First</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="99"/>
         <source>Echogram</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="108"/>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="108"/>
         <source>Sepia</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="108"/>
         <source>WRGBD</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="108"/>
         <source>WhiteBlack</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="108"/>
         <source>BlackWhite</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="123"/>
         <source>Raw</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="123"/>
         <source>Side-Scan</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="140"/>
         <source>Bottom-Track</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="149"/>
         <source>Line1</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="149"/>
         <source>Line2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="149"/>
         <source>Dot1</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="149"/>
         <source>Dot2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="149"/>
         <source>DotLine</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="165"/>
         <source>Rangefinder</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="172"/>
         <source>Text</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="172"/>
         <source>Line</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="172"/>
         <source>Dot</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="188"/>
         <source>Attitude</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="206"/>
         <source>Doppler Beams</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="271"/>
         <source>Doppler Instrument</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="310"/>
         <source>Doppler Profiler</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="320"/>
         <source>GNSS data</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="337"/>
         <source>Grid</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="343"/>
         <source>fill</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="378"/>
         <source>Angle range, °</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="426"/>
         <source>Velocity range, m/s</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="479"/>
         <source>Distance auto range</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="493"/>
         <source>Last data       </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="493"/>
         <source>Last on screen</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="493"/>
         <source>Max on screen</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="507"/>
         <source>Horizontal</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="531"/>
+        <location filename="../QML/DisplaySettings.qml" line="513"/>
+        <source>Fix black stripes</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="544"/>
         <source>Bottom-Track processing</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="564"/>
+        <location filename="../QML/DisplaySettings.qml" line="577"/>
         <source>Preset:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="570"/>
+        <location filename="../QML/DisplaySettings.qml" line="583"/>
         <source>Normal 2D</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="570"/>
+        <location filename="../QML/DisplaySettings.qml" line="583"/>
         <source>Narrow 2D</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="570"/>
+        <location filename="../QML/DisplaySettings.qml" line="583"/>
         <source>Echogram Side-Scan</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="590"/>
+        <location filename="../QML/DisplaySettings.qml" line="603"/>
         <source>Gain slope:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="642"/>
+        <location filename="../QML/DisplaySettings.qml" line="655"/>
         <source>Threshold:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="694"/>
+        <location filename="../QML/DisplaySettings.qml" line="707"/>
         <source>Horizontal window:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="731"/>
+        <location filename="../QML/DisplaySettings.qml" line="744"/>
         <source>Vertical gap, %:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="769"/>
+        <location filename="../QML/DisplaySettings.qml" line="782"/>
         <source>Min range, m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="825"/>
+        <location filename="../QML/DisplaySettings.qml" line="838"/>
         <source>Max range, m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="880"/>
+        <location filename="../QML/DisplaySettings.qml" line="893"/>
         <source>Sonar offset XYZ, mm:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="962"/>
+        <location filename="../QML/DisplaySettings.qml" line="975"/>
         <source>Processing</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="971"/>
+        <location filename="../QML/DisplaySettings.qml" line="984"/>
         <source>Export</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="982"/>
+        <location filename="../QML/DisplaySettings.qml" line="995"/>
         <source>Enter path</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1020"/>
+        <location filename="../QML/DisplaySettings.qml" line="1033"/>
         <source>Decimation, m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1040"/>
+        <location filename="../QML/DisplaySettings.qml" line="1053"/>
         <source>Export to CSV</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1048"/>
+        <location filename="../QML/DisplaySettings.qml" line="1061"/>
         <source>Export to XTF</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1056"/>
+        <location filename="../QML/DisplaySettings.qml" line="1069"/>
         <source>Complex signal to CSV</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../QML/DisplaySettings.qml" line="1064"/>
-        <source>USBL to CSV</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../QML/DisplaySettings.qml" line="1074"/>
-        <source>Preference</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="1077"/>
-        <source>Language:</source>
-        <translation type="unfinished"></translation>
+        <source>USBL to CSV</source>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1082"/>
-        <location filename="../QML/DisplaySettings.qml" line="1088"/>
-        <location filename="../QML/DisplaySettings.qml" line="1094"/>
-        <source>English</source>
-        <translation type="unfinished"></translation>
+        <location filename="../QML/DisplaySettings.qml" line="1087"/>
+        <source>Preference</source>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1082"/>
         <location filename="../QML/DisplaySettings.qml" line="1090"/>
+        <source>Language:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="1095"/>
+        <location filename="../QML/DisplaySettings.qml" line="1101"/>
+        <location filename="../QML/DisplaySettings.qml" line="1107"/>
+        <source>English</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="1095"/>
+        <location filename="../QML/DisplaySettings.qml" line="1103"/>
         <source>Russian</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1082"/>
-        <location filename="../QML/DisplaySettings.qml" line="1092"/>
+        <location filename="../QML/DisplaySettings.qml" line="1095"/>
+        <location filename="../QML/DisplaySettings.qml" line="1105"/>
         <source>Polish</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1109"/>
+        <location filename="../QML/DisplaySettings.qml" line="1122"/>
         <source>Display theme:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../QML/DisplaySettings.qml" line="1114"/>
-        <source>Dark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../QML/DisplaySettings.qml" line="1114"/>
-        <source>Super Dark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../QML/DisplaySettings.qml" line="1114"/>
-        <source>Light</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../QML/DisplaySettings.qml" line="1114"/>
-        <source>Super Light</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="1127"/>
+        <source>Dark</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="1127"/>
+        <source>Super Dark</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="1127"/>
+        <source>Light</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="1127"/>
+        <source>Super Light</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/DisplaySettings.qml" line="1140"/>
         <source>Instrumets grade:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1132"/>
+        <location filename="../QML/DisplaySettings.qml" line="1145"/>
         <source>Fish Finders</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1132"/>
+        <location filename="../QML/DisplaySettings.qml" line="1145"/>
         <source>Bottom Tracking</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1132"/>
+        <location filename="../QML/DisplaySettings.qml" line="1145"/>
         <source>Maximum</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1147"/>
+        <location filename="../QML/DisplaySettings.qml" line="1160"/>
         <source>Interface</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1151"/>
+        <location filename="../QML/DisplaySettings.qml" line="1164"/>
         <source>Console</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -698,27 +711,27 @@
     <message>
         <location filename="../QML/DopplerBox.qml" line="18"/>
         <source>Range Modes</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DopplerBox.qml" line="27"/>
         <source>Mode1</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DopplerBox.qml" line="39"/>
         <source>Mode2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DopplerBox.qml" line="51"/>
         <source>Mode3</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/DopplerBox.qml" line="63"/>
         <source>Mode4 range, m</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -726,17 +739,17 @@
     <message>
         <location filename="../QML/ExportDist.qml" line="26"/>
         <source>Export:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ExportDist.qml" line="33"/>
         <source>Distance</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/ExportDist.qml" line="46"/>
         <source>Export to CSV</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -744,52 +757,52 @@
     <message>
         <location filename="../QML/FactoryBox.qml" line="13"/>
         <source>Please choose a file</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="41"/>
         <source>Factory</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="44"/>
         <source>PN</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="51"/>
         <source>Enter PN</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="240"/>
         <source>Write</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="254"/>
         <source>Read</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="268"/>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="282"/>
         <source>Upgrade</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="301"/>
         <source>FLASH</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FactoryBox.qml" line="316"/>
         <source>Simple FLASH</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -797,17 +810,17 @@
     <message>
         <location filename="../QML/FlashBox.qml" line="28"/>
         <source>Write</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FlashBox.qml" line="38"/>
         <source>Erase</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/FlashBox.qml" line="48"/>
         <source>Reboot</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -815,7 +828,7 @@
     <message>
         <location filename="../QML/KoggerCommon/KButton.qml" line="6"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -823,7 +836,7 @@
     <message>
         <location filename="../QML/KoggerCommon/KCheck.qml" line="6"/>
         <source>Check</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -831,7 +844,7 @@
     <message>
         <location filename="../QML/KoggerCommon/KParamGroup.qml" line="8"/>
         <source>Group</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -839,7 +852,7 @@
     <message>
         <location filename="../QML/KoggerCommon/KParamSetup.qml" line="9"/>
         <source>Param</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -847,7 +860,7 @@
     <message>
         <location filename="../QML/KoggerCommon/KProgressButton.qml" line="7"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -855,30 +868,30 @@
     <message>
         <location filename="../QML/KoggerCommon/KWaitProgressBar.qml" line="6"/>
         <source>Please, wait...</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
     <name>MenuBar</name>
     <message>
-        <location filename="../QML/MenuBar.qml" line="64"/>
+        <location filename="../QML/MenuBar.qml" line="91"/>
         <source>Connections</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/MenuBar.qml" line="79"/>
+        <location filename="../QML/MenuBar.qml" line="106"/>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/MenuBar.qml" line="110"/>
+        <location filename="../QML/MenuBar.qml" line="137"/>
         <source>Display 3D</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/MenuBar.qml" line="128"/>
+        <location filename="../QML/MenuBar.qml" line="155"/>
         <source>Display 2D</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -886,7 +899,7 @@
     <message>
         <location filename="../QML/MotorViewer.qml" line="252"/>
         <source>Enter path</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -894,7 +907,7 @@
     <message>
         <location filename="../QML/MpcFilterControlMenu.qml" line="27"/>
         <source>Points count: </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -902,7 +915,7 @@
     <message>
         <location filename="../QML/NpdFilterControlMenu.qml" line="27"/>
         <source>Distance: </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -910,7 +923,7 @@
     <message>
         <location filename="../QML/ParamGroup.qml" line="8"/>
         <source>Group</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -918,7 +931,7 @@
     <message>
         <location filename="../QML/ParamSetup.qml" line="9"/>
         <source>Param</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -926,22 +939,22 @@
     <message>
         <location filename="../QML/PointGroupControlMenu.qml" line="145"/>
         <source>Point list is empty. Add point to list or import list from file.</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/PointGroupControlMenu.qml" line="178"/>
         <source>Selected point</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/PointGroupControlMenu.qml" line="241"/>
         <source>width: </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/PointGroupControlMenu.qml" line="262"/>
         <source>Add point</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -949,22 +962,22 @@
     <message>
         <location filename="../QML/PolygonGroupControlMenu.qml" line="29"/>
         <source>Polygon group controls</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/PolygonGroupControlMenu.qml" line="38"/>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/PolygonGroupControlMenu.qml" line="147"/>
         <source>Selected point</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/PolygonGroupControlMenu.qml" line="212"/>
         <source>Add polygon</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -972,14 +985,14 @@
     <message>
         <location filename="../Plot2DGrid.cpp" line="33"/>
         <source> m/s    </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../Plot2DGrid.cpp" line="44"/>
         <location filename="../Plot2DGrid.cpp" line="59"/>
         <location filename="../Plot2DGrid.cpp" line="78"/>
         <source> m</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -987,47 +1000,47 @@
     <message>
         <location filename="../QML/RecorderBox.qml" line="81"/>
         <source>MB / </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="81"/>
         <source> MB</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="161"/>
         <source>Update list</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="171"/>
         <source>Download</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="181"/>
         <source>Pause</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="203"/>
         <source>Set baudrate</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="218"/>
         <source>Flash settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="228"/>
         <source>Erase settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/RecorderBox.qml" line="238"/>
         <source>Reboot</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1035,12 +1048,12 @@
     <message>
         <location filename="../QML/Scene3DControlMenu.qml" line="28"/>
         <source>Show scene bounding box</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DControlMenu.qml" line="36"/>
         <source>Vertical scale: </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1048,168 +1061,178 @@
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="45"/>
         <source>Edge limit, m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="62"/>
         <source>Decimation by:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="66"/>
         <source>Count</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="77"/>
         <source>Distance</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="92"/>
         <source>Point count:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="110"/>
         <source>Decimation, m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="128"/>
         <source>Type:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="132"/>
         <source>Triangle</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="143"/>
         <source>Grid</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="158"/>
         <source>Grid step, m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="180"/>
         <source>Show contour</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="193"/>
         <source>Show grid</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/Scene3DToolbar.qml" line="207"/>
-        <location filename="../QML/Scene3DToolbar.qml" line="680"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="729"/>
         <source>Update</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="660"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="709"/>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="322"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="371"/>
         <source>Realtime processing</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="347"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="230"/>
+        <source>Enter path</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/Scene3DToolbar.qml" line="257"/>
+        <source>Export to CSV</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/Scene3DToolbar.qml" line="396"/>
         <source>Track last data</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="370"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="419"/>
         <source>Theme:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="427"/>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="427"/>
         <source>Sepia</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="427"/>
         <source>WRGBD</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="427"/>
         <source>WhiteBlack</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="378"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="427"/>
         <source>BlackWhite</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="401"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="450"/>
         <source>Angle offset, °</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="412"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="461"/>
         <source>left:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="445"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="494"/>
         <source>right:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="481"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="530"/>
         <source>Tile side pixel size:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="505"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="554"/>
         <source>Tile height matrix ratio:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="527"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="576"/>
         <source>Tile resolution, pix/m:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="548"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="597"/>
         <source>Reinit global mesh</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="565"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="614"/>
         <source>Use linear filter</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="588"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="637"/>
         <source>Grid/contour visible</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="612"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="661"/>
         <source>Measuse lines visible</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/Scene3DToolbar.qml" line="636"/>
+        <location filename="../QML/Scene3DToolbar.qml" line="685"/>
         <source>Generate grid/contour</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1217,22 +1240,22 @@
     <message>
         <location filename="../QML/SceneControlMenu.qml" line="55"/>
         <source>Bottom track</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SceneControlMenu.qml" line="67"/>
         <source>Surface</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SceneControlMenu.qml" line="80"/>
         <source>Point group</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SceneControlMenu.qml" line="92"/>
         <source>Polygon group</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1240,52 +1263,52 @@
     <message>
         <location filename="../QML/SonarBox.qml" line="21"/>
         <source>Actions</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="31"/>
         <source>Flash settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="41"/>
         <source>Erase settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="51"/>
         <source>Reboot</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="71"/>
         <source>Set baudrate</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="81"/>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="85"/>
         <source>Open file</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="102"/>
         <source>Save as file</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="120"/>
         <source>Import</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SonarBox.qml" line="127"/>
         <source>Export</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1293,57 +1316,57 @@
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="72"/>
         <source>Surface controls</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="76"/>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="86"/>
         <source>Show contour</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="119"/>
         <source>Show grid</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="149"/>
         <source>Triangle edge length limit: </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="163"/>
         <source>Enable grid interpolation</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="170"/>
         <source>Grid cell size: </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="188"/>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="188"/>
         <source>Max points count</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="188"/>
         <source>Nearest point distance</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/SurfaceControlMenu.qml" line="220"/>
         <source>Update surface</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1351,25 +1374,25 @@
     <message>
         <location filename="../QML/TitleMeasurement.qml" line="11"/>
         <source>TITLE</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/TitleMeasurement.qml" line="65"/>
         <location filename="../QML/TitleMeasurement.qml" line="80"/>
         <source>OFF</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/TitleMeasurement.qml" line="67"/>
         <location filename="../QML/TitleMeasurement.qml" line="86"/>
         <source>CH1</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/TitleMeasurement.qml" line="69"/>
         <location filename="../QML/TitleMeasurement.qml" line="92"/>
         <source>CH2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1377,7 +1400,7 @@
     <message>
         <location filename="../QML/TitleMenuBox.qml" line="14"/>
         <source>TitleBox</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1385,7 +1408,7 @@
     <message>
         <location filename="../QML/TitleSetup.qml" line="9"/>
         <source>TITLE</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1393,22 +1416,22 @@
     <message>
         <location filename="../QML/UpgradeBox.qml" line="14"/>
         <source>Please choose a file</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/UpgradeBox.qml" line="33"/>
         <source>Upgrade</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/UpgradeBox.qml" line="57"/>
         <source>Enter path</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../QML/UpgradeBox.qml" line="69"/>
         <source>UPGRADE</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -1416,54 +1439,54 @@
     <message>
         <location filename="../QML/main.qml" line="20"/>
         <source>KoggerApp, KOGGER</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="40"/>
+        <location filename="../QML/main.qml" line="105"/>
         <source>Undefined</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="54"/>
+        <location filename="../QML/main.qml" line="119"/>
         <source>Please restart the application to apply the language change</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="63"/>
+        <location filename="../QML/main.qml" line="128"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="201"/>
+        <location filename="../QML/main.qml" line="385"/>
         <source>Calculating surface
 Please wait...</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="209"/>
+        <location filename="../QML/main.qml" line="393"/>
         <source>Calculating mosaic
 Please wait...</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="600"/>
+        <location filename="../QML/main.qml" line="822"/>
         <source> V   </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="600"/>
+        <location filename="../QML/main.qml" line="822"/>
         <source> A   </source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="600"/>
+        <location filename="../QML/main.qml" line="822"/>
         <source> m/s</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="650"/>
+        <location filename="../QML/main.qml" line="872"/>
         <source>Please wait, the file is opening</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 </TS>
