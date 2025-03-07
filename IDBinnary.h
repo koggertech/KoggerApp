@@ -175,8 +175,12 @@ class IDBinChart : public IDBin
 {
     Q_OBJECT
 public:
-
-    explicit IDBinChart() : IDBin() {
+    IDBinChart() :
+        IDBin(),
+        lossIndex_(0)
+    {
+        lossHistory_.resize(100);
+        std::fill(lossHistory_.begin(), lossHistory_.end(), 0);
     }
 
     ID id() override { return ID_CHART; }
@@ -201,6 +205,14 @@ public:
     // uint32_t rawDataSize() { return _rawDataSize; }
     // uint8_t rawType() { return type; }
 
+    uint8_t getAverageLosses() const {
+        uint8_t sum = 0;
+        for (uint8_t loss : lossHistory_) {
+            sum += loss;
+        }
+        return (sum * 1.0f) / (lossHistory_.size() * 1.0f) * 100.0f;
+    }
+
 protected:
     uint32_t m_seqOffset = 0, m_sampleResol = 0, m_absOffset = 0;
     uint32_t m_chartSizeIncr = 0;
@@ -214,6 +226,10 @@ protected:
     RawData _rawData;
 signals:
     void rawDataRecieved(RawData raw_data);
+
+private:
+    QVector<uint8_t> lossHistory_;
+    uint8_t lossIndex_ = 0;
 };
 
 

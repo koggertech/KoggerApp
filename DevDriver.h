@@ -376,4 +376,5 @@ private:
     bool transcState_;
     bool soundSpeedState_;
     bool uartState_;
+    int errorFreezeCnt_;
 };

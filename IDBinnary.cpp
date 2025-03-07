@@ -233,7 +233,11 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             m_chartSizeIncr = 0;
         }
 
+        lossIndex_ = (lossIndex_ + 1) % 100;
+
         if(m_chartSizeIncr == m_seqOffset) {
+            lossHistory_[lossIndex_] = 0;
+
             uint16_t part_len = proto.readAvailable();
 
             if(m_seqOffset + part_len < sizeof (m_fillChart)) {
@@ -241,6 +245,8 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
                 m_chartSizeIncr += part_len;
             }
         } else {
+            lossHistory_[lossIndex_] = 1;
+
             return respErrorPayload;
         }
     } else if(proto.ver() == v7) {
