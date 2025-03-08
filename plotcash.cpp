@@ -424,7 +424,7 @@ void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution,
                 }
             }
 
-            if (leftFreqIndx != -1) {
+            if (leftFreqIndx != -1 && mostFrequentSize >= 0) {
                 QVector<uint8_t> fixData(mostFrequentSize, 0);
 
                 if (dataSize < mostFrequentSize) {
