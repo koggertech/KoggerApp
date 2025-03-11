@@ -981,12 +981,16 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
             }
             ++errorFreezeCnt_;
 
-            emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+            if (!data.empty()) {
+                emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+            }
 
             if(ver == v1) {
                 QVector<uint8_t> data2(idChart->chartSize());
                 memcpy(data2.data(), idChart->logData28(), idChart->chartSize());
-                emit chartComplete(_lastAddres+1, data2, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+                if (!data2.empty()) {
+                    emit chartComplete(_lastAddres+1, data2, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+                }
             }
         }
         // else if(ver == v7) {

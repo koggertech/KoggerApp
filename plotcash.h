@@ -861,6 +861,9 @@ public:
     float getInterpFirstChannelDist() const;
     float getInterpSecondChannelDist() const;
 
+    bool getWasValidlyRenderedInEchogram() const;
+    void setWasValidlyRenderedInEchogram(bool state);
+
     Contact contact_;
 
 protected:
@@ -945,6 +948,7 @@ private:
             return false;
         };
     } interpData_;
+    bool wasValidlyRenderedInEchogram_;
 };
 
 class Dataset : public QObject {

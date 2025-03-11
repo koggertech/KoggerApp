@@ -207,11 +207,17 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
         int pool_index = cursor.getIndex(cursor_pos);
         int pool_index_safe = dataset->validIndex(pool_index);
         if(pool_index_safe >= 0) {
+
+            bool wasValidlyRendered = false;
+            auto* datasource = dataset->fromIndex(pool_index_safe);
+            if (datasource) {
+                wasValidlyRendered = datasource->getWasValidlyRenderedInEchogram();
+            }
+
             const int cash_index = _cash[column].poolIndex;
-            if(is_cash_notvalid || pool_index_safe != cash_index) {
+            if(is_cash_notvalid || pool_index_safe != cash_index || !wasValidlyRendered) {
                 _cash[column].poolIndex = pool_index_safe;
 
-                Epoch* datasource = dataset->fromIndex(pool_index_safe);
                 if(datasource != NULL) {
                     _cash[column].state = CashLine::CashStateNotValid;
                     int16_t* cash_data = _cash[column].data.data();
@@ -266,6 +272,8 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
                         }
                     }
                 }
+
+                datasource->setWasValidlyRenderedInEchogram(true);
             }
         } else {
             if(_cash[column].state != CashLine::CashStateEraced) {

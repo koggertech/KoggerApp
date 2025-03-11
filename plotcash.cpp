@@ -4,7 +4,7 @@
 #include <core.h>
 extern Core core;
 
-Epoch::Epoch() {
+Epoch::Epoch() : wasValidlyRenderedInEchogram_(false) {
     _charts.clear();
     flags.distAvail = false;
 }
@@ -203,6 +203,16 @@ float Epoch::getInterpSecondChannelDist() const
     return interpData_.distSecondChannel;
 }
 
+bool Epoch::getWasValidlyRenderedInEchogram() const
+{
+    return wasValidlyRenderedInEchogram_;
+}
+
+void Epoch::setWasValidlyRenderedInEchogram(bool state)
+{
+    wasValidlyRenderedInEchogram_ = state;
+}
+
 Dataset::Dataset() :
     interpolator_(this),
     lastBoatTrackEpoch_(0),
@@ -361,105 +371,97 @@ void Dataset::setFixBlackStripes(bool state)
 }
 
 void Dataset::addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset) {
-    auto dataSize = data.size();
+    const auto dataSize = data.size();
+    if (dataSize <= 0 || qFuzzyIsNull(resolution)) {
+        return;
+    }
 
-    if(dataSize <= 0 || resolution == 0) { return; }
-
-    int pool_index = endIndex();
-
-    if(pool_index < 0
-            //             || _pool[pool_index].eventAvail() == false
-            || _pool[pool_index].chartAvail(channel)) {
+    int poolIndex = endIndex();
+    if (poolIndex < 0 ||
+        //_pool[poolIndex].eventAvail() == false ||
+        _pool[poolIndex].chartAvail(channel)) {
         addNewEpoch();
-        pool_index = endIndex();
+        //poolIndex = endIndex();
     }
 
     auto setChartByDefault = [&]() -> void {
         _pool[endIndex()].setChart(channel, data, resolution, offset);
-        lastMostFreqChartSize_ = data.size();
+        _pool[endIndex()].setWasValidlyRenderedInEchogram(false);
+        lastMostFreqChartSize_ = dataSize;
     };
+
+    const int windowSize = 20; // window for calculating frequently occurring data size
+    const int numBackSteps = 5; // number of steps to check recent epochs
 
     if (!fixBlackStripes_) {
         setChartByDefault();
     }
     else {
-        const int windowSize = 25; // adjust
-
-        bool isChannelDoubled = _channelsSetup.size() == 2;
-        int chartCount = chartCount_ / (isChannelDoubled ? 2 : 1);
-
-        bool needToCopy = (endIndex() > windowSize) &&
+        const bool isChannelDoubled = _channelsSetup.size() == 2;
+        const int chartCount = chartCount_ / (isChannelDoubled ? 2 : 1);
+        const int endIndx = endIndex();
+        const int startIndx = (endIndx - windowSize < 0) ? 0 : endIndx - windowSize;
+        const int preEndIndx = endIndex() - 1 ;
+        const bool needToCopy = (endIndx > windowSize) &&
                           ((state_ == DatasetState::kConnection && dataSize != chartCount) ||
                            (state_ == DatasetState::kFile       && dataSize != lastMostFreqChartSize_));
 
         if (needToCopy) {
-            int startIndx = endIndex() - windowSize;
-            int endIndx = endIndex();
-            int preEndIndx = endIndex() - 1;
-
-            if (startIndx < 0) {
-                startIndx = 0;
-            }
-
-            QHash<int, int> frequencyCount;
+            QHash<int, int> freqCount;
             for (int i = preEndIndx; i > startIndx; --i) {
-                frequencyCount[_pool[i].chartSize(channel)]++;
+                freqCount[_pool[i].chartSize(channel)]++;
             }
-
-            int mostFrequentSize = _pool[preEndIndx].chartSize(channel);
+            int mostFreqChartSize = _pool[preEndIndx].chartSize(channel);
             int maxCount = 0;
-            for (auto it = frequencyCount.constBegin(); it != frequencyCount.constEnd(); ++it) {
+            for (auto it = freqCount.constBegin(); it != freqCount.constEnd(); ++it) {
                 if (it.value() > maxCount) {
                     maxCount = it.value();
-                    mostFrequentSize = it.key();
+                    mostFreqChartSize = it.key();
                 }
             }
-
             int leftFreqIndx = -1;
             for (int i = preEndIndx; i > startIndx; --i) {
                 int currChartSize = _pool[i].chartSize(channel);
-                if (currChartSize == mostFrequentSize) {
+                if (currChartSize == mostFreqChartSize) {
                     leftFreqIndx = i;
                     break;
                 }
             }
 
-            if (leftFreqIndx != -1 && mostFrequentSize >= 0) {
-                QVector<uint8_t> fixData(mostFrequentSize, 0);
-
-                if (dataSize < mostFrequentSize) {
+            if (leftFreqIndx != -1 && mostFreqChartSize >= 0) {
+                if (dataSize < mostFreqChartSize) {
+                    QVector<uint8_t> fixData(mostFreqChartSize, 0);
                     memcpy(fixData.data(), data.data(), dataSize);
                     auto copyFrom = _pool[leftFreqIndx].chartData(channel);
-                    memcpy(fixData.data() + dataSize , copyFrom.data() + dataSize, mostFrequentSize - dataSize);
+                    memcpy(fixData.data() + dataSize , copyFrom.data() + dataSize, mostFreqChartSize - dataSize);
                     _pool[endIndx].setChart(channel, fixData, resolution, offset);
                 }
                 else {
                     _pool[endIndx].setChart(channel, _pool[leftFreqIndx].chartData(channel), resolution, offset);
                 }
-
-                lastMostFreqChartSize_ = mostFrequentSize;
+                _pool[endIndx].setWasValidlyRenderedInEchogram(false);
+                lastMostFreqChartSize_ = mostFreqChartSize;
             }
             else {
-                lastMostFreqChartSize_ = dataSize;
+                setChartByDefault();
             }
         }
         else {
             setChartByDefault();
+        }
 
-            int checkSize = 5;
-            int startIndx = endIndex() - checkSize;
-            int endIndx = endIndex();
-            int preEndIndx = endIndx - 1;
-            if (startIndx < 0) {
-                startIndx = 0;
-            }
-            for (int i = preEndIndx; i >= startIndx; --i) {
-                if (_pool[i].chartSize(channel) != dataSize) {
-                    _pool[i].setChart(channel, data, resolution, offset);
-                }
+        // walk backward
+        const int wbStartIndx = (endIndx - numBackSteps < 0) ? 0 : endIndx - numBackSteps;
+        const int wbPreEndIndx = endIndx - 1;
+        const auto recorderData = _pool[endIndx].chartData(channel);
+        const auto recorderDataSize = recorderData.size();
+        for (int i = wbPreEndIndx; i > wbStartIndx; --i) {
+            if (_pool[i].chartSize(channel) != recorderDataSize) {
+                _pool[i].setChart(channel, recorderData, resolution, offset);
+                _pool[i].setWasValidlyRenderedInEchogram(false);
             }
         }
-    } // test area
+    }
 
     validateChannelList(channel);
     emit dataUpdate();
