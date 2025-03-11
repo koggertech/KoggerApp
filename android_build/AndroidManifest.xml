@@ -10,7 +10,8 @@
         android:label="KoggerApp" 
         android:extractNativeLibs="true" 
         android:icon="@drawable/icon"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true">
 
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.kogger.koggerapp.KoggerActivity" android:label="KoggerApp" android:screenOrientation="unspecified" 
         android:launchMode="singleTop" 
@@ -99,7 +100,9 @@
     <!-- Default permissions and features -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
     <uses-permission android:name="android.permission.INTERNET" />
