@@ -778,8 +778,8 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
 
     QPainter* p = canvas.painter();
     p->setPen(pen);
-    QFont font = QFont("Asap", 14, QFont::Normal);
-    font.setPixelSize(18);
+    QFont font = QFont("Asap", 14 * scaleFactor_, QFont::Normal);
+    font.setPixelSize(18 * scaleFactor_);
     p->setFont(font);
 
     const int image_height = canvas.height();
@@ -801,14 +801,19 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     QString distanceText = QString("%1 m").arg(cursor_distance, 0, 'g', 4);
     QRect textRect = p->fontMetrics().boundingRect(distanceText);
 
-    bool onTheRight = (p->window().width() - cursor.mouseX - 65) < textRect.width();
+    int xShift = 50 * scaleFactor_;
+    int yShiftBot = 20 * scaleFactor_;
+    int yShiftTop = 40 * scaleFactor_;
+    int xCheck = xShift + 15 * scaleFactor_;
+
+    bool onTheRight = (p->window().width() - cursor.mouseX - xCheck) < textRect.width();
 
     QPoint shiftedPoint;
-    if (cursor.mouseY > 60) {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY - 20) : QPoint(cursor.mouseX + 50, cursor.mouseY - 20);
+    if (cursor.mouseY > xCheck) {
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - xShift - textRect.width(), cursor.mouseY - yShiftBot) : QPoint(cursor.mouseX + xShift, cursor.mouseY - yShiftBot);
     }
     else {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - 50 - textRect.width(), cursor.mouseY + 40) : QPoint(cursor.mouseX + 50, cursor.mouseY + 40);
+        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - xShift - textRect.width(), cursor.mouseY + yShiftTop) : QPoint(cursor.mouseX + xShift, cursor.mouseY + yShiftTop);
     }
 
     textRect.moveTopLeft(shiftedPoint);
@@ -816,7 +821,7 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     // back
     p->setPen(Qt::NoPen);
     p->setBrush(QColor(45,45,45));
-    p->drawRect(textRect.adjusted(-5, -20, 5, -15));
+    p->drawRect(textRect.adjusted(-5 * scaleFactor_, -20 * scaleFactor_, 5 * scaleFactor_, -15 * scaleFactor_));
 
     // text
     p->setPen(QColor(255,255,255));

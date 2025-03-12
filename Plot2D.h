@@ -894,6 +894,12 @@ protected:
     bool beenEpochEvent_ = false;
     int _lineWidth = 1;
     QColor _lineColor = QColor(255, 255, 255, 255);
+private:
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
+    int scaleFactor_ = 2;
+#else
+    int scaleFactor_ = 1;
+#endif
 };
 
 
