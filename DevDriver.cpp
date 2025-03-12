@@ -14,7 +14,8 @@ DevDriver::DevDriver(QObject *parent) :
     transcState_(false),
     soundSpeedState_(false),
     uartState_(false),
-    errorFreezeCnt_(0)
+    errorFreezeCnt_(0),
+    averageChartLosses_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
     regID(idTimestamp = new IDBinTimestamp(), &DevDriver::receivedTimestamp);
@@ -975,8 +976,9 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
             QVector<uint8_t> data(idChart->chartSize());
             memcpy(data.data(), idChart->logData8(), idChart->chartSize());
 
-            if (errorFreezeCnt_ > 10) {
-                //qDebug() << idChart->getAverageLosses();
+            if (errorFreezeCnt_ > 100) {
+                averageChartLosses_ = idChart->getAverageLosses();
+                emit averageChartLossesChanged();
                 errorFreezeCnt_ = 0;
             }
             ++errorFreezeCnt_;

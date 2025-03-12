@@ -2,7 +2,8 @@
 
 
 DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
-    QObject(parent)
+    QObject(parent),
+    averageChartLosses_(0)
 {
     workerObject_ = std::make_unique<DeviceManager>();
 
@@ -14,6 +15,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,    connectionType));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged, connectionType));
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,    connectionType));
+    deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses,    connectionType));
 
 
 #ifdef MOTOR
@@ -35,6 +37,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject::connect(workerObject_.get(), &DeviceManager::devChanged,           this,                &DeviceManagerWrapper::devChanged,    connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::streamChanged,        this,                &DeviceManagerWrapper::streamChanged, connectionType);
     QObject::connect(workerObject_.get(), &DeviceManager::vruChanged,           this,                &DeviceManagerWrapper::vruChanged,    connectionType);
+    QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses,    connectionType);
 
 
 #ifdef MOTOR
@@ -68,6 +71,12 @@ DeviceManagerWrapper::~DeviceManagerWrapper()
 DeviceManager* DeviceManagerWrapper::getWorker()
 {
     return workerObject_.get();
+}
+
+void DeviceManagerWrapper::calcAverageChartLosses()
+{
+    averageChartLosses_ = std::max(0, std::min(100, 100 - getWorker()->calcAverageChartLosses()));
+    emit this->chartLossesChanged();
 }
 
 #ifdef MOTOR

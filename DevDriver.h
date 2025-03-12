@@ -162,8 +162,10 @@ public:
     bool getTranscState() { return transcState_; };
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
+    int getAverageChartLosses() const { return averageChartLosses_; };
 
 signals:
+    void averageChartLossesChanged();
     void binFrameOut(ProtoBinOut proto_out);
 
     //
@@ -377,4 +379,5 @@ private:
     bool soundSpeedState_;
     bool uartState_;
     int errorFreezeCnt_;
+    int averageChartLosses_;
 };

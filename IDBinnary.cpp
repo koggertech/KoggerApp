@@ -233,7 +233,7 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             m_chartSizeIncr = 0;
         }
 
-        lossIndex_ = (lossIndex_ + 1) % 100;
+        lossIndex_ = (lossIndex_ + 1) % lossHistory_.size();
 
         if(m_chartSizeIncr == m_seqOffset) {
             lossHistory_[lossIndex_] = 0;

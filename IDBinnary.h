@@ -179,7 +179,7 @@ public:
         IDBin(),
         lossIndex_(0)
     {
-        lossHistory_.resize(100);
+        lossHistory_.resize(1000);
         std::fill(lossHistory_.begin(), lossHistory_.end(), 0);
     }
 
@@ -206,7 +206,7 @@ public:
     // uint8_t rawType() { return type; }
 
     uint8_t getAverageLosses() const {
-        uint8_t sum = 0;
+        int sum = 0;
         for (uint8_t loss : lossHistory_) {
             sum += loss;
         }
@@ -229,7 +229,7 @@ signals:
 
 private:
     QVector<uint8_t> lossHistory_;
-    uint8_t lossIndex_ = 0;
+    int lossIndex_ = 0;
 };
 
 

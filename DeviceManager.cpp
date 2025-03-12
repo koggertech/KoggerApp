@@ -59,6 +59,28 @@ int DeviceManager::pilotModeState()
     return vru_.flightMode;
 }
 
+int DeviceManager::calcAverageChartLosses()
+{
+    int retVal = 0;
+    int averageChartLosses = 0;
+    int numOfDevices = 0;
+
+    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+        QHash<int, DevQProperty*> devs = i.value();
+
+        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+            ++numOfDevices;
+            averageChartLosses += k.value()->getAverageChartLosses();
+        }
+    }
+
+    if (numOfDevices != 0) {
+        retVal = averageChartLosses / numOfDevices;
+    }
+
+    return retVal;
+}
+
 QList<DevQProperty *> DeviceManager::getDevList()
 {
     devList_.clear();
@@ -767,6 +789,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
 
     //
     connect(dev, &DevQProperty::channelChartSetupChanged, this, &DeviceManager::channelChartSetupChanged, connType);
+    connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged, connType);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
@@ -795,6 +818,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
 
     //
     connect(dev, &DevQProperty::channelChartSetupChanged, this, &DeviceManager::channelChartSetupChanged);
+    connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved);

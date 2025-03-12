@@ -24,6 +24,7 @@ public:
     Q_PROPERTY(float                vruVelocityH        READ    vruVelocityH            NOTIFY vruChanged)
     Q_PROPERTY(int                  pilotArmState       READ    pilotArmState           NOTIFY vruChanged)
     Q_PROPERTY(int                  pilotModeState      READ    pilotModeState          NOTIFY vruChanged)
+    Q_PROPERTY(int averageChartLosses  READ getAverageChartLosses      NOTIFY chartLossesChanged)
 
     Q_PROPERTY(bool                 isbeaconDirectQueueAsk    WRITE   setUSBLBeaconDirectAsk)
 
@@ -59,8 +60,14 @@ public:
     void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
 
     void                 setUSBLBeaconDirectAsk(bool is_ask) { getWorker()->setUSBLBeaconDirectAsk(is_ask); }
+
+    int getAverageChartLosses() const {
+        return averageChartLosses_;
+    };
+
 public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
+    void calcAverageChartLosses();
 
 private slots:
 
@@ -79,6 +86,7 @@ signals:
     void devChanged();
     void streamChanged();
     void vruChanged();
+    void chartLossesChanged();
 
 #ifdef MOTOR
     void sendOpenCsvFile(QString path);
@@ -103,4 +111,5 @@ private:
     float currSAngle_ = 0.0f;
     float taskSAngle_ = 0.0f;
 #endif
+    int averageChartLosses_;
 }; // class DeviceWrapper

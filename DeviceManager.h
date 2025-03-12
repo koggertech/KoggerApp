@@ -37,6 +37,7 @@ public:
 #ifdef MOTOR
     bool isMotorControlCreated() const;
 #endif
+    int calcAverageChartLosses();
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id);
@@ -102,6 +103,7 @@ signals:
     void attitudeComplete(float yaw, float pitch, float roll);
     void encoderComplete(float e1, float e2, float e3);
     void fileStopsOpening();
+    void chartLossesChanged();
 
 #ifdef SEPARATE_READING
     void fileStartOpening();

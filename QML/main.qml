@@ -819,7 +819,14 @@ ApplicationWindow  {
                     visible: isFinite(deviceManagerWrapper.vruVoltage)
                     rightPadding: 4
                     leftPadding: 4
-                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + qsTr(" V   ") + deviceManagerWrapper.vruCurrent.toFixed(1) + qsTr(" A   ") + deviceManagerWrapper.vruVelocityH.toFixed(2) + qsTr(" m/s")
+                    text: deviceManagerWrapper.vruVoltage.toFixed(1) + qsTr(" V   ") + deviceManagerWrapper.vruCurrent.toFixed(1) + qsTr(" A   ") + deviceManagerWrapper.vruVelocityH.toFixed(2) + qsTr(" m/s ")
+                }
+                CText {
+                    id: errText
+                    //visible: isFinite(deviceManagerWrapper.vruVoltage)
+                    rightPadding: 4
+                    leftPadding: 4
+                    text: deviceManagerWrapper.averageChartLosses + qsTr(" %")
                 }
             }
         }
