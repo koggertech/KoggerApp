@@ -14,8 +14,12 @@
 #include FT_FREETYPE_H
 
 
-GraphicsScene3dRenderer::GraphicsScene3dRenderer()
+GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
+    scaleFactor_(1.0f)
 {
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
+    scaleFactor_ = 2.0f;
+#endif
     m_shaderProgramMap["height"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
@@ -172,7 +176,7 @@ void GraphicsScene3dRenderer::drawObjects()
         float distance =  m_camera.distToFocusPoint();
         float perspFixFovRad = qDegreesToRadians(perspFixFov);
         float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
-        float worldScale = factor * 7.f;
+        float worldScale = factor * 7.f * scaleFactor_;
         nModel.scale(worldScale);
         navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
     }

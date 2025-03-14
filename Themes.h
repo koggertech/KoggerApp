@@ -232,6 +232,8 @@ inline qreal Themes::checkResolutionCoeff() const
         if (physDotsPerInch > 90.0) {
             retVal = 2.0;
         }
+#else
+        Q_UNUSED(physDotsPerInch)
 #endif
         // retVal = 2.0; // test
         // qDebug() << "Logical DPI:" << screen->logicalDotsPerInch();

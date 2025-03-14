@@ -360,6 +360,8 @@ void Dataset::addTimestamp(int timestamp) {
 
 void Dataset::setChartSetup(int16_t channel, uint16_t resol, int count, uint16_t offset)
 {
+    Q_UNUSED(channel)
+
     chartResolution_ = resol;
     chartCount_ = count;
     chartOffset_ = offset;

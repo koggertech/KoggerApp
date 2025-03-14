@@ -84,4 +84,5 @@ private:
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     GLuint VAO, VBO;
+    float scaleFactor_;
 };
