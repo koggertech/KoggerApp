@@ -113,19 +113,17 @@ void GraphicsScene3dRenderer::drawObjects()
 {
     QMatrix4x4 model, view, projection;
 
+    const float perspectiveEdge     { 5000.0f };
+    const float nearPlanePersp      { 1.0f };
+    const float farPlanePersp       { 20000.0f };
+    const float nearPlaneOrthoCoeff { 0.05f };
+    const float farPlaneOrthoCoeff  { 1.2f };
 
-    float perspectiveEdge{ 5000.0f };
-
-    float nearPlanePersp{ 1.0f };
-    float farPlanePersp{ 20000.0f };
-
-    float nearPlaneOrthoCoeff{ 0.05f };
-    float farPlaneOrthoCoeff{ 1.2f };
+    float perspCoeff = m_camera.getHeightAboveGround() /  perspectiveEdge;
+    qreal perspFixFov = m_camera.fov() + m_camera.fov() * perspCoeff;
 
     if (m_camera.getIsPerspective()) {
-        float coeff = m_camera.getHeightAboveGround() /  perspectiveEdge;
-        qreal fixFov = m_camera.fov() + m_camera.fov() * coeff;
-        projection.perspective(fixFov, m_viewSize.width() / m_viewSize.height(), nearPlanePersp, farPlanePersp);
+        projection.perspective(perspFixFov, m_viewSize.width() / m_viewSize.height(), nearPlanePersp, farPlanePersp);
     }
     else {
         float orth_v = m_camera.getHeightAboveGround();
@@ -162,10 +160,28 @@ void GraphicsScene3dRenderer::drawObjects()
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
-    navigationArrowRenderImpl_.render(this,  m_projection * view * m_model, m_shaderProgramMap);
-    contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 
+    // navigation arrow
+    glEnable(GL_DEPTH_TEST);
+    {
+        QMatrix4x4 nModel;
+        nModel.setToIdentity();
+        nModel.translate(navigationArrowRenderImpl_.getPosition());
+        nModel.rotate(navigationArrowRenderImpl_.getAngle(), 0.f, 0.f, 1.f);
+        float distance =  m_camera.distToFocusPoint();
+        float perspFixFovRad = qDegreesToRadians(perspFixFov);
+        float factor = 2.0f * distance * std::tan(perspFixFovRad * 0.5f) / m_viewSize.height();
+        float worldScale = factor * 7.f;
+        nModel.scale(worldScale);
+        navigationArrowRenderImpl_.render(this, projection * view * nModel, m_shaderProgramMap);
+    }
+    glDisable(GL_DEPTH_TEST);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    glDisable(GL_BLEND);
 
     //-----------Draw axes-------------
     GLint viewport[4];

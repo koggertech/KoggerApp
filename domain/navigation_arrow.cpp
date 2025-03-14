@@ -4,11 +4,16 @@
 #include <draw_utils.h>
 
 
-NavigationArrow::NavigationArrow(QObject *parent)
-    : SceneObject(new NavigationArrowRenderImplementation,parent), isEnabled_(true)
-{}
+NavigationArrow::NavigationArrow(QObject *parent) :
+    SceneObject(new NavigationArrowRenderImplementation, parent)
+{
+    auto* r = RENDER_IMPL(NavigationArrow);
+    r->arrowVertices_ = makeArrowVertices();
+    r->arrowRibs_ = makeArrowRibs();
+}
 
-NavigationArrow::NavigationArrowRenderImplementation::NavigationArrowRenderImplementation() : isEnabled_(true)
+NavigationArrow::NavigationArrowRenderImplementation::NavigationArrowRenderImplementation() :
+    position_(QVector3D(0.0f, 0.0f, 0.0f))
 {}
 
 NavigationArrow::NavigationArrowRenderImplementation::~NavigationArrowRenderImplementation()
@@ -16,44 +21,64 @@ NavigationArrow::NavigationArrowRenderImplementation::~NavigationArrowRenderImpl
 
 void NavigationArrow::setPositionAndAngle(const QVector3D& position, float degAngle)
 {
-    QVector<QVector3D> renderNavArrow = cubeVertices_;
-    moveToPosition(renderNavArrow, position);
-    rotateByDegrees(renderNavArrow, degAngle);
-    RENDER_IMPL(NavigationArrow)->cubeVertices_ = renderNavArrow;
-    Q_EMIT changed();
-}
-void NavigationArrow::setEnabled(bool state)
-{
-    isEnabled_ = state;
-    RENDER_IMPL(NavigationArrow)->isEnabled_ = state;
+    auto* r = RENDER_IMPL(NavigationArrow);
+    r->position_ = position;
+    r->angle_ = degAngle;
+
     Q_EMIT changed();
 }
 
-void NavigationArrow::moveToPosition(QVector<QVector3D>& cubeVertices, const QVector3D& position) const
+void NavigationArrow::resetPositionAndAngle()
 {
-    for (QVector3D &vertex : cubeVertices)
-        vertex += position;
+    auto* r = RENDER_IMPL(NavigationArrow);
+    r->position_ = QVector3D(0.0f, 0.0f, 0.0f);
+    r->angle_ = 0.0f;
+
+    Q_EMIT changed();
 }
 
-void NavigationArrow::rotateByDegrees(QVector<QVector3D>& cubeVertices, float degAngle) const
+QVector<QVector3D> NavigationArrow::makeArrowVertices() const
 {
-    QVector3D center = QVector3D(0, 0, 0);
-    for (const QVector3D &vertex : cubeVertices)
-        center += vertex;
-    center /= cubeVertices.size();
-    for (QVector3D &vertex : cubeVertices)
-        vertex -= center;
-    const float angleInRadians = qDegreesToRadians(degAngle);
-    const float cosAngle = qCos(angleInRadians);
-    const float sinAngle = qSin(angleInRadians);
-    for (QVector3D &vertex : cubeVertices) {
-        const float x = vertex.x();
-        const float y = vertex.y();
-        vertex.setX(x * cosAngle - y * sinAngle);
-        vertex.setY(x * sinAngle + y * cosAngle);
-    }
-    for (QVector3D &vertex : cubeVertices)
-        vertex += center;
+    QVector<QVector3D> verts;
+    verts.reserve(6 * 3);
+
+    QVector3D A( -2.0f, -1.0f,  0.0f );
+    QVector3D B(  0.0f,  0.0f,  0.0f );
+    QVector3D C(  2.0f, -1.0f,  0.0f );
+    QVector3D D(  0.0f,  5.0f,  0.0f );
+    QVector3D E(  0.0f,  1.0f,  1.0f );
+
+    //verts << A << B << D
+    //      << B << C << D
+    verts << A << B << E
+          << B << C << E
+          << A << E << D
+          << E << C << D;
+
+    return verts;
+}
+
+QVector<QVector3D> NavigationArrow::makeArrowRibs() const
+{
+    QVector<QVector3D> ribs;
+    ribs.reserve(6 * 3);
+
+    QVector3D A( -2.0f, -1.0f,  0.05f );
+    QVector3D B(  0.0f, -0.0f,  0.05f );
+    QVector3D C(  2.0f, -1.0f,  0.05f );
+    QVector3D D(  0.0f,  5.0f,  0.05f );
+    QVector3D E(  0.0f,  1.0f,  1.05f );
+
+    ribs << A << B
+         << B << C
+         << C << D
+         << D << A
+         << D << E
+         << E << A
+         << E << C;
+//       << E << B;
+
+    return ribs;
 }
 
 void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctions *ctx,
@@ -64,11 +89,11 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
     return;
 #endif
 
-    if (!isEnabled_ || !shaderProgramMap.contains("static") || cubeVertices_.empty())
+    if (position_.isNull() || !m_isVisible || !shaderProgramMap.contains("static")) {
         return;
+    }
 
     auto shaderProgram = shaderProgramMap["static"];
-
     if (!shaderProgram->bind()) {
         qCritical() << "Error binding shader program.";
         return;
@@ -81,33 +106,40 @@ void NavigationArrow::NavigationArrowRenderImplementation::render(QOpenGLFunctio
     shaderProgram->setUniformValue(matrixLoc, mvp);
     shaderProgram->enableAttributeArray(posLoc);
 
-    ctx->glLineWidth(1.0f);
+    { // edges
+        QVector<GLfloat> vertices;
+        vertices.reserve(arrowVertices_.size() * 3);
+        for (const QVector3D &v : arrowVertices_) {
+            vertices << v.x() << v.y() << v.z();
+        }
+        shaderProgram->setAttributeArray(posLoc, vertices.constData(), 3);
+        shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(235, 52, 52)));
+        ctx->glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+    }
 
-    QVector<GLfloat> vertices;
-    vertices.reserve(cubeVertices_.size() * 3);
-    vertices.append(static_cast<GLfloat>(cubeVertices_[0].x()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[0].y()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[0].z()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[3].x()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[3].y()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[3].z()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[1].x()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[1].y()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[1].z()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[2].x()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[2].y()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[2].z()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[3].x()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[3].y()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[3].z()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[1].x()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[1].y()));
-    vertices.append(static_cast<GLfloat>(cubeVertices_[1].z()));
+    { // ribs
+        QVector<GLfloat> lineVertices;
+        lineVertices.reserve(arrowRibs_.size() * 3);
+        for (const QVector3D &v : arrowRibs_) {
+            lineVertices << v.x() << v.y() << v.z();
+        }
+        shaderProgram->setAttributeArray(posLoc, lineVertices.constData(), 3);
+        shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(99, 22, 22)));
 
-    shaderProgram->setAttributeArray(posLoc, vertices.constData(), 3);
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(255, 0, 0)));
-    ctx->glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
+        ctx->glLineWidth(2.0f);
+        ctx->glDrawArrays(GL_LINES, 0, lineVertices.size() / 3);
+    }
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->release();
+}
+
+QVector3D NavigationArrow::NavigationArrowRenderImplementation::getPosition() const
+{
+    return position_;
+}
+
+float NavigationArrow::NavigationArrowRenderImplementation::getAngle() const
+{
+    return angle_;
 }

@@ -179,11 +179,11 @@ public:
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
+    std::shared_ptr<NavigationArrow> getNavigationArrowPtr() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
     Dataset* dataset() const;
-    void setNavigationArrowState(bool state);
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setCalcStateSideScanView(bool state);
@@ -254,7 +254,7 @@ private:
     std::shared_ptr<CoordinateAxes> m_coordAxes;
     std::shared_ptr<PlaneGrid> m_planeGrid;
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
-    std::shared_ptr<NavigationArrow> m_navigationArrow;
+    std::shared_ptr<NavigationArrow> navigationArrow_;
     std::shared_ptr<UsblView> usblView_;
 
     std::shared_ptr<map::TileManager> tileManager_;
@@ -269,7 +269,6 @@ private:
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
-    bool navigationArrowState_;
     bool sideScanCalcState_;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };

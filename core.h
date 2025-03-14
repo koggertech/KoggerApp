@@ -15,6 +15,7 @@
 #include "ConverterXTF.h"
 #include "graphicsscene3dview.h"
 #include "boattrackcontrolmenucontroller.h"
+#include "navigation_arrow_control_menu_controller.h"
 #include "bottomtrackcontrolmenucontroller.h"
 #include "surfacecontrolmenucontroller.h"
 #include "side_scan_view_control_menu_controller.h"
@@ -160,6 +161,7 @@ private:
     Console* consolePtr_;
     // 3d scene controllers
     std::shared_ptr<BoatTrackControlMenuController> boatTrackControlMenuController_;
+    std::shared_ptr<NavigationArrowControlMenuController> navigationArrowControlMenuController_;
     std::shared_ptr<BottomTrackControlMenuController> bottomTrackControlMenuController_;
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;

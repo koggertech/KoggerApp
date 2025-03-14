@@ -41,19 +41,20 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     qmlAppEnginePtr_ = engine;
     QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::UILoad, Qt::QueuedConnection);
-    qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",    boatTrackControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",  bottomTrackControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",      surfaceControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController", sideScanViewControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",    imageViewControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",      mapViewControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("PointGroupControlMenuController",   pointGroupControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("PolygonGroupControlMenuController", polygonGroupControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("MpcFilterControlMenuController",    mpcFilterControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("NpdFilterControlMenuController",    npdFilterControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3DControlMenuController",      scene3dControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3dToolBarController",          scene3dToolBarController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("UsblViewControlMenuController",     usblViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",         surfaceControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController",    sideScanViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",       imageViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",         mapViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("PointGroupControlMenuController",      pointGroupControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("PolygonGroupControlMenuController",    polygonGroupControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("MpcFilterControlMenuController",       mpcFilterControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("NpdFilterControlMenuController",       npdFilterControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3DControlMenuController",         scene3dControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3dToolBarController",             scene3dToolBarController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("UsblViewControlMenuController",        usblViewControlMenuController_.get());
 }
 
 Console* Core::getConsolePtr()
@@ -175,8 +176,6 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         if (!isAppend) {
             scene3dViewPtr_->clear();
         }
-
-        scene3dViewPtr_->setNavigationArrowState(false);
     }
 
     QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
@@ -221,6 +220,7 @@ bool Core::closeLogFile(bool onOpen)
         }
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
+            scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
             //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
         }
         if (!onOpen) {
@@ -290,6 +290,7 @@ void Core::onFileOpenBreaked(bool onOpen)
     }
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
+        scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
     if (onOpen && !tryOpenedfilePath_.isEmpty()) {
@@ -321,9 +322,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             datasetPtr_->resetDataset();
 
         if (scene3dViewPtr_) {
-            if (!isAppend)
+            if (!isAppend) {
                 scene3dViewPtr_->clear();
-            scene3dViewPtr_->setNavigationArrowState(false);
+            }
             scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
         }
 
@@ -387,7 +388,7 @@ bool Core::closeLogFile()
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
-        scene3dViewPtr_->setNavigationArrowState(true);
+        scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
 
@@ -1033,6 +1034,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     boatTrackControlMenuController_->setQmlEngine(object);
     boatTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
+    navigationArrowControlMenuController_->setQmlEngine(object);
+    navigationArrowControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
     bottomTrackControlMenuController_->setQmlEngine(object);
     bottomTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
@@ -1147,19 +1151,20 @@ ConsoleListModel* Core::consoleList()
 
 void Core::createControllers()
 {
-    boatTrackControlMenuController_    = std::make_shared<BoatTrackControlMenuController>();
-    bottomTrackControlMenuController_  = std::make_shared<BottomTrackControlMenuController>();
-    mpcFilterControlMenuController_    = std::make_shared<MpcFilterControlMenuController>();
-    npdFilterControlMenuController_    = std::make_shared<NpdFilterControlMenuController>();
-    surfaceControlMenuController_      = std::make_shared<SurfaceControlMenuController>();
-    sideScanViewControlMenuController_ = std::make_shared<SideScanViewControlMenuController>();
-    imageViewControlMenuController_    = std::make_shared<ImageViewControlMenuController>();
-    mapViewControlMenuController_      = std::make_shared<MapViewControlMenuController>();
-    pointGroupControlMenuController_   = std::make_shared<PointGroupControlMenuController>();
-    polygonGroupControlMenuController_ = std::make_shared<PolygonGroupControlMenuController>();
-    scene3dControlMenuController_      = std::make_shared<Scene3DControlMenuController>();
-    scene3dToolBarController_          = std::make_shared<Scene3dToolBarController>();
-    usblViewControlMenuController_     = std::make_shared<UsblViewControlMenuController>();
+    boatTrackControlMenuController_       = std::make_shared<BoatTrackControlMenuController>();
+    navigationArrowControlMenuController_ = std::make_shared<NavigationArrowControlMenuController>();
+    bottomTrackControlMenuController_     = std::make_shared<BottomTrackControlMenuController>();
+    mpcFilterControlMenuController_       = std::make_shared<MpcFilterControlMenuController>();
+    npdFilterControlMenuController_       = std::make_shared<NpdFilterControlMenuController>();
+    surfaceControlMenuController_         = std::make_shared<SurfaceControlMenuController>();
+    sideScanViewControlMenuController_    = std::make_shared<SideScanViewControlMenuController>();
+    imageViewControlMenuController_       = std::make_shared<ImageViewControlMenuController>();
+    mapViewControlMenuController_         = std::make_shared<MapViewControlMenuController>();
+    pointGroupControlMenuController_      = std::make_shared<PointGroupControlMenuController>();
+    polygonGroupControlMenuController_    = std::make_shared<PolygonGroupControlMenuController>();
+    scene3dControlMenuController_         = std::make_shared<Scene3DControlMenuController>();
+    scene3dToolBarController_             = std::make_shared<Scene3dToolBarController>();
+    usblViewControlMenuController_        = std::make_shared<UsblViewControlMenuController>();
 
     sideScanViewControlMenuController_->setCorePtr(this);
 }
@@ -1253,13 +1258,12 @@ void Core::createLinkManagerConnections()
 #endif
                                                                                                                                      datasetPtr_->setState(Dataset::DatasetState::kConnection);
                                                                                                                                      if (scene3dViewPtr_) {
-                                                                                                                                         scene3dViewPtr_->setNavigationArrowState(true);
                                                                                                                                          scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
                                                                                                                                      }
                                                                                                                                  }, linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this]() {
                                                                                                                                      if (scene3dViewPtr_) {
-                                                                                                                                         scene3dViewPtr_->setNavigationArrowState(false);
+                                                                                                                                         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
                                                                                                                                          //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
                                                                                                                                      }
                                                                                                                                  }, linkManagerConnection));

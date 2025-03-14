@@ -1123,6 +1123,29 @@ ColumnLayout {
         }
 
         CheckButton {
+            id: navigationArrowCheckButton
+            objectName: "navigationArrowCheckButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "./icons/speedboat.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                NavigationArrowControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias navigationArrowCheckButton: navigationArrowCheckButton.checked
+            }
+        }
+
+        CheckButton {
             id: boatTrackCheckButton
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
