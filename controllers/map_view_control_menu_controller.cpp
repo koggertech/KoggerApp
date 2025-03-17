@@ -22,8 +22,6 @@ void MapViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sce
 
 void MapViewControlMenuController::onVisibilityChanged(bool state)
 {
-    qDebug() << "MapViewControlMenuController::onVisibilityChanged" << state;
-
     visibility_ = state;
 
     if (m_graphicsSceneView) {
@@ -38,8 +36,6 @@ void MapViewControlMenuController::onVisibilityChanged(bool state)
 }
 void MapViewControlMenuController::onUpdateClicked()
 {
-    qDebug() << "MapViewControlMenuController::onUpdateClicked";
-
     if (m_graphicsSceneView) {
         m_graphicsSceneView->getMapViewPtr()->update();
     }

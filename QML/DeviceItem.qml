@@ -186,6 +186,8 @@ ColumnLayout {
             paramName: qsTr("Booster")
 
             SpinBoxCustom {
+                id: spinBoxBooster
+
                 from: 0
                 to: 1
                 stepSize: 1
@@ -201,9 +203,10 @@ ColumnLayout {
                 }
 
                 property var items: [qsTr("Off"), qsTr("On")]
+                property string regExpPattern: "(" + items.join("|") + ")"
 
                 validator: RegExpValidator {
-                    regExp: new RegExp("(" + items.join("|") + ")", "i")
+                    regExp: new RegExp(spinBoxBooster ? spinBoxBooster.regExpPattern : "(Off|On)", "i")
                 }
 
                 textFromValue: function(value) {
@@ -212,10 +215,11 @@ ColumnLayout {
 
                 valueFromText: function(text) {
                     for (var i = 0; i < items.length; ++i) {
-                        if (items[i].toLowerCase().indexOf(text.toLowerCase()) === 0)
+                        if (items[i].toLowerCase().indexOf(text.toLowerCase()) === 0) {
                             return i
+                        }
                     }
-                    return sb.value
+                    return spinBoxBooster.value
                 }
             }
         }
