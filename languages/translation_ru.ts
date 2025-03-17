@@ -333,6 +333,154 @@
     </message>
 </context>
 <context>
+    <name>DeviceItem</name>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="15"/>
+        <location filename="../QML/DeviceItem.qml" line="292"/>
+        <source>Echogram</source>
+        <translation>Эхограмма</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="18"/>
+        <source>Resolution, mm</source>
+        <translation>Разрешение, мм</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="38"/>
+        <source>Number of Samples</source>
+        <translation>Количество отсчётов</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="58"/>
+        <source>Offset of Samples</source>
+        <translation>Оффсет отсчётов</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="79"/>
+        <location filename="../QML/DeviceItem.qml" line="323"/>
+        <source>Rangefinder</source>
+        <translation>Глубиномер</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="82"/>
+        <source>Max distance, mm</source>
+        <translation>Макс. дистанция, мм</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="102"/>
+        <source>Dead zone, mm</source>
+        <translation>Мертвая зона, мм</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="122"/>
+        <source>Confidence threshold, %</source>
+        <translation>Порог уверенности, %</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="143"/>
+        <source>Transducer</source>
+        <translation>Трансдьюсер</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="146"/>
+        <source>Pulse count</source>
+        <translation>Количество импульсов</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="166"/>
+        <source>Frequency, kHz</source>
+        <translation>Частота, кГц</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="186"/>
+        <source>Booster</source>
+        <translation>Усилитель</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="203"/>
+        <location filename="../QML/DeviceItem.qml" line="315"/>
+        <location filename="../QML/DeviceItem.qml" line="350"/>
+        <location filename="../QML/DeviceItem.qml" line="381"/>
+        <location filename="../QML/DeviceItem.qml" line="412"/>
+        <location filename="../QML/DeviceItem.qml" line="443"/>
+        <source>Off</source>
+        <translation>Выкл</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="203"/>
+        <location filename="../QML/DeviceItem.qml" line="350"/>
+        <location filename="../QML/DeviceItem.qml" line="412"/>
+        <location filename="../QML/DeviceItem.qml" line="443"/>
+        <source>On</source>
+        <translation>Вкл</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="225"/>
+        <source>DSP</source>
+        <translation>ЦСП</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="228"/>
+        <source>Horizontal smoothing factor</source>
+        <translation>Коэффициент горизонтального сглаживания</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="248"/>
+        <source>Speed of Sound, m/s</source>
+        <translation>Скорость звука, м/с</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="269"/>
+        <source>Dataset</source>
+        <translation>Набор данных</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="272"/>
+        <source>Period, ms</source>
+        <translation>Период, мс</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="315"/>
+        <source>8-bit</source>
+        <translation>8-бит</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="315"/>
+        <source>16-bit</source>
+        <translation>16-бит</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="350"/>
+        <source>NMEA</source>
+        <translation>NMEA</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="358"/>
+        <source>AHRS</source>
+        <translation>AHRS</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="381"/>
+        <source>Euler</source>
+        <translation>Эйлер</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="381"/>
+        <source>Quat.</source>
+        <translation>Кват.</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="389"/>
+        <source>Temperature</source>
+        <translation>Температура</translation>
+    </message>
+    <message>
+        <location filename="../QML/DeviceItem.qml" line="420"/>
+        <source>Timestamp</source>
+        <translation>Временная метка</translation>
+    </message>
+</context>
+<context>
     <name>DisplaySettings</name>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="23"/>
@@ -1031,7 +1179,7 @@
     <message>
         <location filename="../Plot2D.cpp" line="816"/>
         <source>Booster: </source>
-        <translation>Бустер: </translation>
+        <translation>Усилитель: </translation>
     </message>
     <message>
         <location filename="../Plot2D.cpp" line="817"/>

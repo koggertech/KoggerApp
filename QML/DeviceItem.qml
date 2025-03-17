@@ -12,10 +12,10 @@ ColumnLayout {
     property var dev: null
 
     ParamGroup {
-        groupName: "Echogram"
+        groupName: qsTr("Echogram")
 
         ParamSetup {
-            paramName: "Resolution, mm"
+            paramName: qsTr("Resolution, mm")
 
             SpinBoxCustom {
                 from: 10
@@ -35,7 +35,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Number of Samples"
+            paramName: qsTr("Number of Samples")
 
             SpinBoxCustom {
                 from: 100
@@ -55,7 +55,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Offset of Samples"
+            paramName: qsTr("Offset of Samples")
 
             SpinBoxCustom {
                 from: 0
@@ -76,10 +76,10 @@ ColumnLayout {
     }
 
     ParamGroup {
-        groupName: "Rangefinder"
+        groupName: qsTr("Rangefinder")
 
         ParamSetup {
-            paramName: "Max distance, mm"
+            paramName: qsTr("Max distance, mm")
 
             SpinBoxCustom {
                 from: 0;
@@ -99,7 +99,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Dead zone, mm"
+            paramName: qsTr("Dead zone, mm")
 
             SpinBoxCustom {
                 from: 0
@@ -119,7 +119,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Confidence threshold, %"
+            paramName: qsTr("Confidence threshold, %")
 
             SpinBoxCustom {
                 from: 0
@@ -140,10 +140,10 @@ ColumnLayout {
     }
 
     ParamGroup {
-        groupName: "Transducer"
+        groupName: qsTr("Transducer")
 
         ParamSetup {
-            paramName: "Pulse count"
+            paramName: qsTr("Pulse count")
 
             SpinBoxCustom {
                 from: 0
@@ -163,7 +163,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Frequency, kHz"
+            paramName: qsTr("Frequency, kHz")
 
             SpinBoxCustom {
                 from: 40
@@ -183,7 +183,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Booster"
+            paramName: qsTr("Booster")
 
             SpinBoxCustom {
                 from: 0
@@ -200,10 +200,10 @@ ColumnLayout {
                     isDriverChanged = false
                 }
 
-                property var items: ["Off", "On"]
+                property var items: [qsTr("Off"), qsTr("On")]
 
                 validator: RegExpValidator {
-                    regExp: new RegExp("(Off|On)", "i")
+                    regExp: new RegExp("(" + items.join("|") + ")", "i")
                 }
 
                 textFromValue: function(value) {
@@ -222,10 +222,10 @@ ColumnLayout {
     }
 
     ParamGroup {
-        groupName: "DSP"
+        groupName: qsTr("DSP")
 
         ParamSetup {
-            paramName: "Horizontal smoothing factor"
+            paramName: qsTr("Horizontal smoothing factor")
 
             SpinBoxCustom {
                 from: 0
@@ -245,7 +245,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Speed of Sound, m/s"
+            paramName: qsTr("Speed of Sound, m/s")
 
             SpinBoxCustom {
                 from: 300
@@ -266,10 +266,10 @@ ColumnLayout {
     }
 
     ParamGroup {
-        groupName: "Dataset"
+        groupName: qsTr("Dataset")
 
         ParamSetup {
-            paramName: "Period, ms"
+            paramName: qsTr("Period, ms")
 
             SpinBoxCustom {
                 from: 0
@@ -289,7 +289,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Echogram"
+            paramName: qsTr("Echogram")
 
             SpinBoxCustom {
                 from: 0
@@ -312,7 +312,7 @@ ColumnLayout {
                     isDriverChanged = false
                 }
 
-                property var items: ["Off", "8-bit", "16-bit"]
+                property var items: [qsTr("Off"), qsTr("8-bit"), qsTr("16-bit")]
                 textFromValue: function(value) {
                     return items[value];
                 }
@@ -320,7 +320,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Rangefinder"
+            paramName: qsTr("Rangefinder")
 
             SpinBoxCustom {
                 from: 0
@@ -347,7 +347,7 @@ ColumnLayout {
                     isDriverChanged = false
                 }
 
-                property var items: ["Off", "On", "NMEA"]
+                property var items: [qsTr("Off"), qsTr("On"), qsTr("NMEA")]
                 textFromValue: function(value) {
                     return items[value];
                 }
@@ -355,7 +355,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "AHRS"
+            paramName: qsTr("AHRS")
 
             SpinBoxCustom {
                 from: 0
@@ -378,7 +378,7 @@ ColumnLayout {
                     isDriverChanged = false
                 }
 
-                property var items: ["Off", "Euler", "Quat."]
+                property var items: [qsTr("Off"), qsTr("Euler"), qsTr("Quat.")]
                 textFromValue: function(value) {
                     return items[value];
                 }
@@ -386,7 +386,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Temperature"
+            paramName: qsTr("Temperature")
 
             SpinBoxCustom {
                 from: 0
@@ -409,7 +409,7 @@ ColumnLayout {
                     isDriverChanged = false
                 }
 
-                property var items: ["Off", "On"]
+                property var items: [qsTr("Off"), qsTr("On")]
                 textFromValue: function(value) {
                     return items[value];
                 }
@@ -417,7 +417,7 @@ ColumnLayout {
         }
 
         ParamSetup {
-            paramName: "Timestamp"
+            paramName: qsTr("Timestamp")
 
             SpinBoxCustom {
                 from: 0
@@ -440,7 +440,7 @@ ColumnLayout {
                     isDriverChanged = false
                 }
 
-                property var items: ["Off", "On"]
+                property var items: [qsTr("Off"), qsTr("On")]
                 textFromValue: function(value) {
                     return items[value];
                 }
