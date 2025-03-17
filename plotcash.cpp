@@ -213,6 +213,76 @@ void Epoch::setWasValidlyRenderedInEchogram(bool state)
     wasValidlyRenderedInEchogram_ = state;
 }
 
+void Epoch::setResolution(uint16_t resolution)
+{
+    recParams_.resol = resolution;
+}
+
+void Epoch::setChartCount(uint16_t chartCount)
+{
+    recParams_.count = chartCount;
+}
+
+void Epoch::setOffset(uint16_t offset)
+{
+    recParams_.offset = offset;
+}
+
+void Epoch::setFrequency(uint16_t frequency)
+{
+    recParams_.freq = frequency;
+}
+
+void Epoch::setPulse(uint8_t pulse)
+{
+    recParams_.pulse = pulse;
+}
+
+void Epoch::setBoost(uint8_t boost)
+{
+    recParams_.boost = boost;
+}
+
+void Epoch::setSoundSpeed(uint32_t soundSpeed)
+{
+    recParams_.soundSpeed = soundSpeed;
+}
+
+uint16_t Epoch::getResolution() const
+{
+    return recParams_.resol;
+}
+
+uint16_t Epoch::getChartCount() const
+{
+    return recParams_.count;
+}
+
+uint16_t Epoch::getOffset() const
+{
+    return recParams_.offset;
+}
+
+uint16_t Epoch::getFrequency() const
+{
+    return recParams_.freq;
+}
+
+uint8_t Epoch::getPulse() const
+{
+    return recParams_.pulse;
+}
+
+uint8_t Epoch::getBoost() const
+{
+    return recParams_.boost;
+}
+
+uint32_t Epoch::getSoundSpeed() const
+{
+    return recParams_.soundSpeed;
+}
+
 Dataset::Dataset() :
     interpolator_(this),
     lastBoatTrackEpoch_(0),
@@ -222,6 +292,10 @@ Dataset::Dataset() :
     chartResolution_(0),
     chartCount_(0),
     chartOffset_(0),
+    transcFreq_(0),
+    transcPulse_(0),
+    transcBoost_(0),
+    devSoundSpeed_(0),
     fixBlackStripes_(false)
 {
     resetDataset();
@@ -358,7 +432,23 @@ void Dataset::addTimestamp(int timestamp) {
     Q_UNUSED(timestamp);
 }
 
-void Dataset::setChartSetup(int16_t channel, uint16_t resol, int count, uint16_t offset)
+void Dataset::setTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost)
+{
+    Q_UNUSED(channel)
+
+    transcFreq_ = freq;
+    transcPulse_ = pulse;
+    transcBoost_ = boost;
+}
+
+void Dataset::setSoundSpeed(int16_t channel, uint32_t soundSpeed)
+{
+    Q_UNUSED(channel)
+
+    devSoundSpeed_ = soundSpeed;
+}
+
+void Dataset::setChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset)
 {
     Q_UNUSED(channel)
 
@@ -843,6 +933,10 @@ void Dataset::resetDataset() {
     chartResolution_ = 0;
     chartCount_ = 0;
     chartOffset_ = 0;
+    transcFreq_ = 0;
+    transcPulse_ = 0;
+    transcBoost_ = 0;
+    devSoundSpeed_ = 0;
 
     //fixBlackStripes_ = false;
 

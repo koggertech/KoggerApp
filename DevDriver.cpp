@@ -417,7 +417,7 @@ void DevDriver::setDistSetupState(bool state) {
 void DevDriver::setChartSetupState(bool state) {
     if (state != chartSetupState_) {
         chartSetupState_ = state;
-        emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -647,7 +647,11 @@ void DevDriver::setTransFreq(int freq) {
     if(!m_state.connect) return;
     bool is_changed = transFreq() != freq;
     idTransc->setFreq((U2)freq);
-    if(is_changed) { emit transChanged(); }
+
+    if (is_changed) {
+        emit sendTranscSetup(_lastAddres, static_cast<uint16_t>(freq), idTransc->pulse(), idTransc->boost());
+        emit transChanged();
+    }
 }
 
 int DevDriver::transPulse() {
@@ -658,7 +662,11 @@ void DevDriver::setTransPulse(int pulse) {
     if(!m_state.connect) return;
     bool is_changed = transPulse() != pulse;
     idTransc->setPulse((U1)pulse);
-    if(is_changed) { emit transChanged(); }
+
+    if (is_changed) {
+        emit sendTranscSetup(_lastAddres, idTransc->freq(), static_cast<uint8_t>(pulse), idTransc->boost());
+        emit transChanged();
+    }
 }
 
 int DevDriver::transBoost() {
@@ -669,7 +677,11 @@ void DevDriver::setTransBoost(int boost) {
     if(!m_state.connect) return;
     bool is_changed = transBoost() != boost;
     idTransc->setBoost((U1)boost);
-    if(is_changed) { emit transChanged(); }
+
+    if (is_changed) {
+        emit sendTranscSetup(_lastAddres, idTransc->freq(), idTransc->pulse(), static_cast<uint8_t>(boost));
+        emit transChanged();
+    }
 }
 
 int DevDriver::soundSpeed() {
@@ -680,7 +692,11 @@ void DevDriver::setSoundSpeed(int speed) {
     if(!m_state.connect) return;
     bool is_changed = transBoost() != speed;
     idSoundSpeed->setSoundSpeed(speed);
-    if(is_changed) { emit soundChanged(); }
+
+    if (is_changed) {
+        emit sendSoundSpeeed(_lastAddres, static_cast<uint32_t>(speed));
+        emit soundChanged();
+    }
 }
 
 float DevDriver::yaw() {
@@ -752,7 +768,7 @@ void DevDriver::setChartSamples(int smpls) {
     bool is_changed = smpls != chartSamples();
     idChartSetup->setCount((U2)smpls);
     if (is_changed) {
-        emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), smpls, idChartSetup->offset());
+        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), static_cast<uint16_t>(smpls), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -766,7 +782,7 @@ void DevDriver::setChartResolution(int resol) {
     bool is_changed = resol != chartResolution();
     idChartSetup->setResolution((U2)resol);
     if (is_changed) {
-        emit channelChartSetupChanged(_lastAddres, resol, idChartSetup->count(), idChartSetup->offset());
+        emit sendChartSetup(_lastAddres, static_cast<uint16_t>(resol), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -780,7 +796,7 @@ void DevDriver::setChartOffset(int offset) {
     bool is_changed = offset != chartOffset();
     idChartSetup->setOffset((U2)offset);
     if (is_changed) {
-        emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), offset);
+        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), static_cast<uint16_t>(offset));
         emit chartSetupChanged();
     }
 }
@@ -1037,9 +1053,9 @@ void DevDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
 
     if(resp == respNone) {
         //if(ver == v0 || ver == v1) {
-            emit channelChartSetupChanged(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+            emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         //    if(ver == v1) {
-          //  emit channelChartSetupChanged(_lastAddres+1, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+          //  emit sendChartSetup(_lastAddres+1, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         //    }
         //}
         emit chartSetupChanged();
@@ -1057,14 +1073,20 @@ void DevDriver::receivedTransc(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
 
-    if(resp == respNone) {  emit transChanged();  }
+    if (resp == respNone) {
+        emit sendTranscSetup(_lastAddres, idTransc->freq(), idTransc->pulse(), idTransc->boost());
+        emit transChanged();
+    }
 }
 
 void DevDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
 
-    if(resp == respNone) {  emit soundChanged();  }
+    if (resp == respNone) {
+        emit sendSoundSpeeed(_lastAddres, idSoundSpeed->getSoundSpeed());
+        emit soundChanged();
+    }
 }
 
 void DevDriver::receivedUART(Type type, Version ver, Resp resp) {

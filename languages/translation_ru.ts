@@ -238,12 +238,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1288"/>
+        <location filename="../plotcash.cpp" line="1386"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1289"/>
+        <location filename="../plotcash.cpp" line="1387"/>
         <source>First</source>
         <translation>Первый</translation>
     </message>
@@ -998,6 +998,70 @@
         <source> m</source>
         <translation> м</translation>
     </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="799"/>
+        <source>%1 m</source>
+        <translation>%1 м</translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="810"/>
+        <source>ON</source>
+        <translation>ВКЛ</translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="810"/>
+        <source>OFF</source>
+        <translation>ВЫКЛ</translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="811"/>
+        <source>Resolution, mm: </source>
+        <translation>Разрешение, мм: </translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="814"/>
+        <source>Frequency, kHz: </source>
+        <translation>Частота, кГц: </translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="815"/>
+        <source>Pulse count: </source>
+        <translation>Количество импульсов: </translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="816"/>
+        <source>Booster: </source>
+        <translation>Бустер: </translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="817"/>
+        <source>Speed of sound, m/s: </source>
+        <translation>Скорость звука, м/с: </translation>
+    </message>
+    <message>
+        <source>Resolution: </source>
+        <translation type="vanished">Разрешение: </translation>
+    </message>
+    <message>
+        <source>ChartCount: </source>
+        <translation type="vanished">Кол-во семплов: </translation>
+    </message>
+    <message>
+        <source>Offset: </source>
+        <translation type="vanished">Оффсет: </translation>
+    </message>
+    <message>
+        <source>Frequency: </source>
+        <translation type="vanished">Частота: </translation>
+    </message>
+    <message>
+        <source>Pulse: </source>
+        <translation type="vanished">Период импульсов: </translation>
+    </message>
+    <message>
+        <source>Boost: </source>
+        <translation type="vanished">Буст: </translation>
+    </message>
 </context>
 <context>
     <name>RecorderBox</name>
@@ -1591,6 +1655,16 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
+        <location filename="../QML/main.qml" line="822"/>
+        <source> m/s </source>
+        <translation> м/с </translation>
+    </message>
+    <message>
+        <location filename="../QML/main.qml" line="829"/>
+        <source> %</source>
+        <translation> %</translation>
+    </message>
+    <message>
         <source>Calculating surface.
 Please wait...</source>
         <translation type="vanished">Вычисление поверхности.
@@ -1607,12 +1681,11 @@ Please wait...</source>
         <translation> А   </translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="822"/>
         <source> m/s</source>
-        <translation> м/с</translation>
+        <translation type="vanished"> м/с</translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="872"/>
+        <location filename="../QML/main.qml" line="879"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

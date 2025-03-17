@@ -581,28 +581,28 @@ bool Plot2D::setContact(int indx, const QString& text)
         return false;
     }
 
-    ep->contact_.info_ = text;
+    ep->contact_.info = text;
     //qDebug() << "Plot2D::setContact: setted to epoch:" <<  currIndx << text;
 
 
     if (primary) {
-        ep->contact_.cursorX_ = _cursor.contactX;
-        ep->contact_.cursorY_ = _cursor.contactY;
+        ep->contact_.cursorX = _cursor.contactX;
+        ep->contact_.cursorY = _cursor.contactY;
 
         const float canvas_height = _canvas.height();
         float value_range = _cursor.distance.to - _cursor.distance.from;
         float value_scale = float(_cursor.contactY) / canvas_height;
         float cursor_distance = value_scale * value_range + _cursor.distance.from;
 
-        ep->contact_.distance_ = cursor_distance;
+        ep->contact_.distance = cursor_distance;
 
         auto pos = ep->getPositionGNSS();
 
-        ep->contact_.nedX_ = pos.ned.n;
-        ep->contact_.nedY_ = pos.ned.e;
+        ep->contact_.nedX = pos.ned.n;
+        ep->contact_.nedY = pos.ned.e;
 
-        ep->contact_.lat_ = pos.lla.latitude;
-        ep->contact_.lon_ = pos.lla.longitude;
+        ep->contact_.lat = pos.lla.latitude;
+        ep->contact_.lon = pos.lla.longitude;
     }
     else {
         // update rect
@@ -756,14 +756,15 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     }
 
     if (cursor.selectEpochIndx != -1) {
-        auto selectedEpoch = dataset->fromIndex(cursor.selectEpochIndx);
+        auto* ep = dataset->fromIndex(cursor.selectEpochIndx);
         int offsetX = 0;
         int halfCanvas = canvas.width() / 2;
         int withoutHalf = dataset->size() - halfCanvas;
-        if (cursor.selectEpochIndx >= withoutHalf)
+        if (cursor.selectEpochIndx >= withoutHalf) {
             offsetX = cursor.selectEpochIndx - withoutHalf;
+        }
         if (const auto keys{ dataset->channelsList().keys() }; !keys.empty()) {
-            if (const auto chartPtr{ selectedEpoch->chart(keys.at(0)) }; chartPtr) {
+            if (const auto chartPtr{ ep->chart(keys.at(0)) }; chartPtr) {
                 const int x = canvas.width() / 2 + offsetX;
                 const int y = keys.size() == 2 ? canvas.height() / 2 - canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range()) :
                                   canvas.height() * (chartPtr->bottomProcessing.distance / cursor.distance.range());
@@ -772,60 +773,96 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
         }
     }
 
+    QPainter* p = canvas.painter();
+
     QPen pen;
     pen.setWidth(_lineWidth);
     pen.setColor(_lineColor);
-
-    QPainter* p = canvas.painter();
     p->setPen(pen);
-    QFont font = QFont("Asap", 14 * scaleFactor_, QFont::Normal);
+
+    QFont font("Asap", 14 * scaleFactor_, QFont::Normal);
     font.setPixelSize(18 * scaleFactor_);
     p->setFont(font);
 
-    const int image_height = canvas.height();
-    const int image_width = canvas.width();
-
     if (cursor._tool == MouseToolNothing || beenEpochEvent_) {
-        p->drawLine(0, cursor.mouseY, image_width, cursor.mouseY);
-        p->drawLine(cursor.mouseX, 0, cursor.mouseX, image_height);
+        p->drawLine(0,             cursor.mouseY, canvas.width(),  cursor.mouseY);
+        p->drawLine(cursor.mouseX, 0,             cursor.mouseX, canvas.height());
     }
 
-    const float canvas_height = canvas.height();
-    float value_range = cursor.distance.to - cursor.distance.from;
-    float value_scale = float(cursor.mouseY)/canvas_height;
-    float cursor_distance = value_scale*value_range + cursor.distance.from;
+    float canvas_height  = static_cast<float>(canvas.height());
+    float value_range    = cursor.distance.to - cursor.distance.from;
+    float value_scale    = float(cursor.mouseY) / canvas_height;
+    float cursor_distance = value_scale * value_range + cursor.distance.from;
 
-    // text & back
     p->setCompositionMode(QPainter::CompositionMode_SourceOver);
 
-    QString distanceText = QString("%1 m").arg(cursor_distance, 0, 'g', 4);
-    QRect textRect = p->fontMetrics().boundingRect(distanceText);
+    QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
+    QString text = distanceText;
 
-    int xShift = 50 * scaleFactor_;
-    int yShiftBot = 20 * scaleFactor_;
-    int yShiftTop = 40 * scaleFactor_;
-    int xCheck = xShift + 15 * scaleFactor_;
+    if (cursor.currentEpochIndx != -1) {
+        if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
+            if (!(ep ->getResolution() == 0 &&
+                  ep ->getChartCount() == 0 &&
+                  ep ->getOffset() == 0 &&
+                  ep ->getFrequency() == 0 &&
+                  ep ->getPulse() == 0 &&
+                  ep ->getBoost() == 0)) {
+                QString boostStr = ep->getBoost() ? QObject::tr("ON") : QObject::tr("OFF");
+                text += "\n" + QObject::tr("Resolution, mm: ") + QString::number(ep->getResolution());
+                //text += "\n" + QObject::tr("Number of Samples: ") + QString::number(ep->getChartCount());
+                //text += "\n" + QObject::tr("Offset of samples: ")     + QString::number(ep->getOffset());
+                text += "\n" + QObject::tr("Frequency, kHz: ")  + QString::number(ep->getFrequency());
+                text += "\n" + QObject::tr("Pulse count: ")      + QString::number(ep->getPulse());
+                text += "\n" + QObject::tr("Booster: ")      + boostStr;
+                text += "\n" + QObject::tr("Speed of sound, m/s: ") + QString::number(ep->getSoundSpeed() / 1000);
+            }
+        }
+    }
+
+    QRect textRect = p->fontMetrics().boundingRect(QRect(0, 0, 9999, 9999), Qt::AlignLeft | Qt::AlignTop, text);
+
+    int xShift    = 50 * scaleFactor_;
+    int yShift    = 40 * scaleFactor_;
+    int xCheck    = xShift + 15 * scaleFactor_;
+    int yCheck    = yShift + 15 * scaleFactor_;
 
     bool onTheRight = (p->window().width() - cursor.mouseX - xCheck) < textRect.width();
 
-    QPoint shiftedPoint;
-    if (cursor.mouseY > xCheck) {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - xShift - textRect.width(), cursor.mouseY - yShiftBot) : QPoint(cursor.mouseX + xShift, cursor.mouseY - yShiftBot);
+    int spaceBelow = cursor.mouseY;
+    bool placeAbove = false;
+
+    int neededSpaceBelow = textRect.height() + yCheck;
+    if (spaceBelow < neededSpaceBelow) {
+        placeAbove = true;
     }
-    else {
-        shiftedPoint = onTheRight ? QPoint(cursor.mouseX - xShift - textRect.width(), cursor.mouseY + yShiftTop) : QPoint(cursor.mouseX + xShift, cursor.mouseY + yShiftTop);
+
+    QPoint shiftedPoint;
+    if (!placeAbove) {
+        shiftedPoint = onTheRight
+                           ? QPoint(cursor.mouseX - xShift - textRect.width(),
+                                    cursor.mouseY - yShift - textRect.height())
+                           : QPoint(cursor.mouseX + xShift,
+                                    cursor.mouseY - yShift - textRect.height());
+    } else {
+        shiftedPoint = onTheRight
+                           ? QPoint(cursor.mouseX - xShift - textRect.width(),
+                                    cursor.mouseY + yShift)
+                           : QPoint(cursor.mouseX + xShift,
+                                    cursor.mouseY + yShift);
     }
 
     textRect.moveTopLeft(shiftedPoint);
 
     // back
     p->setPen(Qt::NoPen);
-    p->setBrush(QColor(45,45,45));
-    p->drawRect(textRect.adjusted(-5 * scaleFactor_, -20 * scaleFactor_, 5 * scaleFactor_, -15 * scaleFactor_));
+    p->setBrush(QColor(45, 45, 45));
+    int margin = 5 * scaleFactor_;
+    QRect backgroundRect = textRect.adjusted(-margin, -margin, margin, margin);
+    p->drawRect(backgroundRect);
 
     // text
     p->setPen(QColor(255,255,255));
-    p->drawText(textRect.topLeft(), distanceText);
+    p->drawText(textRect, Qt::AlignLeft | Qt::AlignTop, text);
 
     return true;
 }
@@ -864,10 +901,10 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
             const float canvasHeight = canvas.height();
             float valueRange = cursor.distance.to - cursor.distance.from;
             float valueScale = canvasHeight / valueRange;
-            float yPos = (epoch->contact_.distance_ - cursor.distance.from) * valueScale;
+            float yPos = (epoch->contact_.distance - cursor.distance.from) * valueScale;
             bool intersects = false;
 
-            auto& epRect = epoch->contact_.rectEcho_;
+            auto& epRect = epoch->contact_.rectEcho;
             if (!epRect.isEmpty()) {
                 QRectF locRect = epRect.translated(QPointF(xPos + shiftXY, yPos + shiftXY) - epRect.topLeft());
                 locRect = locRect.adjusted(-adjPix, -adjPix, adjPix, adjPix);
@@ -875,16 +912,16 @@ bool Plot2DContact::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
                 if (locRect.contains(QPointF(mouseX_, mouseY_))) {
                     indx_ = indx;
                     position_ = QPoint(xPos + shiftXY * 0.75, yPos + shiftXY *0.75);
-                    info_ = epoch->contact_.info_;
-                    lat_ = epoch->contact_.lat_;
-                    lon_ = epoch->contact_.lon_;
-                    depth_ = epoch->contact_.distance_;
+                    info_ = epoch->contact_.info;
+                    lat_ = epoch->contact_.lat;
+                    lon_ = epoch->contact_.lon;
+                    depth_ = epoch->contact_.distance;
                     setVisibleContact(true);
                     intersects = true;
                 }
             }
 
-            QString infoText = epoch->contact_.info_;
+            QString infoText = epoch->contact_.info;
             QRectF textRect = p->fontMetrics().boundingRect(infoText);
             textRect.moveTopLeft(QPointF(xPos + shiftXY, yPos + shiftXY));
 

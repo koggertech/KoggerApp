@@ -400,33 +400,42 @@ typedef QMap<int, ComplexSignal> ComplexSignals;
 class Epoch {
 public:
     struct Contact {
-    public:
         bool isValid() const {
-            return !info_.isEmpty() &&
-                   cursorX_ != -1 &&
-                   cursorY_ != -1;
+            return !info.isEmpty() &&
+                   cursorX != -1 &&
+                   cursorY != -1;
         }
         void clear() {
-            cursorX_ = -1;
-            cursorY_ = -1;
-            info_.clear();
-            lat_ = 0.0f;
-            lon_ = 0.0f;
-            nedX_ = 0.0f;
-            nedY_ = 0.0f;
-            rectEcho_ = QRectF();
-            distance_ = 0.0f;
+            info.clear();
+            lat      = 0.0f;
+            lon      = 0.0f;
+            distance = 0.0f;
+            nedX     = 0.0f;
+            nedY     = 0.0f;
+            cursorX  = -1;
+            cursorY  = -1;
+            rectEcho = QRectF();
         }        
 
-        QString info_;
-        float lat_ = 0.0f;
-        float lon_ = 0.0f;
-        float distance_ = 0.0f;
-        float nedX_ = 0.0f;
-        float nedY_ = 0.0f;
-        int cursorX_ = -1;
-        int cursorY_ = -1;
-        QRectF rectEcho_;
+        QString info;
+        float   lat = 0.0f;
+        float   lon = 0.0f;
+        float   distance = 0.0f;
+        float   nedX = 0.0f;
+        float   nedY = 0.0f;
+        int     cursorX = -1;
+        int     cursorY = -1;
+        QRectF  rectEcho;
+    };
+
+    struct RecordParameters {
+        uint16_t resol      = 0;
+        uint16_t count      = 0;
+        uint16_t offset     = 0;
+        uint16_t freq       = 0;
+        uint8_t  pulse      = 0;
+        uint8_t  boost      = 0;
+        uint32_t soundSpeed = 0;
     };
 
     typedef struct {
@@ -864,7 +873,22 @@ public:
     bool getWasValidlyRenderedInEchogram() const;
     void setWasValidlyRenderedInEchogram(bool state);
 
-    Contact contact_;
+    void setResolution(uint16_t resolution);
+    void setChartCount(uint16_t chartCount);
+    void setOffset(uint16_t offset);
+    void setFrequency(uint16_t frequency);
+    void setPulse(uint8_t pulse);
+    void setBoost(uint8_t boost);
+    void setSoundSpeed(uint32_t soundSpeed);
+    uint16_t getResolution() const;
+    uint16_t getChartCount() const;
+    uint16_t getOffset() const;
+    uint16_t getFrequency() const;
+    uint8_t getPulse() const;
+    uint8_t getBoost() const;
+    uint32_t getSoundSpeed() const;
+
+    Contact contact_; // TODO: private
 
 protected:
 
@@ -949,6 +973,7 @@ private:
         };
     } interpData_;
     bool wasValidlyRenderedInEchogram_;
+    RecordParameters recParams_;
 };
 
 class Dataset : public QObject {
@@ -1048,7 +1073,9 @@ public slots:
     void addTimestamp(int timestamp);
 
     //
-    void setChartSetup(int16_t channel, uint16_t resol, int count, uint16_t offset);
+    void setChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
+    void setTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
+    void setSoundSpeed(int16_t channel, uint32_t soundSpeed);
     void setFixBlackStripes(bool state);
 
     void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
@@ -1159,7 +1186,18 @@ protected:
 
     Epoch* addNewEpoch() {
         _pool.resize(_pool.size() + 1);
-        return last();
+
+        auto* lastEpoch = last();
+
+        lastEpoch->setResolution(chartResolution_);
+        lastEpoch->setChartCount(chartCount_);
+        lastEpoch->setOffset(chartOffset_);
+        lastEpoch->setFrequency(transcFreq_);
+        lastEpoch->setPulse(transcPulse_);
+        lastEpoch->setBoost(transcBoost_);
+        lastEpoch->setSoundSpeed(devSoundSpeed_);
+
+        return lastEpoch;
     }
 
     GraphicsScene3dView* scene3dViewPtr_ = nullptr;
@@ -1202,9 +1240,17 @@ private:
     uint64_t boatTrackValidPosCounter_;
 
     int lastMostFreqChartSize_;
+
     uint16_t chartResolution_;
-    int chartCount_;
+    uint16_t chartCount_;
     uint16_t chartOffset_;
+
+    uint16_t transcFreq_;
+    uint8_t transcPulse_;
+    uint8_t transcBoost_;
+
+    uint32_t devSoundSpeed_;
+
     bool fixBlackStripes_;
 };
 

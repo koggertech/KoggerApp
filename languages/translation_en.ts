@@ -234,12 +234,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1288"/>
+        <location filename="../plotcash.cpp" line="1386"/>
         <source>None</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1289"/>
+        <location filename="../plotcash.cpp" line="1387"/>
         <source>First</source>
         <translation></translation>
     </message>
@@ -994,6 +994,46 @@
         <source> m</source>
         <translation></translation>
     </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="799"/>
+        <source>%1 m</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="810"/>
+        <source>ON</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="810"/>
+        <source>OFF</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="811"/>
+        <source>Resolution, mm: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="814"/>
+        <source>Frequency, kHz: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="815"/>
+        <source>Pulse count: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="816"/>
+        <source>Booster: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="817"/>
+        <source>Speed of sound, m/s: </source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>RecorderBox</name>
@@ -1480,11 +1520,16 @@ Please wait...</source>
     </message>
     <message>
         <location filename="../QML/main.qml" line="822"/>
-        <source> m/s</source>
+        <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../QML/main.qml" line="872"/>
+        <location filename="../QML/main.qml" line="829"/>
+        <source> %</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../QML/main.qml" line="879"/>
         <source>Please wait, the file is opening</source>
         <translation></translation>
     </message>

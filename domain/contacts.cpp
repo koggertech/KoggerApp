@@ -98,11 +98,11 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
             auto& contact = epoch->contact_;
             if (contact.isValid()) {
                 ContactInfo cInfo;
-                cInfo.info = contact.info_;
-                cInfo.nedPos = { contact.nedX_, contact.nedY_, -contact.distance_ };
-                cInfo.lat = contact.lat_;
-                cInfo.lon = contact.lon_;
-                cInfo.depth = contact.distance_;
+                cInfo.info = contact.info;
+                cInfo.nedPos = { contact.nedX, contact.nedY, -contact.distance };
+                cInfo.lat = contact.lat;
+                cInfo.lon = contact.lon;
+                cInfo.depth = contact.distance;
 
                 r->points_.insert(epIndx, cInfo);
                 beenUpdated = true;
@@ -141,7 +141,7 @@ bool Contacts::setContact(int indx, const QString& text)
         return false;
     }
 
-    ep->contact_.info_ = text;
+    ep->contact_.info = text;
     //qDebug() << "Plot2D::setContact: setted to epoch:" << indx << text;
 
     emit datasetPtr_->dataUpdate();
@@ -214,10 +214,10 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
         if (auto* ep = datasetPtr_->fromIndex(indx_); ep) {
             if (ep->contact_.isValid()) {
-                info_ = ep->contact_.info_;
-                lat_ = ep->contact_.lat_;
-                lon_ = ep->contact_.lon_;
-                depth_ = ep->contact_.distance_;
+                info_ = ep->contact_.info;
+                lat_ = ep->contact_.lat;
+                lon_ = ep->contact_.lon;
+                depth_ = ep->contact_.distance;
             }
         }
     }

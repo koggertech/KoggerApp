@@ -929,11 +929,11 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
         auto& contact = epoch->contact_;
         if (contact.isValid()) {
             if (contactInfo) {
-                row_data.append(contact.info_);
+                row_data.append(contact.info);
                 row_data.append(",");
             }
             if (contactDistance) {
-                row_data.append(QString::number(contact.distance_, 'f', 4));
+                row_data.append(QString::number(contact.distance, 'f', 4));
             }
         }
 
@@ -1175,7 +1175,9 @@ void Core::createDeviceManagerConnections()
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::AutoConnection;
 
     //
-    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::channelChartSetupChanged, datasetPtr_, &Dataset::setChartSetup, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendChartSetup,         datasetPtr_, &Dataset::setChartSetup,   deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendTranscSetup,        datasetPtr_, &Dataset::setTranscSetup,  deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendSoundSpeeed,        datasetPtr_, &Dataset::setSoundSpeed,   deviceManagerConnection));
 
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::chartComplete,          datasetPtr_, &Dataset::addChart,        deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rawDataRecieved,        datasetPtr_, &Dataset::rawDataRecieved, deviceManagerConnection));
@@ -1213,7 +1215,9 @@ void Core::createDeviceManagerConnections()
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::DirectConnection;
 
     //
-    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::channelChartSetupChanged, datasetPtr_, &Dataset::setChartSetup, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendChartSetup,         datasetPtr_, &Dataset::setChartSetup,   deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendTranscSetup,        datasetPtr_, &Dataset::setTranscSetup,  deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendSoundSpeeed,        datasetPtr_, &Dataset::setSoundSpeed,   deviceManagerConnection);
 
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::chartComplete,          datasetPtr_, &Dataset::addChart,        deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rawDataRecieved,        datasetPtr_, &Dataset::rawDataRecieved, deviceManagerConnection);

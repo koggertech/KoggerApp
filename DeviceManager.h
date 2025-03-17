@@ -74,7 +74,9 @@ public slots:
 
 signals:
     //
-    void channelChartSetupChanged(int16_t channel, uint16_t resol, int count, uint16_t offset);
+    void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
+    void sendTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
+    void sendSoundSpeeed(int16_t channel, uint32_t soundSpeed);
 
     void dataSend(QByteArray data);
     void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
