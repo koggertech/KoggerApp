@@ -171,9 +171,9 @@ signals:
     //
     void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
     void sendTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
-    void sendSoundSpeeed(int16_t channel, uint32_t soundSpeed);
+    void sendSoundSpeed(int16_t channel, uint32_t soundSpeed);
 
-    void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
+    void chartComplete(ChartParameters chartsParams, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
 
     void iqComplete(QByteArray data, uint8_t type);
@@ -246,6 +246,8 @@ public slots:
 #endif
 
 protected:
+    friend class DeviceManager;
+
     typedef void (DevDriver::* ParseCallback)(Type type, Version ver, Resp resp);
 
     //FrameParser* m_proto;

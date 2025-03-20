@@ -30,10 +30,23 @@ struct LastReadInfo {
     LastReadInfo() : version(), checkSum(0), address(0), isReaded(true) {};
     LastReadInfo(Version _version, uint16_t _checkSum, uint8_t _address, bool _isReaded) :
         version(_version), checkSum(_checkSum), address(_address), isReaded(_isReaded) {};
-    Version version;
+
+    Version  version;
     uint16_t checkSum;
-    uint8_t address;
-    bool isReaded;
+    uint8_t  address;
+    bool     isReaded;
+};
+
+struct ChartParameters {
+    ChartParameters() : address(0), channelId(0) {};
+    ChartParameters(int16_t _address, int16_t _channelId, BoardVersion _boardVersion, Version _version, QList<int16_t> _linkedChannels) :
+        address(_address), channelId(_channelId), boardVersion(_boardVersion), version(_version), linkedChannels(_linkedChannels) {};
+
+    int16_t        address;
+    int16_t        channelId;
+    BoardVersion   boardVersion;
+    Version        version;
+    QList<int16_t> linkedChannels;
 };
 
 class IDBin : public QObject

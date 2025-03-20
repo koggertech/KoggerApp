@@ -395,6 +395,29 @@ typedef struct ComplexSignal {
     QVector<ComplexF> data;
 } ComplexSignal;
 
+struct RecordParameters {
+    uint16_t resol      = 0;
+    uint16_t count      = 0;
+    uint16_t offset     = 0;
+    uint16_t freq       = 0;
+    uint8_t  pulse      = 0;
+    uint8_t  boost      = 0;
+    uint32_t soundSpeed = 0;
+
+    bool isNull() const {
+        if (resol      == 0 &&
+            count      == 0 &&
+            offset     == 0 &&
+            freq       == 0 &&
+            pulse      == 0 &&
+            boost      == 0 &&
+            soundSpeed == 0) {
+            return true;
+        }
+        return false;
+    }
+};
+
 typedef QMap<int, ComplexSignal> ComplexSignals;
 
 class Epoch {
@@ -426,16 +449,6 @@ public:
         int     cursorX = -1;
         int     cursorY = -1;
         QRectF  rectEcho;
-    };
-
-    struct RecordParameters {
-        uint16_t resol      = 0;
-        uint16_t count      = 0;
-        uint16_t offset     = 0;
-        uint16_t freq       = 0;
-        uint8_t  pulse      = 0;
-        uint8_t  boost      = 0;
-        uint32_t soundSpeed = 0;
     };
 
     typedef struct {
@@ -479,7 +492,7 @@ public:
         float getMin() { return min; }
     } DistProcessing;
 
-    typedef struct {
+    struct Echogram {
         QVector<uint8_t> amplitude;
         float resolution = 0; // m
         float offset = 0; // m
@@ -514,14 +527,12 @@ public:
 
         DistProcessing bottomProcessing;
         Position sensorPosition;
+        RecordParameters recordParameters_;
 
         float range() {
             return amplitude.size()*(resolution);
         }
-
-
-
-    } Echogram;
+    };
 
 
 
@@ -529,6 +540,7 @@ public:
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
     void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, float offset);
+    void setRecParameters(int16_t address, RecordParameters recParams);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -873,26 +885,25 @@ public:
     bool getWasValidlyRenderedInEchogram() const;
     void setWasValidlyRenderedInEchogram(bool state);
 
-    void setResolution(uint16_t resolution);
-    void setChartCount(uint16_t chartCount);
-    void setOffset(uint16_t offset);
-    void setFrequency(uint16_t frequency);
-    void setPulse(uint8_t pulse);
-    void setBoost(uint8_t boost);
-    void setSoundSpeed(uint32_t soundSpeed);
-    uint16_t getResolution() const;
-    uint16_t getChartCount() const;
-    uint16_t getOffset() const;
-    uint16_t getFrequency() const;
-    uint8_t getPulse() const;
-    uint8_t getBoost() const;
-    uint32_t getSoundSpeed() const;
+    void setResolution(int16_t channelId, uint16_t resolution);
+    void setChartCount(int16_t channelId, uint16_t chartCount);
+    void setOffset(int16_t channelId, uint16_t offset);
+    void setFrequency(int16_t channelId, uint16_t frequency);
+    void setPulse(int16_t channelId, uint8_t pulse);
+    void setBoost(int16_t channelId, uint8_t boost);
+    void setSoundSpeed(int16_t channelId, uint32_t soundSpeed);
+    uint16_t getResolution(int16_t channelId) const;
+    uint16_t getChartCount(int16_t channelId) const;
+    uint16_t getOffset(int16_t channelId) const;
+    uint16_t getFrequency(int16_t channelId) const;
+    uint8_t getPulse(int16_t channelId) const;
+    uint8_t getBoost(int16_t channelId) const;
+    uint32_t getSoundSpeed(int16_t channelId) const;
 
     Contact contact_; // TODO: private
 
 protected:
-
-    QMap<int16_t, Echogram> _charts;
+    QMap<int16_t, Echogram> _charts; // channels not addr
     QMap<int16_t, float> _rangeFinders;
 
     int _eventTimestamp_us = 0;
@@ -973,7 +984,6 @@ private:
         };
     } interpData_;
     bool wasValidlyRenderedInEchogram_;
-    RecordParameters recParams_;
 };
 
 class Dataset : public QObject {
@@ -1078,7 +1088,7 @@ public slots:
     void setSoundSpeed(int16_t channel, uint32_t soundSpeed);
     void setFixBlackStripes(bool state);
 
-    void addChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
+    void addChart(ChartParameters, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
     void addDist(int dist);
     void addRangefinder(float distance);
@@ -1144,6 +1154,7 @@ signals:
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);
     void updatedLlaRef();
+    void channelsUpdated();
 
 protected:
     int lastEventTimestamp = 0;
@@ -1158,8 +1169,14 @@ protected:
     QMap<int, DatasetChannel> _channelsSetup;
 
     void validateChannelList(int ch) {
+        bool isNewChannel = !_channelsSetup.contains(ch);
+
         _channelsSetup[ch].channel = ch;
         _channelsSetup[ch].counter();
+
+        if (isNewChannel) {
+            emit channelsUpdated();
+        }
     }
 
     QVector<QVector3D> _boatTrack;
@@ -1186,17 +1203,7 @@ protected:
 
     Epoch* addNewEpoch() {
         _pool.resize(_pool.size() + 1);
-
         auto* lastEpoch = last();
-
-        lastEpoch->setResolution(chartResolution_);
-        lastEpoch->setChartCount(chartCount_);
-        lastEpoch->setOffset(chartOffset_);
-        lastEpoch->setFrequency(transcFreq_);
-        lastEpoch->setPulse(transcPulse_);
-        lastEpoch->setBoost(transcBoost_);
-        lastEpoch->setSoundSpeed(devSoundSpeed_);
-
         return lastEpoch;
     }
 
@@ -1238,19 +1245,8 @@ private:
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;
     uint64_t boatTrackValidPosCounter_;
-
     int lastMostFreqChartSize_;
-
-    uint16_t chartResolution_;
-    uint16_t chartCount_;
-    uint16_t chartOffset_;
-
-    uint16_t transcFreq_;
-    uint8_t transcPulse_;
-    uint8_t transcBoost_;
-
-    uint32_t devSoundSpeed_;
-
+    QMap<int16_t, RecordParameters> usingRecordParameters_;
     bool fixBlackStripes_;
 };
 

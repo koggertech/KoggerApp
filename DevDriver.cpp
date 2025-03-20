@@ -18,6 +18,8 @@ DevDriver::DevDriver(QObject *parent) :
     averageChartLosses_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+    qRegisterMetaType<ChartParameters>("ChartParameters");
+
     regID(idTimestamp = new IDBinTimestamp(), &DevDriver::receivedTimestamp);
 
     regID(idDist = new IDBinDist(), &DevDriver::receivedDist);
@@ -432,6 +434,7 @@ void DevDriver::setDspSetupState(bool state) {
 void DevDriver::setTranscState(bool state) {
     if (state != transcState_) {
         transcState_ = state;
+        emit sendTranscSetup(_lastAddres, idTransc->freq(), idTransc->pulse(), idTransc->boost());
         emit transChanged();
     }
 }
@@ -439,6 +442,7 @@ void DevDriver::setTranscState(bool state) {
 void DevDriver::setSoundSpeedState(bool state) {
     if (state != soundSpeedState_) {
         soundSpeedState_ = state;
+        emit sendSoundSpeed(_lastAddres, idSoundSpeed->getSoundSpeed());
         emit soundChanged();
     }
 }
@@ -694,7 +698,7 @@ void DevDriver::setSoundSpeed(int speed) {
     idSoundSpeed->setSoundSpeed(speed);
 
     if (is_changed) {
-        emit sendSoundSpeeed(_lastAddres, static_cast<uint32_t>(speed));
+        emit sendSoundSpeed(_lastAddres, static_cast<uint32_t>(speed));
         emit soundChanged();
     }
 }
@@ -999,15 +1003,23 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
             }
             ++errorFreezeCnt_;
 
-            if (!data.empty()) {
-                emit chartComplete(_lastAddres, data, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+            if(ver == v0) {
+                if (!data.empty()) {
+                    ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { _lastAddres });
+                    emit chartComplete(chartParams, data, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
+                }
             }
 
             if(ver == v1) {
+                ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { static_cast<int16_t>(_lastAddres + 2), static_cast<int16_t>(_lastAddres + 3) });
+                chartParams.channelId = chartParams.linkedChannels.at(0);
+                emit chartComplete(chartParams, data, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
+
                 QVector<uint8_t> data2(idChart->chartSize());
                 memcpy(data2.data(), idChart->logData28(), idChart->chartSize());
                 if (!data2.empty()) {
-                    emit chartComplete(_lastAddres+1, data2, 0.001*idChart->resolution(), 0.001*idChart->offsetRange());
+                    chartParams.channelId = chartParams.linkedChannels.at(1);
+                    emit chartComplete(chartParams, data2, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
                 }
             }
         }
@@ -1052,12 +1064,7 @@ void DevDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
     Q_UNUSED(ver);
 
     if(resp == respNone) {
-        //if(ver == v0 || ver == v1) {
-            emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
-        //    if(ver == v1) {
-          //  emit sendChartSetup(_lastAddres+1, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
-        //    }
-        //}
+        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -1084,7 +1091,7 @@ void DevDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
     Q_UNUSED(ver);
 
     if (resp == respNone) {
-        emit sendSoundSpeeed(_lastAddres, idSoundSpeed->getSoundSpeed());
+        emit sendSoundSpeed(_lastAddres, idSoundSpeed->getSoundSpeed());
         emit soundChanged();
     }
 }

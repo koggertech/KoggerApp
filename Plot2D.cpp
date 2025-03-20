@@ -799,22 +799,23 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
     QString text = distanceText;
 
+    int16_t channelId =  cursor.channel2 == CHANNEL_NONE ? cursor.channel1 : cursor_distance <= 0 ? cursor.channel1 : cursor.channel2;
+
     if (cursor.currentEpochIndx != -1) {
         if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
-            if (!(ep ->getResolution() == 0 &&
-                  ep ->getChartCount() == 0 &&
-                  ep ->getOffset() == 0 &&
-                  ep ->getFrequency() == 0 &&
-                  ep ->getPulse() == 0 &&
-                  ep ->getBoost() == 0)) {
-                QString boostStr = ep->getBoost() ? QObject::tr("ON") : QObject::tr("OFF");
-                text += "\n" + QObject::tr("Resolution, mm: ") + QString::number(ep->getResolution());
-                //text += "\n" + QObject::tr("Number of Samples: ") + QString::number(ep->getChartCount());
-                //text += "\n" + QObject::tr("Offset of samples: ")     + QString::number(ep->getOffset());
-                text += "\n" + QObject::tr("Frequency, kHz: ")  + QString::number(ep->getFrequency());
-                text += "\n" + QObject::tr("Pulse count: ")      + QString::number(ep->getPulse());
-                text += "\n" + QObject::tr("Booster: ")      + boostStr;
-                text += "\n" + QObject::tr("Speed of sound, m/s: ") + QString::number(ep->getSoundSpeed() / 1000);
+            if (auto* echogram = ep->chart(channelId); echogram) {
+                if (!echogram->recordParameters_.isNull()) {
+                    auto& recParams = echogram->recordParameters_;
+                    QString boostStr = recParams.boost ? QObject::tr("ON") : QObject::tr("OFF");
+                    text += "\n" + QObject::tr("Channel: ")          + QString::number(channelId);
+                    text += "\n" + QObject::tr("Resolution, mm: ")      + QString::number(recParams.resol);
+                    //text += "\n" + QObject::tr("Number of Samples: ") + QString::number(recParams.count);
+                    //text += "\n" + QObject::tr("Offset of samples: ")     + QString::number(recParams.offset);
+                    text += "\n" + QObject::tr("Frequency, kHz: ")      + QString::number(recParams.freq);
+                    text += "\n" + QObject::tr("Pulse count: ")         + QString::number(recParams.pulse);
+                    text += "\n" + QObject::tr("Booster: ")             + boostStr;
+                    text += "\n" + QObject::tr("Speed of sound, m/s: ") + QString::number(recParams.soundSpeed / 1000);
+                }
             }
         }
     }

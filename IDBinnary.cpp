@@ -47,7 +47,8 @@ Resp  IDBin::parse(FrameParser &proto) {
         m_lastVersion = proto.ver();
         _lastAddress = proto.route();
 
-        if (proto.resp()) {
+        if ((proto.resp() && proto.type() == CONTENT) ||
+            proto.type() == GETTING) {
             m_lastResp = (Resp)proto.read<U1>();
 
             if ((m_lastResp == Resp::respOk)  && (!hashLastInfo_.isReaded && needToCheckSetResp_)) {
@@ -62,9 +63,14 @@ Resp  IDBin::parse(FrameParser &proto) {
 
             resp_parse = respOk;
         }
-        else {
+        else if ((!proto.resp() && proto.type() == CONTENT) ||
+                   proto.type() == SETTING) {
+
             m_lastResp = respNone;
-            resp_parse = parsePayload(proto);
+            resp_parse = Resp::respOk;
+            if (proto.type() == CONTENT || proto.type() == SETTING) {
+                resp_parse = parsePayload(proto);
+            }
 
             if (!hashLastInfo_.isReaded && !needToCheckSetResp_) {
                 hashLastInfo_.isReaded = true;
@@ -74,7 +80,7 @@ Resp  IDBin::parse(FrameParser &proto) {
             if (resp_parse == Resp::respOk && isColdStart_) {
                 isColdStart_ = false;
                 onExpiredColdStartTimer();
-            }            
+            }
         }
 
         if (resp_parse == respOk)

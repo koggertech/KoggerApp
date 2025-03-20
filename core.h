@@ -121,6 +121,7 @@ public slots:
     bool getIsMosaicUpdatingInThread() const;
     bool getIsSideScanPerformanceMode() const;
     bool getIsSeparateReading() const;
+    void onChannelsUpdated();
 
 #if defined(FAKE_COORDS)
     Q_INVOKABLE void setPosZeroing(bool state);

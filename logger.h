@@ -19,6 +19,9 @@ public:
     Logger();
     void setDatasetPtr(Dataset* datasetPtr);
 
+signals:
+    void loggingKlfStarted();
+
 public slots:
     // .klf
     bool startNewKlfLog();
@@ -39,6 +42,8 @@ public slots:
     bool dataExport(QString str);
     bool dataByteExport(QByteArray data);
     bool endExportStream();
+
+    void receiveProtoFrame(ProtoBinOut protoBinOut);
 
 private:
     struct {

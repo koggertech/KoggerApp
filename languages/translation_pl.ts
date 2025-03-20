@@ -238,12 +238,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1386"/>
+        <location filename="../plotcash.cpp" line="1422"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1387"/>
+        <location filename="../plotcash.cpp" line="1423"/>
         <source>First</source>
         <translation>Pierwszy</translation>
     </message>
@@ -336,7 +336,7 @@
     <name>DeviceItem</name>
     <message>
         <location filename="../QML/DeviceItem.qml" line="15"/>
-        <location filename="../QML/DeviceItem.qml" line="292"/>
+        <location filename="../QML/DeviceItem.qml" line="296"/>
         <source>Echogram</source>
         <translation>Echogram</translation>
     </message>
@@ -357,7 +357,7 @@
     </message>
     <message>
         <location filename="../QML/DeviceItem.qml" line="79"/>
-        <location filename="../QML/DeviceItem.qml" line="323"/>
+        <location filename="../QML/DeviceItem.qml" line="327"/>
         <source>Rangefinder</source>
         <translation>Głębokość</translation>
     </message>
@@ -397,85 +397,85 @@
         <translation>Wzmacniacz</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="203"/>
-        <location filename="../QML/DeviceItem.qml" line="315"/>
-        <location filename="../QML/DeviceItem.qml" line="350"/>
-        <location filename="../QML/DeviceItem.qml" line="381"/>
-        <location filename="../QML/DeviceItem.qml" line="412"/>
-        <location filename="../QML/DeviceItem.qml" line="443"/>
+        <location filename="../QML/DeviceItem.qml" line="205"/>
+        <location filename="../QML/DeviceItem.qml" line="319"/>
+        <location filename="../QML/DeviceItem.qml" line="354"/>
+        <location filename="../QML/DeviceItem.qml" line="385"/>
+        <location filename="../QML/DeviceItem.qml" line="416"/>
+        <location filename="../QML/DeviceItem.qml" line="447"/>
         <source>Off</source>
         <translation>Wyłącz</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="203"/>
-        <location filename="../QML/DeviceItem.qml" line="350"/>
-        <location filename="../QML/DeviceItem.qml" line="412"/>
-        <location filename="../QML/DeviceItem.qml" line="443"/>
+        <location filename="../QML/DeviceItem.qml" line="205"/>
+        <location filename="../QML/DeviceItem.qml" line="354"/>
+        <location filename="../QML/DeviceItem.qml" line="416"/>
+        <location filename="../QML/DeviceItem.qml" line="447"/>
         <source>On</source>
         <translation>Włącz</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="225"/>
+        <location filename="../QML/DeviceItem.qml" line="229"/>
         <source>DSP</source>
         <translation>DSP</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="228"/>
+        <location filename="../QML/DeviceItem.qml" line="232"/>
         <source>Horizontal smoothing factor</source>
         <translation>Współczynnik wygładzania poziomego</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="248"/>
+        <location filename="../QML/DeviceItem.qml" line="252"/>
         <source>Speed of Sound, m/s</source>
         <translation>Prędkość dźwięku, m/s</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="269"/>
+        <location filename="../QML/DeviceItem.qml" line="273"/>
         <source>Dataset</source>
         <translation>Zbiór danych</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="272"/>
+        <location filename="../QML/DeviceItem.qml" line="276"/>
         <source>Period, ms</source>
         <translation>Zakres, ms</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="315"/>
+        <location filename="../QML/DeviceItem.qml" line="319"/>
         <source>8-bit</source>
         <translation>8-bitowy</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="315"/>
+        <location filename="../QML/DeviceItem.qml" line="319"/>
         <source>16-bit</source>
         <translation>16-bitowy</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="350"/>
+        <location filename="../QML/DeviceItem.qml" line="354"/>
         <source>NMEA</source>
         <translation>NMEA</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="358"/>
+        <location filename="../QML/DeviceItem.qml" line="362"/>
         <source>AHRS</source>
         <translation>AHRS</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="381"/>
+        <location filename="../QML/DeviceItem.qml" line="385"/>
         <source>Euler</source>
         <translation>Euler</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="381"/>
+        <location filename="../QML/DeviceItem.qml" line="385"/>
         <source>Quat.</source>
         <translation>Kwat.</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="389"/>
+        <location filename="../QML/DeviceItem.qml" line="393"/>
         <source>Temperature</source>
         <translation>Temperatura</translation>
     </message>
     <message>
-        <location filename="../QML/DeviceItem.qml" line="420"/>
+        <location filename="../QML/DeviceItem.qml" line="424"/>
         <source>Timestamp</source>
         <translation>Znacznik czasu</translation>
     </message>
@@ -1156,37 +1156,42 @@
         <translation>%1 m</translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="810"/>
+        <location filename="../Plot2D.cpp" line="820"/>
         <source>ON</source>
         <translation>ON</translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="810"/>
+        <location filename="../Plot2D.cpp" line="820"/>
         <source>OFF</source>
         <translation>OFF</translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="811"/>
+        <location filename="../Plot2D.cpp" line="821"/>
+        <source>Channel: </source>
+        <translation>Kanał: </translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="822"/>
         <source>Resolution, mm: </source>
         <translation>Rozdzielczość, mm: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="814"/>
+        <location filename="../Plot2D.cpp" line="825"/>
         <source>Frequency, kHz: </source>
         <translation>Częstotliwość, kHz: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="815"/>
+        <location filename="../Plot2D.cpp" line="826"/>
         <source>Pulse count: </source>
         <translation>Liczba impulsów: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="816"/>
+        <location filename="../Plot2D.cpp" line="827"/>
         <source>Booster: </source>
         <translation>Propagator: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="817"/>
+        <location filename="../Plot2D.cpp" line="828"/>
         <source>Speed of sound, m/s: </source>
         <translation>Prędkość dźwięku, m/s: </translation>
     </message>

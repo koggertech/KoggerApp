@@ -552,9 +552,10 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
 
 void DeviceManager::binFrameOut(ProtoBinOut protoOut)
 {
-    if (isConsoled_ && !(protoOut.id() == 33 || protoOut.id() == 33)) {
+    if (isConsoled_ && protoOut.id() != 33) {
         core.consoleProto(protoOut, false);
     }
+    emit sendProtoFrame(protoOut);
 }
 
 bool DeviceManager::isCreatedId(int id)
@@ -602,6 +603,16 @@ void DeviceManager::setUSBLBeaconDirectAsk(bool is_ask) {
         beacon_timer.start();
     } else {
         beacon_timer.stop();
+    }
+}
+
+void DeviceManager::onLoggingKlfStarted()
+{
+    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+        QHash<int, DevQProperty*> devs = i.value();
+        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+            k.value()->requestSetup();
+        }
     }
 }
 
@@ -821,7 +832,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     //
     connect(dev, &DevQProperty::sendChartSetup,  this, &DeviceManager::sendChartSetup);
     connect(dev, &DevQProperty::sendTranscSetup, this, &DeviceManager::sendTranscSetup);
-    connect(dev, &DevQProperty::sendSoundSpeeed, this, &DeviceManager::sendSoundSpeeed);
+    connect(dev, &DevQProperty::sendSoundSpeed, this, &DeviceManager::sendSoundSpeeed);
     connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);

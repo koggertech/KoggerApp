@@ -60,6 +60,10 @@ bool Logger::startNewKlfLog()
         core.consoleInfo("Logger can't make dir");
     }
 
+    if (isOpen) {
+        emit loggingKlfStarted();
+    }
+
     return isOpen;
 }
 
@@ -390,4 +394,20 @@ bool Logger::endExportStream()
     return true;
 }
 
+void Logger::receiveProtoFrame(ProtoBinOut protoBinOut)
+{
+    QByteArray data = QByteArray((const char*)protoBinOut.frame(), protoBinOut.frameLen());
+
+    if (isOpenKlf()) {
+        klfLogFile_->write(data);
+
+        if (klfCurrentIteration_ > klfFlushInterval_) {
+            klfLogFile_->flush();
+            klfCurrentIteration_ = 0;
+        }
+        else {
+            ++klfCurrentIteration_;
+        }
+    }
+}
 

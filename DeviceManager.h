@@ -62,6 +62,8 @@ public slots:
     bool isbeaconDirectQueueAsk() { return isUSBLBeaconDirectAsk; }
     void setUSBLBeaconDirectAsk(bool is_ask);
 
+    void onLoggingKlfStarted();
+
 #ifdef MOTOR
     float getFAngle();
     float getSAngle();
@@ -79,7 +81,7 @@ signals:
     void sendSoundSpeeed(int16_t channel, uint32_t soundSpeed);
 
     void dataSend(QByteArray data);
-    void chartComplete(int16_t channel, QVector<uint8_t> data, float resolution, float offset);
+    void chartComplete(ChartParameters chartParams, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData rawData);
     void distComplete(int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
@@ -106,6 +108,9 @@ signals:
     void encoderComplete(float e1, float e2, float e3);
     void fileStopsOpening();
     void chartLossesChanged();
+
+    // logger
+    void sendProtoFrame(const ProtoBinOut& protoOut);
 
 #ifdef SEPARATE_READING
     void fileStartOpening();

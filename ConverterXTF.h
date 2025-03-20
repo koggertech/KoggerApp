@@ -273,8 +273,8 @@ public:
                         }
                     }
 
-
-                    dataset->addChart(pingch->ChannelNumber, data, range/sample_count, 0);
+                    ChartParameters chartParams(pingch->ChannelNumber, 0, {}, {}, {});
+                    dataset->addChart(chartParams, data, range/sample_count, 0); // TODO, address, channel
                 }
 
             } else  if(pingheader->HeaderType == 3) {

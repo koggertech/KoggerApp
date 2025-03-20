@@ -30,6 +30,7 @@ Core::Core() :
     createDeviceManagerConnections();
     createLinkManagerConnections();
     createControllers();
+    QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
 }
 
 Core::~Core()
@@ -269,17 +270,7 @@ void Core::onFileReadEnough()
         //scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
     }
 
-    QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (i == 0 && plot2dList_.at(i) != NULL) {
-            if (chs.size() >= 2) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
-            }
-            if (chs.size() == 1) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel);
-            }
-        }
-    }
+    onChannelsUpdated();
 }
 
 void Core::onFileOpenBreaked(bool onOpen)
@@ -360,17 +351,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
         }
 
-        QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
-        for (int i = 0; i < plot2dList_.size(); i++) {
-            if (i == 0 &&plot2dList_.at(i) != NULL) {
-                if (chs.size() >= 2) {
-                    plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
-                }
-                if (chs.size() == 1) {
-                    plot2dList_.at(i)->setDataChannel(chs[0].channel);
-                }
-            }
-        }
+        onChannelsUpdated();
     });
 }
 
@@ -661,8 +642,8 @@ bool Core::exportUSBLToCSV(QString filePath)
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
 
     logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
-    QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
-    Q_UNUSED(ch_list);
+    //QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
+    //Q_UNUSED(ch_list);
     // _dataset->setRefPosition(1518);
 
     logger_.dataExport("epoch,yaw,pitch,roll,north,east,ping_counter,carrier_counter,snr,azimuth_deg,elevation_deg,distance_m\n");
@@ -950,8 +931,8 @@ bool Core::exportPlotAsXTF(QString filePath)
 {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(filePath + "/_" + export_file_name + ".xtf");
-    QMap<int, DatasetChannel> chs = datasetPtr_->channelsList();
-    Q_UNUSED(chs);
+    //QMap<int, DatasetChannel> chs = datasetPtr_->channelsList();
+    //Q_UNUSED(chs);
     QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), plot2dList_[0]->plotDatasetChannel(), plot2dList_[0]->plotDatasetChannel2());
     logger_.dataByteExport(data_export);
     logger_.endExportStream();
@@ -1137,6 +1118,21 @@ bool Core::getIsSeparateReading() const
 #endif
 }
 
+void Core::onChannelsUpdated()
+{
+    QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
+    for (int i = 0; i < plot2dList_.size(); i++) {
+        if (i == 0 &&plot2dList_.at(i) != NULL) {
+            if (chs.size() >= 2) {
+                plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+            }
+            if (chs.size() == 1) {
+                plot2dList_.at(i)->setDataChannel(chs[0].channel);
+            }
+        }
+    }
+}
+
 #if defined(FAKE_COORDS)
 void Core::setPosZeroing(bool state)
 {
@@ -1201,6 +1197,8 @@ void Core::createDeviceManagerConnections()
                                                                                                                                                       isFileOpening_ = false;
                                                                                                                                                       emit sendIsFileOpening();
                                                                                                                                                   }, deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendProtoFrame,        &logger_, &Logger::receiveProtoFrame,    deviceManagerConnection));
+    deviceManagerWrapperConnections_.append(QObject::connect(&logger_, &Logger::loggingKlfStarted,  deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLoggingKlfStarted,     deviceManagerConnection));
 }
 
 void Core::removeDeviceManagerConnections()
@@ -1237,6 +1235,8 @@ void Core::createDeviceManagerConnections()
                                                                                                               isFileOpening_ = false;
                                                                                                               emit sendIsFileOpening();
                                                                                                           }, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendProtoFrame, &logger_, &Logger::receiveProtoFrame, deviceManagerConnection);    
+    QObject::connect(&logger_, &Logger::loggingKlfStarted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLoggingKlfStarted, deviceManagerConnection);
 
 }
 #endif
