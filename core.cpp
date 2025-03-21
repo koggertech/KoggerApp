@@ -1326,43 +1326,67 @@ void Core::fixFilePathString(QString& filePath) const
 
 void Core::saveLLARefToSettings()
 {
-    auto ref = datasetPtr_->getLlaRef();
+    if (!datasetPtr_) {
+        return;
+    }
 
-    QSettings settings("KOGGER", "KoggerApp");
-    QString group{"LLARef"};
+    try {
+        auto ref = datasetPtr_->getLlaRef();
 
-    settings.beginGroup(group);
-    settings.setValue("refLatSin", ref.refLatSin);
-    settings.setValue("refLatCos", ref.refLatCos);
-    settings.setValue("refLatRad", ref.refLatRad);
-    settings.setValue("refLonRad", ref.refLonRad);
-    settings.setValue("refLlaLatitude", ref.refLla.latitude);
-    settings.setValue("refLlaLongitude", ref.refLla.longitude);
-    settings.setValue("isInit", ref.isInit);
-    settings.endGroup();
+        QSettings settings("KOGGER", "KoggerApp");
+        QString group{"LLARef"};
 
-    settings.sync();
+        settings.beginGroup(group);
+        settings.setValue("refLatSin", ref.refLatSin);
+        settings.setValue("refLatCos", ref.refLatCos);
+        settings.setValue("refLatRad", ref.refLatRad);
+        settings.setValue("refLonRad", ref.refLonRad);
+        settings.setValue("refLlaLatitude", ref.refLla.latitude);
+        settings.setValue("refLlaLongitude", ref.refLla.longitude);
+        settings.setValue("isInit", ref.isInit);
+        settings.endGroup();
 
-    //qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
+        settings.sync();
+
+        //qDebug() << "saved: " << ref.refLla.latitude << ref.refLla.longitude;
+    }
+    catch (const std::exception& e) {
+        qCritical() << "Core::saveLLARefToSettings throw exception:" << e.what();
+    }
+    catch (...) {
+        qCritical() << "Core::saveLLARefToSettings throw unknown exception";
+    }
 }
 
 void Core::loadLLARefFromSettings()
 {
-    QSettings settings("KOGGER", "KoggerApp");
-    QString group{"LLARef"};
+    if (!datasetPtr_) {
+        return;
+    }
 
-    settings.beginGroup(group);
-    LLARef ref;
-    ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
-    ref.refLatCos = settings.value("refLatCos", NAN).toDouble();
-    ref.refLatRad = settings.value("refLatRad", NAN).toDouble();
-    ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
-    ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
-    ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
-    ref.isInit = settings.value("isInit", false).toBool();
-    settings.endGroup();
+    try {
+        QSettings settings("KOGGER", "KoggerApp");
+        QString group{"LLARef"};
 
-    datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kSettings);
+        settings.beginGroup(group);
+        LLARef ref;
+        ref.refLatSin = settings.value("refLatSin", NAN).toDouble();
+        ref.refLatCos = settings.value("refLatCos", NAN).toDouble();
+        ref.refLatRad = settings.value("refLatRad", NAN).toDouble();
+        ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
+        ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
+        ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
+        ref.isInit = settings.value("isInit", false).toBool();
+        settings.endGroup();
 
-    //qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
+        datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kSettings);
+
+        //qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
+    }
+    catch (const std::exception& e) {
+        qCritical() << "Core::loadLLARefFromSettings throw exception:" << e.what();
+    }
+    catch (...) {
+        qCritical() << "Core::loadLLARefFromSettings throw unknown exception";
+    }
 }

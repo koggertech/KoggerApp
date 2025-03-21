@@ -801,7 +801,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     //
     connect(dev, &DevQProperty::sendChartSetup, this, &DeviceManager::sendChartSetup, connType);
     connect(dev, &DevQProperty::sendTranscSetup, this, &DeviceManager::sendTranscSetup, connType);
-    connect(dev, &DevQProperty::sendSoundSpeeed, this, &DeviceManager::sendSoundSpeeed, connType);
+    connect(dev, &DevQProperty::sendSoundSpeed, this, &DeviceManager::sendSoundSpeeed, connType);
     connect(dev, &DevQProperty::averageChartLossesChanged, this, &DeviceManager::chartLossesChanged, connType);
 
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
