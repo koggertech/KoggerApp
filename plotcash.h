@@ -1086,8 +1086,8 @@ public slots:
     void setChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
     void setTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
     void setSoundSpeed(int16_t channel, uint32_t soundSpeed);
-    void setFixBlackStripes(bool state);
-
+    void setFixBlackStripesState(bool state);
+    void setFixBlackStripesRange(int val);
     void addChart(ChartParameters, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
     void addDist(int dist);
@@ -1157,6 +1157,8 @@ signals:
     void channelsUpdated();
 
 protected:
+    using EthalonVec = QVector<QPair<uint8_t, uint8_t>>;
+    QMap<int16_t, EthalonVec> ethData_; // first - channelId, sec - vec,
     int lastEventTimestamp = 0;
     int lastEventId = 0;
     float _lastEncoder = 0;
@@ -1245,9 +1247,9 @@ private:
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;
     uint64_t boatTrackValidPosCounter_;
-    int lastMostFreqChartSize_;
     QMap<int16_t, RecordParameters> usingRecordParameters_;
-    bool fixBlackStripes_;
+    bool fixBlackStripesState_;
+    int fixBlackStripesWrCnt_;
 };
 
 #endif // PLOT_CASH_H

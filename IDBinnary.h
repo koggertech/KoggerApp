@@ -2,11 +2,13 @@
 #define IDBINNARY_H
 
 #include <QObject>
+#include <QList>
 #include <QVector>
 #include <QTimer>
 #include <ProtoBinnary.h>
 
 using namespace Parsers;
+using Segment = QPair<uint16_t, uint16_t>; // first - begin, second - end
 
 typedef enum {
     BoardNone,
@@ -39,14 +41,15 @@ struct LastReadInfo {
 
 struct ChartParameters {
     ChartParameters() : address(0), channelId(0) {};
-    ChartParameters(int16_t _address, int16_t _channelId, BoardVersion _boardVersion, Version _version, QList<int16_t> _linkedChannels) :
-        address(_address), channelId(_channelId), boardVersion(_boardVersion), version(_version), linkedChannels(_linkedChannels) {};
+    ChartParameters(int16_t _address, int16_t _channelId, BoardVersion _boardVersion, Version _version, QList<int16_t> _linkedChannels, QList<Segment> _errList) :
+        address(_address), channelId(_channelId), boardVersion(_boardVersion), version(_version), linkedChannels(_linkedChannels), errList(_errList) {};
 
     int16_t        address;
     int16_t        channelId;
     BoardVersion   boardVersion;
     Version        version;
     QList<int16_t> linkedChannels;
+    QList<Segment> errList;
 };
 
 class IDBin : public QObject
@@ -214,6 +217,16 @@ public:
 
     uint8_t* logData8() { return m_completeChart; }
     uint8_t* logData28() { return m_completeChart2; }
+
+    QList<Segment> getErrList() {
+        if (!compErrList_.empty()) {
+            auto retVal = std::move(compErrList_);
+            compErrList_.clear();
+            return retVal;
+        }
+        return {};
+    }
+
     // uint8_t* rawData() { return _rawDataSave; }
     // uint32_t rawDataSize() { return _rawDataSize; }
     // uint8_t rawType() { return type; }
@@ -233,6 +246,9 @@ protected:
     uint8_t m_fillChart[20000];
     uint8_t m_completeChart[20000];
     uint8_t m_completeChart2[20000];
+
+    QList<Segment> tempErrList_;
+    QList<Segment> compErrList_;
 
     bool m_isCompleteChart = false;
 

@@ -507,16 +507,53 @@ GridLayout {
                 text: qsTr("Horizontal")
             }
 
-            CCheck {
-                id: fixBlackStripes
-                checked: false
-                text: qsTr("Fix black stripes")
+            RowLayout {
+                visible: instruments > 1
 
-                onCheckedChanged: core.fixBlackStripes = fixBlackStripes.checked
-                Component.onCompleted: core.fixBlackStripes = fixBlackStripes.checked
+                CCheck {
+                    id: fixBlackStripesCheckButton
+                    Layout.fillWidth: true
+                    checked: false
+                    text: qsTr("Fix black stripes, window")
 
-                Settings {
-                    property alias fixBlackStripes: fixBlackStripes.checked
+                    onCheckedChanged: core.fixBlackStripesState = fixBlackStripesCheckButton.checked
+                    Component.onCompleted: core.fixBlackStripesState = fixBlackStripesCheckButton.checked
+
+                    Settings {
+                        property alias fixBlackStripesCheckButton: fixBlackStripesCheckButton.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: fixBlackStripesSpinBox
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 5
+
+                    onValueChanged: core.fixBlackStripesRange = fixBlackStripesSpinBox.currValue
+                    Component.onCompleted: core.fixBlackStripesRange = fixBlackStripesSpinBox.currValue
+
+                    property int currValue: value
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(fixBlackStripesSpinBox.from, fixBlackStripesSpinBox.to)
+                        top:  Math.max(fixBlackStripesSpinBox.from, fixBlackStripesSpinBox.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value).toLocaleString(locale, 'f', 0)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text)
+                    }
+
+                    onCurrValueChanged: core.fixBlackStripesRange = currValue
+
+                    Settings {
+                        property alias fixBlackStripesSpinBox: fixBlackStripesSpinBox.value
+                    }
                 }
             }
 

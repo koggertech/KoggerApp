@@ -47,7 +47,8 @@ public:
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
-    Q_PROPERTY(bool fixBlackStripes WRITE fixBlackStripes)
+    Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
+    Q_PROPERTY(int  fixBlackStripesRange WRITE setFixBlackStripesRange)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
     Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
@@ -95,9 +96,9 @@ public slots:
     bool upgradeFW(const QString& name, QObject* dev);
     void upgradeChanged(int progressStatus);
     void setKlfLogging(bool isLogging);
-    void fixBlackStripes(bool state);
+    void setFixBlackStripesState(bool state);
+    void setFixBlackStripesRange(int val);
     bool getIsKlfLogging();
-    bool getFixBlackStripes() const;
     void setCsvLogging(bool isLogging);
     bool getIsCsvLogging();
     bool exportComplexToCSV(QString filePath);
@@ -193,7 +194,6 @@ private:
     QList<QMetaObject::Connection> linkManagerWrapperConnections_;
     QString openedfilePath_;
     bool isLoggingKlf_;
-    bool fixBlackStripes_;
     bool isLoggingCsv_;
     QString filePath_;
 #ifdef FLASHER

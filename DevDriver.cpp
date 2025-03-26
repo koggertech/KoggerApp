@@ -1005,13 +1005,13 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
 
             if(ver == v0) {
                 if (!data.empty()) {
-                    ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { _lastAddres });
+                    ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { _lastAddres }, idChart->getErrList());
                     emit chartComplete(chartParams, data, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
                 }
             }
 
             if(ver == v1) {
-                ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { static_cast<int16_t>(_lastAddres + 2), static_cast<int16_t>(_lastAddres + 3) });
+                ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { static_cast<int16_t>(_lastAddres + 2), static_cast<int16_t>(_lastAddres + 3) }, idChart->getErrList());
                 chartParams.channelId = chartParams.linkedChannels.at(0);
                 emit chartComplete(chartParams, data, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
 

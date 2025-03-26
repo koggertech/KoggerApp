@@ -19,7 +19,6 @@ Core::Core() :
     scene3dViewPtr_(nullptr),
     openedfilePath_(),
     isLoggingKlf_(false),
-    fixBlackStripes_(false),
     isLoggingCsv_(false),
     filePath_(),
     isFileOpening_(false),
@@ -560,25 +559,23 @@ void Core::setKlfLogging(bool isLogging)
     isLoggingKlf_ = isLogging;
 }
 
-void Core::fixBlackStripes(bool state)
+void Core::setFixBlackStripesState(bool state)
 {
-    if (!datasetPtr_ ||
-        state == this->getFixBlackStripes()) {
-        return;
+    if (datasetPtr_) {
+        datasetPtr_->setFixBlackStripesState(state);
     }
+}
 
-    datasetPtr_->setFixBlackStripes(state);
-    fixBlackStripes_ = state;
+void Core::setFixBlackStripesRange(int val)
+{
+    if (datasetPtr_) {
+        datasetPtr_->setFixBlackStripesRange(val);
+    }
 }
 
 bool Core::getIsKlfLogging()
 {
     return isLoggingKlf_;
-}
-
-bool Core::getFixBlackStripes() const
-{
-    return fixBlackStripes_;
 }
 
 void Core::setCsvLogging(bool isLogging)

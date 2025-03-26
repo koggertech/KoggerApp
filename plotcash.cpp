@@ -328,8 +328,8 @@ Dataset::Dataset() :
     lastBoatTrackEpoch_(0),
     lastBottomTrackEpoch_(0),
     boatTrackValidPosCounter_(0),
-    lastMostFreqChartSize_(-1),
-    fixBlackStripes_(false)
+    fixBlackStripesState_(false),
+    fixBlackStripesWrCnt_(5)
 {
     resetDataset();
 }
@@ -482,114 +482,110 @@ void Dataset::setChartSetup(int16_t channel, uint16_t resol, uint16_t count, uin
     usingRecordParameters_[channel].resol  = resol;
     usingRecordParameters_[channel].count  = count;
     usingRecordParameters_[channel].offset = offset;
+
+    if (ethData_.contains(channel)) {
+        if (count < ethData_[channel].size()) {
+            ethData_[channel].resize(count);
+        }
+    }
 }
 
-void Dataset::setFixBlackStripes(bool state)
+void Dataset::setFixBlackStripesState(bool state)
 {
-    fixBlackStripes_ = state;
+    fixBlackStripesState_ = state;
+}
+
+void Dataset::setFixBlackStripesRange(int val)
+{
+    fixBlackStripesWrCnt_ = val;
 }
 
 void Dataset::addChart(ChartParameters chartParams, QVector<uint8_t> data, float resolution, float offset)
 {
-    const auto dataSize = data.size();
-    if (dataSize <= 0 || qFuzzyIsNull(resolution)) {
+    if (data.empty() || qFuzzyIsNull(resolution)) {
         return;
     }
 
-    int poolIndex = endIndex();
-    if (poolIndex < 0 || _pool[poolIndex].chartAvail(chartParams.channelId)) {
+    if (endIndex() < 0 ||
+        _pool[endIndex()].chartAvail(chartParams.channelId)) {
         addNewEpoch();
     }
+
+    const int dataSize = data.size();
     const int endIndx = endIndex();
+    const auto& address = chartParams.address;
+    const auto& channelId = chartParams.channelId;
 
     RecordParameters recParam;
-    if (usingRecordParameters_.contains(chartParams.address)) {
-        recParam = usingRecordParameters_[chartParams.address];
+    if (usingRecordParameters_.contains(address)) {
+        recParam = usingRecordParameters_[address];
     }
 
-    auto setChartByDefault = [&]() -> void {
-        _pool[endIndx].setChart(chartParams.channelId, data, resolution, offset);
-        _pool[endIndx].setRecParameters(chartParams.channelId, recParam);
+    auto setChart = [&]() -> void {
+        _pool[endIndx].setChart(channelId, data, resolution, offset);
+        _pool[endIndx].setRecParameters(channelId, recParam);
         _pool[endIndx].setWasValidlyRenderedInEchogram(false);
-        lastMostFreqChartSize_ = dataSize;
-    };
+    };    
 
-    const int windowSize = 20; // window for calculating frequently occurring data size
-    const int numBackSteps = 5; // number of steps to check recent epochs
-
-    if (!fixBlackStripes_ || !recParam.count) {
-        setChartByDefault();
+    if (!fixBlackStripesState_) {
+        setChart();
+        validateChannelList(channelId);
+        emit dataUpdate();
+        return;
     }
-    else {
-        const bool isChannelDoubled = chartParams.version == Version::v1;
 
-        const int  chartCount = recParam.count / (isChannelDoubled ? 2 : 1);
-        const int  startIndx  = (endIndx - windowSize < 0) ? 0 : endIndx - windowSize;
-        const int  preEndIndx = endIndx - 1 ;
-        const bool needToCopy = (endIndx > windowSize) &&
-                                ((state_ == DatasetState::kConnection && dataSize != chartCount) ||
-                                 (state_ == DatasetState::kFile       && dataSize != lastMostFreqChartSize_));
+    // fix black stripes
+    auto& ethVec = ethData_[channelId];
+    const auto& errList = chartParams.errList;
 
-        if (needToCopy) {
-            QHash<int, int> freqCount;
-            for (int i = preEndIndx; i > startIndx; --i) {
-                freqCount[_pool[i].chartSize(chartParams.channelId)]++;
-            }
-            int mostFreqChartSize = _pool[preEndIndx].chartSize(chartParams.channelId);
-            int maxCount = 0;
-            for (auto it = freqCount.constBegin(); it != freqCount.constEnd(); ++it) {
-                if (it.value() > maxCount) {
-                    maxCount = it.value();
-                    mostFreqChartSize = it.key();
-                }
-            }
-            int leftFreqIndx = -1;
-            for (int i = preEndIndx; i > startIndx; --i) {
-                int currChartSize = _pool[i].chartSize(chartParams.channelId);
-                if (currChartSize == mostFreqChartSize) {
-                    leftFreqIndx = i;
-                    break;
-                }
-            }
+    QVector<uint8_t> errorMask(dataSize, 0);
+    for (const auto& seg : errList) {
+        const int start = std::max(static_cast<int>(seg.first), 0);
+        const int end   = std::min(static_cast<int>(seg.second), dataSize);
+        for (int i = start; i < end; ++i) {
+            errorMask[i] = 1;
+        }
+    }
 
-            if (leftFreqIndx != -1 && mostFreqChartSize >= 0) {
-                if (dataSize < mostFreqChartSize) {
-                    QVector<uint8_t> fixData(mostFreqChartSize, 0);
-                    memcpy(fixData.data(), data.data(), dataSize);
-                    auto copyFrom = _pool[leftFreqIndx].chartData(chartParams.channelId);
-                    memcpy(fixData.data() + dataSize , copyFrom.data() + dataSize, mostFreqChartSize - dataSize);
-                    _pool[endIndx].setChart(chartParams.channelId, fixData, resolution, offset);
-                }
-                else {
-                    _pool[endIndx].setChart(chartParams.channelId, _pool[leftFreqIndx].chartData(chartParams.channelId), resolution, offset);
-                }
-                _pool[endIndx].setRecParameters(chartParams.channelId, recParam); //
-                _pool[endIndx].setWasValidlyRenderedInEchogram(false);
-                lastMostFreqChartSize_ = mostFreqChartSize;
-            }
-            else {
-                setChartByDefault();
+    int lastValidEthIndx = -1;
+    for (int i = ethVec.size() - 1; i >= 0; --i) {
+        if (ethVec.at(i).first) {
+            lastValidEthIndx = i;
+            break;
+        }
+    }
+
+    int newDataSize = dataSize;
+    if (dataSize < ethVec.size()) {
+        if (lastValidEthIndx != -1) {
+            newDataSize = std::max(dataSize, lastValidEthIndx + 1);
+        }
+    }
+
+    if (ethVec.size() < newDataSize) {
+        ethVec.resize(newDataSize);
+    }
+    if (data.size() < newDataSize) {
+        data.resize(newDataSize);
+    }
+
+    for (int i = 0; i < newDataSize; ++i) {
+        bool outOfOrigDataRange = (i >= dataSize);
+        bool inErrorMask = (i < errorMask.size() && errorMask[i] != 0);
+
+        if (outOfOrigDataRange || inErrorMask) {
+            if (ethVec[i].first) {
+                data[i] = ethVec[i].second;
+                --ethVec[i].first;
             }
         }
         else {
-            setChartByDefault();
-        }
-
-        // walk backward
-        const int wbStartIndx = (endIndx - numBackSteps < 0) ? 0 : endIndx - numBackSteps;
-        const int wbPreEndIndx = endIndx - 1;
-        const auto recorderData = _pool[endIndx].chartData(chartParams.channelId);
-        const auto recorderDataSize = recorderData.size();
-        for (int i = wbPreEndIndx; i > wbStartIndx; --i) {
-            if (_pool[i].chartSize(chartParams.channelId) != recorderDataSize) {
-                _pool[i].setChart(chartParams.channelId, recorderData, resolution, offset);
-                //_pool[endIndx].setRecParameters(chartParams.channelId, recParam); //
-                _pool[i].setWasValidlyRenderedInEchogram(false);
-            }
+            ethVec[i] = qMakePair(fixBlackStripesWrCnt_, data[i]);
         }
     }
 
-    validateChannelList(chartParams.channelId);
+    setChart();
+    validateChannelList(channelId);
     emit dataUpdate();
 }
 
@@ -963,11 +959,8 @@ void Dataset::resetDataset() {
     testTime_ = 1740466541;
 #endif
 
-    lastMostFreqChartSize_ = -1;
-
     usingRecordParameters_.clear();
-
-    //fixBlackStripes_ = false;
+    ethData_.clear();
 
     emit dataUpdate();
 }

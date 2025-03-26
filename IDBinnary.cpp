@@ -211,23 +211,21 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         U2 absOffset = proto.read<U2>();
 
         if(m_seqOffset == 0 && m_chartSizeIncr != 0) {
-//            for(uint16_t i = 0; i < m_chartSizeIncr; i++) {
-//                m_completeChart[i] = m_fillChart[i];
-//            }
-            // memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
-            // memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
-            // m_chartSize = m_chartSizeIncr;
             if(proto.ver() == v0) {
                 memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
                 m_chartSize = m_chartSizeIncr;
-            } else if(proto.ver() == v1) {
+                compErrList_ = std::move(tempErrList_);
+                tempErrList_.clear();
+            }
+            else if(proto.ver() == v1) {
                 for(uint32_t i = 0; i < m_chartSizeIncr/2; i++) {
                     m_completeChart[i] = m_fillChart[i*2];
                     m_completeChart2[i] = m_fillChart[i*2+1];
                 }
                 m_chartSize = m_chartSizeIncr/2;
+                compErrList_ = std::move(tempErrList_);
+                tempErrList_.clear();
             }
-
 
             m_isCompleteChart = true;
         }
@@ -241,21 +239,75 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
 
         lossIndex_ = (lossIndex_ + 1) % lossHistory_.size();
 
-        if(m_chartSizeIncr == m_seqOffset) {
+        uint16_t part_len = proto.readAvailable();
+        if (m_chartSizeIncr == m_seqOffset) {
             lossHistory_[lossIndex_] = 0;
-
-            uint16_t part_len = proto.readAvailable();
 
             if(m_seqOffset + part_len < sizeof (m_fillChart)) {
                 proto.read(&m_fillChart[m_chartSizeIncr], part_len);
                 m_chartSizeIncr += part_len;
             }
-        } else {
+        }
+        else if(m_chartSizeIncr < m_seqOffset) {
             lossHistory_[lossIndex_] = 1;
 
-            return respErrorPayload;
+
+            if (proto.ver() == v0) {
+                tempErrList_.append(qMakePair(m_chartSizeIncr, m_seqOffset));
+            }
+            else if (proto.ver() == v1) {
+                tempErrList_.append(qMakePair(m_chartSizeIncr / 2, m_seqOffset / 2));
+            }
+
+            for (int i = m_chartSizeIncr; i < m_seqOffset; i++) {
+                m_fillChart[i] = 0;
+            }
+            if (m_seqOffset + part_len < sizeof(m_fillChart)) {
+                proto.read(&m_fillChart[m_seqOffset], part_len);
+                m_chartSizeIncr = m_seqOffset + part_len;
+            }
+            //return respErrorPayload;
         }
-    } else if(proto.ver() == v7) {
+        else { // first frame loss
+            if (m_chartSizeIncr != 0) {
+                if(proto.ver() == v0) {
+                    memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
+                    m_chartSize = m_chartSizeIncr;
+                    compErrList_ = std::move(tempErrList_);
+                    tempErrList_.clear();
+                }
+                else if(proto.ver() == v1) {
+                    for(uint32_t i = 0; i < m_chartSizeIncr/2; i++) {
+                        m_completeChart[i] = m_fillChart[i*2];
+                        m_completeChart2[i] = m_fillChart[i*2+1];
+                    }
+                    compErrList_ = std::move(tempErrList_);
+                    tempErrList_.clear();
+                    m_chartSize = m_chartSizeIncr / 2;
+                }
+                m_isCompleteChart = true;
+            }
+
+            m_chartSizeIncr = 0;
+
+            if (proto.ver() == v0) {
+                tempErrList_.append(qMakePair(m_chartSizeIncr, m_seqOffset));
+            }
+            else if (proto.ver() == v1) {
+                tempErrList_.append(qMakePair(m_chartSizeIncr / 2, m_seqOffset / 2));
+            }
+
+            for (int i = m_chartSizeIncr; i < m_seqOffset; i++) {
+                m_fillChart[i] = 0;
+            }
+
+            if (m_seqOffset + part_len < sizeof(m_fillChart)) {
+                proto.read(&m_fillChart[m_seqOffset], part_len);
+                m_chartSizeIncr = m_seqOffset + part_len;
+            }
+        }
+    }
+    else if(proto.ver() == v7) {
         RawData::RawDataHeader header;
 
         proto.read(&header);
@@ -265,7 +317,8 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         raw_data.header = header;
         raw_data.data = QByteArray((char*)proto.read(avail), avail);
         emit rawDataRecieved(raw_data);
-    } else {
+    }
+    else {
         return respErrorVersion;
     }
 
