@@ -57,7 +57,7 @@ ColumnLayout {
                         id: linkSettingsButton
                         width: theme.controlHeight
                         height: theme.controlHeight
-                        icon.source: "./icons/settings.svg"
+                        icon.source: "qrc:/icons/ui/settings.svg"
                         borderWidth: 0
                         implicitWidth: theme.controlHeight
 
@@ -68,7 +68,7 @@ ColumnLayout {
                     CheckButton {
                         visible: linkSettingsButton.checked
                         Layout.alignment: Qt.AlignLeft
-                        icon.source: "./icons/pin.svg"
+                        icon.source: "qrc:/icons/ui/pin.svg"
                         checked: IsPinned
                         implicitWidth: theme.controlHeight
 
@@ -83,7 +83,7 @@ ColumnLayout {
                     CheckButton {
                         visible: linkSettingsButton.checked
                         Layout.alignment: Qt.AlignLeft
-                        icon.source: "./icons/repeat.svg"
+                        icon.source: "qrc:/icons/ui/repeat.svg"
                         checked: ControlType
                         // text: "Auto"
                         implicitWidth: theme.controlHeight
@@ -99,7 +99,7 @@ ColumnLayout {
                     CheckButton {
                         visible: linkSettingsButton.checked && LinkType == 2
                         Layout.alignment: Qt.AlignLeft
-                        icon.source: "./icons/x.svg"
+                        icon.source: "qrc:/icons/ui/x.svg"
                         checked: false
                         implicitWidth: theme.controlHeight
 
@@ -445,7 +445,7 @@ ColumnLayout {
                 property alias loggingCheck: loggingCheck.checked
             }
 
-            icon.source: checked ? "./icons/record_fill.svg": "./icons/record.svg"
+            icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
 
             // ToolTip.visible: hovered
             // ToolTip.text: "Recording"
@@ -466,7 +466,7 @@ ColumnLayout {
                 property alias loggingCheck2: loggingCheck2.checked
             }
 
-            icon.source: checked ? "./icons/record_fill.svg": "./icons/record.svg"
+            icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
 
             // ToolTip.visible: hovered
             // ToolTip.text: "Recording"
@@ -477,7 +477,7 @@ ColumnLayout {
         spacing: 4
         CheckButton {
             id: zeroingPosButton
-            icon.source: "./icons/propeller-off.svg"
+            icon.source: "qrc:/icons/ui/propeller-off.svg"
             backColor: theme.controlSolidBackColor
             borderWidth: 0
             implicitWidth: theme.controlHeight
@@ -520,7 +520,7 @@ ColumnLayout {
         }
 
         CheckButton {
-            icon.source: "./icons/file.svg"
+            icon.source: "qrc:/icons/ui/file.svg"
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0
@@ -554,7 +554,7 @@ ColumnLayout {
         }
 
         CheckButton {
-            icon.source: "./icons/file-plus.svg"
+            icon.source: "qrc:/icons/ui/file-plus.svg"
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0
@@ -589,7 +589,7 @@ ColumnLayout {
         }
 
         CheckButton {
-            icon.source: "./icons/file-off.svg"
+            icon.source: "qrc:/icons/ui/file-off.svg"
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0

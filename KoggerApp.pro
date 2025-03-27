@@ -52,51 +52,52 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 ### SOURCES
 SOURCES += \
-    3Plot.cpp \
-    DevDriver.cpp \
-    DeviceManager.cpp \
-    DeviceManagerWrapper.cpp \
-    EchogramProcessing.cpp \
-    IDBinnary.cpp \
-    Link.cpp \
-    LinkManager.cpp \
-    LinkManagerWrapper.cpp \
-    Plot2D.cpp \
-    Plot2DEchogram.cpp \
-    Plot2DGrid.cpp \
-    ProtoBinnary.cpp \
-    LinkListModel.cpp \
-    StreamListModel.cpp \
-    console.cpp \
-    consolelistmodel.cpp \
-    core.cpp \
-    filelist.cpp \
-    geometryengine.cpp \
-    graphicsscene3drenderer.cpp \
-    graphicsscene3dview.cpp \
-    logger.cpp \
-    main.cpp \
-    flasher.cpp \
-    maxpointsfilter.cpp \
-    nearestpointfilter.cpp \
-    plotcash.cpp \
-    ray.cpp \
-    raycaster.cpp \
-    streamlist.cpp \
-    textrenderer.cpp \
-    waterfall.cpp \
-    tile_manager.cpp \
-    tile_set.cpp \
-    tile_provider.cpp \
-    tile_google_provider.cpp \
-    tile_downloader.cpp \
-    tile_db.cpp \
-    map_defs.cpp \
-    hotkeys_manager.cpp
+    src/3Plot.cpp \
+    src/DevDriver.cpp \
+    src/DeviceManager.cpp \
+    src/DeviceManagerWrapper.cpp \
+    src/EchogramProcessing.cpp \
+    src/IDBinnary.cpp \
+    src/Link.cpp \
+    src/LinkManager.cpp \
+    src/LinkManagerWrapper.cpp \
+    src/Plot2D.cpp \
+    src/Plot2DEchogram.cpp \
+    src/Plot2DGrid.cpp \
+    src/ProtoBinnary.cpp \
+    src/LinkListModel.cpp \
+    src/StreamListModel.cpp \
+    src/console.cpp \
+    src/consolelistmodel.cpp \
+    src/core.cpp \
+    src/filelist.cpp \
+    src/geometryengine.cpp \
+    src/graphicsscene3drenderer.cpp \
+    src/graphicsscene3dview.cpp \
+    src/logger.cpp \
+    src/main.cpp \
+    src/flasher.cpp \
+    src/maxpointsfilter.cpp \
+    src/nearestpointfilter.cpp \
+    src/plotcash.cpp \
+    src/ray.cpp \
+    src/raycaster.cpp \
+    src/streamlist.cpp \
+    src/textrenderer.cpp \
+    src/waterfall.cpp \
+    src/tile_manager.cpp \
+    src/tile_set.cpp \
+    src/tile_provider.cpp \
+    src/tile_google_provider.cpp \
+    src/tile_downloader.cpp \
+    src/tile_db.cpp \
+    src/map_defs.cpp \
+    src/hotkeys_manager.cpp \
+    src/connection.cpp
 
 FLASHER {
 DEFINES += FLASHER
-SOURCES += coreFlash.cpp
+SOURCES += src/coreFlash.cpp
 }
 
 SEPARATE_READING {
@@ -108,25 +109,25 @@ DEFINES += FAKE_COORDS
 
 android {
 SOURCES += \
-    android.cpp \
-    qtandroidserialport/src/qserialport.cpp \
-    qtandroidserialport/src/qserialport_android.cpp \
-    qtandroidserialport/src/qserialportinfo.cpp \
-    qtandroidserialport/src/qserialportinfo_android.cpp \
+    platform/android/src/android.cpp \
+    platform/android/src/qtandroidserialport/src/qserialport.cpp \
+    platform/android/src/qtandroidserialport/src/qserialport_android.cpp \
+    platform/android/src/qtandroidserialport/src/qserialportinfo.cpp \
+    platform/android/src/qtandroidserialport/src/qserialportinfo_android.cpp \
 }
 
-TRANSLATIONS += languages/translation_en.ts \
-                languages/translation_ru.ts \
-                languages/translation_pl.ts
+TRANSLATIONS += translations/translation_en.ts \
+                translations/translation_ru.ts \
+                translations/translation_pl.ts
 
-RESOURCES += QML/qml.qrc \
-    icons.qrc \
-    resources.qrc
+RESOURCES += qml/qml.qrc \
+    resources/icons.qrc \
+    resources/resources.qrc
 
 windows {
     message("Building for Windows with full OpenGL")
     LIBS += -lopengl32
-    RESOURCES += shaders.qrc
+    RESOURCES += resources/shaders.qrc
 }
 linux:!android {
     PLATFORM_ARCH = $$system(uname -m)
@@ -135,25 +136,25 @@ linux:!android {
         #DEFINES += USE_OPENGLES
         DEFINES += LINUX_ES
         LIBS += -lGLESv2
-        RESOURCES += android_build/shaders.qrc
+        RESOURCES += platform/android/shaders.qrc
     } else {
         message("Building for Ubuntu Desktop with full OpenGL")
         DEFINES += LINUX_DESKTOP
         LIBS += -lGL
-        RESOURCES += shaders.qrc
+        RESOURCES += resources/shaders.qrc
     }
 }
 
 android {
     message("Building for Android (ARM) with OpenGL ES")
-    RESOURCES += android_build/shaders.qrc
+    RESOURCES += platform/android/shaders.qrc
 }
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH = $$PWD\QML
+QML_IMPORT_PATH = $$PWD\qml
 
 # Additional import path used to resolve QML modules just for Qt Quick Designer
-QML_DESIGNER_IMPORT_PATH = $$PWD\QML
+QML_DESIGNER_IMPORT_PATH = $$PWD\qml
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -163,160 +164,160 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 ### HEADERS
 HEADERS += \
-    3Plot.h \
-    ConverterXTF.h \
-    DSP.h \
-    DevDriver.h \
-    DeviceManager.h \
-    DeviceManagerWrapper.h \
-    DevQProperty.h \
-    EchogramProcessing.h \
-    IDBinnary.h \
-    Link.h \
-    LinkManager.h \
-    LinkManagerWrapper.h \
-    MAVLinkConf.h \
-    Plot2D.h \
-    ProtoBinnary.h \
-    LinkListModel.h \
-    StreamListModel.h \
-    Themes.h \
-    abstractentitydatafilter.h \
-    XTFConf.h \
-    console.h \
-    consolelistmodel.h \
-    filelist.h \
-    flasher.h \
-    core.h \
-    geometryengine.h \
-    graphicsscene3drenderer.h \
-    graphicsscene3dview.h \
-    logger.h \
-    maxpointsfilter.h \
-    nearestpointfilter.h \
-    plotcash.h \
-    ray.h \
-    raycaster.h \
-    streamlist.h \
-    textrenderer.h \
-    waterfall.h \
-    waterfallproxy.h \
-    tile_manager.h \
-    tile_set.h \
-    tile_provider.h \
-    tile_google_provider.h \
-    tile_downloader.h \
-    tile_db.h \
-    map_defs.h \
-    hotkeys_manager.h
+    src/3Plot.h \
+    src/ConverterXTF.h \
+    src/DSP.h \
+    src/DevDriver.h \
+    src/DeviceManager.h \
+    src/DeviceManagerWrapper.h \
+    src/DevQProperty.h \
+    src/EchogramProcessing.h \
+    src/IDBinnary.h \
+    src/Link.h \
+    src/LinkManager.h \
+    src/LinkManagerWrapper.h \
+    src/MAVLinkConf.h \
+    src/Plot2D.h \
+    src/ProtoBinnary.h \
+    src/LinkListModel.h \
+    src/StreamListModel.h \
+    src/Themes.h \
+    src/abstractentitydatafilter.h \
+    src/XTFConf.h \
+    src/console.h \
+    src/consolelistmodel.h \
+    src/filelist.h \
+    src/flasher.h \
+    src/core.h \
+    src/geometryengine.h \
+    src/graphicsscene3drenderer.h \
+    src/graphicsscene3dview.h \
+    src/logger.h \
+    src/maxpointsfilter.h \
+    src/nearestpointfilter.h \
+    src/plotcash.h \
+    src/ray.h \
+    src/raycaster.h \
+    src/streamlist.h \
+    src/textrenderer.h \
+    src/waterfall.h \
+    src/waterfallproxy.h \
+    src/tile_manager.h \
+    src/tile_set.h \
+    src/tile_provider.h \
+    src/tile_google_provider.h \
+    src/tile_downloader.h \
+    src/tile_db.h \
+    src/map_defs.h \
+    src/hotkeys_manager.h \
+    src/connection.h
 
 android {
 HEADERS += \
-    android.h \
-    qtandroidserialport/src/qserialport_android_p.h \
-    qtandroidserialport/src/qserialport_p.h \
-    qtandroidserialport/src/qserialport.h \
-    qtandroidserialport/src/qserialportinfo.h \
-    qtandroidserialport/src/qserialportinfo_p.h
+    platform/android/src/android.h \
+    platform/android/src/qtandroidserialport/src/qserialport_android_p.h \
+    platform/android/src/qtandroidserialport/src/qserialport_p.h \
+    platform/android/src/qtandroidserialport/src/qserialport.h \
+    platform/android/src/qtandroidserialport/src/qserialportinfo.h \
+    platform/android/src/qtandroidserialport/src/qserialportinfo_p.h
 }
 
 
 ### DISTFILES
 DISTFILES += \
-    QML/Common/MenuBlockEx.qml \
-    QML/Scene3DToolbar.qml \
-    QML/SceneObjectsControlBar/ActiveObjectParams.qml \
-    QML/SceneObjectsControlBar/BottomTrackParams.qml \
-    QML/SceneObjectsControlBar/SceneObjectsControlBar.qml \
-    QML/SceneObjectsControlBar/SceneObjectsList.qml \
-    QML/SceneObjectsControlBar/SceneObjectsListDelegate.qml \
-    QML/SceneObjectsList.qml \
-    QML/SceneObjectsListDelegate.qml \
-    QML/AdjBox.qml \
-    QML/AdjBoxBack.qml \
-    QML/BackStyle.qml \
-    QML/ButtonBackStyle.qml \
-    QML/CButton.qml \
-    QML/CCombo.qml \
-    QML/CComboBox.qml \
-    QML/CSlider.qml \
-    QML/ComboBackStyle.qml \
-    QML/ConnectionViewer.qml \
-    QML/Console.qml \
-    QML/CustomGroupBox.qml \
-    QML/DeviceSettingsViewer.qml \
-    QML/MenuBar.qml \
-    QML/MenuFrame.qml \
-    QML/MenuButton.qml \
-    QML/MenuViewer.qml \
-    QML/TabBackStyle.qml \
-    QML/UpgradeBox.qml \
-    QML/FlashBox.qml \
-    QML/main.qml \
-    android_build/AndroidManifest.xml \
-    android_build/build.gradle \
-    android_build/gradle.properties \
-    android_build/gradle/wrapper/gradle-wrapper.jar \
-    android_build/gradle/wrapper/gradle-wrapper.properties \
-    android_build/gradlew \
-    android_build/gradlew.bat \
-    android_build/res/values/libs.xml \
-    tools/models.pri \
-    tools/tools.pri
+    qml/Common/MenuBlockEx.qml \
+    qml/Scene3DToolbar.qml \
+    qml/SceneObjectsControlBar/ActiveObjectParams.qml \
+    qml/SceneObjectsControlBar/BottomTrackParams.qml \
+    qml/SceneObjectsControlBar/SceneObjectsControlBar.qml \
+    qml/SceneObjectsControlBar/SceneObjectsList.qml \
+    qml/SceneObjectsControlBar/SceneObjectsListDelegate.qml \
+    qml/SceneObjectsList.qml \
+    qml/SceneObjectsListDelegate.qml \
+    qml/AdjBox.qml \
+    qml/AdjBoxBack.qml \
+    qml/BackStyle.qml \
+    qml/ButtonBackStyle.qml \
+    qml/CButton.qml \
+    qml/CCombo.qml \
+    qml/CComboBox.qml \
+    qml/CSlider.qml \
+    qml/ComboBackStyle.qml \
+    qml/ConnectionViewer.qml \
+    qml/Console.qml \
+    qml/CustomGroupBox.qml \
+    qml/DeviceSettingsViewer.qml \
+    qml/MenuBar.qml \
+    qml/MenuFrame.qml \
+    qml/MenuButton.qml \
+    qml/MenuViewer.qml \
+    qml/TabBackStyle.qml \
+    qml/UpgradeBox.qml \
+    qml/FlashBox.qml \
+    qml/main.qml \
+    platform/android/AndroidManifest.xml \
+    platform/android/build.gradle \
+    platform/android/gradle.properties \
+    platform/android/gradle/wrapper/gradle-wrapper.jar \
+    platform/android/gradle/wrapper/gradle-wrapper.properties \
+    platform/android/gradlew \
+    platform/android/gradlew.bat \
+    platform/android/res/values/libs.xml
 
 
 android {
 DISTFILES += \
-    android_build/AndroidManifest.xml \
-    android_build/build.gradle \
-    android_build/gradle/wrapper/gradle-wrapper.jar \
-    android_build/gradle/wrapper/gradle-wrapper.properties \
-    android_build/gradlew \
-    android_build/gradlew.bat \
-    android_build/res/values/libs.xml \
-    qtandroidserialport/src/qtandroidserialport.pri
+    platform/android/AndroidManifest.xml \
+    platform/android/build.gradle \
+    platform/android/gradle/wrapper/gradle-wrapper.jar \
+    platform/android/gradle/wrapper/gradle-wrapper.properties \
+    platform/android/gradlew \
+    platform/android/gradlew.bat \
+    platform/android/res/values/libs.xml \
+    platform/android/src/qtandroidserialport/src/qtandroidserialport.pri
 }
 
-win32:RC_FILE = file.rc
+win32:RC_FILE = resources/file.rc
 
 android {
     equals(ANDROID_TARGET_ARCH, arm64-v8a) {
         message("Adding FreeType Lib for arm64-v8a arch")
-        LIBS += -L$$PWD/libs/freetype/lib/arm64-v8a -lfreetype
+        LIBS += -L$$PWD/third_party/freetype/lib/arm64-v8a -lfreetype
     } else:equals(ANDROID_TARGET_ARCH, armeabi-v7a) {
         message("Adding FreeType Lib for armeabi-v7a arch")
-        LIBS += -L$$PWD/libs/freetype/lib/armeabi-v7a -lfreetype
+        LIBS += -L$$PWD/third_party/freetype/lib/armeabi-v7a -lfreetype
     }
 }
 
 linux:!android {
     contains(QMAKE_HOST.arch, arm) {
         message("Using freetype for Raspberry Pi 4 (aarch64)")
-        LIBS += -L$$PWD/libs/freetype/lib/aarch64 -lfreetype
+        LIBS += -L$$PWD/third_party/freetype/lib/aarch64 -lfreetype
         LIBS += -lpng -lbrotlidec
     }
     else {
-        LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+        LIBS += -L$$PWD/third_party/freetype/lib/gcc/ -lfreetype
     }
 }
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/freetype/lib/mingw-x64/ -lfreetype
-#else:unix:!macx: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
-#else:unix:!android: LIBS += -L$$PWD/libs/freetype/lib/gcc/ -lfreetype
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/mingw-x64/ -lfreetype
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/mingw-x64/ -lfreetype
+#else:unix:!macx: LIBS += -L$$PWD/third_party/freetype/lib/gcc/ -lfreetype
+#else:unix:!android: LIBS += -L$$PWD/third_party/freetype/lib/gcc/ -lfreetype
 
-INCLUDEPATH += $$PWD/libs/freetype/include
-DEPENDPATH += $$PWD/libs/freetype/include
+INCLUDEPATH += $$PWD/third_party/freetype/include
+INCLUDEPATH += $$PWD/src
+DEPENDPATH += $$PWD/third_party/freetype/include
 
-include ($$PWD/core/core.pri)
-include ($$PWD/processors/processors.pri)
-include ($$PWD/domain/domain.pri)
-include ($$PWD/controllers/controllers.pri)
-include ($$PWD/events/events.pri)
+include ($$PWD/src/core/core.pri)
+include ($$PWD/src/processors/processors.pri)
+include ($$PWD/src/domain/domain.pri)
+include ($$PWD/src/controllers/controllers.pri)
+include ($$PWD/src/events/events.pri)
 
 
 android {
-    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android_build
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/platform/android
 #    ANDROID_ABIS = arm64-v8a
 ##    ANDROID_ABIS = x86
 }
@@ -330,7 +331,7 @@ android {
 
 MOTOR {
 DEFINES += MOTOR
-HEADERS += motor_control.h
-SOURCES += motor_control.cpp
-DISTFILES += QML/MotorViewer.qml
+HEADERS += src/motor_control.h
+SOURCES += src/motor_control.cpp
+DISTFILES += qml/MotorViewer.qml
 }

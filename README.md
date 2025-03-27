@@ -1,4 +1,4 @@
 # KoggerApp
 KoggerApp is an open-source GUI
 
-![Screen](/image/SettingsNMEA.jpg)
+![Screen](/resources\images/SettingsNMEA.jpg)

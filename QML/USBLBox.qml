@@ -21,7 +21,7 @@ DevSettingsBox {
         RowLayout {
             visible: isUSBL
             CheckButton {
-                icon.source: checked ? "./icons/radar.svg" :  "./icons/radar-off.svg"
+                icon.source: checked ? "qrc:/icons/ui/radar.svg" :  "qrc:/icons/ui/radar-off.svg"
                 onCheckedChanged: {
                     deviceManagerWrapper.isbeaconDirectQueueAsk = checked
                 }
@@ -32,7 +32,7 @@ DevSettingsBox {
                 // enabled: false
                 checkable: false
                 borderColor: "transparent"
-                icon.source: "./icons/refresh.svg"
+                icon.source: "qrc:/icons/ui/refresh.svg"
 
                 onClicked: {
                     dev.askBeaconPosition();
@@ -46,14 +46,14 @@ DevSettingsBox {
 
             CheckButton {
                 borderColor: "transparent"
-                icon.source: "./icons/settings.svg"
+                icon.source: "qrc:/icons/ui/settings.svg"
             }
         }
 
         RowLayout {
             // visible: isBeacon
             CheckButton {
-                icon.source: "./icons/submarine.svg"
+                icon.source: "qrc:/icons/ui/submarine.svg"
                 // enabled: false
                 checkable: false
                 borderColor: "transparent"
@@ -68,7 +68,7 @@ DevSettingsBox {
                 Layout.leftMargin: 12
                 enabled: false
                 borderColor: "transparent"
-                icon.source: "./icons/arrow-bar-down.svg"
+                icon.source: "qrc:/icons/ui/arrow-bar-down.svg"
             }
 
             CText {
@@ -79,7 +79,7 @@ DevSettingsBox {
                 Layout.leftMargin: 12
                 enabled: false
                 borderColor: "transparent"
-                icon.source: "./icons/ruler-measure.svg"
+                icon.source: "qrc:/icons/ui/ruler-measure.svg"
             }
 
             CText {
@@ -89,7 +89,7 @@ DevSettingsBox {
 
             CheckButton {
                 borderColor: "transparent"
-                icon.source: "./icons/settings.svg"
+                icon.source: "qrc:/icons/ui/settings.svg"
             }
         }
     }

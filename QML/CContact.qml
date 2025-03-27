@@ -48,7 +48,7 @@ MenuFrame {
 
         RowLayout {
             CheckButton {
-                icon.source: "./icons/tag.svg"
+                icon.source: "qrc:/icons/ui/tag.svg"
                 backColor: theme.menuBackColor
                 borderColor: theme.menuBackColor
                 implicitWidth: theme.controlHeight
@@ -68,7 +68,7 @@ MenuFrame {
             }
             CheckButton {
                 id: setButton
-                icon.source: "./icons/plus.svg"
+                icon.source: "qrc:/icons/ui/plus.svg"
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
                 checkable: false
@@ -81,7 +81,7 @@ MenuFrame {
 
             CheckButton {
                 id: deleteButton
-                icon.source: "./icons/x.svg"
+                icon.source: "qrc:/icons/ui/x.svg"
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
                 checkable: false
@@ -95,7 +95,7 @@ MenuFrame {
         RowLayout {
             visible: info.length != 0
             CheckButton {
-                icon.source: "./icons/gps.svg"
+                icon.source: "qrc:/icons/ui/gps.svg"
                 backColor: theme.menuBackColor
                 borderColor: theme.menuBackColor
                 implicitWidth: theme.controlHeight
@@ -114,7 +114,7 @@ MenuFrame {
             }
             CheckButton {
                 id: copyButton
-                icon.source: "./icons/click.svg"
+                icon.source: "qrc:/icons/ui/click.svg"
                 backColor: theme.controlBackColor
                 implicitWidth: theme.controlHeight
                 checkable: false
@@ -131,7 +131,7 @@ MenuFrame {
         RowLayout {
             visible: info.length != 0
             CheckButton {
-                icon.source: "./icons/arrow-bar-down.svg"
+                icon.source: "qrc:/icons/ui/arrow-bar-down.svg"
                 backColor: theme.menuBackColor
                 borderColor: theme.menuBackColor
                 implicitWidth: theme.controlHeight

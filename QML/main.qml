@@ -578,7 +578,7 @@ ApplicationWindow  {
                     ButtonGroup { id: pencilbuttonGroup }
 
                     CheckButton {
-                        icon.source: "./icons/arrow-bar-to-down.svg"
+                        icon.source: "qrc:/icons/ui/arrow-bar-to-down.svg"
                         backColor: theme.controlBackColor
                         checkable: false
                         implicitWidth: theme.controlHeight
@@ -592,7 +592,7 @@ ApplicationWindow  {
                     }
 
                     CheckButton {
-                        icon.source: "./icons/arrow-bar-to-up.svg"
+                        icon.source: "qrc:/icons/ui/arrow-bar-to-up.svg"
                         backColor: theme.controlBackColor
                         checkable: false
                         implicitWidth: theme.controlHeight
@@ -606,7 +606,7 @@ ApplicationWindow  {
                     }
 
                     CheckButton {
-                        icon.source: "./icons/eraser.svg"
+                        icon.source: "qrc:/icons/ui/eraser.svg"
                         backColor: theme.controlBackColor
                         checkable: false
                         implicitWidth: theme.controlHeight
@@ -620,7 +620,7 @@ ApplicationWindow  {
                     }
 
                     CheckButton {
-                        icon.source: "./icons/x.svg"
+                        icon.source: "qrc:/icons/ui/x.svg"
                         backColor: theme.controlBackColor
                         checkable: false
                         implicitWidth: theme.controlHeight
@@ -720,7 +720,7 @@ ApplicationWindow  {
                 Layout.alignment: Qt.AlignHCenter
                 CheckButton {
                     // text: checked ? "Armed" : "Disarmed"
-                    icon.source: checked ? "./icons/propeller.svg" : "./icons/propeller-off.svg"
+                    icon.source: checked ? "qrc:/icons/ui/propeller.svg" : "qrc:/icons/ui/propeller-off.svg"
                     checked: deviceManagerWrapper.pilotArmState == 1
                     color: "white"
                     backColor: "red"
@@ -735,7 +735,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "./icons/direction-arrows.svg"
+                    icon.source: "qrc:/icons/ui/direction-arrows.svg"
                     checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
                     onCheckedChanged: {
                     }
@@ -745,7 +745,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "./icons/route.svg"
+                    icon.source: "qrc:/icons/ui/route.svg"
                     checked: deviceManagerWrapper.pilotModeState == 10 // "Auto"
                     onCheckedChanged: {
                     }
@@ -755,7 +755,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "./icons/anchor.svg"
+                    icon.source: "qrc:/icons/ui/anchor.svg"
                     checked: deviceManagerWrapper.pilotModeState == 5 // "Loiter"
                     onCheckedChanged: {
                     }
@@ -765,7 +765,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "./icons/map-pin.svg"
+                    icon.source: "qrc:/icons/ui/map-pin.svg"
                     checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
                     onCheckedChanged: {
                     }
@@ -775,7 +775,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "./icons/home.svg"
+                    icon.source: "qrc:/icons/ui/home.svg"
                     checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
                     onCheckedChanged: {
                     }

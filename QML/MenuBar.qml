@@ -84,7 +84,7 @@ Item {
 
             MenuButton {
                 id: menuSettings
-                icon.source: "./icons/plug.svg"
+                icon.source: "qrc:/icons/ui/plug.svg"
                 Layout.fillWidth: true
 
                 CMouseOpacityArea {
@@ -128,7 +128,7 @@ Item {
                 id: settings3DButton
                 visible: instruments > 0
                 implicitWidth: theme.controlHeight*1.2
-                icon.source: "./icons/map.svg"
+                icon.source: "qrc:/icons/ui/map.svg"
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
                 checkedBorderColor: "black"
@@ -149,7 +149,7 @@ Item {
                 id: visible2dButton
                 visible: instruments > 0
                 implicitWidth: theme.controlHeight*1.2
-                icon.source: "./icons/ripple.svg"
+                icon.source: "qrc:/icons/ui/ripple.svg"
 
                 CMouseOpacityArea {
                     toolTipText: qsTr("Display 2D")

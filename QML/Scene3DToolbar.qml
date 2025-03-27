@@ -206,7 +206,7 @@ ColumnLayout {
             CButton {
                 text: qsTr("Update")
                 Layout.fillWidth: true
-                icon.source: "./icons/refresh.svg"
+                icon.source: "qrc:/icons/ui/refresh.svg"
                 onClicked: {
                     SurfaceControlMenuController.onUpdateSurfaceButtonClicked(
                         triangleEdgeLengthLimitSpinBox.value,
@@ -834,7 +834,7 @@ ColumnLayout {
                     }
                 }
                 CheckButton {
-                    icon.source: "./icons/file.svg"
+                    icon.source: "qrc:/icons/ui/file.svg"
                     checkable: false
                     backColor: theme.controlSolidBackColor
                     borderWidth: 0
@@ -1087,7 +1087,7 @@ ColumnLayout {
 
         CheckButton {
             id: fitAllinViewButton
-            iconSource: "./icons/zoom-cancel.svg"
+            iconSource: "qrc:/icons/ui/zoom-cancel.svg"
             backColor: theme.controlBackColor
             checkable: false
             checked: false
@@ -1098,7 +1098,7 @@ ColumnLayout {
 
         CheckButton {
             id: cancelZoomViewButton
-            iconSource: "./icons/ruler-measure.svg"
+            iconSource: "qrc:/icons/ui/ruler-measure.svg"
             backColor: theme.controlBackColor
             checkable: false
             checked: false
@@ -1114,7 +1114,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/click.svg"
+            iconSource: "qrc:/icons/ui/click.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1129,7 +1129,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/speedboat.svg"
+            iconSource: "qrc:/icons/ui/speedboat.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1151,7 +1151,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/route.svg"
+            iconSource: "qrc:/icons/ui/route.svg"
             implicitWidth: theme.controlHeight
 
 
@@ -1170,7 +1170,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/overline.svg"
+            iconSource: "qrc:/icons/ui/overline.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1188,7 +1188,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/stack-backward.svg"
+            iconSource: "qrc:/icons/ui/stack-backward.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1249,7 +1249,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/gps.svg"
+            iconSource: "qrc:/icons/ui/gps.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1301,7 +1301,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/map-route.svg"
+            iconSource: "qrc:/icons/ui/map-route.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1403,7 +1403,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "./icons/map.svg"
+            iconSource: "qrc:/icons/ui/map.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {

@@ -390,7 +390,7 @@ WaterFall {
         ButtonGroup { id: pencilbuttonGroup }
 
         CheckButton {
-            icon.source: "./icons/direction-arrows.svg"
+            icon.source: "qrc:/icons/ui/direction-arrows.svg"
             checked: true
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
@@ -405,7 +405,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "./icons/arrow-bar-to-down.svg"
+            icon.source: "qrc:/icons/ui/arrow-bar-to-down.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
 
@@ -419,7 +419,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "./icons/pencil.svg"
+            icon.source: "qrc:/icons/ui/pencil.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
 
@@ -433,7 +433,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "./icons/arrow-bar-to-up.svg"
+            icon.source: "qrc:/icons/ui/arrow-bar-to-up.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
 
@@ -447,7 +447,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "./icons/eraser.svg"
+            icon.source: "qrc:/icons/ui/eraser.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
 
@@ -461,7 +461,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "./icons/anchor.svg"
+            icon.source: "qrc:/icons/ui/anchor.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
             checkable: false
@@ -480,7 +480,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "./icons/x.svg"
+            icon.source: "qrc:/icons/ui/x.svg"
             backColor: theme.controlBackColor
             checkable: false
             implicitWidth: theme.controlHeight
