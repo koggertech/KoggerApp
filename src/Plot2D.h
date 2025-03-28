@@ -8,6 +8,7 @@
 #include <QPoint>
 #include <QPixmap>
 #include <QPainter>
+#include <QEvent>
 
 #include "plotcash.h"
 

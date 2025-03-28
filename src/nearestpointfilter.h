@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-#include <abstractentitydatafilter.h>
+#include <abstract_entity_data_filter.h>
 #include <Edge.h>
 
 class NearestPointFilter : public AbstractEntityDataFilter

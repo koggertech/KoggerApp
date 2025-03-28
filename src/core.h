@@ -12,8 +12,8 @@
 #include "waterfall.h"
 #include "logger.h"
 #include "console.h"
-#include "ConverterXTF.h"
-#include "graphicsscene3dview.h"
+#include "converter_xtf.h"
+#include "scene3d_view.h"
 #include "boattrackcontrolmenucontroller.h"
 #include "navigation_arrow_control_menu_controller.h"
 #include "bottomtrackcontrolmenucontroller.h"
@@ -28,7 +28,7 @@
 #include "npdfiltercontrolmenucontroller.h"
 #include "scene3dtoolbarcontroller.h"
 #include "scene3dcontrolmenucontroller.h"
-#include "DeviceManagerWrapper.h"
+#include "device_manager_wrapper.h"
 #include "LinkManagerWrapper.h"
 //#include <FileReader.h>
 

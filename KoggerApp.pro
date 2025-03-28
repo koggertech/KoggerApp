@@ -52,12 +52,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 ### SOURCES
 SOURCES += \
-    src/3Plot.cpp \
-    src/DevDriver.cpp \
-    src/DeviceManager.cpp \
-    src/DeviceManagerWrapper.cpp \
-    src/EchogramProcessing.cpp \
-    src/IDBinnary.cpp \
+    src/dev_driver.cpp \
+    src/device_manager.cpp \
+    src/device_manager_wrapper.cpp \
+    src/id_binnary.cpp \
     src/Link.cpp \
     src/LinkManager.cpp \
     src/LinkManagerWrapper.cpp \
@@ -68,12 +66,10 @@ SOURCES += \
     src/LinkListModel.cpp \
     src/StreamListModel.cpp \
     src/console.cpp \
-    src/consolelistmodel.cpp \
+    src/console_list_model.cpp \
     src/core.cpp \
-    src/filelist.cpp \
-    src/geometryengine.cpp \
-    src/graphicsscene3drenderer.cpp \
-    src/graphicsscene3dview.cpp \
+    src/scene3d_renderer.cpp \
+    src/scene3d_view.cpp \
     src/logger.cpp \
     src/main.cpp \
     src/flasher.cpp \
@@ -92,8 +88,7 @@ SOURCES += \
     src/tile_downloader.cpp \
     src/tile_db.cpp \
     src/map_defs.cpp \
-    src/hotkeys_manager.cpp \
-    src/connection.cpp
+    src/hotkeys_manager.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -164,15 +159,13 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 ### HEADERS
 HEADERS += \
-    src/3Plot.h \
-    src/ConverterXTF.h \
-    src/DSP.h \
-    src/DevDriver.h \
-    src/DeviceManager.h \
-    src/DeviceManagerWrapper.h \
-    src/DevQProperty.h \
-    src/EchogramProcessing.h \
-    src/IDBinnary.h \
+    src/converter_xtf.h \
+    src/dsp_defs.h \
+    src/dev_driver.h \
+    src/device_manager.h \
+    src/device_manager_wrapper.h \
+    src/dev_q_property.h \
+    src/id_binnary.h \
     src/Link.h \
     src/LinkManager.h \
     src/LinkManagerWrapper.h \
@@ -182,16 +175,13 @@ HEADERS += \
     src/LinkListModel.h \
     src/StreamListModel.h \
     src/Themes.h \
-    src/abstractentitydatafilter.h \
     src/XTFConf.h \
     src/console.h \
-    src/consolelistmodel.h \
-    src/filelist.h \
+    src/console_list_model.h \
     src/flasher.h \
     src/core.h \
-    src/geometryengine.h \
-    src/graphicsscene3drenderer.h \
-    src/graphicsscene3dview.h \
+    src/scene3d_renderer.h \
+    src/scene3d_view.h \
     src/logger.h \
     src/maxpointsfilter.h \
     src/nearestpointfilter.h \
@@ -209,8 +199,7 @@ HEADERS += \
     src/tile_downloader.h \
     src/tile_db.h \
     src/map_defs.h \
-    src/hotkeys_manager.h \
-    src/connection.h
+    src/hotkeys_manager.h
 
 android {
 HEADERS += \
@@ -309,11 +298,9 @@ INCLUDEPATH += $$PWD/third_party/freetype/include
 INCLUDEPATH += $$PWD/src
 DEPENDPATH += $$PWD/third_party/freetype/include
 
-include ($$PWD/src/core/core.pri)
-include ($$PWD/src/processors/processors.pri)
-include ($$PWD/src/domain/domain.pri)
-include ($$PWD/src/controllers/controllers.pri)
-include ($$PWD/src/events/events.pri)
+
+# scene3d
+include($$PWD/src/scene3d/scene3d.pri)
 
 
 android {

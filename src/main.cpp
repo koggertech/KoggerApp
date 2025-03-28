@@ -4,7 +4,6 @@
 #include <QQmlApplicationEngine>
 #include <waterfall.h>
 #include <plotcash.h>
-#include <connection.h>
 #include <console.h>
 #include <core.h>
 #include <Themes.h>
@@ -12,7 +11,6 @@
 #include <QResource>
 #include <QFile>
 #include <QByteArray>
-#include "3Plot.h"
 #include <sceneobject.h>
 #include "Plot2D.h"
 #include "QQuickWindow"

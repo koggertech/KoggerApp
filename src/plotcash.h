@@ -13,10 +13,9 @@
 #include <QQmlEngine>
 #include <QMutex>
 
-#include <DSP.h>
+#include <dsp_defs.h>
 
-#include <3Plot.h>
-#include <IDBinnary.h>
+#include "id_binnary.h"
 
 #include "time.h"
 

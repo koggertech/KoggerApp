@@ -2,7 +2,7 @@
 #define CONSOLE_H
 
 #include <QObject>
-#include <consolelistmodel.h>
+#include <console_list_model.h>
 #include <QLoggingCategory>
 #include <QQuickTextDocument>
 
