@@ -55,16 +55,9 @@ SOURCES += \
     src/console.cpp \
     src/console_list_model.cpp \
     src/core.cpp \
-    src/dev_driver.cpp \
-    src/device_manager.cpp \
-    src/device_manager_wrapper.cpp \
     src/flasher.cpp \
     src/hotkeys_manager.cpp \
     src/id_binnary.cpp \
-    src/link.cpp \
-    src/link_list_model.cpp \
-    src/link_manager.cpp \
-    src/link_manager_wrapper.cpp \
     src/logger.cpp \
     src/main.cpp \
     src/map_defs.cpp \
@@ -73,16 +66,8 @@ SOURCES += \
     src/plot2D_grid.cpp \
     src/plotcash.cpp \
     src/proto_binnary.cpp \
-    src/scene3d_renderer.cpp \
-    src/scene3d_view.cpp \
     src/stream_list.cpp \
     src/stream_list_model.cpp \
-    src/tile_db.cpp \
-    src/tile_downloader.cpp \
-    src/tile_google_provider.cpp \
-    src/tile_manager.cpp \
-    src/tile_provider.cpp \
-    src/tile_set.cpp \
     src/waterfall.cpp
 
 
@@ -159,37 +144,21 @@ HEADERS += \
     src/console_list_model.h \
     src/converter_xtf.h \
     src/core.h \
-    src/dev_driver.h \
-    src/dev_q_property.h \
-    src/device_manager.h \
-    src/device_manager_wrapper.h \
     src/dsp_defs.h \
     src/flasher.h \
     src/hotkeys_manager.h \
     src/id_binnary.h \
-    src/link.h \
-    src/link_list_model.h \
-    src/link_manager.h \
-    src/link_manager_wrapper.h \
     src/logger.h \
     src/map_defs.h \
     src/mav_link_conf.h \
     src/plot2D.h \
     src/plotcash.h \
     src/proto_binnary.h \
-    src/scene3d_renderer.h \
-    src/scene3d_view.h \
     src/stream_list.h \
     src/stream_list_model.h \
     src/themes.h \
-    src/tile_db.h \
-    src/tile_downloader.h \
-    src/tile_google_provider.h \
-    src/tile_manager.h \
-    src/tile_provider.h \
-    src/tile_set.h \
     src/waterfall.h \
-    src/xtf_conf.h\
+    src/xtf_conf.h
 
 android {
 HEADERS += \
@@ -289,8 +258,10 @@ INCLUDEPATH += $$PWD/src
 DEPENDPATH += $$PWD/third_party/freetype/include
 
 
-# scene3d
 include($$PWD/src/scene3d/scene3d.pri)
+include($$PWD/src/device_manager/device_manager.pri)
+include($$PWD/src/link_manager/link.pri)
+include($$PWD/src/tile_engine/tile_engine.pri)
 
 
 android {
