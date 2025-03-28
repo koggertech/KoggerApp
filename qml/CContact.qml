@@ -131,7 +131,7 @@ MenuFrame {
         RowLayout {
             visible: info.length != 0
             CheckButton {
-                icon.source: "qrc:/icons/ui/arrow-bar-down.svg"
+                icon.source: "qrc:/icons/ui/arrow_bar_down.svg"
                 backColor: theme.menuBackColor
                 borderColor: theme.menuBackColor
                 implicitWidth: theme.controlHeight

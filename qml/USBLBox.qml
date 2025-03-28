@@ -21,7 +21,7 @@ DevSettingsBox {
         RowLayout {
             visible: isUSBL
             CheckButton {
-                icon.source: checked ? "qrc:/icons/ui/radar.svg" :  "qrc:/icons/ui/radar-off.svg"
+                icon.source: checked ? "qrc:/icons/ui/radar.svg" :  "qrc:/icons/ui/radar_off.svg"
                 onCheckedChanged: {
                     deviceManagerWrapper.isbeaconDirectQueueAsk = checked
                 }
@@ -68,7 +68,7 @@ DevSettingsBox {
                 Layout.leftMargin: 12
                 enabled: false
                 borderColor: "transparent"
-                icon.source: "qrc:/icons/ui/arrow-bar-down.svg"
+                icon.source: "qrc:/icons/ui/arrow_bar_down.svg"
             }
 
             CText {
@@ -79,7 +79,7 @@ DevSettingsBox {
                 Layout.leftMargin: 12
                 enabled: false
                 borderColor: "transparent"
-                icon.source: "qrc:/icons/ui/ruler-measure.svg"
+                icon.source: "qrc:/icons/ui/ruler_measure.svg"
             }
 
             CText {

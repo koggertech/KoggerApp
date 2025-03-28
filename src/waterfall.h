@@ -6,7 +6,7 @@
 #include <QObject>
 #include <plotcash.h>
 #include <QTimer>
-#include "Plot2D.h"
+#include "plot2D.h"
 
 //#define USE_PIXMAP
 

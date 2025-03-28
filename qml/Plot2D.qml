@@ -390,7 +390,7 @@ WaterFall {
         ButtonGroup { id: pencilbuttonGroup }
 
         CheckButton {
-            icon.source: "qrc:/icons/ui/direction-arrows.svg"
+            icon.source: "qrc:/icons/ui/direction_arrows.svg"
             checked: true
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
@@ -405,7 +405,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "qrc:/icons/ui/arrow-bar-to-down.svg"
+            icon.source: "qrc:/icons/ui/arrow_bar_to_down.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
 
@@ -433,7 +433,7 @@ WaterFall {
         }
 
         CheckButton {
-            icon.source: "qrc:/icons/ui/arrow-bar-to-up.svg"
+            icon.source: "qrc:/icons/ui/arrow_bar_to_up.svg"
             backColor: theme.controlBackColor
             implicitWidth: theme.controlHeight
 

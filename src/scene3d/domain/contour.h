@@ -1,7 +1,7 @@
 #ifndef CONTOUR_H
 #define CONTOUR_H
 
-#include <sceneobject.h>
+#include "scene_object.h"
 
 class Contour : public SceneObject
 {

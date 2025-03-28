@@ -2,9 +2,9 @@
 
 #include <QFile>
 
-#include <boundarydetector.h>
-#include <Triangle.h>
-#include <draw_utils.h>
+#include "boundary_detector.h"
+#include "triangle.h"
+#include "draw_utils.h"
 
 Surface::Surface(QObject* parent)
 : SceneObject(new SurfaceRenderImplementation, parent)

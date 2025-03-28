@@ -1,9 +1,9 @@
 #ifndef CONVERTERXTF_H
 #define CONVERTERXTF_H
 
-#include "XTFConf.h"
+#include "xtf_conf.h"
 #include "plotcash.h"
-#include "vector"
+#include <vector>
 
 class ConverterXTF {
 public:

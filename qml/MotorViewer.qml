@@ -296,7 +296,7 @@ ColumnLayout {
         }
 
         CheckButton {
-            icon.source: "qrc:/icons/ui/file-off.svg"
+            icon.source: "qrc:/icons/ui/file_off.svg"
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0

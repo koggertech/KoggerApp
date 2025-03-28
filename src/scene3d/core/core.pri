@@ -2,10 +2,10 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
-    $$PWD/QmlObjectNames.h \
     $$PWD/draw_utils.h \
-    $$PWD/koggerglobal.h \
-    $$PWD/sceneobject.h
+    $$PWD/qml_object_names.h \
+    $$PWD/scene_object.h
+
 SOURCES += \
-    $$PWD/sceneobject.cpp \
-    $$PWD/draw_utils.cpp
+    $$PWD/draw_utils.cpp \
+    $$PWD/scene_object.cpp

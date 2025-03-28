@@ -1,6 +1,6 @@
 #pragma once
 
-#include <sceneobject.h>
+#include "scene_object.h"
 
 
 class NavigationArrow : public SceneObject

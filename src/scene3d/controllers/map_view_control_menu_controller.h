@@ -1,6 +1,6 @@
 #pragma once
 
-#include "qmlcomponentcontroller.h"
+#include "qml_component_controller.h"
 
 
 class MapView;

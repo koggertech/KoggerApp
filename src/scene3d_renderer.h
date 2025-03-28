@@ -1,15 +1,15 @@
 #pragma once
 
-#include <coordinateaxes.h>
-#include <planegrid.h>
-#include <bottomtrack.h>
-#include <surface.h>
+#include "coordinate_axes.h"
+#include "plane_grid.h"
+#include "bottom_track.h"
+#include "surface.h"
 #include "side_scan_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
-#include <pointgroup.h>
-#include <polygongroup.h>
+#include "point_group.h"
+#include "polygon_group.h"
 #include "scene3d_view.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"

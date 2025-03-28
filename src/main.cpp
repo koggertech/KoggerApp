@@ -2,27 +2,29 @@
 #include <QQmlContext>
 #include <QApplication>
 #include <QQmlApplicationEngine>
-#include <waterfall.h>
-#include <plotcash.h>
-#include <console.h>
-#include <core.h>
-#include <Themes.h>
-#include <QThread>
-#include <QResource>
-#include <QFile>
-#include <QByteArray>
-#include <sceneobject.h>
-#include "Plot2D.h"
-#include "QQuickWindow"
-#include "bottomtrack.h"
-#if defined(Q_OS_ANDROID)
-#include "platform/android/src/android.h"
-#endif
 #include <QTranslator>
 #include <QLocale>
 #include <QSettings>
 #include <QVector>
 #include <QString>
+#include <QThread>
+#include <QResource>
+#include <QFile>
+#include <QByteArray>
+#include <QQuickWindow>
+
+#include "waterfall.h"
+#include "plotcash.h"
+#include "console.h"
+#include "core.h"
+#include "themes.h"
+#include "scene_object.h"
+#include "plot2D.h"
+#include "bottom_track.h"
+#if defined(Q_OS_ANDROID)
+#include "platform/android/src/android.h"
+#endif
+
 
 Core core;
 Themes theme;

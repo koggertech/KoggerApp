@@ -578,7 +578,7 @@ ApplicationWindow  {
                     ButtonGroup { id: pencilbuttonGroup }
 
                     CheckButton {
-                        icon.source: "qrc:/icons/ui/arrow-bar-to-down.svg"
+                        icon.source: "qrc:/icons/ui/arrow_bar_to_down.svg"
                         backColor: theme.controlBackColor
                         checkable: false
                         implicitWidth: theme.controlHeight
@@ -592,7 +592,7 @@ ApplicationWindow  {
                     }
 
                     CheckButton {
-                        icon.source: "qrc:/icons/ui/arrow-bar-to-up.svg"
+                        icon.source: "qrc:/icons/ui/arrow_bar_to_up.svg"
                         backColor: theme.controlBackColor
                         checkable: false
                         implicitWidth: theme.controlHeight
@@ -720,7 +720,7 @@ ApplicationWindow  {
                 Layout.alignment: Qt.AlignHCenter
                 CheckButton {
                     // text: checked ? "Armed" : "Disarmed"
-                    icon.source: checked ? "qrc:/icons/ui/propeller.svg" : "qrc:/icons/ui/propeller-off.svg"
+                    icon.source: checked ? "qrc:/icons/ui/propeller.svg" : "qrc:/icons/ui/propeller_off.svg"
                     checked: deviceManagerWrapper.pilotArmState == 1
                     color: "white"
                     backColor: "red"
@@ -735,7 +735,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "qrc:/icons/ui/direction-arrows.svg"
+                    icon.source: "qrc:/icons/ui/direction_arrows.svg"
                     checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
                     onCheckedChanged: {
                     }
@@ -765,7 +765,7 @@ ApplicationWindow  {
 
                 CheckButton {
                     // Layout.fillWidth: true
-                    icon.source: "qrc:/icons/ui/map-pin.svg"
+                    icon.source: "qrc:/icons/ui/map_pin.svg"
                     checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
                     onCheckedChanged: {
                     }

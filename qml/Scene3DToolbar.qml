@@ -1087,7 +1087,7 @@ ColumnLayout {
 
         CheckButton {
             id: fitAllinViewButton
-            iconSource: "qrc:/icons/ui/zoom-cancel.svg"
+            iconSource: "qrc:/icons/ui/zoom_cancel.svg"
             backColor: theme.controlBackColor
             checkable: false
             checked: false
@@ -1098,7 +1098,7 @@ ColumnLayout {
 
         CheckButton {
             id: cancelZoomViewButton
-            iconSource: "qrc:/icons/ui/ruler-measure.svg"
+            iconSource: "qrc:/icons/ui/ruler_measure.svg"
             backColor: theme.controlBackColor
             checkable: false
             checked: false
@@ -1188,7 +1188,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "qrc:/icons/ui/stack-backward.svg"
+            iconSource: "qrc:/icons/ui/stack_backward.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
@@ -1301,7 +1301,7 @@ ColumnLayout {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             checked: true
-            iconSource: "qrc:/icons/ui/map-route.svg"
+            iconSource: "qrc:/icons/ui/map_route.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {

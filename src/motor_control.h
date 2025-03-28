@@ -6,7 +6,7 @@
 #include <QQueue>
 #include <QStringList>
 
-#include "Link.h"
+#include "link.h"
 
 
 typedef enum

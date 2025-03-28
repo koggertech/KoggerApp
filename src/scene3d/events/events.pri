@@ -2,7 +2,7 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS *= \
-    $$PWD/epochevent.h
+    $$PWD/epoch_event.h
 
 SOURCES *= \
-    $$PWD/epochevent.cpp
+    $$PWD/epoch_event.cpp

@@ -6,10 +6,10 @@
 #include <QList>
 #include <QHash>
 #include <QUuid>
-#include "Link.h"
-#include "streamlist.h"
+#include "link.h"
+#include "stream_list.h"
 #include "dev_q_property.h"
-#include "ProtoBinnary.h"
+#include "proto_binnary.h"
 #include "id_binnary.h"
 
 #ifdef MOTOR

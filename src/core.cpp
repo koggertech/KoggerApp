@@ -2,7 +2,7 @@
 
 #include <QSettings>
 #include <ctime>
-#include "bottomtrack.h"
+#include "bottom_track.h"
 #include "hotkeys_manager.h"
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>

@@ -5,8 +5,8 @@
 #include <QQuickWindow>
 
 #include <QMutex>
-#include <core.h>
-#include <epochevent.h>
+#include "core.h"
+#include "epoch_event.h"
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)

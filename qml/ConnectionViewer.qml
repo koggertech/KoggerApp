@@ -477,7 +477,7 @@ ColumnLayout {
         spacing: 4
         CheckButton {
             id: zeroingPosButton
-            icon.source: "qrc:/icons/ui/propeller-off.svg"
+            icon.source: "qrc:/icons/ui/propeller_off.svg"
             backColor: theme.controlSolidBackColor
             borderWidth: 0
             implicitWidth: theme.controlHeight
@@ -554,7 +554,7 @@ ColumnLayout {
         }
 
         CheckButton {
-            icon.source: "qrc:/icons/ui/file-plus.svg"
+            icon.source: "qrc:/icons/ui/file_plus.svg"
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0
@@ -589,7 +589,7 @@ ColumnLayout {
         }
 
         CheckButton {
-            icon.source: "qrc:/icons/ui/file-off.svg"
+            icon.source: "qrc:/icons/ui/file_off.svg"
             checkable: false
             backColor: theme.controlSolidBackColor
             borderWidth: 0

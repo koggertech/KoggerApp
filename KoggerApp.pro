@@ -52,43 +52,39 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 ### SOURCES
 SOURCES += \
-    src/dev_driver.cpp \
-    src/device_manager.cpp \
-    src/device_manager_wrapper.cpp \
-    src/id_binnary.cpp \
-    src/Link.cpp \
-    src/LinkManager.cpp \
-    src/LinkManagerWrapper.cpp \
-    src/Plot2D.cpp \
-    src/Plot2DEchogram.cpp \
-    src/Plot2DGrid.cpp \
-    src/ProtoBinnary.cpp \
-    src/LinkListModel.cpp \
-    src/StreamListModel.cpp \
     src/console.cpp \
     src/console_list_model.cpp \
     src/core.cpp \
-    src/scene3d_renderer.cpp \
-    src/scene3d_view.cpp \
+    src/dev_driver.cpp \
+    src/device_manager.cpp \
+    src/device_manager_wrapper.cpp \
+    src/flasher.cpp \
+    src/hotkeys_manager.cpp \
+    src/id_binnary.cpp \
+    src/link.cpp \
+    src/link_list_model.cpp \
+    src/link_manager.cpp \
+    src/link_manager_wrapper.cpp \
     src/logger.cpp \
     src/main.cpp \
-    src/flasher.cpp \
-    src/maxpointsfilter.cpp \
-    src/nearestpointfilter.cpp \
-    src/plotcash.cpp \
-    src/ray.cpp \
-    src/raycaster.cpp \
-    src/streamlist.cpp \
-    src/textrenderer.cpp \
-    src/waterfall.cpp \
-    src/tile_manager.cpp \
-    src/tile_set.cpp \
-    src/tile_provider.cpp \
-    src/tile_google_provider.cpp \
-    src/tile_downloader.cpp \
-    src/tile_db.cpp \
     src/map_defs.cpp \
-    src/hotkeys_manager.cpp
+    src/plot2D.cpp \
+    src/plot2D_echogram.cpp \
+    src/plot2D_grid.cpp \
+    src/plotcash.cpp \
+    src/proto_binnary.cpp \
+    src/scene3d_renderer.cpp \
+    src/scene3d_view.cpp \
+    src/stream_list.cpp \
+    src/stream_list_model.cpp \
+    src/tile_db.cpp \
+    src/tile_downloader.cpp \
+    src/tile_google_provider.cpp \
+    src/tile_manager.cpp \
+    src/tile_provider.cpp \
+    src/tile_set.cpp \
+    src/waterfall.cpp
+
 
 FLASHER {
 DEFINES += FLASHER
@@ -159,47 +155,41 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 ### HEADERS
 HEADERS += \
-    src/converter_xtf.h \
-    src/dsp_defs.h \
-    src/dev_driver.h \
-    src/device_manager.h \
-    src/device_manager_wrapper.h \
-    src/dev_q_property.h \
-    src/id_binnary.h \
-    src/Link.h \
-    src/LinkManager.h \
-    src/LinkManagerWrapper.h \
-    src/MAVLinkConf.h \
-    src/Plot2D.h \
-    src/ProtoBinnary.h \
-    src/LinkListModel.h \
-    src/StreamListModel.h \
-    src/Themes.h \
-    src/XTFConf.h \
     src/console.h \
     src/console_list_model.h \
-    src/flasher.h \
+    src/converter_xtf.h \
     src/core.h \
+    src/dev_driver.h \
+    src/dev_q_property.h \
+    src/device_manager.h \
+    src/device_manager_wrapper.h \
+    src/dsp_defs.h \
+    src/flasher.h \
+    src/hotkeys_manager.h \
+    src/id_binnary.h \
+    src/link.h \
+    src/link_list_model.h \
+    src/link_manager.h \
+    src/link_manager_wrapper.h \
+    src/logger.h \
+    src/map_defs.h \
+    src/mav_link_conf.h \
+    src/plot2D.h \
+    src/plotcash.h \
+    src/proto_binnary.h \
     src/scene3d_renderer.h \
     src/scene3d_view.h \
-    src/logger.h \
-    src/maxpointsfilter.h \
-    src/nearestpointfilter.h \
-    src/plotcash.h \
-    src/ray.h \
-    src/raycaster.h \
-    src/streamlist.h \
-    src/textrenderer.h \
-    src/waterfall.h \
-    src/waterfallproxy.h \
-    src/tile_manager.h \
-    src/tile_set.h \
-    src/tile_provider.h \
-    src/tile_google_provider.h \
-    src/tile_downloader.h \
+    src/stream_list.h \
+    src/stream_list_model.h \
+    src/themes.h \
     src/tile_db.h \
-    src/map_defs.h \
-    src/hotkeys_manager.h
+    src/tile_downloader.h \
+    src/tile_google_provider.h \
+    src/tile_manager.h \
+    src/tile_provider.h \
+    src/tile_set.h \
+    src/waterfall.h \
+    src/xtf_conf.h\
 
 android {
 HEADERS += \

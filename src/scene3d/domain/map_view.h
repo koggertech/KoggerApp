@@ -5,7 +5,7 @@
 #include <QImage>
 #include <unordered_map>
 
-#include "sceneobject.h"
+#include "scene_object.h"
 #include "map_defs.h"
 
 

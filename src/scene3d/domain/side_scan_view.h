@@ -6,7 +6,7 @@
 #include <QUuid>
 #include <QQueue>
 #include <QReadWriteLock>
-#include "sceneobject.h"
+#include "scene_object.h"
 #include "plotcash.h"
 #include "global_mesh.h"
 #include "tile.h"

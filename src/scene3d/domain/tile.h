@@ -6,7 +6,7 @@
 #include <QVector3D>
 #include <QVector2D>
 #include <QOpenGLFunctions>
-#include "sceneobject.h"
+#include "scene_object.h"
 
 
 class GlobalMesh;

@@ -2,7 +2,7 @@
 
 #include <QColor>
 #include <QThread>
-#include "qmlcomponentcontroller.h"
+#include "qml_component_controller.h"
 //#include "usbl_view.h"
 
 

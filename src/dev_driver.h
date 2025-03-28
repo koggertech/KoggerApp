@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <ProtoBinnary.h>
+#include "proto_binnary.h"
 #include "id_binnary.h"
 #include <QHash>
 #include <QVector>

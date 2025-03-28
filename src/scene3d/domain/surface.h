@@ -5,10 +5,10 @@
 #include <QVector3D>
 #include <QHash>
 
-#include <sceneobject.h>
-#include <contour.h>
-#include <surfacegrid.h>
-#include <surfaceprocessor.h>
+#include "scene_object.h"
+#include "contour.h"
+#include "surface_grid.h"
+#include "surface_processor.h"
 #include "plotcash.h"
 
 inline uint qHash(const QVector3D &key, uint seed = 0) {

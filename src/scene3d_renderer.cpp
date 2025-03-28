@@ -1,16 +1,17 @@
 #include "scene3d_renderer.h"
-#include <draw_utils.h>
+#include "draw_utils.h"
 
-#include <bottomtrack.h>
-#include <surface.h>
-#include <pointgroup.h>
-#include <polygongroup.h>
+#include "bottom_track.h"
+#include "surface.h"
+#include "point_group.h"
+#include "polygon_group.h"
 
 #include <QThread>
 #include <QDebug>
 
-#include <textrenderer.h>
-#include <ft2build.h>
+#include "text_renderer.h"
+#include "ft2build.h"
+
 #include FT_FREETYPE_H
 
 
@@ -25,7 +26,6 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     m_shaderProgramMap["static_sec"] = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text"]       = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
-    m_shaderProgramMap["texture"]    = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
 }

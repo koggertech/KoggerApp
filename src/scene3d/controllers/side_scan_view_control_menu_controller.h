@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QList>
-#include "qmlcomponentcontroller.h"
+#include "qml_component_controller.h"
 
 class Core;
 class SideScanView;

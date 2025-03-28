@@ -2,7 +2,7 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH *= $$PWD
 
 HEADERS += \
-    $$PWD/surfaceprocessor.h \
+    $$PWD/surface_processor.h
 
 SOURCES += \
-    $$PWD/surfaceprocessor.cpp \
+    $$PWD/surface_processor.cpp

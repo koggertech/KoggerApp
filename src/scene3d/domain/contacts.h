@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sceneobject.h"
+#include "scene_object.h"
 
 #include <QEvent>
 #include <QQmlContext>

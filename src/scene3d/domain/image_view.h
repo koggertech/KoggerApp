@@ -4,7 +4,7 @@
 #include <QVector3D>
 #include <QImage>
 
-#include "sceneobject.h"
+#include "scene_object.h"
 
 
 class GraphicsScene3dView;

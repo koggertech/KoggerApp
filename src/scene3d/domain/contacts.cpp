@@ -1,8 +1,8 @@
 #include "contacts.h"
 
 #include "draw_utils.h"
-#include "epochevent.h"
-#include "textrenderer.h"
+#include "epoch_event.h"
+#include "text_renderer.h"
 
 
 Contacts::Contacts(QObject *parent) :

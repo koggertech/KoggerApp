@@ -7,8 +7,8 @@
 #include <QString>
 #include <QUuid>
 #include "plotcash.h"
-#include "Link.h"
-#include "ProtoBinnary.h"
+#include "link.h"
+#include "proto_binnary.h"
 
 
 class Logger : public QObject
