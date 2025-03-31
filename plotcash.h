@@ -1088,6 +1088,7 @@ public slots:
     void setSoundSpeed(int16_t channel, uint32_t soundSpeed);
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesRange(int val);
+    void setFixBlackStripesBackSteps(int val);
     void addChart(ChartParameters, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
     void addDist(int dist);
@@ -1250,6 +1251,7 @@ private:
     QMap<int16_t, RecordParameters> usingRecordParameters_;
     bool fixBlackStripesState_;
     int fixBlackStripesWrCnt_;
+    int fixBlackStripesBkStp_;
 };
 
 #endif // PLOT_CASH_H

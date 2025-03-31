@@ -525,20 +525,20 @@ GridLayout {
                 }
 
                 SpinBoxCustom {
-                    id: fixBlackStripesSpinBox
+                    id: fixBlackStripesRangeSpinBox
                     from: 1
                     to: 100
                     stepSize: 1
-                    value: 5
+                    value: 20
 
-                    onValueChanged: core.fixBlackStripesRange = fixBlackStripesSpinBox.currValue
-                    Component.onCompleted: core.fixBlackStripesRange = fixBlackStripesSpinBox.currValue
+                    onValueChanged: core.fixBlackStripesRange = fixBlackStripesRangeSpinBox.currValue
+                    Component.onCompleted: core.fixBlackStripesRange = fixBlackStripesRangeSpinBox.currValue
 
                     property int currValue: value
 
                     validator: DoubleValidator {
-                        bottom: Math.min(fixBlackStripesSpinBox.from, fixBlackStripesSpinBox.to)
-                        top:  Math.max(fixBlackStripesSpinBox.from, fixBlackStripesSpinBox.to)
+                        bottom: Math.min(fixBlackStripesRangeSpinBox.from, fixBlackStripesRangeSpinBox.to)
+                        top:  Math.max(fixBlackStripesRangeSpinBox.from, fixBlackStripesRangeSpinBox.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -552,7 +552,40 @@ GridLayout {
                     onCurrValueChanged: core.fixBlackStripesRange = currValue
 
                     Settings {
-                        property alias fixBlackStripesSpinBox: fixBlackStripesSpinBox.value
+                        property alias fixBlackStripesRangeSpinBox: fixBlackStripesRangeSpinBox.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: fixBlackStripesBackStepsSpinBox
+                    from: 0
+                    to: 50
+                    stepSize: 1
+                    value: 3
+                    visible: false // turn on for debug mode
+
+                    onValueChanged: core.fixBlackStripesBackSteps = fixBlackStripesBackStepsSpinBox.currValue
+                    Component.onCompleted: core.fixBlackStripesBackSteps = fixBlackStripesBackStepsSpinBox.currValue
+
+                    property int currValue: value
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(fixBlackStripesBackStepsSpinBox.from, fixBlackStripesBackStepsSpinBox.to)
+                        top:  Math.max(fixBlackStripesBackStepsSpinBox.from, fixBlackStripesBackStepsSpinBox.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value).toLocaleString(locale, 'f', 0)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text)
+                    }
+
+                    onCurrValueChanged: core.fixBlackStripesBackSteps = currValue
+
+                    Settings {
+                        property alias fixBlackStripesBackStepsSpinBox: fixBlackStripesBackStepsSpinBox.value
                     }
                 }
             }

@@ -49,6 +49,7 @@ public:
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
     Q_PROPERTY(int  fixBlackStripesRange WRITE setFixBlackStripesRange)
+    Q_PROPERTY(int  fixBlackStripesBackSteps WRITE setFixBlackStripesBackSteps)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
     Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
@@ -98,6 +99,7 @@ public slots:
     void setKlfLogging(bool isLogging);
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesRange(int val);
+    void setFixBlackStripesBackSteps(int val);
     bool getIsKlfLogging();
     void setCsvLogging(bool isLogging);
     bool getIsCsvLogging();
