@@ -594,7 +594,7 @@ void Dataset::addChart(ChartParameters chartParams, QVector<uint8_t> data, float
 
     // walk backward
     if (fixBlackStripesBkStp_ > 0) {
-        const int wBStartIndx = std::max(0, endIndx - fixBlackStripesWrCnt_ - 1);
+        const int wBStartIndx = std::max(0, endIndx - fixBlackStripesBkStp_ - 1);
         const int wBPreEndIndx = std::max(0, endIndx - 1);
         const auto recorderData = _pool[endIndx].chartData(channelId);
         for (int i = wBPreEndIndx; i > wBStartIndx; --i) {
