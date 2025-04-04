@@ -238,12 +238,12 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../plotcash.cpp" line="1408"/>
+        <location filename="../plotcash.cpp" line="1391"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
     <message>
-        <location filename="../plotcash.cpp" line="1409"/>
+        <location filename="../plotcash.cpp" line="1392"/>
         <source>First</source>
         <translation>Первый</translation>
     </message>
@@ -670,194 +670,198 @@
     </message>
     <message>
         <location filename="../QML/DisplaySettings.qml" line="517"/>
+        <source>FBS, f/b</source>
+        <translation>УЧП в/н</translation>
+    </message>
+    <message>
         <source>Fix black stripes, window</source>
-        <translation>Убрать черные полосы, окно</translation>
+        <translation type="vanished">Убрать черные полосы, окно</translation>
     </message>
     <message>
         <source>Fix black stripes</source>
         <translation type="vanished">Убрать чёрные полосы</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="581"/>
+        <location filename="../QML/DisplaySettings.qml" line="607"/>
         <source>Bottom-Track processing</source>
         <translation>Обработка трека дна</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="614"/>
+        <location filename="../QML/DisplaySettings.qml" line="640"/>
         <source>Preset:</source>
         <translation>Предустановка:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="620"/>
+        <location filename="../QML/DisplaySettings.qml" line="646"/>
         <source>Normal 2D</source>
         <translation>Обычный 2D</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="620"/>
+        <location filename="../QML/DisplaySettings.qml" line="646"/>
         <source>Narrow 2D</source>
         <translation>Узкий 2D</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="620"/>
+        <location filename="../QML/DisplaySettings.qml" line="646"/>
         <source>Echogram Side-Scan</source>
         <translation>Эхограмма бокового сканирования</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="640"/>
+        <location filename="../QML/DisplaySettings.qml" line="666"/>
         <source>Gain slope:</source>
         <translation>Наклон коэффициента усиления:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="692"/>
+        <location filename="../QML/DisplaySettings.qml" line="718"/>
         <source>Threshold:</source>
         <translation>Порог:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="744"/>
+        <location filename="../QML/DisplaySettings.qml" line="770"/>
         <source>Horizontal window:</source>
         <translation>Горизонтальное окно:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="781"/>
+        <location filename="../QML/DisplaySettings.qml" line="807"/>
         <source>Vertical gap, %:</source>
         <translation>Вертикальный зазор, %:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="819"/>
+        <location filename="../QML/DisplaySettings.qml" line="845"/>
         <source>Min range, m:</source>
         <translation>Мин. диапазон, м:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="875"/>
+        <location filename="../QML/DisplaySettings.qml" line="901"/>
         <source>Max range, m:</source>
         <translation>Макс. диапазон, м:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="930"/>
+        <location filename="../QML/DisplaySettings.qml" line="956"/>
         <source>Sonar offset XYZ, mm:</source>
         <translation>Смещение сонара XYZ, мм:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1012"/>
+        <location filename="../QML/DisplaySettings.qml" line="1038"/>
         <source>Processing</source>
         <translation>Обработка</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1021"/>
+        <location filename="../QML/DisplaySettings.qml" line="1047"/>
         <source>Export</source>
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1032"/>
+        <location filename="../QML/DisplaySettings.qml" line="1058"/>
         <source>Enter path</source>
         <translation>Введите путь</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1070"/>
+        <location filename="../QML/DisplaySettings.qml" line="1096"/>
         <source>Decimation, m:</source>
         <translation>Децимация, м:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1090"/>
+        <location filename="../QML/DisplaySettings.qml" line="1116"/>
         <source>Export to CSV</source>
         <translation>Экспорт в CSV</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1098"/>
+        <location filename="../QML/DisplaySettings.qml" line="1124"/>
         <source>Export to XTF</source>
         <translation>Экспорт в XTF</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1106"/>
+        <location filename="../QML/DisplaySettings.qml" line="1132"/>
         <source>Complex signal to CSV</source>
         <translation>Комплексный сигнал в CSV</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1114"/>
+        <location filename="../QML/DisplaySettings.qml" line="1140"/>
         <source>USBL to CSV</source>
         <translation>USBL в CSV</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1124"/>
+        <location filename="../QML/DisplaySettings.qml" line="1150"/>
         <source>Preference</source>
         <translation>Настройки приложения</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1127"/>
+        <location filename="../QML/DisplaySettings.qml" line="1153"/>
         <source>Language:</source>
         <translation>Язык:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1132"/>
-        <location filename="../QML/DisplaySettings.qml" line="1138"/>
-        <location filename="../QML/DisplaySettings.qml" line="1144"/>
+        <location filename="../QML/DisplaySettings.qml" line="1158"/>
+        <location filename="../QML/DisplaySettings.qml" line="1164"/>
+        <location filename="../QML/DisplaySettings.qml" line="1170"/>
         <source>English</source>
         <translation>Английский</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1132"/>
-        <location filename="../QML/DisplaySettings.qml" line="1140"/>
+        <location filename="../QML/DisplaySettings.qml" line="1158"/>
+        <location filename="../QML/DisplaySettings.qml" line="1166"/>
         <source>Russian</source>
         <translation>Русский</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1132"/>
-        <location filename="../QML/DisplaySettings.qml" line="1142"/>
+        <location filename="../QML/DisplaySettings.qml" line="1158"/>
+        <location filename="../QML/DisplaySettings.qml" line="1168"/>
         <source>Polish</source>
         <translation>Польский</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1159"/>
+        <location filename="../QML/DisplaySettings.qml" line="1185"/>
         <source>Display theme:</source>
         <translation>Тема приложения:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1164"/>
+        <location filename="../QML/DisplaySettings.qml" line="1190"/>
         <source>Dark</source>
         <translation>Тёмная</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1164"/>
+        <location filename="../QML/DisplaySettings.qml" line="1190"/>
         <source>Super Dark</source>
         <translation>Очень Тёмная</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1164"/>
+        <location filename="../QML/DisplaySettings.qml" line="1190"/>
         <source>Light</source>
         <translation>Светлая</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1164"/>
+        <location filename="../QML/DisplaySettings.qml" line="1190"/>
         <source>Super Light</source>
         <translation>Очень Светлая</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1177"/>
+        <location filename="../QML/DisplaySettings.qml" line="1203"/>
         <source>Instrumets grade:</source>
         <translation>Набор инструментов:</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1182"/>
+        <location filename="../QML/DisplaySettings.qml" line="1208"/>
         <source>Fish Finders</source>
         <translation>Для Рыболова</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1182"/>
+        <location filename="../QML/DisplaySettings.qml" line="1208"/>
         <source>Bottom Tracking</source>
         <translation>Оценка трека дна</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1182"/>
+        <location filename="../QML/DisplaySettings.qml" line="1208"/>
         <source>Maximum</source>
         <translation>Максимум</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1197"/>
+        <location filename="../QML/DisplaySettings.qml" line="1223"/>
         <source>Interface</source>
         <translation>Интерфейс</translation>
     </message>
     <message>
-        <location filename="../QML/DisplaySettings.qml" line="1201"/>
+        <location filename="../QML/DisplaySettings.qml" line="1227"/>
         <source>Console</source>
         <translation>Консоль</translation>
     </message>
@@ -1156,42 +1160,47 @@
         <translation>%1 м</translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="809"/>
+        <location filename="../Plot2D.cpp" line="817"/>
         <source>ON</source>
         <translation>ВКЛ</translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="809"/>
+        <location filename="../Plot2D.cpp" line="817"/>
         <source>OFF</source>
         <translation>ВЫКЛ</translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="810"/>
+        <location filename="../Plot2D.cpp" line="804"/>
         <source>Channel: </source>
         <translation>Канал: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="811"/>
+        <location filename="../Plot2D.cpp" line="807"/>
+        <source>Epoch: </source>
+        <translation>Эпоха: </translation>
+    </message>
+    <message>
+        <location filename="../Plot2D.cpp" line="818"/>
         <source>Resolution, mm: </source>
         <translation>Разрешение, мм: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="814"/>
+        <location filename="../Plot2D.cpp" line="821"/>
         <source>Frequency, kHz: </source>
         <translation>Частота, кГц: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="815"/>
+        <location filename="../Plot2D.cpp" line="822"/>
         <source>Pulse count: </source>
         <translation>Количество импульсов: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="816"/>
+        <location filename="../Plot2D.cpp" line="823"/>
         <source>Booster: </source>
         <translation>Усилитель: </translation>
     </message>
     <message>
-        <location filename="../Plot2D.cpp" line="817"/>
+        <location filename="../Plot2D.cpp" line="824"/>
         <source>Speed of sound, m/s: </source>
         <translation>Скорость звука, м/с: </translation>
     </message>

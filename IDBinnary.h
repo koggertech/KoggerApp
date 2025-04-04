@@ -241,6 +241,7 @@ public:
 
 protected:
     uint32_t m_seqOffset = 0, m_sampleResol = 0, m_absOffset = 0;
+    uint32_t sampleResolLast_ = 0, absOffsetLast_ = 0;
     uint32_t m_chartSizeIncr = 0;
     uint32_t m_chartSize = 0;
     uint8_t m_fillChart[20000];

@@ -1,6 +1,7 @@
 #include "plotcash.h"
-#include <QPainterPath>
 
+#include <QPainterPath>
+#include "black_stripes_processor.h"
 #include <core.h>
 extern Core core;
 
@@ -17,17 +18,24 @@ void Epoch::setEvent(int timestamp, int id, int unixt) {
     flags.eventAvail = true;
 }
 
-void Epoch::setChart(int16_t channel, QVector<uint8_t> data, float resolution, float offset) {
-    _charts[channel].amplitude = data;
-    _charts[channel].resolution = resolution;
-    _charts[channel].offset = offset;
-    _charts[channel].type = 1;
+void Epoch::setChart(int16_t channelId, QVector<uint8_t> data, float resolution, float offset) {
+    _charts[channelId].amplitude = data;
+    _charts[channelId].resolution = resolution;
+    _charts[channelId].offset = offset;
+    _charts[channelId].type = 1;
 }
 
-void Epoch::setRecParameters(int16_t channel, RecordParameters recParams)
+void Epoch::setRecParameters(int16_t channelId, const RecordParameters& recParams)
 {
-    if (_charts.contains(channel)) {
-        _charts[channel].recordParameters_ = recParams;
+    if (_charts.contains(channelId)) {
+        _charts[channelId].recordParameters_ = recParams;
+    }
+}
+
+void Epoch::setChartParameters(int16_t channelId, const ChartParameters& chartParams)
+{
+    if (_charts.contains(channelId)) {
+        _charts[channelId].chartParameters_ = chartParams;
     }
 }
 
@@ -323,16 +331,28 @@ uint32_t Epoch::getSoundSpeed(int16_t channelId) const
     return 0;
 }
 
+ChartParameters Epoch::getChartParameters(int16_t channelId) const
+{
+    if (auto echogarm = _charts.find(channelId); echogarm != _charts.end()) {
+        return echogarm.value().chartParameters_;
+    }
+    return {};
+}
+
 Dataset::Dataset() :
     interpolator_(this),
     lastBoatTrackEpoch_(0),
     lastBottomTrackEpoch_(0),
     boatTrackValidPosCounter_(0),
-    fixBlackStripesState_(false),
-    fixBlackStripesWrCnt_(20),
-    fixBlackStripesBkStp_(3)
+    bSProc_(new BlackStripesProcessor()),
+    lastAddChartEpochIndx_(-1)
 {
     resetDataset();
+}
+
+Dataset::~Dataset()
+{
+    delete bSProc_;
 }
 
 void Dataset::setState(DatasetState state)
@@ -484,26 +504,23 @@ void Dataset::setChartSetup(int16_t channel, uint16_t resol, uint16_t count, uin
     usingRecordParameters_[channel].count  = count;
     usingRecordParameters_[channel].offset = offset;
 
-    if (ethData_.contains(channel)) {
-        if (count < ethData_[channel].size()) {
-            ethData_[channel].resize(count);
-        }
-    }
+    bSProc_->tryResizeEthalonData(channel, BlackStripesProcessor::Direction::kForward, count);
+    bSProc_->tryResizeEthalonData(channel, BlackStripesProcessor::Direction::kBackward, count);
 }
 
 void Dataset::setFixBlackStripesState(bool state)
 {
-    fixBlackStripesState_ = state;
+    bSProc_->setState(state);
 }
 
-void Dataset::setFixBlackStripesRange(int val)
+void Dataset::setFixBlackStripesForwardSteps(int val)
 {
-    fixBlackStripesWrCnt_ = val;
+    bSProc_->setForwardSteps(val);
 }
 
-void Dataset::setFixBlackStripesBackSteps(int val)
+void Dataset::setFixBlackStripesBackwardSteps(int val)
 {
-    fixBlackStripesBkStp_ = val;
+    bSProc_->setBackwardSteps(val);
 }
 
 void Dataset::addChart(ChartParameters chartParams, QVector<uint8_t> data, float resolution, float offset)
@@ -517,7 +534,6 @@ void Dataset::addChart(ChartParameters chartParams, QVector<uint8_t> data, float
         addNewEpoch();
     }
 
-    const int dataSize = data.size();
     const int endIndx = endIndex();
     const auto& address = chartParams.address;
     const auto& channelId = chartParams.channelId;
@@ -527,84 +543,81 @@ void Dataset::addChart(ChartParameters chartParams, QVector<uint8_t> data, float
         recParam = usingRecordParameters_[address];
     }
 
-    auto setChart = [&]() -> void {
-        _pool[endIndx].setChart(channelId, data, resolution, offset);
-        _pool[endIndx].setRecParameters(channelId, recParam);
-        _pool[endIndx].setWasValidlyRenderedInEchogram(false);
-    };    
+    auto* epoch = &_pool[endIndx];
+    epoch->setChart(channelId, data, resolution, offset);
+    epoch->setRecParameters(channelId, recParam);
+    epoch->setChartParameters(channelId, chartParams);
+    epoch->setWasValidlyRenderedInEchogram(false);
 
-    if (!fixBlackStripesState_) {
-        setChart();
-        validateChannelList(channelId);
-        emit dataUpdate();
-        return;
-    }
+    if (bSProc_->getState()) {
+        // FORWARD
+        if (bSProc_->getForwardSteps()) {
+            auto getPreChart = [&](int i) -> const Epoch::Echogram* {
+                const int preEpIndx = std::max(0, i - 1);
+                if (auto* preEpoch = &_pool[preEpIndx]; preEpoch) {
+                    return  preEpoch->chart(channelId);
+                }
+                return nullptr;
+            };
 
-    // fix black stripes
-    auto& ethVec = ethData_[channelId];
-    const auto& errList = chartParams.errList;
+            const int remainingIndx = lastAddChartEpochIndx_ + 1;
+            for (int i = remainingIndx; i <= endIndx; ++i) {
+                if (auto* iEpoch = &_pool[i]; iEpoch) {
+                    float iResolution = 0.0f;
+                    float iOffset = 0.0f;
+                    if (i == endIndx) {
+                        iResolution = resolution;
+                        iOffset = offset;
+                    }
+                    else {
+                        if (const auto* iChart = iEpoch->chart(channelId); iChart) {
+                            iResolution = iChart->resolution;
+                            iOffset = iChart->offset;
+                        }
+                        else {
+                            if (auto* preChart = getPreChart(i); preChart) {
+                                iResolution = preChart->resolution;
+                                iOffset = preChart->offset;
+                            }
+                        }
+                    }
 
-    QVector<uint8_t> errorMask(dataSize, 0);
-    for (const auto& seg : errList) {
-        const int start = std::max(static_cast<int>(seg.first), 0);
-        const int end   = std::min(static_cast<int>(seg.second), dataSize);
-        for (int i = start; i < end; ++i) {
-            errorMask[i] = 1;
-        }
-    }
+                    if (auto* preChart = getPreChart(i); preChart) {
+                        if (!qFuzzyCompare(preChart->resolution, iResolution) || !qFuzzyCompare(preChart->offset, iOffset)) {
+                            bSProc_->clearEthalonData(channelId, BlackStripesProcessor::Direction::kForward);
+                        }
+                    }
 
-    int lastValidEthIndx = -1;
-    for (int i = ethVec.size() - 1; i >= 0; --i) {
-        if (ethVec.at(i).first) {
-            lastValidEthIndx = i;
-            break;
-        }
-    }
-
-    int newDataSize = dataSize;
-    if (dataSize < ethVec.size()) {
-        if (lastValidEthIndx != -1) {
-            newDataSize = std::max(dataSize, lastValidEthIndx + 1);
-        }
-    }
-
-    if (ethVec.size() < newDataSize) {
-        ethVec.resize(newDataSize);
-    }
-    if (data.size() < newDataSize) {
-        data.resize(newDataSize);
-    }
-
-    for (int i = 0; i < newDataSize; ++i) {
-        bool outOfOrigDataRange = (i >= dataSize);
-        bool inErrorMask = (i < errorMask.size() && errorMask[i] != 0);
-
-        if (outOfOrigDataRange || inErrorMask) {
-            if (ethVec[i].first) {
-                data[i] = ethVec[i].second;
-                --ethVec[i].first;
+                    bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kForward, iResolution, iOffset);
+                }
             }
         }
-        else {
-            ethVec[i] = qMakePair(fixBlackStripesWrCnt_, data[i]);
-        }
-    }
 
-    setChart();
+        // BACKWARD
+        int backSteps = bSProc_->getBackwardSteps();
+        if (backSteps) {
+            bSProc_->clearEthalonData(channelId, BlackStripesProcessor::Direction::kBackward);
 
-    // walk backward
-    if (fixBlackStripesBkStp_ > 0) {
-        const int wBStartIndx = std::max(0, endIndx - fixBlackStripesBkStp_ - 1);
-        const int wBPreEndIndx = std::max(0, endIndx - 1);
-        const auto recorderData = _pool[endIndx].chartData(channelId);
-        for (int i = wBPreEndIndx; i > wBStartIndx; --i) {
-            if (_pool[i].chartSize(chartParams.channelId) == -1) {
-                _pool[i].setChart(channelId, recorderData, resolution, offset);
-                _pool[i].setRecParameters(channelId, recParam);
-                _pool[i].setWasValidlyRenderedInEchogram(false);
+            const int startIndx  = std::max(0, endIndx - backSteps);
+            for (int i = endIndx; i >= startIndx; --i) {
+                if (auto* iEpoch = &_pool[i]; iEpoch) {
+                    float iResolution = resolution;
+                    float iOffset = offset;
+                    if (const auto* iChart = iEpoch->chart(channelId); iChart) {
+                        iResolution = iChart->resolution;
+                        iOffset = iChart->offset;
+                        if (!qFuzzyCompare(iChart->resolution, resolution) || !qFuzzyCompare(iChart->offset, offset)) {
+                            bSProc_->clearEthalonData(channelId, BlackStripesProcessor::Direction::kBackward);
+                        }
+                    }
+
+                    bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kBackward, iResolution, iOffset);
+                }
             }
         }
     }
+
+    lastAddChartEpochIndx_ = endIndx;
 
     validateChannelList(channelId);
     emit dataUpdate();
@@ -981,7 +994,8 @@ void Dataset::resetDataset() {
 #endif
 
     usingRecordParameters_.clear();
-    ethData_.clear();
+    bSProc_->clear();
+    lastAddChartEpochIndx_ = -1;
 
     emit dataUpdate();
 }

@@ -514,7 +514,7 @@ GridLayout {
                     id: fixBlackStripesCheckButton
                     Layout.fillWidth: true
                     checked: false
-                    text: qsTr("Fix black stripes, window")
+                    text: qsTr("FBS, f/b")
 
                     onCheckedChanged: core.fixBlackStripesState = fixBlackStripesCheckButton.checked
                     Component.onCompleted: core.fixBlackStripesState = fixBlackStripesCheckButton.checked
@@ -525,20 +525,20 @@ GridLayout {
                 }
 
                 SpinBoxCustom {
-                    id: fixBlackStripesRangeSpinBox
-                    from: 1
+                    id: fixBlackStripesForwardStepsSpinBox
+                    from: 0
                     to: 100
                     stepSize: 1
-                    value: 20
+                    value: 15
 
-                    onValueChanged: core.fixBlackStripesRange = fixBlackStripesRangeSpinBox.currValue
-                    Component.onCompleted: core.fixBlackStripesRange = fixBlackStripesRangeSpinBox.currValue
+                    onValueChanged: core.fixBlackStripesForwardSteps = fixBlackStripesForwardStepsSpinBox.currValue
+                    Component.onCompleted: core.fixBlackStripesForwardSteps = fixBlackStripesForwardStepsSpinBox.currValue
 
                     property int currValue: value
 
                     validator: DoubleValidator {
-                        bottom: Math.min(fixBlackStripesRangeSpinBox.from, fixBlackStripesRangeSpinBox.to)
-                        top:  Math.max(fixBlackStripesRangeSpinBox.from, fixBlackStripesRangeSpinBox.to)
+                        bottom: Math.min(fixBlackStripesForwardStepsSpinBox.from, fixBlackStripesForwardStepsSpinBox.to)
+                        top:  Math.max(fixBlackStripesForwardStepsSpinBox.from, fixBlackStripesForwardStepsSpinBox.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -549,29 +549,28 @@ GridLayout {
                         return Number.fromLocaleString(locale, text)
                     }
 
-                    onCurrValueChanged: core.fixBlackStripesRange = currValue
+                    onCurrValueChanged: core.fixBlackStripesForwardSteps = currValue
 
                     Settings {
-                        property alias fixBlackStripesRangeSpinBox: fixBlackStripesRangeSpinBox.value
+                        property alias fixBlackStripesForwardStepsSpinBox: fixBlackStripesForwardStepsSpinBox.value
                     }
                 }
 
                 SpinBoxCustom {
-                    id: fixBlackStripesBackStepsSpinBox
+                    id: fixBlackStripesBackwardStepsSpinBox
                     from: 0
-                    to: 50
+                    to: 100
                     stepSize: 1
-                    value: 3
-                    visible: false // turn on for debug mode
+                    value: 15
 
-                    onValueChanged: core.fixBlackStripesBackSteps = fixBlackStripesBackStepsSpinBox.currValue
-                    Component.onCompleted: core.fixBlackStripesBackSteps = fixBlackStripesBackStepsSpinBox.currValue
+                    onValueChanged: core.fixBlackStripesBackwardSteps = fixBlackStripesBackwardStepsSpinBox.currValue
+                    Component.onCompleted: core.fixBlackStripesBackwardSteps = fixBlackStripesBackwardStepsSpinBox.currValue
 
                     property int currValue: value
 
                     validator: DoubleValidator {
-                        bottom: Math.min(fixBlackStripesBackStepsSpinBox.from, fixBlackStripesBackStepsSpinBox.to)
-                        top:  Math.max(fixBlackStripesBackStepsSpinBox.from, fixBlackStripesBackStepsSpinBox.to)
+                        bottom: Math.min(fixBlackStripesBackwardStepsSpinBox.from, fixBlackStripesBackwardStepsSpinBox.to)
+                        top:  Math.max(fixBlackStripesBackwardStepsSpinBox.from, fixBlackStripesBackwardStepsSpinBox.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -582,10 +581,10 @@ GridLayout {
                         return Number.fromLocaleString(locale, text)
                     }
 
-                    onCurrValueChanged: core.fixBlackStripesBackSteps = currValue
+                    onCurrValueChanged: core.fixBlackStripesBackwardSteps = currValue
 
                     Settings {
-                        property alias fixBlackStripesBackStepsSpinBox: fixBlackStripesBackStepsSpinBox.value
+                        property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value
                     }
                 }
             }
@@ -595,17 +594,11 @@ GridLayout {
                 property alias rangefinderVisible: rangefinderVisible.checked
                 property alias postProcVisible: bottomTrackVisible.checked
                 property alias ahrsVisible: ahrsVisible.checked
-
                 property alias gridVisible: gridVisible.checked
-
-
                 property alias dopplerBeamVisible: dopplerBeamVisible.checked
                 property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
-
                 property alias horisontalVertical: horisontalVertical.checked
             }
-
-
         }
 
         ParamGroup {

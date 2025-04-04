@@ -92,7 +92,8 @@ SOURCES += \
     tile_downloader.cpp \
     tile_db.cpp \
     map_defs.cpp \
-    hotkeys_manager.cpp
+    hotkeys_manager.cpp \
+    black_stripes_processor.cpp
 
 FLASHER {
 DEFINES += FLASHER
@@ -208,7 +209,8 @@ HEADERS += \
     tile_downloader.h \
     tile_db.h \
     map_defs.h \
-    hotkeys_manager.h
+    hotkeys_manager.h \
+    black_stripes_processor.h
 
 android {
 HEADERS += \

@@ -48,8 +48,8 @@ public:
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
-    Q_PROPERTY(int  fixBlackStripesRange WRITE setFixBlackStripesRange)
-    Q_PROPERTY(int  fixBlackStripesBackSteps WRITE setFixBlackStripesBackSteps)
+    Q_PROPERTY(int  fixBlackStripesForwardSteps WRITE setFixBlackStripesForwardSteps)
+    Q_PROPERTY(int  fixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
     Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
     Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
@@ -98,8 +98,8 @@ public slots:
     void upgradeChanged(int progressStatus);
     void setKlfLogging(bool isLogging);
     void setFixBlackStripesState(bool state);
-    void setFixBlackStripesRange(int val);
-    void setFixBlackStripesBackSteps(int val);
+    void setFixBlackStripesForwardSteps(int val);
+    void setFixBlackStripesBackwardSteps(int val);
     bool getIsKlfLogging();
     void setCsvLogging(bool isLogging);
     bool getIsCsvLogging();
