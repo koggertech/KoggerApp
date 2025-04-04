@@ -566,10 +566,17 @@ void Core::setFixBlackStripesState(bool state)
     }
 }
 
-void Core::setFixBlackStripesRange(int val)
+void Core::setFixBlackStripesForwardSteps(int val)
 {
     if (datasetPtr_) {
-        datasetPtr_->setFixBlackStripesRange(val);
+        datasetPtr_->setFixBlackStripesForwardSteps(val);
+    }
+}
+
+void Core::setFixBlackStripesBackwardSteps(int val)
+{
+    if (datasetPtr_) {
+        datasetPtr_->setFixBlackStripesBackwardSteps(val);
     }
 }
 

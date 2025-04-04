@@ -52,6 +52,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 ### SOURCES
 SOURCES += \
+    src/black_stripes_processor.cpp \
     src/console.cpp \
     src/console_list_model.cpp \
     src/core.cpp \
@@ -140,6 +141,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 ### HEADERS
 HEADERS += \
+    src/black_stripes_processor.h \
     src/console.h \
     src/console_list_model.h \
     src/converter_xtf.h \

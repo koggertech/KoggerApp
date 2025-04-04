@@ -799,15 +799,24 @@ bool Plot2DAim::draw(Canvas &canvas, Dataset *dataset, DatasetCursor cursor)
     QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
     QString text = distanceText;
 
-    int16_t channelId =  cursor.channel2 == CHANNEL_NONE ? cursor.channel1 : cursor_distance <= 0 ? cursor.channel1 : cursor.channel2;
+    int16_t channelId = cursor.channel2 == CHANNEL_NONE ? cursor.channel1 : cursor_distance <= 0 ? cursor.channel1 : cursor.channel2;
+
+    if (channelId != CHANNEL_FIRST) {
+        text += "\n" + QObject::tr("Channel: ") + QString::number(channelId);
+    }
 
     if (cursor.currentEpochIndx != -1) {
+        text += "\n" + QObject::tr("Epoch: ")   + QString::number(cursor.currentEpochIndx);
+
         if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
             if (auto* echogram = ep->chart(channelId); echogram) {
+                //qDebug() << "errs[" << cursor.currentEpochIndx << "]:"<< echogram->chartParameters_.errList;
+                //qDebug() << "size[" << cursor.currentEpochIndx << "]:"<< echogram->amplitude.size();
+                //qDebug() << "RES[" << cursor.currentEpochIndx << "]:" << echogram->resolution;
+
                 if (!echogram->recordParameters_.isNull()) {
                     auto& recParams = echogram->recordParameters_;
                     QString boostStr = recParams.boost ? QObject::tr("ON") : QObject::tr("OFF");
-                    text += "\n" + QObject::tr("Channel: ")          + QString::number(channelId);
                     text += "\n" + QObject::tr("Resolution, mm: ")      + QString::number(recParams.resol);
                     //text += "\n" + QObject::tr("Number of Samples: ") + QString::number(recParams.count);
                     //text += "\n" + QObject::tr("Offset of samples: ")     + QString::number(recParams.offset);

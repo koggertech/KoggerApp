@@ -37,6 +37,8 @@
 #define M_RAD_TO_DEG 57.29577951308232087679f
 #define M_DEG_TO_RAD 0.01745329251994329576f
 
+class BlackStripesProcessor;
+
 typedef struct NED NED;
 typedef struct LLARef LLARef;
 
@@ -527,6 +529,7 @@ public:
         DistProcessing bottomProcessing;
         Position sensorPosition;
         RecordParameters recordParameters_;
+        ChartParameters chartParameters_;
 
         float range() {
             return amplitude.size()*(resolution);
@@ -538,8 +541,9 @@ public:
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
-    void setChart(int16_t channel, QVector<uint8_t> chartData, float resolution, float offset);
-    void setRecParameters(int16_t address, RecordParameters recParams);
+    void setChart(int16_t channelId, QVector<uint8_t> chartData, float resolution, float offset);
+    void setRecParameters(int16_t channelId, const RecordParameters& recParams);
+    void setChartParameters(int16_t channelId, const ChartParameters& chartParams);
     void setDist(int dist);
     void setRangefinder(int channel, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
@@ -898,6 +902,7 @@ public:
     uint8_t getPulse(int16_t channelId) const;
     uint8_t getBoost(int16_t channelId) const;
     uint32_t getSoundSpeed(int16_t channelId) const;
+    ChartParameters getChartParameters(int16_t channelId) const;
 
     Contact contact_; // TODO: private
 
@@ -1003,6 +1008,7 @@ public:
 
     /*methods*/
     Dataset();
+    ~Dataset();
 
     void setState(DatasetState state);
 
@@ -1086,7 +1092,8 @@ public slots:
     void setTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
     void setSoundSpeed(int16_t channel, uint32_t soundSpeed);
     void setFixBlackStripesState(bool state);
-    void setFixBlackStripesRange(int val);
+    void setFixBlackStripesForwardSteps(int val);
+    void setFixBlackStripesBackwardSteps(int val);
     void addChart(ChartParameters, QVector<uint8_t> data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
     void addDist(int dist);
@@ -1156,8 +1163,7 @@ signals:
     void channelsUpdated();
 
 protected:
-    using EthalonVec = QVector<QPair<uint8_t, uint8_t>>;
-    QMap<int16_t, EthalonVec> ethData_; // first - channelId, sec - vec,
+
     int lastEventTimestamp = 0;
     int lastEventId = 0;
     float _lastEncoder = 0;
@@ -1247,8 +1253,8 @@ private:
     BottomTrackParam bottomTrackParam_;
     uint64_t boatTrackValidPosCounter_;
     QMap<int16_t, RecordParameters> usingRecordParameters_;
-    bool fixBlackStripesState_;
-    int fixBlackStripesWrCnt_;
+    BlackStripesProcessor* bSProc_;
+    int lastAddChartEpochIndx_;
 };
 
 #endif // PLOT_CASH_H

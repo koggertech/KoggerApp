@@ -210,7 +210,7 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         U2 sampleResol = proto.read<U2>();
         U2 absOffset = proto.read<U2>();
 
-        if(m_seqOffset == 0 && m_chartSizeIncr != 0) {
+        if((m_seqOffset == 0 && m_chartSizeIncr != 0) || (m_sampleResol != sampleResol || m_absOffset != absOffset)) {
             if(proto.ver() == v0) {
                 memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
                 m_chartSize = m_chartSizeIncr;
@@ -227,15 +227,19 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
                 tempErrList_.clear();
             }
 
-            m_isCompleteChart = true;
-        }
+            m_sampleResol = sampleResolLast_;
+            m_absOffset = absOffsetLast_;
 
-        if(m_seqOffset == 0 || m_sampleResol != sampleResol || m_absOffset != absOffset) {
-            m_sampleResol = sampleResol;
-            m_absOffset = absOffset;
+            m_isCompleteChart = true;
 
             m_chartSizeIncr = 0;
         }
+
+        // if(m_seqOffset == 0 || m_sampleResol != sampleResol || m_absOffset != absOffset) {
+        //     // m_sampleResol = sampleResol;
+        //     // m_absOffset = absOffset;
+        //     m_chartSizeIncr = 0;
+        // }
 
         lossIndex_ = (lossIndex_ + 1) % lossHistory_.size();
 
@@ -269,7 +273,7 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             //return respErrorPayload;
         }
         else { // first frame loss
-            if (m_chartSizeIncr != 0) {
+            if ((m_chartSizeIncr != 0) || (m_sampleResol != sampleResol || m_absOffset != absOffset)) {
                 if(proto.ver() == v0) {
                     memcpy(m_completeChart, m_fillChart, m_chartSizeIncr);
                     m_chartSize = m_chartSizeIncr;
@@ -285,6 +289,10 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
                     tempErrList_.clear();
                     m_chartSize = m_chartSizeIncr / 2;
                 }
+
+                m_sampleResol = sampleResolLast_;
+                m_absOffset = absOffsetLast_;
+
                 m_isCompleteChart = true;
             }
 
@@ -306,6 +314,9 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
                 m_chartSizeIncr = m_seqOffset + part_len;
             }
         }
+
+        sampleResolLast_ = sampleResol;
+        absOffsetLast_ = absOffset;
     }
     else if(proto.ver() == v7) {
         RawData::RawDataHeader header;
