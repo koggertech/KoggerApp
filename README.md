@@ -1,5 +1,4 @@
-<p align="center">
-  <a href="https://github.com/koggertech/KoggerApp/releases">
-    <img src="/resources/images/kogger_app_logo.png" alt="KoggerApp Logo" />
-  </a>
-</p>
+# KoggerApp
+KoggerApp is an open-source GUI
+
+![Screen](/resources/images/settings_nmea.jpg)
