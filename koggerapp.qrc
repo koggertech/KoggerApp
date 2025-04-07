@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/qml">
-        <file>QML/Common/MenuBlockEx.qml</file>
-    </qresource>
-</RCC>

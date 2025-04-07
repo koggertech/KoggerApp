@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>../translations/translation_en.qm</file>
+        <file>../translations/translation_ru.qm</file>
+        <file>../translations/translation_pl.qm</file>
+        <file>fonts/arial.ttf</file>
+        <file>fonts/PTSansCaption-Regular.ttf</file>
+	<file>fonts/Roboto-VariableFont_wdth,wght.ttf</file>
+        <file>version.txt</file>
+    </qresource>
+</RCC>
