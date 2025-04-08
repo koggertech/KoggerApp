@@ -7,6 +7,7 @@ import Qt.labs.settings 1.1
 MenuScroll {
     id: scrollBar
     property int menuWidth: 200
+    property string filePath: devConnection.filePath
 
     Column {
         // width: menuWidth

@@ -225,6 +225,14 @@ ApplicationWindow  {
                 }
                 return;
             }
+            if (fn === "openFile") {
+                core.openLogFile(menuBar.filePath, false, false)
+                return;
+            }
+            if (fn === "closeFile") {
+                core.closeLogFile()
+                return;
+            }
             if (fn === "closeSettings") {
                 menuBar.closeMenus()
                 splitLayer.focus = true

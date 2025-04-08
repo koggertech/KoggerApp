@@ -7,6 +7,7 @@ import Qt.labs.settings 1.1
 ColumnLayout {
     property var dev: null
     property var devList: deviceManagerWrapper.devs
+    property string filePath: pathText.text
 
     Layout.margins: 0
     spacing: 10

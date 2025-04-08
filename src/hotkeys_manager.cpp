@@ -53,6 +53,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="prevTheme"         scanCode="46"                 description="switch the echogram theme to the previous one"/>
     <Hotkey functionName="nextTheme"         scanCode="47"                 description="switch the echogram theme to the next one"/>
     <Hotkey functionName="toggleFullScreen"  scanCode="87"                 description="toggle fullscreen"/>
+    <Hotkey functionName="openFile"          scanCode="68"                 description="open file"/>
+    <Hotkey functionName="closeFile"         scanCode="67"                 description="close file"/>
 </Hotkeys>
 )";
 #endif

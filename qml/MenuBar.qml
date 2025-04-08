@@ -16,6 +16,7 @@ Item {
     property bool is2DHorizontal: appSettings.is2DHorizontal
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
+    property string filePath: devSettings.filePath
 
     signal languageChanged(string langStr)
 
