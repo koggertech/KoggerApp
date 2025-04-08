@@ -23,8 +23,8 @@ void BlackStripesProcessor::update(int16_t channelId, Epoch* epoch, Direction di
         ethalonVector.resize(newDataSize);
     }
 
+    auto& amplitude = epoch->chart(channelId)->amplitude;
     if (epoch->chartAvail(channelId)) {
-        auto& amplitude = epoch->chart(channelId)->amplitude;
         auto chartParameters = epoch->getChartParameters(channelId);
 
         if (dataSize < newDataSize) {
@@ -52,7 +52,6 @@ void BlackStripesProcessor::update(int16_t channelId, Epoch* epoch, Direction di
         epoch->setChartParameters(channelId, chartParameters);
     }
 
-    auto& amplitude = epoch->chart(channelId)->amplitude;
     auto chartParameters = epoch->getChartParameters(channelId);
 
     const auto errorMask = createErrorMask(chartParameters.errList, newDataSize);
@@ -66,7 +65,7 @@ void BlackStripesProcessor::update(int16_t channelId, Epoch* epoch, Direction di
             }
         }
         else {
-            ethalonVector[i] = qMakePair(isForward ? forwardSteps_ : backwardSteps_, amplitude[i]);
+            ethalonVector[i] = qMakePair(isForward ? forwardSteps_ : backwardSteps_, amplitude.at(i));
         }
     }
 
