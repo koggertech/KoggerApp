@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="resources/images/readme_md/main_logo.png" alt="KoggerApp Logo" width="1024">
+  <img src="resources/images/readme_md/kogger_app_logo.png" alt="KoggerApp Logo" width="854">
 </p>
 
 [![Latest Release](https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue)](https://github.com/koggertech/KoggerApp/releases)
@@ -9,14 +9,14 @@
 
 ---
 
-## 🚁 *Key Features*
+### 🚁 *Key Features*
 - Multiple connections of Kogger sonars via serial port or UDP network.
 
 - Autopilot data display (charge level, speed, communication quality)
 
 - Real-time display of highly detailed echograms
 <p align="center">
-<img src="resources/images/readme_md/echogram.jpg" alt="Echogram" width="768">
+<img src="resources/images/readme_md/echogram.jpg" alt="Echogram" width="556">
 </p>
 
 - Depth calculation from received sonar data
@@ -25,12 +25,12 @@
 
 - Calculation of bottom surface by bottom track
 <p align="center">
-<img src="resources/images/readme_md/surface.jpg" alt="3d Surface" width="768">
+<img src="resources/images/readme_md/surface.jpg" alt="3d Surface" width="556">
 </p>
 
 - Real-time calculation of side scan mosaics
 <p align="center">
-<img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="768">
+<img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="556">
 </p>
 
 - Loading and displaying a globe map for georeferencing measurements to the survey location
@@ -39,14 +39,14 @@
 
 - Customization of sonar acquisition parameters (frequency, sound speed, resolution, etc.)
 <p align="center">
-<img src="resources/images/readme_md/sonar_settings.jpg" alt="Sonar settings" width="768">
+<img src="resources/images/readme_md/sonar_settings.jpg" alt="Sonar settings" width="556">
 </p>
 
 - Switching modes of operation for new users and professional researchers.
 
 ---
 
-## 🛠️ *Installation*
+### 🛠️ *Installation*
 You can download the latest release from the [Releases page](https://github.com/koggertech/KoggerApp/releases).
 
 🪟 Windows (x86_64):  
@@ -68,7 +68,7 @@ and run:
 
 ---
 
-## 🧱 *Build Instructions*
+### 🧱 *Build Instructions*
 *KoggerApp* is a cross-platform C++ Qt QML project, built using a .pro file. You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers.
 
 🪟 Windows (x86_64):  
@@ -108,12 +108,12 @@ make -j$(nproc)
 
 ---
 
-## 💻 *Get Involved!*
+### 💻 *Get Involved!*
 KoggerApp is open-source, meaning you have the power to shape it! Whether you're fixing bugs, adding features, or customizing for your specific needs, KoggerApp welcomes contributions from the community.
 
 ---
 
-## 🔗 *Useful links*
+### 🔗 *Useful links*
 - 🌐 [Official Website](https://kogger.tech/)
 
 ---
@@ -121,5 +121,5 @@ KoggerApp is open-source, meaning you have the power to shape it! Whether you're
 Unlock next-level insights in hydrography and survey with KoggerApp.
 
 <p align="center">
-<img src="resources/images/readme_md/kogger_logo.png" alt="kogger logo" width="1024">
+<img src="resources/images/readme_md/kogger_logo.png" alt="kogger logo" width="670">
 </p>
