@@ -583,7 +583,7 @@ ColumnLayout {
                             implicitWidth: 200
                             from: 1
                             to: 100
-                            stepSize: 1
+                            stepSize: 5
                             value: 10
                             editable: false
 
