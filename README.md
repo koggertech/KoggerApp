@@ -10,10 +10,39 @@
 ---
 
 ## 🚁 *Key Features*
-- Echogram display and 3D mosaic calculation on the map:
+- Multiple connections of Kogger sonars via serial port or UDP network.
+
+- Autopilot data display (charge level, speed, communication quality)
+
+- Real-time display of highly detailed echograms
+<p align="center">
+<img src="resources/images/readme_md/echogram.jpg" alt="3d Surface" width="500">
+</p>
+
+- Depth calculation from received sonar data
+
+- Manual editing of measurement data (depth, bottom surface, etc.)
+
+- Calculation of bottom surface by bottom track
+<p align="center">
+<img src="resources/images/readme_md/surface.jpg" alt="3d Surface" width="500">
+</p>
+
+- Real-time calculation of side scan mosaics
 <p align="center">
 <img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="500">
 </p>
+
+- Loading and displaying a globe map for georeferencing measurements to the survey location
+
+- Convert bottom track, bottom surface to .csv file for importing measurements into other applications
+
+- Customization of sonar acquisition parameters (frequency, sound speed, resolution, etc.)
+<p align="center">
+<img src="resources/images/readme_md/sonar_settings.jpg" alt="sonar settings" width="500">
+</p>
+
+- Switching modes of operation for new users and professional researchers.
 
 ---
 
