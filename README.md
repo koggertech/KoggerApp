@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="resources/images/readme_md/main_logo.png" width="1024" alt="KoggerApp Logo">
+  <img src="resources/images/readme_md/main_logo.png" alt="KoggerApp Logo" width="1024">
 </p>
 
 [![Latest Release](https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue)](https://github.com/koggertech/KoggerApp/releases)
@@ -10,7 +10,8 @@
 ---
 
 ## 🚁 *Key Features*
-<!-- Add bullet points or descriptions of features here -->
+- Echogram display and 3D mosaic calculation on the map:
+<img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="800">
 
 ---
 
