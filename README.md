@@ -1,23 +1,25 @@
-<img src="resources/images/readme_md/main_logo.png" height="480" alt="KoggerApp Logo" style="pointer-events:none;">
+<p align="center">
+  <img src="resources/images/readme_md/main_logo.png" width="1024" alt="KoggerApp Logo">
+</p>
 
-[![GPLv3 License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://choosealicense.com/licenses/gpl-3.0/)
 [![Latest Release](https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue)](https://github.com/koggertech/KoggerApp/releases)
+[![GPLv3 License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://choosealicense.com/licenses/gpl-3.0/)
 
 *KoggerApp* is a full-featured, easy-to-use, and free open-source software (FOSS) solution designed for hydrographic and survey applications. Whether you're a beginner or an experienced professional, KoggerApp delivers highly detailed visualization of sonar data collected from Kogger devices. The application is cross-platform and available for Windows, Android, and Linux.
 
 ---
 
-### 🚁 *Key Features*
+## 🚁 *Key Features*
 <!-- Add bullet points or descriptions of features here -->
 
 ---
 
-### 🛠️ *Installation*
+## 🛠️ *Installation*
 You can download the latest release from the [Releases page](https://github.com/koggertech/KoggerApp/releases).
 
 🪟 Windows (x86_64):  
- — Portable: Download .zip. Extract and run "KoggerApp.exe".  
- — Installer: Download and launch the installer (Optionally associates .klf files with the app during setup).
+- Portable: Download .zip. Extract and run "KoggerApp.exe".  
+- Installer: Download and launch the installer (Optionally associates .klf files with the app during setup).
 
 🤖 Android (ARMv7, ARMv8):  
 Download and install the .apk file. You may need to enable "Install from unknown sources" in your device settings.
@@ -26,12 +28,15 @@ Download and install the .apk file. You may need to enable "Install from unknown
 Download the .AppImage file and make it executable:
 ```bash
 chmod +x KoggerApp_version_linux_x86_64.AppImage
+```
+and run:
+```bash
 ./KoggerApp_version_linux_x86_64.AppImage
 ```
 
 ---
 
-### 🧱 *Build Instructions*
+## 🧱 *Build Instructions*
 *KoggerApp* is a cross-platform C++ Qt QML project, built using a .pro file. You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers.
 
 🪟 Windows (x86_64):  
@@ -71,11 +76,12 @@ make -j$(nproc)
 
 ---
 
-### 💻 *Get Involved!*
+## 💻 *Get Involved!*
 KoggerApp is open-source, meaning you have the power to shape it! Whether you're fixing bugs, adding features, or customizing for your specific needs, KoggerApp welcomes contributions from the community.
 
 ---
 
+## 🔗 *Useful links*
 - 🌐 [Official Website](https://kogger.tech/)
 
 ---
