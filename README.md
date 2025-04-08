@@ -11,7 +11,9 @@
 
 ## 🚁 *Key Features*
 - Echogram display and 3D mosaic calculation on the map:
-<img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="800">
+<p align="center">
+<img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="500">
+</p>
 
 ---
 
