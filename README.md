@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="resources/images/readme_md/kogger_app_logo.png" alt="KoggerApp Logo" width="854">
+  <img src="resources/images/readme_md/kogger_app_logo.png" alt="KoggerApp Logo" width="670">
 </p>
 
 [![Latest Release](https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue)](https://github.com/koggertech/KoggerApp/releases)
