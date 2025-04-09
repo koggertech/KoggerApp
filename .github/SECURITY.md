@@ -14,7 +14,7 @@ The security of KoggerApp is of utmost importance. If you believe you've found a
 
 Upon receipt of a security vulnerability report:
 
-1. We will confirm receipt of your report and typically respond within 48 hours.
+1. We will confirm receipt of your report.
 2. We will then work to validate and understand the nature of the reported vulnerability.
 3. Once validated, we will provide feedback regarding the reported issue and communicate our plans for its resolution.
 4. We aim to keep you informed about our progress as we work towards resolving the vulnerability.

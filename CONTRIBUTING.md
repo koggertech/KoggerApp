@@ -4,12 +4,12 @@ Thank you for considering a contribution to KoggerApp. We appreciate all contrib
 
 ## Code of Conduct
 
-Please be reminded that as a participant in this project, it is imperative that you adhere to our [Code of Conduct](https://github.com/koggertech/KoggerApp/blob/main/CODE_OF_CONDUCT.md). Kindly take the time to thoroughly review and comply with its guidelines. Thank you.
+Please be reminded that as a participant in this project, it is imperative that you adhere to our [Code of Conduct](https://github.com/koggertech/KoggerApp/blob/master/.github/CODE_OF_CONDUCT.md). Kindly take the time to thoroughly review and comply with its guidelines. Thank you.
 
 ## Getting Started
 
 1. Fork the repository on GitHub.
-2. Clone your fork locally: `git clone git@github.com:koggertech/KoggerApp.git`
+2. Clone your fork locally: `git clone https://github.com/koggertech/KoggerApp.git`
 3. Create a new branch for your work: `git checkout -b your-feature-branch-name`
 
 ## Making Changes
