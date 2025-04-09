@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  <span style="display:inline-block;">
-    <a href="https://github.com/koggertech/KoggerApp/releases">
-      <img src="https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue" alt="Latest Release">
+  <span style="display:inline-block; text-decoration:none;">
+    <a href="https://github.com/koggertech/KoggerApp/releases" style="text-decoration:none;">
+      <img src="https://img.shields.io/github/v/release/koggertech/KoggerApp?label=release&color=blue" alt="Latest Release">
     </a>
-  </span>
-  <span style="display:inline-block;">
-    <a href="https://choosealicense.com/licenses/gpl-3.0/">
+  </span>&nbsp;
+  <span style="display:inline-block; text-decoration:none;">
+    <a href="https://choosealicense.com/licenses/gpl-3.0/" style="text-decoration:none;">
       <img src="https://img.shields.io/badge/License-GPLv3-green.svg" alt="GPLv3 License">
     </a>
   </span>
