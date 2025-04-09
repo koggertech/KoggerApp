@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/koggertech/KoggerApp/releases">
     <img src="https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue" alt="Latest Release">
-  </a>
+  </a>&nbsp;
   <a href="https://choosealicense.com/licenses/gpl-3.0/">
     <img src="https://img.shields.io/badge/License-GPLv3-green.svg" alt="GPLv3 License">
   </a>
