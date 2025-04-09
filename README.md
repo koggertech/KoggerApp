@@ -3,16 +3,9 @@
 </p>
 
 <p align="center">
-  <span style="display:inline-block; text-decoration:none;">
     <a href="https://github.com/koggertech/KoggerApp/releases" style="text-decoration:none;">
       <img src="https://img.shields.io/github/v/release/koggertech/KoggerApp?label=release&color=blue" alt="Latest Release">
     </a>
-  </span>&nbsp;
-  <span style="display:inline-block; text-decoration:none;">
-    <a href="https://choosealicense.com/licenses/gpl-3.0/" style="text-decoration:none;">
-      <img src="https://img.shields.io/badge/License-GPLv3-green.svg" alt="GPLv3 License">
-    </a>
-  </span>
 </p>
 
 *KoggerApp* is a full-featured, easy-to-use, and free open-source software (FOSS) solution designed for hydrographic and survey applications. Whether you're a beginner or an experienced professional, KoggerApp delivers highly detailed visualization of sonar data collected from Kogger devices. The application is cross-platform and available for Windows, Android, and Linux.
