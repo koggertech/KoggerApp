@@ -16,7 +16,7 @@
 
 - Real-time display of highly detailed echograms
 <p align="center">
-<img src="resources/images/readme_md/echogram.jpg" alt="Echogram" width="556">
+<img src="resources/images/readme_md/echogram.jpg" alt="Echogram" width="768">
 </p>
 
 - Depth calculation from received sonar data
@@ -25,12 +25,12 @@
 
 - Calculation of bottom surface by bottom track
 <p align="center">
-<img src="resources/images/readme_md/surface.jpg" alt="3d Surface" width="556">
+<img src="resources/images/readme_md/surface.jpg" alt="3d Surface" width="768">
 </p>
 
 - Real-time calculation of side scan mosaics
 <p align="center">
-<img src="resources/gifs/readme_md/echogram_and_mosaic.gif" alt="Echogram and Mosaic Preview" width="556">
+<img src="resources/webp/readme_md/echogram_and_mosaic.webp" alt="Echogram and Mosaic Preview" width="768">
 </p>
 
 - Loading and displaying a globe map for georeferencing measurements to the survey location
@@ -39,7 +39,7 @@
 
 - Customization of sonar acquisition parameters (frequency, sound speed, resolution, etc.)
 <p align="center">
-<img src="resources/images/readme_md/sonar_settings.jpg" alt="Sonar settings" width="556">
+<img src="resources/images/readme_md/sonar_settings.jpg" alt="Sonar settings" width="768">
 </p>
 
 - Switching modes of operation for new users and professional researchers.
