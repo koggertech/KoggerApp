@@ -2,8 +2,14 @@
   <img src="resources/images/readme_md/kogger_app_logo.png" alt="KoggerApp Logo" width="670">
 </p>
 
-[![Latest Release](https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue)](https://github.com/koggertech/KoggerApp/releases)
-[![GPLv3 License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://choosealicense.com/licenses/gpl-3.0/)
+<p align="center">
+  <a href="https://github.com/koggertech/KoggerApp/releases">
+    <img src="https://img.shields.io/github/v/release/koggertech/KoggerApp?color=blue" alt="Latest Release">
+  </a>
+  <a href="https://choosealicense.com/licenses/gpl-3.0/">
+    <img src="https://img.shields.io/badge/License-GPLv3-green.svg" alt="GPLv3 License">
+  </a>
+</p>
 
 *KoggerApp* is a full-featured, easy-to-use, and free open-source software (FOSS) solution designed for hydrographic and survey applications. Whether you're a beginner or an experienced professional, KoggerApp delivers highly detailed visualization of sonar data collected from Kogger devices. The application is cross-platform and available for Windows, Android, and Linux.
 
@@ -12,32 +18,35 @@
 ### 🚁 *Key Features*
 - Multiple connections of Kogger sonars via serial port or UDP network.
 
-- Autopilot data display (charge level, speed, communication quality)
+- Autopilot data display (charge level, speed, communication quality).
 
-- Real-time display of highly detailed echograms
+- Real-time display of highly detailed echogram.
 <p align="center">
-<img src="resources/images/readme_md/echogram.jpg" alt="Echogram" width="768">
+<img src="resources/webp/readme_md/echogram.webp" alt="Echogram" width="768">
+<img src="resources/images/readme_md/echogram.jpg" alt="Echogram_screen" width="768">
 </p>
 
-- Depth calculation from received sonar data
+- Depth calculation from received sonar data.
 
-- Manual editing of measurement data (depth, bottom surface, etc.)
+- Manual editing of measurement data (depth, bottom surface, etc.).
 
-- Calculation of bottom surface by bottom track
+- Calculation of bottom surface by bottom track.
 <p align="center">
-<img src="resources/webp/readme_md/surface.webp" alt="3d Surface" width="768">
+<img src="resources/webp/readme_md/surface.webp" alt="3d_Surface" width="768">
+<img src="resources/images/readme_md/surface.jpg" alt="3d_Surface_screem" width="768">
 </p>
 
-- Real-time calculation of side scan mosaics
+- Real-time calculation of side scan mosaics.
 <p align="center">
-<img src="resources/webp/readme_md/echogram_and_mosaic.webp" alt="Echogram and Mosaic Preview" width="768">
+<img src="resources/webp/readme_md/echogram_and_mosaic.webp" alt="Echogram_and_Mosaic_preview" width="768">
+<img src="resources/images/readme_md/mosaic.jpg" alt="Mosaic_preview" width="768">
 </p>
 
-- Loading and displaying a globe map for georeferencing measurements to the survey location
+- Loading and displaying a globe map for georeferencing measurements to the survey location.
 
-- Convert bottom track, bottom surface to .csv file for importing measurements into other applications
+- Convert bottom track, bottom surface to .csv file for importing measurements into other applications.
 
-- Customization of sonar acquisition parameters (frequency, sound speed, resolution, etc.)
+- Customization of sonar acquisition parameters (frequency, sound speed, resolution, etc.).
 <p align="center">
 <img src="resources/images/readme_md/sonar_settings.jpg" alt="Sonar settings" width="768">
 </p>
