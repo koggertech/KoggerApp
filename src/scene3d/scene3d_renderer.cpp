@@ -143,8 +143,9 @@ void GraphicsScene3dRenderer::drawObjects()
 
     bool isOut = m_camera.getIsFarAwayFromOriginLla();
 
-    glEnable(GL_DEPTH_TEST);
     mapViewRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+
+    glEnable(GL_DEPTH_TEST);
     if (!isOut) {
         m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
         imageViewRenderImpl_.render(this, m_projection * view * m_model, m_shaderProgramMap);
@@ -158,16 +159,13 @@ void GraphicsScene3dRenderer::drawObjects()
         return;
     }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
-    glDisable(GL_BLEND);
 
     // navigation arrow
-    glEnable(GL_DEPTH_TEST);
     {
         QMatrix4x4 nModel;
         nModel.setToIdentity();
@@ -191,7 +189,6 @@ void GraphicsScene3dRenderer::drawObjects()
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glViewport(viewport[2]-100,0,100,100);
-    glDisable(GL_DEPTH_TEST);
 
     QMatrix4x4 axesView;
     QMatrix4x4 axesProjection;
