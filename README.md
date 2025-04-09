@@ -25,7 +25,7 @@
 
 - Calculation of bottom surface by bottom track
 <p align="center">
-<img src="resources/images/readme_md/surface.jpg" alt="3d Surface" width="768">
+<img src="resources/webp/readme_md/surface.webp" alt="3d Surface" width="768">
 </p>
 
 - Real-time calculation of side scan mosaics
