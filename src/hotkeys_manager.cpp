@@ -55,6 +55,9 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="toggleFullScreen"  scanCode="87"                 description="toggle fullscreen"/>
     <Hotkey functionName="openFile"          scanCode="68"                 description="open file"/>
     <Hotkey functionName="closeFile"         scanCode="67"                 description="close file"/>
+    <Hotkey functionName="updateBottomTrack" scanCode="64"                 description="update bottom track"/>
+    <Hotkey functionName="updateSurface"     scanCode="65"                 description="update surface"/>
+    <Hotkey functionName="updateMosaic"      scanCode="66"                 description="update mosaic"/>
 </Hotkeys>
 )";
 #endif

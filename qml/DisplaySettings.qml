@@ -14,6 +14,10 @@ GridLayout {
 
     signal languageChanged(string langStr)
 
+    function updateBottomTrack() {
+        updateBottomTrackButton.clicked()
+    }
+
     ColumnLayout {
         id: columnItem
         spacing: 24
@@ -1035,9 +1039,12 @@ GridLayout {
 
             RowLayout {
                 CButton {
+                    id: updateBottomTrackButton
                     text: qsTr("Processing")
                     Layout.fillWidth: true
-                    onClicked: bottomTrackProcessingGroup.updateProcessing()
+                    onClicked: {
+                        bottomTrackProcessingGroup.updateProcessing()
+                    }
                 }
             }
         }

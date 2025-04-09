@@ -13,6 +13,10 @@ MenuScroll {
 
     signal languageChanged(string langStr)
 
+    function updateBottomTrack() {
+        displaySettings.updateBottomTrack()
+    }
+
     ColumnLayout {
         MenuFrame {
             DisplaySettings {

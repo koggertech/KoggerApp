@@ -6,6 +6,15 @@ import QtQuick.Dialogs 1.2
 
 
 ColumnLayout {
+
+    function updateSurface() {
+        updateSurfaceButton.clicked();
+    }
+
+    function updateMosaic() {
+        updateMosaicButton.clicked();
+    }
+
     Layout.alignment: Qt.AlignHCenter
 
     // surface extra settings
@@ -204,6 +213,7 @@ ColumnLayout {
             }
 
             CButton {
+                id: updateSurfaceButton
                 text: qsTr("Update")
                 Layout.fillWidth: true
                 icon.source: "qrc:/icons/ui/refresh.svg"
@@ -726,6 +736,7 @@ ColumnLayout {
                 }
 
                 CButton {
+                    id: updateMosaicButton
                     text: qsTr("Update")
                     Layout.fillWidth: true
                     Layout.preferredWidth: 200

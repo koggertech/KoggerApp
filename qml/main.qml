@@ -233,6 +233,15 @@ ApplicationWindow  {
                 core.closeLogFile()
                 return;
             }
+            if (fn === "updateBottomTrack") {
+                menuBar.updateBottomTrack()
+            }
+            if (fn === "updateSurface") {
+                scene3DToolbar.updateSurface()
+            }
+            if (fn === "updateMosaic") {
+                scene3DToolbar.updateMosaic()
+            }
             if (fn === "closeSettings") {
                 menuBar.closeMenus()
                 splitLayer.focus = true

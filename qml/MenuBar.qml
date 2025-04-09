@@ -20,6 +20,10 @@ Item {
 
     signal languageChanged(string langStr)
 
+    function updateBottomTrack() {
+        appSettings.updateBottomTrack()
+    }
+
     function clickConnections() {
         itemChangeActive(menuSettings)
     }
