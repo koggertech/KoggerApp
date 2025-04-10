@@ -84,7 +84,7 @@ ColumnLayout {
                             CCombo {
                                 id: baudrateCombo
                                 implicitWidth: 150
-                                model: [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
+                                model: linkManagerWrapper.baudrateModel
                                 currentIndex: 7
                                 displayText: Baudrate
                                 visible: LinkType === 1

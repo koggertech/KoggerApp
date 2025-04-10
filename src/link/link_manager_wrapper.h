@@ -16,6 +16,7 @@ class LinkManagerWrapper : public QObject // wrapper for LinkManager in main thr
     Q_OBJECT
 public:
     Q_PROPERTY(LinkListModel* linkListModel READ getModelPtr NOTIFY modelChanged)
+     Q_PROPERTY(QVariant baudrateModel READ baudrateModel CONSTANT)
 
     /*methods*/
     LinkManagerWrapper(QObject* parent);
@@ -25,6 +26,7 @@ public:
     LinkManager* getWorker();
     void closeOpenedLinks();
     void openClosedLinks();
+    QVariant baudrateModel() const;
 
 public slots:
 
@@ -85,4 +87,5 @@ private:
     std::unique_ptr<LinkManager> workerObject_;
     LinkListModel model_;
     QList<QPair<QUuid, LinkType>> forceClosedLinks_;
+    QList<uint32_t> baudrates_;
 };
