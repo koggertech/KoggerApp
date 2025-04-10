@@ -37,6 +37,7 @@
 <p align="center">
 <img src="resources/webp/readme_md/echogram_and_mosaic.webp" alt="Echogram_and_Mosaic_preview" width="768">
 <img src="resources/images/readme_md/mosaic.jpg" alt="Mosaic_preview" width="768">
+<img src="resources/images/readme_md/mosaic_2.jpg" alt="Mosaic_preview_2" width="768">
 </p>
 
 - Loading and displaying a globe map for georeferencing measurements to the survey location.
