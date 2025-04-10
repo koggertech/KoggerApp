@@ -161,7 +161,8 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
                            linkPtr->getDestinationPort(),
                            linkPtr->getIsPinned(),
                            linkPtr->getIsHided(),
-                           linkPtr->getIsNotAvailable());
+                           linkPtr->getIsNotAvailable(),
+                           linkPtr->getAutoSpeedSelection());
 }
 
 void LinkManager::exportPinnedLinksToXML()
@@ -203,6 +204,7 @@ void LinkManager::exportPinnedLinksToXML()
             xmlWriter.writeTextElement("is_hided", QVariant(static_cast<bool>(itm->getIsHided())).toString());
             xmlWriter.writeTextElement("is_not_available", QVariant(static_cast<bool>(itm->getIsNotAvailable())).toString());
             xmlWriter.writeTextElement("connection_status", QVariant(static_cast<bool>(itm->getConnectionStatus())).toString());
+            xmlWriter.writeTextElement("auto_speed_selection", QVariant(static_cast<bool>(itm->getAutoSpeedSelection())).toString());
             xmlWriter.writeEndElement();
         }
     }
@@ -297,6 +299,9 @@ void LinkManager::importPinnedLinksFromXML()
                         }
                         else if (xmlReader.name().toString() == "is_not_available") {
                             link->setIsNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                        }
+                        else if (xmlReader.name().toString() == "auto_speed_selection") {
+                            link->setAutoSpeedSelection(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
                         }
                     }
                     xmlReader.readNext();
@@ -486,6 +491,19 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
+
+        //doEmitAppendModifyModel(linkPtr); // why not?
+        if (linkPtr->getIsPinned())
+            exportPinnedLinksToXML();
+    }
+}
+
+void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setAutoSpeedSelection(state);
 
         //doEmitAppendModifyModel(linkPtr); // why not?
         if (linkPtr->getIsPinned())

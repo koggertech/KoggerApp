@@ -16,6 +16,7 @@ class LinkManagerWrapper : public QObject // wrapper for LinkManager in main thr
     Q_OBJECT
 public:
     Q_PROPERTY(LinkListModel* linkListModel READ getModelPtr NOTIFY modelChanged)
+     Q_PROPERTY(QVariant baudrateModel READ baudrateModel CONSTANT)
 
     /*methods*/
     LinkManagerWrapper(QObject* parent);
@@ -25,6 +26,7 @@ public:
     LinkManager* getWorker();
     void closeOpenedLinks();
     void openClosedLinks();
+    QVariant baudrateModel() const;
 
 public slots:
 
@@ -46,7 +48,8 @@ public slots:
     void deleteLink(QUuid uuid);
     void updateBaudrate(QUuid uuid, int baudrate);
     void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+                               LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
+                               bool autoSpeedSelection);
     void deleteModelData(QUuid uuid);
 
 signals:
@@ -70,6 +73,7 @@ signals:
     void sendDeleteLink(QUuid uuid);
     void sendUpdateBaudrate(QUuid uuid, int baudrate);
     void sendUpdateAddress(QUuid uuid, QString address);
+    void sendAutoSpeedSelection(QUuid uuid, bool state);
     void sendUpdateSourcePort(QUuid uuid, int sourcePort);
     void sendUpdateDestinationPort(QUuid uuid, int destinationPort);
     void sendUpdatePinnedState(QUuid uuid, bool state);
@@ -85,4 +89,5 @@ private:
     std::unique_ptr<LinkManager> workerObject_;
     LinkListModel model_;
     QList<QPair<QUuid, LinkType>> forceClosedLinks_;
+    QList<uint32_t> baudrates_;
 };

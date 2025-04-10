@@ -16,7 +16,8 @@ Link::Link() :
     isHided_(false),
     isNotAvailable_(false),
     isProxy_(false),
-    isForcedStopped_(false)
+    isForcedStopped_(false),
+    autoSpeedSelection_(false)
 {
     frame_.resetComplete();
 }
@@ -268,6 +269,11 @@ void Link::setIsForceStopped(bool isForcedStopped)
     isForcedStopped_ = isForcedStopped;
 }
 
+void Link::setAutoSpeedSelection(bool autoSpeedSelection)
+{
+    autoSpeedSelection_ = autoSpeedSelection;
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -344,6 +350,11 @@ bool Link::getIsProxy() const
 bool Link::getIsForceStopped() const
 {
     return isForcedStopped_;
+}
+
+bool Link::getAutoSpeedSelection() const
+{
+    return autoSpeedSelection_;
 }
 
 // #ifdef MOTOR
