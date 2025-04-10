@@ -201,7 +201,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
     navigationArrow_->clearData();
-    usblView_->clearData();
+    usblView_->clearTracks();
     m_bounds = Cube();
 
     //setMapView();
