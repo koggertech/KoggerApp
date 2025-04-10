@@ -149,11 +149,9 @@ ColumnLayout {
 
                     CCheck {
                         visible: LinkType == 1
-                        Layout.fillWidth: true
-                        text: "Auto"
+                        text: "auto"
                         checked: AutoSpeedSelection
-                        implicitWidth: theme.controlHeight
-
+                        implicitWidth: 60 * theme.resCoeff
                         onToggled: {
                             linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
                         }
