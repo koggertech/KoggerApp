@@ -48,7 +48,8 @@ public slots:
     void deleteLink(QUuid uuid);
     void updateBaudrate(QUuid uuid, int baudrate);
     void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+                               LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
+                               bool autoSpeedSelection);
     void deleteModelData(QUuid uuid);
 
 signals:
@@ -72,6 +73,7 @@ signals:
     void sendDeleteLink(QUuid uuid);
     void sendUpdateBaudrate(QUuid uuid, int baudrate);
     void sendUpdateAddress(QUuid uuid, QString address);
+    void sendAutoSpeedSelection(QUuid uuid, bool state);
     void sendUpdateSourcePort(QUuid uuid, int sourcePort);
     void sendUpdateDestinationPort(QUuid uuid, int destinationPort);
     void sendUpdatePinnedState(QUuid uuid, bool state);

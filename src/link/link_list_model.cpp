@@ -60,7 +60,8 @@ int LinkListModel::getSize() const
 }
 
 void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                             ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
+                                   ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
+                                   bool autoSpeedSelection)
 {
     if (isHided)
         return;
@@ -84,6 +85,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlT
         vectors_[LinkListModel::IsPinned].append(isPinned);
         vectors_[LinkListModel::IsHided].append(isHided);
         vectors_[LinkListModel::IsNotAvailable].append(isNotAvailable);
+        vectors_[LinkListModel::AutoSpeedSelection].append(autoSpeedSelection);
 
         ++size_;
         endInsertRows();
@@ -104,6 +106,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlT
         vectors_[LinkListModel::IsPinned][line] = isPinned;
         vectors_[LinkListModel::IsHided][line] = isHided;
         vectors_[LinkListModel::IsNotAvailable][line] = isNotAvailable;
+        vectors_[LinkListModel::AutoSpeedSelection][line] = autoSpeedSelection;
 
         emit dataChanged(index(line, 0), index(line, 0));
     }
@@ -129,6 +132,7 @@ void LinkListModel::doRemove(QUuid uuid)
         vectors_[LinkListModel::IsPinned].erase(vectors_[LinkListModel::IsPinned].begin() + line);
         vectors_[LinkListModel::IsHided].erase(vectors_[LinkListModel::IsHided].begin() + line);
         vectors_[LinkListModel::IsNotAvailable].erase(vectors_[LinkListModel::IsNotAvailable].begin() + line);
+        vectors_[LinkListModel::AutoSpeedSelection].erase(vectors_[LinkListModel::AutoSpeedSelection].begin() + line);
 
         index_.remove(uuid);
         for (auto it = index_.begin(); it != index_.end(); ++it) {

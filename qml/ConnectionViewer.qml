@@ -151,9 +151,11 @@ ColumnLayout {
                         visible: LinkType == 1
                         Layout.fillWidth: true
                         text: "Auto"
+                        checked: AutoSpeedSelection
                         implicitWidth: theme.controlHeight
 
                         onToggled: {
+                            linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
                         }
                     }
 

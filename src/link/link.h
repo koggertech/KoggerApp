@@ -72,6 +72,7 @@ public:
     void setIsNotAvailable(bool isNotAvailable);
     void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
+    void setAutoSpeedSelection(bool autoSpeedSelection);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     ControlType getControlType() const;
@@ -87,6 +88,7 @@ public:
     bool        getIsNotAvailable() const;
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
+    bool        getAutoSpeedSelection() const;
 
 // #ifdef MOTOR
     void        setAttribute(int attribute) { attribute_ = attribute; }
@@ -143,6 +145,8 @@ private:
 // #ifdef MOTOR
 //     bool isMotorDevice_ = false;
 // #endif
+
+    bool autoSpeedSelection_;
 
 private slots:
     void readyRead();
