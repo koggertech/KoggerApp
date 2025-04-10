@@ -148,10 +148,18 @@ ColumnLayout {
                     }
 
                     CCheck {
+                        id: autoSpeedCheckBox
                         visible: LinkType == 1
                         text: "auto"
                         checked: AutoSpeedSelection
                         implicitWidth: 60 * theme.resCoeff
+
+                        onCheckedChanged: {
+                            if (!checked) {
+                                linkManagerWrapper.sendAutoSpeedSelection(Uuid, false)
+                            }
+                        }
+
                         onToggled: {
                             linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
                         }
@@ -172,6 +180,7 @@ ColumnLayout {
                             if (LinkType == 1 && !isStartup) {
                                 console.info("baudrateCombo: onCurrentTextChanged: currentText: " + Number(baudrateCombo.currentText))
                                 linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                                autoSpeedCheckBox.checked = false
                             }
                             isStartup = false
                         }
