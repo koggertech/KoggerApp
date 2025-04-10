@@ -12,7 +12,7 @@
 
 ---
 
-### 🚁 *Key Features*
+### 🚤 *Key Features*
 - Multiple connections of Kogger sonars via serial port or UDP network.
 
 - Autopilot data display (battery level, speed, communication quality).
