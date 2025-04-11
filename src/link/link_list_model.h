@@ -12,6 +12,7 @@ public:
     enum Roles {
         Uuid,
         ConnectionStatus,
+        ReceivesData,
         ControlType,
         PortName,
         Baudrate,
@@ -42,7 +43,7 @@ private:
     Q_DISABLE_COPY(LinkListModel)
 
     /*methods*/
-    void doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+    void doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                   ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection);
     void doRemove(QUuid uuid);
 
@@ -50,6 +51,7 @@ private:
     QHash<int, QByteArray> roleNames_ {
         {{LinkListModel::Uuid},              {"Uuid"}},
         {{LinkListModel::ConnectionStatus},  {"ConnectionStatus"}},
+        {{LinkListModel::ReceivesData},      {"ReceivesData"}},
         {{LinkListModel::ControlType},       {"ControlType"}},
         {{LinkListModel::PortName},          {"PortName"}},
         {{LinkListModel::Baudrate},          {"Baudrate"}},
@@ -68,7 +70,7 @@ private:
     int size_;
 
 signals:
-    void appendModifyEvent(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+    void appendModifyEvent(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                      ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection);
     void removeEvent(QUuid uuid);
 };

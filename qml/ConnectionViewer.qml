@@ -43,7 +43,7 @@ ColumnLayout {
                     anchors.leftMargin: 0
                     anchors.rightMargin: 0
                     // anchors.verticalCenter: parent
-                    color: ConnectionStatus ? "#005000" : IsNotAvailable ? "#500000" : theme.controlBackColor
+                    color: ConnectionStatus ? (ReceivesData ? "#005000" : "#505000") : IsNotAvailable ? "#500000" : theme.controlBackColor
                     border.width: 0
                     border.color: theme.controlBorderColor
                     radius: 2
@@ -341,7 +341,7 @@ ColumnLayout {
                     CButton {
                         Layout.alignment: Qt.AlignRight
                         text: ConnectionStatus ? qsTr("Close") : qsTr("Open")
-                        backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
+                        backColor: ConnectionStatus ? (ReceivesData ? "green" : "#adad00") : theme.controlSolidBackColor
                         borderRadius: 2
 
                         onClicked: {

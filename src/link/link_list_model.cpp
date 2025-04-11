@@ -59,7 +59,7 @@ int LinkListModel::getSize() const
     return size_;
 }
 
-void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
+void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
                                    ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
                                    bool autoSpeedSelection)
 {
@@ -74,6 +74,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlT
 
         vectors_[LinkListModel::Uuid].append(uuid);
         vectors_[LinkListModel::ConnectionStatus].append(connectionStatus);
+        vectors_[LinkListModel::ReceivesData].append(receivesData);
         vectors_[LinkListModel::ControlType].append(controlType);
         vectors_[LinkListModel::PortName].append(portName);
         vectors_[LinkListModel::Baudrate].append(baudrate);
@@ -95,6 +96,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, ::ControlT
 
         vectors_[LinkListModel::Uuid][line] = uuid;
         vectors_[LinkListModel::ConnectionStatus][line] = connectionStatus;
+        vectors_[LinkListModel::ReceivesData][line] = receivesData;
         vectors_[LinkListModel::ControlType][line] = controlType;
         vectors_[LinkListModel::PortName][line] = portName;
         vectors_[LinkListModel::Baudrate][line] = baudrate;
@@ -121,6 +123,7 @@ void LinkListModel::doRemove(QUuid uuid)
 
         vectors_[LinkListModel::Uuid].erase(vectors_[LinkListModel::Uuid].begin() + line);
         vectors_[LinkListModel::ConnectionStatus].erase(vectors_[LinkListModel::ConnectionStatus].begin() + line);
+        vectors_[LinkListModel::ReceivesData].erase(vectors_[LinkListModel::ReceivesData].begin() + line);
         vectors_[LinkListModel::ControlType].erase(vectors_[LinkListModel::ControlType].begin() + line);
         vectors_[LinkListModel::PortName].erase(vectors_[LinkListModel::PortName].begin() + line);
         vectors_[LinkListModel::Baudrate].erase(vectors_[LinkListModel::Baudrate].begin() + line);

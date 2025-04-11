@@ -16,7 +16,7 @@ class LinkManagerWrapper : public QObject // wrapper for LinkManager in main thr
     Q_OBJECT
 public:
     Q_PROPERTY(LinkListModel* linkListModel READ getModelPtr NOTIFY modelChanged)
-     Q_PROPERTY(QVariant baudrateModel READ baudrateModel CONSTANT)
+    Q_PROPERTY(QVariant baudrateModel READ baudrateModel CONSTANT)
 
     /*methods*/
     LinkManagerWrapper(QObject* parent);
@@ -47,7 +47,7 @@ public slots:
     void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);
     void updateBaudrate(QUuid uuid, int baudrate);
-    void appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
+    void appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
                                LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
                                bool autoSpeedSelection);
     void deleteModelData(QUuid uuid);

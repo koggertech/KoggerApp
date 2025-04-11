@@ -26,6 +26,7 @@ public:
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
+    void onLinkIsReceivesDataChanged(QUuid uuid);
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();
@@ -59,7 +60,7 @@ public slots:
     void closeUdpProxy();
 
 signals:
-    void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
+    void appendModifyModel(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
                            LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection);
     void deleteModel(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, FrameParser frame);

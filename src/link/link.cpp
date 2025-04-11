@@ -17,9 +17,19 @@ Link::Link() :
     isNotAvailable_(false),
     isProxy_(false),
     isForcedStopped_(false),
-    autoSpeedSelection_(false)
+    attribute_(0),
+    autoSpeedSelection_(false),
+    timeoutCnt_(numTimeouts_),
+    lastTotalCnt_(0),
+    isReceivesData_(false)
 {
     frame_.resetComplete();
+
+    checkTimer_ = std::make_unique<QTimer>(this);
+    checkTimer_->setInterval(100);
+
+    QObject::connect(checkTimer_.get(), &QTimer::timeout, this, &Link::onCheckedTimerEnd, Qt::AutoConnection);
+    QTimer::singleShot(500, this, [&]() -> void { checkTimer_->start(); });
 }
 
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
@@ -287,6 +297,11 @@ bool Link::getConnectionStatus() const
     return false;
 }
 
+bool Link::getIsRecievesData() const
+{
+    return isReceivesData_;
+}
+
 ControlType Link::getControlType() const
 {
     return controlType_;
@@ -386,6 +401,33 @@ bool Link::write(QByteArray data)
         return true;
     }
     return false;
+}
+
+void Link::onCheckedTimerEnd()
+{
+    auto currTotalCnt = frame_.getCompleteTotal();
+    if (currTotalCnt == lastTotalCnt_) {
+        if (timeoutCnt_) {
+            --timeoutCnt_;
+        }
+    }
+    else {
+        if (timeoutCnt_ != numTimeouts_) {
+            timeoutCnt_ = numTimeouts_;
+        }
+    }
+
+    if (timeoutCnt_ && !isReceivesData_) {
+        isReceivesData_ = true;
+        emit isReceivesDataChanged(uuid_);
+    }
+    if (!timeoutCnt_ && isReceivesData_) {
+        isReceivesData_ = false;
+        emit isReceivesDataChanged(uuid_);
+    }
+
+    lastTotalCnt_ = currTotalCnt;
+    checkTimer_->start();
 }
 
 void Link::setDev(QIODevice *dev)

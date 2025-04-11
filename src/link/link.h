@@ -15,6 +15,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #endif
+#include <QTimer>
 #include "proto_binnary.h"
 
 using namespace Parsers;
@@ -75,6 +76,7 @@ public:
     void setAutoSpeedSelection(bool autoSpeedSelection);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
+    bool        getIsRecievesData() const;
     ControlType getControlType() const;
     QString     getPortName() const;
     int         getBaudrate() const;
@@ -106,12 +108,16 @@ signals:
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
+    void isReceivesDataChanged(QUuid uuid);
 
 #ifdef MOTOR
     void dataReady(QByteArray data);
 #else
     void dataReady();
 #endif
+
+private slots:
+    void onCheckedTimerEnd();
 
 private:
     /*methods*/
@@ -120,6 +126,7 @@ private:
     void toParser(const QByteArray data);
 
     /*data*/
+    static const int numTimeouts_ = 10;
     QIODevice* ioDevice_;
     FrameParser frame_;
     QByteArray context_;
@@ -139,14 +146,17 @@ private:
     bool isNotAvailable_;
     bool isProxy_;
     bool isForcedStopped_;
+    int attribute_;
 
-
-    int attribute_ = 0;
 // #ifdef MOTOR
 //     bool isMotorDevice_ = false;
 // #endif
 
     bool autoSpeedSelection_;
+    std::unique_ptr<QTimer> checkTimer_;
+    int timeoutCnt_;
+    uint32_t lastTotalCnt_;
+    bool isReceivesData_;
 
 private slots:
     void readyRead();

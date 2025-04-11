@@ -145,11 +145,11 @@ void LinkManagerWrapper::updateBaudrate(QUuid uuid, int baudrate)
     emit sendUpdateBaudrate(uuid, baudrate);
 }
 
-void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
+void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
                                                LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
                                                bool autoSpeedSelection)
 {
-    emit model_.appendModifyEvent(uuid, connectionStatus, controlType, portName, baudrate, parity,
+    emit model_.appendModifyEvent(uuid, connectionStatus, receivesData, controlType, portName, baudrate, parity,
                                   linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable, autoSpeedSelection);
 }
 
