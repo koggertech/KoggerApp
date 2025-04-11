@@ -5,7 +5,7 @@ Link::Link() :
     ioDevice_(nullptr),
     uuid_(QUuid::createUuid()),
     controlType_(ControlType::kManual),
-    linkType_(LinkType::LinkNone),
+    linkType_(LinkType::kLinkNone),
     portName_(""),
     baudrate_(0),
     parity_(false),
@@ -19,14 +19,14 @@ Link::Link() :
     isForcedStopped_(false),
     attribute_(0),
     autoSpeedSelection_(false),
-    timeoutCnt_(numTimeouts_),
+    timeoutCnt_(linkNumTimeouts),
     lastTotalCnt_(0),
     isReceivesData_(false)
 {
     frame_.resetComplete();
 
     checkTimer_ = std::make_unique<QTimer>(this);
-    checkTimer_->setInterval(100);
+    checkTimer_->setInterval(linkCheckingTimeInterval);
 
     QObject::connect(checkTimer_.get(), &QTimer::timeout, this, &Link::onCheckedTimerEnd, Qt::AutoConnection);
     QTimer::singleShot(500, this, [&]() -> void { checkTimer_->start(); });
@@ -34,7 +34,7 @@ Link::Link() :
 
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
-    linkType_ = LinkType::LinkSerial;
+    linkType_ = LinkType::kLinkSerial;
     portName_ = portName;
     parity_ = parity;
     baudrate_ = baudrate;
@@ -64,7 +64,7 @@ void Link::openAsSerial()
 
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
 {
-    linkType_ = LinkType::LinkIPUDP;
+    linkType_ = LinkType::kLinkIPUDP;
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
@@ -104,7 +104,7 @@ void Link::openAsUdp()
 
 void Link::createAsTcp(const QString &address, int sourcePort, int destinationPort)
 {
-    linkType_ = LinkType::LinkIPTCP;
+    linkType_ = LinkType::kLinkIPTCP;
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
@@ -130,20 +130,20 @@ bool Link::isOpen() const
         return retVal;
 
     switch (linkType_) {
-    case LinkType::LinkNone: {
+    case LinkType::kLinkNone: {
         retVal = false;
         break;
     }
-    case LinkType::LinkSerial: {
+    case LinkType::kLinkSerial: {
         retVal = ioDevice_->isOpen();
         break;
     }
-    case LinkType::LinkIPUDP: {
+    case LinkType::kLinkIPUDP: {
         if (auto ptr = static_cast<QUdpSocket*>(ioDevice_); ptr)
             retVal = ptr->state() != QAbstractSocket::UnconnectedState;
         break;
     }
-    case LinkType::LinkIPTCP: {
+    case LinkType::kLinkIPTCP: {
         if (auto ptr = static_cast<QTcpSocket*>(ioDevice_); ptr)
             retVal = ptr->state() != QAbstractSocket::UnconnectedState;
         break;
@@ -195,10 +195,10 @@ void Link::setConnectionStatus(bool connectionStatus)
         close();
     else {
         switch (linkType_) {
-        case LinkType::LinkNone: { break; }
-        case LinkType::LinkSerial: { openAsSerial(); break; }
-        case LinkType::LinkIPUDP: { openAsUdp(); break; }
-        case LinkType::LinkIPTCP: { openAsTcp(); break; }
+        case LinkType::kLinkNone: { break; }
+        case LinkType::kLinkSerial: { openAsSerial(); break; }
+        case LinkType::kLinkIPUDP: { openAsUdp(); break; }
+        case LinkType::kLinkIPTCP: { openAsTcp(); break; }
         default: { break; }
         }
     }
@@ -218,7 +218,7 @@ void Link::setBaudrate(int baudrate)
 {
     baudrate_ = baudrate;
 
-    if (linkType_ == LinkType::LinkSerial) {
+    if (linkType_ == LinkType::kLinkSerial) {
         if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
             currDev->setBaudRate(baudrate_);
         }
@@ -393,7 +393,7 @@ bool Link::write(QByteArray data)
 {
     QIODevice *dev = device();
     if(dev != nullptr && isOpen()) {
-        if(linkType_ == LinkType::LinkIPUDP) {
+        if(linkType_ == LinkType::kLinkIPUDP) {
             (static_cast<QUdpSocket*>(ioDevice_))->writeDatagram(data, hostAddress_, destinationPort_);
         } else {
             ioDevice_->write(data);
@@ -412,8 +412,8 @@ void Link::onCheckedTimerEnd()
         }
     }
     else {
-        if (timeoutCnt_ != numTimeouts_) {
-            timeoutCnt_ = numTimeouts_;
+        if (timeoutCnt_ != linkNumTimeouts) {
+            timeoutCnt_ = linkNumTimeouts;
         }
     }
 
@@ -532,7 +532,7 @@ void Link::readyRead()
 #else
     QIODevice* dev = device();
     if (dev != nullptr) {
-        if (linkType_ == LinkType::LinkIPUDP) {
+        if (linkType_ == LinkType::kLinkIPUDP) {
             QUdpSocket* socsUpd = (QUdpSocket*)dev;
             while (socsUpd->hasPendingDatagrams()) {
                 QByteArray datagram;

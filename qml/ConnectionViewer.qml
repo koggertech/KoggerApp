@@ -147,23 +147,7 @@ ColumnLayout {
                         }
                     }
 
-                    CCheck {
-                        id: autoSpeedCheckBox
-                        visible: LinkType == 1
-                        text: "auto"
-                        checked: AutoSpeedSelection
-                        implicitWidth: 60 * theme.resCoeff
 
-                        onCheckedChanged: {
-                            if (!checked) {
-                                linkManagerWrapper.sendAutoSpeedSelection(Uuid, false)
-                            }
-                        }
-
-                        onToggled: {
-                            linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
-                        }
-                    }
 
                     CCombo  {
                         property bool isStartup: true
@@ -190,6 +174,27 @@ ColumnLayout {
                             border.width: 0
                             border.color: theme.controlBorderColor
                         }
+                    }
+
+                    CheckButton {
+                        id: autoSpeedCheckBox
+                        visible: LinkType == 1
+                        icon.source: "qrc:/icons/ui/refresh.svg"
+
+                        checked: AutoSpeedSelection
+
+                        onCheckedChanged: {
+                            if (!checked) {
+                                linkManagerWrapper.sendAutoSpeedSelection(Uuid, false)
+                            }
+                        }
+
+                        onToggled: {
+                            linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
+                        }
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Auto search baudrate")
                     }
 
                     CText {

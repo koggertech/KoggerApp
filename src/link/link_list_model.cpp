@@ -75,11 +75,11 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[LinkListModel::Uuid].append(uuid);
         vectors_[LinkListModel::ConnectionStatus].append(connectionStatus);
         vectors_[LinkListModel::ReceivesData].append(receivesData);
-        vectors_[LinkListModel::ControlType].append(controlType);
+        vectors_[LinkListModel::ControlType].append(static_cast<int>(controlType));
         vectors_[LinkListModel::PortName].append(portName);
         vectors_[LinkListModel::Baudrate].append(baudrate);
         vectors_[LinkListModel::Parity].append(parity);
-        vectors_[LinkListModel::LinkType].append(linkType);
+        vectors_[LinkListModel::LinkType].append(static_cast<int>(linkType));
         vectors_[LinkListModel::Address].append(address);
         vectors_[LinkListModel::SourcePort].append(sourcePort);
         vectors_[LinkListModel::DestinationPort].append(destinationPort);
@@ -97,11 +97,11 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[LinkListModel::Uuid][line] = uuid;
         vectors_[LinkListModel::ConnectionStatus][line] = connectionStatus;
         vectors_[LinkListModel::ReceivesData][line] = receivesData;
-        vectors_[LinkListModel::ControlType][line] = controlType;
+        vectors_[LinkListModel::ControlType][line] = static_cast<int>(controlType);
         vectors_[LinkListModel::PortName][line] = portName;
         vectors_[LinkListModel::Baudrate][line] = baudrate;
         vectors_[LinkListModel::Parity][line] = parity;
-        vectors_[LinkListModel::LinkType][line] = linkType;
+        vectors_[LinkListModel::LinkType][line] = static_cast<int>(linkType);
         vectors_[LinkListModel::Address][line] = address;
         vectors_[LinkListModel::SourcePort][line] = sourcePort;
         vectors_[LinkListModel::DestinationPort][line] = destinationPort;

@@ -5,9 +5,6 @@
 
 LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
 {
-    baudrates_ = {4800, 9600, 19200, 38400, 57600, 115200, 230400,
-                  460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000};
-
     workerThread_ = std::make_unique<QThread>(this);
     workerObject_ = std::make_unique<LinkManager>(nullptr);
 
@@ -83,7 +80,7 @@ void LinkManagerWrapper::openClosedLinks()
 QVariant LinkManagerWrapper::baudrateModel() const
 {
     QVariantList list;
-    for (uint32_t rate : baudrates_) {
+    for (const uint32_t rate : baudrates) {
         list.append(QVariant::fromValue(rate));
     }
     return list;

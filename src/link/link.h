@@ -16,28 +16,11 @@
 #include <QSerialPortInfo>
 #endif
 #include <QTimer>
+
+#include "link_defs.h"
 #include "proto_binnary.h"
 
 using namespace Parsers;
-
-
-typedef enum {
-    LinkNone,
-    LinkSerial,
-    LinkIPUDP, // also is proxy
-    LinkIPTCP,
-} LinkType;
-
-typedef enum {
-    LinkAttributeNone,
-    LinkAttributeMotor = 2
-} LinkAttribute;
-
-typedef enum {
-    kManual = 0,
-    kAuto,
-    kAutoOnce
-} ControlType;
 
 class Link : public QObject
 {
@@ -94,7 +77,7 @@ public:
 
 // #ifdef MOTOR
     void        setAttribute(int attribute) { attribute_ = attribute; }
-    bool        getIsMotorDevice() { return attribute_ == LinkAttributeMotor; }
+    bool        getIsMotorDevice() { return attribute_ == static_cast<int>(LinkAttribute::kLinkAttributeMotor); }
 // #endif
 
 
@@ -126,7 +109,6 @@ private:
     void toParser(const QByteArray data);
 
     /*data*/
-    static const int numTimeouts_ = 10;
     QIODevice* ioDevice_;
     FrameParser frame_;
     QByteArray context_;

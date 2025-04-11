@@ -89,5 +89,4 @@ private:
     std::unique_ptr<LinkManager> workerObject_;
     LinkListModel model_;
     QList<QPair<QUuid, LinkType>> forceClosedLinks_;
-    QList<uint32_t> baudrates_;
 };

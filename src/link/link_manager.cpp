@@ -39,7 +39,7 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
         bool isBeen{ false };
 
         for (auto& itmJ : list_) {
-            if (itmJ->getLinkType() != LinkType::LinkSerial)
+            if (itmJ->getLinkType() != LinkType::kLinkSerial)
                 continue;
 
             if (itmI.portName() == itmJ->getPortName()) {
@@ -61,7 +61,7 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
 
-        if (link->getLinkType() != LinkType::LinkSerial)
+        if (link->getLinkType() != LinkType::kLinkSerial)
             continue;
 
         bool isBeen{ false };
@@ -105,10 +105,10 @@ void LinkManager::openAutoConnections()
             if (link->getControlType() == ControlType::kAuto &&
                 !link->getIsNotAvailable()) {
                 switch (link->getLinkType()) {
-                    case LinkType::LinkNone:   { break; }
-                    case LinkType::LinkSerial: { link->openAsSerial(); break; }
-                    case LinkType::LinkIPUDP:  { link->openAsUdp(); break; }
-                    case LinkType::LinkIPTCP:  { link->openAsTcp(); break; }
+                    case LinkType::kLinkNone:   { break; }
+                    case LinkType::kLinkSerial: { link->openAsSerial(); break; }
+                    case LinkType::kLinkIPUDP:  { link->openAsUdp(); break; }
+                    case LinkType::kLinkIPTCP:  { link->openAsTcp(); break; }
                     default:                   { break; }
                 }
             }
@@ -236,8 +236,9 @@ void LinkManager::printLinkDebugInfo(Link* link) const
         qDebug() << "\tlink is nullptr";
     else {
         qDebug() << QString("uuid: %1; controlType: %2; portName: %3; baudrate: %4; parity: %5; linkType: %6; address: %7; sourcePort: %8; destinationPort: %9; isPinned: %10; isHided: %11; isNotAvailable: %12; connectionStatus: %13")
-                        .arg(link->getUuid().toString()).arg(link->getControlType()).arg(link->getPortName()).arg(link->getBaudrate()).arg(link->getParity()).arg(link->getLinkType()).arg(link->getAddress()).arg(link->getSourcePort())
-                        .arg(link->getDestinationPort()).arg(link->getIsPinned()).arg(link->getIsHided()).arg(link->getIsNotAvailable()).arg(link->getConnectionStatus());
+                        .arg(link->getUuid().toString()).arg(static_cast<int>(link->getControlType())).arg(link->getPortName()).arg(link->getBaudrate()).arg(link->getParity())
+                        .arg(static_cast<int>(link->getLinkType())).arg(link->getAddress()).arg(link->getSourcePort()).arg(link->getDestinationPort()).arg(link->getIsPinned())
+                        .arg(link->getIsHided()).arg(link->getIsNotAvailable()).arg(link->getConnectionStatus());
     }
 }
 
@@ -476,8 +477,8 @@ void LinkManager::deleteLink(QUuid uuid)
         delete linkPtr;
 
         // manual deleting
-        if (linkType == LinkType::LinkIPTCP ||
-            linkType == LinkType::LinkIPUDP)
+        if (linkType == LinkType::kLinkIPTCP ||
+            linkType == LinkType::kLinkIPUDP)
             exportPinnedLinksToXML();
     }
 }
@@ -609,15 +610,15 @@ void LinkManager::openFLinks()
             itm->setIsForceStopped(false);
 
             switch (itm->getLinkType()) {
-            case LinkType::LinkSerial: {
+            case LinkType::kLinkSerial: {
                 itm->openAsSerial();
                 break;
             }
-            case LinkType::LinkIPTCP : {
+            case LinkType::kLinkIPTCP : {
                 itm->openAsTcp();
                 break;
             }
-            case LinkType::LinkIPUDP: {
+            case LinkType::kLinkIPUDP: {
                 itm->openAsUdp();
                 break;
             }
