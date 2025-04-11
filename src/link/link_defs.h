@@ -22,9 +22,10 @@ enum class ControlType {
     kAutoOnce
 };
 
-static const int linkNumTimeouts = 10; // num of timeouts
-static const int linkCheckingTimeInterval = 100; // msecs
 
+static const int linkNumTimeoutsBig = 10; // num of updates
+static const int linkNumTimeoutsSmall = 2; // num of updates
+static const int linkCheckingTimeInterval = 100; // msecs
 
 inline const QList<uint32_t> baudrates = { 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000 };
 inline const QList<uint32_t> baudrateSearchList = { 115200, 921600, 9600, 38400, 115200, 921600, 460800, 230400 };

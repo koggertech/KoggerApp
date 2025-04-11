@@ -19,7 +19,7 @@ Link::Link() :
     isForcedStopped_(false),
     attribute_(0),
     autoSpeedSelection_(false),
-    timeoutCnt_(linkNumTimeouts),
+    timeoutCnt_(linkNumTimeoutsBig),
     lastTotalCnt_(0),
     isReceivesData_(false)
 {
@@ -42,6 +42,10 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 
 void Link::openAsSerial()
 {
+    if (autoSpeedSelection_) {
+        baudrateSearchList_ = baudrateSearchList;
+    }
+
     QSerialPort *serialPort = new QSerialPort(this);
 
     serialPort->setPortName(portName_);
@@ -214,13 +218,17 @@ void Link::setPortName(const QString &portName)
     portName_ = portName;
 }
 
-void Link::setBaudrate(int baudrate)
+void Link::setBaudrate(int baudrate, bool fromAutoSelector)
 {
     baudrate_ = baudrate;
 
     if (linkType_ == LinkType::kLinkSerial) {
         if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
             currDev->setBaudRate(baudrate_);
+        }
+
+        if (!fromAutoSelector) {
+            baudrateSearchList_.clear();
         }
     }
 }
@@ -282,6 +290,10 @@ void Link::setIsForceStopped(bool isForcedStopped)
 void Link::setAutoSpeedSelection(bool autoSpeedSelection)
 {
     autoSpeedSelection_ = autoSpeedSelection;
+
+    if (autoSpeedSelection_) {
+        baudrateSearchList_ = baudrateSearchList;
+    }
 }
 
 QUuid Link::getUuid() const
@@ -406,24 +418,47 @@ bool Link::write(QByteArray data)
 void Link::onCheckedTimerEnd()
 {
     auto currTotalCnt = frame_.getCompleteTotal();
+    bool lastIsReceivesData = isReceivesData_;
+    bool currConnectionStatus = getConnectionStatus();
+
+
+    // yellow banner
     if (currTotalCnt == lastTotalCnt_) {
-        if (timeoutCnt_) {
+        if (timeoutCnt_ != 0) {
             --timeoutCnt_;
         }
     }
     else {
-        if (timeoutCnt_ != linkNumTimeouts) {
-            timeoutCnt_ = linkNumTimeouts;
-        }
+        //searchIndx_ = 0;
+        timeoutCnt_ = linkNumTimeoutsBig;
     }
 
-    if (timeoutCnt_ && !isReceivesData_) {
+    if (currTotalCnt != lastTotalCnt_) {
         isReceivesData_ = true;
+
+        if (autoSpeedSelection_) {
+            baudrateSearchList_ = baudrateSearchList;
+        }
+    }
+    if (timeoutCnt_ == 0 && isReceivesData_) {
+        isReceivesData_ = false;
+    }
+
+    if (lastIsReceivesData != isReceivesData_) {
         emit isReceivesDataChanged(uuid_);
     }
-    if (!timeoutCnt_ && isReceivesData_) {
-        isReceivesData_ = false;
-        emit isReceivesDataChanged(uuid_);
+
+    if (autoSpeedSelection_ && currConnectionStatus && !isReceivesData_) {
+
+        timeoutCnt_ = linkNumTimeoutsSmall;
+
+        if (!baudrateSearchList_.empty()) {
+            auto currBaudrate = baudrateSearchList_.takeFirst();
+            qDebug() << " trying check" << currBaudrate;
+            setBaudrate(currBaudrate, true);
+            emit baudrateChanged(uuid_);
+            //searchIndx_ = (searchIndx_ + 1) % baudrateSearchList.size();
+        }
     }
 
     lastTotalCnt_ = currTotalCnt;

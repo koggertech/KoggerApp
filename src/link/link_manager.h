@@ -26,6 +26,7 @@ public:
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
+    void onLinkBaudrateChanged(QUuid uuid);
     void onLinkIsReceivesDataChanged(QUuid uuid);
     void createAndStartTimer();
     void stopTimer();

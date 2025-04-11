@@ -223,6 +223,7 @@ Link *LinkManager::createNewLink() const
     QObject::connect(retVal, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(retVal, &Link::closed, this, &LinkManager::linkClosed);
     QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
+    QObject::connect(retVal, &Link::baudrateChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
     QObject::connect(retVal, &Link::isReceivesDataChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
 
     return retVal;
@@ -328,6 +329,19 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 
         if (linkPtr->getIsPinned()) // or to open/close?
             exportPinnedLinksToXML();
+    }
+}
+
+void LinkManager::onLinkBaudrateChanged(QUuid uuid)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        doEmitAppendModifyModel(linkPtr);
+
+        if (linkPtr->getIsPinned()) {
+            exportPinnedLinksToXML();
+        }
     }
 }
 

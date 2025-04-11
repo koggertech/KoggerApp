@@ -45,7 +45,7 @@ public:
     void setConnectionStatus(bool connectionStatus);
     void setControlType(ControlType controlType);
     void setPortName(const QString& portName);
-    void setBaudrate(int baudrate);
+    void setBaudrate(int baudrate, bool fromAutoSelector = false);
     void setParity(bool parity);
     void setLinkType(LinkType linkType);
     void setAddress(const QString& address);
@@ -82,15 +82,16 @@ public:
 
 
 public slots:
-    bool writeFrame(FrameParser frame);
+    bool writeFrame(Parsers::FrameParser frame);
     bool write(QByteArray data);
 
 signals:
     void readyParse(Link* link);
     void connectionStatusChanged(QUuid uuid);
-    void frameReady(QUuid uuid, Link* link, FrameParser frame);
+    void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
+    void baudrateChanged(QUuid uuid);
     void isReceivesDataChanged(QUuid uuid);
 
 #ifdef MOTOR
@@ -139,6 +140,8 @@ private:
     int timeoutCnt_;
     uint32_t lastTotalCnt_;
     bool isReceivesData_;
+//    int searchIndx_; ?
+    QList<uint32_t> baudrateSearchList_;
 
 private slots:
     void readyRead();
