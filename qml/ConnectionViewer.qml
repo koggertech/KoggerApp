@@ -150,23 +150,16 @@ ColumnLayout {
 
 
                     CCombo  {
-                        property bool isStartup: true
-
                         id: baudrateCombo
                         implicitWidth: 150
-                        // Layout.fillWidth: true
                         visible: LinkType == 1
                         model: linkManagerWrapper.baudrateModel
-                        currentIndex: 7
+                        currentIndex: 8
                         displayText: Baudrate
 
-                        onCurrentTextChanged: {
-                            if (LinkType == 1 && !isStartup) {
-                                console.info("baudrateCombo: onCurrentTextChanged: currentText: " + Number(baudrateCombo.currentText))
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                                autoSpeedCheckBox.checked = false
-                            }
-                            isStartup = false
+                        onActivated: {
+                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            autoSpeedCheckBox.checked = false
                         }
 
                         background:  Rectangle {

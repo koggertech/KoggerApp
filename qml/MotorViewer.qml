@@ -85,11 +85,11 @@ ColumnLayout {
                                 id: baudrateCombo
                                 implicitWidth: 150
                                 model: linkManagerWrapper.baudrateModel
-                                currentIndex: 7
+                                currentIndex: 8
                                 displayText: Baudrate
                                 visible: LinkType === 1
 
-                                onCurrentTextChanged: {
+                                onActivated: {
                                     linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
                                 }
 

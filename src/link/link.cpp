@@ -19,7 +19,7 @@ Link::Link() :
     isForcedStopped_(false),
     attribute_(0),
     autoSpeedSelection_(false),
-    timeoutCnt_(linkNumTimeoutsBig),
+    timeoutCnt_(linkNumTimeoutsSmall),
     lastTotalCnt_(0),
     isReceivesData_(false)
 {
@@ -417,48 +417,48 @@ bool Link::write(QByteArray data)
 
 void Link::onCheckedTimerEnd()
 {
-    auto currTotalCnt = frame_.getCompleteTotal();
-    bool lastIsReceivesData = isReceivesData_;
-    bool currConnectionStatus = getConnectionStatus();
-
-
-    // yellow banner
-    if (currTotalCnt == lastTotalCnt_) {
-        if (timeoutCnt_ != 0) {
-            --timeoutCnt_;
-        }
+    if (!getConnectionStatus()) {
+        return;
     }
-    else {
-        //searchIndx_ = 0;
+
+    auto currTotalCnt       = frame_.getCompleteTotal();
+    bool lastIsReceivesData = isReceivesData_;
+    bool newDataReceived    = (currTotalCnt != lastTotalCnt_);
+
+    // timeouts
+    if (newDataReceived) {
+        isReceivesData_ = true;
         timeoutCnt_ = linkNumTimeoutsBig;
     }
+    else {
+        if (timeoutCnt_ > 0) {
+            --timeoutCnt_;
+        }
 
-    if (currTotalCnt != lastTotalCnt_) {
-        isReceivesData_ = true;
+        if (!timeoutCnt_ && isReceivesData_) {
+            isReceivesData_ = false;
 
-        if (autoSpeedSelection_) {
-            baudrateSearchList_ = baudrateSearchList;
+            if (autoSpeedSelection_) {
+                baudrateSearchList_ = baudrateSearchList;
+                timeoutCnt_ = linkNumTimeoutsSmall;
+            }
         }
     }
-    if (timeoutCnt_ == 0 && isReceivesData_) {
-        isReceivesData_ = false;
-    }
 
+    // gui
     if (lastIsReceivesData != isReceivesData_) {
         emit isReceivesDataChanged(uuid_);
     }
 
-    if (autoSpeedSelection_ && currConnectionStatus && !isReceivesData_) {
-
-        timeoutCnt_ = linkNumTimeoutsSmall;
-
-        if (!baudrateSearchList_.empty()) {
-            auto currBaudrate = baudrateSearchList_.takeFirst();
-            qDebug() << " trying check" << currBaudrate;
-            setBaudrate(currBaudrate, true);
-            emit baudrateChanged(uuid_);
-            //searchIndx_ = (searchIndx_ + 1) % baudrateSearchList.size();
-        }
+    // autosearch
+    if (autoSpeedSelection_ &&
+        !isReceivesData_ &&
+        !timeoutCnt_ &&
+        !baudrateSearchList_.empty()) {
+        auto currBaudrate = baudrateSearchList_.takeFirst();
+        qDebug() << " trying check" << currBaudrate;
+        setBaudrate(currBaudrate, true);
+        emit baudrateChanged(uuid_);
     }
 
     lastTotalCnt_ = currTotalCnt;
