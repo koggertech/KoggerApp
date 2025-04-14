@@ -530,16 +530,15 @@ bool Core::closeProxy()
 bool Core::upgradeFW(const QString& name, QObject* dev)
 {
     QUrl url(name);
-    QFile m_file;
-    url.isLocalFile() ? m_file.setFileName(url.toLocalFile()) : m_file.setFileName(name);
+    QFile file(url.isLocalFile() ? url.toLocalFile() : name);
 
-    bool is_open = false;
-    is_open = m_file.open(QIODevice::ReadOnly);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
 
-    if(is_open == false) {  return false;  }
-
-    DevQProperty* dev_q = (DevQProperty*)(dev);
-    dev_q->sendUpdateFW(m_file.readAll());
+    if (auto* devQProp = dynamic_cast<DevQProperty*>(dev); devQProp) {
+        devQProp->sendUpdateFW(file.readAll());
+    }
 
     return true;
 }

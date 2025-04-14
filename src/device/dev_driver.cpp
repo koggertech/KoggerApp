@@ -594,6 +594,7 @@ void DevDriver::restartState() {
     m_state.connect = false;
     m_state.uptime = UptimeNone;
     m_state.conf = ConfNone;
+    m_state.mark = false;
     if(m_state.duplex) {
         m_processTimer.start(200);
     }
@@ -639,6 +640,7 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
     reboot();
     restartState();
     QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
+    emit upgradingFirmware();
 //    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
 }
 

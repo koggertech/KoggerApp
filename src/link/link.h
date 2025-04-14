@@ -45,7 +45,7 @@ public:
     void setConnectionStatus(bool connectionStatus);
     void setControlType(ControlType controlType);
     void setPortName(const QString& portName);
-    void setBaudrate(int baudrate, bool fromAutoSelector = false);
+    void setBaudrate(int baudrate);
     void setParity(bool parity);
     void setLinkType(LinkType linkType);
     void setAddress(const QString& address);
@@ -84,6 +84,7 @@ public:
 public slots:
     bool writeFrame(Parsers::FrameParser frame);
     bool write(QByteArray data);
+    void onUpgradingFirmware();
 
 signals:
     void readyParse(Link* link);
@@ -142,6 +143,7 @@ private:
     bool isReceivesData_;
 //    int searchIndx_; ?
     QList<uint32_t> baudrateSearchList_;
+    int lastSearchIndx_;
 
 private slots:
     void readyRead();

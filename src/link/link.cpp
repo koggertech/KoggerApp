@@ -21,7 +21,8 @@ Link::Link() :
     autoSpeedSelection_(false),
     timeoutCnt_(linkNumTimeoutsSmall),
     lastTotalCnt_(0),
-    isReceivesData_(false)
+    isReceivesData_(false),
+    lastSearchIndx_(0)
 {
     frame_.resetComplete();
 
@@ -38,14 +39,12 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
     portName_ = portName;
     parity_ = parity;
     baudrate_ = baudrate;
+    baudrateSearchList_ = baudrateSearchList; // by default
+    lastSearchIndx_ = 0;
 }
 
 void Link::openAsSerial()
 {
-    if (autoSpeedSelection_) {
-        baudrateSearchList_ = baudrateSearchList;
-    }
-
     QSerialPort *serialPort = new QSerialPort(this);
 
     serialPort->setPortName(portName_);
@@ -64,6 +63,8 @@ void Link::openAsSerial()
         delete serialPort;
         emit connectionStatusChanged(uuid_);
     }
+    baudrateSearchList_ = baudrateSearchList;
+    lastSearchIndx_ = 0;
 }
 
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
@@ -218,7 +219,7 @@ void Link::setPortName(const QString &portName)
     portName_ = portName;
 }
 
-void Link::setBaudrate(int baudrate, bool fromAutoSelector)
+void Link::setBaudrate(int baudrate)
 {
     int lastBaudRate = baudrate_;
 
@@ -232,12 +233,7 @@ void Link::setBaudrate(int baudrate, bool fromAutoSelector)
     }
 
     if (getConnectionStatus()) {
-        if (installed) {
-            if (!fromAutoSelector) {
-                baudrateSearchList_.clear();
-            }
-        }
-        else {
+        if (!installed) {
             baudrate_ = lastBaudRate;
             emit baudrateChanged(uuid_);
         }
@@ -301,10 +297,7 @@ void Link::setIsForceStopped(bool isForcedStopped)
 void Link::setAutoSpeedSelection(bool autoSpeedSelection)
 {
     autoSpeedSelection_ = autoSpeedSelection;
-
-    if (autoSpeedSelection_) {
-        baudrateSearchList_ = baudrateSearchList;
-    }
+    lastSearchIndx_ = 0;
 }
 
 QUuid Link::getUuid() const
@@ -426,6 +419,11 @@ bool Link::write(QByteArray data)
     return false;
 }
 
+void Link::onUpgradingFirmware()
+{
+    qDebug() << "ON UPGRADING FIRMWARE" << uuid_;
+}
+
 void Link::onCheckedTimerEnd()
 {
     if (!getConnectionStatus()) {
@@ -440,19 +438,14 @@ void Link::onCheckedTimerEnd()
     if (newDataReceived) {
         isReceivesData_ = true;
         timeoutCnt_ = linkNumTimeoutsBig;
+        lastSearchIndx_ = 0;
     }
     else {
         if (timeoutCnt_ > 0) {
             --timeoutCnt_;
         }
-
         if (!timeoutCnt_ && isReceivesData_) {
             isReceivesData_ = false;
-
-            if (autoSpeedSelection_) {
-                baudrateSearchList_ = baudrateSearchList;
-                timeoutCnt_ = linkNumTimeoutsSmall;
-            }
         }
     }
 
@@ -466,8 +459,15 @@ void Link::onCheckedTimerEnd()
         !isReceivesData_ &&
         !timeoutCnt_ &&
         !baudrateSearchList_.empty()) {
-        auto currBaudrate = baudrateSearchList_.takeFirst();
-        setBaudrate(currBaudrate, true);
+
+        timeoutCnt_ = linkNumTimeoutsSmall;
+
+        auto currBaudrate = baudrateSearchList_.at(lastSearchIndx_);
+
+        //qDebug() << "trying find" << currBaudrate << "on" << lastSearchIndx_;
+        lastSearchIndx_ = (lastSearchIndx_ + 1) % baudrateSearchList_.size();
+
+        setBaudrate(currBaudrate);
         emit baudrateChanged(uuid_);
     }
 
