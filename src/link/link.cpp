@@ -220,15 +220,26 @@ void Link::setPortName(const QString &portName)
 
 void Link::setBaudrate(int baudrate, bool fromAutoSelector)
 {
+    int lastBaudRate = baudrate_;
+
     baudrate_ = baudrate;
 
+    bool installed = false;
     if (linkType_ == LinkType::kLinkSerial) {
         if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
-            currDev->setBaudRate(baudrate_);
+            installed = currDev->setBaudRate(baudrate_);
         }
+    }
 
-        if (!fromAutoSelector) {
-            baudrateSearchList_.clear();
+    if (getConnectionStatus()) {
+        if (installed) {
+            if (!fromAutoSelector) {
+                baudrateSearchList_.clear();
+            }
+        }
+        else {
+            baudrate_ = lastBaudRate;
+            emit baudrateChanged(uuid_);
         }
     }
 }
@@ -456,7 +467,6 @@ void Link::onCheckedTimerEnd()
         !timeoutCnt_ &&
         !baudrateSearchList_.empty()) {
         auto currBaudrate = baudrateSearchList_.takeFirst();
-        qDebug() << " trying check" << currBaudrate;
         setBaudrate(currBaudrate, true);
         emit baudrateChanged(uuid_);
     }
