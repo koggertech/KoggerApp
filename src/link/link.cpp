@@ -649,8 +649,6 @@ void Link::readyRead()
         }
     } else { // tcp, serial
         QByteArray data = dev->readAll();
-        qDebug() << "echo from server:" << data;
-
         if (!data.isEmpty()) {
             toParser(data);
         }
