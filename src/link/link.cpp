@@ -124,7 +124,39 @@ void Link::updateTcpParameters(const QString& address, int sourcePort, int desti
 
 void Link::openAsTcp()
 {
-    // TODO
+    QTcpSocket *socketTcp = new QTcpSocket(this);
+    hostAddress_.setAddress(address_);
+
+    QPointer<QTcpSocket> safeSock = socketTcp;
+
+    connect(socketTcp, &QTcpSocket::connected, this, [=]() {
+        if (!safeSock) {
+            return;
+        }
+
+        setDev(safeSock);
+        emit connectionStatusChanged(uuid_);
+        emit opened(uuid_, this);
+    });
+
+    connect(socketTcp, &QTcpSocket::disconnected, this, [=]() {
+        if (safeSock) {
+            safeSock->deleteLater();
+        }
+
+        emit connectionStatusChanged(uuid_);
+        close();
+    });
+
+    connect(socketTcp, &QTcpSocket::errorOccurred, this, [=](QAbstractSocket::SocketError err) {
+        Q_UNUSED(err);
+        if (safeSock && safeSock->state() != QAbstractSocket::ConnectedState) {
+            safeSock->abort();
+        }
+        emit connectionStatusChanged(uuid_);
+    });
+
+    socketTcp->connectToHost(hostAddress_, destinationPort_);
 }
 
 bool Link::isOpen() const
@@ -144,12 +176,12 @@ bool Link::isOpen() const
         break;
     }
     case LinkType::kLinkIPUDP: {
-        if (auto ptr = static_cast<QUdpSocket*>(ioDevice_); ptr)
+        if (auto ptr = qobject_cast<QUdpSocket*>(ioDevice_); ptr)
             retVal = ptr->state() != QAbstractSocket::UnconnectedState;
         break;
     }
     case LinkType::kLinkIPTCP: {
-        if (auto ptr = static_cast<QTcpSocket*>(ioDevice_); ptr)
+        if (auto ptr = qobject_cast<QTcpSocket*>(ioDevice_); ptr)
             retVal = ptr->state() != QAbstractSocket::UnconnectedState;
         break;
     }
@@ -227,7 +259,7 @@ void Link::setBaudrate(int baudrate)
 
     bool installed = false;
     if (linkType_ == LinkType::kLinkSerial) {
-        if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
             installed = currDev->setBaudRate(baudrate_);
         }
     }
@@ -307,8 +339,10 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
-    if (ioDevice_ && ioDevice_->isOpen()) {
-        return true;
+    if (ioDevice_) {
+        if (ioDevice_->isOpen()) {
+            return true;
+        }
     }
     return false;
 }
@@ -407,16 +441,30 @@ bool Link::writeFrame(FrameParser frame)
 
 bool Link::write(QByteArray data)
 {
-    QIODevice *dev = device();
-    if(dev != nullptr && isOpen()) {
-        if(linkType_ == LinkType::kLinkIPUDP) {
-            (static_cast<QUdpSocket*>(ioDevice_))->writeDatagram(data, hostAddress_, destinationPort_);
-        } else {
-            ioDevice_->write(data);
-        }
-        return true;
+    if (!ioDevice_ || !isOpen()) {
+        return false;
     }
-    return false;
+
+    switch (linkType_) {
+        case LinkType::kLinkIPUDP: {
+            auto udp = qobject_cast<QUdpSocket*>(ioDevice_);
+            udp->writeDatagram(data, hostAddress_, destinationPort_);
+            break;
+        }
+        case LinkType::kLinkIPTCP: {
+            ioDevice_->write(data);
+            break;
+        }
+        case LinkType::kLinkSerial: {
+            ioDevice_->write(data);
+            break;
+        }
+
+        default:
+            return false;
+    }
+
+    return true;
 }
 
 void Link::onUpgradingFirmware()
@@ -496,20 +544,24 @@ void Link::setDev(QIODevice *dev)
 
 void Link::deleteDev()
 {
-    if (ioDevice_ != nullptr) {
-        if (ioDevice_->isOpen()) {
-            ioDevice_->close();
-            emit connectionStatusChanged(uuid_);  // ???
-            //emit closed(uuid_, this)
-        }
+    QPointer<QIODevice> dev = ioDevice_;
+    if (!dev)
+        return;
 
-        ioDevice_->disconnect(this);
-        this->disconnect(ioDevice_);
-        //setLinkType(LinkNone);
-        delete ioDevice_;
+    if (dev->isOpen()) {
+        dev->close();
+        emit connectionStatusChanged(uuid_);
     }
 
-    ioDevice_ = nullptr;
+    if (dev) {
+        dev->disconnect(this);
+        this->disconnect(dev);
+    }
+
+    if (dev)
+        dev->deleteLater();
+
+    ioDevice_.clear();
 }
 
 void Link::toParser(const QByteArray data)
@@ -575,28 +627,35 @@ void Link::readyRead()
         }
     }
 #else
-    QIODevice* dev = device();
-    if (dev != nullptr) {
-        if (linkType_ == LinkType::kLinkIPUDP) {
-            QUdpSocket* socsUpd = (QUdpSocket*)dev;
-            while (socsUpd->hasPendingDatagrams()) {
-                QByteArray datagram;
-                datagram.resize(socsUpd->pendingDatagramSize());
-                QHostAddress sender;
-                quint16 senderPort;
-                qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                if (slen == -1) {
-                    break;
-                }
-                toParser(datagram);
-            }
+    auto dev = ioDevice_;
+    if (!dev) {
+        return;
+    }
+
+    if (linkType_ == LinkType::kLinkIPUDP) {
+        auto socsUdp = qobject_cast<QUdpSocket*>(dev);
+
+        while (socsUdp->hasPendingDatagrams()) {
+            QByteArray datagram;
+            datagram.resize(socsUdp->pendingDatagramSize());
+            QHostAddress sender;
+            quint16 senderPort;
+
+            qint64 slen = socsUdp->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+            if (slen == -1)
+                break;
+
+            toParser(datagram);
         }
-        else {
-            toParser(dev->readAll());
+    } else { // tcp, serial
+        QByteArray data = dev->readAll();
+        qDebug() << "echo from server:" << data;
+
+        if (!data.isEmpty()) {
+            toParser(data);
         }
     }
 #endif
-
 }
 
 void Link::aboutToClose()

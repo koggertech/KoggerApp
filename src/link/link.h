@@ -8,6 +8,7 @@
 #include <QHostAddress>
 #include <QUdpSocket>
 #include <QTcpSocket>
+#include <QPointer>
 #if defined(Q_OS_ANDROID)
 #include "platform/android/src/qtandroidserialport/src/qserialport.h"
 #include "platform/android/src/qtandroidserialport/src/qserialportinfo.h"
@@ -111,7 +112,7 @@ private:
     void toParser(const QByteArray data);
 
     /*data*/
-    QIODevice* ioDevice_;
+    QPointer<QIODevice> ioDevice_;
     FrameParser frame_;
     QByteArray context_;
     QByteArray buffer_;

@@ -98,7 +98,7 @@ ColumnLayout {
                     }
 
                     CheckButton {
-                        visible: linkSettingsButton.checked && LinkType == 2
+                        visible: linkSettingsButton.checked && (LinkType === 2 || LinkType === 3)
                         Layout.alignment: Qt.AlignLeft
                         icon.source: "qrc:/icons/ui/x.svg"
                         checked: false
@@ -191,16 +191,16 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         small: true
                         leftPadding: 6
                         rightPadding: 0
-                        text: qsTr("ip:")
+                        text: LinkType === 2 ? qsTr("UDP ip:") : qsTr("TCP ip:")
                     }
 
                     CTextField {
                         id: ipAddressText
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         hoverEnabled: true
                         selectByMouse: true
                         Layout.fillWidth: true
@@ -232,7 +232,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -242,7 +242,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -251,7 +251,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPortText
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: {
@@ -285,7 +285,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -295,20 +295,20 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: qsTr("dst:")
+                        text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
                     }
 
                     CTextField {
                         id: ipPort2Text
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: {
-                            if (Qt.platform.os == "android") {
+                            if (Qt.platform.os === "android") {
                                 return 100;
                             }
                             else {
@@ -358,7 +358,7 @@ ColumnLayout {
                                     break
                                 case 3:
                                     core.closeLogFile();
-                                    linkManagerWrapper.openAsTcp(Uuid)
+                                    linkManagerWrapper.openAsTcp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
                                     break
                                 default:
                                     console.log("Undefined type")
@@ -424,6 +424,15 @@ ColumnLayout {
 
             onClicked: {
                 linkManagerWrapper.createAsUdp("", 0, 0)
+            }
+        }
+
+        CButton {
+            text: qsTr("+TCP")
+            Layout.fillWidth: false
+
+            onClicked: {
+                linkManagerWrapper.createAsTcp("", 0, 0)
             }
         }
 
