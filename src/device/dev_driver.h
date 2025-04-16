@@ -331,6 +331,7 @@ protected:
 
     bool m_bootloader = false;
     bool m_bootloaderLagacyMode = true;
+    bool rebootFlag_ = false;
     int m_upgrade_status = 0;
     int64_t _lastUpgradeAnswerTime = 0;
     int64_t _timeoutUpgradeAnswerTime = 0;

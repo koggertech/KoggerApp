@@ -470,6 +470,11 @@ bool Link::write(QByteArray data)
 void Link::onUpgradingFirmware()
 {
     qDebug() << "ON UPGRADING FIRMWARE" << uuid_;
+
+    timeoutCnt_ = 2;
+    lastSearchIndx_ = 0;
+
+    //onCheckedTimerEnd();
 }
 
 void Link::onCheckedTimerEnd()

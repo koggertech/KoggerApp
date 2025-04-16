@@ -549,10 +549,35 @@ QString DevDriver::devPN() {
     return QString();
 }
 
-void DevDriver::protoComplete(FrameParser& proto) {
-    if(!proto.isComplete()) return;
+void DevDriver::protoComplete(FrameParser& proto)
+{
+    if (!proto.isComplete()) {
+        return;
+    }
+
+
+
+    qDebug() << "             RB: " << rebootFlag_;
+    if (!m_state.mark && proto.mark()) {
+        qDebug() << "   !!! setting mark false->TRUE" << proto.id();
+    }
 
     m_state.mark = proto.mark();
+
+    if (rebootFlag_ && !proto.mark()) {
+        rebootFlag_ = false;
+    }
+
+    if (rebootFlag_) {
+         m_state.mark = false;
+    }
+
+    // if(proto.id() == Parsers::ID_BOOT && proto.ver() == v0 && proto.resp() == true) {
+    //     qDebug() << "   !!! and seting mark FALSE";
+    //     m_state.mark = false;
+    // }
+
+
 
     if(_hashID.contains(proto.id())) {
         if(_hashID[proto.id()].instance != NULL) {
@@ -578,6 +603,7 @@ void DevDriver::startConnection(bool duplex) {
     m_upgrade_status = 0;
 
     restartState();
+    rebootFlag_ = false;
 
     emit deviceVersionChanged();
 }
@@ -595,6 +621,7 @@ void DevDriver::restartState() {
     m_state.uptime = UptimeNone;
     m_state.conf = ConfNone;
     m_state.mark = false;
+    idVersion->reset();
     if(m_state.duplex) {
         m_processTimer.start(200);
     }
@@ -639,8 +666,9 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
     idUpdate->setUpdate(update_data);
     reboot();
     restartState();
-    QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
     emit upgradingFirmware();
+
+    QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 //    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
 }
 
@@ -733,6 +761,7 @@ void DevDriver::resetSettings() {
 void DevDriver::reboot() {
     if(!m_state.connect) return;
     idBoot->reboot();
+    rebootFlag_ = true;
     emit onReboot();
 }
 
