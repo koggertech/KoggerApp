@@ -21,6 +21,7 @@ public:
 
     Q_INVOKABLE void onIsobathsVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateIsobathsButtonClicked();
+    Q_INVOKABLE void onSetStepSizeIsobaths(float val);
 
 Q_SIGNALS:
     void isobathsProcessorTaskStarted();
@@ -38,4 +39,5 @@ private:
     QThread thread_;
     std::function<void()> pendingLambda_;
     bool visibility_;
+    float stepSize_;
 };

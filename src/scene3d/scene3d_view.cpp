@@ -922,6 +922,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     processColorTableTexture(view);
     processTileTexture(view);
     processImageTexture(view);
+    processIsobathTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -1135,6 +1136,40 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
     glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
     task = QImage();
+}
+
+void GraphicsScene3dView::InFboRenderer::processIsobathTexture(GraphicsScene3dView *viewPtr) const
+{
+    // init/reinit
+    auto isobathsPtr = viewPtr->getIsobathsPtr();
+    auto& task = isobathsPtr->getTextureTasksRef();
+
+    if (task.empty())
+        return;
+
+    GLuint textureId = isobathsPtr->getTextureId();
+
+    if (textureId) {
+        glDeleteTextures(1, &textureId);
+    }
+
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
+    qDebug() << "Palette texture uploaded, size:" <<  task.size();
+
+    isobathsPtr->setTextureId(textureId);
+    task.clear();
+
+    // deleting
+    auto textureIdtoDel = isobathsPtr->getDeinitTextureTask();
+    if (textureIdtoDel) {
+        glDeleteTextures(1, &textureId);
+    }
 }
 
 GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :

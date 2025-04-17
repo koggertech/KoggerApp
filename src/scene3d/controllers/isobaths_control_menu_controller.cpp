@@ -5,25 +5,18 @@
 
 
 IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent) :
-    QmlComponentController(parent)
+    QmlComponentController(parent),
+    visibility_(false),
+    stepSize_(3.0f)
 {
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskStarted, this, &IsobathsControlMenuController::isobathsProcessorTaskStarted);
 
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskFinished,
                      this,                [this](IsobathsProcessor::IsobathProcessorResult result) {
+                                              Q_UNUSED(result);
                                               if (!graphicsSceneViewPtr_) {
                                                   return;
                                               }
-
-                                              if (auto* isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr().get(); isobathsPtr) {
-                                                  QMetaObject::invokeMethod(isobathsPtr,
-                                                                            "setData",
-                                                                            Qt::QueuedConnection,
-                                                                            Q_ARG(QVector<QVector3D>, result.data),
-                                                                            Q_ARG(int, 1) /*gl primitive type*/);
-                                                  isobathsPtr->setProcessingTask(isobathsProcessor_.ctask());
-                                              }
-
                                               Q_EMIT isobathsProcessorTaskFinished();
                                           });
 }
@@ -59,6 +52,7 @@ void IsobathsControlMenuController::tryInitPendingLambda()
             if (graphicsSceneViewPtr_) {
                 if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
                     isobathsPtr->setVisible(visibility_);
+                    isobathsPtr->setStepSize(stepSize_);
                 }
             }
         };
@@ -96,4 +90,18 @@ void IsobathsControlMenuController::onUpdateIsobathsButtonClicked()
     IsobathsProcessorTask task;
 
     isobathsProcessor_.startInThread(task);
+}
+
+void IsobathsControlMenuController::onSetStepSizeIsobaths(float val)
+{
+    qDebug() << "   onSetStepSizeIsobaths" << val;
+
+    stepSize_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getIsobathsPtr()->setStepSize(val);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }

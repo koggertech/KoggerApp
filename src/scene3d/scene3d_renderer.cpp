@@ -27,6 +27,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["isobaths"]    = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -97,6 +98,13 @@ void GraphicsScene3dRenderer::initialize()
     if (!m_shaderProgramMap["text_back"]->link())
         qCritical() << "Error linking text_back shaders in shader program.";
 
+    // isobaths
+    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/isobaths_colored.vsh"))
+        qCritical() << "Error adding isobaths vertex shader from source file.";
+    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/isobaths_colored.fsh"))
+        qCritical() << "Error adding isobaths fragment shader from source file.";
+    if (!m_shaderProgramMap["isobaths"]->link())
+        qCritical() << "Error linking isobaths shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()

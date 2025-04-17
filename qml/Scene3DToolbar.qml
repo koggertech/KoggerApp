@@ -58,7 +58,7 @@ ColumnLayout {
                     from: 5
                     to: 200
                     stepSize: 5
-                    value: 50
+                    value: 150
                     editable: false
 
                     onFocusChanged: {
@@ -314,6 +314,48 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            SpinBoxCustom {
+                id: stepSizeIsobathSpinBox
+                implicitWidth: 150
+                from: 1
+                to: 200
+                stepSize: 1
+                value: 3
+                editable: false
+
+                property int decimals: 1
+                property real realValue: value / 10
+
+                validator: DoubleValidator {
+                    bottom: Math.min(stepSizeIsobathSpinBox.from, stepSizeIsobathSpinBox.to)
+                    top:  Math.max(stepSizeIsobathSpinBox.from, stepSizeIsobathSpinBox.to)
+                }
+
+                textFromValue: function(value, locale) {
+                    return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                }
+
+                valueFromText: function(text, locale) {
+                    return Number.fromLocaleString(locale, text) * 10
+                }
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    IsobathsControlMenuController.onSetStepSizeIsobaths(stepSizeIsobathSpinBox.realValue)
+                }
+
+                onRealValueChanged: {
+                    IsobathsControlMenuController.onSetStepSizeIsobaths(stepSizeIsobathSpinBox.realValue)
+                }
+
+                Settings {
+                    property alias stepSizeIsobathSpinBox: stepSizeIsobathSpinBox.value
+                }
+            }
+
             CButton {
                 id: updateIsobathsButton
                 text: qsTr("Update isobaths")
