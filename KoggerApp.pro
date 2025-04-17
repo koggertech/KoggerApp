@@ -261,7 +261,7 @@ DEPENDPATH += $$PWD/third_party/freetype/include
 
 
 include($$PWD/src/scene3d/scene3d.pri)
-include($$PWD/src/device/device_manager.pri)
+include($$PWD/src/device/device.pri)
 include($$PWD/src/link/link.pri)
 include($$PWD/src/tile_engine/tile_engine.pri)
 
