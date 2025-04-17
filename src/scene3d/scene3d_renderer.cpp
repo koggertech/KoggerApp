@@ -2,7 +2,6 @@
 #include "draw_utils.h"
 
 #include "bottom_track.h"
-#include "surface.h"
 #include "point_group.h"
 #include "polygon_group.h"
 
@@ -162,6 +161,7 @@ void GraphicsScene3dRenderer::drawObjects()
     glEnable(GL_DEPTH_TEST);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+    isobathsRenderImpl_.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
 

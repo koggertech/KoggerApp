@@ -27,6 +27,13 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
                                                                         Q_ARG(QVector<QVector3D>, result.data),
                                                                         Q_ARG(int, result.primitiveType));
 
+                                              // duplitate surface data for isobaths
+                                              QMetaObject::invokeMethod(m_graphicsSceneView->getIsobathsPtr().get(),
+                                                                        "setData",
+                                                                        Qt::QueuedConnection,
+                                                                        Q_ARG(QVector<QVector3D>, result.data),
+                                                                        Q_ARG(int, result.primitiveType /*TODO*/));
+
                                               m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
 
                                               if (!result.data.empty()) {

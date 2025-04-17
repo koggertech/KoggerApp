@@ -1,6 +1,5 @@
 #include "scene3d_view.h"
 #include "scene3d_renderer.h"
-#include <surface.h>
 #include <plotcash.h>
 
 #include <cmath>
@@ -32,6 +31,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
     tileManager_(std::make_shared<map::TileManager>(this)),
+    isobaths_(std::make_shared<Isobaths>(this)),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
@@ -70,6 +70,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_planeGrid.get(), &PlaneGrid::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(isobaths_.get(), &Isobaths::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -83,6 +84,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(isobaths_.get(), &Isobaths::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
@@ -166,6 +168,11 @@ std::shared_ptr<NavigationArrow> GraphicsScene3dView::getNavigationArrowPtr() co
     return navigationArrow_;
 }
 
+std::shared_ptr<Isobaths> GraphicsScene3dView::getIsobathsPtr() const
+{
+    return isobaths_;
+}
+
 std::weak_ptr<GraphicsScene3dView::Camera> GraphicsScene3dView::camera() const
 {
     return m_camera;
@@ -202,6 +209,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_pointGroup->clearData();
     navigationArrow_->clearData();
     usblView_->clearTracks();
+    isobaths_->clearData();
     m_bounds = Cube();
 
     //setMapView();
@@ -722,7 +730,8 @@ void GraphicsScene3dView::updateBounds()
                     .merge(m_pointGroup->bounds())
                     .merge(sideScanView_->bounds())
                     .merge(imageView_->bounds())
-                    .merge(usblView_->bounds());
+                    .merge(usblView_->bounds())
+                    .merge(isobaths_->bounds());
 
     updatePlaneGrid();
 
@@ -933,6 +942,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));
     m_renderer->usblViewRenderImpl_         = *(dynamic_cast<UsblView::UsblViewRenderImplementation*>(view->usblView_->m_renderImpl));
+    m_renderer->isobathsRenderImpl_         = *(dynamic_cast<Isobaths::IsobathsRenderImplementation*>(view->isobaths_->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
     m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;

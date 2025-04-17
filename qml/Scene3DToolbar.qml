@@ -281,6 +281,55 @@ ColumnLayout {
         }
     }
 
+    // isobaths extra settings
+    MenuFrame {
+        id: isobathsSettings
+        visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered
+        z: isobathsSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !isobathsCheckButton.hovered) {
+                    isobathsCheckButton.isobathsLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                isobathsCheckButton.isobathsLongPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CButton {
+                id: updateIsobathsButton
+                text: qsTr("Update isobaths")
+                Layout.fillWidth: true
+                icon.source: "qrc:/icons/ui/refresh.svg"
+                onClicked: {
+                    IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
+                }
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
+            }
+        }
+    }
+
     /*// usbl settings
     MenuFrame {
         id: usblViewSettings
@@ -1250,6 +1299,61 @@ ColumnLayout {
                 onTriggered: {
                     surfaceCheckButton.longPressTriggered = true;
                 }
+            }
+        }
+
+        // isobaths check button
+        CheckButton {
+            id: isobathsCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "qrc:/icons/ui/stack_forward.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            property bool isobathsLongPressTriggered: false
+
+            MouseArea {
+                id: isobathsTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    isobathsLongPressTimer.start()
+                    isobathsCheckButton.isobathsLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!isobathsCheckButton.isobathsLongPressTriggered) {
+                        isobathsCheckButton.checked = !isobathsCheckButton.checked
+                    }
+                    isobathsLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    isobathsLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: isobathsLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    isobathsCheckButton.isobathsLongPressTriggered = true;
+                }
+            }
+
+            Settings {
+                property alias isobathsCheckButton: isobathsCheckButton.checked
             }
         }
 
