@@ -34,7 +34,7 @@ private:
     Isobaths* isobaths() const;
     void tryInitPendingLambda();
 
-    GraphicsScene3dView* graphicsSceneViewPtr_ = nullptr;
+    GraphicsScene3dView* graphicsSceneViewPtr_;
     IsobathsProcessor isobathsProcessor_;
     QThread thread_;
     std::function<void()> pendingLambda_;

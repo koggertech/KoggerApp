@@ -43,7 +43,7 @@ private:
     void tryInitPendingLambda();
 
     /*data*/
-    GraphicsScene3dView* m_graphicsSceneView;
+    GraphicsScene3dView* graphicsSceneViewPtr_;
     Core* corePtr_;
     QList<QMetaObject::Connection> connections_;
     std::function<void()> pendingLambda_;

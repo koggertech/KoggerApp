@@ -27,7 +27,7 @@ private:
 
     /*data*/
     MapView* getMapViewPtr() const;
-    GraphicsScene3dView* m_graphicsSceneView;
+    GraphicsScene3dView* graphicsSceneViewPtr_;
     std::function<void()> pendingLambda_;
     bool visibility_;
 };

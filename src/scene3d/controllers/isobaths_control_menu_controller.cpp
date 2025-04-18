@@ -1,13 +1,14 @@
 #include "isobaths_control_menu_controller.h"
-#include "qml_object_names.h"
 #include "scene3d_view.h"
 #include "isobaths.h"
 
 
-IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent) :
-    QmlComponentController(parent),
-    visibility_(false),
-    stepSize_(3.0f)
+IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
+    : QmlComponentController(parent),
+      graphicsSceneViewPtr_(nullptr),
+      pendingLambda_(nullptr),
+      visibility_(false),
+      stepSize_(3.0f)
 {
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskStarted, this, &IsobathsControlMenuController::isobathsProcessorTaskStarted);
 
@@ -25,9 +26,11 @@ void IsobathsControlMenuController::setGraphicsSceneView(GraphicsScene3dView* sc
 {
     graphicsSceneViewPtr_ = sceneView;
 
-    if (pendingLambda_) {
-        pendingLambda_();
-        pendingLambda_ = nullptr;
+    if (graphicsSceneViewPtr_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
     }
 }
 

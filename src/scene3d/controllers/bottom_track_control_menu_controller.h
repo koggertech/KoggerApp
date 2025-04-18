@@ -3,7 +3,6 @@
 
 #include "qml_component_controller.h"
 
-#include <memory>
 
 class BottomTrack;
 class GraphicsScene3dView;
@@ -33,6 +32,7 @@ private:
     BottomTrack* bottomTrack() const;
     QStringList channelList() const;
     int visibleChannelIndex() const;
+    void tryInitPendingLambda();
 
 private Q_SLOTS:
     void updateChannelList();
@@ -41,9 +41,10 @@ Q_SIGNALS:
     void channelListUpdated();
 
 private:
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
-    QStringList m_channelList;
-
+    GraphicsScene3dView* graphicsSceneViewPtr_ = nullptr;
+    QStringList channelList_;
+    std::function<void()> pendingLambda_;
+    bool visibility_;
 };
 
 #endif // BOTTOMTRACKCONTROLMENUCONTROLLER_H

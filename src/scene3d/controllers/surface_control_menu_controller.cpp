@@ -6,38 +6,44 @@
 #include "nearest_point_filter.h"
 #include "max_points_filter.h"
 
-SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
-    : QmlComponentController(parent)
-{
-    QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskStarted,
-                     this               , &SurfaceControlMenuController::surfaceProcessorTaskStarted);
 
-    QObject::connect(&m_surfaceProcessor, &SurfaceProcessor::taskFinished,
+SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
+    : QmlComponentController(parent),
+      graphicsSceneViewPtr_(nullptr),
+      pendingLambda_(nullptr),
+      visibility_(false),
+      gridVisibility_(false),
+      contourVisibility_(false)
+{
+    QObject::connect(&surfaceProcessor_, &SurfaceProcessor::taskStarted,
+                     this,               &SurfaceControlMenuController::surfaceProcessorTaskStarted);
+
+    QObject::connect(&surfaceProcessor_, &SurfaceProcessor::taskFinished,
                      this,                [this](SurfaceProcessor::Result result) {
-                                              if (!m_graphicsSceneView)
+                                              if (!graphicsSceneViewPtr_)
                                                   return;
 
                                               //QVector<QVector3D> data;
                                               //for(const auto& v : qAsConst(result.data))
                                               //    data.append({v.x(), v.z(), v.y()});
 
-                                              QMetaObject::invokeMethod(m_graphicsSceneView->surface().get(),
+                                              QMetaObject::invokeMethod(graphicsSceneViewPtr_->surface().get(),
                                                                         "setData",
                                                                         Qt::QueuedConnection,
                                                                         Q_ARG(QVector<QVector3D>, result.data),
                                                                         Q_ARG(int, result.primitiveType));
 
                                               // duplitate surface data for isobaths
-                                              QMetaObject::invokeMethod(m_graphicsSceneView->getIsobathsPtr().get(),
+                                              QMetaObject::invokeMethod(graphicsSceneViewPtr_->getIsobathsPtr().get(),
                                                                         "setData",
                                                                         Qt::QueuedConnection,
                                                                         Q_ARG(QVector<QVector3D>, result.data),
                                                                         Q_ARG(int, result.primitiveType /*TODO*/));
 
-                                              m_graphicsSceneView->surface()->setProcessingTask(m_surfaceProcessor.ctask());
+                                              graphicsSceneViewPtr_->surface()->setProcessingTask(surfaceProcessor_.ctask());
 
                                               if (!result.data.empty()) {
-                                                  m_graphicsSceneView->bottomTrack()->surfaceUpdated();
+                                                  graphicsSceneViewPtr_->bottomTrack()->surfaceUpdated();
                                               }
                                               Q_EMIT surfaceProcessorTaskFinished();
                                           });
@@ -45,7 +51,14 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
 
 void SurfaceControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
-    m_graphicsSceneView = sceneView;
+    graphicsSceneViewPtr_ = sceneView;
+
+    if (graphicsSceneViewPtr_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
+    }
 }
 
 void SurfaceControlMenuController::findComponent()
@@ -55,57 +68,84 @@ void SurfaceControlMenuController::findComponent()
 
 Surface *SurfaceControlMenuController::surface() const
 {
-    if(!m_graphicsSceneView)
+    if(!graphicsSceneViewPtr_)
         return nullptr;
 
-    return m_graphicsSceneView->surface().get();
+    return graphicsSceneViewPtr_->surface().get();
 }
 
 AbstractEntityDataFilter *SurfaceControlMenuController::inputDataFilter() const
 {
-    if (!m_graphicsSceneView)
+    if (!graphicsSceneViewPtr_)
         return nullptr;
 
-    auto task = m_graphicsSceneView->surface()->processingTask(); // ?!
+    auto task = graphicsSceneViewPtr_->surface()->processingTask(); // ?!
 
     return nullptr;
 }
 
+void SurfaceControlMenuController::tryInitPendingLambda()
+{
+    if (!pendingLambda_) {
+        pendingLambda_ = [this] () -> void {
+            if (graphicsSceneViewPtr_) {
+                if (auto surfacePtr = graphicsSceneViewPtr_->surface(); surfacePtr) {
+                    surfacePtr->setVisible(visibility_);
+                    surfacePtr->grid()->setVisible(gridVisibility_);
+                    surfacePtr->contour()->setVisible(contourVisibility_);
+                }
+            }
+        };
+    }
+}
+
 void SurfaceControlMenuController::onSurfaceVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if (!m_graphicsSceneView)
-        return;
+    visibility_ = checked;
 
-    m_graphicsSceneView->surface()->setVisible(checked);
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->surface()->setVisible(checked);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void SurfaceControlMenuController::onSurfaceContourVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if (!m_graphicsSceneView)
-        return;
+    contourVisibility_ = checked;
 
-    m_graphicsSceneView->surface()->contour()->setVisible(checked);
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->surface()->contour()->setVisible(contourVisibility_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void SurfaceControlMenuController::onContourColorDialogAccepted(QColor color)
 {
-    m_graphicsSceneView->surface()->contour()->setColor(color);
+    graphicsSceneViewPtr_->surface()->contour()->setColor(color);
 }
 
 void SurfaceControlMenuController::onSurfaceGridVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if (!m_graphicsSceneView)
-        return;
+    gridVisibility_ = checked;
 
-    m_graphicsSceneView->surface()->grid()->setVisible(checked);
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->surface()->grid()->setVisible(gridVisibility_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void SurfaceControlMenuController::onGridColorDialogAccepted(QColor color)
 {
-    if (!m_graphicsSceneView)
+    if (!graphicsSceneViewPtr_)
         return;
 
-    m_graphicsSceneView->surface()->grid()->setColor(color);
+    graphicsSceneViewPtr_->surface()->grid()->setColor(color);
 }
 
 void SurfaceControlMenuController::onGridInterpolationCheckBoxCheckedChanged(bool checked)
@@ -117,7 +157,7 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 {
     Q_UNUSED(index);
 
-    if (!m_graphicsSceneView)
+    if (!graphicsSceneViewPtr_)
         return;
 
     auto menu = m_component->findChild<QObject*>(QmlObjectNames::surfaceControlMenu());
@@ -133,17 +173,17 @@ void SurfaceControlMenuController::onFilterTypeComboBoxIndexChanged(int index)
 
 void SurfaceControlMenuController::onExportToCSVButtonClicked(const QString& path)
 {
-    if (!m_graphicsSceneView) {
+    if (!graphicsSceneViewPtr_) {
         qDebug().noquote() << "m_graphicsSceneView is nullptr!";
         return;
     }
 
-    if (m_surfaceProcessor.isBusy()) {
+    if (surfaceProcessor_.isBusy()) {
         qDebug().noquote() << "Surface processor is busy!";
         return;
     }
 
-    m_graphicsSceneView->surface()->saveVerticesToFile(path);
+    graphicsSceneViewPtr_->surface()->saveVerticesToFile(path);
 }
 
 void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int triangleEdgeLengthLimitSpinBox,
@@ -151,12 +191,12 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int triangleEdge
                                                                 int decimationCountSpinBox,
                                                                 int decimationDistanceSpinBox)
 {
-    if (!m_graphicsSceneView) {
+    if (!graphicsSceneViewPtr_) {
         qDebug().noquote() << "m_graphicsSceneView is nullptr!";
         return;
     }
 
-    if (m_surfaceProcessor.isBusy()) {
+    if (surfaceProcessor_.isBusy()) {
         qDebug().noquote() << "Surface processor is busy!";
         return;
     }
@@ -164,7 +204,7 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int triangleEdge
     SurfaceProcessorTask task;
     task.setGridInterpEnabled(gridCellSizeSpinBox == -1 ? false : true);
     task.setInterpGridCellSize(gridCellSizeSpinBox);
-    task.setBottomTrack(m_graphicsSceneView->bottomTrack());
+    task.setBottomTrack(graphicsSceneViewPtr_->bottomTrack());
     task.setEdgeLengthLimit(triangleEdgeLengthLimitSpinBox);
     std::shared_ptr<AbstractEntityDataFilter> filter;
     if (decimationCountSpinBox != -1) {
@@ -175,5 +215,5 @@ void SurfaceControlMenuController::onUpdateSurfaceButtonClicked(int triangleEdge
     }
     task.setBottomTrackDataFilter(filter);
 
-    m_surfaceProcessor.startInThread(task);
+    surfaceProcessor_.startInThread(task);
 }
