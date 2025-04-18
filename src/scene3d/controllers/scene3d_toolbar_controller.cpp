@@ -4,42 +4,84 @@
 
 
 Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
-    : QmlComponentController(parent)
+    : QmlComponentController(parent),
+      graphicsSceneViewPtr_(nullptr),
+      pendingLambda_(nullptr),
+      isVertexEditingMode_(false)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
 {
-    m_graphicsSceneView->fitAllInView();
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->fitAllInView();
+    }
 }
 
 void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
 {
-    m_graphicsSceneView->setIsometricView();
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->setIsometricView();
+    }
 }
 
-void Scene3dToolBarController::onSetCameraMapViewButtonClicked() {
-    m_graphicsSceneView->setMapView();
+void Scene3dToolBarController::onSetCameraMapViewButtonClicked()
+{
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->setMapView();
+    }
 }
 
 void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool checked)
 {
-    if(checked)
-        m_graphicsSceneView->setBottomTrackVertexSelectionMode();
-    else
-        m_graphicsSceneView->setIdleMode();
+    isVertexEditingMode_ = checked;
+
+    if (graphicsSceneViewPtr_) {
+        if (isVertexEditingMode_) {
+            graphicsSceneViewPtr_->setBottomTrackVertexSelectionMode();
+        }
+        else {
+            graphicsSceneViewPtr_->setIdleMode();
+        }
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void Scene3dToolBarController::onCancelZoomButtonClicked()
 {
-    m_graphicsSceneView->setCancelZoomView();
+    graphicsSceneViewPtr_->setCancelZoomView();
 }
 
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
-    m_graphicsSceneView = sceneView;
+    graphicsSceneViewPtr_ = sceneView;
+
+    if (graphicsSceneViewPtr_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
+    }
 }
 
 void Scene3dToolBarController::findComponent()
 {
     m_component = m_engine->findChild<QObject*>(QmlObjectNames::scene3dToolBar());
+}
+
+void Scene3dToolBarController::tryInitPendingLambda()
+{
+    if (!pendingLambda_) {
+        pendingLambda_ = [this] () -> void {
+            if (graphicsSceneViewPtr_) {
+                if (isVertexEditingMode_) {
+                    graphicsSceneViewPtr_->setBottomTrackVertexSelectionMode();
+                }
+                else {
+                    graphicsSceneViewPtr_->setIdleMode();
+                }
+            }
+        };
+    }
 }

@@ -52,13 +52,17 @@ protected:
 private:
     Surface* surface() const;
     AbstractEntityDataFilter* inputDataFilter() const;
+    void tryInitPendingLambda();
 
 private:
-    std::shared_ptr<AbstractEntityDataFilter> m_inputDataFilter;
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
-    SurfaceProcessor m_surfaceProcessor;
-    QThread m_thread;
-
+    std::shared_ptr<AbstractEntityDataFilter> inputDataFilter_;
+    GraphicsScene3dView* graphicsSceneViewPtr_;
+    SurfaceProcessor surfaceProcessor_;
+    QThread thread_;
+    std::function<void()> pendingLambda_;
+    bool visibility_;
+    bool gridVisibility_;
+    bool contourVisibility_;
 };
 
 #endif // SURFACECONTROLMENUCONTROLLER_H

@@ -64,6 +64,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias triangleEdgeLengthLimitSpinBox: triangleEdgeLengthLimitSpinBox.value
+                    }
                 }
             }
 
@@ -73,11 +77,20 @@ ColumnLayout {
                 CheckButton {
                     id: decimationCountCheck
                     text: qsTr("Count")
-                    checked: true
                     ButtonGroup.group: decimationGroup
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        if (!decimationDistanceCheck.checked) {
+                            decimationCountCheck.checked = true
+                        }
+                    }
+
+                    Settings {
+                        property alias decimationCountCheck: decimationCountCheck.checked
                     }
                 }
 
@@ -88,6 +101,10 @@ ColumnLayout {
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Settings {
+                        property alias decimationDistanceCheck: decimationDistanceCheck.checked
                     }
                 }
 
@@ -111,6 +128,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias decimationCountSpinBox: decimationCountSpinBox.value
+                    }
                 }
             }
 
@@ -130,6 +151,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias decimationDistanceSpinBox: decimationDistanceSpinBox.value
+                    }
                 }
             }
 
@@ -139,11 +164,20 @@ ColumnLayout {
                 CheckButton {
                     id: triangleTypeCheck
                     text: qsTr("Triangle")
-                    checked: true
                     ButtonGroup.group: surfaceTypeGroup
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        if (!gridTypeCheck.checked) {
+                            triangleTypeCheck.checked = true
+                        }
+                    }
+
+                    Settings {
+                        property alias triangleTypeCheck: triangleTypeCheck.checked
                     }
                 }
 
@@ -154,6 +188,10 @@ ColumnLayout {
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Settings {
+                        property alias gridTypeCheck: gridTypeCheck.checked
                     }
                 }
 
@@ -178,6 +216,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias gridCellSizeSpinBox: gridCellSizeSpinBox.value
+                    }
                 }
             }
 
@@ -196,6 +238,14 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Component.onCompleted: {
+                        SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    Settings {
+                        property alias contourVisibilityCheckButton: contourVisibilityCheckButton.checked
+                    }
                 }
                 CheckButton {
                     id: gridVisibilityCheckButton
@@ -208,6 +258,14 @@ ColumnLayout {
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    Settings {
+                        property alias gridVisibilityCheckButton: gridVisibilityCheckButton.checked
                     }
                 }
             }
@@ -276,6 +334,97 @@ ColumnLayout {
 
                 Settings {
                     property alias exportSurfaceFolderText: exportSurfacePathText.text
+                }
+            }
+        }
+    }
+
+    // isobaths extra settings
+    MenuFrame {
+        id: isobathsSettings
+        visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered
+        z: isobathsSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !isobathsCheckButton.hovered) {
+                    isobathsCheckButton.isobathsLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                isobathsCheckButton.isobathsLongPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            SpinBoxCustom {
+                id: stepSizeIsobathSpinBox
+                implicitWidth: 150
+                from: 1
+                to: 200
+                stepSize: 1
+                value: 3
+                editable: false
+
+                property int decimals: 1
+                property real realValue: value / 10
+
+                validator: DoubleValidator {
+                    bottom: Math.min(stepSizeIsobathSpinBox.from, stepSizeIsobathSpinBox.to)
+                    top:  Math.max(stepSizeIsobathSpinBox.from, stepSizeIsobathSpinBox.to)
+                }
+
+                textFromValue: function(value, locale) {
+                    return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                }
+
+                valueFromText: function(text, locale) {
+                    return Number.fromLocaleString(locale, text) * 10
+                }
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    IsobathsControlMenuController.onSetStepSizeIsobaths(stepSizeIsobathSpinBox.realValue)
+                }
+
+                onRealValueChanged: {
+                    IsobathsControlMenuController.onSetStepSizeIsobaths(stepSizeIsobathSpinBox.realValue)
+                }
+
+                Settings {
+                    property alias stepSizeIsobathSpinBox: stepSizeIsobathSpinBox.value
+                }
+            }
+
+            CButton {
+                id: updateIsobathsButton
+                text: qsTr("Update isobaths")
+                Layout.fillWidth: true
+                icon.source: "qrc:/icons/ui/refresh.svg"
+                onClicked: {
+                    IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
+                }
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
                 }
             }
         }
@@ -1124,12 +1273,15 @@ ColumnLayout {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
-            checked: true
             iconSource: "qrc:/icons/ui/click.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+            }
+
+            Settings {
+                property alias selectionToolButton: selectionToolButton.checked
             }
         }
 
@@ -1165,13 +1317,16 @@ ColumnLayout {
             iconSource: "qrc:/icons/ui/route.svg"
             implicitWidth: theme.controlHeight
 
-
             onCheckedChanged: {
                 BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
 
             Component.onCompleted: {
                 BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias boatTrackCheckButton: boatTrackCheckButton.checked
             }
         }
 
@@ -1191,6 +1346,10 @@ ColumnLayout {
             Component.onCompleted: {
                 BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
+
+            Settings {
+                property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
+            }
         }
 
         CheckButton {
@@ -1204,19 +1363,11 @@ ColumnLayout {
 
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
-                contourVisibilityCheckButton.checked = checked
-                gridVisibilityCheckButton.checked = checked
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
             Component.onCompleted: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
-                contourVisibilityCheckButton.checked = checked
-                gridVisibilityCheckButton.checked = checked
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
@@ -1250,6 +1401,65 @@ ColumnLayout {
                 onTriggered: {
                     surfaceCheckButton.longPressTriggered = true;
                 }
+            }
+
+            Settings {
+                property alias surfaceCheckButton: surfaceCheckButton.checked
+            }
+        }
+
+        // isobaths check button
+        CheckButton {
+            id: isobathsCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "qrc:/icons/ui/stack_forward.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            property bool isobathsLongPressTriggered: false
+
+            MouseArea {
+                id: isobathsTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    isobathsLongPressTimer.start()
+                    isobathsCheckButton.isobathsLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!isobathsCheckButton.isobathsLongPressTriggered) {
+                        isobathsCheckButton.checked = !isobathsCheckButton.checked
+                    }
+                    isobathsLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    isobathsLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: isobathsLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    isobathsCheckButton.isobathsLongPressTriggered = true;
+                }
+            }
+
+            Settings {
+                property alias isobathsCheckButton: isobathsCheckButton.checked
             }
         }
 
