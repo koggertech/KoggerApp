@@ -341,6 +341,7 @@ public:
     uint32_t NMEAError() { return _counter.checkErrorNMEA;}
     uint32_t binComplete() { return _counter.completeKP1;}
     uint32_t NMEAComplete() { return _counter.completeNMEA;}
+    uint32_t getCompleteTotal() { return _counter.completeTotal; }
 
     template<typename T>
     T read() {
@@ -546,6 +547,8 @@ protected:
 
         uint32_t completeProxy = 0;
         uint32_t notCompleteProxy = 0;
+
+        uint32_t completeTotal = 0;
     } _counter;
 
     int32_t availContextPrivate() {
@@ -651,6 +654,7 @@ protected:
 
             _proto = ProtoKP1;
             _counter.completeKP1++;
+            _counter.completeTotal++;
         } else {
             _counter.checkErrorKP1++;
             _proto = ProtoNone;
@@ -711,6 +715,7 @@ protected:
 //                process();
 //                if(isComplete()) {
 //                    _counter.completeProxy++;
+//                    _counter.completeTotal++;
 //                } else {
 //                    _counter.notCompleteProxy++;
 //                }
@@ -736,6 +741,7 @@ protected:
 
                 _proto = ProtoKP2;
                 _counter.completeKP2++;
+                _counter.completeTotal++;
             }
 
 
@@ -756,6 +762,7 @@ protected:
 
             _proto = ProtoUBX;
             _counter.completeUBX++;
+            _counter.completeTotal++;
         } else {
             _counter.checkErrorUBX++;
             _proto = ProtoNone;
@@ -792,6 +799,7 @@ protected:
             _readMaxPosition = checkStopPos;
             _proto = ProtoNMEA;
             _counter.completeNMEA++;
+            _counter.completeTotal++;
         } else {
             _counter.checkErrorNMEA++;
             _proto = ProtoNone;
@@ -830,6 +838,7 @@ protected:
             _payloadLen = _readMaxPosition - _readPosition;
 
             _counter.completeMAVLink++;
+            _counter.completeTotal++;
         } else {
             _counter.checkErrorMAVLink++;
             _proto = ProtoNone;

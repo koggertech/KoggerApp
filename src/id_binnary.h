@@ -11,7 +11,7 @@ using namespace Parsers;
 using Segment = QPair<uint16_t, uint16_t>; // first - begin, second - end
 
 typedef enum {
-    BoardNone,
+    BoardNone = -1,
     BoardEnhanced = 1,
     BoardBase = 3,
     BoardNBase = 4,

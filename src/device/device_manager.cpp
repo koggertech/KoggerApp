@@ -477,8 +477,6 @@ void DeviceManager::closeFile()
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
-    Q_UNUSED(uuid);
-
     if (link) {
         if (link->getIsProxy()) {
             proxyLinkUuid_ = uuid;
@@ -827,6 +825,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
+        connect(dev, &DevQProperty::upgradingFirmware, link, &Link::onUpgradingFirmware);
     }
 
     //
