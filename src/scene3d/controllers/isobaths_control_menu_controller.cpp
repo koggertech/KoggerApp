@@ -1,6 +1,5 @@
 #include "isobaths_control_menu_controller.h"
 #include "scene3d_view.h"
-#include "isobaths.h"
 
 
 IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
@@ -8,15 +7,17 @@ IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
       graphicsSceneViewPtr_(nullptr),
       pendingLambda_(nullptr),
       visibility_(false),
-      stepSize_(3.0f)
+      surfaceStepSize_(3.0f),
+      lineStepSize_(3.0f)
 {
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskStarted, this, &IsobathsControlMenuController::isobathsProcessorTaskStarted);
 
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskFinished,
                      this,                [this](IsobathsProcessor::IsobathProcessorResult result) {
-                                              Q_UNUSED(result);
-                                              if (!graphicsSceneViewPtr_) {
-                                                  return;
+                                              if (graphicsSceneViewPtr_) {
+                                                  if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
+                                                      isobathsPtr->setLineSegments(result.data);
+                                                  }
                                               }
                                               Q_EMIT isobathsProcessorTaskFinished();
                                           });
@@ -39,15 +40,6 @@ void IsobathsControlMenuController::findComponent()
     m_component = m_engine->findChild<QObject*>("activeObjectParamsMenuLoader");
 }
 
-Isobaths* IsobathsControlMenuController::isobaths() const
-{
-    if (graphicsSceneViewPtr_) {
-        return graphicsSceneViewPtr_->getIsobathsPtr().get();
-    }
-
-    return nullptr;
-}
-
 void IsobathsControlMenuController::tryInitPendingLambda()
 {
     if (!pendingLambda_) {
@@ -55,7 +47,8 @@ void IsobathsControlMenuController::tryInitPendingLambda()
             if (graphicsSceneViewPtr_) {
                 if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
                     isobathsPtr->setVisible(visibility_);
-                    isobathsPtr->setStepSize(stepSize_);
+                    isobathsPtr->setSurfaceStepSize(surfaceStepSize_);
+                    isobathsPtr->setLineStepSize(lineStepSize_);
                 }
             }
         };
@@ -70,6 +63,10 @@ void IsobathsControlMenuController::onIsobathsVisibilityCheckBoxCheckedChanged(b
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getIsobathsPtr()->setVisible(checked);
+
+        if (checked) {
+            onUpdateIsobathsButtonClicked();
+        }
     }
     else {
         tryInitPendingLambda();
@@ -81,28 +78,80 @@ void IsobathsControlMenuController::onUpdateIsobathsButtonClicked()
     qDebug() << "   onUpdateIsobathsButtonClicked";
 
     if (!graphicsSceneViewPtr_) {
-        qDebug().noquote() << "graphicsSceneViewPtr_ is nullptr!";
+        qDebug() << "graphicsSceneViewPtr_ is nullptr!";
         return;
     }
 
     if (isobathsProcessor_.isBusy()) {
-        qDebug().noquote() << "Isobaths processor is busy!";
+        qDebug() << "Isobaths processor is busy!";
         return;
     }
 
-    IsobathsProcessorTask task;
+    auto* sur = graphicsSceneViewPtr_->surface().get();
+    auto* iso = graphicsSceneViewPtr_->getIsobathsPtr().get();
 
-    isobathsProcessor_.startInThread(task);
+    if (!sur || !iso) {
+        qDebug() << "sur or iso is nullptr";
+        return;
+    }
+
+    // duplitate surface data for isobaths
+    QMetaObject::invokeMethod(iso,
+                              "setData",
+                              Qt::QueuedConnection,
+                              Q_ARG(QVector<QVector3D>, sur->getRawData()),
+                              Q_ARG(int, sur->getPrimitiveType()));
+
+    // recalc
+    QMetaObject::invokeMethod(this,
+                              "onSetSurfaceStepSizeIsobaths",
+                              Qt::QueuedConnection,
+                              Q_ARG(float, iso->getSurfaceStepSize()));
+
+    QMetaObject::invokeMethod(this,
+                              "onSetLineStepSizeIsobaths",
+                              Qt::QueuedConnection,
+                              Q_ARG(float, iso->getLineStepSize()));
 }
 
-void IsobathsControlMenuController::onSetStepSizeIsobaths(float val)
+void IsobathsControlMenuController::onSetSurfaceStepSizeIsobaths(float val)
 {
-    qDebug() << "   onSetStepSizeIsobaths" << val;
+    qDebug() << "   onSetSurfaceStepSizeIsobaths" << val;
 
-    stepSize_ = val;
+    surfaceStepSize_ = val;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getIsobathsPtr()->setStepSize(val);
+        graphicsSceneViewPtr_->getIsobathsPtr()->setSurfaceStepSize(val);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void IsobathsControlMenuController::onSetLineStepSizeIsobaths(float val)
+{
+    qDebug() << "   onSetLineStepSizeIsobaths" << val;
+
+    lineStepSize_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
+
+            isobathsPtr->setLineStepSize(lineStepSize_);
+
+            if (isobathsProcessor_.isBusy()) {
+                qDebug().noquote() << "Isobaths processor is busy!";
+                return;
+            }
+
+            IsobathsProcessorTask task;
+            task.grid = isobathsPtr->getRawData();
+            task.gridWidth = isobathsPtr->getGridWidth();
+            task.gridHeight = isobathsPtr->getGridHeight();
+            task.step = isobathsPtr->getLineStepSize();
+
+            isobathsProcessor_.startInThread(task);
+        }
     }
     else {
         tryInitPendingLambda();

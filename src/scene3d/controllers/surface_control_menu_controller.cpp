@@ -33,18 +33,12 @@ SurfaceControlMenuController::SurfaceControlMenuController(QObject *parent)
                                                                         Q_ARG(QVector<QVector3D>, result.data),
                                                                         Q_ARG(int, result.primitiveType));
 
-                                              // duplitate surface data for isobaths
-                                              QMetaObject::invokeMethod(graphicsSceneViewPtr_->getIsobathsPtr().get(),
-                                                                        "setData",
-                                                                        Qt::QueuedConnection,
-                                                                        Q_ARG(QVector<QVector3D>, result.data),
-                                                                        Q_ARG(int, result.primitiveType /*TODO*/));
-
                                               graphicsSceneViewPtr_->surface()->setProcessingTask(surfaceProcessor_.ctask());
 
                                               if (!result.data.empty()) {
                                                   graphicsSceneViewPtr_->bottomTrack()->surfaceUpdated();
                                               }
+
                                               Q_EMIT surfaceProcessorTaskFinished();
                                           });
 }

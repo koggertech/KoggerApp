@@ -5,13 +5,16 @@
 #include <QVector3D>
 
 
-class IsobathsProcessorTask{
-
+class IsobathsProcessorTask
+{
 public:
+    QVector<QVector3D> grid;
+    int gridWidth = 0;
+    int gridHeight = 0;
+    float step = 1.f;
 
 private:
     friend class IsobathsProcessor;
-
 };
 Q_DECLARE_METATYPE(IsobathsProcessorTask)
 
@@ -20,7 +23,7 @@ class IsobathsProcessor : public QObject
     Q_OBJECT
 
 public:
-    struct IsobathProcessorResult{
+    struct IsobathProcessorResult {
         QVector <QVector3D> data;
     };
 
@@ -45,6 +48,8 @@ Q_SIGNALS:
     void taskFinished(IsobathsProcessor::IsobathProcessorResult result);
 
 private:
+    QVector<QVector3D> buildGridTriangles(const QVector<QVector3D>& pts, int gridWidth, int gridHeight);
+
     IsobathsProcessorTask task_;
     IsobathProcessorResult result_;
     std::atomic_bool isBusy_;

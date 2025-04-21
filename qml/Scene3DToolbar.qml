@@ -372,45 +372,101 @@ ColumnLayout {
         }
 
         ColumnLayout {
-            SpinBoxCustom {
-                id: stepSizeIsobathSpinBox
-                implicitWidth: 150
-                from: 1
-                to: 200
-                stepSize: 1
-                value: 3
-                editable: false
 
-                property int decimals: 1
-                property real realValue: value / 10
+            RowLayout {
+                CText {
+                    text: "surface step, m:"
+                    Layout.fillWidth: true
 
-                validator: DoubleValidator {
-                    bottom: Math.min(stepSizeIsobathSpinBox.from, stepSizeIsobathSpinBox.to)
-                    top:  Math.max(stepSizeIsobathSpinBox.from, stepSizeIsobathSpinBox.to)
                 }
+                SpinBoxCustom {
+                    id: surfaceStepSizeIsobathSpinBox
+                    implicitWidth: 150
+                    from: 1
+                    to: 200
+                    stepSize: 1
+                    value: 3
+                    editable: false
 
-                textFromValue: function(value, locale) {
-                    return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                    property int decimals: 1
+                    property real realValue: value / 10
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(surfaceStepSizeIsobathSpinBox.from, surfaceStepSizeIsobathSpinBox.to)
+                        top:  Math.max(surfaceStepSizeIsobathSpinBox.from, surfaceStepSizeIsobathSpinBox.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 10
+                    }
+
+                    onFocusChanged: {
+                        isobathsSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        IsobathsControlMenuController.onSetSurfaceStepSizeIsobaths(surfaceStepSizeIsobathSpinBox.realValue)
+                    }
+
+                    onRealValueChanged: {
+                        IsobathsControlMenuController.onSetSurfaceStepSizeIsobaths(surfaceStepSizeIsobathSpinBox.realValue)
+                    }
+
+                    Settings {
+                        property alias surfaceStepSizeIsobathSpinBox: surfaceStepSizeIsobathSpinBox.value
+                    }
                 }
+            }
+            RowLayout {
+                CText {
+                    text: "lines step, m:"
+                    Layout.fillWidth: true
 
-                valueFromText: function(text, locale) {
-                    return Number.fromLocaleString(locale, text) * 10
                 }
+                SpinBoxCustom {
+                    id: lineStepSizeIsobathSpinBox
+                    implicitWidth: 150
+                    from: 1
+                    to: 200
+                    stepSize: 1
+                    value: 3
+                    editable: false
 
-                onFocusChanged: {
-                    isobathsSettings.focus = true
-                }
+                    property int decimals: 1
+                    property real realValue: value / 10
 
-                Component.onCompleted: {
-                    IsobathsControlMenuController.onSetStepSizeIsobaths(stepSizeIsobathSpinBox.realValue)
-                }
+                    validator: DoubleValidator {
+                        bottom: Math.min(lineStepSizeIsobathSpinBox.from, lineStepSizeIsobathSpinBox.to)
+                        top:  Math.max(lineStepSizeIsobathSpinBox.from, lineStepSizeIsobathSpinBox.to)
+                    }
 
-                onRealValueChanged: {
-                    IsobathsControlMenuController.onSetStepSizeIsobaths(stepSizeIsobathSpinBox.realValue)
-                }
+                    textFromValue: function(value, locale) {
+                        return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                    }
 
-                Settings {
-                    property alias stepSizeIsobathSpinBox: stepSizeIsobathSpinBox.value
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 10
+                    }
+
+                    onFocusChanged: {
+                        isobathsSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        IsobathsControlMenuController.onSetLineStepSizeIsobaths(lineStepSizeIsobathSpinBox.realValue)
+                    }
+
+                    onRealValueChanged: {
+                        IsobathsControlMenuController.onSetLineStepSizeIsobaths(lineStepSizeIsobathSpinBox.realValue)
+                    }
+
+                    Settings {
+                        property alias lineStepSizeIsobathSpinBox: lineStepSizeIsobathSpinBox.value
+                    }
                 }
             }
 

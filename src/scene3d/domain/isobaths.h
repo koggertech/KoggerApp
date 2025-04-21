@@ -19,7 +19,6 @@ class Isobaths : public SceneObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(Isobaths)
-    Q_PROPERTY(IsobathsProcessorTask processingTask READ processingTask CONSTANT) //
 
 public:
     class IsobathsRenderImplementation : public SceneObject::RenderImplementation
@@ -27,7 +26,6 @@ public:
     public:
         IsobathsRenderImplementation();
         virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
-
 
     private:
         friend class Isobaths;
@@ -37,25 +35,36 @@ public:
         float minDepth_;
         float maxDepth_;
         float levelStep_;
-        int paletteSize_;
         GLuint textureId_;
+
+        QVector<QVector3D> lineSegments_;
+        QVector3D lineColor_;
     };
 
     explicit Isobaths(QObject* parent = nullptr);
     virtual ~Isobaths();
-    void setProcessingTask(const IsobathsProcessorTask& task);
+
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     virtual void clearData() override;
     virtual SceneObjectType type() const override;
-    IsobathsProcessorTask processingTask() const;
 
-    float getStepSize() const;
-    QVector<float> getDepthLevels() const;
+    void setProcessingTask(const IsobathsProcessorTask& task);
+    IsobathsProcessorTask getProcessingTask() const;
+
+    float getSurfaceStepSize() const;
+    void setSurfaceStepSize(float );
+    float getLineStepSize() const;
+    void setLineStepSize(float val);
+    void setLineSegments(const QVector<QVector3D>& segs);
+
+    const QVector<QVector3D>& getRawData() const;
+    int  getGridWidth() const;
+    int getGridHeight() const;
+
     QVector<uint8_t>& getTextureTasksRef();
     GLuint getDeinitTextureTask() const;
     GLuint getTextureId() const;
     void setTextureId(GLuint textureId);
-    void setStepSize(float step);
 
 private:
     friend class IsobathsProcessor;
@@ -67,11 +76,10 @@ private:
 
     /*data*/
     IsobathsProcessorTask processingTask_;
-    QVector<ColorInterval> colorIntervals_;
-    int paletteSize_;
     float minDepth_;
     float maxDepth_;
-    float stepSize_;
+    float surfaceStepSize_;
+    float lineStepSize_;
     GLuint textureId_;
     QVector<uint8_t> textureTask_;
     GLuint toDeleteId_;

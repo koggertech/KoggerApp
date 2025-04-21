@@ -5,16 +5,16 @@ static const QVector<QVector3D>& colorPalette()
 {
     static const QVector<QVector3D> colorPalette = {
         // midnight
-        // QVector3D(0.2f, 0.5f, 1.0f),
-        // QVector3D(0.2f, 0.4f, 0.9f),
-        // QVector3D(0.3f, 0.3f, 0.8f),
-        // QVector3D(0.4f, 0.2f, 0.7f),
-        // QVector3D(0.5f, 0.2f, 0.6f),
-        // QVector3D(0.6f, 0.3f, 0.5f),
-        // QVector3D(0.7f, 0.4f, 0.4f),
-        // QVector3D(0.8f, 0.5f, 0.3f),
-        // QVector3D(0.9f, 0.6f, 0.2f),
-        // QVector3D(1.0f, 0.7f, 0.1f)
+        //QVector3D(0.2f, 0.5f, 1.0f),
+        //QVector3D(0.2f, 0.4f, 0.9f),
+        //QVector3D(0.3f, 0.3f, 0.8f),
+        //QVector3D(0.4f, 0.2f, 0.7f),
+        //QVector3D(0.5f, 0.2f, 0.6f),
+        //QVector3D(0.6f, 0.3f, 0.5f),
+        //QVector3D(0.7f, 0.4f, 0.4f),
+        //QVector3D(0.8f, 0.5f, 0.3f),
+        //QVector3D(0.9f, 0.6f, 0.2f),
+        //QVector3D(1.0f, 0.7f, 0.1f)
 
         // default
         QVector3D(0.0f, 0.0f, 0.3f),
@@ -30,14 +30,14 @@ static const QVector<QVector3D>& colorPalette()
 }
 
 
-Isobaths::Isobaths(QObject* parent) :
-    SceneObject(new IsobathsRenderImplementation, parent),
-    paletteSize_(0),
-    minDepth_(0.0f),
-    maxDepth_(0.0f),
-    stepSize_(1.0f),
-    textureId_(0),
-    toDeleteId_(0)
+Isobaths::Isobaths(QObject* parent)
+    : SceneObject(new IsobathsRenderImplementation, parent),
+      minDepth_(0.0f),
+      maxDepth_(0.0f),
+      surfaceStepSize_(1.0f),
+      lineStepSize_(1.0f),
+      textureId_(0),
+      toDeleteId_(0)
 {}
 
 Isobaths::~Isobaths()
@@ -47,9 +47,25 @@ Isobaths::~Isobaths()
     }
 }
 
-void Isobaths::setProcessingTask(const IsobathsProcessorTask& task)
+void Isobaths::setData(const QVector<QVector3D>& data, int primitiveType)
 {
-    processingTask_ = task;
+    SceneObject::setData(data, primitiveType);
+
+    processingTask_.grid = data;
+    rebuildColorIntervals();
+
+    Q_EMIT changed();
+}
+
+void Isobaths::clearData()
+{
+    SceneObject::clearData();
+
+    if (auto* r = RENDER_IMPL(Isobaths)) {
+        r->colorIntervals_.clear();
+        r->lineSegments_.clear();
+    }
+    Q_EMIT changed();
 }
 
 SceneObject::SceneObjectType Isobaths::type() const
@@ -57,9 +73,102 @@ SceneObject::SceneObjectType Isobaths::type() const
     return SceneObjectType::Isobaths;
 }
 
-IsobathsProcessorTask Isobaths::processingTask() const
+void Isobaths::setProcessingTask(const IsobathsProcessorTask& task)
+{
+    processingTask_ = task;
+}
+
+IsobathsProcessorTask Isobaths::getProcessingTask() const
 {
     return processingTask_;
+}
+
+float Isobaths::getSurfaceStepSize() const
+{
+    return surfaceStepSize_;
+}
+
+void Isobaths::setSurfaceStepSize(float val)
+{
+    if (qFuzzyCompare(surfaceStepSize_, val)) {
+        return;
+    }
+
+    surfaceStepSize_ = val;
+
+    rebuildColorIntervals();
+
+    Q_EMIT changed();
+}
+
+float Isobaths::getLineStepSize() const
+{
+    return lineStepSize_;
+}
+
+void Isobaths::setLineStepSize(float val)
+{
+    if (qFuzzyCompare(lineStepSize_, val)) {
+        return;
+    }
+
+    lineStepSize_ = val;
+
+    Q_EMIT changed();
+}
+
+void Isobaths::setLineSegments(const QVector<QVector3D> &segs)
+{
+    if (auto* r = RENDER_IMPL(Isobaths)) {
+        r->lineSegments_ = segs;
+    }
+
+    Q_EMIT changed();
+}
+
+const QVector<QVector3D> &Isobaths::getRawData() const
+{
+    return RENDER_IMPL(Isobaths)->m_data;
+}
+
+int Isobaths::getGridWidth() const
+{
+    return processingTask_.gridWidth;
+}
+
+int Isobaths::getGridHeight() const
+{
+    return processingTask_.gridHeight;
+}
+
+QVector<uint8_t>& Isobaths::getTextureTasksRef()
+{
+    return textureTask_;
+}
+
+GLuint Isobaths::getDeinitTextureTask() const
+{
+    return toDeleteId_;
+}
+
+GLuint Isobaths::getTextureId() const
+{
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
+        return r->textureId_;
+    }
+
+    return 0;
+}
+
+void Isobaths::setTextureId(GLuint textureId)
+{
+    textureId_ = textureId;
+
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
+        r->textureId_ = textureId;
+    }
+
+    Q_EMIT changed();
 }
 
 void Isobaths::rebuildColorIntervals()
@@ -69,11 +178,10 @@ void Isobaths::rebuildColorIntervals()
         return;
     }
 
-    if (r->m_data.isEmpty() || stepSize_ <= 0.f) {
+    if (r->m_data.isEmpty() || surfaceStepSize_ <= 0.f) {
         return;
     }
 
-    // detect min/max Z
     minDepth_ = std::numeric_limits<float>::max();
     maxDepth_ = -std::numeric_limits<float>::max();
 
@@ -86,32 +194,28 @@ void Isobaths::rebuildColorIntervals()
         std::swap(minDepth_, maxDepth_);
     }
 
-    // align to step grid
-    minDepth_ = std::floor(minDepth_ / stepSize_) * stepSize_;
-    maxDepth_ = std::ceil (maxDepth_ / stepSize_) * stepSize_;
-    int levelCount = static_cast<int>(((maxDepth_ - minDepth_) / stepSize_) + 1);
+    minDepth_ = std::floor(minDepth_ / surfaceStepSize_) * surfaceStepSize_;
+    maxDepth_ = std::ceil (maxDepth_ / surfaceStepSize_) * surfaceStepSize_;
+    int levelCount = static_cast<int>(((maxDepth_ - minDepth_) / surfaceStepSize_) + 1);
 
     if (levelCount <= 0) {
         return;
     }
 
-    colorIntervals_.clear();
+    r->colorIntervals_.clear();
     QVector<QVector3D> palette = generateExpandedPalette(levelCount);
-    colorIntervals_.reserve(levelCount);
+    r->colorIntervals_.reserve(levelCount);
 
     for (int i = 0; i < levelCount; ++i) {
-        colorIntervals_.append({minDepth_ + i * stepSize_, palette[i]});
+        r->colorIntervals_.append({minDepth_ + i * surfaceStepSize_, palette[i]});
     }
 
-    r->colorIntervals_ = colorIntervals_;
     r->minDepth_ = minDepth_;
     r->maxDepth_ = maxDepth_;
-    r->levelStep_ = stepSize_;
+    r->levelStep_ = surfaceStepSize_;
 
     updateTexture();
     qDebug() << "rebuildColorIntervals complete";
-
-    r->paletteSize_  = paletteSize_;
 }
 
 QVector<QVector3D> Isobaths::generateExpandedPalette(int totalColors) const
@@ -133,146 +237,86 @@ QVector<QVector3D> Isobaths::generateExpandedPalette(int totalColors) const
     return retVal;
 }
 
-void Isobaths::setData(const QVector<QVector3D>& data, int primitiveType)
-{
-    SceneObject::setData(data, primitiveType);
-    rebuildColorIntervals();
-    Q_EMIT changed();
-}
-
-void Isobaths::clearData()
-{
-    SceneObject::clearData();
-    colorIntervals_.clear();
-
-    Q_EMIT changed();
-}
-
-Isobaths::IsobathsRenderImplementation::IsobathsRenderImplementation() :
-    minDepth_(0.0f),
-    maxDepth_(0.0f),
-    levelStep_(1.0f),
-    paletteSize_(0),
-    textureId_(0)
-{
-
-}
-
-void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
-{
-    if (!paletteSize_ || !textureId_) {
-        return;
-    }
-
-    if (!m_isVisible || m_data.isEmpty()) {
-        return;
-    }
-
-    if (!shaderProgramMap.contains("isobaths")) {
-        return;
-    }
-
-    auto shaderProgram = shaderProgramMap["isobaths"];
-    if (!shaderProgram->bind()) {
-        qCritical() << "bind failed";
-        return;
-    }
-
-    shaderProgram->setUniformValue("matrix", mvp);
-    shaderProgram->setUniformValue("depthMin", minDepth_);
-    shaderProgram->setUniformValue("invDepthRange", 1.f / (maxDepth_ - minDepth_));
-    shaderProgram->setUniformValue("levelStep", levelStep_);
-    shaderProgram->setUniformValue("levelCount", paletteSize_);
-
-    QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-    glFuncs->glActiveTexture(GL_TEXTURE0);
-    glFuncs->glBindTexture(GL_TEXTURE_2D, textureId_);
-    shaderProgram->setUniformValue("paletteSampler", 0);
-
-    int posLoc = shaderProgram->attributeLocation("position");
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray   (posLoc, m_data.constData());
-
-    ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
-
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
-}
-
-float Isobaths::getStepSize() const
-{
-    return stepSize_;
-}
-
-void Isobaths::setStepSize(float step)
-{
-    if (qFuzzyCompare(stepSize_, step)) {
-        return;
-    }
-
-    stepSize_ = step;
-    rebuildColorIntervals();
-
-    Q_EMIT changed();
-}
-
-QVector<float> Isobaths::getDepthLevels() const
-{
-    QVector<float> levels;
-
-    for (const auto& interval : colorIntervals_) {
-        levels.append(interval.depth);
-    }
-
-    return levels;
-}
-
-QVector<uint8_t>& Isobaths::getTextureTasksRef()
-{
-    return textureTask_;
-}
-
-GLuint Isobaths::getDeinitTextureTask() const
-{
-    return toDeleteId_;
-}
-
-void Isobaths::setTextureId(GLuint textureId)
-{
-    textureId_ = textureId;
-
-    if (auto* r = RENDER_IMPL(Isobaths); r) {
-        r->textureId_ = textureId;
-    }
-
-    Q_EMIT changed();
-}
-
-GLuint Isobaths::getTextureId() const
-{
-    if (auto* r = RENDER_IMPL(Isobaths); r) {
-        return r->textureId_;
-    }
-
-    return 0;
-}
-
 void Isobaths::updateTexture()
 {
-    paletteSize_ = colorIntervals_.size();
+    auto* r = RENDER_IMPL(Isobaths);
+    if (!r) {
+        return;
+    }
 
-    if (paletteSize_ == 0) {
+    int paletteSize = r->colorIntervals_.size();
+
+    if (paletteSize == 0) {
         return;
     }
 
     textureTask_.clear();
 
-    textureTask_.resize(paletteSize_ * 4);
-    for (int i = 0; i < paletteSize_; ++i) {
-        const QVector3D &c = colorIntervals_[i].color;
-        textureTask_[i*4+0] = static_cast<uint8_t>(qBound(0.f, c.x() * 255.f, 255.f));
-        textureTask_[i*4+1] = static_cast<uint8_t>(qBound(0.f, c.y() * 255.f, 255.f));
-        textureTask_[i*4+2] = static_cast<uint8_t>(qBound(0.f, c.z() * 255.f, 255.f));
-        textureTask_[i*4+3] = 255;
+    textureTask_.resize(paletteSize * 4);
+    for (int i = 0; i < paletteSize; ++i) {
+        const QVector3D &c = r->colorIntervals_[i].color;
+        textureTask_[i * 4 + 0] = static_cast<uint8_t>(qBound(0.f, c.x() * 255.f, 255.f));
+        textureTask_[i * 4 + 1] = static_cast<uint8_t>(qBound(0.f, c.y() * 255.f, 255.f));
+        textureTask_[i * 4 + 2] = static_cast<uint8_t>(qBound(0.f, c.z() * 255.f, 255.f));
+        textureTask_[i * 4 + 3] = 255;
     }
+}
+
+Isobaths::IsobathsRenderImplementation::IsobathsRenderImplementation()
+    : minDepth_(0.0f),
+      maxDepth_(0.0f),
+      levelStep_(1.0f),
+      textureId_(0),
+      lineColor_(0.f, 0.f, 0.f)
+{
+
+}
+
+void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
+{
+    if (!m_isVisible || m_data.isEmpty()) {
+        return;
+    }
+
+    if (!spMap.contains("isobaths")) {
+        return;
+    }
+
+    auto& sp = spMap["isobaths"];
+    if (!sp->bind()) {
+        qCritical() << "isobaths shader bind failed";
+        return;
+    }
+
+    sp->setUniformValue("matrix",        mvp);
+    sp->setUniformValue("depthMin",      minDepth_);
+    sp->setUniformValue("invDepthRange", 1.f / (maxDepth_-minDepth_));
+    sp->setUniformValue("levelStep",     levelStep_);
+    sp->setUniformValue("levelCount",    colorIntervals_.size());
+    sp->setUniformValue("linePass",      false);
+    sp->setUniformValue("lineColor",     QVector3D(0,0,0));
+
+    ctx->glActiveTexture(GL_TEXTURE0);
+    ctx->glBindTexture(GL_TEXTURE_2D, textureId_);
+    sp->setUniformValue("paletteSampler", 0);
+
+    int pos = sp->attributeLocation("position");
+    sp->enableAttributeArray(pos);
+    sp->setAttributeArray(pos, m_data.constData());
+    ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
+    sp->disableAttributeArray(pos);
+
+    if (!lineSegments_.isEmpty()) {
+        sp->setUniformValue("linePass", true);
+        sp->setUniformValue("lineColor", lineColor_);
+        sp->disableAttributeArray(pos);
+        sp->enableAttributeArray(pos);
+        sp->setAttributeArray(pos, lineSegments_.constData());
+        ctx->glLineWidth(1.f);
+        ctx->glDrawArrays(GL_LINES, 0, lineSegments_.size());
+        sp->disableAttributeArray(pos);
+        sp->setUniformValue("linePass", false);
+    }
+
+    sp->release();
 }
