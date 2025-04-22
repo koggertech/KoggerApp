@@ -242,6 +242,21 @@ ApplicationWindow  {
             if (fn === "updateMosaic") {
                 scene3DToolbar.updateMosaic()
             }
+            if (fn === "updateIsobaths") {
+                scene3DToolbar.updateIsobaths()
+            }
+            if (fn === "incIsoSurStep") {
+                scene3DToolbar.increaseIsobathsSurfaceStep()
+            }
+            if (fn === "decIsoSurStep") {
+                scene3DToolbar.decreaseIsobathsSurfaceStep()
+            }
+            if (fn === "incIsoLineStep") {
+                scene3DToolbar.increaseIsobathsLineStep()
+            }
+            if (fn === "decIsoLineStep") {
+                scene3DToolbar.decreaseIsobathsLineStep()
+            }
             if (fn === "closeSettings") {
                 menuBar.closeMenus()
                 splitLayer.focus = true

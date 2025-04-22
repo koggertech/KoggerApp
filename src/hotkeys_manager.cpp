@@ -51,6 +51,10 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="decreaseLowLevel"  scanCode="33" parameter="1"   description="lower the lower slider of the echogram brightness"/>
     <Hotkey functionName="increaseHighLevel" scanCode="20" parameter="1"   description="raise the upper slider of the echogram brightness"/>
     <Hotkey functionName="decreaseHighLevel" scanCode="34" parameter="1"   description="lower the upper slider of the echogram brightness"/>
+    <Hotkey functionName="incIsoSurStep"     scanCode="21"                 description="increase isobaths surface step"/>
+    <Hotkey functionName="decIsoSurStep"     scanCode="35"                 description="decrease isobaths surface step"/>
+    <Hotkey functionName="incIsoLineStep"    scanCode="22"                 description="increase isobaths line step"/>
+    <Hotkey functionName="decIsoLineStep"    scanCode="36"                 description="decrease isobaths line step"/>
     <Hotkey functionName="clickConnections"  scanCode="48"                 description="click connection button"/>
     <Hotkey functionName="clickSettings"     scanCode="49"                 description="click settings button"/>
     <Hotkey functionName="click3D"           scanCode="44"                 description="click 3D button"/>
@@ -63,6 +67,7 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="updateBottomTrack" scanCode="64"                 description="update bottom track"/>
     <Hotkey functionName="updateSurface"     scanCode="65"                 description="update surface"/>
     <Hotkey functionName="updateMosaic"      scanCode="66"                 description="update mosaic"/>
+    <Hotkey functionName="updateIsobaths"    scanCode="63"                 description="update isobaths"/>
 </Hotkeys>
 )";
 #endif

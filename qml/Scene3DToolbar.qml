@@ -15,6 +15,26 @@ ColumnLayout {
         updateMosaicButton.clicked();
     }
 
+    function updateIsobaths() {
+        updateIsobathsButton.clicked();
+    }
+
+    function increaseIsobathsSurfaceStep() {
+        surfaceStepSizeIsobathSpinBox.increase();
+    }
+
+    function decreaseIsobathsSurfaceStep() {
+        surfaceStepSizeIsobathSpinBox.decrease();
+    }
+
+    function increaseIsobathsLineStep() {
+        lineStepSizeIsobathSpinBox.increase();
+    }
+
+    function decreaseIsobathsLineStep() {
+        lineStepSizeIsobathSpinBox.decrease();
+    }
+
     Layout.alignment: Qt.AlignHCenter
 
     // surface extra settings
