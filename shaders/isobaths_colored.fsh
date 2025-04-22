@@ -19,10 +19,11 @@ void main()
         return;
     }
 
-    float norm = clamp((vertice.z - depthMin) * invDepthRange, 0.0, 1.0);
-    float idx = floor(norm * float(levelCount - 1));
-    norm = idx / float(levelCount - 1);
+    float relDepth = vertice.z - depthMin;
+    float stepIdx = floor(relDepth / levelStep);
+    float clampedIdx = clamp(stepIdx, 0.0, float(levelCount - 1));
+    float norm = clampedIdx / float(levelCount - 1);
 
     vec3 color = texture2D(paletteSampler, vec2(norm, 0.5)).rgb;
-    fragColor  = vec4(color, 1.0);
+    fragColor = vec4(color, 1.0);
 }

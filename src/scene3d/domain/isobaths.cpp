@@ -194,8 +194,8 @@ void Isobaths::rebuildColorIntervals()
         std::swap(minDepth_, maxDepth_);
     }
 
-    minDepth_ = std::floor(minDepth_ / surfaceStepSize_) * surfaceStepSize_;
-    maxDepth_ = std::ceil (maxDepth_ / surfaceStepSize_) * surfaceStepSize_;
+    //minDepth_ = std::floor(minDepth_ / surfaceStepSize_) * surfaceStepSize_;
+    //maxDepth_ = std::ceil (maxDepth_ / surfaceStepSize_) * surfaceStepSize_;
     int levelCount = static_cast<int>(((maxDepth_ - minDepth_) / surfaceStepSize_) + 1);
 
     if (levelCount <= 0) {
