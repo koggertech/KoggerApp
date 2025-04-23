@@ -55,6 +55,8 @@ const char* HotkeysManager::s_defaultHotkeysXml = R"(<?xml version="1.0" encodin
     <Hotkey functionName="decIsoSurStep"     scanCode="35"                 description="decrease isobaths surface step"/>
     <Hotkey functionName="incIsoLineStep"    scanCode="22"                 description="increase isobaths line step"/>
     <Hotkey functionName="decIsoLineStep"    scanCode="36"                 description="decrease isobaths line step"/>
+    <Hotkey functionName="incIsoLabelStep"   scanCode="23"                 description="increase isobaths label step"/>
+    <Hotkey functionName="decIsoLabelStep"   scanCode="37"                 description="decrease isobaths label step"/>
     <Hotkey functionName="clickConnections"  scanCode="48"                 description="click connection button"/>
     <Hotkey functionName="clickSettings"     scanCode="49"                 description="click settings button"/>
     <Hotkey functionName="click3D"           scanCode="44"                 description="click 3D button"/>

@@ -35,6 +35,14 @@ ColumnLayout {
         lineStepSizeIsobathSpinBox.decrease();
     }
 
+    function increaseIsobathsLabelStep() {
+        labelStepSizeIsobathSpinBox.increase();
+    }
+
+    function decreaseIsobathsLabelStep() {
+        labelStepSizeIsobathSpinBox.decrease();
+    }
+
     Layout.alignment: Qt.AlignHCenter
 
     // surface extra settings
@@ -392,7 +400,40 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            RowLayout {
+                CText {
+                    text: "label step, m:"
+                    Layout.fillWidth: true
 
+                }
+                SpinBoxCustom {
+                    id: labelStepSizeIsobathSpinBox
+                    implicitWidth: 150
+                    from: 10
+                    to: 1000
+                    stepSize: 5
+                    value: 100
+                    editable: false
+
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        isobathsSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        IsobathsControlMenuController.onSetLabelStepSizeIsobaths(labelStepSizeIsobathSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        IsobathsControlMenuController.onSetLabelStepSizeIsobaths(labelStepSizeIsobathSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias labelStepSizeIsobathSpinBox: labelStepSizeIsobathSpinBox.value
+                    }
+                }
+            }
             RowLayout {
                 CText {
                     text: "surface step, m:"

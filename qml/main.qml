@@ -257,6 +257,12 @@ ApplicationWindow  {
             if (fn === "decIsoLineStep") {
                 scene3DToolbar.decreaseIsobathsLineStep()
             }
+            if (fn === "incIsoLabelStep") {
+                scene3DToolbar.increaseIsobathsLabelStep()
+            }
+            if (fn === "decIsoLabelStep") {
+                scene3DToolbar.decreaseIsobathsLabelStep()
+            }
             if (fn === "closeSettings") {
                 menuBar.closeMenus()
                 splitLayer.focus = true

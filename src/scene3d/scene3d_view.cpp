@@ -99,6 +99,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateIsobaths, Qt::DirectConnection);
 
     updatePlaneGrid();
 }
@@ -893,6 +894,13 @@ void GraphicsScene3dView::updateMapView()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::updateIsobaths()
+{
+    if (isobaths_) {
+        isobaths_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    }
+}
+
 //---------------------Renderer---------------------------//
 GraphicsScene3dView::InFboRenderer::InFboRenderer() :
     QQuickFramebufferObject::Renderer(),
@@ -1156,8 +1164,10 @@ void GraphicsScene3dView::InFboRenderer::processIsobathTexture(GraphicsScene3dVi
     glGenTextures(1, &textureId);
     glBindTexture(GL_TEXTURE_2D, textureId);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
     qDebug() << "Palette texture uploaded, size:" <<  task.size();
@@ -1168,7 +1178,7 @@ void GraphicsScene3dView::InFboRenderer::processIsobathTexture(GraphicsScene3dVi
     // deleting
     auto textureIdtoDel = isobathsPtr->getDeinitTextureTask();
     if (textureIdtoDel) {
-        glDeleteTextures(1, &textureId);
+        glDeleteTextures(1, &textureIdtoDel);
     }
 }
 

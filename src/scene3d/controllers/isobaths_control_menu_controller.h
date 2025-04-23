@@ -21,6 +21,7 @@ public:
     Q_INVOKABLE void onUpdateIsobathsButtonClicked();
     Q_INVOKABLE void onSetSurfaceStepSizeIsobaths(float val);
     Q_INVOKABLE void onSetLineStepSizeIsobaths(float val);
+    Q_INVOKABLE void onSetLabelStepSizeIsobaths(int val);
 
 Q_SIGNALS:
     void isobathsProcessorTaskStarted();
@@ -39,4 +40,5 @@ private:
     bool visibility_;
     float surfaceStepSize_;
     float lineStepSize_;
+    int labelStepSize_;
 };

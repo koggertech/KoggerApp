@@ -25,7 +25,7 @@ public:
     {
     public:
         IsobathsRenderImplementation();
-        virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4& mvp, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
+        virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
     private:
         friend class Isobaths;
@@ -35,10 +35,13 @@ public:
         float minDepth_;
         float maxDepth_;
         float levelStep_;
+        float lineStepSize_;
         GLuint textureId_;
 
         QVector<QVector3D> lineSegments_;
-        QVector3D lineColor_;
+        QVector3D color_;
+        QVector<LabelInfo> labels_;
+        float distToFocusPoint_;
     };
 
     explicit Isobaths(QObject* parent = nullptr);
@@ -55,7 +58,9 @@ public:
     void setSurfaceStepSize(float );
     float getLineStepSize() const;
     void setLineStepSize(float val);
-    void setLineSegments(const QVector<QVector3D>& segs);
+    float getLabelStepSize() const;
+    void setLabelStepSize(float val);
+    void setProcessorResult(const IsobathsProcessorResult& res);
 
     const QVector<QVector3D>& getRawData() const;
     int  getGridWidth() const;
@@ -65,6 +70,7 @@ public:
     GLuint getDeinitTextureTask() const;
     GLuint getTextureId() const;
     void setTextureId(GLuint textureId);
+    void setCameraDistToFocusPoint(float val);
 
 private:
     friend class IsobathsProcessor;
@@ -80,6 +86,7 @@ private:
     float maxDepth_;
     float surfaceStepSize_;
     float lineStepSize_;
+    float labelStepSize_;
     GLuint textureId_;
     QVector<uint8_t> textureTask_;
     GLuint toDeleteId_;

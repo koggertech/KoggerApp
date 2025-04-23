@@ -1,10 +1,13 @@
 #include "isobaths.h"
 
+#include "draw_utils.h"
+#include "text_renderer.h"
+
 
 static const QVector<QVector3D>& colorPalette()
 {
     static const QVector<QVector3D> colorPalette = {
-        // midnight
+        //// midnight
         //QVector3D(0.2f, 0.5f, 1.0f),
         //QVector3D(0.2f, 0.4f, 0.9f),
         //QVector3D(0.3f, 0.3f, 0.8f),
@@ -24,6 +27,37 @@ static const QVector<QVector3D>& colorPalette()
         QVector3D(1.0f, 1.0f, 0.0f),
         QVector3D(1.0f, 0.6f, 0.0f),
         QVector3D(0.8f, 0.2f, 0.0f)
+
+        //// синий
+        //QVector3D(0.0f, 0.0f, 0.0f),
+        //QVector3D(0.078f, 0.020f, 0.314f),
+        //QVector3D(0.196f, 0.706f, 0.902f),
+        //QVector3D(0.745f, 0.941f, 0.980f),
+        //QVector3D(1.0f, 1.0f, 1.0f)
+
+        //// сепия
+        //QVector3D(0.0f,        0.0f,        0.0f),
+        //QVector3D(50/255.0f,   50/255.0f,   10/255.0f),
+        //QVector3D(230/255.0f,  200/255.0f,  100/255.0f),
+        //QVector3D(255/255.0f,  255/255.0f,  220/255.0f)
+
+        //// вбдх
+        //QVector3D(0.0f,        0.0f,        0.0f),
+        //QVector3D(40/255.0f,   0.0f,        80/255.0f),
+        //QVector3D(0.0f,        30/255.0f,   150/255.0f),
+        //QVector3D(20/255.0f,   230/255.0f,  30/255.0f),
+        //QVector3D(255/255.0f,  50/255.0f,   20/255.0f),
+        //QVector3D(255/255.0f,  255/255.0f,  255/255.0f)
+
+        //// чб
+        //QVector3D(0.0f,        0.0f,        0.0f),
+        //QVector3D(190/255.0f,  200/255.0f,  200/255.0f),
+        //QVector3D(230/255.0f,  255/255.0f,  255/255.0f)
+
+        //// бч
+        //QVector3D(230/255.0f,  255/255.0f,  255/255.0f),
+        //QVector3D(70/255.0f,   70/255.0f,   70/255.0f),
+        //QVector3D(0.0f,        0.0f,        0.0f)
     };
 
     return colorPalette;
@@ -36,6 +70,7 @@ Isobaths::Isobaths(QObject* parent)
       maxDepth_(0.0f),
       surfaceStepSize_(1.0f),
       lineStepSize_(1.0f),
+      labelStepSize_(100.0f),
       textureId_(0),
       toDeleteId_(0)
 {}
@@ -114,13 +149,34 @@ void Isobaths::setLineStepSize(float val)
 
     lineStepSize_ = val;
 
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
+        r->lineStepSize_ = lineStepSize_;
+    }
+
     Q_EMIT changed();
 }
 
-void Isobaths::setLineSegments(const QVector<QVector3D> &segs)
+float Isobaths::getLabelStepSize() const
+{
+    return labelStepSize_;
+}
+
+void Isobaths::setLabelStepSize(float val)
+{
+    if (qFuzzyCompare(labelStepSize_, val)) {
+        return;
+    }
+
+    labelStepSize_ = val;
+
+    Q_EMIT changed();
+}
+
+void Isobaths::setProcessorResult(const IsobathsProcessorResult& res)
 {
     if (auto* r = RENDER_IMPL(Isobaths)) {
-        r->lineSegments_ = segs;
+        r->lineSegments_ = res.data;
+        r->labels_ = res.labels;
     }
 
     Q_EMIT changed();
@@ -169,6 +225,13 @@ void Isobaths::setTextureId(GLuint textureId)
     }
 
     Q_EMIT changed();
+}
+
+void Isobaths::setCameraDistToFocusPoint(float val)
+{
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
+        r->distToFocusPoint_ = val;
+    }
 }
 
 void Isobaths::rebuildColorIntervals()
@@ -224,16 +287,23 @@ QVector<QVector3D> Isobaths::generateExpandedPalette(int totalColors) const
     const int paletteSize = palette.size();
 
     QVector<QVector3D> retVal;
+
+    if (totalColors <= 1 || paletteSize == 0) {
+        retVal.append(paletteSize > 0 ? palette.first() : QVector3D(1.0f, 1.0f, 1.0f)); // fallback: white
+        return retVal;
+    }
+
     retVal.reserve(totalColors);
 
     for (int i = 0; i < totalColors; ++i) {
-        float t = static_cast<float>((i)) / static_cast<float>(totalColors - 1);
+        float t = static_cast<float>(i) / static_cast<float>(totalColors - 1);
         float ft = t * (paletteSize - 1);
         int i0 = static_cast<int>(ft);
         int i1 = std::min(i0 + 1, paletteSize - 1);
         float l = ft - static_cast<float>(i0);
         retVal.append((1.f - l) * palette[i0] + l * palette[i1]);
     }
+
     return retVal;
 }
 
@@ -266,13 +336,14 @@ Isobaths::IsobathsRenderImplementation::IsobathsRenderImplementation()
     : minDepth_(0.0f),
       maxDepth_(0.0f),
       levelStep_(1.0f),
+      lineStepSize_(1.0f),
       textureId_(0),
-      lineColor_(0.f, 0.f, 0.f)
+      color_(0.f, 0.f, 0.f)
 {
 
 }
 
-void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &mvp, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
+void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
     if (!m_isVisible || m_data.isEmpty()) {
         return;
@@ -288,13 +359,15 @@ void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const
         return;
     }
 
+    QMatrix4x4 mvp = projection * view * model;
+
     sp->setUniformValue("matrix",        mvp);
     sp->setUniformValue("depthMin",      minDepth_);
     sp->setUniformValue("invDepthRange", 1.f / (maxDepth_-minDepth_));
     sp->setUniformValue("levelStep",     levelStep_);
     sp->setUniformValue("levelCount",    colorIntervals_.size());
     sp->setUniformValue("linePass",      false);
-    sp->setUniformValue("lineColor",     QVector3D(0,0,0));
+    sp->setUniformValue("lineColor",     color_);
 
     ctx->glActiveTexture(GL_TEXTURE0);
     ctx->glBindTexture(GL_TEXTURE_2D, textureId_);
@@ -308,7 +381,6 @@ void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const
 
     if (!lineSegments_.isEmpty()) {
         sp->setUniformValue("linePass", true);
-        sp->setUniformValue("lineColor", lineColor_);
         sp->disableAttributeArray(pos);
         sp->enableAttributeArray(pos);
         sp->setAttributeArray(pos, lineSegments_.constData());
@@ -316,6 +388,33 @@ void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const
         ctx->glDrawArrays(GL_LINES, 0, lineSegments_.size());
         sp->disableAttributeArray(pos);
         sp->setUniformValue("linePass", false);
+
+        if (!labels_.isEmpty()) {
+            glDisable(GL_DEPTH_TEST); // TODO: artifacts
+
+            auto oldTextColor = TextRenderer::instance().getColor();
+            TextRenderer::instance().setColor(QColor(color_.x(), color_.y(), color_.z()));
+
+            // scale
+            float sizeFromStep = lineStepSize_ * 0.2f;
+            float sizeFromDist = distToFocusPoint_ * 0.0015f;
+            float scale = qMin(sizeFromStep, sizeFromDist);
+            scale = qBound(0.15f, scale, 0.3f);
+
+            for (const auto& lbl : labels_) {
+                QString text = QString::number(lbl.depth, 'f', 1);
+                TextRenderer::instance().render3D(text,
+                                                  scale,
+                                                  lbl.pos,
+                                                  lbl.dir,
+                                                  ctx,
+                                                  mvp,
+                                                  spMap);
+            }
+
+            TextRenderer::instance().setColor(oldTextColor);
+            glEnable(GL_DEPTH_TEST);
+        }
     }
 
     sp->release();

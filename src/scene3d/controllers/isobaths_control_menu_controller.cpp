@@ -8,15 +8,16 @@ IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
       pendingLambda_(nullptr),
       visibility_(false),
       surfaceStepSize_(3.0f),
-      lineStepSize_(3.0f)
+      lineStepSize_(3.0f),
+      labelStepSize_(100)
 {
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskStarted, this, &IsobathsControlMenuController::isobathsProcessorTaskStarted);
 
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskFinished,
-                     this,                [this](IsobathsProcessor::IsobathProcessorResult result) {
+                     this,                [this](IsobathsProcessorResult result) {
                                               if (graphicsSceneViewPtr_) {
                                                   if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
-                                                      isobathsPtr->setLineSegments(result.data);
+                                                      isobathsPtr->setProcessorResult(result);
                                                   }
                                               }
                                               Q_EMIT isobathsProcessorTaskFinished();
@@ -49,6 +50,7 @@ void IsobathsControlMenuController::tryInitPendingLambda()
                     isobathsPtr->setVisible(visibility_);
                     isobathsPtr->setSurfaceStepSize(surfaceStepSize_);
                     isobathsPtr->setLineStepSize(lineStepSize_);
+                    isobathsPtr->setLabelStepSize(labelStepSize_);
                 }
             }
         };
@@ -149,6 +151,38 @@ void IsobathsControlMenuController::onSetLineStepSizeIsobaths(float val)
             task.gridWidth = isobathsPtr->getGridWidth();
             task.gridHeight = isobathsPtr->getGridHeight();
             task.step = isobathsPtr->getLineStepSize();
+            task.labelStep = isobathsPtr->getLabelStepSize();
+
+            isobathsProcessor_.startInThread(task);
+        }
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void IsobathsControlMenuController::onSetLabelStepSizeIsobaths(int val)
+{
+    qDebug() << "   onSetLabelStepSizeIsobaths" << val;
+
+    labelStepSize_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
+
+            isobathsPtr->setLabelStepSize(static_cast<float>(labelStepSize_));
+
+            if (isobathsProcessor_.isBusy()) {
+                qDebug().noquote() << "Isobaths processor is busy!";
+                return;
+            }
+
+            IsobathsProcessorTask task;
+            task.grid = isobathsPtr->getRawData();
+            task.gridWidth = isobathsPtr->getGridWidth();
+            task.gridHeight = isobathsPtr->getGridHeight();
+            task.step = isobathsPtr->getLineStepSize();
+            task.labelStep = isobathsPtr->getLabelStepSize();
 
             isobathsProcessor_.startInThread(task);
         }
