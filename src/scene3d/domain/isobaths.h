@@ -71,6 +71,7 @@ public:
     GLuint getTextureId() const;
     void setTextureId(GLuint textureId);
     void setCameraDistToFocusPoint(float val);
+    void setColorTableThemeById(int id);
 
 private:
     friend class IsobathsProcessor;
@@ -90,4 +91,5 @@ private:
     GLuint textureId_;
     QVector<uint8_t> textureTask_;
     GLuint toDeleteId_;
+    int themeId_;
 };

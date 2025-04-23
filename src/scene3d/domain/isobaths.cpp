@@ -1,68 +1,74 @@
 #include "isobaths.h"
 
-#include "draw_utils.h"
 #include "text_renderer.h"
 
 
-static const QVector<QVector3D>& colorPalette()
+static const QVector<QVector3D>& colorPalette(int themeId)
 {
-    static const QVector<QVector3D> colorPalette = {
-        //// midnight
-        //QVector3D(0.2f, 0.5f, 1.0f),
-        //QVector3D(0.2f, 0.4f, 0.9f),
-        //QVector3D(0.3f, 0.3f, 0.8f),
-        //QVector3D(0.4f, 0.2f, 0.7f),
-        //QVector3D(0.5f, 0.2f, 0.6f),
-        //QVector3D(0.6f, 0.3f, 0.5f),
-        //QVector3D(0.7f, 0.4f, 0.4f),
-        //QVector3D(0.8f, 0.5f, 0.3f),
-        //QVector3D(0.9f, 0.6f, 0.2f),
-        //QVector3D(1.0f, 0.7f, 0.1f)
-
-        // default
-        QVector3D(0.0f, 0.0f, 0.3f),
-        QVector3D(0.0f, 0.0f, 0.6f),
-        QVector3D(0.0f, 0.5f, 1.0f),
-        QVector3D(0.0f, 1.0f, 0.5f),
-        QVector3D(1.0f, 1.0f, 0.0f),
-        QVector3D(1.0f, 0.6f, 0.0f),
-        QVector3D(0.8f, 0.2f, 0.0f)
-
-        //// синий
-        //QVector3D(0.0f, 0.0f, 0.0f),
-        //QVector3D(0.078f, 0.020f, 0.314f),
-        //QVector3D(0.196f, 0.706f, 0.902f),
-        //QVector3D(0.745f, 0.941f, 0.980f),
-        //QVector3D(1.0f, 1.0f, 1.0f)
-
-        //// сепия
-        //QVector3D(0.0f,        0.0f,        0.0f),
-        //QVector3D(50/255.0f,   50/255.0f,   10/255.0f),
-        //QVector3D(230/255.0f,  200/255.0f,  100/255.0f),
-        //QVector3D(255/255.0f,  255/255.0f,  220/255.0f)
-
-        //// вбдх
-        //QVector3D(0.0f,        0.0f,        0.0f),
-        //QVector3D(40/255.0f,   0.0f,        80/255.0f),
-        //QVector3D(0.0f,        30/255.0f,   150/255.0f),
-        //QVector3D(20/255.0f,   230/255.0f,  30/255.0f),
-        //QVector3D(255/255.0f,  50/255.0f,   20/255.0f),
-        //QVector3D(255/255.0f,  255/255.0f,  255/255.0f)
-
-        //// чб
-        //QVector3D(0.0f,        0.0f,        0.0f),
-        //QVector3D(190/255.0f,  200/255.0f,  200/255.0f),
-        //QVector3D(230/255.0f,  255/255.0f,  255/255.0f)
-
-        //// бч
-        //QVector3D(230/255.0f,  255/255.0f,  255/255.0f),
-        //QVector3D(70/255.0f,   70/255.0f,   70/255.0f),
-        //QVector3D(0.0f,        0.0f,        0.0f)
+    static const QVector<QVector<QVector3D>> palettes = {
+        // 0: midnight
+        {
+            QVector3D(0.2f, 0.5f, 1.0f),
+            QVector3D(0.2f, 0.4f, 0.9f),
+            QVector3D(0.3f, 0.3f, 0.8f),
+            QVector3D(0.4f, 0.2f, 0.7f),
+            QVector3D(0.5f, 0.2f, 0.6f),
+            QVector3D(0.6f, 0.3f, 0.5f),
+            QVector3D(0.7f, 0.4f, 0.4f),
+            QVector3D(0.8f, 0.5f, 0.3f),
+            QVector3D(0.9f, 0.6f, 0.2f),
+            QVector3D(1.0f, 0.7f, 0.1f)
+        },
+        // 1: default
+        {
+            QVector3D(0.0f, 0.0f, 0.3f),
+            QVector3D(0.0f, 0.0f, 0.6f),
+            QVector3D(0.0f, 0.5f, 1.0f),
+            QVector3D(0.0f, 1.0f, 0.5f),
+            QVector3D(1.0f, 1.0f, 0.0f),
+            QVector3D(1.0f, 0.6f, 0.0f),
+            QVector3D(0.8f, 0.2f, 0.0f)
+        },
+        // 2: blue
+        {
+            QVector3D(0.0f, 0.0f, 0.0f),
+            QVector3D(0.078f, 0.020f, 0.314f),
+            QVector3D(0.196f, 0.706f, 0.902f),
+            QVector3D(0.745f, 0.941f, 0.980f),
+            QVector3D(1.0f, 1.0f, 1.0f)
+        },
+        // 3: sepia
+        {
+            QVector3D(0.0f, 0.0f, 0.0f),
+            QVector3D(50/255.0f, 50/255.0f, 10/255.0f),
+            QVector3D(230/255.0f, 200/255.0f, 100/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 220/255.0f)
+        },
+        // 4: colored
+        {
+            QVector3D(0.0f, 0.0f, 0.0f),
+            QVector3D(40/255.0f, 0.0f, 80/255.0f),
+            QVector3D(0.0f, 30/255.0f, 150/255.0f),
+            QVector3D(20/255.0f, 230/255.0f, 30/255.0f),
+            QVector3D(255/255.0f, 50/255.0f, 20/255.0f),
+            QVector3D(255/255.0f, 255/255.0f, 255/255.0f)
+        },
+        // 5: bw
+        {
+            QVector3D(0.0f, 0.0f, 0.0f),
+            QVector3D(190/255.0f, 200/255.0f, 200/255.0f),
+            QVector3D(230/255.0f, 255/255.0f, 255/255.0f)
+        },
+        // 6: wb
+        {
+            QVector3D(230/255.0f, 255/255.0f, 255/255.0f),
+            QVector3D(70/255.0f, 70/255.0f, 70/255.0f),
+            QVector3D(0.0f, 0.0f, 0.0f)
+        }
     };
 
-    return colorPalette;
+    return palettes[std::clamp(themeId, 0, palettes.size() - 1)];
 }
-
 
 Isobaths::Isobaths(QObject* parent)
     : SceneObject(new IsobathsRenderImplementation, parent),
@@ -72,7 +78,8 @@ Isobaths::Isobaths(QObject* parent)
       lineStepSize_(1.0f),
       labelStepSize_(100.0f),
       textureId_(0),
-      toDeleteId_(0)
+      toDeleteId_(0),
+      themeId_(0)
 {}
 
 Isobaths::~Isobaths()
@@ -234,6 +241,19 @@ void Isobaths::setCameraDistToFocusPoint(float val)
     }
 }
 
+void Isobaths::setColorTableThemeById(int id)
+{
+    if (themeId_ == id) {
+        return;
+    }
+
+    themeId_ = id;
+
+    rebuildColorIntervals();
+
+    Q_EMIT changed();
+}
+
 void Isobaths::rebuildColorIntervals()
 {
     auto *r = RENDER_IMPL(Isobaths);
@@ -283,7 +303,7 @@ void Isobaths::rebuildColorIntervals()
 
 QVector<QVector3D> Isobaths::generateExpandedPalette(int totalColors) const
 {
-    const auto &palette = colorPalette();
+    const auto &palette = colorPalette(themeId_);
     const int paletteSize = palette.size();
 
     QVector<QVector3D> retVal;

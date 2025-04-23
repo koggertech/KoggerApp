@@ -370,7 +370,7 @@ ColumnLayout {
     // isobaths extra settings
     MenuFrame {
         id: isobathsSettings
-        visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered
+        visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered || isobathTheme.activeFocus
         z: isobathsSettings.visible
         Layout.alignment: Qt.AlignRight
 
@@ -400,6 +400,43 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            RowLayout {
+                CText {
+                    text: qsTr("Theme:")
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                CCombo  {
+                    id: isobathTheme
+                    Layout.preferredWidth: 300
+                    model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                    currentIndex: 0
+                    onCurrentIndexChanged: {
+                        IsobathsControlMenuController.onThemeChanged(currentIndex)
+                    }
+
+                    onFocusChanged: {
+                        if (Qt.platform.os === 'android') {
+                            isobathsSettings.focus = true
+                        }
+                    }
+
+                    Component.onCompleted: {
+                        IsobathsControlMenuController.onThemeChanged(currentIndex)
+                    }
+
+                    Settings {
+                        property alias isobathTheme: isobathTheme.currentIndex
+                    }
+                }
+            }
+            RowLayout {
+                CText {
+                    text: ""
+                    Layout.fillWidth: true
+                }
+            }
             RowLayout {
                 CText {
                     text: "label step, m:"
@@ -533,7 +570,7 @@ ColumnLayout {
 
             CButton {
                 id: updateIsobathsButton
-                text: qsTr("Update isobaths")
+                text: qsTr("Update (upd. surface first)")
                 Layout.fillWidth: true
                 icon.source: "qrc:/icons/ui/refresh.svg"
                 onClicked: {

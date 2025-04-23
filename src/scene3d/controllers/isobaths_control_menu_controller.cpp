@@ -9,7 +9,8 @@ IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
       visibility_(false),
       surfaceStepSize_(3.0f),
       lineStepSize_(3.0f),
-      labelStepSize_(100)
+      labelStepSize_(100),
+      themeId_(0)
 {
     QObject::connect(&isobathsProcessor_, &IsobathsProcessor::taskStarted, this, &IsobathsControlMenuController::isobathsProcessorTaskStarted);
 
@@ -51,6 +52,8 @@ void IsobathsControlMenuController::tryInitPendingLambda()
                     isobathsPtr->setSurfaceStepSize(surfaceStepSize_);
                     isobathsPtr->setLineStepSize(lineStepSize_);
                     isobathsPtr->setLabelStepSize(labelStepSize_);
+                    isobathsPtr->setLabelStepSize(labelStepSize_);
+                    isobathsPtr->setColorTableThemeById(themeId_);
                 }
             }
         };
@@ -186,6 +189,18 @@ void IsobathsControlMenuController::onSetLabelStepSizeIsobaths(int val)
 
             isobathsProcessor_.startInThread(task);
         }
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void IsobathsControlMenuController::onThemeChanged(int val)
+{
+    themeId_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getIsobathsPtr()->setColorTableThemeById(themeId_);
     }
     else {
         tryInitPendingLambda();

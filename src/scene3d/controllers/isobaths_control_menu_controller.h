@@ -22,6 +22,7 @@ public:
     Q_INVOKABLE void onSetSurfaceStepSizeIsobaths(float val);
     Q_INVOKABLE void onSetLineStepSizeIsobaths(float val);
     Q_INVOKABLE void onSetLabelStepSizeIsobaths(int val);
+    Q_INVOKABLE void onThemeChanged(int val);
 
 Q_SIGNALS:
     void isobathsProcessorTaskStarted();
@@ -41,4 +42,5 @@ private:
     float surfaceStepSize_;
     float lineStepSize_;
     int labelStepSize_;
+    int themeId_;
 };

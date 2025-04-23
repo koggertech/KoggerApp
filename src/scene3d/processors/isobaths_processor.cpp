@@ -313,7 +313,7 @@ void IsobathsProcessor::process()
                 //float labelOffset = 10.0f;
                 //interpPoint = interpPoint + perp * labelOffset;
 
-                resLabels.append(LabelInfo{ interpPoint, direction, zMin + it.key() * task_.step });
+                resLabels.append(LabelInfo{ interpPoint, direction, std::fabs(zMin + it.key() * task_.step) });
                 nextMark += task_.labelStep;
                 placedLabel = true;
             }
@@ -324,7 +324,7 @@ void IsobathsProcessor::process()
                 QVector3D direction = (polyline[1] - polyline[0]).normalized();
                 direction.setZ(0);
 
-                resLabels.append(LabelInfo{ point, direction, zMin + it.key() * task_.step });
+                resLabels.append(LabelInfo{ point, direction, std::fabs(zMin + it.key() * task_.step) });
             }
 
             cumulativeShift += polylineLen;
