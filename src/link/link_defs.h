@@ -25,6 +25,7 @@ enum class ControlType {
 
 static const int linkNumTimeoutsBig = 10; // num of updates
 static const int linkNumTimeoutsSmall = 2; // num of updates
+static const int ghostIgnoreCount = 3; // number of steps to ignore after flashing
 static const int linkCheckingTimeInterval = 100; // msecs
 
 inline const QList<uint32_t> baudrates = { 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000 };

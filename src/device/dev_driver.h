@@ -167,7 +167,8 @@ public:
 signals:
     void averageChartLossesChanged();
     void binFrameOut(ProtoBinOut proto_out);
-    void upgradingFirmware();
+    void startUpgradingFirmware();
+    void upgradingFirmwareDone();
 
     //
     void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);

@@ -85,7 +85,8 @@ public:
 public slots:
     bool writeFrame(Parsers::FrameParser frame);
     bool write(QByteArray data);
-    void onUpgradingFirmware();
+    void onStartUpgradingFirmware();
+    void onUpgradingFirmwareDone();
 
 signals:
     void readyParse(Link* link);
@@ -111,6 +112,7 @@ private:
     void setDev(QIODevice* dev);
     void deleteDev();
     void toParser(const QByteArray data);
+    void resetLastSearchIndx();
 
     /*data*/
     QPointer<QIODevice> ioDevice_;
@@ -146,6 +148,8 @@ private:
 //    int searchIndx_; ?
     QList<uint32_t> baudrateSearchList_;
     int lastSearchIndx_;
+    bool onUpgradingFirmware_;
+    int localGhostIgnoreCount_;
 
 private slots:
     void readyRead();

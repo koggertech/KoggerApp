@@ -665,7 +665,7 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
     m_bootloaderLagacyMode = true;
     m_state.in_boot = true;
 
-    emit upgradingFirmware();
+    emit startUpgradingFirmware();
 
     // QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 }
@@ -1236,6 +1236,9 @@ void DevDriver::fwUpgradeProcess() {
         idBoot->runFW();
         m_state.in_update = false;
         m_upgrade_status = successUpgrade;
+
+        emit upgradingFirmwareDone();
+
         core.consoleInfo("Upgrade: done");
         restartState();
     }
@@ -1265,6 +1268,9 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
                 // if( m_state.in_boot) {
                     core.consoleInfo("Upgrade: critical error!");
                     m_upgrade_status = failUpgrade;
+
+                    emit upgradingFirmwareDone();
+
                     m_state.in_update = false;
                     m_bootloaderLagacyMode = true;
                     restartState();
@@ -1280,6 +1286,9 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
             if( m_state.in_update && m_bootloaderLagacyMode) {
                 core.consoleInfo("Upgrade: lagacy mode error");
                 m_upgrade_status = failUpgrade;
+
+                emit upgradingFirmwareDone();
+
                 m_state.in_update = false;
                 m_bootloaderLagacyMode = true;
                 restartState();

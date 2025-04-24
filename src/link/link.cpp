@@ -1,28 +1,30 @@
 #include "link.h"
 
 
-Link::Link() :
-    ioDevice_(nullptr),
-    uuid_(QUuid::createUuid()),
-    controlType_(ControlType::kManual),
-    linkType_(LinkType::kLinkNone),
-    portName_(""),
-    baudrate_(0),
-    parity_(false),
-    address_(""),
-    sourcePort_(0),
-    destinationPort_(0),
-    isPinned_(false),
-    isHided_(false),
-    isNotAvailable_(false),
-    isProxy_(false),
-    isForcedStopped_(false),
-    attribute_(0),
-    autoSpeedSelection_(false),
-    timeoutCnt_(linkNumTimeoutsSmall),
-    lastTotalCnt_(0),
-    isReceivesData_(false),
-    lastSearchIndx_(0)
+Link::Link()
+    : ioDevice_(nullptr),
+      uuid_(QUuid::createUuid()),
+      controlType_(ControlType::kManual),
+      linkType_(LinkType::kLinkNone),
+      portName_(""),
+      baudrate_(0),
+      parity_(false),
+      address_(""),
+      sourcePort_(0),
+      destinationPort_(0),
+      isPinned_(false),
+      isHided_(false),
+      isNotAvailable_(false),
+      isProxy_(false),
+      isForcedStopped_(false),
+      attribute_(0),
+      autoSpeedSelection_(false),
+      timeoutCnt_(linkNumTimeoutsSmall),
+      lastTotalCnt_(0),
+      isReceivesData_(false),
+      lastSearchIndx_(0),
+      onUpgradingFirmware_(false),
+      localGhostIgnoreCount_(0)
 {
     frame_.resetComplete();
 
@@ -40,7 +42,7 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
     parity_ = parity;
     baudrate_ = baudrate;
     baudrateSearchList_ = baudrateSearchList; // by default
-    lastSearchIndx_ = 0;
+    resetLastSearchIndx();
 }
 
 void Link::openAsSerial()
@@ -64,7 +66,7 @@ void Link::openAsSerial()
         emit connectionStatusChanged(uuid_);
     }
     baudrateSearchList_ = baudrateSearchList;
-    lastSearchIndx_ = 0;
+    resetLastSearchIndx();
 }
 
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
@@ -329,7 +331,7 @@ void Link::setIsForceStopped(bool isForcedStopped)
 void Link::setAutoSpeedSelection(bool autoSpeedSelection)
 {
     autoSpeedSelection_ = autoSpeedSelection;
-    lastSearchIndx_ = 0;
+    resetLastSearchIndx();
 }
 
 QUuid Link::getUuid() const
@@ -467,14 +469,23 @@ bool Link::write(QByteArray data)
     return true;
 }
 
-void Link::onUpgradingFirmware()
+void Link::onStartUpgradingFirmware()
 {
-    qDebug() << "ON UPGRADING FIRMWARE" << uuid_;
+    qDebug() << "ON START UPGRADING FIRMWARE" << uuid_;
 
-    timeoutCnt_ = 2;
-    lastSearchIndx_ = 0;
+    onUpgradingFirmware_ = true;
+    timeoutCnt_ = linkNumTimeoutsSmall;
+    resetLastSearchIndx();
+}
 
-    //onCheckedTimerEnd();
+void Link::onUpgradingFirmwareDone()
+{
+    qDebug() << "ON UPGRADING FIRMWARE DONE !" << uuid_;
+
+    onUpgradingFirmware_ = false;
+    timeoutCnt_ = linkNumTimeoutsSmall;
+    localGhostIgnoreCount_ = ghostIgnoreCount;
+    resetLastSearchIndx();
 }
 
 void Link::onCheckedTimerEnd()
@@ -489,18 +500,21 @@ void Link::onCheckedTimerEnd()
 
     // timeouts
     if (newDataReceived) {
-        isReceivesData_ = true;
-        timeoutCnt_ = linkNumTimeoutsBig;
-        lastSearchIndx_ = 0;
+        if (localGhostIgnoreCount_ > 0) {
+            qDebug() << "Skipping ghost data after firmware..." << localGhostIgnoreCount_;
+            --localGhostIgnoreCount_;
+        }
+        else {
+            isReceivesData_ = true;
+            timeoutCnt_ = linkNumTimeoutsBig;
+            resetLastSearchIndx();
+        }
     }
     else {
         if (timeoutCnt_ > 0) {
             --timeoutCnt_;
         }
         if (!timeoutCnt_ && isReceivesData_) {
-            //qDebug() << "   link1: timeout ended do emit sendDoRequestAll" << uuid_;
-            emit sendDoRequestAll(uuid_);
-
             isReceivesData_ = false;
         }
     }
@@ -511,21 +525,16 @@ void Link::onCheckedTimerEnd()
     }
 
     // autosearch
-    if (autoSpeedSelection_ &&
-        !isReceivesData_ &&
-        !timeoutCnt_ &&
-        !baudrateSearchList_.empty()) {
+    bool isAutoSpeedSelection = autoSpeedSelection_ || (!autoSpeedSelection_ && onUpgradingFirmware_) || localGhostIgnoreCount_;
+    bool isNeedSearch = isAutoSpeedSelection && !isReceivesData_ && !timeoutCnt_ && !baudrateSearchList_.empty();
 
+    if (isNeedSearch) {
         timeoutCnt_ = linkNumTimeoutsSmall;
-
-        //qDebug() << "   link2: timeout ended do emit sendDoRequestAll" << uuid_;
+        //qDebug() << "   link: timeout ended do emit sendDoRequestAll" << uuid_;
         emit sendDoRequestAll(uuid_);
-
         auto currBaudrate = baudrateSearchList_.at(lastSearchIndx_);
-
-        //qDebug() << "trying find" << currBaudrate << "on" << lastSearchIndx_;
         lastSearchIndx_ = (lastSearchIndx_ + 1) % baudrateSearchList_.size();
-
+        //qDebug() << "   link: trying find" << currBaudrate << "on" << lastSearchIndx_;
         setBaudrate(currBaudrate);
         emit baudrateChanged(uuid_);
     }
@@ -589,6 +598,11 @@ void Link::toParser(const QByteArray data)
             emit frameReady(uuid_, this, frame_);
         }
     }
+}
+
+void Link::resetLastSearchIndx()
+{
+    lastSearchIndx_ = 0;
 }
 
 void Link::readyRead()

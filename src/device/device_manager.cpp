@@ -806,6 +806,8 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
+        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware, connType);
+        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone, connType);
     }
 
     //
@@ -837,7 +839,8 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
-        connect(dev, &DevQProperty::upgradingFirmware, link, &Link::onUpgradingFirmware);
+        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware);
+        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone);
     }
 
     //
