@@ -26,6 +26,7 @@ public:
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
+    void onUpgradingFirmwareStateChanged(QUuid uuid);
     void onLinkBaudrateChanged(QUuid uuid);
     void onLinkIsReceivesDataChanged(QUuid uuid);
     void createAndStartTimer();
@@ -62,7 +63,8 @@ public slots:
 
 signals:
     void appendModifyModel(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
-                           LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection);
+                        LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
+                        bool autoSpeedSelection, bool isUpgradingState);
     void deleteModel(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void linkClosed(QUuid uuid, Link* link);

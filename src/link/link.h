@@ -58,6 +58,7 @@ public:
     void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
     void setAutoSpeedSelection(bool autoSpeedSelection);
+    void setIsUpgradingState(bool state);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     bool        getIsRecievesData() const;
@@ -75,6 +76,7 @@ public:
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
     bool        getAutoSpeedSelection() const;
+    bool        getIsUpgradingState() const;
 
 // #ifdef MOTOR
     void        setAttribute(int attribute) { attribute_ = attribute; }
@@ -97,6 +99,7 @@ signals:
     void baudrateChanged(QUuid uuid);
     void isReceivesDataChanged(QUuid uuid);
     void sendDoRequestAll(QUuid uuid);
+    void upgradingFirmwareStateChanged(QUuid uuid);
 
 #ifdef MOTOR
     void dataReady(QByteArray data);

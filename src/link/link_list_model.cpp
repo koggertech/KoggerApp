@@ -59,9 +59,9 @@ int LinkListModel::getSize() const
     return size_;
 }
 
-void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                                   ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
-                                   bool autoSpeedSelection)
+void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
+                                   int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
+                                   bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
 {
     if (isHided)
         return;
@@ -87,6 +87,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[LinkListModel::IsHided].append(isHided);
         vectors_[LinkListModel::IsNotAvailable].append(isNotAvailable);
         vectors_[LinkListModel::AutoSpeedSelection].append(autoSpeedSelection);
+        vectors_[LinkListModel::IsUpgradingState].append(isUpgradingState);
 
         ++size_;
         endInsertRows();
@@ -109,6 +110,7 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
         vectors_[LinkListModel::IsHided][line] = isHided;
         vectors_[LinkListModel::IsNotAvailable][line] = isNotAvailable;
         vectors_[LinkListModel::AutoSpeedSelection][line] = autoSpeedSelection;
+        vectors_[LinkListModel::IsUpgradingState][line] = isUpgradingState;
 
         emit dataChanged(index(line, 0), index(line, 0));
     }
@@ -136,6 +138,7 @@ void LinkListModel::doRemove(QUuid uuid)
         vectors_[LinkListModel::IsHided].erase(vectors_[LinkListModel::IsHided].begin() + line);
         vectors_[LinkListModel::IsNotAvailable].erase(vectors_[LinkListModel::IsNotAvailable].begin() + line);
         vectors_[LinkListModel::AutoSpeedSelection].erase(vectors_[LinkListModel::AutoSpeedSelection].begin() + line);
+        vectors_[LinkListModel::IsUpgradingState].erase(vectors_[LinkListModel::IsUpgradingState].begin() + line);
 
         index_.remove(uuid);
         for (auto it = index_.begin(); it != index_.end(); ++it) {

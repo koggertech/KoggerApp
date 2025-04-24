@@ -49,7 +49,7 @@ public slots:
     void updateBaudrate(QUuid uuid, int baudrate);
     void appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
                                LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
-                               bool autoSpeedSelection);
+                               bool autoSpeedSelection, bool isUpgradingState);
     void deleteModelData(QUuid uuid);
 
 signals:

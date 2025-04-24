@@ -24,7 +24,8 @@ public:
         IsPinned,
         IsHided,
         IsNotAvailable,
-        AutoSpeedSelection
+        AutoSpeedSelection,
+        IsUpgradingState
     };
 
     /*methods*/
@@ -43,8 +44,9 @@ private:
     Q_DISABLE_COPY(LinkListModel)
 
     /*methods*/
-    void doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                  ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection);
+    void doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
+                        int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
+                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState);
     void doRemove(QUuid uuid);
 
     /*data*/
@@ -63,14 +65,16 @@ private:
         {{LinkListModel::IsPinned},          {"IsPinned"}},
         {{LinkListModel::IsHided},           {"IsHided"}},
         {{LinkListModel::IsNotAvailable},    {"IsNotAvailable"}},
-        {{LinkListModel::AutoSpeedSelection},{"AutoSpeedSelection"}}
+        {{LinkListModel::AutoSpeedSelection},{"AutoSpeedSelection"}},
+        {{LinkListModel::IsUpgradingState},  {"IsUpgradingState"}}
     };
     QHash<int, QVector<QVariant>> vectors_; // first - roleName, second - vec of vals
     QHash<QUuid, int> index_; // first - uuid, second - row
     int size_;
 
 signals:
-    void appendModifyEvent(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                     ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection);
+    void appendModifyEvent(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
+                        int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
+                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingSate);
     void removeEvent(QUuid uuid);
 };

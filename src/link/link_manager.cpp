@@ -163,7 +163,8 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
                            linkPtr->getIsPinned(),
                            linkPtr->getIsHided(),
                            linkPtr->getIsNotAvailable(),
-                           linkPtr->getAutoSpeedSelection());
+                           linkPtr->getAutoSpeedSelection(),
+                           linkPtr->getIsUpgradingState());
 }
 
 void LinkManager::exportPinnedLinksToXML()
@@ -220,6 +221,7 @@ Link *LinkManager::createNewLink() const
     Link* retVal = new Link();
 
     QObject::connect(retVal, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
+    QObject::connect(retVal, &Link::upgradingFirmwareStateChanged, this, &LinkManager::onUpgradingFirmwareStateChanged);
     QObject::connect(retVal, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(retVal, &Link::closed, this, &LinkManager::linkClosed);
     QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
@@ -327,9 +329,15 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
+    }
+}
 
-        if (linkPtr->getIsPinned()) // or to open/close?
-            exportPinnedLinksToXML();
+void LinkManager::onUpgradingFirmwareStateChanged(QUuid uuid)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        doEmitAppendModifyModel(linkPtr);
     }
 }
 

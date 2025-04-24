@@ -334,6 +334,14 @@ void Link::setAutoSpeedSelection(bool autoSpeedSelection)
     resetLastSearchIndx();
 }
 
+void Link::setIsUpgradingState(bool state)
+{
+    if (onUpgradingFirmware_ != state) {
+        onUpgradingFirmware_ = state;
+        emit upgradingFirmwareStateChanged(uuid_);
+    }
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -424,6 +432,11 @@ bool Link::getAutoSpeedSelection() const
     return autoSpeedSelection_;
 }
 
+bool Link::getIsUpgradingState() const
+{
+    return onUpgradingFirmware_;
+}
+
 // #ifdef MOTOR
 // void Link::setIsMotorDevice(bool isMotorDevice)
 // {
@@ -473,7 +486,7 @@ void Link::onStartUpgradingFirmware()
 {
     qDebug() << "ON START UPGRADING FIRMWARE" << uuid_;
 
-    onUpgradingFirmware_ = true;
+    setIsUpgradingState(true);
     timeoutCnt_ = linkNumTimeoutsSmall;
     resetLastSearchIndx();
 }
@@ -482,7 +495,7 @@ void Link::onUpgradingFirmwareDone()
 {
     qDebug() << "ON UPGRADING FIRMWARE DONE !" << uuid_;
 
-    onUpgradingFirmware_ = false;
+    setIsUpgradingState(false);
     timeoutCnt_ = linkNumTimeoutsSmall;
     localGhostIgnoreCount_ = ghostIgnoreCount;
     resetLastSearchIndx();

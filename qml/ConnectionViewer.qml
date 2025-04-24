@@ -53,6 +53,7 @@ ColumnLayout {
                     spacing: 1
                     anchors.fill: parent
                     anchors.margins: 1
+                    enabled: !IsUpgradingState
 
                     CheckButton {
                         id: linkSettingsButton
@@ -367,6 +368,21 @@ ColumnLayout {
 
                             }
                         }
+                    }
+                }
+
+                Rectangle {
+                    id: firmwareBackground
+                    anchors.fill: parent
+                    visible: IsUpgradingState
+                    color: "#30ffffff"
+                    z: 10
+
+                    Image {
+                        anchors.fill: parent
+                        source: "qrc:/icons/ui/diagonal_stripe.png"
+                        fillMode: Image.Tile
+                        opacity: 0.5
                     }
                 }
             }
