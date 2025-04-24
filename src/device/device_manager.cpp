@@ -614,6 +614,18 @@ void DeviceManager::onLoggingKlfStarted()
     }
 }
 
+void DeviceManager::onSendRequestAll(QUuid uuid)
+{
+    if (devTree_.contains(uuid)) {
+        QHash<int, DevQProperty*> devs = devTree_[uuid];
+        for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
+            if (auto* dev = i.value(); dev) {
+                dev->doRequestAll();
+            }
+        }
+    }
+}
+
 #ifdef MOTOR
 float DeviceManager::getFAngle()
 {

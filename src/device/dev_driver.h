@@ -246,6 +246,8 @@ public slots:
     void initChildsTimersConnects();
 #endif
 
+    void doRequestAll();
+
 protected:
     friend class DeviceManager;
 

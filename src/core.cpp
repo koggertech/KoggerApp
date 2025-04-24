@@ -1274,6 +1274,7 @@ void Core::createLinkManagerConnections()
                                                                                                                                          //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
                                                                                                                                      }
                                                                                                                                  }, linkManagerConnection));
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::sendDoRequestAll, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onSendRequestAll, linkManagerConnection));
 }
 
 void Core::removeLinkManagerConnections()

@@ -95,6 +95,7 @@ signals:
     void closed(QUuid uuid, Link* link);
     void baudrateChanged(QUuid uuid);
     void isReceivesDataChanged(QUuid uuid);
+    void sendDoRequestAll(QUuid uuid);
 
 #ifdef MOTOR
     void dataReady(QByteArray data);

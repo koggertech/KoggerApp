@@ -63,6 +63,7 @@ public slots:
     void setUSBLBeaconDirectAsk(bool is_ask);
 
     void onLoggingKlfStarted();
+    void onSendRequestAll(QUuid uuid);
 
 #ifdef MOTOR
     float getFAngle();

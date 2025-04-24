@@ -467,6 +467,14 @@ void DevDriver::enableBeaconOnce(float timeout) {
     idUSBL->enableBeaconOnce(timeout);
 }
 
+void DevDriver::doRequestAll()
+{
+    if (idVersion) {
+        //qDebug() << "  dev_driver: requesting all for" << m_devName << m_devAddress;
+        idVersion->requestAll();
+    }
+}
+
 #ifdef SEPARATE_READING
 void DevDriver::initProcessTimerConnects()
 {

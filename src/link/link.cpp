@@ -498,6 +498,9 @@ void Link::onCheckedTimerEnd()
             --timeoutCnt_;
         }
         if (!timeoutCnt_ && isReceivesData_) {
+            //qDebug() << "   link1: timeout ended do emit sendDoRequestAll" << uuid_;
+            emit sendDoRequestAll(uuid_);
+
             isReceivesData_ = false;
         }
     }
@@ -514,6 +517,9 @@ void Link::onCheckedTimerEnd()
         !baudrateSearchList_.empty()) {
 
         timeoutCnt_ = linkNumTimeoutsSmall;
+
+        //qDebug() << "   link2: timeout ended do emit sendDoRequestAll" << uuid_;
+        emit sendDoRequestAll(uuid_);
 
         auto currBaudrate = baudrateSearchList_.at(lastSearchIndx_);
 

@@ -68,6 +68,7 @@ signals:
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);
     void linkDeleted(QUuid uuid, Link* link);
+    void sendDoRequestAll(QUuid uuid);
 
 private:
     /*structures*/
