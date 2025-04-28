@@ -153,6 +153,7 @@ private:
     int lastSearchIndx_;
     bool onUpgradingFirmware_;
     int localGhostIgnoreCount_;
+    int requestCnt_;
 
 private slots:
     void readyRead();

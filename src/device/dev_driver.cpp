@@ -1378,10 +1378,6 @@ void DevDriver::process() {
                         idUpdate->putUpdate(false);
                     }
                 }
-
-                if(curr_time - m_state.lastConnectTime > 70) {
-                    idVersion->requestAll();
-                }
             } else {
                 idVersion->requestAll();
                 qDebug() << "Request version again";

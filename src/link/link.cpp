@@ -24,7 +24,8 @@ Link::Link()
       isReceivesData_(false),
       lastSearchIndx_(0),
       onUpgradingFirmware_(false),
-      localGhostIgnoreCount_(0)
+      localGhostIgnoreCount_(0),
+      requestCnt_(requestAllCntBig)
 {
     frame_.resetComplete();
 
@@ -488,6 +489,7 @@ void Link::onStartUpgradingFirmware()
 
     setIsUpgradingState(true);
     timeoutCnt_ = linkNumTimeoutsSmall;
+    requestCnt_ = requestAllCntSmall;
     resetLastSearchIndx();
 }
 
@@ -498,6 +500,7 @@ void Link::onUpgradingFirmwareDone()
     setIsUpgradingState(false);
     timeoutCnt_ = linkNumTimeoutsSmall;
     localGhostIgnoreCount_ = ghostIgnoreCount;
+    requestCnt_ = requestAllCntBig;
     resetLastSearchIndx();
 }
 
@@ -544,13 +547,20 @@ void Link::onCheckedTimerEnd()
     if (isNeedSearch) {
         timeoutCnt_ = linkNumTimeoutsSmall;
         //qDebug() << "   link: timeout ended do emit sendDoRequestAll" << uuid_;
-        emit sendDoRequestAll(uuid_);
         auto currBaudrate = baudrateSearchList_.at(lastSearchIndx_);
         lastSearchIndx_ = (lastSearchIndx_ + 1) % baudrateSearchList_.size();
         //qDebug() << "   link: trying find" << currBaudrate << "on" << lastSearchIndx_;
         setBaudrate(currBaudrate);
         emit baudrateChanged(uuid_);
     }
+
+    if (!isReceivesData_ || !requestCnt_) {
+        emit sendDoRequestAll(uuid_);
+        if (!requestCnt_) {
+            requestCnt_ = onUpgradingFirmware_ ? requestAllCntSmall : isReceivesData_ ? requestAllCntBig : requestAllCntSmall;
+        }
+    }
+    --requestCnt_;
 
     lastTotalCnt_ = currTotalCnt;
     checkTimer_->start();
