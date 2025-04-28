@@ -25,7 +25,8 @@ Link::Link()
       lastSearchIndx_(0),
       onUpgradingFirmware_(false),
       localGhostIgnoreCount_(0),
-      requestCnt_(requestAllCntBig)
+      requestCnt_(requestAllCntBig),
+      autoConnOnce_(false)
 {
     frame_.resetComplete();
 
@@ -343,6 +344,11 @@ void Link::setIsUpgradingState(bool state)
     }
 }
 
+void Link::setAutoConnOnce(bool state)
+{
+    autoConnOnce_ = state;
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -438,6 +444,11 @@ bool Link::getIsUpgradingState() const
     return onUpgradingFirmware_;
 }
 
+bool Link::getAutoConnOnce() const
+{
+    return autoConnOnce_;
+}
+
 // #ifdef MOTOR
 // void Link::setIsMotorDevice(bool isMotorDevice)
 // {
@@ -491,6 +502,7 @@ void Link::onStartUpgradingFirmware()
     timeoutCnt_ = linkNumTimeoutsSmall;
     requestCnt_ = requestAllCntSmall;
     resetLastSearchIndx();
+    setAutoConnOnce(true); // logger
 }
 
 void Link::onUpgradingFirmwareDone()
@@ -502,6 +514,7 @@ void Link::onUpgradingFirmwareDone()
     localGhostIgnoreCount_ = ghostIgnoreCount;
     requestCnt_ = requestAllCntBig;
     resetLastSearchIndx();
+    setAutoConnOnce(true); // logger
 }
 
 void Link::onCheckedTimerEnd()

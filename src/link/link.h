@@ -59,6 +59,7 @@ public:
     void setIsForceStopped(bool isForcedStopped);
     void setAutoSpeedSelection(bool autoSpeedSelection);
     void setIsUpgradingState(bool state);
+    void setAutoConnOnce(bool state);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
     bool        getIsRecievesData() const;
@@ -77,6 +78,7 @@ public:
     bool        getIsForceStopped() const;
     bool        getAutoSpeedSelection() const;
     bool        getIsUpgradingState() const;
+    bool        getAutoConnOnce() const;
 
 // #ifdef MOTOR
     void        setAttribute(int attribute) { attribute_ = attribute; }
@@ -154,6 +156,7 @@ private:
     bool onUpgradingFirmware_;
     int localGhostIgnoreCount_;
     int requestCnt_;
+    bool autoConnOnce_;
 
 private slots:
     void readyRead();

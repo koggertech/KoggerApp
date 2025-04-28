@@ -1,11 +1,13 @@
 #pragma once
 
 #include <QObject>
-#include "proto_binnary.h"
-#include "id_binnary.h"
 #include <QHash>
 #include <QVector>
-#include "QTimer"
+#include <QTimer>
+#include <QUuid>
+#include "proto_binnary.h"
+#include "id_binnary.h"
+
 
 using namespace Parsers;
 
@@ -163,12 +165,18 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
+    void setFirmware(const QByteArray& data);
 
 signals:
     void averageChartLossesChanged();
     void binFrameOut(ProtoBinOut proto_out);
+
+    // link
     void startUpgradingFirmware();
     void upgradingFirmwareDone();
+    // deviceManager
+    void startUpgradingFirmwareDM(QUuid linkUuid, uint8_t address, QByteArray firmware);
+    void upgradingFirmwareDoneDM();
 
     //
     void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
@@ -234,7 +242,8 @@ public slots:
     void setTranscState(bool state);
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
-
+    void setLinkUuid(QUuid linkUuid);
+    QUuid getLinkUuid() const;
     void askBeaconPosition() {
         IDBinUsblSolution::USBLRequestBeacon ask;
         askBeaconPosition(ask);
@@ -405,4 +414,5 @@ private:
     bool uartState_;
     int errorFreezeCnt_;
     int averageChartLosses_;
+    QUuid linkUuid_;
 };

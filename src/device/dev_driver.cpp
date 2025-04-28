@@ -5,17 +5,18 @@
 
 extern Core core;
 
-DevDriver::DevDriver(QObject *parent) :
-    QObject(parent),
-    datasetState_(false),
-    distSetupState_(false),
-    chartSetupState_(false),
-    dspSetupState_(false),
-    transcState_(false),
-    soundSpeedState_(false),
-    uartState_(false),
-    errorFreezeCnt_(0),
-    averageChartLosses_(0)
+DevDriver::DevDriver(QObject *parent)
+    : QObject(parent),
+      datasetState_(false),
+      distSetupState_(false),
+      chartSetupState_(false),
+      dspSetupState_(false),
+      transcState_(false),
+      soundSpeedState_(false),
+      uartState_(false),
+      errorFreezeCnt_(0),
+      averageChartLosses_(0),
+      linkUuid_(QUuid())
 {
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<uint16_t>("uint16_t");
@@ -457,6 +458,16 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::setLinkUuid(QUuid linkUuid)
+{
+    linkUuid_ = linkUuid;
+}
+
+QUuid DevDriver::getLinkUuid() const
+{
+    return linkUuid_;
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
     if(!m_state.connect) return;
     idUSBL->askBeacon(ask);
@@ -555,6 +566,11 @@ uint32_t DevDriver::devSerialNumber() {
 
 QString DevDriver::devPN() {
     return QString();
+}
+
+void DevDriver::setFirmware(const QByteArray &data)
+{
+    sendUpdateFW(data);
 }
 
 void DevDriver::protoComplete(FrameParser& proto)
@@ -666,6 +682,7 @@ void DevDriver::sendUpdateFW(QByteArray update_data) {
     m_state.in_boot = true;
 
     emit startUpgradingFirmware();
+    emit startUpgradingFirmwareDM(linkUuid_, _lastAddres, update_data);
 
     // QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 }
@@ -1238,6 +1255,7 @@ void DevDriver::fwUpgradeProcess() {
         m_upgrade_status = successUpgrade;
 
         emit upgradingFirmwareDone();
+        emit upgradingFirmwareDoneDM();
 
         core.consoleInfo("Upgrade: done");
         restartState();
@@ -1270,6 +1288,7 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
                     m_upgrade_status = failUpgrade;
 
                     emit upgradingFirmwareDone();
+                    emit upgradingFirmwareDoneDM();
 
                     m_state.in_update = false;
                     m_bootloaderLagacyMode = true;
@@ -1288,6 +1307,7 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
                 m_upgrade_status = failUpgrade;
 
                 emit upgradingFirmwareDone();
+                emit upgradingFirmwareDoneDM();
 
                 m_state.in_update = false;
                 m_bootloaderLagacyMode = true;

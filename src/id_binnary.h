@@ -746,6 +746,8 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
 
     void setUpdate(QByteArray fw);
+    QByteArray getUpdate() const;
+
     int availSend() {return _fw.length() - _currentFwOffset; }
     int progress() {
         if(_fw.length() != 0) {

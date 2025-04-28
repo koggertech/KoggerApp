@@ -61,8 +61,12 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
 
-        if (link->getLinkType() != LinkType::kLinkSerial)
+        if (link->getLinkType() != LinkType::kLinkSerial) {
             continue;
+        }
+        if (link->getIsUpgradingState()) {
+            continue;
+        }
 
         bool isBeen{ false };
         for (const auto& itm : currSerialList) {
@@ -102,8 +106,16 @@ void LinkManager::openAutoConnections()
         Link* link = list_.at(i);
 
         if (!link->getConnectionStatus()) {
-            if (link->getControlType() == ControlType::kAuto &&
-                !link->getIsNotAvailable()) {
+            bool autoConnOnce = link->getAutoConnOnce();
+
+            if ((link->getControlType() == ControlType::kAuto &&
+                !link->getIsNotAvailable()) ||
+                autoConnOnce) {
+
+                if (autoConnOnce) {
+                    link->setAutoConnOnce(false);
+                }
+
                 switch (link->getLinkType()) {
                     case LinkType::kLinkNone:   { break; }
                     case LinkType::kLinkSerial: { link->openAsSerial(); break; }

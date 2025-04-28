@@ -5,14 +5,16 @@
 extern Core core;
 
 
-DeviceManager::DeviceManager() :
-    lastDevs_(nullptr),
-    lastDevice_(nullptr),
-    mavlinkLink_(nullptr),
-    lastAddress_(-1),
-    progress_(0),
-    isConsoled_(false),
-    break_(false)
+DeviceManager::DeviceManager()
+    : lastDevs_(nullptr),
+      lastDevice_(nullptr),
+      mavlinkLink_(nullptr),
+      lastAddress_(-1),
+      progress_(0),
+      isConsoled_(false),
+      break_(false),
+      upgradeUuid_(QUuid()),
+      upgradeAddr_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
 #ifdef SEPARATE_READING
@@ -743,6 +745,24 @@ void DeviceManager::readyReadProxyNav(Link* link)
     }
 }
 
+void DeviceManager::onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware)
+{
+    qDebug() << "DeviceManager::onStartUpgradingFirmware";
+
+    upgradeUuid_ = linkUuid;
+    upgradeAddr_ = address;
+    upgradeData_ = firmware;
+}
+
+void DeviceManager::onUpgradingFirmwareDone()
+{
+    qDebug() << "DeviceManager::onUpgradingFirmwareDone";
+
+    upgradeUuid_ = QUuid();
+    upgradeAddr_ = 0;
+    upgradeData_.clear();
+}
+
 DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
 {
     if ((link == NULL || lastUuid_ == uuid) && lastAddress_ == addr && lastDevice_ != NULL) {
@@ -799,6 +819,12 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     DevQProperty* dev = new DevQProperty();
     devTree_[uuid][addr] = dev;
     dev->setBusAddress(addr);
+    dev->setLinkUuid(uuid);
+
+    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
+        dev->setFirmware(upgradeData_);
+        upgradeUuid_ = QUuid();
+    }
 
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
@@ -842,6 +868,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
         connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware);
         connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone);
     }
+
+    connect(dev, &DevQProperty::startUpgradingFirmwareDM, this, &DeviceManager::onStartUpgradingFirmware);
+    connect(dev, &DevQProperty::upgradingFirmwareDoneDM, this, &DeviceManager::onUpgradingFirmwareDone);
 
     //
     connect(dev, &DevQProperty::sendChartSetup,  this, &DeviceManager::sendChartSetup);
