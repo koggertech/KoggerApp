@@ -5,14 +5,16 @@
 extern Core core;
 
 
-DeviceManager::DeviceManager() :
-    lastDevs_(nullptr),
-    lastDevice_(nullptr),
-    mavlinkLink_(nullptr),
-    lastAddress_(-1),
-    progress_(0),
-    isConsoled_(false),
-    break_(false)
+DeviceManager::DeviceManager()
+    : lastDevs_(nullptr),
+      lastDevice_(nullptr),
+      mavlinkLink_(nullptr),
+      lastAddress_(-1),
+      progress_(0),
+      isConsoled_(false),
+      break_(false),
+      upgradeUuid_(QUuid()),
+      upgradeAddr_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
 #ifdef SEPARATE_READING
@@ -477,8 +479,6 @@ void DeviceManager::closeFile()
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
-    Q_UNUSED(uuid);
-
     if (link) {
         if (link->getIsProxy()) {
             proxyLinkUuid_ = uuid;
@@ -616,6 +616,18 @@ void DeviceManager::onLoggingKlfStarted()
     }
 }
 
+void DeviceManager::onSendRequestAll(QUuid uuid)
+{
+    if (devTree_.contains(uuid)) {
+        QHash<int, DevQProperty*> devs = devTree_[uuid];
+        for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
+            if (auto* dev = i.value(); dev) {
+                dev->doRequestAll();
+            }
+        }
+    }
+}
+
 #ifdef MOTOR
 float DeviceManager::getFAngle()
 {
@@ -733,6 +745,24 @@ void DeviceManager::readyReadProxyNav(Link* link)
     }
 }
 
+void DeviceManager::onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware)
+{
+    qDebug() << "DeviceManager::onStartUpgradingFirmware";
+
+    upgradeUuid_ = linkUuid;
+    upgradeAddr_ = address;
+    upgradeData_ = firmware;
+}
+
+void DeviceManager::onUpgradingFirmwareDone()
+{
+    qDebug() << "DeviceManager::onUpgradingFirmwareDone";
+
+    upgradeUuid_ = QUuid();
+    upgradeAddr_ = 0;
+    upgradeData_.clear();
+}
+
 DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
 {
     if ((link == NULL || lastUuid_ == uuid) && lastAddress_ == addr && lastDevice_ != NULL) {
@@ -789,6 +819,12 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     DevQProperty* dev = new DevQProperty();
     devTree_[uuid][addr] = dev;
     dev->setBusAddress(addr);
+    dev->setLinkUuid(uuid);
+
+    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
+        dev->setFirmware(upgradeData_);
+        upgradeUuid_ = QUuid();
+    }
 
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
@@ -796,6 +832,8 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
+        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware, connType);
+        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone, connType);
     }
 
     //
@@ -827,7 +865,12 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
+        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware);
+        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone);
     }
+
+    connect(dev, &DevQProperty::startUpgradingFirmwareDM, this, &DeviceManager::onStartUpgradingFirmware);
+    connect(dev, &DevQProperty::upgradingFirmwareDoneDM, this, &DeviceManager::onUpgradingFirmwareDone);
 
     //
     connect(dev, &DevQProperty::sendChartSetup,  this, &DeviceManager::sendChartSetup);

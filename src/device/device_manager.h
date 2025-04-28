@@ -63,6 +63,7 @@ public slots:
     void setUSBLBeaconDirectAsk(bool is_ask);
 
     void onLoggingKlfStarted();
+    void onSendRequestAll(QUuid uuid);
 
 #ifdef MOTOR
     float getFAngle();
@@ -179,6 +180,9 @@ private:
 
     bool isUSBLBeaconDirectAsk = false;
     QTimer beacon_timer;
+    QUuid upgradeUuid_;
+    uint8_t upgradeAddr_;
+    QByteArray upgradeData_;
 
 #ifdef MOTOR
     std::unique_ptr<MotorControl> motorControl_;
@@ -189,4 +193,7 @@ private:
 private slots:
     void readyReadProxy(Link* link);
     void readyReadProxyNav(Link* link);
+
+    void onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware);
+    void onUpgradingFirmwareDone();
 };

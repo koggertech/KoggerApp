@@ -8,6 +8,7 @@
 #include <QHostAddress>
 #include <QUdpSocket>
 #include <QTcpSocket>
+#include <QPointer>
 #if defined(Q_OS_ANDROID)
 #include "platform/android/src/qtandroidserialport/src/qserialport.h"
 #include "platform/android/src/qtandroidserialport/src/qserialportinfo.h"
@@ -15,28 +16,12 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 #endif
+#include <QTimer>
+
+#include "link_defs.h"
 #include "proto_binnary.h"
 
 using namespace Parsers;
-
-
-typedef enum {
-    LinkNone,
-    LinkSerial,
-    LinkIPUDP, // also is proxy
-    LinkIPTCP,
-} LinkType;
-
-typedef enum {
-    LinkAttributeNone,
-    LinkAttributeMotor = 2
-} LinkAttribute;
-
-typedef enum {
-    kManual = 0,
-    kAuto,
-    kAutoOnce
-} ControlType;
 
 class Link : public QObject
 {
@@ -72,8 +57,12 @@ public:
     void setIsNotAvailable(bool isNotAvailable);
     void setIsProxy(bool isProxy);
     void setIsForceStopped(bool isForcedStopped);
+    void setAutoSpeedSelection(bool autoSpeedSelection);
+    void setIsUpgradingState(bool state);
+    void setAutoConnOnce(bool state);
     QUuid       getUuid() const;
     bool        getConnectionStatus() const;
+    bool        getIsRecievesData() const;
     ControlType getControlType() const;
     QString     getPortName() const;
     int         getBaudrate() const;
@@ -87,23 +76,32 @@ public:
     bool        getIsNotAvailable() const;
     bool        getIsProxy() const;
     bool        getIsForceStopped() const;
+    bool        getAutoSpeedSelection() const;
+    bool        getIsUpgradingState() const;
+    bool        getAutoConnOnce() const;
 
 // #ifdef MOTOR
     void        setAttribute(int attribute) { attribute_ = attribute; }
-    bool        getIsMotorDevice() { return attribute_ == LinkAttributeMotor; }
+    bool        getIsMotorDevice() { return attribute_ == static_cast<int>(LinkAttribute::kLinkAttributeMotor); }
 // #endif
 
 
 public slots:
-    bool writeFrame(FrameParser frame);
+    bool writeFrame(Parsers::FrameParser frame);
     bool write(QByteArray data);
+    void onStartUpgradingFirmware();
+    void onUpgradingFirmwareDone();
 
 signals:
     void readyParse(Link* link);
     void connectionStatusChanged(QUuid uuid);
-    void frameReady(QUuid uuid, Link* link, FrameParser frame);
+    void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void opened(QUuid uuid, Link* linkPtr);
     void closed(QUuid uuid, Link* link);
+    void baudrateChanged(QUuid uuid);
+    void isReceivesDataChanged(QUuid uuid);
+    void sendDoRequestAll(QUuid uuid);
+    void upgradingFirmwareStateChanged(QUuid uuid);
 
 #ifdef MOTOR
     void dataReady(QByteArray data);
@@ -111,14 +109,18 @@ signals:
     void dataReady();
 #endif
 
+private slots:
+    void onCheckedTimerEnd();
+
 private:
     /*methods*/
     void setDev(QIODevice* dev);
     void deleteDev();
     void toParser(const QByteArray data);
+    void resetLastSearchIndx();
 
     /*data*/
-    QIODevice* ioDevice_;
+    QPointer<QIODevice> ioDevice_;
     FrameParser frame_;
     QByteArray context_;
     QByteArray buffer_;
@@ -137,12 +139,24 @@ private:
     bool isNotAvailable_;
     bool isProxy_;
     bool isForcedStopped_;
+    int attribute_;
 
-
-    int attribute_ = 0;
 // #ifdef MOTOR
 //     bool isMotorDevice_ = false;
 // #endif
+
+    bool autoSpeedSelection_;
+    std::unique_ptr<QTimer> checkTimer_;
+    int timeoutCnt_;
+    uint32_t lastTotalCnt_;
+    bool isReceivesData_;
+//    int searchIndx_; ?
+    QList<uint32_t> baudrateSearchList_;
+    int lastSearchIndx_;
+    bool onUpgradingFirmware_;
+    int localGhostIgnoreCount_;
+    int requestCnt_;
+    bool autoConnOnce_;
 
 private slots:
     void readyRead();

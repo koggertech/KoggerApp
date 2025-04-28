@@ -937,6 +937,11 @@ void IDBinUpdate::setUpdate(QByteArray fw) {
     _currentNumPacket = 1;
 }
 
+QByteArray IDBinUpdate::getUpdate() const
+{
+    return _fw;
+}
+
 bool IDBinUpdate::putUpdate(bool is_auto_offset) {
     uint16_t len_part = _packetSize;
 

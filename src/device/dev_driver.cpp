@@ -5,17 +5,18 @@
 
 extern Core core;
 
-DevDriver::DevDriver(QObject *parent) :
-    QObject(parent),
-    datasetState_(false),
-    distSetupState_(false),
-    chartSetupState_(false),
-    dspSetupState_(false),
-    transcState_(false),
-    soundSpeedState_(false),
-    uartState_(false),
-    errorFreezeCnt_(0),
-    averageChartLosses_(0)
+DevDriver::DevDriver(QObject *parent)
+    : QObject(parent),
+      datasetState_(false),
+      distSetupState_(false),
+      chartSetupState_(false),
+      dspSetupState_(false),
+      transcState_(false),
+      soundSpeedState_(false),
+      uartState_(false),
+      errorFreezeCnt_(0),
+      averageChartLosses_(0),
+      linkUuid_(QUuid())
 {
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<uint16_t>("uint16_t");
@@ -457,6 +458,16 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::setLinkUuid(QUuid linkUuid)
+{
+    linkUuid_ = linkUuid;
+}
+
+QUuid DevDriver::getLinkUuid() const
+{
+    return linkUuid_;
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
     if(!m_state.connect) return;
     idUSBL->askBeacon(ask);
@@ -465,6 +476,14 @@ void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
 void DevDriver::enableBeaconOnce(float timeout) {
     if(!m_state.connect) return;
     idUSBL->enableBeaconOnce(timeout);
+}
+
+void DevDriver::doRequestAll()
+{
+    if (idVersion) {
+        //qDebug() << "  dev_driver: requesting all for" << m_devName << m_devAddress;
+        idVersion->requestAll();
+    }
 }
 
 #ifdef SEPARATE_READING
@@ -549,10 +568,39 @@ QString DevDriver::devPN() {
     return QString();
 }
 
-void DevDriver::protoComplete(FrameParser& proto) {
-    if(!proto.isComplete()) return;
+void DevDriver::setFirmware(const QByteArray &data)
+{
+    sendUpdateFW(data);
+}
+
+void DevDriver::protoComplete(FrameParser& proto)
+{
+    if (!proto.isComplete()) {
+        return;
+    }
+
+    int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
 
     m_state.mark = proto.mark();
+
+    if(m_state.mark) {
+        m_state.lastConnectTime = curr_time;
+    }
+
+    // if (rebootFlag_ && !proto.mark()) {
+    //     rebootFlag_ = false;
+    // }
+
+    // if (rebootFlag_) {
+    //      m_state.mark = false;
+    // }
+
+    // if(proto.id() == Parsers::ID_BOOT && proto.ver() == v0 && proto.resp() == true) {
+    //     qDebug() << "   !!! and seting mark FALSE";
+    //     m_state.mark = false;
+    // }
+
+
 
     if(_hashID.contains(proto.id())) {
         if(_hashID[proto.id()].instance != NULL) {
@@ -569,15 +617,11 @@ void DevDriver::protoComplete(FrameParser& proto) {
 }
 
 void DevDriver::startConnection(bool duplex) {
-    m_devName = "...";
     m_state.duplex = duplex;
-    idVersion->reset();
-
-    m_bootloaderLagacyMode = true;
-    m_bootloader = false;
-    m_upgrade_status = 0;
-
     restartState();
+    m_devName = "...";
+    m_bootloaderLagacyMode = true;
+    m_upgrade_status = 0;
 
     emit deviceVersionChanged();
 }
@@ -591,12 +635,10 @@ void DevDriver::stopConnection() {
 
 void DevDriver::restartState() {
     m_processTimer.stop();
-    m_state.connect = false;
-    m_state.uptime = UptimeNone;
-    m_state.conf = ConfNone;
-    if(m_state.duplex) {
-        m_processTimer.start(200);
-    }
+    qDebug() << "restart";
+    m_state.resetState();
+    idVersion->reset();
+    m_processTimer.start(200);
 }
 
 void DevDriver::requestDist() {
@@ -631,15 +673,18 @@ void DevDriver::requestStream(int stream_id) {
 }
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
-//    if(!m_state.connect) return;
-    m_bootloaderLagacyMode = true;
-    m_bootloader = true;
-    _timeoutUpgradeAnswerTime = 5000;
-    idUpdate->setUpdate(update_data);
     reboot();
     restartState();
-    QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
-//    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
+
+    _timeoutUpgradeAnswerTime = 5000;
+    idUpdate->setUpdate(update_data);
+    m_bootloaderLagacyMode = true;
+    m_state.in_boot = true;
+
+    emit startUpgradingFirmware();
+    emit startUpgradingFirmwareDM(linkUuid_, _lastAddres, update_data);
+
+    // QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 }
 
 void DevDriver::sendFactoryFW(QByteArray update_data) {
@@ -730,7 +775,9 @@ void DevDriver::resetSettings() {
 
 void DevDriver::reboot() {
     if(!m_state.connect) return;
+    idVersion->reset();
     idBoot->reboot();
+    m_state.reboot = true;
     emit onReboot();
 }
 
@@ -1110,7 +1157,6 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
 
     if(resp == respNone) {
-
         if(ver == v0) {
             switch (idVersion->boardVersion()) {
             case BoardNone:
@@ -1166,7 +1212,6 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
             }
 
-//            qInfo("board info %u", idVersion->boardVersion());
             emit deviceVersionChanged();
         } else if(ver == v1) {
             emit deviceIDChanged(idVersion->uid());
@@ -1177,9 +1222,6 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
 
             emit deviceVersionChanged();
         }
-
-
-
     }
 }
 
@@ -1209,8 +1251,12 @@ void DevDriver::fwUpgradeProcess() {
     m_upgrade_status = idUpdate->progress();
     if(!is_avail_data) {
         idBoot->runFW();
-        m_bootloader = false;
+        m_state.in_update = false;
         m_upgrade_status = successUpgrade;
+
+        emit upgradingFirmwareDone();
+        emit upgradingFirmwareDoneDM();
+
         core.consoleInfo("Upgrade: done");
         restartState();
     }
@@ -1237,25 +1283,33 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 
                 fwUpgradeProcess();
             } else {
-                if(m_bootloader) {
+                // if( m_state.in_boot) {
                     core.consoleInfo("Upgrade: critical error!");
                     m_upgrade_status = failUpgrade;
-                    m_bootloader = false;
+
+                    emit upgradingFirmwareDone();
+                    emit upgradingFirmwareDoneDM();
+
+                    m_state.in_update = false;
                     m_bootloaderLagacyMode = true;
                     restartState();
-                }
+                // }
             }
         }
     } else {
         if(resp == respOk) {
-            if(m_bootloader && m_bootloaderLagacyMode) {
+            if( m_state.in_update && m_bootloaderLagacyMode) {
                 fwUpgradeProcess();
             }
         } else {
-            if(m_bootloader && m_bootloaderLagacyMode) {
+            if( m_state.in_update && m_bootloaderLagacyMode) {
                 core.consoleInfo("Upgrade: lagacy mode error");
                 m_upgrade_status = failUpgrade;
-                m_bootloader = false;
+
+                emit upgradingFirmwareDone();
+                emit upgradingFirmwareDoneDM();
+
+                m_state.in_update = false;
                 m_bootloaderLagacyMode = true;
                 restartState();
             }
@@ -1310,34 +1364,49 @@ void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::process() {
+    int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
     if(m_state.duplex) {
-        if(!m_state.mark) {
-            m_state.uptime = UptimeNone;
-        }
+        if(m_state.mark) {
+            if(idVersion->boardVersion() != BoardNone) {
+                if(m_state.uptime != UptimeFix) {
+                    qDebug() << "UptimeFix";
+                    m_state.uptime = UptimeFix;
+                }
 
-        if(m_state.uptime == UptimeNone) {
+                if(!m_state.connect) {
+                    qDebug() << "connect = true";
+                    m_state.connect = true;
+                }
+
+                if(m_state.in_boot) {
+                    m_state.in_boot = false;
+                    m_state.in_update = true;
+                    // idUpdate->putUpdate();
+
+                    QTimer::singleShot(100, idUpdate, SLOT(putUpdate()));
+                    qDebug() << "To upgrading";
+                }
+
+                if(!(m_state.in_boot || m_state.in_update) && m_state.conf < ConfRequest) {
+                    requestSetup();
+                    qDebug() << "Request setup";
+                }
+
+                if(m_state.in_update && !m_bootloaderLagacyMode) {
+                    if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
+                        core.consoleInfo("Upgrade: timeout error!");
+                        idUpdate->putUpdate(false);
+                    }
+                }
+            } else {
+                idVersion->requestAll();
+                qDebug() << "Request version again";
+            }
+        } else {
+            restartState();
             idMark->setMark();
             idVersion->requestAll();
-            m_state.uptime = UptimeRequest;
-        } else if(m_state.uptime == UptimeRequest) {
-            if(!m_bootloader) {
-                requestSetup();
-            }
-
-            m_state.uptime = UptimeFix;
-        } else if(m_state.uptime == UptimeFix) {
-            if(m_state.mark) {
-                m_state.connect = true;
-            }
-
-            if(m_bootloader && !m_bootloaderLagacyMode) {
-                int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
-                if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
-                    core.consoleInfo("Upgrade: timeout error!");
-                    idUpdate->putUpdate(false);
-//                    idUpdate->putUpdate();
-                }
-            }
+            qDebug() << "Reset state";
         }
     }
 }

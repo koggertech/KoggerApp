@@ -39,7 +39,7 @@ void LinkManager::addNewLinks(const QList<QSerialPortInfo> &currSerialList)
         bool isBeen{ false };
 
         for (auto& itmJ : list_) {
-            if (itmJ->getLinkType() != LinkType::LinkSerial)
+            if (itmJ->getLinkType() != LinkType::kLinkSerial)
                 continue;
 
             if (itmI.portName() == itmJ->getPortName()) {
@@ -61,8 +61,12 @@ void LinkManager::deleteMissingLinks(const QList<QSerialPortInfo> &currSerialLis
     for (int i = 0; i < list_.size(); ++i) {
         Link* link = list_.at(i);
 
-        if (link->getLinkType() != LinkType::LinkSerial)
+        if (link->getLinkType() != LinkType::kLinkSerial) {
             continue;
+        }
+        if (link->getIsUpgradingState()) {
+            continue;
+        }
 
         bool isBeen{ false };
         for (const auto& itm : currSerialList) {
@@ -102,13 +106,21 @@ void LinkManager::openAutoConnections()
         Link* link = list_.at(i);
 
         if (!link->getConnectionStatus()) {
-            if (link->getControlType() == ControlType::kAuto &&
-                !link->getIsNotAvailable()) {
+            bool autoConnOnce = link->getAutoConnOnce();
+
+            if ((link->getControlType() == ControlType::kAuto &&
+                !link->getIsNotAvailable()) ||
+                autoConnOnce) {
+
+                if (autoConnOnce) {
+                    link->setAutoConnOnce(false);
+                }
+
                 switch (link->getLinkType()) {
-                    case LinkType::LinkNone:   { break; }
-                    case LinkType::LinkSerial: { link->openAsSerial(); break; }
-                    case LinkType::LinkIPUDP:  { link->openAsUdp(); break; }
-                    case LinkType::LinkIPTCP:  { link->openAsTcp(); break; }
+                    case LinkType::kLinkNone:   { break; }
+                    case LinkType::kLinkSerial: { link->openAsSerial(); break; }
+                    case LinkType::kLinkIPUDP:  { link->openAsUdp(); break; }
+                    case LinkType::kLinkIPTCP:  { link->openAsTcp(); break; }
                     default:                   { break; }
                 }
             }
@@ -151,6 +163,7 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
 
     emit appendModifyModel(linkPtr->getUuid(),
                            linkPtr->getConnectionStatus(),
+                           linkPtr->getIsRecievesData(),
                            linkPtr->getControlType(),
                            linkPtr->getPortName(),
                            linkPtr->getBaudrate(),
@@ -161,7 +174,9 @@ void LinkManager::doEmitAppendModifyModel(Link* linkPtr)
                            linkPtr->getDestinationPort(),
                            linkPtr->getIsPinned(),
                            linkPtr->getIsHided(),
-                           linkPtr->getIsNotAvailable());
+                           linkPtr->getIsNotAvailable(),
+                           linkPtr->getAutoSpeedSelection(),
+                           linkPtr->getIsUpgradingState());
 }
 
 void LinkManager::exportPinnedLinksToXML()
@@ -203,6 +218,7 @@ void LinkManager::exportPinnedLinksToXML()
             xmlWriter.writeTextElement("is_hided", QVariant(static_cast<bool>(itm->getIsHided())).toString());
             xmlWriter.writeTextElement("is_not_available", QVariant(static_cast<bool>(itm->getIsNotAvailable())).toString());
             xmlWriter.writeTextElement("connection_status", QVariant(static_cast<bool>(itm->getConnectionStatus())).toString());
+            xmlWriter.writeTextElement("auto_speed_selection", QVariant(static_cast<bool>(itm->getAutoSpeedSelection())).toString());
             xmlWriter.writeEndElement();
         }
     }
@@ -217,9 +233,13 @@ Link *LinkManager::createNewLink() const
     Link* retVal = new Link();
 
     QObject::connect(retVal, &Link::connectionStatusChanged, this, &LinkManager::onLinkConnectionStatusChanged);
+    QObject::connect(retVal, &Link::upgradingFirmwareStateChanged, this, &LinkManager::onUpgradingFirmwareStateChanged);
     QObject::connect(retVal, &Link::frameReady, this, &LinkManager::frameReady);
     QObject::connect(retVal, &Link::closed, this, &LinkManager::linkClosed);
     QObject::connect(retVal, &Link::opened, this, &LinkManager::linkOpened);
+    QObject::connect(retVal, &Link::baudrateChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
+    QObject::connect(retVal, &Link::isReceivesDataChanged, this, &LinkManager::onLinkIsReceivesDataChanged);
+    QObject::connect(retVal, &Link::sendDoRequestAll, this, &LinkManager::sendDoRequestAll);
 
     return retVal;
 }
@@ -232,8 +252,9 @@ void LinkManager::printLinkDebugInfo(Link* link) const
         qDebug() << "\tlink is nullptr";
     else {
         qDebug() << QString("uuid: %1; controlType: %2; portName: %3; baudrate: %4; parity: %5; linkType: %6; address: %7; sourcePort: %8; destinationPort: %9; isPinned: %10; isHided: %11; isNotAvailable: %12; connectionStatus: %13")
-                        .arg(link->getUuid().toString()).arg(link->getControlType()).arg(link->getPortName()).arg(link->getBaudrate()).arg(link->getParity()).arg(link->getLinkType()).arg(link->getAddress()).arg(link->getSourcePort())
-                        .arg(link->getDestinationPort()).arg(link->getIsPinned()).arg(link->getIsHided()).arg(link->getIsNotAvailable()).arg(link->getConnectionStatus());
+                        .arg(link->getUuid().toString()).arg(static_cast<int>(link->getControlType())).arg(link->getPortName()).arg(link->getBaudrate()).arg(link->getParity())
+                        .arg(static_cast<int>(link->getLinkType())).arg(link->getAddress()).arg(link->getSourcePort()).arg(link->getDestinationPort()).arg(link->getIsPinned())
+                        .arg(link->getIsHided()).arg(link->getIsNotAvailable()).arg(link->getConnectionStatus());
     }
 }
 
@@ -298,6 +319,9 @@ void LinkManager::importPinnedLinksFromXML()
                         else if (xmlReader.name().toString() == "is_not_available") {
                             link->setIsNotAvailable(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
                         }
+                        else if (xmlReader.name().toString() == "auto_speed_selection") {
+                            link->setAutoSpeedSelection(xmlReader.readElementText().trimmed().toUpper() == "TRUE" ? true : false);
+                        }
                     }
                     xmlReader.readNext();
                 }
@@ -317,9 +341,37 @@ void LinkManager::onLinkConnectionStatusChanged(QUuid uuid)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         doEmitAppendModifyModel(linkPtr);
+    }
+}
 
-        if (linkPtr->getIsPinned()) // or to open/close?
+void LinkManager::onUpgradingFirmwareStateChanged(QUuid uuid)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        doEmitAppendModifyModel(linkPtr);
+    }
+}
+
+void LinkManager::onLinkBaudrateChanged(QUuid uuid)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        doEmitAppendModifyModel(linkPtr);
+
+        if (linkPtr->getIsPinned()) {
             exportPinnedLinksToXML();
+        }
+    }
+}
+
+void LinkManager::onLinkIsReceivesDataChanged(QUuid uuid)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        doEmitAppendModifyModel(linkPtr);
     }
 }
 
@@ -460,8 +512,8 @@ void LinkManager::deleteLink(QUuid uuid)
         delete linkPtr;
 
         // manual deleting
-        if (linkType == LinkType::LinkIPTCP ||
-            linkType == LinkType::LinkIPUDP)
+        if (linkType == LinkType::kLinkIPTCP ||
+            linkType == LinkType::kLinkIPUDP)
             exportPinnedLinksToXML();
     }
 }
@@ -486,6 +538,19 @@ void LinkManager::updateAddress(QUuid uuid, const QString &address)
 
     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
         linkPtr->setAddress(address);
+
+        //doEmitAppendModifyModel(linkPtr); // why not?
+        if (linkPtr->getIsPinned())
+            exportPinnedLinksToXML();
+    }
+}
+
+void LinkManager::updateAutoSpeedSelection(QUuid uuid, bool state)
+{
+    TimerController(timer_.get());
+
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setAutoSpeedSelection(state);
 
         //doEmitAppendModifyModel(linkPtr); // why not?
         if (linkPtr->getIsPinned())
@@ -580,15 +645,15 @@ void LinkManager::openFLinks()
             itm->setIsForceStopped(false);
 
             switch (itm->getLinkType()) {
-            case LinkType::LinkSerial: {
+            case LinkType::kLinkSerial: {
                 itm->openAsSerial();
                 break;
             }
-            case LinkType::LinkIPTCP : {
+            case LinkType::kLinkIPTCP : {
                 itm->openAsTcp();
                 break;
             }
-            case LinkType::LinkIPUDP: {
+            case LinkType::kLinkIPUDP: {
                 itm->openAsUdp();
                 break;
             }

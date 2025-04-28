@@ -26,6 +26,9 @@ public:
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
+    void onUpgradingFirmwareStateChanged(QUuid uuid);
+    void onLinkBaudrateChanged(QUuid uuid);
+    void onLinkIsReceivesDataChanged(QUuid uuid);
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();
@@ -45,6 +48,7 @@ public slots:
     void deleteLink(QUuid uuid);
     void updateBaudrate(QUuid uuid, int baudrate);
     void updateAddress(QUuid uuid, const QString& address);
+    void updateAutoSpeedSelection(QUuid uuid, bool state);
     void updateSourcePort(QUuid uuid,int sourcePort);
     void updateDestinationPort(QUuid uuid,int destinationPort);
     void updatePinnedState(QUuid uuid, bool state);
@@ -58,13 +62,15 @@ public slots:
     void closeUdpProxy();
 
 signals:
-    void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                           LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void appendModifyModel(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
+                        LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
+                        bool autoSpeedSelection, bool isUpgradingState);
     void deleteModel(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);
     void linkDeleted(QUuid uuid, Link* link);
+    void sendDoRequestAll(QUuid uuid);
 
 private:
     /*structures*/
