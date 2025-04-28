@@ -57,13 +57,16 @@
 You can download the latest release from the [Releases page](https://github.com/koggertech/KoggerApp/releases).
 
 🪟 Windows (x86_64):  
+Supported versions: Windows 7 SP1, 8, 8.1, 10, 11.  
 - Portable: Download .zip. Extract and run "KoggerApp.exe".  
 - Installer: Download and launch the installer (Optionally associates .klf files with the app during setup).
 
 🤖 Android (ARMv7, ARMv8):  
+Supported versions: Android 5.0 (Lollipop) and above.  
 Download and install the .apk file. You may need to enable "Install from unknown sources" in your device settings.
 
 🐧 Linux (Ubuntu x86_64):  
+Supported distributions: Ubuntu 18.04, 20.04, 22.04, 24.04 and compatible systems.  
 Download the .AppImage file and make it executable:
 ```bash
 chmod +x KoggerApp_version_linux_x86_64.AppImage
