@@ -1,10 +1,9 @@
-#ifndef WATERFALL_H
-#define WATERFALL_H
+#pragma once
 
 #include <QImage>
 #include <QQuickPaintedItem>
 #include <QObject>
-#include <plotcash.h>
+#include <dataset.h>
 #include <QTimer>
 #include "plot2D.h"
 
@@ -67,9 +66,31 @@ public slots:
     Q_INVOKABLE bool deleteContact(int indx);
     Q_INVOKABLE void updateContact();
 
-    void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
-    int plotDatasetChannel() { return _cursor.channel1; }
-    int plotDatasetChannel2() { return _cursor.channel2; }
+
+    void plotDatasetChannelFromStrings(const QString& ch1Str, const QString& ch2Str)
+    {
+        if (!datasetPtr_) {
+           return;
+        }
+
+        //qDebug() << "plotDatasetChannelFromStrings" << ch1Str << ch2Str;
+
+        auto [ch1, sub1] = datasetPtr_->channelIdFromName(ch1Str);
+        auto [ch2, sub2] = datasetPtr_->channelIdFromName(ch2Str);
+
+        //qDebug() << "   " << ch1.toShortName() << sub1;
+        //qDebug() << "   " << ch2.toShortName() << sub2;
+
+        plotDatasetChannel(ch1, sub1, ch2, sub2);
+    }
+
+    void plotDatasetChannel(const ChannelId& channel, uint8_t sub1, const ChannelId& channel2, uint8_t sub2)
+    {
+        setDataChannel(channel, sub1, channel2, sub2);
+    }
+
+    ChannelId plotDatasetChannel() { return cursor_.channel1; }
+    ChannelId plotDatasetChannel2() { return cursor_.channel2; }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
@@ -117,5 +138,3 @@ public slots:
     void setOffsetY(float value);
     void setOffsetZ(float value);
 };
-
-#endif // WATERFALL_H

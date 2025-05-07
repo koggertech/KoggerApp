@@ -5,7 +5,9 @@
 #include <QList>
 #include <QVector>
 #include <QTimer>
+#include "dataset_defs.h"
 #include "proto_binnary.h"
+
 
 using namespace Parsers;
 using Segment = QPair<uint16_t, uint16_t>; // first - begin, second - end
@@ -39,16 +41,22 @@ struct LastReadInfo {
     bool     isReaded;
 };
 
-struct ChartParameters {
-    ChartParameters() : address(0), channelId(0) {};
-    ChartParameters(int16_t _address, int16_t _channelId, BoardVersion _boardVersion, Version _version, QList<int16_t> _linkedChannels, QList<Segment> _errList) :
-        address(_address), channelId(_channelId), boardVersion(_boardVersion), version(_version), linkedChannels(_linkedChannels), errList(_errList) {};
+using ListLinkedChannels = QList<QPair<ChannelId, uint8_t>>;
 
-    int16_t        address;
-    int16_t        channelId;
-    BoardVersion   boardVersion;
-    Version        version;
-    QList<int16_t> linkedChannels;
+struct ChartParameters {
+    ChartParameters()
+        : boardVersion(BoardNone),
+          version(v0)
+    {};
+
+    ChartParameters(BoardVersion _boardVersion, Version _version, QList<Segment> _errList)
+        : boardVersion(_boardVersion),
+          version(_version),
+          errList(_errList)
+    {};
+
+    BoardVersion boardVersion;
+    Version version;
     QList<Segment> errList;
 };
 
@@ -206,7 +214,7 @@ public:
     uint16_t absOffset() const { return m_absOffset; }
     int chartSize() const { return m_chartSize; }
 
-    bool isCompleteChart() {
+    bool readAndClearIsCompleteChart() {
         bool flag_val = m_isCompleteChart;
         m_isCompleteChart = false;
         return flag_val;

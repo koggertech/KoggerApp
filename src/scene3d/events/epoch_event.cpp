@@ -3,12 +3,12 @@
 EpochEvent::EpochEvent(Type eventType,
                        Epoch *epoch,
                        int epochIndex,
-                       const DatasetChannel channel)
+                       const DatasetChannel& channelId)
     : QEvent(eventType)
     , m_epoch(epoch)
     , m_epochIndex(epochIndex)
     , m_channelId(-1)
-    , m_channel(channel)
+    , m_channel(channelId)
 {}
 
 Epoch *EpochEvent::epoch() const

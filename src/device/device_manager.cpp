@@ -191,9 +191,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 prot_nmea.skip();
                 double depth_m = prot_nmea.readDouble();
                 if (isfinite(depth_m)) {
-                    emit rangefinderComplete(depth_m);
+                    if (auto* dev = getDevice(uuid, link, frame.route()); dev) { // work?
+                        emit rangefinderComplete(dev->getChannelId(), depth_m);
+                    }
                 }
-
             }
 
             if (prot_nmea.isEqualId("RMC")) {
@@ -369,7 +370,8 @@ void DeviceManager::openFile(QString filePath)
     const qint64 totalSize = file.size();
     qint64 bytesRead = 0;
     Parsers::FrameParser frameParser;
-    const QUuid someUuid;
+    const QUuid someUuid(kFileUuidStr);
+
     delAllDev();
 
 #ifdef SEPARATE_READING

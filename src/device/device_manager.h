@@ -16,6 +16,8 @@
 #include "motor_control.h"
 #endif
 
+constexpr auto kFileUuidStr = "12345678-1234-1234-1234-1234567890ab";
+
 class DeviceManager : public QObject
 {
     Q_OBJECT
@@ -77,14 +79,14 @@ public slots:
 
 signals:
     //
-    void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
-    void sendTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
-    void sendSoundSpeeed(int16_t channel, uint32_t soundSpeed);
+    void sendChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
+    void sendTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
+    void sendSoundSpeeed(const ChannelId& channelId, uint32_t soundSpeed);
 
     void dataSend(QByteArray data);
-    void chartComplete(ChartParameters chartParams, QVector<uint8_t> data, float resolution, float offset);
+    void chartComplete(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void rawDataRecieved(RawData rawData);
-    void distComplete(int dist);
+    void distComplete(const ChannelId& channelId, int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution* beams, uint16_t cnt);
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
@@ -102,7 +104,7 @@ signals:
     void writeProxyFrame(FrameParser frame);
     void writeMavlinkFrame(FrameParser frame);
     void eventComplete(int timestamp, int id, int unixt);
-    void rangefinderComplete(float distance);
+    void rangefinderComplete(const ChannelId& channelId, float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);

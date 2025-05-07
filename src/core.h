@@ -9,7 +9,7 @@
 #ifdef FLASHER
 #include "flasher.h"
 #endif
-#include "waterfall.h"
+#include "qPlot2D.h"
 #include "logger.h"
 #include "console.h"
 #include "converter_xtf.h"
@@ -105,14 +105,14 @@ public slots:
     bool getIsCsvLogging();
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
-    bool exportPlotAsCVS(QString filePath, int channel, float decimation = 0);
+    bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
     void setTimelinePosition(double position);
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
-    void setSideScanChannels(int firstChId, int secondChId);
+    void setSideScanChannels(const QString& firstChStr, const QString& secondChStr);
 #ifdef FLASHER
     bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);

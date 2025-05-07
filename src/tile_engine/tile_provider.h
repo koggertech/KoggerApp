@@ -3,7 +3,7 @@
 #include <QVector>
 
 #include "map_defs.h"
-#include "plotcash.h"
+#include "dataset.h"
 
 
 namespace map {
