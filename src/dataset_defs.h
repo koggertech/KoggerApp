@@ -23,11 +23,7 @@ struct ChannelId
 
     bool isValid() const
     {
-        bool retVal = false;
-
-        retVal = !uuid.isNull();
-
-        return retVal;
+        return !uuid.isNull();
     }
 
     QString toShortName() const

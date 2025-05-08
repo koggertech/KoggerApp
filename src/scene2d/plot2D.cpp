@@ -804,14 +804,16 @@ void Plot2D::reRangeDistance()
         }
     }
 
-    if(isfinite(max_range)) {
+    if (isfinite(max_range)) {
+        const float dist = std::round(std::abs(max_range));
+        cursor_.distance.to = dist;
+
         if (cursor_.isChannelDoubled()) {
-            cursor_.distance.from = -ceil(max_range);;
+            cursor_.distance.from = -dist;
         }
         else {
             cursor_.distance.from = 0;
         }
-        cursor_.distance.to = ceil(max_range);
     }
 }
 float Plot2D::timelinePosition() { return cursor_.position; }
