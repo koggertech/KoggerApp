@@ -204,6 +204,27 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
     auto gMeshWidthPixs = globalMesh_.getPixelWidth(); // for bypass
     auto gMeshHeightPixs = globalMesh_.getPixelHeight();
 
+
+    constexpr int sampleLimiter = 2;
+    auto sampleIndex = [](Epoch::Echogram* echogramPtr, float dist) -> std::optional<int> {
+        if (!echogramPtr) {
+            return std::nullopt;
+        }
+        const float resolution = echogramPtr->resolution;
+        if (resolution < 0.0f || qFuzzyIsNull(resolution)) {
+            return std::nullopt;
+        }
+        float resDist = dist / resolution;
+        if (resDist < 0.f) {
+            return std::nullopt;
+        }
+        int indx = static_cast<int>(std::round(resDist));
+        if (indx >= static_cast<int>(echogramPtr->amplitude.size()) - sampleLimiter) {
+            return std::nullopt;
+        }
+        return indx;
+    };
+
     // processing
     for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
         if (i + 5 > measLinesVertices.size() - 1) {
@@ -318,11 +339,23 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
             float segFPixCurrDist = std::sqrt(std::pow(segFPixX1 - segFPixX2, 2) + std::pow(segFPixY1 - segFPixY2, 2));
             float segFProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
             QVector3D segFCurrPhPos(segFPhBegPnt.x() + segFProgByPix * segFPhDistX, segFPhBegPnt.y() + segFProgByPix * segFPhDistY, segFDistProc);
-            auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFCurrPhPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
             // second segment, calc corresponding progress using smoothed interpolation
             float segSCorrProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
             QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX, segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY, segSDistProc);
-            auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSCurrPhPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
+
+            auto indxF = sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos));
+            auto indxS = sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos));
+            int segFColorIndx = 0;
+            int segSColorIndx = 0;
+
+            bool bothValid = indxF && indxS;
+            if (bothValid) {
+                segFColorIndx = getColorIndx(segFCharts, *indxF);
+                segSColorIndx = getColorIndx(segSCharts, *indxS);
+                if (segFColorIndx == 0 && segSColorIndx == 0) {
+                    bothValid = false;
+                }
+            }
 
             auto segFCurrPixPos = globalMesh_.convertPhToPixCoords(segFCurrPhPos);
             auto segSCurrPixPos = globalMesh_.convertPhToPixCoords(segSCurrPhPos);
@@ -337,7 +370,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
             float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
 
             // interpolate
-            if (checkLength(interpPixTotDist) && !(segSColorIndx == 0 && segSColorIndx == 0)) {
+            if (bothValid && checkLength(interpPixTotDist)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
                     float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
                     int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
@@ -728,7 +761,7 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         retVal = cVal;
     }
     else {
-        return 0;
+        return retVal;
     }
 
     if (!retVal) {
