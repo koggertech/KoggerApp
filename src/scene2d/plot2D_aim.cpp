@@ -71,21 +71,17 @@ bool Plot2DAim::draw(Plot2D* parent, Dataset* dataset)
     QString distanceText = QString(QObject::tr("%1 m")).arg(cursor_distance, 0, 'g', 4);
     QString text = distanceText;
 
-    auto selectedChannelInfo = parent->getSelectedChannelId();
+    auto [channelId, subIndx, name] = parent->getSelectedChannelId();
 
-
-    if (selectedChannelInfo.first != CHANNEL_NONE) {
-
-        //QString name = QString("%1|%2").arg(chId.toShortName(), QString::number(sub));
-
-        text += "\n" + QObject::tr("Channel: ") + QString("%1|%2").arg(selectedChannelInfo.first.toShortName(), QString::number(selectedChannelInfo.second)); //selectedChannelInfo.first.toShortName() + "|" +QString::number(selectedChannelInfo.second, 10, 2);
+    if (channelId != CHANNEL_NONE) {
+        text += "\n" + QObject::tr("Channel: ") + QString("%1").arg(name);
     }
 
     if (cursor.currentEpochIndx != -1) {
         text += "\n" + QObject::tr("Epoch: ")   + QString::number(cursor.currentEpochIndx);
 
         if (auto* ep = dataset->fromIndex(cursor.currentEpochIndx); ep) {
-            if (auto* echogram = ep->chart(selectedChannelInfo.first, selectedChannelInfo.second); echogram) {
+            if (auto* echogram = ep->chart(channelId, subIndx); echogram) {
                 //qDebug() << "errs[" << cursor.currentEpochIndx << "]:"<< echogram->chartParameters_.errList;
                 //qDebug() << "size[" << cursor.currentEpochIndx << "]:"<< echogram->amplitude.size();
                 //qDebug() << "RES[" << cursor.currentEpochIndx << "]:" << echogram->resolution;

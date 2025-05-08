@@ -77,6 +77,7 @@ public:
 #ifdef SEPARATE_READING
     void removeDeviceManagerConnections();
 #endif
+    QHash<QUuid, QString> getLinkNames() const;
 
 public slots:
 #ifdef SEPARATE_READING
@@ -136,6 +137,7 @@ signals:
     void sendIsFileOpening();
     void isMosaicUpdatingInThreadUpdated();
     void isSideScanPerformanceModeUpdated();
+    void channelListUpdated();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);

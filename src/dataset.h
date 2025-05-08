@@ -347,6 +347,7 @@ public:
     double distanceFrom_ = NAN;
     double distanceTo_ = NAN;
     XYZ localPosition_;
+    QString portName_;
 
     DatasetChannel()
     {}
@@ -1184,13 +1185,12 @@ public slots:
     void updateBoatTrack(bool update_all = false);
 
     QStringList channelsNameList();
-    std::pair<ChannelId, uint8_t>  channelIdFromName(const QString& name) const;
+    std::tuple<ChannelId, uint8_t, QString> channelIdFromName(const QString& name) const;
 
 
     void interpolateData(bool fromStart);
 
 signals:
-    void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
     void bottomTrackUpdated(int lEpoch, int rEpoch);
     void boatTrackUpdated();
@@ -1211,33 +1211,7 @@ protected:
 
     QVector<DatasetChannel> channelsSetup_;
 
-    void validateChannelList(const ChannelId& channelId, uint8_t subChannelId)
-    {
-        //qDebug() << "validateChannelList " << channelId.toShortName() << subChannelId;
-
-
-        int16_t indx = -1;
-        const int chVecSize = channelsSetup_.size();
-
-
-        for (int16_t i = 0; i < chVecSize; ++i) {
-            if (channelsSetup_.at(i).channelId_ == channelId &&
-                channelsSetup_.at(i).subChannelId_ == subChannelId) {
-                indx = i;
-                break;
-            }
-        }
-
-        if (indx != -1) {
-            channelsSetup_[indx].counter();
-        }
-        else {
-            channelsSetup_.push_back(DatasetChannel(channelId, subChannelId));
-
-            emit channelsUpdated();
-        }
-
-    }
+    void validateChannelList(const ChannelId& channelId, uint8_t subChannelId);
 
     QVector<QVector3D> _boatTrack;
     QHash<int, int> selectedBoatTrackVertexIndices_; // first - vertice indx, second - epoch indx

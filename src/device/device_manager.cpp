@@ -1,5 +1,5 @@
 #include "device_manager.h"
-
+#include "device_defs.h"
 #include <QDateTime>
 #include "core.h"
 extern Core core;

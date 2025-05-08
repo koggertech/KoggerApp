@@ -47,7 +47,7 @@ public:
     float timelinePosition();
     void scrollPosition(int columns);
 
-    void setDataChannel(const ChannelId& channel, uint8_t subChannel1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0);
+    void setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subChannel1, const QString& portName1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0, const QString& portName2 = QString());
 
     bool getIsContactChanged();
 
@@ -65,7 +65,7 @@ public:
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
 
     float getCursorDistance() const;
-    QPair<ChannelId, uint8_t> getSelectedChannelId(float cursorDistance = 0.0f) const;
+    std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;
 
     float getEchogramLowLevel() const;
     float getEchogramHighLevel() const;

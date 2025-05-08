@@ -6,7 +6,6 @@
 #include <QThread>
 #include <QPair>
 #include <QUuid>
-#include "link.h"
 #include "link_manager.h"
 #include "link_list_model.h"
 
@@ -25,6 +24,7 @@ public:
     LinkListModel* getModelPtr();
     LinkManager* getWorker();
     void closeOpenedLinks();
+    QHash<QUuid, QString> getLinkNames() const;
     void openClosedLinks();
     QVariant baudrateModel() const;
 

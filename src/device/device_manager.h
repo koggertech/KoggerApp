@@ -16,7 +16,6 @@
 #include "motor_control.h"
 #endif
 
-constexpr auto kFileUuidStr = "12345678-1234-1234-1234-1234567890ab";
 
 class DeviceManager : public QObject
 {

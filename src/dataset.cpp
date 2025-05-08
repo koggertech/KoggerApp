@@ -1627,13 +1627,12 @@ QStringList Dataset::channelsNameList()
 
     const QVector<DatasetChannel> chList = channelsList();
 
-    const auto cchList = channelsList();
-
     for (const auto& channel : chList) {
+
         const ChannelId& chId = channel.channelId_;
         uint8_t sub = channel.subChannelId_;
 
-        QString name = QString("%1|%2").arg(chId.toShortName(), QString::number(sub));
+        QString name = QString("%1|%2|%3").arg(channel.portName_, QString::number(channel.channelId_.address), QString::number(sub));
 
         result << name;
 
@@ -1648,6 +1647,41 @@ QStringList Dataset::channelsNameList()
 void Dataset::interpolateData(bool fromStart)
 {
     interpolator_.interpolateData(fromStart);
+}
+
+void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
+{
+    int16_t indx = -1;
+    const int chVecSize = channelsSetup_.size();
+
+    for (int16_t i = 0; i < chVecSize; ++i) {
+        if (channelsSetup_.at(i).channelId_ == channelId &&
+            channelsSetup_.at(i).subChannelId_ == subChannelId) {
+            indx = i;
+            break;
+        }
+    }
+
+    if (indx != -1) {
+        if (channelsSetup_[indx].portName_.isEmpty()) {
+            auto links = core.getLinkNames();
+            if (links.contains(channelId.uuid)) {
+                channelsSetup_[indx].portName_ = links[channelId.uuid];
+            }
+        }
+
+        channelsSetup_[indx].counter();
+    }
+    else {
+        auto newDCh = DatasetChannel(channelId, subChannelId);
+        auto links = core.getLinkNames();
+        if (links.contains(channelId.uuid)) {
+            newDCh.portName_ = links[channelId.uuid];
+        }
+
+        channelsSetup_.push_back(newDCh);
+        emit channelsUpdated();
+    }
 }
 
 Epoch *Dataset::addNewEpoch()
@@ -1692,22 +1726,24 @@ void Dataset::updateEpochWithChart(const ChannelId &channelId, const ChartParame
     epoch.setWasValidlyRenderedInEchogram(false);
 }
 
-std::pair<ChannelId, uint8_t>  Dataset::channelIdFromName(const QString&name) const
+std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QString& name) const
 {
+    auto retVal = std::make_tuple(ChannelId(), 0x00, QString());
+
     if (name.isEmpty() || channelsNames_.isEmpty() ||
         channelsIds_.size() != channelsNames_.size() ||
         subChannelIds_.size() != channelsNames_.size()) {
 
-        return { ChannelId(), 0x00 };
+        return retVal;
     }
 
     int index = channelsNames_.indexOf(name);
 
     if (index >= 0 && index < channelsIds_.size()) {
-        return { channelsIds_[index], subChannelIds_[index] };
+        return std::make_tuple(channelsIds_[index], subChannelIds_[index], channelsNames_[index]);
     }
 
-    return { ChannelId(), 0x00 };
+    return retVal;
 }
 
 Dataset::Interpolator::Interpolator(Dataset *datasetPtr) :

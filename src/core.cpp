@@ -400,16 +400,29 @@ bool Core::openXTF(QByteArray data)
     consoleInfo("XTF sonar name:" + QString(converterXtf_.header.SonarName));
 
     const QVector<DatasetChannel> channelList = datasetPtr_->channelsList();
+    if (channelList.size() < 2) {
+        return false;
+    }
+
+    auto linkNames = getLinkNames();
+    QString fChName;
+    QString sChName;
+    if (linkNames.contains(channelList.at(0).channelId_.uuid)) {
+        fChName = channelList.at(0).portName_;
+    }
+    if (linkNames.contains(channelList.at(1).channelId_.uuid)) {
+        sChName = channelList.at(0).portName_;
+    }
 
     if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
-        plot2dList_.at(0)->setDataChannel(channelList[0].channelId_, channelList[0].subChannelId_, channelList[1].channelId_, channelList[1].subChannelId_); // TODO what ta
+        plot2dList_.at(0)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName); // TODO what ta
     }
 
     // TODO check
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL && i < channelList.size()) {
             if (i == 0) {
-                plot2dList_.at(i)->setDataChannel(channelList[0].channelId_, channelList[0].subChannelId_, channelList[1].channelId_, channelList[1].subChannelId_);
+                plot2dList_.at(i)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
             }
         }
     }
@@ -1067,8 +1080,11 @@ void Core::setSideScanChannels(const QString& firstChStr, const QString& secondC
 {
     if (scene3dViewPtr_ && scene3dViewPtr_->getSideScanViewPtr() && datasetPtr_) {
 
-        auto [ch1, sub1] = datasetPtr_->channelIdFromName(firstChStr);
-        auto [ch2, sub2] = datasetPtr_->channelIdFromName(secondChStr);
+        auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);
+        auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(secondChStr);
+
+        Q_UNUSED(name1)
+        Q_UNUSED(name2)
 
         scene3dViewPtr_->getSideScanViewPtr()->setChannels(ch1, sub1, ch2, sub2);
     }
@@ -1134,16 +1150,32 @@ void Core::onChannelsUpdated()
 {
     auto chs = datasetPtr_->channelsList();
 
+    QString fChName;
+    QString sChName;
+
+    auto linkNames = getLinkNames();
+
+    if (linkNames.contains(chs[0].channelId_.uuid)) {
+        fChName = chs[0].portName_;
+    }
+    if (linkNames.contains(chs[1].channelId_.uuid)) {
+        sChName = chs[1].portName_;
+    }
+
+    if (fChName.isEmpty() &&sChName.isEmpty()) {return;};
+
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (i == 0 && plot2dList_.at(i)) {
             if (chs.size() >= 2) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channelId_, chs[0].subChannelId_, chs[1].channelId_, chs[1].subChannelId_); // TODO what?!
+                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName); // TODO what?!
             }
             if (chs.size() == 1) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channelId_, chs[0].subChannelId_);
+                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
             }
         }
     }
+
+    emit channelListUpdated();
 }
 
 #if defined(FAKE_COORDS)
@@ -1292,6 +1324,22 @@ void Core::removeLinkManagerConnections()
     for (auto& itm : linkManagerWrapperConnections_)
         disconnect(itm);
     linkManagerWrapperConnections_.clear();
+}
+
+QHash<QUuid, QString> Core::getLinkNames() const
+{
+    QHash<QUuid, QString> retVal;
+
+    if (isFileOpening_) {
+        retVal[deviceManagerWrapperPtr_->getFileUuid()] = QObject::tr("File");
+    }
+
+    const auto linkNames = linkManagerWrapperPtr_->getLinkNames();
+    for (auto it = linkNames.constBegin(); it != linkNames.constEnd(); ++it) {
+        retVal.insert(it.key(), it.value());
+    }
+
+    return retVal;
 }
 
 bool Core::isOpenedFile() const

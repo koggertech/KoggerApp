@@ -18,7 +18,7 @@ Plot2D::Plot2D()
     grid_.setVisible(true);
     aim_.setVisible(true);
     quadrature_.setVisible(false);
-    setDataChannel(CHANNEL_NONE, 0);
+    setDataChannel(false, CHANNEL_NONE, 0, {});
     cursor_.attitude.from = -180;
     cursor_.attitude.to = 180;
     cursor_.distance.set(0, 20);
@@ -36,12 +36,12 @@ float Plot2D::getCursorDistance() const
     return valueScale * valueRange + cursor_.distance.from;
 }
 
-QPair <ChannelId, uint8_t> Plot2D::getSelectedChannelId(float cursorDistance) const
+std::tuple<ChannelId, uint8_t, QString> Plot2D::getSelectedChannelId(float cursorDistance) const
 {
     const float dist = qFuzzyIsNull(cursorDistance) ? getCursorDistance() : cursorDistance;
     const bool useChannel1 = qFuzzyIsNull(dist) || dist < 0.0f || cursor_.channel2 == CHANNEL_NONE;
 
-    return useChannel1 ? qMakePair(cursor_.channel1, cursor_.subChannel1) : qMakePair(cursor_.channel2, cursor_.subChannel2);
+    return useChannel1 ? std::make_tuple(cursor_.channel1, cursor_.subChannel1, cursor_.firstChannelPortName) : std::make_tuple(cursor_.channel2, cursor_.subChannel2, cursor_.secondChannelPortName);
 }
 
 void Plot2D::setDataset(Dataset *dataset)
@@ -148,12 +148,14 @@ void Plot2D::scrollPosition(int columns)
     setTimelinePosition(new_position);
 }
 
-void Plot2D::setDataChannel(const ChannelId& channel, uint8_t subChannel1, const ChannelId& channel2, uint8_t subChannel2)
+void Plot2D::setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subChannel1, const QString& portName1, const ChannelId& channel2, uint8_t subChannel2, const QString& portName2)
 {
     cursor_.channel1 = channel;
     cursor_.subChannel1 = subChannel1;
+    cursor_.firstChannelPortName = fromGui ? portName1 : QString("%1|%2|%3").arg(portName1, QString::number(channel.address), QString::number(subChannel1));
     cursor_.channel2 = channel2;
     cursor_.subChannel2 = subChannel2;
+    cursor_.secondChannelPortName = fromGui ? portName2 : QString("%1|%2|%3").arg(portName2, QString::number(channel2.address), QString::number(subChannel2));
 
     float from = NAN, to = NAN;
 
@@ -519,8 +521,6 @@ void Plot2D::setMousePosition(int x, int y) {
                 float image_y_pos = ((float)y_start + (float)x_ind*y_scale);
                 float dist = abs(image_y_pos*image_distance_ratio + distance_from);
 
-                //getSelectedChannelId();
-
                 if(cursor_.tool() == MouseToolDistanceMin) {
                     epoch->setMinDistProc(channel1, dist);
                     epoch->setMinDistProc(channel2, dist);
@@ -797,7 +797,6 @@ void Plot2D::reRangeDistance()
             Epoch* epoch = datasetPtr_->fromIndex(cursor_.getIndex(i));
             if(epoch != NULL) {
                 float epoch_range = epoch->getMaxRange(cursor_.channel1);
-                qDebug() << max_range;
                 if(!isfinite(max_range) || max_range < epoch_range) {
                     max_range = epoch_range;
                 }
@@ -812,7 +811,7 @@ void Plot2D::reRangeDistance()
         else {
             cursor_.distance.from = 0;
         }
-        cursor_.distance.to = max_range; // ceil(max_range)
+        cursor_.distance.to = ceil(max_range);
     }
 }
 float Plot2D::timelinePosition() { return cursor_.position; }

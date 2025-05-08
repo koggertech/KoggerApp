@@ -31,8 +31,10 @@ typedef struct DatasetCursor {
     int lastEpochIndx = -1;
     ChannelId channel1;
     uint8_t subChannel1 = 0;
+    QString firstChannelPortName;
     ChannelId channel2;
     uint8_t subChannel2 = 0;
+    QString secondChannelPortName;
     int numZeroEpoch = 0;
 
     bool isChannelDoubled() {

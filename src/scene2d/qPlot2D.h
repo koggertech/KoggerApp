@@ -73,20 +73,10 @@ public slots:
            return;
         }
 
-        //qDebug() << "plotDatasetChannelFromStrings" << ch1Str << ch2Str;
+        auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(ch1Str);
+        auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(ch2Str);
 
-        auto [ch1, sub1] = datasetPtr_->channelIdFromName(ch1Str);
-        auto [ch2, sub2] = datasetPtr_->channelIdFromName(ch2Str);
-
-        //qDebug() << "   " << ch1.toShortName() << sub1;
-        //qDebug() << "   " << ch2.toShortName() << sub2;
-
-        plotDatasetChannel(ch1, sub1, ch2, sub2);
-    }
-
-    void plotDatasetChannel(const ChannelId& channel, uint8_t sub1, const ChannelId& channel2, uint8_t sub2)
-    {
-        setDataChannel(channel, sub1, channel2, sub2);
+        setDataChannel(true, ch1, sub1, name1, ch2, sub2, name2);
     }
 
     ChannelId plotDatasetChannel() { return cursor_.channel1; }
