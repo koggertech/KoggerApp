@@ -1,4 +1,5 @@
 #include "device_manager_wrapper.h"
+#include "device_defs.h"
 
 
 DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
@@ -71,6 +72,11 @@ DeviceManagerWrapper::~DeviceManagerWrapper()
 DeviceManager* DeviceManagerWrapper::getWorker()
 {
     return workerObject_.get();
+}
+
+QUuid DeviceManagerWrapper::getFileUuid() const
+{
+    return QUuid(kFileUuidStr);
 }
 
 void DeviceManagerWrapper::calcAverageChartLosses()

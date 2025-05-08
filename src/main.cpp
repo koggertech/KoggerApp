@@ -13,8 +13,8 @@
 #include <QByteArray>
 #include <QQuickWindow>
 
-#include "waterfall.h"
-#include "plotcash.h"
+#include "qPlot2D.h"
+#include "dataset.h"
 #include "console.h"
 #include "core.h"
 #include "themes.h"

@@ -1,7 +1,7 @@
 #include "scene3d_view.h"
 #include "scene3d_renderer.h"
 #include <surface.h>
-#include <plotcash.h>
+#include <dataset.h>
 
 #include <cmath>
 #include <memory.h>
@@ -650,15 +650,15 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     }
 
                                     // bottom track
-                                    int firstChannelId = CHANNEL_NONE;
-                                    int secondChannelId = CHANNEL_FIRST;
+                                    ChannelId firstChannelId = CHANNEL_NONE;
+                                    ChannelId secondChannelId = CHANNEL_NONE;
                                     if (m_dataset) {
-                                        if (auto chList = m_dataset->channelsList(); !chList.empty()) {
-                                            auto it = chList.begin();
-                                            firstChannelId = it.key();
+                                        if (auto chVector = m_dataset->channelsList(); !chVector.empty()) {
+                                            auto it = chVector.begin();
+                                            firstChannelId = it->channelId_;
 
-                                            if (++it != chList.end()) {
-                                                secondChannelId = it.key();
+                                            if (++it != chVector.end()) {
+                                                secondChannelId = it->channelId_;
                                             }
                                         }
                                     }

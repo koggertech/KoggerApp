@@ -47,6 +47,7 @@ public:
 #endif
 
     DeviceManager* getWorker();
+    QUuid getFileUuid() const;
 
     /*QML*/
     QList<DevQProperty*> getDevList        ()           { return getWorker()->getDevList();        }

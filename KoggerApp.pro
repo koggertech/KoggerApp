@@ -56,20 +56,16 @@ SOURCES += \
     src/console.cpp \
     src/console_list_model.cpp \
     src/core.cpp \
+    src/dataset.cpp \
     src/flasher.cpp \
     src/hotkeys_manager.cpp \
     src/id_binnary.cpp \
     src/logger.cpp \
     src/main.cpp \
     src/map_defs.cpp \
-    src/plot2D.cpp \
-    src/plot2D_echogram.cpp \
-    src/plot2D_grid.cpp \
-    src/plotcash.cpp \
     src/proto_binnary.cpp \
     src/stream_list.cpp \
-    src/stream_list_model.cpp \
-    src/waterfall.cpp
+    src/stream_list_model.cpp
 
 
 FLASHER {
@@ -146,6 +142,8 @@ HEADERS += \
     src/console_list_model.h \
     src/converter_xtf.h \
     src/core.h \
+    src/dataset.h \
+    src/dataset_defs.h \
     src/dsp_defs.h \
     src/flasher.h \
     src/hotkeys_manager.h \
@@ -153,13 +151,10 @@ HEADERS += \
     src/logger.h \
     src/map_defs.h \
     src/mav_link_conf.h \
-    src/plot2D.h \
-    src/plotcash.h \
     src/proto_binnary.h \
     src/stream_list.h \
     src/stream_list_model.h \
     src/themes.h \
-    src/waterfall.h \
     src/xtf_conf.h
 
 android {
@@ -259,12 +254,11 @@ INCLUDEPATH += $$PWD/third_party/freetype/include
 INCLUDEPATH += $$PWD/src
 DEPENDPATH += $$PWD/third_party/freetype/include
 
-
+include($$PWD/src/scene2d/scene2d.pri)
 include($$PWD/src/scene3d/scene3d.pri)
 include($$PWD/src/device/device.pri)
 include($$PWD/src/link/link.pri)
 include($$PWD/src/tile_engine/tile_engine.pri)
-
 
 android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/platform/android

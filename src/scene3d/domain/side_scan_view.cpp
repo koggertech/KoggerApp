@@ -12,8 +12,8 @@ SideScanView::SideScanView(QObject* parent) :
     datasetPtr_(nullptr),
     tileResolution_(0.1), // 0.1 метр - 1 пиксель
     currIndxSec_(0),
-    segFChannelId_(-1),
-    segSChannelId_(-1),
+    segFSubChannelId_(0),
+    segSSubChannelId_(0),
     tileSidePixelSize_(256),
     tileHeightMatrixRatio_(16),
     lastCalcEpoch_(0),
@@ -45,16 +45,25 @@ bool SideScanView::updateChannelsIds()
 {
     bool retVal = false;
 
-    segFChannelId_ = -1;
-    segSChannelId_ = -1;
+    segFChannelId_ = ChannelId();
+    segFSubChannelId_ = 0;
+    segSChannelId_ = ChannelId();
+    segSSubChannelId_ = 0;
 
     if (datasetPtr_) {
-        if (auto chList = datasetPtr_->channelsList(); !chList.empty()) {
-            auto it = chList.begin();
-            segFChannelId_ = it.key();
+        if (auto chVector = datasetPtr_->channelsList(); !chVector.empty()) {
+            auto it = chVector.begin();
 
-            if (++it != chList.end()) {
-                segSChannelId_ = it.key();
+            //auto& fVal = it. value();
+
+            segFChannelId_ = it->channelId_;
+            segFSubChannelId_ = it->subChannelId_;
+
+            if (++it != chVector.end()) {
+                //auto& sVal = it.value();
+
+                segSChannelId_ = it->channelId_;
+                segSSubChannelId_ = it->subChannelId_;
             }
 
             retVal = true;
@@ -100,8 +109,8 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
         return;
     }
 
-    bool segFIsValid = checkChannel(segFChannelId_);
-    bool segSIsValid = checkChannel(segSChannelId_);
+    bool segFIsValid = segFChannelId_.isValid();
+    bool segSIsValid = segSChannelId_.isValid();
 
     if (!segFIsValid && !segSIsValid) {
         if (cleanFunc) cleanFunc();
@@ -134,7 +143,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
                 double azRad = qDegreesToRadians(yaw);
 
                 if (segFIsValid) {
-                    if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
+                    if (auto segFCharts = epoch->chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                         double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                         float lDist = segFCharts->range();
 
@@ -149,7 +158,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
                 }
 
                 if (segSIsValid) {
-                    if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
+                    if (auto segSCharts = epoch->chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                         double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                         float rDist = segSCharts ->range();
 
@@ -256,8 +265,8 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
             continue;
         }
         // segments checking
-        auto segFCharts = segFEpoch.chart(segFIsOdd ? segSChannelId_ : segFChannelId_);
-        auto segSCharts = segSEpoch.chart(segSIsOdd ? segSChannelId_ : segFChannelId_);
+        auto segFCharts = segFEpoch.chart(segFIsOdd ? segSChannelId_ : segFChannelId_, segFIsOdd ? segSSubChannelId_ : segFSubChannelId_);
+        auto segSCharts = segSEpoch.chart(segSIsOdd ? segSChannelId_ : segFChannelId_, segSIsOdd ? segSSubChannelId_ : segFSubChannelId_);
         if (!segFCharts || !segSCharts) {
             continue;
         }
@@ -471,6 +480,8 @@ void SideScanView::clear(bool force)
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
     currIndxSec_ = 0;
+    segFSubChannelId_ = 0;
+    segSSubChannelId_ = 0;
     lastMatParams_ = MatrixParams();
     if (force) {
         manualSettedChannels_ = false;
@@ -625,10 +636,12 @@ void SideScanView::setRAngleOffset(float val)
     rAngleOffset_ = val;
 }
 
-void SideScanView::setChannels(int firstChId, int secondChId)
+void SideScanView::setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId)
 {
     segFChannelId_ = firstChId;
+    segFSubChannelId_ = firstSubChId;
     segSChannelId_ = secondChId;
+    segSSubChannelId_ = secondSubChId;
     manualSettedChannels_ = true;
 }
 
@@ -896,16 +909,6 @@ void SideScanView::updateUnmarkedHeightVertices(Tile* tilePtr) const
                 continue;
             }
         }
-    }
-}
-
-bool SideScanView::checkChannel(int val) const
-{
-    if (val == CHANNEL_NONE || val == CHANNEL_FIRST) {
-        return false;
-    }
-    else {
-        return true;
     }
 }
 

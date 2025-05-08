@@ -40,6 +40,30 @@ void LinkListModel::clear()
     endResetModel();
 }
 
+QHash<QUuid, QString> LinkListModel::getLinkNames() const
+{
+    QHash<QUuid, QString> retVal;
+
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        int line = it.value();
+
+        if (vectors_[LinkListModel::ConnectionStatus][line].toBool()) {
+            auto linkType = vectors_[LinkListModel::LinkType][line].toUInt();
+
+            if (linkType == 1) { // uart
+                retVal[it.key()] = vectors_[LinkListModel::PortName][line].toString();
+            }
+            if (linkType == 2 || linkType == 3) {
+                QString type = (linkType == 2) ? "UDP" : "TCP";
+                QString address = vectors_[LinkListModel::Address][line].toString();
+                retVal[it.key()] = type + "(" + address + ")";
+            }
+        }
+    }
+
+    return retVal;
+}
+
 QList<QPair<QUuid, LinkType>> LinkListModel::getOpenedUuids() const
 {
     QList<QPair<QUuid, ::LinkType>> retVal;

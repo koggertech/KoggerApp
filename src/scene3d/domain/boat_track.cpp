@@ -76,18 +76,13 @@ void BoatTrack::selectEpoch(int epochIndex)
             r->boatTrackVertice_ = QVector3D(ned.n, ned.e, 0.0f);
 
             // channel select logic from bottomTrack
-            DatasetChannel visibleChannel;
             bool beenBottomSelected{ false };
 
             if (datasetPtr_) {
-                if (auto channelMap = datasetPtr_->channelsList(); !channelMap.isEmpty()) {
-                    if (visibleChannel.channel < channelMap.first().channel ||
-                        visibleChannel.channel > channelMap.last().channel) {
-                        visibleChannel = channelMap.first();
-                        if (float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel.channel)); isfinite(distance)) {
-                            r->bottomTrackVertice_ = QVector3D(ned.n, ned.e, distance);
-                            beenBottomSelected = true;
-                        }
+                if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
+                    if (float distance = -1.f * static_cast<float>(epoch->distProccesing(datasetChannels.first().channelId_)); isfinite(distance)) {
+                        r->bottomTrackVertice_ = QVector3D(ned.n, ned.e, distance);
+                        beenBottomSelected = true;
                     }
                 }
             }
@@ -131,15 +126,11 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                             auto epNed = epoch->getPositionGNSS().ned;
                             QVector3D pos(epNed.n, epNed.e, 0.0f);
                             RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
-                            DatasetChannel visibleChannel;
-                            if (auto channelMap = datasetPtr_->channelsList(); !channelMap.isEmpty()) {
-                                if (visibleChannel.channel < channelMap.first().channel ||
-                                    visibleChannel.channel > channelMap.last().channel) {
-                                    visibleChannel = channelMap.first();
-                                }
+
+                            if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
+                                auto epochEvent = new EpochEvent(EpochSelected3d, epoch, epochIndx, datasetChannels.first());
+                                QCoreApplication::postEvent(this, epochEvent);
                             }
-                            auto epochEvent = new EpochEvent(EpochSelected3d, epoch, epochIndx, visibleChannel);
-                            QCoreApplication::postEvent(this, epochEvent);
                         }
                     }
                 }

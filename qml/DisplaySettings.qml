@@ -29,22 +29,26 @@ GridLayout {
             RowLayout {
                 id:rowDataset
                 visible: instruments > 1
-                CCombo  {
-                    id: datasetCombo
-                    Layout.fillWidth: true
-//                    Layout.preferredWidth: columnItem.width/3
-                    visible: true
-                    onPressedChanged: {
-                    }
+                //CCombo  {
+                //    id: datasetCombo
+                //    Layout.fillWidth: true
+                //      Layout.preferredWidth: columnItem.width/3
+                //    visible: true
+                //    onPressedChanged: {
+                //    }
 
-                    Component.onCompleted: {
-                        model = [qsTr("Dataset #1")]
-                    }
+                //    Component.onCompleted: {
+                //        model = [qsTr("Dataset #1")]
+                //    }
+                //}
+
+                CText {
+                    text: qsTr("Channels:")
                 }
 
                 CCombo  {
                     id: channel1Combo
-//                    Layout.fillWidth: true
+                    Layout.fillWidth: true
                     currentIndex: 1
                     Layout.preferredWidth: rowDataset.width/3
                     visible: true
@@ -56,21 +60,17 @@ GridLayout {
 
                     Component.onCompleted: {
                         model = dataset.channelsNameList()
-                        channel1Combo.currentIndex = 1
                     }
 
                     onCurrentTextChanged: {
-                        var ch1 = channel1Combo.currentText !== qsTr("None") ? channel1Combo.currentText !== qsTr("First") ? channel1Combo.currentText : 32767 : 32768
-                        var ch2 = channel2Combo.currentText !== qsTr("None") ? channel2Combo.currentText !== qsTr("First") ? channel2Combo.currentText : 32767 : 32768
-
-                        targetPlot.plotDatasetChannel(ch1, ch2)
-                        core.setSideScanChannels(ch1, ch2);
+                        targetPlot.plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
+                        core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
                     }
                 }
 
                 CCombo  {
                     id: channel2Combo
-//                    Layout.fillWidth: true
+                    Layout.fillWidth: true
                     currentIndex: 0
                     Layout.preferredWidth: rowDataset.width/3
                     visible: true
@@ -85,11 +85,8 @@ GridLayout {
                     }
 
                     onCurrentTextChanged: {
-                        var ch1 = channel1Combo.currentText !== qsTr("None") ? channel1Combo.currentText !== qsTr("First") ? channel1Combo.currentText : 32767 : 32768
-                        var ch2 = channel2Combo.currentText !== qsTr("None") ? channel2Combo.currentText !== qsTr("First") ? channel2Combo.currentText : 32767 : 32768
-
-                        targetPlot.plotDatasetChannel(ch1, ch2)
-                        core.setSideScanChannels(ch1, ch2);
+                        targetPlot.plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
+                        core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
                     }
                 }
             }

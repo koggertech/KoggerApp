@@ -2,7 +2,7 @@
 #define EPOCHEVENT_H
 
 #include <QEvent>
-#include <plotcash.h>
+#include <dataset.h>
 
 static const QEvent::Type EpochSelected3d = static_cast<QEvent::Type>(QEvent::User + 1);
 static const QEvent::Type EpochSelected2d = static_cast<QEvent::Type>(QEvent::User + 2);
@@ -16,7 +16,7 @@ public:
     EpochEvent(QEvent::Type eventType,
                Epoch* epoch,
                int epochIndex,
-               const DatasetChannel channel);
+               const DatasetChannel& channelId);
 
     Epoch* epoch() const;
     int epochIndex() const;

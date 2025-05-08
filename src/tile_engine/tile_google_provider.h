@@ -9,7 +9,7 @@ namespace map {
 
 constexpr double GOOGLE_TILE_CONSTANT = 126543000.03392;
 const int GOOGLE_PROVIDER_ID = 1;
-const int googleSat = 988;
+const int googleSat = 997;
 const QString secGoogleWord = QStringLiteral("Galileo");
 const QString language = QStringLiteral("en-US");
 const QString server = QStringLiteral("khm");

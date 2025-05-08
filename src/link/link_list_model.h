@@ -39,6 +39,7 @@ public:
     void clear();
 
     QList<QPair<QUuid, ::LinkType>> getOpenedUuids() const;
+    QHash<QUuid, QString> getLinkNames() const;
 
 private:
     Q_DISABLE_COPY(LinkListModel)

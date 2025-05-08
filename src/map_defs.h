@@ -12,7 +12,7 @@
 #include <QtMath>
 #include <functional>
 
-#include "plotcash.h"
+#include "dataset.h"
 
 
 namespace map {

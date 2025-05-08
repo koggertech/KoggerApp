@@ -7,7 +7,7 @@
 #include <QQueue>
 #include <QReadWriteLock>
 #include "scene_object.h"
-#include "plotcash.h"
+#include "dataset.h"
 #include "global_mesh.h"
 #include "tile.h"
 #include "draw_utils.h"
@@ -76,7 +76,7 @@ public:
     void setWorkMode(Mode mode);
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
-    void setChannels(int firstChId, int secondChId);
+    void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
     GLuint                              getTextureIdByTileId(QUuid tileId);
     bool                                getUseLinearFilter() const;
     bool                                getTrackLastEpoch() const;
@@ -98,7 +98,6 @@ private:
     void postUpdate();
     void updateTilesTexture();
     void updateUnmarkedHeightVertices(Tile* tilePtr) const;
-    bool checkChannel(int val) const;
 
     /*data*/
     static constexpr float amplitudeCoeff_ = 100.0f;
@@ -112,8 +111,10 @@ private:
     Dataset* datasetPtr_;
     float tileResolution_;
     uint64_t currIndxSec_;
-    int segFChannelId_;
-    int segSChannelId_;
+    ChannelId segFChannelId_;
+    uint8_t segFSubChannelId_;
+    ChannelId segSChannelId_;
+    uint8_t segSSubChannelId_;
     int tileSidePixelSize_;
     int tileHeightMatrixRatio_;
     int lastCalcEpoch_;

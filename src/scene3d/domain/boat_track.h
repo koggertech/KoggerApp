@@ -1,7 +1,7 @@
 #pragma once
 
 #include "scene_object.h"
-#include "plotcash.h"
+#include "dataset.h"
 
 
 class GraphicsScene3dView;

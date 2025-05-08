@@ -35,7 +35,7 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
         auto epochEvent = static_cast<EpochEvent*>(event);
         resetVertexSelection();
         m_view->m_mode = GraphicsScene3dView::ActiveMode::BottomTrackVertexSelectionMode;
-        selectEpoch(epochEvent->epochIndex(),epochEvent->channel().channel);
+        selectEpoch(epochEvent->epochIndex(), epochEvent->channel().channelId_);
         m_view->update();
     }
     return false;
@@ -46,15 +46,15 @@ bool BottomTrack::eventFilter(QObject *watched, QEvent *event)
 //    return m_epochList;
 //}
 
-QMap<int, DatasetChannel> BottomTrack::channels() const
-{
-    return datasetPtr_->channelsList();
-}
+//QMap<ChannelId, DatasetChannel> BottomTrack::channels() const
+//{
+//    return datasetPtr_->channelsList();
+//}
 
-DatasetChannel BottomTrack::visibleChannel() const
-{
-    return visibleChannel_;
-}
+//DatasetChannel BottomTrack::visibleChannel() const
+//{
+//    return visibleChannel_;
+//}
 
 void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
     datasetPtr_ = datasetPtr;
@@ -77,10 +77,10 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                     const auto channels = datasetPtr_->channelsList();
                     for (const auto& channel : channels) {
                         if (!isMin) {
-                            epoch->setMaxDistProc(channel.channel, epoch->distProccesing(channel.channel) * coeff);
+                            epoch->setMaxDistProc(channel.channelId_, epoch->distProccesing(channel.channelId_) * coeff);
                         }
                         else {
-                            epoch->setMinDistProc(channel.channel, epoch->distProccesing(channel.channel) * coeff);
+                            epoch->setMinDistProc(channel.channelId_, epoch->distProccesing(channel.channelId_) * coeff);
                         }
                     }
                 }
@@ -88,12 +88,16 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
 
             sequenceVector.shrink_to_fit();
             const auto subArraysVec{ getSubarrays(sequenceVector) };
+            const auto channels = datasetPtr_->channelsList();
 
             for (auto& itm : subArraysVec) {
-                if (auto btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
+                if (auto* btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
                     btp->indexFrom = itm.first;
                     btp->indexTo = itm.second;
-                    datasetPtr_->bottomTrackProcessing(0, 1); // TODO: 0, 1
+
+                    for (auto it = channels.begin(); it != channels.end(); ++it) {
+                        datasetPtr_->bottomTrackProcessing(it->channelId_, ChannelId()); // TODO check
+                    }
                 }
                 else {
                     break;
@@ -117,7 +121,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             for (const auto& verticeIndex : indices) {
                 const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
-                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    epoch->clearDistProcessing(visibleChannel_.channelId_);
                     Q_EMIT epochErased(epochIndex);
                     isSomethingDeleted = true;
                 }
@@ -147,14 +151,13 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
 void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
 {
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
-        auto channelMap = datasetPtr_->channelsList();
-        if (!channelMap.isEmpty()) {
-            if (visibleChannel_.channel < channelMap.first().channel ||
-                visibleChannel_.channel > channelMap.last().channel)
-                visibleChannel_ = channelMap.first();
+        auto datasetChannels = datasetPtr_->channelsList();
+        if (!datasetChannels.isEmpty()) {
+            visibleChannel_ = datasetChannels.first();
         }
-        else
+        else {
             visibleChannel_ = DatasetChannel();
+        }
 
         updateRenderData(lEpoch, rEpoch);
         Q_EMIT epochListChanged();
@@ -193,31 +196,32 @@ void BottomTrack::resetVertexSelection()
     RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
 }
 
-void BottomTrack::setVisibleChannel(int channelId)
-{
-    if (!datasetPtr_->channelsList().contains(channelId))
-        return;
+//void BottomTrack::setVisibleChannel(const ChannelId& channelId)
+//{
+//    if (!datasetPtr_->channelsList().contains(channelId))
+//        return;
+//
+//    visibleChannel_ = datasetPtr_->channelsList().value(channelId);
+//
+//    updateRenderData();
+//
+//    //Q_EMIT visibleChannelChanged(channelId);
+//    //Q_EMIT visibleChannelChanged(visibleChannel_);
+//    Q_EMIT changed();
+//}
+//
+//void BottomTrack::setVisibleChannel(const DatasetChannel &channel)
+//{
+//    visibleChannel_ = channel;
+//}
 
-    visibleChannel_ = datasetPtr_->channelsList().value(channelId);
-
-    updateRenderData();
-
-    Q_EMIT visibleChannelChanged(channelId);
-    Q_EMIT visibleChannelChanged(visibleChannel_);
-    Q_EMIT changed();
-}
-
-void BottomTrack::setVisibleChannel(const DatasetChannel &channel)
-{
-    visibleChannel_ = channel;
-}
-
-void BottomTrack::selectEpoch(int epochIndex, int channelId)
+void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
 {
     if (m_view->m_mode != GraphicsScene3dView::BottomTrackVertexSelectionMode)
         return;
 
-    if (!datasetPtr_->channelsList().contains(channelId) || channelId != visibleChannel_.channel)
+
+    if (!datasetPtr_->isContainsChannelInChannelSetup(channelId) || channelId != visibleChannel_.channelId_)
         return;
 
     if (epochIndex < 0 || epochIndex >= datasetPtr_->size())
@@ -343,7 +347,7 @@ void BottomTrack::mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
 void BottomTrack::keyPressEvent(Qt::Key key)
 {
-    if (!m_view || visibleChannel_.channel < 0)
+    if (!m_view || !visibleChannel_.channelId_.isValid())
         return;
 
     if (m_view->m_mode == GraphicsScene3dView::BottomTrackVertexSelectionMode && key == Qt::Key_Delete) {
@@ -352,7 +356,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         for (const auto& verticeIndex : indices) {
             const auto epochIndx{ epochIndexMatchingMap_.value(verticeIndex) };
             if (auto epoch{ datasetPtr_->fromIndex(epochIndx) }) {
-                epoch->clearDistProcessing(visibleChannel_.channel);
+                epoch->clearDistProcessing(visibleChannel_.channelId_);
                 Q_EMIT epochErased(epochIndx);
                 isSomethingDeleted = true;
             }
@@ -371,7 +375,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
             for (const auto& verticeIndex : indices) {
                 const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
-                    epoch->clearDistProcessing(visibleChannel_.channel);
+                    epoch->clearDistProcessing(visibleChannel_.channelId_);
                     Q_EMIT epochErased(epochIndex);
                     isSomethingDeleted = true;
                 }
@@ -405,20 +409,24 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
         beenUpdated = true;
     };
 
-    if (visibleChannel_.channel > -1) {
+    if (visibleChannel_.channelId_.isValid()) {
         int currMin = defMode ? 0 : lEpoch;
         int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
-        if (defMode)
+
+        if (defMode) {
             renderData_.reserve(currMax);
+        }
+
         for (int i = currMin; i < currMax; ++i) {
             auto epoch = datasetPtr_->fromIndex(i);
-            if (!epoch)
+            if (!epoch) {
                 continue;
+            }
 
             auto pos = epoch->getPositionGNSS();
 
             if (pos.ned.isCoordinatesValid()) {
-                float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channel));
+                float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
                 if (defMode) {
                     appendData(pos, distance, i);
                 }
@@ -442,7 +450,7 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
                             if (auto cEpoch = datasetPtr_->fromIndex(k); cEpoch) {
                                 auto cPos = cEpoch->getPositionGNSS();
                                 if (cPos.ned.isCoordinatesValid()) {
-                                    float cDistance = -1.f * static_cast<float>(cEpoch->distProccesing(visibleChannel_.channel));
+                                    float cDistance = -1.f * static_cast<float>(cEpoch->distProccesing(visibleChannel_.channelId_));
                                     appendData(cPos, cDistance, k);
                                 }
                             }

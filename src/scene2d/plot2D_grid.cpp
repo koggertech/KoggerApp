@@ -1,13 +1,15 @@
+#include "plot2D_grid.h"
 #include "plot2D.h"
-#include <QObject>
 
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
 
-
-bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
+bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 {
+    auto &canvas = parent->canvas();
+    auto &cursor = parent->cursor();
+
     if (!isVisible())
         return false;
 

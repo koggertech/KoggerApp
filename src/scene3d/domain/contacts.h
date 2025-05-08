@@ -5,7 +5,7 @@
 #include <QEvent>
 #include <QQmlContext>
 #include <QQmlApplicationEngine>
-#include "plotcash.h"
+#include "dataset.h"
 
 
 class Contacts : public SceneObject

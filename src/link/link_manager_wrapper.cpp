@@ -72,6 +72,11 @@ void LinkManagerWrapper::closeOpenedLinks()
     }
 }
 
+QHash<QUuid, QString> LinkManagerWrapper::getLinkNames() const
+{
+    return model_.getLinkNames();
+}
+
 void LinkManagerWrapper::openClosedLinks()
 {
     emit sendOpenFLinks();

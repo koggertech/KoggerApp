@@ -34,6 +34,8 @@ public:
     QList<QTimer*> getChildTimers();
 #endif
 
+    ChannelId getChannelId() const;
+
     int distMax();
     void setDistMax(int dist);
 
@@ -179,16 +181,16 @@ signals:
     void upgradingFirmwareDoneDM();
 
     //
-    void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
-    void sendTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
-    void sendSoundSpeed(int16_t channel, uint32_t soundSpeed);
+    void sendChartSetup(const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
+    void sendTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
+    void sendSoundSpeed(const ChannelId& channelId, uint32_t soundSpeed);
 
-    void chartComplete(ChartParameters chartsParams, QVector<uint8_t> data, float resolution, float offset);
+    void chartComplete(const ChannelId& channelId, const ChartParameters& chartsParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
 
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
-    void distComplete(int dist);
+    void distComplete(const ChannelId& channelId, int dist);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void beaconActivationComplete(uint8_t id);
@@ -354,7 +356,7 @@ protected:
         }
     } m_state;
 
-    uint8_t _lastAddres = 0;
+    uint8_t lastAddress_ = 0;
 
     QTimer m_processTimer;
 
