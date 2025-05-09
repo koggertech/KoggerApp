@@ -19,6 +19,7 @@
 #include "navigation_arrow.h"
 #include "usbl_view.h"
 #include "tile_manager.h"
+#include "isobaths.h"
 
 
 class Dataset;
@@ -51,8 +52,7 @@ public:
             cameraListener_ = cameraListener;
         };
 
-        //TODO! Process this method later
-        //void rotate(qreal yaw, qreal pitch);
+        //void rotate(qreal yaw, qreal pitch); //TODO! Process this method later
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
         void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
@@ -137,6 +137,7 @@ public:
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
+        void processIsobathTexture(GraphicsScene3dView* viewPtr) const;
         QString checkOpenGLError() const;
 
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
@@ -180,6 +181,7 @@ public:
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
     std::shared_ptr<NavigationArrow> getNavigationArrowPtr() const;
+    std::shared_ptr<Isobaths> getIsobathsPtr() const;
     std::weak_ptr <Camera> camera() const;
     float verticalScale() const;
     bool sceneBoundingBoxVisible() const;
@@ -222,6 +224,7 @@ public Q_SLOTS:
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
+    void updateIsobaths();
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -256,8 +259,8 @@ private:
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> navigationArrow_;
     std::shared_ptr<UsblView> usblView_;
-
     std::shared_ptr<map::TileManager> tileManager_;
+    std::shared_ptr<Isobaths> isobaths_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

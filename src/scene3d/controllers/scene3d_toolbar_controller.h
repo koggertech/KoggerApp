@@ -19,7 +19,11 @@ public:
 protected:
     virtual void findComponent() override;
 private:
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
+    void tryInitPendingLambda();
+
+    GraphicsScene3dView* graphicsSceneViewPtr_;
+    std::function<void()> pendingLambda_;
+    bool isVertexEditingMode_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

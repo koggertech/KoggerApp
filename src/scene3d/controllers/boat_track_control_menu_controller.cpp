@@ -1,12 +1,14 @@
 #include "boat_track_control_menu_controller.h"
 
-#include <memory>
 #include "scene3d_view.h"
 #include "boat_track.h"
 
 
 BoatTrackControlMenuController::BoatTrackControlMenuController(QObject* parent)
-    : QmlComponentController(parent)
+    : QmlComponentController(parent),
+      graphicsSceneViewPtr_(nullptr),
+      pendingLambda_(nullptr),
+      visibility_(false)
 {
 
 }
@@ -18,28 +20,48 @@ BoatTrackControlMenuController::~BoatTrackControlMenuController()
 
 void BoatTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if (!m_graphicsSceneView) {
-        return;
-    }
+    visibility_ = checked;
 
-    auto boatTrack = m_graphicsSceneView->boatTrack();
-    QMetaObject::invokeMethod(reinterpret_cast<QObject*>(boatTrack.get()), "setVisible", Q_ARG(bool, checked));
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->boatTrack()->setVisible(checked);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void BoatTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
-    m_graphicsSceneView = sceneView;
+    graphicsSceneViewPtr_ = sceneView;
 
-    if (!m_graphicsSceneView)
-        return;    
+    if (graphicsSceneViewPtr_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
+    }
 }
 
 BoatTrack *BoatTrackControlMenuController::boatTrack() const
 {
-    if (!m_graphicsSceneView)
-        return nullptr;
+    if (graphicsSceneViewPtr_) {
+        return graphicsSceneViewPtr_->boatTrack().get();
+    }
 
-    return m_graphicsSceneView->boatTrack().get();
+    return nullptr;
+}
+
+void BoatTrackControlMenuController::tryInitPendingLambda()
+{
+    if (!pendingLambda_) {
+        pendingLambda_ = [this] () -> void {
+            if (graphicsSceneViewPtr_) {
+                if (auto bTPtr = graphicsSceneViewPtr_->boatTrack(); bTPtr) {
+                    bTPtr->setVisible(visibility_);
+                }
+            }
+        };
+    }
 }
 
 void BoatTrackControlMenuController::findComponent()

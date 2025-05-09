@@ -22,11 +22,14 @@ protected:
 
 private:
     BoatTrack* boatTrack() const;
+    void tryInitPendingLambda();
 
 private Q_SLOTS:
 
 Q_SIGNALS:
 
 private:
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
+    GraphicsScene3dView* graphicsSceneViewPtr_;
+    std::function<void()> pendingLambda_;
+    bool visibility_;
 };

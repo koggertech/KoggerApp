@@ -12,5 +12,7 @@
         <file>../shaders/text.vsh</file>
         <file>../shaders/text_back.fsh</file>
         <file>../shaders/text_back.vsh</file>
+        <file>../shaders/isobaths_colored.fsh</file>
+        <file>../shaders/isobaths_colored.vsh</file>
     </qresource>
 </RCC>

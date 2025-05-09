@@ -54,6 +54,8 @@ public:
     SurfaceProcessorTask processingTask() const;
     void setLlaRef(LLARef llaRef);
     void saveVerticesToFile(const QString& path);
+    const QVector<QVector3D>& getRawData() const;
+    int getPrimitiveType() const;
 
 private:
     void updateContour();
@@ -69,6 +71,7 @@ private:
     std::shared_ptr <SurfaceGrid> m_grid;
     SurfaceProcessorTask m_processingTask;
     LLARef llaRef_;
+    int primitiveType_;
 };
 
 #endif // SURFACE_H
