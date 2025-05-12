@@ -329,6 +329,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 if (file.open(QIODevice::ReadOnly)) {
                     openXTF(file.readAll());
                 }
+
+                onFileStopsOpening();
+
                 return;
             }
         }
@@ -1192,6 +1195,12 @@ QString Core::getChannel2Name() const
     return sChName_;
 }
 
+void Core::onFileStopsOpening()
+{
+    isFileOpening_ = false;
+    emit sendIsFileOpening();
+}
+
 #if defined(FAKE_COORDS)
 void Core::setPosZeroing(bool state)
 {
@@ -1290,10 +1299,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection);
-    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this, [this]() {
-                                                                                                              isFileOpening_ = false;
-                                                                                                              emit sendIsFileOpening();
-                                                                                                          }, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this,        &Core::onFileStopsOpening, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendProtoFrame, &logger_, &Logger::receiveProtoFrame, deviceManagerConnection);    
     QObject::connect(&logger_, &Logger::loggingKlfStarted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLoggingKlfStarted, deviceManagerConnection);
 

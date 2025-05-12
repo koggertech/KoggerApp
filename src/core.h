@@ -154,6 +154,9 @@ private slots:
     bool reconnectForFlash();
 #endif
 
+private slots:
+    void onFileStopsOpening();
+
 private:
     /*methods*/
     ConsoleListModel* consoleList();
