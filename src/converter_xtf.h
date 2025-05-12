@@ -4,6 +4,9 @@
 #include "xtf_conf.h"
 #include "dataset.h"
 #include <vector>
+#include <QUuid>
+#include "device_defs.h"
+
 
 class ConverterXTF {
 public:
@@ -229,6 +232,9 @@ public:
                     dataset->addPosition(lat, lon);
                 }
 
+
+                QUuid uuid = QUuid(kFileUuidStr);
+
                 for(uint16_t chi = 0; chi < ch_count; chi++) {
                     XTFPINGCHANHEADER* pingch = (XTFPINGCHANHEADER*)(cdata);
 
@@ -273,9 +279,11 @@ public:
                         }
                     }
 
+                    auto chId = ChannelId(uuid, pingch->ChannelNumber);
+
                     //ChartParameters chartParams(pingch->ChannelNumber, 0, {}, {}, {}, {});
                     ChartParameters chartParams(BoardVersion::BoardNone, Version::v0, {});
-                    dataset->addChart(ChannelId(), chartParams, data, range/sample_count, 0); // TODO
+                    dataset->addChart(chId, chartParams, data, range/sample_count, 0); // TODO
                 }
 
             } else  if(pingheader->HeaderType == 3) {

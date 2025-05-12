@@ -93,7 +93,7 @@ public slots:
     bool closeLogFile();
 #endif
     void onFileOpened();
-    bool openXTF(QByteArray data);    
+    bool openXTF(const QByteArray& data);
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
     bool openProxy(const QString& address, const int port, bool isTcp);
     bool closeProxy();

@@ -330,6 +330,8 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                     openXTF(file.readAll());
                 }
 
+                openedfilePath_ = localfilePath;
+
                 onFileStopsOpening();
 
                 return;
@@ -342,9 +344,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         openedfilePath_ = localfilePath;
 
-        if (scene3dViewPtr_)
+        if (scene3dViewPtr_) {
             scene3dViewPtr_->fitAllInView();
-
+        }
         datasetPtr_->setRefPositionByFirstValid();
         datasetPtr_->usblProcessing();
 
@@ -392,9 +394,8 @@ void Core::onFileOpened()
 }
 #endif
 
-bool Core::openXTF(QByteArray data)
+bool Core::openXTF(const QByteArray& data)
 {
-    datasetPtr_->resetDataset();
     datasetPtr_->setState(Dataset::DatasetState::kFile);
     converterXtf_.toDataset(data, getDatasetPtr());
 
