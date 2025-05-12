@@ -1153,15 +1153,20 @@ bool Core::getIsSeparateReading() const
 void Core::onChannelsUpdated()
 {
     auto chs = datasetPtr_->channelsList();
+    int chSize = chs.size();
+
+    if (!chSize) {
+        return;
+    }
 
     QString fChName;
     QString sChName;
 
     auto linkNames = getLinkNames();
-    if (linkNames.contains(chs[0].channelId_.uuid)) {
+    if (chSize > 0 && linkNames.contains(chs[0].channelId_.uuid)) {
         fChName = chs[0].portName_;
     }
-    if (linkNames.contains(chs[1].channelId_.uuid)) {
+    if (chSize > 1 && linkNames.contains(chs[1].channelId_.uuid)) {
         sChName = chs[1].portName_;
     }
 
@@ -1171,12 +1176,12 @@ void Core::onChannelsUpdated()
 
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (i == 0 && plot2dList_.at(i)) {
-            if (chs.size() >= 2) {
+            if (chSize >= 2) {
                 plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName); // TODO what?!
                 fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
                 sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
             }
-            if (chs.size() == 1) {
+            if (chSize == 1) {
                 plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
                 fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
             }
