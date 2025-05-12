@@ -55,6 +55,8 @@ public:
     Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
     Q_PROPERTY(bool isSideScanPerformanceMode READ getIsSideScanPerformanceMode NOTIFY isSideScanPerformanceModeUpdated)
     Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
+    Q_PROPERTY(QString ch1Name READ getChannel1Name NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(QString ch2Name READ getChannel2Name NOTIFY channelListUpdated FINAL)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -131,6 +133,9 @@ public slots:
     Q_INVOKABLE void setPosZeroing(bool state);
 #endif
 
+    Q_INVOKABLE QString getChannel1Name() const;
+    Q_INVOKABLE QString getChannel2Name() const;
+
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
@@ -200,6 +205,9 @@ private:
     bool isLoggingKlf_;
     bool isLoggingCsv_;
     QString filePath_;
+    QString fChName_;
+    QString sChName_;
+
 #ifdef FLASHER
     Flasher flasher;
     QByteArray boot_data;
