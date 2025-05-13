@@ -609,7 +609,6 @@ void LinkManager::updateControlType(QUuid uuid, ControlType controlType)
 
 void LinkManager::frameInput(Link *link, FrameParser frame)
 {
-    // TODO
     Q_UNUSED(link);
     Q_UNUSED(frame);
 }

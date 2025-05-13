@@ -419,10 +419,9 @@ bool Core::openXTF(const QByteArray& data)
     }
 
     if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
-        plot2dList_.at(0)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName); // TODO what ta
+        plot2dList_.at(0)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
     }
 
-    // TODO check
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL && i < channelList.size()) {
             if (i == 0) {
@@ -849,7 +848,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             epoch->distAvail() ? row_data.append(QString("%1,").arg((float)epoch->rangeFinder())) : row_data.append("0,");
 
         if (bottom_depth) {
-            prev_dist_proc = epoch->distProccesing(channelId); // TODO check
+            prev_dist_proc = epoch->distProccesing(channelId);
             row_data.append(QString("%1,").arg((float)(prev_dist_proc)));
         }
 
@@ -910,7 +909,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
             row_data.append(",");
         }
 
-        Epoch::Echogram* sensor = epoch->chart(channelId); // TODO check
+        Epoch::Echogram* sensor = epoch->chart(channelId);
 
         if (sonar_height) {
             if (sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
@@ -1181,7 +1180,7 @@ void Core::onChannelsUpdated()
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (i == 0 && plot2dList_.at(i)) {
             if (chSize >= 2) {
-                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName); // TODO what?!
+                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
                 fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
                 sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
             }

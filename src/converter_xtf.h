@@ -232,7 +232,6 @@ public:
                     dataset->addPosition(lat, lon);
                 }
 
-
                 QUuid uuid = QUuid(kFileUuidStr);
 
                 for(uint16_t chi = 0; chi < ch_count; chi++) {
@@ -279,11 +278,8 @@ public:
                         }
                     }
 
-                    auto chId = ChannelId(uuid, pingch->ChannelNumber);
-
-                    //ChartParameters chartParams(pingch->ChannelNumber, 0, {}, {}, {}, {});
                     ChartParameters chartParams(BoardVersion::BoardNone, Version::v0, {});
-                    dataset->addChart(chId, chartParams, data, range/sample_count, 0); // TODO
+                    dataset->addChart(ChannelId(uuid, pingch->ChannelNumber), chartParams, data, range/sample_count, 0);
                 }
 
             } else  if(pingheader->HeaderType == 3) {

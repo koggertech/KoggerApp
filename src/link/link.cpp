@@ -289,20 +289,16 @@ void Link::setLinkType(LinkType linkType)
 void Link::setAddress(const QString &address)
 {
     address_ = address;
-    //hostAddress_.setAddress(address_);
-    // TODO: rebind?
 }
 
 void Link::setSourcePort(int sourcePort)
 {
     sourcePort_ = sourcePort;
-    // TODO: rebind?
 }
 
 void Link::setDestinationPort(int destinationPort)
 {
     destinationPort_ = destinationPort;
-    // TODO: rebind?
 }
 
 void Link::setIsPinned(bool state)
