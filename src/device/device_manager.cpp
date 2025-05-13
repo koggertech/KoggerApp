@@ -351,7 +351,14 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 if (mavlink_frame.msgId() == 30) {
                     MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
-                    emit attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+
+                    const float yaw = attitude.yawDeg();
+                    const float pitch = attitude.pitchDeg();
+                    const float roll = attitude.rollDeg();
+
+                    if (!qFuzzyIsNull(yaw) || !qFuzzyIsNull(pitch) || !qFuzzyIsNull(roll)) {
+                        emit attitudeComplete(yaw, attitude.pitchDeg(), attitude.rollDeg());
+                    }
                 }
 
                 core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));

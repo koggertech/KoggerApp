@@ -276,7 +276,16 @@ class IDBinAttitude : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinAttitude() : IDBin() {
+    explicit IDBinAttitude()
+        : IDBin(),
+        m_yaw(0.0f),
+        m_pitch(0.0f),
+        m_roll(0.0f),
+        m_w0(0.0f),
+        m_w1(0.0f),
+        m_w2(0.0f),
+        m_w3(0.0f)
+    {
     }
 
     ID id() override { return ID_ATTITUDE; }

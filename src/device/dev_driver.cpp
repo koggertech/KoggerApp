@@ -1091,8 +1091,14 @@ void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
-//    qInfo("Euler: yaw %f, pitch %f, roll %f", idAtt->yaw(), idAtt->pitch(), idAtt->roll());
-    emit attitudeComplete(idAtt->yaw(), idAtt->pitch(), idAtt->roll());
+
+    const float yaw = idAtt->yaw();
+    const float pitch = idAtt->pitch();
+    const float roll = idAtt->roll();
+
+    if (!qFuzzyIsNull(yaw) || !qFuzzyIsNull(pitch) || !qFuzzyIsNull(roll)) {
+        emit attitudeComplete(yaw, idAtt->pitch(), idAtt->roll());
+    }
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
