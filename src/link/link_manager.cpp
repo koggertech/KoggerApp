@@ -417,29 +417,6 @@ void LinkManager::openAsSerial(QUuid uuid, int attribute)
     }
 }
 
-// #ifdef MOTOR
-// void LinkManager::openAsSerial(QUuid uuid, int attribute = 0)
-// {
-//     TimerController(timer_.get());
-
-//     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
-//         linkPtr->setIsMotorDevice(isMotorDevice);
-//         linkPtr->setIsForceStopped(false);
-//         linkPtr->openAsSerial();
-//     }
-// }
-// #else
-// void LinkManager::openAsSerial(QUuid uuid)
-// {
-//     TimerController(timer_.get());
-
-//     if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
-//         linkPtr->setIsForceStopped(false);
-//         linkPtr->openAsSerial();
-//     }
-// }
-// #endif
-
 void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
 {
     TimerController(timer_.get());

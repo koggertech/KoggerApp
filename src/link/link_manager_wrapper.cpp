@@ -96,18 +96,6 @@ void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
     emit sendOpenAsSerial(uuid, attribute);
 }
 
-// #ifdef MOTOR
-// void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
-// {
-//     emit sendOpenAsSerial(uuid, isMotorDevice);
-// }
-// #else
-// void LinkManagerWrapper::openAsSerial(QUuid uuid)
-// {
-//     emit sendOpenAsSerial(uuid);
-// }
-// #endif
-
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
     emit sendCreateAsUdp(address, sourcePort, destinationPort);

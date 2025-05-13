@@ -12,10 +12,6 @@
 #include "proto_binnary.h"
 #include "id_binnary.h"
 
-#ifdef MOTOR
-#include "motor_control.h"
-#endif
-
 
 class DeviceManager : public QObject
 {
@@ -31,13 +27,8 @@ public:
     Q_INVOKABLE float vruVelocityH();
     Q_INVOKABLE int pilotArmState();
     Q_INVOKABLE int pilotModeState();
-
     QList<DevQProperty*> getDevList();
     QList<DevQProperty*> getDevList(BoardVersion ver);
-
-#ifdef MOTOR
-    bool isMotorControlCreated() const;
-#endif
     int calcAverageChartLosses();
 
 public slots:
@@ -65,16 +56,6 @@ public slots:
 
     void onLoggingKlfStarted();
     void onSendRequestAll(QUuid uuid);
-
-#ifdef MOTOR
-    float getFAngle();
-    float getSAngle();
-    void returnToZero(int id);
-    void runSteps(int id, int speed, int angle);
-    void openCsvFile(QString path);
-    void clearTasks();
-    void calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
-#endif
 
 signals:
     //
@@ -120,12 +101,6 @@ signals:
     void onFileReadEnough();
 #endif
     void fileOpened();
-
-#ifdef MOTOR
-    void motorDeviceChanged();
-    void anglesHasChanged();
-    void posIsConstant(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle);
-#endif
 
 private:
     /*methods*/
@@ -184,12 +159,6 @@ private:
     QUuid upgradeUuid_;
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
-
-#ifdef MOTOR
-    std::unique_ptr<MotorControl> motorControl_;
-    float fAngle_ = 0.0f;
-    float sAngle_ = 0.0f;
-#endif
 
 private slots:
     void readyReadProxy(Link* link);

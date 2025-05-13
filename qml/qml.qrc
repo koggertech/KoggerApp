@@ -91,7 +91,6 @@
         <file>MenuFrame.qml</file>
         <file>CheckButton.qml</file>
         <file>MouseOpacityArea.qml</file>
-        <file>MotorViewer.qml</file>
         <file>USBLBox.qml</file>
         <file>DeviceItem.qml</file>
         <file>CPopup.qml</file>

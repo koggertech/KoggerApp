@@ -5,7 +5,6 @@ QT += qml
 QT += sql
 
 #CONFIG += FLASHER
-#CONFIG += MOTOR # motor_control definition
 #CONFIG += SEPARATE_READING # data reception in a separate thread
 #CONFIG += FAKE_COORDS
 
@@ -271,11 +270,4 @@ ANDROID_ABIS = armeabi-v7a arm64-v8a
 android {
     OPENSSL_PATH = $$ANDROID_SDK_ROOT/android_openssl/openssl.pri
     include($$OPENSSL_PATH)
-}
-
-MOTOR {
-DEFINES += MOTOR
-HEADERS += src/motor_control.h
-SOURCES += src/motor_control.cpp
-DISTFILES += qml/MotorViewer.qml
 }

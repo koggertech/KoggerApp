@@ -42,8 +42,6 @@ public:
     ~Core();
 
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
-    Q_PROPERTY(bool isSupportedMotorControlMode READ isMotorControlMode CONSTANT)
-
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
@@ -165,7 +163,6 @@ private:
     void createLinkManagerConnections();
     bool isOpenedFile() const;
     bool isFactoryMode() const;
-    bool isMotorControlMode() const;
 
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
