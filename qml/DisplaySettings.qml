@@ -79,7 +79,7 @@ GridLayout {
 
                     Connections {
                         target: core
-                        onChannelListUpdated: {
+                        function onChannelListUpdated() {
                             let list = dataset.channelsNameList()
 
                             channel1Combo.suppressTextSignal = true
@@ -129,7 +129,7 @@ GridLayout {
 
                     Connections {
                         target: core
-                        onChannelListUpdated: {
+                        function onChannelListUpdated() {
                             let list = dataset.channelsNameList()
 
                             channel2Combo.suppressTextSignal = true

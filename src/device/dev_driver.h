@@ -254,8 +254,8 @@ public slots:
     void enableBeaconOnce(float timeout);
 
 #ifdef SEPARATE_READING
-    void initProcessTimerConnects();
-    void initChildsTimersConnects();
+    Q_INVOKABLE void initProcessTimerConnects();
+    Q_INVOKABLE void initChildsTimersConnects();
 #endif
 
     void doRequestAll();
