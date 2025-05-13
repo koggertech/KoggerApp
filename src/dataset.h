@@ -37,9 +37,30 @@ class BlackStripesProcessor;
 typedef struct NED NED;
 typedef struct LLARef LLARef;
 
+enum PositionSource {
+    PositionSourceNone,
+    PositionSourceGNSS,
+    PositionSourceRTK,
+    PositionSourcePPK,
+    PositionSourceInterpolation,
+    PositionSourceExtrapolation,
+    PositionSourceNED,
+    PositionSourceLLA,
+};
+
+enum AltitudeSource {
+    AltitudeSourceNone,
+    AltitudeSourceRTK,
+    AltitudeSourcePPK
+};
+
 typedef struct LLA {
     double latitude = NAN, longitude = NAN;
     double altitude = NAN;
+
+    PositionSource source = PositionSourceNone;
+    AltitudeSource altSource = AltitudeSourceNone;
+
     LLA() {};
     LLA(double lat, double lon, double alt= NAN) {
         latitude = lat;
@@ -127,6 +148,8 @@ typedef struct  LLARef {
 
 typedef struct NED {
     double n = NAN, e = NAN, d = NAN;
+    PositionSource source = PositionSourceNone;
+
     NED() {}
     NED(double _n, double _e, double _d) : n(_n), e(_e), d(_d) { };
     NED(LLA* lla, LLARef* ref, bool spherical = true) {
@@ -1143,6 +1166,7 @@ public slots:
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void addPositionRTK(Position position);
 
     void addGnssVelocity(double h_speed, double course);
 

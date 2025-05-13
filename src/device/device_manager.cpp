@@ -196,7 +196,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 Q_UNUSED(isCorrect);
 
                 char c = prot_nmea.readChar();
-                if (c == 'A') {
+                if (c == 'A' || c == 'D') {
                     double lat = prot_nmea.readLatitude();
                     double lon = prot_nmea.readLongitude();
 
@@ -209,6 +209,41 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                     uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                }
+            }
+
+            if (prot_nmea.isEqualId("GGA")) {
+                uint8_t h = 0, m = 0, s = 0;
+                uint16_t ms = 0;
+
+                bool isCorrect =  prot_nmea.readTime(&h, &m, &s, &ms);
+                Q_UNUSED(isCorrect);
+
+                double lat = prot_nmea.readLatitude();
+                double lon = prot_nmea.readLongitude();
+
+                char q = prot_nmea.readChar();
+
+                prot_nmea.skip(); // sv
+                prot_nmea.skip(); // HDOP
+
+                float height_msl = prot_nmea.readDouble(); // Orthometric height (MSL reference)
+
+                if (q == '1' || q == '2' || q == '4' || q == '5') {
+                    uint16_t year = 1971;
+                    uint8_t mounth = 1, day = 1;
+
+                    Position pos;
+                    pos.lla.latitude = lat;
+                    pos.lla.longitude = lon;
+                    pos.lla.altitude = height_msl;
+                    pos.lla.source = PositionSourceRTK;
+                    pos.lla.altSource = AltitudeSourceRTK;
+                    pos.time = DateTime(year, mounth, day, h, m, s, int64_t(ms)*1000*1000);
+
+                    if(q == '4') {
+                        emit positionCompleteRTK(pos);
+                    }
                 }
             }
         }

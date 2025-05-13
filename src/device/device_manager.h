@@ -11,6 +11,7 @@
 #include "dev_q_property.h"
 #include "proto_binnary.h"
 #include "id_binnary.h"
+#include "dataset.h"
 
 
 class DeviceManager : public QObject
@@ -86,6 +87,7 @@ signals:
     void eventComplete(int timestamp, int id, int unixt);
     void rangefinderComplete(const ChannelId& channelId, float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
+    void positionCompleteRTK(Position position);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
     void encoderComplete(float e1, float e2, float e3);

@@ -1063,6 +1063,11 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     updateBoatTrack();
 }
 
+void Dataset::addPositionRTK(Position position) {
+    Epoch* last_epoch = last();
+    last_epoch->setExternalPosition(position);
+}
+
 void Dataset::addGnssVelocity(double h_speed, double course) {
     int pool_index = endIndex();
     if(pool_index < 0) {
