@@ -79,12 +79,7 @@ public:
     bool        getAutoSpeedSelection() const;
     bool        getIsUpgradingState() const;
     bool        getAutoConnOnce() const;
-
-// #ifdef MOTOR
-    void        setAttribute(int attribute) { attribute_ = attribute; }
-    bool        getIsMotorDevice() { return attribute_ == static_cast<int>(LinkAttribute::kLinkAttributeMotor); }
-// #endif
-
+    void        setAttribute(int attribute) { attribute_ = attribute; } // for link type (sonar, motor, etc.)
 
 public slots:
     bool writeFrame(Parsers::FrameParser frame);
@@ -102,12 +97,7 @@ signals:
     void isReceivesDataChanged(QUuid uuid);
     void sendDoRequestAll(QUuid uuid);
     void upgradingFirmwareStateChanged(QUuid uuid);
-
-#ifdef MOTOR
-    void dataReady(QByteArray data);
-#else
     void dataReady();
-#endif
 
 private slots:
     void onCheckedTimerEnd();
@@ -140,17 +130,11 @@ private:
     bool isProxy_;
     bool isForcedStopped_;
     int attribute_;
-
-// #ifdef MOTOR
-//     bool isMotorDevice_ = false;
-// #endif
-
     bool autoSpeedSelection_;
     std::unique_ptr<QTimer> checkTimer_;
     int timeoutCnt_;
     uint32_t lastTotalCnt_;
     bool isReceivesData_;
-//    int searchIndx_; ?
     QList<uint32_t> baudrateSearchList_;
     int lastSearchIndx_;
     bool onUpgradingFirmware_;

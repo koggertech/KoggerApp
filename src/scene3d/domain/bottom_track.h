@@ -2,7 +2,7 @@
 
 #include <memory>
 #include "scene_object.h"
-#include "plotcash.h"
+#include "dataset.h"
 
 
 class GraphicsScene3dView;
@@ -10,7 +10,7 @@ class Surface;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
-    Q_PROPERTY(DatasetChannel visibleChannel READ visibleChannel WRITE setVisibleChannel NOTIFY visibleChannelChanged FINAL)
+    //Q_PROPERTY(DatasetChannel visibleChannel READ visibleChannel WRITE setVisibleChannel NOTIFY visibleChannelChanged FINAL)
     QML_NAMED_ELEMENT(BottomTrack)
 
 public:
@@ -50,8 +50,8 @@ public:
     virtual SceneObjectType type() const override;
     virtual bool eventFilter(QObject *watched, QEvent *event) override final;
     //QList<Epoch*> epochs() const;
-    QMap<int,DatasetChannel> channels() const;
-    DatasetChannel visibleChannel() const;
+    //QMap<ChannelId, DatasetChannel> channels() const;
+    //DatasetChannel visibleChannel() const;
     void setDatasetPtr(Dataset* datasetPtr);
     void actionEvent(ActionEvent actionEvent);
 
@@ -60,9 +60,9 @@ public Q_SLOTS:
     virtual void clearData() override;
     void isEpochsChanged(int lEpoch, int rEpoch);
     void resetVertexSelection();
-    void setVisibleChannel(int channelIndex);
-    void setVisibleChannel(const DatasetChannel& channel);
-    void selectEpoch(int epochIndex, int channelId);
+    //void setVisibleChannel(const ChannelId& channelIndex);
+    //void setVisibleChannel(const DatasetChannel& channel);
+    void selectEpoch(int epochIndex, const ChannelId& channelId);
     void surfaceUpdated();
     void sideScanUpdated();
     void surfaceStateChanged(bool state);
@@ -74,8 +74,8 @@ Q_SIGNALS:
     void epochErased(int epochIndex);
     void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
-    void visibleChannelChanged(int channelId);
-    void visibleChannelChanged(DatasetChannel channel);
+    //void visibleChannelChanged(const ChannelId& channelId);
+    //void visibleChannelChanged(DatasetChannel channel);
 
 protected:
     friend class GraphicsScene3dView;

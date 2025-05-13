@@ -9,7 +9,7 @@
 #ifdef FLASHER
 #include "flasher.h"
 #endif
-#include "waterfall.h"
+#include "qPlot2D.h"
 #include "logger.h"
 #include "console.h"
 #include "converter_xtf.h"
@@ -42,8 +42,6 @@ public:
     ~Core();
 
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
-    Q_PROPERTY(bool isSupportedMotorControlMode READ isMotorControlMode CONSTANT)
-
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
@@ -55,6 +53,8 @@ public:
     Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
     Q_PROPERTY(bool isSideScanPerformanceMode READ getIsSideScanPerformanceMode NOTIFY isSideScanPerformanceModeUpdated)
     Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
+    Q_PROPERTY(QString ch1Name READ getChannel1Name NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(QString ch2Name READ getChannel2Name NOTIFY channelListUpdated FINAL)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -77,6 +77,7 @@ public:
 #ifdef SEPARATE_READING
     void removeDeviceManagerConnections();
 #endif
+    QHash<QUuid, QString> getLinkNames() const;
 
 public slots:
 #ifdef SEPARATE_READING
@@ -90,7 +91,7 @@ public slots:
     bool closeLogFile();
 #endif
     void onFileOpened();
-    bool openXTF(QByteArray data);    
+    bool openXTF(const QByteArray& data);
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
     bool openProxy(const QString& address, const int port, bool isTcp);
     bool closeProxy();
@@ -105,14 +106,14 @@ public slots:
     bool getIsCsvLogging();
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
-    bool exportPlotAsCVS(QString filePath, int channel, float decimation = 0);
+    bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
     bool exportPlotAsXTF(QString filePath);
     void setPlotStartLevel(int level);
     void setPlotStopLevel(int level);
     void setTimelinePosition(double position);
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
-    void setSideScanChannels(int firstChId, int secondChId);
+    void setSideScanChannels(const QString& firstChStr, const QString& secondChStr);
 #ifdef FLASHER
     bool simpleFlash(const QString &name);
     bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
@@ -130,12 +131,16 @@ public slots:
     Q_INVOKABLE void setPosZeroing(bool state);
 #endif
 
+    Q_INVOKABLE QString getChannel1Name() const;
+    Q_INVOKABLE QString getChannel2Name() const;
+
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
     void sendIsFileOpening();
     void isMosaicUpdatingInThreadUpdated();
     void isSideScanPerformanceModeUpdated();
+    void channelListUpdated();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -147,6 +152,9 @@ private slots:
     bool reconnectForFlash();
 #endif
 
+private slots:
+    void onFileStopsOpening();
+
 private:
     /*methods*/
     ConsoleListModel* consoleList();
@@ -155,7 +163,6 @@ private:
     void createLinkManagerConnections();
     bool isOpenedFile() const;
     bool isFactoryMode() const;
-    bool isMotorControlMode() const;
 
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
@@ -198,6 +205,9 @@ private:
     bool isLoggingKlf_;
     bool isLoggingCsv_;
     QString filePath_;
+    QString fChName_;
+    QString sChName_;
+
 #ifdef FLASHER
     Flasher flasher;
     QByteArray boot_data;

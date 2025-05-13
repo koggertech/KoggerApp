@@ -72,6 +72,11 @@ void LinkManagerWrapper::closeOpenedLinks()
     }
 }
 
+QHash<QUuid, QString> LinkManagerWrapper::getLinkNames() const
+{
+    return model_.getLinkNames();
+}
+
 void LinkManagerWrapper::openClosedLinks()
 {
     emit sendOpenFLinks();
@@ -90,18 +95,6 @@ void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
 {
     emit sendOpenAsSerial(uuid, attribute);
 }
-
-// #ifdef MOTOR
-// void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
-// {
-//     emit sendOpenAsSerial(uuid, isMotorDevice);
-// }
-// #else
-// void LinkManagerWrapper::openAsSerial(QUuid uuid)
-// {
-//     emit sendOpenAsSerial(uuid);
-// }
-// #endif
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {

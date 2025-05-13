@@ -27,69 +27,127 @@ GridLayout {
             groupName: qsTr("Plot")
 
             RowLayout {
-                id:rowDataset
+                id: rowDataset
                 visible: instruments > 1
-                CCombo  {
-                    id: datasetCombo
-                    Layout.fillWidth: true
-//                    Layout.preferredWidth: columnItem.width/3
-                    visible: true
-                    onPressedChanged: {
-                    }
+                //CCombo  {
+                //    id: datasetCombo
+                //    Layout.fillWidth: true
+                //      Layout.preferredWidth: columnItem.width/3
+                //    visible: true
+                //    onPressedChanged: {
+                //    }
 
-                    Component.onCompleted: {
-                        model = [qsTr("Dataset #1")]
-                    }
+                //    Component.onCompleted: {
+                //        model = [qsTr("Dataset #1")]
+                //    }
+                //}
+
+                CText {
+                    text: qsTr("Channels:")
+                }
+
+                function setChannelNamesToBackend() {
+                    targetPlot.plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
+                    core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
                 }
 
                 CCombo  {
                     id: channel1Combo
-//                    Layout.fillWidth: true
-                    currentIndex: 1
-                    Layout.preferredWidth: rowDataset.width/3
+
+                    property bool suppressTextSignal: false
+
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: rowDataset.width / 3
                     visible: true
-                    onPressedChanged: {
-                        if(pressed) {
-                            model = dataset.channelsNameList()
+
+                    onCurrentTextChanged: {
+                        if (suppressTextSignal) {
+                            return
                         }
+
+                        rowDataset.setChannelNamesToBackend()
                     }
 
                     Component.onCompleted: {
                         model = dataset.channelsNameList()
-                        channel1Combo.currentIndex = 1
+
+                        let index = model.indexOf(core.ch1Name)
+                        if (index >= 0) {
+                            channel1Combo.currentIndex = index
+                        }
                     }
 
-                    onCurrentTextChanged: {
-                        var ch1 = channel1Combo.currentText !== qsTr("None") ? channel1Combo.currentText !== qsTr("First") ? channel1Combo.currentText : 32767 : 32768
-                        var ch2 = channel2Combo.currentText !== qsTr("None") ? channel2Combo.currentText !== qsTr("First") ? channel2Combo.currentText : 32767 : 32768
+                    Connections {
+                        target: core
+                        function onChannelListUpdated() {
+                            let list = dataset.channelsNameList()
 
-                        targetPlot.plotDatasetChannel(ch1, ch2)
-                        core.setSideScanChannels(ch1, ch2);
+                            channel1Combo.suppressTextSignal = true
+
+                            channel1Combo.model = []
+                            channel1Combo.model = list
+
+                            let newIndex = list.indexOf(core.ch1Name)
+                            if (newIndex >= 0) {
+                                channel1Combo.currentIndex = newIndex
+                            }
+                            else {
+                                channel1Combo.currentIndex = 0
+                            }
+
+                            channel1Combo.suppressTextSignal = false
+                        }
                     }
                 }
 
                 CCombo  {
                     id: channel2Combo
-//                    Layout.fillWidth: true
-                    currentIndex: 0
-                    Layout.preferredWidth: rowDataset.width/3
+
+                    property bool suppressTextSignal: false
+
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: rowDataset.width / 3
                     visible: true
-                    onPressedChanged: {
-                        if(pressed) {
-                            model = dataset.channelsNameList()
+
+                    onCurrentTextChanged: {
+                        if (suppressTextSignal) {
+                            return
                         }
+
+                        rowDataset.setChannelNamesToBackend()
                     }
+
 
                     Component.onCompleted: {
                         model = dataset.channelsNameList()
+
+                        let index = model.indexOf(core.ch2Name)
+                        if (index >= 0) {
+                            channel2Combo.currentIndex = index
+                        }
                     }
 
-                    onCurrentTextChanged: {
-                        var ch1 = channel1Combo.currentText !== qsTr("None") ? channel1Combo.currentText !== qsTr("First") ? channel1Combo.currentText : 32767 : 32768
-                        var ch2 = channel2Combo.currentText !== qsTr("None") ? channel2Combo.currentText !== qsTr("First") ? channel2Combo.currentText : 32767 : 32768
+                    Connections {
+                        target: core
+                        function onChannelListUpdated() {
+                            let list = dataset.channelsNameList()
 
-                        targetPlot.plotDatasetChannel(ch1, ch2)
-                        core.setSideScanChannels(ch1, ch2);
+                            channel2Combo.suppressTextSignal = true
+
+                            channel2Combo.model = []
+                            channel2Combo.model = list
+
+                            let newIndex = list.indexOf(core.ch2Name)
+
+                            if (newIndex >= 0) {
+                                channel2Combo.currentIndex = newIndex
+                            }
+                            else {
+                                channel2Combo.currentIndex = 0
+                            }
+
+                            channel2Combo.suppressTextSignal = false
+                        }
                     }
                 }
             }

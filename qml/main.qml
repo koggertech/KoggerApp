@@ -160,7 +160,8 @@ ApplicationWindow  {
                     for (var i = 0; i < drag.urls.length; ++i) {
                         var url = drag.urls[i]
                         var filePath = url.replace("file:///", "").toLowerCase()
-                        if (filePath.endsWith(".klf")) {
+                        if (filePath.endsWith(".klf") ||
+                            filePath.endsWith(".xtf")) {
                             draggedFilePath = filePath
                             overlay.opacity = 0.3
                             break

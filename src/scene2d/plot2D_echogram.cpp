@@ -1,26 +1,32 @@
+#include "plot2D_echogram.h"
 #include "plot2D.h"
 
 
-Plot2DEchogram::Plot2DEchogram() {
+Plot2DEchogram::Plot2DEchogram()
+{
     setThemeId(ClassicTheme);
     setLevels(10, 100);
 }
 
-void Plot2DEchogram::setLowLevel(float low) {
+void Plot2DEchogram::setLowLevel(float low)
+{
     setLevels(low, _levels.high);
 }
 
-void Plot2DEchogram::setHightLevel(float high) {
+void Plot2DEchogram::setHightLevel(float high)
+{
     setLevels(_levels.low, high);
 }
 
-void Plot2DEchogram::setLevels(float low, float high) {
+void Plot2DEchogram::setLevels(float low, float high)
+{
     _levels.low = low;
     _levels.high = high;
     updateColors();
 }
 
-void Plot2DEchogram::setColorScheme(QVector<QColor> coloros, QVector<int> levels) {
+void Plot2DEchogram::setColorScheme(QVector<QColor> coloros, QVector<int> levels)
+{
     if(coloros.length() != levels.length()) { return; }
 
     _colorTable.resize(256);
@@ -53,7 +59,6 @@ int Plot2DEchogram::getThemeId() const
 }
 
 void Plot2DEchogram::setThemeId(int theme_id) {
-
     if (theme_id >= ClassicTheme && theme_id <= BWTheme) {
         themeId_ = static_cast<ThemeId>(theme_id);
     }
@@ -92,11 +97,13 @@ void Plot2DEchogram::setThemeId(int theme_id) {
     setColorScheme(coloros, levels);
 }
 
-void Plot2DEchogram::setCompensation(int compensation_id) {
+void Plot2DEchogram::setCompensation(int compensation_id)
+{
     _compensation_id = compensation_id;
 }
 
-void Plot2DEchogram::updateColors() {
+void Plot2DEchogram::updateColors()
+{
     float low = _levels.low;
     float high = _levels.high;
 
@@ -120,19 +127,22 @@ void Plot2DEchogram::updateColors() {
     _image.setColorTable(_colorLevels);
 }
 
-void Plot2DEchogram::resetCash() {
+void Plot2DEchogram::resetCash()
+{
     _cashFlags.resetCash = true;
 }
 
-int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width, int height) {
-    if(_cash.size() != width) {
+int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int height)
+{
+    auto& cursor = parent->cursor();
+
+    if (_cash.size() != width) {
         _cash.resize(width);
         resetCash();
     }
 
     uint8_t* image_data = (uint8_t*)_image.constBits();
     const int b_scanline = _image.bytesPerLine();
-
 
     bool is_cash_notvalid = getTriggerCashReset();
     is_cash_notvalid |= !_lastCursor.isChannelsEqual(cursor);
@@ -152,26 +162,29 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
     float from2 = 0;
     float to2 = 0;
 
-    if(to >= 0) {
+    if (to >= 0) {
         range1 = 0 - from;
         from1 = 0;
         to1 = -from;
 
-        if(from >= 0) { from2 = from; }
-        else { from2 = 0; }
+        if (from >= 0) {
+            from2 = from;
+        }
+        else {
+            from2 = 0;
+        }
         to2 = to;
-    } else {
+    }
+    else {
         range1 = to - from;
         from1 = -to;
         to1 = -from;
     }
 
-    int cash_validate = 0;
-
     int wrap_start_pos = qAbs(cursor.getIndex(0) % width);
 
-    for(unsigned int i = 0; i < cursor.indexes.size(); i++) {
-        if(cursor.indexes[i] > 0) {
+    for (unsigned int i = 0; i < cursor.indexes.size(); i++) {
+        if (cursor.indexes[i] > 0) {
             wrap_start_pos = qAbs((cursor.indexes[i] + (width - i)) % width);
             break;
         }
@@ -223,13 +236,14 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
                     int16_t* cash_data = _cash[column].data.data();
                     int16_t cash_data_size = _cash[column].data.size();
 
-                    if(cursor.channel2 == CHANNEL_NONE) {
-                        datasource->chartTo(cursor.channel1, from, to, cash_data, cash_data_size, _compensation_id);
-                    } else {
+                    if (cursor.channel2 == CHANNEL_NONE) {
+                        datasource->chartTo(cursor.channel1, cursor.subChannel1, from, to, cash_data, cash_data_size, _compensation_id);
+                    }
+                    else {
                         int cash_data_size_part1 = cash_data_size*(range1/fullrange);
 
                         if(cash_data_size_part1 > 0) {
-                            datasource->chartTo(cursor.channel1, from1, to1, cash_data, cash_data_size_part1, _compensation_id, true);
+                            datasource->chartTo(cursor.channel1, cursor.subChannel1, from1, to1, cash_data, cash_data_size_part1, _compensation_id, true);
                         }
 
                         if(cash_data_size_part1 < 0) {
@@ -238,11 +252,9 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
 
                         const int cash_data_size_part2 = cash_data_size - cash_data_size_part1;
                         if(cash_data_size_part2 > 0) {
-                            datasource->chartTo(cursor.channel2, from2, to2, &cash_data[cash_data_size_part1], cash_data_size_part2, _compensation_id, false);
+                            datasource->chartTo(cursor.channel2, cursor.subChannel2, from2, to2, &cash_data[cash_data_size_part1], cash_data_size_part2, _compensation_id, false);
                         }
                     }
-
-                    cash_validate++;
 
                     _cash[column].state = CashLine::CashStateValid;
                     _cash[column].isNeedUpdate = true;
@@ -306,8 +318,12 @@ int Plot2DEchogram::updateCash(Dataset* dataset, DatasetCursor cursor, int width
     return wrap_start_pos;
 }
 
-bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor) {
-    if(isVisible() && dataset != nullptr && cursor.distance.isValid()) {
+bool Plot2DEchogram::draw(Plot2D* parent, Dataset* dataset)
+{
+    auto& canvas = parent->canvas();
+    auto& cursor = parent->cursor();
+
+    if (isVisible() && dataset != nullptr && cursor.distance.isValid()) {
         const int image_width = canvas.width();
         const int image_height = canvas.height();
 
@@ -319,7 +335,7 @@ bool Plot2DEchogram::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor
 
         const int cash_width = canvas.width();
 
-        const int cash_position = updateCash(dataset, cursor, cash_width, image_height);
+        const int cash_position = updateCash(parent, dataset, cash_width, image_height);
 
         QPainter p(&_pixmap);
 

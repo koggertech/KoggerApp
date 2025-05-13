@@ -5,8 +5,9 @@
 #include <QPair>
 #include <QVector>
 
-#include "plotcash.h"
+#include "dataset.h"
 
+using VecCntAndBrightness = QVector<QPair<uint8_t, uint8_t>>; // first - counter, second - brightness
 
 class BlackStripesProcessor
 {
@@ -18,10 +19,10 @@ public:
 
     BlackStripesProcessor();
 
-    void update(int16_t channelId, Epoch* epoch, Direction direction, float resolution, float offset);
+    void update(const ChannelId& channelId, Epoch* epoch, Direction direction, float resolution, float offset);
     void clear();
-    void clearEthalonData(int channelId, Direction direction);
-    void tryResizeEthalonData(int channelId, Direction direction, int size);
+    void clearEthalonData(const ChannelId& channelId, Direction direction);
+    void tryResizeEthalonData(const ChannelId& channelId, uint8_t numSubChannels, Direction direction, int size);
 
     void setState(bool state);
     void setForwardSteps(int val);
@@ -31,13 +32,13 @@ public:
     int  getBackwardSteps() const;
 
 private:
-    /*methods*/
-    int getLastValidEthalonIndex(int16_t channelId, Direction direction) const;
+    // methods
+    int getLastValidEthalonIndex(const ChannelId& channelId, uint8_t subChannelId, Direction direction) const;
     QVector<uint8_t> createErrorMask(const QList<Segment>& errList, int dataSize) const;
 
-    /*data*/
-    QMap<int16_t, QVector<QPair<uint8_t, uint8_t>>> forwardEthalonData_;
-    QMap<int16_t, QVector<QPair<uint8_t, uint8_t>>> backwardEthalonData_;
+    // data
+    QMap<ChannelId, QVector<VecCntAndBrightness>> forwardEthalonData_; // QVector - data for subchannels
+    QMap<ChannelId, QVector<VecCntAndBrightness>> backwardEthalonData_;
     bool state_;
     int forwardSteps_;
     int backwardSteps_;

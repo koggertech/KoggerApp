@@ -289,20 +289,16 @@ void Link::setLinkType(LinkType linkType)
 void Link::setAddress(const QString &address)
 {
     address_ = address;
-    //hostAddress_.setAddress(address_);
-    // TODO: rebind?
 }
 
 void Link::setSourcePort(int sourcePort)
 {
     sourcePort_ = sourcePort;
-    // TODO: rebind?
 }
 
 void Link::setDestinationPort(int destinationPort)
 {
     destinationPort_ = destinationPort;
-    // TODO: rebind?
 }
 
 void Link::setIsPinned(bool state)
@@ -448,18 +444,6 @@ bool Link::getAutoConnOnce() const
 {
     return autoConnOnce_;
 }
-
-// #ifdef MOTOR
-// void Link::setIsMotorDevice(bool isMotorDevice)
-// {
-//     isMotorDevice_ = isMotorDevice;
-// }
-
-// bool Link::getIsMotorDevice() const
-// {
-//     return isMotorDevice_;
-// }
-// #endif
 
 bool Link::writeFrame(FrameParser frame)
 {
@@ -643,51 +627,6 @@ void Link::resetLastSearchIndx()
 
 void Link::readyRead()
 {
-
-#ifdef MOTOR
-    QIODevice* dev = device();
-    if (dev != nullptr) {
-
-        if (attribute_ == LinkAttributeNone) {
-            if (linkType_ == LinkType::LinkIPUDP) {
-                QUdpSocket* socsUpd = (QUdpSocket*)dev;
-                while (socsUpd->hasPendingDatagrams()) {
-                    QByteArray datagram;
-                    datagram.resize(socsUpd->pendingDatagramSize());
-                    QHostAddress sender;
-                    quint16 senderPort;
-                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                    if (slen == -1) {
-                        break;
-                    }
-                    toParser(datagram);
-                }
-            }
-            else {
-                toParser(dev->readAll());
-            }
-        }
-        else {
-            if (linkType_ == LinkType::LinkIPUDP) {
-                QUdpSocket* socsUpd = (QUdpSocket*)dev;
-                while (socsUpd->hasPendingDatagrams()) {
-                    QByteArray datagram;
-                    datagram.resize(socsUpd->pendingDatagramSize());
-                    QHostAddress sender;
-                    quint16 senderPort;
-                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                    if (slen == -1) {
-                        break;
-                    }
-                    emit dataReady(datagram);
-                }
-            }
-            else {
-                emit dataReady(dev->readAll());
-            }
-        }
-    }
-#else
     auto dev = ioDevice_;
     if (!dev) {
         return;
@@ -714,7 +653,6 @@ void Link::readyRead()
             toParser(data);
         }
     }
-#endif
 }
 
 void Link::aboutToClose()
