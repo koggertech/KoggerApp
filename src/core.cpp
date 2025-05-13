@@ -1156,6 +1156,10 @@ void Core::onChannelsUpdated()
     int chSize = chs.size();
 
     if (!chSize) {
+        fChName_.clear();
+        sChName_.clear();
+        emit channelListUpdated();
+
         return;
     }
 

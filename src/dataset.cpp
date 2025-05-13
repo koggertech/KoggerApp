@@ -1160,6 +1160,7 @@ void Dataset::resetDataset() {
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
 
+    emit channelsUpdated();
     emit dataUpdate();
 }
 
