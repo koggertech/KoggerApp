@@ -6,7 +6,7 @@ import Qt.labs.settings 1.1
 
 MenuScroll {
     id: scrollBar
-    property bool is2DHorizontal: displaySettings.is2DHorizontal
+
     property int instruments:  displaySettings.instruments
     property var targetPlot: null
     property int menuWidth: 200

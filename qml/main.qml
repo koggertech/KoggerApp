@@ -244,6 +244,7 @@ ApplicationWindow  {
                 scene3DToolbar.updateMosaic()
             }
             if (fn === "closeSettings") {
+                waterView.closeSettings()
                 menuBar.closeMenus()
                 splitLayer.focus = true
                 return;
@@ -654,7 +655,6 @@ ApplicationWindow  {
                 }
             }
 
-
             Item {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
@@ -673,12 +673,15 @@ ApplicationWindow  {
                         Layout.fillWidth: true
                         Layout.margins: 0
 
+                        //Layout.leftMargin: {
+                        //    const menuY = menuBar.mapToItem(null, 0, 0).y
+                        //    return menuY + menuBar.height > 450 ? 0 : menuBar.width
+                        //}
+
                         Layout.rowSpan   : 1
                         Layout.columnSpan: 1
                         focus: true
-                        horizontal: menuBar.is2DHorizontal
-
-
+                        instruments: menuBar.instruments
                     }
 
                     // Plot2D {
