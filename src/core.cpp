@@ -1165,12 +1165,22 @@ void Core::onChannelsUpdated()
     QString fChName;
     QString sChName;
 
-    auto linkNames = getLinkNames();
-    if (chSize > 0 && linkNames.contains(chs[0].channelId_.uuid)) {
-        fChName = chs[0].portName_;
+    if (openedfilePath_.isEmpty()) {
+        auto linkNames = getLinkNames();
+        if (chSize > 0 && linkNames.contains(chs[0].channelId_.uuid)) {
+            fChName = chs[0].portName_;
+        }
+        if (chSize > 1 && linkNames.contains(chs[1].channelId_.uuid)) {
+            sChName = chs[1].portName_;
+        }
     }
-    if (chSize > 1 && linkNames.contains(chs[1].channelId_.uuid)) {
-        sChName = chs[1].portName_;
+    else {
+        if (chSize > 0) {
+            fChName = chs[0].portName_;
+        }
+        if (chSize > 1) {
+            sChName = chs[1].portName_;
+        }
     }
 
     if (fChName.isEmpty() && sChName.isEmpty()) {

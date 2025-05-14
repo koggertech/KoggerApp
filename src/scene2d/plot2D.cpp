@@ -816,4 +816,8 @@ void Plot2D::reRangeDistance()
         }
     }
 }
-float Plot2D::timelinePosition() { return cursor_.position; }
+
+float Plot2D::timelinePosition()
+{
+    return cursor_.position;
+}
