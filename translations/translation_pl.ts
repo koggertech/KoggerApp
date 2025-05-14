@@ -262,8 +262,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1623"/>
-        <location filename="../src/dataset.cpp" line="1625"/>
+        <location filename="../src/dataset.cpp" line="1628"/>
+        <location filename="../src/dataset.cpp" line="1630"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
@@ -1252,7 +1252,7 @@
         <translation type="vanished">Boost: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1363"/>
+        <location filename="../src/core.cpp" line="1364"/>
         <source>File</source>
         <translation>File</translation>
     </message>

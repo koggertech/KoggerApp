@@ -258,8 +258,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1623"/>
-        <location filename="../src/dataset.cpp" line="1625"/>
+        <location filename="../src/dataset.cpp" line="1628"/>
+        <location filename="../src/dataset.cpp" line="1630"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -612,7 +612,7 @@
     <message>
         <location filename="../qml/DisplaySettings.qml" line="250"/>
         <source>Attitude</source>
-        <translation>Отношение</translation>
+        <translation>Ориентация</translation>
     </message>
     <message>
         <location filename="../qml/DisplaySettings.qml" line="268"/>
@@ -1244,7 +1244,7 @@
         <translation type="vanished">Буст: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1363"/>
+        <location filename="../src/core.cpp" line="1364"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
