@@ -1,6 +1,7 @@
 #include "plot2D_grid.h"
 #include "plot2D.h"
 
+constexpr float epsilon = 0.001f;
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
@@ -58,8 +59,9 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if (cursor.distance.isValid()) {
         p->setFont(QFont("Asap", 26, QFont::Normal));
         float val{ cursor.distance.to };
-        QString range_text = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QObject::tr(" m");
-        p->drawText(imageWidth - textXOffset / 2 - range_text.count() * 25, imageHeight - 10, range_text);
+        bool isInteger = std::abs(val - std::round(val)) < epsilon;
+        QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
+        p->drawText(imageWidth - textXOffset / 2 - rangeText.count() * 25, imageHeight - 10, rangeText);
     }
 
     if (_rangeFinderLastVisible && cursor.distance.isValid()) {
@@ -67,17 +69,20 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         Epoch* preLastEpoch = dataset->lastlast();
         float distance = NAN;
 
-        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder()))
+        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder())) {
             distance = lastEpoch->rangeFinder();
-        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder()))
+        }
+        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder())) {
             distance = preLastEpoch->rangeFinder();
+        }
 
         if (isfinite(distance)) {
             pen.setColor(QColor(250, 100, 0));
             p->setPen(pen);
             p->setFont(QFont("Asap", 40, QFont::Normal));
             float val{ round(distance * 100.f) / 100.f };
-            QString rangeText = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QObject::tr(" m");
+            bool isInteger = std::abs(val - std::round(val)) < epsilon;
+            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
             p->drawText(imageWidth / 2 - rangeText.count() * 32, imageHeight - 15, rangeText);
         }
     }
