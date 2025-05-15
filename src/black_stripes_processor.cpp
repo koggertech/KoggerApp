@@ -13,10 +13,20 @@ void BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Dir
         return;
     }
 
-    uint8_t chartSize = epoch->getChartsSizeByChannelId(channelId);
-    if (!chartSize) {
-        return;
+    if (!epoch->getChartsSizeByChannelId(channelId)) {
+        auto& data = direction == Direction::kForward ? forwardEthalonData_ : backwardEthalonData_;
+        QVector<VecCntAndBrightness>* allDirData = nullptr;
+        if (data.contains(channelId)) {
+            allDirData = &data[channelId];
+        }
+        if (allDirData) {
+            int newNumSubCh = allDirData->size();
+            QVector<QVector<uint8_t>> data(newNumSubCh);
+            epoch->setChart(channelId, data, resolution, offset);
+        }
     }
+
+    uint8_t chartSize = epoch->getChartsSizeByChannelId(channelId);
 
     for (uint8_t subChannelId = 0; subChannelId < chartSize; ++subChannelId) {
         const int dataSize = epoch->chartSize(channelId, subChannelId);

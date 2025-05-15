@@ -697,10 +697,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
             auto getPreChart = [&](int i, uint8_t subChannelId) -> const Epoch::Echogram* {
                 const int preEpIndx = std::max(0, i - 1);
                 if (auto* preEpoch = &pool_[preEpIndx]; preEpoch) {
-                    if (auto keysCh = preEpoch->chartChannels(); !keysCh.empty()) {
-                        auto& firstChId = keysCh.first();
-                        return  preEpoch->chart(firstChId, subChannelId);
-                    }
+                    return preEpoch->chart(channelId, subChannelId);
                 }
 
                 return nullptr;
