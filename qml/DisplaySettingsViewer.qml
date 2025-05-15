@@ -7,7 +7,8 @@ import Qt.labs.settings 1.1
 MenuScroll {
     id: scrollBar
 
-    property int instruments:  displaySettings.instruments
+    property int numPlots: displaySettings.numPlots
+    property int instruments: displaySettings.instruments
     property var targetPlot: null
     property int menuWidth: 200
 

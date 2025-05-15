@@ -9,6 +9,7 @@ import WaterFall 1.0
 WaterFall {
     id: plot
 
+    property int indx: 0
     property int instruments: instrumentsGradeList.currentIndex
 
     horizontal: horisontalVertical.checked
@@ -24,6 +25,8 @@ WaterFall {
     function closeSettings() {
         plotCheckButton.checked = false
     }
+
+    signal plotScrolled(int indx)
 
     PinchArea {
         id: pinch2D
@@ -234,11 +237,32 @@ WaterFall {
                 else {
                     plot.horScrollEvent(wheel.angleDelta.y)
                 }
+                plotScrolled(indx)
             }
         }
     }
 
     onHeightChanged: {
+        //if (leftPanel.height > plot.height*0.7) {
+        //    echogramLevelsSlider.heightCoeff = 7
+        //}
+        //if (leftPanel.height > plot.height*0.8) {
+        //    echogramLevelsSlider.heightCoeff = 5
+        //}
+        //if (leftPanel.height > plot.height*0.9) {
+        //    echogramLevelsSlider.heightCoeff = 4
+        //}
+        //if (leftPanel.height > plot.height) {
+        //    echogramLevelsSlider.heightCoeff = 3
+        //}
+
+        if (leftPanel.height > plot.height*0.7) {
+            leftPanel.x = leftPanel.width
+        }
+        else {
+            leftPanel.x = 0
+        }
+
         if(menuBlock.visible) {
             menuBlock.position(menuBlock.x, menuBlock.y)
         }
@@ -261,6 +285,7 @@ WaterFall {
             Layout.alignment: Qt.AlignLeft
 
             ColumnLayout {
+                id: plotControl
                 spacing: 4
 
                 CheckButton {
@@ -270,12 +295,6 @@ WaterFall {
                     checkedBorderColor: theme.controlBorderColor
                     iconSource: "qrc:/icons/ui/settings.svg"
                     implicitWidth: theme.controlHeight*1.2
-
-                    onCheckedChanged: {
-                    }
-
-                    Component.onCompleted: {
-                    }
                 }
 
                 // brightess slider

@@ -7,6 +7,7 @@ import Qt.labs.settings 1.1
 GridLayout {
     id: control
 
+    property int numPlots: numPlotsSpinBox.value
     property int instruments:  instrumentsGradeList.currentIndex
     property var targetPlot: null
 
@@ -25,7 +26,21 @@ GridLayout {
             groupName: qsTr("Plot")
 
             RowLayout {
+                CText {
+                    Layout.fillWidth: true
+                    text: qsTr("numPlot's:")
+                }
+                SpinBoxCustom {
+                    id: numPlotsSpinBox
+                    from: 1
+                    to: 2
+                    stepSize: 1
+                    value: 1
 
+                    Settings {
+                        property alias numPlotsSpinBox: numPlotsSpinBox.value
+                    }
+                }
             }
         }
 

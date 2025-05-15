@@ -13,6 +13,7 @@ Item {
     //property bool isConsoleVisible: consoleEnable.checked // TODO
     property bool is3DVisible: settings3DButton.checked
     property bool is2DVisible: visible2dButton.checked
+    property int numPlots: appSettings.numPlots
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
     property string filePath: devSettings.filePath
