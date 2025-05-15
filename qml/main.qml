@@ -933,7 +933,6 @@ ApplicationWindow  {
     }
 
     function handlePlotScrolled(indx) {
-        console.info("handlePlotScrolled indx " + indx)
         if (indx === 1) {
             waterViewSecond.update()
         }
