@@ -3,9 +3,10 @@
 
 
 Plot2D::Plot2D()
-    : datasetPtr_(nullptr),
-      pendingBtpLambda_(nullptr),
-    isHorizontal_(true)
+    : datasetPtr_(nullptr)
+    , pendingBtpLambda_(nullptr)
+    , isHorizontal_(true)
+    , isEnabled_(true)
 {
     echogram_.setVisible(true);
     attitude_.setVisible(true);
@@ -51,6 +52,16 @@ void Plot2D::setDataset(Dataset *dataset)
         pendingBtpLambda_();
         pendingBtpLambda_ = nullptr;
     }
+}
+
+void Plot2D::setPlotEnabled(bool state)
+{
+    isEnabled_ = state;
+}
+
+bool Plot2D::plotEnabled() const
+{
+    return isEnabled_;
 }
 
 bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizontal)

@@ -24,7 +24,12 @@ qPlot2D::qPlot2D(QQuickItem* parent)
 
 #include <time.h>
 
-void qPlot2D::paint(QPainter *painter) {
+void qPlot2D::paint(QPainter *painter)
+{
+    if (!Plot2D::plotEnabled()) {
+        return;
+    }
+
     clock_t start = clock();
 
     if (m_plot != nullptr && painter != nullptr) {
@@ -84,7 +89,12 @@ void qPlot2D::setPlot(Dataset *dataset) {
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
 }
 
-void qPlot2D::plotUpdate() {
+void qPlot2D::plotUpdate()
+{
+    if (!Plot2D::plotEnabled()) {
+        return;
+    }
+
     static QMutex mutex;
     if(!mutex.tryLock()) {
 //        qInfo("HHHHHHHHHHHHHHHHHHHHHHHHHH==================HHHHHHHHHHHHHHHHHHHHHHHHHH");

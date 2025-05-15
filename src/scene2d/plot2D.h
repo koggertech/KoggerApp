@@ -33,6 +33,8 @@ public:
 
     void setDataset(Dataset* dataset);
 
+    void setPlotEnabled(bool state);
+    bool plotEnabled() const;
 
     bool isHorizontal();
     void setHorizontal(bool is_horizontal);
@@ -139,4 +141,7 @@ protected:
     Dataset* datasetPtr_;
     std::function<void()> pendingBtpLambda_;
     bool isHorizontal_;
+
+private:
+    bool isEnabled_;
 };

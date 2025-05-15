@@ -755,6 +755,8 @@ ApplicationWindow  {
                         instruments: menuBar.instruments
                         indx: 2
 
+                        isEnabled: enabled
+
                         onTimelinePositionChanged: {
                             historyScroll.value = waterViewSecond.timelinePosition
                         }

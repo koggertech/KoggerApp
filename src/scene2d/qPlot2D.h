@@ -16,7 +16,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
-
+    Q_PROPERTY(bool isEnabled WRITE setPlotEnabled)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
     Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
