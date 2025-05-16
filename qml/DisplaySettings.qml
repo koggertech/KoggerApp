@@ -28,7 +28,7 @@ GridLayout {
             RowLayout {
                 CText {
                     Layout.fillWidth: true
-                    text: qsTr("numPlot's:")
+                    text: qsTr("Number of graphs:")
                 }
                 SpinBoxCustom {
                     id: numPlotsSpinBox
