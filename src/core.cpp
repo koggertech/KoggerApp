@@ -1078,6 +1078,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     usblViewControlMenuController_->setQmlEngine(object);
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    onChannelsUpdated();
 }
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
