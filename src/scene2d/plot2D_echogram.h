@@ -33,6 +33,8 @@ public:
     int updateCash(Plot2D* parent, Dataset* dataset, int width, int height);
     void resetCash();
 
+    void addReRenderPlotIndxs(const QSet<int>& indxs);
+
 protected:
     typedef struct {
         typedef enum {
@@ -86,4 +88,5 @@ protected:
     }
 private:
     ThemeId themeId_;
+    QSet<int> reRenderPlotIndxs_;
 };

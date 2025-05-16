@@ -30,6 +30,7 @@ Core::Core() :
     createLinkManagerConnections();
     createControllers();
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
+    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
 }
 
 Core::~Core()
@@ -1077,6 +1078,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     usblViewControlMenuController_->setQmlEngine(object);
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    onChannelsUpdated();
 }
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
@@ -1187,21 +1190,28 @@ void Core::onChannelsUpdated()
         return;
     }
 
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (i == 0 && plot2dList_.at(i)) {
-            if (chSize >= 2) {
-                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
-                fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
-                sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
-            }
-            if (chSize == 1) {
-                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
-                fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
-            }
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        if (chSize >= 2) {
+            plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
+            fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
+            sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
+        }
+        if (chSize == 1) {
+            plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
+            fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
         }
     }
 
     emit channelListUpdated();
+}
+
+void Core::onRedrawEpochs(const QSet<int>& indxs)
+{
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
 }
 
 QString Core::getChannel1Name() const

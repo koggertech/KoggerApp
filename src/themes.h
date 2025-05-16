@@ -224,22 +224,21 @@ inline qreal Themes::checkResolutionCoeff() const
 {
     qreal retVal = 1.0;
 
-    QScreen *screen = QApplication::primaryScreen();
-    if (screen) {
-        auto physDotsPerInch = screen->physicalDotsPerInch();
-
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-        if (physDotsPerInch > 90.0) {
-            retVal = 2.0;
-        }
-#else
-        Q_UNUSED(physDotsPerInch)
+    retVal = 2.0;
 #endif
-        // retVal = 2.0; // test
-        // qDebug() << "Logical DPI:" << screen->logicalDotsPerInch();
-        // qDebug() << "Physical DPI:" << screen->physicalDotsPerInch();
-        // qDebug() << "Device Pixel Ratio:" << screen->devicePixelRatio();
-    }
+
+    // QScreen *screen = QApplication::primaryScreen();
+    // if (screen) {
+    //     auto physDotsPerInch = screen->physicalDotsPerInch();
+    //     Q_UNUSED(physDotsPerInch)
+
+
+    //     // retVal = 2.0; // test
+    //     // qDebug() << "Logical DPI:" << screen->logicalDotsPerInch();
+    //     // qDebug() << "Physical DPI:" << screen->physicalDotsPerInch();
+    //     // qDebug() << "Device Pixel Ratio:" << screen->devicePixelRatio();
+    // }
 
     return retVal;
 }

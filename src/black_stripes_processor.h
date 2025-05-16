@@ -19,7 +19,7 @@ public:
 
     BlackStripesProcessor();
 
-    void update(const ChannelId& channelId, Epoch* epoch, Direction direction, float resolution, float offset);
+    bool update(const ChannelId& channelId, Epoch* epoch, Direction direction, float resolution, float offset);
     void clear();
     void clearEthalonData(const ChannelId& channelId, Direction direction);
     void tryResizeEthalonData(const ChannelId& channelId, uint8_t numSubChannels, Direction direction, int size);

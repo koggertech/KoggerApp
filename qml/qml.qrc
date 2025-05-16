@@ -36,7 +36,7 @@
         <file>DevAddrBox.qml</file>
         <file>FactoryBox.qml</file>
         <file>DevSettingsBox.qml</file>
-        <file>DiplaySettingsViewer.qml</file>
+        <file>DisplaySettingsViewer.qml</file>
         <file>DisplaySettings.qml</file>
         <file>ExportSettings.qml</file>
         <file>ExportDist.qml</file>

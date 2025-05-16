@@ -78,9 +78,15 @@ ApplicationWindow  {
     }
 
     Component.onCompleted: {
-        //theme.updateResCoeff(); // for UI scaling
+        theme.updateResCoeff()
 
         menuBar.languageChanged.connect(handleChildSignal)
+        waterViewFirst.plotScrolled.connect(handlePlotScrolled)
+        waterViewSecond.plotScrolled.connect(handlePlotScrolled)
+        waterViewFirst. plotPressed.connect(handlePlotPressed)
+        waterViewSecond.plotPressed.connect(handlePlotPressed)
+        waterViewFirst. plotReleased.connect(handlePlotReleased)
+        waterViewSecond.plotReleased.connect(handlePlotReleased)
 
         if (Qt.platform.os !== "windows") {
             if (appSettings.isFullScreen) {
@@ -244,6 +250,10 @@ ApplicationWindow  {
                 scene3DToolbar.updateMosaic()
             }
             if (fn === "closeSettings") {
+                waterViewFirst.closeSettings()
+                if (waterViewSecond.enabled) {
+                    waterViewSecond.closeSettings()
+                }
                 menuBar.closeMenus()
                 splitLayer.focus = true
                 return;
@@ -261,67 +271,119 @@ ApplicationWindow  {
 
                 switch (fn) {
                 case "horScrollLeft": {
-                    waterView.horScrollEvent(-p)
+                    waterViewFirst.horScrollEvent(-p)
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.horScrollEvent(-p)
+                    }
                     break
                 }
                 case "horScrollRight": {
-                    waterView.horScrollEvent(p)
+                    waterViewFirst.horScrollEvent(p)
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.horScrollEvent(p)
+                    }
                     break
                 }
                 case "verScrollUp": {
-                    waterView.verScrollEvent(-p)
+                    waterViewFirst.verScrollEvent(-p)
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.verScrollEvent(-p)
+                    }
                     break
                 }
                 case "verScrollDown": {
-                    waterView.verScrollEvent(p)
+                    waterViewFirst.verScrollEvent(p)
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.verScrollEvent(p)
+                    }
                     break
                 }
                 case "verZoomOut": {
-                    waterView.verZoomEvent(-p)
+                    waterViewFirst.verZoomEvent(-p)
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.verZoomEvent(-p)
+                    }
                     break
                 }
                 case "verZoomIn": {
-                    waterView.verZoomEvent(p)
+                    waterViewFirst.verZoomEvent(p)
+                    if (waterViewSecond.enabled) {
+                        waterViewSecond.verZoomEvent(p)
+                    }
                     break
                 }
                 case "increaseLowLevel": {
-                    let newLow = Math.min(120, waterView.getLowEchogramLevel() + p)
-                    let newHigh = waterView.getHighEchogramLevel()
+                    let newLow = Math.min(120, waterViewFirst.getLowEchogramLevel() + p)
+                    let newHigh = waterViewFirst.getHighEchogramLevel()
                     if (newLow > newHigh) newHigh = newLow
-                    waterView.plotEchogramSetLevels(newLow, newHigh)
-                    waterView.setLevels(newLow, newHigh)
+                    waterViewFirst.plotEchogramSetLevels(newLow, newHigh)
+                    waterViewFirst.setLevels(newLow, newHigh)
+                    if (waterViewSecond.enabled) {
+                        let newSLow = Math.min(120, waterViewSecond.getLowEchogramLevel() + p)
+                        let newSHigh = waterViewSecond.getHighEchogramLevel()
+                        if (newSLow > newSHigh) newSHigh = newSLow
+                        waterViewSecond.plotEchogramSetLevels(newSLow, newSHigh)
+                        waterViewSecond.setLevels(newSLow, newSHigh)
+                    }
                     break
                 }
                 case "decreaseLowLevel": {
-                    let newLow = Math.max(0, waterView.getLowEchogramLevel() - p)
-                    let newHigh = waterView.getHighEchogramLevel()
-                    waterView.plotEchogramSetLevels(newLow, newHigh)
-                    waterView.setLevels(newLow, newHigh)
+                    let newLow = Math.max(0, waterViewFirst.getLowEchogramLevel() - p)
+                    let newHigh = waterViewFirst.getHighEchogramLevel()
+                    waterViewFirst.plotEchogramSetLevels(newLow, newHigh)
+                    waterViewFirst.setLevels(newLow, newHigh)
+                    if (waterViewSecond.enabled) {
+                        let newSLow = Math.max(0, waterViewSecond.getLowEchogramLevel() - p)
+                        let newSHigh = waterViewSecond.getHighEchogramLevel()
+                        waterViewSecond.plotEchogramSetLevels(newSLow, newSHigh)
+                        waterViewSecond.setLevels(newSLow, newSHigh)
+                    }
                     break
                 }
                 case "increaseHighLevel": {
-                    let newHigh = Math.min(120, waterView.getHighEchogramLevel() + p)
-                    let newLow = waterView.getLowEchogramLevel()
-                    waterView.plotEchogramSetLevels(newLow, newHigh)
-                    waterView.setLevels(newLow, newHigh)
+                    let newHigh = Math.min(120, waterViewFirst.getHighEchogramLevel() + p)
+                    let newLow = waterViewFirst.getLowEchogramLevel()
+                    waterViewFirst.plotEchogramSetLevels(newLow, newHigh)
+                    waterViewFirst.setLevels(newLow, newHigh)
+                    if (waterViewSecond.enabled) {
+                        let newSHigh = Math.min(120, waterViewSecond.getHighEchogramLevel() + p)
+                        let newSLow = waterViewSecond.getLowEchogramLevel()
+                        waterViewSecond.plotEchogramSetLevels(newSLow, newSHigh)
+                        waterViewSecond.setLevels(newSLow, newSHigh)
+                    }
                     break
                 }
                 case "decreaseHighLevel": {
-                    let newHigh = Math.max(0, waterView.getHighEchogramLevel() - p)
-                    let newLow = waterView.getLowEchogramLevel()
+                    let newHigh = Math.max(0, waterViewFirst.getHighEchogramLevel() - p)
+                    let newLow = waterViewFirst.getLowEchogramLevel()
                     if (newHigh < newLow) newLow = newHigh
-                    waterView.plotEchogramSetLevels(newLow, newHigh)
-                    waterView.setLevels(newLow, newHigh)
+                    waterViewFirst.plotEchogramSetLevels(newLow, newHigh)
+                    waterViewFirst.setLevels(newLow, newHigh)
+                    if (waterViewSecond.enabled) {
+                        let newSHigh = Math.max(0, waterViewSecond.getHighEchogramLevel() - p)
+                        let newSLow = waterViewSecond.getLowEchogramLevel()
+                        if (newSHigh < newSLow) newSLow = newSHigh
+                        waterViewSecond.plotEchogramSetLevels(newSLow, newSHigh)
+                        waterViewSecond.setLevels(newSLow, newSHigh)
+                    }
                     break
                 }
                 case "prevTheme": {
-                    let themeId = waterView.getThemeId()
-                    if (themeId > 0) waterView.plotEchogramTheme(themeId - 1)
+                    let themeId = waterViewFirst.getThemeId()
+                    if (themeId > 0) waterViewFirst.plotEchogramTheme(themeId - 1)
+                    if (waterViewSecond.enabled) {
+                        let themeSId = waterViewSecond.getThemeId()
+                        if (themeSId > 0) waterViewSecond.plotEchogramTheme(themeSId - 1)
+                    }
                     break
                 }
                 case "nextTheme": {
-                    let themeId = waterView.getThemeId()
-                    if (themeId < 4) waterView.plotEchogramTheme(themeId + 1)
+                    let themeId = waterViewFirst.getThemeId()
+                    if (themeId < 4) waterViewFirst.plotEchogramTheme(themeId + 1)
+                    if (waterViewSecond.enabled) {
+                        let themeSId = waterViewSecond.getThemeId()
+                        if (themeSId < 4) waterViewSecond.plotEchogramTheme(themeSId + 1)
+                    }
                     break
                 }
                 case "clickConnections": {
@@ -654,7 +716,6 @@ ApplicationWindow  {
                 }
             }
 
-
             Item {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
@@ -668,30 +729,43 @@ ApplicationWindow  {
                     rowSpacing: 0
 
                     Plot2D {
-                        id: waterView
+                        id: waterViewFirst
                         Layout.fillHeight: true
                         Layout.fillWidth: true
-                        Layout.margins: 0
 
                         Layout.rowSpan   : 1
                         Layout.columnSpan: 1
                         focus: true
-                        horizontal: menuBar.is2DHorizontal
+                        instruments: menuBar.instruments
+                        indx: 1
+                        is3dVisible: menuBar.is3DVisible
 
-
+                        onTimelinePositionChanged: {
+                            historyScroll.value = waterViewFirst.timelinePosition
+                        }
                     }
 
-                    // Plot2D {
-                    //     id: waterView1
+                    Plot2D {
+                        id: waterViewSecond
 
-                    //     Layout.fillHeight: true
-                    //     Layout.fillWidth: true
+                        enabled: menuBar.numPlots === 2
+                        visible: menuBar.numPlots === 2
 
-                    //     Layout.rowSpan   : 1
-                    //     Layout.columnSpan: 1
-                    //     focus: true
-                    //     horizontal: menuBar.is2DHorizontal
-                    // }
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+
+                        Layout.rowSpan   : 1
+                        Layout.columnSpan: 1
+                        focus: true
+                        instruments: menuBar.instruments
+                        indx: 2
+
+                        isEnabled: enabled
+
+                        onTimelinePositionChanged: {
+                            historyScroll.value = waterViewSecond.timelinePosition
+                        }
+                    }
 
                     CSlider {
                         id: historyScroll
@@ -701,7 +775,7 @@ ApplicationWindow  {
                         Layout.columnSpan: parent.columns
                         implicitHeight: theme.controlHeight
                         height: theme.controlHeight
-                        value: waterView.timelinePosition
+                        //value: waterViewFirst.timelinePosition
                         stepSize: 0.0001
                         from: 0
                         to: 1
@@ -856,13 +930,40 @@ ApplicationWindow  {
         Layout.fillHeight: true
         Keys.forwardTo:    [splitLayer, mousearea3D]
         height: visualisationLayout.height
-        targetPlot: waterView
+        targetPlot: waterViewFirst //??
         visible: !showBanner
     }
 
     function handleChildSignal(langStr) {
         mainview.showBanner = true
         selectedLanguageStr = langStr
+    }
+
+    function handlePlotScrolled(indx) {
+        if (indx === 1 && waterViewSecond.enabled) {
+            waterViewSecond.update()
+        }
+        if (indx === 2) {
+            waterViewFirst.update()
+        }
+    }
+    function handlePlotPressed(indx, mouseX, mouseY) {
+        let toIndx = indx === 1 ? 2 : 1
+        if (indx === 1 && waterViewSecond.enabled) {
+            waterViewSecond.setAim(mouseX, mouseY)
+        }
+        if (indx === 2) {
+            waterViewFirst.setAim(mouseX, mouseY)
+        }
+    }
+    function handlePlotReleased(indx) {
+        let toIndx = indx === 1 ? 2 : 1
+        if (indx === 1 && waterViewSecond.enabled) {
+            waterViewSecond.resetAim()
+        }
+        if (indx === 2) {
+            waterViewFirst.resetAim()
+        }
     }
 
     Connections {
