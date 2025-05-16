@@ -30,6 +30,7 @@ Core::Core() :
     createLinkManagerConnections();
     createControllers();
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
+    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
 }
 
 Core::~Core()
@@ -1201,6 +1202,14 @@ void Core::onChannelsUpdated()
     }
 
     emit channelListUpdated();
+}
+
+void Core::onRedrawEpochs(const QSet<int>& indxs)
+{
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
 }
 
 QString Core::getChannel1Name() const

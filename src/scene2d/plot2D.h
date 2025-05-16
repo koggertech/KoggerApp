@@ -33,6 +33,8 @@ public:
 
     void setDataset(Dataset* dataset);
 
+    void addReRenderPlotIndxs(const QSet<int>& indxs);
+
     void setPlotEnabled(bool state);
     bool plotEnabled() const;
 

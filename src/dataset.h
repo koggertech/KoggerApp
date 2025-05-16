@@ -933,9 +933,6 @@ public:
     float getInterpFirstChannelDist() const;
     float getInterpSecondChannelDist() const;
 
-    bool getWasValidlyRenderedInEchogram() const;
-    void setWasValidlyRenderedInEchogram(bool state);
-
     void setResolution      (const ChannelId& channelId, uint16_t resolution);
     void setChartCount      (const ChannelId& channelId, uint16_t chartCount);
     void setOffset          (const ChannelId& channelId, uint16_t offset);
@@ -1040,7 +1037,6 @@ private:
             return false;
         };
     } interpData_;
-    bool wasValidlyRenderedInEchogram_;
 };
 
 class Dataset : public QObject {
@@ -1221,6 +1217,7 @@ signals:
     void updatedInterpolatedData(int indx);
     void updatedLlaRef();
     void channelsUpdated();
+    void redrawEpochs(const QSet<int>& indxs);
 
 protected:
 

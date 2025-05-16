@@ -54,6 +54,11 @@ void Plot2D::setDataset(Dataset *dataset)
     }
 }
 
+void Plot2D::addReRenderPlotIndxs(const QSet<int> &indxs)
+{
+    echogram_.addReRenderPlotIndxs(indxs);
+}
+
 void Plot2D::setPlotEnabled(bool state)
 {
     isEnabled_ = state;

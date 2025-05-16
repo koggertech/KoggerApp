@@ -7,10 +7,12 @@ BlackStripesProcessor::BlackStripesProcessor() :
     backwardSteps_(15)
 {}
 
-void BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Direction direction, float resolution, float offset)
+bool BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Direction direction, float resolution, float offset)
 {
+    bool beenUpdated = false;
+
     if (!epoch) {
-        return;
+        return beenUpdated;
     }
 
     if (!epoch->getChartsSizeByChannelId(channelId)) {
@@ -60,11 +62,12 @@ void BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Dir
                 chartParameters.errList.append(Segment(dataSize, newDataSize));
                 epoch->setChartParameters(channelId, chartParameters);
                 amplitude.resize(newDataSize);
+                beenUpdated = true;
             }
         }
         else {
             if (lastValidEthalonIndex == -1) {
-                return;
+                continue;
             }
 
             QVector<uint8_t> data(lastValidEthalonIndex + 1, 0);
@@ -79,6 +82,7 @@ void BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Dir
             auto chartParameters = epoch->getChartParameters(channelId);
             chartParameters.errList.append(Segment(0, data.size()));
             epoch->setChartParameters(channelId, chartParameters);
+            beenUpdated = true;
         }
 
         auto& amplitude = epoch->chart(channelId, subChannelId)->amplitude;
@@ -90,6 +94,7 @@ void BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Dir
         for (int i = 0; i < newDataSize; ++i) {
             if (isMaskAvailable && errorMask[i]) {
                 if (ethalonVector[i].first) {
+                    beenUpdated = true;
                     amplitude[i] = ethalonVector[i].second;
                     --ethalonVector[i].first;
                 }
@@ -98,9 +103,9 @@ void BlackStripesProcessor::update(const ChannelId& channelId, Epoch* epoch, Dir
                 ethalonVector[i] = qMakePair(isForward ? forwardSteps_ : backwardSteps_, amplitude.at(i));
             }
         }
-
-        epoch->setWasValidlyRenderedInEchogram(false);
     }
+
+    return beenUpdated;
 }
 
 void BlackStripesProcessor::clear()

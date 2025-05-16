@@ -126,6 +126,7 @@ public slots:
     bool getIsSideScanPerformanceMode() const;
     bool getIsSeparateReading() const;
     void onChannelsUpdated();
+    void onRedrawEpochs(const QSet<int>& indxs);
 
 #if defined(FAKE_COORDS)
     Q_INVOKABLE void setPosZeroing(bool state);
