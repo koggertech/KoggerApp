@@ -27,7 +27,16 @@ WaterFall {
         plotCheckButton.checked = false
     }
 
+    function setAim(mouseX, mouseY) {
+        plotMousePosition(mouseX, mouseY)
+    }
+    function resetAim() {
+        plot.plotMousePosition(-1, -1)
+    }
+
     signal plotScrolled(int indx)
+    signal plotPressed(int indx, int mousex, int mousey)
+    signal plotReleased(int indx)
 
     PinchArea {
         id: pinch2D
@@ -152,6 +161,7 @@ WaterFall {
                 if (mouse.button === Qt.LeftButton) {
                     menuBlock.visible = false
                     plot.plotMousePosition(mouse.x, mouse.y)
+                    plotPressed(indx, mouse.x, mouse.y)
                 }
 
                 if (mouse.button === Qt.RightButton) {
@@ -184,6 +194,7 @@ WaterFall {
 
                 wasMoved = false
                 startMousePos = Qt.point(-1, -1)
+                plotReleased(indx)
             }
 
             onCanceled: {
@@ -195,6 +206,7 @@ WaterFall {
 
                 wasMoved = false
                 startMousePos = Qt.point(-1, -1)
+                plotReleased(indx)
             }
 
             onPositionChanged: {
@@ -214,6 +226,7 @@ WaterFall {
 
                 if (mousearea.pressedButtons & Qt.LeftButton) {
                     plot.plotMousePosition(mouse.x, mouse.y)
+                    plotPressed(indx, mouse.x, mouse.y)
 
                     if (theme.instrumentsGrade === 0) {
                         plot.horScrollEvent(delta)

@@ -83,6 +83,10 @@ ApplicationWindow  {
         menuBar.languageChanged.connect(handleChildSignal)
         waterViewFirst.plotScrolled.connect(handlePlotScrolled)
         waterViewSecond.plotScrolled.connect(handlePlotScrolled)
+        waterViewFirst. plotPressed.connect(handlePlotPressed)
+        waterViewSecond.plotPressed.connect(handlePlotPressed)
+        waterViewFirst. plotReleased.connect(handlePlotReleased)
+        waterViewSecond.plotReleased.connect(handlePlotReleased)
 
         if (Qt.platform.os !== "windows") {
             if (appSettings.isFullScreen) {
@@ -936,11 +940,29 @@ ApplicationWindow  {
     }
 
     function handlePlotScrolled(indx) {
-        if (indx === 1) {
+        if (indx === 1 && waterViewSecond.enabled) {
             waterViewSecond.update()
         }
         if (indx === 2) {
             waterViewFirst.update()
+        }
+    }
+    function handlePlotPressed(indx, mouseX, mouseY) {
+        let toIndx = indx === 1 ? 2 : 1
+        if (indx === 1 && waterViewSecond.enabled) {
+            waterViewSecond.setAim(mouseX, mouseY)
+        }
+        if (indx === 2) {
+            waterViewFirst.setAim(mouseX, mouseY)
+        }
+    }
+    function handlePlotReleased(indx) {
+        let toIndx = indx === 1 ? 2 : 1
+        if (indx === 1 && waterViewSecond.enabled) {
+            waterViewSecond.resetAim()
+        }
+        if (indx === 2) {
+            waterViewFirst.resetAim()
         }
     }
 
