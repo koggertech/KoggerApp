@@ -78,7 +78,7 @@ ApplicationWindow  {
     }
 
     Component.onCompleted: {
-        //theme.updateResCoeff(); // for UI scaling
+        theme.updateResCoeff()
 
         menuBar.languageChanged.connect(handleChildSignal)
         waterViewFirst.plotScrolled.connect(handlePlotScrolled)
@@ -734,6 +734,7 @@ ApplicationWindow  {
                         focus: true
                         instruments: menuBar.instruments
                         indx: 1
+                        is3dVisible: menuBar.is3DVisible
 
                         onTimelinePositionChanged: {
                             historyScroll.value = waterViewFirst.timelinePosition

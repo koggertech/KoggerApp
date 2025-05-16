@@ -9,6 +9,7 @@ import WaterFall 1.0
 WaterFall {
     id: plot
 
+    property bool is3dVisible: false
     property int indx: 0
     property int instruments: instrumentsGradeList.currentIndex
 
@@ -243,26 +244,6 @@ WaterFall {
     }
 
     onHeightChanged: {
-        //if (leftPanel.height > plot.height*0.7) {
-        //    echogramLevelsSlider.heightCoeff = 7
-        //}
-        //if (leftPanel.height > plot.height*0.8) {
-        //    echogramLevelsSlider.heightCoeff = 5
-        //}
-        //if (leftPanel.height > plot.height*0.9) {
-        //    echogramLevelsSlider.heightCoeff = 4
-        //}
-        //if (leftPanel.height > plot.height) {
-        //    echogramLevelsSlider.heightCoeff = 3
-        //}
-
-        if (leftPanel.height > plot.height*0.7) {
-            leftPanel.x = leftPanel.width
-        }
-        else {
-            leftPanel.x = 0
-        }
-
         if(menuBlock.visible) {
             menuBlock.position(menuBlock.x, menuBlock.y)
         }
@@ -283,6 +264,11 @@ WaterFall {
             id: leftPanel
             isOpacityControlled: true
             Layout.alignment: Qt.AlignLeft
+            Layout.leftMargin: (indx === 1 &&
+                                !is3dVisible &&
+                                height > plot.height - 130 * theme.resCoeff)
+                               ? width
+                               : 0
 
             ColumnLayout {
                 id: plotControl
