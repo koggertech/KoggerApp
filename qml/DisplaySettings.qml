@@ -23,6 +23,8 @@ GridLayout {
         Layout.margins: 10
 
         ParamGroup {
+            visible: instruments > 1
+
             groupName: qsTr("Plot")
 
             RowLayout {
@@ -45,10 +47,11 @@ GridLayout {
         }
 
         ParamGroup {
+            visible: instruments > 1
+
             groupName: qsTr("Dataset")
 
             RowLayout {
-                visible: instruments > 1
 
                 CCheck {
                     id: fixBlackStripesCheckButton
