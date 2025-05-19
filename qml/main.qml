@@ -952,7 +952,6 @@ ApplicationWindow  {
             }
             if (mode === 3) {
                 waterViewSecond.update()
-                // waterViewSecond.doHorScrollEvent(param)
             }
         }
         if (indx === 2) {
@@ -963,8 +962,7 @@ ApplicationWindow  {
                 waterViewFirst.doVerScrollEvent(param)
             }
             if (mode === 3) {
-                waterViewSecond.update()
-                // waterViewFirst.doHorScrollEvent(param)
+                waterViewFirst.update()
             }
         }
     }

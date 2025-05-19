@@ -34,10 +34,10 @@ WaterFall {
         plotMousePosition(-1, -1)
     }
     function doVerZoomEvent(paramX) {
-        verZoomEvent(-paramX)
+        verZoomEvent(paramX)
     }
     function doVerScrollEvent(paramX) {
-        verScrollEvent(-paramX)
+        verScrollEvent(paramX)
     }
 
     signal plotScrolled(int indx, int mode, real param)
@@ -79,13 +79,19 @@ WaterFall {
             console.info("onPinchUpdated")
 
             if (movementX) {
-                plot.horScrollEvent(-(pinch.previousCenter.x - pinch.center.x))
+                let val = -(pinch.previousCenter.x - pinch.center.x)
+                plot.horScrollEvent(val)
+                plotScrolled(indx, 3, val)
             }
             else if (movementY) {
-                plot.verScrollEvent(pinch.previousCenter.y - pinch.center.y)
+                let val = pinch.previousCenter.y - pinch.center.y
+                plot.verScrollEvent(val)
+                plotScrolled(indx, 2, val)
             }
             else if (zoomY) {
-                plot.verZoomEvent((pinch.previousScale - pinch.scale)*500.0)
+                let val = (pinch.previousScale - pinch.scale) * 500.0
+                plot.verZoomEvent(val)
+                plotScrolled(indx, 1, val)
             }
             else {
                 if (Math.abs(pinchStartPos.x - pinch.center.x) > thresholdXAxis) {
@@ -235,8 +241,9 @@ WaterFall {
                     plot.plotMousePosition(mouse.x, mouse.y)
                     plotPressed(indx, mouse.x, mouse.y)
 
-                    if (theme.instrumentsGrade === 0) {
+                    if (theme.instrumentsGrade === 0) { // ?
                         plot.horScrollEvent(delta)
+                        plotScrolled(indx, 3, delta)
                     }
                 }
 
@@ -250,16 +257,19 @@ WaterFall {
 
             onWheel: {
                 if (wheel.modifiers & Qt.ControlModifier) {
-                    plotScrolled(indx, 1, wheel.angleDelta.y)
-                    plot.verZoomEvent(-wheel.angleDelta.y)
+                    let val = -wheel.angleDelta.y
+                    plot.verZoomEvent(val)
+                    plotScrolled(indx, 1, val)
                 }
                 else if (wheel.modifiers & Qt.ShiftModifier) {
-                    plotScrolled(indx, 2, wheel.angleDelta.y)
-                    plot.verScrollEvent(-wheel.angleDelta.y)
+                    let val = -wheel.angleDelta.y
+                    plot.verScrollEvent(val)
+                    plotScrolled(indx, 2, val)
                 }
                 else {
-                    plotScrolled(indx, 3, wheel.angleDelta.y)
-                    plot.horScrollEvent(wheel.angleDelta.y)
+                    let val = wheel.angleDelta.y
+                    plot.horScrollEvent(val)
+                    plotScrolled(indx, 3, val)
                 }
             }
         }
