@@ -31,10 +31,16 @@ WaterFall {
         plotMousePosition(mouseX, mouseY)
     }
     function resetAim() {
-        plot.plotMousePosition(-1, -1)
+        plotMousePosition(-1, -1)
+    }
+    function doVerZoomEvent(paramX) {
+        verZoomEvent(-paramX)
+    }
+    function doVerScrollEvent(paramX) {
+        verScrollEvent(-paramX)
     }
 
-    signal plotScrolled(int indx)
+    signal plotScrolled(int indx, int mode, real param)
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
 
@@ -243,15 +249,17 @@ WaterFall {
 
             onWheel: {
                 if (wheel.modifiers & Qt.ControlModifier) {
+                    plotScrolled(indx, 1, wheel.angleDelta.y)
                     plot.verZoomEvent(-wheel.angleDelta.y)
                 }
                 else if (wheel.modifiers & Qt.ShiftModifier) {
+                    plotScrolled(indx, 2, wheel.angleDelta.y)
                     plot.verScrollEvent(-wheel.angleDelta.y)
                 }
                 else {
+                    plotScrolled(indx, 3, wheel.angleDelta.y)
                     plot.horScrollEvent(wheel.angleDelta.y)
                 }
-                plotScrolled(indx)
             }
         }
     }

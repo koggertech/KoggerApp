@@ -939,12 +939,30 @@ ApplicationWindow  {
         selectedLanguageStr = langStr
     }
 
-    function handlePlotScrolled(indx) {
+    function handlePlotScrolled(indx, mode, param) {
         if (indx === 1 && waterViewSecond.enabled) {
-            waterViewSecond.update()
+            if (mode === 1) {
+                waterViewSecond.doVerZoomEvent(param)
+            }
+            if (mode === 2) {
+                waterViewSecond.doVerScrollEvent(param)
+            }
+            if (mode === 3) {
+                waterViewSecond.update()
+                // waterViewSecond.doHorScrollEvent(param)
+            }
         }
         if (indx === 2) {
-            waterViewFirst.update()
+            if (mode === 1) {
+                waterViewFirst.doVerZoomEvent(param)
+            }
+            if (mode === 2) {
+                waterViewFirst.doVerScrollEvent(param)
+            }
+            if (mode === 3) {
+                waterViewSecond.update()
+                // waterViewFirst.doHorScrollEvent(param)
+            }
         }
     }
     function handlePlotPressed(indx, mouseX, mouseY) {
