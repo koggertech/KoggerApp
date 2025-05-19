@@ -1224,6 +1224,26 @@ QString Core::getChannel2Name() const
     return sChName_;
 }
 
+QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
+{
+    QVariantMap retVal;
+
+    int currIndx = indx - 1;
+    int secIndx = currIndx == 0 ? 1 : 0;
+
+    if (plot2dList_.size() < 2) {
+        return retVal;
+    }
+
+    const float currDepth = plot2dList_.at(currIndx)->getDepthByMouseY(mouseY);
+    const int secMouseY = plot2dList_.at(secIndx)->getMouseYByDepth(currDepth);
+    
+    retVal["x"] = mouseX;
+    retVal["y"] = secMouseY;
+    
+    return retVal;
+}
+
 void Core::onFileStopsOpening()
 {
     isFileOpening_ = false;

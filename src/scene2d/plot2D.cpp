@@ -54,6 +54,31 @@ void Plot2D::setDataset(Dataset *dataset)
     }
 }
 
+float Plot2D::getDepthByMouseY(int mouseY) const
+{
+    const float valueRange = cursor_.distance.to - cursor_.distance.from;
+    const float valueScale = static_cast<float>(mouseY) / static_cast<float>(canvas_.height());
+
+    return valueScale * valueRange + cursor_.distance.from;
+}
+
+int Plot2D::getMouseYByDepth(float depth) const
+{
+    const float valueRange = cursor_.distance.to - cursor_.distance.from;
+    const float norm = (depth - cursor_.distance.from) / valueRange;
+
+    int mouseY = static_cast<int>(norm * static_cast<float>(canvas_.height()));
+
+    if (mouseY < 0) { 
+        mouseY = 0;
+    }
+    if (mouseY >= canvas_.height()) {
+        mouseY = canvas_.height() - 1;
+    }
+
+    return mouseY;
+}
+
 void Plot2D::addReRenderPlotIndxs(const QSet<int> &indxs)
 {
     echogram_.addReRenderPlotIndxs(indxs);

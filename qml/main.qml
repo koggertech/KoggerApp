@@ -89,6 +89,7 @@ ApplicationWindow  {
         waterViewSecond.plotReleased.connect(handlePlotReleased)
         waterViewFirst.settingsClicked.connect(onPlotSettingsClicked)
         waterViewSecond.settingsClicked.connect(onPlotSettingsClicked)
+        menuBar.menuBarSettingOpened.connect(onMenuBarSettingsOpened)
 
         if (Qt.platform.os !== "windows") {
             if (appSettings.isFullScreen) {
@@ -968,16 +969,16 @@ ApplicationWindow  {
         }
     }
     function handlePlotPressed(indx, mouseX, mouseY) {
-        let toIndx = indx === 1 ? 2 : 1
+        let r = core.getConvertedMousePos(indx, mouseX, mouseY)
+
         if (indx === 1 && waterViewSecond.enabled) {
-            waterViewSecond.setAim(mouseX, mouseY)
+            waterViewSecond.setAim(r.x, r.y)
         }
         if (indx === 2) {
-            waterViewFirst.setAim(mouseX, mouseY)
+            waterViewFirst.setAim(r.x, r.y)
         }
     }
     function handlePlotReleased(indx) {
-        let toIndx = indx === 1 ? 2 : 1
         if (indx === 1 && waterViewSecond.enabled) {
             waterViewSecond.resetAim()
         }
@@ -987,6 +988,10 @@ ApplicationWindow  {
     }
     function onPlotSettingsClicked() {
         menuBar.closeMenus()
+    }
+    function onMenuBarSettingsOpened() {
+        waterViewFirst.closeSettings()
+        waterViewSecond.closeSettings()
     }
 
     Connections {

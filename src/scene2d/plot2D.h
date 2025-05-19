@@ -33,6 +33,9 @@ public:
 
     void setDataset(Dataset* dataset);
 
+    float getDepthByMouseY(int mouseY) const;
+    int getMouseYByDepth(float depth) const;
+
     void addReRenderPlotIndxs(const QSet<int>& indxs);
 
     void setPlotEnabled(bool state);

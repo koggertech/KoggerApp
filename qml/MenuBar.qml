@@ -19,6 +19,7 @@ Item {
     property string filePath: devSettings.filePath
 
     signal languageChanged(string langStr)
+    signal menuBarSettingOpened()
 
     function updateBottomTrack() {
         appSettings.updateBottomTrack()
@@ -52,15 +53,22 @@ Item {
     }
 
     function itemChangeActive(currentItem) {
-        if(currentItem) {
+        let wasOpen = currentItem.active
+        let lastItemTmp = lastItem
+
+        if (currentItem) {
             currentItem.active = !(currentItem.active)
         }
 
-        if(lastItem && lastItem !== currentItem) {
+        if (lastItem && lastItem !== currentItem) {
             lastItem.active = false
         }
 
         lastItem = currentItem
+
+        if (!wasOpen && currentItem.active && (currentItem === menuSettings || currentItem === menuDisplay)) {
+            menuBarSettingOpened()
+        }
     }
 
     RowLayout {
