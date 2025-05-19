@@ -241,10 +241,10 @@ WaterFall {
                     plot.plotMousePosition(mouse.x, mouse.y)
                     plotPressed(indx, mouse.x, mouse.y)
 
-                    if (theme.instrumentsGrade === 0) { // ?
-                        plot.horScrollEvent(delta)
-                        plotScrolled(indx, 3, delta)
-                    }
+                    //if (theme.instrumentsGrade === 0) { // ?
+                    //    plot.horScrollEvent(delta)
+                    //    plotScrolled(indx, 3, delta)
+                    //}
                 }
 
                 if (mouse.button === Qt.RightButton) {
