@@ -43,6 +43,7 @@ WaterFall {
     signal plotScrolled(int indx, int mode, real param)
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
+    signal settingsClicked()
 
     PinchArea {
         id: pinch2D
@@ -302,6 +303,12 @@ WaterFall {
                     checkedBorderColor: theme.controlBorderColor
                     iconSource: "qrc:/icons/ui/settings.svg"
                     implicitWidth: theme.controlHeight*1.2
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            settingsClicked()
+                        }
+                    }
                 }
 
                 // brightess slider

@@ -87,6 +87,8 @@ ApplicationWindow  {
         waterViewSecond.plotPressed.connect(handlePlotPressed)
         waterViewFirst. plotReleased.connect(handlePlotReleased)
         waterViewSecond.plotReleased.connect(handlePlotReleased)
+        waterViewFirst.settingsClicked.connect(onPlotSettingsClicked)
+        waterViewSecond.settingsClicked.connect(onPlotSettingsClicked)
 
         if (Qt.platform.os !== "windows") {
             if (appSettings.isFullScreen) {
@@ -982,6 +984,9 @@ ApplicationWindow  {
         if (indx === 2) {
             waterViewFirst.resetAim()
         }
+    }
+    function onPlotSettingsClicked() {
+        menuBar.closeMenus()
     }
 
     Connections {
