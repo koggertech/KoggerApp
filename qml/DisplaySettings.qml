@@ -141,30 +141,34 @@ GridLayout {
             property bool autoApplyChange: false
 
             Component.onCompleted: {
-                targetPlot.refreshDistParams(bottomTrackList.currentIndex,
-                                             bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
-                                             bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value* 0.01 : 0,
-                                             bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
-                                             bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
-                                             bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
-                                             bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
-                                             bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
-                                             bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
-                                             bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0)
+                if (targetPlot) {
+                    targetPlot.refreshDistParams(bottomTrackList.currentIndex,
+                                                 bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
+                                                 bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value* 0.01 : 0,
+                                                 bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
+                                                 bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
+                                                 bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
+                                                 bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0)
+                }
             }
 
             function updateProcessing() {
-                targetPlot.doDistProcessing(bottomTrackList.currentIndex,
-                                            bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
-                                            bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value*0.01 : 0,
-                                            bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
-                                            bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
-                                            bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
-                                            bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
-                                            bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0
-                                            );
+                if (targetPlot) {
+                    targetPlot.doDistProcessing(bottomTrackList.currentIndex,
+                                                bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
+                                                bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value*0.01 : 0,
+                                                bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
+                                                bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
+                                                bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
+                                                bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                                bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
+                                                bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
+                                                bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0
+                                                );
+                }
             }
 
             RowLayout {
@@ -181,7 +185,9 @@ GridLayout {
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
 
                         onCurrentIndexChanged: {
-                            targetPlot.setPreset(bottomTrackList.currentIndex)
+                            if (targetPlot) {
+                                targetPlot.setPreset(bottomTrackList.currentIndex)
+                            }
                         }
 
                         Settings {
@@ -199,7 +205,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            }
                         }
                     }
 
@@ -233,7 +241,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackGainSlope.checked) {
-                            targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            }
                         }
                     }
 
@@ -251,7 +261,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            }
                         }
                     }
 
@@ -285,7 +297,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackThreshold.checked) {
-                            targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            }
                         }
                     }
 
@@ -303,7 +317,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            if (targetPlot) {
+                                targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            }
                         }
                     }
 
@@ -321,7 +337,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackWindow.checked) {
-                            targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            if (targetPlot) {
+                                targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            }
                         }
                     }
 
@@ -341,7 +359,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            if (targetPlot) {
+                                targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            }
                         }
                     }
 
@@ -360,7 +380,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackVerticalGap.checked) {
-                            targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            if (targetPlot) {
+                                targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            }
                         }
                     }
 
@@ -379,7 +401,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -416,7 +440,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackMinRange.checked) {
-                            targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -435,7 +461,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -471,7 +499,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackMaxRange.checked) {
-                            targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -490,9 +520,11 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
-                            targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
-                            targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                                targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                                targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            }
                         }
                     }
 
@@ -513,7 +545,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackSensorOffset.checked) {
-                            targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                            }
                         }
                     }
 
@@ -534,7 +568,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackSensorOffset.checked) {
-                            targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                            }
                         }
                     }
 
@@ -555,7 +591,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackSensorOffset.checked) {
-                            targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            }
                         }
                     }
 
@@ -650,7 +688,11 @@ GridLayout {
                     CButton {
                         text: qsTr("Export to CSV")
                         Layout.fillWidth: true
-                        onClicked: core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
+                        onClicked: {
+                            if (targetPlot) {
+                                core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
+                            }
+                        }
                     }
                 }
 

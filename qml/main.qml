@@ -933,7 +933,9 @@ ApplicationWindow  {
         Layout.fillHeight: true
         Keys.forwardTo:    [splitLayer, mousearea3D]
         height: visualisationLayout.height
-        targetPlot: waterViewFirst //??
+        Component.onCompleted: {
+            menuBar.targetPlot = waterViewFirst
+        }
         visible: !showBanner
     }
 
