@@ -174,6 +174,7 @@ ColumnLayout {
                         id: autoSpeedCheckBox
                         visible: LinkType == 1
                         icon.source: "qrc:/icons/ui/refresh.svg"
+                        implicitWidth: theme.controlHeight
 
                         checked: AutoSpeedSelection
 
