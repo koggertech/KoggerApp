@@ -16,9 +16,8 @@ android {
     ANDROID_TARGET_SDK_VERSION = 34
 
     QT += androidextras
-    QT += core-private
-    QT += gui-private
     QT += svg
+    QT -= widgets
 
     CONFIG += mobility
 
@@ -81,11 +80,7 @@ DEFINES += FAKE_COORDS
 
 android {
 SOURCES += \
-    platform/android/src/android.cpp \
-    platform/android/src/qtandroidserialport/src/qserialport.cpp \
-    platform/android/src/qtandroidserialport/src/qserialport_android.cpp \
-    platform/android/src/qtandroidserialport/src/qserialportinfo.cpp \
-    platform/android/src/qtandroidserialport/src/qserialportinfo_android.cpp \
+    platform/android/src/android.cpp
 }
 
 TRANSLATIONS += translations/translation_en.ts \
@@ -158,12 +153,7 @@ HEADERS += \
 
 android {
 HEADERS += \
-    platform/android/src/android.h \
-    platform/android/src/qtandroidserialport/src/qserialport_android_p.h \
-    platform/android/src/qtandroidserialport/src/qserialport_p.h \
-    platform/android/src/qtandroidserialport/src/qserialport.h \
-    platform/android/src/qtandroidserialport/src/qserialportinfo.h \
-    platform/android/src/qtandroidserialport/src/qserialportinfo_p.h
+    platform/android/src/android.h
 }
 
 
@@ -217,8 +207,9 @@ DISTFILES += \
     platform/android/gradle/wrapper/gradle-wrapper.properties \
     platform/android/gradlew \
     platform/android/gradlew.bat \
-    platform/android/res/values/libs.xml \
-    platform/android/src/qtandroidserialport/src/qtandroidserialport.pri
+    platform/android/res/values/libs.xml
+
+    include($$PWD/platform/android/src/qtandroidserialport/src/qtandroidserialport.pri)
 }
 
 win32:RC_FILE = resources/file.rc
