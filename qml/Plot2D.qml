@@ -40,6 +40,12 @@ WaterFall {
         verScrollEvent(paramX)
     }
 
+    onEnabledChanged: {
+        if (enabled) {
+            update();
+        }
+    }
+
     signal plotScrolled(int indx, int mode, real param)
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
@@ -240,11 +246,6 @@ WaterFall {
                 if (mousearea.pressedButtons & Qt.LeftButton) {
                     plot.plotMousePosition(mouse.x, mouse.y)
                     plotPressed(indx, mouse.x, mouse.y)
-
-                    //if (theme.instrumentsGrade === 0) { // ?
-                    //    plot.horScrollEvent(delta)
-                    //    plotScrolled(indx, 3, delta)
-                    //}
                 }
 
                 if (mouse.button === Qt.RightButton) {
