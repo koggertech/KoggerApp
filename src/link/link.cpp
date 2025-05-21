@@ -3,7 +3,6 @@
 
 Link::Link()
     : ioDevice_(nullptr),
-      uuid_(QUuid::createUuid()),
       controlType_(ControlType::kManual),
       linkType_(LinkType::kLinkNone),
       portName_(""),
@@ -41,6 +40,7 @@ void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
     linkType_ = LinkType::kLinkSerial;
     portName_ = portName;
+    uuid_ =  QUuid::createUuidV3(QUuid{}, portName_);
     parity_ = parity;
     baudrate_ = baudrate;
     baudrateSearchList_ = baudrateSearchList; // by default
@@ -77,6 +77,7 @@ void Link::createAsUdp(const QString &address, int sourcePort, int destinationPo
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
+    uuid_ = QUuid::createUuid();
 }
 
 void Link::updateUdpParameters(const QString& address, int sourcePort, int destinationPort)
@@ -117,6 +118,7 @@ void Link::createAsTcp(const QString &address, int sourcePort, int destinationPo
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
+    uuid_ = QUuid::createUuid();
 }
 
 void Link::updateTcpParameters(const QString& address, int sourcePort, int destinationPort)
