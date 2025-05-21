@@ -954,11 +954,19 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
 bool Core::exportPlotAsXTF(QString filePath)
 {
+    if (plot2dList_.empty()) {
+        return false;
+    }
+
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(filePath + "/_" + export_file_name + ".xtf");
-    //QMap<int, DatasetChannel> chs = datasetPtr_->channelsList();
-    //Q_UNUSED(chs);
-    QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), plot2dList_[0]->plotDatasetChannel(), plot2dList_[0]->plotDatasetChannel2());
+
+    auto ch1 = plot2dList_[0]->plotDatasetChannel();
+    auto subCh1 = plot2dList_[0]->plotDatasetSubChannel();
+    auto ch2 = plot2dList_[0]->plotDatasetChannel2();
+    auto subCh2 = plot2dList_[0]->plotDatasetSubChannel2();
+
+    QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), ch1, subCh1, ch2, subCh2);
     logger_.dataByteExport(data_export);
     logger_.endExportStream();
     return true;

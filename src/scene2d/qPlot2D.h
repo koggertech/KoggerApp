@@ -80,7 +80,9 @@ public slots:
     }
 
     ChannelId plotDatasetChannel() { return cursor_.channel1; }
+    uint8_t plotDatasetSubChannel() { return cursor_.subChannel1; }
     ChannelId plotDatasetChannel2() { return cursor_.channel2; }
+    uint8_t plotDatasetSubChannel2() { return cursor_.subChannel2; }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
