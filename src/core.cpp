@@ -1243,11 +1243,25 @@ QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
         return retVal;
     }
 
-    const float currDepth = plot2dList_.at(currIndx)->getDepthByMouseY(mouseY);
-    const int secMouseY = plot2dList_.at(secIndx)->getMouseYByDepth(currDepth);
-    
-    retVal["x"] = mouseX;
-    retVal["y"] = secMouseY;
+    auto& firstPlot =  plot2dList_.at(currIndx);
+    auto& secondPlot =  plot2dList_.at(secIndx);
+
+    bool isCurrHor = firstPlot->isHorizontal();
+    bool isSecHor  = secondPlot->isHorizontal();
+
+    const float currDepth = firstPlot->getDepthByMousePos(mouseX, mouseY, isCurrHor);
+    const int currEpochIndx = firstPlot->getEpochIndxByMousePos(mouseX, mouseY, isCurrHor);
+
+    if (currEpochIndx == -1) {
+        retVal["x"] = mouseX;
+        retVal["y"] = mouseY;
+        return retVal;
+    }
+
+    const auto mousePos = secondPlot->getMousePosByDepthAndEpochIndx(currDepth, currEpochIndx, isSecHor);
+
+    retVal["x"] = mousePos.x();
+    retVal["y"] = mousePos.y();
     
     return retVal;
 }

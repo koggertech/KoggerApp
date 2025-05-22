@@ -32,12 +32,18 @@ public:
 
     void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
-    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  update(); }
+    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; isHorizontal_ = _isHorizontal; update(); }
 
     void plotUpdate() override;
 
     bool eventFilter(QObject *watched, QEvent *event) override final;
     void sendSyncEvent(int epoch_index, QEvent::Type eventType) override final;
+
+    Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
+    Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
+    Q_INVOKABLE void setCursorFrom(float val) { Plot2D::cursor_.distance.from = val; }
+    Q_INVOKABLE void setCursorTo(float val) { Plot2D::cursor_.distance.to = val; }
+    Q_INVOKABLE void setIndx(int indx) { indx_ = indx; }
 
 protected:
     Dataset* m_plot = nullptr;
@@ -129,4 +135,7 @@ public slots:
     void setOffsetX(float value);
     void setOffsetY(float value);
     void setOffsetZ(float value);
+
+private:
+    int indx_ = -1;
 };

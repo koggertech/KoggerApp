@@ -46,6 +46,7 @@ WaterFall {
         }
     }
 
+    signal plotCursorChanged(int indx, real from, real to)
     signal plotScrolled(int indx, int mode, real param)
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
@@ -93,11 +94,13 @@ WaterFall {
                 let val = pinch.previousCenter.y - pinch.center.y
                 plot.verScrollEvent(val)
                 plotScrolled(indx, 2, val)
+                //plotCursorChanged(indx, cursorFrom(), cursorTo())
             }
             else if (zoomY) {
                 let val = (pinch.previousScale - pinch.scale) * 500.0
                 plot.verZoomEvent(val)
                 plotScrolled(indx, 1, val)
+                //plotCursorChanged(indx, cursorFrom(), cursorTo())
             }
             else {
                 if (Math.abs(pinchStartPos.x - pinch.center.x) > thresholdXAxis) {
@@ -261,11 +264,13 @@ WaterFall {
                     let val = -wheel.angleDelta.y
                     plot.verZoomEvent(val)
                     plotScrolled(indx, 1, val)
+                    //plotCursorChanged(indx, cursorFrom(), cursorTo())
                 }
                 else if (wheel.modifiers & Qt.ShiftModifier) {
                     let val = -wheel.angleDelta.y
                     plot.verScrollEvent(val)
                     plotScrolled(indx, 2, val)
+                    //plotCursorChanged(indx, cursorFrom(), cursorTo())
                 }
                 else {
                     let val = wheel.angleDelta.y

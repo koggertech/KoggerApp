@@ -33,8 +33,9 @@ public:
 
     void setDataset(Dataset* dataset);
 
-    float getDepthByMouseY(int mouseY) const;
-    int getMouseYByDepth(float depth) const;
+    float getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
+    int getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
+    QPoint getMousePosByDepthAndEpochIndx(float depth, int epochIndx, bool isHorizontal) const;
 
     void addReRenderPlotIndxs(const QSet<int>& indxs);
 
@@ -70,6 +71,7 @@ public:
     double  getContactDepth();
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
+    void draw(QPainter* painterPtr);
 
     float getCursorDistance() const;
     std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;

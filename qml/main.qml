@@ -81,6 +81,8 @@ ApplicationWindow  {
         theme.updateResCoeff()
 
         menuBar.languageChanged.connect(handleChildSignal)
+        waterViewFirst.plotCursorChanged.connect(handlePlotCursorChanged)
+        waterViewSecond.plotCursorChanged.connect(handlePlotCursorChanged)
         waterViewFirst.plotScrolled.connect(handlePlotScrolled)
         waterViewSecond.plotScrolled.connect(handlePlotScrolled)
         waterViewFirst. plotPressed.connect(handlePlotPressed)
@@ -746,6 +748,10 @@ ApplicationWindow  {
                         onTimelinePositionChanged: {
                             historyScroll.value = waterViewFirst.timelinePosition
                         }
+
+                        Component.onCompleted: {
+                            waterViewFirst.setIndx(waterViewFirst.indx);
+                        }
                     }
 
                     Plot2D {
@@ -767,6 +773,10 @@ ApplicationWindow  {
 
                         onTimelinePositionChanged: {
                             historyScroll.value = waterViewSecond.timelinePosition
+                        }
+
+                        Component.onCompleted: {
+                            waterViewSecond.setIndx(waterViewSecond.indx);
                         }
                     }
 
@@ -942,6 +952,19 @@ ApplicationWindow  {
     function handleChildSignal(langStr) {
         mainview.showBanner = true
         selectedLanguageStr = langStr
+    }
+
+    function handlePlotCursorChanged(indx, from, to) {
+        if (indx === 1 && waterViewSecond.enabled) {
+            waterViewSecond.setCursorFrom(from)
+            waterViewSecond.setCursorTo(to)
+            waterViewSecond.update()
+        }
+        if (indx === 2) {
+            waterViewFirst.setCursorFrom(from)
+            waterViewFirst.setCursorTo(to)
+            waterViewFirst.update()
+        }
     }
 
     function handlePlotScrolled(indx, mode, param) {

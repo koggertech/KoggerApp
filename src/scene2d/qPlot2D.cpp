@@ -1,12 +1,13 @@
 #include "qPlot2D.h"
+
+#include <time.h>
+#include <QMutex>
 #include <QPixmap>
 #include <QPainter>
 #include <QSGSimpleTextureNode>
 #include <QQuickWindow>
-
-#include <QMutex>
-#include "core.h"
 #include "epoch_event.h"
+
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
@@ -22,8 +23,6 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     _isHorizontal = false;
 }
 
-#include <time.h>
-
 void qPlot2D::paint(QPainter *painter)
 {
     if (!Plot2D::plotEnabled()) {
@@ -34,6 +33,7 @@ void qPlot2D::paint(QPainter *painter)
 
     if (m_plot != nullptr && painter != nullptr) {
         Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
+        Plot2D::draw(painter);
         if (Plot2D::getIsContactChanged()) {
             emit contactChanged();
         }
