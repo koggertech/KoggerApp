@@ -475,7 +475,7 @@ void Plot2D::scrollDistance(float ratio)
     plotUpdate();
 }
 
-void Plot2D::setMousePosition(int x, int y) {
+void Plot2D::setMousePosition(int x, int y, bool isSync) {
 
     const int image_width = canvas_.width();
     const int image_height = canvas_.height();
@@ -547,7 +547,7 @@ void Plot2D::setMousePosition(int x, int y) {
 
     sendSyncEvent(epoch_index, EpochSelected2d);
 
-    if(cursor_.tool() > MouseToolNothing) {
+    if(cursor_.tool() > MouseToolNothing && !isSync) {
 
         for(int x_ind = 0; x_ind < x_length; x_ind++) {
             int epoch_index = cursor_.getIndex(x_start + x_ind);

@@ -107,7 +107,7 @@ public:
     void zoomDistance(float ratio);
     void scrollDistance(float ratio);
 
-    void setMousePosition(int x, int y);
+    void setMousePosition(int x, int y, bool isSync = false);
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
     bool setContact(int indx, const QString& text);

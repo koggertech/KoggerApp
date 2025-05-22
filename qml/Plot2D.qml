@@ -28,7 +28,7 @@ WaterFall {
     }
 
     function setAim(mouseX, mouseY) {
-        plotMousePosition(mouseX, mouseY)
+        plotMousePosition(mouseX, mouseY, true)
     }
     function resetAim() {
         plotMousePosition(-1, -1)
@@ -980,6 +980,7 @@ WaterFall {
 
                 if (accepted) {
                     plot.setContact(contactDialog.indx, contactDialog.inputFieldText)
+                    plotScrolled(plot.indx, 3, 0) // just update
                     accepted = false
                 }
                 contactDialog.info = ""
@@ -989,6 +990,7 @@ WaterFall {
 
         onDeleteButtonClicked: {
             plot.deleteContact(contactDialog.indx)
+            plotScrolled(plot.indx, 3, 0) // just update
         }
 
         onCopyButtonClicked: {

@@ -327,15 +327,16 @@ void qPlot2D::setOffsetZ(float value)
     }
 }
 
-void qPlot2D::plotMousePosition(int x, int y) {
+void qPlot2D::plotMousePosition(int x, int y, bool isSync)
+{
     setAimEpochEventState(false);
     if(_isHorizontal) {
-        setMousePosition(x, y);
+        setMousePosition(x, y, isSync);
     } else {
         if(x >=0 && y >= 0) {
-            setMousePosition(height() - y, x);
+            setMousePosition(height() - y, x, isSync);
         } else {
-            setMousePosition(-1, -1);
+            setMousePosition(-1, -1, isSync);
         }
 
     }
