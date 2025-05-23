@@ -27,10 +27,23 @@ void TextRenderer::setColor(const QColor &color)
         m_color = color;
 }
 
+QColor TextRenderer::getColor() const
+{
+    return m_color;
+}
+
 void TextRenderer::setBackgroundColor(const QColor &color)
 {
     if (m_backgroundColor != color)
         m_backgroundColor = color;
+}
+
+int TextRenderer::getCharPixelHeight() const
+{
+    if (m_chars.contains('0')) {
+        return m_chars['0'].size.y();
+    }
+    return m_fontPixelSize;
 }
 
 void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool drawBackground,
@@ -182,8 +195,6 @@ void TextRenderer::render(const QString &text, float scale, QVector2D pos, bool 
 
 void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, const QVector3D &dir, QOpenGLFunctions *ctx, const QMatrix4x4 &pvm, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap)
 {
-    Q_UNUSED(dir);
-
     auto shaderProgram = shaderProgramMap.value("text", nullptr);
 
     if (!shaderProgram) {
@@ -206,19 +217,23 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
 
     shaderProgram->setUniformValue("mvp_matrix", pvm);
 
+    float cs = dir.normalized().x();
+    float sn = dir.normalized().y();
+
     auto it = text.begin();
     while(it != text.end()){
         uint16_t c = it->unicode();
 
-        if(!m_chars.contains(c))
+        if (!m_chars.contains(c)) {
+            ++it;
             continue;
+        }
 
         auto ch = m_chars.value(c);
 
-        float pen_x = pos.x() + ch.bearing.x() * scale;
-        float pen_y = pos.y() - (ch.size.y() - ch.bearing.y()) * scale;
-        float pen_z = pos.z();
-
+        float pen_x = ch.bearing.x() * scale;
+        float pen_y = -ch.bearing.y() * scale;
+        float pen_z = 0.0f;
 
         const float w = ch.size.x() * scale;
         const float h = ch.size.y() * scale;
@@ -232,6 +247,16 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
             { pen_x + w, pen_y + h, pen_z, 1.0, 1.0 },
             { pen_x + w, pen_y,     pen_z, 1.0, 0.0 }
         };
+
+        for (int i = 0; i < 6; ++i) {
+            float vx = vertices[i][0];
+            float vy = vertices[i][1];
+            float rotated_x = vx * cs - vy * sn;
+            float rotated_y = vx * sn + vy * cs;
+            vertices[i][0] = rotated_x + pos.x();
+            vertices[i][1] = rotated_y + pos.y();
+            vertices[i][2] = pos.z();
+        }
 
         if (ch.texture) {
             ch.texture->bind();
@@ -252,7 +277,10 @@ void TextRenderer::render3D(const QString &text, float scale, QVector3D pos, con
             ch.texture->release();
         }
 
-        pos.setX(pos.x() + (ch.advance >> 6) * scale);
+        float adv = (ch.advance >> 6) * scale;
+        pos.setX(pos.x() + adv * cs);
+        pos.setY(pos.y() + adv * sn);
+
         it++;
     }
 
