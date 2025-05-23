@@ -956,13 +956,11 @@ ApplicationWindow  {
 
     function handlePlotCursorChanged(indx, from, to) {
         if (indx === 1 && waterViewSecond.enabled) {
-            waterViewSecond.setCursorFrom(from)
-            waterViewSecond.setCursorTo(to)
+            waterViewSecond.setCursorFromTo(from, to)
             waterViewSecond.update()
         }
         if (indx === 2) {
-            waterViewFirst.setCursorFrom(from)
-            waterViewFirst.setCursorTo(to)
+            waterViewFirst.setCursorFromTo(from, to)
             waterViewFirst.update()
         }
     }

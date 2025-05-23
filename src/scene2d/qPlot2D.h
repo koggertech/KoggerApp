@@ -41,8 +41,7 @@ public:
 
     Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
     Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
-    Q_INVOKABLE void setCursorFrom(float val) { Plot2D::cursor_.distance.from = val; }
-    Q_INVOKABLE void setCursorTo(float val) { Plot2D::cursor_.distance.to = val; }
+    Q_INVOKABLE void setCursorFromTo(float from, float to) { cursor_.distance.mode = AutoRangeNone; Plot2D::cursor_.distance.from = from; Plot2D::cursor_.distance.to = to; }
     Q_INVOKABLE void setIndx(int indx) { indx_ = indx; }
 
 protected:
