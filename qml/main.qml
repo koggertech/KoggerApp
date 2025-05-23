@@ -81,10 +81,11 @@ ApplicationWindow  {
         theme.updateResCoeff()
 
         menuBar.languageChanged.connect(handleChildSignal)
+        menuBar.syncPlotEnabled.connect(handleSyncPlotEnabled)
         waterViewFirst.plotCursorChanged.connect(handlePlotCursorChanged)
         waterViewSecond.plotCursorChanged.connect(handlePlotCursorChanged)
-        waterViewFirst.plotScrolled.connect(handlePlotScrolled)
-        waterViewSecond.plotScrolled.connect(handlePlotScrolled)
+        waterViewFirst.updateOtherPlot.connect(handleUpdateOtherPlot)
+        waterViewSecond.updateOtherPlot.connect(handleUpdateOtherPlot)
         waterViewFirst. plotPressed.connect(handlePlotPressed)
         waterViewSecond.plotPressed.connect(handlePlotPressed)
         waterViewFirst. plotReleased.connect(handlePlotReleased)
@@ -771,12 +772,19 @@ ApplicationWindow  {
 
                         isEnabled: enabled
 
+                        onVisibleChanged: {
+                            if (visible) {
+                                setCursorFromTo(waterViewFirst.cursorFrom(), waterViewFirst.cursorTo())
+                                update()
+                            }
+                        }
+
                         onTimelinePositionChanged: {
-                            historyScroll.value = waterViewSecond.timelinePosition
+                            historyScroll.value = timelinePosition
                         }
 
                         Component.onCompleted: {
-                            waterViewSecond.setIndx(waterViewSecond.indx);
+                            setIndx(waterViewSecond.indx);
                         }
                     }
 
@@ -954,6 +962,11 @@ ApplicationWindow  {
         selectedLanguageStr = langStr
     }
 
+    function handleSyncPlotEnabled() {
+        waterViewSecond.setCursorFromTo(waterViewFirst.cursorFrom(), waterViewFirst.cursorTo())
+        waterViewSecond.update()
+    }
+
     function handlePlotCursorChanged(indx, from, to) {
         if (!menuBar.syncPlots) {
             return;
@@ -969,32 +982,12 @@ ApplicationWindow  {
         }
     }
 
-    function handlePlotScrolled(indx, mode, param) {
-        if (!menuBar.syncPlots) {
-            return;
-        }
-
+    function handleUpdateOtherPlot(indx) {
         if (indx === 1 && waterViewSecond.enabled) {
-            if (mode === 1) {
-                waterViewSecond.doVerZoomEvent(param)
-            }
-            if (mode === 2) {
-                waterViewSecond.doVerScrollEvent(param)
-            }
-            if (mode === 3) {
-                waterViewSecond.update()
-            }
+            waterViewSecond.update()
         }
         if (indx === 2) {
-            if (mode === 1) {
-                waterViewFirst.doVerZoomEvent(param)
-            }
-            if (mode === 2) {
-                waterViewFirst.doVerScrollEvent(param)
-            }
-            if (mode === 3) {
-                waterViewFirst.update()
-            }
+            waterViewFirst.update()
         }
     }
     function handlePlotPressed(indx, mouseX, mouseY) {

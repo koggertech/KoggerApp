@@ -21,6 +21,7 @@ Item {
 
     signal languageChanged(string langStr)
     signal menuBarSettingOpened()
+    signal syncPlotEnabled()
 
     function updateBottomTrack() {
         appSettings.updateBottomTrack()
@@ -224,7 +225,12 @@ Item {
         languageChanged(langStr)
     }
 
+    function handleSyncPlotEnabled() {
+        syncPlotEnabled()
+    }
+
     Component.onCompleted: {
         appSettings.languageChanged.connect(handleChildSignal)
+        appSettings.syncPlotEnabled.connect(handleSyncPlotEnabled)
     }
 }

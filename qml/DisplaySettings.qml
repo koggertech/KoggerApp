@@ -9,10 +9,11 @@ GridLayout {
 
     property int numPlots: numPlotsSpinBox.value
     property bool syncPlots: plotSyncCheckBox.checked
-    property int instruments:  instrumentsGradeList.currentIndex
+    property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
 
     signal languageChanged(string langStr)
+    signal syncPlotEnabled()
 
     function updateBottomTrack() {
         updateBottomTrackButton.clicked()
@@ -52,6 +53,12 @@ GridLayout {
                 checked: false
                 text: qsTr("Synchronization")
                 visible: numPlotsSpinBox.value === 2
+
+                onCheckedChanged: {
+                    if (checked) {
+                        syncPlotEnabled()
+                    }
+                }
 
                 Settings {
                     property alias plotSyncCheckBox: plotSyncCheckBox.checked

@@ -14,6 +14,7 @@ MenuScroll {
     property int menuWidth: 200
 
     signal languageChanged(string langStr)
+    signal syncPlotEnabled()
 
     function updateBottomTrack() {
         displaySettings.updateBottomTrack()
@@ -33,7 +34,12 @@ MenuScroll {
         languageChanged(langStr)
     }
 
+    function handleSyncPlotEnabled() {
+        syncPlotEnabled()
+    }
+
     Component.onCompleted: {
         displaySettings.languageChanged.connect(handleChildSignal)
+        displaySettings.syncPlotEnabled.connect(handleSyncPlotEnabled)
     }
 }

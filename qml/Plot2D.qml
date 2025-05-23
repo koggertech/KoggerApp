@@ -47,7 +47,7 @@ WaterFall {
     }
 
     signal plotCursorChanged(int indx, real from, real to)
-    signal plotScrolled(int indx, int mode, real param)
+    signal updateOtherPlot(int indx)
     signal plotPressed(int indx, int mousex, int mousey)
     signal plotReleased(int indx)
     signal settingsClicked()
@@ -88,18 +88,16 @@ WaterFall {
             if (movementX) {
                 let val = -(pinch.previousCenter.x - pinch.center.x)
                 plot.horScrollEvent(val)
-                plotScrolled(indx, 3, val)
+                updateOtherPlot(indx)
             }
             else if (movementY) {
                 let val = pinch.previousCenter.y - pinch.center.y
                 plot.verScrollEvent(val)
-                //plotScrolled(indx, 2, val)
                 plotCursorChanged(indx, cursorFrom(), cursorTo())
             }
             else if (zoomY) {
                 let val = (pinch.previousScale - pinch.scale) * 500.0
                 plot.verZoomEvent(val)
-                //plotScrolled(indx, 1, val)
                 plotCursorChanged(indx, cursorFrom(), cursorTo())
             }
             else {
@@ -263,19 +261,17 @@ WaterFall {
                 if (wheel.modifiers & Qt.ControlModifier) {
                     let val = -wheel.angleDelta.y
                     plot.verZoomEvent(val)
-                    //plotScrolled(indx, 1, val)
                     plotCursorChanged(indx, cursorFrom(), cursorTo())
                 }
                 else if (wheel.modifiers & Qt.ShiftModifier) {
                     let val = -wheel.angleDelta.y
                     plot.verScrollEvent(val)
-                    //plotScrolled(indx, 2, val)
                     plotCursorChanged(indx, cursorFrom(), cursorTo())
                 }
                 else {
                     let val = wheel.angleDelta.y
                     plot.horScrollEvent(val)
-                    plotScrolled(indx, 3, val)
+                    updateOtherPlot(indx)
                 }
             }
         }
@@ -986,7 +982,7 @@ WaterFall {
 
                 if (accepted) {
                     plot.setContact(contactDialog.indx, contactDialog.inputFieldText)
-                    plotScrolled(plot.indx, 3, 0) // just update
+                    updateOtherPlot(plot.indx)
                     accepted = false
                 }
                 contactDialog.info = ""
@@ -996,7 +992,7 @@ WaterFall {
 
         onDeleteButtonClicked: {
             plot.deleteContact(contactDialog.indx)
-            plotScrolled(plot.indx, 3, 0) // just update
+            updateOtherPlot(plot.indx)
         }
 
         onCopyButtonClicked: {
