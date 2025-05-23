@@ -6,12 +6,15 @@ import Qt.labs.settings 1.1
 
 MenuScroll {
     id: scrollBar
-    property bool is2DHorizontal: displaySettings.is2DHorizontal
-    property int instruments:  displaySettings.instruments
+
+    property int numPlots: displaySettings.numPlots
+    property bool syncPlots: displaySettings.syncPlots
+    property int instruments: displaySettings.instruments
     property var targetPlot: null
     property int menuWidth: 200
 
     signal languageChanged(string langStr)
+    signal syncPlotEnabled()
 
     function updateBottomTrack() {
         displaySettings.updateBottomTrack()
@@ -31,7 +34,12 @@ MenuScroll {
         languageChanged(langStr)
     }
 
+    function handleSyncPlotEnabled() {
+        syncPlotEnabled()
+    }
+
     Component.onCompleted: {
         displaySettings.languageChanged.connect(handleChildSignal)
+        displaySettings.syncPlotEnabled.connect(handleSyncPlotEnabled)
     }
 }

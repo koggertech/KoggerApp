@@ -16,7 +16,7 @@ public:
 
     XTFFILEHEADER header;
 
-    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, const ChannelId& channel2 = CHANNEL_NONE) {
+    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, uint8_t subChannel1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0) {
         QByteArray xtfdata;
         XTFFILEHEADER fileheader;
 
@@ -117,8 +117,8 @@ public:
                 pingheader.SensorYcoordinate = pingheader.ShipYcoordinate;
                 pingheader.SensorXcoordinate = pingheader.ShipXcoordinate;
 
-                Epoch::Echogram* chart1 = epoch->chart(channel1);
-                Epoch::Echogram* chart2 = epoch->chart(channel2);
+                Epoch::Echogram* chart1 = epoch->chart(channel1, subChannel1);
+                Epoch::Echogram* chart2 = epoch->chart(channel2, subChannel2);
                 QVector<uint8_t> raw1;
                 QVector<uint8_t> raw2;
 

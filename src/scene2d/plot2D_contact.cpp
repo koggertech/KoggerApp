@@ -44,7 +44,19 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 
                 if (locRect.contains(QPointF(mouseX_, mouseY_))) {
                     indx_ = indx;
-                    position_ = QPoint(xPos + shiftXY * 0.75, yPos + shiftXY *0.75);
+
+                    if (isHorizontal_) {
+                        position_ = QPoint(xPos + shiftXY * 0.75f, yPos + shiftXY * 0.75f);
+
+                    }
+                    else {
+                        float fixedX = xPos + shiftXY;
+                        float fixedY = yPos + shiftXY;
+                        const float currDepth = parent->getDepthByMousePos(fixedX, fixedY, true);
+                        const int currEpochIndx = parent->getEpochIndxByMousePos(fixedX, fixedY, true);
+                        position_ = parent->getMousePosByDepthAndEpochIndx(currDepth, currEpochIndx, false);
+                    }
+
                     info_ = epoch->contact_.info;
                     lat_ = epoch->contact_.lat;
                     lon_ = epoch->contact_.lon;

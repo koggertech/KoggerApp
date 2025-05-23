@@ -1,12 +1,13 @@
 #include "qPlot2D.h"
+
+#include <time.h>
+#include <QMutex>
 #include <QPixmap>
 #include <QPainter>
 #include <QSGSimpleTextureNode>
 #include <QQuickWindow>
-
-#include <QMutex>
-#include "core.h"
 #include "epoch_event.h"
+
 
 qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
@@ -22,13 +23,17 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     _isHorizontal = false;
 }
 
-#include <time.h>
+void qPlot2D::paint(QPainter *painter)
+{
+    if (!Plot2D::plotEnabled()) {
+        return;
+    }
 
-void qPlot2D::paint(QPainter *painter) {
     clock_t start = clock();
 
     if (m_plot != nullptr && painter != nullptr) {
         Plot2D::getImage((int)width(), (int)height(), painter, _isHorizontal);
+        Plot2D::draw(painter);
         if (Plot2D::getIsContactChanged()) {
             emit contactChanged();
         }
@@ -84,7 +89,12 @@ void qPlot2D::setPlot(Dataset *dataset) {
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
 }
 
-void qPlot2D::plotUpdate() {
+void qPlot2D::plotUpdate()
+{
+    if (!Plot2D::plotEnabled()) {
+        return;
+    }
+
     static QMutex mutex;
     if(!mutex.tryLock()) {
 //        qInfo("HHHHHHHHHHHHHHHHHHHHHHHHHH==================HHHHHHHHHHHHHHHHHHHHHHHHHH");
@@ -317,15 +327,16 @@ void qPlot2D::setOffsetZ(float value)
     }
 }
 
-void qPlot2D::plotMousePosition(int x, int y) {
+void qPlot2D::plotMousePosition(int x, int y, bool isSync)
+{
     setAimEpochEventState(false);
     if(_isHorizontal) {
-        setMousePosition(x, y);
+        setMousePosition(x, y, isSync);
     } else {
         if(x >=0 && y >= 0) {
-            setMousePosition(height() - y, x);
+            setMousePosition(height() - y, x, isSync);
         } else {
-            setMousePosition(-1, -1);
+            setMousePosition(-1, -1, isSync);
         }
 
     }

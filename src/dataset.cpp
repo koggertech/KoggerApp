@@ -7,7 +7,6 @@ extern Core core;
 
 
 Epoch::Epoch()
-    : wasValidlyRenderedInEchogram_(false)
 {
     charts_.clear();
     flags.distAvail = false;
@@ -300,16 +299,6 @@ float Epoch::getInterpFirstChannelDist() const
 float Epoch::getInterpSecondChannelDist() const
 {
     return interpData_.distSecondChannel;
-}
-
-bool Epoch::getWasValidlyRenderedInEchogram() const
-{
-    return wasValidlyRenderedInEchogram_;
-}
-
-void Epoch::setWasValidlyRenderedInEchogram(bool state)
-{
-    wasValidlyRenderedInEchogram_ = state;
 }
 
 // write to all
@@ -682,6 +671,8 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
 
     // BLACK STRIPES PROCESSOR
     if (bSProc_->getState()) {
+        QSet<int> updatedIndxs;
+
         // resize eth data
         if (channelsToResizeEthData_.contains(channelId)) {
             channelsToResizeEthData_.remove(channelId);
@@ -697,10 +688,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
             auto getPreChart = [&](int i, uint8_t subChannelId) -> const Epoch::Echogram* {
                 const int preEpIndx = std::max(0, i - 1);
                 if (auto* preEpoch = &pool_[preEpIndx]; preEpoch) {
-                    if (auto keysCh = preEpoch->chartChannels(); !keysCh.empty()) {
-                        auto& firstChId = keysCh.first();
-                        return  preEpoch->chart(firstChId, subChannelId);
-                    }
+                    return preEpoch->chart(channelId, subChannelId);
                 }
 
                 return nullptr;
@@ -737,7 +725,9 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
                         }
                     }
 
-                    bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kForward, iResolution, iOffset);
+                    if (bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kForward, iResolution, iOffset)) {
+                        updatedIndxs.insert(i);
+                    }
                 }
             }
         }
@@ -760,9 +750,16 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
                         }
                     }
 
-                    bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kBackward, iResolution, iOffset);
+                    if (bSProc_->update(channelId, iEpoch, BlackStripesProcessor::Direction::kBackward, iResolution, iOffset)) {
+                        updatedIndxs.insert(i);
+                    }
                 }
             }
+        }
+
+
+        if (!updatedIndxs.empty()) {
+            emit redrawEpochs(updatedIndxs);
         }
     }
 
@@ -1729,7 +1726,6 @@ void Dataset::updateEpochWithChart(const ChannelId &channelId, const ChartParame
     epoch.setChart(channelId, data, resolution, offset);
     epoch.setRecParameters(channelId, recParam);
     epoch.setChartParameters(channelId, chartParams);
-    epoch.setWasValidlyRenderedInEchogram(false);
 }
 
 std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QString& name) const

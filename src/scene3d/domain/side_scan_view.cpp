@@ -480,10 +480,12 @@ void SideScanView::clear(bool force)
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
     currIndxSec_ = 0;
-    segFSubChannelId_ = 0;
-    segSSubChannelId_ = 0;
     lastMatParams_ = MatrixParams();
     if (force) {
+        segFChannelId_ = ChannelId();
+        segSChannelId_ = ChannelId();
+        segFSubChannelId_ = 0;
+        segSSubChannelId_ = 0;
         manualSettedChannels_ = false;
     }
     workMode_ = Mode::kUndefined;

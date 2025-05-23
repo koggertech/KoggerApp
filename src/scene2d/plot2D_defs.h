@@ -43,7 +43,7 @@ typedef struct DatasetCursor {
 
     std::vector<int> indexes;
 
-    inline int getIndex(int col) {
+    inline int getIndex(int col) const {
         if(col < (int)indexes.size() && col >= 0) {
             return indexes[col];
         }

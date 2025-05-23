@@ -126,6 +126,7 @@ public slots:
     bool getIsSideScanPerformanceMode() const;
     bool getIsSeparateReading() const;
     void onChannelsUpdated();
+    void onRedrawEpochs(const QSet<int>& indxs);
 
 #if defined(FAKE_COORDS)
     Q_INVOKABLE void setPosZeroing(bool state);
@@ -133,6 +134,7 @@ public slots:
 
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
+    Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
 signals:
     void connectionChanged(bool duplex = false);

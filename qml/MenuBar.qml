@@ -13,12 +13,15 @@ Item {
     //property bool isConsoleVisible: consoleEnable.checked // TODO
     property bool is3DVisible: settings3DButton.checked
     property bool is2DVisible: visible2dButton.checked
-    property bool is2DHorizontal: appSettings.is2DHorizontal
+    property int numPlots: appSettings.numPlots
+    property bool syncPlots: appSettings.syncPlots
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
     property string filePath: devSettings.filePath
 
     signal languageChanged(string langStr)
+    signal menuBarSettingOpened()
+    signal syncPlotEnabled()
 
     function updateBottomTrack() {
         appSettings.updateBottomTrack()
@@ -52,15 +55,22 @@ Item {
     }
 
     function itemChangeActive(currentItem) {
-        if(currentItem) {
+        let wasOpen = currentItem.active
+        let lastItemTmp = lastItem
+
+        if (currentItem) {
             currentItem.active = !(currentItem.active)
         }
 
-        if(lastItem && lastItem !== currentItem) {
+        if (lastItem && lastItem !== currentItem) {
             lastItem.active = false
         }
 
         lastItem = currentItem
+
+        if (!wasOpen && currentItem.active && (currentItem === menuSettings || currentItem === menuDisplay)) {
+            menuBarSettingOpened()
+        }
     }
 
     RowLayout {
@@ -186,7 +196,7 @@ Item {
             y:0
         }
 
-        DiplaySettingsViewer {
+        DisplaySettingsViewer {
             id: appSettings
             Layout.alignment: Qt.AlignTop
             visible: menuDisplay.active
@@ -215,7 +225,12 @@ Item {
         languageChanged(langStr)
     }
 
+    function handleSyncPlotEnabled() {
+        syncPlotEnabled()
+    }
+
     Component.onCompleted: {
         appSettings.languageChanged.connect(handleChildSignal)
+        appSettings.syncPlotEnabled.connect(handleSyncPlotEnabled)
     }
 }

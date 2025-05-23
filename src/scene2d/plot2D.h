@@ -33,6 +33,14 @@ public:
 
     void setDataset(Dataset* dataset);
 
+    float getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
+    int getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
+    QPoint getMousePosByDepthAndEpochIndx(float depth, int epochIndx, bool isHorizontal) const;
+
+    void addReRenderPlotIndxs(const QSet<int>& indxs);
+
+    void setPlotEnabled(bool state);
+    bool plotEnabled() const;
 
     bool isHorizontal();
     void setHorizontal(bool is_horizontal);
@@ -63,6 +71,7 @@ public:
     double  getContactDepth();
 
     bool getImage(int width, int height, QPainter* painter, bool is_horizontal);
+    void draw(QPainter* painterPtr);
 
     float getCursorDistance() const;
     std::tuple<ChannelId, uint8_t, QString> getSelectedChannelId(float cursorDistance = 0.0f) const;
@@ -100,7 +109,7 @@ public:
     void zoomDistance(float ratio);
     void scrollDistance(float ratio);
 
-    void setMousePosition(int x, int y);
+    void setMousePosition(int x, int y, bool isSync = false);
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
     bool setContact(int indx, const QString& text);
@@ -139,4 +148,7 @@ protected:
     Dataset* datasetPtr_;
     std::function<void()> pendingBtpLambda_;
     bool isHorizontal_;
+
+private:
+    bool isEnabled_;
 };

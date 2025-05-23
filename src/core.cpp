@@ -30,6 +30,7 @@ Core::Core() :
     createLinkManagerConnections();
     createControllers();
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
+    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
 }
 
 Core::~Core()
@@ -953,11 +954,19 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
 
 bool Core::exportPlotAsXTF(QString filePath)
 {
+    if (plot2dList_.empty()) {
+        return false;
+    }
+
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(filePath + "/_" + export_file_name + ".xtf");
-    //QMap<int, DatasetChannel> chs = datasetPtr_->channelsList();
-    //Q_UNUSED(chs);
-    QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), plot2dList_[0]->plotDatasetChannel(), plot2dList_[0]->plotDatasetChannel2());
+
+    auto ch1 = plot2dList_[0]->plotDatasetChannel();
+    auto subCh1 = plot2dList_[0]->plotDatasetSubChannel();
+    auto ch2 = plot2dList_[0]->plotDatasetChannel2();
+    auto subCh2 = plot2dList_[0]->plotDatasetSubChannel2();
+
+    QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), ch1, subCh1, ch2, subCh2);
     logger_.dataByteExport(data_export);
     logger_.endExportStream();
     return true;
@@ -1077,6 +1086,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     usblViewControlMenuController_->setQmlEngine(object);
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    onChannelsUpdated();
 }
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
@@ -1187,21 +1198,28 @@ void Core::onChannelsUpdated()
         return;
     }
 
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (i == 0 && plot2dList_.at(i)) {
-            if (chSize >= 2) {
-                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
-                fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
-                sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
-            }
-            if (chSize == 1) {
-                plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
-                fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
-            }
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        if (chSize >= 2) {
+            plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
+            fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
+            sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
+        }
+        if (chSize == 1) {
+            plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
+            fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
         }
     }
 
     emit channelListUpdated();
+}
+
+void Core::onRedrawEpochs(const QSet<int>& indxs)
+{
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
 }
 
 QString Core::getChannel1Name() const
@@ -1212,6 +1230,40 @@ QString Core::getChannel1Name() const
 QString Core::getChannel2Name() const
 {
     return sChName_;
+}
+
+QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
+{
+    QVariantMap retVal;
+
+    int currIndx = indx - 1;
+    int secIndx = currIndx == 0 ? 1 : 0;
+
+    if (plot2dList_.size() < 2) {
+        return retVal;
+    }
+
+    auto& firstPlot =  plot2dList_.at(currIndx);
+    auto& secondPlot =  plot2dList_.at(secIndx);
+
+    bool isCurrHor = firstPlot->isHorizontal();
+    bool isSecHor  = secondPlot->isHorizontal();
+
+    const float currDepth = firstPlot->getDepthByMousePos(mouseX, mouseY, isCurrHor);
+    const int currEpochIndx = firstPlot->getEpochIndxByMousePos(mouseX, mouseY, isCurrHor);
+
+    if (currEpochIndx == -1) {
+        retVal["x"] = mouseX;
+        retVal["y"] = mouseY;
+        return retVal;
+    }
+
+    const auto mousePos = secondPlot->getMousePosByDepthAndEpochIndx(currDepth, currEpochIndx, isSecHor);
+
+    retVal["x"] = mousePos.x();
+    retVal["y"] = mousePos.y();
+    
+    return retVal;
 }
 
 void Core::onFileStopsOpening()

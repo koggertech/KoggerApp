@@ -132,6 +132,11 @@ void Plot2DEchogram::resetCash()
     _cashFlags.resetCash = true;
 }
 
+void Plot2DEchogram::addReRenderPlotIndxs(const QSet<int> &indxs)
+{
+    reRenderPlotIndxs_.unite(indxs);
+}
+
 int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int height)
 {
     auto& cursor = parent->cursor();
@@ -221,14 +226,16 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
         int pool_index_safe = dataset->validIndex(pool_index);
         if(pool_index_safe >= 0) {
 
-            bool wasValidlyRendered = false;
-            auto* datasource = dataset->fromIndex(pool_index_safe);
-            if (datasource) {
-                wasValidlyRendered = datasource->getWasValidlyRenderedInEchogram();
+            bool wasValidlyRendered = true;
+            if (reRenderPlotIndxs_.contains(pool_index_safe)) {
+                reRenderPlotIndxs_.remove(pool_index_safe);
+                wasValidlyRendered = false;
             }
 
+            auto* datasource = dataset->fromIndex(pool_index_safe);
             const int cash_index = _cash[column].poolIndex;
-            if(is_cash_notvalid || pool_index_safe != cash_index || !wasValidlyRendered) {
+
+            if (is_cash_notvalid || pool_index_safe != cash_index || !wasValidlyRendered) {
                 _cash[column].poolIndex = pool_index_safe;
 
                 if(datasource != NULL) {
@@ -285,7 +292,6 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
                     }
                 }
 
-                datasource->setWasValidlyRenderedInEchogram(true);
             }
         } else {
             if(_cash[column].state != CashLine::CashStateEraced) {

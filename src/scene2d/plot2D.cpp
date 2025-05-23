@@ -3,9 +3,10 @@
 
 
 Plot2D::Plot2D()
-    : datasetPtr_(nullptr),
-      pendingBtpLambda_(nullptr),
-    isHorizontal_(true)
+    : datasetPtr_(nullptr)
+    , pendingBtpLambda_(nullptr)
+    , isHorizontal_(true)
+    , isEnabled_(true)
 {
     echogram_.setVisible(true);
     attitude_.setVisible(true);
@@ -53,6 +54,80 @@ void Plot2D::setDataset(Dataset *dataset)
     }
 }
 
+float Plot2D::getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const
+{
+    int currPos = isHorizontal ? mouseY : mouseX;
+
+    const float valueRange = cursor_.distance.to - cursor_.distance.from;
+    const float valueScale = static_cast<float>(currPos) / static_cast<float>(canvas_.height());
+
+    return valueScale * valueRange + cursor_.distance.from;
+}
+
+int Plot2D::getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const
+{
+    const int width = canvas_.width();
+
+    if (width == 0 || cursor_.indexes.empty()) {
+        return -1;
+    }
+
+    int column = isHorizontal ? mouseX : (width - 1 - mouseY);
+    int indxsSize = cursor_.indexes.size();
+    if (column < 0 || column >= width || column >= indxsSize) {
+        return -1;
+    }
+
+    return cursor_.indexes[column];
+}
+
+QPoint Plot2D::getMousePosByDepthAndEpochIndx(float depth, int epochIndx, bool isHorizontal) const
+{
+    if (!datasetPtr_ || canvas_.width() <= 0 || canvas_.height() <= 0) {
+        return QPoint(-1, -1);
+    }
+
+    int column = -1;
+    int sizeIndxs = cursor_.indexes.size();
+    for (int i = 0; i < sizeIndxs; ++i) {
+        if (cursor_.indexes[i] == epochIndx) {
+            column = i;
+            break;
+        }
+    }
+
+    if (column == -1) {
+        return QPoint(-1, -1);
+    }
+
+    const float valueRange = cursor_.distance.to - cursor_.distance.from;
+    const float norm = (depth - cursor_.distance.from) / valueRange;
+    int depthPix = static_cast<int>(norm * canvas_.height());
+    depthPix = std::clamp(depthPix, 0, canvas_.height() - 1);
+
+    if (isHorizontal) {
+        return QPoint(column, depthPix);
+    }
+    else {
+        return QPoint(depthPix, canvas_.width() - 1 - column);
+    }
+}
+
+void Plot2D::addReRenderPlotIndxs(const QSet<int> &indxs)
+{
+    echogram_.addReRenderPlotIndxs(indxs);
+}
+
+void Plot2D::setPlotEnabled(bool state)
+{
+    isEnabled_ = state;
+}
+
+bool Plot2D::plotEnabled() const
+{
+    return isEnabled_;
+}
+
 bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizontal)
 {
     if (is_horizontal) {
@@ -67,7 +142,12 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
     reindexingCursor();
     reRangeDistance();
 
-//    painter->setCompositionMode(QPainter::RasterOp_SourceXorDestination);
+    return true;
+}
+
+void Plot2D::draw(QPainter *painterPtr)
+{
+    //    painter->setCompositionMode(QPainter::RasterOp_SourceXorDestination);
     echogram_.draw(this, datasetPtr_);
     attitude_.draw(this, datasetPtr_);
     encoder_.draw(this, datasetPtr_);
@@ -79,13 +159,11 @@ bool Plot2D::getImage(int width, int height, QPainter* painter, bool is_horizont
     gnss_.draw(this, datasetPtr_);
     quadrature_.draw(this, datasetPtr_);
 
-    painter->setCompositionMode(QPainter::CompositionMode_Exclusion);
+    painterPtr->setCompositionMode(QPainter::CompositionMode_Exclusion);
     grid_.draw(this, datasetPtr_);
     aim_.draw(this, datasetPtr_);
 
     contacts_.draw(this, datasetPtr_);
-
-    return true;
 }
 
 bool Plot2D::isHorizontal()
@@ -96,6 +174,7 @@ bool Plot2D::isHorizontal()
 void Plot2D::setHorizontal(bool is_horizontal)
 {
     isHorizontal_ = is_horizontal;
+    contacts_.setIsHorizontal(isHorizontal_);
 }
 
 void Plot2D::setAimEpochEventState(bool state)
@@ -434,7 +513,7 @@ void Plot2D::scrollDistance(float ratio)
     plotUpdate();
 }
 
-void Plot2D::setMousePosition(int x, int y) {
+void Plot2D::setMousePosition(int x, int y, bool isSync) {
 
     const int image_width = canvas_.width();
     const int image_height = canvas_.height();
@@ -506,7 +585,7 @@ void Plot2D::setMousePosition(int x, int y) {
 
     sendSyncEvent(epoch_index, EpochSelected2d);
 
-    if(cursor_.tool() > MouseToolNothing) {
+    if(cursor_.tool() > MouseToolNothing && !isSync) {
 
         for(int x_ind = 0; x_ind < x_length; x_ind++) {
             int epoch_index = cursor_.getIndex(x_start + x_ind);
@@ -697,7 +776,17 @@ void Plot2D::updateContact()
 
 void Plot2D::onCursorMoved(int x, int y)
 {
-    contacts_.setMousePos(x, y);
+    if (isHorizontal_) {
+        contacts_.setMousePos(x, y);
+    } 
+    else {
+        const int horX = canvas_.width() - 1 - y;
+        const int horY = x;
+
+        const int clampedX = std::clamp(horX, 0, canvas_.width() - 1);
+        const int clampedY = std::clamp(horY, 0, canvas_.height() - 1);
+        contacts_.setMousePos(clampedX, clampedY);
+    }
 
     plotUpdate();
 }

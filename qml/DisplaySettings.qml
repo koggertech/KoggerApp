@@ -7,12 +7,13 @@ import Qt.labs.settings 1.1
 GridLayout {
     id: control
 
-    property bool is2DHorizontal: horisontalVertical.checked
-    property int instruments:  instrumentsGradeList.currentIndex
-
+    property int numPlots: numPlotsSpinBox.value
+    property bool syncPlots: plotSyncCheckBox.checked
+    property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
 
     signal languageChanged(string langStr)
+    signal syncPlotEnabled()
 
     function updateBottomTrack() {
         updateBottomTrackButton.clicked()
@@ -24,553 +25,53 @@ GridLayout {
         Layout.margins: 10
 
         ParamGroup {
+            visible: instruments > 1
+
             groupName: qsTr("Plot")
 
             RowLayout {
-                id: rowDataset
-                visible: instruments > 1
-                //CCombo  {
-                //    id: datasetCombo
-                //    Layout.fillWidth: true
-                //      Layout.preferredWidth: columnItem.width/3
-                //    visible: true
-                //    onPressedChanged: {
-                //    }
-
-                //    Component.onCompleted: {
-                //        model = [qsTr("Dataset #1")]
-                //    }
-                //}
-
                 CText {
-                    text: qsTr("Channels:")
-                }
-
-                function setChannelNamesToBackend() {
-                    targetPlot.plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
-                    core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
-                }
-
-                CCombo  {
-                    id: channel1Combo
-
-                    property bool suppressTextSignal: false
-
                     Layout.fillWidth: true
-                    Layout.preferredWidth: rowDataset.width / 3
-                    visible: true
-
-                    onCurrentTextChanged: {
-                        if (suppressTextSignal) {
-                            return
-                        }
-
-                        rowDataset.setChannelNamesToBackend()
-                    }
-
-                    Component.onCompleted: {
-                        model = dataset.channelsNameList()
-
-                        let index = model.indexOf(core.ch1Name)
-                        if (index >= 0) {
-                            channel1Combo.currentIndex = index
-                        }
-                    }
-
-                    Connections {
-                        target: core
-                        function onChannelListUpdated() {
-                            let list = dataset.channelsNameList()
-
-                            channel1Combo.suppressTextSignal = true
-
-                            channel1Combo.model = []
-                            channel1Combo.model = list
-
-                            let newIndex = list.indexOf(core.ch1Name)
-                            if (newIndex >= 0) {
-                                channel1Combo.currentIndex = newIndex
-                            }
-                            else {
-                                channel1Combo.currentIndex = 0
-                            }
-
-                            channel1Combo.suppressTextSignal = false
-                        }
-                    }
+                    text: qsTr("Number of graphs:")
                 }
-
-                CCombo  {
-                    id: channel2Combo
-
-                    property bool suppressTextSignal: false
-
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: rowDataset.width / 3
-                    visible: true
-
-                    onCurrentTextChanged: {
-                        if (suppressTextSignal) {
-                            return
-                        }
-
-                        rowDataset.setChannelNamesToBackend()
-                    }
-
-
-                    Component.onCompleted: {
-                        model = dataset.channelsNameList()
-
-                        let index = model.indexOf(core.ch2Name)
-                        if (index >= 0) {
-                            channel2Combo.currentIndex = index
-                        }
-                    }
-
-                    Connections {
-                        target: core
-                        function onChannelListUpdated() {
-                            let list = dataset.channelsNameList()
-
-                            channel2Combo.suppressTextSignal = true
-
-                            channel2Combo.model = []
-                            channel2Combo.model = list
-
-                            let newIndex = list.indexOf(core.ch2Name)
-
-                            if (newIndex >= 0) {
-                                channel2Combo.currentIndex = newIndex
-                            }
-                            else {
-                                channel2Combo.currentIndex = 0
-                            }
-
-                            channel2Combo.suppressTextSignal = false
-                        }
-                    }
-                }
-            }
-
-            RowLayout {
-                CCheck {
-                    id: echogramVisible
-                    Layout.fillWidth: true
-                    //                        Layout.preferredWidth: 150
-                    checked: true
-                    text: qsTr("Echogram")
-                    onCheckedChanged: targetPlot.plotEchogramVisible(checked)
-                    Component.onCompleted: targetPlot.plotEchogramVisible(checked)
-                }
-
-                CCombo  {
-                    id: echoTheme
-                    //                        Layout.fillWidth: true
-                    Layout.preferredWidth: 150
-                    model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
-                    currentIndex: 0
-
-                    onCurrentIndexChanged: targetPlot.plotEchogramTheme(currentIndex)
-                    Component.onCompleted: targetPlot.plotEchogramTheme(currentIndex)
-
-                    Settings {
-                        property alias waterfallThemeId: echoTheme.currentIndex
-                    }
-                }
-
-                CCombo  {
-                    id: echogramTypesList
-                    //                        Layout.fillWidth: true
-                    Layout.preferredWidth: 150
-                    model: [qsTr("Raw"), qsTr("Side-Scan")]
-                    currentIndex: 0
-
-                    onCurrentIndexChanged: targetPlot.plotEchogramCompensation(currentIndex) // TODO
-                    Component.onCompleted: targetPlot.plotEchogramCompensation(currentIndex) // TODO
-
-                    Settings {
-                        property alias echogramTypesList: echogramTypesList.currentIndex
-                    }
-                }
-            }
-
-            RowLayout {
-                visible: instruments > 0
-                CCheck {
-                    id: bottomTrackVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Bottom-Track")
-                    onCheckedChanged: targetPlot.plotBottomTrackVisible(checked)
-                    Component.onCompleted: targetPlot.plotBottomTrackVisible(checked)
-                }
-
-                CCombo  {
-                    id: bottomTrackThemeList
-                    //                        Layout.fillWidth: true
-                    //                        Layout.preferredWidth: 150
-                    model: [qsTr("Line1"), qsTr("Line2"), qsTr("Dot1"), qsTr("Dot2"), qsTr("DotLine")]
-                    currentIndex: 1
-
-                    onCurrentIndexChanged: targetPlot.plotBottomTrackTheme(currentIndex)
-                    Component.onCompleted: targetPlot.plotBottomTrackTheme(currentIndex)
-
-                    Settings {
-                        property alias bottomTrackThemeList: bottomTrackThemeList.currentIndex
-                    }
-                }
-            }
-
-            RowLayout {
-                CCheck {
-                    id: rangefinderVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Rangefinder")
-                    onCheckedChanged: targetPlot.plotRangefinderVisible(checked)
-                    Component.onCompleted: targetPlot.plotRangefinderVisible(checked)
-                }
-
-                CCombo  {
-                    id: rangefinderThemeList
-                    model: [qsTr("Text"), qsTr("Line"), qsTr("Dot")]
-                    currentIndex: 1
-
-                    onCurrentIndexChanged: targetPlot.plotRangefinderTheme(currentIndex)
-                    Component.onCompleted: targetPlot.plotRangefinderTheme(currentIndex)
-
-                    Settings {
-                        property alias rangefinderThemeList: rangefinderThemeList.currentIndex
-                    }
-                }
-            }
-
-
-            CCheck {
-                visible: instruments > 1
-                id: ahrsVisible
-                text: qsTr("Attitude")
-                onCheckedChanged: targetPlot.plotAttitudeVisible(checked)
-                Component.onCompleted: targetPlot.plotAttitudeVisible(checked)
-            }
-
-            RowLayout {
-                visible: instruments > 1
-                id: dopplerBeamVisibleGroup
-                spacing: 0
-                function updateDopplerBeamVisible() {
-                    var beamfilter = dopplerBeam1Visible.checked*1 + dopplerBeam2Visible.checked*2 + dopplerBeam3Visible.checked*4 + dopplerBeam4Visible.checked*8
-                    targetPlot.plotDopplerBeamVisible(dopplerBeamVisible.checked,
-                                           beamfilter)
-                }
-
-                CCheck {
-                    id: dopplerBeamVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Doppler Beams")
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                    Component.onCompleted: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-
-                CCheck {
-                    id: dopplerBeam1Visible
-                    enabled: true
-                    checked: true
-                    text: "1"
-
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-
-                CCheck {
-                    id: dopplerBeam2Visible
-                    leftPadding: 0
-                    enabled: true
-                    checked: true
-                    text: "2"
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-
-                CCheck {
-                    id: dopplerBeam3Visible
-                    leftPadding: 0
-                    enabled: true
-                    checked: true
-                    text: "3"
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-
-                CCheck {
-                    id: dopplerBeam4Visible
-                    leftPadding: 0
-                    enabled: true
-                    checked: true
-                    text: "4"
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-
-                CCheck {
-                    id: dopplerBeamAmpVisible
-                    enabled: true
-                    checked: true
-                    text: "A"
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-
-                CCheck {
-                    id: dopplerBeamModeVisible
-                    leftPadding: 0
-                    enabled: true
-                    checked: true
-                    text: "M"
-                    onCheckedChanged: dopplerBeamVisibleGroup.updateDopplerBeamVisible()
-                }
-            }
-
-            RowLayout {
-                visible: instruments > 1
-                spacing: 0
-                CCheck {
-                    id: dopplerInstrumentVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Doppler Instrument")
-                    onCheckedChanged: targetPlot.plotDopplerInstrumentVisible(checked)
-                    Component.onCompleted: targetPlot.plotDopplerInstrumentVisible(checked)
-                }
-
-                CCheck {
-                    id: dopplerInstrumentXVisible
-                    enabled: false
-                    checked: true
-                    text: "X"
-                    //                        onCheckedChanged: targetPlot.setDopplerInstrumentVis(checked)
-                    //                        Component.onCompleted: targetPlot.setDopplerInstrumentVis(checked)
-                }
-
-                CCheck {
-                    id: dopplerInstrumentYVisible
-                    enabled: false
-                    checked: true
-                    text: "Y"
-                    //                        onCheckedChanged: targetPlot.setDopplerInstrumentVis(checked)
-                    //                        Component.onCompleted: targetPlot.setDopplerInstrumentVis(checked)
-                }
-
-                CCheck {
-                    id: dopplerInstrumentZVisible
-                    enabled: false
-                    checked: true
-                    text: "Z"
-                    //                        onCheckedChanged: targetPlot.setDopplerInstrumentVis(checked)
-                    //                        Component.onCompleted: targetPlot.setDopplerInstrumentVis(checked)
-                }
-            }
-
-            RowLayout {
-                visible: instruments > 1
-                CCheck {
-                    id: adcpVisible
-                    enabled: false
-                    Layout.fillWidth: true
-                    text: qsTr("Doppler Profiler")
-                }
-            }
-
-            RowLayout {
-                visible: instruments > 1
-                CCheck {
-                    id: gnssVisible
-                    checked: false
-                    Layout.fillWidth: true
-                    text: qsTr("GNSS data")
-
-                    onCheckedChanged: targetPlot.plotGNSSVisible(checked, 1)
-                    Component.onCompleted: targetPlot.plotGNSSVisible(checked, 1)
-
-                    Settings {
-                        property alias gnssVisible: gnssVisible.checked
-                    }
-                }
-            }
-
-
-            RowLayout {
-                RowLayout {
-                    CCheck {
-                        id: gridVisible
-                        Layout.fillWidth: true
-                        text: qsTr("Grid")
-                        onCheckedChanged: targetPlot.plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
-                    }
-                    CCheck {
-                        id: fillWidthGrid
-                        Layout.fillWidth: true
-                        text: qsTr("fill")
-                        onCheckedChanged: targetPlot.plotGridFillWidth(checked)
-                        visible: gridVisible.checked
-
-                        Component.onCompleted: {
-                            targetPlot.plotGridFillWidth(checked)
-                        }
-                        Settings {
-                            property alias fillWidthGrid: fillWidthGrid.checked
-                        }
-                    }
-                }
-
                 SpinBoxCustom {
-                    id: gridNumber
+                    id: numPlotsSpinBox
                     from: 1
-                    to: 24
+                    to: 2
                     stepSize: 1
-                    value: 5
-
-                    onValueChanged: targetPlot.plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
-                    Component.onCompleted: targetPlot.plotGridVerticalNumber(gridNumber.value*gridVisible.checked)
+                    value: 1
 
                     Settings {
-                        property alias gridNumber: gridNumber.value
-                    }
-                }
-            }
-
-            RowLayout {
-                visible: instruments > 1
-
-                CCheck {
-                    id: angleVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Angle range, °")
-                    onCheckedChanged: targetPlot.plotAngleVisibility(checked)
-                    Component.onCompleted: targetPlot.plotAngleVisibility(checked)
-
-                    Settings {
-                        property alias angleVisible: angleVisible.checked
-                    }
-                }
-
-                SpinBoxCustom {
-                    id: angleRange
-                    from: 1
-                    to: 360
-                    stepSize: 1
-                    value: 45
-
-                    onValueChanged: targetPlot.plotAngleRange(angleRange.currValue)
-                    Component.onCompleted: targetPlot.plotAngleRange(angleRange.currValue)
-
-                    property int currValue: value
-
-                    validator: DoubleValidator {
-                        bottom: Math.min(angleRange.from, angleRange.to)
-                        top:  Math.max(angleRange.from, angleRange.to)
-                    }
-
-                    textFromValue: function(value, locale) {
-                        return Number(value).toLocaleString(locale, 'f', 0)
-                    }
-
-                    valueFromText: function(text, locale) {
-                        return Number.fromLocaleString(locale, text)
-                    }
-
-                    onCurrValueChanged: targetPlot.plotAngleRange(currValue)
-
-                    Settings {
-                        property alias angleRange: angleRange.value
-                    }
-                }
-            }
-
-
-            RowLayout {
-                visible: instruments > 1
-                CCheck {
-                    id: velocityVisible
-                    Layout.fillWidth: true
-                    text: qsTr("Velocity range, m/s")
-                    onCheckedChanged: targetPlot.plotVelocityVisible(checked)
-                    Component.onCompleted: targetPlot.plotVelocityVisible(checked)
-
-                    Settings {
-                        property alias velocityVisible: velocityVisible.checked
-                    }
-                }
-
-                SpinBoxCustom {
-                    id: velocityRange
-                    from: 500
-                    to: 1000*8
-                    stepSize: 500
-                    value: 5
-
-                    onValueChanged: targetPlot.plotVelocityRange(velocityRange.realValue)
-                    Component.onCompleted: targetPlot.plotVelocityRange(velocityRange.realValue)
-
-                    property int decimals: 1
-                    property real realValue: value / 1000
-
-                    validator: DoubleValidator {
-                        bottom: Math.min(velocityRange.from, velocityRange.to)
-                        top:  Math.max(velocityRange.from, velocityRange.to)
-                    }
-
-                    textFromValue: function(value, locale) {
-                        return Number(value / 1000).toLocaleString(locale, 'f', decimals)
-                    }
-
-                    valueFromText: function(text, locale) {
-                        return Number.fromLocaleString(locale, text) * 1000
-                    }
-
-                    onRealValueChanged: targetPlot.plotVelocityRange(realValue)
-
-                    Settings {
-                        property alias velocityRange: velocityRange.value
-                    }
-                }
-            }
-
-            RowLayout {
-                id: distanceAutoRangeRow
-                function distanceAutorangeMode() {
-                    targetPlot.plotDistanceAutoRange(distanceAutoRange.checked ? distanceAutoRangeList.currentIndex : -1)
-                }
-
-                CCheck {
-                    id: distanceAutoRange
-                    checked: true
-                    Layout.fillWidth: true
-                    text: qsTr("Distance auto range")
-
-                    onCheckedChanged: {
-                        distanceAutoRangeRow.distanceAutorangeMode()
-                    }
-                    Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
-
-                    Settings {
-                        property alias distanceAutoRange: distanceAutoRange.checked
-                    }
-                }
-
-                CCombo  {
-                    id: distanceAutoRangeList
-                    model: [qsTr("Last data       "), qsTr("Last on screen"), qsTr("Max on screen")]
-                    currentIndex: 0
-                    onCurrentIndexChanged: distanceAutoRangeRow.distanceAutorangeMode()
-                    Component.onCompleted: distanceAutoRangeRow.distanceAutorangeMode()
-
-                    Settings {
-                        property alias distanceAutoRangeList: distanceAutoRangeList.currentIndex
+                        property alias numPlotsSpinBox: numPlotsSpinBox.value
                     }
                 }
             }
 
             CCheck {
-                id: horisontalVertical
-                checked: true
-                text: qsTr("Horizontal")
+                id: plotSyncCheckBox
+                Layout.fillWidth: true
+                checked: false
+                text: qsTr("Synchronization")
+                visible: numPlotsSpinBox.value === 2
+
+                onCheckedChanged: {
+                    if (checked) {
+                        syncPlotEnabled()
+                    }
+                }
+
+                Settings {
+                    property alias plotSyncCheckBox: plotSyncCheckBox.checked
+                }
             }
+        }
+
+        ParamGroup {
+            visible: instruments > 1
+
+            groupName: qsTr("Dataset")
 
             RowLayout {
-                visible: instruments > 1
 
                 CCheck {
                     id: fixBlackStripesCheckButton
@@ -650,17 +151,6 @@ GridLayout {
                     }
                 }
             }
-
-            Settings {
-                property alias echogramVisible: echogramVisible.checked
-                property alias rangefinderVisible: rangefinderVisible.checked
-                property alias postProcVisible: bottomTrackVisible.checked
-                property alias ahrsVisible: ahrsVisible.checked
-                property alias gridVisible: gridVisible.checked
-                property alias dopplerBeamVisible: dopplerBeamVisible.checked
-                property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
-                property alias horisontalVertical: horisontalVertical.checked
-            }
         }
 
         ParamGroup {
@@ -671,30 +161,34 @@ GridLayout {
             property bool autoApplyChange: false
 
             Component.onCompleted: {
-                targetPlot.refreshDistParams(bottomTrackList.currentIndex,
-                                             bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
-                                             bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value* 0.01 : 0,
-                                             bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
-                                             bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
-                                             bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
-                                             bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
-                                             bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
-                                             bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
-                                             bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0)
+                if (targetPlot) {
+                    targetPlot.refreshDistParams(bottomTrackList.currentIndex,
+                                                 bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
+                                                 bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value* 0.01 : 0,
+                                                 bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
+                                                 bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
+                                                 bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
+                                                 bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0)
+                }
             }
 
             function updateProcessing() {
-                targetPlot.doDistProcessing(bottomTrackList.currentIndex,
-                                            bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
-                                            bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value*0.01 : 0,
-                                            bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
-                                            bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
-                                            bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
-                                            bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
-                                            bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
-                                            bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0
-                                            );
+                if (targetPlot) {
+                    targetPlot.doDistProcessing(bottomTrackList.currentIndex,
+                                                bottomTrackWindow.checked ? bottomTrackWindowValue.value : 1,
+                                                bottomTrackVerticalGap.checked ? bottomTrackVerticalGapValue.value*0.01 : 0,
+                                                bottomTrackMinRange.checked ? bottomTrackMinRangeValue.realValue : 0,
+                                                bottomTrackMaxRange.checked ? bottomTrackMaxRangeValue.realValue : 1000,
+                                                bottomTrackGainSlope.checked ? bottomTrackGainSlopeValue.realValue : 1,
+                                                bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
+                                                bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
+                                                bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
+                                                bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0
+                                                );
+                }
             }
 
             RowLayout {
@@ -711,7 +205,9 @@ GridLayout {
 //                        onCurrentIndexChanged: bottomTrackProcessingGroup.updateProcessing()
 
                         onCurrentIndexChanged: {
-                            targetPlot.setPreset(bottomTrackList.currentIndex)
+                            if (targetPlot) {
+                                targetPlot.setPreset(bottomTrackList.currentIndex)
+                            }
                         }
 
                         Settings {
@@ -729,7 +225,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            }
                         }
                     }
 
@@ -763,7 +261,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackGainSlope.checked) {
-                            targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setGainSlope(bottomTrackGainSlopeValue.realValue)
+                            }
                         }
                     }
 
@@ -781,7 +281,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            }
                         }
                     }
 
@@ -815,7 +317,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackThreshold.checked) {
-                            targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setThreshold(bottomTrackThresholdValue.realValue)
+                            }
                         }
                     }
 
@@ -833,7 +337,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            if (targetPlot) {
+                                targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            }
                         }
                     }
 
@@ -851,7 +357,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackWindow.checked) {
-                            targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            if (targetPlot) {
+                                targetPlot.setWindowSize(bottomTrackWindowValue.value)
+                            }
                         }
                     }
 
@@ -871,7 +379,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            if (targetPlot) {
+                                targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            }
                         }
                     }
 
@@ -890,7 +400,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackVerticalGap.checked) {
-                            targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            if (targetPlot) {
+                                targetPlot.setVerticalGap(bottomTrackVerticalGapValue.value * 0.01)
+                            }
                         }
                     }
 
@@ -909,7 +421,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -946,7 +460,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackMinRange.checked) {
-                            targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMin(bottomTrackMinRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -965,7 +481,9 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -1001,7 +519,9 @@ GridLayout {
 
                     onRealValueChanged: {
                         if (bottomTrackMaxRange.checked) {
-                            targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            if (targetPlot) {
+                                targetPlot.setRangeMax(bottomTrackMaxRangeValue.realValue)
+                            }
                         }
                     }
 
@@ -1020,9 +540,11 @@ GridLayout {
 
                     onCheckedChanged: {
                         if (checked) {
-                            targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
-                            targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
-                            targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                                targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                                targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            }
                         }
                     }
 
@@ -1043,7 +565,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackSensorOffset.checked) {
-                            targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetX(bottomTrackSensorOffsetValueX.value * 0.001)
+                            }
                         }
                     }
 
@@ -1064,7 +588,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackSensorOffset.checked) {
-                            targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetY(bottomTrackSensorOffsetValueY.value * 0.001)
+                            }
                         }
                     }
 
@@ -1085,7 +611,9 @@ GridLayout {
 
                     onValueChanged: {
                         if (bottomTrackSensorOffset.checked) {
-                            targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            if (targetPlot) {
+                                targetPlot.setOffsetZ(bottomTrackSensorOffsetValueZ.value * 0.001)
+                            }
                         }
                     }
 
@@ -1180,7 +708,11 @@ GridLayout {
                     CButton {
                         text: qsTr("Export to CSV")
                         Layout.fillWidth: true
-                        onClicked: core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
+                        onClicked: {
+                            if (targetPlot) {
+                                core.exportPlotAsCVS(exportPathText.text, targetPlot.plotDatasetChannel(), exportDecimation.checked ? exportDecimationValue.value : 0);
+                            }
+                        }
                     }
                 }
 
