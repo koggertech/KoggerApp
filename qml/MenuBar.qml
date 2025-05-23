@@ -14,6 +14,7 @@ Item {
     property bool is3DVisible: settings3DButton.checked
     property bool is2DVisible: visible2dButton.checked
     property int numPlots: appSettings.numPlots
+    property bool syncPlots: appSettings.syncPlots
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
     property string filePath: devSettings.filePath

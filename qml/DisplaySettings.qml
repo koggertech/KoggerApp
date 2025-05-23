@@ -8,6 +8,7 @@ GridLayout {
     id: control
 
     property int numPlots: numPlotsSpinBox.value
+    property bool syncPlots: plotSyncCheckBox.checked
     property int instruments:  instrumentsGradeList.currentIndex
     property var targetPlot: null
 
@@ -42,6 +43,18 @@ GridLayout {
                     Settings {
                         property alias numPlotsSpinBox: numPlotsSpinBox.value
                     }
+                }
+            }
+
+            CCheck {
+                id: plotSyncCheckBox
+                Layout.fillWidth: true
+                checked: false
+                text: qsTr("Synchronization")
+                visible: numPlotsSpinBox.value === 2
+
+                Settings {
+                    property alias plotSyncCheckBox: plotSyncCheckBox.checked
                 }
             }
         }

@@ -955,6 +955,10 @@ ApplicationWindow  {
     }
 
     function handlePlotCursorChanged(indx, from, to) {
+        if (!menuBar.syncPlots) {
+            return;
+        }
+
         if (indx === 1 && waterViewSecond.enabled) {
             waterViewSecond.setCursorFromTo(from, to)
             waterViewSecond.update()
@@ -966,6 +970,10 @@ ApplicationWindow  {
     }
 
     function handlePlotScrolled(indx, mode, param) {
+        if (!menuBar.syncPlots) {
+            return;
+        }
+
         if (indx === 1 && waterViewSecond.enabled) {
             if (mode === 1) {
                 waterViewSecond.doVerZoomEvent(param)

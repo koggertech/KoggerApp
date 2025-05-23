@@ -8,6 +8,7 @@ MenuScroll {
     id: scrollBar
 
     property int numPlots: displaySettings.numPlots
+    property bool syncPlots: displaySettings.syncPlots
     property int instruments: displaySettings.instruments
     property var targetPlot: null
     property int menuWidth: 200
