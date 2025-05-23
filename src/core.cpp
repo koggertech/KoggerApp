@@ -30,6 +30,7 @@ Core::Core() :
     createLinkManagerConnections();
     createControllers();
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
+    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
 }
 
 Core::~Core()
@@ -330,6 +331,11 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 if (file.open(QIODevice::ReadOnly)) {
                     openXTF(file.readAll());
                 }
+
+                openedfilePath_ = localfilePath;
+
+                onFileStopsOpening();
+
                 return;
             }
         }
@@ -340,9 +346,9 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         openedfilePath_ = localfilePath;
 
-        if (scene3dViewPtr_)
+        if (scene3dViewPtr_) {
             scene3dViewPtr_->fitAllInView();
-
+        }
         datasetPtr_->setRefPositionByFirstValid();
         datasetPtr_->usblProcessing();
 
@@ -390,9 +396,8 @@ void Core::onFileOpened()
 }
 #endif
 
-bool Core::openXTF(QByteArray data)
+bool Core::openXTF(const QByteArray& data)
 {
-    datasetPtr_->resetDataset();
     datasetPtr_->setState(Dataset::DatasetState::kFile);
     converterXtf_.toDataset(data, getDatasetPtr());
 
@@ -400,12 +405,29 @@ bool Core::openXTF(QByteArray data)
     consoleInfo("XTF programm name:" + QString(converterXtf_.header.RecordingProgramName));
     consoleInfo("XTF sonar name:" + QString(converterXtf_.header.SonarName));
 
-    QMap<int, DatasetChannel> chs = datasetPtr_->channelsList();
+    const QVector<DatasetChannel> channelList = datasetPtr_->channelsList();
+    if (channelList.size() < 2) {
+        return false;
+    }
+
+    auto linkNames = getLinkNames();
+    QString fChName;
+    QString sChName;
+    if (linkNames.contains(channelList.at(0).channelId_.uuid)) {
+        fChName = channelList.at(0).portName_;
+    }
+    if (linkNames.contains(channelList.at(1).channelId_.uuid)) {
+        sChName = channelList.at(0).portName_;
+    }
+
+    if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
+        plot2dList_.at(0)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
+    }
 
     for (int i = 0; i < plot2dList_.size(); i++) {
-        if (plot2dList_.at(i) != NULL && i < chs.size()) {
+        if (plot2dList_.at(i) != NULL && i < channelList.size()) {
             if (i == 0) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
+                plot2dList_.at(i)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
             }
         }
     }
@@ -531,16 +553,15 @@ bool Core::closeProxy()
 bool Core::upgradeFW(const QString& name, QObject* dev)
 {
     QUrl url(name);
-    QFile m_file;
-    url.isLocalFile() ? m_file.setFileName(url.toLocalFile()) : m_file.setFileName(name);
+    QFile file(url.isLocalFile() ? url.toLocalFile() : name);
 
-    bool is_open = false;
-    is_open = m_file.open(QIODevice::ReadOnly);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
 
-    if(is_open == false) {  return false;  }
-
-    DevQProperty* dev_q = (DevQProperty*)(dev);
-    dev_q->sendUpdateFW(m_file.readAll());
+    if (auto* devQProp = dynamic_cast<DevQProperty*>(dev); devQProp) {
+        devQProp->sendUpdateFW(file.readAll());
+    }
 
     return true;
 }
@@ -621,7 +642,7 @@ bool Core::exportComplexToCSV(QString file_path) {
                 int data_size = signal.data.size();
 
                 QString row_data;
-                row_data.append(QString("%1,%2").arg(i).arg(ch.key()));
+                row_data.append(QString("%1,%2").arg(i).arg(ch.key().toShortName()));
                 row_data.append(QString(",%1").arg(signal.globalOffset));
                 row_data.append(QString(",%1").arg(signal.sampleRate));
 
@@ -681,7 +702,7 @@ bool Core::exportUSBLToCSV(QString filePath)
     return true;
 }
 
-bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
+bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation)
 {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(filePath + "/" + export_file_name + ".csv");
@@ -829,7 +850,7 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
             epoch->distAvail() ? row_data.append(QString("%1,").arg((float)epoch->rangeFinder())) : row_data.append("0,");
 
         if (bottom_depth) {
-            prev_dist_proc = epoch->distProccesing(channel);
+            prev_dist_proc = epoch->distProccesing(channelId);
             row_data.append(QString("%1,").arg((float)(prev_dist_proc)));
         }
 
@@ -890,7 +911,7 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
             row_data.append(",");
         }
 
-        Epoch::Echogram* sensor = epoch->chart(channel);
+        Epoch::Echogram* sensor = epoch->chart(channelId);
 
         if (sonar_height) {
             if (sensor != NULL && isfinite(sensor->sensorPosition.ned.d)) {
@@ -934,11 +955,19 @@ bool Core::exportPlotAsCVS(QString filePath, int channel, float decimation)
 
 bool Core::exportPlotAsXTF(QString filePath)
 {
+    if (plot2dList_.empty()) {
+        return false;
+    }
+
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(filePath + "/_" + export_file_name + ".xtf");
-    //QMap<int, DatasetChannel> chs = datasetPtr_->channelsList();
-    //Q_UNUSED(chs);
-    QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), plot2dList_[0]->plotDatasetChannel(), plot2dList_[0]->plotDatasetChannel2());
+
+    auto ch1 = plot2dList_[0]->plotDatasetChannel();
+    auto subCh1 = plot2dList_[0]->plotDatasetSubChannel();
+    auto ch2 = plot2dList_[0]->plotDatasetChannel2();
+    auto subCh2 = plot2dList_[0]->plotDatasetSubChannel2();
+
+    QByteArray data_export = converterXtf_.toXTF(getDatasetPtr(), ch1, subCh1, ch2, subCh2);
     logger_.dataByteExport(data_export);
     logger_.endExportStream();
     return true;
@@ -1061,12 +1090,21 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     isobathsControlMenuController_->setQmlEngine(object);
     isobathsControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
+    onChannelsUpdated();
 }
 
-void Core::setSideScanChannels(int firstChId, int secondChId)
+void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
 {
-    if (scene3dViewPtr_ && scene3dViewPtr_->getSideScanViewPtr()) {
-        scene3dViewPtr_->getSideScanViewPtr()->setChannels(firstChId, secondChId);
+    if (scene3dViewPtr_ && scene3dViewPtr_->getSideScanViewPtr() && datasetPtr_) {
+
+        auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);
+        auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(secondChStr);
+
+        Q_UNUSED(name1)
+        Q_UNUSED(name2)
+
+        scene3dViewPtr_->getSideScanViewPtr()->setChannels(ch1, sub1, ch2, sub2);
     }
 }
 
@@ -1128,17 +1166,114 @@ bool Core::getIsSeparateReading() const
 
 void Core::onChannelsUpdated()
 {
-    QList<DatasetChannel> chs = datasetPtr_->channelsList().values();
-    for (int i = 0; i < plot2dList_.size(); i++) {
-        if (i == 0 &&plot2dList_.at(i) != NULL) {
-            if (chs.size() >= 2) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel, chs[1].channel);
-            }
-            if (chs.size() == 1) {
-                plot2dList_.at(i)->setDataChannel(chs[0].channel);
-            }
+    auto chs = datasetPtr_->channelsList();
+    int chSize = chs.size();
+
+    if (!chSize) {
+        fChName_.clear();
+        sChName_.clear();
+        emit channelListUpdated();
+
+        return;
+    }
+
+    QString fChName;
+    QString sChName;
+
+    if (openedfilePath_.isEmpty()) {
+        auto linkNames = getLinkNames();
+        if (chSize > 0 && linkNames.contains(chs[0].channelId_.uuid)) {
+            fChName = chs[0].portName_;
+        }
+        if (chSize > 1 && linkNames.contains(chs[1].channelId_.uuid)) {
+            sChName = chs[1].portName_;
         }
     }
+    else {
+        if (chSize > 0) {
+            fChName = chs[0].portName_;
+        }
+        if (chSize > 1) {
+            sChName = chs[1].portName_;
+        }
+    }
+
+    if (fChName.isEmpty() && sChName.isEmpty()) {
+        return;
+    }
+
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        if (chSize >= 2) {
+            plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
+            fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
+            sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
+        }
+        if (chSize == 1) {
+            plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
+            fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
+        }
+    }
+
+    emit channelListUpdated();
+}
+
+void Core::onRedrawEpochs(const QSet<int>& indxs)
+{
+    const int numPlots = plot2dList_.size();
+    for (int i = 0; i < numPlots; i++) {
+        plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
+}
+
+QString Core::getChannel1Name() const
+{
+    return fChName_;
+}
+
+QString Core::getChannel2Name() const
+{
+    return sChName_;
+}
+
+QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
+{
+    QVariantMap retVal;
+
+    int currIndx = indx - 1;
+    int secIndx = currIndx == 0 ? 1 : 0;
+
+    if (plot2dList_.size() < 2) {
+        return retVal;
+    }
+
+    auto& firstPlot =  plot2dList_.at(currIndx);
+    auto& secondPlot =  plot2dList_.at(secIndx);
+
+    bool isCurrHor = firstPlot->isHorizontal();
+    bool isSecHor  = secondPlot->isHorizontal();
+
+    const float currDepth = firstPlot->getDepthByMousePos(mouseX, mouseY, isCurrHor);
+    const int currEpochIndx = firstPlot->getEpochIndxByMousePos(mouseX, mouseY, isCurrHor);
+
+    if (currEpochIndx == -1) {
+        retVal["x"] = mouseX;
+        retVal["y"] = mouseY;
+        return retVal;
+    }
+
+    const auto mousePos = secondPlot->getMousePosByDepthAndEpochIndx(currDepth, currEpochIndx, isSecHor);
+
+    retVal["x"] = mousePos.x();
+    retVal["y"] = mousePos.y();
+    
+    return retVal;
+}
+
+void Core::onFileStopsOpening()
+{
+    isFileOpening_ = false;
+    emit sendIsFileOpening();
 }
 
 #if defined(FAKE_COORDS)
@@ -1236,14 +1371,12 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::eventComplete,          datasetPtr_, &Dataset::addEvent,        deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::rangefinderComplete,    datasetPtr_, &Dataset::addRangefinder,  deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionComplete,       datasetPtr_, &Dataset::addPosition,     deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::positionCompleteRTK,    datasetPtr_, &Dataset::addPositionRTK,     deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::gnssVelocityComplete,   datasetPtr_, &Dataset::addGnssVelocity, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::attitudeComplete,       datasetPtr_, &Dataset::addAtt,          deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection);
-    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this, [this]() {
-                                                                                                              isFileOpening_ = false;
-                                                                                                              emit sendIsFileOpening();
-                                                                                                          }, deviceManagerConnection);
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this,        &Core::onFileStopsOpening, deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendProtoFrame, &logger_, &Logger::receiveProtoFrame, deviceManagerConnection);    
     QObject::connect(&logger_, &Logger::loggingKlfStarted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLoggingKlfStarted, deviceManagerConnection);
 
@@ -1280,6 +1413,7 @@ void Core::createLinkManagerConnections()
                                                                                                                                          //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
                                                                                                                                      }
                                                                                                                                  }, linkManagerConnection));
+    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::sendDoRequestAll, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onSendRequestAll, linkManagerConnection));
 }
 
 void Core::removeLinkManagerConnections()
@@ -1287,6 +1421,22 @@ void Core::removeLinkManagerConnections()
     for (auto& itm : linkManagerWrapperConnections_)
         disconnect(itm);
     linkManagerWrapperConnections_.clear();
+}
+
+QHash<QUuid, QString> Core::getLinkNames() const
+{
+    QHash<QUuid, QString> retVal;
+
+    if (isFileOpening_) {
+        retVal[deviceManagerWrapperPtr_->getFileUuid()] = QObject::tr("File");
+    }
+
+    const auto linkNames = linkManagerWrapperPtr_->getLinkNames();
+    for (auto it = linkNames.constBegin(); it != linkNames.constEnd(); ++it) {
+        retVal.insert(it.key(), it.value());
+    }
+
+    return retVal;
 }
 
 bool Core::isOpenedFile() const
@@ -1300,15 +1450,6 @@ bool Core::isFactoryMode() const
         return true;
 #else
         return false;
-#endif
-}
-
-bool Core::isMotorControlMode() const
-{
-#ifdef MOTOR
-    return true;
-#else
-    return false;
 #endif
 }
 

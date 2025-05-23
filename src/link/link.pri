@@ -3,6 +3,7 @@ DEPENDPATH *= $$PWD
 
 HEADERS *= \
     $$PWD/link.h \
+	$$PWD/link_defs.h \
 	$$PWD/link_list_model.h \
 	$$PWD/link_manager.h \
 	$$PWD/link_manager_wrapper.h	

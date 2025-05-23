@@ -43,7 +43,7 @@ ColumnLayout {
                     anchors.leftMargin: 0
                     anchors.rightMargin: 0
                     // anchors.verticalCenter: parent
-                    color: ConnectionStatus ? "#005000" : IsNotAvailable ? "#500000" : theme.controlBackColor
+                    color: ConnectionStatus ? (ReceivesData ? "#005000" : "#505000") : IsNotAvailable ? "#500000" : theme.controlBackColor
                     border.width: 0
                     border.color: theme.controlBorderColor
                     radius: 2
@@ -53,6 +53,7 @@ ColumnLayout {
                     spacing: 1
                     anchors.fill: parent
                     anchors.margins: 1
+                    enabled: !IsUpgradingState
 
                     CheckButton {
                         id: linkSettingsButton
@@ -98,7 +99,7 @@ ColumnLayout {
                     }
 
                     CheckButton {
-                        visible: linkSettingsButton.checked && LinkType == 2
+                        visible: linkSettingsButton.checked && (LinkType === 2 || LinkType === 3)
                         Layout.alignment: Qt.AlignLeft
                         icon.source: "qrc:/icons/ui/x.svg"
                         checked: false
@@ -147,23 +148,19 @@ ColumnLayout {
                         }
                     }
 
-                    CCombo  {
-                        property bool isStartup: true
 
+
+                    CCombo  {
                         id: baudrateCombo
                         implicitWidth: 150
-                        // Layout.fillWidth: true
                         visible: LinkType == 1
-                        model: [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
-                        currentIndex: 7
+                        model: linkManagerWrapper.baudrateModel
+                        currentIndex: 8
                         displayText: Baudrate
 
-                        onCurrentTextChanged: {
-                            if (LinkType == 1 && !isStartup) {
-                                console.info("baudrateCombo: onCurrentTextChanged: currentText: " + Number(baudrateCombo.currentText))
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                            }
-                            isStartup = false
+                        onActivated: {
+                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            autoSpeedCheckBox.checked = false
                         }
 
                         background:  Rectangle {
@@ -173,17 +170,39 @@ ColumnLayout {
                         }
                     }
 
+                    CheckButton {
+                        id: autoSpeedCheckBox
+                        visible: LinkType == 1
+                        icon.source: "qrc:/icons/ui/refresh.svg"
+                        implicitWidth: theme.controlHeight
+
+                        checked: AutoSpeedSelection
+
+                        onCheckedChanged: {
+                            if (!checked) {
+                                linkManagerWrapper.sendAutoSpeedSelection(Uuid, false)
+                            }
+                        }
+
+                        onToggled: {
+                            linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
+                        }
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Auto search baudrate")
+                    }
+
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         small: true
                         leftPadding: 6
                         rightPadding: 0
-                        text: qsTr("ip:")
+                        text: LinkType === 2 ? qsTr("UDP ip:") : qsTr("TCP ip:")
                     }
 
                     CTextField {
                         id: ipAddressText
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         hoverEnabled: true
                         selectByMouse: true
                         Layout.fillWidth: true
@@ -215,7 +234,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -225,7 +244,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -234,7 +253,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPortText
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: {
@@ -268,7 +287,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -278,20 +297,20 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: qsTr("dst:")
+                        text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
                     }
 
                     CTextField {
                         id: ipPort2Text
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: {
-                            if (Qt.platform.os == "android") {
+                            if (Qt.platform.os === "android") {
                                 return 100;
                             }
                             else {
@@ -322,7 +341,7 @@ ColumnLayout {
                     CButton {
                         Layout.alignment: Qt.AlignRight
                         text: ConnectionStatus ? qsTr("Close") : qsTr("Open")
-                        backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
+                        backColor: ConnectionStatus ? (ReceivesData ? "green" : "#adad00") : theme.controlSolidBackColor
                         borderRadius: 2
 
                         onClicked: {
@@ -341,7 +360,7 @@ ColumnLayout {
                                     break
                                 case 3:
                                     core.closeLogFile();
-                                    linkManagerWrapper.openAsTcp(Uuid)
+                                    linkManagerWrapper.openAsTcp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
                                     break
                                 default:
                                     console.log("Undefined type")
@@ -350,6 +369,21 @@ ColumnLayout {
 
                             }
                         }
+                    }
+                }
+
+                Rectangle {
+                    id: firmwareBackground
+                    anchors.fill: parent
+                    visible: IsUpgradingState
+                    color: "#30ffffff"
+                    z: 10
+
+                    Image {
+                        anchors.fill: parent
+                        source: "qrc:/icons/ui/diagonal_stripe.png"
+                        fillMode: Image.Tile
+                        opacity: 0.5
                     }
                 }
             }
@@ -407,6 +441,15 @@ ColumnLayout {
 
             onClicked: {
                 linkManagerWrapper.createAsUdp("", 0, 0)
+            }
+        }
+
+        CButton {
+            text: qsTr("+TCP")
+            Layout.fillWidth: false
+
+            onClicked: {
+                linkManagerWrapper.createAsTcp("", 0, 0)
             }
         }
 

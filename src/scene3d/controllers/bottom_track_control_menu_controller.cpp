@@ -2,7 +2,7 @@
 #include "scene3d_view.h"
 #include "bottom_track.h"
 #include "qml_object_names.h"
-#include "plotcash.h"
+
 
 BottomTrackControlMenuController::BottomTrackControlMenuController(QObject* parent)
     : QmlComponentController(parent),
@@ -24,19 +24,6 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
     else {
         tryInitPendingLambda();
     }
-}
-
-void BottomTrackControlMenuController::onVisibleChannelComboBoxIndexChanged(int index)
-{
-    if(!graphicsSceneViewPtr_)
-        return;
-
-    if(channelList_.isEmpty())
-        return;
-
-    auto channelId = QString(channelList_.at(index)).toInt();
-
-    graphicsSceneViewPtr_->bottomTrack()->setVisibleChannel(channelId);
 }
 
 void BottomTrackControlMenuController::onSurfaceUpdated()
@@ -68,9 +55,6 @@ void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView 
             pendingLambda_();
             pendingLambda_ = nullptr;
         }
-
-        QObject::connect(graphicsSceneViewPtr_->bottomTrack().get(), &BottomTrack::epochListChanged,
-                         this,                                     &BottomTrackControlMenuController::updateChannelList);
     }
 }
 
@@ -80,21 +64,6 @@ BottomTrack *BottomTrackControlMenuController::bottomTrack() const
         return nullptr;
 
     return graphicsSceneViewPtr_->bottomTrack().get();
-}
-
-QStringList BottomTrackControlMenuController::channelList() const
-{
-    return channelList_;
-}
-
-int BottomTrackControlMenuController::visibleChannelIndex() const
-{
-    if(!graphicsSceneViewPtr_)
-        return -1;
-
-    auto ch = graphicsSceneViewPtr_->bottomTrack()->visibleChannel();
-
-    return channelList_.indexOf(QString::number(ch.channel));
 }
 
 void BottomTrackControlMenuController::tryInitPendingLambda()
@@ -108,21 +77,6 @@ void BottomTrackControlMenuController::tryInitPendingLambda()
             }
         };
     }
-}
-
-void BottomTrackControlMenuController::updateChannelList()
-{
-    channelList_.clear();
-
-    if(!graphicsSceneViewPtr_)
-        return;
-
-    auto channels = graphicsSceneViewPtr_->bottomTrack()->channels();
-
-    for(const auto& channel : qAsConst(channels))
-        channelList_ << QString("%1").arg(channel.channel);
-
-    Q_EMIT channelListUpdated();
 }
 
 void BottomTrackControlMenuController::findComponent()

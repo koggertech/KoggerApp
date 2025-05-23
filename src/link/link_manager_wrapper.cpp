@@ -29,6 +29,7 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,       workerObject_.get(), &LinkManager::updatePinnedState,            connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAndOpenAsUdpProxy, workerObject_.get(), &LinkManager::createAndOpenAsUdpProxy,      connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCloseUdpProxy,           workerObject_.get(), &LinkManager::closeUdpProxy,                connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendAutoSpeedSelection,      workerObject_.get(), &LinkManager::updateAutoSpeedSelection,     connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateControlType,       this,                [this](QUuid uuid, int controlType) {
         QMetaObject::invokeMethod(workerObject_.get(), [this, uuid, controlType]() {
                 switch (controlType) {
@@ -71,27 +72,29 @@ void LinkManagerWrapper::closeOpenedLinks()
     }
 }
 
+QHash<QUuid, QString> LinkManagerWrapper::getLinkNames() const
+{
+    return model_.getLinkNames();
+}
+
 void LinkManagerWrapper::openClosedLinks()
 {
     emit sendOpenFLinks();
+}
+
+QVariant LinkManagerWrapper::baudrateModel() const
+{
+    QVariantList list;
+    for (const uint32_t rate : baudrates) {
+        list.append(QVariant::fromValue(rate));
+    }
+    return list;
 }
 
 void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
 {
     emit sendOpenAsSerial(uuid, attribute);
 }
-
-// #ifdef MOTOR
-// void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
-// {
-//     emit sendOpenAsSerial(uuid, isMotorDevice);
-// }
-// #else
-// void LinkManagerWrapper::openAsSerial(QUuid uuid)
-// {
-//     emit sendOpenAsSerial(uuid);
-// }
-// #endif
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
@@ -132,11 +135,12 @@ void LinkManagerWrapper::updateBaudrate(QUuid uuid, int baudrate)
     emit sendUpdateBaudrate(uuid, baudrate);
 }
 
-void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                                  LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
+void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName,
+                                               int baudrate, bool parity, LinkType linkType, QString address, int sourcePort, int destinationPort,
+                                               bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
 {
-    emit model_.appendModifyEvent(uuid, connectionStatus, controlType, portName, baudrate, parity,
-                                  linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable);
+    emit model_.appendModifyEvent(uuid, connectionStatus, receivesData, controlType, portName, baudrate, parity,
+                                  linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable, autoSpeedSelection, isUpgradingState);
 }
 
 void LinkManagerWrapper::deleteModelData(QUuid uuid)

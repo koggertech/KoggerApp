@@ -5,22 +5,25 @@
 
 extern Core core;
 
-DevDriver::DevDriver(QObject *parent) :
-    QObject(parent),
-    datasetState_(false),
-    distSetupState_(false),
-    chartSetupState_(false),
-    dspSetupState_(false),
-    transcState_(false),
-    soundSpeedState_(false),
-    uartState_(false),
-    errorFreezeCnt_(0),
-    averageChartLosses_(0)
+DevDriver::DevDriver(QObject *parent)
+    : QObject(parent),
+      datasetState_(false),
+      distSetupState_(false),
+      chartSetupState_(false),
+      dspSetupState_(false),
+      transcState_(false),
+      soundSpeedState_(false),
+      uartState_(false),
+      errorFreezeCnt_(0),
+      averageChartLosses_(0),
+      linkUuid_(QUuid())
 {
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
+    qRegisterMetaType<QVector<QVector<uint8_t>>>("QVector<QVector<uint8_t>>");
+    qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<ChartParameters>("ChartParameters");
 
     regID(idTimestamp = new IDBinTimestamp(), &DevDriver::receivedTimestamp);
@@ -80,6 +83,10 @@ DevDriver::~DevDriver()
 #endif
 }
 
+ChannelId DevDriver::getChannelId() const
+{
+    return ChannelId(linkUuid_, lastAddress_);
+}
 
 #ifdef SEPARATE_READING
 QTimer *DevDriver::getProcessTimer()
@@ -422,7 +429,7 @@ void DevDriver::setDistSetupState(bool state) {
 void DevDriver::setChartSetupState(bool state) {
     if (state != chartSetupState_) {
         chartSetupState_ = state;
-        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+        emit sendChartSetup(getChannelId(), idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -437,7 +444,7 @@ void DevDriver::setDspSetupState(bool state) {
 void DevDriver::setTranscState(bool state) {
     if (state != transcState_) {
         transcState_ = state;
-        emit sendTranscSetup(_lastAddres, idTransc->freq(), idTransc->pulse(), idTransc->boost());
+        emit sendTranscSetup(getChannelId(), idTransc->freq(), idTransc->pulse(), idTransc->boost());
         emit transChanged();
     }
 }
@@ -445,7 +452,7 @@ void DevDriver::setTranscState(bool state) {
 void DevDriver::setSoundSpeedState(bool state) {
     if (state != soundSpeedState_) {
         soundSpeedState_ = state;
-        emit sendSoundSpeed(_lastAddres, idSoundSpeed->getSoundSpeed());
+        emit sendSoundSpeed(getChannelId(), idSoundSpeed->getSoundSpeed());
         emit soundChanged();
     }
 }
@@ -457,6 +464,16 @@ void DevDriver::setUartState(bool state) {
     }
 }
 
+void DevDriver::setLinkUuid(QUuid linkUuid)
+{
+    linkUuid_ = linkUuid;
+}
+
+QUuid DevDriver::getLinkUuid() const
+{
+    return linkUuid_;
+}
+
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
     if(!m_state.connect) return;
     idUSBL->askBeacon(ask);
@@ -465,6 +482,14 @@ void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
 void DevDriver::enableBeaconOnce(float timeout) {
     if(!m_state.connect) return;
     idUSBL->enableBeaconOnce(timeout);
+}
+
+void DevDriver::doRequestAll()
+{
+    if (idVersion) {
+        //qDebug() << "  dev_driver: requesting all for" << m_devName << m_devAddress;
+        idVersion->requestAll();
+    }
 }
 
 #ifdef SEPARATE_READING
@@ -549,19 +574,48 @@ QString DevDriver::devPN() {
     return QString();
 }
 
-void DevDriver::protoComplete(FrameParser& proto) {
-    if(!proto.isComplete()) return;
+void DevDriver::setFirmware(const QByteArray &data)
+{
+    sendUpdateFW(data);
+}
+
+void DevDriver::protoComplete(FrameParser& proto)
+{
+    if (!proto.isComplete()) {
+        return;
+    }
+
+    int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
 
     m_state.mark = proto.mark();
+
+    if(m_state.mark) {
+        m_state.lastConnectTime = curr_time;
+    }
+
+    // if (rebootFlag_ && !proto.mark()) {
+    //     rebootFlag_ = false;
+    // }
+
+    // if (rebootFlag_) {
+    //      m_state.mark = false;
+    // }
+
+    // if(proto.id() == Parsers::ID_BOOT && proto.ver() == v0 && proto.resp() == true) {
+    //     qDebug() << "   !!! and seting mark FALSE";
+    //     m_state.mark = false;
+    // }
+
+
 
     if(_hashID.contains(proto.id())) {
         if(_hashID[proto.id()].instance != NULL) {
             IDBin* parse_instance = _hashID[proto.id()].instance;
             parse_instance->parse(proto);
-            _lastAddres = proto.route();
+            lastAddress_ = proto.route();
 
             if(_hashID[proto.id()].callback != NULL) {
-                ParseCallback callback = _hashID[proto.id()].callback;
+                ParseCallback& callback = _hashID[proto.id()].callback;
                 (this->*callback)(parse_instance->lastType(), parse_instance->lastVersion(), parse_instance->lastResp());
             }
         }
@@ -569,15 +623,11 @@ void DevDriver::protoComplete(FrameParser& proto) {
 }
 
 void DevDriver::startConnection(bool duplex) {
-    m_devName = "...";
     m_state.duplex = duplex;
-    idVersion->reset();
-
-    m_bootloaderLagacyMode = true;
-    m_bootloader = false;
-    m_upgrade_status = 0;
-
     restartState();
+    m_devName = "...";
+    m_bootloaderLagacyMode = true;
+    m_upgrade_status = 0;
 
     emit deviceVersionChanged();
 }
@@ -591,12 +641,10 @@ void DevDriver::stopConnection() {
 
 void DevDriver::restartState() {
     m_processTimer.stop();
-    m_state.connect = false;
-    m_state.uptime = UptimeNone;
-    m_state.conf = ConfNone;
-    if(m_state.duplex) {
-        m_processTimer.start(200);
-    }
+    qDebug() << "restart";
+    m_state.resetState();
+    idVersion->reset();
+    m_processTimer.start(200);
 }
 
 void DevDriver::requestDist() {
@@ -631,15 +679,18 @@ void DevDriver::requestStream(int stream_id) {
 }
 
 void DevDriver::sendUpdateFW(QByteArray update_data) {
-//    if(!m_state.connect) return;
-    m_bootloaderLagacyMode = true;
-    m_bootloader = true;
-    _timeoutUpgradeAnswerTime = 5000;
-    idUpdate->setUpdate(update_data);
     reboot();
     restartState();
-    QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
-//    QTimer::singleShot(400, idUpdate, SLOT(putUpdate()));
+
+    _timeoutUpgradeAnswerTime = 5000;
+    idUpdate->setUpdate(update_data);
+    m_bootloaderLagacyMode = true;
+    m_state.in_boot = true;
+
+    emit startUpgradingFirmware();
+    emit startUpgradingFirmwareDM(linkUuid_, lastAddress_, update_data);
+
+    // QTimer::singleShot(500, idUpdate, SLOT(putUpdate()));
 }
 
 void DevDriver::sendFactoryFW(QByteArray update_data) {
@@ -656,7 +707,7 @@ void DevDriver::setTransFreq(int freq) {
     idTransc->setFreq((U2)freq);
 
     if (is_changed) {
-        emit sendTranscSetup(_lastAddres, static_cast<uint16_t>(freq), idTransc->pulse(), idTransc->boost());
+        emit sendTranscSetup(getChannelId(), static_cast<uint16_t>(freq), idTransc->pulse(), idTransc->boost());
         emit transChanged();
     }
 }
@@ -671,7 +722,7 @@ void DevDriver::setTransPulse(int pulse) {
     idTransc->setPulse((U1)pulse);
 
     if (is_changed) {
-        emit sendTranscSetup(_lastAddres, idTransc->freq(), static_cast<uint8_t>(pulse), idTransc->boost());
+        emit sendTranscSetup(getChannelId(), idTransc->freq(), static_cast<uint8_t>(pulse), idTransc->boost());
         emit transChanged();
     }
 }
@@ -686,7 +737,7 @@ void DevDriver::setTransBoost(int boost) {
     idTransc->setBoost((U1)boost);
 
     if (is_changed) {
-        emit sendTranscSetup(_lastAddres, idTransc->freq(), idTransc->pulse(), static_cast<uint8_t>(boost));
+        emit sendTranscSetup(getChannelId(), idTransc->freq(), idTransc->pulse(), static_cast<uint8_t>(boost));
         emit transChanged();
     }
 }
@@ -701,7 +752,7 @@ void DevDriver::setSoundSpeed(int speed) {
     idSoundSpeed->setSoundSpeed(speed);
 
     if (is_changed) {
-        emit sendSoundSpeed(_lastAddres, static_cast<uint32_t>(speed));
+        emit sendSoundSpeed(getChannelId(), static_cast<uint32_t>(speed));
         emit soundChanged();
     }
 }
@@ -730,7 +781,9 @@ void DevDriver::resetSettings() {
 
 void DevDriver::reboot() {
     if(!m_state.connect) return;
+    idVersion->reset();
     idBoot->reboot();
+    m_state.reboot = true;
     emit onReboot();
 }
 
@@ -775,7 +828,7 @@ void DevDriver::setChartSamples(int smpls) {
     bool is_changed = smpls != chartSamples();
     idChartSetup->setCount((U2)smpls);
     if (is_changed) {
-        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), static_cast<uint16_t>(smpls), idChartSetup->offset());
+        emit sendChartSetup(getChannelId(), idChartSetup->resolution(), static_cast<uint16_t>(smpls), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -789,7 +842,7 @@ void DevDriver::setChartResolution(int resol) {
     bool is_changed = resol != chartResolution();
     idChartSetup->setResolution((U2)resol);
     if (is_changed) {
-        emit sendChartSetup(_lastAddres, static_cast<uint16_t>(resol), idChartSetup->count(), idChartSetup->offset());
+        emit sendChartSetup(getChannelId(), static_cast<uint16_t>(resol), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -803,7 +856,7 @@ void DevDriver::setChartOffset(int offset) {
     bool is_changed = offset != chartOffset();
     idChartSetup->setOffset((U2)offset);
     if (is_changed) {
-        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), static_cast<uint16_t>(offset));
+        emit sendChartSetup(getChannelId(), idChartSetup->resolution(), idChartSetup->count(), static_cast<uint16_t>(offset));
         emit chartSetupChanged();
     }
 }
@@ -987,58 +1040,65 @@ void DevDriver::receivedDist(Type type, Version ver, Resp resp) {
     Q_UNUSED(ver);
     Q_UNUSED(resp);
 
-    emit distComplete(idDist->dist_mm());
+    emit distComplete(getChannelId(), idDist->dist_mm());
 }
 
-void DevDriver::receivedChart(Type type, Version ver, Resp resp) {
+void DevDriver::receivedChart(Type type, Version ver, Resp resp)
+{
     Q_UNUSED(type);
     Q_UNUSED(resp);
 
-    if(idChart->isCompleteChart()) {
-        if(ver == v0 || ver == v1) {
-            QVector<uint8_t> data(idChart->chartSize());
-            memcpy(data.data(), idChart->logData8(), idChart->chartSize());
+    bool isCompleteChart = idChart->readAndClearIsCompleteChart();
 
-            if (errorFreezeCnt_ > 100) {
-                averageChartLosses_ = idChart->getAverageLosses();
-                emit averageChartLossesChanged();
-                errorFreezeCnt_ = 0;
-            }
-            ++errorFreezeCnt_;
-
-            if(ver == v0) {
-                if (!data.empty()) {
-                    ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { _lastAddres }, idChart->getErrList());
-                    emit chartComplete(chartParams, data, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
-                }
-            }
-
-            if(ver == v1) {
-                ChartParameters chartParams(_lastAddres, _lastAddres, idVersion->boardVersion(), ver, { static_cast<int16_t>(_lastAddres + 2), static_cast<int16_t>(_lastAddres + 3) }, idChart->getErrList());
-                chartParams.channelId = chartParams.linkedChannels.at(0);
-                emit chartComplete(chartParams, data, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
-
-                QVector<uint8_t> data2(idChart->chartSize());
-                memcpy(data2.data(), idChart->logData28(), idChart->chartSize());
-                if (!data2.empty()) {
-                    chartParams.channelId = chartParams.linkedChannels.at(1);
-                    emit chartComplete(chartParams, data2, 0.001 * idChart->resolution(), 0.001 * idChart->offsetRange());
-                }
-            }
-        }
-        // else if(ver == v7) {
-        //     QByteArray data((const char*)idChart->rawData(), idChart->rawDataSize());
-        //     emit iqComplete(data, idChart->rawType());
-        // }
+    if (!isCompleteChart || (ver != v0 && ver != v1)) {
+        return;
     }
+
+    // connection quality
+    if (errorFreezeCnt_ > 100) {
+        averageChartLosses_ = idChart->getAverageLosses();
+        emit averageChartLossesChanged();
+        errorFreezeCnt_ = 0;
+    }
+    ++errorFreezeCnt_;
+
+    const int size = idChart->chartSize();
+    QVector<QVector<uint8_t>> data(1); // always size == 1 or 2 for chart logic *1
+
+    if (idChart->logData8()) {
+        data[0].resize(size);
+        memcpy(data[0].data(), idChart->logData8(), size);
+    }
+
+    if (ver == v1) {
+        data.resize(2); // *2
+
+        if (idChart->logData28()) {
+            data[1].resize(size);
+            memcpy(data[1].data(), idChart->logData28(), idChart->chartSize());
+        }
+    }
+
+    ChannelId channelId(linkUuid_, lastAddress_);
+    ChartParameters chartParams(idVersion->boardVersion(), ver, idChart->getErrList());
+    float resolution = 0.001f * idChart->resolution();
+    float offsetRange = 0.001f * idChart->offsetRange();
+
+    emit chartComplete(channelId, chartParams, data, resolution, offsetRange);
 }
 
 void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
-//    qInfo("Euler: yaw %f, pitch %f, roll %f", idAtt->yaw(), idAtt->pitch(), idAtt->roll());
-    emit attitudeComplete(idAtt->yaw(), idAtt->pitch(), idAtt->roll());
+
+    const float yaw = idAtt->yaw();
+    const float pitch = idAtt->pitch();
+    const float roll = idAtt->roll();
+
+    if (!qFuzzyIsNull(yaw) || !qFuzzyIsNull(pitch) || !qFuzzyIsNull(roll)) {
+        emit attitudeComplete(yaw, idAtt->pitch(), idAtt->roll());
+    }
 }
 
 void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
@@ -1067,7 +1127,7 @@ void DevDriver::receivedChartSetup(Type type, Version ver, Resp resp) {
     Q_UNUSED(ver);
 
     if(resp == respNone) {
-        emit sendChartSetup(_lastAddres, idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
+        emit sendChartSetup(getChannelId(), idChartSetup->resolution(), idChartSetup->count(), idChartSetup->offset());
         emit chartSetupChanged();
     }
 }
@@ -1084,7 +1144,7 @@ void DevDriver::receivedTransc(Type type, Version ver, Resp resp) {
     Q_UNUSED(ver);
 
     if (resp == respNone) {
-        emit sendTranscSetup(_lastAddres, idTransc->freq(), idTransc->pulse(), idTransc->boost());
+        emit sendTranscSetup(getChannelId(), idTransc->freq(), idTransc->pulse(), idTransc->boost());
         emit transChanged();
     }
 }
@@ -1094,7 +1154,7 @@ void DevDriver::receivedSoundSpeed(Type type, Version ver, Resp resp) {
     Q_UNUSED(ver);
 
     if (resp == respNone) {
-        emit sendSoundSpeed(_lastAddres, idSoundSpeed->getSoundSpeed());
+        emit sendSoundSpeed(getChannelId(), idSoundSpeed->getSoundSpeed());
         emit soundChanged();
     }
 }
@@ -1110,7 +1170,6 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
 
     if(resp == respNone) {
-
         if(ver == v0) {
             switch (idVersion->boardVersion()) {
             case BoardNone:
@@ -1166,7 +1225,6 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());
             }
 
-//            qInfo("board info %u", idVersion->boardVersion());
             emit deviceVersionChanged();
         } else if(ver == v1) {
             emit deviceIDChanged(idVersion->uid());
@@ -1177,9 +1235,6 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
 
             emit deviceVersionChanged();
         }
-
-
-
     }
 }
 
@@ -1209,8 +1264,12 @@ void DevDriver::fwUpgradeProcess() {
     m_upgrade_status = idUpdate->progress();
     if(!is_avail_data) {
         idBoot->runFW();
-        m_bootloader = false;
+        m_state.in_update = false;
         m_upgrade_status = successUpgrade;
+
+        emit upgradingFirmwareDone();
+        emit upgradingFirmwareDoneDM();
+
         core.consoleInfo("Upgrade: done");
         restartState();
     }
@@ -1237,25 +1296,33 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
 
                 fwUpgradeProcess();
             } else {
-                if(m_bootloader) {
+                // if( m_state.in_boot) {
                     core.consoleInfo("Upgrade: critical error!");
                     m_upgrade_status = failUpgrade;
-                    m_bootloader = false;
+
+                    emit upgradingFirmwareDone();
+                    emit upgradingFirmwareDoneDM();
+
+                    m_state.in_update = false;
                     m_bootloaderLagacyMode = true;
                     restartState();
-                }
+                // }
             }
         }
     } else {
         if(resp == respOk) {
-            if(m_bootloader && m_bootloaderLagacyMode) {
+            if( m_state.in_update && m_bootloaderLagacyMode) {
                 fwUpgradeProcess();
             }
         } else {
-            if(m_bootloader && m_bootloaderLagacyMode) {
+            if( m_state.in_update && m_bootloaderLagacyMode) {
                 core.consoleInfo("Upgrade: lagacy mode error");
                 m_upgrade_status = failUpgrade;
-                m_bootloader = false;
+
+                emit upgradingFirmwareDone();
+                emit upgradingFirmwareDoneDM();
+
+                m_state.in_update = false;
                 m_bootloaderLagacyMode = true;
                 restartState();
             }
@@ -1310,34 +1377,49 @@ void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
 }
 
 void DevDriver::process() {
+    int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
     if(m_state.duplex) {
-        if(!m_state.mark) {
-            m_state.uptime = UptimeNone;
-        }
+        if(m_state.mark) {
+            if(idVersion->boardVersion() != BoardNone) {
+                if(m_state.uptime != UptimeFix) {
+                    qDebug() << "UptimeFix";
+                    m_state.uptime = UptimeFix;
+                }
 
-        if(m_state.uptime == UptimeNone) {
+                if(!m_state.connect) {
+                    qDebug() << "connect = true";
+                    m_state.connect = true;
+                }
+
+                if(m_state.in_boot) {
+                    m_state.in_boot = false;
+                    m_state.in_update = true;
+                    // idUpdate->putUpdate();
+
+                    QTimer::singleShot(100, idUpdate, SLOT(putUpdate()));
+                    qDebug() << "To upgrading";
+                }
+
+                if(!(m_state.in_boot || m_state.in_update) && m_state.conf < ConfRequest) {
+                    requestSetup();
+                    qDebug() << "Request setup";
+                }
+
+                if(m_state.in_update && !m_bootloaderLagacyMode) {
+                    if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
+                        core.consoleInfo("Upgrade: timeout error!");
+                        idUpdate->putUpdate(false);
+                    }
+                }
+            } else {
+                idVersion->requestAll();
+                qDebug() << "Request version again";
+            }
+        } else {
+            restartState();
             idMark->setMark();
             idVersion->requestAll();
-            m_state.uptime = UptimeRequest;
-        } else if(m_state.uptime == UptimeRequest) {
-            if(!m_bootloader) {
-                requestSetup();
-            }
-
-            m_state.uptime = UptimeFix;
-        } else if(m_state.uptime == UptimeFix) {
-            if(m_state.mark) {
-                m_state.connect = true;
-            }
-
-            if(m_bootloader && !m_bootloaderLagacyMode) {
-                int64_t curr_time = QDateTime::currentMSecsSinceEpoch();
-                if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
-                    core.consoleInfo("Upgrade: timeout error!");
-                    idUpdate->putUpdate(false);
-//                    idUpdate->putUpdate();
-                }
-            }
+            qDebug() << "Reset state";
         }
     }
 }

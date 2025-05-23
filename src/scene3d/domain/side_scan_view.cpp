@@ -12,8 +12,8 @@ SideScanView::SideScanView(QObject* parent) :
     datasetPtr_(nullptr),
     tileResolution_(0.1), // 0.1 метр - 1 пиксель
     currIndxSec_(0),
-    segFChannelId_(-1),
-    segSChannelId_(-1),
+    segFSubChannelId_(0),
+    segSSubChannelId_(0),
     tileSidePixelSize_(256),
     tileHeightMatrixRatio_(16),
     lastCalcEpoch_(0),
@@ -45,16 +45,25 @@ bool SideScanView::updateChannelsIds()
 {
     bool retVal = false;
 
-    segFChannelId_ = -1;
-    segSChannelId_ = -1;
+    segFChannelId_ = ChannelId();
+    segFSubChannelId_ = 0;
+    segSChannelId_ = ChannelId();
+    segSSubChannelId_ = 0;
 
     if (datasetPtr_) {
-        if (auto chList = datasetPtr_->channelsList(); !chList.empty()) {
-            auto it = chList.begin();
-            segFChannelId_ = it.key();
+        if (auto chVector = datasetPtr_->channelsList(); !chVector.empty()) {
+            auto it = chVector.begin();
 
-            if (++it != chList.end()) {
-                segSChannelId_ = it.key();
+            //auto& fVal = it. value();
+
+            segFChannelId_ = it->channelId_;
+            segFSubChannelId_ = it->subChannelId_;
+
+            if (++it != chVector.end()) {
+                //auto& sVal = it.value();
+
+                segSChannelId_ = it->channelId_;
+                segSSubChannelId_ = it->subChannelId_;
             }
 
             retVal = true;
@@ -100,8 +109,8 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
         return;
     }
 
-    bool segFIsValid = checkChannel(segFChannelId_);
-    bool segSIsValid = checkChannel(segSChannelId_);
+    bool segFIsValid = segFChannelId_.isValid();
+    bool segSIsValid = segSChannelId_.isValid();
 
     if (!segFIsValid && !segSIsValid) {
         if (cleanFunc) cleanFunc();
@@ -134,7 +143,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
                 double azRad = qDegreesToRadians(yaw);
 
                 if (segFIsValid) {
-                    if (auto segFCharts = epoch->chart(segFChannelId_); segFCharts) {
+                    if (auto segFCharts = epoch->chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                         double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                         float lDist = segFCharts->range();
 
@@ -149,7 +158,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
                 }
 
                 if (segSIsValid) {
-                    if (auto segSCharts = epoch->chart(segSChannelId_); segSCharts) {
+                    if (auto segSCharts = epoch->chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                         double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                         float rDist = segSCharts ->range();
 
@@ -195,6 +204,27 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
     auto gMeshWidthPixs = globalMesh_.getPixelWidth(); // for bypass
     auto gMeshHeightPixs = globalMesh_.getPixelHeight();
 
+
+    constexpr int sampleLimiter = 2;
+    auto sampleIndex = [](Epoch::Echogram* echogramPtr, float dist) -> std::optional<int> {
+        if (!echogramPtr) {
+            return std::nullopt;
+        }
+        const float resolution = echogramPtr->resolution;
+        if (resolution < 0.0f || qFuzzyIsNull(resolution)) {
+            return std::nullopt;
+        }
+        float resDist = dist / resolution;
+        if (resDist < 0.f) {
+            return std::nullopt;
+        }
+        int indx = static_cast<int>(std::round(resDist));
+        if (indx >= static_cast<int>(echogramPtr->amplitude.size()) - sampleLimiter) {
+            return std::nullopt;
+        }
+        return indx;
+    };
+
     // processing
     for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
         if (i + 5 > measLinesVertices.size() - 1) {
@@ -235,8 +265,8 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
             continue;
         }
         // segments checking
-        auto segFCharts = segFEpoch.chart(segFIsOdd ? segSChannelId_ : segFChannelId_);
-        auto segSCharts = segSEpoch.chart(segSIsOdd ? segSChannelId_ : segFChannelId_);
+        auto segFCharts = segFEpoch.chart(segFIsOdd ? segSChannelId_ : segFChannelId_, segFIsOdd ? segSSubChannelId_ : segFSubChannelId_);
+        auto segSCharts = segSEpoch.chart(segSIsOdd ? segSChannelId_ : segFChannelId_, segSIsOdd ? segSSubChannelId_ : segFSubChannelId_);
         if (!segFCharts || !segSCharts) {
             continue;
         }
@@ -309,11 +339,23 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
             float segFPixCurrDist = std::sqrt(std::pow(segFPixX1 - segFPixX2, 2) + std::pow(segFPixY1 - segFPixY2, 2));
             float segFProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
             QVector3D segFCurrPhPos(segFPhBegPnt.x() + segFProgByPix * segFPhDistX, segFPhBegPnt.y() + segFProgByPix * segFPhDistY, segFDistProc);
-            auto segFColorIndx = getColorIndx(segFCharts, static_cast<int>(std::floor(segFCurrPhPos.distanceToPoint(segFBoatPos) * amplitudeCoeff_)));
             // second segment, calc corresponding progress using smoothed interpolation
             float segSCorrProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
             QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX, segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY, segSDistProc);
-            auto segSColorIndx  = getColorIndx(segSCharts, static_cast<int>(std::floor(segSCurrPhPos.distanceToPoint(segSBoatPos) * amplitudeCoeff_)));
+
+            auto indxF = sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos));
+            auto indxS = sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos));
+            int segFColorIndx = 0;
+            int segSColorIndx = 0;
+
+            bool bothValid = indxF && indxS;
+            if (bothValid) {
+                segFColorIndx = getColorIndx(segFCharts, *indxF);
+                segSColorIndx = getColorIndx(segSCharts, *indxS);
+                if (segFColorIndx == 0 && segSColorIndx == 0) {
+                    bothValid = false;
+                }
+            }
 
             auto segFCurrPixPos = globalMesh_.convertPhToPixCoords(segFCurrPhPos);
             auto segSCurrPixPos = globalMesh_.convertPhToPixCoords(segSCurrPhPos);
@@ -328,7 +370,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
             float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
 
             // interpolate
-            if (checkLength(interpPixTotDist) && !(segSColorIndx == 0 && segSColorIndx == 0)) {
+            if (bothValid && checkLength(interpPixTotDist)) {
                 for (int step = 0; step <= interpPixTotDist; ++step) {
                     float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
                     int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
@@ -440,6 +482,10 @@ void SideScanView::clear(bool force)
     currIndxSec_ = 0;
     lastMatParams_ = MatrixParams();
     if (force) {
+        segFChannelId_ = ChannelId();
+        segSChannelId_ = ChannelId();
+        segFSubChannelId_ = 0;
+        segSSubChannelId_ = 0;
         manualSettedChannels_ = false;
     }
     workMode_ = Mode::kUndefined;
@@ -592,10 +638,12 @@ void SideScanView::setRAngleOffset(float val)
     rAngleOffset_ = val;
 }
 
-void SideScanView::setChannels(int firstChId, int secondChId)
+void SideScanView::setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId)
 {
     segFChannelId_ = firstChId;
+    segFSubChannelId_ = firstSubChId;
     segSChannelId_ = secondChId;
+    segSSubChannelId_ = secondSubChId;
     manualSettedChannels_ = true;
 }
 
@@ -715,7 +763,7 @@ int SideScanView::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         retVal = cVal;
     }
     else {
-        return 0;
+        return retVal;
     }
 
     if (!retVal) {
@@ -863,16 +911,6 @@ void SideScanView::updateUnmarkedHeightVertices(Tile* tilePtr) const
                 continue;
             }
         }
-    }
-}
-
-bool SideScanView::checkChannel(int val) const
-{
-    if (val == CHANNEL_NONE || val == CHANNEL_FIRST) {
-        return false;
-    }
-    else {
-        return true;
     }
 }
 

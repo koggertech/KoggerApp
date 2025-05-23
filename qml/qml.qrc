@@ -36,7 +36,7 @@
         <file>DevAddrBox.qml</file>
         <file>FactoryBox.qml</file>
         <file>DevSettingsBox.qml</file>
-        <file>DiplaySettingsViewer.qml</file>
+        <file>DisplaySettingsViewer.qml</file>
         <file>DisplaySettings.qml</file>
         <file>ExportSettings.qml</file>
         <file>ExportDist.qml</file>
@@ -91,7 +91,6 @@
         <file>MenuFrame.qml</file>
         <file>CheckButton.qml</file>
         <file>MouseOpacityArea.qml</file>
-        <file>MotorViewer.qml</file>
         <file>USBLBox.qml</file>
         <file>DeviceItem.qml</file>
         <file>CPopup.qml</file>

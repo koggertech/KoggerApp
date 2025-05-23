@@ -1,10 +1,9 @@
-#ifndef WATERFALL_H
-#define WATERFALL_H
+#pragma once
 
 #include <QImage>
 #include <QQuickPaintedItem>
 #include <QObject>
-#include <plotcash.h>
+#include <dataset.h>
 #include <QTimer>
 #include "plot2D.h"
 
@@ -17,7 +16,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
-
+    Q_PROPERTY(bool isEnabled WRITE setPlotEnabled)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
     Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
@@ -33,12 +32,17 @@ public:
 
     void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
-    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal;  update(); }
+    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; Plot2D::setHorizontal(_isHorizontal); update(); }
 
     void plotUpdate() override;
 
     bool eventFilter(QObject *watched, QEvent *event) override final;
     void sendSyncEvent(int epoch_index, QEvent::Type eventType) override final;
+
+    Q_INVOKABLE float cursorFrom() const { return Plot2D::cursor_.distance.from; }
+    Q_INVOKABLE float cursorTo() const { return Plot2D::cursor_.distance.to; }
+    Q_INVOKABLE void setCursorFromTo(float from, float to) { cursor_.distance.mode = AutoRangeNone; Plot2D::cursor_.distance.from = from; Plot2D::cursor_.distance.to = to; }
+    Q_INVOKABLE void setIndx(int indx) { indx_ = indx; }
 
 protected:
     Dataset* m_plot = nullptr;
@@ -59,7 +63,7 @@ public slots:
     void horScrollEvent(int delta);
     void verZoomEvent(int delta);
     void verScrollEvent(int delta);
-    Q_INVOKABLE void plotMousePosition(int x, int y);
+    Q_INVOKABLE void plotMousePosition(int x, int y, bool isSync = false);
     Q_INVOKABLE void simplePlotMousePosition(int x, int y);
     Q_INVOKABLE void onCursorMoved(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
@@ -67,9 +71,23 @@ public slots:
     Q_INVOKABLE bool deleteContact(int indx);
     Q_INVOKABLE void updateContact();
 
-    void plotDatasetChannel(int channel, int channel2 = CHANNEL_NONE) { setDataChannel(channel, channel2); }
-    int plotDatasetChannel() { return _cursor.channel1; }
-    int plotDatasetChannel2() { return _cursor.channel2; }
+
+    void plotDatasetChannelFromStrings(const QString& ch1Str, const QString& ch2Str)
+    {
+        if (!datasetPtr_) {
+           return;
+        }
+
+        auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(ch1Str);
+        auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(ch2Str);
+
+        setDataChannel(true, ch1, sub1, name1, ch2, sub2, name2);
+    }
+
+    ChannelId plotDatasetChannel() { return cursor_.channel1; }
+    uint8_t plotDatasetSubChannel() { return cursor_.subChannel1; }
+    ChannelId plotDatasetChannel2() { return cursor_.channel2; }
+    uint8_t plotDatasetSubChannel2() { return cursor_.subChannel2; }
 
     void plotEchogramVisible(bool visible) { setEchogramVisible(visible); }
     Q_INVOKABLE void plotEchogramTheme(int theme_id) { setEchogramTheme(theme_id); }
@@ -116,6 +134,7 @@ public slots:
     void setOffsetX(float value);
     void setOffsetY(float value);
     void setOffsetZ(float value);
-};
 
-#endif // WATERFALL_H
+private:
+    int indx_ = -1;
+};

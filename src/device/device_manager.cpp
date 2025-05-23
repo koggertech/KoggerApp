@@ -1,18 +1,20 @@
 #include "device_manager.h"
-
+#include "device_defs.h"
 #include <QDateTime>
 #include "core.h"
 extern Core core;
 
 
-DeviceManager::DeviceManager() :
-    lastDevs_(nullptr),
-    lastDevice_(nullptr),
-    mavlinkLink_(nullptr),
-    lastAddress_(-1),
-    progress_(0),
-    isConsoled_(false),
-    break_(false)
+DeviceManager::DeviceManager()
+    : lastDevs_(nullptr),
+      lastDevice_(nullptr),
+      mavlinkLink_(nullptr),
+      lastAddress_(-1),
+      progress_(0),
+      isConsoled_(false),
+      break_(false),
+      upgradeUuid_(QUuid()),
+      upgradeAddr_(0)
 {
     qRegisterMetaType<ProtoBinOut>("ProtoBinOut");
 #ifdef SEPARATE_READING
@@ -112,15 +114,6 @@ QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
     return list;
 }
 
-#ifdef MOTOR
-bool DeviceManager::isMotorControlCreated() const
-{
-    if (motorControl_)
-        return true;
-    return false;
-}
-#endif
-
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
     if (frame.isComplete()) {
@@ -189,9 +182,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 prot_nmea.skip();
                 double depth_m = prot_nmea.readDouble();
                 if (isfinite(depth_m)) {
-                    emit rangefinderComplete(depth_m);
+                    if (auto* dev = getDevice(uuid, link, frame.route()); dev) { // work?
+                        emit rangefinderComplete(dev->getChannelId(), depth_m);
+                    }
                 }
-
             }
 
             if (prot_nmea.isEqualId("RMC")) {
@@ -202,7 +196,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 Q_UNUSED(isCorrect);
 
                 char c = prot_nmea.readChar();
-                if (c == 'A') {
+                if (c == 'A' || c == 'D') {
                     double lat = prot_nmea.readLatitude();
                     double lon = prot_nmea.readLongitude();
 
@@ -215,6 +209,41 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                     uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
+                }
+            }
+
+            if (prot_nmea.isEqualId("GGA")) {
+                uint8_t h = 0, m = 0, s = 0;
+                uint16_t ms = 0;
+
+                bool isCorrect =  prot_nmea.readTime(&h, &m, &s, &ms);
+                Q_UNUSED(isCorrect);
+
+                double lat = prot_nmea.readLatitude();
+                double lon = prot_nmea.readLongitude();
+
+                char q = prot_nmea.readChar();
+
+                prot_nmea.skip(); // sv
+                prot_nmea.skip(); // HDOP
+
+                float height_msl = prot_nmea.readDouble(); // Orthometric height (MSL reference)
+
+                if (q == '1' || q == '2' || q == '4' || q == '5') {
+                    uint16_t year = 1971;
+                    uint8_t mounth = 1, day = 1;
+
+                    Position pos;
+                    pos.lla.latitude = lat;
+                    pos.lla.longitude = lon;
+                    pos.lla.altitude = height_msl;
+                    pos.lla.source = PositionSourceRTK;
+                    pos.lla.altSource = AltitudeSourceRTK;
+                    pos.time = DateTime(year, mounth, day, h, m, s, int64_t(ms)*1000*1000);
+
+                    if(q == '4') {
+                        emit positionCompleteRTK(pos);
+                    }
                 }
             }
         }
@@ -322,7 +351,14 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 if (mavlink_frame.msgId() == 30) {
                     MAVLink_MSG_ATTITUDE attitude = mavlink_frame.read<MAVLink_MSG_ATTITUDE>();
-                    emit attitudeComplete(attitude.yawDeg(),attitude.pitchDeg(), attitude.rollDeg());
+
+                    const float yaw = attitude.yawDeg();
+                    const float pitch = attitude.pitchDeg();
+                    const float roll = attitude.rollDeg();
+
+                    if (!qFuzzyIsNull(yaw) || !qFuzzyIsNull(pitch) || !qFuzzyIsNull(roll)) {
+                        emit attitudeComplete(yaw, attitude.pitchDeg(), attitude.rollDeg());
+                    }
                 }
 
                 core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
@@ -367,7 +403,8 @@ void DeviceManager::openFile(QString filePath)
     const qint64 totalSize = file.size();
     qint64 bytesRead = 0;
     Parsers::FrameParser frameParser;
-    const QUuid someUuid;
+    const QUuid someUuid(kFileUuidStr);
+
     delAllDev();
 
 #ifdef SEPARATE_READING
@@ -477,40 +514,13 @@ void DeviceManager::closeFile()
 
 void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
 {
-    Q_UNUSED(uuid);
-
     if (link) {
         if (link->getIsProxy()) {
             proxyLinkUuid_ = uuid;
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         }
         else {
-#ifdef MOTOR
-            if (!link->getIsMotorDevice()) {
             getDevice(uuid, link, 0);
-        }
-            else { // create motor driver
-                if (motorControl_) {
-                    motorControl_.reset();
-    }
-                motorControl_ = std::make_unique<MotorControl>(this, link);
-
-                QObject::connect(motorControl_.get(), &MotorControl::posIsConstant, this, &DeviceManager::calibrationStandIn);
-                QObject::connect(motorControl_.get(), &MotorControl::angleChanged, this, [this](uint8_t addr, float angle) {
-                    if (addr == 225) {
-                        fAngle_ = angle;
-                    }
-                    if (addr == 226) {
-                        sAngle_ = angle;
-                    }
-                    emit anglesHasChanged();
-                });
-
-                emit motorDeviceChanged();
-            }
-#else
-            getDevice(uuid, link, 0);
-#endif
         }
     }
 }
@@ -520,13 +530,6 @@ void DeviceManager::onLinkClosed(QUuid uuid, Link *link)
     Q_UNUSED(uuid);
 
     if (link) {
-#ifdef MOTOR
-        if (link->getIsMotorDevice()) {
-            motorControl_.reset();
-            emit motorDeviceChanged();
-        }
-#endif
-
         deleteDevicesByLink(uuid);
         this->disconnect(link);
         otherProtocolStat_.remove(uuid);
@@ -616,93 +619,17 @@ void DeviceManager::onLoggingKlfStarted()
     }
 }
 
-#ifdef MOTOR
-float DeviceManager::getFAngle()
+void DeviceManager::onSendRequestAll(QUuid uuid)
 {
-    return fAngle_;
-}
-
-float DeviceManager::getSAngle()
-{
-    return sAngle_;
-}
-
-void DeviceManager::returnToZero(int id)
-{
-    if (!motorControl_) {
-        return;
-    }
-
-    if (id == 0) {
-        motorControl_->goZero(motorControl_->getFAddr());
-    }
-    if (id == 1) {
-        motorControl_->goZero(motorControl_->getSAddr());
+    if (devTree_.contains(uuid)) {
+        QHash<int, DevQProperty*> devs = devTree_[uuid];
+        for (auto i = devs.cbegin(), end = devs.cend(); i != end; ++i) {
+            if (auto* dev = i.value(); dev) {
+                dev->doRequestAll();
+            }
+        }
     }
 }
-
-void DeviceManager::runSteps(int id, int speed, int angle)
-{
-    if (!motorControl_) {
-        return;
-    }
-
-    if (id == 0) {
-        motorControl_->runSteps(motorControl_->getFAddr(), speed, angle, false); // false - need waiting for curr pos
-    }
-    if (id == 1) {
-        motorControl_->runSteps(motorControl_->getSAddr(), speed, angle, false);
-    }
-}
-
-void DeviceManager::openCsvFile(QString name)
-{
-    if (!motorControl_) {
-        qDebug() << "motorControl is not inited";
-        return;
-    }
-
-    QFile file;
-    QUrl url(name);
-    url.isLocalFile() ? file.setFileName(url.toLocalFile()) : file.setFileName(url.toString());
-
-    if (!file.open(QIODevice::ReadOnly))
-        return;
-
-    QTextStream in(&file);
-    QStringList tasks;
-
-    while (!in.atEnd()) {
-        QString row = in.readLine();
-        tasks.append(row);
-    }
-
-    motorControl_->addTask(tasks);
-}
-
-void DeviceManager::clearTasks()
-{
-    if (!motorControl_) {
-        qDebug() << "motorControl is not inited";
-        return;
-    }
-
-    motorControl_->clearTasks();
-}
-
-void DeviceManager::calibrationStandIn(float currFAngle, float taskFAngle, float currSAngle, float taskSAngle) {
-    // emit encoderComplete(currFAngle, -currSAngle, NAN);
-    emit posIsConstant(currFAngle, taskFAngle, currSAngle, taskSAngle);
-
-    QList<DevQProperty *> usbl_devs = getDevList(BoardUSBL);
-    if(usbl_devs.size() > 0) {
-        IDBinUsblSolution::USBLRequestBeacon ask;
-        ask.external_heading_deg = currFAngle;
-        ask.external_pitch = currSAngle;
-        usbl_devs[0]->askBeaconPosition(ask);
-    }
-}
-#endif
 
 StreamListModel* DeviceManager::streamsList()
 {
@@ -731,6 +658,24 @@ void DeviceManager::readyReadProxyNav(Link* link)
             emit dataSend(data);
         }
     }
+}
+
+void DeviceManager::onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware)
+{
+    qDebug() << "DeviceManager::onStartUpgradingFirmware";
+
+    upgradeUuid_ = linkUuid;
+    upgradeAddr_ = address;
+    upgradeData_ = firmware;
+}
+
+void DeviceManager::onUpgradingFirmwareDone()
+{
+    qDebug() << "DeviceManager::onUpgradingFirmwareDone";
+
+    upgradeUuid_ = QUuid();
+    upgradeAddr_ = 0;
+    upgradeData_.clear();
 }
 
 DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
@@ -789,6 +734,12 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     DevQProperty* dev = new DevQProperty();
     devTree_[uuid][addr] = dev;
     dev->setBusAddress(addr);
+    dev->setLinkUuid(uuid);
+
+    if (upgradeUuid_ == uuid && upgradeAddr_ == addr) {
+        dev->setFirmware(upgradeData_);
+        upgradeUuid_ = QUuid();
+    }
 
 #ifdef SEPARATE_READING
     auto connType = Qt::AutoConnection;
@@ -796,7 +747,12 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut, connType);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame, connType);
+        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware, connType);
+        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone, connType);
     }
+
+    connect(dev, &DevQProperty::startUpgradingFirmwareDM, this, &DeviceManager::onStartUpgradingFirmware, connType);
+    connect(dev, &DevQProperty::upgradingFirmwareDoneDM, this, &DeviceManager::onUpgradingFirmwareDone, connType);
 
     //
     connect(dev, &DevQProperty::sendChartSetup, this, &DeviceManager::sendChartSetup, connType);
@@ -827,7 +783,12 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     if(link != NULL) {
         connect(dev, &DevQProperty::binFrameOut, this, &DeviceManager::binFrameOut);
         connect(dev, &DevQProperty::binFrameOut, link, &Link::writeFrame);
+        connect(dev, &DevQProperty::startUpgradingFirmware, link, &Link::onStartUpgradingFirmware);
+        connect(dev, &DevQProperty::upgradingFirmwareDone, link, &Link::onUpgradingFirmwareDone);
     }
+
+    connect(dev, &DevQProperty::startUpgradingFirmwareDM, this, &DeviceManager::onStartUpgradingFirmware);
+    connect(dev, &DevQProperty::upgradingFirmwareDoneDM, this, &DeviceManager::onUpgradingFirmwareDone);
 
     //
     connect(dev, &DevQProperty::sendChartSetup,  this, &DeviceManager::sendChartSetup);

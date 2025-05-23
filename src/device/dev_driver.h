@@ -1,11 +1,13 @@
 #pragma once
 
 #include <QObject>
-#include "proto_binnary.h"
-#include "id_binnary.h"
 #include <QHash>
 #include <QVector>
-#include "QTimer"
+#include <QTimer>
+#include <QUuid>
+#include "proto_binnary.h"
+#include "id_binnary.h"
+
 
 using namespace Parsers;
 
@@ -31,6 +33,8 @@ public:
     QTimer* getProcessTimer();
     QList<QTimer*> getChildTimers();
 #endif
+
+    ChannelId getChannelId() const;
 
     int distMax();
     void setDistMax(int dist);
@@ -75,7 +79,7 @@ public:
     void setCh2Period(int period);
 
     void sendUpdateFW(QByteArray update_data);
-    bool isUpdatingFw() { return m_bootloader; }
+    bool isUpdatingFw() { return m_state.in_update; }
     int upgradeFWStatus() {return m_upgrade_status; }
 
     void sendFactoryFW(QByteArray update_data);
@@ -163,22 +167,30 @@ public:
     bool getSoundSpeedState() { return soundSpeedState_; };
     bool getUartState() { return uartState_; };
     int getAverageChartLosses() const { return averageChartLosses_; };
+    void setFirmware(const QByteArray& data);
 
 signals:
     void averageChartLossesChanged();
     void binFrameOut(ProtoBinOut proto_out);
 
-    //
-    void sendChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
-    void sendTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
-    void sendSoundSpeed(int16_t channel, uint32_t soundSpeed);
+    // link
+    void startUpgradingFirmware();
+    void upgradingFirmwareDone();
+    // deviceManager
+    void startUpgradingFirmwareDM(QUuid linkUuid, uint8_t address, QByteArray firmware);
+    void upgradingFirmwareDoneDM();
 
-    void chartComplete(ChartParameters chartsParams, QVector<uint8_t> data, float resolution, float offset);
+    //
+    void sendChartSetup(const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
+    void sendTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
+    void sendSoundSpeed(const ChannelId& channelId, uint32_t soundSpeed);
+
+    void chartComplete(const ChannelId& channelId, const ChartParameters& chartsParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
 
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
-    void distComplete(int dist);
+    void distComplete(const ChannelId& channelId, int dist);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void beaconActivationComplete(uint8_t id);
@@ -232,7 +244,8 @@ public slots:
     void setTranscState(bool state);
     void setSoundSpeedState(bool state);
     void setUartState(bool state);
-
+    void setLinkUuid(QUuid linkUuid);
+    QUuid getLinkUuid() const;
     void askBeaconPosition() {
         IDBinUsblSolution::USBLRequestBeacon ask;
         askBeaconPosition(ask);
@@ -241,9 +254,11 @@ public slots:
     void enableBeaconOnce(float timeout);
 
 #ifdef SEPARATE_READING
-    void initProcessTimerConnects();
-    void initChildsTimersConnects();
+    Q_INVOKABLE void initProcessTimerConnects();
+    Q_INVOKABLE void initChildsTimersConnects();
 #endif
+
+    void doRequestAll();
 
 protected:
     friend class DeviceManager;
@@ -314,22 +329,39 @@ protected:
     } UptimeStatus;
 
     struct {
-        bool connect = false;
         bool duplex = false;
+
+        bool connect = false;
         bool heartbeat = false;
         bool mark = false;
+        bool in_boot = false;
+        bool reboot = false;
+        bool in_update = false;
 
         ConfStatus conf = ConfNone;
         UptimeStatus uptime = UptimeNone;
 
+        int64_t lastConnectTime = 0;
+
+        void resetState() {
+            connect = false;
+            heartbeat = false;
+            mark = false;
+            // in_boot = false;
+            reboot = false;
+            in_update = false;
+
+            conf = ConfNone;
+            uptime = UptimeNone;
+        }
     } m_state;
 
-    uint8_t _lastAddres = 0;
+    uint8_t lastAddress_ = 0;
 
     QTimer m_processTimer;
 
-    bool m_bootloader = false;
     bool m_bootloaderLagacyMode = true;
+    bool rebootFlag_ = false;
     int m_upgrade_status = 0;
     int64_t _lastUpgradeAnswerTime = 0;
     int64_t _timeoutUpgradeAnswerTime = 0;
@@ -384,4 +416,5 @@ private:
     bool uartState_;
     int errorFreezeCnt_;
     int averageChartLosses_;
+    QUuid linkUuid_;
 };

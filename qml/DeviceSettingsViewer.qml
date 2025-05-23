@@ -22,21 +22,6 @@ MenuScroll {
             }
         }
 
-        Loader {
-            id: menuLoader
-            sourceComponent: core.isSupportedMotorControlMode ? menuComponent : null
-        }
-
-        Component {
-            id: menuComponent
-            MenuFrame {
-                MotorViewer {
-                    id: motorView
-                    width: menuWidth
-                }
-            }
-        }
-
         MenuFrame {
             visible: false
             FactoryBox {
