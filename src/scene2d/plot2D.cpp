@@ -174,6 +174,7 @@ bool Plot2D::isHorizontal()
 void Plot2D::setHorizontal(bool is_horizontal)
 {
     isHorizontal_ = is_horizontal;
+    contacts_.setIsHorizontal(isHorizontal_);
 }
 
 void Plot2D::setAimEpochEventState(bool state)

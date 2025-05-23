@@ -32,7 +32,7 @@ public:
 
     void setPlot(Dataset* plot);
     bool isHorizontal() { return _isHorizontal; }
-    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; isHorizontal_ = _isHorizontal; update(); }
+    void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; Plot2D::setHorizontal(_isHorizontal); update(); }
 
     void plotUpdate() override;
 

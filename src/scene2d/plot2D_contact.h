@@ -20,6 +20,7 @@ public:
     double getLat();
     double getLon();
     double getDepth();
+    void setIsHorizontal(bool state) { isHorizontal_ = state; };
 
 private:
     int lineWidth_ = 1;
@@ -35,6 +36,7 @@ private:
     double lat_ = 0.0;
     double lon_ = 0.0;
     double depth_ = 0.0;
+    bool isHorizontal_ = true;
 
     void setVisibleContact(bool val);
 };
