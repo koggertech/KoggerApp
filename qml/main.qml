@@ -773,7 +773,7 @@ ApplicationWindow  {
                         isEnabled: enabled
 
                         onVisibleChanged: {
-                            if (visible) {
+                            if (visible && menuBar.syncPlots) {
                                 setCursorFromTo(waterViewFirst.cursorFrom(), waterViewFirst.cursorTo())
                                 update()
                             }
