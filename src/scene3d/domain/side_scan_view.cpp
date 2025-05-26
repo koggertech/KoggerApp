@@ -1,5 +1,6 @@
 #include "side_scan_view.h"
 
+#include <optional>
 #include <QtMath>
 #include "scene3d_view.h"
 #include <QtConcurrent/QtConcurrent>
