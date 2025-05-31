@@ -12,7 +12,8 @@ enum class LinkType {
 };
 
 enum class LinkAttribute {
-    kLinkAttributeNone = 1
+    kLinkAttributeNone = 0,
+    kLinkAttributeBoot = 0xFFFF
 };
 
 enum class ControlType {

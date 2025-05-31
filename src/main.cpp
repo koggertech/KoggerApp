@@ -90,6 +90,7 @@ void registerQmlMetaTypes()
     qmlRegisterType<qPlot2D>( "WaterFall", 1, 0, "WaterFall");
     qmlRegisterType<BottomTrack>("BottomTrack", 1, 0, "BottomTrack");
     qRegisterMetaType<BottomTrack::ActionEvent>("BottomTrack::ActionEvent");
+    qRegisterMetaType<LinkAttribute>("LinkAttribute");
 }
 
 

@@ -23,6 +23,10 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendOpenFLinks,              workerObject_.get(), &LinkManager::openFLinks,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendDeleteLink,              workerObject_.get(), &LinkManager::deleteLink,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateBaudrate,          workerObject_.get(), &LinkManager::updateBaudrate,               connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetRequestToSend,        workerObject_.get(), &LinkManager::setRequestToSend,             connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetDataTerminalReady,    workerObject_.get(), &LinkManager::setDataTerminalReady,         connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetPatity,               workerObject_.get(), &LinkManager::setParity,                    connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetAttribut,             workerObject_.get(), &LinkManager::setAttribute,                 connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateAddress,           workerObject_.get(), &LinkManager::updateAddress,                connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,        workerObject_.get(), &LinkManager::updateSourcePort,             connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort,   workerObject_.get(), &LinkManager::updateDestinationPort,        connectionType);
@@ -91,7 +95,7 @@ QVariant LinkManagerWrapper::baudrateModel() const
     return list;
 }
 
-void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
+void LinkManagerWrapper::openAsSerial(QUuid uuid, LinkAttribute attribute)
 {
     emit sendOpenAsSerial(uuid, attribute);
 }
@@ -101,7 +105,7 @@ void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destin
     emit sendCreateAsUdp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
+void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
     emit sendOpenAsUdp(uuid, address, sourcePort, destinationPort, attribute);
 }
@@ -111,7 +115,7 @@ void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destin
     emit sendCreateAsTcp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
+void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
     emit sendOpenAsTcp(uuid, address, sourcePort, destinationPort, attribute);
 }
@@ -133,6 +137,22 @@ void LinkManagerWrapper::deleteLink(QUuid uuid)
 void LinkManagerWrapper::updateBaudrate(QUuid uuid, int baudrate)
 {
     emit sendUpdateBaudrate(uuid, baudrate);
+}
+
+void LinkManagerWrapper::setRequestToSend(QUuid uuid, bool rts) {
+    emit sendSetRequestToSend(uuid, rts);
+}
+
+void LinkManagerWrapper::setDataTerminalReady(QUuid uuid, bool dtr) {
+    emit sendSetDataTerminalReady(uuid, dtr);
+}
+
+void LinkManagerWrapper::setParity(QUuid uuid, bool parity) {
+    emit sendSetPatity(uuid, parity);
+}
+
+void LinkManagerWrapper::setAttribute(QUuid uuid, LinkAttribute attribute) {
+    emit sendSetAttribut(uuid, attribute);
 }
 
 void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName,
