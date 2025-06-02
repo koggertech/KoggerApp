@@ -5,29 +5,30 @@
 
 Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
     : QmlComponentController(parent),
-      graphicsSceneViewPtr_(nullptr),
+      graphicsScene3dViewPtr_(nullptr),
       pendingLambda_(nullptr),
-      isVertexEditingMode_(false)
+      isVertexEditingMode_(false),
+      trackLastData_(false)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
 {
-    if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->fitAllInView();
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->fitAllInView();
     }
 }
 
 void Scene3dToolBarController::onSetCameraIsometricViewButtonClicked()
 {
-    if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->setIsometricView();
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setIsometricView();
     }
 }
 
 void Scene3dToolBarController::onSetCameraMapViewButtonClicked()
 {
-    if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->setMapView();
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setMapView();
     }
 }
 
@@ -35,12 +36,12 @@ void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool 
 {
     isVertexEditingMode_ = checked;
 
-    if (graphicsSceneViewPtr_) {
+    if (graphicsScene3dViewPtr_) {
         if (isVertexEditingMode_) {
-            graphicsSceneViewPtr_->setBottomTrackVertexSelectionMode();
+            graphicsScene3dViewPtr_->setBottomTrackVertexSelectionMode();
         }
         else {
-            graphicsSceneViewPtr_->setIdleMode();
+            graphicsScene3dViewPtr_->setIdleMode();
         }
     }
     else {
@@ -50,14 +51,26 @@ void Scene3dToolBarController::onBottomTrackVertexEditingModeButtonChecked(bool 
 
 void Scene3dToolBarController::onCancelZoomButtonClicked()
 {
-    graphicsSceneViewPtr_->setCancelZoomView();
+    graphicsScene3dViewPtr_->setCancelZoomView();
+}
+
+void Scene3dToolBarController::onTrackLastDataCheckButtonCheckedChanged(bool state)
+{
+    trackLastData_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setTrackLastData(state);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
-    graphicsSceneViewPtr_ = sceneView;
+    graphicsScene3dViewPtr_ = sceneView;
 
-    if (graphicsSceneViewPtr_) {
+    if (graphicsScene3dViewPtr_) {
         if (pendingLambda_) {
             pendingLambda_();
             pendingLambda_ = nullptr;
@@ -74,12 +87,13 @@ void Scene3dToolBarController::tryInitPendingLambda()
 {
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
-            if (graphicsSceneViewPtr_) {
+            if (graphicsScene3dViewPtr_) {
+                graphicsScene3dViewPtr_->setTrackLastData(trackLastData_);
                 if (isVertexEditingMode_) {
-                    graphicsSceneViewPtr_->setBottomTrackVertexSelectionMode();
+                    graphicsScene3dViewPtr_->setBottomTrackVertexSelectionMode();
                 }
                 else {
-                    graphicsSceneViewPtr_->setIdleMode();
+                    graphicsScene3dViewPtr_->setIdleMode();
                 }
             }
         };

@@ -18,7 +18,6 @@ SideScanViewControlMenuController::SideScanViewControlMenuController(QObject *pa
       //tileResolution_(1.0f/10.0f),
       generateGridContour_(false),
       updateState_(false),
-      trackLastEpoch_(false),
       themeId_(0),
       lowLevel_(10.0f),
       highLevel_(90.0f),
@@ -141,18 +140,6 @@ void SideScanViewControlMenuController::onUpdateStateChanged(bool state)
     }
 }
 
-void SideScanViewControlMenuController::onTrackLastEpochChanged(bool state)
-{
-    trackLastEpoch_ = state;
-
-    if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getSideScanViewPtr()->setTrackLastEpoch(trackLastEpoch_);
-    }
-    else {
-        tryInitPendingLambda();
-    }
-}
-
 void SideScanViewControlMenuController::onThemeChanged(int val)
 {
     themeId_ = val + 1;
@@ -244,7 +231,6 @@ void SideScanViewControlMenuController::tryInitPendingLambda()
                     sideScanPtr->setMeasLineVisible(measLineVisible_);
                     //sideScanPtr->resetTileSettings(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                     sideScanPtr->setGenerateGridContour(generateGridContour_);
-                    sideScanPtr->setTrackLastEpoch(trackLastEpoch_);
                     sideScanPtr->setColorTableThemeById(themeId_);
                     sideScanPtr->setColorTableLevels(lowLevel_, highLevel_);
                     sideScanPtr->setLAngleOffset(lAngleOffset_);

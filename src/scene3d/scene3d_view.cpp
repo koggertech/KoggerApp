@@ -37,7 +37,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     switchedToBottomTrackVertexComboSelectionMode_(false),
     bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
-    lastCameraDist_(m_camera->distForMapView())
+    lastCameraDist_(m_camera->distForMapView()),
+    trackLastData_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -443,6 +444,12 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setTrackLastData(bool state)
+{
+    qDebug() << "GraphicsScene3dView::setTrackLastData" << state;
+    trackLastData_ = state;
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -654,6 +661,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     const Position pos = m_dataset->getLastPosition();
                                     navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
 
+                                    if (trackLastData_) {
+                                        setLastEpochFocusView();
+                                    }
+
                                     if (!sideScanCalcState_ || sideScanView_->getWorkMode() != SideScanView::Mode::kRealtime) {
                                         return;
                                     }
@@ -687,9 +698,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
                                         m_bottomTrack->sideScanUpdated();
                                         sideScanView_->startUpdateDataInThread(indx);
-                                        if (sideScanView_->getTrackLastEpoch()) {
-                                            setLastEpochFocusView();
-                                        }
                                     }
                                 }, Qt::DirectConnection);
 

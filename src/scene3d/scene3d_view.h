@@ -203,6 +203,8 @@ public:
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
+    void setTrackLastData(bool state);
+
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
@@ -292,6 +294,7 @@ private:
     int bottomTrackWindowCounter_;
     bool needToResetStartPos_;
     float lastCameraDist_;
+    bool trackLastData_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

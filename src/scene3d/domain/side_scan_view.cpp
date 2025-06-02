@@ -20,7 +20,6 @@ SideScanView::SideScanView(QObject* parent) :
     lastAcceptedEpoch_(0),
     globalMesh_(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_),
     useLinearFilter_(false),
-    trackLastEpoch_(true),
     colorMapTextureId_(0),
     workMode_(Mode::kUndefined),
     manualSettedChannels_(false),
@@ -601,11 +600,6 @@ void SideScanView::setUseLinearFilter(bool state)
     Q_EMIT changed();
 }
 
-void SideScanView::setTrackLastEpoch(bool state)
-{
-    trackLastEpoch_ = state;
-}
-
 void SideScanView::setColorTableTextureId(GLuint value)
 {
     colorMapTextureId_ = value;
@@ -666,12 +660,6 @@ bool SideScanView::getUseLinearFilter() const
 {
     return useLinearFilter_;
 }
-
-bool SideScanView::getTrackLastEpoch() const
-{
-    return trackLastEpoch_;
-}
-
 
 GLuint SideScanView::getColorTableTextureId() const
 {

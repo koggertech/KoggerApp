@@ -14,6 +14,7 @@ public:
     Q_INVOKABLE void onSetCameraMapViewButtonClicked();
     Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
     Q_INVOKABLE void onCancelZoomButtonClicked();
+    Q_INVOKABLE void onTrackLastDataCheckButtonCheckedChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 protected:
@@ -21,9 +22,10 @@ protected:
 private:
     void tryInitPendingLambda();
 
-    GraphicsScene3dView* graphicsSceneViewPtr_;
+    GraphicsScene3dView* graphicsScene3dViewPtr_;
     std::function<void()> pendingLambda_;
     bool isVertexEditingMode_;
+    bool trackLastData_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

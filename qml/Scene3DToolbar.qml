@@ -704,29 +704,6 @@ ColumnLayout {
                         property alias realtimeProcessingButton: realtimeProcessingButton.checked
                     }
                 }
-                CheckButton {
-                    id: sideScanTrackLastData
-                    text: qsTr("Track last data")
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    checked: true
-
-                    onToggled: {
-                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
-                    }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
-
-                    Component.onCompleted: {
-                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
-                    }
-
-                    Settings {
-                        property alias sideScanTrackLastData: sideScanTrackLastData.checked
-                    }
-                }
                 RowLayout {
                     CText {
                         text: qsTr("Theme:")
@@ -1436,6 +1413,29 @@ ColumnLayout {
 
             Settings {
                 property alias selectionToolButton: selectionToolButton.checked
+            }
+        }
+
+        CheckButton {
+            id: trackLastDataCheckButton
+            objectName: "trackLastDataCheckButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: false
+            iconSource: "qrc:/icons/ui/location.svg"
+            implicitWidth: theme.controlHeight
+
+            onToggled: {
+                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
             }
         }
 
