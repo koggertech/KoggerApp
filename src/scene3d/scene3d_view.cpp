@@ -1,6 +1,5 @@
 #include "scene3d_view.h"
 #include "scene3d_renderer.h"
-#include <surface.h>
 #include <dataset.h>
 
 #include <cmath>
@@ -32,12 +31,14 @@ GraphicsScene3dView::GraphicsScene3dView() :
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
     tileManager_(std::make_shared<map::TileManager>(this)),
+    isobaths_(std::make_shared<Isobaths>(this)),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
-    lastCameraDist_(m_camera->distForMapView())
+    lastCameraDist_(m_camera->distForMapView()),
+    trackLastData_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -70,6 +71,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_planeGrid.get(), &PlaneGrid::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(isobaths_.get(), &Isobaths::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -83,6 +85,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(isobaths_.get(), &Isobaths::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
     // map
     QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
@@ -97,6 +100,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateIsobaths, Qt::DirectConnection);
 
     updatePlaneGrid();
 }
@@ -166,6 +170,11 @@ std::shared_ptr<NavigationArrow> GraphicsScene3dView::getNavigationArrowPtr() co
     return navigationArrow_;
 }
 
+std::shared_ptr<Isobaths> GraphicsScene3dView::getIsobathsPtr() const
+{
+    return isobaths_;
+}
+
 std::weak_ptr<GraphicsScene3dView::Camera> GraphicsScene3dView::camera() const
 {
     return m_camera;
@@ -202,6 +211,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_pointGroup->clearData();
     navigationArrow_->clearData();
     usblView_->clearTracks();
+    isobaths_->clearData();
     m_bounds = Cube();
 
     //setMapView();
@@ -434,6 +444,12 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setTrackLastData(bool state)
+{
+    qDebug() << "GraphicsScene3dView::setTrackLastData" << state;
+    trackLastData_ = state;
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -645,6 +661,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     const Position pos = m_dataset->getLastPosition();
                                     navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
 
+                                    if (trackLastData_) {
+                                        setLastEpochFocusView();
+                                    }
+
                                     if (!sideScanCalcState_ || sideScanView_->getWorkMode() != SideScanView::Mode::kRealtime) {
                                         return;
                                     }
@@ -678,9 +698,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
                                         m_bottomTrack->sideScanUpdated();
                                         sideScanView_->startUpdateDataInThread(indx);
-                                        if (sideScanView_->getTrackLastEpoch()) {
-                                            setLastEpochFocusView();
-                                        }
                                     }
                                 }, Qt::DirectConnection);
 
@@ -722,7 +739,8 @@ void GraphicsScene3dView::updateBounds()
                     .merge(m_pointGroup->bounds())
                     .merge(sideScanView_->bounds())
                     .merge(imageView_->bounds())
-                    .merge(usblView_->bounds());
+                    .merge(usblView_->bounds())
+                    .merge(isobaths_->bounds());
 
     updatePlaneGrid();
 
@@ -884,6 +902,13 @@ void GraphicsScene3dView::updateMapView()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::updateIsobaths()
+{
+    if (isobaths_) {
+        isobaths_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    }
+}
+
 //---------------------Renderer---------------------------//
 GraphicsScene3dView::InFboRenderer::InFboRenderer() :
     QQuickFramebufferObject::Renderer(),
@@ -913,6 +938,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     processColorTableTexture(view);
     processTileTexture(view);
     processImageTexture(view);
+    processIsobathTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -933,6 +959,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));
     m_renderer->usblViewRenderImpl_         = *(dynamic_cast<UsblView::UsblViewRenderImplementation*>(view->usblView_->m_renderImpl));
+    m_renderer->isobathsRenderImpl_         = *(dynamic_cast<Isobaths::IsobathsRenderImplementation*>(view->isobaths_->m_renderImpl));
     m_renderer->m_viewSize                  = view->size();
     m_renderer->m_camera                    = *view->m_camera;
     m_renderer->m_axesThumbnailCamera       = *view->m_axesThumbnailCamera;
@@ -1125,6 +1152,42 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
     glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
     task = QImage();
+}
+
+void GraphicsScene3dView::InFboRenderer::processIsobathTexture(GraphicsScene3dView *viewPtr) const
+{
+    // init/reinit
+    auto isobathsPtr = viewPtr->getIsobathsPtr();
+    auto& task = isobathsPtr->getTextureTasksRef();
+
+    if (task.empty())
+        return;
+
+    GLuint textureId = isobathsPtr->getTextureId();
+
+    if (textureId) {
+        glDeleteTextures(1, &textureId);
+    }
+
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
+    qDebug() << "Palette texture uploaded, size:" <<  task.size();
+
+    isobathsPtr->setTextureId(textureId);
+    task.clear();
+
+    // deleting
+    auto textureIdtoDel = isobathsPtr->getDeinitTextureTask();
+    if (textureIdtoDel) {
+        glDeleteTextures(1, &textureIdtoDel);
+    }
 }
 
 GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :

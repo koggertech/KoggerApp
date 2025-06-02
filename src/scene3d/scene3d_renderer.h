@@ -13,7 +13,7 @@
 #include "scene3d_view.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-
+#include "isobaths.h"
 #include <QMatrix4x4>
 #include "qsystemdetection.h"
 #if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
@@ -75,6 +75,7 @@ private:
     BoatTrack::BoatTrackRenderImplementation m_boatTrackRenderImpl;
     NavigationArrow::NavigationArrowRenderImplementation navigationArrowRenderImpl_;
     UsblView::UsblViewRenderImplementation usblViewRenderImpl_;
+    Isobaths::IsobathsRenderImplementation isobathsRenderImpl_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

@@ -16,6 +16,7 @@ HEADERS += \
     $$PWD/global_mesh.h \
     $$PWD/grid_generator.h \
     $$PWD/image_view.h \
+	$$PWD/isobaths.h \
     $$PWD/map_view.h \
     $$PWD/navigation_arrow.h \
     $$PWD/plane.h \
@@ -44,6 +45,7 @@ SOURCES += \
     $$PWD/cube.cpp \
     $$PWD/global_mesh.cpp \
     $$PWD/image_view.cpp \
+    $$PWD/isobaths.cpp \
     $$PWD/map_view.cpp \
     $$PWD/navigation_arrow.cpp \
     $$PWD/plane.cpp \
