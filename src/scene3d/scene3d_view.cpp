@@ -38,7 +38,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
-    trackLastData_(false)
+    trackLastData_(false),
+    updateBottomTrack_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -53,9 +54,9 @@ GraphicsScene3dView::GraphicsScene3dView() :
     imageView_->setView(this);
 
 #ifdef SEPARATE_READING
-    sideScanCalcState_ = true;
+    updateMosaic_ = true;
 #else
-    sideScanCalcState_ = false;
+    updateMosaic_ = false;
 #endif
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
@@ -237,9 +238,9 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
-void GraphicsScene3dView::setCalcStateSideScanView(bool state)
+void GraphicsScene3dView::setUpdateMosaic(bool state)
 {
-    sideScanCalcState_ = state;
+    updateMosaic_ = state;
 }
 
 void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
@@ -450,6 +451,11 @@ void GraphicsScene3dView::setTrackLastData(bool state)
     trackLastData_ = state;
 }
 
+void GraphicsScene3dView::setUpdateBottomTrack(bool state)
+{
+    updateBottomTrack_ = state;
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -649,7 +655,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                      this,      [this](int lEpoch, int rEpoch) -> void {
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                    if (sideScanCalcState_) {
+                                    if (updateMosaic_) {
                                         interpolateDatasetEpochs(false);
                                     }
                                 }, Qt::DirectConnection);
@@ -665,31 +671,26 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                         setLastEpochFocusView();
                                     }
 
-                                    if (!sideScanCalcState_ || sideScanView_->getWorkMode() != SideScanView::Mode::kRealtime) {
-                                        return;
-                                    }
+                                    if (updateMosaic_ || updateBottomTrack_) {
 
-                                    // bottom track
-                                    ChannelId firstChannelId = CHANNEL_NONE;
-                                    ChannelId secondChannelId = CHANNEL_NONE;
-                                    if (m_dataset) {
-                                        if (auto chVector = m_dataset->channelsList(); !chVector.empty()) {
-                                            auto it = chVector.begin();
-                                            firstChannelId = it->channelId_;
+                                        auto* btP = m_dataset->getBottomTrackParamPtr();
 
-                                            if (++it != chVector.end()) {
-                                                secondChannelId = it->channelId_;
+                                        const int endIndx    = m_dataset->endIndex();
+                                        const int windowSize = btP->windowSize;
+
+                                        int currCount = std::floor(endIndx / windowSize);
+                                        if (bottomTrackWindowCounter_ != currCount) {
+
+                                            btP->indexFrom = windowSize * bottomTrackWindowCounter_;
+                                            btP->indexTo   = windowSize * currCount;
+
+                                            const auto channels = m_dataset->channelsList();
+                                            for (auto it = channels.begin(); it != channels.end(); ++it) {
+                                                m_dataset->bottomTrackProcessing(it->channelId_, ChannelId());
                                             }
+
+                                            bottomTrackWindowCounter_ = currCount;;
                                         }
-                                    }
-                                    int currEpochIndx = m_dataset->endIndex();
-                                    auto btP = m_dataset->getBottomTrackParamPtr();
-                                    int currCount = std::floor(currEpochIndx / btP->windowSize);
-                                    if (bottomTrackWindowCounter_ != currCount) {
-                                        btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
-                                        btP->indexTo = currCount  * btP->windowSize;
-                                        m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
-                                        bottomTrackWindowCounter_ = currCount;;
                                     }
                                 }, Qt::DirectConnection);
 

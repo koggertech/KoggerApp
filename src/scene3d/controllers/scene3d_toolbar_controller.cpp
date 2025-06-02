@@ -8,7 +8,8 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       graphicsScene3dViewPtr_(nullptr),
       pendingLambda_(nullptr),
       isVertexEditingMode_(false),
-      trackLastData_(false)
+      trackLastData_(false),
+      updateBottomTrack_(false)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
@@ -59,7 +60,19 @@ void Scene3dToolBarController::onTrackLastDataCheckButtonCheckedChanged(bool sta
     trackLastData_ = state;
 
     if (graphicsScene3dViewPtr_) {
-        graphicsScene3dViewPtr_->setTrackLastData(state);
+        graphicsScene3dViewPtr_->setTrackLastData(trackLastData_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onUpdateBottomTrackCheckButtonCheckedChanged(bool state)
+{
+    updateBottomTrack_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setUpdateBottomTrack(updateBottomTrack_);
     }
     else {
         tryInitPendingLambda();
@@ -89,6 +102,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsScene3dViewPtr_) {
                 graphicsScene3dViewPtr_->setTrackLastData(trackLastData_);
+                graphicsScene3dViewPtr_->setUpdateBottomTrack(updateBottomTrack_);
                 if (isVertexEditingMode_) {
                     graphicsScene3dViewPtr_->setBottomTrackVertexSelectionMode();
                 }

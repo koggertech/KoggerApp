@@ -1440,6 +1440,29 @@ ColumnLayout {
         }
 
         CheckButton {
+            id: realtimeUpdateBottomTrackCheckButton
+            objectName: "realtimeUpdateBottomTrackCheckButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: false
+            iconSource: "qrc:/icons/ui/refresh.svg"
+            implicitWidth: theme.controlHeight
+
+            onToggled: {
+                Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias realtimeUpdateBottomTrackCheckButton: realtimeUpdateBottomTrackCheckButton.checked
+            }
+        }
+
+        CheckButton {
             id: navigationArrowCheckButton
             objectName: "navigationArrowCheckButton"
             backColor: theme.controlBackColor

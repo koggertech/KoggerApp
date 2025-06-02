@@ -188,7 +188,7 @@ public:
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
-    void setCalcStateSideScanView(bool state);
+    void setUpdateMosaic(bool state);
     void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
@@ -204,6 +204,7 @@ public:
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
     void setTrackLastData(bool state);
+    void setUpdateBottomTrack(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -274,7 +275,7 @@ private:
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
-    bool sideScanCalcState_;
+    bool updateMosaic_;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -295,6 +296,7 @@ private:
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
+    bool updateBottomTrack_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

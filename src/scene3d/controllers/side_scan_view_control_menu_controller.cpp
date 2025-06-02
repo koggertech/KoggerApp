@@ -133,7 +133,7 @@ void SideScanViewControlMenuController::onUpdateStateChanged(bool state)
     updateState_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->setCalcStateSideScanView(updateState_);
+        graphicsSceneViewPtr_->setUpdateMosaic(updateState_);
     }
     else {
         tryInitPendingLambda();
@@ -223,7 +223,7 @@ void SideScanViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this](){
             if (graphicsSceneViewPtr_) {
-                graphicsSceneViewPtr_->setCalcStateSideScanView(updateState_);
+                graphicsSceneViewPtr_->setUpdateMosaic(updateState_);
                 if (auto sideScanPtr = graphicsSceneViewPtr_->getSideScanViewPtr(); sideScanPtr) {
                     sideScanPtr->setVisible(visibility_);
                     sideScanPtr->setUseLinearFilter(usingFilter_);
