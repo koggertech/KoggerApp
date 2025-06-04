@@ -27,7 +27,8 @@ typedef enum {
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
     BoardNanoSSS = 17,
-
+    BoardPULSEred_2D = 128,
+    BoardPULSEblue_DSS = 129
 } BoardVersion;
 
 struct LastReadInfo {
