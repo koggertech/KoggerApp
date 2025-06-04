@@ -23,7 +23,7 @@ typedef enum {
     BoardSideEnhanced = 8,
     BoardRecorderMini = 9,
     BoardDVL = 10,
-    BoardEcho20 = 12,
+    BoardBasic2D = 12,
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
     BoardNanoSSS = 17,

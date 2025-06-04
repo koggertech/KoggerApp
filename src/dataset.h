@@ -991,7 +991,7 @@ protected:
         double course = NAN;
     } _GnssData;
 
-    float m_temp_c = 0;
+    float m_temp_c = NAN;
 
     struct {
         float e1 = NAN;
@@ -1137,6 +1137,10 @@ public:
         return _lastPositionGNSS;
     }
 
+    float getLastTemp() {
+        return lastTemp_;
+    }
+
     BottomTrackParam* getBottomTrackParamPtr() {
         return &bottomTrackParam_;
     }
@@ -1251,10 +1255,9 @@ protected:
 
     QVector<Epoch> pool_;
 
-    float lastTemperature = 0;
-
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
     Position _lastPositionGNSS;
+    float lastTemp_ = NAN;
 
     Epoch* addNewEpoch();
 

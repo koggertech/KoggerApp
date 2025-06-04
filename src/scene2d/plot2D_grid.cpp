@@ -87,6 +87,42 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         }
     }
 
+    if(true) {
+        Epoch* lastEpoch = dataset->last();
+        Epoch* preLastEpoch = dataset->lastlast();
+        float temp = NAN;
+        temp = dataset->getLastTemp();
+
+        // qDebug() << "Plot temp def: " << temp;
+
+        // if (lastEpoch != NULL && isfinite(lastEpoch->temperatureAvail())) {
+        //     temp = lastEpoch->temperature();
+        //     qDebug() << "Plot temp one: " << temp;
+        // }
+        // else if (preLastEpoch != NULL && isfinite(preLastEpoch->temperatureAvail())) {
+        //     temp = preLastEpoch->temperature();
+        //     qDebug() << "Plot temp sec: " << temp;
+        // } else if() {
+
+        // if (lastEpoch != NULL && isfinite(lastEpoch->temperatureAvail())) {
+        //     temp = preLastEpoch->temperature();
+        //     qDebug() << "Plot temp sec: " << temp;
+        // }
+
+        // }
+        // qDebug() << "Plot temp end: " << temp;
+
+        if (isfinite(temp)) {
+            pen.setColor(QColor(80, 200, 0));
+            p->setPen(pen);
+            p->setFont(QFont("Asap", 40, QFont::Normal));
+            float val{ round(temp * 100.f) / 100.f };
+            bool isInteger = std::abs(val - std::round(val)) < epsilon;
+            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 1) + QObject::tr("°");
+            p->drawText(imageWidth / 2 - 300, imageHeight - 15, rangeText);
+        }
+    }
+
     return true;
 }
 
