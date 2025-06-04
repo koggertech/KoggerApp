@@ -367,6 +367,54 @@ ColumnLayout {
         }
     }
 
+    // surface view extra settings
+    MenuFrame {
+        id: surfaceViewSettings
+        visible: surfaceViewCheckButton.hovered || isHovered || surfaceViewCheckButton.surfaceViewLongPressTriggered
+        z: surfaceViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !surfaceViewCheckButton.hovered) {
+                    surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CButton {
+                id: updateSurfaceViewButton
+                text: qsTr("Update surfaceView")
+                Layout.fillWidth: true
+                onClicked: {
+                    SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+        }
+    }
+
     // isobaths extra settings
     MenuFrame {
         id: isobathsSettings
@@ -1582,6 +1630,61 @@ ColumnLayout {
 
             Settings {
                 property alias surfaceCheckButton: surfaceCheckButton.checked
+            }
+        }
+
+        // surface view check button
+        CheckButton {
+            id: surfaceViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "qrc:/icons/ui/grid_4x4.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                SurfaceViewControlMenuController.onSurfaceViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                SurfaceViewControlMenuController.onSurfaceViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            property bool surfaceViewLongPressTriggered: false
+
+            MouseArea {
+                id: surfaceViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    surfaceViewLongPressTimer.start()
+                    surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!surfaceViewCheckButton.surfaceViewLongPressTriggered) {
+                        surfaceViewCheckButton.checked = !surfaceViewCheckButton.checked
+                    }
+                    surfaceViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    surfaceViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: surfaceViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    surfaceViewCheckButton.surfaceViewLongPressTriggered = true;
+                }
+            }
+
+            Settings {
+                property alias surfaceViewCheckButton: surfaceViewCheckButton.checked
             }
         }
 

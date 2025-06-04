@@ -18,6 +18,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     m_surface(std::make_shared<Surface>()),
+    surfaceView_(std::make_shared<SurfaceView>()),
     sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
@@ -60,6 +61,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
 #endif
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
@@ -75,6 +77,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(isobaths_.get(), &Isobaths::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -103,6 +106,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateIsobaths, Qt::DirectConnection);
 
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, surfaceView_.get(), &SurfaceView::onUpdatedBottomTrackData);
+
     updatePlaneGrid();
 }
 
@@ -129,6 +134,11 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
 std::shared_ptr<Surface> GraphicsScene3dView::surface() const
 {
     return m_surface;
+}
+
+std::shared_ptr<SurfaceView> GraphicsScene3dView::getSurfaceViewPtr() const
+{
+    return surfaceView_;
 }
 
 std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
@@ -199,6 +209,7 @@ Dataset *GraphicsScene3dView::dataset() const
 void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
+    surfaceView_->clearData();
     sideScanView_->clear();
     contacts_->clear();
     imageView_->clear();//
@@ -648,6 +659,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
     contacts_->setDatasetPtr(m_dataset);
+    surfaceView_->setBottomTrackPtr(m_bottomTrack.get());
 
     forceUpdateDatasetRef();
 
@@ -672,7 +684,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     }
 
                                     if (updateMosaic_ || updateBottomTrack_) {
-
                                         auto* btP = m_dataset->getBottomTrackParamPtr();
 
                                         const int endIndx    = m_dataset->endIndex();
@@ -734,6 +745,7 @@ void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
                     .merge(m_surface->bounds())
+                    .merge(surfaceView_->bounds())
                     .merge(m_bottomTrack->bounds())
                     .merge(m_boatTrack->bounds())
                     .merge(m_polygonGroup->bounds())
@@ -952,6 +964,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
+    m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));

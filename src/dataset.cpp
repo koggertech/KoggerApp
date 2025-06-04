@@ -1435,7 +1435,8 @@ void Dataset::bottomTrackProcessing(const ChannelId& channel1, const ChannelId& 
     spatialProcessing();
     emit dataUpdate();
     lastBottomTrackEpoch_ = size();
-    emit bottomTrackUpdated(epoch_min_index, epoch_max_index);
+
+    emit bottomTrackUpdated(bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo);
 }
 
 void Dataset::spatialProcessing() {
@@ -1547,8 +1548,6 @@ void Dataset::setRefPosition(Position ref_pos) {
             epoch->setPositionRef(&_llaRef);
         }
     }
-
-    emitPositionsUpdated();
 }
 
 void Dataset::setRefPositionByFirstValid() {

@@ -76,6 +76,7 @@ Q_SIGNALS:
     void epochListChanged();
     //void visibleChannelChanged(const ChannelId& channelId);
     //void visibleChannelChanged(DatasetChannel channel);
+    void updatedDataByIndxs(const QVector<int>& indx);
 
 protected:
     friend class GraphicsScene3dView;
@@ -91,7 +92,8 @@ private:
 
     using EpochIndex = int;
     using VerticeIndex = int;
-    QHash<VerticeIndex,EpochIndex> epochIndexMatchingMap_;
+    QHash<VerticeIndex,EpochIndex> vertex2Epoch_;
+    QHash<VerticeIndex,EpochIndex> epoch2Vertex_;
     DatasetChannel visibleChannel_;
     Dataset* datasetPtr_;
     QVector<QVector3D> renderData_;

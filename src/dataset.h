@@ -1178,11 +1178,6 @@ public slots:
 
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2);
     void spatialProcessing();
-    void emitPositionsUpdated() {
-        emit bottomTrackUpdated(0, endIndex());
-        emit boatTrackUpdated();
-    }
-
 
     void usblProcessing();
     QVector<QVector3D> beaconTrack() {

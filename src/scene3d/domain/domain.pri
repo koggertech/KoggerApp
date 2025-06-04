@@ -31,6 +31,7 @@ HEADERS += \
     $$PWD/side_scan_view.h \
     $$PWD/surface.h \
     $$PWD/surface_grid.h \
+    $$PWD/surface_view.h \
     $$PWD/tile.h \
     $$PWD/triangle.h \
     $$PWD/usbl_view.h \
@@ -57,5 +58,6 @@ SOURCES += \
     $$PWD/side_scan_view.cpp \
     $$PWD/surface.cpp \
     $$PWD/surface_grid.cpp \
+    $$PWD/surface_view.cpp \
     $$PWD/tile.cpp \
     $$PWD/usbl_view.cpp

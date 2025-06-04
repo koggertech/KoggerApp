@@ -24,6 +24,7 @@ HEADERS += \
     src/flasher.h \
     src/hotkeys_manager.h \
     src/id_binnary.h \
+    src/delaunay.h \
     src/logger.h \
     src/map_defs.h \
     src/mav_link_conf.h \
