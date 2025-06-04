@@ -664,7 +664,10 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     forceUpdateDatasetRef();
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
-                     this,      [this](int lEpoch, int rEpoch) -> void {
+                     this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
+                                    if (!m_dataset || m_dataset->channelsList().first().channelId_ != channelId) {
+                                        return;
+                                    }
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
                                     if (updateMosaic_) {

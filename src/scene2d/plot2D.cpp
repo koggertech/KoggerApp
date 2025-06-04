@@ -625,7 +625,7 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
         }
 
         if(cursor_.tool() == MouseToolDistance || cursor_.tool() == MouseToolDistanceErase) {
-            emit datasetPtr_->bottomTrackUpdated(cursor_.getIndex(x_start), cursor_.getIndex(x_start + x_length));
+            emit datasetPtr_->bottomTrackUpdated(cursor_.channel1, cursor_.getIndex(x_start), cursor_.getIndex(x_start + x_length));
         }
     }
 

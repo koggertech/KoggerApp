@@ -1207,7 +1207,7 @@ public slots:
 
 signals:
     void dataUpdate();
-    void bottomTrackUpdated(int lEpoch, int rEpoch);
+    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);
     void updatedLlaRef();
