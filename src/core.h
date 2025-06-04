@@ -7,7 +7,7 @@
 #include <QQmlContext>
 #include <QThread>
 #ifdef FLASHER
-#include "flasher.h"
+#include "deviceflasher.h"
 #endif
 #include "qPlot2D.h"
 #include "logger.h"
@@ -69,9 +69,6 @@ public:
     void consoleInfo(QString msg);
     void consoleWarning(QString msg);
     void consoleProto(FrameParser& parser, bool isIn = true);
-#ifdef FLASHER
-    void getFlasherPtr() const;
-#endif
     void saveLLARefToSettings();
     void removeLinkManagerConnections();
 #ifdef SEPARATE_READING
@@ -114,19 +111,20 @@ public slots:
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
     void setSideScanChannels(const QString& firstChStr, const QString& secondChStr);
-#ifdef FLASHER
-    bool simpleFlash(const QString &name);
-    bool factoryFlash(const QString &name, int sn, QString pn, QObject* dev);
-#endif
     bool getIsFileOpening() const;
     void setIsMosaicUpdatingInThread(bool state);
     void setSideScanWorkMode(SideScanView::Mode mode);
-
     bool getIsMosaicUpdatingInThread() const;
     bool getIsSideScanPerformanceMode() const;
     bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
+
+#ifdef FLASHER
+    void connectOpenedLinkAsFlasher(QString pn);
+    void setFlasherData(QString data);
+    void releaseFlasherLink();
+#endif
 
 #if defined(FAKE_COORDS)
     Q_INVOKABLE void setPosZeroing(bool state);
@@ -148,11 +146,6 @@ signals:
     void sendCloseLogFile(bool onOpen = false);
 #endif
 private slots:
-#ifdef FLASHER
-    void updateDeviceID(QByteArray uid);
-    void flasherConnectionChanged(Flasher::BootState connection_status);
-    bool reconnectForFlash();
-#endif
 
 private slots:
     void onFileStopsOpening();
@@ -210,22 +203,23 @@ private:
     QString fChName_;
     QString sChName_;
 
-#ifdef FLASHER
-    Flasher flasher;
-    QByteArray boot_data;
-    QByteArray fw_data;
-    QTcpSocket *_socket = new QTcpSocket();
-    bool getFW(void* uid);
-    QString _pn;
-    enum  {
-        FactoryIdle,
-        FactoryTest,
-        FactoryProduct,
-        FactorySimple
-    } _factoryState = FactoryIdle;
-    QByteArray _flashUID;
-#endif
     bool isFileOpening_;
     bool isMosaicUpdatingInThread_;
     bool isSideScanPerformanceMode_;
+
+#ifdef FLASHER
+    Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)
+    Q_PROPERTY(int flasherIdInfo READ flasherIdInfo NOTIFY dev_flasher_changed)
+private:
+    DeviceFlasher dev_flasher_;
+    int dev_flasher_msg_id_ = 0;
+    QString dev_flasher_msg_;
+
+    QString flasherTextInfo() { return dev_flasher_msg_; }
+    int flasherIdInfo() { return dev_flasher_msg_id_; }
+private slots:
+    void dev_flasher_rcv(QString msg, int num);
+signals:
+    void dev_flasher_changed();
+#endif
 };

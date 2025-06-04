@@ -144,9 +144,6 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
-#ifdef FLASHER
-    engine.rootContext()->setContextProperty("flasher", &core.getFlasherPtr);
-#endif
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
     core.consoleInfo("Run...");
