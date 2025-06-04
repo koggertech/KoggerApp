@@ -81,7 +81,7 @@ public:
     bool        getAutoSpeedSelection() const;
     bool        getIsUpgradingState() const;
     bool        getAutoConnOnce() const;
-    void        setAttribute(LinkAttribute attribute) { attribute_ = attribute; } // for link type (sonar, motor, etc.)
+    void        setAttribute(LinkAttribute attribute); // for link type (sonar, motor, etc.)
     LinkAttribute attribute() { return attribute_; }
 
 public slots:

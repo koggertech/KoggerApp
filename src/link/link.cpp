@@ -475,9 +475,13 @@ bool Link::getAutoConnOnce() const
     return autoConnOnce_;
 }
 
+void Link::setAttribute(LinkAttribute attribute) {
+    attribute_ = attribute;
+}
+
 bool Link::writeFrame(FrameParser frame)
 {
-    return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
+    return  attribute_ == LinkAttribute::kLinkAttributeNone && frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
 
 bool Link::write(QByteArray data)
@@ -582,7 +586,9 @@ void Link::onCheckedTimerEnd()
     }
 
     if (!isReceivesData_ || !requestCnt_) {
-        emit sendDoRequestAll(uuid_);
+        if(attribute_ == LinkAttribute::kLinkAttributeNone) {
+            emit sendDoRequestAll(uuid_);
+        }
         if (!requestCnt_) {
             requestCnt_ = onUpgradingFirmware_ ? requestAllCntSmall : isReceivesData_ ? requestAllCntBig : requestAllCntSmall;
         }

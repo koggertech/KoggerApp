@@ -518,8 +518,9 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
         if (link->getIsProxy()) {
             proxyLinkUuid_ = uuid;
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
-        }
-        else {
+        } else if(link->attribute() == LinkAttribute::kLinkAttributeBoot) {
+            core.consoleInfo("Device: Boot opened");
+        } else {
             getDevice(uuid, link, 0);
         }
     }
