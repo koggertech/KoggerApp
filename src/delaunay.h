@@ -134,7 +134,8 @@ public:
     }
 
     /// Add a new point and update triangulation
-    void addPoint(const Point &p) {
+    uint64_t addPoint(const Point &p) {
+        uint64_t pointIndx = points.size();
         //qDebug() << "Delaunay::addPoint";
 
         updated.clear();
@@ -192,6 +193,8 @@ public:
             ++slot;
         }
         // no need for free-list: vector only grows when boundary > badIdx
+
+        return pointIndx;
     }
 
     /// Access current triangle list
@@ -200,6 +203,10 @@ public:
     }
     /// Access point list
     const std::vector<Point>& getPoints() const {
+        return points;
+    }
+
+    std::vector<Point>& getPointsRef(){
         return points;
     }
 

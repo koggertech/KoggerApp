@@ -29,9 +29,15 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
         //}
         //r->m_data[itm] = bTrDataRef[itm]; // ?
 
-        // triang
         auto& point = bTrDataRef[itm];
-        del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
+
+        if (bTrToTrIndxs_.contains(itm)) {
+            uint64_t trIndx = bTrToTrIndxs_[itm];
+            del_.getPointsRef()[trIndx].z = point.z();
+        }
+        else {
+            bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
+        }
     }
 
     auto& pt = del_.getPoints();

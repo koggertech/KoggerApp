@@ -46,4 +46,6 @@ private:
 
     delaunay::Delaunay del_;
     BottomTrack* bottomTrackPtr_ = nullptr;
+
+    QHash<int, uint64_t> bTrToTrIndxs_;
 };
