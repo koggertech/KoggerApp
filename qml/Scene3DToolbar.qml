@@ -412,6 +412,34 @@ ColumnLayout {
                     surfaceViewSettings.focus = true
                 }
             }
+
+            CheckButton {
+                text: qsTr("triangles")
+                Layout.fillWidth: true
+                checked: true
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onTrianglesVisible(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            CheckButton {
+                text: qsTr("edges")
+                Layout.fillWidth: true
+                checked: true
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onEdgesVisible(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
         }
     }
 

@@ -20,6 +20,9 @@ public:
     Q_INVOKABLE void onSurfaceViewVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateSurfaceViewButtonClicked();
 
+    Q_INVOKABLE void onTrianglesVisible(bool state);
+    Q_INVOKABLE void onEdgesVisible(bool state);
+
 Q_SIGNALS:
     void surfaceViewProcessorTaskStarted();
     void surfaceViewProcessorTaskFinished();

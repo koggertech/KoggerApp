@@ -4,7 +4,6 @@
 #include <QVector>
 #include <QVector3D>
 
-#include "dataset.h"
 #include "scene_object.h"
 #include "surface_view_processor.h"
 #include "bottom_track.h"
@@ -31,21 +30,35 @@ public:
 
         float minZ_ = std::numeric_limits<float>::max();
         float maxZ_ = std::numeric_limits<float>::lowest();
+
+        bool trianglesVisible_ = true;
+        bool edgesVisible_ = true;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
     virtual ~SurfaceView();
 
+    void clear();
+
     void setBottomTrackPtr(BottomTrack* ptr);
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
+    void onAction();
+    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; };
+    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; };
 
 private:
     friend class SurfaceViewProcessor;
 
+    void resetTriangulation();
+
     delaunay::Delaunay del_;
     BottomTrack* bottomTrackPtr_ = nullptr;
-
     QHash<int, uint64_t> bTrToTrIndxs_;
+    bool originSet_ = false;
+    QHash<QPair<int,int>,QPointF>  cellPoints_;
+    int cellPx_ = 1;
+    QPointF origin_;
+
 };

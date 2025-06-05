@@ -209,7 +209,7 @@ Dataset *GraphicsScene3dView::dataset() const
 void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
-    surfaceView_->clearData();
+    surfaceView_->clear();
     sideScanView_->clear();
     contacts_->clear();
     imageView_->clear();//

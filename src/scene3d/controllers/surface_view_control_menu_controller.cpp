@@ -12,6 +12,7 @@ SurfaceViewControlMenuController::SurfaceViewControlMenuController(QObject* pare
 
     QObject::connect(&surfaceViewProcessor_, &SurfaceViewProcessor::taskFinished,
                      this,                [this](SurfaceViewProcessorResult result) {
+                                              Q_UNUSED(result)
                                               if (graphicsSceneViewPtr_) {
                                                   if (auto surfaceViewPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfaceViewPtr) {
                                                       //surfaceViewPtr->setProcessorResult(result);
@@ -59,11 +60,6 @@ void SurfaceViewControlMenuController::onSurfaceViewVisibilityCheckBoxCheckedCha
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setVisible(checked);
-
-        // force update
-        //if (checked) {
-        //    onUpdateSurfaceViewButtonClicked();
-        //}
     }
     else {
         tryInitPendingLambda();
@@ -74,25 +70,21 @@ void SurfaceViewControlMenuController::onUpdateSurfaceViewButtonClicked()
 {
     qDebug() << "   onUpdateSurfaceViewButtonClicked";
 
-    if (!graphicsSceneViewPtr_) {
-        qDebug() << "graphicsSceneViewPtr_ is nullptr!";
-        return;
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->onAction();
     }
+}
 
-    if (surfaceViewProcessor_.isBusy()) {
-        qDebug() << "Isobaths processor is busy!";
-        return;
+void SurfaceViewControlMenuController::onTrianglesVisible(bool state)
+{
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->onTrianglesVisible(state);
     }
+}
 
-    auto* sur = graphicsSceneViewPtr_->surface().get();
-    auto* iso = graphicsSceneViewPtr_->getIsobathsPtr().get();
-
-    if (!sur || !iso) {
-        qDebug() << "sur or iso is nullptr";
-        return;
+void SurfaceViewControlMenuController::onEdgesVisible(bool state)
+{
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->onEdgesVisible(state);
     }
-
-    //// duplitate surface data for isobaths
-
-    //// recalc
 }

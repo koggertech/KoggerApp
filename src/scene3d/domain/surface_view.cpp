@@ -1,5 +1,7 @@
 #include "surface_view.h"
 
+#include <QtMath>
+
 
 SurfaceView::SurfaceView(QObject* parent)
     : SceneObject(new SurfaceViewRenderImplementation, parent)
@@ -7,6 +9,20 @@ SurfaceView::SurfaceView(QObject* parent)
 
 SurfaceView::~SurfaceView()
 {}
+
+void SurfaceView::clear()
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+
+    r->pts_.clear();
+    r->edgePts_.clear();
+    r->minZ_ = std::numeric_limits<float>::max();
+    r->maxZ_ = std::numeric_limits<float>::lowest();
+
+    bTrToTrIndxs_.clear();
+
+    resetTriangulation();
+}
 
 void SurfaceView::setBottomTrackPtr(BottomTrack* ptr)
 {
@@ -22,8 +38,13 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
     auto* r = RENDER_IMPL(SurfaceView);
     const auto& bTrDataRef = bottomTrackPtr_->cdata();
 
-    for (auto itm : indxs) {
+    auto dist2 = [](const QPointF&a,const QPointF&b) {
+        double dx = a.x()-b.x();
+        double dy = a.y()-b.y();
+        return dx * dx + dy * dy;
+    };
 
+    for (auto itm : indxs) {
         //if (r->m_data.size() <= itm) {
         //    r->m_data.resize(itm + 1);
         //}
@@ -36,6 +57,26 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
             del_.getPointsRef()[trIndx].z = point.z();
         }
         else {
+            if (!originSet_) {
+                origin_ = { point.x(), point.y() };
+                originSet_ = true;
+            }
+
+            const int cellPxVal = cellPx_;
+            /* индекс ячейки */
+            int ix = qFloor((point.x() - origin_.x()) / cellPxVal);
+            int iy = qFloor((point.y() - origin_.y()) / cellPxVal);
+            QPair<int,int> cid(ix,iy);
+
+            QPointF center(origin_.x() + (ix+0.5) * cellPxVal,
+                           origin_.y() + (iy+0.5) * cellPxVal);
+
+            bool accept = !cellPoints_.contains(cid) || dist2({ point.x(), point.y() }, center) < dist2(cellPoints_[cid], center);
+            if (!accept) {
+                continue;
+            }
+
+            cellPoints_[cid] = { point.x(), point.y() };
             bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
         }
     }
@@ -74,61 +115,80 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
     }
 }
 
+void SurfaceView::onAction()
+{
+    auto& pts = del_.getPoints();
+
+    for (auto& itm : pts) {
+        qDebug() << itm.x << itm.y;
+    }
+}
+
+void SurfaceView::resetTriangulation()
+{
+    del_ = delaunay::Delaunay();
+    cellPoints_.clear();
+    originSet_ = false;
+}
+
 SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
 {}
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
-    if (!m_isVisible || pts_.empty() || edgePts_.empty() || !spMap.contains("height")) {
+    if (!m_isVisible || /* pts_.empty() || edgePts_.empty() ||*/ !spMap.contains("height")) {
         return;
     }
 
-    auto shaderProgram = spMap["height"];
-    if (!shaderProgram->bind()) {
-        qCritical() << "Error binding height shader program.";
-        return;
+    if (trianglesVisible_) {
+        auto shaderProgram = spMap["height"];
+        if (!shaderProgram->bind()) {
+            qCritical() << "Error binding height shader program.";
+            return;
+        }
+
+        int posLoc    = shaderProgram->attributeLocation("position");
+        int maxZLoc   = shaderProgram->uniformLocation("max_z");
+        int minZLoc   = shaderProgram->uniformLocation("min_z");
+        int matrixLoc = shaderProgram->uniformLocation("matrix");
+
+        shaderProgram->setUniformValue(minZLoc, minZ_);
+        shaderProgram->setUniformValue(maxZLoc, maxZ_);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, pts_.constData());
+
+        ctx->glEnable(GL_DEPTH_TEST);
+        ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
+        ctx->glDisable(GL_DEPTH_TEST);
+
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
     }
 
-    int posLoc    = shaderProgram->attributeLocation("position");
-    int maxZLoc   = shaderProgram->uniformLocation("max_z");
-    int minZLoc   = shaderProgram->uniformLocation("min_z");
-    int matrixLoc = shaderProgram->uniformLocation("matrix");
+    if (edgesVisible_) {
+        // ребра
+        if (!edgePts_.isEmpty() && spMap.contains("static")) {
+            auto lineShader = spMap["static"];
+            if (lineShader->bind()) {
+                int linePosLoc  = lineShader->attributeLocation("position");
+                int colorLoc    = lineShader->uniformLocation("color");
+                int matrixLoc   = lineShader->uniformLocation("matrix");
+                int widthLoc    = lineShader->uniformLocation("width");
 
-    shaderProgram->setUniformValue(minZLoc, minZ_);
-    shaderProgram->setUniformValue(maxZLoc, maxZ_);
-    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+                lineShader->setUniformValue(matrixLoc, projection * view * model);
+                lineShader->setUniformValue(colorLoc, QVector4D(0, 0, 0, 1));
+                lineShader->setUniformValue(widthLoc, 1.0f);
 
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, pts_.constData());
+                lineShader->enableAttributeArray(linePosLoc);
+                lineShader->setAttributeArray(linePosLoc, edgePts_.constData());
 
-    ctx->glEnable(GL_DEPTH_TEST);
-    ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
-    ctx->glDisable(GL_DEPTH_TEST);
-
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
-
-
-    // ребра
-    if (!edgePts_.isEmpty() && spMap.contains("static")) {
-        auto lineShader = spMap["static"];
-        if (lineShader->bind()) {
-            int linePosLoc  = lineShader->attributeLocation("position");
-            int colorLoc    = lineShader->uniformLocation("color");
-            int matrixLoc   = lineShader->uniformLocation("matrix");
-            int widthLoc    = lineShader->uniformLocation("width");
-
-            lineShader->setUniformValue(matrixLoc, projection * view * model);
-            lineShader->setUniformValue(colorLoc, QVector4D(0, 0, 0, 1));
-            lineShader->setUniformValue(widthLoc, 1.0f);
-
-            lineShader->enableAttributeArray(linePosLoc);
-            lineShader->setAttributeArray(linePosLoc, edgePts_.constData());
-
-            ctx->glLineWidth(1.0f);
-            ctx->glDrawArrays(GL_LINES, 0, edgePts_.size());
-            lineShader->disableAttributeArray(linePosLoc);
-            lineShader->release();
+                ctx->glLineWidth(1.0f);
+                ctx->glDrawArrays(GL_LINES, 0, edgePts_.size());
+                lineShader->disableAttributeArray(linePosLoc);
+                lineShader->release();
+            }
         }
     }
 }
