@@ -50,10 +50,10 @@ SOURCES += \
 
 FLASHER {
     DEFINES += FLASHER
-    SOURCES += src/deviceflasher.cpp
-    HEADERS += src/deviceflasher.h
-    SOURCES += src/flasher.cpp
-    HEADERS += src/flasher.h
+    SOURCES += src/flasher/deviceflasher.cpp
+    HEADERS += src/flasher/deviceflasher.h
+    SOURCES += src/flasher/flasher.cpp
+    HEADERS += src/flasher/flasher.h
 }
 
 SEPARATE_READING {

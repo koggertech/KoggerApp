@@ -7,7 +7,7 @@
 #include <QQmlContext>
 #include <QThread>
 #ifdef FLASHER
-#include "deviceflasher.h"
+#include "flasher/deviceflasher.h"
 #endif
 #include "qPlot2D.h"
 #include "logger.h"
