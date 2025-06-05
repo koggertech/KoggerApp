@@ -11,12 +11,13 @@ namespace delaunay {
 constexpr int RESERVE_BAD = 16;
 constexpr double SUPER_SIZE = 1e6;
 constexpr double COLLINEAR_EPS = 1e-12;
+constexpr double ZERO_LEVEL = 0.0;
 
 /// Simple 2D point
 struct Point {
-    Point() : x(0.0), y(0.0) {};
-    Point(double _x, double _y) : x(_x), y(_y) {};
-    double x, y;
+    Point() : x(0.0), y(0.0), z(0.0) {};
+    Point(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {};
+    double x, y, z;
 
     bool operator==(const Point &other) const {
         return (qFuzzyCompare(x, other.x) && qFuzzyCompare(y, other.y));
@@ -47,6 +48,14 @@ struct Triangle {
         computeCircumcircle(points);
     }
 
+    bool operator==(const Triangle& other) const {
+        return (a == other.a) && (b == other.b) && (c == other.b);
+    }
+
+    bool operator!=(const Triangle &other) const {
+        return !(*this == other);
+    }
+
     /// Compute a robust circumcircle; fallback on collinear triangles
     void computeCircumcircle(const std::vector<Point> &pts) {
         const Point &A = pts[a];
@@ -65,13 +74,13 @@ struct Triangle {
             double dBC = sqdist(B,C);
             double dCA = sqdist(C,A);
             if (dAB >= dBC && dAB >= dCA) {
-                circumcenter = {(A.x+B.x)/2.0, (A.y+B.y)/2.0};
+                circumcenter = {(A.x+B.x)/2.0, (A.y+B.y)/2.0, ZERO_LEVEL};
                 circumradius2 = dAB/4.0;
             } else if (dBC >= dCA) {
-                circumcenter = {(B.x+C.x)/2.0, (B.y+C.y)/2.0};
+                circumcenter = {(B.x+C.x)/2.0, (B.y+C.y)/2.0, ZERO_LEVEL};
                 circumradius2 = dBC/4.0;
             } else {
-                circumcenter = {(C.x+A.x)/2.0, (C.y+A.y)/2.0};
+                circumcenter = {(C.x+A.x)/2.0, (C.y+A.y)/2.0, ZERO_LEVEL};
                 circumradius2 = dCA/4.0;
             }
             return;
@@ -100,15 +109,26 @@ struct Triangle {
     }
 };
 
+inline uint qHash(const Triangle& t, uint seed = 0) noexcept
+{
+    std::array<size_t,3> v{t.a, t.b, t.c};
+    std::sort(v.begin(), v.end());
+
+    seed ^= ::qHash(quint64(v[0])) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    seed ^= ::qHash(quint64(v[1])) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    seed ^= ::qHash(quint64(v[2])) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    return seed;
+}
+
 /// Brute‐force incremental Delaunay triangulation (Bowyer–Watson)
 class Delaunay {
 public:
     Delaunay() {
         // Create a "super‑triangle" rectangle enclosing all points
-        points.push_back({-SUPER_SIZE, -SUPER_SIZE}); // index 0
-        points.push_back({ SUPER_SIZE, -SUPER_SIZE}); // index 1
-        points.push_back({ SUPER_SIZE,  SUPER_SIZE}); // index 2
-        points.push_back({-SUPER_SIZE,  SUPER_SIZE}); // index 3
+        points.push_back({-SUPER_SIZE, -SUPER_SIZE, ZERO_LEVEL}); // index 0
+        points.push_back({ SUPER_SIZE, -SUPER_SIZE, ZERO_LEVEL}); // index 1
+        points.push_back({ SUPER_SIZE,  SUPER_SIZE, ZERO_LEVEL}); // index 2
+        points.push_back({-SUPER_SIZE,  SUPER_SIZE, ZERO_LEVEL}); // index 3
         triangles.emplace_back(0, 1, 2, points);
         triangles.emplace_back(0, 2, 3, points);
     }

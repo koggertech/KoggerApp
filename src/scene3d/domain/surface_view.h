@@ -25,23 +25,25 @@ public:
 
     private:
         friend class SurfaceView;
+
+        QVector<QVector3D> pts_; // для треугольников
+        QVector<QVector3D> edgePts_; // для ребер
+
+        float minZ_ = std::numeric_limits<float>::max();
+        float maxZ_ = std::numeric_limits<float>::lowest();
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
     virtual ~SurfaceView();
 
-    void setDatasetPtr(Dataset* ptr) { datasetPtr_ = ptr; };
     void setBottomTrackPtr(BottomTrack* ptr);
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
 
-
 private:
     friend class SurfaceViewProcessor;
 
     delaunay::Delaunay del_;
-
-    Dataset* datasetPtr_ = nullptr;
     BottomTrack* bottomTrackPtr_ = nullptr;
 };

@@ -440,6 +440,9 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
             }
 
             const float dist = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
+            if (!std::isfinite(dist)) {
+                continue;
+            }
 
             if (defMode) {
                 appendData(pos, dist, i);
@@ -450,7 +453,6 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
             if (vIt != epoch2Vertex_.end()) {
                 renderData_[*vIt].setZ(dist);
                 updatedByIndxs.append(*vIt);
-
             }
             else {
                 appendData(pos, dist, i);
