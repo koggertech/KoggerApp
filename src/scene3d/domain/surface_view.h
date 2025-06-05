@@ -45,8 +45,8 @@ public:
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void onAction();
-    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; };
-    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; };
+    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; Q_EMIT changed(); };
+    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
 
 private:
     friend class SurfaceViewProcessor;
@@ -57,8 +57,7 @@ private:
     BottomTrack* bottomTrackPtr_ = nullptr;
     QHash<int, uint64_t> bTrToTrIndxs_;
     bool originSet_ = false;
-    QHash<QPair<int,int>,QPointF>  cellPoints_;
+    QHash<QPair<int,int>, size_t>  cellPoints_; // fir - virt indx, sec - indx in tr
     int cellPx_ = 1;
     QPointF origin_;
-
 };

@@ -68,19 +68,31 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
             int iy = qFloor((point.y() - origin_.y()) / cellPxVal);
             QPair<int,int> cid(ix,iy);
 
-            QPointF center(origin_.x() + (ix+0.5) * cellPxVal,
-                           origin_.y() + (iy+0.5) * cellPxVal);
+            QPointF center(origin_.x() + (ix + 0.5) * cellPxVal, origin_.y() + (iy + 0.5) * cellPxVal);
 
-            bool accept = !cellPoints_.contains(cid) || dist2({ point.x(), point.y() }, center) < dist2(cellPoints_[cid], center);
-            if (!accept) {
-                continue;
+            if (cellPoints_.contains(cid)) {
+                uint64_t indxInTr = cellPoints_[cid];
+
+                auto& pts = del_.getPoints();
+                auto lastPoint = pts[indxInTr];
+
+                bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x, lastPoint.y }, center);
+
+                if (currNearest) {
+                    bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
+                    cellPoints_[cid] = bTrToTrIndxs_[itm];// point.x(), point.y() };
+
+                    //del_.replacePoint(indxInTr, delaunay::Point(point.x(), point.y(), point.z()));
+                }
             }
-
-            cellPoints_[cid] = { point.x(), point.y() };
-            bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
+            else {
+                bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
+                cellPoints_[cid] = bTrToTrIndxs_[itm];// point.x(), point.y() };
+            }
         }
     }
 
+    // again
     auto& pt = del_.getPoints();
 
     // треуг
@@ -136,40 +148,38 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
-    if (!m_isVisible || /* pts_.empty() || edgePts_.empty() ||*/ !spMap.contains("height")) {
+    if (!m_isVisible || !spMap.contains("height") || !spMap.contains("static")) {
         return;
     }
 
     if (trianglesVisible_) {
-        auto shaderProgram = spMap["height"];
-        if (!shaderProgram->bind()) {
-            qCritical() << "Error binding height shader program.";
-            return;
+        if (!pts_.empty()) {
+            auto shaderProgram = spMap["height"];
+            if (shaderProgram->bind()) {
+                int posLoc    = shaderProgram->attributeLocation("position");
+                int maxZLoc   = shaderProgram->uniformLocation("max_z");
+                int minZLoc   = shaderProgram->uniformLocation("min_z");
+                int matrixLoc = shaderProgram->uniformLocation("matrix");
+
+                shaderProgram->setUniformValue(minZLoc, minZ_);
+                shaderProgram->setUniformValue(maxZLoc, maxZ_);
+                shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+
+                shaderProgram->enableAttributeArray(posLoc);
+                shaderProgram->setAttributeArray(posLoc, pts_.constData());
+
+                ctx->glEnable(GL_DEPTH_TEST);
+                ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
+                ctx->glDisable(GL_DEPTH_TEST);
+
+                shaderProgram->disableAttributeArray(posLoc);
+                shaderProgram->release();
+            }
         }
-
-        int posLoc    = shaderProgram->attributeLocation("position");
-        int maxZLoc   = shaderProgram->uniformLocation("max_z");
-        int minZLoc   = shaderProgram->uniformLocation("min_z");
-        int matrixLoc = shaderProgram->uniformLocation("matrix");
-
-        shaderProgram->setUniformValue(minZLoc, minZ_);
-        shaderProgram->setUniformValue(maxZLoc, maxZ_);
-        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
-
-        shaderProgram->enableAttributeArray(posLoc);
-        shaderProgram->setAttributeArray(posLoc, pts_.constData());
-
-        ctx->glEnable(GL_DEPTH_TEST);
-        ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
-        ctx->glDisable(GL_DEPTH_TEST);
-
-        shaderProgram->disableAttributeArray(posLoc);
-        shaderProgram->release();
     }
 
     if (edgesVisible_) {
-        // ребра
-        if (!edgePts_.isEmpty() && spMap.contains("static")) {
+        if (!edgePts_.isEmpty()) {
             auto lineShader = spMap["static"];
             if (lineShader->bind()) {
                 int linePosLoc  = lineShader->attributeLocation("position");
