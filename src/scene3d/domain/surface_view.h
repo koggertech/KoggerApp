@@ -16,6 +16,14 @@ class SurfaceView : public SceneObject
     QML_NAMED_ELEMENT(SurfaceView)
 
 public:
+    struct ColorInterval
+    {
+        float depth = 0.0f;
+        QVector3D color;
+        ColorInterval() = default;
+        ColorInterval(float d, const QVector3D &c) : depth(d), color(c) {}
+    };
+
     class SurfaceViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
@@ -33,14 +41,31 @@ public:
 
         bool trianglesVisible_ = true;
         bool edgesVisible_ = true;
+
+        /*data*/
+        QVector<ColorInterval> colorIntervals_;
+        float levelStep_ = 3.0f;
+        float lineStepSize_ = 3.0f;
+        GLuint textureId_ = 0;
+        //QVector<QVector3D> lineSegments_;
+        QVector3D color_;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
     virtual ~SurfaceView();
-
     void clear();
-
     void setBottomTrackPtr(BottomTrack* ptr);
+
+    QVector<uint8_t>& getTextureTasksRef();
+    GLuint getDeinitTextureTask() const;
+    GLuint getTextureId() const;
+    void setTextureId(GLuint textureId);
+    void setColorTableThemeById(int id);
+
+    float getSurfaceStepSize() const;
+    void setSurfaceStepSize(float val);
+    float getLineStepSize() const;
+    void setLineStepSize(float val);
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
@@ -52,6 +77,9 @@ private:
     friend class SurfaceViewProcessor;
 
     void resetTriangulation();
+    void rebuildColorIntervals();
+    QVector<QVector3D> generateExpandedPalette(int totalColors) const;
+    void updateTexture();
 
     delaunay::Delaunay del_;
     BottomTrack* bottomTrackPtr_ = nullptr;
@@ -60,4 +88,15 @@ private:
     QHash<QPair<int,int>, size_t>  cellPoints_; // fir - virt indx, sec - indx in tr
     int cellPx_ = 1;
     QPointF origin_;
+
+    /*data*/
+    float minDepth_ = 0.0f;
+    float maxDepth_ = 0.0f;
+    float surfaceStepSize_ = 1.0f;
+    float lineStepSize_    = 1.0f;
+    float labelStepSize_   = 100.0f;
+    GLuint textureId_ = 0;
+    QVector<uint8_t> textureTask_;
+    GLuint toDeleteId_ = 0;
+    int themeId_ = 0;
 };

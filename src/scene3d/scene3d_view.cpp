@@ -955,6 +955,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     processTileTexture(view);
     processImageTexture(view);
     processIsobathTexture(view);
+    processSurfaceViewTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -1202,6 +1203,41 @@ void GraphicsScene3dView::InFboRenderer::processIsobathTexture(GraphicsScene3dVi
 
     // deleting
     auto textureIdtoDel = isobathsPtr->getDeinitTextureTask();
+    if (textureIdtoDel) {
+        glDeleteTextures(1, &textureIdtoDel);
+    }
+}
+
+void GraphicsScene3dView::InFboRenderer::processSurfaceViewTexture(GraphicsScene3dView *viewPtr) const
+{
+    // init/reinit
+    auto surfaceViewPtr = viewPtr->getSurfaceViewPtr();
+    auto& task = surfaceViewPtr->getTextureTasksRef();
+
+    if (task.empty())
+        return;
+
+    GLuint textureId = surfaceViewPtr->getTextureId();
+
+    if (textureId) {
+        glDeleteTextures(1, &textureId);
+    }
+
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
+
+    surfaceViewPtr->setTextureId(textureId);
+    task.clear();
+
+    // deleting
+    auto textureIdtoDel = surfaceViewPtr->getDeinitTextureTask();
     if (textureIdtoDel) {
         glDeleteTextures(1, &textureIdtoDel);
     }

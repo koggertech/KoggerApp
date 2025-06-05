@@ -44,8 +44,11 @@ void SurfaceViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
-                if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
-                    isobathsPtr->setVisible(visibility_);
+                if (auto surfaceViewPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfaceViewPtr) {
+                    surfaceViewPtr->setVisible(visibility_);
+                    surfaceViewPtr->setColorTableThemeById(themeId_);
+                    surfaceViewPtr->setSurfaceStepSize(surfaceLineStepSize_);
+                    surfaceViewPtr->setLineStepSize(surfaceLineStepSize_);
                 }
             }
         };
@@ -54,8 +57,6 @@ void SurfaceViewControlMenuController::tryInitPendingLambda()
 
 void SurfaceViewControlMenuController::onSurfaceViewVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    qDebug() << "   onSurfaceViewVisibilityCheckBoxCheckedChanged" << checked;
-
     visibility_ = checked;
 
     if (graphicsSceneViewPtr_) {
@@ -68,8 +69,6 @@ void SurfaceViewControlMenuController::onSurfaceViewVisibilityCheckBoxCheckedCha
 
 void SurfaceViewControlMenuController::onUpdateSurfaceViewButtonClicked()
 {
-    qDebug() << "   onUpdateSurfaceViewButtonClicked";
-
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->onAction();
     }
@@ -86,5 +85,35 @@ void SurfaceViewControlMenuController::onEdgesVisible(bool state)
 {
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->onEdgesVisible(state);
+    }
+}
+
+void SurfaceViewControlMenuController::onSetSurfaceLineStepSize(float val)
+{
+    surfaceLineStepSize_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setSurfaceStepSize(val);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setLineStepSize(val);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void SurfaceViewControlMenuController::onSetLabelStepSizeIsobaths(int val)
+{
+
+}
+
+void SurfaceViewControlMenuController::onThemeChanged(int val)
+{
+    themeId_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setColorTableThemeById(themeId_);
+    }
+    else {
+        tryInitPendingLambda();
     }
 }

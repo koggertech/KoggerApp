@@ -134,11 +134,14 @@ public:
 
     private:
         friend class GraphicsScene3dView;
+
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
         void processIsobathTexture(GraphicsScene3dView* viewPtr) const;
+        void processSurfaceViewTexture(GraphicsScene3dView* viewPtr) const;
+
         QString checkOpenGLError() const;
 
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;

@@ -370,7 +370,7 @@ ColumnLayout {
     // surface view extra settings
     MenuFrame {
         id: surfaceViewSettings
-        visible: surfaceViewCheckButton.hovered || isHovered || surfaceViewCheckButton.surfaceViewLongPressTriggered
+        visible: surfaceViewCheckButton.hovered || isHovered || surfaceViewCheckButton.surfaceViewLongPressTriggered || surfaceViewTheme.activeFocus
         z: surfaceViewSettings.visible
         Layout.alignment: Qt.AlignRight
 
@@ -400,6 +400,87 @@ ColumnLayout {
         }
 
         ColumnLayout {
+
+            RowLayout {
+                CText {
+                    text: qsTr("Theme:")
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                CCombo  {
+                    id: surfaceViewTheme
+                    Layout.preferredWidth: 300
+                    model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                    currentIndex: 0
+                    onCurrentIndexChanged: {
+                        SurfaceViewControlMenuController.onThemeChanged(currentIndex)
+                    }
+
+                    onFocusChanged: {
+                        if (Qt.platform.os === 'android') {
+                            surfaceViewSettings.focus = true
+                        }
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onThemeChanged(currentIndex)
+                    }
+
+                    Settings {
+                        property alias surfaceViewTheme: surfaceViewTheme.currentIndex
+                    }
+                }
+            }
+            RowLayout {
+                CText {
+                    text: "surface/line step, m:"
+                    Layout.fillWidth: true
+
+                }
+                SpinBoxCustom {
+                    id: surfaceViewStepSizeSpinBox
+                    implicitWidth: 150
+                    from: 1
+                    to: 200
+                    stepSize: 1
+                    value: 3
+                    editable: false
+
+                    property int decimals: 1
+                    property real realValue: value / 10
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(surfaceViewStepSizeSpinBox.from, surfaceViewStepSizeSpinBox.to)
+                        top:  Math.max(surfaceViewStepSizeSpinBox.from, surfaceViewStepSizeSpinBox.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 10
+                    }
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewStepSizeSpinBox.realValue)
+                    }
+
+                    onRealValueChanged: {
+                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewStepSizeSpinBox.realValue)
+                    }
+
+                    Settings {
+                        property alias surfaceViewStepSizeSpinBox: surfaceViewStepSizeSpinBox.value
+                    }
+                }
+            }
+
             CButton {
                 id: updateSurfaceViewButton
                 text: qsTr("Update surfaceView")

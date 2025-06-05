@@ -23,6 +23,10 @@ public:
     Q_INVOKABLE void onTrianglesVisible(bool state);
     Q_INVOKABLE void onEdgesVisible(bool state);
 
+    Q_INVOKABLE void onSetSurfaceLineStepSize(float val);
+    Q_INVOKABLE void onSetLabelStepSizeIsobaths(int val);
+    Q_INVOKABLE void onThemeChanged(int val);
+
 Q_SIGNALS:
     void surfaceViewProcessorTaskStarted();
     void surfaceViewProcessorTaskFinished();
@@ -38,4 +42,7 @@ private:
     QThread thread_;
     std::function<void()> pendingLambda_;
     bool visibility_;
+
+    float surfaceLineStepSize_ = 3.0f;
+    int themeId_ = 0;
 };
