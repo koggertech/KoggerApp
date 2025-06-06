@@ -200,6 +200,78 @@ public:
         return pointIndx;
     }
 
+    /**
+     * Replace an existing point at index p_idx with new point newP.
+     * Remove all triangles referencing p_idx, then re-scan the mesh to find every triangle
+     * whose circumcircle (after replacement) contains newP. Build one combined cavity and
+     * retriangulate with slot-reuse so as to preserve vector indices.
+     */
+    void replacePoint(size_t p_idx, const Point &newP) {
+        // 1) Collect all triangles that reference p_idx (old hole)
+        std::vector<size_t> oldRemove;
+        oldRemove.reserve(RESERVE_BAD);
+        for (size_t i = 0; i < triangles.size(); ++i) {
+            const Triangle &t = triangles[i];
+            if (t.a == p_idx || t.b == p_idx || t.c == p_idx) {
+                oldRemove.push_back(i);
+            }
+        }
+
+        // 2) Overwrite the point in the points vector
+        points[p_idx] = newP;
+
+        // 3) Build set of triangles still in mesh (excluding oldRemove)
+        size_t N = triangles.size();
+        std::vector<bool> isRemoved(N, false);
+        for (size_t idx : oldRemove) {
+            isRemoved[idx] = true;
+        }
+
+        // 4) Find new bad triangles: any triangle (not removed) whose circumcircle contains newP
+        std::vector<size_t> newBad;
+        newBad.reserve(RESERVE_BAD);
+        for (size_t i = 0; i < N; ++i) {
+            if (isRemoved[i]) continue;
+            if (triangles[i].containsInCircumcircle(newP)) {
+                newBad.push_back(i);
+            }
+        }
+
+        // 5) Merge oldRemove and newBad into allBad (unique)
+        std::vector<size_t> allBad = oldRemove;
+        allBad.insert(allBad.end(), newBad.begin(), newBad.end());
+        std::sort(allBad.begin(), allBad.end());
+        allBad.erase(std::unique(allBad.begin(), allBad.end()), allBad.end());
+        size_t K = allBad.size();
+
+        // 6) Build combined boundary for allBad
+        std::vector<Edge> boundary;
+        boundary.reserve(K * 3);
+        for (size_t idx : allBad) {
+            const Triangle &t = triangles[idx];
+            addEdge(boundary, {t.a, t.b});
+            addEdge(boundary, {t.b, t.c});
+            addEdge(boundary, {t.c, t.a});
+        }
+
+        // 7) Retrangulate the combined cavity: reuse slots in allBad, then append
+        size_t slot = 0;
+        updated.clear();
+        for (const auto &e : boundary) {
+            size_t triIndex;
+            if (slot < K) {
+                triIndex = allBad[slot];
+                triangles[triIndex] = Triangle(e.i1, e.i2, p_idx, points);
+            } else {
+                triIndex = triangles.size();
+                triangles.emplace_back(e.i1, e.i2, p_idx, points);
+            }
+            updated.emplace_back(e.i1, e.i2, p_idx, points);
+            ++slot;
+        }
+        // Any slots in allBad beyond boundary.size() remain logically gone until future reuse
+    }
+
     /// Access current triangle list
     const std::vector<Triangle>& getTriangles() const {
         return triangles;

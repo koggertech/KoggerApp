@@ -103,7 +103,7 @@ void SurfaceViewControlMenuController::onSetSurfaceLineStepSize(float val)
 
 void SurfaceViewControlMenuController::onSetLabelStepSizeIsobaths(int val)
 {
-
+    Q_UNUSED(val)
 }
 
 void SurfaceViewControlMenuController::onThemeChanged(int val)

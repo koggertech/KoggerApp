@@ -386,135 +386,135 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
-    if (!m_isVisible ) {
-        return;
-    }
+//     if (!m_isVisible ) {
+//         return;
+//     }
 
-    if (!spMap.contains("isobaths")) {
-        return;
-    }
+//     if (!spMap.contains("isobaths")) {
+//         return;
+//     }
 
-    auto& sp = spMap["isobaths"];
-    if (!sp->bind()) {
-        qCritical() << "isobaths shader bind failed";
-        return;
-    }
+//     auto& sp = spMap["isobaths"];
+//     if (!sp->bind()) {
+//         qCritical() << "isobaths shader bind failed";
+//         return;
+//     }
 
-    QMatrix4x4 mvp = projection * view * model;
+//     QMatrix4x4 mvp = projection * view * model;
 
-    sp->setUniformValue("matrix",        mvp);
-    sp->setUniformValue("depthMin",      minZ_);
-    sp->setUniformValue("invDepthRange", 1.f / (maxZ_-minZ_));
-    sp->setUniformValue("levelStep",     levelStep_);
-    sp->setUniformValue("levelCount",    colorIntervals_.size());
-    sp->setUniformValue("linePass",      false);
-    sp->setUniformValue("lineColor",     color_);
+//     sp->setUniformValue("matrix",        mvp);
+//     sp->setUniformValue("depthMin",      minZ_);
+//     sp->setUniformValue("invDepthRange", 1.f / (maxZ_-minZ_));
+//     sp->setUniformValue("levelStep",     levelStep_);
+//     sp->setUniformValue("levelCount",    colorIntervals_.size());
+//     sp->setUniformValue("linePass",      false);
+//     sp->setUniformValue("lineColor",     color_);
 
-    ctx->glActiveTexture(GL_TEXTURE0);
-    ctx->glBindTexture(GL_TEXTURE_2D, textureId_);
-    sp->setUniformValue("paletteSampler", 0);
+//     ctx->glActiveTexture(GL_TEXTURE0);
+//     ctx->glBindTexture(GL_TEXTURE_2D, textureId_);
+//     sp->setUniformValue("paletteSampler", 0);
 
-    int pos = sp->attributeLocation("position");
-    sp->enableAttributeArray(pos);
-    sp->setAttributeArray(pos, pts_.constData());
-    ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
-    sp->disableAttributeArray(pos);
+//     int pos = sp->attributeLocation("position");
+//     sp->enableAttributeArray(pos);
+//     sp->setAttributeArray(pos, pts_.constData());
+//     ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
+//     sp->disableAttributeArray(pos);
 
-    /*
-    if (!lineSegments_.isEmpty()) {
-        sp->setUniformValue("linePass", true);
-        sp->disableAttributeArray(pos);
-        sp->enableAttributeArray(pos);
-        sp->setAttributeArray(pos, lineSegments_.constData());
-        ctx->glLineWidth(1.f);
-        ctx->glDrawArrays(GL_LINES, 0, lineSegments_.size());
-        sp->disableAttributeArray(pos);
-        sp->setUniformValue("linePass", false);
+//     /*
+//     if (!lineSegments_.isEmpty()) {
+//         sp->setUniformValue("linePass", true);
+//         sp->disableAttributeArray(pos);
+//         sp->enableAttributeArray(pos);
+//         sp->setAttributeArray(pos, lineSegments_.constData());
+//         ctx->glLineWidth(1.f);
+//         ctx->glDrawArrays(GL_LINES, 0, lineSegments_.size());
+//         sp->disableAttributeArray(pos);
+//         sp->setUniformValue("linePass", false);
 
-        if (!labels_.isEmpty()) {
-            glDisable(GL_DEPTH_TEST); // TODO: artifacts
+//         if (!labels_.isEmpty()) {
+//             glDisable(GL_DEPTH_TEST); // TODO: artifacts
 
-            auto oldTextColor = TextRenderer::instance().getColor();
-            TextRenderer::instance().setColor(QColor(color_.x(), color_.y(), color_.z()));
+//             auto oldTextColor = TextRenderer::instance().getColor();
+//             TextRenderer::instance().setColor(QColor(color_.x(), color_.y(), color_.z()));
 
-            // scale
-            float sizeFromStep = lineStepSize_ * 0.2f;
-            float sizeFromDist = distToFocusPoint_ * 0.0015f;
-            float scale = qMin(sizeFromStep, sizeFromDist);
-            scale = qBound(0.15f, scale, 0.3f);
+//             // scale
+//             float sizeFromStep = lineStepSize_ * 0.2f;
+//             float sizeFromDist = distToFocusPoint_ * 0.0015f;
+//             float scale = qMin(sizeFromStep, sizeFromDist);
+//             scale = qBound(0.15f, scale, 0.3f);
 
-            for (const auto& lbl : labels_) {
-                QString text = QString::number(lbl.depth, 'f', 1);
-                TextRenderer::instance().render3D(text,
-                                                  scale,
-                                                  lbl.pos,
-                                                  lbl.dir,
-                                                  ctx,
-                                                  mvp,
-                                                  spMap);
-            }
+//             for (const auto& lbl : labels_) {
+//                 QString text = QString::number(lbl.depth, 'f', 1);
+//                 TextRenderer::instance().render3D(text,
+//                                                   scale,
+//                                                   lbl.pos,
+//                                                   lbl.dir,
+//                                                   ctx,
+//                                                   mvp,
+//                                                   spMap);
+//             }
 
-            TextRenderer::instance().setColor(oldTextColor);
-            glEnable(GL_DEPTH_TEST);
-        }
-    }
-*/
-    sp->release();
+//             TextRenderer::instance().setColor(oldTextColor);
+//             glEnable(GL_DEPTH_TEST);
+//         }
+//     }
+// */
+//     sp->release();
 
 
 
     // old render
-    // if (!m_isVisible || !spMap.contains("height") || !spMap.contains("static")) {
-    //     return;
-    // }
+    if (!m_isVisible || !spMap.contains("height") || !spMap.contains("static")) {
+        return;
+    }
 
-    // if (trianglesVisible_) {
-    //     if (!pts_.empty()) {
-    //         auto shaderProgram = spMap["height"];
-    //         if (shaderProgram->bind()) {
-    //             int posLoc    = shaderProgram->attributeLocation("position");
-    //             int maxZLoc   = shaderProgram->uniformLocation("max_z");
-    //             int minZLoc   = shaderProgram->uniformLocation("min_z");
-    //             int matrixLoc = shaderProgram->uniformLocation("matrix");
+    if (trianglesVisible_) {
+        if (!pts_.empty()) {
+            auto shaderProgram = spMap["height"];
+            if (shaderProgram->bind()) {
+                int posLoc    = shaderProgram->attributeLocation("position");
+                int maxZLoc   = shaderProgram->uniformLocation("max_z");
+                int minZLoc   = shaderProgram->uniformLocation("min_z");
+                int matrixLoc = shaderProgram->uniformLocation("matrix");
 
-    //             shaderProgram->setUniformValue(minZLoc, minZ_);
-    //             shaderProgram->setUniformValue(maxZLoc, maxZ_);
-    //             shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+                shaderProgram->setUniformValue(minZLoc, minZ_);
+                shaderProgram->setUniformValue(maxZLoc, maxZ_);
+                shaderProgram->setUniformValue(matrixLoc, projection * view * model);
 
-    //             shaderProgram->enableAttributeArray(posLoc);
-    //             shaderProgram->setAttributeArray(posLoc, pts_.constData());
+                shaderProgram->enableAttributeArray(posLoc);
+                shaderProgram->setAttributeArray(posLoc, pts_.constData());
 
-    //             ctx->glEnable(GL_DEPTH_TEST);
-    //             ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
-    //             ctx->glDisable(GL_DEPTH_TEST);
+                ctx->glEnable(GL_DEPTH_TEST);
+                ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
+                ctx->glDisable(GL_DEPTH_TEST);
 
-    //             shaderProgram->disableAttributeArray(posLoc);
-    //             shaderProgram->release();
-    //         }
-    //     }
-    // }
+                shaderProgram->disableAttributeArray(posLoc);
+                shaderProgram->release();
+            }
+        }
+    }
 
-    // if (edgesVisible_) {
-    //     if (!edgePts_.isEmpty()) {
-    //         auto lineShader = spMap["static"];
-    //         if (lineShader->bind()) {
-    //             int linePosLoc  = lineShader->attributeLocation("position");
-    //             int colorLoc    = lineShader->uniformLocation("color");
-    //             int matrixLoc   = lineShader->uniformLocation("matrix");
-    //             int widthLoc    = lineShader->uniformLocation("width");
+    if (edgesVisible_) {
+        if (!edgePts_.isEmpty()) {
+            auto lineShader = spMap["static"];
+            if (lineShader->bind()) {
+                int linePosLoc  = lineShader->attributeLocation("position");
+                int colorLoc    = lineShader->uniformLocation("color");
+                int matrixLoc   = lineShader->uniformLocation("matrix");
+                int widthLoc    = lineShader->uniformLocation("width");
 
-    //             lineShader->setUniformValue(matrixLoc, projection * view * model);
-    //             lineShader->setUniformValue(colorLoc, QVector4D(0, 0, 0, 1));
-    //             lineShader->setUniformValue(widthLoc, 1.0f);
+                lineShader->setUniformValue(matrixLoc, projection * view * model);
+                lineShader->setUniformValue(colorLoc, QVector4D(0, 0, 0, 1));
+                lineShader->setUniformValue(widthLoc, 1.0f);
 
-    //             lineShader->enableAttributeArray(linePosLoc);
-    //             lineShader->setAttributeArray(linePosLoc, edgePts_.constData());
+                lineShader->enableAttributeArray(linePosLoc);
+                lineShader->setAttributeArray(linePosLoc, edgePts_.constData());
 
-    //             ctx->glLineWidth(1.0f);
-    //             ctx->glDrawArrays(GL_LINES, 0, edgePts_.size());
-    //             lineShader->disableAttributeArray(linePosLoc);
-    //             lineShader->release();
-    //         }
-    //     }
-    // }
+                ctx->glLineWidth(1.0f);
+                ctx->glDrawArrays(GL_LINES, 0, edgePts_.size());
+                lineShader->disableAttributeArray(linePosLoc);
+                lineShader->release();
+            }
+        }
+    }
 }
