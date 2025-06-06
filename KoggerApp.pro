@@ -28,6 +28,7 @@ HEADERS += \
     src/logger.h \
     src/map_defs.h \
     src/mav_link_conf.h \
+    src/predicates.h \
     src/proto_binnary.h \
     src/stream_list.h \
     src/stream_list_model.h \
@@ -47,9 +48,14 @@ SOURCES += \
     src/logger.cpp \
     src/main.cpp \
     src/map_defs.cpp \
+    src/predicates.c \
     src/proto_binnary.cpp \
     src/stream_list.cpp \
     src/stream_list_model.cpp
+
+QMAKE_CFLAGS += -Wno-unused-function -Wno-unused-variable
+gcc: QMAKE_CFLAGS += -Wno-maybe-uninitialized
+clang: QMAKE_CFLAGS += -Wno-deprecated-non-prototype
 
 FLASHER {
     DEFINES += FLASHER
@@ -180,6 +186,7 @@ android {
     QMAKE_CXXFLAGS_DEBUG -= -O2
     QMAKE_CXXFLAGS_DEBUG -= -O3
     QMAKE_CXXFLAGS_DEBUG += -O0
+    QMAKE_CFLAGS += -Wno-deprecated-non-prototype
 
     HEADERS += platform/android/src/android.h
     SOURCES += platform/android/src/android.cpp
