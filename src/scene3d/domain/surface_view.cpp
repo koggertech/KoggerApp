@@ -239,6 +239,10 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
 
         auto& point = bTrDataRef[itm];
 
+        if (!std::isfinite(point.z())) {
+            continue;
+        }
+
         if (bTrToTrIndxs_.contains(itm)) {
             uint64_t trIndx = bTrToTrIndxs_[itm];
             del_.getPointsRef()[trIndx].z = point.z();
