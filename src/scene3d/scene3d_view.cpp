@@ -104,7 +104,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateIsobaths, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
     QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, surfaceView_.get(), &SurfaceView::onUpdatedBottomTrackData);
 
@@ -918,10 +918,13 @@ void GraphicsScene3dView::updateMapView()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::updateIsobaths()
+void GraphicsScene3dView::updateViews()
 {
     if (isobaths_) {
         isobaths_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    }
+    if (surfaceView_) {
+        surfaceView_->setCameraDistToFocusPoint(m_camera->distForMapView());
     }
 }
 

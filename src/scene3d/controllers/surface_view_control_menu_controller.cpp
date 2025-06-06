@@ -49,6 +49,11 @@ void SurfaceViewControlMenuController::tryInitPendingLambda()
                     surfaceViewPtr->setColorTableThemeById(themeId_);
                     surfaceViewPtr->setSurfaceStepSize(surfaceLineStepSize_);
                     surfaceViewPtr->setLineStepSize(surfaceLineStepSize_);
+                    surfaceViewPtr->onEdgesVisible(edgesVisible_);
+                    surfaceViewPtr->onTrianglesVisible(trianglesVisible_);
+                    surfaceViewPtr->setLabelStepSize(labelStepSize_);
+                    surfaceViewPtr->setDebugMode(debugModeView_);
+                    surfaceViewPtr->onProcessStateChanged(processState_);
                 }
             }
         };
@@ -76,15 +81,25 @@ void SurfaceViewControlMenuController::onUpdateSurfaceViewButtonClicked()
 
 void SurfaceViewControlMenuController::onTrianglesVisible(bool state)
 {
+    trianglesVisible_ = state;
+
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getSurfaceViewPtr()->onTrianglesVisible(state);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->onTrianglesVisible(trianglesVisible_);
+    }
+    else {
+        tryInitPendingLambda();
     }
 }
 
 void SurfaceViewControlMenuController::onEdgesVisible(bool state)
 {
+    edgesVisible_ = state;
+
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getSurfaceViewPtr()->onEdgesVisible(state);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->onEdgesVisible(edgesVisible_ );
+    }
+    else {
+        tryInitPendingLambda();
     }
 }
 
@@ -93,8 +108,8 @@ void SurfaceViewControlMenuController::onSetSurfaceLineStepSize(float val)
     surfaceLineStepSize_ = val;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getSurfaceViewPtr()->setSurfaceStepSize(val);
-        graphicsSceneViewPtr_->getSurfaceViewPtr()->setLineStepSize(val);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setSurfaceStepSize(surfaceLineStepSize_);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setLineStepSize(surfaceLineStepSize_);
     }
     else {
         tryInitPendingLambda();
@@ -103,7 +118,14 @@ void SurfaceViewControlMenuController::onSetSurfaceLineStepSize(float val)
 
 void SurfaceViewControlMenuController::onSetLabelStepSizeIsobaths(int val)
 {
-    Q_UNUSED(val)
+    labelStepSize_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setLabelStepSize(labelStepSize_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void SurfaceViewControlMenuController::onThemeChanged(int val)
@@ -115,5 +137,36 @@ void SurfaceViewControlMenuController::onThemeChanged(int val)
     }
     else {
         tryInitPendingLambda();
+    }
+}
+
+void SurfaceViewControlMenuController::onDebugModeView(bool state)
+{
+    debugModeView_ = state;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setDebugMode(debugModeView_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void SurfaceViewControlMenuController::onProcessStateChanged(bool state)
+{
+    processState_ = state;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->onProcessStateChanged(processState_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void SurfaceViewControlMenuController::onResetSurfaceViewButtonClicked()
+{
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->clear();
     }
 }

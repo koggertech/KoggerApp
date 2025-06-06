@@ -400,8 +400,44 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            CheckButton {
+                id: realtimeSurfaceProcessingCheckButton
+                text: qsTr("realtime processing")
+                Layout.fillWidth: true
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onProcessStateChanged(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    SurfaceViewControlMenuController.onProcessStateChanged(checked);
+
+                }
+
+                Settings {
+                    property alias realtimeSurfaceProcessingCheckButton: realtimeSurfaceProcessingCheckButton.checked
+                }
+            }
+
+            CButton {
+                id: resetSurfaceViewButton
+                text: qsTr("Reset")
+                Layout.fillWidth: true
+                onClicked: {
+                    SurfaceViewControlMenuController.onResetSurfaceViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
 
             RowLayout {
+                visible: !surfaceViewDebugModeCheckButton.checked
                 CText {
                     text: qsTr("Theme:")
                 }
@@ -432,14 +468,17 @@ ColumnLayout {
                     }
                 }
             }
+
             RowLayout {
+                visible: !surfaceViewDebugModeCheckButton.checked
+
                 CText {
                     text: "surface/line step, m:"
                     Layout.fillWidth: true
 
                 }
                 SpinBoxCustom {
-                    id: surfaceViewStepSizeSpinBox
+                    id: surfaceViewSurfaceLineStepSizeSpinBox
                     implicitWidth: 150
                     from: 1
                     to: 200
@@ -451,8 +490,8 @@ ColumnLayout {
                     property real realValue: value / 10
 
                     validator: DoubleValidator {
-                        bottom: Math.min(surfaceViewStepSizeSpinBox.from, surfaceViewStepSizeSpinBox.to)
-                        top:  Math.max(surfaceViewStepSizeSpinBox.from, surfaceViewStepSizeSpinBox.to)
+                        bottom: Math.min(surfaceViewSurfaceLineStepSizeSpinBox.from, surfaceViewSurfaceLineStepSizeSpinBox.to)
+                        top:  Math.max(surfaceViewSurfaceLineStepSizeSpinBox.from, surfaceViewSurfaceLineStepSizeSpinBox.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -468,29 +507,51 @@ ColumnLayout {
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewStepSizeSpinBox.realValue)
+                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewSurfaceLineStepSizeSpinBox.realValue)
                     }
 
                     onRealValueChanged: {
-                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewStepSizeSpinBox.realValue)
+                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewSurfaceLineStepSizeSpinBox.realValue)
                     }
 
                     Settings {
-                        property alias surfaceViewStepSizeSpinBox: surfaceViewStepSizeSpinBox.value
+                        property alias surfaceViewSurfaceLineStepSizeSpinBox: surfaceViewSurfaceLineStepSizeSpinBox.value
                     }
                 }
             }
+            RowLayout {
+                visible: !surfaceViewDebugModeCheckButton.checked
 
-            CButton {
-                id: updateSurfaceViewButton
-                text: qsTr("Update surfaceView")
-                Layout.fillWidth: true
-                onClicked: {
-                    SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
+                CText {
+                    text: "label step, m:"
+                    Layout.fillWidth: true
                 }
+                SpinBoxCustom {
+                    id: surfaceViewLabelStepSpinBox
+                    implicitWidth: 150
+                    from: 10
+                    to: 1000
+                    stepSize: 5
+                    value: 100
+                    editable: false
 
-                onFocusChanged: {
-                    surfaceViewSettings.focus = true
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        isobathsSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onSetLabelStepSizeIsobaths(surfaceViewLabelStepSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        SurfaceViewControlMenuController.onSetLabelStepSizeIsobaths(surfaceViewLabelStepSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias surfaceViewLabelStepSpinBox: surfaceViewLabelStepSpinBox.value
+                    }
                 }
             }
 
@@ -498,6 +559,7 @@ ColumnLayout {
                 text: qsTr("triangles")
                 Layout.fillWidth: true
                 checked: true
+                visible: surfaceViewDebugModeCheckButton.checked
 
                 onCheckedChanged: {
                     SurfaceViewControlMenuController.onTrianglesVisible(checked);
@@ -512,9 +574,39 @@ ColumnLayout {
                 text: qsTr("edges")
                 Layout.fillWidth: true
                 checked: true
+                visible: surfaceViewDebugModeCheckButton.checked
 
                 onCheckedChanged: {
                     SurfaceViewControlMenuController.onEdgesVisible(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            CheckButton {
+                id: surfaceViewDebugModeCheckButton
+                text: qsTr("debug mode")
+                Layout.fillWidth: true
+                checked: false
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onDebugModeView(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            CButton {
+                id: updateSurfaceViewButton
+                text: qsTr("some action")
+                Layout.fillWidth: true
+
+                onClicked: {
+                    SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
                 }
 
                 onFocusChanged: {

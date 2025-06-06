@@ -19,13 +19,14 @@ public:
 
     Q_INVOKABLE void onSurfaceViewVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateSurfaceViewButtonClicked();
-
     Q_INVOKABLE void onTrianglesVisible(bool state);
     Q_INVOKABLE void onEdgesVisible(bool state);
-
     Q_INVOKABLE void onSetSurfaceLineStepSize(float val);
     Q_INVOKABLE void onSetLabelStepSizeIsobaths(int val);
     Q_INVOKABLE void onThemeChanged(int val);
+    Q_INVOKABLE void onDebugModeView(bool state);
+    Q_INVOKABLE void onProcessStateChanged(bool state);
+    Q_INVOKABLE void onResetSurfaceViewButtonClicked();
 
 Q_SIGNALS:
     void surfaceViewProcessorTaskStarted();
@@ -42,7 +43,11 @@ private:
     QThread thread_;
     std::function<void()> pendingLambda_;
     bool visibility_;
-
+    bool edgesVisible_ = true;
+    bool trianglesVisible_ = true;
     float surfaceLineStepSize_ = 3.0f;
     int themeId_ = 0;
+    int labelStepSize_ = 100;
+    bool debugModeView_ = false;
+    bool processState_ = true;
 };

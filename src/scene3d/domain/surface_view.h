@@ -10,6 +10,22 @@
 #include "delaunay.h"
 
 
+using IsobathsPolylines = QVector<QVector<QVector3D>>;
+using IsobathsSegVec = QVector<QPair<QVector3D,QVector3D>>;
+
+struct LLabelInfo
+{
+    QVector3D pos;
+    QVector3D dir;
+    float depth;
+};
+
+struct SSurfaceViewProcessorResult {
+    QVector<QVector3D> data;
+    QVector<LLabelInfo> labels;
+};
+
+
 class SurfaceView : public SceneObject
 {
     Q_OBJECT
@@ -47,8 +63,11 @@ public:
         float levelStep_ = 3.0f;
         float lineStepSize_ = 3.0f;
         GLuint textureId_ = 0;
-        //QVector<QVector3D> lineSegments_;
+        QVector<QVector3D> lineSegments_;
+        QVector<LLabelInfo> labels_;
         QVector3D color_;
+        float distToFocusPoint_ = 10.0f;
+        bool debugMode_ = false;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
@@ -66,12 +85,17 @@ public:
     void setSurfaceStepSize(float val);
     float getLineStepSize() const;
     void setLineStepSize(float val);
+    float getLabelStepSize() const;
+    void setLabelStepSize(float val);
+    void setCameraDistToFocusPoint(float val);
+    void setDebugMode(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->debugMode_ = state; Q_EMIT changed(); };
+    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; Q_EMIT changed(); };
+    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
+    void onProcessStateChanged(bool state) { processState_ = state; };
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void onAction();
-    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; Q_EMIT changed(); };
-    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
 
 private:
     friend class SurfaceViewProcessor;
@@ -81,6 +105,16 @@ private:
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture();
 
+    void processLinesLabels();//
+
+    QVector<QVector3D> buildGridTriangles(const QVector<QVector3D>& pts, int gridWidth, int gridHeight) const;
+    void buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& polylines) const;
+    void edgeIntersection(const QVector3D& vertA, const QVector3D& vertB, float level, QVector<QVector3D>& out) const;
+    void filterNearbyLabels(const QVector<LLabelInfo>& inputData, QVector<LLabelInfo>& outputData) const;
+    void filterLinesBehindLabels(const QVector<LLabelInfo>& filteredLabels, const QVector<QVector3D>& inputData, QVector<QVector3D>& outputData) const;
+
+    /*data*/
+    //SSurfaceViewProcessorResult result_;
     delaunay::Delaunay del_;
     BottomTrack* bottomTrackPtr_ = nullptr;
     QHash<int, uint64_t> bTrToTrIndxs_;
@@ -88,8 +122,6 @@ private:
     QHash<QPair<int,int>, size_t>  cellPoints_; // fir - virt indx, sec - indx in tr
     int cellPx_ = 1;
     QPointF origin_;
-
-    /*data*/
     float minDepth_ = 0.0f;
     float maxDepth_ = 0.0f;
     float surfaceStepSize_ = 1.0f;
@@ -99,4 +131,5 @@ private:
     QVector<uint8_t> textureTask_;
     GLuint toDeleteId_ = 0;
     int themeId_ = 0;
+    bool processState_ = false;
 };
