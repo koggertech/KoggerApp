@@ -92,6 +92,7 @@ public:
     void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; Q_EMIT changed(); };
     void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
     void onProcessStateChanged(bool state) { processState_ = state; };
+    bool processState() const { return processState_; };
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
