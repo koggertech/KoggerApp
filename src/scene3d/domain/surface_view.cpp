@@ -99,6 +99,8 @@ void SurfaceView::clear()
     bTrToTrIndxs_.clear();
 
     resetTriangulation();
+
+    Q_EMIT changed();
 }
 
 void SurfaceView::setBottomTrackPtr(BottomTrack* ptr)
