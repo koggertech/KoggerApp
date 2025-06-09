@@ -695,8 +695,8 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                         int currCount = std::floor(endIndx / windowSize);
                                         if (bottomTrackWindowCounter_ != currCount) {
 
-                                            btP->indexFrom = windowSize * bottomTrackWindowCounter_;
-                                            btP->indexTo   = windowSize * currCount;
+                                            btP->indexFrom = windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1);
+                                            btP->indexTo   = windowSize * currCount - (windowSize / 2 + 1);
 
                                             const auto channels = m_dataset->channelsList();
                                             for (auto it = channels.begin(); it != channels.end(); ++it) {
