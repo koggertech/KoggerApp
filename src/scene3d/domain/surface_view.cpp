@@ -239,13 +239,13 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
         //}
         //r->m_data[itm] = bTrDataRef[itm]; // ?
 
-        auto& point = bTrDataRef[itm];
+        const auto& point = bTrDataRef[itm];
 
         if (!std::isfinite(point.z())) {
             continue;
         }
 
-        if (bTrToTrIndxs_.contains(itm)) {
+        if (bTrToTrIndxs_.contains(itm)) { // просто обновляем Z координату
             uint64_t trIndx = bTrToTrIndxs_[itm];
             del_.getPointsRef()[trIndx].z = point.z();
         }
@@ -255,43 +255,42 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
                 originSet_ = true;
             }
 
-            const int cellPxVal = cellPx_;
             /* индекс ячейки */
-            int ix = qRound((point.x() - origin_.x()) / cellPxVal);
-            int iy = qRound((point.y() - origin_.y()) / cellPxVal);
+            const int ix = qRound((point.x() - origin_.x()) / cellPx_);
+            const int iy = qRound((point.y() - origin_.y()) / cellPx_);
             QPair<int,int> cid(ix,iy);
 
-            QPointF center(origin_.x() + float(ix) * cellPxVal, origin_.y() + float(iy) * cellPxVal);
+            QPointF center(origin_.x() + float(ix) * cellPx_, origin_.y() + float(iy) * cellPx_);
 
             if (cellPoints_.contains(cid)) {
-                if(!cellPointsInTri_.contains(cid)) {
-                    auto& lastPoint = cellPoints_[cid];
-                    bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
+                if (!cellPointsInTri_.contains(cid)) {
+
+                    const auto& lastPoint = cellPoints_[cid];
+                    const bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
 
                     if (currNearest) {
                         cellPoints_[cid] = point;
-                    } else {
+                    }
+                    else {
                         // for low-delay: when the point is moving away from the nearest one
                         // may not have the best possible alignment
-                        auto& lastPoint = cellPoints_[cid];
-                        delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(),lastPoint.y(), lastPoint.z()));
+                        delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(), lastPoint.y(), lastPoint.z()));
                         bTrToTrIndxs_[itm] = res.pointIdx;
-                        int p_idx = res.pointIdx;
-                        cellPointsInTri_[cid] = p_idx;
+                        cellPointsInTri_[cid] = res.pointIdx;
                     }
                 }
-            } else {
+            }
+            else {
                 cellPoints_[cid] = point;
             }
 
-            if(lastCellPoint_ != cid) {
+            if (lastCellPoint_ != cid) {
                 // check if the last cell wasn't triangulated
-                if(!cellPointsInTri_.contains(lastCellPoint_)) {
-                    auto& lastPoint = cellPoints_[lastCellPoint_];
-                    delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(),lastPoint.y(), lastPoint.z()));
+                if (!cellPointsInTri_.contains(lastCellPoint_)) {
+                    const auto& lastPoint = cellPoints_[lastCellPoint_];
+                    delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(), lastPoint.y(), lastPoint.z()));
                     bTrToTrIndxs_[itm] = res.pointIdx;
-                    int p_idx = res.pointIdx;
-                    cellPointsInTri_[lastCellPoint_] = p_idx;
+                    cellPointsInTri_[lastCellPoint_] = res.pointIdx;
                 }
 
                 lastCellPoint_ = cid;
