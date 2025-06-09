@@ -273,6 +273,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
                         // may not have the best possible alignment
                         auto& lastPoint = cellPoints_[cid];
                         delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(),lastPoint.y(), lastPoint.z()));
+                        bTrToTrIndxs_[itm] = res.pointIdx;
                         int p_idx = res.pointIdx;
                         cellPointsInTri_[cid] = p_idx;
                     }
@@ -286,6 +287,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
                 if(!cellPointsInTri_.contains(lastCellPoint_)) {
                     auto& lastPoint = cellPoints_[lastCellPoint_];
                     delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(),lastPoint.y(), lastPoint.z()));
+                    bTrToTrIndxs_[itm] = res.pointIdx;
                     int p_idx = res.pointIdx;
                     cellPointsInTri_[lastCellPoint_] = p_idx;
                 }
@@ -449,7 +451,7 @@ void SurfaceView::processLinesLabels()
     const int levelCnt = int((zMax - zMin) / lineStepSize_) + 1;
 
     for (const auto& t : del_.getTriangles()) {
-        if (t.a < 4 || t.b < 4 || t.c < 4) {
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > 20.0) {
             continue;
         }
 
