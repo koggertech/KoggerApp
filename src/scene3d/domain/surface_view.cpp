@@ -255,30 +255,42 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
 
             const int cellPxVal = cellPx_;
             /* индекс ячейки */
-            int ix = qFloor((point.x() - origin_.x()) / cellPxVal);
-            int iy = qFloor((point.y() - origin_.y()) / cellPxVal);
+            int ix = qRound((point.x() - origin_.x()) / cellPxVal);
+            int iy = qRound((point.y() - origin_.y()) / cellPxVal);
             QPair<int,int> cid(ix,iy);
 
-            QPointF center(origin_.x() + (ix + 0.5) * cellPxVal, origin_.y() + (iy + 0.5) * cellPxVal);
+            QPointF center(origin_.x() + float(ix) * cellPxVal, origin_.y() + float(iy) * cellPxVal);
 
             if (cellPoints_.contains(cid)) {
-                uint64_t indxInTr = cellPoints_[cid];
+                if(!cellPointsInTri_.contains(cid)) {
+                    auto& lastPoint = cellPoints_[cid];
+                    bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
 
-                auto& pts = del_.getPoints();
-                auto lastPoint = pts[indxInTr];
-
-                bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x, lastPoint.y }, center);
-
-                if (currNearest) {
-                    bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
-                    cellPoints_[cid] = bTrToTrIndxs_[itm];// point.x(), point.y() };
-
-                    //del_.replacePoint(indxInTr, delaunay::Point(point.x(), point.y(), point.z()));
+                    if (currNearest) {
+                        cellPoints_[cid] = point;
+                    } else {
+                        // for low-delay: when the point is moving away from the nearest one
+                        // may not have the best possible alignment
+                        auto& lastPoint = cellPoints_[cid];
+                        delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(),lastPoint.y(), lastPoint.z()));
+                        int p_idx = res.pointIdx;
+                        cellPointsInTri_[cid] = p_idx;
+                    }
                 }
+            } else {
+                cellPoints_[cid] = point;
             }
-            else {
-                bTrToTrIndxs_[itm] = del_.addPoint(delaunay::Point(point.x(),point.y(), point.z()));
-                cellPoints_[cid] = bTrToTrIndxs_[itm];// point.x(), point.y() };
+
+            if(lastCellPoint_ != cid) {
+                // check if the last cell wasn't triangulated
+                if(!cellPointsInTri_.contains(lastCellPoint_)) {
+                    auto& lastPoint = cellPoints_[lastCellPoint_];
+                    delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(),lastPoint.y(), lastPoint.z()));
+                    int p_idx = res.pointIdx;
+                    cellPointsInTri_[lastCellPoint_] = p_idx;
+                }
+
+                lastCellPoint_ = cid;
             }
         }
     }
@@ -293,7 +305,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
     double lastMaxZ = r->maxZ_;
 
     for (const auto& t : del_.getTriangles()) {
-        if (t.a < 4 || t.b < 4 || t.c < 4) {
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > 20.0) {
             continue;
         }
 
