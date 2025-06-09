@@ -85,7 +85,9 @@ private:
     BottomTrack* bottomTrackPtr_ = nullptr;
     QHash<int, uint64_t> bTrToTrIndxs_;
     bool originSet_ = false;
-    QHash<QPair<int,int>, size_t>  cellPoints_; // fir - virt indx, sec - indx in tr
+    QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
+    QHash<QPair<int,int>, int>  cellPointsInTri_;
+    QPair<int,int> lastCellPoint_;
     int cellPx_ = 1;
     QPointF origin_;
 

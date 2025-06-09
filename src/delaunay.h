@@ -3,13 +3,15 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <stack>
+#include <set>
 #include <QDebug>
 
 
 namespace delaunay {
 
 constexpr int RESERVE_BAD = 16;
-constexpr double SUPER_SIZE = 1e6;
+constexpr double SUPER_SIZE = 1e4;
 constexpr double COLLINEAR_EPS = 1e-12;
 constexpr double ZERO_LEVEL = 0.0;
 
@@ -18,6 +20,7 @@ struct Point {
     Point() : x(0.0), y(0.0), z(0.0) {};
     Point(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {};
     double x, y, z;
+    bool is_bad = false;
 
     bool operator==(const Point &other) const {
         return (qFuzzyCompare(x, other.x) && qFuzzyCompare(y, other.y));
@@ -31,29 +34,52 @@ struct Point {
 /// Edge between two point indices (undirected)
 struct Edge {
     size_t i1, i2;
-    bool operator==(const Edge &other) const {
-        return (i1 == other.i1 && i2 == other.i2) ||
-               (i1 == other.i2 && i2 == other.i1);
+    Edge(std::size_t _a = 0, std::size_t _b = 0) {
+        if (_a < _b) { i1 = _a; i2 = _b; }
+        else { i1 = _b; i2 = _a; }
     }
+
+    bool operator==(const Edge &other) const {
+        return (i1 == other.i1 && i2 == other.i2);
+    }
+};
+
+struct TriResult {
+    size_t pointIdx = 0;
+    std::vector<size_t> removedTriIdx;
+    std::vector<size_t> newTriIdx;
 };
 
 struct Triangle {
     size_t a, b, c;          // indices of vertices in points[]
     Point circumcenter;       // Center of circumcircle
     double circumradius2;     // Squared radius of circumcircle
+    bool is_bad = false;
+    double longest_edge_dist;
 
     /// Construct and compute circumcircle from indexed points
-    Triangle(size_t ia, size_t ib, size_t ic, const std::vector<Point> &points)
-        : a(ia), b(ib), c(ic) {
+    Triangle(size_t ia, size_t ib, size_t ic, const std::vector<Point> &points) {
+        std::array<size_t,3> v = {ia, ib, ic};
+        std::sort(v.begin(), v.end());
+        a = v[0]; b = v[1]; c = v[2];
+        is_bad = false;
         computeCircumcircle(points);
     }
 
     bool operator==(const Triangle& other) const {
-        return (a == other.a) && (b == other.b) && (c == other.b);
+        return (a == other.a) && (b == other.b) && (c == other.c);
     }
 
     bool operator!=(const Triangle &other) const {
         return !(*this == other);
+    }
+
+    bool isNeighbor(Triangle &t) {
+        return (a == t.a && b == t.b) || (b == t.b && c == t.c) || (a == t.a && c == t.c);
+    }
+
+    std::vector<Edge> edges() {
+        return std::vector<Edge>() = {{a, b}, {b, c}, {a, c}};
     }
 
     /// Compute a robust circumcircle; fallback on collinear triangles
@@ -61,18 +87,29 @@ struct Triangle {
         const Point &A = pts[a];
         const Point &B = pts[b];
         const Point &C = pts[c];
+
+        auto sqdist = [&](const Point &P, const Point &Q) {
+            double dx = P.x - Q.x;
+            double dy = P.y - Q.y;
+            return dx*dx + dy*dy;
+        };
+        double dAB = sqdist(A,B);
+        double dBC = sqdist(B,C);
+        double dCA = sqdist(C,A);
+
+        if (dAB >= dBC && dAB >= dCA) {
+            longest_edge_dist = sqrt(dAB);
+        } else if (dBC >= dCA) {
+            longest_edge_dist = sqrt(dBC);
+        } else {
+            longest_edge_dist = sqrt(dCA);
+        }
+
         // Compute twice signed area of triangle ABC
         double area2 = (B.x - A.x)*(C.y - A.y) - (B.y - A.y)*(C.x - A.x);
         if (std::fabs(area2) < COLLINEAR_EPS) {
             // Collinear fallback: choose the longest edge
-            auto sqdist = [&](const Point &P, const Point &Q) {
-                double dx = P.x - Q.x;
-                double dy = P.y - Q.y;
-                return dx*dx + dy*dy;
-            };
-            double dAB = sqdist(A,B);
-            double dBC = sqdist(B,C);
-            double dCA = sqdist(C,A);
+
             if (dAB >= dBC && dAB >= dCA) {
                 circumcenter = {(A.x+B.x)/2.0, (A.y+B.y)/2.0, ZERO_LEVEL};
                 circumradius2 = dAB/4.0;
@@ -83,6 +120,7 @@ struct Triangle {
                 circumcenter = {(C.x+A.x)/2.0, (C.y+A.y)/2.0, ZERO_LEVEL};
                 circumradius2 = dCA/4.0;
             }
+            is_bad = true;
             return;
         }
         // Standard circumcircle via perpendicular bisector intersection
@@ -107,169 +145,70 @@ struct Triangle {
         double dy = p.y - circumcenter.y;
         return (dx * dx + dy * dy) <= circumradius2;
     }
+
+    bool containsVertex(size_t idx) {
+        return a == idx || b == idx || c == idx;
+    }
 };
-
-inline uint qHash(const Triangle& t, uint seed = 0) noexcept
-{
-    std::array<size_t,3> v{t.a, t.b, t.c};
-    std::sort(v.begin(), v.end());
-
-    seed ^= ::qHash(quint64(v[0])) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    seed ^= ::qHash(quint64(v[1])) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    seed ^= ::qHash(quint64(v[2])) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    return seed;
-}
 
 /// Brute‐force incremental Delaunay triangulation (Bowyer–Watson)
 class Delaunay {
 public:
-    Delaunay() {
+    Delaunay(double super_size = SUPER_SIZE) {
         // Create a "super‑triangle" rectangle enclosing all points
-        points.push_back({-SUPER_SIZE, -SUPER_SIZE, ZERO_LEVEL}); // index 0
-        points.push_back({ SUPER_SIZE, -SUPER_SIZE, ZERO_LEVEL}); // index 1
-        points.push_back({ SUPER_SIZE,  SUPER_SIZE, ZERO_LEVEL}); // index 2
-        points.push_back({-SUPER_SIZE,  SUPER_SIZE, ZERO_LEVEL}); // index 3
-        triangles.emplace_back(0, 1, 2, points);
-        triangles.emplace_back(0, 2, 3, points);
+        size_t p0 = insertPoint({-super_size, -super_size, ZERO_LEVEL});
+        size_t p1 = insertPoint({ super_size, -super_size, ZERO_LEVEL});
+        size_t p2 = insertPoint({ super_size,  super_size, ZERO_LEVEL});
+        size_t p3 = insertPoint({-super_size,  super_size, ZERO_LEVEL});
+
+        // triangles.emplace_back(p0, p1, p2, points);
+        // triangles.emplace_back(p0, p2, p3, points);
+
+        insertTriangle(p0, p1, p2);
+        insertTriangle(p0, p2, p3);
     }
 
     /// Add a new point and update triangulation
-    uint64_t addPoint(const Point &p, size_t point_slot_idx = SIZE_MAX, std::vector<size_t> triangle_slot_idx = std::vector<size_t>()) {
-        uint64_t pointIndx = points.size();
-        //qDebug() << "Delaunay::addPoint";
-
-        updated.clear();
-
+    TriResult addPoint(const Point &p) {
         // 1) Insert point and get its index
-        size_t pi = point_slot_idx;
-        if(point_slot_idx == SIZE_MAX) {
-            pi = points.size() ;
-            points.push_back(p);
+        size_t pi = insertPoint(p);
+
+        // 2) Find all bad triangles by index
+        std::vector<size_t> removedTriIdx = findBadTriangles(p);
+
+        // 3) Build boundary of hole
+        std::vector<Edge> boundary = buildBoundary(removedTriIdx);
+
+        // 4) Re‐triangulate
+        std::vector<size_t> newTriIdx = triangulateHoleInPlace(boundary, pi);
+
+        return {pi, removedTriIdx, newTriIdx};
+    }
+
+    uint64_t removePoint(size_t p_idx) {
+        if(!markPointAsBad(p_idx)) {
+            qDebug() << "invalid removing idx";
+            return -1;
         }
 
         // 2) Find all bad triangles by index
-     std::vector<size_t> badIdx = triangle_slot_idx;
-        badIdx.reserve(RESERVE_BAD);
-        for (size_t i = 0; i < triangles.size(); ++i) {
-            if (triangles[i].containsInCircumcircle(p)) {
-                badIdx.push_back(i);
-            }
-        }
+        std::vector<size_t> badIdx = findBadTrianglesByVertice(p_idx);
 
         // 3) Build boundary of hole
-        std::vector<Edge> boundary;
-        boundary.reserve(RESERVE_BAD * 3);
-        for (size_t idx : badIdx) {
-            const Triangle &t = triangles[idx];
-            addEdge(boundary, {t.a, t.b});
-            addEdge(boundary, {t.b, t.c});
-            addEdge(boundary, {t.c, t.a});
+        std::vector<Edge> boundary = buildBoundary(badIdx);
+
+        std::vector<Triangle> new_triangles = triangulateHole(boundary);
+
+        for (Triangle &t : new_triangles) {
+            insertTriangle(t.a, t.b, t.c);
+        }
+        int t_dif = int(badIdx.size()) - int(new_triangles.size());
+
+        if(t_dif != 2) {
+            qDebug() << "Triangles dif: " << t_dif;
         }
 
-        // 4) Re‐triangulate: reuse slots, then append
-        size_t K = badIdx.size();
-        size_t slot = 0;
-        for (const auto &e : boundary) {
-            if (slot < K) {
-                // overwrite bad triangle slot
-                triangles[ badIdx[slot] ] = Triangle(e.i1, e.i2, pi, points);
-
-                //qDebug() << "   updated"
-                //         << points[e.i1].x << points[e.i1].y << "\t\t"
-                //         << points[e.i2].x << points[e.i2].y << "\t\t"
-                //         << points[pi].x   << points[pi].y;
-
-                updated.emplace_back(e.i1, e.i2, pi, points);
-            }
-            else {
-                // append new triangle
-                triangles.emplace_back(e.i1, e.i2, pi, points);
-
-                //qDebug() << "   appending"
-                //         << points[e.i1].x << points[e.i1].y << "\t\t"
-                //         << points[e.i2].x << points[e.i2].y << "\t\t"
-                //         << points[pi].x   << points[pi].y;
-
-                updated.emplace_back(e.i1, e.i2, pi, points);
-            }
-
-            ++slot;
-        }
-        // no need for free-list: vector only grows when boundary > badIdx
-
-        return pointIndx;
-    }
-
-    /**
-     * Replace an existing point at index p_idx with new point newP.
-     * Remove all triangles referencing p_idx, then re-scan the mesh to find every triangle
-     * whose circumcircle (after replacement) contains newP. Build one combined cavity and
-     * retriangulate with slot-reuse so as to preserve vector indices.
-     */
-    void replacePoint(size_t p_idx, const Point &newP) {
-        // 1) Collect all triangles that reference p_idx (old hole)
-        std::vector<size_t> oldRemove;
-        oldRemove.reserve(RESERVE_BAD);
-        for (size_t i = 0; i < triangles.size(); ++i) {
-            const Triangle &t = triangles[i];
-            if (t.a == p_idx || t.b == p_idx || t.c == p_idx) {
-                oldRemove.push_back(i);
-            }
-        }
-
-        // 2) Overwrite the point in the points vector
-        points[p_idx] = newP;
-
-        // 3) Build set of triangles still in mesh (excluding oldRemove)
-        size_t N = triangles.size();
-        std::vector<bool> isRemoved(N, false);
-        for (size_t idx : oldRemove) {
-            isRemoved[idx] = true;
-        }
-
-        // 4) Find new bad triangles: any triangle (not removed) whose circumcircle contains newP
-        std::vector<size_t> newBad;
-        newBad.reserve(RESERVE_BAD);
-        for (size_t i = 0; i < N; ++i) {
-            if (isRemoved[i]) continue;
-            if (triangles[i].containsInCircumcircle(newP)) {
-                newBad.push_back(i);
-            }
-        }
-
-        // 5) Merge oldRemove and newBad into allBad (unique)
-        std::vector<size_t> allBad = oldRemove;
-        allBad.insert(allBad.end(), newBad.begin(), newBad.end());
-        std::sort(allBad.begin(), allBad.end());
-        allBad.erase(std::unique(allBad.begin(), allBad.end()), allBad.end());
-        size_t K = allBad.size();
-
-        // 6) Build combined boundary for allBad
-        std::vector<Edge> boundary;
-        boundary.reserve(K * 3);
-        for (size_t idx : allBad) {
-            const Triangle &t = triangles[idx];
-            addEdge(boundary, {t.a, t.b});
-            addEdge(boundary, {t.b, t.c});
-            addEdge(boundary, {t.c, t.a});
-        }
-
-        // 7) Retrangulate the combined cavity: reuse slots in allBad, then append
-        size_t slot = 0;
-        updated.clear();
-        for (const auto &e : boundary) {
-            size_t triIndex;
-            if (slot < K) {
-                triIndex = allBad[slot];
-                triangles[triIndex] = Triangle(e.i1, e.i2, p_idx, points);
-            } else {
-                triIndex = triangles.size();
-                triangles.emplace_back(e.i1, e.i2, p_idx, points);
-            }
-            updated.emplace_back(e.i1, e.i2, p_idx, points);
-            ++slot;
-        }
-        // Any slots in allBad beyond boundary.size() remain logically gone until future reuse
+        return p_idx;
     }
 
     /// Access current triangle list
@@ -285,14 +224,202 @@ public:
         return points;
     }
 
-    const std::vector<Triangle>& getUpdated() const {
-        return updated;
-    }
-
 private:
     std::vector<Point>    points;
     std::vector<Triangle> triangles;
-    std::vector<Triangle> updated;
+    std::stack<size_t> freePointSlots;
+    std::stack<size_t> freeTriangleSlots;
+
+    std::vector<size_t> findBadTriangles(Point const &p) {
+        std::vector<size_t> badIdx;
+        badIdx.reserve(RESERVE_BAD);
+        for (size_t i = 0; i < triangles.size(); ++i) {
+            if (triangles[i].is_bad) continue;
+            if (triangles[i].containsInCircumcircle(p)) {
+                badIdx.push_back(i);
+                markTriangleAsBad(i);
+            }
+        }
+        return badIdx;
+    }
+
+    std::vector<size_t> findBadTrianglesByVertice(size_t p_idx) {
+        std::vector<size_t> badIdx;
+        badIdx.reserve(RESERVE_BAD);
+        for (size_t i = 0; i < triangles.size(); ++i) {
+            if (triangles[i].is_bad) continue;
+            if (triangles[i].containsVertex(p_idx)) {
+                badIdx.push_back(i);
+                markTriangleAsBad(i);
+            }
+        }
+        return badIdx;
+    }
+
+    std::vector<Edge> buildBoundary(std::vector<size_t> t_idx) {
+        std::vector<Edge> boundary;
+        boundary.reserve(RESERVE_BAD * 3);
+        for (size_t idx : t_idx) {
+            const Triangle &t = triangles[idx];
+            addEdge(boundary, {t.a, t.b});
+            addEdge(boundary, {t.b, t.c});
+            addEdge(boundary, {t.a, t.c});
+        }
+        return boundary;
+    }
+
+    std::vector<size_t> triangulateHoleInPlace(std::vector<Edge> boundary, size_t p_idx) {
+        std::vector<size_t> t_new_idx;
+        for (const auto &e : boundary) {
+            size_t t_new = insertTriangle(e.i1, e.i2, p_idx);
+            t_new_idx.push_back(t_new);
+        }
+        return t_new_idx;
+    }
+
+    std::vector<Triangle> triangulateHole(std::vector<Edge> boundary) {
+        std::vector<Triangle> newTriangles;
+        if (boundary.empty()) {
+            return newTriangles;
+        }
+
+        // 1) Collect unique boundary vertex indices
+        std::set<size_t> uniqueVerts;
+        for (const Edge &e : boundary) {
+            uniqueVerts.insert(e.i1);
+            uniqueVerts.insert(e.i2);
+        }
+
+
+        std::vector<size_t> verts(uniqueVerts.begin(), uniqueVerts.end());
+        size_t n = verts.size();
+        if (n < 3) {
+            return newTriangles; // Not enough vertices to form a triangle
+        }
+
+        Delaunay del(SUPER_SIZE*2);
+        std::unordered_map<size_t, size_t> p_p;
+        for(size_t p_inx : verts) {
+            Point p = points[p_inx];
+            TriResult res = del.addPoint(p);
+            size_t p_n_idx = res.pointIdx;
+            p_p[p_n_idx] = p_inx;
+        }
+
+        std::vector<Triangle> row_new_t = del.getTriangles();
+
+        std::vector<Triangle> filtered_t;
+        for(Triangle &t : row_new_t) {
+            if(t.a > 3 && t.b > 3 && t.c > 3 && !t.is_bad) {
+                filtered_t.emplace_back(p_p[t.a], p_p[t.b], p_p[t.c], points);
+            }
+        }
+
+        for(Triangle &t : filtered_t) {
+            std::vector<Edge> edges = t.edges();
+            int find_neighbors = 0;
+
+            // for(Triangle &t_test : filtered_t) {
+            //     bool is_same = (t == t_test);
+            //     if(!is_same && t.isNeighbor(t_test)) {
+            //         find_neighbors++;
+            //     }
+            // }
+
+            for(Edge &e : edges) {
+                bool is_find = false;
+                for(Edge &b : boundary) {
+                    if(e == b) {
+                        is_find = true;
+                        break;
+                    }
+                }
+                if(!is_find) {
+                    for(Triangle &t_test : filtered_t) {
+                        if(t != t_test) {
+                            std::vector<Edge> edges_test = t_test.edges();
+                            for(Edge &e_test : edges_test) {
+                                if(e == e_test) {
+                                    is_find = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(is_find) {
+                            break;
+                        }
+                    }
+                }
+
+                if(is_find) {
+                    find_neighbors++;
+                }
+            }
+
+            if(find_neighbors == 3) {
+                newTriangles.emplace_back(t);
+            }
+        }
+
+        int t_dif = int(boundary.size()) - int(newTriangles.size());
+
+        if(t_dif != 2) {
+            qDebug() << "Re_Triangles dif: " << t_dif;
+        }
+
+        return newTriangles;
+    }
+
+    std::size_t insertPoint(Point const &p) {
+        std::size_t idx;
+        if (!freePointSlots.empty()) {
+            idx = freePointSlots.top();
+            freePointSlots.pop();
+            points[idx] = p;
+        } else {
+            idx = points.size();
+            points.push_back(p);
+        }
+
+        // std::size_t idx = points.size();
+        // points.push_back(p);
+        return idx;
+    }
+
+    bool markPointAsBad(std::size_t idx) {
+        if(idx < points.size() && (!points[idx].is_bad)) {
+            points[idx].is_bad = true;
+            freePointSlots.push(idx);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // Create a triangle by indices (reuse slot if available)
+    size_t insertTriangle(size_t i0, size_t i1, size_t i2) {
+        size_t tid;
+        Triangle tri(i0, i1, i2, points);
+        tri.is_bad = false;
+        if (!freeTriangleSlots.empty()) {
+            tid = freeTriangleSlots.top();
+            freeTriangleSlots.pop();
+            if(!triangles[tid].is_bad) {
+                qDebug() << "bad reuse";
+            }
+            triangles[tid] = tri;
+        } else {
+            tid = triangles.size();
+            triangles.push_back(tri);
+        }
+        return tid;
+    }
+
+    void markTriangleAsBad(std::size_t idx) {
+        triangles[idx].is_bad = true;
+        freeTriangleSlots.push(idx);
+    }
 
     /// Utility to add or remove edges on boundary
     void addEdge(std::vector<Edge> &edges, const Edge &e) {
