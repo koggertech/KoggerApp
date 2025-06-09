@@ -97,6 +97,8 @@ void SurfaceView::clear()
     r->labels_.clear();
 
     bTrToTrIndxs_.clear();
+    cellPoints_.clear();
+    cellPointsInTri_.clear();
 
     resetTriangulation();
 
@@ -307,7 +309,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
     double lastMaxZ = r->maxZ_;
 
     for (const auto& t : del_.getTriangles()) {
-        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > 20.0) {
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
             continue;
         }
 
@@ -451,7 +453,7 @@ void SurfaceView::processLinesLabels()
     const int levelCnt = int((zMax - zMin) / lineStepSize_) + 1;
 
     for (const auto& t : del_.getTriangles()) {
-        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > 20.0) {
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
             continue;
         }
 

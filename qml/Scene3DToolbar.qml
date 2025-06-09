@@ -437,6 +437,40 @@ ColumnLayout {
             }
 
             RowLayout {
+                CText {
+                    text: "edge limit, m:"
+                    Layout.fillWidth: true
+                }
+                SpinBoxCustom {
+                    id: surfaceViewEdgeLimtSpinBox
+                    implicitWidth: 150
+                    from: 10
+                    to: 1000
+                    stepSize: 5
+                    value: 20
+                    editable: false
+
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimtSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimtSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias surfaceViewEdgeLimtSpinBox: surfaceViewEdgeLimtSpinBox.value
+                    }
+                }
+            }
+
+            RowLayout {
                 visible: !surfaceViewDebugModeCheckButton.checked
                 CText {
                     text: qsTr("Theme:")
@@ -538,7 +572,7 @@ ColumnLayout {
                     property int decimals: 1
 
                     onFocusChanged: {
-                        isobathsSettings.focus = true
+                        surfaceViewSettings.focus = true
                     }
 
                     Component.onCompleted: {

@@ -93,6 +93,7 @@ public:
     void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
     void onProcessStateChanged(bool state) { processState_ = state; };
     bool processState() const { return processState_; };
+    void setEdgeLimit(int val) { edgeLimit_ = val; };
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
@@ -135,4 +136,5 @@ private:
     GLuint toDeleteId_ = 0;
     int themeId_ = 0;
     bool processState_ = false;
+    float edgeLimit_ = 20.0f;
 };
