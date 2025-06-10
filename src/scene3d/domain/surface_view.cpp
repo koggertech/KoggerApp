@@ -1,7 +1,9 @@
 #include "surface_view.h"
 
+#include <algorithm>
 #include <QtMath>
 #include "text_renderer.h"
+
 
 static const float epsilon_ = 1e-6f;
 
@@ -224,124 +226,158 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
         return;
     }
 
-    auto* r = RENDER_IMPL(SurfaceView);
-    const auto& bTrDataRef = bottomTrackPtr_->cdata();
+    auto *r  = RENDER_IMPL(SurfaceView);
+    auto &tr = del_.getTriangles();
+    auto &pt = del_.getPoints();
+    const auto &bTrDataRef = bottomTrackPtr_->cdata();
 
-    auto dist2 = [](const QPointF&a,const QPointF&b) {
-        double dx = a.x()-b.x();
-        double dy = a.y()-b.y();
+    const auto dist2 = [](const QPointF &a, const QPointF &b) {
+        double dx = a.x() - b.x();
+        double dy = a.y() - b.y();
         return dx * dx + dy * dy;
     };
+    const auto fvec = [](const delaunay::Point &p) {
+        return QVector3D(float(p.x), float(p.y), float(p.z));
+    };
+    const auto nanVec = [] {
+        return QVector3D(std::numeric_limits<float>::quiet_NaN(),
+                         std::numeric_limits<float>::quiet_NaN(),
+                         std::numeric_limits<float>::quiet_NaN());
+    };
+    const auto registerTriangle = [&](int triIdx) {
+        const auto &t = tr[triIdx];
+        pointToTris_[t.a] << triIdx;
+        pointToTris_[t.b] << triIdx;
+        pointToTris_[t.c] << triIdx;
+    };
 
-    for (auto itm : indxs) {
-        //if (r->m_data.size() <= itm) {
-        //    r->m_data.resize(itm + 1);
-        //}
-        //r->m_data[itm] = bTrDataRef[itm]; // ?
+    QSet<int> updsTrIndx;
 
-        const auto& point = bTrDataRef[itm];
-
+    for (int itm : indxs) {
+        const auto &point = bTrDataRef[itm];
         if (!std::isfinite(point.z())) {
             continue;
         }
 
-        if (bTrToTrIndxs_.contains(itm)) { // просто обновляем Z координату
-            uint64_t trIndx = bTrToTrIndxs_[itm];
-            del_.getPointsRef()[trIndx].z = point.z();
-        }
-        else {
-            if (!originSet_) {
-                origin_ = { point.x(), point.y() };
-                originSet_ = true;
-            }
+        if (bTrToTrIndxs_.contains(itm)) { // точка уже была в триангуляции
+            const uint64_t pIdx = bTrToTrIndxs_[itm];
+            auto &p = del_.getPointsRef()[pIdx];
 
-            /* индекс ячейки */
-            const int ix = qRound((point.x() - origin_.x()) / cellPx_);
-            const int iy = qRound((point.y() - origin_.y()) / cellPx_);
-            QPair<int,int> cid(ix,iy);
-
-            QPointF center(origin_.x() + float(ix) * cellPx_, origin_.y() + float(iy) * cellPx_);
-
-            if (cellPoints_.contains(cid)) {
-                if (!cellPointsInTri_.contains(cid)) {
-
-                    const auto& lastPoint = cellPoints_[cid];
-                    const bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
-
-                    if (currNearest) {
-                        cellPoints_[cid] = point;
-                    }
-                    else {
-                        // for low-delay: when the point is moving away from the nearest one
-                        // may not have the best possible alignment
-                        delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(), lastPoint.y(), lastPoint.z()));
-                        bTrToTrIndxs_[itm] = res.pointIdx;
-                        cellPointsInTri_[cid] = res.pointIdx;
-                    }
+            if (!qFuzzyCompare(float(p.z), point.z())) {
+                p.z = point.z();
+                for (int triIdx : pointToTris_.value(pIdx)) {
+                    updsTrIndx.insert(triIdx);
                 }
             }
-            else {
-                cellPoints_[cid] = point;
-            }
-
-            if (lastCellPoint_ != cid) {
-                // check if the last cell wasn't triangulated
-                if (!cellPointsInTri_.contains(lastCellPoint_)) {
-                    const auto& lastPoint = cellPoints_[lastCellPoint_];
-                    delaunay::TriResult res = del_.addPoint(delaunay::Point(lastPoint.x(), lastPoint.y(), lastPoint.z()));
-                    bTrToTrIndxs_[itm] = res.pointIdx;
-                    cellPointsInTri_[lastCellPoint_] = res.pointIdx;
-                }
-
-                lastCellPoint_ = cid;
-            }
-        }
-    }
-
-    // again
-    auto& pt = del_.getPoints();
-
-    // треуг
-    r->pts_.clear();
-
-    double lastMinZ = r->minZ_;
-    double lastMaxZ = r->maxZ_;
-
-    for (const auto& t : del_.getTriangles()) {
-        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
             continue;
         }
 
-        r->minZ_ = std::min(static_cast<double>(r->minZ_), pt[t.a].z);
-        r->minZ_ = std::min(static_cast<double>(r->minZ_), pt[t.b].z);
-        r->minZ_ = std::min(static_cast<double>(r->minZ_), pt[t.c].z);
-        r->maxZ_ = std::max(static_cast<double>(r->maxZ_), pt[t.a].z);
-        r->maxZ_ = std::max(static_cast<double>(r->maxZ_), pt[t.b].z);
-        r->maxZ_ = std::max(static_cast<double>(r->maxZ_), pt[t.c].z);
+        if (!originSet_) {
+            origin_ = { point.x(), point.y() };
+            originSet_ = true;
+        }
 
-        r->pts_.append(QVector3D(pt[t.a].x, pt[t.a].y, pt[t.a].z));
-        r->pts_.append(QVector3D(pt[t.b].x, pt[t.b].y, pt[t.b].z));
-        r->pts_.append(QVector3D(pt[t.c].x, pt[t.c].y, pt[t.c].z));
+        const int ix = qRound((point.x() - origin_.x()) / cellPx_);
+        const int iy = qRound((point.y() - origin_.y()) / cellPx_);
+        const QPair<int,int> cid(ix, iy);
+        const QPointF center(origin_.x() + float(ix) * cellPx_, origin_.y() + float(iy) * cellPx_);
+
+        if (cellPoints_.contains(cid)) {
+            if (!cellPointsInTri_.contains(cid)) {
+                const auto &lastPoint = cellPoints_[cid];
+                const bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
+
+                if (currNearest) {
+                    cellPoints_[cid] = point;
+                }
+                else {
+                    const auto res = del_.addPoint({ lastPoint.x(), lastPoint.y(), lastPoint.z() });
+                    for (int triIdx : res.newTriIdx) {
+                        registerTriangle(triIdx);
+                        updsTrIndx.insert(triIdx);
+                    }
+
+                    bTrToTrIndxs_[itm]   = res.pointIdx;
+                    cellPointsInTri_[cid] = res.pointIdx;
+                }
+            }
+        }
+        else {
+            cellPoints_[cid] = point;
+        }
+
+        if (lastCellPoint_ != cid) {
+            if (!cellPointsInTri_.contains(lastCellPoint_)) {
+                const auto &lastPoint  = cellPoints_[lastCellPoint_];
+                const auto res = del_.addPoint({ lastPoint.x(), lastPoint.y(), lastPoint.z() });
+                for (int triIdx : res.newTriIdx) {
+                    registerTriangle(triIdx);
+                    updsTrIndx.insert(triIdx);
+                }
+
+                bTrToTrIndxs_[itm] = res.pointIdx;
+                cellPointsInTri_[lastCellPoint_] = res.pointIdx;
+            }
+
+            lastCellPoint_ = cid;
+        }
     }
 
-    // ребра
-    r->edgePts_.clear();
-    for (int i = 0; i + 2 < r->pts_.size(); i += 3) {
-        const QVector3D& a = r->pts_[i];
-        const QVector3D& b = r->pts_[i + 1];
-        const QVector3D& c = r->pts_[i + 2];
-
-        r->edgePts_ << a << b;
-        r->edgePts_ << b << c;
-        r->edgePts_ << c << a;
+    const int triCount = tr.size();
+    if (r->pts_.size() < triCount * 3) {
+        r->pts_.resize(triCount * 3);
+    }
+    if (r->edgePts_.size() < triCount * 6) {
+        r->edgePts_.resize(triCount * 6);
     }
 
-    if (!(qFuzzyCompare(1.0 + lastMinZ, 1.0 + r->minZ_) &&
-          qFuzzyCompare(1.0 + lastMaxZ, 1.0 + r->maxZ_))) {
+    double newMinZ = r->minZ_;
+    double newMaxZ = r->maxZ_;
+
+    for (auto triIdx : updsTrIndx) {
+        if (triIdx < 0 || triIdx >= triCount) {
+            continue;
+        }
+
+        const auto &t = tr[triIdx];
+        bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+
+        const int trBase  = triIdx * 3;
+        const int edgBase = triIdx * 6;
+
+        if (!draw) {
+            r->pts_[trBase] = r->pts_[trBase + 1] = r->pts_[trBase + 2] = nanVec();
+            std::fill_n(r->edgePts_.begin() + edgBase, 6, nanVec());
+            continue;
+        }
+
+        // вершины
+        r->pts_[trBase    ] = fvec(pt[t.a]);
+        r->pts_[trBase + 1] = fvec(pt[t.b]);
+        r->pts_[trBase + 2] = fvec(pt[t.c]);
+
+        // рёбра
+        r->edgePts_[edgBase    ] = r->pts_[trBase];
+        r->edgePts_[edgBase + 1] = r->pts_[trBase + 1];
+        r->edgePts_[edgBase + 2] = r->pts_[trBase + 1];
+        r->edgePts_[edgBase + 3] = r->pts_[trBase + 2];
+        r->edgePts_[edgBase + 4] = r->pts_[trBase + 2];
+        r->edgePts_[edgBase + 5] = r->pts_[trBase];
+
+        // экстремумы
+        newMinZ = std::min(newMinZ, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+        newMaxZ = std::max(newMaxZ, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+    }
+
+    const bool zChanged = !qFuzzyCompare(1.0 + r->minZ_, 1.0 + newMinZ) || !qFuzzyCompare(1.0 + r->maxZ_, 1.0 + newMaxZ);
+
+    if (zChanged) {
+        r->minZ_ = newMinZ;
+        r->maxZ_ = newMaxZ;
         rebuildColorIntervals();
     }
 
-    processLinesLabels();
+    //processLinesLabels();
 
     Q_EMIT changed();
 }

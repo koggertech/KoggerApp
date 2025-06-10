@@ -137,4 +137,8 @@ private:
     int themeId_ = 0;
     bool processState_ = false;
     float edgeLimit_ = 20.0f;
+
+    QHash<uint64_t, QVector<int>> pointToTris_;
+//    bool firstFill_ = true;
+
 };
