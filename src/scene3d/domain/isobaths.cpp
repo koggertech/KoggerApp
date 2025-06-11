@@ -383,7 +383,6 @@ void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const
 
     sp->setUniformValue("matrix",        mvp);
     sp->setUniformValue("depthMin",      minDepth_);
-    sp->setUniformValue("invDepthRange", 1.f / (maxDepth_-minDepth_));
     sp->setUniformValue("levelStep",     levelStep_);
     sp->setUniformValue("levelCount",    colorIntervals_.size());
     sp->setUniformValue("linePass",      false);

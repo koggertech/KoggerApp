@@ -5,7 +5,15 @@
 #include "text_renderer.h"
 
 
-static const float epsilon_ = 1e-6f;
+template <typename T>
+static inline void appendUnique(QVector<T>& dst, const QVector<T>& src)
+{
+    for (const T& v : src) {
+        if (!dst.contains(v)) {
+            dst.append(v);
+        }
+    }
+}
 
 static const QVector<QVector3D>& colorPalette(int themeId)
 {
@@ -94,15 +102,22 @@ void SurfaceView::clear()
     r->edgePts_.clear();
     r->minZ_ = std::numeric_limits<float>::max();
     r->maxZ_ = std::numeric_limits<float>::lowest();
-
+    r->colorIntervals_.clear();
+    r->textureId_ = 0;
     r->lineSegments_.clear();
     r->labels_.clear();
 
+    del_ = delaunay::Delaunay();
     bTrToTrIndxs_.clear();
+    originSet_ = false;
     cellPoints_.clear();
     cellPointsInTri_.clear();
-
-    resetTriangulation();
+    lastCellPoint_ = QPair<int,int>();
+    pointToTris_.clear();
+    textureTask_.clear();
+    origin_ = QPointF();
+    cellPoints_.clear();
+    isoState_.clear();
 
     Q_EMIT changed();
 }
@@ -190,7 +205,7 @@ void SurfaceView::setLineStepSize(float val)
         r->lineStepSize_ = lineStepSize_;
     }
 
-    processLinesLabels();
+    fullRebuildLinesLabels();
 
     Q_EMIT changed();
 }
@@ -208,7 +223,7 @@ void SurfaceView::setLabelStepSize(float val)
 
     labelStepSize_ = val;
 
-    processLinesLabels();
+    fullRebuildLinesLabels();
 
     Q_EMIT changed();
 }
@@ -220,7 +235,12 @@ void SurfaceView::setCameraDistToFocusPoint(float val)
     }
 }
 
-void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
+void SurfaceView::setEdgeLimit(int val)
+{
+    edgeLimit_ = val;
+}
+
+void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкрементальное обновление ребер и вершин
 {
     if (!bottomTrackPtr_ || indxs.empty() || !processState_) {
         return;
@@ -375,9 +395,11 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs)
         r->minZ_ = newMinZ;
         r->maxZ_ = newMaxZ;
         rebuildColorIntervals();
+        fullRebuildLinesLabels();
     }
-
-    //processLinesLabels();
+    else if (!updsTrIndx.isEmpty()) {
+        incrementalProcessLinesLabels(updsTrIndx);
+    }
 
     Q_EMIT changed();
 }
@@ -391,11 +413,262 @@ void SurfaceView::onAction()
     }
 }
 
-void SurfaceView::resetTriangulation()
+void SurfaceView::fullRebuildLinesLabels()
 {
-    del_ = delaunay::Delaunay();
-    cellPoints_.clear();
-    originSet_ = false;
+    auto* r = RENDER_IMPL(SurfaceView);
+    const auto& pts = del_.getPointsRef();
+    float zMin = r->minZ_;
+    float zMax = r->maxZ_;
+    isoState_.clear();
+
+    const int levelCnt = int((zMax - zMin) / lineStepSize_) + 1;
+
+    // сегменты изолиний
+    for (int triIdx = 0; triIdx < del_.getTriangles().size(); ++triIdx) {
+        const auto& t = del_.getTriangles()[triIdx];
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_)
+            continue;
+
+        QVector3D A(pts[t.a].x, pts[t.a].y, pts[t.a].z);
+        QVector3D B(pts[t.b].x, pts[t.b].y, pts[t.b].z);
+        QVector3D C(pts[t.c].x, pts[t.c].y, pts[t.c].z);
+
+        for (int lvl = 0; lvl < levelCnt; ++lvl) {
+            float L = zMin + lvl * lineStepSize_;
+            QVector<QVector3D> segPoints;
+            edgeIntersection(A, B, L, segPoints);
+            edgeIntersection(B, C, L, segPoints);
+            edgeIntersection(C, A, L, segPoints);
+
+            IsobathsSegVec newSegs;
+            if (segPoints.size() == 2) {
+                newSegs.append( canonSeg(segPoints[0], segPoints[1]) );
+            } else if (segPoints.size() == 3) {
+                if (!fuzzyEq(segPoints[0], segPoints[1]))
+                    newSegs.append( canonSeg(segPoints[0], segPoints[1]) );
+                if (!fuzzyEq(segPoints[1], segPoints[2]))
+                    newSegs.append( canonSeg(segPoints[1], segPoints[2]) );
+            }
+
+            if (!newSegs.isEmpty()) {
+                isoState_.hashSegsByLvl[lvl].append(newSegs);
+                isoState_.triangleSegs[triIdx][lvl] = newSegs;
+            }
+        }
+    }
+
+    // полилинии
+    for (auto it = isoState_.hashSegsByLvl.begin(); it != isoState_.hashSegsByLvl.end(); ++it) {
+        buildPolylines(it.value(), isoState_.polylinesByLevel[it.key()]);
+    }
+
+    QVector<QVector3D> resLines;
+    QVector<LLabelInfo> resLabels;
+
+    // линии и подписи
+    for (auto it = isoState_.polylinesByLevel.begin(); it != isoState_.polylinesByLevel.end(); ++it) {
+        int level = it.key();
+        const auto& polylines = it.value();
+
+        if (polylines.isEmpty()) continue;
+
+        // линии
+        for (const auto& polyline : polylines) {
+            for (int i = 0; i < polyline.size() - 1; ++i) {
+                resLines.append(polyline[i]);
+                resLines.append(polyline[i + 1]);
+            }
+        }
+
+        // подписи
+        float nextMark = 0.0f;
+        float cumulativeShift = 0.0f;
+        QVector<LLabelInfo> levelLabels;
+
+        for (const auto& polyline : polylines) {
+            QVector<float> segLen(polyline.size() - 1);
+            float polylineLen = 0.0f;
+
+            for (int i = 0; i < polyline.size() - 1; ++i) {
+                segLen[i] = (polyline[i + 1] - polyline[i]).length();
+                polylineLen += segLen[i];
+            }
+
+            int curSeg = 0;
+            float curOff = 0.0f;
+            bool placedLabel = false;
+
+            while (nextMark < cumulativeShift + polylineLen + epsilon_) {
+                while (curSeg < segLen.size() &&
+                       curOff + segLen[curSeg] < nextMark - cumulativeShift - epsilon_) {
+                    curOff += segLen[curSeg];
+                    ++curSeg;
+                }
+
+                if (curSeg >= segLen.size()) break;
+
+                float localMark = nextMark - cumulativeShift;
+                float t = (localMark - curOff) / segLen[curSeg];
+
+                QVector3D interpPoint = polyline[curSeg] + t * (polyline[curSeg + 1] - polyline[curSeg]);
+
+                QVector3D direction = (polyline[curSeg + 1] - polyline[curSeg]).normalized();
+                direction.setZ(0);
+
+                float depthValue = zMin + level * lineStepSize_;
+                levelLabels.append({interpPoint, direction, std::fabs(depthValue)});
+                nextMark += labelStepSize_;
+                placedLabel = true;
+            }
+
+            if (!placedLabel && polyline.size() >= 2) {
+                QVector3D point = polyline.first();
+                QVector3D direction = (polyline[1] - polyline[0]).normalized();
+                direction.setZ(0);
+                float depthValue = zMin + level * lineStepSize_;
+                levelLabels.append({point, direction, std::fabs(depthValue)});
+            }
+
+            cumulativeShift += polylineLen;
+        }
+
+        resLabels.append(levelLabels);
+    }
+
+    // фильтрация подписей
+    QVector<LLabelInfo> filteredLabels;
+    filterNearbyLabels(resLabels, filteredLabels);
+
+    r->lineSegments_ = resLines;
+    r->labels_ = filteredLabels;
+}
+
+void SurfaceView::incrementalProcessLinesLabels(const QSet<int> &updsTrIndx) // инкрементальное обновление линий и лейбов
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    const auto& tr = del_.getTriangles();
+    const auto& pts = del_.getPointsRef();
+
+    float zMin = r->minZ_;
+    float zMax = r->maxZ_;
+    const int levelCnt = static_cast<int>((zMax - zMin) / lineStepSize_) + 1;
+
+    // удаление старых отрезков этого треугольника
+    for (int triIdx : updsTrIndx) {
+        auto itTri = isoState_.triangleSegs.find(triIdx);
+        if (itTri == isoState_.triangleSegs.end()) {
+            continue;
+        }
+
+        for (auto itLvl = itTri->begin(); itLvl != itTri->end(); ++itLvl) {
+            int lvl = itLvl.key();
+            auto& bucket = isoState_.hashSegsByLvl[lvl];
+
+            const auto& valu = itLvl.value();
+            for (const auto& oldSeg : valu) {
+                IsobathsSeg cs = canonSeg(oldSeg.first, oldSeg.second);
+                int idx = bucket.indexOf(cs);
+                if (idx != -1) {
+                    bucket.remove(idx);
+                }
+            }
+            isoState_.dirtyLevels.insert(lvl);
+        }
+        isoState_.triangleSegs.erase(itTri);
+    }
+
+    // добавление новых сегментов из обновлённых треугольников
+    for (int triIdx : updsTrIndx) {
+        const auto& t = tr[triIdx];
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
+            continue;
+        }
+
+        QVector3D A(pts[t.a].x, pts[t.a].y, pts[t.a].z);
+        QVector3D B(pts[t.b].x, pts[t.b].y, pts[t.b].z);
+        QVector3D C(pts[t.c].x, pts[t.c].y, pts[t.c].z);
+
+        for (int lvl = 0; lvl < levelCnt; ++lvl) {
+            float L = zMin + lvl * lineStepSize_;
+            QVector<QVector3D> spts;
+            edgeIntersection(A, B, L, spts);
+            edgeIntersection(B, C, L, spts);
+            edgeIntersection(C, A, L, spts);
+
+            IsobathsSegVec newSegs;
+            if (spts.size() == 2) {
+                newSegs.append(canonSeg(spts[0], spts[1]));
+            }
+            else if (spts.size() == 3) {
+                if (!fuzzyEq(spts[0], spts[1])) {
+                    newSegs.append(canonSeg(spts[0], spts[1]));
+                }
+                if (!fuzzyEq(spts[1], spts[2])) {
+                    newSegs.append(canonSeg(spts[1], spts[2]));
+                }
+            }
+
+            if (newSegs.isEmpty()) {
+                continue;
+            }
+
+            auto& bucket = isoState_.hashSegsByLvl[lvl];
+            appendUnique(bucket, newSegs);
+            isoState_.triangleSegs[triIdx][lvl] = newSegs;
+            isoState_.dirtyLevels.insert(lvl);
+        }
+    }
+
+    // перестройка полилиний и подписей только для dirty уровней
+    for (int lvl : std::as_const(isoState_.dirtyLevels)) {
+        auto& polylines = isoState_.polylinesByLevel[lvl];
+        polylines.clear();
+        buildPolylines(isoState_.hashSegsByLvl[lvl], polylines);
+    }
+
+    QVector<QVector3D> resLines;
+    QVector<LLabelInfo> resLabels;
+
+    for (auto it = isoState_.polylinesByLevel.begin(); it != isoState_.polylinesByLevel.end(); ++it) {
+        int lvl = it.key();
+        float depthVal = zMin + lvl * lineStepSize_;
+        const auto& polys = it.value();
+
+        for (const auto& poly : polys) {
+            // линии
+            for (int i = 0; i + 1 < poly.size(); ++i) {
+                resLines << poly[i] << poly[i + 1];
+            }
+
+            // подписи
+            if (poly.size() < 2) {
+                continue;
+            }
+
+            float accLen = 0.f;
+            float next = 0.f;
+            for (int i = 0; i + 1 < poly.size(); ++i) {
+                float segLen = (poly[i + 1] - poly[i]).length();
+                while (accLen + segLen >= next - epsilon_) {
+                    float t = (next - accLen) / segLen;
+                    QVector3D pos = poly[i] + t * (poly[i + 1] - poly[i]);
+                    QVector3D dir = (poly[i + 1] - poly[i]).normalized();
+                    dir.setZ(0);
+                    resLabels << LLabelInfo{ pos, dir, qAbs(depthVal) };
+                    next += labelStepSize_;
+                }
+                accLen += segLen;
+            }
+        }
+    }
+
+    QVector<LLabelInfo> filtered;
+    filterNearbyLabels(resLabels, filtered);
+
+    r->lineSegments_ = std::move(resLines);
+    r->labels_       = std::move(filtered);
+
+    isoState_.dirtyLevels.clear();
 }
 
 void SurfaceView::rebuildColorIntervals()
@@ -442,7 +715,6 @@ QVector<QVector3D> SurfaceView::generateExpandedPalette(int totalColors) const
         retVal.append((1.f - l) * palette[i0] + l * palette[i1]);
     }
 
-
     return retVal;
 }
 
@@ -469,149 +741,6 @@ void SurfaceView::updateTexture()
         textureTask_[i * 4 + 2] = static_cast<uint8_t>(qBound(0.f, c.z() * 255.f, 255.f));
         textureTask_[i * 4 + 3] = 255;
     }
-}
-
-void SurfaceView::processLinesLabels()
-{
-    //result_.data.clear();
-
-    auto* r = RENDER_IMPL(SurfaceView);
-    auto& pts = del_.getPointsRef();
-
-    float zMin = r->minZ_;
-    float zMax = r->maxZ_;
-    QHash<int, IsobathsSegVec> hashSegsByLvl;
-
-    //auto& tris = ; // уже «правильный» список
-
-
-    const int levelCnt = int((zMax - zMin) / lineStepSize_) + 1;
-
-    for (const auto& t : del_.getTriangles()) {
-        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
-            continue;
-        }
-
-        QVector3D A(pts[t.a].x, pts[t.a].y, pts[t.a].z);
-        QVector3D B(pts[t.b].x, pts[t.b].y, pts[t.b].z);
-        QVector3D C(pts[t.c].x, pts[t.c].y, pts[t.c].z);
-
-        for (int lvl = 0; lvl < levelCnt; ++lvl) {
-            float L = zMin + lvl * lineStepSize_;
-            QVector<QVector3D> seg;  seg.reserve(3);
-
-            edgeIntersection(A, B, L, seg);
-            edgeIntersection(B, C, L, seg);
-            edgeIntersection(C, A, L, seg);
-
-            if (seg.size() == 2)          hashSegsByLvl[lvl].append({seg[0], seg[1]});
-            else if (seg.size() == 3) {   // случай ровно по вершине
-                if (seg[0] != seg[1]) hashSegsByLvl[lvl].append({seg[0], seg[1]});
-                if (seg[1] != seg[2]) hashSegsByLvl[lvl].append({seg[1], seg[2]});
-            }
-        }
-    }
-
-    QVector<QVector3D> resLines;
-    QVector<LLabelInfo> resLabels;
-
-    for (auto it = hashSegsByLvl.begin(); it != hashSegsByLvl.end(); ++it) {
-        IsobathsPolylines polylines; // несколько на уровень
-        buildPolylines(it.value(), polylines);
-
-        if (polylines.isEmpty()) {
-            continue;
-        }
-
-        const auto& cPolylines = polylines;
-        for (const auto& polyline : cPolylines) {
-            for (int i = 0; i < polyline.size() - 1; ++i) {
-                resLines.append(polyline[i]);
-                resLines.append(polyline[i + 1]);
-            }
-        }
-
-        // Подписи по объединённой длине
-        float nextMark = 0.0f;
-        float cumulativeShift = 0.0f;
-
-        for (const auto& polyline : cPolylines) {
-            // Длины сегментов текущей полилинии
-            QVector<float> segLen(polyline.size() - 1);
-            float polylineLen = 0.0f;
-
-            for (int i = 0; i < polyline.size() - 1; ++i) {
-                segLen[i] = (polyline[i + 1] - polyline[i]).length();
-                polylineLen += segLen[i];
-            }
-
-            int curSeg = 0;
-            float curOff = 0.0f;
-
-            bool placedLabel = false;
-
-            while (nextMark < cumulativeShift + polylineLen + epsilon_) {
-                // Сдвигаем указатель сегмента до нужного отрезка
-                while (curSeg < segLen.size() &&
-                       curOff + segLen[curSeg] < nextMark - cumulativeShift - epsilon_) {
-                    curOff += segLen[curSeg];
-                    ++curSeg;
-                }
-
-                if (curSeg >= segLen.size()) {
-                    break;
-                }
-
-                // Положение подписи внутри сегмента
-                float localMark = nextMark - cumulativeShift;
-                float t = (localMark - curOff) / segLen[curSeg];
-
-                QVector3D interpPoint = polyline[curSeg] + t * (polyline[curSeg + 1] - polyline[curSeg]);
-                QVector3D direction = (polyline[curSeg + 1] - polyline[curSeg]).normalized();
-                direction.setZ(0);
-
-                // смещение от линии
-                //QVector3D perp(-direction.y(), direction.x(), 0.0f);
-                //perp.normalize();
-                //float labelOffset = 10.0f;
-                //interpPoint = interpPoint + perp * labelOffset;
-
-                resLabels.append(LLabelInfo{ interpPoint, direction, std::fabs(zMin + it.key() * lineStepSize_) });
-                nextMark += labelStepSize_;
-                placedLabel = true;
-            }
-
-            // Если не было поставлено ни одной метки — ставим одну в начало
-            if (!placedLabel && polyline.size() >= 2) {
-                QVector3D point = polyline.first();
-                QVector3D direction = (polyline[1] - polyline[0]).normalized();
-                direction.setZ(0);
-
-                resLabels.append(LLabelInfo{ point, direction, std::fabs(zMin + it.key() * lineStepSize_) });
-            }
-
-            cumulativeShift += polylineLen;
-        }
-    }
-
-    // filter labels
-    QVector<LLabelInfo> filteredLabels;
-    filteredLabels.reserve(resLabels.size());
-    filterNearbyLabels(resLabels, filteredLabels);
-
-    ////result_.labels = std::move(filteredLabels);
-
-    // filter lines
-    //QVector<QVector3D> filteredLines;
-    //filteredLines.reserve(resLines.size());
-    //filterLinesBehindLabels(result_.labels, resLines, filteredLines);
-    //result_.data = std::move(filteredLines);
-
-    ////result_.data = std::move(resLines);
-
-    // test
-    r->lineSegments_ = std::move(resLines); //result_.data;
-    r->labels_ = std::move(filteredLabels); //result_.labels;
 }
 
 QVector<QVector3D> SurfaceView::buildGridTriangles(const QVector<QVector3D> &pts, int gridWidth, int gridHeight) const
@@ -680,53 +809,34 @@ QVector<QVector3D> SurfaceView::buildGridTriangles(const QVector<QVector3D> &pts
 
 void SurfaceView::buildPolylines(const IsobathsSegVec &segs, IsobathsPolylines &polylines) const
 {
-    auto isEqual = [&](const QVector3D& a,const QVector3D& b) -> bool {
-        return (a - b).lengthSquared() < std::pow(epsilon_, 2);
-    };
+    auto eq = [](const QVector3D& a,const QVector3D& b){ return fuzzyEq(a,b); };
 
-    QVector<bool> usedSegs(segs.size(), false);
-    for (int s = 0; s < segs.size(); ++s) {
-        if (usedSegs[s]) {
-            continue;
-        }
+    QVector<bool> used(segs.size(),false);
+    for (int i=0;i<segs.size();++i){
+        if (used[i]) continue;
+        QList<QVector3D> poly;
+        poly << segs[i].first << segs[i].second;
+        used[i]=true;
 
-        QList<QVector3D> polyline;
-        polyline.append(segs[s].first);
-        polyline.append(segs[s].second);
-        usedSegs[s] = true;
-
-        bool extended = true;
-        while (extended) {
-            extended = false;
-            for (int t = 0; t < segs.size(); ++t) {
-                if (!usedSegs[t]) {
-                    if (isEqual(polyline.last(), segs[t].first )) {
-                        polyline.append(segs[t].second);
-                        usedSegs[t] = true;
-                        extended = true;
-                    }
-                    else if (isEqual(polyline.last(), segs[t].second)) {
-                        polyline.append(segs[t].first);
-                        usedSegs[t] = true;
-                        extended = true;
-                    }
-                    else if (isEqual(polyline.first(), segs[t].second)) {
-                        polyline.prepend(segs[t].first);
-                        usedSegs[t] = true;
-                        extended = true;
-                    }
-                    else if (isEqual(polyline.first(), segs[t].first)) {
-                        polyline.prepend(segs[t].second);
-                        usedSegs[t] = true;
-                        extended = true;
-                    }
+        bool again=true;
+        while (again){
+            again=false;
+            for (int j=0;j<segs.size();++j){
+                if (used[j]) continue;
+                if (eq(poly.back(), segs[j].first )){
+                    poly << segs[j].second; used[j]=true; again=true;
+                }else if (eq(poly.back(), segs[j].second)){
+                    poly << segs[j].first;  used[j]=true; again=true;
+                }else if (eq(poly.front(), segs[j].second)){
+                    poly.prepend(segs[j].first); used[j]=true; again=true;
+                }else if (eq(poly.front(), segs[j].first)){
+                    poly.prepend(segs[j].second); used[j]=true; again=true;
                 }
             }
         }
+        if (poly.size()>1) polylines.append(QVector<QVector3D>(poly.begin(), poly.end()));
 
-        if (polyline.size() > 1) {
-            polylines.append(QVector<QVector3D>(polyline.begin(), polyline.end()));
-        }
+
     }
 }
 
@@ -887,7 +997,6 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         sp->setUniformValue("matrix",        mvp);
         sp->setUniformValue("depthMin",      minZ_);
-        sp->setUniformValue("invDepthRange", 1.f / (maxZ_-minZ_));
         sp->setUniformValue("levelStep",     levelStep_);
         sp->setUniformValue("levelCount",    colorIntervals_.size());
         sp->setUniformValue("linePass",      false);

@@ -12,15 +12,22 @@ out vec4 fragColor;
 
 uniform sampler2D paletteSampler;
 uniform float  depthMin;
-uniform float  invDepthRange;
+uniform float  levelStep;
 uniform int    levelCount;
+uniform bool  linePass;
+uniform vec3  lineColor;
 
 void main()
 {
-    float norm = clamp((vertice.z - depthMin) * invDepthRange, 0.0, 1.0);
-    float idx = floor(norm * float(levelCount));
-    norm = idx / float(levelCount - 1);
+    if (linePass) {
+        fragColor = vec4(lineColor, 1.0);
+        return;
+    }
 
+    float relDepth = vertice.z - depthMin;
+    float stepIdx = floor(relDepth / levelStep);
+    float clampedIdx = clamp(stepIdx, 0.0, float(levelCount - 1));
+    float norm = clampedIdx / float(levelCount - 1);
     vec3 color = texture(paletteSampler, vec2(norm, 0.5)).rgb;
     fragColor = vec4(color, 1.0);
 }

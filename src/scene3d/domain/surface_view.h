@@ -1,17 +1,56 @@
 #pragma once
 
 #include <stdint.h>
+#include <QHash>
+#include <QSet>
 #include <QVector>
 #include <QVector3D>
-
 #include "scene_object.h"
 #include "surface_view_processor.h"
 #include "bottom_track.h"
 #include "delaunay.h"
 
 
-using IsobathsPolylines = QVector<QVector<QVector3D>>;
-using IsobathsSegVec = QVector<QPair<QVector3D,QVector3D>>;
+using IsobathsSeg = QPair<QVector3D, QVector3D>;
+using IsobathsSegVec = QVector<IsobathsSeg>;
+using IsobathsPolyline = QVector<QVector3D>;
+using IsobathsPolylines = QVector<IsobathsPolyline>;
+
+static constexpr float epsilon_ = 1e-6f;
+
+inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = epsilon_)
+{
+    return (a - b).lengthSquared() < eps * eps;
+}
+
+inline IsobathsSeg canonSeg(const QVector3D& p1, const QVector3D& p2)
+{
+    if (p1.x()  <  p2.x()) return {p1,p2};
+    if (p1.x()  >  p2.x()) return {p2,p1};
+    if (p1.y()  <  p2.y()) return {p1,p2};
+    if (p1.y()  >  p2.y()) return {p2,p1};
+    if (p1.z()  <  p2.z()) return {p1,p2};
+    if (p1.z()  >  p2.z()) return {p2,p1};
+    return {p1,p2};
+}
+
+struct IsoState {
+    QHash<int, IsobathsSegVec> hashSegsByLvl;
+    QHash<int, IsobathsPolylines> polylinesByLevel;
+    QHash<int, QHash<int, IsobathsSegVec>> triangleSegs; // triIdx -> (level -> segs)
+    QSet<int> dirtyLevels;
+
+    void clear() {
+        hashSegsByLvl.clear();
+        polylinesByLevel.clear();
+        triangleSegs.clear();
+        dirtyLevels.clear();
+    }
+
+    bool isEmpty() const {
+        return hashSegsByLvl.isEmpty();
+    }
+};
 
 struct LLabelInfo
 {
@@ -20,7 +59,8 @@ struct LLabelInfo
     float depth;
 };
 
-struct SSurfaceViewProcessorResult {
+struct SSurfaceViewProcessorResult
+{
     QVector<QVector3D> data;
     QVector<LLabelInfo> labels;
 };
@@ -93,7 +133,7 @@ public:
     void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
     void onProcessStateChanged(bool state) { processState_ = state; };
     bool processState() const { return processState_; };
-    void setEdgeLimit(int val) { edgeLimit_ = val; };
+    void setEdgeLimit(int val);
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
@@ -102,13 +142,11 @@ public slots:
 private:
     friend class SurfaceViewProcessor;
 
-    void resetTriangulation();
     void rebuildColorIntervals();
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture();
-
-    void processLinesLabels();//
-
+    void fullRebuildLinesLabels();
+    void incrementalProcessLinesLabels(const QSet<int>& updsTrIndx);
     QVector<QVector3D> buildGridTriangles(const QVector<QVector3D>& pts, int gridWidth, int gridHeight) const;
     void buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& polylines) const;
     void edgeIntersection(const QVector3D& vertA, const QVector3D& vertB, float level, QVector<QVector3D>& out) const;
@@ -137,8 +175,6 @@ private:
     int themeId_ = 0;
     bool processState_ = false;
     float edgeLimit_ = 20.0f;
-
     QHash<uint64_t, QVector<int>> pointToTris_;
-//    bool firstFill_ = true;
-
+    IsoState isoState_;
 };
