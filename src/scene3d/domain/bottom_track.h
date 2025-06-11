@@ -97,4 +97,5 @@ private:
     DatasetChannel visibleChannel_;
     Dataset* datasetPtr_;
     QVector<QVector3D> renderData_;
+    int firstLIndx_ = -1;
 };

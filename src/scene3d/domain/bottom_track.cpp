@@ -178,6 +178,7 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 
 void BottomTrack::clearData()
 {
+    firstLIndx_ = -1;
     vertex2Epoch_.clear();
     epoch2Vertex_.clear();
     renderData_.clear();
@@ -397,8 +398,12 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
     }
 
     int range = rEpoch - lEpoch;
-    if (range < 1) {
+    if (range < 1 || lEpoch < 0 || rEpoch < 0 || firstLIndx_ > lEpoch) {
         return;
+    }
+
+    if (firstLIndx_ == -1) {
+        firstLIndx_ = lEpoch;
     }
 
     bool interCall = (rEpoch == 0) && (lEpoch == 0);
