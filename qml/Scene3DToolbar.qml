@@ -668,19 +668,19 @@ ColumnLayout {
                 }
             }
 
-            CButton {
-                id: updateSurfaceViewButton
-                text: qsTr("some action")
-                Layout.fillWidth: true
+            // CButton {
+            //     id: updateSurfaceViewButton
+            //     text: qsTr("some action")
+            //     Layout.fillWidth: true
 
-                onClicked: {
-                    SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
-                }
+            //     onClicked: {
+            //         SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
+            //     }
 
-                onFocusChanged: {
-                    surfaceViewSettings.focus = true
-                }
-            }
+            //     onFocusChanged: {
+            //         surfaceViewSettings.focus = true
+            //     }
+            // }
         }
     }
 
