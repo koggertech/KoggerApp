@@ -55,6 +55,7 @@ void SurfaceViewControlMenuController::tryInitPendingLambda()
                     surfaceViewPtr->setDebugMode(debugModeView_);
                     surfaceViewPtr->onProcessStateChanged(processState_);
                     surfaceViewPtr->setEdgeLimit(edgeLimit_);
+                    surfaceViewPtr->setHandleXCall(handleXCall_);
                 }
             }
         };
@@ -178,6 +179,18 @@ void SurfaceViewControlMenuController::onEdgeLimitChanged(int val)
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setEdgeLimit(edgeLimit_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void SurfaceViewControlMenuController::onHandleXCallChanged(int val)
+{
+    handleXCall_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setHandleXCall(handleXCall_);
     }
     else {
         tryInitPendingLambda();

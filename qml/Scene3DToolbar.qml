@@ -442,7 +442,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
-                    id: surfaceViewEdgeLimtSpinBox
+                    id: surfaceViewEdgeLimitSpinBox
                     implicitWidth: 150
                     from: 10
                     to: 1000
@@ -457,15 +457,49 @@ ColumnLayout {
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimtSpinBox.value)
+                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimitSpinBox.value)
                     }
 
                     onValueChanged: {
-                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimtSpinBox.value)
+                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimitSpinBox.value)
                     }
 
                     Settings {
-                        property alias surfaceViewEdgeLimtSpinBox: surfaceViewEdgeLimtSpinBox.value
+                        property alias surfaceViewEdgeLimitSpinBox: surfaceViewEdgeLimitSpinBox.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CText {
+                    text: "handle each call:"
+                    Layout.fillWidth: true
+                }
+                SpinBoxCustom {
+                    id: surfaceViewHandleXCallSpinBox
+                    implicitWidth: 150
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 1
+                    editable: false
+
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onHandleXCallChanged(surfaceViewHandleXCallSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        SurfaceViewControlMenuController.onHandleXCallChanged(surfaceViewHandleXCallSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias surfaceViewHandleXCallSpinBox: surfaceViewHandleXCallSpinBox.value
                     }
                 }
             }

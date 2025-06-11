@@ -118,6 +118,7 @@ void SurfaceView::clear()
     origin_ = QPointF();
     cellPoints_.clear();
     isoState_.clear();
+    updCnt_ = 0;
 
     Q_EMIT changed();
 }
@@ -240,8 +241,18 @@ void SurfaceView::setEdgeLimit(int val)
     edgeLimit_ = val;
 }
 
+void SurfaceView::setHandleXCall(int val)
+{
+    handleXCall_ = val;
+}
+
 void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкрементальное обновление ребер и вершин
 {
+    if (++updCnt_ % handleXCall_) { // fake decimator
+        return;
+    }
+    updCnt_ = 0;
+
     if (!bottomTrackPtr_ || indxs.empty() || !processState_) {
         return;
     }

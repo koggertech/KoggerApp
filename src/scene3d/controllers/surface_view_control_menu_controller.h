@@ -28,6 +28,7 @@ public:
     Q_INVOKABLE void onProcessStateChanged(bool state);
     Q_INVOKABLE void onResetSurfaceViewButtonClicked();
     Q_INVOKABLE void onEdgeLimitChanged(int val);
+    Q_INVOKABLE void onHandleXCallChanged(int val);
 
 Q_SIGNALS:
     void surfaceViewProcessorTaskStarted();
@@ -52,4 +53,5 @@ private:
     bool debugModeView_ = false;
     bool processState_ = true;
     int edgeLimit_ = 20;
+    int handleXCall_ = 1;
 };

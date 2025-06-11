@@ -134,6 +134,7 @@ public:
     void onProcessStateChanged(bool state) { processState_ = state; };
     bool processState() const { return processState_; };
     void setEdgeLimit(int val);
+    void setHandleXCall(int val);
 
 public slots:
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
@@ -177,4 +178,6 @@ private:
     float edgeLimit_ = 20.0f;
     QHash<uint64_t, QVector<int>> pointToTris_;
     IsoState isoState_;
+    uint8_t updCnt_ = 0;
+    uint8_t handleXCall_ = 1;
 };
