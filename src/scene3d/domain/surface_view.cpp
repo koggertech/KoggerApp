@@ -213,6 +213,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инк�
     };
 
     QSet<int> updsTrIndx;
+    bool beenManualChanged = false;
 
     for (int itm : indxs) {
         const auto &point = bTrDataRef[itm];
@@ -226,6 +227,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инк�
 
             if (!qFuzzyCompare(float(p.z), point.z())) {
                 p.z = point.z();
+                beenManualChanged = true;
                 for (int triIdx : pointToTris_.value(pIdx)) {
                     updsTrIndx.insert(triIdx);
                 }
@@ -328,6 +330,25 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инк�
         // экстремумы
         newMinZ = std::min(newMinZ, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
         newMaxZ = std::max(newMaxZ, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+    }
+
+    if (beenManualChanged) {
+        float currMin = std::numeric_limits<float>::max();
+        float currMax = std::numeric_limits<float>::lowest();
+        for (auto t : tr) {
+            bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+            if (!draw) {
+                continue;
+            }
+            currMin = std::fmin(currMin, std::min({ pt[t.a].z, pt[t.b].z , pt[t.c].z }));
+            currMax = std::fmax(currMax, std::max({ pt[t.a].z, pt[t.b].z , pt[t.c].z }));
+        }
+        if (currMin != std::numeric_limits<float>::max()) {
+            newMinZ = currMin;
+        }
+        if (currMax != std::numeric_limits<float>::lowest()) {
+            newMaxZ = currMax;
+        }
     }
 
     const bool zChanged = !qFuzzyCompare(1.0 + r->minZ_, 1.0 + newMinZ) || !qFuzzyCompare(1.0 + r->maxZ_, 1.0 + newMaxZ);
