@@ -137,12 +137,13 @@ public:
     void setHandleXCall(int val);
 
 public slots:
-    void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void onAction();
+    void onUpdatedBottomTrackDataWrapper(const QVector<int>& indxs);
 
 private:
     friend class SurfaceViewProcessor;
 
+    void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void rebuildColorIntervals();
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture();
@@ -165,8 +166,6 @@ private:
     QPair<int,int> lastCellPoint_;
     int cellPx_ = 1;
     QPointF origin_;
-    float minDepth_ = 0.0f;
-    float maxDepth_ = 0.0f;
     float surfaceStepSize_ = 1.0f;
     float lineStepSize_    = 1.0f;
     float labelStepSize_   = 100.0f;

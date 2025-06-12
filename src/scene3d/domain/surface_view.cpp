@@ -248,11 +248,6 @@ void SurfaceView::setHandleXCall(int val)
 
 void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкрементальное обновление ребер и вершин
 {
-    if (++updCnt_ % handleXCall_) { // fake decimator
-        return;
-    }
-    updCnt_ = 0;
-
     if (!bottomTrackPtr_ || indxs.empty() || !processState_) {
         return;
     }
@@ -424,6 +419,16 @@ void SurfaceView::onAction()
     }
 }
 
+void SurfaceView::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
+{
+    if (++updCnt_ % handleXCall_) { // fake decimator
+        return;
+    }
+    updCnt_ = 0;
+
+    onUpdatedBottomTrackData(indxs);
+}
+
 void SurfaceView::fullRebuildLinesLabels()
 {
     auto* r = RENDER_IMPL(SurfaceView);
@@ -435,7 +440,8 @@ void SurfaceView::fullRebuildLinesLabels()
     const int levelCnt = int((zMax - zMin) / lineStepSize_) + 1;
 
     // сегменты изолиний
-    for (int triIdx = 0; triIdx < del_.getTriangles().size(); ++triIdx) {
+    for (size_t idx = 0; idx < del_.getTriangles().size(); ++idx) {
+        uint64_t triIdx = idx;
         const auto& t = del_.getTriangles()[triIdx];
         if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_)
             continue;
@@ -695,7 +701,7 @@ void SurfaceView::rebuildColorIntervals()
     r->colorIntervals_.reserve(levelCount);
 
     for (int i = 0; i < levelCount; ++i) {
-        r->colorIntervals_.append({minDepth_ + i * surfaceStepSize_, palette[i]});
+        r->colorIntervals_.append({r->minZ_ + i * surfaceStepSize_, palette[i]});
     }
 
     r->levelStep_ = surfaceStepSize_; // ???

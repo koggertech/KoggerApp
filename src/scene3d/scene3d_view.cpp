@@ -106,7 +106,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, surfaceView_.get(), &SurfaceView::onUpdatedBottomTrackData);
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, surfaceView_.get(), &SurfaceView::onUpdatedBottomTrackDataWrapper);
 
     updatePlaneGrid();
 }
