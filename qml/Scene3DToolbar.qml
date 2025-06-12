@@ -15,34 +15,6 @@ ColumnLayout {
         updateMosaicButton.clicked();
     }
 
-    function updateIsobaths() {
-        updateIsobathsButton.clicked();
-    }
-
-    function increaseIsobathsSurfaceStep() {
-        surfaceStepSizeIsobathSpinBox.increase();
-    }
-
-    function decreaseIsobathsSurfaceStep() {
-        surfaceStepSizeIsobathSpinBox.decrease();
-    }
-
-    function increaseIsobathsLineStep() {
-        lineStepSizeIsobathSpinBox.increase();
-    }
-
-    function decreaseIsobathsLineStep() {
-        lineStepSizeIsobathSpinBox.decrease();
-    }
-
-    function increaseIsobathsLabelStep() {
-        labelStepSizeIsobathSpinBox.increase();
-    }
-
-    function decreaseIsobathsLabelStep() {
-        labelStepSizeIsobathSpinBox.decrease();
-    }
-
     Layout.alignment: Qt.AlignHCenter
 
     // surface extra settings
@@ -402,7 +374,7 @@ ColumnLayout {
         ColumnLayout {
             CheckButton {
                 id: realtimeSurfaceProcessingCheckButton
-                text: qsTr("realtime processing")
+                text: qsTr("Realtime processing")
                 Layout.fillWidth: true
 
                 onCheckedChanged: {
@@ -438,12 +410,12 @@ ColumnLayout {
 
             RowLayout {
                 CText {
-                    text: "edge limit, m:"
+                    text: qsTr("Edge limit, m:")
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
                     id: surfaceViewEdgeLimitSpinBox
-                    implicitWidth: 150
+                    implicitWidth: 200
                     from: 10
                     to: 1000
                     stepSize: 5
@@ -472,12 +444,12 @@ ColumnLayout {
 
             RowLayout {
                 CText {
-                    text: "handle each call:"
+                    text: qsTr("Handle each call:")
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
                     id: surfaceViewHandleXCallSpinBox
-                    implicitWidth: 150
+                    implicitWidth: 200
                     from: 1
                     to: 100
                     stepSize: 1
@@ -541,13 +513,13 @@ ColumnLayout {
                 visible: !surfaceViewDebugModeCheckButton.checked
 
                 CText {
-                    text: "surface/line step, m:"
+                    text: qsTr("Surface/line step, m:")
                     Layout.fillWidth: true
 
                 }
                 SpinBoxCustom {
                     id: surfaceViewSurfaceLineStepSizeSpinBox
-                    implicitWidth: 150
+                    implicitWidth: 200
                     from: 1
                     to: 200
                     stepSize: 1
@@ -591,12 +563,12 @@ ColumnLayout {
                 visible: !surfaceViewDebugModeCheckButton.checked
 
                 CText {
-                    text: "label step, m:"
+                    text: qsTr("Label step, m:")
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
                     id: surfaceViewLabelStepSpinBox
-                    implicitWidth: 150
+                    implicitWidth: 200
                     from: 10
                     to: 1000
                     stepSize: 5
@@ -610,11 +582,11 @@ ColumnLayout {
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onSetLabelStepSizeIsobaths(surfaceViewLabelStepSpinBox.value)
+                        SurfaceViewControlMenuController.onSetLabelStepSize(surfaceViewLabelStepSpinBox.value)
                     }
 
                     onValueChanged: {
-                        SurfaceViewControlMenuController.onSetLabelStepSizeIsobaths(surfaceViewLabelStepSpinBox.value)
+                        SurfaceViewControlMenuController.onSetLabelStepSize(surfaceViewLabelStepSpinBox.value)
                     }
 
                     Settings {
@@ -624,7 +596,7 @@ ColumnLayout {
             }
 
             CheckButton {
-                text: qsTr("triangles")
+                text: qsTr("Triangles")
                 Layout.fillWidth: true
                 checked: true
                 visible: surfaceViewDebugModeCheckButton.checked
@@ -639,7 +611,7 @@ ColumnLayout {
             }
 
             CheckButton {
-                text: qsTr("edges")
+                text: qsTr("Edges")
                 Layout.fillWidth: true
                 checked: true
                 visible: surfaceViewDebugModeCheckButton.checked
@@ -655,7 +627,7 @@ ColumnLayout {
 
             CheckButton {
                 id: surfaceViewDebugModeCheckButton
-                text: qsTr("debug mode")
+                text: qsTr("Debug mode")
                 Layout.fillWidth: true
                 checked: false
 
@@ -681,223 +653,6 @@ ColumnLayout {
             //         surfaceViewSettings.focus = true
             //     }
             // }
-        }
-    }
-
-    // isobaths extra settings
-    MenuFrame {
-        id: isobathsSettings
-        visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered || isobathTheme.activeFocus
-        z: isobathsSettings.visible
-        Layout.alignment: Qt.AlignRight
-
-        onIsHoveredChanged: {
-            if (Qt.platform.os === "android") {
-                if (isHovered) {
-                    isHovered = false
-                }
-            }
-            else {
-                if (!isHovered || !isobathsCheckButton.hovered) {
-                    isobathsCheckButton.isobathsLongPressTriggered = false
-                }
-            }
-        }
-
-        onVisibleChanged: {
-            if (visible) {
-                focus = true;
-            }
-        }
-
-        onFocusChanged: {
-            if (!focus) {
-                isobathsCheckButton.isobathsLongPressTriggered = false
-            }
-        }
-
-        ColumnLayout {
-            RowLayout {
-                CText {
-                    text: qsTr("Theme:")
-                }
-                Item {
-                    Layout.fillWidth: true
-                }
-                CCombo  {
-                    id: isobathTheme
-                    Layout.preferredWidth: 300
-                    model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
-                    currentIndex: 0
-                    onCurrentIndexChanged: {
-                        IsobathsControlMenuController.onThemeChanged(currentIndex)
-                    }
-
-                    onFocusChanged: {
-                        if (Qt.platform.os === 'android') {
-                            isobathsSettings.focus = true
-                        }
-                    }
-
-                    Component.onCompleted: {
-                        IsobathsControlMenuController.onThemeChanged(currentIndex)
-                    }
-
-                    Settings {
-                        property alias isobathTheme: isobathTheme.currentIndex
-                    }
-                }
-            }
-            RowLayout {
-                CText {
-                    text: ""
-                    Layout.fillWidth: true
-                }
-            }
-            RowLayout {
-                CText {
-                    text: "label step, m:"
-                    Layout.fillWidth: true
-
-                }
-                SpinBoxCustom {
-                    id: labelStepSizeIsobathSpinBox
-                    implicitWidth: 150
-                    from: 10
-                    to: 1000
-                    stepSize: 5
-                    value: 100
-                    editable: false
-
-                    property int decimals: 1
-
-                    onFocusChanged: {
-                        isobathsSettings.focus = true
-                    }
-
-                    Component.onCompleted: {
-                        IsobathsControlMenuController.onSetLabelStepSizeIsobaths(labelStepSizeIsobathSpinBox.value)
-                    }
-
-                    onValueChanged: {
-                        IsobathsControlMenuController.onSetLabelStepSizeIsobaths(labelStepSizeIsobathSpinBox.value)
-                    }
-
-                    Settings {
-                        property alias labelStepSizeIsobathSpinBox: labelStepSizeIsobathSpinBox.value
-                    }
-                }
-            }
-            RowLayout {
-                CText {
-                    text: "surface step, m:"
-                    Layout.fillWidth: true
-
-                }
-                SpinBoxCustom {
-                    id: surfaceStepSizeIsobathSpinBox
-                    implicitWidth: 150
-                    from: 1
-                    to: 200
-                    stepSize: 1
-                    value: 3
-                    editable: false
-
-                    property int decimals: 1
-                    property real realValue: value / 10
-
-                    validator: DoubleValidator {
-                        bottom: Math.min(surfaceStepSizeIsobathSpinBox.from, surfaceStepSizeIsobathSpinBox.to)
-                        top:  Math.max(surfaceStepSizeIsobathSpinBox.from, surfaceStepSizeIsobathSpinBox.to)
-                    }
-
-                    textFromValue: function(value, locale) {
-                        return Number(value / 10).toLocaleString(locale, 'f', decimals)
-                    }
-
-                    valueFromText: function(text, locale) {
-                        return Number.fromLocaleString(locale, text) * 10
-                    }
-
-                    onFocusChanged: {
-                        isobathsSettings.focus = true
-                    }
-
-                    Component.onCompleted: {
-                        IsobathsControlMenuController.onSetSurfaceStepSizeIsobaths(surfaceStepSizeIsobathSpinBox.realValue)
-                    }
-
-                    onRealValueChanged: {
-                        IsobathsControlMenuController.onSetSurfaceStepSizeIsobaths(surfaceStepSizeIsobathSpinBox.realValue)
-                    }
-
-                    Settings {
-                        property alias surfaceStepSizeIsobathSpinBox: surfaceStepSizeIsobathSpinBox.value
-                    }
-                }
-            }
-            RowLayout {
-                CText {
-                    text: "lines step, m:"
-                    Layout.fillWidth: true
-
-                }
-                SpinBoxCustom {
-                    id: lineStepSizeIsobathSpinBox
-                    implicitWidth: 150
-                    from: 1
-                    to: 200
-                    stepSize: 1
-                    value: 3
-                    editable: false
-
-                    property int decimals: 1
-                    property real realValue: value / 10
-
-                    validator: DoubleValidator {
-                        bottom: Math.min(lineStepSizeIsobathSpinBox.from, lineStepSizeIsobathSpinBox.to)
-                        top:  Math.max(lineStepSizeIsobathSpinBox.from, lineStepSizeIsobathSpinBox.to)
-                    }
-
-                    textFromValue: function(value, locale) {
-                        return Number(value / 10).toLocaleString(locale, 'f', decimals)
-                    }
-
-                    valueFromText: function(text, locale) {
-                        return Number.fromLocaleString(locale, text) * 10
-                    }
-
-                    onFocusChanged: {
-                        isobathsSettings.focus = true
-                    }
-
-                    Component.onCompleted: {
-                        IsobathsControlMenuController.onSetLineStepSizeIsobaths(lineStepSizeIsobathSpinBox.realValue)
-                    }
-
-                    onRealValueChanged: {
-                        IsobathsControlMenuController.onSetLineStepSizeIsobaths(lineStepSizeIsobathSpinBox.realValue)
-                    }
-
-                    Settings {
-                        property alias lineStepSizeIsobathSpinBox: lineStepSizeIsobathSpinBox.value
-                    }
-                }
-            }
-
-            CButton {
-                id: updateIsobathsButton
-                text: qsTr("Update (upd. surface first)")
-                Layout.fillWidth: true
-                icon.source: "qrc:/icons/ui/refresh.svg"
-                onClicked: {
-                    IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
-                }
-
-                onFocusChanged: {
-                    isobathsSettings.focus = true
-                }
-            }
         }
     }
 
@@ -1954,61 +1709,6 @@ ColumnLayout {
 
             Settings {
                 property alias surfaceViewCheckButton: surfaceViewCheckButton.checked
-            }
-        }
-
-        // isobaths check button
-        CheckButton {
-            id: isobathsCheckButton
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: true
-            iconSource: "qrc:/icons/ui/stack_forward.svg"
-            implicitWidth: theme.controlHeight
-
-            onCheckedChanged: {
-                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-            }
-
-            Component.onCompleted: {
-                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-            }
-
-            property bool isobathsLongPressTriggered: false
-
-            MouseArea {
-                id: isobathsTouchArea
-                anchors.fill: parent
-                onPressed: {
-                    isobathsLongPressTimer.start()
-                    isobathsCheckButton.isobathsLongPressTriggered = false
-                }
-
-                onReleased: {
-                    if (!isobathsCheckButton.isobathsLongPressTriggered) {
-                        isobathsCheckButton.checked = !isobathsCheckButton.checked
-                    }
-                    isobathsLongPressTimer.stop()
-                }
-
-                onCanceled: {
-                    isobathsLongPressTimer.stop()
-                }
-            }
-
-            Timer {
-                id: isobathsLongPressTimer
-                interval: 100 // ms
-                repeat: false
-
-                onTriggered: {
-                    isobathsCheckButton.isobathsLongPressTriggered = true;
-                }
-            }
-
-            Settings {
-                property alias isobathsCheckButton: isobathsCheckButton.checked
             }
         }
 

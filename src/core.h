@@ -23,7 +23,6 @@
 #include "image_view_control_menu_controller.h"
 #include "map_view_control_menu_controller.h"
 #include "usbl_view_control_menu_controller.h"
-#include "isobaths_control_menu_controller.h"
 #include "point_group_control_menu_controller.h"
 #include "polygon_group_control_menu_controller.h"
 #include "mpc_filter_control_menu_controller.h"
@@ -190,7 +189,6 @@ private:
     std::shared_ptr<Scene3DControlMenuController> scene3dControlMenuController_;
     std::shared_ptr<Scene3dToolBarController> scene3dToolBarController_;
     std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
-    std::shared_ptr<IsobathsControlMenuController> isobathsControlMenuController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
 

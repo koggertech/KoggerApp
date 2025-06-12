@@ -1,70 +1,21 @@
 #pragma once
 
 #include <stdint.h>
+#include <QtConcurrent/QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QHash>
+#include <QMutex>
 #include <QSet>
 #include <QVector>
 #include <QVector3D>
-#include "scene_object.h"
-#include "surface_view_processor.h"
 #include "bottom_track.h"
 #include "delaunay.h"
+#include "isobaths_defs.h"
+#include "scene_object.h"
 
 
-using IsobathsSeg = QPair<QVector3D, QVector3D>;
-using IsobathsSegVec = QVector<IsobathsSeg>;
-using IsobathsPolyline = QVector<QVector3D>;
-using IsobathsPolylines = QVector<IsobathsPolyline>;
-
-static constexpr float epsilon_ = 1e-6f;
-
-inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = epsilon_)
-{
-    return (a - b).lengthSquared() < eps * eps;
-}
-
-inline IsobathsSeg canonSeg(const QVector3D& p1, const QVector3D& p2)
-{
-    if (p1.x()  <  p2.x()) return {p1,p2};
-    if (p1.x()  >  p2.x()) return {p2,p1};
-    if (p1.y()  <  p2.y()) return {p1,p2};
-    if (p1.y()  >  p2.y()) return {p2,p1};
-    if (p1.z()  <  p2.z()) return {p1,p2};
-    if (p1.z()  >  p2.z()) return {p2,p1};
-    return {p1,p2};
-}
-
-struct IsoState {
-    QHash<int, IsobathsSegVec> hashSegsByLvl;
-    QHash<int, IsobathsPolylines> polylinesByLevel;
-    QHash<int, QHash<int, IsobathsSegVec>> triangleSegs; // triIdx -> (level -> segs)
-    QSet<int> dirtyLevels;
-
-    void clear() {
-        hashSegsByLvl.clear();
-        polylinesByLevel.clear();
-        triangleSegs.clear();
-        dirtyLevels.clear();
-    }
-
-    bool isEmpty() const {
-        return hashSegsByLvl.isEmpty();
-    }
-};
-
-struct LLabelInfo
-{
-    QVector3D pos;
-    QVector3D dir;
-    float depth;
-};
-
-struct SSurfaceViewProcessorResult
-{
-    QVector<QVector3D> data;
-    QVector<LLabelInfo> labels;
-};
-
+using namespace IsobathUtils;
 
 class SurfaceView : public SceneObject
 {
@@ -72,14 +23,6 @@ class SurfaceView : public SceneObject
     QML_NAMED_ELEMENT(SurfaceView)
 
 public:
-    struct ColorInterval
-    {
-        float depth = 0.0f;
-        QVector3D color;
-        ColorInterval() = default;
-        ColorInterval(float d, const QVector3D &c) : depth(d), color(c) {}
-    };
-
     class SurfaceViewRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
@@ -89,38 +32,34 @@ public:
     private:
         friend class SurfaceView;
 
+        // data
         QVector<QVector3D> pts_; // для треугольников
         QVector<QVector3D> edgePts_; // для ребер
-
-        float minZ_ = std::numeric_limits<float>::max();
-        float maxZ_ = std::numeric_limits<float>::lowest();
-
-        bool trianglesVisible_ = true;
-        bool edgesVisible_ = true;
-
-        /*data*/
+        float minZ_;
+        float maxZ_;
+        bool trianglesVisible_;
+        bool edgesVisible_;
         QVector<ColorInterval> colorIntervals_;
-        float levelStep_ = 3.0f;
-        float lineStepSize_ = 3.0f;
-        GLuint textureId_ = 0;
+        float levelStep_;
+        float lineStepSize_;
+        GLuint textureId_;
         QVector<QVector3D> lineSegments_;
         QVector<LLabelInfo> labels_;
         QVector3D color_;
-        float distToFocusPoint_ = 10.0f;
-        bool debugMode_ = false;
+        float distToFocusPoint_;
+        bool debugMode_;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
     virtual ~SurfaceView();
+
     void clear();
     void setBottomTrackPtr(BottomTrack* ptr);
-
     QVector<uint8_t>& getTextureTasksRef();
     GLuint getDeinitTextureTask() const;
     GLuint getTextureId() const;
     void setTextureId(GLuint textureId);
     void setColorTableThemeById(int id);
-
     float getSurfaceStepSize() const;
     void setSurfaceStepSize(float val);
     float getLineStepSize() const;
@@ -140,9 +79,13 @@ public slots:
     void onAction();
     void onUpdatedBottomTrackDataWrapper(const QVector<int>& indxs);
 
+private slots:
+    void handleWorkerFinished();
+
 private:
     friend class SurfaceViewProcessor;
 
+    // methods
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void rebuildColorIntervals();
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
@@ -155,8 +98,7 @@ private:
     void filterNearbyLabels(const QVector<LLabelInfo>& inputData, QVector<LLabelInfo>& outputData) const;
     void filterLinesBehindLabels(const QVector<LLabelInfo>& filteredLabels, const QVector<QVector3D>& inputData, QVector<QVector3D>& outputData) const;
 
-    /*data*/
-    //SSurfaceViewProcessorResult result_;
+    // data
     delaunay::Delaunay del_;
     BottomTrack* bottomTrackPtr_ = nullptr;
     QHash<int, uint64_t> bTrToTrIndxs_;
@@ -164,19 +106,23 @@ private:
     QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
     QHash<QPair<int,int>, int>  cellPointsInTri_;
     QPair<int,int> lastCellPoint_;
-    int cellPx_ = 1;
+    int cellPx_;
     QPointF origin_;
-    float surfaceStepSize_ = 1.0f;
-    float lineStepSize_    = 1.0f;
-    float labelStepSize_   = 100.0f;
-    GLuint textureId_ = 0;
+    float surfaceStepSize_;
+    float lineStepSize_;
+    float labelStepSize_;
+    GLuint textureId_;
     QVector<uint8_t> textureTask_;
-    GLuint toDeleteId_ = 0;
-    int themeId_ = 0;
-    bool processState_ = false;
-    float edgeLimit_ = 20.0f;
+    GLuint toDeleteId_;
+    int themeId_;
+    bool processState_;
+    float edgeLimit_;
     QHash<uint64_t, QVector<int>> pointToTris_;
     IsoState isoState_;
-    uint8_t updCnt_ = 0;
-    uint8_t handleXCall_ = 1;
+    uint8_t updCnt_;
+    uint8_t handleXCall_;
+    QFuture<void> workerFuture_;
+    QFutureWatcher<void> workerWatcher_;
+    QMutex pendingMtx_;
+    QVector<int> pendingIndxs_;
 };

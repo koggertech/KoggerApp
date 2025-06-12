@@ -27,7 +27,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
-    m_shaderProgramMap["isobaths"]    = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["isobaths"]   = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -170,7 +170,6 @@ void GraphicsScene3dRenderer::drawObjects()
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
     surfaceViewRenderImpl_.render(this,      m_model, view, m_projection, m_shaderProgramMap);
-    isobathsRenderImpl_.render(this,         m_model, view, m_projection, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
 

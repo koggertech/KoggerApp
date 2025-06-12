@@ -255,27 +255,6 @@ ApplicationWindow  {
             if (fn === "updateMosaic") {
                 scene3DToolbar.updateMosaic()
             }
-            if (fn === "updateIsobaths") {
-                scene3DToolbar.updateIsobaths()
-            }
-            if (fn === "incIsoSurStep") {
-                scene3DToolbar.increaseIsobathsSurfaceStep()
-            }
-            if (fn === "decIsoSurStep") {
-                scene3DToolbar.decreaseIsobathsSurfaceStep()
-            }
-            if (fn === "incIsoLineStep") {
-                scene3DToolbar.increaseIsobathsLineStep()
-            }
-            if (fn === "decIsoLineStep") {
-                scene3DToolbar.decreaseIsobathsLineStep()
-            }
-            if (fn === "incIsoLabelStep") {
-                scene3DToolbar.increaseIsobathsLabelStep()
-            }
-            if (fn === "decIsoLabelStep") {
-                scene3DToolbar.decreaseIsobathsLabelStep()
-            }
             if (fn === "closeSettings") {
                 waterViewFirst.closeSettings()
                 if (waterViewSecond.enabled) {

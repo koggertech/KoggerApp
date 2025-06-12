@@ -5,86 +5,21 @@
 #include "text_renderer.h"
 
 
-template <typename T>
-static inline void appendUnique(QVector<T>& dst, const QVector<T>& src)
-{
-    for (const T& v : src) {
-        if (!dst.contains(v)) {
-            dst.append(v);
-        }
-    }
-}
-
-static const QVector<QVector3D>& colorPalette(int themeId)
-{
-    static const QVector<QVector<QVector3D>> palettes = {
-        // 0: midnight
-        {
-            QVector3D(0.2f, 0.5f, 1.0f),
-            QVector3D(0.2f, 0.4f, 0.9f),
-            QVector3D(0.3f, 0.3f, 0.8f),
-            QVector3D(0.4f, 0.2f, 0.7f),
-            QVector3D(0.5f, 0.2f, 0.6f),
-            QVector3D(0.6f, 0.3f, 0.5f),
-            QVector3D(0.7f, 0.4f, 0.4f),
-            QVector3D(0.8f, 0.5f, 0.3f),
-            QVector3D(0.9f, 0.6f, 0.2f),
-            QVector3D(1.0f, 0.7f, 0.1f)
-        },
-        // 1: default
-        {
-            QVector3D(0.0f, 0.0f, 0.3f),
-            QVector3D(0.0f, 0.0f, 0.6f),
-            QVector3D(0.0f, 0.5f, 1.0f),
-            QVector3D(0.0f, 1.0f, 0.5f),
-            QVector3D(1.0f, 1.0f, 0.0f),
-            QVector3D(1.0f, 0.6f, 0.0f),
-            QVector3D(0.8f, 0.2f, 0.0f)
-        },
-        // 2: blue
-        {
-            QVector3D(0.0f, 0.0f, 0.0f),
-            QVector3D(0.078f, 0.020f, 0.314f),
-            QVector3D(0.196f, 0.706f, 0.902f),
-            QVector3D(0.745f, 0.941f, 0.980f),
-            QVector3D(1.0f, 1.0f, 1.0f)
-        },
-        // 3: sepia
-        {
-            QVector3D(0.0f, 0.0f, 0.0f),
-            QVector3D(50/255.0f, 50/255.0f, 10/255.0f),
-            QVector3D(230/255.0f, 200/255.0f, 100/255.0f),
-            QVector3D(255/255.0f, 255/255.0f, 220/255.0f)
-        },
-        // 4: colored
-        {
-            QVector3D(0.0f, 0.0f, 0.0f),
-            QVector3D(40/255.0f, 0.0f, 80/255.0f),
-            QVector3D(0.0f, 30/255.0f, 150/255.0f),
-            QVector3D(20/255.0f, 230/255.0f, 30/255.0f),
-            QVector3D(255/255.0f, 50/255.0f, 20/255.0f),
-            QVector3D(255/255.0f, 255/255.0f, 255/255.0f)
-        },
-        // 5: bw
-        {
-            QVector3D(0.0f, 0.0f, 0.0f),
-            QVector3D(190/255.0f, 200/255.0f, 200/255.0f),
-            QVector3D(230/255.0f, 255/255.0f, 255/255.0f)
-        },
-        // 6: wb
-        {
-            QVector3D(230/255.0f, 255/255.0f, 255/255.0f),
-            QVector3D(70/255.0f, 70/255.0f, 70/255.0f),
-            QVector3D(0.0f, 0.0f, 0.0f)
-        }
-    };
-
-    return palettes[std::clamp(themeId, 0, palettes.size() - 1)];
-}
-
-
 SurfaceView::SurfaceView(QObject* parent)
-    : SceneObject(new SurfaceViewRenderImplementation, parent)
+    : SceneObject(new SurfaceViewRenderImplementation, parent),
+    bottomTrackPtr_(nullptr),
+    originSet_(false),
+    cellPx_(1),
+    surfaceStepSize_(1.0f),
+    lineStepSize_(1.0f),
+    labelStepSize_(100.0f),
+    textureId_(0),
+    toDeleteId_(0),
+    themeId_(0),
+    processState_(false),
+    edgeLimit_(20.0f),
+    updCnt_(0),
+    handleXCall_(1)
 {}
 
 SurfaceView::~SurfaceView()
@@ -406,8 +341,6 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инк�
     else if (!updsTrIndx.isEmpty()) {
         incrementalProcessLinesLabels(updsTrIndx);
     }
-
-    Q_EMIT changed();
 }
 
 void SurfaceView::onAction()
@@ -426,7 +359,44 @@ void SurfaceView::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
     }
     updCnt_ = 0;
 
-    onUpdatedBottomTrackData(indxs);
+    {
+        QMutexLocker lk(&pendingMtx_);
+        pendingIndxs_ += indxs; // с дублями
+    }
+
+    if (workerFuture_.isRunning()) {
+        return;
+    }
+
+    workerFuture_ = QtConcurrent::run([this] {
+                                          QVector<int> workCopy;
+                                          {
+                                              QMutexLocker lk(&pendingMtx_);
+                                              workCopy.swap(pendingIndxs_);
+                                          }
+                                          onUpdatedBottomTrackData(workCopy);
+                                      });
+
+    if (!workerWatcher_.isRunning()) {
+        connect(&workerWatcher_, &QFutureWatcher<void>::finished, this, &SurfaceView::handleWorkerFinished, Qt::QueuedConnection);
+    }
+
+    workerWatcher_.setFuture(workerFuture_);
+}
+
+void SurfaceView::handleWorkerFinished()
+{
+    Q_EMIT changed();
+
+    {
+        QMutexLocker lk(&pendingMtx_);
+        if (!pendingIndxs_.isEmpty()) {
+            QVector<int> copy = std::move(pendingIndxs_);
+            pendingIndxs_.clear();
+            lk.unlock();
+            onUpdatedBottomTrackDataWrapper(copy);
+        }
+    }
 }
 
 void SurfaceView::fullRebuildLinesLabels()
@@ -443,8 +413,9 @@ void SurfaceView::fullRebuildLinesLabels()
     for (size_t idx = 0; idx < del_.getTriangles().size(); ++idx) {
         uint64_t triIdx = idx;
         const auto& t = del_.getTriangles()[triIdx];
-        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_)
+        if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
             continue;
+        }
 
         QVector3D A(pts[t.a].x, pts[t.a].y, pts[t.a].z);
         QVector3D B(pts[t.b].x, pts[t.b].y, pts[t.b].z);
@@ -459,12 +430,15 @@ void SurfaceView::fullRebuildLinesLabels()
 
             IsobathsSegVec newSegs;
             if (segPoints.size() == 2) {
-                newSegs.append( canonSeg(segPoints[0], segPoints[1]) );
-            } else if (segPoints.size() == 3) {
-                if (!fuzzyEq(segPoints[0], segPoints[1]))
-                    newSegs.append( canonSeg(segPoints[0], segPoints[1]) );
-                if (!fuzzyEq(segPoints[1], segPoints[2]))
-                    newSegs.append( canonSeg(segPoints[1], segPoints[2]) );
+                newSegs.append(canonSeg(segPoints[0], segPoints[1]));
+            }
+            else if (segPoints.size() == 3) {
+                if (!fuzzyEq(segPoints[0], segPoints[1])) {
+                    newSegs.append(canonSeg(segPoints[0], segPoints[1]));
+                }
+                if (!fuzzyEq(segPoints[1], segPoints[2])) {
+                    newSegs.append(canonSeg(segPoints[1], segPoints[2]));
+                }
             }
 
             if (!newSegs.isEmpty()) {
@@ -487,7 +461,9 @@ void SurfaceView::fullRebuildLinesLabels()
         int level = it.key();
         const auto& polylines = it.value();
 
-        if (polylines.isEmpty()) continue;
+        if (polylines.isEmpty()) {
+            continue;
+        }
 
         // линии
         for (const auto& polyline : polylines) {
@@ -516,19 +492,19 @@ void SurfaceView::fullRebuildLinesLabels()
             bool placedLabel = false;
 
             while (nextMark < cumulativeShift + polylineLen + epsilon_) {
-                while (curSeg < segLen.size() &&
-                       curOff + segLen[curSeg] < nextMark - cumulativeShift - epsilon_) {
+                while (curSeg < segLen.size() && curOff + segLen[curSeg] < nextMark - cumulativeShift - epsilon_) {
                     curOff += segLen[curSeg];
                     ++curSeg;
                 }
 
-                if (curSeg >= segLen.size()) break;
+                if (curSeg >= segLen.size()) {
+                    break;
+                }
 
                 float localMark = nextMark - cumulativeShift;
                 float t = (localMark - curOff) / segLen[curSeg];
 
                 QVector3D interpPoint = polyline[curSeg] + t * (polyline[curSeg + 1] - polyline[curSeg]);
-
                 QVector3D direction = (polyline[curSeg + 1] - polyline[curSeg]).normalized();
                 direction.setZ(0);
 
@@ -990,6 +966,15 @@ void SurfaceView::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLab
 }
 
 SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
+    : minZ_(std::numeric_limits<float>::max()),
+    maxZ_(std::numeric_limits<float>::lowest()),
+    trianglesVisible_(true),
+    edgesVisible_(true),
+    levelStep_(3.0f),
+    lineStepSize_(3.0f),
+    textureId_(0),
+    distToFocusPoint_(10.0f),
+    debugMode_(false)
 {}
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const

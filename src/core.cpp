@@ -57,7 +57,6 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3DControlMenuController",         scene3dControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3dToolBarController",             scene3dToolBarController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("UsblViewControlMenuController",        usblViewControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("IsobathsControlMenuController",        isobathsControlMenuController_.get());
 }
 
 Console* Core::getConsolePtr()
@@ -1092,9 +1091,6 @@ void Core::UILoad(QObject* object, const QUrl& url)
     usblViewControlMenuController_->setQmlEngine(object);
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
-    isobathsControlMenuController_->setQmlEngine(object);
-    isobathsControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
-
     onChannelsUpdated();
 }
 
@@ -1309,7 +1305,6 @@ void Core::createControllers()
     scene3dControlMenuController_         = std::make_shared<Scene3DControlMenuController>();
     scene3dToolBarController_             = std::make_shared<Scene3dToolBarController>();
     usblViewControlMenuController_        = std::make_shared<UsblViewControlMenuController>();
-    isobathsControlMenuController_        = std::make_shared<IsobathsControlMenuController>();
 
     sideScanViewControlMenuController_->setCorePtr(this);
 }

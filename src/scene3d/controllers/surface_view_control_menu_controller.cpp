@@ -118,7 +118,7 @@ void SurfaceViewControlMenuController::onSetSurfaceLineStepSize(float val)
     }
 }
 
-void SurfaceViewControlMenuController::onSetLabelStepSizeIsobaths(int val)
+void SurfaceViewControlMenuController::onSetLabelStepSize(int val)
 {
     labelStepSize_ = val;
 

@@ -22,7 +22,7 @@ public:
     Q_INVOKABLE void onTrianglesVisible(bool state);
     Q_INVOKABLE void onEdgesVisible(bool state);
     Q_INVOKABLE void onSetSurfaceLineStepSize(float val);
-    Q_INVOKABLE void onSetLabelStepSizeIsobaths(int val);
+    Q_INVOKABLE void onSetLabelStepSize(int val);
     Q_INVOKABLE void onThemeChanged(int val);
     Q_INVOKABLE void onDebugModeView(bool state);
     Q_INVOKABLE void onProcessStateChanged(bool state);
