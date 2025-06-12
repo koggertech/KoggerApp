@@ -1,4 +1,0 @@
-If:
-  PathMatch: "src/predicates.c"
-CompileFlags:
-  Add: [-w]  # отключить все ворнинги
