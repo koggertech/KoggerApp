@@ -31,6 +31,16 @@ SurfaceView::~SurfaceView()
 
 void SurfaceView::clear()
 {
+    if (workerFuture_.isRunning()) {
+        workerFuture_.cancel();
+        workerFuture_.waitForFinished();
+    }
+
+    {
+        QMutexLocker lk(&pendingMtx_);
+        pending_.clear();
+    }
+
     auto* r = RENDER_IMPL(SurfaceView);
 
     r->pts_.clear();
@@ -141,7 +151,7 @@ void SurfaceView::setLineStepSize(float val)
         r->lineStepSize_ = lineStepSize_;
     }
 
-    fullRebuildLinesLabels();
+    enqueueWork({}, true);
 
     Q_EMIT changed();
 }
@@ -159,7 +169,7 @@ void SurfaceView::setLabelStepSize(float val)
 
     labelStepSize_ = val;
 
-    fullRebuildLinesLabels();
+    enqueueWork({}, true);
 
     Q_EMIT changed();
 }
@@ -380,44 +390,22 @@ void SurfaceView::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
     }
     updCnt_ = 0;
 
-    {
-        QMutexLocker lk(&pendingMtx_);
-        pendingIndxs_ += indxs; // с дублями
-    }
-
-    if (workerFuture_.isRunning()) {
-        return;
-    }
-
-    workerFuture_ = QtConcurrent::run([this] {
-                                          QVector<int> workCopy;
-                                          {
-                                              QMutexLocker lk(&pendingMtx_);
-                                              workCopy.swap(pendingIndxs_);
-                                          }
-                                          onUpdatedBottomTrackData(workCopy);
-                                      });
-
-    if (!workerWatcher_.isRunning()) {
-        connect(&workerWatcher_, &QFutureWatcher<void>::finished, this, &SurfaceView::handleWorkerFinished, Qt::QueuedConnection);
-    }
-
-    workerWatcher_.setFuture(workerFuture_);
+    enqueueWork(indxs, false);
 }
 
 void SurfaceView::handleWorkerFinished()
-{
-    Q_EMIT changed();
+  {
+        Q_EMIT changed();
 
-    {
-        QMutexLocker lk(&pendingMtx_);
-        if (!pendingIndxs_.isEmpty()) {
-            QVector<int> copy = std::move(pendingIndxs_);
-            pendingIndxs_.clear();
-            lk.unlock();
-            onUpdatedBottomTrackDataWrapper(copy);
+        {
+            QMutexLocker lk(&pendingMtx_);
+            if (!pending_.indxs.isEmpty() || pending_.needFull) {
+                PendingWork copy = pending_;
+                pending_ = PendingWork{};
+                lk.unlock();
+                enqueueWork(copy.indxs, copy.needFull);
+            }
         }
-    }
 }
 
 void SurfaceView::fullRebuildLinesLabels()
@@ -986,6 +974,46 @@ void SurfaceView::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLab
     }
 }
 
+void SurfaceView::enqueueWork(const QVector<int> &indxs, bool full)
+{
+    {
+        QMutexLocker lk(&pendingMtx_);
+        pending_.indxs += indxs;
+        pending_.needFull |= full;
+    }
+
+    if (workerFuture_.isRunning()) {
+        return;
+    }
+
+    workerFuture_ = QtConcurrent::run([this] {
+        if (workerFuture_.isCanceled()) {
+            return;
+        }
+
+        PendingWork todo;
+        {
+            QMutexLocker lk(&pendingMtx_);
+            todo = std::move(pending_);
+            pending_.clear();
+        }
+
+        // TODO: more accuracy
+        if (!todo.indxs.isEmpty()) {
+            onUpdatedBottomTrackData(todo.indxs);
+        }
+        if (todo.needFull) {
+            fullRebuildLinesLabels();
+        }
+    });
+
+    if (!workerWatcher_.isRunning()) {
+        connect(&workerWatcher_, &QFutureWatcher<void>::finished, this, &SurfaceView::handleWorkerFinished, Qt::QueuedConnection);
+    }
+
+    workerWatcher_.setFuture(workerFuture_);
+}
+
 SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     : minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
@@ -1001,7 +1029,6 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
     if (!debugMode_) {
-
         if (!m_isVisible ) {
             return;
         }
@@ -1034,7 +1061,6 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         sp->setAttributeArray(pos, pts_.constData());
         ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
         sp->disableAttributeArray(pos);
-
 
         if (!lineSegments_.isEmpty()) {
             sp->setUniformValue("linePass", true);
@@ -1097,9 +1123,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
                     shaderProgram->enableAttributeArray(posLoc);
                     shaderProgram->setAttributeArray(posLoc, pts_.constData());
 
-                    ctx->glEnable(GL_DEPTH_TEST);
                     ctx->glDrawArrays(GL_TRIANGLES, 0, pts_.size());
-                    ctx->glDisable(GL_DEPTH_TEST);
 
                     shaderProgram->disableAttributeArray(posLoc);
                     shaderProgram->release();
@@ -1109,6 +1133,8 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         if (edgesVisible_) {
             if (!edgePts_.isEmpty()) {
+                ctx->glDisable(GL_DEPTH_TEST);
+
                 auto lineShader = spMap["static"];
                 if (lineShader->bind()) {
                     int linePosLoc  = lineShader->attributeLocation("position");
@@ -1128,6 +1154,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
                     lineShader->disableAttributeArray(linePosLoc);
                     lineShader->release();
                 }
+                ctx->glEnable(GL_DEPTH_TEST);
             }
         }
     }

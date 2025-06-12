@@ -145,4 +145,14 @@ struct ColorInterval
     ColorInterval(float d, const QVector3D &c) : depth(d), color(c) {}
 };
 
+struct PendingWork {
+    QVector<int> indxs; // новые индексы точек
+    bool         needFull = false; // полный rebuild
+
+    void clear() {
+        indxs.clear();
+        needFull = false;
+    }
+};
+
 } // namespace IsobathUtils

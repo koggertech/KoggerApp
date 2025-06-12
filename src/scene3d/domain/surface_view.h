@@ -97,6 +97,7 @@ private:
     void edgeIntersection(const QVector3D& vertA, const QVector3D& vertB, float level, QVector<QVector3D>& out) const;
     void filterNearbyLabels(const QVector<LLabelInfo>& inputData, QVector<LLabelInfo>& outputData) const;
     void filterLinesBehindLabels(const QVector<LLabelInfo>& filteredLabels, const QVector<QVector3D>& inputData, QVector<QVector3D>& outputData) const;
+    void enqueueWork(const QVector<int>& indxs, bool full);
 
     // data
     delaunay::Delaunay del_;
@@ -125,4 +126,5 @@ private:
     QFutureWatcher<void> workerWatcher_;
     QMutex pendingMtx_;
     QVector<int> pendingIndxs_;
+    PendingWork pending_;
 };
