@@ -1,4 +1,4 @@
-QT += quick widgets network qml sql
+QT += quick widgets network qml sql concurrent
 
 #CONFIG += FLASHER
 #CONFIG += SEPARATE_READING # data reception in a separate thread
@@ -23,8 +23,10 @@ HEADERS += \
     src/dsp_defs.h \
     src/hotkeys_manager.h \
     src/id_binnary.h \
+    src/delaunay.h \
     src/logger.h \
     src/map_defs.h \
+    src/isobaths_defs.h \
     src/mav_link_conf.h \
     src/proto_binnary.h \
     src/stream_list.h \
@@ -47,6 +49,7 @@ SOURCES += \
     src/proto_binnary.cpp \
     src/stream_list.cpp \
     src/stream_list_model.cpp
+
 
 FLASHER {
     DEFINES += FLASHER

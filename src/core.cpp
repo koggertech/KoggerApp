@@ -49,6 +49,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",         surfaceControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceViewControlMenuController",     surfaceViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController",    sideScanViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",       imageViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",         mapViewControlMenuController_.get());
@@ -313,6 +314,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 scene3dViewPtr_->clear();
             }
             scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
+            scene3dViewPtr_->setOpeningFileState(true);
         }
 
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
@@ -330,6 +332,10 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 openedfilePath_ = localfilePath;
 
                 onFileStopsOpening();
+
+                if (scene3dViewPtr_) {
+                    scene3dViewPtr_->setOpeningFileState(false);
+                }
 
                 return;
             }
@@ -387,6 +393,7 @@ void Core::onFileOpened()
 
     if (scene3dViewPtr_) {
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+        scene3dViewPtr_->setOpeningFileState(false);
     };
 }
 #endif
@@ -1053,6 +1060,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     surfaceControlMenuController_->setQmlEngine(object);
     surfaceControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
+    surfaceViewControlMenuController_->setQmlEngine(object);
+    surfaceViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+
     sideScanViewControlMenuController_->setQmlEngine(object);
     sideScanViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
@@ -1288,6 +1298,7 @@ void Core::createControllers()
     mpcFilterControlMenuController_       = std::make_shared<MpcFilterControlMenuController>();
     npdFilterControlMenuController_       = std::make_shared<NpdFilterControlMenuController>();
     surfaceControlMenuController_         = std::make_shared<SurfaceControlMenuController>();
+    surfaceViewControlMenuController_     = std::make_shared<SurfaceViewControlMenuController>();
     sideScanViewControlMenuController_    = std::make_shared<SideScanViewControlMenuController>();
     imageViewControlMenuController_       = std::make_shared<ImageViewControlMenuController>();
     mapViewControlMenuController_         = std::make_shared<MapViewControlMenuController>();

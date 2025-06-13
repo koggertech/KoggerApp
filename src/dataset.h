@@ -1182,11 +1182,6 @@ public slots:
 
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2);
     void spatialProcessing();
-    void emitPositionsUpdated() {
-        emit bottomTrackUpdated(0, endIndex());
-        emit boatTrackUpdated();
-    }
-
 
     void usblProcessing();
     QVector<QVector3D> beaconTrack() {
@@ -1216,7 +1211,7 @@ public slots:
 
 signals:
     void dataUpdate();
-    void bottomTrackUpdated(int lEpoch, int rEpoch);
+    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);
     void updatedLlaRef();

@@ -24,7 +24,6 @@ public:
     Q_INVOKABLE void onGlobalMeshChanged(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     Q_INVOKABLE void onGenerateGridContourChanged(bool state);
     Q_INVOKABLE void onUpdateStateChanged(bool state);
-    Q_INVOKABLE void onTrackLastEpochChanged(bool state);
     Q_INVOKABLE void onThemeChanged(int val);
     Q_INVOKABLE void onLevelChanged(float lowLevel, float highLevel);
     Q_INVOKABLE void onUpdateClicked();
@@ -43,7 +42,7 @@ private:
     void tryInitPendingLambda();
 
     /*data*/
-    GraphicsScene3dView* m_graphicsSceneView;
+    GraphicsScene3dView* graphicsSceneViewPtr_;
     Core* corePtr_;
     QList<QMetaObject::Connection> connections_;
     std::function<void()> pendingLambda_;
@@ -56,7 +55,6 @@ private:
     //float tileResolution_;
     bool generateGridContour_;
     bool updateState_;
-    bool trackLastEpoch_;
     int themeId_;
     float lowLevel_;
     float highLevel_;

@@ -1,6 +1,5 @@
 #include "scene3d_view.h"
 #include "scene3d_renderer.h"
-#include <surface.h>
 #include <dataset.h>
 
 #include <cmath>
@@ -19,6 +18,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     m_surface(std::make_shared<Surface>()),
+    surfaceView_(std::make_shared<SurfaceView>()),
     sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
@@ -32,12 +32,16 @@ GraphicsScene3dView::GraphicsScene3dView() :
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
     tileManager_(std::make_shared<map::TileManager>(this)),
+    updateIsobaths_(false),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
-    lastCameraDist_(m_camera->distForMapView())
+    lastCameraDist_(m_camera->distForMapView()),
+    trackLastData_(false),
+    updateBottomTrack_(false),
+    isOpeningFile_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -52,12 +56,13 @@ GraphicsScene3dView::GraphicsScene3dView() :
     imageView_->setView(this);
 
 #ifdef SEPARATE_READING
-    sideScanCalcState_ = true;
+    updateMosaic_ = true;
 #else
-    sideScanCalcState_ = false;
+    updateMosaic_ = false;
 #endif
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
@@ -72,6 +77,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -97,6 +103,9 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
+
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, surfaceView_.get(), &SurfaceView::onUpdatedBottomTrackDataWrapper);
 
     updatePlaneGrid();
 }
@@ -124,6 +133,11 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
 std::shared_ptr<Surface> GraphicsScene3dView::surface() const
 {
     return m_surface;
+}
+
+std::shared_ptr<SurfaceView> GraphicsScene3dView::getSurfaceViewPtr() const
+{
+    return surfaceView_;
 }
 
 std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
@@ -189,6 +203,7 @@ Dataset *GraphicsScene3dView::dataset() const
 void GraphicsScene3dView::clear(bool cleanMap)
 {
     m_surface->clearData();
+    surfaceView_->clear();
     sideScanView_->clear();
     contacts_->clear();
     imageView_->clear();//
@@ -227,9 +242,14 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
-void GraphicsScene3dView::setCalcStateSideScanView(bool state)
+void GraphicsScene3dView::setUpdateMosaic(bool state)
 {
-    sideScanCalcState_ = state;
+    updateMosaic_ = state;
+}
+
+void GraphicsScene3dView::setUpdateIsobaths(bool state)
+{
+    updateIsobaths_ = state;
 }
 
 void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
@@ -434,6 +454,16 @@ void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent action
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setTrackLastData(bool state)
+{
+    trackLastData_ = state;
+}
+
+void GraphicsScene3dView::setUpdateBottomTrack(bool state)
+{
+    updateBottomTrack_ = state;
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -469,6 +499,11 @@ void GraphicsScene3dView::forceUpdateDatasetRef()
     m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
 
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setOpeningFileState(bool state)
+{
+    isOpeningFile_ = state;
 }
 
 void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -626,14 +661,19 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_bottomTrack->setDatasetPtr(m_dataset);
     sideScanView_->setDatasetPtr(m_dataset);
     contacts_->setDatasetPtr(m_dataset);
+    surfaceView_->setBottomTrackPtr(m_bottomTrack.get());
 
     forceUpdateDatasetRef();
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
-                     this,      [this](int lEpoch, int rEpoch) -> void {
+                     this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
+                                    auto fCh = m_dataset->channelsList().first();
+                                    if (!m_dataset || fCh.channelId_ != channelId) {
+                                        return;
+                                    }
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                    if (sideScanCalcState_) {
+                                    if (updateMosaic_) {
                                         interpolateDatasetEpochs(false);
                                     }
                                 }, Qt::DirectConnection);
@@ -645,31 +685,35 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     const Position pos = m_dataset->getLastPosition();
                                     navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
 
-                                    if (!sideScanCalcState_ || sideScanView_->getWorkMode() != SideScanView::Mode::kRealtime) {
+                                    if (trackLastData_) {
+                                        setLastEpochFocusView();
+                                    }
+
+#ifndef SEPARATE_READING
+                                    if (isOpeningFile_) {
                                         return;
                                     }
+#endif
 
-                                    // bottom track
-                                    ChannelId firstChannelId = CHANNEL_NONE;
-                                    ChannelId secondChannelId = CHANNEL_NONE;
-                                    if (m_dataset) {
-                                        if (auto chVector = m_dataset->channelsList(); !chVector.empty()) {
-                                            auto it = chVector.begin();
-                                            firstChannelId = it->channelId_;
+                                    if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
+                                        auto* btP = m_dataset->getBottomTrackParamPtr();
 
-                                            if (++it != chVector.end()) {
-                                                secondChannelId = it->channelId_;
+                                        const int endIndx    = m_dataset->endIndex();
+                                        const int windowSize = btP->windowSize;
+
+                                        int currCount = std::floor(endIndx / windowSize);
+                                        if (bottomTrackWindowCounter_ != currCount) {
+
+                                            btP->indexFrom = windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1);
+                                            btP->indexTo   = windowSize * currCount - (windowSize / 2 + 1);
+
+                                            const auto channels = m_dataset->channelsList();
+                                            for (auto it = channels.begin(); it != channels.end(); ++it) {
+                                                m_dataset->bottomTrackProcessing(it->channelId_, ChannelId());
                                             }
+
+                                            bottomTrackWindowCounter_ = currCount;;
                                         }
-                                    }
-                                    int currEpochIndx = m_dataset->endIndex();
-                                    auto btP = m_dataset->getBottomTrackParamPtr();
-                                    int currCount = std::floor(currEpochIndx / btP->windowSize);
-                                    if (bottomTrackWindowCounter_ != currCount) {
-                                        btP->indexFrom = bottomTrackWindowCounter_ * btP->windowSize;
-                                        btP->indexTo = currCount  * btP->windowSize;
-                                        m_dataset->bottomTrackProcessing(firstChannelId, secondChannelId);
-                                        bottomTrackWindowCounter_ = currCount;;
                                     }
                                 }, Qt::DirectConnection);
 
@@ -678,9 +722,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
                                         m_bottomTrack->sideScanUpdated();
                                         sideScanView_->startUpdateDataInThread(indx);
-                                        if (sideScanView_->getTrackLastEpoch()) {
-                                            setLastEpochFocusView();
-                                        }
                                     }
                                 }, Qt::DirectConnection);
 
@@ -715,14 +756,15 @@ void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
 void GraphicsScene3dView::updateBounds()
 {
     m_bounds = m_boatTrack->bounds()
-                    .merge(m_surface->bounds())
-                    .merge(m_bottomTrack->bounds())
-                    .merge(m_boatTrack->bounds())
-                    .merge(m_polygonGroup->bounds())
-                    .merge(m_pointGroup->bounds())
-                    .merge(sideScanView_->bounds())
-                    .merge(imageView_->bounds())
-                    .merge(usblView_->bounds());
+                   .merge(m_surface->bounds())
+                   .merge(surfaceView_->bounds())
+                   .merge(m_bottomTrack->bounds())
+                   .merge(m_boatTrack->bounds())
+                   .merge(m_polygonGroup->bounds())
+                   .merge(m_pointGroup->bounds())
+                   .merge(sideScanView_->bounds())
+                   .merge(imageView_->bounds())
+                   .merge(usblView_->bounds());
 
     updatePlaneGrid();
 
@@ -884,6 +926,13 @@ void GraphicsScene3dView::updateMapView()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::updateViews()
+{
+    if (surfaceView_) {
+        surfaceView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    }
+}
+
 //---------------------Renderer---------------------------//
 GraphicsScene3dView::InFboRenderer::InFboRenderer() :
     QQuickFramebufferObject::Renderer(),
@@ -913,6 +962,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     processColorTableTexture(view);
     processTileTexture(view);
     processImageTexture(view);
+    processSurfaceViewTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -925,6 +975,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
+    m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
@@ -1125,6 +1176,41 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
     glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
     task = QImage();
+}
+
+void GraphicsScene3dView::InFboRenderer::processSurfaceViewTexture(GraphicsScene3dView *viewPtr) const
+{
+    // init/reinit
+    auto surfaceViewPtr = viewPtr->getSurfaceViewPtr();
+    auto& task = surfaceViewPtr->getTextureTasksRef();
+
+    if (task.empty())
+        return;
+
+    GLuint textureId = surfaceViewPtr->getTextureId();
+
+    if (textureId) {
+        glDeleteTextures(1, &textureId);
+    }
+
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
+
+    surfaceViewPtr->setTextureId(textureId);
+    task.clear();
+
+    // deleting
+    auto textureIdtoDel = surfaceViewPtr->getDeinitTextureTask();
+    if (textureIdtoDel) {
+        glDeleteTextures(1, &textureIdtoDel);
+    }
 }
 
 GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :

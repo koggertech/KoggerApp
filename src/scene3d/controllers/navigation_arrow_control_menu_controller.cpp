@@ -19,13 +19,14 @@ NavigationArrowControlMenuController::~NavigationArrowControlMenuController()
 
 void NavigationArrowControlMenuController::onVisibilityCheckBoxCheckedChanged(bool checked)
 {
+    isVisible_ = checked;
+
     if (graphicsSceneView_) {
         if (auto nAPtr = graphicsSceneView_->getNavigationArrowPtr(); nAPtr) {
             nAPtr->setVisible(checked);
         }
     }
     else {
-        isVisible_ = checked;
         tryInitPendingLambda();
     }
 }
@@ -34,9 +35,11 @@ void NavigationArrowControlMenuController::setGraphicsSceneView(GraphicsScene3dV
 {
     graphicsSceneView_ = sceneView;
 
-    if (pendingLambda_) {
-        pendingLambda_();
-        pendingLambda_ = nullptr;
+    if (graphicsSceneView_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
     }
 }
 

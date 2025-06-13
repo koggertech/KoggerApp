@@ -4,6 +4,7 @@
 #include "plane_grid.h"
 #include "bottom_track.h"
 #include "surface.h"
+#include "surface_view.h"
 #include "side_scan_view.h"
 #include "image_view.h"
 #include "map_view.h"
@@ -13,7 +14,6 @@
 #include "scene3d_view.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-
 #include <QMatrix4x4>
 #include "qsystemdetection.h"
 #if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
@@ -65,6 +65,7 @@ private:
     CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
     Surface::SurfaceRenderImplementation m_surfaceRenderImpl;
+    SurfaceView::SurfaceViewRenderImplementation surfaceViewRenderImpl_;
     SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;

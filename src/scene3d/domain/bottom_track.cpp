@@ -69,7 +69,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             sequenceVector.reserve(indices.size());
 
             for (const auto& verticeIndex : indices) {
-                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                const auto epochIndex{ vertex2Epoch_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }; epoch) {
                     sequenceVector.push_back(epochIndex);
 
@@ -119,7 +119,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
         if (!indices.isEmpty()) {
             bool isSomethingDeleted{ false };
             for (const auto& verticeIndex : indices) {
-                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                const auto epochIndex{ vertex2Epoch_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
                     epoch->clearDistProcessing(visibleChannel_.channelId_);
                     Q_EMIT epochErased(epochIndex);
@@ -178,7 +178,9 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 
 void BottomTrack::clearData()
 {
-    epochIndexMatchingMap_.clear();
+    firstLIndx_ = -1;
+    vertex2Epoch_.clear();
+    epoch2Vertex_.clear();
     renderData_.clear();
     visibleChannel_ = DatasetChannel();
 
@@ -228,7 +230,7 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
         return;
 
     auto* epoch = datasetPtr_->fromIndex(epochIndex);
-    auto indxFromMap = epochIndexMatchingMap_.key(epochIndex);
+    auto indxFromMap = vertex2Epoch_.key(epochIndex);
 
     if (!epoch ||
         !epoch->getPositionGNSS().ned.isCoordinatesValid() ||
@@ -279,7 +281,7 @@ void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
             if (!hits.isEmpty()) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
-                auto epochIndex = epochIndexMatchingMap_.value({hits.first().indices().first});
+                auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
 
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
 
@@ -316,7 +318,7 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
             auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
             if (!hits.isEmpty()) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
-                auto epochIndex = epochIndexMatchingMap_.value({hits.first().indices().first});
+                auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
                 m_view->boatTrack()->selectEpoch(epochIndex);
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
                 QCoreApplication::postEvent(this, epochEvent);
@@ -354,7 +356,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         const auto indices{ RENDER_IMPL(BottomTrack)->selectedVertexIndices_ };
         bool isSomethingDeleted{ false };
         for (const auto& verticeIndex : indices) {
-            const auto epochIndx{ epochIndexMatchingMap_.value(verticeIndex) };
+            const auto epochIndx{ vertex2Epoch_.value(verticeIndex) };
             if (auto epoch{ datasetPtr_->fromIndex(epochIndx) }) {
                 epoch->clearDistProcessing(visibleChannel_.channelId_);
                 Q_EMIT epochErased(epochIndx);
@@ -373,7 +375,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         if (!indices.isEmpty()) {
             bool isSomethingDeleted{ false };
             for (const auto& verticeIndex : indices) {
-                const auto epochIndex{ epochIndexMatchingMap_.value(verticeIndex) };
+                const auto epochIndex{ vertex2Epoch_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
                     epoch->clearDistProcessing(visibleChannel_.channelId_);
                     Q_EMIT epochErased(epochIndex);
@@ -391,6 +393,19 @@ void BottomTrack::keyPressEvent(Qt::Key key)
 
 void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 {
+    if (!visibleChannel_.channelId_.isValid()) {
+        return;
+    }
+
+    int range = rEpoch - lEpoch;
+    if (range < 1 || lEpoch < 0 || rEpoch < 0 || firstLIndx_ > lEpoch) {
+        return;
+    }
+
+    if (firstLIndx_ == -1) {
+        firstLIndx_ = lEpoch;
+    }
+
     bool interCall = (rEpoch == 0) && (lEpoch == 0);
     bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
     bool defMode = interCall || updateAll;
@@ -398,71 +413,61 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
     RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
 
     if (defMode) {
-        epochIndexMatchingMap_.clear();
+        vertex2Epoch_.clear();
+        epoch2Vertex_.clear();
         renderData_.clear();
     }
 
-    bool beenUpdated{ false };
-    auto appendData = [&, this](Position& pos, float distance, int i) ->void {
-        renderData_.append(QVector3D(pos.ned.n, pos.ned.e, distance));
-        epochIndexMatchingMap_.insert(renderData_.size() - 1, i);
-        beenUpdated = true;
+    QVector<int> updatedByIndxs;
+    updatedByIndxs.reserve(range);
+
+    auto appendData = [&](const Position& pos, float dist, int epochIdx) -> void {
+        int vIdx = renderData_.size();
+        renderData_.append(QVector3D(pos.ned.n, pos.ned.e, dist));
+        vertex2Epoch_.insert(vIdx, epochIdx); // vertice -> epoch
+        epoch2Vertex_.insert(epochIdx, vIdx); // vertice -> epoch
+
+        updatedByIndxs.append(vIdx);
     };
 
-    if (visibleChannel_.channelId_.isValid()) {
-        int currMin = defMode ? 0 : lEpoch;
-        int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
+    int currMin = defMode ? 0 : lEpoch;
+    int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
 
-        if (defMode) {
-            renderData_.reserve(currMax);
-        }
+    if (defMode) {
+        renderData_.reserve(currMax);
+    }
 
-        for (int i = currMin; i < currMax; ++i) {
-            auto epoch = datasetPtr_->fromIndex(i);
-            if (!epoch) {
+    for (int i = currMin; i < currMax; ++i) {
+        if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
+            const auto pos = epoch->getPositionGNSS();
+            if (!pos.ned.isCoordinatesValid()) {
                 continue;
             }
 
-            auto pos = epoch->getPositionGNSS();
+            const float dist = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
+            //if (!std::isfinite(dist)) {
+            //    continue;
+            //}
 
-            if (pos.ned.isCoordinatesValid()) {
-                float distance = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
-                if (defMode) {
-                    appendData(pos, distance, i);
-                }
-                else {
-                    for (int j = 0; j < renderData_.size(); ++j) { // first - find correct point by pos
-                        if (renderData_[j].x() == static_cast<float>(pos.ned.n) &&
-                            renderData_[j].y() == static_cast<float>(pos.ned.e)) {
-                            renderData_[j] = QVector3D(pos.ned.n, pos.ned.e, distance);
-                            epochIndexMatchingMap_[j] = i;
-                            beenUpdated = true;
-                            break;
-                        }
-                    }
-                    if (!beenUpdated) { // rewrite cause we have new undefined epoch (undef pos left, mid, right)
-                        epochIndexMatchingMap_.clear();
-                        renderData_.clear();
-                        int cCurrMin = 0;
-                        int cCurrMax = datasetPtr_->getLastBottomTrackEpoch();
-                        renderData_.reserve(cCurrMax);
-                        for (int k = cCurrMin; k < cCurrMax; ++k) {
-                            if (auto cEpoch = datasetPtr_->fromIndex(k); cEpoch) {
-                                auto cPos = cEpoch->getPositionGNSS();
-                                if (cPos.ned.isCoordinatesValid()) {
-                                    float cDistance = -1.f * static_cast<float>(cEpoch->distProccesing(visibleChannel_.channelId_));
-                                    appendData(cPos, cDistance, k);
-                                }
-                            }
-                        }
-                    }
-                }
+            if (defMode) {
+                appendData(pos, dist, i);
+                continue;
+            }
+
+            auto vIt = epoch2Vertex_.find(i);
+            if (vIt != epoch2Vertex_.end()) {
+                renderData_[*vIt].setZ(dist);
+                updatedByIndxs.append(*vIt);
+            }
+            else {
+                appendData(pos, dist, i);
             }
         }
     }
 
-    if (beenUpdated && !renderData_.empty()) {
+    if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
+        emit updatedDataByIndxs(updatedByIndxs);
     }
 }
 

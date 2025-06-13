@@ -71,7 +71,6 @@ public:
     void setColorTableHighLevel(float val);
     void setTextureIdByTileId(QUuid tileId, GLuint textureId);
     void setUseLinearFilter(bool state);
-    void setTrackLastEpoch(bool state);
     void setColorTableTextureId(GLuint value);
     void setWorkMode(Mode mode);
     void setLAngleOffset(float val);
@@ -79,7 +78,6 @@ public:
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
     GLuint                              getTextureIdByTileId(QUuid tileId);
     bool                                getUseLinearFilter() const;
-    bool                                getTrackLastEpoch() const;
     GLuint                              getColorTableTextureId() const;
     QHash<QUuid, std::vector<uint8_t>>  getTileTextureTasks();
     std::vector<uint8_t>                getColorTableTextureTask();
@@ -121,7 +119,6 @@ private:
     int lastAcceptedEpoch_;
     GlobalMesh globalMesh_;
     bool useLinearFilter_;
-    bool trackLastEpoch_;
     GLuint colorMapTextureId_;
     Mode workMode_;
     bool manualSettedChannels_;
