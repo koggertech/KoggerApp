@@ -1395,7 +1395,7 @@
         <translation type="vanished">Буст: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1431"/>
+        <location filename="../src/core.cpp" line="1437"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -1467,7 +1467,7 @@
         <location filename="../qml/Scene3DToolbar.qml" line="54"/>
         <location filename="../qml/Scene3DToolbar.qml" line="413"/>
         <source>Edge limit, m:</source>
-        <translation type="unfinished">Предел грани, м:</translation>
+        <translation>Предел грани, м:</translation>
     </message>
     <message>
         <location filename="../qml/Scene3DToolbar.qml" line="75"/>
