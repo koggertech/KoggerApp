@@ -127,7 +127,7 @@ public:
 
     bool isSonar() {
         BoardVersion ver = boardVersion();
-        return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced || ver == BoardSideEnhanced || ver == BoardEcho20 || ver == BoardNanoSSS;
+        return ver == BoardBase || ver == BoardNBase || ver == BoardEnhanced || ver == BoardChirp || ver == BoardNEnhanced || ver == BoardSideEnhanced || ver == BoardBasic2D || ver == BoardNanoSSS || ver == BoardPULSEred_2D || ver == BoardPULSEblue_DSS;
     }
 
     bool isRecorder() {

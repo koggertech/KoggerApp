@@ -406,7 +406,7 @@ void LinkManager::onExpiredTimer()
     }
 }
 
-void LinkManager::openAsSerial(QUuid uuid, int attribute)
+void LinkManager::openAsSerial(QUuid uuid, LinkAttribute attribute)
 {
     TimerController(timer_.get());
 
@@ -417,7 +417,7 @@ void LinkManager::openAsSerial(QUuid uuid, int attribute)
     }
 }
 
-void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
+void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
     TimerController(timer_.get());
 
@@ -431,7 +431,7 @@ void LinkManager::openAsUdp(QUuid uuid, QString address, int sourcePort, int des
     }
 }
 
-void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
+void LinkManager::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
     TimerController(timer_.get());
 
@@ -506,6 +506,30 @@ void LinkManager::updateBaudrate(QUuid uuid, int baudrate)
 
         if (linkPtr->getIsPinned())
             exportPinnedLinksToXML();
+    }
+}
+
+void LinkManager::setRequestToSend(QUuid uuid, bool rts) {
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setRequestToSend(rts);
+    }
+}
+
+void LinkManager::setDataTerminalReady(QUuid uuid, bool dtr) {
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setDataTerminalReady(dtr);
+    }
+}
+
+void LinkManager::setParity(QUuid uuid, bool parity) {
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setParity(parity);
+    }
+}
+
+void LinkManager::setAttribute(QUuid uuid, LinkAttribute attribute) {
+    if (const auto linkPtr = getLinkPtr(uuid); linkPtr) {
+        linkPtr->setAttribute(attribute);
     }
 }
 
@@ -661,6 +685,15 @@ void LinkManager::closeUdpProxy()
 
     deleteLink(proxyLinkUuid_);
     proxyLinkUuid_ = QUuid();
+}
+
+QUuid LinkManager::getFirstOpend() {
+    for (auto& itm : list_) {
+        if (itm->isOpen()) {
+            return itm->getUuid();
+        }
+    }
+    return QUuid();
 }
 
 LinkManager::TimerController::TimerController(QTimer *timer) : timer_(timer)

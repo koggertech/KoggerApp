@@ -21,7 +21,6 @@ HEADERS += \
     src/dataset.h \
     src/dataset_defs.h \
     src/dsp_defs.h \
-    src/flasher.h \
     src/hotkeys_manager.h \
     src/id_binnary.h \
     src/delaunay.h \
@@ -42,7 +41,6 @@ SOURCES += \
     src/console_list_model.cpp \
     src/core.cpp \
     src/dataset.cpp \
-    src/flasher.cpp \
     src/hotkeys_manager.cpp \
     src/id_binnary.cpp \
     src/logger.cpp \
@@ -55,7 +53,10 @@ SOURCES += \
 
 FLASHER {
     DEFINES += FLASHER
-    #SOURCES += src/coreFlash.cpp // dont exist
+    SOURCES += src/flasher/deviceflasher.cpp
+    HEADERS += src/flasher/deviceflasher.h
+    SOURCES += src/flasher/flasher.cpp
+    HEADERS += src/flasher/flasher.h
 }
 
 SEPARATE_READING {

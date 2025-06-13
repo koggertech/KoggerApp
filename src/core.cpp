@@ -31,6 +31,9 @@ Core::Core() :
     createControllers();
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
+#ifdef FLASHER
+    connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
+#endif
 }
 
 Core::~Core()
@@ -146,13 +149,6 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
         qCritical().noquote() << __func__ << " --> " << ex.what();
     }
 }
-
-#ifdef FLASHER
-void Core::getFlasherPtr() const
-{
-    return &flasher;
-}
-#endif
 
 
 #ifdef SEPARATE_READING
@@ -1546,3 +1542,23 @@ void Core::loadLLARefFromSettings()
         qCritical() << "Core::loadLLARefFromSettings throw unknown exception";
     }
 }
+
+#ifdef FLASHER
+void Core::dev_flasher_rcv(QString msg, int num) {
+    dev_flasher_msg_ = msg;
+    dev_flasher_msg_id_ = num;
+    emit dev_flasher_changed();
+}
+
+void Core::connectOpenedLinkAsFlasher(QString pn) {
+    dev_flasher_.setLinkAsFlasher(getLinkManagerWrapperPtr(), getDeviceManagerWrapperPtr()->getWorker(), pn);
+}
+
+void Core::setFlasherData(QString data) {
+    dev_flasher_.setData(data);
+}
+
+void Core::releaseFlasherLink() {
+    dev_flasher_.releaseLink();
+}
+#endif

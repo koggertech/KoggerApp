@@ -1083,16 +1083,18 @@ void Dataset::addGnssVelocity(double h_speed, double course) {
 }
 
 void Dataset::addTemp(float temp_c) {
+    lastTemp_ = temp_c;
+    Epoch* last_epoch = last();
+    last_epoch->setTemp(temp_c);
+    // qDebug() << "Dataset Temp: " << temp_c;
 
-    lastTemperature = temp_c;
-
-    int pool_index = endIndex();
-    if(pool_index < 0) {
-        addNewEpoch();
-        pool_index = endIndex();
-    }
-    pool_[pool_index].setTemp(temp_c);
-    emit dataUpdate();
+    // int pool_index = endIndex();
+    // if(pool_index < 0) {
+    //     addNewEpoch();
+    //     pool_index = endIndex();
+    // }
+    // pool_[pool_index].setTemp(temp_c);
+    // emit dataUpdate();
 }
 
 void Dataset::mergeGnssTrack(QList<Position> track) {

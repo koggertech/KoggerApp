@@ -90,6 +90,7 @@ void registerQmlMetaTypes()
     qmlRegisterType<qPlot2D>( "WaterFall", 1, 0, "WaterFall");
     qmlRegisterType<BottomTrack>("BottomTrack", 1, 0, "BottomTrack");
     qRegisterMetaType<BottomTrack::ActionEvent>("BottomTrack::ActionEvent");
+    qRegisterMetaType<LinkAttribute>("LinkAttribute");
 }
 
 
@@ -143,9 +144,6 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("theme", &theme);
     engine.rootContext()->setContextProperty("linkManagerWrapper", core.getLinkManagerWrapperPtr());
     engine.rootContext()->setContextProperty("deviceManagerWrapper", core.getDeviceManagerWrapperPtr());
-#ifdef FLASHER
-    engine.rootContext()->setContextProperty("flasher", &core.getFlasherPtr);
-#endif
     engine.rootContext()->setContextProperty("logViewer", core.getConsolePtr());
 
     core.consoleInfo("Run...");

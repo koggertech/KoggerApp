@@ -16,7 +16,7 @@ Link::Link()
       isNotAvailable_(false),
       isProxy_(false),
       isForcedStopped_(false),
-      attribute_(0),
+      attribute_(LinkAttribute::kLinkAttributeNone),
       autoSpeedSelection_(false),
       timeoutCnt_(linkNumTimeoutsSmall),
       lastTotalCnt_(0),
@@ -278,9 +278,37 @@ void Link::setBaudrate(int baudrate)
     }
 }
 
+void Link::setRequestToSend(bool rts) {
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            installed = currDev->setRequestToSend(rts);
+        }
+    }
+}
+
+void Link::setDataTerminalReady(bool dtr) {
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            installed = currDev->setDataTerminalReady(dtr);
+        }
+    }
+}
+
 void Link::setParity(bool parity)
 {
     parity_ = parity;
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            if(parity_) {
+                currDev->setParity(QSerialPort::EvenParity);
+            } else {
+                currDev->setParity(QSerialPort::NoParity);
+            }
+        }
+    }
 }
 
 void Link::setLinkType(LinkType linkType)
@@ -447,9 +475,13 @@ bool Link::getAutoConnOnce() const
     return autoConnOnce_;
 }
 
+void Link::setAttribute(LinkAttribute attribute) {
+    attribute_ = attribute;
+}
+
 bool Link::writeFrame(FrameParser frame)
 {
-    return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
+    return  attribute_ == LinkAttribute::kLinkAttributeNone && frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
 
 bool Link::write(QByteArray data)
@@ -554,7 +586,9 @@ void Link::onCheckedTimerEnd()
     }
 
     if (!isReceivesData_ || !requestCnt_) {
-        emit sendDoRequestAll(uuid_);
+        if(attribute_ == LinkAttribute::kLinkAttributeNone) {
+            emit sendDoRequestAll(uuid_);
+        }
         if (!requestCnt_) {
             requestCnt_ = onUpgradingFirmware_ ? requestAllCntSmall : isReceivesData_ ? requestAllCntBig : requestAllCntSmall;
         }
@@ -646,13 +680,20 @@ void Link::readyRead()
             qint64 slen = socsUdp->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
             if (slen == -1)
                 break;
-
-            toParser(datagram);
+            if(attribute_ == LinkAttribute::kLinkAttributeNone) {
+                toParser(datagram);
+            } else {
+                emit dataReady(datagram);
+            }
         }
     } else { // tcp, serial
         QByteArray data = dev->readAll();
         if (!data.isEmpty()) {
-            toParser(data);
+            if(attribute_ == LinkAttribute::kLinkAttributeNone) {
+                toParser(data);
+            } else {
+                emit dataReady(data);
+            }
         }
     }
 }

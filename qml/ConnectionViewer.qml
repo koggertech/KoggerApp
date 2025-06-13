@@ -518,6 +518,82 @@ ColumnLayout {
     }
 
     MenuRow {
+        visible: core.isFactoryMode
+        CheckButton {
+            id: flasherStart
+            text: "Flash Firmware"
+            Layout.fillWidth: true
+            checkable: false
+
+            onClicked: {
+                core.connectOpenedLinkAsFlasher(flasherPnText.text)
+            }
+        }
+
+        CheckButton {
+            id: flasherDataRefresh
+            Layout.fillWidth: false
+            checkable: true
+            icon.source: "./icons/refresh.svg"
+
+            onCheckedChanged: {
+                 flasherDataInput.text = ""
+            }
+        }
+    }
+
+    MenuRow {
+        visible: flasherDataRefresh.checked && core.isFactoryMode
+        CTextField {
+            id: flasherDataInput
+            Layout.fillWidth: true
+            onVisibleChanged: {
+                if(visible) {
+                    focus = true
+                }
+            }
+        }
+
+        CheckButton {
+            Layout.fillWidth: false
+            checkable: false
+            visible: flasherDataRefresh.checked
+            icon.source: "./icons/file-download.svg"
+
+            onClicked: {
+                if(flasherDataInput.text !== "") {
+                    core.setFlasherData(flasherDataInput.text)
+                    flasherDataInput.text = ""
+                    flasherDataRefresh.checked = false
+                }
+            }
+        }
+    }
+
+    MenuRow {
+        visible: core.isFactoryMode
+        CText {
+            text: "Part Number:"
+        }
+
+        CTextField {
+            id: flasherPnText
+            Layout.fillWidth: true
+        }
+
+        Settings {
+            property alias flasherPartNumber: flasherPnText.text
+        }
+    }
+
+    MenuRow {
+        visible: core.isFactoryMode
+        CText {
+            text: core.flasherTextInfo
+        }
+    }
+
+    MenuRow {
         spacing: 4
         CheckButton {
             id: zeroingPosButton

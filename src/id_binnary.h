@@ -23,11 +23,12 @@ typedef enum {
     BoardSideEnhanced = 8,
     BoardRecorderMini = 9,
     BoardDVL = 10,
-    BoardEcho20 = 12,
+    BoardBasic2D = 12,
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
     BoardNanoSSS = 17,
-
+    BoardPULSEred_2D = 128,
+    BoardPULSEblue_DSS = 129
 } BoardVersion;
 
 struct LastReadInfo {

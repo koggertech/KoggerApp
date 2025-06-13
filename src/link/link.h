@@ -47,6 +47,8 @@ public:
     void setControlType(ControlType controlType);
     void setPortName(const QString& portName);
     void setBaudrate(int baudrate);
+    void setRequestToSend(bool rts);
+    void setDataTerminalReady(bool dtr);
     void setParity(bool parity);
     void setLinkType(LinkType linkType);
     void setAddress(const QString& address);
@@ -79,7 +81,8 @@ public:
     bool        getAutoSpeedSelection() const;
     bool        getIsUpgradingState() const;
     bool        getAutoConnOnce() const;
-    void        setAttribute(int attribute) { attribute_ = attribute; } // for link type (sonar, motor, etc.)
+    void        setAttribute(LinkAttribute attribute); // for link type (sonar, motor, etc.)
+    LinkAttribute attribute() { return attribute_; }
 
 public slots:
     bool writeFrame(Parsers::FrameParser frame);
@@ -97,7 +100,7 @@ signals:
     void isReceivesDataChanged(QUuid uuid);
     void sendDoRequestAll(QUuid uuid);
     void upgradingFirmwareStateChanged(QUuid uuid);
-    void dataReady();
+    void dataReady(QByteArray data);
 
 private slots:
     void onCheckedTimerEnd();
@@ -129,7 +132,7 @@ private:
     bool isNotAvailable_;
     bool isProxy_;
     bool isForcedStopped_;
-    int attribute_;
+    LinkAttribute attribute_;
     bool autoSpeedSelection_;
     std::unique_ptr<QTimer> checkTimer_;
     int timeoutCnt_;

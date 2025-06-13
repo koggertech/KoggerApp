@@ -81,6 +81,7 @@ DevDriver::~DevDriver()
         m_processTimer.stop();
     }
 #endif
+    m_processTimer.stop();
 }
 
 ChannelId DevDriver::getChannelId() const
@@ -1206,8 +1207,8 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
             case BoardDVL:
                 m_devName = "DVL";
                 break;
-            case BoardEcho20:
-                m_devName = "ECHO20";
+            case BoardBasic2D:
+                m_devName = "Basic2D";
                 break;
 
             case BoardNanoSSS:
@@ -1220,6 +1221,14 @@ void DevDriver::receivedVersion(Type type, Version ver, Resp resp) {
 
             case BoardUSBLBeacon:
                 m_devName = "Beacon";
+                break;
+
+            case BoardPULSEred_2D:
+                m_devName = "PULSEred 2D DSP";
+                break;
+
+            case BoardPULSEblue_DSS:
+                m_devName = "PULSEblue DSS";
                 break;
             default:
                 m_devName = QString("Device ID: %1.%2").arg(idVersion->boardVersion()).arg(idVersion->boardVersionMinor());

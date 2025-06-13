@@ -58,6 +58,9 @@ public slots:
     void onLoggingKlfStarted();
     void onSendRequestAll(QUuid uuid);
 
+    void onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware);
+    void onUpgradingFirmwareDone();
+
 signals:
     //
     void sendChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
@@ -165,7 +168,4 @@ private:
 private slots:
     void readyReadProxy(Link* link);
     void readyReadProxyNav(Link* link);
-
-    void onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware);
-    void onUpgradingFirmwareDone();
 };
