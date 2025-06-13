@@ -147,11 +147,11 @@ struct ColorInterval
 
 struct PendingWork {
     QVector<int> indxs; // новые индексы точек
-    bool         needFull = false; // полный rebuild
+    bool         rebuildLineLabels = false; // полный линий и лейб
 
     void clear() {
         indxs.clear();
-        needFull = false;
+        rebuildLineLabels = false;
     }
 };
 

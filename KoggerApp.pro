@@ -1,7 +1,7 @@
 QT += quick widgets network qml sql concurrent
 
 #CONFIG += FLASHER
-CONFIG += SEPARATE_READING # data reception in a separate thread
+#CONFIG += SEPARATE_READING # data reception in a separate thread
 #CONFIG += FAKE_COORDS # for measurements at single location
 
 CONFIG += c++17 qmltypes

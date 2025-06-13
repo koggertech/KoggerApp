@@ -193,7 +193,7 @@ void SurfaceView::setHandleXCall(int val)
 
 void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкрементальное обновление ребер и вершин
 {
-    if (!bottomTrackPtr_ || indxs.empty() || !processState_) {
+    if (indxs.empty()) {
         return;
     }
 
@@ -385,7 +385,11 @@ void SurfaceView::onAction()
 
 void SurfaceView::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
 {
-    if (++updCnt_ % handleXCall_) { // fake decimator
+    if (!bottomTrackPtr_ || !processState_) {
+        return;
+    }
+
+    if (++updCnt_ % handleXCall_) { // fake decimator by count
         return;
     }
     updCnt_ = 0;
@@ -399,11 +403,11 @@ void SurfaceView::handleWorkerFinished()
 
         {
             QMutexLocker lk(&pendingMtx_);
-            if (!pending_.indxs.isEmpty() || pending_.needFull) {
+            if (!pending_.indxs.isEmpty() || pending_.rebuildLineLabels) {
                 PendingWork copy = pending_;
                 pending_ = PendingWork{};
                 lk.unlock();
-                enqueueWork(copy.indxs, copy.needFull);
+                enqueueWork(copy.indxs, copy.rebuildLineLabels);
             }
         }
 }
@@ -974,12 +978,12 @@ void SurfaceView::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLab
     }
 }
 
-void SurfaceView::enqueueWork(const QVector<int> &indxs, bool full)
+void SurfaceView::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels)
 {
     {
         QMutexLocker lk(&pendingMtx_);
         pending_.indxs += indxs;
-        pending_.needFull |= full;
+        pending_.rebuildLineLabels |= rebuildLinesLabels;
     }
 
     if (workerFuture_.isRunning()) {
@@ -1002,7 +1006,7 @@ void SurfaceView::enqueueWork(const QVector<int> &indxs, bool full)
         if (!todo.indxs.isEmpty()) {
             onUpdatedBottomTrackData(todo.indxs);
         }
-        if (todo.needFull) {
+        if (todo.rebuildLineLabels) {
             fullRebuildLinesLabels();
         }
     });

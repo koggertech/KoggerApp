@@ -32,6 +32,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
     tileManager_(std::make_shared<map::TileManager>(this)),
+    updateIsobaths_(false),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
@@ -39,7 +40,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
     trackLastData_(false),
-    updateBottomTrack_(false)
+    updateBottomTrack_(false),
+    isOpeningFile_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -243,6 +245,11 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
 void GraphicsScene3dView::setUpdateMosaic(bool state)
 {
     updateMosaic_ = state;
+}
+
+void GraphicsScene3dView::setUpdateIsobaths(bool state)
+{
+    updateIsobaths_ = state;
 }
 
 void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
@@ -494,6 +501,11 @@ void GraphicsScene3dView::forceUpdateDatasetRef()
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setOpeningFileState(bool state)
+{
+    isOpeningFile_ = state;
+}
+
 void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
     QQuickFramebufferObject::geometryChanged(newGeometry, oldGeometry);
@@ -677,7 +689,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                         setLastEpochFocusView();
                                     }
 
-                                    if (updateMosaic_ || updateBottomTrack_) {
+#ifndef SEPARATE_READING
+                                    if (isOpeningFile_) {
+                                        return;
+                                    }
+#endif
+
+                                    if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
                                         auto* btP = m_dataset->getBottomTrackParamPtr();
 
                                         const int endIndx    = m_dataset->endIndex();

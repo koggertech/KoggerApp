@@ -318,6 +318,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 scene3dViewPtr_->clear();
             }
             scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
+            scene3dViewPtr_->setOpeningFileState(true);
         }
 
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
@@ -335,6 +336,10 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
                 openedfilePath_ = localfilePath;
 
                 onFileStopsOpening();
+
+                if (scene3dViewPtr_) {
+                    scene3dViewPtr_->setOpeningFileState(false);
+                }
 
                 return;
             }
@@ -392,6 +397,7 @@ void Core::onFileOpened()
 
     if (scene3dViewPtr_) {
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
+        scene3dViewPtr_->setOpeningFileState(false);
     };
 }
 #endif

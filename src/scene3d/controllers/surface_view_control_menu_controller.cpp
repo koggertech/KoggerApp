@@ -44,6 +44,7 @@ void SurfaceViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
+                graphicsSceneViewPtr_->setUpdateIsobaths(processState_);
                 if (auto surfaceViewPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfaceViewPtr) {
                     surfaceViewPtr->setVisible(visibility_);
                     surfaceViewPtr->setColorTableThemeById(themeId_);
@@ -159,6 +160,7 @@ void SurfaceViewControlMenuController::onProcessStateChanged(bool state)
     processState_ = state;
 
     if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->setUpdateIsobaths(processState_);
         graphicsSceneViewPtr_->getSurfaceViewPtr()->onProcessStateChanged(processState_);
     }
     else {

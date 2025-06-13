@@ -191,10 +191,12 @@ public:
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
     void setUpdateMosaic(bool state);
+    void setUpdateIsobaths(bool state);
     void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetRef();
+    void setOpeningFileState(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -278,6 +280,7 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
     bool updateMosaic_;
+    bool updateIsobaths_;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -299,6 +302,7 @@ private:
     float lastCameraDist_;
     bool trackLastData_;
     bool updateBottomTrack_;
+    bool isOpeningFile_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
