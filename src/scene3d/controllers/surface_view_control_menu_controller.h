@@ -4,7 +4,6 @@
 #include <QThread>
 
 #include "qml_component_controller.h"
-#include "surface_view_processor.h"
 
 
 class GraphicsScene3dView;
@@ -30,10 +29,6 @@ public:
     Q_INVOKABLE void onEdgeLimitChanged(int val);
     Q_INVOKABLE void onHandleXCallChanged(int val);
 
-Q_SIGNALS:
-    void surfaceViewProcessorTaskStarted();
-    void surfaceViewProcessorTaskFinished();
-
 protected:
     virtual void findComponent() override;
 
@@ -41,7 +36,6 @@ private:
     void tryInitPendingLambda();
 
     GraphicsScene3dView* graphicsSceneViewPtr_;
-    SurfaceViewProcessor surfaceViewProcessor_;
     QThread thread_;
     std::function<void()> pendingLambda_;
     bool visibility_;

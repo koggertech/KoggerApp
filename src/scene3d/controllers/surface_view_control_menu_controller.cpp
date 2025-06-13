@@ -7,20 +7,7 @@ SurfaceViewControlMenuController::SurfaceViewControlMenuController(QObject* pare
       graphicsSceneViewPtr_(nullptr),
       pendingLambda_(nullptr),
       visibility_(false)
-{
-    QObject::connect(&surfaceViewProcessor_, &SurfaceViewProcessor::taskStarted, this, &SurfaceViewControlMenuController::surfaceViewProcessorTaskStarted);
-
-    QObject::connect(&surfaceViewProcessor_, &SurfaceViewProcessor::taskFinished,
-                     this,                [this](SurfaceViewProcessorResult result) {
-                                              Q_UNUSED(result)
-                                              if (graphicsSceneViewPtr_) {
-                                                  if (auto surfaceViewPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfaceViewPtr) {
-                                                      //surfaceViewPtr->setProcessorResult(result);
-                                                  }
-                                              }
-                                              Q_EMIT surfaceViewProcessorTaskFinished();
-                                          });
-}
+{}
 
 void SurfaceViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView* sceneView)
 {

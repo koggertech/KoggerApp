@@ -83,8 +83,6 @@ private slots:
     void handleWorkerFinished();
 
 private:
-    friend class SurfaceViewProcessor;
-
     // methods
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void rebuildColorIntervals();
