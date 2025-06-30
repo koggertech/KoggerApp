@@ -7,9 +7,10 @@
 #include "draw_utils.h"
 
 Surface::Surface(QObject* parent)
-: SceneObject(new SurfaceRenderImplementation, parent)
-, m_contour(std::make_shared <Contour>())
-, m_grid(std::make_shared <SurfaceGrid>())
+    : SceneObject(new SurfaceRenderImplementation, parent),
+      m_contour(std::make_shared <Contour>()),
+      m_grid(std::make_shared <SurfaceGrid>()),
+      primitiveType_(0)
 {
     QObject::connect(m_grid.get(), &SurfaceGrid::changed, [this](){
         RENDER_IMPL(Surface)->m_gridRenderImpl = *m_grid->m_renderImpl;
@@ -90,9 +91,20 @@ void Surface::saveVerticesToFile(const QString& path)
     file.close();
 }
 
+const QVector<QVector3D> &Surface::getRawData() const
+{
+    return RENDER_IMPL(Surface)->m_data;
+}
+
+int Surface::getPrimitiveType() const
+{
+    return primitiveType_;
+}
+
 void Surface::setData(const QVector<QVector3D>& data, int primitiveType)
 {
     SceneObject::setData(data, primitiveType);
+    primitiveType_ = primitiveType;
 
     updateGrid();
     updateContour();

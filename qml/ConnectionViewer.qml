@@ -43,7 +43,7 @@ ColumnLayout {
                     anchors.leftMargin: 0
                     anchors.rightMargin: 0
                     // anchors.verticalCenter: parent
-                    color: ConnectionStatus ? "#005000" : IsNotAvailable ? "#500000" : theme.controlBackColor
+                    color: ConnectionStatus ? (ReceivesData ? "#005000" : "#505000") : IsNotAvailable ? "#500000" : theme.controlBackColor
                     border.width: 0
                     border.color: theme.controlBorderColor
                     radius: 2
@@ -53,6 +53,7 @@ ColumnLayout {
                     spacing: 1
                     anchors.fill: parent
                     anchors.margins: 1
+                    enabled: !IsUpgradingState
 
                     CheckButton {
                         id: linkSettingsButton
@@ -98,7 +99,7 @@ ColumnLayout {
                     }
 
                     CheckButton {
-                        visible: linkSettingsButton.checked && LinkType == 2
+                        visible: linkSettingsButton.checked && (LinkType === 2 || LinkType === 3)
                         Layout.alignment: Qt.AlignLeft
                         icon.source: "qrc:/icons/ui/x.svg"
                         checked: false
@@ -147,23 +148,19 @@ ColumnLayout {
                         }
                     }
 
-                    CCombo  {
-                        property bool isStartup: true
 
+
+                    CCombo  {
                         id: baudrateCombo
                         implicitWidth: 150
-                        // Layout.fillWidth: true
                         visible: LinkType == 1
-                        model: [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600, 1200000, 2000000, 4000000, 5000000, 8000000, 10000000]
-                        currentIndex: 7
+                        model: linkManagerWrapper.baudrateModel
+                        currentIndex: 8
                         displayText: Baudrate
 
-                        onCurrentTextChanged: {
-                            if (LinkType == 1 && !isStartup) {
-                                console.info("baudrateCombo: onCurrentTextChanged: currentText: " + Number(baudrateCombo.currentText))
-                                linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
-                            }
-                            isStartup = false
+                        onActivated: {
+                            linkManagerWrapper.sendUpdateBaudrate(Uuid, Number(baudrateCombo.currentText))
+                            autoSpeedCheckBox.checked = false
                         }
 
                         background:  Rectangle {
@@ -173,17 +170,39 @@ ColumnLayout {
                         }
                     }
 
+                    CheckButton {
+                        id: autoSpeedCheckBox
+                        visible: LinkType == 1
+                        icon.source: "qrc:/icons/ui/refresh.svg"
+                        implicitWidth: theme.controlHeight
+
+                        checked: AutoSpeedSelection
+
+                        onCheckedChanged: {
+                            if (!checked) {
+                                linkManagerWrapper.sendAutoSpeedSelection(Uuid, false)
+                            }
+                        }
+
+                        onToggled: {
+                            linkManagerWrapper.sendAutoSpeedSelection(Uuid, checked)
+                        }
+
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Auto search baudrate")
+                    }
+
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         small: true
                         leftPadding: 6
                         rightPadding: 0
-                        text: qsTr("ip:")
+                        text: LinkType === 2 ? qsTr("UDP ip:") : qsTr("TCP ip:")
                     }
 
                     CTextField {
                         id: ipAddressText
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         hoverEnabled: true
                         selectByMouse: true
                         Layout.fillWidth: true
@@ -215,7 +234,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -225,7 +244,7 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         small: true
                         leftPadding: 4
                         rightPadding: 0
@@ -234,7 +253,7 @@ ColumnLayout {
 
                     CTextField {
                         id: ipPortText
-                        visible: LinkType == 2
+                        visible: LinkType === 2
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: {
@@ -268,7 +287,7 @@ ColumnLayout {
                     }
 
                     Rectangle {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         color: theme.controlBackColor
                         height: parent.height
                         width: 2
@@ -278,20 +297,20 @@ ColumnLayout {
                     }
 
                     CText {
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         small: true
                         leftPadding: 4
                         rightPadding: 0
-                        text: qsTr("dst:")
+                        text: LinkType === 2 ? qsTr("dst:") : qsTr("srv:")
                     }
 
                     CTextField {
                         id: ipPort2Text
-                        visible: LinkType == 2
+                        visible: LinkType === 2 || LinkType === 3
                         hoverEnabled: true
                         Layout.fillWidth: false
                         implicitWidth: {
-                            if (Qt.platform.os == "android") {
+                            if (Qt.platform.os === "android") {
                                 return 100;
                             }
                             else {
@@ -322,7 +341,7 @@ ColumnLayout {
                     CButton {
                         Layout.alignment: Qt.AlignRight
                         text: ConnectionStatus ? qsTr("Close") : qsTr("Open")
-                        backColor: ConnectionStatus ? "green" : theme.controlSolidBackColor
+                        backColor: ConnectionStatus ? (ReceivesData ? "green" : "#adad00") : theme.controlSolidBackColor
                         borderRadius: 2
 
                         onClicked: {
@@ -341,7 +360,7 @@ ColumnLayout {
                                     break
                                 case 3:
                                     core.closeLogFile();
-                                    linkManagerWrapper.openAsTcp(Uuid)
+                                    linkManagerWrapper.openAsTcp(Uuid, ipAddressText.text, Number(ipPortText.text), Number(ipPort2Text.text))
                                     break
                                 default:
                                     console.log("Undefined type")
@@ -350,6 +369,21 @@ ColumnLayout {
 
                             }
                         }
+                    }
+                }
+
+                Rectangle {
+                    id: firmwareBackground
+                    anchors.fill: parent
+                    visible: IsUpgradingState
+                    color: "#30ffffff"
+                    z: 10
+
+                    Image {
+                        anchors.fill: parent
+                        source: "qrc:/icons/ui/diagonal_stripe.png"
+                        fillMode: Image.Tile
+                        opacity: 0.5
                     }
                 }
             }
@@ -411,6 +445,15 @@ ColumnLayout {
         }
 
         CButton {
+            text: qsTr("+TCP")
+            Layout.fillWidth: false
+
+            onClicked: {
+                linkManagerWrapper.createAsTcp("", 0, 0)
+            }
+        }
+
+        CButton {
             id: mavlinkProxy
             text: qsTr("MAVProxy")
             Layout.fillWidth: false
@@ -433,7 +476,7 @@ ColumnLayout {
 
         CheckButton {
             id: loggingCheck
-            text: qsTr("REC KLF")
+            text: qsTr("KLF")
             checkedColor: "red"
             color: "red"
 
@@ -454,7 +497,7 @@ ColumnLayout {
 
         CheckButton {
             id: loggingCheck2
-            text: qsTr("REC CSV")
+            text: qsTr("CSV")
             checkedColor: "red"
             color: "red"
 
@@ -468,9 +511,359 @@ ColumnLayout {
             }
 
             icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
+        }
 
-            // ToolTip.visible: hovered
-            // ToolTip.text: "Recording"
+        CheckButton {
+            id: importCheck
+            text: "Import"
+            checked: false
+        }
+    }
+
+    ParamGroup {
+        groupName: "CSV import"
+        visible: importCheck.checked
+        Layout.margins: 24
+
+        RowLayout {
+            ParamSetup {
+                paramName: "Separator: "
+                Layout.fillWidth: true
+
+                CCombo  {
+                    id: separatorCombo
+                    //                    Layout.fillWidth: true
+                    model: ["Comma", "Tab", "Space", "SemiColon"]
+
+                    Settings {
+                        property alias separatorCombo: separatorCombo.currentIndex
+                    }
+                }
+            }
+
+            ParamSetup {
+                paramName: "Row: "
+                Layout.fillWidth: true
+
+                SpinBoxCustom {
+                    id:firstRow
+                    implicitWidth: 100
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 1
+
+                    Settings {
+                        property alias importCSVfirstRow: firstRow.value
+                    }
+                }
+            }
+        }
+
+
+        RowLayout {
+            CCheck {
+                id: timeEnable
+                //                    Layout.fillWidth: true
+                //                        Layout.preferredWidth: 150
+                checked: true
+                text: "Time"
+
+                Settings {
+                    property alias importCSVtimeEnable: timeEnable.checked
+                }
+            }
+
+            //                CTextField {
+            //                    id: timeFormater
+            //                    text: "yyyy-MM-dd hh:mm:ss,zzz"
+            //                    Settings {
+            //                        property alias importCSVtimeFormater: timeFormater.text
+            //                    }
+            //                }
+
+            SpinBoxCustom {
+                id:timeColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 6
+
+                Settings {
+                    property alias importCSVtimeColumn: timeColumn.value
+                }
+            }
+
+            CCombo  {
+                id: utcGpsCombo
+                //                    Layout.fillWidth: true
+                model: ["UTC time", "GPS time"]
+
+                Settings {
+                    property alias utcGpsCombo: utcGpsCombo.currentIndex
+                }
+            }
+        }
+
+        //            RowLayout {
+        //                CCheck {
+        //                    id: utcTime
+        //                    Layout.fillWidth: true
+        //                    checked: true
+        //                    text: "UTC time"
+
+        //                    Settings {
+        //                        property alias utcTime: utcTime.checked
+        //                    }
+        //                }
+
+        //            }
+
+
+        RowLayout {
+            CCheck {
+                id: latLonEnable
+                Layout.fillWidth: true
+                //                        Layout.preferredWidth: 150
+                checked: true
+                text: "Lat/Lon/Alt"
+
+                Settings {
+                    property alias importCSVlatLonEnable: latLonEnable.checked
+                }
+            }
+
+            SpinBoxCustom {
+                id: latColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 2
+
+                Settings {
+                    property alias importCSVlatColumn: latColumn.value
+                }
+            }
+
+            SpinBoxCustom {
+                id: lonColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 3
+
+                Settings {
+                    property alias importCSVlonColumn: lonColumn.value
+                }
+            }
+
+            SpinBoxCustom {
+                id: altColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 4
+
+                Settings {
+                    property alias importCSValtColumn: altColumn.value
+                }
+            }
+        }
+
+        RowLayout {
+            CCheck {
+                id: xyzEnable
+                Layout.fillWidth: true
+                //                        Layout.preferredWidth: 150
+                checked: true
+                text: "NEU"
+
+                Settings {
+                    property alias importCSVxyzEnable: xyzEnable.checked
+                }
+            }
+
+            SpinBoxCustom {
+                id: northColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 2
+
+                Settings {
+                    property alias importCSVnorthColumn: northColumn.value
+                }
+            }
+
+            SpinBoxCustom {
+                id: eastColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 3
+
+                Settings {
+                    property alias importCSVeastColumn: eastColumn.value
+                }
+            }
+
+            SpinBoxCustom {
+                id: upColumn
+                implicitWidth: 100
+                from: 1
+                to: 100
+                stepSize: 1
+                value: 4
+
+                Settings {
+                    property alias importCSVupColumn: upColumn.value
+                }
+            }
+        }
+
+        RowLayout {
+            CTextField {
+                id: importPathText
+                hoverEnabled: true
+                Layout.fillWidth: true
+                //                    visible: connectionTypeCombo.currentText === "File"
+
+                text: ""
+                placeholderText: qsTr("Enter path")
+
+                Keys.onPressed: {
+                    if (event.key === 16777220) {
+                        importTrackFileDialog.openCSV();
+                    }
+                }
+
+                Settings {
+                    property alias importPathText: importPathText.text
+                }
+            }
+
+            CButton {
+                text: "..."
+                Layout.fillWidth: false
+                //visible: true // connectionTypeCombo.currentText === "File"
+                implicitHeight: theme.controlHeight
+                implicitWidth: implicitHeight*1.1
+                onClicked: {
+                    importTrackFileDialog.open()
+                }
+
+                FileDialog {
+                    id: importTrackFileDialog
+                    title: "Please choose a file"
+                    folder: shortcuts.home
+                    //                    fileMode: FileDialog.OpenFiles
+
+                    nameFilters: ["Logs (*.csv *.txt)"]
+
+                    function openCSV() {
+                        core.openCSV(importPathText.text, separatorCombo.currentIndex, firstRow.value, timeColumn.value, utcGpsCombo.currentIndex == 0,
+                                     latColumn.value*latLonEnable.checked, lonColumn.value*latLonEnable.checked, altColumn.value*latLonEnable.checked,
+                                     northColumn.value*xyzEnable.checked, eastColumn.value*xyzEnable.checked, upColumn.value*xyzEnable.checked);
+                    }
+
+                    onAccepted: {
+                        importPathText.text = importTrackFileDialog.fileUrl.toString()
+
+                        openCSV();
+                    }
+                    onRejected: {
+                    }
+                }
+
+                Settings {
+                    property alias importFolder: importTrackFileDialog.folder
+                }
+            }
+        }
+
+
+    }
+
+
+    MenuRow {
+        visible: core.isFactoryMode
+        CheckButton {
+            id: flasherStart
+            text: "Flash Firmware"
+            Layout.fillWidth: true
+            checkable: false
+
+            onClicked: {
+                core.connectOpenedLinkAsFlasher(flasherPnText.text)
+            }
+        }
+
+        CheckButton {
+            id: flasherDataRefresh
+            Layout.fillWidth: false
+            checkable: true
+            icon.source: "qrc:/icons/ui/refresh.svg"
+
+            onCheckedChanged: {
+                flasherDataInput.text = ""
+            }
+        }
+    }
+
+    MenuRow {
+        visible: flasherDataRefresh.checked && core.isFactoryMode
+        CTextField {
+            id: flasherDataInput
+            Layout.fillWidth: true
+            onVisibleChanged: {
+                if(visible) {
+                    focus = true
+                }
+            }
+        }
+
+        CheckButton {
+            Layout.fillWidth: false
+            checkable: false
+            visible: flasherDataRefresh.checked
+            icon.source: "qrc:/icons/ui/file_download.svg"
+
+            onClicked: {
+                if(flasherDataInput.text !== "") {
+                    core.setFlasherData(flasherDataInput.text)
+                    flasherDataInput.text = ""
+                    flasherDataRefresh.checked = false
+                }
+            }
+        }
+    }
+
+    MenuRow {
+        visible: core.isFactoryMode
+        CText {
+            text: "Part Number:"
+        }
+
+        CTextField {
+            id: flasherPnText
+            Layout.fillWidth: true
+        }
+
+        Settings {
+            property alias flasherPartNumber: flasherPnText.text
+        }
+    }
+
+    MenuRow {
+        visible: core.isFactoryMode
+        CText {
+            text: FLASHER_STATE ? core.flasherTextInfo : ""
         }
     }
 

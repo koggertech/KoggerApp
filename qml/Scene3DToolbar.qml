@@ -64,6 +64,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias triangleEdgeLengthLimitSpinBox: triangleEdgeLengthLimitSpinBox.value
+                    }
                 }
             }
 
@@ -73,11 +77,20 @@ ColumnLayout {
                 CheckButton {
                     id: decimationCountCheck
                     text: qsTr("Count")
-                    checked: true
                     ButtonGroup.group: decimationGroup
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        if (!decimationDistanceCheck.checked) {
+                            decimationCountCheck.checked = true
+                        }
+                    }
+
+                    Settings {
+                        property alias decimationCountCheck: decimationCountCheck.checked
                     }
                 }
 
@@ -88,6 +101,10 @@ ColumnLayout {
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Settings {
+                        property alias decimationDistanceCheck: decimationDistanceCheck.checked
                     }
                 }
 
@@ -111,6 +128,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias decimationCountSpinBox: decimationCountSpinBox.value
+                    }
                 }
             }
 
@@ -130,6 +151,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias decimationDistanceSpinBox: decimationDistanceSpinBox.value
+                    }
                 }
             }
 
@@ -139,11 +164,20 @@ ColumnLayout {
                 CheckButton {
                     id: triangleTypeCheck
                     text: qsTr("Triangle")
-                    checked: true
                     ButtonGroup.group: surfaceTypeGroup
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        if (!gridTypeCheck.checked) {
+                            triangleTypeCheck.checked = true
+                        }
+                    }
+
+                    Settings {
+                        property alias triangleTypeCheck: triangleTypeCheck.checked
                     }
                 }
 
@@ -154,6 +188,10 @@ ColumnLayout {
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Settings {
+                        property alias gridTypeCheck: gridTypeCheck.checked
                     }
                 }
 
@@ -178,6 +216,10 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Settings {
+                        property alias gridCellSizeSpinBox: gridCellSizeSpinBox.value
+                    }
                 }
             }
 
@@ -196,6 +238,14 @@ ColumnLayout {
                     onFocusChanged: {
                         surfaceSettings.focus = true
                     }
+
+                    Component.onCompleted: {
+                        SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    Settings {
+                        property alias contourVisibilityCheckButton: contourVisibilityCheckButton.checked
+                    }
                 }
                 CheckButton {
                     id: gridVisibilityCheckButton
@@ -208,6 +258,14 @@ ColumnLayout {
 
                     onFocusChanged: {
                         surfaceSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    Settings {
+                        property alias gridVisibilityCheckButton: gridVisibilityCheckButton.checked
                     }
                 }
             }
@@ -278,6 +336,323 @@ ColumnLayout {
                     property alias exportSurfaceFolderText: exportSurfacePathText.text
                 }
             }
+        }
+    }
+
+    // surface view extra settings
+    MenuFrame {
+        id: surfaceViewSettings
+        visible: surfaceViewCheckButton.hovered || isHovered || surfaceViewCheckButton.surfaceViewLongPressTriggered || surfaceViewTheme.activeFocus
+        z: surfaceViewSettings.visible
+        Layout.alignment: Qt.AlignRight
+
+        onIsHoveredChanged: {
+            if (Qt.platform.os === "android") {
+                if (isHovered) {
+                    isHovered = false
+                }
+            }
+            else {
+                if (!isHovered || !surfaceViewCheckButton.hovered) {
+                    surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                }
+            }
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                focus = true;
+            }
+        }
+
+        onFocusChanged: {
+            if (!focus) {
+                surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+            }
+        }
+
+        ColumnLayout {
+            CheckButton {
+                id: realtimeSurfaceProcessingCheckButton
+                text: qsTr("Realtime processing")
+                Layout.fillWidth: true
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onProcessStateChanged(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    SurfaceViewControlMenuController.onProcessStateChanged(checked);
+
+                }
+
+                Settings {
+                    property alias realtimeSurfaceProcessingCheckButton: realtimeSurfaceProcessingCheckButton.checked
+                }
+            }
+
+            CButton {
+                id: resetSurfaceViewButton
+                text: qsTr("Reset")
+                Layout.fillWidth: true
+                onClicked: {
+                    SurfaceViewControlMenuController.onResetSurfaceViewButtonClicked()
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            RowLayout {
+                CText {
+                    text: qsTr("Edge limit, m:")
+                    Layout.fillWidth: true
+                }
+                SpinBoxCustom {
+                    id: surfaceViewEdgeLimitSpinBox
+                    implicitWidth: 200
+                    from: 10
+                    to: 1000
+                    stepSize: 5
+                    value: 20
+                    editable: false
+
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimitSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimitSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias surfaceViewEdgeLimitSpinBox: surfaceViewEdgeLimitSpinBox.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CText {
+                    text: qsTr("Handle each call:")
+                    Layout.fillWidth: true
+                }
+                SpinBoxCustom {
+                    id: surfaceViewHandleXCallSpinBox
+                    implicitWidth: 200
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    value: 1
+                    editable: false
+
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onHandleXCallChanged(surfaceViewHandleXCallSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        SurfaceViewControlMenuController.onHandleXCallChanged(surfaceViewHandleXCallSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias surfaceViewHandleXCallSpinBox: surfaceViewHandleXCallSpinBox.value
+                    }
+                }
+            }
+
+            RowLayout {
+                visible: !surfaceViewDebugModeCheckButton.checked
+                CText {
+                    text: qsTr("Theme:")
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                CCombo  {
+                    id: surfaceViewTheme
+                    Layout.preferredWidth: 300
+                    model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                    currentIndex: 0
+                    onCurrentIndexChanged: {
+                        SurfaceViewControlMenuController.onThemeChanged(currentIndex)
+                    }
+
+                    onFocusChanged: {
+                        if (Qt.platform.os === 'android') {
+                            surfaceViewSettings.focus = true
+                        }
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onThemeChanged(currentIndex)
+                    }
+
+                    Settings {
+                        property alias surfaceViewTheme: surfaceViewTheme.currentIndex
+                    }
+                }
+            }
+
+            RowLayout {
+                visible: !surfaceViewDebugModeCheckButton.checked
+
+                CText {
+                    text: qsTr("Surface/line step, m:")
+                    Layout.fillWidth: true
+
+                }
+                SpinBoxCustom {
+                    id: surfaceViewSurfaceLineStepSizeSpinBox
+                    implicitWidth: 200
+                    from: 1
+                    to: 200
+                    stepSize: 1
+                    value: 3
+                    editable: false
+
+                    property int decimals: 1
+                    property real realValue: value / 10
+
+                    validator: DoubleValidator {
+                        bottom: Math.min(surfaceViewSurfaceLineStepSizeSpinBox.from, surfaceViewSurfaceLineStepSizeSpinBox.to)
+                        top:  Math.max(surfaceViewSurfaceLineStepSizeSpinBox.from, surfaceViewSurfaceLineStepSizeSpinBox.to)
+                    }
+
+                    textFromValue: function(value, locale) {
+                        return Number(value / 10).toLocaleString(locale, 'f', decimals)
+                    }
+
+                    valueFromText: function(text, locale) {
+                        return Number.fromLocaleString(locale, text) * 10
+                    }
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewSurfaceLineStepSizeSpinBox.realValue)
+                    }
+
+                    onRealValueChanged: {
+                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewSurfaceLineStepSizeSpinBox.realValue)
+                    }
+
+                    Settings {
+                        property alias surfaceViewSurfaceLineStepSizeSpinBox: surfaceViewSurfaceLineStepSizeSpinBox.value
+                    }
+                }
+            }
+            RowLayout {
+                visible: !surfaceViewDebugModeCheckButton.checked
+
+                CText {
+                    text: qsTr("Label step, m:")
+                    Layout.fillWidth: true
+                }
+                SpinBoxCustom {
+                    id: surfaceViewLabelStepSpinBox
+                    implicitWidth: 200
+                    from: 10
+                    to: 1000
+                    stepSize: 5
+                    value: 100
+                    editable: false
+
+                    property int decimals: 1
+
+                    onFocusChanged: {
+                        surfaceViewSettings.focus = true
+                    }
+
+                    Component.onCompleted: {
+                        SurfaceViewControlMenuController.onSetLabelStepSize(surfaceViewLabelStepSpinBox.value)
+                    }
+
+                    onValueChanged: {
+                        SurfaceViewControlMenuController.onSetLabelStepSize(surfaceViewLabelStepSpinBox.value)
+                    }
+
+                    Settings {
+                        property alias surfaceViewLabelStepSpinBox: surfaceViewLabelStepSpinBox.value
+                    }
+                }
+            }
+
+            CheckButton {
+                text: qsTr("Triangles")
+                Layout.fillWidth: true
+                checked: true
+                visible: surfaceViewDebugModeCheckButton.checked
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onTrianglesVisible(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            CheckButton {
+                text: qsTr("Edges")
+                Layout.fillWidth: true
+                checked: true
+                visible: surfaceViewDebugModeCheckButton.checked
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onEdgesVisible(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            CheckButton {
+                id: surfaceViewDebugModeCheckButton
+                text: qsTr("Debug mode")
+                Layout.fillWidth: true
+                checked: false
+
+                onCheckedChanged: {
+                    SurfaceViewControlMenuController.onDebugModeView(checked);
+                }
+
+                onFocusChanged: {
+                    surfaceViewSettings.focus = true
+                }
+            }
+
+            // CButton {
+            //     id: updateSurfaceViewButton
+            //     text: qsTr("some action")
+            //     Layout.fillWidth: true
+
+            //     onClicked: {
+            //         SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
+            //     }
+
+            //     onFocusChanged: {
+            //         surfaceViewSettings.focus = true
+            //     }
+            // }
         }
     }
 
@@ -399,29 +774,6 @@ ColumnLayout {
 
                     Settings {
                         property alias realtimeProcessingButton: realtimeProcessingButton.checked
-                    }
-                }
-                CheckButton {
-                    id: sideScanTrackLastData
-                    text: qsTr("Track last data")
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 200
-                    checked: true
-
-                    onToggled: {
-                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
-                    }
-
-                    onFocusChanged: {
-                        sideScanViewSettings.focus = true
-                    }
-
-                    Component.onCompleted: {
-                        SideScanViewControlMenuController.onTrackLastEpochChanged(checked)
-                    }
-
-                    Settings {
-                        property alias sideScanTrackLastData: sideScanTrackLastData.checked
                     }
                 }
                 RowLayout {
@@ -1124,14 +1476,63 @@ ColumnLayout {
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
-            checked: true
             iconSource: "qrc:/icons/ui/click.svg"
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
                 Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
             }
+
+            Settings {
+                property alias selectionToolButton: selectionToolButton.checked
+            }
         }
+
+        CheckButton {
+            id: trackLastDataCheckButton
+            objectName: "trackLastDataCheckButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: false
+            iconSource: "qrc:/icons/ui/location.svg"
+            implicitWidth: theme.controlHeight
+
+            onToggled: {
+                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
+            }
+        }
+
+        //CheckButton {
+        //    id: realtimeUpdateBottomTrackCheckButton
+        //    objectName: "realtimeUpdateBottomTrackCheckButton"
+        //    backColor: theme.controlBackColor
+        //    borderColor: theme.controlBackColor
+        //    checkedBorderColor: theme.controlBorderColor
+        //    checked: false
+        //    iconSource: "qrc:/icons/ui/refresh.svg"
+        //    implicitWidth: theme.controlHeight
+
+        //    onToggled: {
+        //        Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
+        //    }
+
+        //    Component.onCompleted: {
+        //        Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
+        //    }
+
+        //    Settings {
+        //        property alias realtimeUpdateBottomTrackCheckButton: realtimeUpdateBottomTrackCheckButton.checked
+        //    }
+        //}
 
         CheckButton {
             id: navigationArrowCheckButton
@@ -1165,13 +1566,16 @@ ColumnLayout {
             iconSource: "qrc:/icons/ui/route.svg"
             implicitWidth: theme.controlHeight
 
-
             onCheckedChanged: {
                 BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
 
             Component.onCompleted: {
                 BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias boatTrackCheckButton: boatTrackCheckButton.checked
             }
         }
 
@@ -1191,6 +1595,10 @@ ColumnLayout {
             Component.onCompleted: {
                 BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
             }
+
+            Settings {
+                property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
+            }
         }
 
         CheckButton {
@@ -1204,19 +1612,11 @@ ColumnLayout {
 
             onCheckedChanged: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
-                contourVisibilityCheckButton.checked = checked
-                gridVisibilityCheckButton.checked = checked
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
             Component.onCompleted: {
                 SurfaceControlMenuController.onSurfaceVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceContourVisibilityCheckBoxCheckedChanged(checked)
-                SurfaceControlMenuController.onSurfaceGridVisibilityCheckBoxCheckedChanged(checked)
-                contourVisibilityCheckButton.checked = checked
-                gridVisibilityCheckButton.checked = checked
                 BottomTrackControlMenuController.onSurfaceStateChanged(checked)
             }
 
@@ -1250,6 +1650,65 @@ ColumnLayout {
                 onTriggered: {
                     surfaceCheckButton.longPressTriggered = true;
                 }
+            }
+
+            Settings {
+                property alias surfaceCheckButton: surfaceCheckButton.checked
+            }
+        }
+
+        // surface view check button
+        CheckButton {
+            id: surfaceViewCheckButton
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "qrc:/icons/ui/grid_4x4.svg"
+            implicitWidth: theme.controlHeight
+
+            onCheckedChanged: {
+                SurfaceViewControlMenuController.onSurfaceViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            Component.onCompleted: {
+                SurfaceViewControlMenuController.onSurfaceViewVisibilityCheckBoxCheckedChanged(checked)
+            }
+
+            property bool surfaceViewLongPressTriggered: false
+
+            MouseArea {
+                id: surfaceViewTouchArea
+                anchors.fill: parent
+                onPressed: {
+                    surfaceViewLongPressTimer.start()
+                    surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                }
+
+                onReleased: {
+                    if (!surfaceViewCheckButton.surfaceViewLongPressTriggered) {
+                        surfaceViewCheckButton.checked = !surfaceViewCheckButton.checked
+                    }
+                    surfaceViewLongPressTimer.stop()
+                }
+
+                onCanceled: {
+                    surfaceViewLongPressTimer.stop()
+                }
+            }
+
+            Timer {
+                id: surfaceViewLongPressTimer
+                interval: 100 // ms
+                repeat: false
+
+                onTriggered: {
+                    surfaceViewCheckButton.surfaceViewLongPressTriggered = true;
+                }
+            }
+
+            Settings {
+                property alias surfaceViewCheckButton: surfaceViewCheckButton.checked
             }
         }
 

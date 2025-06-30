@@ -1,13 +1,16 @@
+#include "plot2D_grid.h"
 #include "plot2D.h"
-#include <QObject>
 
+constexpr float epsilon = 0.001f;
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
 
-
-bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
+bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
 {
+    auto &canvas = parent->canvas();
+    auto &cursor = parent->cursor();
+
     if (!isVisible())
         return false;
 
@@ -56,8 +59,9 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
     if (cursor.distance.isValid()) {
         p->setFont(QFont("Asap", 26, QFont::Normal));
         float val{ cursor.distance.to };
-        QString range_text = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QObject::tr(" m");
-        p->drawText(imageWidth - textXOffset / 2 - range_text.count() * 25, imageHeight - 10, range_text);
+        bool isInteger = std::abs(val - std::round(val)) < epsilon;
+        QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
+        p->drawText(imageWidth - textXOffset / 2 - rangeText.count() * 25, imageHeight - 10, rangeText);
     }
 
     if (_rangeFinderLastVisible && cursor.distance.isValid()) {
@@ -65,18 +69,57 @@ bool Plot2DGrid::draw(Canvas& canvas, Dataset* dataset, DatasetCursor cursor)
         Epoch* preLastEpoch = dataset->lastlast();
         float distance = NAN;
 
-        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder()))
+        if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder())) {
             distance = lastEpoch->rangeFinder();
-        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder()))
+        }
+        else if (preLastEpoch != NULL && isfinite(preLastEpoch->rangeFinder())) {
             distance = preLastEpoch->rangeFinder();
+        }
 
         if (isfinite(distance)) {
             pen.setColor(QColor(250, 100, 0));
             p->setPen(pen);
             p->setFont(QFont("Asap", 40, QFont::Normal));
             float val{ round(distance * 100.f) / 100.f };
-            QString rangeText = QString::number(val, 'f', (val == static_cast<int>(val)) ? 0 : 2) + QObject::tr(" m");
+            bool isInteger = std::abs(val - std::round(val)) < epsilon;
+            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
             p->drawText(imageWidth / 2 - rangeText.count() * 32, imageHeight - 15, rangeText);
+        }
+    }
+
+    if(true) {
+        Epoch* lastEpoch = dataset->last();
+        Epoch* preLastEpoch = dataset->lastlast();
+        float temp = NAN;
+        temp = dataset->getLastTemp();
+
+        // qDebug() << "Plot temp def: " << temp;
+
+        // if (lastEpoch != NULL && isfinite(lastEpoch->temperatureAvail())) {
+        //     temp = lastEpoch->temperature();
+        //     qDebug() << "Plot temp one: " << temp;
+        // }
+        // else if (preLastEpoch != NULL && isfinite(preLastEpoch->temperatureAvail())) {
+        //     temp = preLastEpoch->temperature();
+        //     qDebug() << "Plot temp sec: " << temp;
+        // } else if() {
+
+        // if (lastEpoch != NULL && isfinite(lastEpoch->temperatureAvail())) {
+        //     temp = preLastEpoch->temperature();
+        //     qDebug() << "Plot temp sec: " << temp;
+        // }
+
+        // }
+        // qDebug() << "Plot temp end: " << temp;
+
+        if (isfinite(temp)) {
+            pen.setColor(QColor(80, 200, 0));
+            p->setPen(pen);
+            p->setFont(QFont("Asap", 40, QFont::Normal));
+            float val{ round(temp * 100.f) / 100.f };
+            bool isInteger = std::abs(val - std::round(val)) < epsilon;
+            QString rangeText = QString::number(val, 'f', isInteger ? 0 : 1) + QObject::tr("°");
+            p->drawText(imageWidth / 2 - 300, imageHeight - 15, rangeText);
         }
     }
 

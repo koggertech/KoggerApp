@@ -90,7 +90,8 @@ public:
         SideScanView = 9,
         ImageView    = 10,
         MapView      = 11,
-        Contacts     = 12
+        Contacts     = 12,
+        SurfaceView  = 13
     };
 
     Q_ENUM(SceneObjectType)

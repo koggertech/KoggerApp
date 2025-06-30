@@ -20,7 +20,7 @@ Item {
     property bool isDraggable: false
     property bool isOpacityControlled: false
     property real offOpacity: 0.5
-    property bool isHovered: mouseOpacityArea.containsMouse
+    property bool isHovered: false
 
     Rectangle {
         id: backgroundRect
@@ -66,6 +66,7 @@ Item {
         onClicked: mouse.accepted = false
 
         onContainsMouseChanged: {
+            containsMouse ? isHovered = true : isHovered = false
             columnItem.opacity = !isOpacityControlled || containsMouse ? 1 : offOpacity
         }
 

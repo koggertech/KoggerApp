@@ -1,25 +1,22 @@
-#ifndef PLOT_CASH_H
-#define PLOT_CASH_H
+#pragma once
 
-#include <QObject>
+#include <math.h>
 #include <stdint.h>
-#include <QVector>
+#include <time.h>
 #include <QImage>
-#include <QPoint>
-#include <QPixmap>
-#include <QPainter>
-#include "math.h"
-#include <qvector3d.h>
-#include <QQmlEngine>
 #include <QMutex>
-
-#include <dsp_defs.h>
-
+#include <QObject>
+#include <QPainter>
+#include <QPixmap>
+#include <QPoint>
+#include <QVector>
+#include <QVector3D>
+#include <QQmlEngine>
+#include "dataset_defs.h"
+#include "dsp_defs.h"
 #include "id_binnary.h"
-
-#include "time.h"
-
 #include "usbl_view.h"
+
 
 #if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
 #define MAKETIME(t) mktime(t)
@@ -27,11 +24,9 @@
 #else
 #define MAKETIME(t) _mkgmtime64(t)
 #define GMTIME(t) _gmtime64(&sec);
-
 #endif
 
-
-#define CONSTANTS_RADIUS_OF_EARTH			6371000			/* meters (m)		*/
+#define CONSTANTS_RADIUS_OF_EARTH 6371000 /* meters (m) */
 #define M_TWOPI_F 6.28318530717958647692f
 #define M_PI_2_F  1.57079632679489661923f
 #define M_RAD_TO_DEG 57.29577951308232087679f
@@ -42,9 +37,30 @@ class BlackStripesProcessor;
 typedef struct NED NED;
 typedef struct LLARef LLARef;
 
+enum PositionSource {
+    PositionSourceNone,
+    PositionSourceGNSS,
+    PositionSourceRTK,
+    PositionSourcePPK,
+    PositionSourceInterpolation,
+    PositionSourceExtrapolation,
+    PositionSourceNED,
+    PositionSourceLLA,
+};
+
+enum AltitudeSource {
+    AltitudeSourceNone,
+    AltitudeSourceRTK,
+    AltitudeSourcePPK
+};
+
 typedef struct LLA {
     double latitude = NAN, longitude = NAN;
     double altitude = NAN;
+
+    PositionSource source = PositionSourceNone;
+    AltitudeSource altSource = AltitudeSourceNone;
+
     LLA() {};
     LLA(double lat, double lon, double alt= NAN) {
         latitude = lat;
@@ -132,6 +148,8 @@ typedef struct  LLARef {
 
 typedef struct NED {
     double n = NAN, e = NAN, d = NAN;
+    PositionSource source = PositionSourceNone;
+
     NED() {}
     NED(double _n, double _e, double _d) : n(_n), e(_e), d(_d) { };
     NED(LLA* lla, LLARef* ref, bool spherical = true) {
@@ -336,30 +354,34 @@ typedef struct {
     }
 } Position;
 
-
-const int CHANNEL_NONE = 0x8000;
-const int CHANNEL_FIRST = 0x8000-1;
+template <typename T>
+inline bool hasIndex(const QVector<T>& vec, int i) {
+    return i >= 0 && i < vec.size();
+}
 
 typedef struct DatasetChannel {
     Q_GADGET
-    Q_PROPERTY(int channelId  MEMBER channel)
+   // Q_PROPERTY(int channelId  MEMBER channel)
 
 public:
-    int channel = -1;
-    int count = 0;
-    double distance_from = NAN;
-    double distance_to = NAN;
+    ChannelId channelId_;
+    uint8_t subChannelId_ = 0;
+    int count_ = 0;
+    double distanceFrom_ = NAN;
+    double distanceTo_ = NAN;
+    XYZ localPosition_;
+    QString portName_;
 
-    XYZ localPosition;
+    DatasetChannel()
+    {}
 
-    DatasetChannel() {
-    }
+    DatasetChannel(const ChannelId& channelId, uint8_t subChannelId)
+        : channelId_(channelId),
+        subChannelId_(subChannelId)
+    {}
 
-    DatasetChannel(int ch) {
-        channel = ch;
-    }
     void counter() {
-        count++;
+        count_++;
     }
 } DatasetChannel;
 Q_DECLARE_METATYPE(DatasetChannel)
@@ -419,7 +441,7 @@ struct RecordParameters {
     }
 };
 
-typedef QMap<int, ComplexSignal> ComplexSignals;
+typedef QMap<ChannelId, ComplexSignal> ComplexSignals;
 
 class Epoch {
 public:
@@ -468,7 +490,7 @@ public:
 
         Position bottomPoint;
 
-        bool isDist() { return isfinite(distance); }
+        bool isDist() const { return isfinite(distance); }
         void setDistance(float dist, DistanceSource src = DistanceSourceNone) { distance = dist; source = src; }
         void clearDistance(DistanceSource src = DistanceSourceNone) { distance = NAN; source = src; }
         void resetDistance() { distance = NAN; source = DistanceSourceNone; }
@@ -489,8 +511,8 @@ public:
             source = src;
         }
 
-        float getMax() { return max; }
-        float getMin() { return min; }
+        float getMax() const { return max; }
+        float getMin() const { return min; }
     } DistProcessing;
 
     struct Echogram {
@@ -531,8 +553,8 @@ public:
         RecordParameters recordParameters_;
         ChartParameters chartParameters_;
 
-        float range() {
-            return amplitude.size()*(resolution);
+        float range() const {
+            return amplitude.size() * resolution;
         }
     };
 
@@ -541,11 +563,13 @@ public:
 
     Epoch();
     void setEvent(int timestamp, int id, int unixt);
-    void setChart(int16_t channelId, QVector<uint8_t> chartData, float resolution, float offset);
-    void setRecParameters(int16_t channelId, const RecordParameters& recParams);
-    void setChartParameters(int16_t channelId, const ChartParameters& chartParams);
-    void setDist(int dist);
-    void setRangefinder(int channel, float distance);
+    void setChart(const ChannelId& channelId, const QVector<QVector<uint8_t>>& chartData, float resolution, float offset);
+    void setChartBySubChannelId(const ChannelId& channelId, uint8_t subChannelId, const QVector<uint8_t>& chartData, float resolution, float offset);
+
+    void setRecParameters(const ChannelId& channelId, const RecordParameters& recParams);
+    void setChartParameters(const ChannelId& channelId, const ChartParameters& chartParams);
+    void setDist(const ChannelId& channelId, int dist);
+    void setRangefinder(const ChannelId& channelId, float distance);
     void setDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
@@ -553,9 +577,9 @@ public:
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
 
-    void setComplexF(int channel, ComplexSignal signal);
+    void setComplexF(const ChannelId& channelId, ComplexSignal signal);
     ComplexSignals complexSignals() { return _complex; }
-    ComplexSignal complexSignal(int channel) { return _complex[channel]; }
+    //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
     bool isComplexSignalAvail() { return _complex.size() > 0; }
 
     void set(IDBinUsblSolution::UsblSolution data) { _usblSolution = data;  _isUsblSolutionAvailable = true; }
@@ -574,46 +598,60 @@ public:
     float encoder2() { return _encoder.e2; }
     float encoder3() { return _encoder.e3; }
 
-    void setDistProcessing(int16_t channel, float dist) {
-        if(_charts.contains(channel)) {
-            _charts[channel].bottomProcessing.setDistance(dist, DistProcessing::DistanceSourceDirectHand);
-        }
-    }
-
-    void clearDistProcessing(int16_t channel) {
-        if(_charts.contains(channel)) {
-            _charts[channel].bottomProcessing.clearDistance(DistProcessing::DistanceSourceDirectHand);
-        }
-    }
-
-    void setMinDistProc(int16_t channel, float dist) {
-        if(_charts.contains(channel)) {
-            _charts[channel].bottomProcessing.setMin(dist, DistProcessing::DistanceSourceConstrainHand);
-        }
-    }
-
-    void setMaxDistProc(int16_t channel, float dist) {
-        if(_charts.contains(channel)) {
-            _charts[channel].bottomProcessing.setMax(dist, DistProcessing::DistanceSourceConstrainHand);
-        }
-    }
-
-    void setMinMaxDistProc(int16_t channel, int min, int max,  bool is_save = true) {
-        if(_charts.contains(channel)) {
-            float minsave = _charts[channel].bottomProcessing.getMin();
-            float maxsave = _charts[channel].bottomProcessing.getMax();
-
-            _charts[channel].bottomProcessing.setMin(min);
-            _charts[channel].bottomProcessing.setMax(max);
-            _charts[channel].bottomProcessing.resetDistance();
-
-            if(!is_save) {
-                _charts[channel].bottomProcessing.setMin(minsave);
-                _charts[channel].bottomProcessing.setMax(maxsave);
+    void setDistProcessing(const ChannelId& channelId, float dist) {
+        if (charts_.contains(channelId)) {
+            auto& charts = charts_[channelId];
+            for (auto& iEchogram : charts) {
+                iEchogram.bottomProcessing.setDistance(dist, DistProcessing::DistanceSourceDirectHand);
             }
         }
     }
 
+    void clearDistProcessing(const ChannelId& channelId) {
+        if (charts_.contains(channelId)) {
+            auto& charts = charts_[channelId];
+            for (auto& iEchogram : charts) {
+                iEchogram.bottomProcessing.clearDistance(DistProcessing::DistanceSourceDirectHand);
+            }
+        }
+    }
+
+    void setMinDistProc(const ChannelId& channelId, float dist) {
+        if (charts_.contains(channelId)) {
+            auto& charts = charts_[channelId];
+            for (auto& iEchogram : charts) {
+                iEchogram.bottomProcessing.setMin(dist, DistProcessing::DistanceSourceConstrainHand);
+            }
+        }
+    }
+
+    void setMaxDistProc(const ChannelId& channelId, float dist) {
+        if (charts_.contains(channelId)) {
+            auto& charts = charts_[channelId];
+            for (auto& iEchogram : charts) {
+                iEchogram.bottomProcessing.setMax(dist, DistProcessing::DistanceSourceConstrainHand);
+            }
+        }
+    }
+
+    void setMinMaxDistProc(const ChannelId& channelId, int min, int max,  bool isSave = true) {
+        if (charts_.contains(channelId)) {
+            auto& charts = charts_[channelId];
+            for (auto& iEchogram : charts) {
+                float minsave = iEchogram.bottomProcessing.getMin();
+                float maxsave = iEchogram.bottomProcessing.getMax();
+
+                iEchogram.bottomProcessing.setMin(min);
+                iEchogram.bottomProcessing.setMax(max);
+                iEchogram.bottomProcessing.resetDistance();
+
+                if (!isSave) {
+                    iEchogram.bottomProcessing.setMin(minsave);
+                    iEchogram.bottomProcessing.setMax(maxsave);
+                }
+            }
+        }
+    }
 
     bool eventAvail() { return flags.eventAvail; }
     int eventID() { return _eventId; }
@@ -622,116 +660,115 @@ public:
 
     DateTime* time() { return &_time; }
 
-    QVector<uint8_t> chartData(int16_t channel = 0) {
-        if(chartAvail(channel)) {
-            return _charts[channel].amplitude;
-        }
-        return QVector<uint8_t>();
-    }
-    int chartSize(int16_t channel = 0) {
-        if(chartAvail(channel)) {
-            return _charts[channel].amplitude.size();
-        }
-        return -1;
-    }
-    bool chartAvail() { return _charts.size() > 0; }
-    bool chartAvail(int16_t channel) {
-        if(_charts.contains(channel)) {
-            return _charts[channel].amplitude.size() > 0;
-        }
+    //QVector<uint8_t> chartData(const ChannelId& channelId = CHANNEL_NONE) {
+    //    if(chartAvail(channelId)) {
+    //        return charts_[channelId].amplitude;
+    //    }
+    //    return QVector<uint8_t>();
+    //}
+    int chartSize(const ChannelId& channelId = CHANNEL_NONE, uint8_t subChannelId = 0);
+    bool chartAvail();
+    bool chartAvail(const ChannelId& channelId, uint8_t subChannelId = 0) const;
+    Echogram* chart(const ChannelId& channelId = CHANNEL_NONE, uint8_t subChannelId = 0);
+    QList<ChannelId> chartChannels();
 
-        return false;
-    }
+    // float chartsFullRange(const ChannelId& channelId = ChannelId()) {
+    //     Q_UNUSED(channelId);
+    //     QList<ChannelId> charts_channels = chartChannels();
 
-    Echogram* chart(int16_t channel = 0) {
-        if(_charts.contains(channel)) {
-            return &_charts[channel];
-        }
+    //     float full_range  = 0;
+    //     for(uint16_t ch = 0; ch < charts_channels.size(); ch++) {
+    //         int16_t channel = charts_channels[ch];
+    //         full_range += _charts[channel].range();
+    //     }
 
-        return NULL;
-    }
+    //     return full_range;
+    // }
 
-    QList<int16_t> chartChannels() {
-        return _charts.keys();
-    }
+    float getMaxRange(const ChannelId& channel = CHANNEL_NONE, const ChannelId& channel2 = CHANNEL_NONE)
+    {
+        float maxRange = NAN;
 
-    float chartsFullRange(int16_t channel = -1) {
-        Q_UNUSED(channel);
-        QList<int16_t> charts_channels = chartChannels();
-
-        float full_range  = 0;
-        for(uint16_t ch = 0; ch < charts_channels.size(); ch++) {
-            int16_t channel = charts_channels[ch];
-            full_range += _charts[channel].range();
-        }
-
-        return full_range;
-    }
-
-    float getMaxRnage(int32_t channel = CHANNEL_FIRST, int32_t channel2 = CHANNEL_NONE) {
-        float range = NAN;
-
-        float range1 = NAN;
-        float range2 = NAN;
-        if(_charts.size() > 0 && channel == CHANNEL_FIRST) {
-            range1 = _charts.first().range();
-        } else if(_charts.contains(channel)) {
-            range1 = _charts[channel].range();
-        }
-
-        if(_charts.size() > 0 && channel2 == CHANNEL_FIRST) {
-            range2 = _charts.first().range();
-        } else if(_charts.contains(channel2)) {
-            range2 = _charts[channel2].range();
-        }
-
-        if(isfinite(range1)) {
-            range = range1;
-        }
-
-        if(isfinite(range2)) {
-            if(isfinite(range)) {
-                if(range < range2) {
-                    range = range2;
+        if (channel == CHANNEL_NONE && channel2 == CHANNEL_NONE) {
+            for (const auto& echogramList : charts_) {
+                for (const auto& ech : echogramList) {
+                    float r = ech.range();
+                    if (std::isfinite(r) && (!std::isfinite(maxRange) || r > maxRange)) {
+                        maxRange = r;
+                        break;
+                    }
                 }
-            } else {
-                range = range2;
+            }
+        } else {
+            auto extractMaxFromChannel = [this](const ChannelId& ch) -> float {
+                float result = NAN;
+                if (charts_.contains(ch)) {
+                    for (const auto& ech : charts_[ch]) {
+                        float r = ech.range();
+                        if (std::isfinite(r) && (!std::isfinite(result) || r > result)) {
+                            result = r;
+                            break;
+                        }
+                    }
+                }
+                return result;
+            };
+
+            const float r1 = extractMaxFromChannel(channel);
+            const float r2 = extractMaxFromChannel(channel2);
+
+            if (std::isfinite(r1)) {
+                maxRange = r1;
+            }
+            if (std::isfinite(r2) && (!std::isfinite(maxRange) || r2 > maxRange)) {
+                maxRange = r2;
             }
         }
 
-        if(_rangeFinders.size() > 0) {
-            float r1 = _rangeFinders.first();
-            if(isfinite(r1) && (r1 > range || !isfinite(range))) {
-                range = r1;
+        if (!rangefinders_.isEmpty()) {
+            float r3 = rangefinders_.first();
+            if (std::isfinite(r3) && (!std::isfinite(maxRange) || r3 > maxRange)) {
+                maxRange = r3;
             }
         }
 
-        return range;
+        return maxRange;
+
+
     }
 
-    bool distAvail() { return flags.distAvail; }
+    bool distAvail() const
+    {
+        return flags.distAvail;
+    }
 
-    double  distProccesing(int16_t channel) {
-        if(channel == CHANNEL_FIRST) {
-            QMapIterator<int16_t, Echogram> i(_charts);
-             while (i.hasNext()) {
-                 i.next();
-                 double distance = i.value().bottomProcessing.getDistance();
-                 if(isfinite(distance)) {
-                     return distance;
-                 }
-             }
-        } else if(_charts.contains(channel)) {
-            return _charts[channel].bottomProcessing.getDistance();
+    double distProccesing(const ChannelId& channelId = CHANNEL_NONE)
+    {
+        if (channelId == CHANNEL_NONE) {
+            for (auto it = charts_.cbegin(); it != charts_.cend(); ++it) {
+                for (const auto& iEchogram : it.value()) {
+                    double distance = iEchogram.bottomProcessing.getDistance();
+                    if (std::isfinite(distance)) {
+                        return distance;
+                    }
+                }
+            }
+        } else if (charts_.contains(channelId)) {
+            const auto& chart = charts_[channelId];
+            for (const auto& ech : chart) {
+                double distance = ech.bottomProcessing.getDistance();
+                if (std::isfinite(distance)) {
+                    return distance;
+                }
+            }
         }
 
         return NAN;
     }
 
-
-    float rangeFinder() {
-        if(_rangeFinders.size() > 0) {
-            return _rangeFinders.first();
+    float rangeFinder() const {
+        if(rangefinders_.size() > 0) {
+            return rangefinders_.first();
         }
 
         return NAN;
@@ -787,87 +824,98 @@ public:
     void doBottomTrackSideScan(Echogram &chart, bool is_update_dist = false);
 
 
-    bool chartTo(int16_t channel, float start, float end, int16_t* dst, int len, int image_type, bool reverse = false) {
-        if(dst == nullptr) {  return false; }
-
-        if(channel == CHANNEL_FIRST && _charts.size() > 0) {
-            channel =  _charts.firstKey();
-        } else if(!_charts.contains(channel)) {
-            memset(dst, 0, len*2);
+    bool chartTo(const ChannelId& channelId, uint8_t subChannelId, float start, float end, int16_t* dst, int len, int imageType, bool reverse = false)
+    {
+        if (dst == nullptr) {
             return false;
         }
 
-        if(_charts[channel].resolution == 0) {
-            memset(dst, 0, len*2);
+        ChannelId localChannelId = channelId;
+
+        //if (localChannelId == CHANNEL_NONE && charts_.size() > 0) {
+        //    localChannelId = charts_.firstKey();
+        //}
+        /*else*/ if (!charts_.contains(localChannelId)) {
+            memset(dst, 0, len * 2);
             return false;
         }
 
-        int raw_size = _charts[channel].amplitude.size();
-
-        if(raw_size == 0) {
-            memset(dst, 0, len*2);
+        if (charts_[localChannelId][subChannelId].resolution == 0) {
+            memset(dst, 0, len * 2);
             return false;
         }
 
-        uint8_t* src = _charts[channel].amplitude.data();
+        int rawSize = charts_[localChannelId][subChannelId].amplitude.size();
 
-        if(image_type == 1) {
-            if(_charts[channel].compensated.size() == 0) {
-                _charts[channel].updateCompesated();
+        if (rawSize == 0) {
+            memset(dst, 0, len * 2);
+            return false;
+        }
+
+        uint8_t* src = charts_[localChannelId][subChannelId].amplitude.data();
+
+        if (imageType == 1) {
+            if (charts_[localChannelId][subChannelId].compensated.size() == 0) {
+                charts_[localChannelId][subChannelId].updateCompesated();
             }
-            src = _charts[channel].compensated.data();
+            src = charts_[localChannelId][subChannelId].compensated.data();
         }
 
-        if(raw_size == 0) {
-            for(int i_to = 0; i_to < len; i_to++) {
-                dst[i_to] = 0;
+        if (rawSize == 0) {
+            for (int iTo = 0; iTo < len; iTo++) {
+                dst[iTo] = 0;
             }
         }
 
-        start -= _charts[channel].offset;
-        end -= _charts[channel].offset;
+        start -= charts_[localChannelId][subChannelId].offset;
+        end -= charts_[localChannelId][subChannelId].offset;
 
-        float raw_range_f = _charts[channel].range();
-        float target_range_f = (float)(end - start);
-        float scale_factor = ((float)raw_size/(float)len)*(target_range_f/raw_range_f);
-        int offset = start/_charts[channel].resolution;
+        float rawRangeF = charts_[localChannelId][subChannelId].range();
+        float targetRangeF = static_cast<float>(end - start);
+        float scaleFactor = (static_cast<float>(rawSize) / static_cast<float>(len)) * (targetRangeF / rawRangeF);
+        int offset = start / charts_[localChannelId][subChannelId].resolution;
 
-        int src_start = offset;
+        int srcStart = offset;
         int dir = reverse ? -1 : 1;
         int off = reverse ? (len-1) : 0;
-        if(scale_factor >= 0.8f) {
-            for(int i_to = 0; i_to < len; i_to++) {
-                int src_end = (float)(i_to + 1)*scale_factor + offset;
+        if (scaleFactor >= 0.8f) {
+            for (int iTo = 0; iTo < len; iTo++) {
+                int srcEnd = static_cast<float>(iTo + 1) * scaleFactor + offset;
 
                 int32_t val = 0;
-                if(src_start >= 0 && src_start < raw_size) {
-                    if(src_end > raw_size) { src_end = raw_size; }
+                if (srcStart >= 0 && srcStart < rawSize) {
+                    if (srcEnd > rawSize) {
+                        srcEnd = rawSize;
+                    }
 
-                    val = src[src_start];
-                    for(int i = src_start; i < src_end; i++) {
+                    val = src[srcStart];
+                    for (int i = srcStart; i < srcEnd; i++) {
                         val += src[i];
                     }
-                    val /= 1 + (src_end - src_start);
+                    val /= 1 + (srcEnd - srcStart);
                 }
 
-                src_start = src_end;
-                dst[off + dir*i_to] = val;
+                srcStart = srcEnd;
+                dst[off + dir * iTo] = val;
             }
-        } else {
-            for(int i_to = 0; i_to < len; i_to++) {
-                float cell_offset = (float)(i_to)*scale_factor + (float)offset + 0.5f;
-                int src_start = int(cell_offset);
-                int src_end = src_start + 1;
+        }
+        else {
+            for (int iTo = 0; iTo < len; iTo++) {
+                float cellOffset = static_cast<float>(iTo) * scaleFactor + static_cast<float>(offset) + 0.5f;
+                int srcStart = static_cast<int>(cellOffset);
+                int srcEnd = srcStart + 1;
 
                 int32_t val = 0;
-                if(src_start >= 0 && src_start < raw_size) {
-                    if(src_end >= raw_size) { src_end = raw_size-1; }
+                if (srcStart >= 0 && srcStart < rawSize) {
+                    if (srcEnd >= rawSize) {
+                        srcEnd = rawSize - 1;
+                    }
 
-                    float coef = cell_offset - floorf(cell_offset);
-                    val = (float)src[src_start]*(1 - coef) + (float)src[src_end]*coef;
+                    float coef = cellOffset - floorf(cellOffset);
+                    val = static_cast<float>(src[srcStart]) * (1 - coef) + static_cast<float>(src[srcEnd]) * coef;
                 }
 
-                dst[off + dir*i_to] = val;
+                dst[off + dir*iTo] = val;
             }
         }
 
@@ -885,30 +933,32 @@ public:
     float getInterpFirstChannelDist() const;
     float getInterpSecondChannelDist() const;
 
-    bool getWasValidlyRenderedInEchogram() const;
-    void setWasValidlyRenderedInEchogram(bool state);
-
-    void setResolution(int16_t channelId, uint16_t resolution);
-    void setChartCount(int16_t channelId, uint16_t chartCount);
-    void setOffset(int16_t channelId, uint16_t offset);
-    void setFrequency(int16_t channelId, uint16_t frequency);
-    void setPulse(int16_t channelId, uint8_t pulse);
-    void setBoost(int16_t channelId, uint8_t boost);
-    void setSoundSpeed(int16_t channelId, uint32_t soundSpeed);
-    uint16_t getResolution(int16_t channelId) const;
-    uint16_t getChartCount(int16_t channelId) const;
-    uint16_t getOffset(int16_t channelId) const;
-    uint16_t getFrequency(int16_t channelId) const;
-    uint8_t getPulse(int16_t channelId) const;
-    uint8_t getBoost(int16_t channelId) const;
-    uint32_t getSoundSpeed(int16_t channelId) const;
-    ChartParameters getChartParameters(int16_t channelId) const;
-
+    void setResolution      (const ChannelId& channelId, uint16_t resolution);
+    void setChartCount      (const ChannelId& channelId, uint16_t chartCount);
+    void setOffset          (const ChannelId& channelId, uint16_t offset);
+    void setFrequency       (const ChannelId& channelId, uint16_t frequency);
+    void setPulse           (const ChannelId& channelId, uint8_t pulse);
+    void setBoost           (const ChannelId& channelId, uint8_t boost);
+    void setSoundSpeed      (const ChannelId& channelId, uint32_t soundSpeed);
+    uint16_t getResolution  (const ChannelId& channelId) const;
+    uint16_t getChartCount  (const ChannelId& channelId) const;
+    uint16_t getOffset      (const ChannelId& channelId) const;
+    uint16_t getFrequency   (const ChannelId& channelId) const;
+    uint8_t getPulse        (const ChannelId& channelId) const;
+    uint8_t getBoost        (const ChannelId& channelId) const;
+    uint32_t getSoundSpeed  (const ChannelId& channelId) const;
+    ChartParameters getChartParameters(const ChannelId& channelId) const;
     Contact contact_; // TODO: private
 
+    uint8_t getChartsSizeByChannelId(const ChannelId& channelId) const {
+        if (charts_.contains(channelId)) {
+            return static_cast<uint8_t>(charts_[channelId].size());
+        }
+        return 0;
+    }
 protected:
-    QMap<int16_t, Echogram> _charts; // channels not addr
-    QMap<int16_t, float> _rangeFinders;
+    QMap<ChannelId, QVector<Echogram>> charts_; // key - channelId, value - echograms for all addresses
+    QMap<ChannelId, float> rangefinders_; // ???
 
     int _eventTimestamp_us = 0;
     int _eventUnix = 0;
@@ -941,7 +991,7 @@ protected:
         double course = NAN;
     } _GnssData;
 
-    float m_temp_c = 0;
+    float m_temp_c = NAN;
 
     struct {
         float e1 = NAN;
@@ -987,7 +1037,6 @@ private:
             return false;
         };
     } interpData_;
-    bool wasValidlyRenderedInEchogram_;
 };
 
 class Dataset : public QObject {
@@ -1022,14 +1071,14 @@ public:
 
     inline int size() const {
 
-        return _pool.size();
+        return pool_.size();
 
     }
 
     Epoch* fromIndex(int index_offset = 0) {
         int index = validIndex(index_offset);
         if(index >= 0) {
-            return &_pool[index];
+            return &pool_[index];
         }
 
         return NULL;
@@ -1049,7 +1098,7 @@ public:
         return NULL;
     }
 
-    int endIndex() {
+    int endIndex() const {
         return size() - 1;
     }
 
@@ -1060,10 +1109,20 @@ public:
         return index;
     }
 
-    void getMaxDistanceRange(float* from, float* to, int channel1, int channel2 = CHANNEL_NONE);
+    void getMaxDistanceRange(float* from, float* to, const ChannelId& channel, uint8_t subAddressCh1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subAddressCh2 = 0);
 
-    QMap<int, DatasetChannel> channelsList() {
-        return _channelsSetup;
+    QVector<DatasetChannel> channelsList() {
+        return channelsSetup_;
+    }
+
+    bool isContainsChannelInChannelSetup(const ChannelId& channelId) const {
+        for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
+            if (channelsSetup_.at(i).channelId_ == channelId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     QVector<QVector3D> boatTrack() const;
@@ -1078,6 +1137,10 @@ public:
         return _lastPositionGNSS;
     }
 
+    float getLastTemp() {
+        return lastTemp_;
+    }
+
     BottomTrackParam* getBottomTrackParamPtr() {
         return &bottomTrackParam_;
     }
@@ -1088,21 +1151,22 @@ public slots:
     void addTimestamp(int timestamp);
 
     //
-    void setChartSetup(int16_t channel, uint16_t resol, uint16_t count, uint16_t offset);
-    void setTranscSetup(int16_t channel, uint16_t freq, uint8_t pulse, uint8_t boost);
-    void setSoundSpeed(int16_t channel, uint32_t soundSpeed);
+    void setChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
+    void setTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
+    void setSoundSpeed (const ChannelId& channelId, uint32_t soundSpeed);
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
-    void addChart(ChartParameters, QVector<uint8_t> data, float resolution, float offset);
+    void addChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void rawDataRecieved(RawData raw_data);
-    void addDist(int dist);
-    void addRangefinder(float distance);
+    void addDist(const ChannelId& channelId, int dist);
+    void addRangefinder(const ChannelId& channelId, float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);
     void addDopplerBeam(IDBinDVL::BeamSolution *beams, uint16_t cnt);
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void addPositionRTK(Position position);
 
     void addGnssVelocity(double h_speed, double course);
 
@@ -1114,21 +1178,10 @@ public slots:
     void resetDataset();
     void resetDistProcessing();
 
-    void setChannelOffset(int channal, float x, float y, float z) {
-        if(_channelsSetup.contains(channal)) {
-            _channelsSetup[channal].localPosition.x = x;
-            _channelsSetup[channal].localPosition.y = y;
-            _channelsSetup[channal].localPosition.z = z;
-        }
-    }
+    void setChannelOffset(const ChannelId& channelId, float x, float y, float z);
 
-    void bottomTrackProcessing(int channel1, int channel2);
+    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2);
     void spatialProcessing();
-    void emitPositionsUpdated() {
-        emit bottomTrackUpdated(0, endIndex());
-        emit boatTrackUpdated();
-    }
-
 
     void usblProcessing();
     QVector<QVector3D> beaconTrack() {
@@ -1151,16 +1204,19 @@ public slots:
     void updateBoatTrack(bool update_all = false);
 
     QStringList channelsNameList();
+    std::tuple<ChannelId, uint8_t, QString> channelIdFromName(const QString& name) const;
+
+
     void interpolateData(bool fromStart);
 
 signals:
-    void channelsListUpdates(QList<DatasetChannel> channels);
     void dataUpdate();
-    void bottomTrackUpdated(int lEpoch, int rEpoch);
+    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);
     void updatedLlaRef();
     void channelsUpdated();
+    void redrawEpochs(const QSet<int>& indxs);
 
 protected:
 
@@ -1173,18 +1229,9 @@ protected:
     uint64_t testTime_ = 1740466541;
 #endif
 
-    QMap<int, DatasetChannel> _channelsSetup;
+    QVector<DatasetChannel> channelsSetup_;
 
-    void validateChannelList(int ch) {
-        bool isNewChannel = !_channelsSetup.contains(ch);
-
-        _channelsSetup[ch].channel = ch;
-        _channelsSetup[ch].counter();
-
-        if (isNewChannel) {
-            emit channelsUpdated();
-        }
-    }
+    void validateChannelList(const ChannelId& channelId, uint8_t subChannelId);
 
     QVector<QVector3D> _boatTrack;
     QHash<int, int> selectedBoatTrackVertexIndices_; // first - vertice indx, second - epoch indx
@@ -1193,26 +1240,21 @@ protected:
 
     QMap<int, UsblView::UsblObjectParams> tracks;
 
-    enum {
-        AutoRangeNone,
-        AutoRangeLast,
-        AutoRangeMax,
-        AutoRangeMaxVis
-    } _autoRange = AutoRangeLast;
+    //enum {
+    //    AutoRangeNone,
+    //    AutoRangeLast,
+    //    AutoRangeMax,
+    //    AutoRangeMaxVis
+    //} _autoRange = AutoRangeLast;
 
 
-    QVector<Epoch> _pool;
-
-    float lastTemperature = 0;
+    QVector<Epoch> pool_;
 
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
     Position _lastPositionGNSS;
+    float lastTemp_ = NAN;
 
-    Epoch* addNewEpoch() {
-        _pool.resize(_pool.size() + 1);
-        auto* lastEpoch = last();
-        return lastEpoch;
-    }
+    Epoch* addNewEpoch();
 
     GraphicsScene3dView* scene3dViewPtr_ = nullptr;
 
@@ -1236,12 +1278,14 @@ private:
 
         Dataset* datasetPtr_;
         int lastInterpIndx_;
-        int firstChannelId_;
-        int secondChannelId_;
+        ChannelId firstChannelId_;
+        ChannelId secondChannelId_;
     };
 
     /*methods*/
     LlaRefState getCurrentLlaRefState() const;
+    bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
+    void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
 
     /*data*/
     LLARef _llaRef;
@@ -1252,9 +1296,13 @@ private:
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;
     uint64_t boatTrackValidPosCounter_;
-    QMap<int16_t, RecordParameters> usingRecordParameters_;
+    QMap<ChannelId, RecordParameters> usingRecordParameters_;
     BlackStripesProcessor* bSProc_;
-    int lastAddChartEpochIndx_;
-};
+    QMap<ChannelId, int> lastAddChartEpochIndx_;
+    QSet<ChannelId> channelsToResizeEthData_;
 
-#endif // PLOT_CASH_H
+    // for GUI
+    QList<QString> channelsNames_;
+    QList<ChannelId> channelsIds_;
+    QList<uint8_t> subChannelIds_;
+};

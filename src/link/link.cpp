@@ -1,32 +1,50 @@
 #include "link.h"
 
 
-Link::Link() :
-    ioDevice_(nullptr),
-    uuid_(QUuid::createUuid()),
-    controlType_(ControlType::kManual),
-    linkType_(LinkType::LinkNone),
-    portName_(""),
-    baudrate_(0),
-    parity_(false),
-    address_(""),
-    sourcePort_(0),
-    destinationPort_(0),
-    isPinned_(false),
-    isHided_(false),
-    isNotAvailable_(false),
-    isProxy_(false),
-    isForcedStopped_(false)
+Link::Link()
+    : ioDevice_(nullptr),
+      controlType_(ControlType::kManual),
+      linkType_(LinkType::kLinkNone),
+      portName_(""),
+      baudrate_(0),
+      parity_(false),
+      address_(""),
+      sourcePort_(0),
+      destinationPort_(0),
+      isPinned_(false),
+      isHided_(false),
+      isNotAvailable_(false),
+      isProxy_(false),
+      isForcedStopped_(false),
+      attribute_(LinkAttribute::kLinkAttributeNone),
+      autoSpeedSelection_(false),
+      timeoutCnt_(linkNumTimeoutsSmall),
+      lastTotalCnt_(0),
+      isReceivesData_(false),
+      lastSearchIndx_(0),
+      onUpgradingFirmware_(false),
+      localGhostIgnoreCount_(0),
+      requestCnt_(requestAllCntBig),
+      autoConnOnce_(false)
 {
     frame_.resetComplete();
+
+    checkTimer_ = std::make_unique<QTimer>(this);
+    checkTimer_->setInterval(linkCheckingTimeInterval);
+
+    QObject::connect(checkTimer_.get(), &QTimer::timeout, this, &Link::onCheckedTimerEnd, Qt::AutoConnection);
+    QTimer::singleShot(500, this, [&]() -> void { checkTimer_->start(); });
 }
 
 void Link::createAsSerial(const QString &portName, int baudrate, bool parity)
 {
-    linkType_ = LinkType::LinkSerial;
+    linkType_ = LinkType::kLinkSerial;
     portName_ = portName;
+    uuid_ =  QUuid::createUuidV3(QUuid{}, portName_);
     parity_ = parity;
     baudrate_ = baudrate;
+    baudrateSearchList_ = baudrateSearchList; // by default
+    resetLastSearchIndx();
 }
 
 void Link::openAsSerial()
@@ -49,14 +67,17 @@ void Link::openAsSerial()
         delete serialPort;
         emit connectionStatusChanged(uuid_);
     }
+    baudrateSearchList_ = baudrateSearchList;
+    resetLastSearchIndx();
 }
 
 void Link::createAsUdp(const QString &address, int sourcePort, int destinationPort)
 {
-    linkType_ = LinkType::LinkIPUDP;
+    linkType_ = LinkType::kLinkIPUDP;
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
+    uuid_ = QUuid::createUuid();
 }
 
 void Link::updateUdpParameters(const QString& address, int sourcePort, int destinationPort)
@@ -93,10 +114,11 @@ void Link::openAsUdp()
 
 void Link::createAsTcp(const QString &address, int sourcePort, int destinationPort)
 {
-    linkType_ = LinkType::LinkIPTCP;
+    linkType_ = LinkType::kLinkIPTCP;
     address_ = address;
     sourcePort_ = sourcePort;
     destinationPort_ = destinationPort;
+    uuid_ = QUuid::createUuid();
 }
 
 void Link::updateTcpParameters(const QString& address, int sourcePort, int destinationPort)
@@ -108,7 +130,39 @@ void Link::updateTcpParameters(const QString& address, int sourcePort, int desti
 
 void Link::openAsTcp()
 {
-    // TODO
+    QTcpSocket *socketTcp = new QTcpSocket(this);
+    hostAddress_.setAddress(address_);
+
+    QPointer<QTcpSocket> safeSock = socketTcp;
+
+    connect(socketTcp, &QTcpSocket::connected, this, [=]() {
+        if (!safeSock) {
+            return;
+        }
+
+        setDev(safeSock);
+        emit connectionStatusChanged(uuid_);
+        emit opened(uuid_, this);
+    });
+
+    connect(socketTcp, &QTcpSocket::disconnected, this, [=]() {
+        if (safeSock) {
+            safeSock->deleteLater();
+        }
+
+        emit connectionStatusChanged(uuid_);
+        close();
+    });
+
+    connect(socketTcp, &QTcpSocket::errorOccurred, this, [=](QAbstractSocket::SocketError err) {
+        Q_UNUSED(err);
+        if (safeSock && safeSock->state() != QAbstractSocket::ConnectedState) {
+            safeSock->abort();
+        }
+        emit connectionStatusChanged(uuid_);
+    });
+
+    socketTcp->connectToHost(hostAddress_, destinationPort_);
 }
 
 bool Link::isOpen() const
@@ -119,21 +173,21 @@ bool Link::isOpen() const
         return retVal;
 
     switch (linkType_) {
-    case LinkType::LinkNone: {
+    case LinkType::kLinkNone: {
         retVal = false;
         break;
     }
-    case LinkType::LinkSerial: {
+    case LinkType::kLinkSerial: {
         retVal = ioDevice_->isOpen();
         break;
     }
-    case LinkType::LinkIPUDP: {
-        if (auto ptr = static_cast<QUdpSocket*>(ioDevice_); ptr)
+    case LinkType::kLinkIPUDP: {
+        if (auto ptr = qobject_cast<QUdpSocket*>(ioDevice_); ptr)
             retVal = ptr->state() != QAbstractSocket::UnconnectedState;
         break;
     }
-    case LinkType::LinkIPTCP: {
-        if (auto ptr = static_cast<QTcpSocket*>(ioDevice_); ptr)
+    case LinkType::kLinkIPTCP: {
+        if (auto ptr = qobject_cast<QTcpSocket*>(ioDevice_); ptr)
             retVal = ptr->state() != QAbstractSocket::UnconnectedState;
         break;
     }
@@ -184,10 +238,10 @@ void Link::setConnectionStatus(bool connectionStatus)
         close();
     else {
         switch (linkType_) {
-        case LinkType::LinkNone: { break; }
-        case LinkType::LinkSerial: { openAsSerial(); break; }
-        case LinkType::LinkIPUDP: { openAsUdp(); break; }
-        case LinkType::LinkIPTCP: { openAsTcp(); break; }
+        case LinkType::kLinkNone: { break; }
+        case LinkType::kLinkSerial: { openAsSerial(); break; }
+        case LinkType::kLinkIPUDP: { openAsUdp(); break; }
+        case LinkType::kLinkIPTCP: { openAsTcp(); break; }
         default: { break; }
         }
     }
@@ -205,11 +259,39 @@ void Link::setPortName(const QString &portName)
 
 void Link::setBaudrate(int baudrate)
 {
+    int lastBaudRate = baudrate_;
+
     baudrate_ = baudrate;
 
-    if (linkType_ == LinkType::LinkSerial) {
-        if (auto currDev = static_cast<QSerialPort*>(ioDevice_); currDev) {
-            currDev->setBaudRate(baudrate_);
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            installed = currDev->setBaudRate(baudrate_);
+        }
+    }
+
+    if (getConnectionStatus()) {
+        if (!installed) {
+            baudrate_ = lastBaudRate;
+            emit baudrateChanged(uuid_);
+        }
+    }
+}
+
+void Link::setRequestToSend(bool rts) {
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            installed = currDev->setRequestToSend(rts);
+        }
+    }
+}
+
+void Link::setDataTerminalReady(bool dtr) {
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            installed = currDev->setDataTerminalReady(dtr);
         }
     }
 }
@@ -217,6 +299,16 @@ void Link::setBaudrate(int baudrate)
 void Link::setParity(bool parity)
 {
     parity_ = parity;
+    bool installed = false;
+    if (linkType_ == LinkType::kLinkSerial) {
+        if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
+            if(parity_) {
+                currDev->setParity(QSerialPort::EvenParity);
+            } else {
+                currDev->setParity(QSerialPort::NoParity);
+            }
+        }
+    }
 }
 
 void Link::setLinkType(LinkType linkType)
@@ -227,20 +319,16 @@ void Link::setLinkType(LinkType linkType)
 void Link::setAddress(const QString &address)
 {
     address_ = address;
-    //hostAddress_.setAddress(address_);
-    // TODO: rebind?
 }
 
 void Link::setSourcePort(int sourcePort)
 {
     sourcePort_ = sourcePort;
-    // TODO: rebind?
 }
 
 void Link::setDestinationPort(int destinationPort)
 {
     destinationPort_ = destinationPort;
-    // TODO: rebind?
 }
 
 void Link::setIsPinned(bool state)
@@ -268,6 +356,25 @@ void Link::setIsForceStopped(bool isForcedStopped)
     isForcedStopped_ = isForcedStopped;
 }
 
+void Link::setAutoSpeedSelection(bool autoSpeedSelection)
+{
+    autoSpeedSelection_ = autoSpeedSelection;
+    resetLastSearchIndx();
+}
+
+void Link::setIsUpgradingState(bool state)
+{
+    if (onUpgradingFirmware_ != state) {
+        onUpgradingFirmware_ = state;
+        emit upgradingFirmwareStateChanged(uuid_);
+    }
+}
+
+void Link::setAutoConnOnce(bool state)
+{
+    autoConnOnce_ = state;
+}
+
 QUuid Link::getUuid() const
 {
     return uuid_;
@@ -275,10 +382,17 @@ QUuid Link::getUuid() const
 
 bool Link::getConnectionStatus() const
 {
-    if (ioDevice_ && ioDevice_->isOpen()) {
-        return true;
+    if (ioDevice_) {
+        if (ioDevice_->isOpen()) {
+            return true;
+        }
     }
     return false;
+}
+
+bool Link::getIsRecievesData() const
+{
+    return isReceivesData_;
 }
 
 ControlType Link::getControlType() const
@@ -346,35 +460,143 @@ bool Link::getIsForceStopped() const
     return isForcedStopped_;
 }
 
-// #ifdef MOTOR
-// void Link::setIsMotorDevice(bool isMotorDevice)
-// {
-//     isMotorDevice_ = isMotorDevice;
-// }
+bool Link::getAutoSpeedSelection() const
+{
+    return autoSpeedSelection_;
+}
 
-// bool Link::getIsMotorDevice() const
-// {
-//     return isMotorDevice_;
-// }
-// #endif
+bool Link::getIsUpgradingState() const
+{
+    return onUpgradingFirmware_;
+}
+
+bool Link::getAutoConnOnce() const
+{
+    return autoConnOnce_;
+}
+
+void Link::setAttribute(LinkAttribute attribute) {
+    attribute_ = attribute;
+}
 
 bool Link::writeFrame(FrameParser frame)
 {
-    return frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
+    return  attribute_ == LinkAttribute::kLinkAttributeNone && frame.isComplete() && write(QByteArray((const char*)frame.frame(), frame.frameLen()));
 }
 
 bool Link::write(QByteArray data)
 {
-    QIODevice *dev = device();
-    if(dev != nullptr && isOpen()) {
-        if(linkType_ == LinkType::LinkIPUDP) {
-            (static_cast<QUdpSocket*>(ioDevice_))->writeDatagram(data, hostAddress_, destinationPort_);
-        } else {
-            ioDevice_->write(data);
-        }
-        return true;
+    if (!ioDevice_ || !isOpen()) {
+        return false;
     }
-    return false;
+
+    switch (linkType_) {
+        case LinkType::kLinkIPUDP: {
+            auto udp = qobject_cast<QUdpSocket*>(ioDevice_);
+            udp->writeDatagram(data, hostAddress_, destinationPort_);
+            break;
+        }
+        case LinkType::kLinkIPTCP: {
+            ioDevice_->write(data);
+            break;
+        }
+        case LinkType::kLinkSerial: {
+            ioDevice_->write(data);
+            break;
+        }
+
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+void Link::onStartUpgradingFirmware()
+{
+    qDebug() << "ON START UPGRADING FIRMWARE" << uuid_;
+
+    setIsUpgradingState(true);
+    timeoutCnt_ = linkNumTimeoutsSmall;
+    requestCnt_ = requestAllCntSmall;
+    resetLastSearchIndx();
+    setAutoConnOnce(true); // logger
+}
+
+void Link::onUpgradingFirmwareDone()
+{
+    qDebug() << "ON UPGRADING FIRMWARE DONE !" << uuid_;
+
+    setIsUpgradingState(false);
+    timeoutCnt_ = linkNumTimeoutsSmall;
+    localGhostIgnoreCount_ = ghostIgnoreCount;
+    requestCnt_ = requestAllCntBig;
+    resetLastSearchIndx();
+    setAutoConnOnce(true); // logger
+}
+
+void Link::onCheckedTimerEnd()
+{
+    if (!getConnectionStatus()) {
+        return;
+    }
+
+    auto currTotalCnt       = frame_.getCompleteTotal();
+    bool lastIsReceivesData = isReceivesData_;
+    bool newDataReceived    = (currTotalCnt != lastTotalCnt_);
+
+    // timeouts
+    if (newDataReceived) {
+        if (localGhostIgnoreCount_ > 0) {
+            qDebug() << "Skipping ghost data after firmware..." << localGhostIgnoreCount_;
+            --localGhostIgnoreCount_;
+        }
+        else {
+            isReceivesData_ = true;
+            timeoutCnt_ = linkNumTimeoutsBig;
+            resetLastSearchIndx();
+        }
+    }
+    else {
+        if (timeoutCnt_ > 0) {
+            --timeoutCnt_;
+        }
+        if (!timeoutCnt_ && isReceivesData_) {
+            isReceivesData_ = false;
+        }
+    }
+
+    // gui
+    if (lastIsReceivesData != isReceivesData_) {
+        emit isReceivesDataChanged(uuid_);
+    }
+
+    // autosearch
+    bool isAutoSpeedSelection = autoSpeedSelection_ || (!autoSpeedSelection_ && onUpgradingFirmware_) || localGhostIgnoreCount_;
+    bool isNeedSearch = isAutoSpeedSelection && !isReceivesData_ && !timeoutCnt_ && !baudrateSearchList_.empty();
+
+    if (isNeedSearch) {
+        timeoutCnt_ = linkNumTimeoutsSmall;
+        //qDebug() << "   link: timeout ended do emit sendDoRequestAll" << uuid_;
+        auto currBaudrate = baudrateSearchList_.at(lastSearchIndx_);
+        lastSearchIndx_ = (lastSearchIndx_ + 1) % baudrateSearchList_.size();
+        //qDebug() << "   link: trying find" << currBaudrate << "on" << lastSearchIndx_;
+        setBaudrate(currBaudrate);
+        emit baudrateChanged(uuid_);
+    }
+
+    if (!isReceivesData_ || !requestCnt_) {
+        if(attribute_ == LinkAttribute::kLinkAttributeNone) {
+            emit sendDoRequestAll(uuid_);
+        }
+        if (!requestCnt_) {
+            requestCnt_ = onUpgradingFirmware_ ? requestAllCntSmall : isReceivesData_ ? requestAllCntBig : requestAllCntSmall;
+        }
+    }
+    --requestCnt_;
+
+    lastTotalCnt_ = currTotalCnt;
+    checkTimer_->start();
 }
 
 void Link::setDev(QIODevice *dev)
@@ -398,20 +620,24 @@ void Link::setDev(QIODevice *dev)
 
 void Link::deleteDev()
 {
-    if (ioDevice_ != nullptr) {
-        if (ioDevice_->isOpen()) {
-            ioDevice_->close();
-            emit connectionStatusChanged(uuid_);  // ???
-            //emit closed(uuid_, this)
-        }
+    QPointer<QIODevice> dev = ioDevice_;
+    if (!dev)
+        return;
 
-        ioDevice_->disconnect(this);
-        this->disconnect(ioDevice_);
-        //setLinkType(LinkNone);
-        delete ioDevice_;
+    if (dev->isOpen()) {
+        dev->close();
+        emit connectionStatusChanged(uuid_);
     }
 
-    ioDevice_ = nullptr;
+    if (dev) {
+        dev->disconnect(this);
+        this->disconnect(dev);
+    }
+
+    if (dev)
+        dev->deleteLater();
+
+    ioDevice_.clear();
 }
 
 void Link::toParser(const QByteArray data)
@@ -430,75 +656,46 @@ void Link::toParser(const QByteArray data)
     }
 }
 
+void Link::resetLastSearchIndx()
+{
+    lastSearchIndx_ = 0;
+}
+
 void Link::readyRead()
 {
-
-#ifdef MOTOR
-    QIODevice* dev = device();
-    if (dev != nullptr) {
-
-        if (attribute_ == LinkAttributeNone) {
-            if (linkType_ == LinkType::LinkIPUDP) {
-                QUdpSocket* socsUpd = (QUdpSocket*)dev;
-                while (socsUpd->hasPendingDatagrams()) {
-                    QByteArray datagram;
-                    datagram.resize(socsUpd->pendingDatagramSize());
-                    QHostAddress sender;
-                    quint16 senderPort;
-                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                    if (slen == -1) {
-                        break;
-                    }
-                    toParser(datagram);
-                }
-            }
-            else {
-                toParser(dev->readAll());
-            }
-        }
-        else {
-            if (linkType_ == LinkType::LinkIPUDP) {
-                QUdpSocket* socsUpd = (QUdpSocket*)dev;
-                while (socsUpd->hasPendingDatagrams()) {
-                    QByteArray datagram;
-                    datagram.resize(socsUpd->pendingDatagramSize());
-                    QHostAddress sender;
-                    quint16 senderPort;
-                    qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                    if (slen == -1) {
-                        break;
-                    }
-                    emit dataReady(datagram);
-                }
-            }
-            else {
-                emit dataReady(dev->readAll());
-            }
-        }
+    auto dev = ioDevice_;
+    if (!dev) {
+        return;
     }
-#else
-    QIODevice* dev = device();
-    if (dev != nullptr) {
-        if (linkType_ == LinkType::LinkIPUDP) {
-            QUdpSocket* socsUpd = (QUdpSocket*)dev;
-            while (socsUpd->hasPendingDatagrams()) {
-                QByteArray datagram;
-                datagram.resize(socsUpd->pendingDatagramSize());
-                QHostAddress sender;
-                quint16 senderPort;
-                qint64 slen = socsUpd->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-                if (slen == -1) {
-                    break;
-                }
+
+    if (linkType_ == LinkType::kLinkIPUDP) {
+        auto socsUdp = qobject_cast<QUdpSocket*>(dev);
+
+        while (socsUdp->hasPendingDatagrams()) {
+            QByteArray datagram;
+            datagram.resize(socsUdp->pendingDatagramSize());
+            QHostAddress sender;
+            quint16 senderPort;
+
+            qint64 slen = socsUdp->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+            if (slen == -1)
+                break;
+            if(attribute_ == LinkAttribute::kLinkAttributeNone) {
                 toParser(datagram);
+            } else {
+                emit dataReady(datagram);
             }
         }
-        else {
-            toParser(dev->readAll());
+    } else { // tcp, serial
+        QByteArray data = dev->readAll();
+        if (!data.isEmpty()) {
+            if(attribute_ == LinkAttribute::kLinkAttributeNone) {
+                toParser(data);
+            } else {
+                emit dataReady(data);
+            }
         }
     }
-#endif
-
 }
 
 void Link::aboutToClose()

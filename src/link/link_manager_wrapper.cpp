@@ -23,12 +23,17 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     QObject::connect(this,                &LinkManagerWrapper::sendOpenFLinks,              workerObject_.get(), &LinkManager::openFLinks,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendDeleteLink,              workerObject_.get(), &LinkManager::deleteLink,                   connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateBaudrate,          workerObject_.get(), &LinkManager::updateBaudrate,               connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetRequestToSend,        workerObject_.get(), &LinkManager::setRequestToSend,             connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetDataTerminalReady,    workerObject_.get(), &LinkManager::setDataTerminalReady,         connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetPatity,               workerObject_.get(), &LinkManager::setParity,                    connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendSetAttribut,             workerObject_.get(), &LinkManager::setAttribute,                 connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateAddress,           workerObject_.get(), &LinkManager::updateAddress,                connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateSourcePort,        workerObject_.get(), &LinkManager::updateSourcePort,             connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateDestinationPort,   workerObject_.get(), &LinkManager::updateDestinationPort,        connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdatePinnedState,       workerObject_.get(), &LinkManager::updatePinnedState,            connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCreateAndOpenAsUdpProxy, workerObject_.get(), &LinkManager::createAndOpenAsUdpProxy,      connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendCloseUdpProxy,           workerObject_.get(), &LinkManager::closeUdpProxy,                connectionType);
+    QObject::connect(this,                &LinkManagerWrapper::sendAutoSpeedSelection,      workerObject_.get(), &LinkManager::updateAutoSpeedSelection,     connectionType);
     QObject::connect(this,                &LinkManagerWrapper::sendUpdateControlType,       this,                [this](QUuid uuid, int controlType) {
         QMetaObject::invokeMethod(workerObject_.get(), [this, uuid, controlType]() {
                 switch (controlType) {
@@ -71,34 +76,36 @@ void LinkManagerWrapper::closeOpenedLinks()
     }
 }
 
+QHash<QUuid, QString> LinkManagerWrapper::getLinkNames() const
+{
+    return model_.getLinkNames();
+}
+
 void LinkManagerWrapper::openClosedLinks()
 {
     emit sendOpenFLinks();
 }
 
-void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
+QVariant LinkManagerWrapper::baudrateModel() const
+{
+    QVariantList list;
+    for (const uint32_t rate : baudrates) {
+        list.append(QVariant::fromValue(rate));
+    }
+    return list;
+}
+
+void LinkManagerWrapper::openAsSerial(QUuid uuid, LinkAttribute attribute)
 {
     emit sendOpenAsSerial(uuid, attribute);
 }
-
-// #ifdef MOTOR
-// void LinkManagerWrapper::openAsSerial(QUuid uuid, int attribute)
-// {
-//     emit sendOpenAsSerial(uuid, isMotorDevice);
-// }
-// #else
-// void LinkManagerWrapper::openAsSerial(QUuid uuid)
-// {
-//     emit sendOpenAsSerial(uuid);
-// }
-// #endif
 
 void LinkManagerWrapper::createAsUdp(QString address, int sourcePort, int destinationPort)
 {
     emit sendCreateAsUdp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
+void LinkManagerWrapper::openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
     emit sendOpenAsUdp(uuid, address, sourcePort, destinationPort, attribute);
 }
@@ -108,7 +115,7 @@ void LinkManagerWrapper::createAsTcp(QString address, int sourcePort, int destin
     emit sendCreateAsTcp(address, sourcePort, destinationPort);
 }
 
-void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute)
+void LinkManagerWrapper::openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute)
 {
     emit sendOpenAsTcp(uuid, address, sourcePort, destinationPort, attribute);
 }
@@ -132,11 +139,28 @@ void LinkManagerWrapper::updateBaudrate(QUuid uuid, int baudrate)
     emit sendUpdateBaudrate(uuid, baudrate);
 }
 
-void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                                  LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable)
+void LinkManagerWrapper::setRequestToSend(QUuid uuid, bool rts) {
+    emit sendSetRequestToSend(uuid, rts);
+}
+
+void LinkManagerWrapper::setDataTerminalReady(QUuid uuid, bool dtr) {
+    emit sendSetDataTerminalReady(uuid, dtr);
+}
+
+void LinkManagerWrapper::setParity(QUuid uuid, bool parity) {
+    emit sendSetPatity(uuid, parity);
+}
+
+void LinkManagerWrapper::setAttribute(QUuid uuid, LinkAttribute attribute) {
+    emit sendSetAttribut(uuid, attribute);
+}
+
+void LinkManagerWrapper::appendModifyModelData(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName,
+                                               int baudrate, bool parity, LinkType linkType, QString address, int sourcePort, int destinationPort,
+                                               bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
 {
-    emit model_.appendModifyEvent(uuid, connectionStatus, controlType, portName, baudrate, parity,
-                                  linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable);
+    emit model_.appendModifyEvent(uuid, connectionStatus, receivesData, controlType, portName, baudrate, parity,
+                                  linkType, address, sourcePort, destinationPort, isPinned, isHided, isNotAvailable, autoSpeedSelection, isUpgradingState);
 }
 
 void LinkManagerWrapper::deleteModelData(QUuid uuid)

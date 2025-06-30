@@ -19,6 +19,7 @@
 #include "navigation_arrow.h"
 #include "usbl_view.h"
 #include "tile_manager.h"
+#include "surface_view.h"
 
 
 class Dataset;
@@ -51,8 +52,7 @@ public:
             cameraListener_ = cameraListener;
         };
 
-        //TODO! Process this method later
-        //void rotate(qreal yaw, qreal pitch);
+        //void rotate(qreal yaw, qreal pitch); //TODO! Process this method later
         void rotate(const QVector2D& lastMouse, const QVector2D& mousePos);
         void rotate(const QPointF& prevCenter, const QPointF& currCenter, qreal angleDelta, qreal widgetHeight);
         //void move(const QVector2D& startPos, const QVector2D& endPos);
@@ -133,10 +133,13 @@ public:
 
     private:
         friend class GraphicsScene3dView;
+
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
+        void processSurfaceViewTexture(GraphicsScene3dView* viewPtr) const;
+
         QString checkOpenGLError() const;
 
         std::unique_ptr <GraphicsScene3dRenderer> m_renderer;
@@ -172,6 +175,7 @@ public:
     std::shared_ptr<BoatTrack> boatTrack() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Surface> surface() const;
+    std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
@@ -186,11 +190,13 @@ public:
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
-    void setCalcStateSideScanView(bool state);
+    void setUpdateMosaic(bool state);
+    void setUpdateIsobaths(bool state);
     void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetRef();
+    void setOpeningFileState(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -200,6 +206,9 @@ public:
     Q_INVOKABLE void pinchTrigger(const QPointF& prevCenter, const QPointF& currCenter, qreal scaleDelta, qreal angleDelta);
     Q_INVOKABLE void keyPressTrigger(Qt::Key key);
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
+
+    void setTrackLastData(bool state);
+    void setUpdateBottomTrack(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -222,6 +231,7 @@ public Q_SLOTS:
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
+    void updateViews();
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -243,6 +253,7 @@ private:
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<SurfaceView> surfaceView_;
     std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
@@ -256,7 +267,6 @@ private:
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> navigationArrow_;
     std::shared_ptr<UsblView> usblView_;
-
     std::shared_ptr<map::TileManager> tileManager_;
 
     QMatrix4x4 m_model;
@@ -269,7 +279,8 @@ private:
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
-    bool sideScanCalcState_;
+    bool updateMosaic_;
+    bool updateIsobaths_;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -289,6 +300,9 @@ private:
     int bottomTrackWindowCounter_;
     bool needToResetStartPos_;
     float lastCameraDist_;
+    bool trackLastData_;
+    bool updateBottomTrack_;
+    bool isOpeningFile_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

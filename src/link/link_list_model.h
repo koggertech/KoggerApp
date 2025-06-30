@@ -12,6 +12,7 @@ public:
     enum Roles {
         Uuid,
         ConnectionStatus,
+        ReceivesData,
         ControlType,
         PortName,
         Baudrate,
@@ -22,7 +23,9 @@ public:
         DestinationPort,
         IsPinned,
         IsHided,
-        IsNotAvailable
+        IsNotAvailable,
+        AutoSpeedSelection,
+        IsUpgradingState
     };
 
     /*methods*/
@@ -36,37 +39,43 @@ public:
     void clear();
 
     QList<QPair<QUuid, ::LinkType>> getOpenedUuids() const;
+    QHash<QUuid, QString> getLinkNames() const;
 
 private:
     Q_DISABLE_COPY(LinkListModel)
 
     /*methods*/
-    void doAppendModify(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                  ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
+                        int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
+                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState);
     void doRemove(QUuid uuid);
 
     /*data*/
     QHash<int, QByteArray> roleNames_ {
-        {{LinkListModel::Uuid},             {"Uuid"}},
-        {{LinkListModel::ConnectionStatus}, {"ConnectionStatus"}},
-        {{LinkListModel::ControlType},      {"ControlType"}},
-        {{LinkListModel::PortName},         {"PortName"}},
-        {{LinkListModel::Baudrate},         {"Baudrate"}},
-        {{LinkListModel::Parity},           {"Parity"}},
-        {{LinkListModel::LinkType},         {"LinkType"}},
-        {{LinkListModel::Address},          {"Address"}},
-        {{LinkListModel::SourcePort},       {"SourcePort"}},
-        {{LinkListModel::DestinationPort},  {"DestinationPort"}},
-        {{LinkListModel::IsPinned},         {"IsPinned"}},
-        {{LinkListModel::IsHided},          {"IsHided"}},
-        {{LinkListModel::IsNotAvailable},   {"IsNotAvailable"}}
+        {{LinkListModel::Uuid},              {"Uuid"}},
+        {{LinkListModel::ConnectionStatus},  {"ConnectionStatus"}},
+        {{LinkListModel::ReceivesData},      {"ReceivesData"}},
+        {{LinkListModel::ControlType},       {"ControlType"}},
+        {{LinkListModel::PortName},          {"PortName"}},
+        {{LinkListModel::Baudrate},          {"Baudrate"}},
+        {{LinkListModel::Parity},            {"Parity"}},
+        {{LinkListModel::LinkType},          {"LinkType"}},
+        {{LinkListModel::Address},           {"Address"}},
+        {{LinkListModel::SourcePort},        {"SourcePort"}},
+        {{LinkListModel::DestinationPort},   {"DestinationPort"}},
+        {{LinkListModel::IsPinned},          {"IsPinned"}},
+        {{LinkListModel::IsHided},           {"IsHided"}},
+        {{LinkListModel::IsNotAvailable},    {"IsNotAvailable"}},
+        {{LinkListModel::AutoSpeedSelection},{"AutoSpeedSelection"}},
+        {{LinkListModel::IsUpgradingState},  {"IsUpgradingState"}}
     };
     QHash<int, QVector<QVariant>> vectors_; // first - roleName, second - vec of vals
     QHash<QUuid, int> index_; // first - uuid, second - row
     int size_;
 
 signals:
-    void appendModifyEvent(QUuid uuid, bool connectionStatus, ::ControlType controlType, const QString& portName, int baudrate, bool parity,
-                     ::LinkType linkType, const QString& address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void appendModifyEvent(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
+                        int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
+                        bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingSate);
     void removeEvent(QUuid uuid);
 };

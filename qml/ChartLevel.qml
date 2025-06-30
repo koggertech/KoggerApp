@@ -5,8 +5,9 @@ import QtQuick.Layouts 1.15
 Item {
     id: control
     width: 87
-    height: theme.controlHeight*8
+    height: theme.controlHeight * heightCoeff
 
+    property int heightCoeff: 6
     property int widthSlider: theme.controlHeight
     property int heightSlider: theme.controlHeight/2
     property int mouseRange: height - heightSlider*2

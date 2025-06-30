@@ -5,18 +5,20 @@
 
 MapViewControlMenuController::MapViewControlMenuController(QObject *parent) :
     QmlComponentController(parent),
-    m_graphicsSceneView(nullptr),
+    graphicsSceneViewPtr_(nullptr),
     pendingLambda_(nullptr),
     visibility_(false)
 { }
 
 void MapViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
-    m_graphicsSceneView = sceneView;
+    graphicsSceneViewPtr_ = sceneView;
 
-    if (pendingLambda_) {
-        pendingLambda_();
-        pendingLambda_ = nullptr;
+    if (graphicsSceneViewPtr_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
     }
 }
 
@@ -24,10 +26,10 @@ void MapViewControlMenuController::onVisibilityChanged(bool state)
 {
     visibility_ = state;
 
-    if (m_graphicsSceneView) {
-        m_graphicsSceneView->getMapViewPtr()->setVisible(visibility_);
-        if (state) {
-            m_graphicsSceneView->updateMapView();
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getMapViewPtr()->setVisible(visibility_);
+        if (visibility_) {
+            graphicsSceneViewPtr_->updateMapView();
         }
     }
     else {
@@ -36,8 +38,8 @@ void MapViewControlMenuController::onVisibilityChanged(bool state)
 }
 void MapViewControlMenuController::onUpdateClicked()
 {
-    if (m_graphicsSceneView) {
-        m_graphicsSceneView->getMapViewPtr()->update();
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getMapViewPtr()->update();
     }
     else {
         tryInitPendingLambda();
@@ -46,8 +48,8 @@ void MapViewControlMenuController::onUpdateClicked()
 
 MapView* MapViewControlMenuController::getMapViewPtr() const
 {
-    if (m_graphicsSceneView) {
-        return m_graphicsSceneView->getMapViewPtr().get();
+    if (graphicsSceneViewPtr_) {
+        return graphicsSceneViewPtr_->getMapViewPtr().get();
     }
     return nullptr;
 }
@@ -61,8 +63,8 @@ void MapViewControlMenuController::tryInitPendingLambda()
 {
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
-            if (m_graphicsSceneView) {
-                if (auto mapPtr = m_graphicsSceneView->getMapViewPtr(); mapPtr) {
+            if (graphicsSceneViewPtr_) {
+                if (auto mapPtr = graphicsSceneViewPtr_->getMapViewPtr(); mapPtr) {
                     mapPtr->setVisible(visibility_);
                     mapPtr->update();
                 }

@@ -5,13 +5,15 @@
 #include <QList>
 #include <QVector>
 #include <QTimer>
+#include "dataset_defs.h"
 #include "proto_binnary.h"
+
 
 using namespace Parsers;
 using Segment = QPair<uint16_t, uint16_t>; // first - begin, second - end
 
 typedef enum {
-    BoardNone,
+    BoardNone = -1,
     BoardEnhanced = 1,
     BoardBase = 3,
     BoardNBase = 4,
@@ -21,11 +23,12 @@ typedef enum {
     BoardSideEnhanced = 8,
     BoardRecorderMini = 9,
     BoardDVL = 10,
-    BoardEcho20 = 12,
+    BoardBasic2D = 12,
     BoardUSBL = 15,
     BoardUSBLBeacon = 16,
     BoardNanoSSS = 17,
-
+    BoardPULSEred_2D = 128,
+    BoardPULSEblue_DSS = 129
 } BoardVersion;
 
 struct LastReadInfo {
@@ -39,16 +42,22 @@ struct LastReadInfo {
     bool     isReaded;
 };
 
-struct ChartParameters {
-    ChartParameters() : address(0), channelId(0) {};
-    ChartParameters(int16_t _address, int16_t _channelId, BoardVersion _boardVersion, Version _version, QList<int16_t> _linkedChannels, QList<Segment> _errList) :
-        address(_address), channelId(_channelId), boardVersion(_boardVersion), version(_version), linkedChannels(_linkedChannels), errList(_errList) {};
+using ListLinkedChannels = QList<QPair<ChannelId, uint8_t>>;
 
-    int16_t        address;
-    int16_t        channelId;
-    BoardVersion   boardVersion;
-    Version        version;
-    QList<int16_t> linkedChannels;
+struct ChartParameters {
+    ChartParameters()
+        : boardVersion(BoardNone),
+          version(v0)
+    {};
+
+    ChartParameters(BoardVersion _boardVersion, Version _version, QList<Segment> _errList)
+        : boardVersion(_boardVersion),
+          version(_version),
+          errList(_errList)
+    {};
+
+    BoardVersion boardVersion;
+    Version version;
     QList<Segment> errList;
 };
 
@@ -206,7 +215,7 @@ public:
     uint16_t absOffset() const { return m_absOffset; }
     int chartSize() const { return m_chartSize; }
 
-    bool isCompleteChart() {
+    bool readAndClearIsCompleteChart() {
         bool flag_val = m_isCompleteChart;
         m_isCompleteChart = false;
         return flag_val;
@@ -268,7 +277,16 @@ class IDBinAttitude : public IDBin
 {
     Q_OBJECT
 public:
-    explicit IDBinAttitude() : IDBin() {
+    explicit IDBinAttitude()
+        : IDBin(),
+        m_yaw(0.0f),
+        m_pitch(0.0f),
+        m_roll(0.0f),
+        m_w0(0.0f),
+        m_w1(0.0f),
+        m_w2(0.0f),
+        m_w3(0.0f)
+    {
     }
 
     ID id() override { return ID_ATTITUDE; }
@@ -746,6 +764,8 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
 
     void setUpdate(QByteArray fw);
+    QByteArray getUpdate() const;
+
     int availSend() {return _fw.length() - _currentFwOffset; }
     int progress() {
         if(_fw.length() != 0) {

@@ -2,8 +2,11 @@
 #define CONVERTERXTF_H
 
 #include "xtf_conf.h"
-#include "plotcash.h"
+#include "dataset.h"
 #include <vector>
+#include <QUuid>
+#include "device_defs.h"
+
 
 class ConverterXTF {
 public:
@@ -13,7 +16,7 @@ public:
 
     XTFFILEHEADER header;
 
-    QByteArray toXTF(Dataset* dataset, int channel1, int channel2 = CHANNEL_NONE) {
+    QByteArray toXTF(Dataset* dataset, const ChannelId& channel1, uint8_t subChannel1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subChannel2 = 0) {
         QByteArray xtfdata;
         XTFFILEHEADER fileheader;
 
@@ -114,8 +117,8 @@ public:
                 pingheader.SensorYcoordinate = pingheader.ShipYcoordinate;
                 pingheader.SensorXcoordinate = pingheader.ShipXcoordinate;
 
-                Epoch::Echogram* chart1 = epoch->chart(channel1);
-                Epoch::Echogram* chart2 = epoch->chart(channel2);
+                Epoch::Echogram* chart1 = epoch->chart(channel1, subChannel1);
+                Epoch::Echogram* chart2 = epoch->chart(channel2, subChannel2);
                 QVector<uint8_t> raw1;
                 QVector<uint8_t> raw2;
 
@@ -229,6 +232,8 @@ public:
                     dataset->addPosition(lat, lon);
                 }
 
+                QUuid uuid = QUuid(kFileUuidStr);
+
                 for(uint16_t chi = 0; chi < ch_count; chi++) {
                     XTFPINGCHANHEADER* pingch = (XTFPINGCHANHEADER*)(cdata);
 
@@ -244,37 +249,37 @@ public:
                     }
 
                     cdata += sizeof (XTFPINGCHANHEADER);
-                    QVector<uint8_t> data;
-                    data.resize(sample_count);
+                    QVector<QVector<uint8_t>> data(1);
+                    data[0].resize(sample_count);
 
                     if((sample_format == 0 && sample_bytes == 1) || sample_format == 8) {
                         if(pingch->ChannelNumber == 0 || pingch->ChannelNumber == 2) {
                             for(uint16_t i = 0; i < sample_count; i++) {
-                                data[sample_count-i-1] = *((uint8_t*)cdata);
+                                data[0][sample_count-i-1] = *((uint8_t*)cdata);
                                 cdata += sample_bytes;
                             }
                         } else {
                             for(uint16_t i = 0; i < sample_count; i++) {
-                                data[i] = *((uint8_t*)cdata);
+                                data[0][i] = *((uint8_t*)cdata);
                                 cdata += sample_bytes;
                             }
                         }
                     } else if((sample_format == 0 && sample_bytes == 2) || sample_format == 2) {
                         if(pingch->ChannelNumber == 0 || pingch->ChannelNumber == 2) {
                             for(uint16_t i = 0; i < sample_count; i++) {
-                                data[sample_count-i-1] = *((uint16_t*)cdata) / 128;
+                                data[0][sample_count-i-1] = *((uint16_t*)cdata) / 128;
                                 cdata += sample_bytes;
                             }
                         } else {
                             for(uint16_t i = 0; i < sample_count; i++) {
-                                data[i] = *((uint16_t*)cdata) / 128;
+                                data[0][i] = *((uint16_t*)cdata) / 128;
                                 cdata += sample_bytes;
                             }
                         }
                     }
 
-                    ChartParameters chartParams(pingch->ChannelNumber, 0, {}, {}, {}, {});
-                    dataset->addChart(chartParams, data, range/sample_count, 0); // TODO, address, channel
+                    ChartParameters chartParams(BoardVersion::BoardNone, Version::v0, {});
+                    dataset->addChart(ChannelId(uuid, pingch->ChannelNumber), chartParams, data, range/sample_count, 0);
                 }
 
             } else  if(pingheader->HeaderType == 3) {

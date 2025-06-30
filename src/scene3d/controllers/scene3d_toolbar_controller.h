@@ -14,12 +14,20 @@ public:
     Q_INVOKABLE void onSetCameraMapViewButtonClicked();
     Q_INVOKABLE void onBottomTrackVertexEditingModeButtonChecked(bool checked);
     Q_INVOKABLE void onCancelZoomButtonClicked();
+    Q_INVOKABLE void onTrackLastDataCheckButtonCheckedChanged(bool state);
+    Q_INVOKABLE void onUpdateBottomTrackCheckButtonCheckedChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
 protected:
     virtual void findComponent() override;
 private:
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
+    void tryInitPendingLambda();
+
+    GraphicsScene3dView* graphicsScene3dViewPtr_;
+    std::function<void()> pendingLambda_;
+    bool isVertexEditingMode_;
+    bool trackLastData_;
+    bool updateBottomTrack_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

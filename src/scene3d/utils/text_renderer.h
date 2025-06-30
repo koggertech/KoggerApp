@@ -20,7 +20,9 @@ public:
 
     void setFontPixelSize(int size);
     void setColor(const QColor& color);
+    QColor getColor() const;
     void setBackgroundColor(const QColor& color);
+    int getCharPixelHeight() const;
 
     void render(const QString& text,
                 float scale,

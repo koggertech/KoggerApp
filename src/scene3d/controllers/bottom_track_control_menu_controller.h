@@ -1,9 +1,7 @@
-#ifndef BOTTOMTRACKCONTROLMENUCONTROLLER_H
-#define BOTTOMTRACKCONTROLMENUCONTROLLER_H
+#pragma once
 
 #include "qml_component_controller.h"
 
-#include <memory>
 
 class BottomTrack;
 class GraphicsScene3dView;
@@ -11,16 +9,12 @@ class BottomTrackControlMenuController : public QmlComponentController
 {
     Q_OBJECT
     Q_PROPERTY(BottomTrack* bottomTrack READ bottomTrack CONSTANT)
-    Q_PROPERTY(QStringList channelList READ channelList CONSTANT)
-    Q_PROPERTY(int visibleChannelIndex READ visibleChannelIndex CONSTANT)
 
 public:
     BottomTrackControlMenuController(QObject* parent = nullptr);
-
     virtual ~BottomTrackControlMenuController();
 
     Q_INVOKABLE void onVisibilityCheckBoxCheckedChanged(bool checked);
-    Q_INVOKABLE void onVisibleChannelComboBoxIndexChanged(int index);
     Q_INVOKABLE void onSurfaceUpdated();
     Q_INVOKABLE void onSurfaceStateChanged(bool state);
 
@@ -31,19 +25,13 @@ protected:
 
 private:
     BottomTrack* bottomTrack() const;
-    QStringList channelList() const;
-    int visibleChannelIndex() const;
-
-private Q_SLOTS:
-    void updateChannelList();
+    void tryInitPendingLambda();
 
 Q_SIGNALS:
     void channelListUpdated();
 
 private:
-    GraphicsScene3dView* m_graphicsSceneView = nullptr;
-    QStringList m_channelList;
-
+    GraphicsScene3dView* graphicsSceneViewPtr_ = nullptr;
+    std::function<void()> pendingLambda_;
+    bool visibility_;
 };
-
-#endif // BOTTOMTRACKCONTROLMENUCONTROLLER_H

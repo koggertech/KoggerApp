@@ -5,11 +5,10 @@
 #include <unordered_map>
 
 #include "map_defs.h"
-#include "plotcash.h"
+#include "dataset.h"
 #include "tile_provider.h"
 #include "tile_db.h"
 #include "tile_downloader.h"
-#include "plotcash.h"
 
 
 namespace map {

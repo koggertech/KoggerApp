@@ -48,7 +48,7 @@
 //
 
 #include "qserialport.h"
-#include "private/qringbuffer_p.h"
+#include "qringbuffer_p.h"
 
 
 #include <QDebug>

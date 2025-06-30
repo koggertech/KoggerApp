@@ -1,13 +1,14 @@
 #include "bottom_track_control_menu_controller.h"
 #include "scene3d_view.h"
 #include "bottom_track.h"
-#include "max_points_filter.h"
-#include "nearest_point_filter.h"
 #include "qml_object_names.h"
-#include "plotcash.h"
+
 
 BottomTrackControlMenuController::BottomTrackControlMenuController(QObject* parent)
-    : QmlComponentController(parent)
+    : QmlComponentController(parent),
+      graphicsSceneViewPtr_(nullptr),
+      pendingLambda_(nullptr),
+      visibility_(false)
 {}
 
 BottomTrackControlMenuController::~BottomTrackControlMenuController()
@@ -15,94 +16,67 @@ BottomTrackControlMenuController::~BottomTrackControlMenuController()
 
 void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool checked)
 {
-    if(!m_graphicsSceneView)
-        return;
+    visibility_ = checked;
 
-    auto bottomTrack = m_graphicsSceneView->bottomTrack();
-
-    QMetaObject::invokeMethod(reinterpret_cast <QObject*>(bottomTrack.get()), "setVisible", Q_ARG(bool, checked));
-}
-
-void BottomTrackControlMenuController::onVisibleChannelComboBoxIndexChanged(int index)
-{
-    if(!m_graphicsSceneView)
-        return;
-
-    if(m_channelList.isEmpty())
-        return;
-
-    auto channelId = QString(m_channelList.at(index)).toInt();
-
-    m_graphicsSceneView->bottomTrack()->setVisibleChannel(channelId);
+    if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->bottomTrack()->setVisible(checked);
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void BottomTrackControlMenuController::onSurfaceUpdated()
 {
-    if (!m_graphicsSceneView)
+    if (!graphicsSceneViewPtr_)
         return;
 
-    auto bottomTrack = m_graphicsSceneView->bottomTrack();
+    auto bottomTrack = graphicsSceneViewPtr_->bottomTrack();
 
     QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceUpdated");
 }
 
 void BottomTrackControlMenuController::onSurfaceStateChanged(bool state)
 {
-    if (!m_graphicsSceneView)
+    if (!graphicsSceneViewPtr_)
         return;
 
-    auto bottomTrack = m_graphicsSceneView->bottomTrack();
+    auto bottomTrack = graphicsSceneViewPtr_->bottomTrack();
 
     QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceStateChanged", Q_ARG(bool, state));
 }
 
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
-    m_graphicsSceneView = sceneView;
+    graphicsSceneViewPtr_ = sceneView;
 
-    if (!m_graphicsSceneView)
-        return;
-
-    QObject::connect(m_graphicsSceneView->bottomTrack().get(), &BottomTrack::epochListChanged,
-                     this,                                     &BottomTrackControlMenuController::updateChannelList);
+    if (graphicsSceneViewPtr_) {
+        if (pendingLambda_) {
+            pendingLambda_();
+            pendingLambda_ = nullptr;
+        }
+    }
 }
 
 BottomTrack *BottomTrackControlMenuController::bottomTrack() const
 {
-    if(!m_graphicsSceneView)
+    if(!graphicsSceneViewPtr_)
         return nullptr;
 
-    return m_graphicsSceneView->bottomTrack().get();
+    return graphicsSceneViewPtr_->bottomTrack().get();
 }
 
-QStringList BottomTrackControlMenuController::channelList() const
+void BottomTrackControlMenuController::tryInitPendingLambda()
 {
-    return m_channelList;
-}
-
-int BottomTrackControlMenuController::visibleChannelIndex() const
-{
-    if(!m_graphicsSceneView)
-        return -1;
-
-    auto ch = m_graphicsSceneView->bottomTrack()->visibleChannel();
-
-    return m_channelList.indexOf(QString::number(ch.channel));
-}
-
-void BottomTrackControlMenuController::updateChannelList()
-{
-    m_channelList.clear();
-
-    if(!m_graphicsSceneView)
-        return;
-
-    auto channels = m_graphicsSceneView->bottomTrack()->channels();
-
-    for(const auto& channel : qAsConst(channels))
-        m_channelList << QString("%1").arg(channel.channel);
-
-    Q_EMIT channelListUpdated();
+    if (!pendingLambda_) {
+        pendingLambda_ = [this] () -> void {
+            if (graphicsSceneViewPtr_) {
+                if (auto bTPtr = graphicsSceneViewPtr_->bottomTrack(); bTPtr) {
+                    bTPtr->setVisible(visibility_);
+                }
+            }
+        };
+    }
 }
 
 void BottomTrackControlMenuController::findComponent()

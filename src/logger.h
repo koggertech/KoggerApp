@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QUuid>
-#include "plotcash.h"
+#include "dataset.h"
 #include "link.h"
 #include "proto_binnary.h"
 

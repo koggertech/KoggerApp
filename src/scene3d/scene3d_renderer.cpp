@@ -2,7 +2,6 @@
 #include "draw_utils.h"
 
 #include "bottom_track.h"
-#include "surface.h"
 #include "point_group.h"
 #include "polygon_group.h"
 
@@ -28,6 +27,7 @@ GraphicsScene3dRenderer::GraphicsScene3dRenderer() :
     m_shaderProgramMap["text_back"]  = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["mosaic"]     = std::make_shared<QOpenGLShaderProgram>();
     m_shaderProgramMap["image"]      = std::make_shared<QOpenGLShaderProgram>();
+    m_shaderProgramMap["isobaths"]   = std::make_shared<QOpenGLShaderProgram>();
 }
 
 GraphicsScene3dRenderer::~GraphicsScene3dRenderer()
@@ -98,6 +98,13 @@ void GraphicsScene3dRenderer::initialize()
     if (!m_shaderProgramMap["text_back"]->link())
         qCritical() << "Error linking text_back shaders in shader program.";
 
+    // isobaths
+    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/isobaths_colored.vsh"))
+        qCritical() << "Error adding isobaths vertex shader from source file.";
+    if (!m_shaderProgramMap["isobaths"]->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/isobaths_colored.fsh"))
+        qCritical() << "Error adding isobaths fragment shader from source file.";
+    if (!m_shaderProgramMap["isobaths"]->link())
+        qCritical() << "Error linking isobaths shaders in shader program.";
 }
 
 void GraphicsScene3dRenderer::render()
@@ -162,6 +169,7 @@ void GraphicsScene3dRenderer::drawObjects()
     glEnable(GL_DEPTH_TEST);
     sideScanViewRenderImpl_.render(this,     m_projection * view * m_model, m_shaderProgramMap);
     m_surfaceRenderImpl.render(this,         m_projection * view * m_model, m_shaderProgramMap);
+    surfaceViewRenderImpl_.render(this,      m_model, view, m_projection, m_shaderProgramMap);
     m_bottomTrackRenderImpl.render(this,     m_model, view, m_projection, m_shaderProgramMap);
     m_boatTrackRenderImpl.render(this,       m_model, view, m_projection, m_shaderProgramMap);
 

@@ -23,28 +23,30 @@ class LinkManager : public QObject
 
 public:
     explicit LinkManager(QObject *parent = nullptr);
+    Link *getLinkPtr(QUuid uuid);
 
 public slots:
     void onLinkConnectionStatusChanged(QUuid uuid);
+    void onUpgradingFirmwareStateChanged(QUuid uuid);
+    void onLinkBaudrateChanged(QUuid uuid);
+    void onLinkIsReceivesDataChanged(QUuid uuid);
     void createAndStartTimer();
     void stopTimer();
     void onExpiredTimer();
 
-    void openAsSerial(QUuid uuid, int attribute = 0);
-
-// #ifdef MOTOR
-//     void openAsSerial(QUuid uuid, bool isMotorDevice = false);
-// #else
-//     void openAsSerial(QUuid uuid);
-// #endif
-
-    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
-    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, int attribute = 0);
+    void openAsSerial(QUuid uuid, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
+    void openAsUdp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
+    void openAsTcp(QUuid uuid, QString address, int sourcePort, int destinationPort, LinkAttribute attribute = LinkAttribute::kLinkAttributeNone);
     void closeLink(QUuid uuid);
     void closeFLink(QUuid uuid);
     void deleteLink(QUuid uuid);
     void updateBaudrate(QUuid uuid, int baudrate);
+    void setRequestToSend(QUuid uuid, bool rts);
+    void setDataTerminalReady(QUuid uuid, bool dtr);
+    void setParity(QUuid uuid, bool parity);
+    void setAttribute(QUuid uuid, LinkAttribute attribute);
     void updateAddress(QUuid uuid, const QString& address);
+    void updateAutoSpeedSelection(QUuid uuid, bool state);
     void updateSourcePort(QUuid uuid,int sourcePort);
     void updateDestinationPort(QUuid uuid,int destinationPort);
     void updatePinnedState(QUuid uuid, bool state);
@@ -56,15 +58,18 @@ public slots:
     void openFLinks();
     void createAndOpenAsUdpProxy(QString address, int sourcePort, int destinationPort);
     void closeUdpProxy();
+    QUuid getFirstOpend();
 
 signals:
-    void appendModifyModel(QUuid uuid, bool connectionStatus, ControlType controlType, QString portName, int baudrate, bool parity,
-                           LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable);
+    void appendModifyModel(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, QString portName, int baudrate, bool parity,
+                        LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
+                        bool autoSpeedSelection, bool isUpgradingState);
     void deleteModel(QUuid uuid);
     void frameReady(QUuid uuid, Link* link, FrameParser frame);
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);
     void linkDeleted(QUuid uuid, Link* link);
+    void sendDoRequestAll(QUuid uuid);
 
 private:
     /*structures*/
@@ -83,7 +88,6 @@ private:
     void deleteMissingLinks(const QList<QSerialPortInfo> &currSerialList);
     void openAutoConnections();
     void update();
-    Link *getLinkPtr(QUuid uuid);
     void doEmitAppendModifyModel(Link* linkPtr);
     void exportPinnedLinksToXML();
     Link* createNewLink() const;
