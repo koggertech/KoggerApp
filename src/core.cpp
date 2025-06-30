@@ -60,6 +60,14 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3DControlMenuController",         scene3dControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("Scene3dToolBarController",             scene3dToolBarController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("UsblViewControlMenuController",        usblViewControlMenuController_.get());
+
+    bool flasherState = false;
+#ifdef FLASHER
+    flasherState = true;
+#endif
+
+    qmlAppEnginePtr_->rootContext()->setContextProperty("FLASHER_STATE", flasherState);
+
 }
 
 Console* Core::getConsolePtr()

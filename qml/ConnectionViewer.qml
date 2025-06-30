@@ -751,7 +751,7 @@ ColumnLayout {
             CButton {
                 text: "..."
                 Layout.fillWidth: false
-                visible: connectionTypeCombo.currentText === "File"
+                //visible: true // connectionTypeCombo.currentText === "File"
                 implicitHeight: theme.controlHeight
                 implicitWidth: implicitHeight*1.1
                 onClicked: {
@@ -808,7 +808,7 @@ ColumnLayout {
             id: flasherDataRefresh
             Layout.fillWidth: false
             checkable: true
-            icon.source: "./icons/refresh.svg"
+            icon.source: "qrc:/icons/ui/refresh.svg"
 
             onCheckedChanged: {
                 flasherDataInput.text = ""
@@ -832,7 +832,7 @@ ColumnLayout {
             Layout.fillWidth: false
             checkable: false
             visible: flasherDataRefresh.checked
-            icon.source: "./icons/file-download.svg"
+            icon.source: "qrc:/icons/ui/file_download.svg"
 
             onClicked: {
                 if(flasherDataInput.text !== "") {
@@ -863,7 +863,7 @@ ColumnLayout {
     MenuRow {
         visible: core.isFactoryMode
         CText {
-            text: core.flasherTextInfo
+            text: FLASHER_STATE ? core.flasherTextInfo : ""
         }
     }
 
