@@ -218,22 +218,23 @@
     </message>
     <message>
         <location filename="../qml/ConnectionViewer.qml" line="479"/>
-        <source>REC KLF</source>
+        <source>KLF</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../qml/ConnectionViewer.qml" line="500"/>
-        <source>REC CSV</source>
+        <source>CSV</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="553"/>
+        <location filename="../qml/ConnectionViewer.qml" line="738"/>
+        <location filename="../qml/ConnectionViewer.qml" line="903"/>
         <source>Enter path</source>
         <translation>Выберите путь</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="579"/>
-        <location filename="../qml/ConnectionViewer.qml" line="613"/>
+        <location filename="../qml/ConnectionViewer.qml" line="929"/>
+        <location filename="../qml/ConnectionViewer.qml" line="963"/>
         <source>Please choose a file</source>
         <translation>Выберите файл</translation>
     </message>
@@ -258,8 +259,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="1624"/>
         <location filename="../src/dataset.cpp" line="1626"/>
+        <location filename="../src/dataset.cpp" line="1628"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -1321,6 +1322,11 @@
         <translation> м</translation>
     </message>
     <message>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="121"/>
+        <source>°</source>
+        <translation></translation>
+    </message>
+    <message>
         <location filename="../src/scene2d/plot2D_aim.cpp" line="71"/>
         <source>%1 m</source>
         <translation>%1 м</translation>
@@ -1395,7 +1401,7 @@
         <translation type="vanished">Буст: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1437"/>
+        <location filename="../src/core.cpp" line="1441"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
