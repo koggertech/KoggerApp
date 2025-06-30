@@ -33,6 +33,11 @@
 <img src="resources/images/readme_md/surface.jpg" alt="3d_Surface_screem" width="768">
 </p>
 
+- Real-time isobaths calculation.
+<p align="center">
+<img src="resources/webp/readme_md/isobaths.webp" alt="Isobaths_preview" width="768">
+</p>
+
 - Real-time calculation of side scan mosaics.
 <p align="center">
 <img src="resources/webp/readme_md/echogram_and_mosaic.webp" alt="Echogram_and_Mosaic_preview" width="768">
