@@ -31,7 +31,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
-    tileManager_(std::make_shared<map::TileManager>(this)),
     updateIsobaths_(false),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
@@ -89,18 +88,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-
-    // map
-    QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
-
-    auto connType = Qt::DirectConnection;
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,             connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,             connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileImage,    mapView_.get(),                      &MapView::onTileImageUpdated,       connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated,    connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,       connType);
-    QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
@@ -462,6 +449,11 @@ void GraphicsScene3dView::setTrackLastData(bool state)
 void GraphicsScene3dView::setUpdateBottomTrack(bool state)
 {
     updateBottomTrack_ = state;
+}
+
+void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
+{
+    emit sendTextureIdByTileIndx(tileIndx, textureId);
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -1020,7 +1012,7 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
         mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId);
-        viewPtr->tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
+        viewPtr->setTextureIdByTileIndx(tileIndx, textureId);
     }
 
     // update image

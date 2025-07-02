@@ -18,7 +18,6 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-#include "tile_manager.h"
 #include "surface_view.h"
 
 
@@ -209,6 +208,7 @@ public:
 
     void setTrackLastData(bool state);
     void setUpdateBottomTrack(bool state);
+    void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -237,6 +237,7 @@ signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void sendLlaRef(LLARef viewLlaRef);
     void cameraIsMoved();
+    void sendTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 private:
     void updateBounds();
@@ -267,7 +268,6 @@ private:
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> navigationArrow_;
     std::shared_ptr<UsblView> usblView_;
-    std::shared_ptr<map::TileManager> tileManager_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;

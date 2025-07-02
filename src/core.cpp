@@ -14,6 +14,7 @@ Core::Core() :
     consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
+    tileManager_(std::make_unique<map::TileManager>(this)),
     qmlAppEnginePtr_(nullptr),
     datasetPtr_(new Dataset),
     scene3dViewPtr_(nullptr),
@@ -45,6 +46,8 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     qmlAppEnginePtr_ = engine;
     QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::UILoad, Qt::QueuedConnection);
+    QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::createTileManagerConnections, Qt::QueuedConnection);
+
     qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
@@ -67,7 +70,6 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 #endif
 
     qmlAppEnginePtr_->rootContext()->setContextProperty("FLASHER_STATE", flasherState);
-
 }
 
 Console* Core::getConsolePtr()
@@ -1286,6 +1288,11 @@ void Core::onFileStopsOpening()
     emit sendIsFileOpening();
 }
 
+void Core::onSendTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
+{
+    tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
+}
+
 #if defined(FAKE_COORDS)
 void Core::setPosZeroing(bool state)
 {
@@ -1549,6 +1556,22 @@ void Core::loadLLARefFromSettings()
     catch (...) {
         qCritical() << "Core::loadLLARefFromSettings throw unknown exception";
     }
+}
+
+void Core::createTileManagerConnections()
+{
+    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
+    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
+
+    auto connType = Qt::DirectConnection;
+    QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvAppendTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileAppend,             connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvDeleteTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileDelete,             connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvUpdateTileImage,    scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileImageUpdated,       connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvUpdateTileVertices, scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileVerticesUpdated,    connType);
+    QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvClearAppendTasks,   scene3dViewPtr_->getMapViewPtr().get(), &MapView::onClearAppendTasks,       connType);
+    QObject::connect(scene3dViewPtr_->getMapViewPtr().get(), &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(),    &map::TileSet::onDeletedFromAppend, connType);
+
+    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendTextureIdByTileIndx, this, &Core::onSendTextureIdByTileIndx, Qt::DirectConnection);
 }
 
 #ifdef FLASHER

@@ -31,6 +31,7 @@
 #include "scene3d_control_menu_controller.h"
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
+#include "tile_manager.h"
 //#include <FileReader.h>
 
 
@@ -150,6 +151,8 @@ private slots:
 
 private slots:
     void onFileStopsOpening();
+    void onSendTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void createTileManagerConnections();
 
 private:
     /*methods*/
@@ -184,6 +187,7 @@ private:
     std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
+    std::unique_ptr<map::TileManager> tileManager_;
 
 #ifdef SEPARATE_READING
     QString tryOpenedfilePath_;
