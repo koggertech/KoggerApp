@@ -15,6 +15,8 @@ Core::Core() :
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
     tileManager_(std::make_unique<map::TileManager>(this)),
+    dataProcessor_(nullptr),
+    dataProcThread_(nullptr),
     qmlAppEnginePtr_(nullptr),
     datasetPtr_(new Dataset),
     scene3dViewPtr_(nullptr),
@@ -26,20 +28,25 @@ Core::Core() :
     isMosaicUpdatingInThread_(false),
     isSideScanPerformanceMode_(false)
 {
+    qDebug() << "Core ctr" << QThread::currentThreadId();
+
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
     createControllers();
-    QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
-    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
+    QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated);
+    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs);
+
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
+
+    createDataProcessor();
 }
 
 Core::~Core()
 {
-
+    destroyDataProcessor();
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)
@@ -1572,6 +1579,36 @@ void Core::createTileManagerConnections()
     QObject::connect(scene3dViewPtr_->getMapViewPtr().get(), &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(),    &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendTextureIdByTileIndx, this, &Core::onSendTextureIdByTileIndx, Qt::DirectConnection);
+}
+
+void Core::createDataProcessor()
+{
+    dataProcThread_ = new QThread(this);
+    dataProcessor_  = new DataProcessor;
+
+    dataProcessor_->moveToThread(dataProcThread_);
+
+    QObject::connect(dataProcThread_, &QThread::started,  dataProcessor_,  &DataProcessor::init);
+    QObject::connect(dataProcThread_, &QThread::finished, dataProcessor_,  &QObject::deleteLater);
+    QObject::connect(dataProcThread_, &QThread::finished, dataProcThread_, &QObject::deleteLater);
+
+    //QObject::connect(_, &QTimer::timeout, dataProcessor_,  );
+
+
+    dataProcThread_->start();
+}
+
+void Core::destroyDataProcessor()
+{
+    if (dataProcThread_ && dataProcThread_->isRunning()) {
+        dataProcThread_->quit();
+        dataProcThread_->wait();
+    }
+
+    delete dataProcessor_;
+
+    dataProcessor_ = nullptr;
+    dataProcThread_ = nullptr;
 }
 
 #ifdef FLASHER

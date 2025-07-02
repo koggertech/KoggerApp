@@ -9,6 +9,7 @@
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
+#include "data_processor.h"
 #include "qPlot2D.h"
 #include "logger.h"
 #include "console.h"
@@ -156,6 +157,8 @@ private slots:
 
 private:
     /*methods*/
+    void createDataProcessor();
+    void destroyDataProcessor();
     ConsoleListModel* consoleList();
     void createControllers();
     void createDeviceManagerConnections();
@@ -188,6 +191,10 @@ private:
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     std::unique_ptr<map::TileManager> tileManager_;
+
+    // data processor
+    DataProcessor* dataProcessor_;
+    QThread* dataProcThread_;
 
 #ifdef SEPARATE_READING
     QString tryOpenedfilePath_;
