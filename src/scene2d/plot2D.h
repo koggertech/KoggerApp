@@ -96,6 +96,8 @@ public:
 
     void setGNSSVisible(bool visible, int flags);
 
+    void setAcousticAngleVisible(bool visible);
+
     void setGridVetricalNumber(int grids);
     void setGridFillWidth(bool state);
     void setAngleVisibility(bool state);

@@ -1157,7 +1157,7 @@ public slots:
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
     void addChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
-    void rawDataRecieved(RawData raw_data);
+    void rawDataRecieved(const ChannelId& channelId, RawData raw_data);
     void addDist(const ChannelId& channelId, int dist);
     void addRangefinder(const ChannelId& channelId, float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);

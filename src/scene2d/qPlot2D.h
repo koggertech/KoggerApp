@@ -104,6 +104,8 @@ public slots:
 
     void plotGNSSVisible(bool visible, int flags) { setGNSSVisible(visible, flags);}
 
+    void plotAcousticAngleVisible(bool visible) { setAcousticAngleVisible(visible); }
+
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
     void plotGridFillWidth(bool state) { setGridFillWidth(state); };
     void plotAngleVisibility(bool state)   { setAngleVisibility(state); }

@@ -262,7 +262,7 @@ void Epoch::moveComplexToEchogram(ChannelId channel_id, int group_id, float offs
         }
     }
 
-    setChart(ChannelId(QUuid(), group_id), chart, 1500.0f/sample_rate, offset_m);
+    setChart(ChannelId(channel_id.uuid, group_id), chart, 1500.0f/sample_rate, offset_m);
 }
 
 void Epoch::setInterpNED(NED ned)
@@ -776,7 +776,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
     emit dataUpdate();
 }
 
-void Dataset::rawDataRecieved(RawData raw_data) {
+void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
     RawData::RawDataHeader header = raw_data.header;
     ComplexF* compelex_data = (ComplexF*)raw_data.data.data();
     int16_t* real16_data = (int16_t*)raw_data.data.data();
@@ -785,7 +785,7 @@ void Dataset::rawDataRecieved(RawData raw_data) {
     Epoch* last_epoch = last();
     ComplexSignals& compex_signals = last_epoch->complexSignals();
 
-    ChannelId dev_id(QUuid(), header.channelGroup);
+    ChannelId dev_id(channelId.uuid, header.channelGroup); // channelId.uuid
 
     if(compex_signals[dev_id].contains(header.channelGroup)) {
         float offset_m = 0;
@@ -1648,6 +1648,8 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
         auto links = core.getLinkNames();
         if (links.contains(channelId.uuid)) {
             newDCh.portName_ = links[channelId.uuid];
+        } else {
+            newDCh.portName_ = "None";
         }
 
         channelsSetup_.push_back(newDCh);

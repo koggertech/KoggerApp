@@ -390,6 +390,11 @@ void Plot2D::setGNSSVisible(bool visible, int flags) {
     plotUpdate();
 }
 
+void Plot2D::setAcousticAngleVisible(bool visible) {
+    usblSolution_.setVisible(visible);
+    plotUpdate();
+}
+
 void Plot2D::setGridVetricalNumber(int grids) {
     grid_.setVisible(grids > 0);
     grid_.setVetricalNumber(grids);

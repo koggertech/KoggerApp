@@ -336,7 +336,7 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             }
 
             _rawData[ch_group] = {header, data};
-        } else {
+        } else  if(_rawData.contains(ch_group)){
             RawData& raw = _rawData[ch_group];
             int ready_samples = raw.samplesPerChannel();
 
