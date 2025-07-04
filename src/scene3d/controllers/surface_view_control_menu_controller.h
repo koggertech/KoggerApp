@@ -4,6 +4,7 @@
 #include <QThread>
 
 #include "qml_component_controller.h"
+#include "data_processor.h"
 
 
 class GraphicsScene3dView;
@@ -15,6 +16,7 @@ public:
     explicit SurfaceViewControlMenuController(QObject* parent = nullptr);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr) { dataProcessorPtr_ = dataProcessorPtr; };
 
     Q_INVOKABLE void onSurfaceViewVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateSurfaceViewButtonClicked();
@@ -36,6 +38,7 @@ private:
     void tryInitPendingLambda();
 
     GraphicsScene3dView* graphicsSceneViewPtr_;
+    DataProcessor* dataProcessorPtr_ = nullptr;
     QThread thread_;
     std::function<void()> pendingLambda_;
     bool visibility_;

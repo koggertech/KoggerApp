@@ -24,6 +24,7 @@
 #include "plot2D_rangefinder.h"
 #include "plot2D_usbl_solution.h"
 #include "dataset.h"
+#include "data_processor.h"
 
 
 class Plot2D
@@ -32,6 +33,7 @@ public:
     Plot2D();
 
     void setDataset(Dataset* dataset);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
 
     float getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
     int getEpochIndxByMousePos(int mouseX, int mouseY, bool isHorizontal) const;
@@ -146,6 +148,7 @@ protected:
     Plot2DRangefinder rangefinder_;
     Plot2DUSBLSolution usblSolution_;
     Dataset* datasetPtr_;
+    DataProcessor* dataProcessorPtr_;
     std::function<void()> pendingBtpLambda_;
     bool isHorizontal_;
 

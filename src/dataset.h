@@ -16,6 +16,7 @@
 #include "dsp_defs.h"
 #include "id_binnary.h"
 #include "usbl_view.h"
+#include "QReadWriteLock"
 
 
 #if defined(Q_OS_ANDROID) || (defined Q_OS_LINUX)
@@ -1042,6 +1043,8 @@ private:
 class Dataset : public QObject {
     Q_OBJECT
 public:
+    mutable QReadWriteLock lock_;
+
     /*structures*/
     enum class DatasetState {
         kUndefined = 0,
@@ -1084,6 +1087,17 @@ public:
         return NULL;
     }
 
+    Epoch fromIndexCopy(int index_offset = 0) {
+        QReadLocker rl(&lock_);
+
+        int index = validIndex(index_offset);
+        if(index >= 0) {
+            return pool_[index];
+        }
+
+        return Epoch();
+    }
+
     Epoch* last() {
         if(size() > 0) {
             return fromIndex(endIndex());
@@ -1111,11 +1125,21 @@ public:
 
     void getMaxDistanceRange(float* from, float* to, const ChannelId& channel, uint8_t subAddressCh1, const ChannelId& channel2 = CHANNEL_NONE, uint8_t subAddressCh2 = 0);
 
-    QVector<DatasetChannel> channelsList() {
+    bool channelsListIsEmpty() const {
+        QReadLocker locker(&lock_);
+
+        return channelsSetup_.isEmpty();
+    }
+
+    QVector<DatasetChannel> channelsList() const {
+        QReadLocker locker(&lock_);
+
         return channelsSetup_;
     }
 
     bool isContainsChannelInChannelSetup(const ChannelId& channelId) const {
+        QReadLocker locker(&lock_);
+
         for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
             if (channelsSetup_.at(i).channelId_ == channelId) {
                 return true;
@@ -1141,11 +1165,23 @@ public:
         return lastTemp_;
     }
 
+    BottomTrackParam getBottomTrackParam() {
+        QReadLocker rl(&lock_);
+
+        return bottomTrackParam_;
+    }
+
     BottomTrackParam* getBottomTrackParamPtr() {
         return &bottomTrackParam_;
     }
 
+    BottomTrackParam& getBottomTrackParamRef() {
+        return bottomTrackParam_;
+    }
+
 public slots:
+    friend class DataProcessor;
+
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
     void addTimestamp(int timestamp);
@@ -1179,8 +1215,6 @@ public slots:
     void resetDistProcessing();
 
     void setChannelOffset(const ChannelId& channelId, float x, float y, float z);
-
-    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2);
     void spatialProcessing();
 
     void usblProcessing();
@@ -1209,8 +1243,12 @@ public slots:
 
     void interpolateData(bool fromStart);
 
+    void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
+    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP);
+
 signals:
     void dataUpdate();
+    void chartsUpdated(int n);
     void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
     void boatTrackUpdated();
     void updatedInterpolatedData(int indx);

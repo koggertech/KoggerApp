@@ -2,6 +2,8 @@
 
 #include <QList>
 #include "qml_component_controller.h"
+#include "data_processor.h"
+
 
 class Core;
 class SideScanView;
@@ -14,6 +16,7 @@ class SideScanViewControlMenuController : public QmlComponentController
 public:
     explicit SideScanViewControlMenuController(QObject *parent = nullptr);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void setCorePtr(Core* corePtr);
 
     Q_INVOKABLE void onVisibilityChanged(bool state);
@@ -43,6 +46,7 @@ private:
 
     /*data*/
     GraphicsScene3dView* graphicsSceneViewPtr_;
+    DataProcessor* dataProcessorPtr_ = nullptr;
     Core* corePtr_;
     QList<QMetaObject::Connection> connections_;
     std::function<void()> pendingLambda_;

@@ -31,6 +31,8 @@ public:
 //    QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
     void setPlot(Dataset* plot);
+    void setDataProcessor(DataProcessor* dataProcessorPtr);
+
     bool isHorizontal() { return _isHorizontal; }
     void setHorizontal(bool is_horizontal) { _isHorizontal = is_horizontal; Plot2D::setHorizontal(_isHorizontal); update(); }
 

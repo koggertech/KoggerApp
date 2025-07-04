@@ -19,6 +19,7 @@
 #include "navigation_arrow.h"
 #include "usbl_view.h"
 #include "surface_view.h"
+#include "data_processor.h"
 
 
 class Dataset;
@@ -189,13 +190,10 @@ public:
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
-    void setUpdateMosaic(bool state);
-    void setUpdateIsobaths(bool state);
     void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetRef();
-    void setOpeningFileState(bool state);
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -207,7 +205,6 @@ public:
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
     void setTrackLastData(bool state);
-    void setUpdateBottomTrack(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 protected:
@@ -227,6 +224,7 @@ public Q_SLOTS:
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
@@ -279,8 +277,7 @@ private:
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
     Dataset* m_dataset = nullptr;
-    bool updateMosaic_;
-    bool updateIsobaths_;
+    DataProcessor* dataProcessorPtr_ = nullptr;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -301,8 +298,6 @@ private:
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
-    bool updateBottomTrack_;
-    bool isOpeningFile_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

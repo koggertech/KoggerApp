@@ -2,6 +2,8 @@
 #define SCENE3DTOOLBARCONTROLLER_H
 
 #include "qml_component_controller.h"
+#include "data_processor.h"
+
 
 class GraphicsScene3dView;
 class Scene3dToolBarController : public QmlComponentController
@@ -18,11 +20,15 @@ public:
     Q_INVOKABLE void onUpdateBottomTrackCheckButtonCheckedChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
+
 protected:
     virtual void findComponent() override;
+
 private:
     void tryInitPendingLambda();
 
+    DataProcessor* dataProcessorPtr_ = nullptr;
     GraphicsScene3dView* graphicsScene3dViewPtr_;
     std::function<void()> pendingLambda_;
     bool isVertexEditingMode_;

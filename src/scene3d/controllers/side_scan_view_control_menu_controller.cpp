@@ -40,6 +40,11 @@ void SideScanViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView
     }
 }
 
+void SideScanViewControlMenuController::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+}
+
 void SideScanViewControlMenuController::setCorePtr(Core* corePtr)
 {
     corePtr_ = corePtr;
@@ -133,7 +138,9 @@ void SideScanViewControlMenuController::onUpdateStateChanged(bool state)
     updateState_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->setUpdateMosaic(updateState_);
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
+        }
     }
     else {
         tryInitPendingLambda();
@@ -223,7 +230,11 @@ void SideScanViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this](){
             if (graphicsSceneViewPtr_) {
-                graphicsSceneViewPtr_->setUpdateMosaic(updateState_);
+
+                if (dataProcessorPtr_) {
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
+                }
+
                 if (auto sideScanPtr = graphicsSceneViewPtr_->getSideScanViewPtr(); sideScanPtr) {
                     sideScanPtr->setVisible(visibility_);
                     sideScanPtr->setUseLinearFilter(usingFilter_);

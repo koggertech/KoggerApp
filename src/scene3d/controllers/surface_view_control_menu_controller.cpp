@@ -31,7 +31,11 @@ void SurfaceViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
-                graphicsSceneViewPtr_->setUpdateIsobaths(processState_);
+
+                if (dataProcessorPtr_) {
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths", Qt::QueuedConnection, Q_ARG(bool, processState_));
+                }
+
                 if (auto surfaceViewPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfaceViewPtr) {
                     surfaceViewPtr->setVisible(visibility_);
                     surfaceViewPtr->setColorTableThemeById(themeId_);
@@ -147,7 +151,11 @@ void SurfaceViewControlMenuController::onProcessStateChanged(bool state)
     processState_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->setUpdateIsobaths(processState_);
+
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths", Qt::QueuedConnection, Q_ARG(bool, processState_));
+        }
+
         graphicsSceneViewPtr_->getSurfaceViewPtr()->onProcessStateChanged(processState_);
     }
     else {

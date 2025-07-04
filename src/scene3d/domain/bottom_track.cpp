@@ -2,7 +2,7 @@
 #include "scene3d_view.h"
 #include "epoch_event.h"
 //#include "text_renderer.h" TODO
-#include "draw_utils.h"
+//#include "draw_utils.h"
 #include "boat_track.h"
 #include <QtOpenGLExtensions/QOpenGLExtensions>
 
@@ -60,6 +60,11 @@ void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
     datasetPtr_ = datasetPtr;
 }
 
+void BottomTrack::setDataProcessorPtr(DataProcessor* dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+}
+
 void BottomTrack::actionEvent(ActionEvent actionEvent)
 {
     auto minMaxFunc = [this](bool isMin) -> void {
@@ -89,6 +94,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             sequenceVector.shrink_to_fit();
             const auto subArraysVec{ getSubarrays(sequenceVector) };
             const auto channels = datasetPtr_->channelsList();
+            const auto btP = datasetPtr_->getBottomTrackParam();
 
             for (auto& itm : subArraysVec) {
                 if (auto* btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
@@ -96,7 +102,8 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                     btp->indexTo = itm.second;
 
                     for (auto it = channels.begin(); it != channels.end(); ++it) {
-                        datasetPtr_->bottomTrackProcessing(it->channelId_, ChannelId()); // TODO check
+                        QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                                  Q_ARG(ChannelId, it->channelId_), Q_ARG(ChannelId, ChannelId()), Q_ARG(BottomTrackParam, btP));
                     }
                 }
                 else {

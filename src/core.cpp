@@ -184,8 +184,12 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
 
     QCoreApplication::processEvents(QEventLoop::AllEvents);
 
-    if (!isAppend)
+    if (!isAppend) {
+        resetDataProcessorConnections();
         datasetPtr_->resetDataset();
+        QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+        setDataProcessorConnections();
+    }
 
     if (scene3dViewPtr_) {
         if (!isAppend) {
@@ -233,12 +237,16 @@ bool Core::closeLogFile(bool onOpen)
         if (datasetPtr_) {
             datasetPtr_->resetDataset();
         }
+
+        QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
             scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
             //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
         }
         if (!onOpen) {
+            setDataProcessorConnections();
             createLinkManagerConnections();
             linkManagerWrapperPtr_->openClosedLinks();
         }
@@ -293,6 +301,9 @@ void Core::onFileOpenBreaked(bool onOpen)
     if (datasetPtr_) {
         datasetPtr_->resetDataset();
     }
+
+    QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
@@ -323,16 +334,21 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
         QCoreApplication::processEvents(QEventLoop::AllEvents);
 
-        if (!isAppend)
+        if (!isAppend) {
+            resetDataProcessorConnections();
             datasetPtr_->resetDataset();
+            QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+            setDataProcessorConnections();
+        }
 
         if (scene3dViewPtr_) {
             if (!isAppend) {
                 scene3dViewPtr_->clear();
             }
             scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
-            scene3dViewPtr_->setOpeningFileState(true);
         }
+
+        QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, true));
 
         QStringList splitname = localfilePath.split(QLatin1Char('.'), Qt::SkipEmptyParts);
 
@@ -350,9 +366,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
                 onFileStopsOpening();
 
-                if (scene3dViewPtr_) {
-                    scene3dViewPtr_->setOpeningFileState(false);
-                }
+                QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
 
                 return;
             }
@@ -391,6 +405,8 @@ bool Core::closeLogFile()
     if (datasetPtr_)
         datasetPtr_->resetDataset();
 
+    QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
@@ -408,10 +424,7 @@ void Core::onFileOpened()
 {
     qDebug() << "file opened!";
 
-    if (scene3dViewPtr_) {
-        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
-        scene3dViewPtr_->setOpeningFileState(false);
-    };
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
 }
 #endif
 
@@ -745,6 +758,9 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
     bool contactDistance = true;
 
     int row_cnt = datasetPtr_->size();
+
+    auto btP = datasetPtr_->getBottomTrackParam();
+    datasetPtr_->setChannelOffset(channelId, btP.offset.x, btP.offset.y, btP.offset.z);
     datasetPtr_->spatialProcessing();
 
     for (int i = 0; i < row_cnt; i++) {
@@ -1041,11 +1057,13 @@ void Core::UILoad(QObject* object, const QUrl& url)
     scene3dViewPtr_ = object->findChild<GraphicsScene3dView*> ();
     plot2dList_ = object->findChildren<qPlot2D*>();
     scene3dViewPtr_->setDataset(datasetPtr_);
+    scene3dViewPtr_->setDataProcessorPtr(dataProcessor_);
     datasetPtr_->setScene3D(scene3dViewPtr_);
 
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL) {
             plot2dList_.at(i)->setPlot(datasetPtr_);
+            plot2dList_.at(i)->setDataProcessor(dataProcessor_);
             scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));
             scene3dViewPtr_->boatTrack()->installEventFilter(plot2dList_.at(i));
             scene3dViewPtr_->getContactsPtr()->installEventFilter(plot2dList_.at(i));
@@ -1078,9 +1096,11 @@ void Core::UILoad(QObject* object, const QUrl& url)
     surfaceControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     surfaceViewControlMenuController_->setQmlEngine(object);
+    surfaceViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
     surfaceViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     sideScanViewControlMenuController_->setQmlEngine(object);
+    sideScanViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
     sideScanViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     imageViewControlMenuController_->setQmlEngine(object);
@@ -1102,6 +1122,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     polygonGroupControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     scene3dToolBarController_->setQmlEngine(object);
+    scene3dToolBarController_->setDataProcessorPtr(dataProcessor_);
     scene3dToolBarController_->setGraphicsSceneView(scene3dViewPtr_);
 
     scene3dControlMenuController_->setQmlEngine(object);
@@ -1586,20 +1607,23 @@ void Core::createDataProcessor()
     dataProcThread_ = new QThread(this);
     dataProcessor_  = new DataProcessor;
 
+    dataProcessor_->setDatasetPtr(datasetPtr_);
+
     dataProcessor_->moveToThread(dataProcThread_);
 
     QObject::connect(dataProcThread_, &QThread::started,  dataProcessor_,  &DataProcessor::init);
     QObject::connect(dataProcThread_, &QThread::finished, dataProcessor_,  &QObject::deleteLater);
     QObject::connect(dataProcThread_, &QThread::finished, dataProcThread_, &QObject::deleteLater);
 
-    //QObject::connect(_, &QTimer::timeout, dataProcessor_,  );
-
+    setDataProcessorConnections();
 
     dataProcThread_->start();
 }
 
 void Core::destroyDataProcessor()
 {
+    resetDataProcessorConnections();
+
     if (dataProcThread_ && dataProcThread_->isRunning()) {
         dataProcThread_->quit();
         dataProcThread_->wait();
@@ -1609,6 +1633,23 @@ void Core::destroyDataProcessor()
 
     dataProcessor_ = nullptr;
     dataProcThread_ = nullptr;
+}
+
+void Core::setDataProcessorConnections()
+{
+    dataProcessorConnections_.append(QObject::connect(datasetPtr_, &Dataset::chartsUpdated, dataProcessor_, &DataProcessor::onChartsUpdated, Qt::QueuedConnection));
+
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing, datasetPtr_, &Dataset::onDistCompleted, Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));
+}
+
+void Core::resetDataProcessorConnections()
+{
+    for (auto& itm : dataProcessorConnections_) {
+        disconnect(itm);
+    }
+
+    dataProcessorConnections_.clear();
 }
 
 #ifdef FLASHER

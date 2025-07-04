@@ -159,6 +159,10 @@ private:
     /*methods*/
     void createDataProcessor();
     void destroyDataProcessor();
+
+    void setDataProcessorConnections();
+    void resetDataProcessorConnections();
+
     ConsoleListModel* consoleList();
     void createControllers();
     void createDeviceManagerConnections();
@@ -235,4 +239,6 @@ private slots:
 signals:
     void dev_flasher_changed();
 #endif
+
+    QVector<QMetaObject::Connection> dataProcessorConnections_;
 };

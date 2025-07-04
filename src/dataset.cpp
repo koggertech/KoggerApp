@@ -769,7 +769,9 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
+    int n = std::max(0, size() - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
     emit dataUpdate();
+    emit chartsUpdated(n);
 }
 
 void Dataset::rawDataRecieved(RawData raw_data)
@@ -1144,10 +1146,15 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
 }
 
 
-void Dataset::resetDataset() {
+void Dataset::resetDataset()
+{
+    {
+        QWriteLocker locker(&lock_);
+        channelsSetup_.clear();
+    }
+
     pool_.clear();
     _llaRef.isInit = false;
-    channelsSetup_.clear();
     lastBottomTrackEpoch_ = 0;
     resetDistProcessing();
     interpolator_.clear();
@@ -1169,15 +1176,17 @@ void Dataset::resetDataset() {
 }
 
 void Dataset::resetDistProcessing() {
-    int pool_size = size();
-    for(int i = 0; i < pool_size; i++) {
-//        Epoch* dataset = fromIndex(i);
-//        dataset->resetDistProccesing();
-    }
+//     int pool_size = size();
+//     for(int i = 0; i < pool_size; i++) {
+// //        Epoch* dataset = fromIndex(i);
+// //        dataset->resetDistProccesing();
+//     }
 }
 
 void Dataset::setChannelOffset(const ChannelId& channelId, float x, float y, float z)
 {
+    QWriteLocker locker(&lock_);
+
     // write to all on ChannelId
     for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
         if (channelsSetup_.at(i).channelId_ == channelId) {
@@ -1186,259 +1195,6 @@ void Dataset::setChannelOffset(const ChannelId& channelId, float x, float y, flo
             channelsSetup_[i].localPosition_.z = z;
         }
     }
-}
-
-void Dataset::bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2) // TODO rewrite
-{
-    if(bottomTrackParam_.indexFrom < 0 || bottomTrackParam_.indexTo < 0) { return; }
-
-    int epoch_min_index = bottomTrackParam_.indexFrom - bottomTrackParam_.windowSize/2;
-
-    if(epoch_min_index < 0) {
-        epoch_min_index = 0;
-    }
-
-    int epoch_max_index = bottomTrackParam_.indexTo + bottomTrackParam_.windowSize/2;
-    if(epoch_max_index >= size()) {
-        epoch_max_index = size();
-    }
-
-    QVector<int32_t> summ;
-
-    float gain_slope = bottomTrackParam_.gainSlope;
-    float threshold = bottomTrackParam_.threshold;
-
-    int istart = 4;
-    int init_win = 6;
-    int scale_win = 20;
-
-    int16_t c1 = -6, c2 = 6, c3 = 4, c4 = 2, c5 = 0;
-    float s2 = 1.04f, s3 = 1.06f, s4 = 1.10f, s5 = 1.15f;
-    float t1 = 1.07;
-
-
-    if(bottomTrackParam_.preset == BottomTrackPreset::BottomTrackOneBeamNarrow) {
-        istart = 4;
-        init_win = 6;
-        scale_win = 35;
-
-        c1 = -3, c2 = 8, c3 = 5, c4 = -1, c5 = -1;
-        s2 = 1.015f, s3 = 1.035f, s4 = 1.08f, s5 = 1.12f;
-        t1 = 1.04;
-    }
-
-
-    if(bottomTrackParam_.preset == BottomTrackPreset::BottomTrackSideScan) {
-        istart = 4;
-        init_win = 6;
-        scale_win = 12;
-
-        c1 = -3, c2 = -3, c3 = 4, c4 = 2, c5 = 1;
-        s2 = 1.1f, s3 = 1.2f, s4 = 1.3f, s5 = 1.4f;
-        t1 = 1.2;
-    }
-
-    const int gain_slope_inv = 1000/(gain_slope);
-    const int threshold_int = 10*gain_slope_inv*1000*threshold;
-
-    typedef  struct {
-        float min = NAN, max = NAN;
-    } EpochConstrants;
-
-    QVector<QVector<int32_t>> cash(bottomTrackParam_.windowSize);
-    QVector<EpochConstrants> constr(bottomTrackParam_.windowSize);
-
-    QVector<float> bottom_track(epoch_max_index - epoch_min_index);
-    bottom_track.fill(NAN);
-
-    int epoch_counter = 0;
-
-    for(int iepoch = epoch_min_index; iepoch < epoch_max_index; iepoch++) {
-        Epoch* epoch = fromIndex(iepoch);
-        if(epoch == NULL || !epoch->chartAvail(channel1)) { continue; }
-
-        epoch_counter++;
-
-        Epoch::Echogram* chart = epoch->chart(channel1);
-
-        uint8_t* data = (uint8_t*)chart->amplitude.constData();
-        const int data_size = chart->amplitude.size();
-
-        int cash_ind = (epoch_counter-1)%bottomTrackParam_.windowSize;
-
-        int back_cash_ind = ((epoch_counter)%bottomTrackParam_.windowSize);
-        int32_t* back_cash_data = (int32_t*)cash[back_cash_ind].constData();
-        const int back_cash_size = cash[back_cash_ind].size();
-
-        int32_t* summ_data = (int32_t*)summ.constData();
-
-        if(epoch_counter >= bottomTrackParam_.windowSize) {
-            for(int i = istart; i < back_cash_size; i++) { summ_data[i] -= back_cash_data[i]; }
-        }
-
-        if(cash[cash_ind].size() != data_size) {
-            cash[cash_ind].resize(data_size);
-        }
-
-        int32_t* cash_data = (int32_t*)cash[cash_ind].constData();
-
-
-        uint8_t* data_from = &data[istart];
-        uint8_t* data_to = &data[(istart+init_win)];
-
-        int data_acc = 0;
-        for(int idata = istart; idata < (istart+init_win); idata++) {
-            data_acc += data[idata];
-        }
-
-        int avrg_range = init_win;
-        for(int idata = istart; (idata + avrg_range) < data_size; idata++) {
-            data_acc -= *data_from; data_from++;
-            data_acc += *data_to; data_to++;
-            while((idata+(init_win*scale_win)) >= ((avrg_range = data_to - data_from)*scale_win)) {
-                data_acc += *data_to; data_to++;
-            }
-            cash_data[idata] = 10*data_acc / (avrg_range);
-        }
-
-        const int data_conv_size = data_size - avrg_range;
-        for(int idata = istart; ; idata++) {
-            const float fidata = idata + init_win+1;
-            int di1 =  idata;
-            int di2 =  fidata*s2;
-            int di3 =  fidata*s3;
-            int di4 =  fidata*s4;
-            int di5 =  fidata*s5;
-
-            if(di5 >= data_conv_size) { break; }
-
-            int calc = (c1*cash_data[di1] + c2*cash_data[di2] + c3*cash_data[di3] + c4*cash_data[di4] + c5*cash_data[di5]);
-            calc = calc*gain_slope_inv + calc*(idata);
-
-            cash_data[idata] = calc;
-        }
-
-        const int col_size = cash[cash_ind].size();
-        if(summ.size() < col_size) { summ.resize(col_size); }
-        summ_data = (int32_t*)summ.constData();
-        for(int i = istart; i < col_size; i++) { summ_data[i] += cash_data[i]; }
-
-
-        constr[cash_ind].min = chart->bottomProcessing.getMin();
-        constr[cash_ind].max = chart->bottomProcessing.getMax();
-
-        const int win_center_index = (epoch_counter - 1 + bottomTrackParam_.windowSize/2)%bottomTrackParam_.windowSize;
-
-        float search_from_distance = bottomTrackParam_.minDistance;
-        float search_to_distance = bottomTrackParam_.maxDistance;
-
-        if(search_from_distance < constr[win_center_index].min) {
-            search_from_distance = constr[win_center_index].min;
-        }
-
-        if(search_to_distance > constr[win_center_index].max) {
-            search_to_distance = constr[win_center_index].max;
-        }
-
-        int start_search_index = search_from_distance/t1/chart->resolution;
-        int end_search_index = search_to_distance/t1/chart->resolution;
-
-        if(start_search_index < 0) { start_search_index = 0; }
-        if(start_search_index > summ.size()) { start_search_index = summ.size(); }
-
-        if(end_search_index < 0) { end_search_index = 0; }
-        if(end_search_index > summ.size()) { end_search_index = summ.size(); }
-
-
-        int max_val = threshold_int*bottomTrackParam_.windowSize;
-        int max_ind = -1;
-        for(int i = start_search_index; i < end_search_index ; i++) {
-            if(max_val < summ_data[i]) {
-                max_val = summ_data[i];
-                max_ind = i;
-            }
-        }
-
-        if(max_ind > 0) {
-            float distance = ((max_ind+init_win+1)*t1)*chart->resolution;
-
-            if(epoch_counter >= bottomTrackParam_.windowSize) {
-                if(bottomTrackParam_.verticalGap > 0) {
-                    int32_t* center_cash_data = (int32_t*)cash[win_center_index].constData();
-                    const int center_cash_size = cash[win_center_index].size();
-
-                    int start_gap_index = max_ind*(1.0f-bottomTrackParam_.verticalGap);
-                    int end_gap_index = max_ind*(1.0f+bottomTrackParam_.verticalGap);
-
-                    if(start_gap_index < start_search_index) { start_gap_index = start_search_index; }
-                    if(start_gap_index > center_cash_size) { start_gap_index = center_cash_size; }
-
-                    if(end_gap_index < 0) { end_gap_index = 0; }
-                    if(end_gap_index > center_cash_size) { end_gap_index = center_cash_size; }
-                    if(end_gap_index > end_search_index) { end_gap_index = end_search_index; }
-
-                    int max_gap_val = 0;
-                    int max_gap_ind = -1;
-                    for(int i = start_gap_index; i < end_gap_index ; i++) {
-                        if(max_gap_val < center_cash_data[i]) {
-                            max_gap_val = center_cash_data[i];
-                            max_gap_ind = i;
-                        }
-                    }
-
-
-                    if(max_gap_ind > 0) {
-                        distance = ((max_gap_ind+init_win+1)*t1)*chart->resolution;
-                    }
-                }
-
-                bottom_track[iepoch - epoch_min_index - bottomTrackParam_.windowSize/2] = distance;
-            } else {
-                bottom_track[iepoch - epoch_min_index - epoch_counter/2] = distance;
-            }
-            }
-    }
-
-
-    int epoch_start_index = bottomTrackParam_.indexFrom;
-
-    if(epoch_start_index < 0) {
-        epoch_start_index = 0;
-    }
-
-    int epoch_stop_index = bottomTrackParam_.indexTo;
-    if(epoch_stop_index >= size()) {
-        epoch_stop_index = size();
-    }
-
-    for(int iepoch = epoch_start_index; iepoch < epoch_stop_index; iepoch++) {
-        Epoch* epoch = fromIndex(iepoch);
-
-        if(epoch == NULL) { continue; }
-
-        if(epoch->chartAvail(channel1)) {
-            Epoch::Echogram* chart = epoch->chart(channel1);
-            if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
-                float dist = bottom_track[iepoch - epoch_min_index];
-                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
-            }
-        }
-
-        if(epoch->chartAvail(channel2)) {
-            Epoch::Echogram* chart = epoch->chart(channel2);
-            if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
-                float dist = bottom_track[iepoch - epoch_min_index];
-                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
-            }
-        }
-    }
-
-    setChannelOffset(channel1, bottomTrackParam_.offset.x, bottomTrackParam_.offset.y, bottomTrackParam_.offset.z);
-    spatialProcessing();
-    emit dataUpdate();
-    lastBottomTrackEpoch_ = size();
-
-    emit bottomTrackUpdated(channel1, bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo);
 }
 
 void Dataset::spatialProcessing() {
@@ -1479,8 +1235,6 @@ void Dataset::spatialProcessing() {
             }
         }
     }
-
-    emit dataUpdate();
 }
 
 void Dataset::usblProcessing() {
@@ -1653,37 +1407,69 @@ void Dataset::interpolateData(bool fromStart)
     interpolator_.interpolateData(fromStart);
 }
 
+void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist)
+{
+    Epoch* epPtr = fromIndex(epIndx);
+
+    if (!epPtr) {
+        return;
+    }
+
+    if (epPtr->chartAvail(channelId)) {
+        Epoch::Echogram* chart = epPtr->chart(channelId);
+        if (chart) {
+            chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
+        }
+    }
+}
+
+void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP)
+{
+    bottomTrackParam_ = btP;
+    lastBottomTrackEpoch_ = val;
+
+    emit dataUpdate();
+    emit bottomTrackUpdated(channelId, bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo);
+}
+
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
 {
     int16_t indx = -1;
-    const int chVecSize = channelsSetup_.size();
 
-    for (int16_t i = 0; i < chVecSize; ++i) {
-        if (channelsSetup_.at(i).channelId_ == channelId &&
-            channelsSetup_.at(i).subChannelId_ == subChannelId) {
-            indx = i;
-            break;
-        }
-    }
+    {
+        QWriteLocker locker(&lock_);
 
-    if (indx != -1) {
-        if (channelsSetup_[indx].portName_.isEmpty()) {
-            auto links = core.getLinkNames();
-            if (links.contains(channelId.uuid)) {
-                channelsSetup_[indx].portName_ = links[channelId.uuid];
+        for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
+            if (channelsSetup_.at(i).channelId_ == channelId &&
+                channelsSetup_.at(i).subChannelId_ == subChannelId) {
+                indx = i;
+                break;
             }
         }
 
-        channelsSetup_[indx].counter();
-    }
-    else {
-        auto newDCh = DatasetChannel(channelId, subChannelId);
-        auto links = core.getLinkNames();
-        if (links.contains(channelId.uuid)) {
-            newDCh.portName_ = links[channelId.uuid];
-        }
+        if (indx != -1) {
+            if (channelsSetup_[indx].portName_.isEmpty()) {
+                auto links = core.getLinkNames();
+                if (links.contains(channelId.uuid)) {
+                    channelsSetup_[indx].portName_ = links[channelId.uuid];
+                }
+            }
 
-        channelsSetup_.push_back(newDCh);
+            channelsSetup_[indx].counter();
+        }
+        else {
+            auto newDCh = DatasetChannel(channelId, subChannelId);
+            auto links = core.getLinkNames();
+
+            if (links.contains(channelId.uuid)) {
+                newDCh.portName_ = links[channelId.uuid];
+            }
+
+            channelsSetup_.push_back(newDCh);
+        }
+    }
+
+    if (indx == -1) {
         emit channelsUpdated();
     }
 }

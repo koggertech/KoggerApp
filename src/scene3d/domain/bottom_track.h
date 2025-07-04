@@ -3,6 +3,7 @@
 #include <memory>
 #include "scene_object.h"
 #include "dataset.h"
+#include "data_processor.h"
 
 
 class GraphicsScene3dView;
@@ -53,6 +54,7 @@ public:
     //QMap<ChannelId, DatasetChannel> channels() const;
     //DatasetChannel visibleChannel() const;
     void setDatasetPtr(Dataset* datasetPtr);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void actionEvent(ActionEvent actionEvent);
 
 public Q_SLOTS:
@@ -96,6 +98,7 @@ private:
     QHash<VerticeIndex,EpochIndex> epoch2Vertex_;
     DatasetChannel visibleChannel_;
     Dataset* datasetPtr_;
+    DataProcessor* dataProcessorPtr_;
     QVector<QVector3D> renderData_;
     int firstLIndx_ = -1;
 };

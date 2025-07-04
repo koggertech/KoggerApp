@@ -72,7 +72,11 @@ void Scene3dToolBarController::onUpdateBottomTrackCheckButtonCheckedChanged(bool
     updateBottomTrack_ = state;
 
     if (graphicsScene3dViewPtr_) {
-        graphicsScene3dViewPtr_->setUpdateBottomTrack(updateBottomTrack_);
+
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));
+        }
+
     }
     else {
         tryInitPendingLambda();
@@ -91,6 +95,11 @@ void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneVi
     }
 }
 
+void Scene3dToolBarController::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+}
+
 void Scene3dToolBarController::findComponent()
 {
     m_component = m_engine->findChild<QObject*>(QmlObjectNames::scene3dToolBar());
@@ -102,7 +111,11 @@ void Scene3dToolBarController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsScene3dViewPtr_) {
                 graphicsScene3dViewPtr_->setTrackLastData(trackLastData_);
-                graphicsScene3dViewPtr_->setUpdateBottomTrack(updateBottomTrack_);
+
+                if (dataProcessorPtr_) {
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));
+                }
+
                 if (isVertexEditingMode_) {
                     graphicsScene3dViewPtr_->setBottomTrackVertexSelectionMode();
                 }

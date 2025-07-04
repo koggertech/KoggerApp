@@ -54,6 +54,11 @@ void Plot2D::setDataset(Dataset *dataset)
     }
 }
 
+void Plot2D::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+}
+
 float Plot2D::getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const
 {
     int currPos = isHorizontal ? mouseY : mouseX;
@@ -620,7 +625,9 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
             if (auto btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
                 btp->indexFrom = cursor_.getIndex(x_start);
                 btp->indexTo = cursor_.getIndex(x_start + x_length);
-                datasetPtr_->bottomTrackProcessing(cursor_.channel1, cursor_.channel2);
+
+                QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                          Q_ARG(ChannelId, cursor_.channel1), Q_ARG(ChannelId, cursor_.channel2), Q_ARG(BottomTrackParam, *btp));
             }
         }
 

@@ -31,16 +31,13 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
-    updateIsobaths_(false),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
-    trackLastData_(false),
-    updateBottomTrack_(false),
-    isOpeningFile_(false)
+    trackLastData_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -53,12 +50,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     sideScanView_->setView(this);
     imageView_->setView(this);
-
-#ifdef SEPARATE_READING
-    updateMosaic_ = true;
-#else
-    updateMosaic_ = false;
-#endif
 
     QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
@@ -227,16 +218,6 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     retVal = rayOrigin + rayDirection * t;
 
     return retVal;
-}
-
-void GraphicsScene3dView::setUpdateMosaic(bool state)
-{
-    updateMosaic_ = state;
-}
-
-void GraphicsScene3dView::setUpdateIsobaths(bool state)
-{
-    updateIsobaths_ = state;
 }
 
 void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
@@ -446,11 +427,6 @@ void GraphicsScene3dView::setTrackLastData(bool state)
     trackLastData_ = state;
 }
 
-void GraphicsScene3dView::setUpdateBottomTrack(bool state)
-{
-    updateBottomTrack_ = state;
-}
-
 void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
 {
     emit sendTextureIdByTileIndx(tileIndx, textureId);
@@ -491,11 +467,6 @@ void GraphicsScene3dView::forceUpdateDatasetRef()
     m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
 
     QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::setOpeningFileState(bool state)
-{
-    isOpeningFile_ = state;
 }
 
 void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -659,15 +630,21 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
+                                    if (m_dataset->channelsListIsEmpty()) {
+                                        return;
+                                    }
                                     auto fCh = m_dataset->channelsList().first();
                                     if (!m_dataset || fCh.channelId_ != channelId) {
                                         return;
                                     }
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                    if (updateMosaic_) {
-                                        interpolateDatasetEpochs(false);
-                                    }
+
+                                    // TODO
+                                    //if (updateMosaic_) {
+                                    //    interpolateDatasetEpochs(false);
+                                    //}
+
                                 }, Qt::DirectConnection);
 
     QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
@@ -679,33 +656,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
                                     if (trackLastData_) {
                                         setLastEpochFocusView();
-                                    }
-
-#ifndef SEPARATE_READING
-                                    if (isOpeningFile_) {
-                                        return;
-                                    }
-#endif
-
-                                    if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
-                                        auto* btP = m_dataset->getBottomTrackParamPtr();
-
-                                        const int endIndx    = m_dataset->endIndex();
-                                        const int windowSize = btP->windowSize;
-
-                                        int currCount = std::floor(endIndx / windowSize);
-                                        if (bottomTrackWindowCounter_ != currCount) {
-
-                                            btP->indexFrom = windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1);
-                                            btP->indexTo   = windowSize * currCount - (windowSize / 2 + 1);
-
-                                            const auto channels = m_dataset->channelsList();
-                                            for (auto it = channels.begin(); it != channels.end(); ++it) {
-                                                m_dataset->bottomTrackProcessing(it->channelId_, ChannelId());
-                                            }
-
-                                            bottomTrackWindowCounter_ = currCount;;
-                                        }
                                     }
                                 }, Qt::DirectConnection);
 
@@ -723,6 +673,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                    forceUpdateDatasetRef();
                                    fitAllInView();
                                 }, Qt::DirectConnection);
+}
+
+void GraphicsScene3dView::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+
+    m_bottomTrack->setDataProcessorPtr(dataProcessorPtr_);
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {

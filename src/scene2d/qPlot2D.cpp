@@ -89,6 +89,15 @@ void qPlot2D::setPlot(Dataset *dataset) {
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
 }
 
+void qPlot2D::setDataProcessor(DataProcessor *dataProcessorPtr)
+{
+    if (!dataProcessorPtr) {
+        return;
+    }
+
+    Plot2D::setDataProcessorPtr(dataProcessorPtr);
+}
+
 void qPlot2D::plotUpdate()
 {
     if (!Plot2D::plotEnabled()) {
@@ -203,7 +212,8 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
             btpPtr->offset.y = offsety;
             btpPtr->offset.z = offsetz;
 
-            datasetPtr_->bottomTrackProcessing(cursor_.channel1, cursor_.channel2);
+            QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                      Q_ARG(ChannelId, cursor_.channel1), Q_ARG(ChannelId, cursor_.channel2), Q_ARG(BottomTrackParam, *btpPtr));
         }
     }
     plotUpdate();
