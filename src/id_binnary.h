@@ -193,6 +193,10 @@ struct RawData {
 
     RawDataHeader header;
     QByteArray data;
+
+    uint32_t samplesPerChannel() {
+        return data.size()/(header.dataSize + 1)/header.channelCount;
+    }
 };
 
 
@@ -262,7 +266,8 @@ protected:
 
     bool m_isCompleteChart = false;
 
-    RawData _rawData;
+    QMap<int, RawData> _rawData;
+    QMap<int, RawData> _rawDataComplete;
 signals:
     void rawDataRecieved(RawData raw_data);
 

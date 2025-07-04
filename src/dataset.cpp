@@ -84,9 +84,10 @@ void Epoch::setChartParameters(const ChannelId& channelId, const ChartParameters
 //     // _complex[channel].type = 2;
 // }
 
-void Epoch::setComplexF(const ChannelId& channelId, ComplexSignal signal) {
-    _complex[channelId] = signal;
+void Epoch::setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal) {
+    _complex[channelId][group] = signal;
 }
+
 void Epoch::setDist(const ChannelId& channelId, int dist) {
     rangefinders_[channelId] = dist * 0.001;
     flags.distAvail = true;
@@ -231,20 +232,23 @@ void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
     Q_UNUSED(is_update_dist);
 }
 
-void Epoch::moveComplexToEchogram(float offset_m, float levels_offset_db)
-{
-    for (auto i = _complex.cbegin(), end = _complex.cend(); i != end; ++i) {
-        // cout << qPrintable(i.key()) << ": " << i.value() << endl;
-        QVector<ComplexF> data = i.value().data;
+void Epoch::moveComplexToEchogram(ChannelId channel_id, int group_id, float offset_m, float levels_offset_db) {
+    QVector<ComplexSignal> chls = _complex[channel_id][group_id];
+    float sample_rate = chls[0].sampleRate;
 
-        int size = data.size();
-        ComplexF* compelex_data = data.data();
+    QVector<QVector<uint8_t>> chart;
+    chart.resize(chls.size());
 
-        QVector<QVector<uint8_t>> chart(1);
-        chart[0].resize(size);
-        uint8_t* chart_data = chart[0].data();
+    for(int ch_i = 0; ch_i < chls.size(); ch_i++) {
+        int ch_echo = ch_i;
 
-        for (int k  = 0; k < size; k++) {
+        int data_size = chls[ch_i].data.size();
+
+        chart[ch_echo].resize(chls[ch_i].data.size());
+        uint8_t* chart_data = chart[ch_echo].data();
+        ComplexF* compelex_data = chls[ch_i].data.data();
+
+        for (int k  = 0; k < data_size; k++) {
             float amp = (compelex_data[k].logPow() + levels_offset_db)*2.5;
 
             if (amp < 0) {
@@ -256,9 +260,9 @@ void Epoch::moveComplexToEchogram(float offset_m, float levels_offset_db)
 
             chart_data[k] = amp;
         }
-
-        setChart(i.key(), chart, 1500.0f/i.value().sampleRate, offset_m);
     }
+
+    setChart(ChannelId(QUuid(), group_id), chart, 1500.0f/sample_rate, offset_m);
 }
 
 void Epoch::setInterpNED(NED ned)
@@ -772,100 +776,63 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
     emit dataUpdate();
 }
 
-void Dataset::rawDataRecieved(RawData raw_data)
-{
-    Q_UNUSED(raw_data);
+void Dataset::rawDataRecieved(RawData raw_data) {
+    RawData::RawDataHeader header = raw_data.header;
+    ComplexF* compelex_data = (ComplexF*)raw_data.data.data();
+    int16_t* real16_data = (int16_t*)raw_data.data.data();
+    int size = raw_data.samplesPerChannel();
 
-    // TODO
-    // Epoch* last_epoch = last();
+    Epoch* last_epoch = last();
+    ComplexSignals& compex_signals = last_epoch->complexSignals();
 
-    // RawData::RawDataHeader header = raw_data.header;
+    ChannelId dev_id(QUuid(), header.channelGroup);
 
-    // ComplexF* compelex_data = (ComplexF*)raw_data.data.data();
-    // int16_t* real16_data = (int16_t*)raw_data.data.data();
+    if(compex_signals[dev_id].contains(header.channelGroup)) {
+        float offset_m = 0;
+        float offset_db = 0;
+        offset_db = -20;
+        // last_epoch->moveComplexToEchogram(offset_m, offset_db);
+        last_epoch = addNewEpoch();
+        compex_signals = last_epoch->complexSignals();
+    }
 
-    // int size = raw_data.data.size()/(header.dataSize + 1)/header.channelCount;
+    QVector<ComplexSignal>& channels = compex_signals[dev_id][header.channelGroup];
+    channels.resize(header.channelCount);
 
-    // if(header.localOffset == 0) {
-    //     float offset_m = 0;
-    //     // if(last_epoch->isUsblSolutionAvailable()) {
-    //     //     offset_m = last_epoch->usblSolution().distance_m;
-    //     //     offset_m -= (last_epoch->usblSolution().carrier_counter - header.globalOffset)*1500.0f/header.sampleRate;
-    //     // }
-    //     float offset_db = 0;
-    //     offset_db = -86;
+    for(int ich = 0; ich < header.channelCount; ich++) {
+        ComplexSignal& signal = channels[ich]; //??
 
-    //     last_epoch->moveComplexToEchogram(offset_m, offset_db);
+        signal.globalOffset = header.globalOffset;
+        signal.sampleRate = header.sampleRate;
+        signal.data.resize(size);
 
-    //     if(header.channelGroup == 0) {
-    //         last_epoch = addNewEpoch();
-    //     }
+        ComplexF* signal_data = signal.data.data();
 
-    //     ComplexSignals compex_signals = last_epoch->complexSignals();
+        if(header.dataType == 0) {
+            signal.isComplex = true;
 
-    //     for(int ich = 0; ich < header.channelCount; ich++) {
-    //         int ch_num = ich + (header.channelGroup*32);
-    //         ComplexSignal signal = compex_signals[ch_num]; //??
-    //         signal.groupIndex = header.channelGroup;
+            for(int i  = 0; i < size; i++) {
+                signal_data[i] = compelex_data[i*header.channelCount + ich];
+            }
+        } else if(header.dataType == 1) {
+            signal.isComplex = false;
 
-    //         signal.globalOffset = header.globalOffset;
-    //         signal.sampleRate = header.sampleRate;
+            for(int i  = 0; i < size; i++) {
+                signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
+            }
+        }
+    }
 
-    //         signal.data.resize(size);
+    float offset_m = 0;
+    float offset_db = 0;
+    offset_db = -20;
+    last_epoch->moveComplexToEchogram(dev_id, header.channelGroup, offset_m, offset_db);
 
-    //         ComplexF* signal_data = signal.data.data();
+    for(int ich = 0; ich < header.channelCount; ich++) {
+        validateChannelList(dev_id, ich);
+    }
 
-    //         if(header.dataType == 0) {
-    //             signal.isComplex = true;
-
-    //             for(int i  = 0; i < size; i++) {
-    //                 signal_data[i] = compelex_data[i*header.channelCount + ich];
-    //             }
-    //         } else if(header.dataType == 1) {
-    //             signal.isComplex = false;
-
-    //             for(int i  = 0; i < size; i++) {
-    //                 signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
-    //             }
-    //         }
-
-    //         last_epoch->setComplexF(ch_num, signal);
-    //         validateChannelList(ch_num);
-    //     }
-
-    // } else {
-    //     ComplexSignals compex_signals = last_epoch->complexSignals();
-
-    //     for(int ich = 0; ich < header.channelCount; ich++) {
-    //         int ch_num = ich + (header.channelGroup*32);
-
-    //         ComplexSignal signal = compex_signals[ch_num];
-    //         uint32_t inbuf_localOffset = signal.data.size();
-    //         signal.data.resize(header.localOffset + size);
-
-    //         // signal.data.fill(ComplexF(0,0))
-
-    //         if(inbuf_localOffset == header.localOffset) {
-    //             ComplexF* signal_data = signal.data.data() + inbuf_localOffset;
-    //             if(header.dataType == 0) {
-    //                 for(int i  = 0; i < size; i++) {
-    //                     signal_data[i] = compelex_data[i*header.channelCount + ich];
-    //                 }
-    //             } else if(header.dataType == 1) {
-    //                 for(int i  = 0; i < size; i++) {
-    //                     signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
-    //                 }
-    //             }
-    //         } else {
-    //             qDebug("raw data has broken");
-    //         }
-
-
-    //         last_epoch->setComplexF(ch_num, signal);
-    //     }
-    // }
-
-    // emit dataUpdate();
+    emit dataUpdate();
 }
 
 void Dataset::addDist(const ChannelId& channelId, int dist)
