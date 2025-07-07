@@ -415,7 +415,6 @@ typedef struct ComplexSignal {
     uint32_t globalOffset = 0;
     float sampleRate = 0;
     bool isComplex = true;
-    int groupIndex = 0;
     QVector<ComplexF> data;
 } ComplexSignal;
 
@@ -442,7 +441,7 @@ struct RecordParameters {
     }
 };
 
-typedef QMap<ChannelId, ComplexSignal> ComplexSignals;
+typedef QMap<ChannelId, QMap<int, QVector<ComplexSignal>>> ComplexSignals;
 
 class Epoch {
 public:
@@ -578,8 +577,8 @@ public:
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
 
-    void setComplexF(const ChannelId& channelId, ComplexSignal signal);
-    ComplexSignals complexSignals() { return _complex; }
+    void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
+    ComplexSignals& complexSignals() { return _complex; }
     //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
     bool isComplexSignalAvail() { return _complex.size() > 0; }
 
@@ -923,7 +922,7 @@ public:
         return true;
     }
 
-    void moveComplexToEchogram(float offset_m, float levels_offset_db);
+    void moveComplexToEchogram(ChannelId channel_id, int group_id, float offset_m, float levels_offset_db);
 
     void setInterpNED(NED ned);
     void setInterpYaw(float yaw);
@@ -1194,7 +1193,7 @@ public slots:
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
     void addChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
-    void rawDataRecieved(RawData raw_data);
+    void rawDataRecieved(const ChannelId& channelId, RawData raw_data);
     void addDist(const ChannelId& channelId, int dist);
     void addRangefinder(const ChannelId& channelId, float distance);
     void addUsblSolution(IDBinUsblSolution::UsblSolution data);

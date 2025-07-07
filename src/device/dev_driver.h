@@ -186,7 +186,7 @@ signals:
     void sendSoundSpeed(const ChannelId& channelId, uint32_t soundSpeed);
 
     void chartComplete(const ChannelId& channelId, const ChartParameters& chartsParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
-    void rawDataRecieved(RawData raw_data);
+    void rawDataRecieved(const ChannelId& channelId, RawData raw_data);
 
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
@@ -383,6 +383,7 @@ protected slots:
     void receivedTimestamp(Type type, Version ver, Resp resp);
     void receivedDist(Type type, Version ver, Resp resp);
     void receivedChart(Type type, Version ver, Resp resp);
+    void receivedRaw(RawData raw_data);
     void receivedAtt(Type type, Version ver, Resp resp);
     void receivedTemp(Type type, Version ver, Resp resp);
 

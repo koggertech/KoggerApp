@@ -656,7 +656,7 @@ bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");
 
-    //QMap<int, DatasetChannel> ch_list = datasetPtr_->channelsList();
+    auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
 
     for(int i = 0; i < datasetPtr_->size(); i++) {
@@ -665,27 +665,37 @@ bool Core::exportComplexToCSV(QString file_path) {
         if(epoch == NULL) { continue; }
 
         if(epoch->isComplexSignalAvail()) {
-            ComplexSignals sigs = epoch->complexSignals();
+            ComplexSignals& sigs = epoch->complexSignals();
 
-            for (auto ch = sigs.cbegin(), end = sigs.cend(); ch != end; ++ch) {
-                ComplexSignal signal = ch.value();
+            for (auto dev_i = sigs.cbegin(), end = sigs.cend(); dev_i != end; ++dev_i) {
+                QMap<int, QVector<ComplexSignal>> dev = dev_i.value();
 
-                ComplexF* data = signal.data.data();
-                int data_size = signal.data.size();
+                for (auto group_i = dev.cbegin(), end = dev.cend(); group_i != end; ++group_i) {
+                    int group_id  = group_i.key();
+                    QVector<ComplexSignal> sig = group_i.value();
+                    int ch_size = sig.size();
 
-                QString row_data;
-                row_data.append(QString("%1,%2").arg(i).arg(ch.key().toShortName()));
-                row_data.append(QString(",%1").arg(signal.globalOffset));
-                row_data.append(QString(",%1").arg(signal.sampleRate));
+                    for(int ch_i = 0; ch_i < ch_size; ch_i++) {
+                        int ch_num = ch_i + group_id*32;
 
-                if(data != NULL && data_size > 0) {
-                    for(int ci = 0; ci < data_size; ci++) {
-                        row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                        ComplexF* data = sig[ch_i].data.data();
+                        int data_size = sig[ch_i].data.size();
+
+                        QString row_data;
+                        row_data.append(QString("%1,%2").arg(i).arg(ch_num));
+                        row_data.append(QString(",%1").arg(sig[ch_i].globalOffset));
+                        row_data.append(QString(",%1").arg(sig[ch_i].sampleRate));
+
+                        if(data != NULL && data_size > 0) {
+                            for(int ci = 0; ci < data_size; ci++) {
+                                row_data.append(QString(",%1,%2").arg(data[ci].real).arg(data[ci].imag));
+                            }
+                        }
+
+                        row_data.append("\n");
+                        logger_.dataExport(row_data);
                     }
                 }
-
-                row_data.append("\n");
-                logger_.dataExport(row_data);
             }
         }
     }

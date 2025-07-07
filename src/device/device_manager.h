@@ -69,7 +69,7 @@ signals:
 
     void dataSend(QByteArray data);
     void chartComplete(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
-    void rawDataRecieved(RawData rawData);
+    void rawDataRecieved(const ChannelId& channelId, RawData rawData);
     void distComplete(const ChannelId& channelId, int dist);
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void dopplerBeamComlete(IDBinDVL::BeamSolution* beams, uint16_t cnt);

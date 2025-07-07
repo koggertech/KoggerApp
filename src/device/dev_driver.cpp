@@ -30,7 +30,7 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idDist = new IDBinDist(), &DevDriver::receivedDist);
     regID(idChart = new IDBinChart(), &DevDriver::receivedChart);
-    connect(idChart, &IDBinChart::rawDataRecieved, this, &DevDriver::rawDataRecieved);
+    connect(idChart, &IDBinChart::rawDataRecieved, this, &DevDriver::receivedRaw);
     regID(idAtt = new IDBinAttitude(), &DevDriver::receivedAtt);
     regID(idTemp = new IDBinTemp(), &DevDriver::receivedTemp);
 
@@ -1086,6 +1086,10 @@ void DevDriver::receivedChart(Type type, Version ver, Resp resp)
     float offsetRange = 0.001f * idChart->offsetRange();
 
     emit chartComplete(channelId, chartParams, data, resolution, offsetRange);
+}
+
+void DevDriver::receivedRaw(RawData raw_data) {
+    emit rawDataRecieved(ChannelId(linkUuid_, lastAddress_), raw_data);
 }
 
 void DevDriver::receivedAtt(Type type, Version ver, Resp resp) {

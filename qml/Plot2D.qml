@@ -734,6 +734,20 @@ WaterFall {
 
                     RowLayout {
                         visible: instruments > 1
+                        id: acousticAngleGroup
+                        spacing: 0
+
+                        CCheck {
+                            id: acousticAngleVisible
+                            Layout.fillWidth: true
+                            text: qsTr("Acoustic angle")
+                            onCheckedChanged: plotAcousticAngleVisible(checked);
+                            Component.onCompleted: plotAcousticAngleVisible(checked);
+                        }
+                    }
+
+                    RowLayout {
+                        visible: instruments > 1
                         CCheck {
                             id: adcpVisible
                             enabled: false

@@ -324,10 +324,33 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         proto.read(&header);
 
         int avail = proto.readAvailable();
-        RawData raw_data;
-        raw_data.header = header;
-        raw_data.data = QByteArray((char*)proto.read(avail), avail);
-        emit rawDataRecieved(raw_data);
+        QByteArray data = QByteArray((char*)proto.read(avail), avail);
+        int expected_data_offset = header.localOffset*(header.dataSize+1)*header.channelCount;
+
+        int ch_group = header.channelGroup;
+
+        if(header.localOffset == 0) {
+            if(_rawData[ch_group].data.size() != 0) {
+                _rawDataComplete[ch_group] = std::move(_rawData[ch_group]);
+                emit rawDataRecieved(_rawDataComplete[ch_group]);
+            }
+
+            _rawData[ch_group] = {header, data};
+        } else  if(_rawData.contains(ch_group)){
+            RawData& raw = _rawData[ch_group];
+            int ready_samples = raw.samplesPerChannel();
+
+            if(ready_samples == header.localOffset) {
+                if(expected_data_offset == raw.data.size()) {
+                    raw.data.append(data);
+                } else {
+                    qDebug() << "Raw data error: data offset";
+                }
+            } else {
+                raw.data.insert(expected_data_offset, data);
+               qDebug() << "Raw data error: sample counter";
+            }
+        }
     }
     else {
         return respErrorVersion;
