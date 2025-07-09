@@ -16,7 +16,7 @@ HEADERS += \
     $$PWD/scene3d_toolbar_controller.h \
     $$PWD/side_scan_view_control_menu_controller.h \
     $$PWD/surface_control_menu_controller.h \
-    $$PWD/surface_view_control_menu_controller.h \
+    $$PWD/isobaths_control_menu_controller.h \
     $$PWD/usbl_view_control_menu_controller.h
 
 SOURCES += \
@@ -34,5 +34,5 @@ SOURCES += \
     $$PWD/scene3d_toolbar_controller.cpp \
     $$PWD/side_scan_view_control_menu_controller.cpp \
     $$PWD/surface_control_menu_controller.cpp \
-    $$PWD/surface_view_control_menu_controller.cpp \
+    $$PWD/isobaths_control_menu_controller.cpp \
     $$PWD/usbl_view_control_menu_controller.cpp

@@ -19,9 +19,9 @@ ColumnLayout {
 
     // surface view extra settings
     MenuFrame {
-        id: surfaceViewSettings
-        visible: surfaceViewCheckButton.hovered || isHovered || surfaceViewCheckButton.surfaceViewLongPressTriggered || surfaceViewTheme.activeFocus
-        z: surfaceViewSettings.visible
+        id: isobathsSettings
+        visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered || isobathsTheme.activeFocus
+        z: isobathsSettings.visible
         Layout.alignment: Qt.AlignRight
 
         onIsHoveredChanged: {
@@ -31,8 +31,8 @@ ColumnLayout {
                 }
             }
             else {
-                if (!isHovered || !surfaceViewCheckButton.hovered) {
-                    surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                if (!isHovered || !isobathsCheckButton.hovered) {
+                    isobathsCheckButton.isobathsLongPressTriggered = false
                 }
             }
         }
@@ -45,7 +45,7 @@ ColumnLayout {
 
         onFocusChanged: {
             if (!focus) {
-                surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                isobathsCheckButton.isobathsLongPressTriggered = false
             }
         }
 
@@ -56,15 +56,15 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 onCheckedChanged: {
-                    SurfaceViewControlMenuController.onProcessStateChanged(checked);
+                    IsobathsControlMenuController.onProcessStateChanged(checked);
                 }
 
                 onFocusChanged: {
-                    surfaceViewSettings.focus = true
+                    isobathsSettings.focus = true
                 }
 
                 Component.onCompleted: {
-                    SurfaceViewControlMenuController.onProcessStateChanged(checked);
+                    IsobathsControlMenuController.onProcessStateChanged(checked);
 
                 }
 
@@ -74,15 +74,15 @@ ColumnLayout {
             }
 
             CButton {
-                id: resetSurfaceViewButton
+                id: resetIsobathsButton
                 text: qsTr("Reset")
                 Layout.fillWidth: true
                 onClicked: {
-                    SurfaceViewControlMenuController.onResetSurfaceViewButtonClicked()
+                    IsobathsControlMenuController.onResetIsobathsButtonClicked()
                 }
 
                 onFocusChanged: {
-                    surfaceViewSettings.focus = true
+                    isobathsSettings.focus = true
                 }
             }
 
@@ -92,7 +92,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
-                    id: surfaceViewEdgeLimitSpinBox
+                    id: isobathsEdgeLimitSpinBox
                     implicitWidth: 200
                     from: 10
                     to: 1000
@@ -103,19 +103,19 @@ ColumnLayout {
                     property int decimals: 1
 
                     onFocusChanged: {
-                        surfaceViewSettings.focus = true
+                        isobathsSettings.focus = true
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimitSpinBox.value)
+                        IsobathsControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
                     }
 
                     onValueChanged: {
-                        SurfaceViewControlMenuController.onEdgeLimitChanged(surfaceViewEdgeLimitSpinBox.value)
+                        IsobathsControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
                     }
 
                     Settings {
-                        property alias surfaceViewEdgeLimitSpinBox: surfaceViewEdgeLimitSpinBox.value
+                        property alias isobathsEdgeLimitSpinBox: isobathsEdgeLimitSpinBox.value
                     }
                 }
             }
@@ -126,7 +126,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
-                    id: surfaceViewHandleXCallSpinBox
+                    id: isobathsHandleXCallSpinBox
                     implicitWidth: 200
                     from: 1
                     to: 100
@@ -137,25 +137,25 @@ ColumnLayout {
                     property int decimals: 1
 
                     onFocusChanged: {
-                        surfaceViewSettings.focus = true
+                        isobathsSettings.focus = true
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onHandleXCallChanged(surfaceViewHandleXCallSpinBox.value)
+                        IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
                     }
 
                     onValueChanged: {
-                        SurfaceViewControlMenuController.onHandleXCallChanged(surfaceViewHandleXCallSpinBox.value)
+                        IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
                     }
 
                     Settings {
-                        property alias surfaceViewHandleXCallSpinBox: surfaceViewHandleXCallSpinBox.value
+                        property alias isobathsHandleXCallSpinBox: isobathsHandleXCallSpinBox.value
                     }
                 }
             }
 
             RowLayout {
-                visible: !surfaceViewDebugModeCheckButton.checked
+                visible: !isobathsDebugModeCheckButton.checked
                 CText {
                     text: qsTr("Theme:")
                 }
@@ -163,32 +163,32 @@ ColumnLayout {
                     Layout.fillWidth: true
                 }
                 CCombo  {
-                    id: surfaceViewTheme
+                    id: isobathsTheme
                     Layout.preferredWidth: 300
                     model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
                     currentIndex: 0
                     onCurrentIndexChanged: {
-                        SurfaceViewControlMenuController.onThemeChanged(currentIndex)
+                        IsobathsControlMenuController.onThemeChanged(currentIndex)
                     }
 
                     onFocusChanged: {
                         if (Qt.platform.os === 'android') {
-                            surfaceViewSettings.focus = true
+                            isobathsSettings.focus = true
                         }
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onThemeChanged(currentIndex)
+                        IsobathsControlMenuController.onThemeChanged(currentIndex)
                     }
 
                     Settings {
-                        property alias surfaceViewTheme: surfaceViewTheme.currentIndex
+                        property alias isobathsTheme: isobathsTheme.currentIndex
                     }
                 }
             }
 
             RowLayout {
-                visible: !surfaceViewDebugModeCheckButton.checked
+                visible: !isobathsDebugModeCheckButton.checked
 
                 CText {
                     text: qsTr("Surface/line step, m:")
@@ -196,7 +196,7 @@ ColumnLayout {
 
                 }
                 SpinBoxCustom {
-                    id: surfaceViewSurfaceLineStepSizeSpinBox
+                    id: isobathsSurfaceLineStepSizeSpinBox
                     implicitWidth: 200
                     from: 1
                     to: 200
@@ -208,8 +208,8 @@ ColumnLayout {
                     property real realValue: value / 10
 
                     validator: DoubleValidator {
-                        bottom: Math.min(surfaceViewSurfaceLineStepSizeSpinBox.from, surfaceViewSurfaceLineStepSizeSpinBox.to)
-                        top:  Math.max(surfaceViewSurfaceLineStepSizeSpinBox.from, surfaceViewSurfaceLineStepSizeSpinBox.to)
+                        bottom: Math.min(isobathsSurfaceLineStepSizeSpinBox.from, isobathsSurfaceLineStepSizeSpinBox.to)
+                        top:  Math.max(isobathsSurfaceLineStepSizeSpinBox.from, isobathsSurfaceLineStepSizeSpinBox.to)
                     }
 
                     textFromValue: function(value, locale) {
@@ -221,31 +221,31 @@ ColumnLayout {
                     }
 
                     onFocusChanged: {
-                        surfaceViewSettings.focus = true
+                        isobathsSettings.focus = true
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewSurfaceLineStepSizeSpinBox.realValue)
+                        IsobathsControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
                     }
 
                     onRealValueChanged: {
-                        SurfaceViewControlMenuController.onSetSurfaceLineStepSize(surfaceViewSurfaceLineStepSizeSpinBox.realValue)
+                        IsobathsControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
                     }
 
                     Settings {
-                        property alias surfaceViewSurfaceLineStepSizeSpinBox: surfaceViewSurfaceLineStepSizeSpinBox.value
+                        property alias isobathsSurfaceLineStepSizeSpinBox: isobathsSurfaceLineStepSizeSpinBox.value
                     }
                 }
             }
             RowLayout {
-                visible: !surfaceViewDebugModeCheckButton.checked
+                visible: !isobathsDebugModeCheckButton.checked
 
                 CText {
                     text: qsTr("Label step, m:")
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
-                    id: surfaceViewLabelStepSpinBox
+                    id: isobathsLabelStepSpinBox
                     implicitWidth: 200
                     from: 10
                     to: 1000
@@ -256,19 +256,19 @@ ColumnLayout {
                     property int decimals: 1
 
                     onFocusChanged: {
-                        surfaceViewSettings.focus = true
+                        isobathsSettings.focus = true
                     }
 
                     Component.onCompleted: {
-                        SurfaceViewControlMenuController.onSetLabelStepSize(surfaceViewLabelStepSpinBox.value)
+                        IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
                     }
 
                     onValueChanged: {
-                        SurfaceViewControlMenuController.onSetLabelStepSize(surfaceViewLabelStepSpinBox.value)
+                        IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
                     }
 
                     Settings {
-                        property alias surfaceViewLabelStepSpinBox: surfaceViewLabelStepSpinBox.value
+                        property alias isobathsLabelStepSpinBox: isobathsLabelStepSpinBox.value
                     }
                 }
             }
@@ -277,14 +277,14 @@ ColumnLayout {
                 text: qsTr("Triangles")
                 Layout.fillWidth: true
                 checked: true
-                visible: surfaceViewDebugModeCheckButton.checked
+                visible: isobathsDebugModeCheckButton.checked
 
                 onCheckedChanged: {
-                    SurfaceViewControlMenuController.onTrianglesVisible(checked);
+                    IsobathsControlMenuController.onTrianglesVisible(checked);
                 }
 
                 onFocusChanged: {
-                    surfaceViewSettings.focus = true
+                    isobathsSettings.focus = true
                 }
             }
 
@@ -292,43 +292,43 @@ ColumnLayout {
                 text: qsTr("Edges")
                 Layout.fillWidth: true
                 checked: true
-                visible: surfaceViewDebugModeCheckButton.checked
+                visible: isobathsDebugModeCheckButton.checked
 
                 onCheckedChanged: {
-                    SurfaceViewControlMenuController.onEdgesVisible(checked);
+                    IsobathsControlMenuController.onEdgesVisible(checked);
                 }
 
                 onFocusChanged: {
-                    surfaceViewSettings.focus = true
+                    isobathsSettings.focus = true
                 }
             }
 
             CheckButton {
-                id: surfaceViewDebugModeCheckButton
+                id: isobathsDebugModeCheckButton
                 text: qsTr("Debug mode")
                 Layout.fillWidth: true
                 checked: false
 
                 onCheckedChanged: {
-                    SurfaceViewControlMenuController.onDebugModeView(checked);
+                    IsobathsControlMenuController.onDebugModeView(checked);
                 }
 
                 onFocusChanged: {
-                    surfaceViewSettings.focus = true
+                    isobathsSettings.focus = true
                 }
             }
 
             // CButton {
-            //     id: updateSurfaceViewButton
+            //     id: updateIsobathsButton
             //     text: qsTr("some action")
             //     Layout.fillWidth: true
 
             //     onClicked: {
-            //         SurfaceViewControlMenuController.onUpdateSurfaceViewButtonClicked()
+            //         IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
             //     }
 
             //     onFocusChanged: {
-            //         surfaceViewSettings.focus = true
+            //         isobathsSettings.focus = true
             //     }
             // }
         }
@@ -917,7 +917,7 @@ ColumnLayout {
 
         // surface view check button
         CheckButton {
-            id: surfaceViewCheckButton
+            id: isobathsCheckButton
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
@@ -926,47 +926,47 @@ ColumnLayout {
             implicitWidth: theme.controlHeight
 
             onCheckedChanged: {
-                SurfaceViewControlMenuController.onSurfaceViewVisibilityCheckBoxCheckedChanged(checked)
+                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
             }
 
             Component.onCompleted: {
-                SurfaceViewControlMenuController.onSurfaceViewVisibilityCheckBoxCheckedChanged(checked)
+                IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
             }
 
-            property bool surfaceViewLongPressTriggered: false
+            property bool isobathsLongPressTriggered: false
 
             MouseArea {
-                id: surfaceViewTouchArea
+                id: isobathsTouchArea
                 anchors.fill: parent
                 onPressed: {
-                    surfaceViewLongPressTimer.start()
-                    surfaceViewCheckButton.surfaceViewLongPressTriggered = false
+                    isobathsLongPressTimer.start()
+                    isobathsCheckButton.isobathsLongPressTriggered = false
                 }
 
                 onReleased: {
-                    if (!surfaceViewCheckButton.surfaceViewLongPressTriggered) {
-                        surfaceViewCheckButton.checked = !surfaceViewCheckButton.checked
+                    if (!isobathsCheckButton.isobathsLongPressTriggered) {
+                        isobathsCheckButton.checked = !isobathsCheckButton.checked
                     }
-                    surfaceViewLongPressTimer.stop()
+                    isobathsLongPressTimer.stop()
                 }
 
                 onCanceled: {
-                    surfaceViewLongPressTimer.stop()
+                    isobathsLongPressTimer.stop()
                 }
             }
 
             Timer {
-                id: surfaceViewLongPressTimer
+                id: isobathsLongPressTimer
                 interval: 100 // ms
                 repeat: false
 
                 onTriggered: {
-                    surfaceViewCheckButton.surfaceViewLongPressTriggered = true;
+                    isobathsCheckButton.isobathsLongPressTriggered = true;
                 }
             }
 
             Settings {
-                property alias surfaceViewCheckButton: surfaceViewCheckButton.checked
+                property alias isobathsCheckButton: isobathsCheckButton.checked
             }
         }
 

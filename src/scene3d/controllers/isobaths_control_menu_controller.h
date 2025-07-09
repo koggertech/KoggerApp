@@ -8,18 +8,18 @@
 
 
 class GraphicsScene3dView;
-class SurfaceViewControlMenuController : public QmlComponentController
+class IsobathsControlMenuController : public QmlComponentController
 {
     Q_OBJECT
 
 public:
-    explicit SurfaceViewControlMenuController(QObject* parent = nullptr);
+    explicit IsobathsControlMenuController(QObject* parent = nullptr);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr) { dataProcessorPtr_ = dataProcessorPtr; };
 
-    Q_INVOKABLE void onSurfaceViewVisibilityCheckBoxCheckedChanged(bool checked);
-    Q_INVOKABLE void onUpdateSurfaceViewButtonClicked();
+    Q_INVOKABLE void onIsobathsVisibilityCheckBoxCheckedChanged(bool checked);
+    Q_INVOKABLE void onUpdateIsobathsButtonClicked();
     Q_INVOKABLE void onTrianglesVisible(bool state);
     Q_INVOKABLE void onEdgesVisible(bool state);
     Q_INVOKABLE void onSetSurfaceLineStepSize(float val);
@@ -27,7 +27,7 @@ public:
     Q_INVOKABLE void onThemeChanged(int val);
     Q_INVOKABLE void onDebugModeView(bool state);
     Q_INVOKABLE void onProcessStateChanged(bool state);
-    Q_INVOKABLE void onResetSurfaceViewButtonClicked();
+    Q_INVOKABLE void onResetIsobathsButtonClicked();
     Q_INVOKABLE void onEdgeLimitChanged(int val);
     Q_INVOKABLE void onHandleXCallChanged(int val);
 

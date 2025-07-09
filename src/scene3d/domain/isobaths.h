@@ -17,20 +17,20 @@
 
 using namespace IsobathUtils;
 
-class SurfaceView : public SceneObject
+class Isobaths : public SceneObject
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(SurfaceView)
+    QML_NAMED_ELEMENT(Isobaths)
 
 public:
-    class SurfaceViewRenderImplementation : public SceneObject::RenderImplementation
+    class IsobathsRenderImplementation : public SceneObject::RenderImplementation
     {
     public:
-        SurfaceViewRenderImplementation();
+        IsobathsRenderImplementation();
         virtual void render(QOpenGLFunctions* ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const override;
 
     private:
-        friend class SurfaceView;
+        friend class Isobaths;
 
         // data
         QVector<QVector3D> pts_; // для треугольников
@@ -50,8 +50,8 @@ public:
         bool debugMode_;
     };
 
-    explicit SurfaceView(QObject* parent = nullptr);
-    virtual ~SurfaceView();
+    explicit Isobaths(QObject* parent = nullptr);
+    virtual ~Isobaths();
 
     void clear();
     void setBottomTrackPtr(BottomTrack* ptr);
@@ -67,9 +67,9 @@ public:
     float getLabelStepSize() const;
     void setLabelStepSize(float val);
     void setCameraDistToFocusPoint(float val);
-    void setDebugMode(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->debugMode_ = state; Q_EMIT changed(); };
-    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->trianglesVisible_ = state; Q_EMIT changed(); };
-    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(SurfaceView); r->edgesVisible_ = state; Q_EMIT changed(); };
+    void setDebugMode(bool state) { auto*r=RENDER_IMPL(Isobaths); r->debugMode_ = state; Q_EMIT changed(); };
+    void onTrianglesVisible(bool state) { auto*r=RENDER_IMPL(Isobaths); r->trianglesVisible_ = state; Q_EMIT changed(); };
+    void onEdgesVisible(bool state) { auto*r=RENDER_IMPL(Isobaths); r->edgesVisible_ = state; Q_EMIT changed(); };
     void onProcessStateChanged(bool state) { processState_ = state; };
     bool processState() const { return processState_; };
     void setEdgeLimit(int val);

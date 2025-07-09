@@ -59,7 +59,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",         surfaceControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceViewControlMenuController",     surfaceViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("IsobathsControlMenuController",        isobathsControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController",    sideScanViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",       imageViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",         mapViewControlMenuController_.get());
@@ -1105,9 +1105,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     surfaceControlMenuController_->setQmlEngine(object);
     surfaceControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
-    surfaceViewControlMenuController_->setQmlEngine(object);
-    surfaceViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
-    surfaceViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+    isobathsControlMenuController_->setQmlEngine(object);
+    isobathsControlMenuController_->setDataProcessorPtr(dataProcessor_);
+    isobathsControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     sideScanViewControlMenuController_->setQmlEngine(object);
     sideScanViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
@@ -1351,7 +1351,7 @@ void Core::createControllers()
     mpcFilterControlMenuController_       = std::make_shared<MpcFilterControlMenuController>();
     npdFilterControlMenuController_       = std::make_shared<NpdFilterControlMenuController>();
     surfaceControlMenuController_         = std::make_shared<SurfaceControlMenuController>();
-    surfaceViewControlMenuController_     = std::make_shared<SurfaceViewControlMenuController>();
+    isobathsControlMenuController_     = std::make_shared<IsobathsControlMenuController>();
     sideScanViewControlMenuController_    = std::make_shared<SideScanViewControlMenuController>();
     imageViewControlMenuController_       = std::make_shared<ImageViewControlMenuController>();
     mapViewControlMenuController_         = std::make_shared<MapViewControlMenuController>();

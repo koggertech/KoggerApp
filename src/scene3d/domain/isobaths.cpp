@@ -1,12 +1,12 @@
-#include "surface_view.h"
+#include "isobaths.h"
 
 #include <algorithm>
 #include <QtMath>
 #include "text_renderer.h"
 
 
-SurfaceView::SurfaceView(QObject* parent)
-    : SceneObject(new SurfaceViewRenderImplementation, parent),
+Isobaths::Isobaths(QObject* parent)
+    : SceneObject(new IsobathsRenderImplementation, parent),
     bottomTrackPtr_(nullptr),
     originSet_(false),
     cellPx_(1),
@@ -22,14 +22,14 @@ SurfaceView::SurfaceView(QObject* parent)
     handleXCall_(1)
 {}
 
-SurfaceView::~SurfaceView()
+Isobaths::~Isobaths()
 {
-    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
         toDeleteId_ = r->textureId_;
     }
 }
 
-void SurfaceView::clear()
+void Isobaths::clear()
 {
     if (workerFuture_.isRunning()) {
         workerFuture_.cancel();
@@ -41,7 +41,7 @@ void SurfaceView::clear()
         pending_.clear();
     }
 
-    auto* r = RENDER_IMPL(SurfaceView);
+    auto* r = RENDER_IMPL(Isobaths);
 
     r->pts_.clear();
     r->edgePts_.clear();
@@ -68,42 +68,42 @@ void SurfaceView::clear()
     Q_EMIT changed();
 }
 
-void SurfaceView::setBottomTrackPtr(BottomTrack* ptr)
+void Isobaths::setBottomTrackPtr(BottomTrack* ptr)
 {
     bottomTrackPtr_ = ptr;
 }
 
-QVector<uint8_t> &SurfaceView::getTextureTasksRef()
+QVector<uint8_t> &Isobaths::getTextureTasksRef()
 {
     return textureTask_;
 }
 
-GLuint SurfaceView::getDeinitTextureTask() const
+GLuint Isobaths::getDeinitTextureTask() const
 {
     return toDeleteId_;
 }
 
-GLuint SurfaceView::getTextureId() const
+GLuint Isobaths::getTextureId() const
 {
-    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
         return r->textureId_;
     }
 
     return 0;
 }
 
-void SurfaceView::setTextureId(GLuint textureId)
+void Isobaths::setTextureId(GLuint textureId)
 {
     textureId_ = textureId;
 
-    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
         r->textureId_ = textureId;
     }
 
     Q_EMIT changed();
 }
 
-void SurfaceView::setColorTableThemeById(int id)
+void Isobaths::setColorTableThemeById(int id)
 {
     if (themeId_ == id) {
         return;
@@ -116,12 +116,12 @@ void SurfaceView::setColorTableThemeById(int id)
     Q_EMIT changed();
 }
 
-float SurfaceView::getSurfaceStepSize() const
+float Isobaths::getSurfaceStepSize() const
 {
     return surfaceStepSize_;
 }
 
-void SurfaceView::setSurfaceStepSize(float val)
+void Isobaths::setSurfaceStepSize(float val)
 {
     if (qFuzzyCompare(surfaceStepSize_, val)) {
         return;
@@ -134,12 +134,12 @@ void SurfaceView::setSurfaceStepSize(float val)
     Q_EMIT changed();
 }
 
-float SurfaceView::getLineStepSize() const
+float Isobaths::getLineStepSize() const
 {
     return lineStepSize_;
 }
 
-void SurfaceView::setLineStepSize(float val)
+void Isobaths::setLineStepSize(float val)
 {
     if (qFuzzyCompare(lineStepSize_, val)) {
         return;
@@ -147,7 +147,7 @@ void SurfaceView::setLineStepSize(float val)
 
     lineStepSize_ = val;
 
-    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
         r->lineStepSize_ = lineStepSize_;
     }
 
@@ -156,12 +156,12 @@ void SurfaceView::setLineStepSize(float val)
     Q_EMIT changed();
 }
 
-float SurfaceView::getLabelStepSize() const
+float Isobaths::getLabelStepSize() const
 {
     return labelStepSize_;
 }
 
-void SurfaceView::setLabelStepSize(float val)
+void Isobaths::setLabelStepSize(float val)
 {
     if (qFuzzyCompare(labelStepSize_, val)) {
         return;
@@ -174,30 +174,30 @@ void SurfaceView::setLabelStepSize(float val)
     Q_EMIT changed();
 }
 
-void SurfaceView::setCameraDistToFocusPoint(float val)
+void Isobaths::setCameraDistToFocusPoint(float val)
 {
-    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+    if (auto* r = RENDER_IMPL(Isobaths); r) {
         r->distToFocusPoint_ = val;
     }
 }
 
-void SurfaceView::setEdgeLimit(int val)
+void Isobaths::setEdgeLimit(int val)
 {
     edgeLimit_ = val;
 }
 
-void SurfaceView::setHandleXCall(int val)
+void Isobaths::setHandleXCall(int val)
 {
     handleXCall_ = val;
 }
 
-void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкрементальное обновление ребер и вершин
+void Isobaths::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкрементальное обновление ребер и вершин
 {
     if (indxs.empty()) {
         return;
     }
 
-    auto *r  = RENDER_IMPL(SurfaceView);
+    auto *r  = RENDER_IMPL(Isobaths);
     auto &tr = del_.getTriangles();
     auto &pt = del_.getPoints();
     const auto &bTrDataRef = bottomTrackPtr_->cdata();
@@ -374,7 +374,7 @@ void SurfaceView::onUpdatedBottomTrackData(const QVector<int>& indxs) // инк�
     }
 }
 
-void SurfaceView::onAction()
+void Isobaths::onAction()
 {
     auto& pts = del_.getPoints();
 
@@ -383,7 +383,7 @@ void SurfaceView::onAction()
     }
 }
 
-void SurfaceView::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
+void Isobaths::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
 {
     if (!bottomTrackPtr_ || !processState_) {
         return;
@@ -397,7 +397,7 @@ void SurfaceView::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
     enqueueWork(indxs, false);
 }
 
-void SurfaceView::handleWorkerFinished()
+void Isobaths::handleWorkerFinished()
   {
         Q_EMIT changed();
 
@@ -412,9 +412,9 @@ void SurfaceView::handleWorkerFinished()
         }
 }
 
-void SurfaceView::fullRebuildLinesLabels()
+void Isobaths::fullRebuildLinesLabels()
 {
-    auto* r = RENDER_IMPL(SurfaceView);
+    auto* r = RENDER_IMPL(Isobaths);
     const auto& pts = del_.getPointsRef();
     float zMin = r->minZ_;
     float zMax = r->maxZ_;
@@ -549,9 +549,9 @@ void SurfaceView::fullRebuildLinesLabels()
     r->labels_ = filteredLabels;
 }
 
-void SurfaceView::incrementalProcessLinesLabels(const QSet<int> &updsTrIndx) // инкрементальное обновление линий и лейбов
+void Isobaths::incrementalProcessLinesLabels(const QSet<int> &updsTrIndx) // инкрементальное обновление линий и лейбов
 {
-    auto* r = RENDER_IMPL(SurfaceView);
+    auto* r = RENDER_IMPL(Isobaths);
     const auto& tr = del_.getTriangles();
     const auto& pts = del_.getPointsRef();
 
@@ -677,9 +677,9 @@ void SurfaceView::incrementalProcessLinesLabels(const QSet<int> &updsTrIndx) // 
     isoState_.dirtyLevels.clear();
 }
 
-void SurfaceView::rebuildColorIntervals()
+void Isobaths::rebuildColorIntervals()
 {
-    auto *r = RENDER_IMPL(SurfaceView);
+    auto *r = RENDER_IMPL(Isobaths);
     int levelCount = static_cast<int>(((r->maxZ_ - r->minZ_) / surfaceStepSize_) + 1);
     if (levelCount <= 0) {
         return;
@@ -698,7 +698,7 @@ void SurfaceView::rebuildColorIntervals()
     updateTexture();
 }
 
-QVector<QVector3D> SurfaceView::generateExpandedPalette(int totalColors) const
+QVector<QVector3D> Isobaths::generateExpandedPalette(int totalColors) const
 {
     const auto &palette = colorPalette(themeId_);
     const int paletteSize = palette.size();
@@ -724,9 +724,9 @@ QVector<QVector3D> SurfaceView::generateExpandedPalette(int totalColors) const
     return retVal;
 }
 
-void SurfaceView::updateTexture()
+void Isobaths::updateTexture()
 {
-    auto* r = RENDER_IMPL(SurfaceView);
+    auto* r = RENDER_IMPL(Isobaths);
     if (!r) {
         return;
     }
@@ -749,7 +749,7 @@ void SurfaceView::updateTexture()
     }
 }
 
-QVector<QVector3D> SurfaceView::buildGridTriangles(const QVector<QVector3D> &pts, int gridWidth, int gridHeight) const
+QVector<QVector3D> Isobaths::buildGridTriangles(const QVector<QVector3D> &pts, int gridWidth, int gridHeight) const
 {
     if (pts.size() < 3 || gridWidth <= 1 || gridHeight <= 1) {
         return {};
@@ -813,7 +813,7 @@ QVector<QVector3D> SurfaceView::buildGridTriangles(const QVector<QVector3D> &pts
     return triangles;
 }
 
-void SurfaceView::buildPolylines(const IsobathsSegVec &segs, IsobathsPolylines &polylines) const
+void Isobaths::buildPolylines(const IsobathsSegVec &segs, IsobathsPolylines &polylines) const
 {
     auto eq = [](const QVector3D& a,const QVector3D& b){ return fuzzyEq(a,b); };
 
@@ -846,7 +846,7 @@ void SurfaceView::buildPolylines(const IsobathsSegVec &segs, IsobathsPolylines &
     }
 }
 
-void SurfaceView::edgeIntersection(const QVector3D &vertA, const QVector3D &vertB, float level, QVector<QVector3D> &out) const
+void Isobaths::edgeIntersection(const QVector3D &vertA, const QVector3D &vertB, float level, QVector<QVector3D> &out) const
 {
     const float zShift = 0.03; // смещение по Z
 
@@ -882,7 +882,7 @@ void SurfaceView::edgeIntersection(const QVector3D &vertA, const QVector3D &vert
     }
 }
 
-void SurfaceView::filterNearbyLabels(const QVector<LLabelInfo> &inputData, QVector<LLabelInfo> &outputData) const
+void Isobaths::filterNearbyLabels(const QVector<LLabelInfo> &inputData, QVector<LLabelInfo> &outputData) const
 {
     const float cellSize = 20.0f;
     const float cellSizeInv = 1.0f / cellSize;
@@ -926,7 +926,7 @@ void SurfaceView::filterNearbyLabels(const QVector<LLabelInfo> &inputData, QVect
     }
 }
 
-void SurfaceView::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLabels, const QVector<QVector3D> &inputData, QVector<QVector3D> &outputData) const
+void Isobaths::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLabels, const QVector<QVector3D> &inputData, QVector<QVector3D> &outputData) const
 {
     auto segmentIntersectsLabelBox = [](const QVector3D& p1, const QVector3D& p2, const LLabelInfo& lbl, float width = 24.0f, float height = 5.0f) -> bool {
         QVector2D a(p1.x(), p1.y());
@@ -978,7 +978,7 @@ void SurfaceView::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLab
     }
 }
 
-void SurfaceView::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels)
+void Isobaths::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels)
 {
     {
         QMutexLocker lk(&pendingMtx_);
@@ -1012,13 +1012,13 @@ void SurfaceView::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels
     });
 
     if (!workerWatcher_.isRunning()) {
-        connect(&workerWatcher_, &QFutureWatcher<void>::finished, this, &SurfaceView::handleWorkerFinished, Qt::QueuedConnection);
+        connect(&workerWatcher_, &QFutureWatcher<void>::finished, this, &Isobaths::handleWorkerFinished, Qt::QueuedConnection);
     }
 
     workerWatcher_.setFuture(workerFuture_);
 }
 
-SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
+Isobaths::IsobathsRenderImplementation::IsobathsRenderImplementation()
     : minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
     trianglesVisible_(true),
@@ -1030,7 +1030,7 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     debugMode_(false)
 {}
 
-void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
+void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx, const QMatrix4x4 &model, const QMatrix4x4 &view, const QMatrix4x4 &projection, const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
     if (!debugMode_) {
         if (!m_isVisible ) {

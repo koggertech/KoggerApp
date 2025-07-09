@@ -91,7 +91,7 @@ public:
         ImageView    = 10,
         MapView      = 11,
         Contacts     = 12,
-        SurfaceView  = 13
+        Isobaths     = 13
     };
 
     Q_ENUM(SceneObjectType)

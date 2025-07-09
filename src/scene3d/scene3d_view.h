@@ -18,7 +18,7 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-#include "surface_view.h"
+#include "isobaths.h"
 #include "data_processor.h"
 
 
@@ -138,7 +138,7 @@ public:
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
-        void processSurfaceViewTexture(GraphicsScene3dView* viewPtr) const;
+        void processIsobathsTexture(GraphicsScene3dView* viewPtr) const;
 
         QString checkOpenGLError() const;
 
@@ -175,7 +175,7 @@ public:
     std::shared_ptr<BoatTrack> boatTrack() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Surface> surface() const;
-    std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
+    std::shared_ptr<Isobaths> getIsobathsPtr() const;
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
@@ -252,7 +252,7 @@ private:
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Surface> m_surface;
-    std::shared_ptr<SurfaceView> surfaceView_;
+    std::shared_ptr<Isobaths> isobaths_;
     std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;

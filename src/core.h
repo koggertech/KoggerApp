@@ -19,7 +19,7 @@
 #include "navigation_arrow_control_menu_controller.h"
 #include "bottom_track_control_menu_controller.h"
 #include "surface_control_menu_controller.h"
-#include "surface_view_control_menu_controller.h"
+#include "isobaths_control_menu_controller.h"
 #include "side_scan_view_control_menu_controller.h"
 #include "image_view_control_menu_controller.h"
 #include "map_view_control_menu_controller.h"
@@ -183,7 +183,7 @@ private:
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;
     std::shared_ptr<SurfaceControlMenuController> surfaceControlMenuController_;
-    std::shared_ptr<SurfaceViewControlMenuController> surfaceViewControlMenuController_;
+    std::shared_ptr<IsobathsControlMenuController> isobathsControlMenuController_;
     std::shared_ptr<SideScanViewControlMenuController> sideScanViewControlMenuController_;
     std::shared_ptr<ImageViewControlMenuController> imageViewControlMenuController_;
     std::shared_ptr<MapViewControlMenuController> mapViewControlMenuController_;
