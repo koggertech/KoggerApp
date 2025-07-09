@@ -58,7 +58,6 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("SurfaceControlMenuController",         surfaceControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("IsobathsControlMenuController",        isobathsControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController",    sideScanViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",       imageViewControlMenuController_.get());
@@ -1102,9 +1101,6 @@ void Core::UILoad(QObject* object, const QUrl& url)
     bottomTrackControlMenuController_->setQmlEngine(object);
     bottomTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
-    surfaceControlMenuController_->setQmlEngine(object);
-    surfaceControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
-
     isobathsControlMenuController_->setQmlEngine(object);
     isobathsControlMenuController_->setDataProcessorPtr(dataProcessor_);
     isobathsControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
@@ -1350,8 +1346,7 @@ void Core::createControllers()
     bottomTrackControlMenuController_     = std::make_shared<BottomTrackControlMenuController>();
     mpcFilterControlMenuController_       = std::make_shared<MpcFilterControlMenuController>();
     npdFilterControlMenuController_       = std::make_shared<NpdFilterControlMenuController>();
-    surfaceControlMenuController_         = std::make_shared<SurfaceControlMenuController>();
-    isobathsControlMenuController_     = std::make_shared<IsobathsControlMenuController>();
+    isobathsControlMenuController_        = std::make_shared<IsobathsControlMenuController>();
     sideScanViewControlMenuController_    = std::make_shared<SideScanViewControlMenuController>();
     imageViewControlMenuController_       = std::make_shared<ImageViewControlMenuController>();
     mapViewControlMenuController_         = std::make_shared<MapViewControlMenuController>();

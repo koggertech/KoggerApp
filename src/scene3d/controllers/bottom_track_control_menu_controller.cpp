@@ -26,26 +26,6 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
     }
 }
 
-void BottomTrackControlMenuController::onSurfaceUpdated()
-{
-    if (!graphicsSceneViewPtr_)
-        return;
-
-    auto bottomTrack = graphicsSceneViewPtr_->bottomTrack();
-
-    QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceUpdated");
-}
-
-void BottomTrackControlMenuController::onSurfaceStateChanged(bool state)
-{
-    if (!graphicsSceneViewPtr_)
-        return;
-
-    auto bottomTrack = graphicsSceneViewPtr_->bottomTrack();
-
-    QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceStateChanged", Q_ARG(bool, state));
-}
-
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsSceneViewPtr_ = sceneView;

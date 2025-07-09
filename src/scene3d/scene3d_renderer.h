@@ -3,7 +3,6 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "bottom_track.h"
-#include "surface.h"
 #include "isobaths.h"
 #include "side_scan_view.h"
 #include "image_view.h"
@@ -64,7 +63,6 @@ private:
     GraphicsScene3dView::Camera m_axesThumbnailCamera;
     CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
-    Surface::SurfaceRenderImplementation m_surfaceRenderImpl;
     Isobaths::IsobathsRenderImplementation isobathsRenderImpl_;
     SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;

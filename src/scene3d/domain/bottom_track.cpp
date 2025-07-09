@@ -194,7 +194,6 @@ void BottomTrack::clearData()
     auto r = RENDER_IMPL(BottomTrack);
     r->selectedVertexIndices_.clear();
 
-    r->surfaceUpdated_ = false;
     r->sideScanUpdated_ = false;
 
     SceneObject::clearData();
@@ -253,19 +252,9 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
     Q_EMIT changed();
 }
 
-void BottomTrack::surfaceUpdated()
-{
-    RENDER_IMPL(BottomTrack)->surfaceUpdated_ = true;
-}
-
 void BottomTrack::sideScanUpdated()
 {
     RENDER_IMPL(BottomTrack)->sideScanUpdated_ = true;
-}
-
-void BottomTrack::surfaceStateChanged(bool state)
-{
-    RENDER_IMPL(BottomTrack)->surfaceState_ = state;
 }
 
 void BottomTrack::setSideScanVisibleState(bool state)
@@ -506,9 +495,7 @@ QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceV
 
 //-----------------------RenderImplementation-----------------------------//
 BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation() :
-    surfaceUpdated_(false),
     sideScanUpdated_(false),
-    surfaceState_(true),
     sideScanVisibleState_(true)
 {}
 
@@ -537,7 +524,7 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     QOpenGLShaderProgram* shaderProgram = nullptr;
     int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    if ((surfaceUpdated_ && surfaceState_) || (sideScanUpdated_ && sideScanVisibleState_)) {
+    if (sideScanUpdated_ && sideScanVisibleState_) {
         shaderProgram = shaderProgramMap["static"].get();
         shaderProgram->bind();
         colorLoc = shaderProgram->uniformLocation("color");

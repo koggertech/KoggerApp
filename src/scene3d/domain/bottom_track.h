@@ -7,7 +7,6 @@
 
 
 class GraphicsScene3dView;
-class Surface;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
@@ -40,9 +39,7 @@ public:
     private:
         friend class BottomTrack;
         QVector<int> selectedVertexIndices_;
-        bool surfaceUpdated_;
         bool sideScanUpdated_;
-        bool surfaceState_;
         bool sideScanVisibleState_;
     };
 
@@ -65,9 +62,7 @@ public Q_SLOTS:
     //void setVisibleChannel(const ChannelId& channelIndex);
     //void setVisibleChannel(const DatasetChannel& channel);
     void selectEpoch(int epochIndex, const ChannelId& channelId);
-    void surfaceUpdated();
     void sideScanUpdated();
-    void surfaceStateChanged(bool state);
     void setSideScanVisibleState(bool state);
 
 Q_SIGNALS:

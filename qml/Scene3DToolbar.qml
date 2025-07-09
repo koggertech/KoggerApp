@@ -7,17 +7,13 @@ import QtQuick.Dialogs 1.2
 
 ColumnLayout {
 
-    function updateSurface() {
-        updateSurfaceButton.clicked();
-    }
-
     function updateMosaic() {
         updateMosaicButton.clicked();
     }
 
     Layout.alignment: Qt.AlignHCenter
 
-    // surface view extra settings
+    // isobaths extra settings
     MenuFrame {
         id: isobathsSettings
         visible: isobathsCheckButton.hovered || isHovered || isobathsCheckButton.isobathsLongPressTriggered || isobathsTheme.activeFocus
@@ -51,7 +47,7 @@ ColumnLayout {
 
         ColumnLayout {
             CheckButton {
-                id: realtimeSurfaceProcessingCheckButton
+                id: realtimeProcessingIsobathsCheckButton
                 text: qsTr("Realtime processing")
                 Layout.fillWidth: true
 
@@ -69,7 +65,7 @@ ColumnLayout {
                 }
 
                 Settings {
-                    property alias realtimeSurfaceProcessingCheckButton: realtimeSurfaceProcessingCheckButton.checked
+                    property alias realtimeProcessingIsobathsCheckButton: realtimeProcessingIsobathsCheckButton.checked
                 }
             }
 

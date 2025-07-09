@@ -78,7 +78,6 @@
         <file>BottomTrackControlMenu.qml</file>
         <file>MpcFilterControlMenu.qml</file>
         <file>NpdFilterControlMenu.qml</file>
-        <file>SurfaceControlMenu.qml</file>
         <file>PointGroupControlMenu.qml</file>
         <file>PolygonGroupControlMenu.qml</file>
         <file>fit-in-view.svg</file>

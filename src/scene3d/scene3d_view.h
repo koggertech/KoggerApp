@@ -6,7 +6,6 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "ray_caster.h"
-#include "surface.h"
 #include "side_scan_view.h"
 #include "image_view.h"
 #include "map_view.h"
@@ -174,7 +173,6 @@ public:
     Renderer *createRenderer() const override;
     std::shared_ptr<BoatTrack> boatTrack() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
-    std::shared_ptr<Surface> surface() const;
     std::shared_ptr<Isobaths> getIsobathsPtr() const;
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
@@ -251,7 +249,6 @@ private:
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
-    std::shared_ptr<Surface> m_surface;
     std::shared_ptr<Isobaths> isobaths_;
     std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<ImageView> imageView_;

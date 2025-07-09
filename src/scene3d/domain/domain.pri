@@ -28,8 +28,6 @@ HEADERS += \
     $$PWD/polygon_object.h \
     $$PWD/quad.h \
     $$PWD/side_scan_view.h \
-    $$PWD/surface.h \
-    $$PWD/surface_grid.h \
     $$PWD/isobaths.h \
     $$PWD/tile.h \
     $$PWD/triangle.h \
@@ -54,8 +52,6 @@ SOURCES += \
     $$PWD/polygon_group.cpp \
     $$PWD/polygon_object.cpp \
     $$PWD/side_scan_view.cpp \
-    $$PWD/surface.cpp \
-    $$PWD/surface_grid.cpp \
     $$PWD/isobaths.cpp \
     $$PWD/tile.cpp \
     $$PWD/usbl_view.cpp

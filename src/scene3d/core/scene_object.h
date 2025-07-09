@@ -78,20 +78,19 @@ public:
     virtual ~SceneObject();
 
     enum class SceneObjectType{
-        BottomTrack  = 0,
-        Surface      = 1,
-        Point        = 2,
-        Polygon      = 3,
-        PointGroup   = 4,
-        PolygonGroup = 5,
-        Unknown      = 6,
-        BoatTrack    = 7,
-        UsblView     = 8,
-        SideScanView = 9,
-        ImageView    = 10,
-        MapView      = 11,
-        Contacts     = 12,
-        Isobaths     = 13
+        Unknown      = 0,
+        BoatTrack    = 1,
+        BottomTrack  = 2,
+        Point        = 3,
+        Polygon      = 4,
+        PointGroup   = 5,
+        PolygonGroup = 6,
+        UsblView     = 7,
+        SideScanView = 8,
+        ImageView    = 9,
+        MapView      = 10,
+        Contacts     = 11,
+        Isobaths     = 12
     };
 
     Q_ENUM(SceneObjectType)

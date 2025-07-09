@@ -249,9 +249,6 @@ ApplicationWindow  {
             if (fn === "updateBottomTrack") {
                 menuBar.updateBottomTrack()
             }
-            if (fn === "updateSurface") {
-                scene3DToolbar.updateSurface()
-            }
             if (fn === "updateMosaic") {
                 scene3DToolbar.updateMosaic()
             }
@@ -464,14 +461,6 @@ ApplicationWindow  {
                 focus:             true
 
                 property bool longPressTriggered: false
-
-                KWaitProgressBar{
-                    id:        surfaceProcessingProgressBar
-                    objectName: "surfaceProcessingProgressBar"
-                    text:      qsTr("Calculating surface\nPlease wait...")
-                    textColor: "white"
-                    visible:   false
-                }
 
                 KWaitProgressBar{
                     id:        sideScanProcessingProgressBar
@@ -1014,18 +1003,6 @@ ApplicationWindow  {
     function onMenuBarSettingsOpened() {
         waterViewFirst.closeSettings()
         waterViewSecond.closeSettings()
-    }
-
-    Connections {
-        target: SurfaceControlMenuController
-
-        function onSurfaceProcessorTaskStarted() {
-            surfaceProcessingProgressBar.visible = true
-        }
-
-        function onSurfaceProcessorTaskFinished() {
-            surfaceProcessingProgressBar.visible = false
-        }
     }
 
     // banner on file opening
