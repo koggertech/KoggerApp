@@ -148,10 +148,12 @@ struct ColorInterval
 struct PendingWork {
     QVector<int> indxs; // новые индексы точек
     bool         rebuildLineLabels = false; // полный линий и лейб
+    bool         rebuildAll        = false; // вершины треугольников
 
     void clear() {
         indxs.clear();
         rebuildLineLabels = false;
+        rebuildAll = false;
     }
 };
 

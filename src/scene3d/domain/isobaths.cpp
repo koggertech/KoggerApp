@@ -151,7 +151,7 @@ void Isobaths::setLineStepSize(float val)
         r->lineStepSize_ = lineStepSize_;
     }
 
-    enqueueWork({}, true);
+    enqueueWork({}, true, false);
 
     Q_EMIT changed();
 }
@@ -169,7 +169,7 @@ void Isobaths::setLabelStepSize(float val)
 
     labelStepSize_ = val;
 
-    enqueueWork({}, true);
+    enqueueWork({}, true, false);
 
     Q_EMIT changed();
 }
@@ -183,7 +183,15 @@ void Isobaths::setCameraDistToFocusPoint(float val)
 
 void Isobaths::setEdgeLimit(int val)
 {
+    if (edgeLimit_ == val) {
+        return;
+    }
+
     edgeLimit_ = val;
+
+    enqueueWork({}, true, true);
+
+    Q_EMIT changed();
 }
 
 void Isobaths::setHandleXCall(int val)
@@ -394,7 +402,7 @@ void Isobaths::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
     }
     updCnt_ = 0;
 
-    enqueueWork(indxs, false);
+    enqueueWork(indxs, false, false);
 }
 
 void Isobaths::handleWorkerFinished()
@@ -407,7 +415,7 @@ void Isobaths::handleWorkerFinished()
                 PendingWork copy = pending_;
                 pending_ = PendingWork{};
                 lk.unlock();
-                enqueueWork(copy.indxs, copy.rebuildLineLabels);
+                enqueueWork(copy.indxs, copy.rebuildLineLabels, copy.rebuildAll);
             }
         }
 }
@@ -978,12 +986,13 @@ void Isobaths::filterLinesBehindLabels(const QVector<LLabelInfo> &filteredLabels
     }
 }
 
-void Isobaths::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels)
+void Isobaths::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)
 {
     {
         QMutexLocker lk(&pendingMtx_);
         pending_.indxs += indxs;
         pending_.rebuildLineLabels |= rebuildLinesLabels;
+        pending_.rebuildAll |= rebuildAll;
     }
 
     if (workerFuture_.isRunning()) {
@@ -1002,12 +1011,19 @@ void Isobaths::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels)
             pending_.clear();
         }
 
-        // TODO: more accuracy
-        if (!todo.indxs.isEmpty()) {
-            onUpdatedBottomTrackData(todo.indxs);
-        }
-        if (todo.rebuildLineLabels) {
+        if (todo.rebuildAll) {
+            rebuildTrianglesBuffers();
             fullRebuildLinesLabels();
+            rebuildColorIntervals(); //
+        }
+        else {
+            // TODO: more accuracy
+            if (!todo.indxs.isEmpty()) {
+                onUpdatedBottomTrackData(todo.indxs);
+            }
+            if (todo.rebuildLineLabels) {
+                fullRebuildLinesLabels();
+            }
         }
     });
 
@@ -1016,6 +1032,61 @@ void Isobaths::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels)
     }
 
     workerWatcher_.setFuture(workerFuture_);
+}
+
+void Isobaths::rebuildTrianglesBuffers()
+{
+    auto* r = RENDER_IMPL(Isobaths);
+    const auto &tri = del_.getTriangles();
+    const auto &pt  = del_.getPointsRef();
+
+    const int triCnt = static_cast<int>(tri.size());
+    r->pts_.resize (triCnt * 3);
+    r->edgePts_.resize(triCnt * 6);
+
+    const auto nanVec = [] {
+        return QVector3D(std::numeric_limits<float>::quiet_NaN(),
+                         std::numeric_limits<float>::quiet_NaN(),
+                         std::numeric_limits<float>::quiet_NaN());
+    };
+
+    const auto fvec = [](const delaunay::Point &p) {
+        return QVector3D(float(p.x), float(p.y), float(p.z));
+    };
+
+    r->minZ_ =  std::numeric_limits<float>::max();
+    r->maxZ_ = -std::numeric_limits<float>::max();
+
+    for (int i = 0; i < triCnt; ++i) {
+        const auto &t = tri[i];
+        const int  trBase = i * 3;
+        const int  edgBase = i * 6;
+
+        bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+
+        if (!draw) {
+            r->pts_[trBase] = r->pts_[trBase + 1] = r->pts_[trBase + 2] = nanVec();
+            std::fill_n(r->edgePts_.begin() + edgBase, 6, nanVec());
+            continue;
+        }
+
+        // вершины
+        r->pts_[trBase    ] = fvec(pt[t.a]);
+        r->pts_[trBase + 1] = fvec(pt[t.b]);
+        r->pts_[trBase + 2] = fvec(pt[t.c]);
+
+        // рёбра
+        r->edgePts_[edgBase    ] = r->pts_[trBase];
+        r->edgePts_[edgBase + 1] = r->pts_[trBase + 1];
+        r->edgePts_[edgBase + 2] = r->pts_[trBase + 1];
+        r->edgePts_[edgBase + 3] = r->pts_[trBase + 2];
+        r->edgePts_[edgBase + 4] = r->pts_[trBase + 2];
+        r->edgePts_[edgBase + 5] = r->pts_[trBase];
+
+        // экстремумы
+        r->minZ_ = std::fmin(r->minZ_, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+        r->maxZ_ = std::fmax(r->maxZ_, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+    }
 }
 
 Isobaths::IsobathsRenderImplementation::IsobathsRenderImplementation()

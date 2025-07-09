@@ -95,7 +95,8 @@ private:
     void edgeIntersection(const QVector3D& vertA, const QVector3D& vertB, float level, QVector<QVector3D>& out) const;
     void filterNearbyLabels(const QVector<LLabelInfo>& inputData, QVector<LLabelInfo>& outputData) const;
     void filterLinesBehindLabels(const QVector<LLabelInfo>& filteredLabels, const QVector<QVector3D>& inputData, QVector<QVector3D>& outputData) const;
-    void enqueueWork(const QVector<int>& indxs, bool rebuildLinesLabels);
+    void enqueueWork(const QVector<int>& indxs, bool rebuildLinesLabels, bool rebuildAll);
+    void rebuildTrianglesBuffers();
 
     // data
     delaunay::Delaunay del_;
