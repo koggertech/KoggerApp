@@ -1153,7 +1153,7 @@ void GraphicsScene3dView::InFboRenderer::processIsobathsTexture(GraphicsScene3dV
 GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :
     viewPtr_(viewPtr)
 {
-    setIsometricView();
+    setMapView();
 }
 
 GraphicsScene3dView::Camera::Camera(qreal pitch,
