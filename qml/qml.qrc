@@ -95,5 +95,8 @@
         <file>CPopup.qml</file>
         <file>CMouseOpacityArea.qml</file>
         <file>CContact.qml</file>
+        <file>Settings3DExtraSettings.qml</file>
+        <file>IsobathsExtraSettings.qml</file>
+        <file>SideScanExtraSettings.qml</file>
     </qresource>
 </RCC>
