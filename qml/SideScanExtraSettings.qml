@@ -87,7 +87,9 @@ MenuFrame {
                     }
 
                     onFocusChanged: {
-                        sideScanViewSettings.focus = true
+                        if (Qt.platform.os === 'android') {
+                            sideScanViewSettings.focus = true
+                        }
                     }
 
                     Component.onCompleted: {

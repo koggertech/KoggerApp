@@ -11,8 +11,8 @@ Item  {
     anchors.bottom:           parent.bottom
     anchors.bottomMargin:     8
 
-    width:  column.implicitWidth
-    height: column.implicitHeight
+    width: rowButtons.implicitWidth
+    height: rowButtons.implicitHeight
 
     function updateMosaic() {
         sideScanViewSettings.updateMosaic()
@@ -43,24 +43,10 @@ Item  {
     ColumnLayout {
         id: column
 
-        // extra menus
-        Settings3DExtraSettings {
-            id: settings3DSettings
-            settings3DCheckButton: settings3DCheckButton
-        }
-        IsobathsExtraSettings {
-            id: isobathsSettings
-            isobathsCheckButton: isobathsCheckButton
-        }
-        SideScanExtraSettings {
-            id: sideScanViewSettings
-            sideScanViewCheckButton: sideScanViewCheckButton
-        }
-
         // buttons
         RowLayout {
             id: rowButtons
-            spacing: 0
+            spacing: 3
             Layout.alignment: Qt.AlignHCenter
 
             CheckButton {
@@ -84,57 +70,67 @@ Item  {
                 }
             }
 
-            CheckButton {
-                id: settings3DCheckButton
-                iconSource: "qrc:/icons/ui/settings.svg"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checkable: false
-                checked: false
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+            Item {
+                id: settings3DWrapper
+                width : settings3DCheckButton.implicitWidth
+                height: settings3DCheckButton.implicitHeight
 
-                property bool settings3DLongPressTriggered: false
+                CheckButton {
+                    id: settings3DCheckButton
+                    iconSource: "qrc:/icons/ui/settings.svg"
+                    backColor: theme.controlBackColor
+                    borderColor: theme.controlBackColor
+                    checkedBorderColor: theme.controlBorderColor
+                    checkable: false
+                    checked: false
+                    implicitHeight: theme.controlHeight * 1.3
+                    implicitWidth: theme.controlHeight * 1.3
 
-                MouseArea {
-                    id: settings3DTouchArea
-                    anchors.fill: parent
-                    enabled: Qt.platform.os === "android"
+                    property bool settings3DLongPressTriggered: false
 
-                    onPressed: {
-                        if (enabled) {
-                            settings3DLongPressTimer.start()
-                            settings3DCheckButton.settings3DLongPressTriggered = false
+                    MouseArea {
+                        id: settings3DTouchArea
+                        anchors.fill: parent
+                        enabled: Qt.platform.os === "android"
+
+                        onPressed: {
+                            if (enabled) {
+                                settings3DLongPressTimer.start()
+                                settings3DCheckButton.settings3DLongPressTriggered = false
+                            }
+                        }
+
+                        onReleased: {
+                            if (enabled) {
+                                settings3DLongPressTimer.stop()
+                            }
+                        }
+
+                        onCanceled: {
+                            if (enabled) {
+                                settings3DLongPressTimer.stop()
+                            }
                         }
                     }
 
-                    onReleased: {
-                        if (enabled) {
-                            settings3DLongPressTimer.stop()
-                        }
-                    }
+                    Timer {
+                        id: settings3DLongPressTimer
+                        interval: 100 // ms
+                        repeat: false
+                        running : false
 
-                    onCanceled: {
-                        if (enabled) {
-                            settings3DLongPressTimer.stop()
+                        onTriggered: {
+                            settings3DCheckButton.settings3DLongPressTriggered = true;
                         }
                     }
                 }
 
-                Timer {
-                    id: settings3DLongPressTimer
-                    interval: 100 // ms
-                    repeat: false
-                    running : false
-
-                    onTriggered: {
-                        settings3DCheckButton.settings3DLongPressTriggered = true;
-                    }
-                }
-
-                Settings {
-                    property alias settings3DCheckButton: settings3DCheckButton.checked
+                Settings3DExtraSettings {
+                    id: settings3DSettings
+                    settings3DCheckButton: settings3DCheckButton
+                    anchors.bottom:        settings3DCheckButton.top
+                    anchors.horizontalCenter: settings3DCheckButton.parent.parent.horizontalCenter
+                    z: 2
                 }
             }
 
@@ -194,135 +190,165 @@ Item  {
                 }
             }
 
-            CheckButton {
-                id: isobathsCheckButton
-                iconSource: "qrc:/icons/ui/isobaths.svg"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: true
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+            Item {
+                id: isobathsWrapper
+                width : isobathsCheckButton.implicitWidth
+                height: isobathsCheckButton.implicitHeight
 
-                onCheckedChanged: {
-                    IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-                }
+                CheckButton {
+                    id: isobathsCheckButton
+                    iconSource: "qrc:/icons/ui/isobaths.svg"
+                    backColor: theme.controlBackColor
+                    borderColor: theme.controlBackColor
+                    checkedBorderColor: theme.controlBorderColor
+                    checked: true
+                    implicitHeight: theme.controlHeight * 1.3
+                    implicitWidth: theme.controlHeight * 1.3
 
-                Component.onCompleted: {
-                    IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-                }
-
-                property bool isobathsLongPressTriggered: false
-
-                MouseArea {
-                    id: isobathsTouchArea
-                    anchors.fill: parent
-                    enabled: Qt.platform.os === "android"
-
-                    onPressed: {
-                        if (enabled) {
-                            isobathsLongPressTimer.start()
-                            isobathsCheckButton.isobathsLongPressTriggered = false
-                        }
+                    onCheckedChanged: {
+                        IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
                     }
 
-                    onReleased: {
-                        if (enabled) {
-                            if (!isobathsCheckButton.isobathsLongPressTriggered) {
-                                isobathsCheckButton.checked = !isobathsCheckButton.checked
+                    Component.onCompleted: {
+                        IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+                    }
+
+                    property bool isobathsLongPressTriggered: false
+
+                    MouseArea {
+                        id: isobathsTouchArea
+                        anchors.fill: parent
+                        enabled: Qt.platform.os === "android"
+
+                        onPressed: {
+                            if (enabled) {
+                                isobathsLongPressTimer.start()
+                                isobathsCheckButton.isobathsLongPressTriggered = false
                             }
-                            isobathsLongPressTimer.stop()
+                        }
+
+                        onReleased: {
+                            if (enabled) {
+                                if (!isobathsCheckButton.isobathsLongPressTriggered) {
+                                    isobathsCheckButton.checked = !isobathsCheckButton.checked
+                                }
+                                isobathsLongPressTimer.stop()
+                            }
+                        }
+
+                        onCanceled: {
+                            if (enabled) {
+                                isobathsLongPressTimer.stop()
+                            }
                         }
                     }
 
-                    onCanceled: {
-                        if (enabled) {
-                            isobathsLongPressTimer.stop()
+                    Timer {
+                        id: isobathsLongPressTimer
+                        interval: 100 // ms
+                        repeat: false
+                        running : false
+                        onTriggered: {
+                            isobathsCheckButton.isobathsLongPressTriggered = true;
                         }
                     }
-                }
 
-                Timer {
-                    id: isobathsLongPressTimer
-                    interval: 100 // ms
-                    repeat: false
-                    running : false
-                    onTriggered: {
-                        isobathsCheckButton.isobathsLongPressTriggered = true;
+                    Settings {
+                        property alias isobathsCheckButton: isobathsCheckButton.checked
                     }
                 }
 
-                Settings {
-                    property alias isobathsCheckButton: isobathsCheckButton.checked
+                IsobathsExtraSettings {
+                    id: isobathsSettings
+                    isobathsCheckButton: isobathsCheckButton
+
+                    anchors.bottom:           isobathsCheckButton.top
+                    anchors.horizontalCenter: isobathsCheckButton.horizontalCenter
+                    z: 2
                 }
             }
 
-            CheckButton { // side scan
-                id: sideScanViewCheckButton
-                iconSource: "qrc:/icons/ui/side_scan.svg"
-                backColor: theme.controlBackColor
-                borderColor: theme.controlBackColor
-                checkedBorderColor: theme.controlBorderColor
-                checked: true
-                implicitHeight: theme.controlHeight * 1.3
-                implicitWidth: theme.controlHeight * 1.3
+            Item {
+                id: sideScanViewWrapper
+                width : sideScanViewCheckButton.implicitWidth
+                height: sideScanViewCheckButton.implicitHeight
 
-                onCheckedChanged: {
-                    SideScanViewControlMenuController.onVisibilityChanged(checked)
-                }
+                CheckButton { // side scan
+                    id: sideScanViewCheckButton
+                    iconSource: "qrc:/icons/ui/side_scan.svg"
+                    backColor: theme.controlBackColor
+                    borderColor: theme.controlBackColor
+                    checkedBorderColor: theme.controlBorderColor
+                    checked: true
+                    implicitHeight: theme.controlHeight * 1.3
+                    implicitWidth: theme.controlHeight * 1.3
 
-                Component.onCompleted: {
-                    SideScanViewControlMenuController.onVisibilityChanged(checked)
-                }
-
-                property bool sideScanLongPressTriggered: false
-
-                MouseArea {
-                    id: sideScanViewTouchArea
-                    anchors.fill: parent
-                    enabled: Qt.platform.os === "android"
-
-                    onPressed: {
-                        if (enabled) {
-                            sideScanViewLongPressTimer.start()
-                            sideScanViewCheckButton.sideScanLongPressTriggered = false
-                        }
+                    onCheckedChanged: {
+                        SideScanViewControlMenuController.onVisibilityChanged(checked)
                     }
 
-                    onReleased: {
-                        if (enabled) {
-                            if (!sideScanViewCheckButton.sideScanLongPressTriggered) {
-                                sideScanViewCheckButton.checked = !sideScanViewCheckButton.checked
+                    Component.onCompleted: {
+                        SideScanViewControlMenuController.onVisibilityChanged(checked)
+                    }
+
+                    property bool sideScanLongPressTriggered: false
+
+                    MouseArea {
+                        id: sideScanViewTouchArea
+                        anchors.fill: parent
+                        enabled: Qt.platform.os === "android"
+
+                        onPressed: {
+                            if (enabled) {
+                                sideScanViewLongPressTimer.start()
+                                sideScanViewCheckButton.sideScanLongPressTriggered = false
                             }
-                            sideScanViewLongPressTimer.stop()
+                        }
+
+                        onReleased: {
+                            if (enabled) {
+                                if (!sideScanViewCheckButton.sideScanLongPressTriggered) {
+                                    sideScanViewCheckButton.checked = !sideScanViewCheckButton.checked
+                                }
+                                sideScanViewLongPressTimer.stop()
+                            }
+                        }
+
+                        onCanceled: {
+                            if (enabled) {
+                                sideScanViewLongPressTimer.stop()
+                            }
                         }
                     }
 
-                    onCanceled: {
-                        if (enabled) {
-                            sideScanViewLongPressTimer.stop()
+                    Timer {
+                        id: sideScanViewLongPressTimer
+                        interval: 100 // ms
+                        repeat: false
+                        running: false
+
+                        onTriggered: {
+                            sideScanViewCheckButton.sideScanLongPressTriggered = true;
                         }
                     }
-                }
 
-                Timer {
-                    id: sideScanViewLongPressTimer
-                    interval: 100 // ms
-                    repeat: false
-                    running: false
 
-                    onTriggered: {
-                        sideScanViewCheckButton.sideScanLongPressTriggered = true;
+                    Settings {
+                        property alias sideScanViewCheckButton: sideScanViewCheckButton.checked
                     }
                 }
 
+                SideScanExtraSettings {
+                    id: sideScanViewSettings
+                    sideScanViewCheckButton: sideScanViewCheckButton
 
-                Settings {
-                    property alias sideScanViewCheckButton: sideScanViewCheckButton.checked
+                    anchors.bottom:           sideScanViewCheckButton.top
+                    anchors.horizontalCenter: sideScanViewCheckButton.horizontalCenter
+                    z: 2
                 }
             }
 
-            ButtonGroup{
+            ButtonGroup {
                 property bool buttonChangeFlag : false
                 id: buttonGroup
                 onCheckedButtonChanged: buttonChangeFlag = true
