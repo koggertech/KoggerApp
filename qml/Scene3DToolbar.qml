@@ -129,7 +129,7 @@ Item  {
                     id: settings3DSettings
                     settings3DCheckButton: settings3DCheckButton
                     anchors.bottom:        settings3DCheckButton.top
-                    anchors.horizontalCenter: settings3DCheckButton.parent.parent.horizontalCenter
+                    anchors.horizontalCenter: settings3DCheckButton.horizontalCenter
                     z: 2
                 }
             }
