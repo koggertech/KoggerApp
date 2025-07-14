@@ -205,6 +205,7 @@ public:
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void updateIsobathsForRemainingData();
+    void setGridVisibility(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -296,6 +297,7 @@ private:
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
+    bool gridVisibility_ = true;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

@@ -83,4 +83,5 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     GLuint VAO, VBO;
     float scaleFactor_;
+    float gridVisibility_ = true;
 };

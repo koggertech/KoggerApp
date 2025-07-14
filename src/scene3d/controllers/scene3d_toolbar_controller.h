@@ -18,6 +18,7 @@ public:
     Q_INVOKABLE void onCancelZoomButtonClicked();
     Q_INVOKABLE void onTrackLastDataCheckButtonCheckedChanged(bool state);
     Q_INVOKABLE void onUpdateBottomTrackCheckButtonCheckedChanged(bool state);
+    Q_INVOKABLE void onGridVisibilityCheckedChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -34,6 +35,7 @@ private:
     bool isVertexEditingMode_;
     bool trackLastData_;
     bool updateBottomTrack_;
+    bool gridVisibility_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

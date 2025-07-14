@@ -9,7 +9,8 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       pendingLambda_(nullptr),
       isVertexEditingMode_(false),
       trackLastData_(false),
-      updateBottomTrack_(false)
+      updateBottomTrack_(false),
+      gridVisibility_(true)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
@@ -83,6 +84,18 @@ void Scene3dToolBarController::onUpdateBottomTrackCheckButtonCheckedChanged(bool
     }
 }
 
+void Scene3dToolBarController::onGridVisibilityCheckedChanged(bool state)
+{
+    gridVisibility_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setGridVisibility(gridVisibility_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
@@ -111,6 +124,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsScene3dViewPtr_) {
                 graphicsScene3dViewPtr_->setTrackLastData(trackLastData_);
+                graphicsScene3dViewPtr_->setGridVisibility(gridVisibility_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

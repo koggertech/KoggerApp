@@ -434,6 +434,13 @@ void GraphicsScene3dView::updateIsobathsForRemainingData()
     isobaths_->onUpdatedBottomTrackDataWrapper(indxs);
 }
 
+void GraphicsScene3dView::setGridVisibility(bool state)
+{
+    gridVisibility_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -939,6 +946,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_verticalScale             = view->m_verticalScale;
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
+    m_renderer->gridVisibility_             = view->gridVisibility_;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)

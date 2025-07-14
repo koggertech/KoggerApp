@@ -154,7 +154,9 @@ void GraphicsScene3dRenderer::drawObjects()
 
     glEnable(GL_DEPTH_TEST);
     if (!isOut) {
-        m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        if (gridVisibility_) {
+            m_planeGridRenderImpl.render(this, m_model, view, m_projection, m_shaderProgramMap);
+        }
         imageViewRenderImpl_.render(this, m_projection * view * m_model, m_shaderProgramMap);
         m_pointGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
         m_polygonGroupRenderImpl.render(this, m_projection * view * m_model, m_shaderProgramMap);
@@ -239,7 +241,7 @@ void GraphicsScene3dRenderer::drawObjects()
     shaderProgram->release();
 
     //-----------Draw scene bounding box-------------
-    if (m_isSceneBoundingBoxVisible) {
+    if (gridVisibility_) {
         if(!m_shaderProgramMap.contains("static"))
             return;
 

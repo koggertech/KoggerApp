@@ -109,6 +109,34 @@ MenuFrame {
         }
 
         CheckButton {
+            id: gridCheckButton
+            objectName: "gridCheckButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            checked: true
+            iconSource: "qrc:/icons/ui/grid_4x4.svg"
+            text: qsTr("Grid visibility")
+            Layout.fillWidth: true
+
+            onToggled: {
+                Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+            }
+
+            onFocusChanged: {
+                settings3DSettings.focus = true
+            }
+
+            Component.onCompleted: {
+                Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+            }
+
+            Settings {
+                property alias gridCheckButton: gridCheckButton.checked
+            }
+        }
+
+        CheckButton {
             id: navigationArrowCheckButton
             objectName: "navigationArrowCheckButton"
             backColor: theme.controlBackColor
