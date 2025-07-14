@@ -7,6 +7,12 @@
 #include "dataset.h"
 #include <QReadWriteLock>
 
+enum class DataProcessorState {
+    kWaiting = 0,
+    kBottomTrackCalculation,
+    kIsobathsCalculation,
+    kMosaicCalculation
+};
 
 class DataProcessor : public QObject
 {
@@ -20,16 +26,16 @@ public:
 signals:
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
     void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP);
-
+    void sendState(DataProcessorState state);
     void finished();
 
 public slots:
     void init();
     void doAction();
-    void onChartsUpdated(int n);
+    void onChartsUpdated(int n); // external calling realtme
     void clear();
 
-    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_);
+    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // external calling not realtime
 
     void setUpdateBottomTrack(bool state) { updateBottomTrack_ = state; };
     void setUpdateIsobaths(bool state) { updateIsobaths_ = state; };
@@ -39,9 +45,11 @@ public slots:
 
 
 private:
+    void changeState(const DataProcessorState& state);
     QReadWriteLock lock_;
 
     Dataset* datasetPtr_ = nullptr;
+    DataProcessorState state_ = DataProcessorState::kWaiting;
     bool updateBottomTrack_ = false;
     bool updateIsobaths_ = false;
     bool updateMosaic_ = false;

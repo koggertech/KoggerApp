@@ -57,10 +57,12 @@ public:
     Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
     Q_PROPERTY(QString ch1Name READ getChannel1Name NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString ch2Name READ getChannel2Name NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(int dataProcessorState READ getDataProcessorState NOTIFY dataProcessorStateChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
     Dataset* getDatasetPtr();
+    DataProcessor* getDataProcessorPtr() const;
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     void stopLinkManagerTimer() const;
@@ -121,6 +123,7 @@ public slots:
     bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
+    int getDataProcessorState() const;
 
 #ifdef FLASHER
     void connectOpenedLinkAsFlasher(QString pn);
@@ -143,6 +146,7 @@ signals:
     void isMosaicUpdatingInThreadUpdated();
     void isSideScanPerformanceModeUpdated();
     void channelListUpdated();
+    void dataProcessorStateChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
@@ -153,6 +157,7 @@ private slots:
     void onFileStopsOpening();
     void onSendTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void createTileManagerConnections();
+    void onDataProcesstorStateChanged(const DataProcessorState& state);
 
 private:
     /*methods*/
@@ -239,4 +244,5 @@ signals:
 #endif
 
     QVector<QMetaObject::Connection> dataProcessorConnections_;
+    DataProcessorState dataProcessorState_ = DataProcessorState::kWaiting;
 };

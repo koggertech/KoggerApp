@@ -81,7 +81,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
     QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, isobaths_.get(), &Isobaths::onUpdatedBottomTrackDataWrapper);
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::completelyRedrawn, [this]() {
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::completelyRedrawn, this, [this]() {
         isobaths_->clear();
         auto allIndxs = m_bottomTrack->getAllIndxs();
         isobaths_->onUpdatedBottomTrackDataWrapper(allIndxs);

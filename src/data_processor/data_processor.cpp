@@ -8,6 +8,8 @@ DataProcessor::DataProcessor(QObject *parent) :
     QObject(parent)
 {
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
+    qRegisterMetaType<DataProcessorState>("DataProcessorState");
+
     //qDebug() << "DataProcessor ctr" << QThread::currentThreadId();
 }
 
@@ -74,6 +76,8 @@ void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const Chann
     auto size = btP.indexTo + btP.windowSize / 2;
 
     if(btP.indexFrom < 0 || btP.indexTo < 0) { return; }
+
+    changeState(DataProcessorState::kBottomTrackCalculation);
 
     int epoch_min_index = btP.indexFrom - btP.windowSize/2;
 
@@ -316,6 +320,13 @@ void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const Chann
             }
         }
     }
+    changeState(DataProcessorState::kWaiting);
 
     emit lastBottomTrackEpochChanged(channel1, size, btP);
+}
+
+void DataProcessor::changeState(const DataProcessorState& state)
+{
+    state_ = state;
+    emit sendState(state_);
 }

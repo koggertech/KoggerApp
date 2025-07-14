@@ -173,6 +173,23 @@ Item  {
                 implicitWidth: theme.controlHeight * 1.3
 
                 hoverEnabled: true
+
+                property bool pulse: core.dataProcessorState === 1
+
+                SequentialAnimation {
+                    id: pulseAnimation
+                    running: bottomTrackCheckButton.pulse
+                    loops: Animation.Infinite
+                    NumberAnimation { target: bottomTrackCheckButton; property: "opacity"; to: 0.2; duration: 500 }
+                    NumberAnimation { target: bottomTrackCheckButton; property: "opacity"; to: 1.0; duration: 500 }
+                }
+
+                onPulseChanged: {
+                    if (!pulse) {
+                        bottomTrackCheckButton.opacity = 1.0;
+                    }
+                }
+
                 onHoveredChanged: {
                     toolbarRoot.isBottomTrackCheckButtonHovered = hovered
                 }

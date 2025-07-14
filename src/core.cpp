@@ -88,6 +88,11 @@ Dataset* Core::getDatasetPtr()
     return datasetPtr_;
 }
 
+DataProcessor* Core::getDataProcessorPtr() const
+{
+    return dataProcessor_;
+}
+
 DeviceManagerWrapper* Core::getDeviceManagerWrapperPtr() const
 {
     return deviceManagerWrapperPtr_.get();
@@ -1607,6 +1612,17 @@ void Core::createTileManagerConnections()
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendTextureIdByTileIndx, this, &Core::onSendTextureIdByTileIndx, Qt::DirectConnection);
 }
 
+void Core::onDataProcesstorStateChanged(const DataProcessorState& state)
+{
+    dataProcessorState_ = state;
+    emit dataProcessorStateChanged();
+}
+
+int Core::getDataProcessorState() const
+{
+    return static_cast<int>(dataProcessorState_);
+}
+
 void Core::createDataProcessor()
 {
     dataProcThread_ = new QThread(this);
@@ -1646,6 +1662,8 @@ void Core::setDataProcessorConnections()
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing, datasetPtr_, &Dataset::onDistCompleted, Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));
+
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::sendState, this, &Core::onDataProcesstorStateChanged, Qt::QueuedConnection));
 }
 
 void Core::resetDataProcessorConnections()
