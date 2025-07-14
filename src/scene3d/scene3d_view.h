@@ -204,6 +204,7 @@ public:
 
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void updateIsobathsForRemainingData();
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;

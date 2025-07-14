@@ -41,39 +41,36 @@ MenuFrame {
     }
 
     ColumnLayout {
-        CheckButton {
-            id: realtimeProcessingIsobathsCheckButton
-            text: qsTr("Realtime processing")
-            Layout.fillWidth: true
-
-            onCheckedChanged: {
-                IsobathsControlMenuController.onProcessStateChanged(checked);
+        RowLayout {
+            //visible: !isobathsDebugModeCheckButton.checked
+            CText {
+                text: qsTr("Theme:")
             }
-
-            onFocusChanged: {
-                isobathsSettings.focus = true
+            Item {
+                Layout.fillWidth: true
             }
+            CCombo  {
+                id: isobathsTheme
+                Layout.preferredWidth: 200
+                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                currentIndex: 0
+                onCurrentIndexChanged: {
+                    IsobathsControlMenuController.onThemeChanged(currentIndex)
+                }
 
-            Component.onCompleted: {
-                IsobathsControlMenuController.onProcessStateChanged(checked);
+                onFocusChanged: {
+                    if (Qt.platform.os === 'android') {
+                        isobathsSettings.focus = true
+                    }
+                }
 
-            }
+                Component.onCompleted: {
+                    IsobathsControlMenuController.onThemeChanged(currentIndex)
+                }
 
-            Settings {
-                property alias realtimeProcessingIsobathsCheckButton: realtimeProcessingIsobathsCheckButton.checked
-            }
-        }
-
-        CButton {
-            id: resetIsobathsButton
-            text: qsTr("Reset")
-            Layout.fillWidth: true
-            onClicked: {
-                IsobathsControlMenuController.onResetIsobathsButtonClicked()
-            }
-
-            onFocusChanged: {
-                isobathsSettings.focus = true
+                Settings {
+                    property alias isobathsTheme: isobathsTheme.currentIndex
+                }
             }
         }
 
@@ -111,78 +108,46 @@ MenuFrame {
             }
         }
 
-        RowLayout {
-            CText {
-                text: qsTr("Handle each call:")
-                Layout.fillWidth: true
-            }
-            SpinBoxCustom {
-                id: isobathsHandleXCallSpinBox
-                implicitWidth: 200
-                from: 1
-                to: 100
-                stepSize: 1
-                value: 1
-                editable: false
+        // RowLayout {
+        //     CText {
+        //         text: qsTr("Handle each call:")
+        //         Layout.fillWidth: true
+        //     }
+        //     SpinBoxCustom {
+        //         id: isobathsHandleXCallSpinBox
+        //         implicitWidth: 200
+        //         from: 1
+        //         to: 100
+        //         stepSize: 1
+        //         value: 1
+        //         editable: false
 
-                property int decimals: 1
+        //         property int decimals: 1
 
-                onFocusChanged: {
-                    isobathsSettings.focus = true
-                }
+        //         onFocusChanged: {
+        //             isobathsSettings.focus = true
+        //         }
 
-                Component.onCompleted: {
-                    IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
-                }
+        //         Component.onCompleted: {
+        //             IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
+        //         }
 
-                onValueChanged: {
-                    IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
-                }
+        //         onValueChanged: {
+        //             IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
+        //         }
 
-                Settings {
-                    property alias isobathsHandleXCallSpinBox: isobathsHandleXCallSpinBox.value
-                }
-            }
-        }
+        //         Settings {
+        //             property alias isobathsHandleXCallSpinBox: isobathsHandleXCallSpinBox.value
+        //         }
+        //     }
+        // }
 
-        RowLayout {
-            visible: !isobathsDebugModeCheckButton.checked
-            CText {
-                text: qsTr("Theme:")
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            CCombo  {
-                id: isobathsTheme
-                Layout.preferredWidth: 300
-                model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
-                currentIndex: 0
-                onCurrentIndexChanged: {
-                    IsobathsControlMenuController.onThemeChanged(currentIndex)
-                }
-
-                onFocusChanged: {
-                    if (Qt.platform.os === 'android') {
-                        isobathsSettings.focus = true
-                    }
-                }
-
-                Component.onCompleted: {
-                    IsobathsControlMenuController.onThemeChanged(currentIndex)
-                }
-
-                Settings {
-                    property alias isobathsTheme: isobathsTheme.currentIndex
-                }
-            }
-        }
 
         RowLayout {
-            visible: !isobathsDebugModeCheckButton.checked
+            //visible: !isobathsDebugModeCheckButton.checked
 
             CText {
-                text: qsTr("Surface/line step, m:")
+                text: qsTr("Step, m:")
                 Layout.fillWidth: true
 
             }
@@ -228,80 +193,109 @@ MenuFrame {
                 }
             }
         }
-        RowLayout {
-            visible: !isobathsDebugModeCheckButton.checked
 
-            CText {
-                text: qsTr("Label step, m:")
-                Layout.fillWidth: true
-            }
-            SpinBoxCustom {
-                id: isobathsLabelStepSpinBox
-                implicitWidth: 200
-                from: 10
-                to: 1000
-                stepSize: 5
-                value: 100
-                editable: false
+        // RowLayout {
+        //     visible: !isobathsDebugModeCheckButton.checked
 
-                property int decimals: 1
+        //     CText {
+        //         text: qsTr("Label step, m:")
+        //         Layout.fillWidth: true
+        //     }
+        //     SpinBoxCustom {
+        //         id: isobathsLabelStepSpinBox
+        //         implicitWidth: 200
+        //         from: 10
+        //         to: 1000
+        //         stepSize: 5
+        //         value: 100
+        //         editable: false
 
-                onFocusChanged: {
-                    isobathsSettings.focus = true
-                }
+        //         property int decimals: 1
 
-                Component.onCompleted: {
-                    IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
-                }
+        //         onFocusChanged: {
+        //             isobathsSettings.focus = true
+        //         }
 
-                onValueChanged: {
-                    IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
-                }
+        //         Component.onCompleted: {
+        //             IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
+        //         }
 
-                Settings {
-                    property alias isobathsLabelStepSpinBox: isobathsLabelStepSpinBox.value
-                }
-            }
-        }
+        //         onValueChanged: {
+        //             IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
+        //         }
 
-        CheckButton {
-            text: qsTr("Triangles")
+        //         Settings {
+        //             property alias isobathsLabelStepSpinBox: isobathsLabelStepSpinBox.value
+        //         }
+        //     }
+        // }
+
+        // CheckButton {
+        //     text: qsTr("Triangles")
+        //     Layout.fillWidth: true
+        //     checked: true
+        //     visible: isobathsDebugModeCheckButton.checked
+
+        //     onCheckedChanged: {
+        //         IsobathsControlMenuController.onTrianglesVisible(checked);
+        //     }
+
+        //     onFocusChanged: {
+        //         isobathsSettings.focus = true
+        //     }
+        // }
+
+        // CheckButton {
+        //     text: qsTr("Edges")
+        //     Layout.fillWidth: true
+        //     checked: true
+        //     visible: isobathsDebugModeCheckButton.checked
+
+        //     onCheckedChanged: {
+        //         IsobathsControlMenuController.onEdgesVisible(checked);
+        //     }
+
+        //     onFocusChanged: {
+        //         isobathsSettings.focus = true
+        //     }
+        // }
+
+        // CheckButton {
+        //     id: isobathsDebugModeCheckButton
+        //     text: qsTr("Debug mode")
+        //     Layout.fillWidth: true
+        //     checked: false
+
+        //     onCheckedChanged: {
+        //         IsobathsControlMenuController.onDebugModeView(checked);
+        //     }
+
+        //     onFocusChanged: {
+        //         isobathsSettings.focus = true
+        //     }
+        // }
+
+        // CButton {
+        //     id: resetIsobathsButton
+        //     text: qsTr("Clear")
+        //     Layout.fillWidth: true
+        //     onClicked: {
+        //         IsobathsControlMenuController.onResetIsobathsButtonClicked()
+        //     }
+
+        //     onFocusChanged: {
+        //         isobathsSettings.focus = true
+        //     }
+        // }
+
+        CButton {
+            id: updateIsobathsButton
+            text: qsTr("Update")
             Layout.fillWidth: true
-            checked: true
-            visible: isobathsDebugModeCheckButton.checked
 
-            onCheckedChanged: {
-                IsobathsControlMenuController.onTrianglesVisible(checked);
-            }
-
-            onFocusChanged: {
-                isobathsSettings.focus = true
-            }
-        }
-
-        CheckButton {
-            text: qsTr("Edges")
-            Layout.fillWidth: true
-            checked: true
-            visible: isobathsDebugModeCheckButton.checked
-
-            onCheckedChanged: {
-                IsobathsControlMenuController.onEdgesVisible(checked);
-            }
-
-            onFocusChanged: {
-                isobathsSettings.focus = true
-            }
-        }
-
-        CheckButton {
-            id: isobathsDebugModeCheckButton
-            text: qsTr("Debug mode")
-            Layout.fillWidth: true
-            checked: false
-
-            onCheckedChanged: {
-                IsobathsControlMenuController.onDebugModeView(checked);
+            onClicked: {
+                //IsobathsControlMenuController.onResetIsobathsButtonClicked()
+                IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
             }
 
             onFocusChanged: {

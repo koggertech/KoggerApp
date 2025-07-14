@@ -8,6 +8,8 @@ Plot2D::Plot2D()
     , isHorizontal_(true)
     , isEnabled_(true)
 {
+    qRegisterMetaType<ChannelId>("ChannelId");
+
     echogram_.setVisible(true);
     attitude_.setVisible(true);
     encoder_.setVisible(true);

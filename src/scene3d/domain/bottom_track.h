@@ -74,6 +74,7 @@ Q_SIGNALS:
     //void visibleChannelChanged(const ChannelId& channelId);
     //void visibleChannelChanged(DatasetChannel channel);
     void updatedDataByIndxs(const QVector<int>& indx);
+    void completelyRedrawn();
 
 protected:
     friend class GraphicsScene3dView;
@@ -82,7 +83,9 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
-    void updateRenderData(int lEpoch = 0, int rEpoch = 0);
+    void updateRenderData(bool redrawAll, int lEpoch = 0, int rEpoch = 0);
+    QVector<int> getAllIndxs();
+    QVector<int> getRemainingIndxs();
 
 private:
     QVector<QPair<int, int>> getSubarrays(const QVector<int>& sequenceVector); // TODO: to utils
@@ -91,9 +94,11 @@ private:
     using VerticeIndex = int;
     QHash<VerticeIndex,EpochIndex> vertex2Epoch_;
     QHash<VerticeIndex,EpochIndex> epoch2Vertex_;
+    QSet<int> allIndxs_;
     DatasetChannel visibleChannel_;
     Dataset* datasetPtr_;
     DataProcessor* dataProcessorPtr_;
     QVector<QVector3D> renderData_;
     int firstLIndx_ = -1;
+    int lastIndx_ = -1;
 };

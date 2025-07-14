@@ -81,6 +81,11 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
     QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, isobaths_.get(), &Isobaths::onUpdatedBottomTrackDataWrapper);
+    QObject::connect(m_bottomTrack.get(), &BottomTrack::completelyRedrawn, [this]() {
+        isobaths_->clear();
+        auto allIndxs = m_bottomTrack->getAllIndxs();
+        isobaths_->onUpdatedBottomTrackDataWrapper(allIndxs);
+    });
 
     updatePlaneGrid();
 }
@@ -421,6 +426,12 @@ void GraphicsScene3dView::setTrackLastData(bool state)
 void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
 {
     emit sendTextureIdByTileIndx(tileIndx, textureId);
+}
+
+void GraphicsScene3dView::updateIsobathsForRemainingData()
+{
+    auto indxs = m_bottomTrack->getRemainingIndxs();
+    isobaths_->onUpdatedBottomTrackDataWrapper(indxs);
 }
 
 void GraphicsScene3dView::updateProjection()

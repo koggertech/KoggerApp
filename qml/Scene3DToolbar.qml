@@ -206,11 +206,17 @@ Item  {
                     implicitWidth: theme.controlHeight * 1.3
 
                     onCheckedChanged: {
-                        IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+                        IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility
+                        IsobathsControlMenuController.onProcessStateChanged(checked); // calculation state
+
+                        if (checked) {
+                            IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
+                        }
                     }
 
                     Component.onCompleted: {
                         IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+                        IsobathsControlMenuController.onProcessStateChanged(checked);
                     }
 
                     property bool isobathsLongPressTriggered: false

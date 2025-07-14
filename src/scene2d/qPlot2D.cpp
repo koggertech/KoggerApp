@@ -13,6 +13,8 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
     , m_updateTimer(new QTimer(this))
 {
+    qRegisterMetaType<ChannelId>("ChannelId");
+
 //    setRenderTarget(QQuickPaintedItem::FramebufferObject);
 //    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
     m_updateTimer->start(30);
