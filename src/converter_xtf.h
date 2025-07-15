@@ -62,6 +62,9 @@ public:
 
                 Position ext_pos = epoch->getExternalPosition();
                 Position int_pos = epoch->getPositionGNSS();
+                if (!int_pos.lla.isCoordinatesValid()) {
+                    int_pos.lla = epoch->getInterpLLA();
+                }
 
                 Position pos;
                 if(ext_pos.lla.isCoordinatesValid()) {

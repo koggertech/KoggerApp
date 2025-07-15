@@ -428,6 +428,12 @@ void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx,
     emit sendTextureIdByTileIndx(tileIndx, textureId);
 }
 
+void GraphicsScene3dView::updateIsobathsForAllData()
+{
+    auto indxs = m_bottomTrack->getAllIndxs();
+    isobaths_->onUpdatedBottomTrackDataWrapper(indxs);
+}
+
 void GraphicsScene3dView::updateIsobathsForRemainingData()
 {
     auto indxs = m_bottomTrack->getRemainingIndxs();
@@ -550,7 +556,16 @@ void GraphicsScene3dView::setMapView() {
 void GraphicsScene3dView::setLastEpochFocusView()
 {
     auto* epoch = m_dataset->last();
-    QVector3D currPos(epoch->getPositionGNSS().ned.n, epoch->getPositionGNSS().ned.e, 1);
+    if (!epoch) {
+        return;
+    }
+
+    NED posNed = epoch->getPositionGNSS().ned;
+    if (!posNed.isCoordinatesValid()) {
+        posNed = epoch->getInterpNED();
+    }
+
+    QVector3D currPos(posNed.n, posNed.e, 1);
 
     m_camera->focusOnPosition(currPos);
     updatePlaneGrid();
@@ -639,20 +654,12 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
                      this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
-                                    if (m_dataset->channelsListIsEmpty()) {
-                                        return;
-                                    }
-                                    auto fCh = m_dataset->channelsList().first();
-                                    if (!m_dataset || fCh.channelId_ != channelId) {
+                                    auto chList = m_dataset->channelsList();
+                                    if (!m_dataset || chList.empty() || chList.first().channelId_ != channelId) {
                                         return;
                                     }
                                     clearComboSelectionRect();
                                     m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-
-                                    // TODO
-                                    //if (updateMosaic_) {
-                                    //    interpolateDatasetEpochs(false);
-                                    //}
 
                                 }, Qt::DirectConnection);
 
@@ -668,13 +675,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
                                     }
                                 }, Qt::DirectConnection);
 
-    QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
-                     this,      [this](int indx) -> void {
-                                    if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
-                                        m_bottomTrack->sideScanUpdated();
-                                        sideScanView_->startUpdateDataInThread(indx);
-                                    }
-                                }, Qt::DirectConnection);
+    //QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
+    //                 this,      [this](int indx) -> void {
+    //                                if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
+    //                                    m_bottomTrack->sideScanUpdated();
+    //                                    sideScanView_->startUpdateDataInThread(indx);
+    //                                }
+    //                            }, Qt::DirectConnection);
 
     QObject::connect(m_dataset, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {

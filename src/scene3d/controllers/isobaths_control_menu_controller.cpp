@@ -69,7 +69,7 @@ void IsobathsControlMenuController::onIsobathsVisibilityCheckBoxCheckedChanged(b
 void IsobathsControlMenuController::onUpdateIsobathsButtonClicked()
 {
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->updateIsobathsForRemainingData();
+        graphicsSceneViewPtr_->updateIsobathsForAllData();
     }
 }
 

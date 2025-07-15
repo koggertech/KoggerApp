@@ -90,6 +90,10 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if(true) {
         Epoch* lastEpoch = dataset->last();
         Epoch* preLastEpoch = dataset->lastlast();
+
+        Q_UNUSED(lastEpoch)
+        Q_UNUSED(preLastEpoch)
+
         float temp = NAN;
         temp = dataset->getLastTemp();
 

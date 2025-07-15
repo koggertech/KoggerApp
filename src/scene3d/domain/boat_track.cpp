@@ -71,9 +71,14 @@ void BoatTrack::selectEpoch(int epochIndex)
         return;
 
     if (auto* epoch = datasetPtr_->fromIndex(epochIndex); epoch) {
-        if (auto ned = epoch->getPositionGNSS().ned; ned.isCoordinatesValid()) {
-            auto r = RENDER_IMPL(BoatTrack);
-            r->boatTrackVertice_ = QVector3D(ned.n, ned.e, 0.0f);
+        NED epNed = epoch->getPositionGNSS().ned;
+        if (!epNed.isCoordinatesValid()) {
+            epNed = epoch->getInterpNED();
+        }
+
+        if (epNed.isCoordinatesValid()) {
+            auto* r = RENDER_IMPL(BoatTrack);
+            r->boatTrackVertice_ = QVector3D(epNed.n, epNed.e, 0.0f);
 
             // channel select logic from bottomTrack
             bool beenBottomSelected{ false };
@@ -81,7 +86,7 @@ void BoatTrack::selectEpoch(int epochIndex)
             if (datasetPtr_) {
                 if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
                     if (float distance = -1.f * static_cast<float>(epoch->distProccesing(datasetChannels.first().channelId_)); isfinite(distance)) {
-                        r->bottomTrackVertice_ = QVector3D(ned.n, ned.e, distance);
+                        r->bottomTrackVertice_ = QVector3D(epNed.n, epNed.e, distance);
                         beenBottomSelected = true;
                     }
                 }
@@ -90,14 +95,23 @@ void BoatTrack::selectEpoch(int epochIndex)
                 r->bottomTrackVertice_ = QVector3D();
             }
         }
+        else {
+            //qDebug() << "invalid pos on boat track" << epochIndex;
+        }
     }
 
     Q_EMIT changed();
 }
 
+void BoatTrack::setBottomTrackVisibleState(bool state)
+{
+    auto* r = RENDER_IMPL(BoatTrack);
+    r->bottomTrackVisibleState_ = state;
+}
+
 void BoatTrack::clearSelectedEpoch()
 {
-    auto r = RENDER_IMPL(BoatTrack);
+    auto* r = RENDER_IMPL(BoatTrack);
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
 }
@@ -123,7 +137,10 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                     if (selectedIndices_.size() > (indice + 1)) {
                         auto epochIndx = selectedIndices_[indice];
                         if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {
-                            auto epNed = epoch->getPositionGNSS().ned;
+                            NED epNed = epoch->getPositionGNSS().ned;
+                            if (!epNed.isCoordinatesValid()) {
+                                epNed = epoch->getInterpNED();
+                            }
                             QVector3D pos(epNed.n, epNed.e, 0.0f);
                             RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
 
@@ -201,7 +218,7 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     shaderProgram->disableAttributeArray(posLoc);
 
     //------------->Drawing line boatTrack -> bottomTrack<<---------------//
-    if (bottomTrackVertice_.isNull()) {
+    if (bottomTrackVertice_.isNull() || !bottomTrackVisibleState_) {
         return;
     }
 

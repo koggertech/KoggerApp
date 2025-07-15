@@ -19,7 +19,7 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
     visibility_ = checked;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->bottomTrack()->setVisible(checked);
+        graphicsSceneViewPtr_->bottomTrack()->setVisibleState(checked);
     }
     else {
         tryInitPendingLambda();
@@ -52,7 +52,7 @@ void BottomTrackControlMenuController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
                 if (auto bTPtr = graphicsSceneViewPtr_->bottomTrack(); bTPtr) {
-                    bTPtr->setVisible(visibility_);
+                    bTPtr->setVisibleState(visibility_);
                 }
             }
         };

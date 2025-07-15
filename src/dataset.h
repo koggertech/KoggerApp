@@ -89,7 +89,7 @@ typedef struct LLA {
     bool isValid() const {
         return isfinite(latitude) && isfinite(longitude) && isfinite(altitude);
     }
-    bool isCoordinatesValid() {
+    bool isCoordinatesValid() const {
         return isfinite(latitude) && isfinite(longitude);
     }
 } LLA;
@@ -924,14 +924,12 @@ public:
 
     void moveComplexToEchogram(ChannelId channel_id, int group_id, float offset_m, float levels_offset_db);
 
-    void setInterpNED(NED ned);
+    void setInterpNED(const NED& ned);
+    void setInterpLLA(const LLA& lla);
     void setInterpYaw(float yaw);
-    void setInterpFirstChannelDist(float dist);
-    void setInterpSecondChannelDist(float dist);
-    NED   getInterpNED() const;
+    NED  getInterpNED() const;
+    LLA  getInterpLLA() const;
     float getInterpYaw() const;
-    float getInterpFirstChannelDist() const;
-    float getInterpSecondChannelDist() const;
 
     void setResolution      (const ChannelId& channelId, uint16_t resolution);
     void setChartCount      (const ChannelId& channelId, uint16_t chartCount);
@@ -1025,12 +1023,12 @@ protected:
 private:
     struct {
         NED ned;
+        LLA lla;
         float yaw = NAN;
-        float distFirstChannel = NAN;
-        float distSecondChannel = NAN;
 
         bool isValid() const {
-            if (ned.isCoordinatesValid()  &&
+            if (ned.isCoordinatesValid() &&
+                lla.isCoordinatesValid() &&
                 isfinite(yaw)) {
                 return true;
             }
@@ -1250,7 +1248,10 @@ signals:
     void chartsUpdated(int n);
     void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
     void boatTrackUpdated();
-    void updatedInterpolatedData(int indx);
+
+    void interpYaw(int epIndx);
+    void interpPos(int epIndx);
+
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);
@@ -1302,21 +1303,24 @@ private:
     class Interpolator {
     public:
         explicit Interpolator(Dataset* datasetPtr);
-        void interpolateData(bool fromStart);
+
+        void interpolatePos(bool fromStart);
+        void interpolateYaw(bool fromStart);
         void clear();
+
     private:
-        bool updateChannelsIds();
         float interpYaw(float start, float end, float progress) const;
         NED interpNED(const NED& start, const NED& end, float progress) const;
+        LLA interpLLA(const LLA& start, const LLA& end, float progress) const;
         float interpDist(float start, float end, float progress) const;
         qint64 calcTimeDiffInNanoSecs(time_t startSecs, int startNanoSecs, time_t endSecs, int endNanoSecs) const;
         qint64 convertToNanosecs(time_t secs, int nanoSecs) const;
         std::pair<time_t, int> convertFromNanosecs(qint64 totalNanoSecs) const; // first - secs, second - nanosecs
 
+    private:
         Dataset* datasetPtr_;
-        int lastInterpIndx_;
-        ChannelId firstChannelId_;
-        ChannelId secondChannelId_;
+        int lastYawInterpIndx_;
+        int lastPosInterpIndx_;
     };
 
     /*methods*/

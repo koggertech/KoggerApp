@@ -279,19 +279,18 @@ void Link::setBaudrate(int baudrate)
 }
 
 void Link::setRequestToSend(bool rts) {
-    bool installed = false;
+    //bool installed = false;
     if (linkType_ == LinkType::kLinkSerial) {
         if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
-            installed = currDev->setRequestToSend(rts);
+            currDev->setRequestToSend(rts);
         }
     }
 }
 
 void Link::setDataTerminalReady(bool dtr) {
-    bool installed = false;
     if (linkType_ == LinkType::kLinkSerial) {
         if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
-            installed = currDev->setDataTerminalReady(dtr);
+            currDev->setDataTerminalReady(dtr);
         }
     }
 }
@@ -299,7 +298,7 @@ void Link::setDataTerminalReady(bool dtr) {
 void Link::setParity(bool parity)
 {
     parity_ = parity;
-    bool installed = false;
+    //bool installed = false;
     if (linkType_ == LinkType::kLinkSerial) {
         if (auto currDev = qobject_cast<QSerialPort*>(ioDevice_); currDev) {
             if(parity_) {

@@ -726,7 +726,10 @@ bool Core::exportUSBLToCSV(QString filePath)
         if (epoch == NULL)
             continue;
 
-        Position pos = epoch->getPositionGNSS();
+        NED posNed = epoch->getPositionGNSS().ned;
+        if (!posNed.isCoordinatesValid()) {
+            posNed = epoch->getInterpNED();
+        }
 
         // pos.ned.isCoordinatesValid() && epoch->isAttAvail() &&
         if( epoch->isUsblSolutionAvailable()) {
@@ -734,7 +737,7 @@ bool Core::exportUSBLToCSV(QString filePath)
 
             row_data.append(QString("%1").arg(i));
             row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
-            row_data.append(QString(",%1,%2").arg(pos.ned.n).arg(pos.ned.e));
+            row_data.append(QString(",%1,%2").arg(posNed.n).arg(posNed.e));
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().ping_counter).arg(epoch->usblSolution().carrier_counter).arg(epoch->usblSolution().snr));
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
 
@@ -857,6 +860,12 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                     continue;
 
                 Position pos = epoch->getPositionGNSS();
+                if (!pos.lla.isCoordinatesValid()) {
+                    pos.lla = epoch->getInterpLLA();
+                }
+                if (!pos.ned.isCoordinatesValid()) {
+                    pos.ned = epoch->getInterpNED();
+                }
 
                 if (pos.lla.isCoordinatesValid()) {
                     if (!lla_ref.isInit) {

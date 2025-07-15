@@ -87,7 +87,11 @@ void SideScanView::startUpdateDataInThread(int endIndx, int endOffset)
 
 void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
 {
-    std::unique_ptr<QMutexLocker> locker;
+    Q_UNUSED(endIndx)
+    Q_UNUSED(endOffset)
+    Q_UNUSED(backgroundThread)
+
+    /*std::unique_ptr<QMutexLocker> locker;
     std::function<void()> cleanFunc;
     if (backgroundThread) {
         cleanFunc = [&, this]() {
@@ -450,7 +454,7 @@ void SideScanView::updateData(int endIndx, int endOffset, bool backgroundThread)
     Q_EMIT changed();
     Q_EMIT boundsChanged();
 
-    if (cleanFunc) cleanFunc();
+    if (cleanFunc) cleanFunc();*/
 }
 
 void SideScanView::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)

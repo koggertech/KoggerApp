@@ -238,11 +238,16 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
         return;
 
     auto* epoch = datasetPtr_->fromIndex(epochIndex);
+    NED nedPos = epoch->getPositionGNSS().ned;
+    if (!nedPos.isCoordinatesValid()) {
+        nedPos = epoch->getInterpNED();
+    }
     auto indxFromMap = vertex2Epoch_.key(epochIndex);
 
     if (!epoch ||
-        !epoch->getPositionGNSS().ned.isCoordinatesValid() ||
+        !nedPos.isCoordinatesValid() ||
         (epochIndex && !indxFromMap)) {
+        //qDebug() << "invalid pos on bottom track" << epochIndex << indxFromMap;
         return;
     }
 
@@ -262,6 +267,13 @@ void BottomTrack::sideScanUpdated()
 void BottomTrack::setSideScanVisibleState(bool state)
 {
     RENDER_IMPL(BottomTrack)->sideScanVisibleState_ = state;
+}
+
+void BottomTrack::setVisibleState(bool state)
+{
+    SceneObject::setVisible(state);
+
+    m_view->boatTrack()->setBottomTrackVisibleState(state);
 }
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -315,7 +327,9 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
         if (buttons.testFlag(Qt::LeftButton)) {
             auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
             if (!hits.isEmpty()) {
-                RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
+                auto* r = RENDER_IMPL(BottomTrack);
+
+                r->selectedVertexIndices_ = {hits.first().indices().first};
                 auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
                 m_view->boatTrack()->selectEpoch(epochIndex);
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
@@ -422,9 +436,9 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     QVector<int> updatedByIndxs;
     updatedByIndxs.reserve(range);
 
-    auto appendData = [&](const Position& pos, float dist, int epochIdx) -> void {
+    auto appendData = [&](const NED& pos, float dist, int epochIdx) -> void {
         int vIdx = renderData_.size();
-        renderData_.append(QVector3D(pos.ned.n, pos.ned.e, dist));
+        renderData_.append(QVector3D(pos.n, pos.e, dist));
         vertex2Epoch_.insert(vIdx, epochIdx); // vertice -> epoch
         epoch2Vertex_.insert(epochIdx, vIdx); // vertice -> epoch
 
@@ -444,8 +458,11 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
 
     for (int i = currMin; i < currMax; ++i) {
         if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            const auto pos = epoch->getPositionGNSS();
-            if (!pos.ned.isCoordinatesValid()) {
+            NED pos = epoch->getPositionGNSS().ned;
+            if (!pos.isCoordinatesValid()) {
+                pos = epoch->getInterpNED();
+            }
+            if (!pos.isCoordinatesValid()) {
                 continue;
             }
 

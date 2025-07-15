@@ -64,6 +64,7 @@ public Q_SLOTS:
     void selectEpoch(int epochIndex, const ChannelId& channelId);
     void sideScanUpdated();
     void setSideScanVisibleState(bool state);
+    void setVisibleState(bool state);
 
 Q_SIGNALS:
     void epochHovered(int epochIndex);
