@@ -37,7 +37,6 @@ Core::Core() :
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated);
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs);
     QObject::connect(this, &Core::sendIsFileOpening, this, &Core::onSendIsFileOpening);
-
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
