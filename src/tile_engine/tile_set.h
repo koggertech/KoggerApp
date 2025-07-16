@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "map_defs.h"
-#include "dataset.h"
+#include "dataset_defs.h"
 #include "tile_provider.h"
 #include "tile_db.h"
 #include "tile_downloader.h"

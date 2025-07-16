@@ -21,6 +21,7 @@ HEADERS += \
     src/dataset.h \
     src/dataset_defs.h \
     src/dsp_defs.h \
+    src/epoch.h \
     src/hotkeys_manager.h \
     src/id_binnary.h \
     src/delaunay.h \
@@ -41,6 +42,7 @@ SOURCES += \
     src/console_list_model.cpp \
     src/core.cpp \
     src/dataset.cpp \
+    src/epoch.cpp \
     src/hotkeys_manager.cpp \
     src/id_binnary.cpp \
     src/logger.cpp \

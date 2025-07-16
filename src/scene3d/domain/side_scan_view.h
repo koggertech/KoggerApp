@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <QMutex>
 #include <QVector>
 #include <QVector3D>
 #include <QUuid>
