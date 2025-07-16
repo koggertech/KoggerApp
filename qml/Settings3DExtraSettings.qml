@@ -75,6 +75,10 @@ MenuFrame {
                 settings3DSettings.focus = true
             }
 
+            Component.onCompleted: {
+                Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+            }
+
             Settings {
                 property alias selectionToolButton: selectionToolButton.checked
             }
