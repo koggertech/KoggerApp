@@ -209,6 +209,7 @@ public:
 
     void setTrackLastData(bool state);
     void setUpdateBottomTrack(bool state);
+    void setIsFileOpening(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -303,6 +304,7 @@ private:
     bool trackLastData_;
     bool updateBottomTrack_;
     bool isOpeningFile_;
+    bool isFileOpening_ = false;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
