@@ -140,8 +140,12 @@ public:
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setPositionLLA(Position position);
+    void setPositionLLA(const LLA& lla);
+    void setPositionNED(const NED& ned);
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
+    void setPositionDataType(DataType dataType);
+    DataType getPositionDataType() const { return _positionGNSS.dataType; };
 
     void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
     ComplexSignals& complexSignals() { return _complex; }
@@ -156,7 +160,8 @@ public:
     void setTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0);
 
     void setTemp(float temp_c);
-    void setAtt(float yaw, float pitch, float roll);
+    void setAtt(float yaw, float pitch, float roll, DataType dataType = DataType::kRaw);
+    DataType getAttDataType() const { return _attitude.dataType; };
 
     void setEncoders(float enc1, float enc2, float enc3);
     bool isEncodersSeted() { return _encoder.isSeted();}
@@ -490,13 +495,6 @@ public:
 
     void moveComplexToEchogram(ChannelId channel_id, int group_id, float offset_m, float levels_offset_db);
 
-    void setInterpNED(const NED& ned);
-    void setInterpLLA(const LLA& lla);
-    void setInterpYaw(float yaw);
-    NED  getInterpNED() const;
-    LLA  getInterpLLA() const;
-    float getInterpYaw() const;
-
     void setResolution      (const ChannelId& channelId, uint16_t resolution);
     void setChartCount      (const ChannelId& channelId, uint16_t chartCount);
     void setOffset          (const ChannelId& channelId, uint16_t offset);
@@ -532,6 +530,9 @@ protected:
 
     struct {
         float yaw = NAN, pitch = NAN, roll = NAN;
+
+        DataType dataType;
+
         bool isAvail() {
             return isfinite(yaw) && isfinite(pitch) && isfinite(roll);
         }
@@ -585,20 +586,4 @@ protected:
         bool isDVLSolutionAvail = false;
 
     } flags;
-
-private:
-    struct {
-        NED ned;
-        LLA lla;
-        float yaw = NAN;
-
-        bool isValid() const {
-            if (ned.isCoordinatesValid() &&
-                lla.isCoordinatesValid() &&
-                isfinite(yaw)) {
-                return true;
-            }
-            return false;
-        };
-    } interpData_;
 };

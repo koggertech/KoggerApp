@@ -43,7 +43,8 @@ enum AltitudeSource {
 };
 
 enum class DataType {
-    kRaw = 0,
+    kUndefined = 0,
+    kRaw,
     kInterpolated
 };
 
@@ -414,6 +415,8 @@ typedef struct {
     DateTime time;
     LLA lla;
     NED ned;
+
+    DataType dataType;
 
     void LLA2NED(LLARef* ref) {
         ned = NED(&lla, ref);

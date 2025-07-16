@@ -184,12 +184,6 @@ void Logger::loggingCsvStream()
         writeCsvHat();
 
     Position epPos = epoch->getPositionGNSS();
-    if (!epPos.ned.isCoordinatesValid()) {
-        epPos.ned = epoch->getInterpNED();
-    }
-    if (!epPos.lla.isCoordinatesValid()) {
-        epPos.lla = epoch->getInterpLLA();
-    }
 
     if (epPos.lla.isCoordinatesValid()) {
         csvData_.lastCsvPos = epPos;

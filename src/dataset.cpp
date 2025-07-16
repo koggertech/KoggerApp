@@ -513,6 +513,7 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     }
 
     last_epoch->setAtt(yaw, pitch, roll);
+    last_epoch->isAttAvail();
 
     _lastYaw = yaw;
     _lastPitch = pitch;
@@ -542,15 +543,16 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     emit dataUpdate();
 }
 
-void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec) {
+void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec)
+{
     Epoch* last_epoch = last();
 
     Position pos;
     pos.lla = LLA(lat, lon);
     pos.time = DateTime(unix_time, nanosec);
 
-    if(pos.lla.isCoordinatesValid()) {
-        if(last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+    if (pos.lla.isCoordinatesValid()) {
+        if (last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
             //qDebug() << "pos add new epoch" << _pool.size();
             last_epoch = addNewEpoch();
         }
@@ -559,7 +561,10 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
         last_epoch->setPositionLLA(pos);
         last_epoch->setPositionRef(&_llaRef);
+
         _lastPositionGNSS = last_epoch->getPositionGNSS();
+
+        last_epoch->setPositionDataType(DataType::kRaw);
     }
 
     interpolator_.interpolatePos(false);
@@ -862,24 +867,16 @@ void Dataset::updateBoatTrack(bool updateAll) {
             continue;
         }
 
-        auto pos   = ep->getPositionGNSS().ned;
+        auto pos = ep->getPositionGNSS().ned;
 
         bool appended = true;
         if (pos.isCoordinatesValid()) {
-            _boatTrack.append(QVector3D(pos.n,pos.e, 0));
-            //qDebug() << "add raw pos" << i << pos.n << pos.e;
+            _boatTrack.append(QVector3D(pos.n, pos.e, 0));
+            //qDebug() << "add pos" << i << pos.n << pos.e << "type" << static_cast<int>(ep->getPositionDataType());
         }
         else {
-            auto inPos = ep->getInterpNED();
-
-            if (inPos.isCoordinatesValid()) {
-                _boatTrack.append(QVector3D(inPos.n,inPos.e, 0));
-                //qDebug() << "add interp pos" << i << inPos.n << inPos.e;
-            }
-            else {
-                appended = false;
-                //qDebug() << "fail add" << i << inPos.n << inPos.e;
-            }
+            appended = false;
+            //qDebug() << "fail add" << i << pos.n << pos.e << "type" << static_cast<int>(ep->getPositionDataType());
         }
 
         if (appended) {

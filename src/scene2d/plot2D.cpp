@@ -740,12 +740,6 @@ bool Plot2D::setContact(int indx, const QString& text)
         ep->contact_.distance = cursor_distance;
 
         auto pos = ep->getPositionGNSS();
-        if (!pos.ned.isCoordinatesValid()) {
-            pos.ned = ep->getInterpNED();
-        }
-        if (!pos.lla.isCoordinatesValid()) {
-            pos.lla = ep->getInterpLLA();
-        }
 
         ep->contact_.nedX = pos.ned.n;
         ep->contact_.nedY = pos.ned.e;

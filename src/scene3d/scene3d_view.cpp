@@ -572,9 +572,6 @@ void GraphicsScene3dView::setLastEpochFocusView()
     }
 
     NED posNed = epoch->getPositionGNSS().ned;
-    if (!posNed.isCoordinatesValid()) {
-        posNed = epoch->getInterpNED();
-    }
 
     QVector3D currPos(posNed.n, posNed.e, 1);
 

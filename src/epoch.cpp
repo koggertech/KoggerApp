@@ -124,6 +124,16 @@ void Epoch::setPositionLLA(Position position) {
     flags.posAvail = true;
 }
 
+void Epoch::setPositionLLA(const LLA &lla)
+{
+    _positionGNSS.lla = lla;
+}
+
+void Epoch::setPositionNED(const NED &ned)
+{
+    _positionGNSS.ned = ned;
+}
+
 void Epoch::setExternalPosition(Position position) {
     _positionExternal = position;
 }
@@ -132,6 +142,11 @@ void Epoch::setPositionRef(LLARef* ref) {
     if(ref != NULL && ref->isInit) {
         _positionGNSS.LLA2NED(ref);
     }
+}
+
+void Epoch::setPositionDataType(DataType dataType)
+{
+    _positionGNSS.dataType = dataType;
 }
 
 void Epoch::setGnssVelocity(double h_speed, double course) {
@@ -205,10 +220,12 @@ Epoch::Echogram *Epoch::chart(const ChannelId &channelId, uint8_t subChannelId)
     return nullptr;
 }
 
-void Epoch::setAtt(float yaw, float pitch, float roll) {
+void Epoch::setAtt(float yaw, float pitch, float roll, DataType dataType) {
     _attitude.yaw = yaw;
     _attitude.pitch = pitch;
     _attitude.roll = roll;
+
+    _attitude.dataType = dataType;
 }
 
 void Epoch::setGNSSSec(time_t sec)
@@ -262,36 +279,6 @@ void Epoch::moveComplexToEchogram(ChannelId channel_id, int group_id, float offs
     }
 
     setChart(ChannelId(channel_id.uuid, group_id), chart, 1500.0f/sample_rate, offset_m);
-}
-
-void Epoch::setInterpNED(const NED& ned)
-{
-    interpData_.ned = ned;
-}
-
-void Epoch::setInterpLLA(const LLA& lla)
-{
-    interpData_.lla = lla;
-}
-
-void Epoch::setInterpYaw(float yaw)
-{
-    interpData_.yaw = yaw;
-}
-
-NED Epoch::getInterpNED() const
-{
-    return interpData_.ned;
-}
-
-LLA Epoch::getInterpLLA() const
-{
-    return interpData_.lla;
-}
-
-float Epoch::getInterpYaw() const
-{
-    return interpData_.yaw;
 }
 
 // write to all

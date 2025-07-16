@@ -72,9 +72,6 @@ void BoatTrack::selectEpoch(int epochIndex)
 
     if (auto* epoch = datasetPtr_->fromIndex(epochIndex); epoch) {
         NED epNed = epoch->getPositionGNSS().ned;
-        if (!epNed.isCoordinatesValid()) {
-            epNed = epoch->getInterpNED();
-        }
 
         if (epNed.isCoordinatesValid()) {
             auto* r = RENDER_IMPL(BoatTrack);
@@ -138,9 +135,7 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                         auto epochIndx = selectedIndices_[indice];
                         if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {
                             NED epNed = epoch->getPositionGNSS().ned;
-                            if (!epNed.isCoordinatesValid()) {
-                                epNed = epoch->getInterpNED();
-                            }
+
                             QVector3D pos(epNed.n, epNed.e, 0.0f);
                             RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
 

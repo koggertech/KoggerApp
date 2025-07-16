@@ -239,9 +239,7 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
 
     auto* epoch = datasetPtr_->fromIndex(epochIndex);
     NED nedPos = epoch->getPositionGNSS().ned;
-    if (!nedPos.isCoordinatesValid()) {
-        nedPos = epoch->getInterpNED();
-    }
+
     auto indxFromMap = vertex2Epoch_.key(epochIndex);
 
     if (!epoch ||
@@ -459,9 +457,6 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     for (int i = currMin; i < currMax; ++i) {
         if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
             NED pos = epoch->getPositionGNSS().ned;
-            if (!pos.isCoordinatesValid()) {
-                pos = epoch->getInterpNED();
-            }
             if (!pos.isCoordinatesValid()) {
                 continue;
             }

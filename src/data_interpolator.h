@@ -16,7 +16,7 @@ public:
     void clear();
 
 private:
-    float interpYaw(float start, float end, float progress) const;
+    float interpAttParam(float start, float end, float progress) const;
     NED interpNED(const NED& start, const NED& end, float progress) const;
     LLA interpLLA(const LLA& start, const LLA& end, float progress) const;
     float interpDist(float start, float end, float progress) const;
