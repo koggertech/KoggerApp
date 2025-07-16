@@ -120,6 +120,7 @@ public slots:
     bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
+    void onSendIsFileOpening();
 
 #ifdef FLASHER
     void connectOpenedLinkAsFlasher(QString pn);

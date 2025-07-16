@@ -31,6 +31,7 @@ Core::Core() :
     createControllers();
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated, Qt::AutoConnection);
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs, Qt::AutoConnection);
+    QObject::connect(this, &Core::sendIsFileOpening, this, &Core::onSendIsFileOpening);
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
@@ -1243,6 +1244,13 @@ void Core::onRedrawEpochs(const QSet<int>& indxs)
     const int numPlots = plot2dList_.size();
     for (int i = 0; i < numPlots; i++) {
         plot2dList_[i]->addReRenderPlotIndxs(indxs);
+    }
+}
+
+void Core::onSendIsFileOpening()
+{
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setIsFileOpening(isFileOpening_);
     }
 }
 
