@@ -447,6 +447,11 @@ void GraphicsScene3dView::setGridVisibility(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setIsFileOpening(bool state)
+{
+    isFileOpening_ = state;
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -555,6 +560,12 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setLastEpochFocusView()
 {
+#ifndef SEPARATE_READING
+    if (isFileOpening_) {
+        return;
+    }
+#endif
+
     auto* epoch = m_dataset->last();
     if (!epoch) {
         return;

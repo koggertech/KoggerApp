@@ -207,6 +207,7 @@ public:
     void updateIsobathsForAllData();
     void updateIsobathsForRemainingData();
     void setGridVisibility(bool state);
+    void setIsFileOpening(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -299,6 +300,7 @@ private:
     float lastCameraDist_;
     bool trackLastData_;
     bool gridVisibility_ = true;
+    bool isFileOpening_ = false;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

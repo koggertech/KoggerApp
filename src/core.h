@@ -124,6 +124,7 @@ public slots:
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
     int getDataProcessorState() const;
+    void onSendIsFileOpening();
 
 #ifdef FLASHER
     void connectOpenedLinkAsFlasher(QString pn);
