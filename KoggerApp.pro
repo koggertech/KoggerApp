@@ -20,6 +20,7 @@ HEADERS += \
     src/core.h \
     src/dataset.h \
     src/dataset_defs.h \
+    src/data_interpolator.h \
     src/dsp_defs.h \
     src/epoch.h \
     src/hotkeys_manager.h \
@@ -42,6 +43,7 @@ SOURCES += \
     src/console_list_model.cpp \
     src/core.cpp \
     src/dataset.cpp \
+    src/data_interpolator.cpp \
     src/epoch.cpp \
     src/hotkeys_manager.cpp \
     src/id_binnary.cpp \
