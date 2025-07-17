@@ -17,6 +17,7 @@ Core::Core() :
     tileManager_(std::make_unique<map::TileManager>(this)),
     dataProcessor_(nullptr),
     dataProcThread_(nullptr),
+    dataHorizon_(std::make_unique<DataHorizon>()),
     qmlAppEnginePtr_(nullptr),
     datasetPtr_(new Dataset),
     scene3dViewPtr_(nullptr),
@@ -34,8 +35,7 @@ Core::Core() :
     createDeviceManagerConnections();
     createLinkManagerConnections();
     createControllers();
-    QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this, &Core::onChannelsUpdated);
-    QObject::connect(datasetPtr_, &Dataset::redrawEpochs, this, &Core::onRedrawEpochs);
+    createDatasetConnections();
     QObject::connect(this, &Core::sendIsFileOpening, this, &Core::onSendIsFileOpening);
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
@@ -1618,6 +1618,18 @@ void Core::onDataProcesstorStateChanged(const DataProcessorState& state)
     emit dataProcessorStateChanged();
 }
 
+void Core::createDatasetConnections()
+{
+    QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this,               &Core::onChannelsUpdated);
+    QObject::connect(datasetPtr_, &Dataset::redrawEpochs,    this,               &Core::onRedrawEpochs);
+
+    // DataHorizon
+    QObject::connect(datasetPtr_, &Dataset::epochAdded,      dataHorizon_.get(), &DataHorizon::onAddedEpoch);
+    QObject::connect(datasetPtr_, &Dataset::positionAdded,   dataHorizon_.get(), &DataHorizon::onAddedPosition);
+    QObject::connect(datasetPtr_, &Dataset::chartAdded,      dataHorizon_.get(), &DataHorizon::onAddedChart);
+    QObject::connect(datasetPtr_, &Dataset::attitudeAdded,   dataHorizon_.get(), &DataHorizon::onAddedAttitude);
+}
+
 int Core::getDataProcessorState() const
 {
     return static_cast<int>(dataProcessorState_);
@@ -1665,11 +1677,11 @@ void Core::destroyDataProcessor()
 
 void Core::setDataProcessorConnections()
 {
-    dataProcessorConnections_.append(QObject::connect(datasetPtr_, &Dataset::chartsUpdated, dataProcessor_, &DataProcessor::onChartsUpdated, Qt::QueuedConnection));
+    // from dataHorizon
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded, dataProcessor_, &DataProcessor::onChartsAdded, Qt::QueuedConnection));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing, datasetPtr_, &Dataset::onDistCompleted, Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));
-
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::sendState, this, &Core::onDataProcesstorStateChanged, Qt::QueuedConnection));
 }
 

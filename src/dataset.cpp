@@ -11,6 +11,7 @@ Dataset::Dataset() :
     boatTrackValidPosCounter_(0),
     bSProc_(new BlackStripesProcessor())
 {
+    qRegisterMetaType<ChannelId>("ChannelId");
     resetDataset();
 }
 
@@ -305,9 +306,9 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
-    int n = std::max(0, size() - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
+    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
     emit dataUpdate();
-    emit chartsUpdated(n);
+    emit chartAdded(channelId, lastIndx);
 }
 
 void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
@@ -507,7 +508,10 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
     emit dataUpdate();
 }
 
-void Dataset::addAtt(float yaw, float pitch, float roll) {
+void Dataset::addAtt(float yaw, float pitch, float roll)
+{
+    uint64_t lastIndx = pool_.size() - 1;
+
     Epoch* last_epoch = last();
     if(last_epoch->isAttAvail()) {
     }
@@ -539,37 +543,37 @@ void Dataset::addAtt(float yaw, float pitch, float roll) {
     }
 #endif
 
-    interpolator_.interpolateYaw(false);
+    interpolator_.interpolateAtt(false);
+
+    emit attitudeAdded(lastIndx);
     emit dataUpdate();
 }
 
 void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec)
 {
-    Epoch* last_epoch = last();
+    Epoch* lastEp = last();
 
     Position pos;
     pos.lla = LLA(lat, lon);
     pos.time = DateTime(unix_time, nanosec);
 
     if (pos.lla.isCoordinatesValid()) {
-        if (last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
+        if (lastEp->getPositionGNSS().lla.isCoordinatesValid()) {
             //qDebug() << "pos add new epoch" << _pool.size();
-            last_epoch = addNewEpoch();
+            lastEp = addNewEpoch();
         }
-
+        uint64_t lastIndx = pool_.size() - 1;
         setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
-
-        last_epoch->setPositionLLA(pos);
-        last_epoch->setPositionRef(&_llaRef);
-
-        _lastPositionGNSS = last_epoch->getPositionGNSS();
-
-        last_epoch->setPositionDataType(DataType::kRaw);
+        lastEp->setPositionLLA(pos);
+        lastEp->setPositionRef(&_llaRef);
+        _lastPositionGNSS = lastEp->getPositionGNSS();
+        lastEp->setPositionDataType(DataType::kRaw);
+        interpolator_.interpolatePos(false);
+        //qDebug() << "add pos for" << lastIndx;
+        emit positionAdded(lastIndx);
+        emit dataUpdate();
+        updateBoatTrack();
     }
-
-    interpolator_.interpolatePos(false);
-    emit dataUpdate();
-    updateBoatTrack();
 }
 
 void Dataset::addPositionRTK(Position position) {
@@ -926,7 +930,7 @@ QStringList Dataset::channelsNameList()
 void Dataset::interpolateData(bool fromStart)
 {
     interpolator_.interpolatePos(fromStart);
-    interpolator_.interpolateYaw(fromStart);
+    interpolator_.interpolateAtt(fromStart);
 }
 
 void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist)
@@ -1001,8 +1005,10 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
 
 Epoch *Dataset::addNewEpoch()
 {
+    uint64_t newSize = pool_.size() + 1;
     pool_.resize(pool_.size() + 1);
     auto* lastEpoch = last();
+    emit epochAdded(newSize);
     return lastEpoch;
 }
 

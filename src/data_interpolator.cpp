@@ -5,7 +5,7 @@
 
 DataInterpolator::DataInterpolator(Dataset *datasetPtr) :
     datasetPtr_(datasetPtr),
-    lastYawInterpIndx_(0),
+    lastAttInterpIndx_(0),
     lastPosInterpIndx_(0)
 {}
 
@@ -23,7 +23,8 @@ void DataInterpolator::interpolatePos(bool fromStart)
     }
 
     int firstValidIndex = startEpochIndx;
-    //bool beenInterp = false;
+    //qDebug() << "firstValidIndex" << firstValidIndex;
+    bool beenInterp = false;
 
     while (firstValidIndex < endEpochIndx) {
         while (firstValidIndex < endEpochIndx) {
@@ -84,32 +85,34 @@ void DataInterpolator::interpolatePos(bool fromStart)
                 float progress = (currentTime - startTime) * 1.0f / static_cast<float>(timeDiffNano);
                 auto resNed = interpNED(startPos.ned, endPos.ned, progress);
                 auto resLla = interpLLA(startPos.lla, endPos.lla, progress);
-
                 //qDebug() << "      interp ned" << j << resNed.n << resNed.e << "lla" << resLla.latitude << resLla.longitude;
                 ep->setPositionNED(resNed);
                 ep->setPositionLLA(resLla);
                 ep->setPositionDataType(DataType::kInterpolated);
-
+                emit datasetPtr_->positionAdded(j);
                 lastPosInterpIndx_ = j;
-                //beenInterp = true;
+                beenInterp = true;
             }
         }
 
         firstValidIndex = secondValidIndex;
     }
 
-    //if (beenInterp) {
-    //    emit datasetPtr_->interpPos(endEpochIndx);
-    //}
+    if (beenInterp) {
+        //emit datasetPtr_->interpPos(endEpochIndx);
+    }
+    else {
+        lastPosInterpIndx_ = firstValidIndex - 1;
+    }
 }
 
-void DataInterpolator::interpolateYaw(bool fromStart)
+void DataInterpolator::interpolateAtt(bool fromStart)
 {
     if (!datasetPtr_) {
         return;
     }
 
-    int startEpochIndx = fromStart ? 0 : lastYawInterpIndx_;
+    int startEpochIndx = fromStart ? 0 : lastAttInterpIndx_;
     int endEpochIndx = datasetPtr_->size();
 
     if ((endEpochIndx - startEpochIndx) < 1) {
@@ -117,7 +120,7 @@ void DataInterpolator::interpolateYaw(bool fromStart)
     }
 
     int firstValidIndex = startEpochIndx;
-    //bool beenInterp = false;
+    bool beenInterp = false;
 
     while (firstValidIndex < endEpochIndx) {
         while (firstValidIndex < endEpochIndx) {
@@ -166,8 +169,6 @@ void DataInterpolator::interpolateYaw(bool fromStart)
         auto startRoll = startEpoch->roll();
         auto endRoll = endEpoch->roll();
 
-
-
         auto timeDiffNano = calcTimeDiffInNanoSecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec, endEpoch->getPositionGNSS().time.sec,   endEpoch->getPositionGNSS().time.nanoSec);
         auto timeOnStep = static_cast<quint64>(timeDiffNano * 1.0f / static_cast<float>(numInterpIndx));
 
@@ -176,38 +177,39 @@ void DataInterpolator::interpolateYaw(bool fromStart)
         auto startTime = convertToNanosecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec);
 
         for (int j = fromIndx; j < toIndx; ++j, ++cnt) {
-            if (auto* ep = datasetPtr_->fromIndex(j); ep) {                
+            if (auto* ep = datasetPtr_->fromIndex(j); ep) {
+                // time
                 auto pTime = convertFromNanosecs(startTime + cnt * timeOnStep);
                 ep->setGNSSSec(pTime.first);
                 ep->setGNSSNanoSec(pTime.second);
-
+                // att
                 auto currentTime = convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec);
                 float progress = (currentTime - startTime) * 1.0f / static_cast<float>(timeDiffNano);
-
-                lastYawInterpIndx_ = j;
+                lastAttInterpIndx_ = j;
                 float resYaw   = interpAttParam(startYaw,   endYaw,   progress);
                 float resPitch = interpAttParam(startPitch, endPitch, progress);
                 float resRoll  = interpAttParam(startRoll,  endRoll,  progress);
-
-                //Debug() << "      interp att" << j << resYaw << resPitch << resRoll;
+                //qDebug() << "      interp att" << j << resYaw << resPitch << resRoll;
                 ep->setAtt(resYaw, resPitch, resRoll, DataType::kInterpolated);
-                //beenInterp = true;
+                beenInterp = true;
             }
         }
 
         firstValidIndex = secondValidIndex;
     }
 
-    //if (beenInterp) {
+    if (beenInterp) {
     //    emit datasetPtr_->interpYaw(endEpochIndx);
-    //}
+    }
+    else {
+        lastAttInterpIndx_ = firstValidIndex - 1;
+    }
 }
 
 void DataInterpolator::clear()
 {
-    lastYawInterpIndx_= 0;
+    lastAttInterpIndx_= 0;
     lastPosInterpIndx_ = 0;
-
 }
 
 float DataInterpolator::interpAttParam(float start, float end, float progress) const

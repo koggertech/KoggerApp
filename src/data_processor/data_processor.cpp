@@ -40,8 +40,10 @@ void DataProcessor::doAction()
     emit finished();
 }
 
-void DataProcessor::onChartsUpdated(int n)
+void DataProcessor::onChartsAdded(const ChannelId& channelId, uint64_t indx)
 {
+    Q_UNUSED(channelId);
+
 #ifndef SEPARATE_READING
     if (isOpeningFile_) {
         return;
@@ -51,7 +53,7 @@ void DataProcessor::onChartsUpdated(int n)
     if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
         auto btP = datasetPtr_->getBottomTrackParam();
 
-        const int endIndx    = n;
+        const int endIndx    = indx;
         const int windowSize = btP.windowSize;
 
         int currCount = std::floor(endIndx / windowSize);
@@ -61,10 +63,12 @@ void DataProcessor::onChartsUpdated(int n)
             btP.indexFrom = std::max(0, windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1) - additionalBTPGap);
             btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
 
-            const auto channels = datasetPtr_->channelsList();
+            const auto channels = datasetPtr_->channelsList(); //
             for (auto it = channels.begin(); it != channels.end(); ++it) {
+              //  qDebug() << it->channelId_.isValid();
                 bottomTrackProcessing(it->channelId_, ChannelId(), btP);
             }
+            //bottomTrackProcessing(channelId, ChannelId(), btP); // TODO: fix
 
             bottomTrackWindowCounter_ = currCount;
         }
@@ -316,7 +320,6 @@ void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const Chann
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
                 emit distCompletedByProcessing(iepoch, channel2, dist);
-
             }
         }
     }

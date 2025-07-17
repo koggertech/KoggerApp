@@ -33,6 +33,7 @@
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
 //#include <FileReader.h>
+#include "data_horizon.h"
 
 
 class Core : public QObject
@@ -162,6 +163,7 @@ private slots:
 
 private:
     /*methods*/
+    void createDatasetConnections();
     void createDataProcessor();
     void destroyDataProcessor();
 
@@ -199,10 +201,10 @@ private:
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
     std::unique_ptr<map::TileManager> tileManager_;
-
     // data processor
     DataProcessor* dataProcessor_;
     QThread* dataProcThread_;
+    std::unique_ptr<DataHorizon> dataHorizon_;
 
 #ifdef SEPARATE_READING
     QString tryOpenedfilePath_;

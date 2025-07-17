@@ -224,14 +224,16 @@ public slots:
     void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP);
 
 signals:
+    // data horizon
+    void epochAdded(uint64_t indx);
+    void positionAdded(uint64_t indx);
+    void chartAdded(const ChannelId& channelId, uint64_t indx);
+    void attitudeAdded(uint64_t indx);
+    //void interpYaw(int epIndx);
+    //void interpPos(int epIndx);
     void dataUpdate();
-    void chartsUpdated(int n);
     void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
     void boatTrackUpdated();
-
-    void interpYaw(int epIndx);
-    void interpPos(int epIndx);
-
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);

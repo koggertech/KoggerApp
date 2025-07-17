@@ -12,7 +12,7 @@ public:
     explicit DataInterpolator(Dataset* datasetPtr);
 
     void interpolatePos(bool fromStart);
-    void interpolateYaw(bool fromStart);
+    void interpolateAtt(bool fromStart);
     void clear();
 
 private:
@@ -26,6 +26,6 @@ private:
 
 private:
     Dataset* datasetPtr_;
-    int lastYawInterpIndx_;
+    int lastAttInterpIndx_;
     int lastPosInterpIndx_;
 };

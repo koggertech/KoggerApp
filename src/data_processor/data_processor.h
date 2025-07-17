@@ -32,7 +32,7 @@ signals:
 public slots:
     void init();
     void doAction();
-    void onChartsUpdated(int n); // external calling realtme
+    void onChartsAdded(const ChannelId& channelId, uint64_t indx); // external calling realtme
     void clear();
 
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // external calling not realtime

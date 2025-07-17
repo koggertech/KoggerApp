@@ -1,0 +1,46 @@
+#pragma once
+
+#include <QObject>
+
+#include "dataset_defs.h"
+
+
+class DataHorizon : public QObject
+{
+    Q_OBJECT
+
+public:
+    DataHorizon();
+
+    void clear();
+
+    void setEmitChanges(bool state);
+
+    uint64_t getEpochSize() const { return epochIndx_; };
+    uint64_t getPositionIndx() const { return positionIndx_; };
+    std::pair<ChannelId, uint64_t> getChartIndx() const { return chartIndx_; };
+    uint64_t getAttitudeIndx() const { return attitudeIndx_; };
+
+signals:
+    void epochAdded(uint64_t indx);
+    void positionAdded(uint64_t indx);
+    void chartAdded(const ChannelId& channelId, uint64_t indx);
+    void attitudeAdded(uint64_t indx);
+
+public slots:
+    // Dataset
+    void onAddedEpoch(uint64_t indx);
+    void onAddedPosition(uint64_t indx);
+    void onAddedChart(const ChannelId& channelId, uint64_t indx);
+    void onAddedAttitude(uint64_t indx);
+
+private:
+
+private:
+    bool emitChanges_;
+
+    uint64_t epochIndx_;
+    uint64_t positionIndx_;
+    std::pair<ChannelId, uint64_t> chartIndx_;
+    uint64_t attitudeIndx_;
+};

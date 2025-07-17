@@ -594,7 +594,6 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
     int epoch_index = cursor_.getIndex(x_start);
     cursor_.currentEpochIndx = epoch_index;
     cursor_.lastEpochIndx = cursor_.currentEpochIndx;
-
     sendSyncEvent(epoch_index, EpochSelected2d);
 
     if(cursor_.tool() > MouseToolNothing && !isSync) {
@@ -608,7 +607,6 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
             const ChannelId channel2 = cursor_.channel2;
 
             if(epoch != NULL) {
-
                 float image_y_pos = ((float)y_start + (float)x_ind*y_scale);
                 float dist = abs(image_y_pos*image_distance_ratio + distance_from);
 
