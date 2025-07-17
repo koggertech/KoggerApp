@@ -411,17 +411,17 @@ typedef struct DateTime {
     }
 } DateTime;
 
-typedef struct {
+struct Position { // TODO: refactor all these structs
     DateTime time;
     LLA lla;
     NED ned;
 
-    DataType dataType;
+    DataType dataType = DataType::kUndefined;
 
     void LLA2NED(LLARef* ref) {
         ned = NED(&lla, ref);
     }
-} Position;
+};
 
 template <typename T>
 inline bool hasIndex(const QVector<T>& vec, int i) {
