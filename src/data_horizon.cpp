@@ -6,17 +6,25 @@
 DataHorizon::DataHorizon() :
     QObject(),
     emitChanges_(true),
+    isFileOpening_(false),
+    isSeparateReading_(false),
     epochIndx_(0),
     positionIndx_(0),
     chartIndx_(std::make_pair(ChannelId(), 0)),
     attitudeIndx_(0)
 {
+#ifdef SEPARATE_READING
+    isSeparateReading_ = true;
+#endif
+
     qRegisterMetaType<uint64_t>("uint64_t");
     qRegisterMetaType<ChannelId>("ChannelId");
 }
 
 void DataHorizon::clear()
 {
+    isFileOpening_ = false;
+
     epochIndx_ = 0;
     positionIndx_ = 0;
     chartIndx_ = std::make_pair(ChannelId(), 0);
@@ -28,6 +36,13 @@ void DataHorizon::setEmitChanges(bool state)
     emitChanges_ = state;
 }
 
+void DataHorizon::setIsFileOpening(bool state)
+{
+    //qDebug() << "DataHorizon::setIsFileOpening" << state;
+
+    isFileOpening_ = state;
+}
+
 void DataHorizon::onAddedEpoch(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedEpoch" << indx;
@@ -36,7 +51,7 @@ void DataHorizon::onAddedEpoch(uint64_t indx)
 
     epochIndx_ = indx;
 
-    if (emitChanges_ && beenChanged) {
+    if (canEmitHorizon(beenChanged)) {
         emit epochAdded(epochIndx_);
     }
 }
@@ -49,8 +64,7 @@ void DataHorizon::onAddedPosition(uint64_t indx)
 
     positionIndx_ = indx;
 
-    if (emitChanges_ && beenChanged) {
-
+    if (canEmitHorizon(beenChanged)) {
         emit positionAdded(positionIndx_);
     }
 }
@@ -63,7 +77,7 @@ void DataHorizon::onAddedChart(const ChannelId& channelId, uint64_t indx)
 
     chartIndx_ = std::make_pair(channelId, indx);
 
-    if (emitChanges_ && beenChanged) {
+    if (canEmitHorizon(beenChanged)) {
         emit chartAdded(chartIndx_.first, chartIndx_.second);
     }
 }
@@ -76,7 +90,29 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
 
     attitudeIndx_ = indx;
 
-    if (emitChanges_ && beenChanged) {
+    if (canEmitHorizon(beenChanged)) {
         emit attitudeAdded(attitudeIndx_);
     }
+}
+
+bool DataHorizon::canEmitHorizon(bool beenChanged) const
+{
+    bool retVal = false;
+
+    if (!emitChanges_) {
+        return retVal;
+    }
+
+    if (isSeparateReading_) {
+        if (beenChanged) {
+            retVal = true;
+        }
+    }
+    else {
+        if(!isFileOpening_ && beenChanged) {
+            retVal = true;
+        }
+    }
+
+    return retVal;
 }

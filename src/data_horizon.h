@@ -15,6 +15,7 @@ public:
     void clear();
 
     void setEmitChanges(bool state);
+    void setIsFileOpening(bool state);
 
     uint64_t getEpochSize() const { return epochIndx_; };
     uint64_t getPositionIndx() const { return positionIndx_; };
@@ -35,9 +36,12 @@ public slots:
     void onAddedAttitude(uint64_t indx);
 
 private:
+    bool canEmitHorizon(bool beenChanged) const;
 
 private:
     bool emitChanges_;
+    bool isFileOpening_;
+    bool isSeparateReading_;
 
     uint64_t epochIndx_;
     uint64_t positionIndx_;

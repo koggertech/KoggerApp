@@ -1637,6 +1637,8 @@ int Core::getDataProcessorState() const
 
 void Core::onSendIsFileOpening()
 {
+    dataHorizon_->setIsFileOpening(isFileOpening_);
+
     if (scene3dViewPtr_) {
         scene3dViewPtr_->setIsFileOpening(isFileOpening_);
     }
