@@ -38,7 +38,7 @@ public:
                             const QMap<QString, std::shared_ptr<QOpenGLShaderProgram>>& shaderProgramMap) const override final;
     private:
         friend class SideScanView;
-        virtual void createBounds() override final;
+        virtual void updateBounds() override final;
 
         /*data*/
         QHash<QUuid, Tile> tiles_;

@@ -85,7 +85,7 @@ void UsblView::UsblViewRenderImplementation::render(QOpenGLFunctions *ctx, const
     shaderProgram->release();
 }
 
-void UsblView::UsblViewRenderImplementation::createBounds()
+void UsblView::UsblViewRenderImplementation::updateBounds()
 {
     m_bounds = Cube();
 
@@ -181,7 +181,7 @@ void UsblView::setTrackRef(QMap<int, UsblObjectParams>& tracks)
     // refresh in render only needed
     if (beenRefreshed) {
         RENDER_IMPL(UsblView)->tracks_ = tracks_;
-        RENDER_IMPL(UsblView)->createBounds();
+        RENDER_IMPL(UsblView)->updateBounds();
 
         Q_EMIT changed();
         Q_EMIT boundsChanged();
@@ -192,7 +192,7 @@ void UsblView::clearTracks()
 {
     tracks_.clear();
     RENDER_IMPL(UsblView)->tracks_.clear();
-    RENDER_IMPL(UsblView)->createBounds();
+    RENDER_IMPL(UsblView)->updateBounds();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();

@@ -6,9 +6,7 @@ extern Core core;
 
 Dataset::Dataset() :
     interpolator_(this),
-    lastBoatTrackEpoch_(0),
     lastBottomTrackEpoch_(0),
-    boatTrackValidPosCounter_(0),
     bSProc_(new BlackStripesProcessor())
 {
     qRegisterMetaType<ChannelId>("ChannelId");
@@ -76,16 +74,6 @@ void Dataset::getMaxDistanceRange(float *from, float *to, const ChannelId& chann
         *from = NAN;
         *to = NAN;
     }
-}
-
-QVector<QVector3D> Dataset::boatTrack() const
-{
-    return _boatTrack;
-}
-
-const QHash<int, int>& Dataset::getSelectedIndicesBoatTrack() const
-{
-    return selectedBoatTrackVertexIndices_;
 }
 
 int Dataset::getLastBottomTrackEpoch() const
@@ -537,9 +525,7 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
             setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
             last_epoch->setPositionLLA(pos);
             last_epoch->setPositionRef(&_llaRef);
-            _lastPositionGNSS = last_epoch->getPositionGNSS();
         }
-        updateBoatTrack();
     }
 #endif
 
@@ -566,13 +552,11 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
         lastEp->setPositionLLA(pos);
         lastEp->setPositionRef(&_llaRef);
-        _lastPositionGNSS = lastEp->getPositionGNSS();
         lastEp->setPositionDataType(DataType::kRaw);
         interpolator_.interpolatePos(false);
         //qDebug() << "add pos for" << lastIndx;
         emit positionAdded(lastIndx);
         emit dataUpdate();
-        updateBoatTrack();
     }
 }
 
@@ -674,7 +658,6 @@ void Dataset::resetDataset()
     interpolator_.clear();
     llaRefState_ = LlaRefState::kUndefined;
     state_ = DatasetState::kUndefined;
-    clearBoatTrack();
 
 #if defined(FAKE_COORDS)
     testTime_ = 1740466541;
@@ -837,61 +820,6 @@ Epoch *Dataset::getFirstEpochByValidPosition() {
     }
 
     return NULL;
-}
-
-void Dataset::clearBoatTrack() {
-    lastBoatTrackEpoch_ = 0;
-    _boatTrack.clear();
-    selectedBoatTrackVertexIndices_.clear();
-    boatTrackValidPosCounter_ = 0;
-    emit dataUpdate();
-}
-
-void Dataset::updateBoatTrack(bool updateAll) {
-    const int toSize = size();
-    int fromIndx = 0;
-
-    if (fromIndx > toSize) {
-        return;
-    }
-
-    if (updateAll) {
-        _boatTrack.clear();
-        selectedBoatTrackVertexIndices_.clear();
-        boatTrackValidPosCounter_ = 0;
-    }
-    else {
-        fromIndx = lastBoatTrackEpoch_;
-    }
-
-
-    for (int i = fromIndx; i < toSize; ++i) {
-        auto* ep = fromIndex(i);
-        if (!ep) {
-            continue;
-        }
-
-        auto pos = ep->getPositionGNSS().ned;
-
-        bool appended = true;
-        if (pos.isCoordinatesValid()) {
-            _boatTrack.append(QVector3D(pos.n, pos.e, 0));
-            //qDebug() << "add pos" << i << pos.n << pos.e << "type" << static_cast<int>(ep->getPositionDataType());
-        }
-        else {
-            appended = false;
-            //qDebug() << "fail add" << i << pos.n << pos.e << "type" << static_cast<int>(ep->getPositionDataType());
-        }
-
-        if (appended) {
-            selectedBoatTrackVertexIndices_.insert(boatTrackValidPosCounter_, i);
-            ++boatTrackValidPosCounter_;
-        }
-    }
-
-    lastBoatTrackEpoch_ = toSize;
-
-    emit boatTrackUpdated();
 }
 
 QStringList Dataset::channelsNameList()

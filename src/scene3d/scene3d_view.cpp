@@ -22,7 +22,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
     contacts_(std::make_shared<Contacts>(this)),
-    m_boatTrack(std::make_shared<BoatTrack>(this, this)),
+    boatTrack_(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
     m_pointGroup(std::make_shared<PointGroup>()),
@@ -44,8 +44,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     m_camera->setCameraListener(m_axesThumbnailCamera.get());
 
-    m_boatTrack->setColor({80,0,180});
-    m_boatTrack->setWidth(6.0f);
+    boatTrack_->setColor({80,0,180});
+    boatTrack_->setWidth(6.0f);
 
     sideScanView_->setView(this);
     imageView_->setView(this);
@@ -55,7 +55,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(boatTrack_.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_pointGroup.get(), &PointGroup::changed, this, &QQuickFramebufferObject::update);
@@ -73,7 +73,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
@@ -100,9 +100,9 @@ QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
     return new GraphicsScene3dView::InFboRenderer();
 }
 
-std::shared_ptr<BoatTrack> GraphicsScene3dView::boatTrack() const
+std::shared_ptr<BoatTrack> GraphicsScene3dView::getBoatTrackPtr() const
 {
-    return m_boatTrack;
+    return boatTrack_;
 }
 
 std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
@@ -172,7 +172,7 @@ bool GraphicsScene3dView::sceneBoundingBoxVisible() const
 
 Dataset *GraphicsScene3dView::dataset() const
 {
-    return m_dataset;
+    return datasetPtr_;
 }
 
 void GraphicsScene3dView::clear(bool cleanMap)
@@ -185,7 +185,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
         mapView_->clear();
     }
     bottomTrackWindowCounter_ = -1;
-    m_boatTrack->clearData();
+    boatTrack_->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
@@ -218,8 +218,8 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
 
 void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
 {
-    if (m_dataset) {
-        m_dataset->interpolateData(fromStart);
+    if (datasetPtr_) {
+        datasetPtr_->interpolateData(fromStart);
     }
 }
 
@@ -228,7 +228,7 @@ void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, q
     switchedToBottomTrackVertexComboSelectionMode_ = true;
 
     m_bottomTrack->resetVertexSelection();
-    m_boatTrack->clearSelectedEpoch();
+    boatTrack_->clearSelectedEpoch();
     lastMode_ = m_mode;
     m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
     m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
@@ -344,9 +344,9 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
     if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
         m_bottomTrack->resetVertexSelection();
-        m_boatTrack->clearSelectedEpoch();
+        boatTrack_->clearSelectedEpoch();
         m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
-        m_boatTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
+        boatTrack_->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
     }
 
     switchedToBottomTrackVertexComboSelectionMode_ = false;
@@ -479,8 +479,8 @@ void GraphicsScene3dView::setNeedToResetStartPos(bool state)
 
 void GraphicsScene3dView::forceUpdateDatasetRef()
 {
-    if (m_dataset) {
-        auto ref = m_dataset->getLlaRef();
+    if (datasetPtr_) {
+        auto ref = datasetPtr_->getLlaRef();
         m_camera->datasetLlaRef_ = ref.isInit ? ref : LLARef(m_camera->yerevanLla);
     }
 
@@ -560,13 +560,7 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setLastEpochFocusView()
 {
-#ifndef SEPARATE_READING
-    if (isFileOpening_) {
-        return;
-    }
-#endif
-
-    auto* epoch = m_dataset->last();
+    auto* epoch = datasetPtr_->last();
     if (!epoch) {
         return;
     }
@@ -589,7 +583,7 @@ void GraphicsScene3dView::setIdleMode()
 
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
-    m_boatTrack->clearSelectedEpoch();
+    boatTrack_->clearSelectedEpoch();
 
     QQuickFramebufferObject::update();
 }
@@ -644,44 +638,34 @@ void GraphicsScene3dView::setPolygonEditingMode()
 
 void GraphicsScene3dView::setDataset(Dataset *dataset)
 {
-    if (m_dataset)
-        QObject::disconnect(m_dataset);
-
-    m_dataset = dataset;
-
-    if (!m_dataset)
+    if (!dataset) {
         return;
+    }
 
-    m_boatTrack->setDatasetPtr(m_dataset);
-    m_bottomTrack->setDatasetPtr(m_dataset);
-    sideScanView_->setDatasetPtr(m_dataset);
-    contacts_->setDatasetPtr(m_dataset);
+    if (datasetPtr_) {
+        QObject::disconnect(datasetPtr_);
+    }
+
+    datasetPtr_ = dataset;
+
+    boatTrack_->setDatasetPtr(datasetPtr_);
+    m_bottomTrack->setDatasetPtr(datasetPtr_);
+    sideScanView_->setDatasetPtr(datasetPtr_);
+    contacts_->setDatasetPtr(datasetPtr_);
     isobaths_->setBottomTrackPtr(m_bottomTrack.get());
 
     forceUpdateDatasetRef();
 
-    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
+    QObject::connect(datasetPtr_, &Dataset::bottomTrackUpdated,
                      this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
-                                    auto chList = m_dataset->channelsList();
-                                    if (!m_dataset || chList.empty() || chList.first().channelId_ != channelId) {
-                                        return;
-                                    }
-                                    clearComboSelectionRect();
-                                    m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
+                         auto chList = datasetPtr_->channelsList();
+                         if (!datasetPtr_ || chList.empty() || chList.first().channelId_ != channelId) {
+                             return;
+                         }
+                         clearComboSelectionRect();
+                         m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
 
-                                }, Qt::DirectConnection);
-
-    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
-                      this,     [this]() -> void {
-                                    m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
-
-                                    const Position pos = m_dataset->getLastPosition();
-                                    navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
-
-                                    if (trackLastData_) {
-                                        setLastEpochFocusView();
-                                    }
-                                }, Qt::DirectConnection);
+                     }, Qt::DirectConnection);
 
     //QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
     //                 this,      [this](int indx) -> void {
@@ -691,11 +675,11 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     //                                }
     //                            }, Qt::DirectConnection);
 
-    QObject::connect(m_dataset, &Dataset::updatedLlaRef,
+    QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
-                                   forceUpdateDatasetRef();
-                                   fitAllInView();
-                                }, Qt::DirectConnection);
+                         forceUpdateDatasetRef();
+                         fitAllInView();
+                     }, Qt::DirectConnection);
 }
 
 void GraphicsScene3dView::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
@@ -727,10 +711,10 @@ void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
 
 void GraphicsScene3dView::updateBounds()
 {
-    m_bounds = m_boatTrack->bounds()
+    m_bounds = boatTrack_->bounds()
                    .merge(isobaths_->bounds())
                    .merge(m_bottomTrack->bounds())
-                   .merge(m_boatTrack->bounds())
+                   .merge(boatTrack_->bounds())
                    .merge(m_polygonGroup->bounds())
                    .merge(m_pointGroup->bounds())
                    .merge(sideScanView_->bounds())
@@ -904,6 +888,19 @@ void GraphicsScene3dView::updateViews()
     }
 }
 
+void GraphicsScene3dView::onPositionAdded(uint64_t indx)
+{
+    boatTrack_->onPositionAdded(indx);
+
+    if (const Position pos = datasetPtr_->fromIndex(indx)->getPositionGNSS(); pos.ned.isCoordinatesValid()) {
+        navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), datasetPtr_->getLastYaw() - 90.f);
+    }
+
+    if (trackLastData_) {
+        setLastEpochFocusView();
+    }
+}
+
 //---------------------Renderer---------------------------//
 GraphicsScene3dView::InFboRenderer::InFboRenderer() :
     QQuickFramebufferObject::Renderer(),
@@ -943,7 +940,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
-    m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
+    m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->isobathsRenderImpl_         = *(dynamic_cast<Isobaths::IsobathsRenderImplementation*>(view->isobaths_->m_renderImpl));
     m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));

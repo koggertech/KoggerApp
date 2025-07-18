@@ -45,6 +45,9 @@ public:
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const;
 
         virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS);
+        virtual void appendData(const QVector<QVector3D>& data);
+        virtual void appendData(const QVector3D& data);
+        virtual void setPrimitiveType(int primitiveType);
         virtual void setColor(QColor color);
         virtual void setWidth(qreal width);
         virtual void setVisible(bool isVisible);
@@ -59,7 +62,7 @@ public:
         void removeVertex(int index);
 
     protected:
-        virtual void createBounds();
+        virtual void updateBounds();
 
     protected:
         QVector<QVector3D> m_data;
@@ -135,6 +138,9 @@ public Q_SLOTS:
     //! @brief Устанавливает набор вершин объекта.
     //! @param[in] data - ссылка на набор вершин.
     virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS);
+    virtual void appendData(const QVector<QVector3D>& data);
+    virtual void appendData(const QVector3D& data);
+    void setPrimitiveType(int primitiveType);
     virtual void clearData();
     void setVisible(bool isVisible);
     void setColor(QColor color);

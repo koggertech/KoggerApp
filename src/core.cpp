@@ -53,7 +53,6 @@ void Core::setEngine(QQmlApplicationEngine *engine)
 {
     qmlAppEnginePtr_ = engine;
     QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::UILoad, Qt::QueuedConnection);
-    QObject::connect(qmlAppEnginePtr_, &QQmlApplicationEngine::objectCreated, this, &Core::createTileManagerConnections, Qt::QueuedConnection);
 
     qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
@@ -1079,10 +1078,10 @@ void Core::UILoad(QObject* object, const QUrl& url)
             plot2dList_.at(i)->setPlot(datasetPtr_);
             plot2dList_.at(i)->setDataProcessor(dataProcessor_);
             scene3dViewPtr_->bottomTrack()->installEventFilter(plot2dList_.at(i));
-            scene3dViewPtr_->boatTrack()->installEventFilter(plot2dList_.at(i));
+            scene3dViewPtr_->getBoatTrackPtr()->installEventFilter(plot2dList_.at(i));
             scene3dViewPtr_->getContactsPtr()->installEventFilter(plot2dList_.at(i));
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->bottomTrack().get());
-            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->boatTrack().get());
+            plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getBoatTrackPtr().get());
             plot2dList_.at(i)->installEventFilter(scene3dViewPtr_->getContactsPtr().get());
         }
     }
@@ -1143,6 +1142,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     onChannelsUpdated();
+
+    createTileManagerConnections();
+    createScene3dConnections();
 }
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
@@ -1675,6 +1677,11 @@ void Core::destroyDataProcessor()
 
     dataProcessor_ = nullptr;
     dataProcThread_ = nullptr;
+}
+
+void Core::createScene3dConnections()
+{
+    QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
 }
 
 void Core::setDataProcessorConnections()

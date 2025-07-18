@@ -171,7 +171,7 @@ public:
      * @return renderer
      */
     Renderer *createRenderer() const override;
-    std::shared_ptr<BoatTrack> boatTrack() const;
+    std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Isobaths> getIsobathsPtr() const;
     std::shared_ptr<SideScanView> getSideScanViewPtr() const;
@@ -233,6 +233,9 @@ public Q_SLOTS:
     void updateMapView();
     void updateViews();
 
+    // from DataHorizon
+    void onPositionAdded(uint64_t indx);
+
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void sendLlaRef(LLARef viewLlaRef);
@@ -258,7 +261,7 @@ private:
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
     std::shared_ptr<Contacts> contacts_;
-    std::shared_ptr<BoatTrack> m_boatTrack;
+    std::shared_ptr<BoatTrack> boatTrack_;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;
     std::shared_ptr<PointGroup> m_pointGroup;
@@ -277,7 +280,7 @@ private:
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
-    Dataset* m_dataset = nullptr;
+    Dataset* datasetPtr_ = nullptr;
     DataProcessor* dataProcessorPtr_ = nullptr;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };

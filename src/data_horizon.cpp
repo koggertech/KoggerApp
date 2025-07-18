@@ -41,6 +41,13 @@ void DataHorizon::setIsFileOpening(bool state)
     //qDebug() << "DataHorizon::setIsFileOpening" << state;
 
     isFileOpening_ = state;
+
+    if (emitChanges_ && !isSeparateReading_ && !isFileOpening_) { // emit all
+        emit epochAdded(epochIndx_);
+        emit positionAdded(positionIndx_);
+        emit chartAdded(chartIndx_.first, chartIndx_.second);
+        emit attitudeAdded(attitudeIndx_);
+    }
 }
 
 void DataHorizon::onAddedEpoch(uint64_t indx)

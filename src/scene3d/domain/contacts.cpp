@@ -69,7 +69,7 @@ void Contacts::clear()
 
     auto* r = RENDER_IMPL(Contacts);
     r->clear();
-    r->createBounds();
+    r->updateBounds();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();

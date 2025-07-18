@@ -8,9 +8,11 @@
 
 BoatTrack::BoatTrack(GraphicsScene3dView* view, QObject* parent) :
     SceneObject(new BoatTrackRenderImplementation, view, parent),
-    datasetPtr_(nullptr)
+    datasetPtr_(nullptr),
+    lastEpoch_(0),
+    validPosCounter_(0)
 {
-
+    setPrimitiveType(GL_LINE_STRIP);
 }
 
 BoatTrack::~BoatTrack()
@@ -49,9 +51,29 @@ void BoatTrack::setSelectedIndices(const QHash<int, int> &selectedIndices)
     selectedIndices_ = selectedIndices;
 }
 
-void BoatTrack::setData(const QVector<QVector3D> &data, int primitiveType)
+void BoatTrack::onPositionAdded(uint64_t indx)
 {
-    SceneObject::setData(data, primitiveType);
+    if (!datasetPtr_) {
+        return;
+    }
+
+    const int toIndx = indx;
+    const int fromIndx = lastEpoch_;
+    if (fromIndx > toIndx) {
+        return;
+    }
+
+    for (int i = fromIndx; i < toIndx; ++i) {
+        if (auto* ep = datasetPtr_->fromIndex(i); ep) {
+            if (auto posNed = ep->getPositionGNSS().ned; posNed.isCoordinatesValid()) {
+                appendData(QVector3D(posNed.n, posNed.e, 0));
+                selectedIndices_.insert(validPosCounter_, i);
+                ++validPosCounter_;
+            }
+        }
+    }
+
+    lastEpoch_ = toIndx;
 }
 
 void BoatTrack::clearData()
@@ -61,6 +83,8 @@ void BoatTrack::clearData()
     r->bottomTrackVertice_ = QVector3D();
 
     selectedIndices_.clear();
+    lastEpoch_ = 0;
+    validPosCounter_ = 0;
 
     SceneObject::clearData();
 }
@@ -128,9 +152,6 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
                 if (!hits.isEmpty()) {
                     auto indice = hits.first().indices().first;
-                    if (selectedIndices_.size() != datasetPtr_->getSelectedIndicesBoatTrack().size()) {
-                        selectedIndices_ = datasetPtr_->getSelectedIndicesBoatTrack();
-                    }
                     if (selectedIndices_.size() > (indice + 1)) {
                         auto epochIndx = selectedIndices_[indice];
                         if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {

@@ -125,16 +125,10 @@ public:
         return false;
     }
 
-    QVector<QVector3D> boatTrack() const;
-    const QHash<int, int>& getSelectedIndicesBoatTrack() const;
     int getLastBottomTrackEpoch() const;
 
     float getLastYaw() {
         return _lastYaw;
-    }
-
-    Position getLastPosition() {
-        return _lastPositionGNSS;
     }
 
     float getLastTemp() {
@@ -212,9 +206,6 @@ public slots:
     void setRefPositionByFirstValid();
     Epoch* getFirstEpochByValidPosition();
 
-    void clearBoatTrack();
-    void updateBoatTrack(bool update_all = false);
-
     QStringList channelsNameList();
 
 
@@ -233,7 +224,6 @@ signals:
     //void interpPos(int epIndx);
     void dataUpdate();
     void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
-    void boatTrackUpdated();
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);
@@ -253,8 +243,6 @@ protected:
 
     void validateChannelList(const ChannelId& channelId, uint8_t subChannelId);
 
-    QVector<QVector3D> _boatTrack;
-    QHash<int, int> selectedBoatTrackVertexIndices_; // first - vertice indx, second - epoch indx
     QVector<QVector3D> _beaconTrack;
     QVector<QVector3D> _beaconTrack1;
 
@@ -271,7 +259,6 @@ protected:
     QVector<Epoch> pool_;
 
     float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
-    Position _lastPositionGNSS;
     float lastTemp_ = NAN;
 
     Epoch* addNewEpoch();
@@ -292,10 +279,8 @@ private:
     LlaRefState llaRefState_ = LlaRefState::kUndefined;
     DatasetState state_ = DatasetState::kUndefined;
     DataInterpolator interpolator_;
-    int lastBoatTrackEpoch_;
     int lastBottomTrackEpoch_;
     BottomTrackParam bottomTrackParam_;
-    uint64_t boatTrackValidPosCounter_;
     QMap<ChannelId, RecordParameters> usingRecordParameters_;
     BlackStripesProcessor* bSProc_;
     QMap<ChannelId, int> lastAddChartEpochIndx_;

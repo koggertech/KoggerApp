@@ -271,7 +271,7 @@ void BottomTrack::setVisibleState(bool state)
 {
     SceneObject::setVisible(state);
 
-    m_view->boatTrack()->setBottomTrackVisibleState(state);
+    m_view->getBoatTrackPtr()->setBottomTrackVisibleState(state);
 }
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -329,7 +329,7 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
 
                 r->selectedVertexIndices_ = {hits.first().indices().first};
                 auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
-                m_view->boatTrack()->selectEpoch(epochIndex);
+                m_view->getBoatTrackPtr()->selectEpoch(epochIndex);
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
                 QCoreApplication::postEvent(this, epochEvent);
             }

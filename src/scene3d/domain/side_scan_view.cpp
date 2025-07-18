@@ -479,7 +479,7 @@ void SideScanView::clear(bool force)
     renderImpl->measLinesVertices_.clear();
     renderImpl->measLinesEvenIndices_.clear();
     renderImpl->measLinesOddIndices_.clear();
-    renderImpl->createBounds();
+    renderImpl->updateBounds();
 
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
@@ -1020,7 +1020,7 @@ void SideScanView::SideScanViewRenderImplementation::render(QOpenGLFunctions *ct
     }
 }
 
-void SideScanView::SideScanViewRenderImplementation::createBounds()
+void SideScanView::SideScanViewRenderImplementation::updateBounds()
 {
     if (measLinesVertices_.isEmpty()) {
         m_bounds = Cube();

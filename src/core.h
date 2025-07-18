@@ -158,14 +158,15 @@ private slots:
 private slots:
     void onFileStopsOpening();
     void onSendTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
-    void createTileManagerConnections();
     void onDataProcesstorStateChanged(const DataProcessorState& state);
 
 private:
     /*methods*/
+    void createTileManagerConnections();
     void createDatasetConnections();
     void createDataProcessor();
     void destroyDataProcessor();
+    void createScene3dConnections();
 
     void setDataProcessorConnections();
     void resetDataProcessorConnections();

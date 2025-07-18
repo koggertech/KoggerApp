@@ -36,7 +36,7 @@ void PointGroup::pointObjectChanged()
                                                            *(dynamic_cast<PointObject::PointObjectRenderImplementation*>(point->m_renderImpl)));
 
     //TODO: Looks like bad
-    RENDER_IMPL(PointGroup)->createBounds();
+    RENDER_IMPL(PointGroup)->updateBounds();
     Q_EMIT changed();
     Q_EMIT boundsChanged();
 }
@@ -110,7 +110,7 @@ void PointGroup::PointGroupRenderImplementation::appendPointRenderImpl(PointObje
 {
     m_pointRenderImplList.append(*impl);
 
-    createBounds();
+    updateBounds();
 }
 
 void PointGroup::PointGroupRenderImplementation::removeRenderAt(int index)
@@ -120,10 +120,10 @@ void PointGroup::PointGroupRenderImplementation::removeRenderAt(int index)
 
     m_pointRenderImplList.removeAt(index);
 
-    createBounds();
+    updateBounds();
 }
 
-void PointGroup::PointGroupRenderImplementation::createBounds()
+void PointGroup::PointGroupRenderImplementation::updateBounds()
 {
     Cube bounds;
 
