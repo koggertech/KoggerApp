@@ -642,7 +642,7 @@ void DevDriver::stopConnection() {
 
 void DevDriver::restartState() {
     m_processTimer.stop();
-    qDebug() << "restart";
+    //qDebug() << "restart";
     m_state.resetState();
     idVersion->reset();
     m_processTimer.start(200);

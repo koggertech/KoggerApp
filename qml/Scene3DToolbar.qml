@@ -14,6 +14,8 @@ Item  {
     width: rowButtons.implicitWidth
     height: rowButtons.implicitHeight
 
+    signal updateBottomTrack()
+
     function updateMosaic() {
         sideScanViewSettings.updateMosaic()
     }
@@ -196,9 +198,15 @@ Item  {
 
                 onCheckedChanged: {
                     BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
+                    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
+
+                    if (checked) {
+                        toolbarRoot.updateBottomTrack()
+                    }
                 }
 
                 Component.onCompleted: {
+                    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
                     BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
                 }
 

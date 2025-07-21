@@ -77,9 +77,14 @@ ApplicationWindow  {
         }
     }
 
+    function handleUpdateBottomTrack() {
+        menuBar.updateBottomTrack()
+    }
+
     Component.onCompleted: {
         theme.updateResCoeff()
 
+        scene3DToolbar.updateBottomTrack.connect(handleUpdateBottomTrack)
         menuBar.languageChanged.connect(handleChildSignal)
         menuBar.syncPlotEnabled.connect(handleSyncPlotEnabled)
         waterViewFirst.plotCursorChanged.connect(handlePlotCursorChanged)
