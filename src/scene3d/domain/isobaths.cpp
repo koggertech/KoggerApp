@@ -382,15 +382,6 @@ void Isobaths::onUpdatedBottomTrackData(const QVector<int>& indxs) // инкре
     }
 }
 
-void Isobaths::onAction()
-{
-    auto& pts = del_.getPoints();
-
-    for (auto& itm : pts) {
-        qDebug() << itm.x << itm.y;
-    }
-}
-
 void Isobaths::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
 {
     if (!bottomTrackPtr_ || !processState_) {

@@ -76,7 +76,6 @@ public:
     void setHandleXCall(int val);
 
 public slots:
-    void onAction();
     void onUpdatedBottomTrackDataWrapper(const QVector<int>& indxs);
 
 private slots:

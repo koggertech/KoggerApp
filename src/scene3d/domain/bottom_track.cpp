@@ -407,14 +407,14 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
         return;
     }
 
-    int range = rEpoch - lEpoch;
+    const int range = rEpoch - lEpoch;
     if (range < 0 || lEpoch < 0 || rEpoch < 0) {
         return;
     }
 
-    bool interCall = (rEpoch == 0) && (lEpoch == 0);
-    bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
-    bool defMode = interCall || updateAll || redrawAll;
+    const bool interCall = (rEpoch == 0) && (lEpoch == 0);
+    const bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
+    const bool defMode = interCall || updateAll || redrawAll;
 
     if (firstLIndx_ > lEpoch && !defMode) {
         return;
@@ -424,12 +424,6 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     }
 
     RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-
-    if (defMode) {
-        vertex2Epoch_.clear();
-        epoch2Vertex_.clear();
-        renderData_.clear();
-    }
 
     QVector<int> updatedByIndxs;
     updatedByIndxs.reserve(range);
@@ -449,6 +443,9 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
 
     if (defMode) {
+        vertex2Epoch_.clear();
+        epoch2Vertex_.clear();
+        renderData_.clear();
         renderData_.reserve(currMax);
     }
 
@@ -464,7 +461,6 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
             const float dist = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
             if (!std::isfinite(dist)) {
                 needRetriangle = true;
-            //    continue;
             }
 
             if (defMode) {
