@@ -1,8 +1,6 @@
 #include "bottom_track.h"
 #include "scene3d_view.h"
 #include "epoch_event.h"
-//#include "text_renderer.h" TODO
-//#include "draw_utils.h"
 #include "boat_track.h"
 #include <QtOpenGLExtensions/QOpenGLExtensions>
 

@@ -298,7 +298,6 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* qmlRootObject_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
-    int bottomTrackWindowCounter_;
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;

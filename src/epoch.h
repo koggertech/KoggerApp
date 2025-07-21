@@ -125,6 +125,10 @@ public:
         float range() const {
             return amplitude.size() * resolution;
         }
+
+        bool isValid() const {
+            return !amplitude.empty();
+        }
     };
 
     Epoch();
@@ -241,6 +245,8 @@ public:
     bool chartAvail();
     bool chartAvail(const ChannelId& channelId, uint8_t subChannelId = 0) const;
     Echogram* chart(const ChannelId& channelId = CHANNEL_NONE, uint8_t subChannelId = 0);
+    Echogram chartCopy(const ChannelId &channelId = CHANNEL_NONE, uint8_t subChannelId = 0) const;
+
     QList<ChannelId> chartChannels();
 
     // float chartsFullRange(const ChannelId& channelId = ChannelId()) {

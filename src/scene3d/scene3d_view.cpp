@@ -33,7 +33,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
-    bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
     trackLastData_(false)
@@ -184,7 +183,6 @@ void GraphicsScene3dView::clear(bool cleanMap)
     if (cleanMap) {
         mapView_->clear();
     }
-    bottomTrackWindowCounter_ = -1;
     boatTrack_->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();

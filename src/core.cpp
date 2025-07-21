@@ -1655,7 +1655,6 @@ void Core::createDataProcessor()
 
     dataProcessor_->moveToThread(dataProcThread_);
 
-    QObject::connect(dataProcThread_, &QThread::started,  dataProcessor_,  &DataProcessor::init);
     QObject::connect(dataProcThread_, &QThread::finished, dataProcessor_,  &QObject::deleteLater);
     QObject::connect(dataProcThread_, &QThread::finished, dataProcThread_, &QObject::deleteLater);
 

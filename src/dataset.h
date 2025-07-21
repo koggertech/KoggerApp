@@ -64,7 +64,7 @@ public:
     }
 
     Epoch fromIndexCopy(int index_offset = 0) {
-        QReadLocker rl(&lock_);
+        QReadLocker rl(&poolMtx_);
 
         int index = validIndex(index_offset);
         if(index >= 0) {
@@ -72,6 +72,26 @@ public:
         }
 
         return Epoch();
+    }
+
+    Epoch::Echogram fromIndexCopyEchogram(int index_offset, const ChannelId& channelId) {
+        QReadLocker rl(&poolMtx_);
+
+        const int currSize = pool_.size();
+        if (currSize == 0)
+            return {};
+
+        int indx = validIndex(index_offset);
+        if (indx == -1) {
+            return {};
+        }
+
+        const Epoch &ep = pool_.at(indx);
+
+        if (!ep.chartAvail(channelId, 0))
+            return {};
+
+        return ep.chartCopy(channelId, 0);
     }
 
     Epoch* last() {
@@ -275,6 +295,8 @@ private:
 
     /*data*/
     mutable QReadWriteLock lock_;
+    mutable QReadWriteLock poolMtx_;
+
     LLARef _llaRef;
     LlaRefState llaRefState_ = LlaRefState::kUndefined;
     DatasetState state_ = DatasetState::kUndefined;

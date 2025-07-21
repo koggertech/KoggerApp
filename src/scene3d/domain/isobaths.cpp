@@ -397,7 +397,7 @@ void Isobaths::onUpdatedBottomTrackDataWrapper(const QVector<int> &indxs)
 }
 
 void Isobaths::handleWorkerFinished()
-  {
+{
         Q_EMIT changed();
 
         {

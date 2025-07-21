@@ -5,7 +5,8 @@
 #include <QVector3D>
 #include <QDateTime>
 #include "dataset.h"
-#include <QReadWriteLock>
+#include "bottom_track_processor.h"
+
 
 enum class DataProcessorState {
     kWaiting = 0,
@@ -30,24 +31,23 @@ signals:
     void finished();
 
 public slots:
-    void init();
-    void doAction();
+    // BottomTrackProcessor
+    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // wraper, external calling not realtime
     void onChartsAdded(const ChannelId& channelId, uint64_t indx); // external calling realtme
+
     void clear();
-
-    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // external calling not realtime
-
     void setUpdateBottomTrack(bool state) { updateBottomTrack_ = state; };
     void setUpdateIsobaths(bool state) { updateIsobaths_ = state; };
     void setUpdateMosaic(bool state) { updateMosaic_ = state; };
-
     void setIsOpeningFile(bool state) { isOpeningFile_ = state; };
-
 
 private:
     void changeState(const DataProcessorState& state);
-    QReadWriteLock lock_;
 
+private:
+    friend class BottomTrackProcessor;
+
+    BottomTrackProcessor bottomTrackProcessor_;
     Dataset* datasetPtr_ = nullptr;
     DataProcessorState state_ = DataProcessorState::kWaiting;
     bool updateBottomTrack_ = false;

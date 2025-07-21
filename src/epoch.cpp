@@ -220,6 +220,17 @@ Epoch::Echogram *Epoch::chart(const ChannelId &channelId, uint8_t subChannelId)
     return nullptr;
 }
 
+Epoch::Echogram Epoch::chartCopy(const ChannelId &channelId, uint8_t subChannelId) const
+{
+    Epoch::Echogram retVal;
+
+    if (chartAvail(channelId, subChannelId)) {
+        retVal = charts_[channelId][subChannelId];
+    }
+
+    return retVal;
+}
+
 void Epoch::setAtt(float yaw, float pitch, float roll, DataType dataType) {
     _attitude.yaw = yaw;
     _attitude.pitch = pitch;

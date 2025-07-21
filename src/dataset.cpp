@@ -933,6 +933,8 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
 
 Epoch *Dataset::addNewEpoch()
 {
+    QWriteLocker wl(&poolMtx_);
+
     uint64_t newSize = pool_.size() + 1;
     pool_.resize(pool_.size() + 1);
     auto* lastEpoch = last();
