@@ -1681,6 +1681,7 @@ void Core::destroyDataProcessor()
 void Core::createScene3dConnections()
 {
     QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
+    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack);
 }
 
 void Core::setDataProcessorConnections()

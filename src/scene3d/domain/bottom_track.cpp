@@ -480,6 +480,8 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
         emit updatedDataByIndxs(updatedByIndxs);
+        //uint64_t currLastIndx = static_cast<uint64_t>(updatedByIndxs.at(updatedByIndxs.size() - 1)); // TODO: from-to
+        emit bottomTrackAdded(updatedByIndxs);
     }
 
     for (auto& itm : updatedByIndxs) {

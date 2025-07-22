@@ -102,6 +102,19 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
     }
 }
 
+void DataHorizon::onAddedBottomTrack(const QVector<int>& indx)
+{
+    //qDebug() << "DataHorizon::onAddedBottomTrack" << indx;
+
+    bool beenChanged = true; //bottomTrackIndxs_ != indx;
+
+    bottomTrackIndxs_ = indx;
+
+    if (canEmitHorizon(beenChanged)) {
+        emit bottomTrackAdded(bottomTrackIndxs_);
+    }
+}
+
 bool DataHorizon::canEmitHorizon(bool beenChanged) const
 {
     bool retVal = false;

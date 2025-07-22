@@ -76,6 +76,7 @@ Q_SIGNALS:
     //void visibleChannelChanged(DatasetChannel channel);
     void updatedDataByIndxs(const QVector<int>& indx);
     void completelyRedrawn();
+    void bottomTrackAdded(const QVector<int>& indx);
 
 protected:
     friend class GraphicsScene3dView;
