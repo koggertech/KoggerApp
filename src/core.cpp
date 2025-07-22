@@ -1687,7 +1687,8 @@ void Core::createScene3dConnections()
 void Core::setDataProcessorConnections()
 {
     // from dataHorizon
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded, dataProcessor_, &DataProcessor::onChartsAdded, Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,       dataProcessor_, &DataProcessor::onChartsAdded, Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrackAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded, Qt::QueuedConnection));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing, datasetPtr_, &Dataset::onDistCompleted, Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));

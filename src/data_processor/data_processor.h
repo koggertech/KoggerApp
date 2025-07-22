@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include "dataset.h"
 #include "bottom_track_processor.h"
+#include "isobaths_processor.h"
 
 
 enum class DataProcessorState {
@@ -35,6 +36,9 @@ public slots:
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // wraper, external calling not realtime
     void onChartsAdded(const ChannelId& channelId, uint64_t indx); // external calling realtme
 
+    // IsobathsProcessor
+    void onBottomTrackAdded(const QVector<int>& indxs);
+
     void clear();
     void setUpdateBottomTrack(bool state) { updateBottomTrack_ = state; };
     void setUpdateIsobaths(bool state) { updateIsobaths_ = state; };
@@ -48,11 +52,16 @@ private:
     friend class BottomTrackProcessor;
 
     BottomTrackProcessor bottomTrackProcessor_;
+    IsobathsProcessor isobathsProcessor_;
+
     Dataset* datasetPtr_ = nullptr;
     DataProcessorState state_ = DataProcessorState::kWaiting;
+
     bool updateBottomTrack_ = false;
     bool updateIsobaths_ = false;
     bool updateMosaic_ = false;
+
     int bottomTrackWindowCounter_ = 0;
+
     bool isOpeningFile_ = false;
 };

@@ -6,7 +6,8 @@
 
 DataProcessor::DataProcessor(QObject *parent) :
     QObject(parent),
-    bottomTrackProcessor_(this)
+    bottomTrackProcessor_(this),
+    isobathsProcessor_(this)
 {
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorState>("DataProcessorState");
@@ -29,6 +30,7 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
+    isobathsProcessor_.setDatasetPtr(datasetPtr_);
 }
 
 void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam &bottomTrackParam_)
@@ -69,6 +71,11 @@ void DataProcessor::onChartsAdded(const ChannelId& channelId, uint64_t indx)
             bottomTrackWindowCounter_ = currCount;
         }
     }
+}
+
+void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
+{
+    isobathsProcessor_.onBottomTrackAdded(indxs);
 }
 
 void DataProcessor::changeState(const DataProcessorState& state)
