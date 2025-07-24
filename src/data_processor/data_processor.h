@@ -8,6 +8,8 @@
 #include <QVector3D>
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
+#include "mosaic_processor.h"
+#include "surface_processor.h"
 
 
 enum class DataProcessorType {
@@ -93,6 +95,8 @@ private:
     Dataset* datasetPtr_;
     BottomTrackProcessor bottomTrackProcessor_;
     IsobathsProcessor isobathsProcessor_;
+    MosaicProcessor mosaicProcessor_;
+    SurfaceProcessor surfaceProcessor_;
     QHash<ChannelId, uint64_t> chartsCounter_;
     DataProcessorType state_;
     uint64_t bottomTrackCounter_;

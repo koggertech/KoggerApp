@@ -11,6 +11,8 @@ DataProcessor::DataProcessor(QObject *parent)
       datasetPtr_(nullptr),
       bottomTrackProcessor_(this),
       isobathsProcessor_(this),
+      mosaicProcessor_(this),
+      surfaceProcessor_(this),
       state_(DataProcessorType::kUndefined),
       bottomTrackCounter_(0),
       epochCounter_(0),
@@ -36,6 +38,8 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
+    mosaicProcessor_.setDatasetPtr(datasetPtr_);
+    surfaceProcessor_.setDatasetPtr(datasetPtr_);
 }
 
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr) // TODO: using BottomTrack data from this?

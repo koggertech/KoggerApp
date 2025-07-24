@@ -1,12 +1,13 @@
 #include "bottom_track_processor.h"
 
 #include <QDebug>
-#include <QThread>
 #include "data_processor.h"
+#include "dataset.h"
 
 
 BottomTrackProcessor::BottomTrackProcessor(DataProcessor* parent) :
-    dataProcessor_(parent)
+    dataProcessor_(parent),
+    datasetPtr_(nullptr)
 {
 }
 
