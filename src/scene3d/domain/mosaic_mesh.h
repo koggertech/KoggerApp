@@ -3,7 +3,7 @@
 #include <vector>
 #include <QVector3D>
 #include "draw_utils.h"
-#include "tile.h"
+#include "mosaic_tile.h"
 
 
 using namespace sscan;

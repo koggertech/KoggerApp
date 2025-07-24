@@ -1,10 +1,9 @@
-#include "global_mesh.h"
+#include "mosaic_mesh.h"
 
 #include <cmath>
-#include "side_scan_view.h"
-
 
 using namespace sscan;
+
 
 GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
     tileResolution_(tileResolution),

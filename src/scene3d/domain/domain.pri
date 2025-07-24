@@ -13,10 +13,11 @@ HEADERS += \
     $$PWD/delaunay_triangulation.h \
     $$PWD/edge.h \
     $$PWD/equals.h \
-    $$PWD/global_mesh.h \
     $$PWD/grid_generator.h \
     $$PWD/image_view.h \
     $$PWD/map_view.h \
+	$$PWD/mosaic_mesh.h \
+    $$PWD/mosaic_tile.h \
     $$PWD/navigation_arrow.h \
     $$PWD/plane.h \
     $$PWD/plane_grid.h \
@@ -29,7 +30,6 @@ HEADERS += \
     $$PWD/quad.h \
     $$PWD/side_scan_view.h \
     $$PWD/isobaths.h \
-    $$PWD/tile.h \
     $$PWD/triangle.h \
     $$PWD/usbl_view.h \
     $$PWD/contacts.h
@@ -41,9 +41,10 @@ SOURCES += \
     $$PWD/contour.cpp \
     $$PWD/coordinate_axes.cpp \
     $$PWD/cube.cpp \
-    $$PWD/global_mesh.cpp \
     $$PWD/image_view.cpp \
     $$PWD/map_view.cpp \
+	$$PWD/mosaic_mesh.cpp \
+    $$PWD/mosaic_tile.cpp \
     $$PWD/navigation_arrow.cpp \
     $$PWD/plane.cpp \
     $$PWD/plane_grid.cpp \
@@ -53,5 +54,4 @@ SOURCES += \
     $$PWD/polygon_object.cpp \
     $$PWD/side_scan_view.cpp \
     $$PWD/isobaths.cpp \
-    $$PWD/tile.cpp \
     $$PWD/usbl_view.cpp

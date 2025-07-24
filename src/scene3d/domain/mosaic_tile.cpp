@@ -1,4 +1,4 @@
-#include "tile.h"
+#include "mosaic_tile.h"
 
 
 Tile::Tile(QVector3D origin, bool generateGridContour) :

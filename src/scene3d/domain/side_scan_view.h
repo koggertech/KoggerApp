@@ -9,8 +9,8 @@
 #include <QReadWriteLock>
 #include "scene_object.h"
 #include "dataset.h"
-#include "global_mesh.h"
-#include "tile.h"
+#include "mosaic_mesh.h"
+#include "mosaic_tile.h"
 #include "draw_utils.h"
 
 
