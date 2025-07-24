@@ -1146,7 +1146,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     createTileManagerConnections();
     createScene3dConnections();
 
-    dataProcessor_->setBottomTrackPtr(scene3dViewPtr_->bottomTrack().get());
+    QMetaObject::invokeMethod(dataProcessor_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, scene3dViewPtr_->bottomTrack().get()));
 }
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)

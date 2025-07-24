@@ -1,14 +1,17 @@
 #pragma once
 
+#include <stdint.h>
+#include <QHash>
+#include <QPair>
+#include <QReadWriteLock>
 #include <QVector>
 #include <QVector3D>
 
-#include "dataset.h"
 #include "delaunay.h"
 #include "isobaths_defs.h"
 
-
 using namespace IsobathUtils;
+
 
 class BottomTrack;
 class DataProcessor;
@@ -18,60 +21,60 @@ public:
     explicit IsobathsProcessor(DataProcessor* parent);
     ~IsobathsProcessor();
 
-    void setDatasetPtr(Dataset* datasetPtr);
-    void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
-
-signals:
-
-public slots:
     void clear();
 
-private:
-    friend class DataProcessor;
+    void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
 
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void rebuildColorIntervals();
-    QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void fullRebuildLinesLabels();
+    void rebuildTrianglesBuffers();
+
+    void setEdgeLimit(float val);;
+    void setLabelStepSize(float val);
+    void setLineStepSize(float val);
+    void setSurfaceStepSize(float val);
+    void setThemeId(int val);
+
+    float getEdgeLimit() const;
+    float getLabelStepSize() const;
+    float getLineStepSize() const;
+    float getSurfaceStepSize() const;
+    int getThemeId() const;
+
+private:
     void incrementalProcessLinesLabels(const QSet<int>& updsTrIndx);
-    QVector<QVector3D> buildGridTriangles(const QVector<QVector3D>& pts, int gridWidth, int gridHeight) const;
+    QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& polylines) const;
     void edgeIntersection(const QVector3D& vertA, const QVector3D& vertB, float level, QVector<QVector3D>& out) const;
     void filterNearbyLabels(const QVector<LabelParameters>& inputData, QVector<LabelParameters>& outputData) const;
-    void filterLinesBehindLabels(const QVector<LabelParameters>& filteredLabels, const QVector<QVector3D>& inputData, QVector<QVector3D>& outputData) const;
-    void rebuildTrianglesBuffers();
     void updateTexture() const;
 
 private:
     DataProcessor* dataProcessor_;
-    Dataset* datasetPtr_ = nullptr;
-
-    // external buffs
-    QVector<QVector3D> pts_; // для треугольников
-    QVector<QVector3D> edgePts_; // для ребер
-    float minZ_;
-    float maxZ_;
-    QVector<ColorInterval> colorIntervals_;
-    float levelStep_;
-    QVector<QVector3D> lineSegments_;
-    QVector<LabelParameters> labels_;
-    float lineStepSize_; // from parent
-
-    // internal buffs
-    delaunay::Delaunay del_;
-    BottomTrack* bottomTrackPtr_ = nullptr;
-    QHash<int, uint64_t> bTrToTrIndxs_;
-    bool originSet_ = false;
+    BottomTrack* bottomTrackPtr_;
+    delaunay::Delaunay delaunayProc_;
+    IsoState isobathsState_;
+    QReadWriteLock lock_;
+    QHash<uint64_t, QVector<int>> pointToTris_;
     QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
     QHash<QPair<int,int>, int>  cellPointsInTri_;
-    QPair<int,int> lastCellPoint_;
-    int cellPx_;
+    QHash<int, uint64_t> bTrToTrIndxs_;
+    QVector<LabelParameters> labels_; // render
+    QVector<ColorInterval> colorIntervals_; // render
+    QVector<QVector3D> pts_; // render
+    QVector<QVector3D> edgePts_; // render
+    QVector<QVector3D> lineSegments_; // render
     QPointF origin_;
+    QPair<int,int> lastCellPoint_;
+    float minZ_; // render
+    float maxZ_; // render
+    float levelStep_; // render
+    float lineStepSize_; // render
     float surfaceStepSize_;
     float labelStepSize_;
-    int themeId_;
     float edgeLimit_;
-    QHash<uint64_t, QVector<int>> pointToTris_;
-    IsoState isoState_;
-    QReadWriteLock lock_;
+    int cellPx_;
+    int themeId_;
+    bool originSet_;
 };

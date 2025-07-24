@@ -2,8 +2,8 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QDebug>
-
 #include "bottom_track.h"
+#include "dataset.h"
 
 
 DataProcessor::DataProcessor(QObject *parent)
@@ -12,41 +12,23 @@ DataProcessor::DataProcessor(QObject *parent)
       bottomTrackProcessor_(this),
       isobathsProcessor_(this),
       state_(DataProcessorType::kUndefined),
-      updateBottomTrack_(false),
-      updateIsobaths_(false),
-      updateMosaic_(false),
-      isOpeningFile_(false),
       bottomTrackCounter_(0),
       epochCounter_(0),
       positionCounter_(0),
       attitudeCounter_(0),
+      updateBottomTrack_(false),
+      updateIsobaths_(false),
+      updateMosaic_(false),
+      isOpeningFile_(false),
       bottomTrackWindowCounter_(0)
 {
-
-
-    //qDebug() << "DataProcessor ctr" << QThread::currentThreadId();
-
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorType>("DataProcessorState");
-    qRegisterMetaType<QVector<LabelParameters>>("QVector<LabelParameters>");
+    qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
 }
 
 DataProcessor::~DataProcessor()
 {
-    //qDebug() << "DataProcessor dtr" << QThread::currentThreadId();
-}
-
-void DataProcessor::clear(DataProcessorType procType)
-{
-    qDebug() << "DataProcessor::clear" << static_cast<int>(procType);
-
-    switch (procType) {
-    case DataProcessorType::kUndefined:   clearAllProcessings();        emit allProcessingCleared();         break;
-    case DataProcessorType::kBottomTrack: clearBottomTrackProcessing(); emit bottomTrackProcessingCleared(); break;
-    case DataProcessorType::kIsobaths:    clearIsobathsProcessing();    emit isobathsProcessingCleared();    break;
-    case DataProcessorType::kMosaic:      clearMosaicProcessing();      emit mosaicProcessingCleared();      break;
-    default: break;
-    }
 }
 
 void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
@@ -54,7 +36,6 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
-    isobathsProcessor_.setDatasetPtr(datasetPtr_);
 }
 
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr) // TODO: using BottomTrack data from this?
@@ -62,9 +43,42 @@ void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr) // TODO: usin
     isobathsProcessor_.setBottomTrackPtr(bottomTrackPtr);
 }
 
-void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam &bottomTrackParam_)
+void DataProcessor::clear(DataProcessorType procType)
 {
-    bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam_);
+    switch (procType) {
+    case DataProcessorType::kUndefined:   clearAllProcessings();        emit allProcessingCleared();         break;
+    case DataProcessorType::kBottomTrack: clearBottomTrackProcessing(); emit bottomTrackProcessingCleared(); break;
+    case DataProcessorType::kIsobaths:    clearIsobathsProcessing();    emit isobathsProcessingCleared();    break;
+    case DataProcessorType::kMosaic:      clearMosaicProcessing();      emit mosaicProcessingCleared();      break;
+    default: break;
+    }
+
+    // this
+    chartsCounter_.clear();
+    bottomTrackCounter_ = 0;
+    epochCounter_ = 0;
+    positionCounter_ = 0;
+    attitudeCounter_ = 0;
+}
+
+void DataProcessor::setUpdateBottomTrack(bool state)
+{
+    updateBottomTrack_ = state;
+}
+
+void DataProcessor::setUpdateIsobaths(bool state)
+{
+    updateIsobaths_ = state;
+}
+
+void DataProcessor::setUpdateMosaic(bool state)
+{
+    updateMosaic_ = state;
+}
+
+void DataProcessor::setIsOpeningFile(bool state)
+{
+    isOpeningFile_ = state;
 }
 
 void DataProcessor::onChartsAdded(const ChannelId& channelId, uint64_t indx)
@@ -137,6 +151,89 @@ void DataProcessor::onAttitudeAdded(uint64_t indx)
     attitudeCounter_ = indx;
 }
 
+void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam &bottomTrackParam_)
+{
+    bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam_);
+}
+
+void DataProcessor::setColorTableThemeById(int id)
+{
+    //qDebug() << "DataProcessor::setColorTableThemeById" << id;
+
+    if (isobathsProcessor_.getThemeId() == id) {
+        return;
+    }
+
+    isobathsProcessor_.setThemeId(id);
+
+    isobathsProcessor_.rebuildColorIntervals();
+}
+
+void DataProcessor::setSurfaceStepSize(float val)
+{
+    //qDebug() << "DataProcessor::setSurfaceStepSize" << val;
+
+    if (qFuzzyCompare(isobathsProcessor_.getSurfaceStepSize(), val)) {
+        return;
+    }
+
+    isobathsProcessor_.setSurfaceStepSize(val);
+
+    isobathsProcessor_.rebuildColorIntervals();
+}
+
+void DataProcessor::setLineStepSize(float val)
+{
+    //qDebug() << "DataProcessor::setLineStepSize" << val;
+
+    if (qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
+        return;
+    }
+
+    isobathsProcessor_.setLineStepSize(val);
+
+    emit sendIsobathsLineStepSize(isobathsProcessor_.getLineStepSize());
+
+    enqueueWork({}, true, false);
+}
+
+void DataProcessor::setLabelStepSize(float val)
+{
+    //qDebug() << "DataProcessor::setLabelStepSize" << val;
+
+    if (qFuzzyCompare(isobathsProcessor_.getLabelStepSize(), val)) {
+        return;
+    }
+
+    isobathsProcessor_.setLabelStepSize(val);
+
+    enqueueWork({}, true, false);
+}
+
+void DataProcessor::setEdgeLimit(int val)
+{
+    //qDebug() << "DataProcessor::setEdgeLimit" << val;
+
+    if (qFuzzyCompare(isobathsProcessor_.getEdgeLimit(), static_cast<float>(val))) {
+        return;
+    }
+
+    isobathsProcessor_.setEdgeLimit(static_cast<float>(val));
+
+    enqueueWork({}, true, true);
+}
+
+void DataProcessor::handleWorkerFinished()
+{
+    QMutexLocker lk(&isobathsPendingMtx_);
+    if (!isobathsPending_.indxs.isEmpty() || isobathsPending_.rebuildLineLabels) {
+        PendingWork copy = isobathsPending_;
+        isobathsPending_ = PendingWork{};
+        lk.unlock();
+        enqueueWork(copy.indxs, copy.rebuildLineLabels, copy.rebuildAll);
+    }
+}
+
 void DataProcessor::changeState(const DataProcessorType& state)
 {
     state_ = state;
@@ -146,19 +243,20 @@ void DataProcessor::changeState(const DataProcessorType& state)
 void DataProcessor::clearBottomTrackProcessing()
 {
     bottomTrackWindowCounter_ = 0;
+
     bottomTrackProcessor_.clear();
 }
 
 void DataProcessor::clearIsobathsProcessing()
 {
-    if (workerFuture_.isRunning()) {
-        workerFuture_.cancel();
-        workerFuture_.waitForFinished();
+    if (isobathsWorkerFuture_.isRunning()) {
+        isobathsWorkerFuture_.cancel();
+        isobathsWorkerFuture_.waitForFinished();
     }
 
     {
-        QMutexLocker lk(&pendingMtx_);
-        pending_.clear();
+        QMutexLocker lk(&isobathsPendingMtx_);
+        isobathsPending_.clear();
     }
 
     isobathsProcessor_.clear();
@@ -176,107 +274,29 @@ void DataProcessor::clearAllProcessings()
     clearMosaicProcessing();
 }
 
-void DataProcessor::setColorTableThemeById(int id)
-{
-    qDebug() << "DataProcessor::setColorTableThemeById" << id;
-
-    if (isobathsProcessor_.themeId_ == id) {
-        return;
-    }
-
-    isobathsProcessor_.themeId_ = id;
-
-    isobathsProcessor_.rebuildColorIntervals();
-}
-
-void DataProcessor::setSurfaceStepSize(float val)
-{
-    qDebug() << "DataProcessor::setSurfaceStepSize" << val;
-
-    if (qFuzzyCompare(isobathsProcessor_.surfaceStepSize_, val)) {
-        return;
-    }
-
-    isobathsProcessor_.surfaceStepSize_ = val;
-
-    isobathsProcessor_.rebuildColorIntervals();
-}
-
-void DataProcessor::setLineStepSize(float val)
-{
-    qDebug() << "DataProcessor::setLineStepSize" << val;
-
-    if (qFuzzyCompare(isobathsProcessor_.lineStepSize_, val)) {
-        return;
-    }
-
-    isobathsProcessor_.lineStepSize_ = val;
-
-    emit sendIsobathsLineStepSize(isobathsProcessor_.lineStepSize_);
-
-    enqueueWork({}, true, false);
-}
-
-void DataProcessor::setLabelStepSize(float val)
-{
-    qDebug() << "DataProcessor::setLabelStepSize" << val;
-
-    if (qFuzzyCompare(isobathsProcessor_.labelStepSize_, val)) {
-        return;
-    }
-
-    isobathsProcessor_.labelStepSize_ = val;
-
-    enqueueWork({}, true, false);
-}
-
-void DataProcessor::setEdgeLimit(int val)
-{
-    qDebug() << "DataProcessor::setEdgeLimit" << val;
-
-    if (isobathsProcessor_.edgeLimit_ == val) {
-        return;
-    }
-
-    isobathsProcessor_.edgeLimit_ = val;
-
-    enqueueWork({}, true, true);
-}
-
-void DataProcessor::handleWorkerFinished()
-{
-    QMutexLocker lk(&pendingMtx_);
-    if (!pending_.indxs.isEmpty() || pending_.rebuildLineLabels) {
-        PendingWork copy = pending_;
-        pending_ = PendingWork{};
-        lk.unlock();
-        enqueueWork(copy.indxs, copy.rebuildLineLabels, copy.rebuildAll);
-    }
-}
-
 void DataProcessor::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)
 {
     {
-        QMutexLocker lk(&pendingMtx_);
-        pending_.indxs += indxs;
-        pending_.rebuildLineLabels |= rebuildLinesLabels;
-        pending_.rebuildAll |= rebuildAll;
+        QMutexLocker lk(&isobathsPendingMtx_);
+        isobathsPending_.indxs += indxs;
+        isobathsPending_.rebuildLineLabels |= rebuildLinesLabels;
+        isobathsPending_.rebuildAll |= rebuildAll;
     }
 
-    if (workerFuture_.isRunning()) {
+    if (isobathsWorkerFuture_.isRunning()) {
         return;
     }
 
-    workerFuture_ = QtConcurrent::run([this] {
-        if (workerFuture_.isCanceled()) {
+    isobathsWorkerFuture_ = QtConcurrent::run([this] {
+        if (isobathsWorkerFuture_.isCanceled()) {
             return;
         }
 
         PendingWork todo;
         {
-            QMutexLocker lk(&pendingMtx_);
-            todo = std::move(pending_);
-            pending_.clear();
+            QMutexLocker lk(&isobathsPendingMtx_);
+            todo = std::move(isobathsPending_);
+            isobathsPending_.clear();
         }
 
         if (todo.rebuildAll) {
@@ -295,9 +315,9 @@ void DataProcessor::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabe
         }
     });
 
-    if (!workerWatcher_.isRunning()) {
-        connect(&workerWatcher_, &QFutureWatcher<void>::finished, this, &DataProcessor::handleWorkerFinished, Qt::QueuedConnection);
+    if (!isobathsWorkerWatcher_.isRunning()) {
+        connect(&isobathsWorkerWatcher_, &QFutureWatcher<void>::finished, this, &DataProcessor::handleWorkerFinished, Qt::QueuedConnection);
     }
 
-    workerWatcher_.setFuture(workerFuture_);
+    isobathsWorkerWatcher_.setFuture(isobathsWorkerFuture_);
 }

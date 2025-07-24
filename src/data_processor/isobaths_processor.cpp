@@ -7,18 +7,18 @@
 
 IsobathsProcessor::IsobathsProcessor(DataProcessor* parent) :
     dataProcessor_(parent),
-    datasetPtr_(nullptr),
+    bottomTrackPtr_(nullptr),
+    lastCellPoint_({ -1, -1 }),
     minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
     levelStep_(3.0f),
     lineStepSize_(3.0f),
-    bottomTrackPtr_(nullptr),
-    originSet_ (false),
-    cellPx_(1),
     surfaceStepSize_(1.0f),
     labelStepSize_(100.0f),
+    edgeLimit_(20.0f),
+    cellPx_(1),
     themeId_(0),
-    edgeLimit_(20.0f)
+    originSet_ (false)
 {
 }
 
@@ -28,26 +28,27 @@ IsobathsProcessor::~IsobathsProcessor()
 
 void IsobathsProcessor::clear()
 {
-    // external buffs
-    pts_.clear();
-    edgePts_.clear();
-    minZ_ = std::numeric_limits<float>::max();
-    maxZ_ = std::numeric_limits<float>::lowest();
-    colorIntervals_.clear();
-    lineSegments_.clear();
-    labels_.clear();
-
-    // internal buffs
-    del_ = delaunay::Delaunay();
-    bTrToTrIndxs_.clear();
-    originSet_ = false;
+    delaunayProc_ = delaunay::Delaunay();
+    isobathsState_.clear();
+    pointToTris_.clear();
     cellPoints_.clear();
     cellPointsInTri_.clear();
-    lastCellPoint_ = QPair<int,int>();
-    pointToTris_.clear();
+    bTrToTrIndxs_.clear();
+    labels_.clear();
+    colorIntervals_.clear();
+    pts_.clear();
+    edgePts_.clear();
+    lineSegments_.clear();
     origin_ = QPointF();
-    isoState_.clear();
+    lastCellPoint_ = QPair<int,int>();
+    minZ_ = std::numeric_limits<float>::max();
+    maxZ_ = std::numeric_limits<float>::lowest();
+    originSet_ = false;
+}
 
+void IsobathsProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
+{
+    bottomTrackPtr_ = bottomTrackPtr;
 }
 
 void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
@@ -58,13 +59,13 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
 
     dataProcessor_->changeState(DataProcessorType::kIsobaths);
 
-    auto &tr = del_.getTriangles();
-    auto &pt = del_.getPoints();
+    auto &tr = delaunayProc_.getTriangles();
+    auto &pt = delaunayProc_.getPoints();
 
     QVector<QVector3D> bTrData;
     {
         QReadLocker rl(&lock_);
-        bTrData = bottomTrackPtr_->cdata();//
+        bTrData = bottomTrackPtr_->cdata(); //
     }
 
     const auto dist2 = [](const QPointF &a, const QPointF &b) {
@@ -72,14 +73,17 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         double dy = a.y() - b.y();
         return dx * dx + dy * dy;
     };
+
     const auto fvec = [](const delaunay::Point &p) {
         return QVector3D(float(p.x), float(p.y), float(p.z));
     };
+
     const auto nanVec = [] {
         return QVector3D(std::numeric_limits<float>::quiet_NaN(),
                          std::numeric_limits<float>::quiet_NaN(),
                          std::numeric_limits<float>::quiet_NaN());
     };
+
     const auto registerTriangle = [&](int triIdx) {
         const auto &t = tr[triIdx];
         pointToTris_[t.a] << triIdx;
@@ -99,7 +103,7 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
 
         if (bTrToTrIndxs_.contains(itm)) { // точка уже была в триангуляции
             const uint64_t pIdx = bTrToTrIndxs_[itm];
-            auto &p = del_.getPointsRef()[pIdx];
+            auto &p = delaunayProc_.getPointsRef()[pIdx];
 
             if (!qFuzzyCompare(float(p.z), point.z())) {
                 p.z = point.z();
@@ -120,22 +124,17 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         const int iy = qRound((point.y() - origin_.y()) / cellPx_);
         const QPair<int,int> cid(ix, iy);
         const QPointF center(origin_.x() + float(ix) * cellPx_, origin_.y() + float(iy) * cellPx_);
-        //qDebug() << "ix" <<ix;
-        //qDebug() << "iy" <<iy;
-        //qDebug() << "cellPx_" <<cellPx_;
 
         if (cellPoints_.contains(cid)) {
             if (!cellPointsInTri_.contains(cid)) {
                 const auto &lastPoint = cellPoints_[cid];
                 const bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
-                //qDebug() << "point" <<point;
-                //qDebug() << "lastPoint" <<lastPoint;
 
                 if (currNearest) {
                     cellPoints_[cid] = point;
                 }
                 else {
-                    const auto res = del_.addPoint({ lastPoint.x(), lastPoint.y(), lastPoint.z() });
+                    const auto res = delaunayProc_.addPoint({ lastPoint.x(), lastPoint.y(), lastPoint.z() });
                     for (int triIdx : res.newTriIdx) {
                         registerTriangle(triIdx);
                         updsTrIndx.insert(triIdx);
@@ -153,7 +152,7 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         if (lastCellPoint_ != cid) {
             if (!cellPointsInTri_.contains(lastCellPoint_)) {
                 const auto &lastPoint  = cellPoints_[lastCellPoint_];
-                const auto res = del_.addPoint({ lastPoint.x(), lastPoint.y(), lastPoint.z() });
+                const auto res = delaunayProc_.addPoint({ lastPoint.x(), lastPoint.y(), lastPoint.z() });
                 for (int triIdx : res.newTriIdx) {
                     registerTriangle(triIdx);
                     updsTrIndx.insert(triIdx);
@@ -218,8 +217,6 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     emit dataProcessor_->sendIsobathsPts(pts_);
     emit dataProcessor_->sendIsobathsEdgePts(edgePts_);
 
-
-
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
         float currMax = std::numeric_limits<float>::lowest();
@@ -256,7 +253,6 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     }
 
     dataProcessor_->changeState(DataProcessorType::kUndefined);
-
 }
 
 void IsobathsProcessor::rebuildColorIntervals()
@@ -282,45 +278,19 @@ void IsobathsProcessor::rebuildColorIntervals()
     updateTexture();
 }
 
-QVector<QVector3D> IsobathsProcessor::generateExpandedPalette(int totalColors) const
-{
-    const auto &palette = colorPalette(themeId_);
-    const int paletteSize = palette.size();
-
-    QVector<QVector3D> retVal;
-
-    if (totalColors <= 1 || paletteSize == 0) {
-        retVal.append(paletteSize > 0 ? palette.first() : QVector3D(1.0f, 1.0f, 1.0f)); // fallback: white
-        return retVal;
-    }
-
-    retVal.reserve(totalColors);
-
-    for (int i = 0; i < totalColors; ++i) {
-        float t = static_cast<float>(i) / static_cast<float>(totalColors - 1);
-        float ft = t * (paletteSize - 1);
-        int i0 = static_cast<int>(ft);
-        int i1 = std::min(i0 + 1, paletteSize - 1);
-        float l = ft - static_cast<float>(i0);
-        retVal.append((1.f - l) * palette[i0] + l * palette[i1]);
-    }
-
-    return retVal;
-}
-
 void IsobathsProcessor::fullRebuildLinesLabels()
 {
-    const auto& pts = del_.getPointsRef();
+    const auto& pts = delaunayProc_.getPointsRef();
     float zMin = minZ_;
     float zMax = maxZ_;
-    isoState_.clear();
+    isobathsState_.clear();
 
     const int levelCnt = int((zMax - zMin) / lineStepSize_) + 1;
 
     // сегменты изолиний
-    for (size_t idx = 0; idx < del_.getTriangles().size(); ++idx) {
+    for (size_t idx = 0; idx < delaunayProc_.getTriangles().size(); ++idx) {
         uint64_t triIdx = idx;
-        const auto& t = del_.getTriangles()[triIdx];
+        const auto& t = delaunayProc_.getTriangles()[triIdx];
         if (t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_) {
             continue;
         }
@@ -350,22 +320,22 @@ void IsobathsProcessor::fullRebuildLinesLabels()
             }
 
             if (!newSegs.isEmpty()) {
-                isoState_.hashSegsByLvl[lvl].append(newSegs);
-                isoState_.triangleSegs[triIdx][lvl] = newSegs;
+                isobathsState_.hashSegsByLvl[lvl].append(newSegs);
+                isobathsState_.triangleSegs[triIdx][lvl] = newSegs;
             }
         }
     }
 
     // полилинии
-    for (auto it = isoState_.hashSegsByLvl.begin(); it != isoState_.hashSegsByLvl.end(); ++it) {
-        buildPolylines(it.value(), isoState_.polylinesByLevel[it.key()]);
+    for (auto it = isobathsState_.hashSegsByLvl.begin(); it != isobathsState_.hashSegsByLvl.end(); ++it) {
+        buildPolylines(it.value(), isobathsState_.polylinesByLevel[it.key()]);
     }
 
     QVector<QVector3D> resLines;
     QVector<LabelParameters> resLabels;
 
     // линии и подписи
-    for (auto it = isoState_.polylinesByLevel.begin(); it != isoState_.polylinesByLevel.end(); ++it) {
+    for (auto it = isobathsState_.polylinesByLevel.begin(); it != isobathsState_.polylinesByLevel.end(); ++it) {
         int level = it.key();
         const auto& polylines = it.value();
 
@@ -448,10 +418,121 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     emit dataProcessor_->sendIsobathsLabels(labels_);
 }
 
+void IsobathsProcessor::rebuildTrianglesBuffers()
+{
+    const auto &tri = delaunayProc_.getTriangles();
+    const auto &pt  = delaunayProc_.getPointsRef();
+
+    const int triCnt = static_cast<int>(tri.size());
+    pts_.resize (triCnt * 3);
+    edgePts_.resize(triCnt * 6);
+
+    const auto nanVec = [] {
+        return QVector3D(std::numeric_limits<float>::quiet_NaN(),
+                         std::numeric_limits<float>::quiet_NaN(),
+                         std::numeric_limits<float>::quiet_NaN());
+    };
+
+    const auto fvec = [](const delaunay::Point &p) {
+        return QVector3D(float(p.x), float(p.y), float(p.z));
+    };
+
+    minZ_ =  std::numeric_limits<float>::max();
+    maxZ_ = -std::numeric_limits<float>::max();
+
+    for (int i = 0; i < triCnt; ++i) {
+        const auto &t = tri[i];
+        const int  trBase = i * 3;
+        const int  edgBase = i * 6;
+
+        bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+
+        if (!draw) {
+            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = nanVec();
+            std::fill_n(edgePts_.begin() + edgBase, 6, nanVec());
+            continue;
+        }
+
+        // вершины
+        pts_[trBase    ] = fvec(pt[t.a]);
+        pts_[trBase + 1] = fvec(pt[t.b]);
+        pts_[trBase + 2] = fvec(pt[t.c]);
+
+        // рёбра
+        edgePts_[edgBase    ] = pts_[trBase];
+        edgePts_[edgBase + 1] = pts_[trBase + 1];
+        edgePts_[edgBase + 2] = pts_[trBase + 1];
+        edgePts_[edgBase + 3] = pts_[trBase + 2];
+        edgePts_[edgBase + 4] = pts_[trBase + 2];
+        edgePts_[edgBase + 5] = pts_[trBase];
+
+        // экстремумы
+        minZ_ = std::fmin(minZ_, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+        maxZ_ = std::fmax(maxZ_, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
+    }
+
+
+    // TODO: optimize
+    emit dataProcessor_->sendIsobathsMinZ(minZ_);
+    emit dataProcessor_->sendIsobathsMaxZ(maxZ_);
+    emit dataProcessor_->sendIsobathsPts(pts_);
+    emit dataProcessor_->sendIsobathsEdgePts(edgePts_);
+}
+
+void IsobathsProcessor::setEdgeLimit(float val)
+{
+    edgeLimit_ = val;
+}
+
+void IsobathsProcessor::setLabelStepSize(float val)
+{
+    labelStepSize_ = val;
+}
+
+void IsobathsProcessor::setLineStepSize(float val)
+{
+    lineStepSize_ = val;
+}
+
+void IsobathsProcessor::setSurfaceStepSize(float val)
+{
+    surfaceStepSize_ = val;
+}
+
+void IsobathsProcessor::setThemeId(int val)
+{
+    themeId_ = val;
+}
+
+float IsobathsProcessor::getEdgeLimit() const
+{
+    return edgeLimit_;
+}
+
+float IsobathsProcessor::getLabelStepSize() const
+{
+    return labelStepSize_;
+}
+
+float IsobathsProcessor::getLineStepSize() const
+{
+    return lineStepSize_;
+}
+
+float IsobathsProcessor::getSurfaceStepSize() const
+{
+    return surfaceStepSize_;
+}
+
+int IsobathsProcessor::getThemeId() const
+{
+    return themeId_;
+}
+
 void IsobathsProcessor::incrementalProcessLinesLabels(const QSet<int> &updsTrIndx)
 {
-    const auto& tr = del_.getTriangles();
-    const auto& pts = del_.getPointsRef();
+    const auto& tr = delaunayProc_.getTriangles();
+    const auto& pts = delaunayProc_.getPointsRef();
 
     float zMin = minZ_;
     float zMax = maxZ_;
@@ -459,14 +540,14 @@ void IsobathsProcessor::incrementalProcessLinesLabels(const QSet<int> &updsTrInd
 
     // удаление старых отрезков этого треугольника
     for (int triIdx : updsTrIndx) {
-        auto itTri = isoState_.triangleSegs.find(triIdx);
-        if (itTri == isoState_.triangleSegs.end()) {
+        auto itTri = isobathsState_.triangleSegs.find(triIdx);
+        if (itTri == isobathsState_.triangleSegs.end()) {
             continue;
         }
 
         for (auto itLvl = itTri->begin(); itLvl != itTri->end(); ++itLvl) {
             int lvl = itLvl.key();
-            auto& bucket = isoState_.hashSegsByLvl[lvl];
+            auto& bucket = isobathsState_.hashSegsByLvl[lvl];
 
             const auto& valu = itLvl.value();
             for (const auto& oldSeg : valu) {
@@ -476,9 +557,9 @@ void IsobathsProcessor::incrementalProcessLinesLabels(const QSet<int> &updsTrInd
                     bucket.remove(idx);
                 }
             }
-            isoState_.dirtyLevels.insert(lvl);
+            isobathsState_.dirtyLevels.insert(lvl);
         }
-        isoState_.triangleSegs.erase(itTri);
+        isobathsState_.triangleSegs.erase(itTri);
     }
 
     // добавление новых сегментов из обновлённых треугольников
@@ -516,24 +597,24 @@ void IsobathsProcessor::incrementalProcessLinesLabels(const QSet<int> &updsTrInd
                 continue;
             }
 
-            auto& bucket = isoState_.hashSegsByLvl[lvl];
+            auto& bucket = isobathsState_.hashSegsByLvl[lvl];
             appendUnique(bucket, newSegs);
-            isoState_.triangleSegs[triIdx][lvl] = newSegs;
-            isoState_.dirtyLevels.insert(lvl);
+            isobathsState_.triangleSegs[triIdx][lvl] = newSegs;
+            isobathsState_.dirtyLevels.insert(lvl);
         }
     }
 
     // перестройка полилиний и подписей только для dirty уровней
-    for (int lvl : std::as_const(isoState_.dirtyLevels)) {
-        auto& polylines = isoState_.polylinesByLevel[lvl];
+    for (int lvl : std::as_const(isobathsState_.dirtyLevels)) {
+        auto& polylines = isobathsState_.polylinesByLevel[lvl];
         polylines.clear();
-        buildPolylines(isoState_.hashSegsByLvl[lvl], polylines);
+        buildPolylines(isobathsState_.hashSegsByLvl[lvl], polylines);
     }
 
     QVector<QVector3D> resLines;
     QVector<LabelParameters> resLabels;
 
-    for (auto it = isoState_.polylinesByLevel.begin(); it != isoState_.polylinesByLevel.end(); ++it) {
+    for (auto it = isobathsState_.polylinesByLevel.begin(); it != isobathsState_.polylinesByLevel.end(); ++it) {
         int lvl = it.key();
         float depthVal = zMin + lvl * lineStepSize_;
         const auto& polys = it.value();
@@ -576,103 +657,85 @@ void IsobathsProcessor::incrementalProcessLinesLabels(const QSet<int> &updsTrInd
     emit dataProcessor_->sendIsobathsLineSegments(lineSegments_);
     emit dataProcessor_->sendIsobathsLabels(labels_);
 
-    isoState_.dirtyLevels.clear();
+    isobathsState_.dirtyLevels.clear();
 }
 
-QVector<QVector3D> IsobathsProcessor::buildGridTriangles(const QVector<QVector3D> &pts, int gridWidth, int gridHeight) const
+QVector<QVector3D> IsobathsProcessor::generateExpandedPalette(int totalColors) const
 {
-    if (pts.size() < 3 || gridWidth <= 1 || gridHeight <= 1) {
-        return {};
+    const auto &palette = colorPalette(themeId_);
+    const int paletteSize = palette.size();
+
+    QVector<QVector3D> retVal;
+
+    if (totalColors <= 1 || paletteSize == 0) {
+        retVal.append(paletteSize > 0 ? palette.first() : QVector3D(1.0f, 1.0f, 1.0f)); // fallback: white
+        return retVal;
     }
 
-    // Карта
-    QVector<int> grid(gridWidth * gridHeight, -1);
+    retVal.reserve(totalColors);
 
-    float minX = std::numeric_limits<float>::max();
-    float minY = std::numeric_limits<float>::max();
-    float maxX = -std::numeric_limits<float>::max();
-    float maxY = -std::numeric_limits<float>::max();
-
-    for (const auto& v : pts) {
-        minX = std::min(minX, v.x());
-        minY = std::min(minY, v.y());
-        maxX = std::max(maxX, v.x());
-        maxY = std::max(maxY, v.y());
+    for (int i = 0; i < totalColors; ++i) {
+        float t = static_cast<float>(i) / static_cast<float>(totalColors - 1);
+        float ft = t * (paletteSize - 1);
+        int i0 = static_cast<int>(ft);
+        int i1 = std::min(i0 + 1, paletteSize - 1);
+        float l = ft - static_cast<float>(i0);
+        retVal.append((1.f - l) * palette[i0] + l * palette[i1]);
     }
 
-    const float stepX = (maxX - minX) / (gridWidth - 1);
-    const float stepY = (maxY - minY) / (gridHeight - 1);
-
-    const float invStepX = 1.f / stepX;
-    const float invStepY = 1.f / stepY;
-
-    for (int k = 0; k < pts.size(); ++k) {
-        int ix = int(std::round((pts[k].x() - minX) * invStepX));
-        int iy = int(std::round((pts[k].y() - minY) * invStepY));
-        if (ix >= 0 && ix < gridWidth && iy >= 0 && iy < gridHeight) {
-            grid[ix + iy * gridWidth] = k;
-        }
-    }
-
-    // Генерация треугольников по клеткам сетки
-    QVector<QVector3D> triangles;
-    triangles.reserve((gridWidth - 1) * (gridHeight - 1) * 6);
-
-    auto id = [&](int x, int y) -> int {
-        return grid[x + y * gridWidth];
-    };
-
-    for (int j = 0; j < gridHeight - 1; ++j) {
-        for (int i = 0; i < gridWidth - 1; ++i) {
-            int i00 = id(i, j);
-            int i10 = id(i + 1, j);
-            int i01 = id(i, j + 1);
-            int i11 = id(i + 1, j + 1);
-            if (i00 < 0 || i10 < 0 || i01 < 0 || i11 < 0) {
-                continue;
-            }
-            triangles.append(pts[i00]);
-            triangles.append(pts[i10]);
-            triangles.append(pts[i11]);
-            triangles.append(pts[i00]);
-            triangles.append(pts[i11]);
-            triangles.append(pts[i01]);
-        }
-    }
-
-    return triangles;
+    return retVal;
 }
 
 void IsobathsProcessor::buildPolylines(const IsobathsSegVec &segs, IsobathsPolylines &polylines) const
 {
-    auto eq = [](const QVector3D& a,const QVector3D& b){ return fuzzyEq(a,b); };
+    auto eq = [](const QVector3D& a,const QVector3D& b) -> bool {
+        return fuzzyEq(a, b);
+    };
 
-    QVector<bool> used(segs.size(),false);
-    for (int i=0;i<segs.size();++i){
-        if (used[i]) continue;
+    QVector<bool> used(segs.size(), false);
+    for (int i = 0; i < segs.size(); ++i) {
+        if (used[i]) {
+            continue;
+        }
+
         QList<QVector3D> poly;
         poly << segs[i].first << segs[i].second;
-        used[i]=true;
+        used[i] = true;
 
-        bool again=true;
-        while (again){
-            again=false;
-            for (int j=0;j<segs.size();++j){
-                if (used[j]) continue;
-                if (eq(poly.back(), segs[j].first )){
-                    poly << segs[j].second; used[j]=true; again=true;
-                }else if (eq(poly.back(), segs[j].second)){
-                    poly << segs[j].first;  used[j]=true; again=true;
-                }else if (eq(poly.front(), segs[j].second)){
-                    poly.prepend(segs[j].first); used[j]=true; again=true;
-                }else if (eq(poly.front(), segs[j].first)){
-                    poly.prepend(segs[j].second); used[j]=true; again=true;
+        bool again = true;
+        while (again) {
+            again = false;
+            for (int j = 0; j < segs.size(); ++j) {
+                if (used[j]) {
+                    continue;
+                }
+
+                if (eq(poly.back(), segs[j].first )) {
+                    poly << segs[j].second;
+                    used[j] = true;
+                    again = true;
+                }
+                else if (eq(poly.back(), segs[j].second)) {
+                    poly << segs[j].first;
+                    used[j] = true;
+                    again = true;
+                }
+                else if (eq(poly.front(), segs[j].second)) {
+                    poly.prepend(segs[j].first);
+                    used[j] = true;
+                    again = true;
+                }
+                else if (eq(poly.front(), segs[j].first)) {
+                    poly.prepend(segs[j].second);
+                    used[j] = true;
+                    again = true;
                 }
             }
         }
-        if (poly.size()>1) polylines.append(QVector<QVector3D>(poly.begin(), poly.end()));
 
-
+        if (poly.size() > 1) {
+            polylines.append(QVector<QVector3D>(poly.begin(), poly.end()));
+        }
     }
 }
 
@@ -744,6 +807,7 @@ void IsobathsProcessor::filterNearbyLabels(const QVector<LabelParameters> &input
                     break;
                 }
             }
+
             if (tooClose) {
                 break;
             }
@@ -756,130 +820,14 @@ void IsobathsProcessor::filterNearbyLabels(const QVector<LabelParameters> &input
     }
 }
 
-void IsobathsProcessor::filterLinesBehindLabels(const QVector<LabelParameters> &filteredLabels, const QVector<QVector3D> &inputData, QVector<QVector3D> &outputData) const
-{
-    auto segmentIntersectsLabelBox = [](const QVector3D& p1, const QVector3D& p2, const LabelParameters& lbl, float width = 24.0f, float height = 5.0f) -> bool {
-        QVector2D a(p1.x(), p1.y());
-        QVector2D b(p2.x(), p2.y());
-
-        float labelOffset = 10;
-
-        QVector2D right = QVector2D(-lbl.dir.y(), -lbl.dir.x()).normalized();
-        QVector2D center = QVector2D(lbl.pos.x(), lbl.pos.y()) + right * labelOffset;
-
-        QVector2D boxMin = center - QVector2D(width * 0.5f, height * 0.5f);
-        QVector2D boxMax = center + QVector2D(width * 0.5f, height * 0.5f);
-
-        float minX = std::min(a.x(), b.x());
-        float maxX = std::max(a.x(), b.x());
-        float minY = std::min(a.y(), b.y());
-        float maxY = std::max(a.y(), b.y());
-
-        if (maxX < boxMin.x() || minX > boxMax.x() ||
-            maxY < boxMin.y() || minY > boxMax.y()) {
-            return false;
-        }
-
-        QVector2D mid = (a + b) * 0.5f;
-        if (mid.x() >= boxMin.x() && mid.x() <= boxMax.x() &&
-            mid.y() >= boxMin.y() && mid.y() <= boxMax.y()) {
-            return true;
-        }
-
-        return false;
-    };
-
-    for (int i = 0; i + 1 < inputData.size(); i += 2) {
-        const QVector3D& p1 = inputData[i];
-        const QVector3D& p2 = inputData[i + 1];
-
-        bool skip = false;
-        for (const auto& lbl : filteredLabels) {
-            if (segmentIntersectsLabelBox(p1, p2, lbl)) {
-                skip = true;
-                break;
-            }
-        }
-
-        if (!skip) {
-            outputData.append(p1);
-            outputData.append(p2);
-        }
-    }
-}
-
-void IsobathsProcessor::rebuildTrianglesBuffers()
-{
-    const auto &tri = del_.getTriangles();
-    const auto &pt  = del_.getPointsRef();
-
-    const int triCnt = static_cast<int>(tri.size());
-    pts_.resize (triCnt * 3);
-    edgePts_.resize(triCnt * 6);
-
-    const auto nanVec = [] {
-        return QVector3D(std::numeric_limits<float>::quiet_NaN(),
-                         std::numeric_limits<float>::quiet_NaN(),
-                         std::numeric_limits<float>::quiet_NaN());
-    };
-
-    const auto fvec = [](const delaunay::Point &p) {
-        return QVector3D(float(p.x), float(p.y), float(p.z));
-    };
-
-    minZ_ =  std::numeric_limits<float>::max();
-    maxZ_ = -std::numeric_limits<float>::max();
-
-    for (int i = 0; i < triCnt; ++i) {
-        const auto &t = tri[i];
-        const int  trBase = i * 3;
-        const int  edgBase = i * 6;
-
-        bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
-
-        if (!draw) {
-            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = nanVec();
-            std::fill_n(edgePts_.begin() + edgBase, 6, nanVec());
-            continue;
-        }
-
-        // вершины
-        pts_[trBase    ] = fvec(pt[t.a]);
-        pts_[trBase + 1] = fvec(pt[t.b]);
-        pts_[trBase + 2] = fvec(pt[t.c]);
-
-        // рёбра
-        edgePts_[edgBase    ] = pts_[trBase];
-        edgePts_[edgBase + 1] = pts_[trBase + 1];
-        edgePts_[edgBase + 2] = pts_[trBase + 1];
-        edgePts_[edgBase + 3] = pts_[trBase + 2];
-        edgePts_[edgBase + 4] = pts_[trBase + 2];
-        edgePts_[edgBase + 5] = pts_[trBase];
-
-        // экстремумы
-        minZ_ = std::fmin(minZ_, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
-        maxZ_ = std::fmax(maxZ_, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
-    }
-
-
-    // TODO: optimize
-    emit dataProcessor_->sendIsobathsMinZ(minZ_);
-    emit dataProcessor_->sendIsobathsMaxZ(maxZ_);
-    emit dataProcessor_->sendIsobathsPts(pts_);
-    emit dataProcessor_->sendIsobathsEdgePts(edgePts_);
-}
-
 void IsobathsProcessor::updateTexture() const
 {
     int paletteSize = colorIntervals_.size();
-
     if (paletteSize == 0) {
         return;
     }
 
     QVector<uint8_t> textureTask;
-
-
     textureTask.resize(paletteSize * 4);
     for (int i = 0; i < paletteSize; ++i) {
         const QVector3D &c = colorIntervals_[i].color;
@@ -890,14 +838,4 @@ void IsobathsProcessor::updateTexture() const
     }
 
     emit dataProcessor_->sendIsobathsTextureTask(textureTask);
-}
-
-void IsobathsProcessor::setDatasetPtr(Dataset *datasetPtr)
-{
-    datasetPtr_ = datasetPtr;
-}
-
-void IsobathsProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
-{
-    bottomTrackPtr_ = bottomTrackPtr;
 }

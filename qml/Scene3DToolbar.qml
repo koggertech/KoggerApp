@@ -179,7 +179,7 @@ Item  {
                 property bool pulse: core.dataProcessorState === 1
 
                 SequentialAnimation {
-                    id: pulseAnimation
+                    id: pulseBottomTrackAnimation
                     running: bottomTrackCheckButton.pulse
                     loops: Animation.Infinite
                     NumberAnimation { target: bottomTrackCheckButton; property: "opacity"; to: 0.2; duration: 500 }
@@ -229,6 +229,22 @@ Item  {
                     checked: true
                     implicitHeight: theme.controlHeight * 1.3
                     implicitWidth: theme.controlHeight * 1.3
+
+                    property bool pulse: core.dataProcessorState === 2
+
+                    SequentialAnimation {
+                        id: pulseIsobathsAnimation
+                        running: isobathsCheckButton.pulse
+                        loops: Animation.Infinite
+                        NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 0.2; duration: 500 }
+                        NumberAnimation { target: isobathsCheckButton; property: "opacity"; to: 1.0; duration: 500 }
+                    }
+
+                    onPulseChanged: {
+                        if (!pulse) {
+                            isobathsCheckButton.opacity = 1.0;
+                        }
+                    }
 
                     onCheckedChanged: {
                         IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility
@@ -313,6 +329,22 @@ Item  {
                     checked: true
                     implicitHeight: theme.controlHeight * 1.3
                     implicitWidth: theme.controlHeight * 1.3
+
+                    property bool pulse: core.dataProcessorState === 3
+
+                    SequentialAnimation {
+                        id: pulseMosaicAnimation
+                        running: sideScanViewCheckButton.pulse
+                        loops: Animation.Infinite
+                        NumberAnimation { target: sideScanViewCheckButton; property: "opacity"; to: 0.2; duration: 500 }
+                        NumberAnimation { target: sideScanViewCheckButton; property: "opacity"; to: 1.0; duration: 500 }
+                    }
+
+                    onPulseChanged: {
+                        if (!pulse) {
+                            sideScanViewCheckButton.opacity = 1.0;
+                        }
+                    }
 
                     onCheckedChanged: {
                         SideScanViewControlMenuController.onVisibilityChanged(checked)
