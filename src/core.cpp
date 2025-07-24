@@ -1145,6 +1145,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     createTileManagerConnections();
     createScene3dConnections();
+
+    dataProcessor_->setBottomTrackPtr(scene3dViewPtr_->bottomTrack().get());
 }
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
@@ -1614,7 +1616,7 @@ void Core::createTileManagerConnections()
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendTextureIdByTileIndx, this, &Core::onSendTextureIdByTileIndx, Qt::DirectConnection);
 }
 
-void Core::onDataProcesstorStateChanged(const DataProcessorState& state)
+void Core::onDataProcesstorStateChanged(const DataProcessorType& state)
 {
     dataProcessorState_ = state;
     emit dataProcessorStateChanged();
@@ -1681,18 +1683,39 @@ void Core::destroyDataProcessor()
 void Core::createScene3dConnections()
 {
     QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
-    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack);
+
+    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints, this, [this](const QVector<int>& indxs) {
+        if (indxs.empty()) {
+            dataHorizon_->onAddedBottomTrack(scene3dViewPtr_->bottomTrack()->getAllIndxs());
+        }
+        else {
+            dataHorizon_->onAddedBottomTrack(indxs);
+        }
+    });
+
+    // res work proc
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,                scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLabels,              Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineSegments,        Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsPts,                   scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setPts,                 Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsEdgePts,               scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setEdgePts,             Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsMinZ,                  scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setMinZ,                Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsMaxZ,                  scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setMaxZ,                Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLevelStep,             scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLevelStep,           Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineStepSize,        Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsTextureTask,           scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setTextureTask,         Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsColorIntervalsSize,    scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setColorIntervalsSize,  Qt::QueuedConnection);
+
 }
 
 void Core::setDataProcessorConnections()
 {
     // from dataHorizon
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,       dataProcessor_, &DataProcessor::onChartsAdded, Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrackAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded, Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,       dataProcessor_, &DataProcessor::onChartsAdded,        Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrackAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded,   Qt::QueuedConnection));
 
-    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing, datasetPtr_, &Dataset::onDistCompleted, Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing,   datasetPtr_, &Dataset::onDistCompleted,               Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::sendState, this, &Core::onDataProcesstorStateChanged, Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::sendState,                   this,        &Core::onDataProcesstorStateChanged,     Qt::QueuedConnection));
 }
 
 void Core::resetDataProcessorConnections()

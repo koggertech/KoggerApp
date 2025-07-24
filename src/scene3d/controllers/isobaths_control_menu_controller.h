@@ -16,7 +16,7 @@ public:
     explicit IsobathsControlMenuController(QObject* parent = nullptr);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
-    void setDataProcessorPtr(DataProcessor* dataProcessorPtr) { dataProcessorPtr_ = dataProcessorPtr; };
+    void setDataProcessorPtr(DataProcessor *dataProcessorPtr);
 
     Q_INVOKABLE void onIsobathsVisibilityCheckBoxCheckedChanged(bool checked);
     Q_INVOKABLE void onUpdateIsobathsButtonClicked();
@@ -29,7 +29,6 @@ public:
     Q_INVOKABLE void onProcessStateChanged(bool state);
     Q_INVOKABLE void onResetIsobathsButtonClicked();
     Q_INVOKABLE void onEdgeLimitChanged(int val);
-    Q_INVOKABLE void onHandleXCallChanged(int val);
 
 protected:
     virtual void findComponent() override;
@@ -37,18 +36,18 @@ protected:
 private:
     void tryInitPendingLambda();
 
+private:
     GraphicsScene3dView* graphicsSceneViewPtr_;
-    DataProcessor* dataProcessorPtr_ = nullptr;
-    QThread thread_;
+    DataProcessor* dataProcessorPtr_;
     std::function<void()> pendingLambda_;
+    QThread thread_;
+    float surfaceLineStepSize_;
+    int themeId_;
+    int labelStepSize_;
+    int edgeLimit_;
     bool visibility_;
-    bool edgesVisible_ = true;
-    bool trianglesVisible_ = true;
-    float surfaceLineStepSize_ = 3.0f;
-    int themeId_ = 0;
-    int labelStepSize_ = 100;
-    bool debugModeView_ = false;
-    bool processState_ = true;
-    int edgeLimit_ = 20;
-    int handleXCall_ = 1;
+    bool edgesVisible_;
+    bool trianglesVisible_;
+    bool debugModeView_;
+    bool processState_;
 };

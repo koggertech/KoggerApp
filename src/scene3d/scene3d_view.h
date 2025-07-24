@@ -204,8 +204,6 @@ public:
 
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
-    void updateIsobathsForAllData();
-    void updateIsobathsForRemainingData();
     void setGridVisibility(bool state);
     void setIsFileOpening(bool state);
 

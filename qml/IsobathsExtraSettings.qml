@@ -108,41 +108,6 @@ MenuFrame {
             }
         }
 
-        // RowLayout {
-        //     CText {
-        //         text: qsTr("Handle each call:")
-        //         Layout.fillWidth: true
-        //     }
-        //     SpinBoxCustom {
-        //         id: isobathsHandleXCallSpinBox
-        //         implicitWidth: 200
-        //         from: 1
-        //         to: 100
-        //         stepSize: 1
-        //         value: 1
-        //         editable: false
-
-        //         property int decimals: 1
-
-        //         onFocusChanged: {
-        //             isobathsSettings.focus = true
-        //         }
-
-        //         Component.onCompleted: {
-        //             IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
-        //         }
-
-        //         onValueChanged: {
-        //             IsobathsControlMenuController.onHandleXCallChanged(isobathsHandleXCallSpinBox.value)
-        //         }
-
-        //         Settings {
-        //             property alias isobathsHandleXCallSpinBox: isobathsHandleXCallSpinBox.value
-        //         }
-        //     }
-        // }
-
-
         RowLayout {
             //visible: !isobathsDebugModeCheckButton.checked
 

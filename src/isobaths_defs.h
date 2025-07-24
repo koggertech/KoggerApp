@@ -130,7 +130,7 @@ struct IsoState {
     }
 };
 
-struct LLabelInfo
+struct LabelParameters
 {
     QVector3D pos;
     QVector3D dir;

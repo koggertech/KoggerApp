@@ -30,7 +30,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const ChannelId &channel1, cons
 
     if(btP.indexFrom < 0 || btP.indexTo < 0) { return; }
 
-    dataProcessor_->changeState(DataProcessorState::kBottomTrackCalculation);
+    dataProcessor_->changeState(DataProcessorType::kBottomTrack);
 
     int epoch_min_index = btP.indexFrom - btP.windowSize/2;
 
@@ -261,7 +261,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const ChannelId &channel1, cons
             Epoch::Echogram* chart = epPtr.chart(channel1);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                emit dataProcessor_->distCompletedByProcessing(iepoch, channel1, dist);
+                emit dataProcessor_->distCompletedByProcessing(iepoch, channel1, dist); //запись в датасет
             }
         }
 
@@ -274,7 +274,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const ChannelId &channel1, cons
         }
     }
 
-    dataProcessor_->changeState(DataProcessorState::kWaiting);
+    dataProcessor_->changeState(DataProcessorType::kUndefined);
 
     emit dataProcessor_->lastBottomTrackEpochChanged(channel1, size, btP);
 }

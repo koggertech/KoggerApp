@@ -10,7 +10,6 @@ class GraphicsScene3dView;
 class BottomTrack : public SceneObject
 {
     Q_OBJECT
-    //Q_PROPERTY(DatasetChannel visibleChannel READ visibleChannel WRITE setVisibleChannel NOTIFY visibleChannelChanged FINAL)
     QML_NAMED_ELEMENT(BottomTrack)
 
 public:
@@ -47,20 +46,17 @@ public:
     virtual ~BottomTrack();
     virtual SceneObjectType type() const override;
     virtual bool eventFilter(QObject *watched, QEvent *event) override final;
-    //QList<Epoch*> epochs() const;
-    //QMap<ChannelId, DatasetChannel> channels() const;
-    //DatasetChannel visibleChannel() const;
     void setDatasetPtr(Dataset* datasetPtr);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void actionEvent(ActionEvent actionEvent);
+    QVector<int> getAllIndxs();
+    QVector<int> getRemainingIndxs();
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     virtual void clearData() override;
     void isEpochsChanged(int lEpoch, int rEpoch);
     void resetVertexSelection();
-    //void setVisibleChannel(const ChannelId& channelIndex);
-    //void setVisibleChannel(const DatasetChannel& channel);
     void selectEpoch(int epochIndex, const ChannelId& channelId);
     void sideScanUpdated();
     void setSideScanVisibleState(bool state);
@@ -72,11 +68,7 @@ Q_SIGNALS:
     void epochErased(int epochIndex);
     void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
-    //void visibleChannelChanged(const ChannelId& channelId);
-    //void visibleChannelChanged(DatasetChannel channel);
-    void updatedDataByIndxs(const QVector<int>& indx);
-    void completelyRedrawn();
-    void bottomTrackAdded(const QVector<int>& indx);
+    void updatedPoints(const QVector<int>& indx);
 
 protected:
     friend class GraphicsScene3dView;
@@ -86,8 +78,6 @@ protected:
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
     void updateRenderData(bool redrawAll, int lEpoch = 0, int rEpoch = 0);
-    QVector<int> getAllIndxs();
-    QVector<int> getRemainingIndxs();
 
 private:
     QVector<QPair<int, int>> getSubarrays(const QVector<int>& sequenceVector); // TODO: to utils

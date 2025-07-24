@@ -79,13 +79,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, isobaths_.get(), &Isobaths::onUpdatedBottomTrackDataWrapper);
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::completelyRedrawn, this, [this]() {
-        isobaths_->clear();
-        auto allIndxs = m_bottomTrack->getAllIndxs();
-        isobaths_->onUpdatedBottomTrackDataWrapper(allIndxs);
-    });
-
     updatePlaneGrid();
 }
 
@@ -426,18 +419,6 @@ void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx,
     emit sendTextureIdByTileIndx(tileIndx, textureId);
 }
 
-void GraphicsScene3dView::updateIsobathsForAllData()
-{
-    auto indxs = m_bottomTrack->getAllIndxs();
-    isobaths_->onUpdatedBottomTrackDataWrapper(indxs);
-}
-
-void GraphicsScene3dView::updateIsobathsForRemainingData()
-{
-    auto indxs = m_bottomTrack->getRemainingIndxs();
-    isobaths_->onUpdatedBottomTrackDataWrapper(indxs);
-}
-
 void GraphicsScene3dView::setGridVisibility(bool state)
 {
     gridVisibility_ = state;
@@ -650,7 +631,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     m_bottomTrack->setDatasetPtr(datasetPtr_);
     sideScanView_->setDatasetPtr(datasetPtr_);
     contacts_->setDatasetPtr(datasetPtr_);
-    isobaths_->setBottomTrackPtr(m_bottomTrack.get());
 
     forceUpdateDatasetRef();
 
@@ -1011,9 +991,9 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
 
     // deleting
     auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
-    for (GLuint textureId : deleteTasks) {
-        if (textureId != 0) {
-            glDeleteTextures(1, &textureId);
+    for (auto it = deleteTasks.constBegin(); it != deleteTasks.constEnd(); ++it) {
+        if (*it != 0) {
+            glDeleteTextures(1, &*it);
         }
     }
 }
@@ -1150,8 +1130,9 @@ void GraphicsScene3dView::InFboRenderer::processIsobathsTexture(GraphicsScene3dV
     auto isobathsPtr = viewPtr->getIsobathsPtr();
     auto& task = isobathsPtr->getTextureTasksRef();
 
-    if (task.empty())
+    if (task.empty()) {
         return;
+    }
 
     GLuint textureId = isobathsPtr->getTextureId();
 

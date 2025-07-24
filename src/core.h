@@ -158,7 +158,7 @@ private slots:
 private slots:
     void onFileStopsOpening();
     void onSendTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
-    void onDataProcesstorStateChanged(const DataProcessorState& state);
+    void onDataProcesstorStateChanged(const DataProcessorType& state);
 
 private:
     /*methods*/
@@ -248,5 +248,5 @@ signals:
 #endif
 
     QVector<QMetaObject::Connection> dataProcessorConnections_;
-    DataProcessorState dataProcessorState_ = DataProcessorState::kWaiting;
+    DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
 };
