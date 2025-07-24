@@ -456,7 +456,7 @@ void GraphicsScene3dView::setNeedToResetStartPos(bool state)
     needToResetStartPos_ = state;
 }
 
-void GraphicsScene3dView::forceUpdateDatasetRef()
+void GraphicsScene3dView::forceUpdateDatasetLlaRef()
 {
     if (datasetPtr_) {
         auto ref = datasetPtr_->getLlaRef();
@@ -632,7 +632,7 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     sideScanView_->setDatasetPtr(datasetPtr_);
     contacts_->setDatasetPtr(datasetPtr_);
 
-    forceUpdateDatasetRef();
+    forceUpdateDatasetLlaRef();
 
     QObject::connect(datasetPtr_, &Dataset::bottomTrackUpdated,
                      this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
@@ -645,17 +645,9 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
                      }, Qt::DirectConnection);
 
-    //QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
-    //                 this,      [this](int indx) -> void {
-    //                                if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
-    //                                    m_bottomTrack->sideScanUpdated();
-    //                                    sideScanView_->startUpdateDataInThread(indx);
-    //                                }
-    //                            }, Qt::DirectConnection);
-
     QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
-                         forceUpdateDatasetRef();
+                         forceUpdateDatasetLlaRef();
                          fitAllInView();
                      }, Qt::DirectConnection);
 }

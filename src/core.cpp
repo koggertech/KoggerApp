@@ -267,7 +267,7 @@ void Core::onFileStartOpening()
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->getSideScanViewPtr()->updateChannelsIds(); // TODO: not effect(
-        scene3dViewPtr_->forceUpdateDatasetRef();
+        scene3dViewPtr_->forceUpdateDatasetLlaRef();
         //scene3dViewPtr_->setMapView();
     }
 }
@@ -280,7 +280,7 @@ void Core::onFileOpened()
     fileIsCompleteOpened_ = true;
 
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->forceUpdateDatasetRef();
+        scene3dViewPtr_->forceUpdateDatasetLlaRef();
         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
@@ -290,7 +290,7 @@ void Core::onFileReadEnough()
     datasetPtr_->setRefPositionByFirstValid();
     // datasetPtr_->usblProcessing();
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->forceUpdateDatasetRef();
+        scene3dViewPtr_->forceUpdateDatasetLlaRef();
         //scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack(), QColor(255, 0, 0), 10);
         //scene3dViewPtr_->addPoints(datasetPtr_->beaconTrack1(), QColor(0, 255, 0), 10);
     }

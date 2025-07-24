@@ -56,8 +56,7 @@ public:
     virtual ~SideScanView();
 
     bool updateChannelsIds();
-    void startUpdateDataInThread(int endIndx, int endOffset = 0);
-    void updateData(int endIndx, int endOffset = 0, bool backgroungThread = false);
+    void startUpdateDataInThread(int endIndx, int endOffset = 0); // вызывался в реалтайме по интерполяции, вызывается в контроллере по кнопке
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void clear(bool force = true);
 
@@ -77,18 +76,21 @@ public:
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
-    GLuint                              getTextureIdByTileId(QUuid tileId);
     bool                                getUseLinearFilter() const;
+    Mode                                getWorkMode() const;
+    // textures
+    GLuint                              getTextureIdByTileId(QUuid tileId);
     GLuint                              getColorTableTextureId() const;
     QHash<QUuid, std::vector<uint8_t>>  getTileTextureTasks();
     std::vector<uint8_t>                getColorTableTextureTask();
-    Mode                                getWorkMode() const;
 
 signals:
     void sendStartedInThread(bool);
     void sendUpdatedWorkMode(Mode);
 
 private:
+    void updateData(int endIndx, int endOffset = 0, bool backgroungThread = false);
+
     /*methods*/
     inline bool checkLength(float dist) const;
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;

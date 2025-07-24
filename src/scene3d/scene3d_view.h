@@ -133,10 +133,14 @@ public:
     private:
         friend class GraphicsScene3dView;
 
+        // maps
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
+        // mosaic
         void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processTileTexture(GraphicsScene3dView* viewPtr) const;
+        // image
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
+        // isobaths
         void processIsobathsTexture(GraphicsScene3dView* viewPtr) const;
 
         QString checkOpenGLError() const;
@@ -191,7 +195,7 @@ public:
     void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
-    void forceUpdateDatasetRef();
+    void forceUpdateDatasetLlaRef();
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
