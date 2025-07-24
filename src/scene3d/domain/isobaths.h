@@ -28,17 +28,17 @@ public:
     private:
         friend class Isobaths;
 
-        QVector<LabelParameters> labels_; //
-        QVector<QVector3D> lineSegments_; //
-        QVector<QVector3D> pts_; // для треугольников //
-        QVector<QVector3D> edgePts_; // для ребер //
+        QVector<LabelParameters> labels_; // from dataprocessor
+        QVector<QVector3D> lineSegments_; // from dataprocessor
+        QVector<QVector3D> pts_; // from dataprocessor
+        QVector<QVector3D> edgePts_; // from dataprocessor
         QVector3D color_;
         float distToFocusPoint_;
-        float minZ_; //
-        float maxZ_; //
-        float levelStep_; //
-        float lineStepSize_; //
-        int colorIntervalsSize_; //
+        float minZ_; // from dataprocessor
+        float maxZ_; // from dataprocessor
+        float levelStep_; // from dataprocessor
+        float lineStepSize_; // from dataprocessor
+        int colorIntervalsSize_; // from dataprocessor
         GLuint textureId_;
         bool trianglesVisible_;
         bool edgesVisible_;
@@ -54,14 +54,12 @@ public:
     GLuint getDeinitTextureTask() const;
     GLuint getTextureId() const;
     void setTextureId(GLuint textureId);
-
     void setCameraDistToFocusPoint(float val);
     void setDebugMode(bool state);
     void setTrianglesVisible(bool state);
     void setEdgesVisible(bool state);
 
-public slots:
-    // data from isobaths processor
+public slots: // from dataprocessor
     void setLabels(const QVector<IsobathUtils::LabelParameters>& labels);
     void setLineSegments(const QVector<QVector3D>& lineSegments);
     void setPts(const QVector<QVector3D>& pts);
@@ -73,8 +71,7 @@ public slots:
     void setTextureTask(const QVector<uint8_t>& textureTask);
     void setColorIntervalsSize(int size);
 
-
 private:
-    QVector<uint8_t> textureTask_; //
+    QVector<uint8_t> textureTask_;
     GLuint toDeleteId_;
 };

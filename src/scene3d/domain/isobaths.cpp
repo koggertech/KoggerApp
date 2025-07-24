@@ -23,7 +23,6 @@ void Isobaths::clear()
         r->minZ_ = std::numeric_limits<float>::max();
         r->maxZ_ = std::numeric_limits<float>::lowest();
         r->colorIntervalsSize_ = -1;
-        //toDeleteId_ = r->textureId_;
         r->textureId_ = 0;
         r->lineSegments_.clear();
         r->labels_.clear();
@@ -57,7 +56,6 @@ GLuint Isobaths::getTextureId() const
 void Isobaths::setTextureId(GLuint textureId)
 {
     if (auto* r = RENDER_IMPL(Isobaths); r) {
-        //toDeleteId_ = r->textureId_;
         r->textureId_ = textureId;
         Q_EMIT changed();
     }
@@ -209,24 +207,6 @@ void Isobaths::IsobathsRenderImplementation::render(QOpenGLFunctions *ctx,
                                                     const QMap<QString,
                                                     std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
-
-    //qDebug() << "labels_" << labels_.size(); //
-    //QVector<QVector3D> lineSegments_; //
-    //QVector<QVector3D> pts_; // для треугольников //
-    //QVector<QVector3D> edgePts_; // для ребер //
-    //QVector3D color_;
-    //float distToFocusPoint_;
-    //float minZ_; //
-    //float maxZ_; //
-    //float levelStep_; //
-    //float lineStepSize_; //
-    //int colorIntervalsSize_; //
-    //GLuint textureId_;
-    //bool trianglesVisible_;
-    //bool edgesVisible_;
-    //bool debugMode_;
-
-
     if (!debugMode_) {
         if (!m_isVisible ) {
             return;
