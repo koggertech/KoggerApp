@@ -253,19 +253,19 @@ MenuFrame {
         //     }
         // }
 
-        CButton {
-            id: updateIsobathsButton
-            text: qsTr("Update")
-            Layout.fillWidth: true
+        // CButton {
+        //     id: updateIsobathsButton
+        //     text: qsTr("Update")
+        //     Layout.fillWidth: true
 
-            onClicked: {
-                //IsobathsControlMenuController.onResetIsobathsButtonClicked()
-                IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
-            }
+        //     onClicked: {
+        //         //IsobathsControlMenuController.onResetIsobathsButtonClicked()
+        //         IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
+        //     }
 
-            onFocusChanged: {
-                isobathsSettings.focus = true
-            }
-        }
+        //     onFocusChanged: {
+        //         isobathsSettings.focus = true
+        //     }
+        // }
     }
 }

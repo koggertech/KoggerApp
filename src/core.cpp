@@ -1151,6 +1151,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
 void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
 {
+    qDebug() << "Core::setSideScanChannels" << firstChStr << secondChStr;
+
     if (scene3dViewPtr_ && scene3dViewPtr_->getSideScanViewPtr() && datasetPtr_) {
 
         auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);

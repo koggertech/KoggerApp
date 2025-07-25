@@ -408,7 +408,7 @@ WaterFall {
 
                         function setChannelNamesToBackend() {
                             plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
-                            core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
+                            //core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
                             plotCursorChanged(indx, cursorFrom(), cursorTo())
                         }
 
