@@ -55,58 +55,65 @@ public:
     explicit SideScanView(QObject* parent = nullptr);
     virtual ~SideScanView();
 
+
+    // LOCAL
+    GLuint                              getTextureIdByTileId(QUuid tileId);
+    GLuint                              getColorTableTextureId() const;
+    QHash<QUuid, std::vector<uint8_t>>  getTileTextureTasks();
+    std::vector<uint8_t>                getColorTableTextureTask();
+    void setTextureIdByTileId(QUuid tileId, GLuint textureId);
+    void setMeasLineVisible(bool state);
+    void setTileGridVisible(bool state);
+    void setUseLinearFilter(bool state);
+    void setColorTableTextureId(GLuint value);
+    bool                                getUseLinearFilter() const;
+
+    void clear(bool force = true); // divide
+
+    // PROCESSING
     bool updateChannelsIds();
     void startUpdateDataInThread(int endIndx, int endOffset = 0); // вызывался в реалтайме по интерполяции, вызывается в контроллере по кнопке
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
-    void clear(bool force = true);
-
-    void setView(GraphicsScene3dView* viewPtr);
     void setDatasetPtr(Dataset* datasetPtr);
-    void setMeasLineVisible(bool state);
-    void setTileGridVisible(bool state);
     void setGenerateGridContour(bool state);
     void setColorTableThemeById(int id);
     void setColorTableLevels(float lowVal, float highVal);
     void setColorTableLowLevel(float val);
     void setColorTableHighLevel(float val);
-    void setTextureIdByTileId(QUuid tileId, GLuint textureId);
-    void setUseLinearFilter(bool state);
-    void setColorTableTextureId(GLuint value);
     void setWorkMode(Mode mode);
+    Mode getWorkMode() const;
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
-    bool                                getUseLinearFilter() const;
-    Mode                                getWorkMode() const;
-    // textures
-    GLuint                              getTextureIdByTileId(QUuid tileId);
-    GLuint                              getColorTableTextureId() const;
-    QHash<QUuid, std::vector<uint8_t>>  getTileTextureTasks();
-    std::vector<uint8_t>                getColorTableTextureTask();
 
 signals:
     void sendStartedInThread(bool);
     void sendUpdatedWorkMode(Mode);
 
 private:
-    void updateData(int endIndx, int endOffset = 0, bool backgroungThread = false);
+    // LOCAL
+    void updateTilesTexture();
+    void postUpdate(); //
+    void updateUnmarkedHeightVertices(Tile* tilePtr) const; //
 
-    /*methods*/
+    // PROCESSING
+    void updateData(int endIndx, int endOffset = 0, bool backgroungThread = false);
     inline bool checkLength(float dist) const;
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
     void concatenateMatrixParameters(MatrixParams& srcDst, const MatrixParams& src) const;
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
-    void postUpdate();
-    void updateTilesTexture();
-    void updateUnmarkedHeightVertices(Tile* tilePtr) const;
-
     /*data*/
-    static constexpr float amplitudeCoeff_ = 100.0f;
     static constexpr int colorTableSize_ = 255;
     static constexpr int interpLineWidth_ = 1;
 
     std::vector<uint8_t> colorTableTextureTask_;
     QHash<QUuid, std::vector<uint8_t>> tileTextureTasks_;
+    GLuint colorMapTextureId_;
+
+
+    GlobalMesh globalMesh_;
+
+
     PlotColorTable colorTable_;
     MatrixParams lastMatParams_;
     Dataset* datasetPtr_;
@@ -120,9 +127,7 @@ private:
     int tileHeightMatrixRatio_;
     int lastCalcEpoch_;
     int lastAcceptedEpoch_;
-    GlobalMesh globalMesh_;
     bool useLinearFilter_;
-    GLuint colorMapTextureId_;
     Mode workMode_;
     bool manualSettedChannels_;
     float lAngleOffset_;

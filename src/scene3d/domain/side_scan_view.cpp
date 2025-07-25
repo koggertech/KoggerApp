@@ -1,6 +1,5 @@
 #include "side_scan_view.h"
 
-#include <optional>
 #include <QtMath>
 #include "scene3d_view.h"
 #include <QtConcurrent/QtConcurrent>
@@ -29,7 +28,7 @@ SideScanView::SideScanView(QObject* parent) :
     startedInThread_(false)
 {
     qRegisterMetaType<Mode>("Mode");
-    colorTableTextureTask_ = colorTable_.getRgbaColors();
+    colorTableTextureTask_ = colorTable_.getRgbaColors();//
 }
 
 SideScanView::~SideScanView()
@@ -475,12 +474,18 @@ void SideScanView::clear(bool force)
 {
     QMutexLocker locker(&mutex_);
 
-    auto renderImpl = RENDER_IMPL(SideScanView);
-    renderImpl->measLinesVertices_.clear();
-    renderImpl->measLinesEvenIndices_.clear();
-    renderImpl->measLinesOddIndices_.clear();
-    renderImpl->updateBounds();
+    // render
+    auto* r = RENDER_IMPL(SideScanView);
+    r->measLinesVertices_.clear();
+    r->measLinesEvenIndices_.clear();
+    r->measLinesOddIndices_.clear();
+    r->updateBounds();
+    r->tiles_.clear();
 
+
+
+
+    // proc
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
     currIndxSec_ = 0;
@@ -497,21 +502,16 @@ void SideScanView::clear(bool force)
 
     globalMesh_.clear();
 
-    renderImpl->tiles_.clear();
-
     for (const auto &itmI : globalMesh_.getTileMatrixRef()) {
         for (const auto& itmJ : itmI) {
             tileTextureTasks_[itmJ->getUuid()] = std::vector<uint8_t>();
         }
     }
 
+
+
     Q_EMIT changed();
     Q_EMIT boundsChanged();
-}
-
-void SideScanView::setView(GraphicsScene3dView *viewPtr)
-{
-    SceneObject::m_view = viewPtr;
 }
 
 void SideScanView::setDatasetPtr(Dataset* datasetPtr)
@@ -521,16 +521,18 @@ void SideScanView::setDatasetPtr(Dataset* datasetPtr)
 
 void SideScanView::setMeasLineVisible(bool state)
 {
-    RENDER_IMPL(SideScanView)->measLineVisible_ = state;
-
-    Q_EMIT changed();
+    if (auto* r = RENDER_IMPL(SideScanView); r) {
+        r->measLineVisible_ = state;
+        Q_EMIT changed();
+    }
 }
 
 void SideScanView::setTileGridVisible(bool state)
 {
-    RENDER_IMPL(SideScanView)->tileGridVisible_ = state;
-
-    Q_EMIT changed();
+    if (auto* r = RENDER_IMPL(SideScanView); r) {
+        r->tileGridVisible_ = state;
+        Q_EMIT changed();
+    }
 }
 
 void SideScanView::setGenerateGridContour(bool state)
@@ -589,8 +591,8 @@ void SideScanView::setTextureIdByTileId(QUuid tileId, GLuint textureId)
     QMutexLocker locker(&mutex_);
 
     // render
-    auto it = RENDER_IMPL(SideScanView)->tiles_.find(tileId);
-    if (it != RENDER_IMPL(SideScanView)->tiles_.end()) {
+    auto* r = RENDER_IMPL(SideScanView);
+    if (auto it = r->tiles_.find(tileId); it != r->tiles_.end()) {
         it.value().setTextureId(textureId);
         Q_EMIT changed();
     }
@@ -845,7 +847,7 @@ void SideScanView::postUpdate()
 
 void SideScanView::updateTilesTexture()
 {
-    if (!globalMesh_.getIsInited() || !m_view) {
+    if (!globalMesh_.getIsInited()) {
         return;
     }
     QMutexLocker locker(&mutex_);
@@ -1034,7 +1036,7 @@ void SideScanView::SideScanViewRenderImplementation::updateBounds()
     float y_max{ !std::isfinite(measLinesVertices_.first().y()) ? 0.f : measLinesVertices_.first().y() };
     float y_min{ y_max };
 
-    for (const auto& itm: qAsConst(measLinesVertices_)){
+    for (const auto& itm: qAsConst(measLinesVertices_)) {
         z_min = std::min(z_min, !std::isfinite(itm.z()) ? 0.f : itm.z());
         z_max = std::max(z_max, !std::isfinite(itm.z()) ? 0.f : itm.z());
         x_min = std::min(x_min, !std::isfinite(itm.x()) ? 0.f : itm.x());

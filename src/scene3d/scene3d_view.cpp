@@ -46,7 +46,6 @@ GraphicsScene3dView::GraphicsScene3dView() :
     boatTrack_->setColor({80,0,180});
     boatTrack_->setWidth(6.0f);
 
-    sideScanView_->setView(this);
     imageView_->setView(this);
 
     QObject::connect(isobaths_.get(), &Isobaths::changed, this, &QQuickFramebufferObject::update);
