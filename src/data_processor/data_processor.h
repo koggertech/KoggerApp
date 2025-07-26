@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QVector>
 #include <QVector3D>
+#include "mosaic_mesh.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
@@ -51,6 +52,16 @@ public slots:
     void setIsobathsLineStepSize(float val);
     void setIsobathsLabelStepSize(float val);
     void setIsobathsEdgeLimit(int val);
+    // MosaicProcessor
+    void setMosaicChannels(const ChannelId& ch1, uint8_t sub1, const ChannelId& ch2, uint8_t sub2);
+    void setMosaicTheme(int indx);
+    void setMosaicLAngleOffset(float val);
+    void setMosaicRAngleOffset(float val);
+    void setMosaicResolution(float val);
+    void setMosaicLevels(float lowLevel, float highLevel);
+    void setMosaicLowLevel(float val);
+    void setMosaicHighLevel(float val);
+    void setMosaicGenerateGridContour(bool state);
 
 signals:
     // this
@@ -73,6 +84,8 @@ signals:
     void sendIsobathsLineStepSize(float lineStepSize);
     void sendIsobathsTextureTask(const QVector<uint8_t>& textureTask);
     void sendIsobathsColorIntervalsSize(int size);
+    // MosaicProcessor
+    void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
 
 private slots:
     // IsobathsProcessor
@@ -91,11 +104,14 @@ private:
 private:
     friend class BottomTrackProcessor;
     friend class IsobathsProcessor;
+    friend class MosaicProcessor;
+
     // this
     Dataset* datasetPtr_;
+    GlobalMesh globalMesh_;
     BottomTrackProcessor bottomTrackProcessor_;
     IsobathsProcessor isobathsProcessor_;
-    //MosaicProcessor mosaicProcessor_;
+    MosaicProcessor mosaicProcessor_;
     SurfaceProcessor surfaceProcessor_;
     QHash<ChannelId, uint64_t> chartsCounter_;
     DataProcessorType state_;

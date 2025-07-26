@@ -9,9 +9,10 @@
 DataProcessor::DataProcessor(QObject *parent)
     : QObject(parent),
       datasetPtr_(nullptr),
+      globalMesh_(256, 16, 0.1f),
       bottomTrackProcessor_(this),
       isobathsProcessor_(this),
-      //mosaicProcessor_(this),
+      mosaicProcessor_(this),
       surfaceProcessor_(this),
       state_(DataProcessorType::kUndefined),
       bottomTrackCounter_(0),
@@ -27,6 +28,8 @@ DataProcessor::DataProcessor(QObject *parent)
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorType>("DataProcessorState");
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
+
+    mosaicProcessor_.setGlobalMeshPtr(&globalMesh_);
 }
 
 DataProcessor::~DataProcessor()
@@ -38,7 +41,7 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
-    //mosaicProcessor_.setDatasetPtr(datasetPtr_);
+    mosaicProcessor_.setDatasetPtr(datasetPtr_);
     surfaceProcessor_.setDatasetPtr(datasetPtr_);
 }
 
@@ -67,16 +70,22 @@ void DataProcessor::clear(DataProcessorType procType)
 
 void DataProcessor::setUpdateBottomTrack(bool state)
 {
+    //qDebug() << "DataProcessor::setUpdateBottomTrack" << state;
+
     updateBottomTrack_ = state;
 }
 
 void DataProcessor::setUpdateIsobaths(bool state)
 {
+    //qDebug() << "DataProcessor::setUpdateIsobaths" << state;
+
     updateIsobaths_ = state;
 }
 
 void DataProcessor::setUpdateMosaic(bool state)
 {
+    //qDebug() << "DataProcessor::setUpdateMosaic" << state;
+
     updateMosaic_ = state;
 }
 
@@ -124,9 +133,7 @@ void DataProcessor::onChartsAdded(const ChannelId& channelId, uint64_t indx)
 
 void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
 {    
-    //qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << QThread::currentThreadId();
-    //qDebug() << indxs.size();
-
+    // qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << QThread::currentThreadId() << indxs.size();
     if (indxs.empty()) {
         return;
     }
@@ -135,7 +142,12 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
 
     // calc isobaths
     if (updateIsobaths_) {
-        enqueueWork(indxs, false, false);
+        enqueueWork(indxs, false, false); // TODO move to this thread
+    }
+
+    // test cals mosaic
+    if (updateMosaic_) {
+        mosaicProcessor_.startUpdateDataInThread(bottomTrackCounter_, 0);
     }
 }
 
@@ -226,6 +238,69 @@ void DataProcessor::setIsobathsEdgeLimit(int val)
     enqueueWork({}, true, true);
 }
 
+void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
+{
+    //qDebug() << "DataProcessor::setMosaicChannels" << ch1.toShortName() << sub1 << ch2.toShortName() << sub2;
+
+    mosaicProcessor_.setChannels(ch1, sub1, ch2, sub2);
+}
+
+void DataProcessor::setMosaicTheme(int indx)
+{
+    //qDebug() << "DataProcessor::setMosaicTheme" << indx;
+
+    mosaicProcessor_.setColorTableThemeById(indx);
+}
+
+void DataProcessor::setMosaicLAngleOffset(float val)
+{
+    //qDebug() << "DataProcessor::setMosaicLAngleOffset" << val;
+
+    mosaicProcessor_.setLAngleOffset(val);
+}
+
+void DataProcessor::setMosaicRAngleOffset(float val)
+{
+    //qDebug() << "DataProcessor::setMosaicRAngleOffset" << val;
+
+    mosaicProcessor_.setRAngleOffset(val);
+}
+
+void DataProcessor::setMosaicResolution(float val)
+{
+    //qDebug() << "DataProcessor::setMosaicResolution" << val;
+
+    mosaicProcessor_.setResolution(val);
+}
+
+void DataProcessor::setMosaicLevels(float lowLevel, float highLevel)
+{
+    //qDebug() << "DataProcessor::setMosaicLevels" << lowLevel << highLevel;
+
+    mosaicProcessor_.setColorTableLevels(lowLevel, highLevel);
+}
+
+void DataProcessor::setMosaicLowLevel(float val)
+{
+    //qDebug() << "DataProcessor::setMosaicLowLevel" << val;
+
+    mosaicProcessor_.setColorTableLowLevel(val);
+}
+
+void DataProcessor::setMosaicHighLevel(float val)
+{
+    //qDebug() << "DataProcessor::setMosaicHighLevel" << val;
+
+    mosaicProcessor_.setColorTableHighLevel(val);
+}
+
+void DataProcessor::setMosaicGenerateGridContour(bool state)
+{
+    //qDebug() << "DataProcessor::setMosaicGenerateGridContour" << state;
+
+    mosaicProcessor_.setGenerateGridContour(state);
+}
+
 void DataProcessor::handleWorkerFinished()
 {
     QMutexLocker lk(&isobathsPendingMtx_);
@@ -267,7 +342,9 @@ void DataProcessor::clearIsobathsProcessing()
 
 void DataProcessor::clearMosaicProcessing()
 {
+    mosaicProcessor_.clear();
 
+    globalMesh_.clear();
 }
 
 void DataProcessor::clearAllProcessings()

@@ -326,7 +326,7 @@ MenuFrame {
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
-                    id: mosaicTileResolutionSpinBox
+                    id: mosaicResolutionSpinBox
                     implicitWidth: 200
                     from: 1
                     to: 100
@@ -336,6 +336,17 @@ MenuFrame {
 
                     onFocusChanged: {
                         mosaicViewSettings.focus = true
+                    }
+
+                    onValueChanged: {
+                        MosaicViewControlMenuController.onSetResolution(value)
+                    }
+                    Component.onCompleted: {
+                        MosaicViewControlMenuController.onSetResolution(value)
+                    }
+
+                    Settings {
+                        property alias mosaicResolutionSpinBox: mosaicResolutionSpinBox.value
                     }
                 }
             }
@@ -415,22 +426,6 @@ MenuFrame {
 //             onFocusChanged: {
 //                 mosaicViewSettings.focus = true
 //             }
-//         }
-//     }
-
-//     CButton {
-//         text: qsTr("Reinit global mesh")
-//         Layout.fillWidth: true
-//         Layout.preferredWidth: 200
-//         enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
-
-//         onClicked: {
-//             MosaicViewControlMenuController.onGlobalMeshChanged(
-//                         mosaicTileSidePixelSizeSpinBox.value, mosaicTileHeightMatrixRatioSpinBox.value, 1 / mosaicTileResolutionSpinBox.value)
-//         }
-
-//         onFocusChanged: {
-//             mosaicViewSettings.focus = true
 //         }
 //     }
 // }

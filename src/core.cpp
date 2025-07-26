@@ -27,6 +27,8 @@ Core::Core() :
     filePath_(),
     isFileOpening_(false)
 {
+    qRegisterMetaType<uint8_t>("uint8_t");
+
     qDebug() << "Core ctr" << QThread::currentThreadId();
 
     logger_.setDatasetPtr(datasetPtr_);
@@ -1138,18 +1140,14 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
 void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
 {
-    qDebug() << "Core::setMosaicChannels" << firstChStr << secondChStr;
-
     if (scene3dViewPtr_ && scene3dViewPtr_->getMosaicViewPtr() && datasetPtr_) {
-
         auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);
         auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(secondChStr);
 
         Q_UNUSED(name1)
         Q_UNUSED(name2)
 
-        // TODO
-        //scene3dViewPtr_->getMosaicViewPtr()->setChannels(ch1, sub1, ch2, sub2);
+        QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels", Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
     }
 }
 
@@ -1324,8 +1322,6 @@ void Core::createControllers()
     scene3dControlMenuController_         = std::make_shared<Scene3DControlMenuController>();
     scene3dToolBarController_             = std::make_shared<Scene3dToolBarController>();
     usblViewControlMenuController_        = std::make_shared<UsblViewControlMenuController>();
-
-    mosaicViewControlMenuController_->setCorePtr(this);
 }
 
 #ifdef SEPARATE_READING

@@ -348,10 +348,16 @@ Item  {
 
                     onCheckedChanged: {
                         MosaicViewControlMenuController.onVisibilityChanged(checked)
+                        MosaicViewControlMenuController.onUpdateStateChanged(checked)
+
+                        if (checked) {
+                            MosaicViewControlMenuController.onUpdateClicked()
+                        }
                     }
 
                     Component.onCompleted: {
                         MosaicViewControlMenuController.onVisibilityChanged(checked)
+                        MosaicViewControlMenuController.onUpdateStateChanged(checked)
                     }
 
                     property bool mosaicLongPressTriggered: false

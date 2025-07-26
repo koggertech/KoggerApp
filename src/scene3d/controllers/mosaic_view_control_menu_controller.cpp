@@ -1,21 +1,19 @@
 #include "mosaic_view_control_menu_controller.h"
+
 #include "scene3d_view.h"
-#include "mosaic_view.h"
-#include "core.h"
+#include "data_processor.h"
 
 
 MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent)
     : QmlComponentController(parent),
       graphicsSceneViewPtr_(nullptr),
-      corePtr_(nullptr),
+      dataProcessorPtr_(nullptr),
       pendingLambda_(nullptr),
       visibility_(false),
       usingFilter_(false),
       gridVisible_(false),
       measLineVisible_(false),
-      //tileSidePixelSize_(256),
-      //tileHeightMatrixRatio_(16),
-      //tileResolution_(1.0f/10.0f),
+      resolution_(10.0f), // pixPerMeters
       generateGridContour_(false),
       updateState_(false),
       themeId_(0),
@@ -24,13 +22,11 @@ MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent
       lAngleOffset_(0.0f),
       rAngleOffset_(0.0f)
 {
-
 }
 
 void MosaicViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsSceneViewPtr_ = sceneView;
-    tryClearMakeConnections();
 
     if (graphicsSceneViewPtr_) {
         if (pendingLambda_) {
@@ -43,13 +39,6 @@ void MosaicViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView *
 void MosaicViewControlMenuController::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
 {
     dataProcessorPtr_ = dataProcessorPtr;
-}
-
-void MosaicViewControlMenuController::setCorePtr(Core* corePtr)
-{
-    corePtr_ = corePtr;
-
-    tryClearMakeConnections();
 }
 
 void MosaicViewControlMenuController::onVisibilityChanged(bool state)
@@ -107,27 +96,14 @@ void MosaicViewControlMenuController::onClearClicked()
     }
 }
 
-void MosaicViewControlMenuController::onGlobalMeshChanged(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
-{
-    if (graphicsSceneViewPtr_) {
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->resetTileSettings(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);
-    }
-    //else {
-    //    tileSidePixelSize_ = tileSidePixelSize;
-    //    tileHeightMatrixRatio_ = tileHeightMatrixRatio;
-    //    tileResolution_ = tileResolution;
-    //    tryInitPendingLambda();
-    //}
-}
-
 void MosaicViewControlMenuController::onGenerateGridContourChanged(bool state)
 {
     generateGridContour_ = state;
 
     if (graphicsSceneViewPtr_) {
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->setGenerateGridContour(generateGridContour_);
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicGenerateGridContour", Qt::QueuedConnection, Q_ARG(bool, generateGridContour_));
+        }
     }
     else {
         tryInitPendingLambda();
@@ -153,8 +129,9 @@ void MosaicViewControlMenuController::onThemeChanged(int val)
     themeId_ = val + 1;
 
     if (graphicsSceneViewPtr_) {
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->setColorTableThemeById(themeId_);
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTheme", Qt::QueuedConnection, Q_ARG(int, themeId_));
+        }
     }
     else {
         tryInitPendingLambda();
@@ -167,8 +144,9 @@ void MosaicViewControlMenuController::onLevelChanged(float lowLevel, float highL
     highLevel_ = highLevel;
 
     if (graphicsSceneViewPtr_) {
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->setColorTableLevels(lowLevel_, highLevel_);
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLevels", Qt::QueuedConnection, Q_ARG(float, lowLevel_), Q_ARG(float, highLevel_));
+        }
     }
     else {
         tryInitPendingLambda();
@@ -178,18 +156,10 @@ void MosaicViewControlMenuController::onLevelChanged(float lowLevel, float highL
 void MosaicViewControlMenuController::onUpdateClicked()
 {
     if (graphicsSceneViewPtr_) {
-#ifdef SEPARATE_READING
-        if (corePtr_) {
-            if (!corePtr_->getTryOpenedfilePath().isEmpty()) {
-                return;
-            }
-        }
-        else {
-            return;
-        }
-#endif
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->startUpdateDataInThread(0, 0);
+        // TODO completely rebuild !!!
+        //if (dataProcessorPtr_) {
+        //    QMetaObject::invokeMethod(dataProcessorPtr_, "UPDATE", Qt::QueuedConnection, Q_ARG());
+        //}
     }
 }
 
@@ -198,8 +168,9 @@ void MosaicViewControlMenuController::onSetLAngleOffset(float val)
     lAngleOffset_ = val;
 
     if (graphicsSceneViewPtr_) {
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->setLAngleOffset(lAngleOffset_);
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLAngleOffset", Qt::QueuedConnection, Q_ARG(float, lAngleOffset_));
+        }
     }
     else {
         tryInitPendingLambda();
@@ -211,21 +182,27 @@ void MosaicViewControlMenuController::onSetRAngleOffset(float val)
     rAngleOffset_ = val;
 
     if (graphicsSceneViewPtr_) {
-        // TODO
-        //graphicsSceneViewPtr_->getMosaicViewPtr()->setRAngleOffset(rAngleOffset_);
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicRAngleOffset", Qt::QueuedConnection, Q_ARG(float, rAngleOffset_));
+        }
     }
     else {
         tryInitPendingLambda();
     }
 }
 
-MosaicView* MosaicViewControlMenuController::getMosaicViewPtr() const
+void MosaicViewControlMenuController::onSetResolution(float val)
 {
-    if (graphicsSceneViewPtr_) {
-        return graphicsSceneViewPtr_->getMosaicViewPtr().get();
-    }
+    resolution_ = val;
 
-    return nullptr;
+    if (graphicsSceneViewPtr_) {
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
+        }
+    }
+    else {
+        tryInitPendingLambda();
+    }
 }
 
 void MosaicViewControlMenuController::tryInitPendingLambda()
@@ -235,7 +212,13 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
             if (graphicsSceneViewPtr_) {
 
                 if (dataProcessorPtr_) {
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicGenerateGridContour", Qt::QueuedConnection, Q_ARG(bool, generateGridContour_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTheme", Qt::QueuedConnection, Q_ARG(int, themeId_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLevels", Qt::QueuedConnection, Q_ARG(float, lowLevel_), Q_ARG(float, highLevel_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLAngleOffset", Qt::QueuedConnection, Q_ARG(float, lAngleOffset_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicRAngleOffset", Qt::QueuedConnection, Q_ARG(float, rAngleOffset_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
                 }
 
                 if (auto mosaicPtr = graphicsSceneViewPtr_->getMosaicViewPtr(); mosaicPtr) {
@@ -243,13 +226,6 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
                     mosaicPtr->setUseLinearFilter(usingFilter_);
                     mosaicPtr->setTileGridVisible(gridVisible_);
                     mosaicPtr->setMeasLineVisible(measLineVisible_);
-                    //mosaicPtr->resetTileSettings(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                    // TODO
-                    //mosaicPtr->setGenerateGridContour(generateGridContour_);
-                    //mosaicPtr->setColorTableThemeById(themeId_);
-                    //mosaicPtr->setColorTableLevels(lowLevel_, highLevel_);
-                    //mosaicPtr->setLAngleOffset(lAngleOffset_);
-                    //mosaicPtr->setRAngleOffset(rAngleOffset_);
                 }
             }
         };
@@ -259,12 +235,4 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
 void MosaicViewControlMenuController::findComponent()
 {
     m_component = m_engine->findChild<QObject*>("mosaicViewControlMenu");
-}
-
-void MosaicViewControlMenuController::tryClearMakeConnections()
-{
-    for (auto& itm : connections_) {
-        disconnect(itm);
-    }
-    connections_.clear();
 }
