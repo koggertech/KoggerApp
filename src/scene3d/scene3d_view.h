@@ -6,7 +6,7 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "ray_caster.h"
-#include "side_scan_view.h"
+#include "mosaic_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
@@ -178,7 +178,7 @@ public:
     std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Isobaths> getIsobathsPtr() const;
-    std::shared_ptr<SideScanView> getSideScanViewPtr() const;
+    std::shared_ptr<MosaicView> getMosaicViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
     std::shared_ptr<Contacts> getContactsPtr() const;
@@ -192,7 +192,6 @@ public:
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
-    void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetLlaRef();
@@ -242,7 +241,7 @@ signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void sendLlaRef(LLARef viewLlaRef);
     void cameraIsMoved();
-    void sendTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 private:
     void updateBounds();
@@ -259,7 +258,7 @@ private:
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Isobaths> isobaths_;
-    std::shared_ptr<SideScanView> sideScanView_;
+    std::shared_ptr<MosaicView> mosaicView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
     std::shared_ptr<Contacts> contacts_;

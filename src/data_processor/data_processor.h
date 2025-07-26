@@ -46,11 +46,11 @@ public slots:
     // BottomTrackProcessor
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
     // IsobathsProcessor
-    void setColorTableThemeById(int id);
-    void setSurfaceStepSize(float val);
-    void setLineStepSize(float val);
-    void setLabelStepSize(float val);
-    void setEdgeLimit(int val);
+    void setIsobathsColorTableThemeById(int id);
+    void setIsobathsSurfaceStepSize(float val);
+    void setIsobathsLineStepSize(float val);
+    void setIsobathsLabelStepSize(float val);
+    void setIsobathsEdgeLimit(int val);
 
 signals:
     // this
@@ -95,7 +95,7 @@ private:
     Dataset* datasetPtr_;
     BottomTrackProcessor bottomTrackProcessor_;
     IsobathsProcessor isobathsProcessor_;
-    MosaicProcessor mosaicProcessor_;
+    //MosaicProcessor mosaicProcessor_;
     SurfaceProcessor surfaceProcessor_;
     QHash<ChannelId, uint64_t> chartsCounter_;
     DataProcessorType state_;

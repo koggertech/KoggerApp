@@ -11,7 +11,7 @@ DataProcessor::DataProcessor(QObject *parent)
       datasetPtr_(nullptr),
       bottomTrackProcessor_(this),
       isobathsProcessor_(this),
-      mosaicProcessor_(this),
+      //mosaicProcessor_(this),
       surfaceProcessor_(this),
       state_(DataProcessorType::kUndefined),
       bottomTrackCounter_(0),
@@ -38,7 +38,7 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 
     bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
-    mosaicProcessor_.setDatasetPtr(datasetPtr_);
+    //mosaicProcessor_.setDatasetPtr(datasetPtr_);
     surfaceProcessor_.setDatasetPtr(datasetPtr_);
 }
 
@@ -133,11 +133,10 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
 
     bottomTrackCounter_ = indxs.last();
 
-    if (!updateIsobaths_ && !updateMosaic_) {
-        return;
+    // calc isobaths
+    if (updateIsobaths_) {
+        enqueueWork(indxs, false, false);
     }
-
-    enqueueWork(indxs, false, false);
 }
 
 void DataProcessor::onEpochAdded(uint64_t indx)
@@ -160,7 +159,7 @@ void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const Chann
     bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam_);
 }
 
-void DataProcessor::setColorTableThemeById(int id)
+void DataProcessor::setIsobathsColorTableThemeById(int id)
 {
     //qDebug() << "DataProcessor::setColorTableThemeById" << id;
 
@@ -173,9 +172,9 @@ void DataProcessor::setColorTableThemeById(int id)
     isobathsProcessor_.rebuildColorIntervals();
 }
 
-void DataProcessor::setSurfaceStepSize(float val)
+void DataProcessor::setIsobathsSurfaceStepSize(float val)
 {
-    //qDebug() << "DataProcessor::setSurfaceStepSize" << val;
+    //qDebug() << "DataProcessor::setIsobathsSurfaceStepSize" << val;
 
     if (qFuzzyCompare(isobathsProcessor_.getSurfaceStepSize(), val)) {
         return;
@@ -186,9 +185,9 @@ void DataProcessor::setSurfaceStepSize(float val)
     isobathsProcessor_.rebuildColorIntervals();
 }
 
-void DataProcessor::setLineStepSize(float val)
+void DataProcessor::setIsobathsLineStepSize(float val)
 {
-    //qDebug() << "DataProcessor::setLineStepSize" << val;
+    //qDebug() << "DataProcessor::setIsobathsLineStepSize" << val;
 
     if (qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
         return;
@@ -201,9 +200,9 @@ void DataProcessor::setLineStepSize(float val)
     enqueueWork({}, true, false);
 }
 
-void DataProcessor::setLabelStepSize(float val)
+void DataProcessor::setIsobathsLabelStepSize(float val)
 {
-    //qDebug() << "DataProcessor::setLabelStepSize" << val;
+    //qDebug() << "DataProcessor::setIsobathsLabelStepSize" << val;
 
     if (qFuzzyCompare(isobathsProcessor_.getLabelStepSize(), val)) {
         return;
@@ -214,9 +213,9 @@ void DataProcessor::setLabelStepSize(float val)
     enqueueWork({}, true, false);
 }
 
-void DataProcessor::setEdgeLimit(int val)
+void DataProcessor::setIsobathsEdgeLimit(int val)
 {
-    //qDebug() << "DataProcessor::setEdgeLimit" << val;
+    //qDebug() << "DataProcessor::setIsobathsEdgeLimit" << val;
 
     if (qFuzzyCompare(isobathsProcessor_.getEdgeLimit(), static_cast<float>(val))) {
         return;

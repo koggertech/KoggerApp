@@ -23,7 +23,6 @@ void Isobaths::clear()
         r->minZ_ = std::numeric_limits<float>::max();
         r->maxZ_ = std::numeric_limits<float>::lowest();
         r->colorIntervalsSize_ = -1;
-        r->textureId_ = 0;
         r->lineSegments_.clear();
         r->labels_.clear();
     }
@@ -34,9 +33,10 @@ void Isobaths::clear()
 }
 
 
-QVector<uint8_t> &Isobaths::getTextureTasksRef()
+QVector<uint8_t> Isobaths::takeTextureTask()
 {
-    return textureTask_;
+    auto retVal = std::move(textureTask_);
+    return retVal;
 }
 
 GLuint Isobaths::getDeinitTextureTask() const
@@ -177,6 +177,8 @@ void Isobaths::setTextureTask(const QVector<uint8_t> &textureTask)
     //qDebug() << "Isobaths::setTextureTask" << textureTask.size();
 
     textureTask_ = textureTask;
+
+    Q_EMIT changed();
 }
 
 void Isobaths::setColorIntervalsSize(int size)
@@ -195,8 +197,8 @@ Isobaths::IsobathsRenderImplementation::IsobathsRenderImplementation()
       lineStepSize_(3.0f),
       colorIntervalsSize_(-1),
       textureId_(0),
-      trianglesVisible_(true),
-      edgesVisible_(true),
+      trianglesVisible_(false),
+      edgesVisible_(false),
       debugMode_(false)
 {}
 

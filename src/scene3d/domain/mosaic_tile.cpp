@@ -152,6 +152,11 @@ std::vector<uint8_t>& Tile::getImageDataRef()
     return imageData_;
 }
 
+const std::vector<uint8_t> &Tile::getImageDataCRef() const
+{
+    return imageData_;
+}
+
 QVector<QVector3D>& Tile::getHeightVerticesRef()
 {
     return heightVertices_;

@@ -1,13 +1,13 @@
 #include "draw_utils.h"
 
 
-sscan::PlotColorTable::PlotColorTable()
+mosaic::PlotColorTable::PlotColorTable()
 {
-    setThemeById(static_cast<int>(ThemeId::kClassic));
+    setTheme(static_cast<int>(ThemeId::kClassic));
     setLevels(10.0f, 100.0f);
 }
 
-void sscan::PlotColorTable::setThemeById(int id)
+void mosaic::PlotColorTable::setTheme(int id)
 {
     ThemeId theme;
     if (id >= static_cast<int>(ThemeId::kClassic) && id <= static_cast<int>(ThemeId::kBW)) {
@@ -16,6 +16,8 @@ void sscan::PlotColorTable::setThemeById(int id)
     else {
         return;
     }
+
+    themeId_ = static_cast<int>(theme);
 
     QVector<QColor> colors;
     QVector<int> levels;
@@ -69,7 +71,7 @@ void sscan::PlotColorTable::setThemeById(int id)
     setColorScheme(colors, levels);
 }
 
-void sscan::PlotColorTable::setLevels(float low, float high)
+void mosaic::PlotColorTable::setLevels(float low, float high)
 {
     lowLevel_ = low;
     highLevel_ = high;
@@ -77,27 +79,27 @@ void sscan::PlotColorTable::setLevels(float low, float high)
     update();
 }
 
-void sscan::PlotColorTable::setLowLevel(float val)
+void mosaic::PlotColorTable::setLowLevel(float val)
 {
     setLevels(val, highLevel_);
 }
 
-void sscan::PlotColorTable::setHighLevel(float val)
+void mosaic::PlotColorTable::setHighLevel(float val)
 {
     setLevels(lowLevel_, val);
 }
 
-QVector<QRgb> sscan::PlotColorTable::getColorTable() const
+QVector<QRgb> mosaic::PlotColorTable::getColorTable() const
 {
     return colorTableWithLevels_;
 }
 
-std::vector<uint8_t> sscan::PlotColorTable::getRgbaColors() const
+std::vector<uint8_t> mosaic::PlotColorTable::getRgbaColors() const
 {
     return rgbaColors_;
 }
 
-void sscan::PlotColorTable::update()
+void mosaic::PlotColorTable::update()
 {
     int levelRange = highLevel_ - lowLevel_;
     int indexOffset = static_cast<int>(lowLevel_ * 2.5f);
@@ -134,7 +136,7 @@ void sscan::PlotColorTable::update()
     }
 }
 
-void sscan::PlotColorTable::setColorScheme(const QVector<QColor> &colors, const QVector<int> &levels)
+void mosaic::PlotColorTable::setColorScheme(const QVector<QColor> &colors, const QVector<int> &levels)
 {
     if (colors.length() != levels.length()) {
         return;
@@ -161,4 +163,24 @@ void sscan::PlotColorTable::setColorScheme(const QVector<QColor> &colors, const 
     }
 
     update();
+}
+
+int mosaic::PlotColorTable::getTheme() const
+{
+    return themeId_;
+}
+
+std::pair<float, float> mosaic::PlotColorTable::getLevels() const
+{
+    return std::make_pair(lowLevel_, highLevel_);
+}
+
+float mosaic::PlotColorTable::getLowLevel() const
+{
+    return lowLevel_;
+}
+
+float mosaic::PlotColorTable::getHighLevel() const
+{
+    return highLevel_;
 }

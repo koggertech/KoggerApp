@@ -13,7 +13,7 @@
 
 constexpr float rgbMaxValue = 255.0f;
 
-namespace sscan {
+namespace mosaic {
 class PlotColorTable // TODO: copy-paste from Plot2DEchogram
 {
 public:
@@ -30,12 +30,16 @@ public:
     /*methods*/
     PlotColorTable();
 
-    void setThemeById(int id); // emun ThemeId
+    void setTheme(int id); // emun ThemeId
     void setLevels(float low, float high);
     void setLowLevel(float val);
     void setHighLevel(float val);
-    QVector<QRgb> getColorTable() const;
-    std::vector<uint8_t> getRgbaColors() const;
+    int                     getTheme()      const;
+    std::pair<float, float> getLevels()     const;
+    float                   getLowLevel()   const;
+    float                   getHighLevel()  const;
+    QVector<QRgb>           getColorTable() const;
+    std::vector<uint8_t>    getRgbaColors() const;
 
 private:
     /*methods*/
@@ -43,6 +47,7 @@ private:
     void setColorScheme(const QVector<QColor>& colors, const QVector<int>& levels);
 
     /*data*/
+    int themeId_;
     QVector<QRgb> colorTable_;
     QVector<QRgb> colorTableWithLevels_;
     float lowLevel_;
@@ -85,7 +90,7 @@ struct MatrixParams {
         stream << " originY:" << originY << "\n";
     }
 };
-} // namespace sscan
+} // namespace mosaic
 
 namespace DrawUtils
 {

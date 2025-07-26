@@ -467,14 +467,6 @@ ApplicationWindow  {
 
                 property bool longPressTriggered: false
 
-                KWaitProgressBar{
-                    id:        sideScanProcessingProgressBar
-                    objectName: "sideScanProcessingProgressBar"
-                    text:      qsTr("Calculating mosaic\nPlease wait...")
-                    textColor: "white"
-                    visible:  core.isMosaicUpdatingInThread && core.isSideScanPerformanceMode
-                }
-
                 PinchArea {
                     id:           pinch3D
                     anchors.fill: parent

@@ -6,9 +6,8 @@
 #include "mosaic_tile.h"
 
 
-using namespace sscan;
+using namespace mosaic;
 
-class SideScanView;
 class GlobalMesh {
 public:
     /*methods*/

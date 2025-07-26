@@ -194,8 +194,6 @@ void BottomTrack::clearData()
     auto r = RENDER_IMPL(BottomTrack);
     r->selectedVertexIndices_.clear();
 
-    r->sideScanUpdated_ = false;
-
     SceneObject::clearData();
 }
 
@@ -253,16 +251,6 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
     r->selectedVertexIndices_.append(indxFromMap);
 
     Q_EMIT changed();
-}
-
-void BottomTrack::sideScanUpdated()
-{
-    RENDER_IMPL(BottomTrack)->sideScanUpdated_ = true;
-}
-
-void BottomTrack::setSideScanVisibleState(bool state)
-{
-    RENDER_IMPL(BottomTrack)->sideScanVisibleState_ = state;
 }
 
 void BottomTrack::setVisibleState(bool state)
@@ -538,9 +526,7 @@ QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceV
 }
 
 //-----------------------RenderImplementation-----------------------------//
-BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation() :
-    sideScanUpdated_(false),
-    sideScanVisibleState_(true)
+BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation()
 {}
 
 BottomTrack::BottomTrackRenderImplementation::~BottomTrackRenderImplementation()
@@ -568,20 +554,12 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     QOpenGLShaderProgram* shaderProgram = nullptr;
     int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    if (sideScanUpdated_ && sideScanVisibleState_) {
-        shaderProgram = shaderProgramMap["static"].get();
-        shaderProgram->bind();
-        colorLoc = shaderProgram->uniformLocation("color");
-        shaderProgram->setUniformValue(colorLoc,QVector4D(1.0f, 0.2f, 0.2f, 1.0f));
-    }
-    else {
-        shaderProgram = shaderProgramMap["height"].get();
-        shaderProgram->bind();
-        maxZLoc = shaderProgram->uniformLocation("max_z");
-        minZLoc = shaderProgram->uniformLocation("min_z");
-        shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
-        shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
-    }
+    shaderProgram = shaderProgramMap["height"].get();
+    shaderProgram->bind();
+    maxZLoc = shaderProgram->uniformLocation("max_z");
+    minZLoc = shaderProgram->uniformLocation("min_z");
+    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
 
     posLoc = shaderProgram->attributeLocation("position");
     matrixLoc = shaderProgram->uniformLocation("matrix");

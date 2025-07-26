@@ -50,7 +50,7 @@ public:
 
     void clear();
 
-    QVector<uint8_t>& getTextureTasksRef();
+    QVector<uint8_t> takeTextureTask();
     GLuint getDeinitTextureTask() const;
     GLuint getTextureId() const;
     void setTextureId(GLuint textureId);

@@ -7,9 +7,9 @@ import QtQuick.Dialogs 1.2
 
 // side-scan extra settings
 MenuFrame {
-    id: sideScanViewSettings
+    id: mosaicViewSettings
 
-    property CheckButton sideScanViewCheckButton
+    property CheckButton mosaicViewCheckButton
 
     function updateMosaic() {
         updateMosaicButton.clicked();
@@ -17,19 +17,19 @@ MenuFrame {
 
     function setChannelNamesToBackend() {
         //plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
-        core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
+        core.setMosaicChannels(channel1Combo.currentText, channel2Combo.currentText);
         //plotCursorChanged(indx, cursorFrom(), cursorTo())
     }
 
     visible: Qt.platform.os === "android"
-             ? (sideScanViewCheckButton.sideScanLongPressTriggered || sideScanTheme.activeFocus || channel1Combo.activeFocus || channel2Combo.activeFocus)
-             : (sideScanViewCheckButton.hovered                    ||
+             ? (mosaicViewCheckButton.mosaicLongPressTriggered || mosaicTheme.activeFocus || channel1Combo.activeFocus || channel2Combo.activeFocus)
+             : (mosaicViewCheckButton.hovered                    ||
                 isHovered                                          ||
-                sideScanTheme.activeFocus                          ||
+                mosaicTheme.activeFocus                          ||
                 channel1Combo.activeFocus                          ||
                 channel2Combo.activeFocus)
 
-    z: sideScanViewSettings.visible
+    z: mosaicViewSettings.visible
     Layout.alignment: Qt.AlignCenter
 
     onIsHoveredChanged: {
@@ -48,7 +48,7 @@ MenuFrame {
 
     onFocusChanged: {
         if (Qt.platform.os === "android" && !focus) {
-            sideScanViewCheckButton.sideScanLongPressTriggered = false
+            mosaicViewCheckButton.mosaicLongPressTriggered = false
         }
     }
 
@@ -59,31 +59,31 @@ MenuFrame {
                 Layout.topMargin: 0
                 Layout.preferredWidth: theme.controlHeight*1.2
                 horizontalAlignment: Text.AlignHCenter
-                text: sideScanLevelsSlider.stopValue
+                text: mosaicLevelsSlider.stopValue
                 small: true
             }
             ChartLevel {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 Layout.preferredWidth: theme.controlHeight * 1.2
-                id: sideScanLevelsSlider
+                id: mosaicLevelsSlider
                 Layout.alignment: Qt.AlignHCenter
 
                 onStartValueChanged: {
-                   SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                   MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
                 }
 
                 onStopValueChanged: {
-                   SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                   MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
                 }
 
                 Component.onCompleted: {
-                    SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+                    MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
                 }
 
                 Settings {
-                    property alias sideScanLevelsStart: sideScanLevelsSlider.startValue
-                    property alias sideScanLevelsStop: sideScanLevelsSlider.stopValue
+                    property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
+                    property alias mosaicLevelsStop: mosaicLevelsSlider.stopValue
                 }
             }
             CText {
@@ -92,7 +92,7 @@ MenuFrame {
                 Layout.bottomMargin: 0
                 horizontalAlignment: Text.AlignHCenter
 
-                text: sideScanLevelsSlider.startValue
+                text: mosaicLevelsSlider.startValue
                 small: true
             }
         }
@@ -106,26 +106,26 @@ MenuFrame {
                     Layout.fillWidth: true
                 }
                 CCombo {
-                    id: sideScanTheme
+                    id: mosaicTheme
                     Layout.preferredWidth: 300
                     model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
                     currentIndex: 0
                     onCurrentIndexChanged: {
-                        SideScanViewControlMenuController.onThemeChanged(currentIndex)
+                        MosaicViewControlMenuController.onThemeChanged(currentIndex)
                     }
 
                     onFocusChanged: {
                         if (Qt.platform.os === 'android') {
-                            sideScanViewSettings.focus = true
+                            mosaicViewSettings.focus = true
                         }
                     }
 
                     Component.onCompleted: {
-                        SideScanViewControlMenuController.onThemeChanged(currentIndex)
+                        MosaicViewControlMenuController.onThemeChanged(currentIndex)
                     }
 
                     Settings {
-                        property alias sideScanTheme: sideScanTheme.currentIndex
+                        property alias mosaicTheme: mosaicTheme.currentIndex
                     }
                 }
             }
@@ -156,7 +156,7 @@ MenuFrame {
 
                             onFocusChanged: {
                                 if (Qt.platform.os === 'android') {
-                                    sideScanViewSettings.focus = true
+                                    mosaicViewSettings.focus = true
                                 }
                             }
 
@@ -165,7 +165,7 @@ MenuFrame {
                                     return
                                 }
 
-                                sideScanViewSettings.setChannelNamesToBackend()
+                                mosaicViewSettings.setChannelNamesToBackend()
                             }
 
                             Component.onCompleted: {
@@ -195,7 +195,7 @@ MenuFrame {
                                         channel1Combo.currentIndex = 0
                                     }
 
-                                    sideScanViewSettings.setChannelNamesToBackend()
+                                    mosaicViewSettings.setChannelNamesToBackend()
 
                                     channel1Combo.suppressTextSignal = false
                                 }
@@ -213,7 +213,7 @@ MenuFrame {
 
                             onFocusChanged: {
                                 if (Qt.platform.os === 'android') {
-                                    sideScanViewSettings.focus = true
+                                    mosaicViewSettings.focus = true
                                 }
                             }
 
@@ -222,7 +222,7 @@ MenuFrame {
                                     return
                                 }
 
-                                sideScanViewSettings.setChannelNamesToBackend()
+                                mosaicViewSettings.setChannelNamesToBackend()
                             }
 
 
@@ -254,7 +254,7 @@ MenuFrame {
                                         channel2Combo.currentIndex = 0
                                     }
 
-                                    sideScanViewSettings.setChannelNamesToBackend()
+                                    mosaicViewSettings.setChannelNamesToBackend()
 
                                     channel2Combo.suppressTextSignal = false
                                 }
@@ -264,7 +264,7 @@ MenuFrame {
 
                     RowLayout {
                         SpinBoxCustom  {
-                            id: sideScanLAngleOffset
+                            id: mosaicLAngleOffset
                             implicitWidth: 200
                             from: -90
                             to: 90
@@ -273,24 +273,24 @@ MenuFrame {
                             editable: false
 
                             onValueChanged: {
-                                SideScanViewControlMenuController.onSetLAngleOffset(value)
+                                MosaicViewControlMenuController.onSetLAngleOffset(value)
                             }
 
                             onFocusChanged: {
-                                sideScanViewSettings.focus = true
+                                mosaicViewSettings.focus = true
                             }
 
                             Component.onCompleted: {
-                                SideScanViewControlMenuController.onSetLAngleOffset(value)
+                                MosaicViewControlMenuController.onSetLAngleOffset(value)
                             }
 
                             Settings {
-                                property alias sideScanLAngleOffset: sideScanLAngleOffset.value
+                                property alias mosaicLAngleOffset: mosaicLAngleOffset.value
                             }
                         }
 
                         SpinBoxCustom  {
-                            id: sideScanRAngleOffset
+                            id: mosaicRAngleOffset
                             implicitWidth: 200
                             from: -90
                             to: 90
@@ -299,19 +299,19 @@ MenuFrame {
                             editable: false
 
                             onValueChanged: {
-                                SideScanViewControlMenuController.onSetRAngleOffset(value)
+                                MosaicViewControlMenuController.onSetRAngleOffset(value)
                             }
 
                             onFocusChanged: {
-                                sideScanViewSettings.focus = true
+                                mosaicViewSettings.focus = true
                             }
 
                             Component.onCompleted: {
-                                SideScanViewControlMenuController.onSetRAngleOffset(value)
+                                MosaicViewControlMenuController.onSetRAngleOffset(value)
                             }
 
                             Settings {
-                                property alias sideScanRAngleOffset: sideScanRAngleOffset.value
+                                property alias mosaicRAngleOffset: mosaicRAngleOffset.value
                             }
                         }
                     }
@@ -326,7 +326,7 @@ MenuFrame {
                     Layout.fillWidth: true
                 }
                 SpinBoxCustom {
-                    id: sideScanTileResolutionSpinBox
+                    id: mosaicTileResolutionSpinBox
                     implicitWidth: 200
                     from: 1
                     to: 100
@@ -335,7 +335,7 @@ MenuFrame {
                     editable: false
 
                     onFocusChanged: {
-                        sideScanViewSettings.focus = true
+                        mosaicViewSettings.focus = true
                     }
                 }
             }
@@ -358,7 +358,7 @@ MenuFrame {
 //             Layout.fillWidth: true
 //         }
 //         SpinBoxCustom {
-//             id: sideScanTileSidePixelSizeSpinBox
+//             id: mosaicTileSidePixelSizeSpinBox
 //             implicitWidth: 200
 //             from: 32
 //             to: 2048
@@ -367,7 +367,7 @@ MenuFrame {
 //             editable: false
 
 //             onFocusChanged: {
-//                 sideScanViewSettings.focus = true
+//                 mosaicViewSettings.focus = true
 //             }
 //         }
 //     }
@@ -382,7 +382,7 @@ MenuFrame {
 //             Layout.fillWidth: true
 //         }
 //         SpinBoxCustom {
-//             id: sideScanTileHeightMatrixRatioSpinBox
+//             id: mosaicTileHeightMatrixRatioSpinBox
 //             implicitWidth: 200
 //             from: 2
 //             to: 256
@@ -391,7 +391,7 @@ MenuFrame {
 //             editable: false
 
 //             onFocusChanged: {
-//                 sideScanViewSettings.focus = true
+//                 mosaicViewSettings.focus = true
 //             }
 //         }
 //     }
@@ -404,7 +404,7 @@ MenuFrame {
 //             Layout.fillWidth: true
 //         }
 //         SpinBoxCustom {
-//             id: sideScanTileResolutionSpinBox
+//             id: mosaicTileResolutionSpinBox
 //             implicitWidth: 200
 //             from: 1
 //             to: 100
@@ -413,7 +413,7 @@ MenuFrame {
 //             editable: false
 
 //             onFocusChanged: {
-//                 sideScanViewSettings.focus = true
+//                 mosaicViewSettings.focus = true
 //             }
 //         }
 //     }
@@ -425,40 +425,40 @@ MenuFrame {
 //         enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
 
 //         onClicked: {
-//             SideScanViewControlMenuController.onGlobalMeshChanged(
-//                         sideScanTileSidePixelSizeSpinBox.value, sideScanTileHeightMatrixRatioSpinBox.value, 1 / sideScanTileResolutionSpinBox.value)
+//             MosaicViewControlMenuController.onGlobalMeshChanged(
+//                         mosaicTileSidePixelSizeSpinBox.value, mosaicTileHeightMatrixRatioSpinBox.value, 1 / mosaicTileResolutionSpinBox.value)
 //         }
 
 //         onFocusChanged: {
-//             sideScanViewSettings.focus = true
+//             mosaicViewSettings.focus = true
 //         }
 //     }
 // }
 // CheckButton {
-//     id: sideScanUseLinearFilter
+//     id: mosaicUseLinearFilter
 //     text: qsTr("Use linear filter")
 //     Layout.fillWidth: true
 //     Layout.preferredWidth: 200
 //     //visible: core.isSeparateReading
 
 //     onClicked: {
-//         SideScanViewControlMenuController.onUseFilterChanged(checked)
+//         MosaicViewControlMenuController.onUseFilterChanged(checked)
 //     }
 
 //     onFocusChanged: {
-//         sideScanViewSettings.focus = true
+//         mosaicViewSettings.focus = true
 //     }
 
 //     Component.onCompleted: {
-//         SideScanViewControlMenuController.onUseFilterChanged(checked)
+//         MosaicViewControlMenuController.onUseFilterChanged(checked)
 //     }
 
 //     Settings {
-//         property alias sideScanUseLinearFilter: sideScanUseLinearFilter.checked
+//         property alias mosaicUseLinearFilter: mosaicUseLinearFilter.checked
 //     }
 // }
 // CheckButton {
-//     id: sideScanGridContourVisible
+//     id: mosaicGridContourVisible
 //     text: qsTr("Grid/contour visible")
 //     Layout.fillWidth: true
 //     Layout.preferredWidth: 200
@@ -466,23 +466,23 @@ MenuFrame {
 //     //visible: core.isSeparateReading
 
 //     onClicked: {
-//         SideScanViewControlMenuController.onGridVisibleChanged(checked)
+//         MosaicViewControlMenuController.onGridVisibleChanged(checked)
 //     }
 
 //     onFocusChanged: {
-//         sideScanViewSettings.focus = true
+//         mosaicViewSettings.focus = true
 //     }
 
 //     Component.onCompleted: {
-//         SideScanViewControlMenuController.onGridVisibleChanged(checked)
+//         MosaicViewControlMenuController.onGridVisibleChanged(checked)
 //     }
 
 //     Settings {
-//         property alias sideScanGridContourVisible: sideScanGridContourVisible.checked
+//         property alias mosaicGridContourVisible: mosaicGridContourVisible.checked
 //     }
 // }
 // CheckButton {
-//     id: sideScanMeasLinesVisible
+//     id: mosaicMeasLinesVisible
 //     text: qsTr("Measuse lines visible")
 //     Layout.fillWidth: true
 //     Layout.preferredWidth: 200
@@ -490,23 +490,23 @@ MenuFrame {
 //     //visible: core.isSeparateReading
 
 //     onClicked: {
-//         SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
+//         MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
 //     }
 
 //     onFocusChanged: {
-//         sideScanViewSettings.focus = true
+//         mosaicViewSettings.focus = true
 //     }
 
 //     Component.onCompleted: {
-//         SideScanViewControlMenuController.onMeasLineVisibleChanged(checked)
+//         MosaicViewControlMenuController.onMeasLineVisibleChanged(checked)
 //     }
 
 //     Settings {
-//         property alias sideScanMeasLinesVisible: sideScanMeasLinesVisible.checked
+//         property alias mosaicMeasLinesVisible: mosaicMeasLinesVisible.checked
 //     }
 // }
 // CheckButton {
-//     id: sideScanGenerateGridContour
+//     id: mosaicGenerateGridContour
 //     text: qsTr("Generate grid/contour")
 //     Layout.fillWidth: true
 //     Layout.preferredWidth: 200
@@ -514,19 +514,19 @@ MenuFrame {
 //     //visible: core.isSeparateReading
 
 //     onClicked: {
-//         SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
+//         MosaicViewControlMenuController.onGenerateGridContourChanged(checked)
 //     }
 
 //     onFocusChanged: {
-//         sideScanViewSettings.focus = true
+//         mosaicViewSettings.focus = true
 //     }
 
 //     Component.onCompleted: {
-//         SideScanViewControlMenuController.onGenerateGridContourChanged(checked)
+//         MosaicViewControlMenuController.onGenerateGridContourChanged(checked)
 //     }
 
 //     Settings {
-//         property alias sideScanGenerateGridContour: sideScanGenerateGridContour.checked
+//         property alias mosaicGenerateGridContour: mosaicGenerateGridContour.checked
 //     }
 // }
 
@@ -538,11 +538,11 @@ MenuFrame {
 //     enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
 
 //     onClicked: {
-//         SideScanViewControlMenuController.onClearClicked()
+//         MosaicViewControlMenuController.onClearClicked()
 //     }
 
 //     onFocusChanged: {
-//         sideScanViewSettings.focus = true
+//         mosaicViewSettings.focus = true
 //     }
 // }
 
@@ -558,11 +558,11 @@ MenuFrame {
 //     enabled: !core.isMosaicUpdatingInThread && !core.isFileOpening
 
 //     onClicked: {
-//         SideScanViewControlMenuController.onUpdateClicked()
+//         MosaicViewControlMenuController.onUpdateClicked()
 //     }
 
 //     onFocusChanged: {
-//         sideScanViewSettings.focus = true
+//         mosaicViewSettings.focus = true
 //     }
 // }
 // }
@@ -574,7 +574,7 @@ MenuFrame {
 //     Layout.topMargin: 0
 //     Layout.preferredWidth: theme.controlHeight*1.2
 //     horizontalAlignment: Text.AlignHCenter
-//     text: sideScanLevelsSlider.stopValue
+//     text: mosaicLevelsSlider.stopValue
 //     small: true
 // }
 
@@ -582,24 +582,24 @@ MenuFrame {
 //     Layout.fillHeight: true
 //     Layout.fillWidth: true
 //     Layout.preferredWidth: theme.controlHeight * 1.2
-//     id: sideScanLevelsSlider
+//     id: mosaicLevelsSlider
 //     Layout.alignment: Qt.AlignHCenter
 
 //     onStartValueChanged: {
-//        SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+//        MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
 //     }
 
 //     onStopValueChanged: {
-//        SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+//        MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
 //     }
 
 //     Component.onCompleted: {
-//         SideScanViewControlMenuController.onLevelChanged(startValue, stopValue);
+//         MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
 //     }
 
 //     Settings {
-//         property alias sideScanLevelsStart: sideScanLevelsSlider.startValue
-//         property alias sideScanLevelsStop: sideScanLevelsSlider.stopValue
+//         property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
+//         property alias mosaicLevelsStop: mosaicLevelsSlider.stopValue
 //     }
 // }
 
@@ -609,7 +609,7 @@ MenuFrame {
 //     Layout.bottomMargin: 0
 //     horizontalAlignment: Text.AlignHCenter
 
-//     text: sideScanLevelsSlider.startValue
+//     text: mosaicLevelsSlider.startValue
 //     small: true
 // }
 // }

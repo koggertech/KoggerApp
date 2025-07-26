@@ -38,8 +38,6 @@ public:
     private:
         friend class BottomTrack;
         QVector<int> selectedVertexIndices_;
-        bool sideScanUpdated_;
-        bool sideScanVisibleState_;
     };
 
     explicit BottomTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
@@ -58,8 +56,6 @@ public Q_SLOTS:
     void isEpochsChanged(int lEpoch, int rEpoch);
     void resetVertexSelection();
     void selectEpoch(int epochIndex, const ChannelId& channelId);
-    void sideScanUpdated();
-    void setSideScanVisibleState(bool state);
     void setVisibleState(bool state);
 
 Q_SIGNALS:

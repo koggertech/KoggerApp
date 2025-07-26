@@ -25,9 +25,7 @@ Core::Core() :
     isLoggingKlf_(false),
     isLoggingCsv_(false),
     filePath_(),
-    isFileOpening_(false),
-    isMosaicUpdatingInThread_(false),
-    isSideScanPerformanceMode_(false)
+    isFileOpening_(false)
 {
     qDebug() << "Core ctr" << QThread::currentThreadId();
 
@@ -58,7 +56,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("IsobathsControlMenuController",        isobathsControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("SideScanViewControlMenuController",    sideScanViewControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("MosaicViewControlMenuController",      mosaicViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",       imageViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",         mapViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("PointGroupControlMenuController",      pointGroupControlMenuController_.get());
@@ -222,10 +220,6 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
     fileIsCompleteOpened_ = false;
     openedfilePath_ = filePath;
 
-    if (scene3dViewPtr_) {
-        scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
-    }
-
     datasetPtr_->setState(Dataset::DatasetState::kFile);
 
     emit deviceManagerWrapperPtr_->sendOpenFile(localfilePath);
@@ -246,7 +240,6 @@ bool Core::closeLogFile(bool onOpen)
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
             scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
-            //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
         }
         if (!onOpen) {
             setDataProcessorConnections();
@@ -266,9 +259,7 @@ void Core::onFileStartOpening()
     emit sendIsFileOpening();
 
     if (scene3dViewPtr_) {
-        scene3dViewPtr_->getSideScanViewPtr()->updateChannelsIds(); // TODO: not effect(
         scene3dViewPtr_->forceUpdateDatasetLlaRef();
-        //scene3dViewPtr_->setMapView();
     }
 }
 
@@ -281,7 +272,6 @@ void Core::onFileOpened()
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->forceUpdateDatasetLlaRef();
-        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     };
 }
 
@@ -310,7 +300,6 @@ void Core::onFileOpenBreaked(bool onOpen)
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
-        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
     if (onOpen && !tryOpenedfilePath_.isEmpty()) {
         openLogFile(tryOpenedfilePath_, false, false);
@@ -348,7 +337,6 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             if (!isAppend) {
                 scene3dViewPtr_->clear();
             }
-            scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kPerformance);
         }
 
         QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, true));
@@ -413,7 +401,6 @@ bool Core::closeLogFile()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
-        //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
     }
 
     openedfilePath_.clear();
@@ -1109,9 +1096,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     isobathsControlMenuController_->setDataProcessorPtr(dataProcessor_);
     isobathsControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
-    sideScanViewControlMenuController_->setQmlEngine(object);
-    sideScanViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
-    sideScanViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+    mosaicViewControlMenuController_->setQmlEngine(object);
+    mosaicViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
+    mosaicViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     imageViewControlMenuController_->setQmlEngine(object);
     imageViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
@@ -1143,17 +1130,17 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
     onChannelsUpdated();
 
-    createTileManagerConnections();
+    createMapTileManagerConnections();
     createScene3dConnections();
 
     QMetaObject::invokeMethod(dataProcessor_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, scene3dViewPtr_->bottomTrack().get()));
 }
 
-void Core::setSideScanChannels(const QString& firstChStr, const QString& secondChStr)
+void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
 {
-    qDebug() << "Core::setSideScanChannels" << firstChStr << secondChStr;
+    qDebug() << "Core::setMosaicChannels" << firstChStr << secondChStr;
 
-    if (scene3dViewPtr_ && scene3dViewPtr_->getSideScanViewPtr() && datasetPtr_) {
+    if (scene3dViewPtr_ && scene3dViewPtr_->getMosaicViewPtr() && datasetPtr_) {
 
         auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);
         auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(secondChStr);
@@ -1161,7 +1148,8 @@ void Core::setSideScanChannels(const QString& firstChStr, const QString& secondC
         Q_UNUSED(name1)
         Q_UNUSED(name2)
 
-        scene3dViewPtr_->getSideScanViewPtr()->setChannels(ch1, sub1, ch2, sub2);
+        // TODO
+        //scene3dViewPtr_->getMosaicViewPtr()->setChannels(ch1, sub1, ch2, sub2);
     }
 }
 
@@ -1180,36 +1168,6 @@ void Core::stopDeviceManagerThread() const
 bool Core::getIsFileOpening() const
 {
     return isFileOpening_;
-}
-
-void Core::setIsMosaicUpdatingInThread(bool state)
-{
-    isMosaicUpdatingInThread_ = state;
-
-    emit isMosaicUpdatingInThreadUpdated();
-}
-
-void Core::setSideScanWorkMode(SideScanView::Mode mode)
-{
-    switch (mode) {
-    case SideScanView::Mode::kUndefined:   { isSideScanPerformanceMode_ = false; break; }
-    case SideScanView::Mode::kPerformance: { isSideScanPerformanceMode_ = true;  break; }
-    case SideScanView::Mode::kRealtime:    { isSideScanPerformanceMode_ = false; break; }
-    default:
-        break;
-    }
-
-    emit isSideScanPerformanceModeUpdated();
-}
-
-bool Core::getIsMosaicUpdatingInThread() const
-{
-    return isMosaicUpdatingInThread_;
-}
-
-bool Core::getIsSideScanPerformanceMode() const
-{
-    return isSideScanPerformanceMode_;
 }
 
 bool Core::getIsSeparateReading() const
@@ -1333,7 +1291,7 @@ void Core::onFileStopsOpening()
     emit sendIsFileOpening();
 }
 
-void Core::onSendTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
+void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
 {
     tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
 }
@@ -1358,7 +1316,7 @@ void Core::createControllers()
     mpcFilterControlMenuController_       = std::make_shared<MpcFilterControlMenuController>();
     npdFilterControlMenuController_       = std::make_shared<NpdFilterControlMenuController>();
     isobathsControlMenuController_        = std::make_shared<IsobathsControlMenuController>();
-    sideScanViewControlMenuController_    = std::make_shared<SideScanViewControlMenuController>();
+    mosaicViewControlMenuController_    = std::make_shared<MosaicViewControlMenuController>();
     imageViewControlMenuController_       = std::make_shared<ImageViewControlMenuController>();
     mapViewControlMenuController_         = std::make_shared<MapViewControlMenuController>();
     pointGroupControlMenuController_      = std::make_shared<PointGroupControlMenuController>();
@@ -1367,7 +1325,7 @@ void Core::createControllers()
     scene3dToolBarController_             = std::make_shared<Scene3dToolBarController>();
     usblViewControlMenuController_        = std::make_shared<UsblViewControlMenuController>();
 
-    sideScanViewControlMenuController_->setCorePtr(this);
+    mosaicViewControlMenuController_->setCorePtr(this);
 }
 
 #ifdef SEPARATE_READING
@@ -1464,16 +1422,14 @@ void Core::createLinkManagerConnections()
                                                                                                                                      tryOpenedfilePath_.clear();
 #endif
                                                                                                                                      datasetPtr_->setState(Dataset::DatasetState::kConnection);
-                                                                                                                                     if (scene3dViewPtr_) {
-                                                                                                                                         scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kRealtime);
-                                                                                                                                     }
                                                                                                                                  }, linkManagerConnection));
+
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  this, [this]() {
                                                                                                                                      if (scene3dViewPtr_) {
                                                                                                                                          scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
-                                                                                                                                         //scene3dViewPtr_->getSideScanViewPtr()->setWorkMode(SideScanView::Mode::kUndefined);
                                                                                                                                      }
                                                                                                                                  }, linkManagerConnection));
+
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::sendDoRequestAll, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onSendRequestAll, linkManagerConnection));
 }
 
@@ -1602,7 +1558,7 @@ void Core::loadLLARefFromSettings()
     }
 }
 
-void Core::createTileManagerConnections()
+void Core::createMapTileManagerConnections()
 {
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
@@ -1615,7 +1571,7 @@ void Core::createTileManagerConnections()
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvClearAppendTasks,   scene3dViewPtr_->getMapViewPtr().get(), &MapView::onClearAppendTasks,       connType);
     QObject::connect(scene3dViewPtr_->getMapViewPtr().get(), &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(),    &map::TileSet::onDeletedFromAppend, connType);
 
-    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendTextureIdByTileIndx, this, &Core::onSendTextureIdByTileIndx, Qt::DirectConnection);
+    QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendMapTextureIdByTileIndx, this, &Core::onSendMapTextureIdByTileIndx, Qt::DirectConnection);
 }
 
 void Core::onDataProcesstorStateChanged(const DataProcessorType& state)

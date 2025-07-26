@@ -18,7 +18,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     isobaths_(std::make_shared<Isobaths>()),
-    sideScanView_(std::make_shared<SideScanView>()),
+    mosaicView_(std::make_shared<MosaicView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
     contacts_(std::make_shared<Contacts>(this)),
@@ -49,7 +49,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     imageView_->setView(this);
 
     QObject::connect(isobaths_.get(), &Isobaths::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(mosaicView_.get(), &MosaicView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
@@ -63,7 +63,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(isobaths_.get(), &Isobaths::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(mosaicView_.get(), &MosaicView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(contacts_.get(), &Contacts::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -106,9 +106,9 @@ std::shared_ptr<Isobaths> GraphicsScene3dView::getIsobathsPtr() const
     return isobaths_;
 }
 
-std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
+std::shared_ptr<MosaicView> GraphicsScene3dView::getMosaicViewPtr() const
 {
-    return sideScanView_;
+    return mosaicView_;
 }
 
 std::shared_ptr<ImageView> GraphicsScene3dView::getImageViewPtr() const
@@ -169,7 +169,7 @@ Dataset *GraphicsScene3dView::dataset() const
 void GraphicsScene3dView::clear(bool cleanMap)
 {
     isobaths_->clear();
-    sideScanView_->clear();
+    mosaicView_->clear();
     contacts_->clear();
     imageView_->clear();//
     if (cleanMap) {
@@ -204,13 +204,6 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     retVal = rayOrigin + rayDirection * t;
 
     return retVal;
-}
-
-void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
-{
-    if (datasetPtr_) {
-        datasetPtr_->interpolateData(fromStart);
-    }
 }
 
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
@@ -415,7 +408,7 @@ void GraphicsScene3dView::setTrackLastData(bool state)
 
 void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
 {
-    emit sendTextureIdByTileIndx(tileIndx, textureId);
+    emit sendMapTextureIdByTileIndx(tileIndx, textureId);
 }
 
 void GraphicsScene3dView::setGridVisibility(bool state)
@@ -628,7 +621,6 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
 
     boatTrack_->setDatasetPtr(datasetPtr_);
     m_bottomTrack->setDatasetPtr(datasetPtr_);
-    sideScanView_->setDatasetPtr(datasetPtr_);
     contacts_->setDatasetPtr(datasetPtr_);
 
     forceUpdateDatasetLlaRef();
@@ -686,7 +678,7 @@ void GraphicsScene3dView::updateBounds()
                    .merge(boatTrack_->bounds())
                    .merge(m_polygonGroup->bounds())
                    .merge(m_pointGroup->bounds())
-                   .merge(sideScanView_->bounds())
+                   .merge(mosaicView_->bounds())
                    .merge(imageView_->bounds())
                    .merge(usblView_->bounds());
 
@@ -912,7 +904,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->isobathsRenderImpl_         = *(dynamic_cast<Isobaths::IsobathsRenderImplementation*>(view->isobaths_->m_renderImpl));
-    m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
+    m_renderer->mosaicViewRenderImpl_       = *(dynamic_cast<MosaicView::MosaicViewRenderImplementation*>(view->mosaicView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
@@ -991,63 +983,72 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
 
 void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
 {
-    auto sideScanPtr = viewPtr->getSideScanViewPtr();
-    auto task = sideScanPtr->getColorTableTextureTask();
-    if (!task.empty()) {
-        GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
+    auto mosaicPtr = viewPtr->getMosaicViewPtr();
+
+    // del
+    if (auto cTTDId = mosaicPtr->takeColorTableDeleteTextureId(); cTTDId) {
+        mosaicPtr->setColorTableTextureId(0);
+        glDeleteTextures(1, &cTTDId);
+    }
+
+    auto task = mosaicPtr->takeColorTableTextureTask();
+    if (task.empty()) {
+        return;
+    }
+
+    GLuint colorTableTextureId = mosaicPtr->getColorTableTextureId();
 
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-        if (colorTableTextureId) {
-            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-        }
-        else {
-            glGenTextures(1, &colorTableTextureId);
-            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-            sideScanPtr->setColorTableTextureId(colorTableTextureId);
-        }
-#else
-         if (colorTableTextureId) {
-             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-             glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-         }
-         else {
-             glGenTextures(1, &colorTableTextureId);
-             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-
-             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-             glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-             sideScanPtr->setColorTableTextureId(colorTableTextureId);
-         }
-#endif
+    if (colorTableTextureId) {
+        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
     }
+    else {
+        glGenTextures(1, &colorTableTextureId);
+        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+
+        mosaicPtr->setColorTableTextureId(colorTableTextureId);
+    }
+#else
+    if (colorTableTextureId) {
+        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+    }
+    else {
+        glGenTextures(1, &colorTableTextureId);
+        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+
+        mosaicPtr->setColorTableTextureId(colorTableTextureId);
+    }
+#endif
 }
 
 void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const
 {
-    auto sideScanPtr = viewPtr->getSideScanViewPtr();
+    auto mosaicPtr = viewPtr->getMosaicViewPtr();
 
-    auto tasks = sideScanPtr->getTileTextureTasks();
+    auto tasks = mosaicPtr->takeTileTextureTasks();
 
     for (auto it = tasks.begin(); it != tasks.end(); ++it) {
         const QUuid& tileId = it.key();
         const std::vector<uint8_t>& image = it.value();
-        GLuint textureId = viewPtr->getSideScanViewPtr()->getTextureIdByTileId(tileId);
+        GLuint textureId = viewPtr->getMosaicViewPtr()->getTextureIdByTileId(tileId);
 
-        if (image == std::vector<uint8_t>()) { // delete
-            sideScanPtr->setTextureIdByTileId(tileId, 0);
+        if (image.empty()) { // delete
+            mosaicPtr->setTextureIdByTileId(tileId, 0);
             glDeleteTextures(1, &textureId);
             continue;
         }
@@ -1055,8 +1056,8 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
         if (textureId) {
             glBindTexture(GL_TEXTURE_2D, textureId);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
 
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RED, GL_UNSIGNED_BYTE, image.data());
         }
@@ -1064,15 +1065,15 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
             glGenTextures(1, &textureId);
             glBindTexture(GL_TEXTURE_2D, textureId);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
 
-            sideScanPtr->setTextureIdByTileId(tileId, textureId);
+            mosaicPtr->setTextureIdByTileId(tileId, textureId);
         }
 
         QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
@@ -1119,7 +1120,7 @@ void GraphicsScene3dView::InFboRenderer::processIsobathsTexture(GraphicsScene3dV
 {
     // init/reinit
     auto isobathsPtr = viewPtr->getIsobathsPtr();
-    auto& task = isobathsPtr->getTextureTasksRef();
+    auto task = isobathsPtr->takeTextureTask();
 
     if (task.empty()) {
         return;
@@ -1142,7 +1143,6 @@ void GraphicsScene3dView::InFboRenderer::processIsobathsTexture(GraphicsScene3dV
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
 
     isobathsPtr->setTextureId(textureId);
-    task.clear();
 
     // deleting
     auto textureIdtoDel = isobathsPtr->getDeinitTextureTask();

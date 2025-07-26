@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-using namespace sscan;
+using namespace mosaic;
 
 
 GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :

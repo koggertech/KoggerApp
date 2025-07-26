@@ -16,7 +16,7 @@ HEADERS += \
     $$PWD/grid_generator.h \
     $$PWD/image_view.h \
     $$PWD/map_view.h \
-	$$PWD/mosaic_mesh.h \
+    $$PWD/mosaic_mesh.h \
     $$PWD/mosaic_tile.h \
     $$PWD/navigation_arrow.h \
     $$PWD/plane.h \
@@ -28,7 +28,7 @@ HEADERS += \
     $$PWD/polygon_group.h \
     $$PWD/polygon_object.h \
     $$PWD/quad.h \
-    $$PWD/side_scan_view.h \
+    $$PWD/mosaic_view.h \
     $$PWD/isobaths.h \
     $$PWD/triangle.h \
     $$PWD/usbl_view.h \
@@ -43,7 +43,7 @@ SOURCES += \
     $$PWD/cube.cpp \
     $$PWD/image_view.cpp \
     $$PWD/map_view.cpp \
-	$$PWD/mosaic_mesh.cpp \
+    $$PWD/mosaic_mesh.cpp \
     $$PWD/mosaic_tile.cpp \
     $$PWD/navigation_arrow.cpp \
     $$PWD/plane.cpp \
@@ -52,6 +52,6 @@ SOURCES += \
     $$PWD/point_object.cpp \
     $$PWD/polygon_group.cpp \
     $$PWD/polygon_object.cpp \
-    $$PWD/side_scan_view.cpp \
+    $$PWD/mosaic_view.cpp \
     $$PWD/isobaths.cpp \
     $$PWD/usbl_view.cpp

@@ -17,7 +17,7 @@ Item  {
     signal updateBottomTrack()
 
     function updateMosaic() {
-        sideScanViewSettings.updateMosaic()
+        mosaicViewSettings.updateMosaic()
     }
 
     // opacity
@@ -37,7 +37,7 @@ Item  {
     property bool menuOpened:
         settings3DSettings.visible
     || isobathsSettings.visible
-    || sideScanViewSettings.visible
+    || mosaicViewSettings.visible
 
     opacity: (toolbarHovered || menuOpened) ? 1.0 : 0.5
     Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -316,12 +316,12 @@ Item  {
             }
 
             Item {
-                id: sideScanViewWrapper
-                width : sideScanViewCheckButton.implicitWidth
-                height: sideScanViewCheckButton.implicitHeight
+                id: mosaicViewWrapper
+                width : mosaicViewCheckButton.implicitWidth
+                height: mosaicViewCheckButton.implicitHeight
 
                 CheckButton { // side scan
-                    id: sideScanViewCheckButton
+                    id: mosaicViewCheckButton
                     iconSource: "qrc:/icons/ui/side_scan.svg"
                     backColor: theme.controlBackColor
                     borderColor: theme.controlBackColor
@@ -334,79 +334,79 @@ Item  {
 
                     SequentialAnimation {
                         id: pulseMosaicAnimation
-                        running: sideScanViewCheckButton.pulse
+                        running: mosaicViewCheckButton.pulse
                         loops: Animation.Infinite
-                        NumberAnimation { target: sideScanViewCheckButton; property: "opacity"; to: 0.2; duration: 500 }
-                        NumberAnimation { target: sideScanViewCheckButton; property: "opacity"; to: 1.0; duration: 500 }
+                        NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 0.2; duration: 500 }
+                        NumberAnimation { target: mosaicViewCheckButton; property: "opacity"; to: 1.0; duration: 500 }
                     }
 
                     onPulseChanged: {
                         if (!pulse) {
-                            sideScanViewCheckButton.opacity = 1.0;
+                            mosaicViewCheckButton.opacity = 1.0;
                         }
                     }
 
                     onCheckedChanged: {
-                        SideScanViewControlMenuController.onVisibilityChanged(checked)
+                        MosaicViewControlMenuController.onVisibilityChanged(checked)
                     }
 
                     Component.onCompleted: {
-                        SideScanViewControlMenuController.onVisibilityChanged(checked)
+                        MosaicViewControlMenuController.onVisibilityChanged(checked)
                     }
 
-                    property bool sideScanLongPressTriggered: false
+                    property bool mosaicLongPressTriggered: false
 
                     MouseArea {
-                        id: sideScanViewTouchArea
+                        id: mosaicViewTouchArea
                         anchors.fill: parent
                         enabled: Qt.platform.os === "android"
 
                         onPressed: {
                             if (enabled) {
-                                sideScanViewLongPressTimer.start()
-                                sideScanViewCheckButton.sideScanLongPressTriggered = false
+                                mosaicViewLongPressTimer.start()
+                                mosaicViewCheckButton.mosaicLongPressTriggered = false
                             }
                         }
 
                         onReleased: {
                             if (enabled) {
-                                if (!sideScanViewCheckButton.sideScanLongPressTriggered) {
-                                    sideScanViewCheckButton.checked = !sideScanViewCheckButton.checked
+                                if (!mosaicViewCheckButton.mosaicLongPressTriggered) {
+                                    mosaicViewCheckButton.checked = !mosaicViewCheckButton.checked
                                 }
-                                sideScanViewLongPressTimer.stop()
+                                mosaicViewLongPressTimer.stop()
                             }
                         }
 
                         onCanceled: {
                             if (enabled) {
-                                sideScanViewLongPressTimer.stop()
+                                mosaicViewLongPressTimer.stop()
                             }
                         }
                     }
 
                     Timer {
-                        id: sideScanViewLongPressTimer
+                        id: mosaicViewLongPressTimer
                         interval: 100 // ms
                         repeat: false
                         running: false
 
                         onTriggered: {
-                            sideScanViewCheckButton.sideScanLongPressTriggered = true;
+                            mosaicViewCheckButton.mosaicLongPressTriggered = true;
                         }
                     }
 
 
                     Settings {
-                        property alias sideScanViewCheckButton: sideScanViewCheckButton.checked
+                        property alias mosaicViewCheckButton: mosaicViewCheckButton.checked
                     }
                 }
 
-                SideScanExtraSettings {
-                    id: sideScanViewSettings
-                    sideScanViewCheckButton: sideScanViewCheckButton
+                MosaicExtraSettings {
+                    id: mosaicViewSettings
+                    mosaicViewCheckButton: mosaicViewCheckButton
 
-                    anchors.bottom:           sideScanViewCheckButton.top
-                    anchors.horizontalCenter: sideScanViewCheckButton.horizontalCenter
+                    anchors.bottom:           mosaicViewCheckButton.top
+                    anchors.horizontalCenter: mosaicViewCheckButton.horizontalCenter
                     z: 2
                 }
             }

@@ -48,12 +48,12 @@ void IsobathsControlMenuController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
                 if (dataProcessorPtr_) {
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths",       Qt::QueuedConnection, Q_ARG(bool,  processState_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceStepSize",      Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setLineStepSize",         Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setLabelStepSize",        Qt::QueuedConnection, Q_ARG(float, labelStepSize_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setColorTableThemeById",  Qt::QueuedConnection, Q_ARG(int,   themeId_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setEdgeLimit",            Qt::QueuedConnection, Q_ARG(int,   edgeLimit_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths",               Qt::QueuedConnection, Q_ARG(bool,  processState_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsSurfaceStepSize",      Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLineStepSize",         Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize",        Qt::QueuedConnection, Q_ARG(float, labelStepSize_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsColorTableThemeById",  Qt::QueuedConnection, Q_ARG(int,   themeId_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsEdgeLimit",            Qt::QueuedConnection, Q_ARG(int,   edgeLimit_));
                 }
 
                 if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
@@ -122,8 +122,8 @@ void IsobathsControlMenuController::onSetSurfaceLineStepSize(float val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setLineStepSize",    Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsSurfaceStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLineStepSize",    Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
         }
     }
     else {
@@ -137,7 +137,7 @@ void IsobathsControlMenuController::onSetLabelStepSize(int val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setLabelStepSize", Qt::QueuedConnection, Q_ARG(int , labelStepSize_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize", Qt::QueuedConnection, Q_ARG(int , labelStepSize_));
         }
     }
     else {
@@ -151,7 +151,7 @@ void IsobathsControlMenuController::onThemeChanged(int val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setColorTableThemeById", Qt::QueuedConnection, Q_ARG(int, themeId_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsColorTableThemeById", Qt::QueuedConnection, Q_ARG(int, themeId_));
         }
     }
     else {
@@ -202,7 +202,7 @@ void IsobathsControlMenuController::onEdgeLimitChanged(int val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setEdgeLimit", Qt::QueuedConnection, Q_ARG(int, edgeLimit_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsEdgeLimit", Qt::QueuedConnection, Q_ARG(int, edgeLimit_));
         }
     }
     else {

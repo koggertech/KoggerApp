@@ -6,15 +6,15 @@
 
 
 class Core;
-class SideScanView;
+class MosaicView;
 class GraphicsScene3dView;
-class SideScanViewControlMenuController : public QmlComponentController
+class MosaicViewControlMenuController : public QmlComponentController
 {
     Q_OBJECT
-    Q_PROPERTY(SideScanView* sideScanView READ getSideScanViewPtr CONSTANT)
+    Q_PROPERTY(MosaicView* mosaicView READ getMosaicViewPtr CONSTANT)
 
 public:
-    explicit SideScanViewControlMenuController(QObject *parent = nullptr);
+    explicit MosaicViewControlMenuController(QObject *parent = nullptr);
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void setCorePtr(Core* corePtr);
@@ -41,7 +41,7 @@ protected:
 
 private:
     void tryClearMakeConnections();
-    SideScanView* getSideScanViewPtr() const;
+    MosaicView* getMosaicViewPtr() const;
     void tryInitPendingLambda();
 
     /*data*/

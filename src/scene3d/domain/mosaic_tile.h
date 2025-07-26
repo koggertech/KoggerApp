@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <vector>
 #include <QUuid>
 #include <QVector>
@@ -9,7 +10,6 @@
 #include "scene_object.h"
 
 
-class GlobalMesh;
 class Tile {
 public:
     /*methods*/
@@ -25,6 +25,7 @@ public:
     GLuint                                   getTextureId() const;
     int                                      getIsUpdate() const;
     std::vector<uint8_t>&                    getImageDataRef();
+    const std::vector<uint8_t>&              getImageDataCRef() const;
     QVector<QVector3D>&                      getHeightVerticesRef();
     QVector<char>&                           getHeightMarkVerticesRef();
     const QVector<QVector2D>&                getTextureVerticesRef() const;

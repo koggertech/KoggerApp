@@ -49,9 +49,7 @@ public:
     void setLlaRef(const LLARef& val, LlaRefState state);
 
     inline int size() const {
-
         return pool_.size();
-
     }
 
     Epoch* fromIndex(int index_offset = 0) {

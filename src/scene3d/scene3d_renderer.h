@@ -4,7 +4,7 @@
 #include "plane_grid.h"
 #include "bottom_track.h"
 #include "isobaths.h"
-#include "side_scan_view.h"
+#include "mosaic_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
@@ -64,7 +64,7 @@ private:
     CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
     Isobaths::IsobathsRenderImplementation isobathsRenderImpl_;
-    SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
+    MosaicView::MosaicViewRenderImplementation mosaicViewRenderImpl_;
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
