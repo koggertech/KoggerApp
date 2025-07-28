@@ -151,7 +151,8 @@ void MosaicProcessor::setResolution(float pixPerMeters)
 {
     tileResolution_ = 1.0f / pixPerMeters;
 
-    // TODO globalMesh?
+    // TODO
+    globalMeshPtr_->reinit(256, 16, tileResolution_);
 }
 
 void MosaicProcessor::setGenerageGridContour(bool state)
@@ -159,25 +160,24 @@ void MosaicProcessor::setGenerageGridContour(bool state)
     generateGridContour_ = state;
 }
 
-
+void MosaicProcessor::askColorTableForMosaicView()
+{
+    emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
+}
 
 void MosaicProcessor::postUpdate()
 {
-    //if (!globalMeshPtr_->getIsInited()) {
-    //    return;
-    //}
+    //qDebug() << "tileResolution_" << tileResolution_;
 
-    auto updateTextureInView = [this](Tile* tilePtr, bool isNew) -> void {
+    if (!globalMeshPtr_->getIsInited()) {
+        return;
+    }
+
+    auto updateVerticesIndices = [this](Tile* tilePtr, bool isNew) -> void {
         if (!isNew) {
             updateUnmarkedHeightVertices(tilePtr);
         }
         tilePtr->updateHeightIndices();
-
-        // TODO
-        //if (auto* r = RENDER_IMPL(MosaicProcessor); r) {
-        //    r->tiles_.insert(tilePtr->getUuid(), *tilePtr); // copy data to render
-        //    tileTextureTasks_[tilePtr->getUuid()] = tilePtr->getImageDataCRef();
-        //}
     };
 
     int tileMatrixYSize = globalMeshPtr_->getTileMatrixRef().size();
@@ -187,13 +187,12 @@ void MosaicProcessor::postUpdate()
         for (int j = 0; j < tileMatrixXSize; ++j) {
 
             auto& tileRef = globalMeshPtr_->getTileMatrixRef()[i][j];
-            if (!tileRef->getIsUpdate()) {
+            if (!tileRef->getIsPostUpdate()) {
                 continue;
             }
 
-
-            updateTextureInView(tileRef, false);
-            tileRef->setIsUpdate(false);
+            updateVerticesIndices (tileRef, false);
+            tileRef->setIsPostUpdate(false);
 
             // fix height matrixs
             auto& tileVertRef = tileRef->getHeightVerticesRef();
@@ -218,7 +217,7 @@ void MosaicProcessor::postUpdate()
                     topTileVertRef[rowIndxTo][2] = tileVertRef[rowIndxFrom][2];
                     topTileMarkVertRef[rowIndxTo] = '1';
                 }
-                updateTextureInView(rowTileRef, true);
+                updateVerticesIndices (rowTileRef, true);
             }
 
             int xIndx = j - 1; // by column
@@ -239,11 +238,20 @@ void MosaicProcessor::postUpdate()
                     leftTileVertRef[colIndxTo][2] = tileVertRef[colIndxFrom][2];
                     leftTileMarkVertRef[colIndxTo] = '1';
                 }
-                updateTextureInView(colTileRef, true);
+                updateVerticesIndices (colTileRef, true);
             }
 
         }
     }
+
+    // to MosaicView
+    const auto& tilesRef = globalMeshPtr_->getTilesCRef();
+    QHash<QUuid, Tile> res;
+    res.reserve(tilesRef.size());
+    for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
+        res.insert((*it)->getUuid(), (*(*it)));
+    }
+    emit dataProcessor_->sendMosaicTiles(res);
 }
 
 void MosaicProcessor::updateUnmarkedHeightVertices(Tile* tilePtr) const
@@ -598,7 +606,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
                             tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
                             tileRef->getHeightMarkVerticesRef()[hVIndx] = '1';
-                            tileRef->setIsUpdate(true);
+                            tileRef->setIsPostUpdate(true);
                         }
                     }
                 }
@@ -641,8 +649,6 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
     //renderImpl->measLinesOddIndices_.append(std::move(measLinesOddIndices));
     //renderImpl->createBounds();
 }
-
-
 
 bool MosaicProcessor::checkLength(float dist) const
 {

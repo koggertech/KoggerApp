@@ -21,6 +21,7 @@ public:
     void clear();
 
     void setGenerateGridContour(bool state);
+    const std::vector<Tile*>&        getTilesCRef() const;
     std::vector<std::vector<Tile*>>& getTileMatrixRef();
     Tile*                            getTilePtrById(QUuid tileId);
     int                              getPixelWidth() const;

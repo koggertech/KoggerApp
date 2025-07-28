@@ -14,7 +14,7 @@ MosaicView::~MosaicView()
     }
     const auto& rTiles = r->tiles_;
     for (const auto& itm : rTiles) {
-        tileTextureTasks_[itm.getUuid()] = std::vector<uint8_t>();
+        vectorTileTextureIdToDelete_.append(itm.getTextureId());
     }
     colorTableDeleteTextureId_ = getColorTableTextureId();
     r->colorTableTextureId_ = 0;
@@ -29,10 +29,9 @@ void MosaicView::clear()
 
     const auto& rTiles = r->tiles_;
     for (const auto& itm : rTiles) {
-        tileTextureTasks_[itm.getUuid()] = std::vector<uint8_t>();
+        vectorTileTextureIdToDelete_.append(itm.getTextureId());
     }
-    colorTableDeleteTextureId_ = getColorTableTextureId();
-    r->colorTableTextureId_ = 0;
+
     r->tiles_.clear();
     r->measLinesVertices_.clear();
     r->measLinesEvenIndices_.clear();
@@ -97,9 +96,15 @@ void MosaicView::setUseLinearFilter(bool state)
     }
 }
 
-QHash<QUuid, std::vector<uint8_t>> MosaicView::takeTileTextureTasks()
+QVector<GLuint> MosaicView::takeVectorTileTextureIdToDelete()
 {
-    auto retVal = std::move(tileTextureTasks_);
+    auto retVal = std::move(vectorTileTextureIdToDelete_);
+    return retVal;
+}
+
+QVector<std::pair<QUuid, std::vector<uint8_t> > > MosaicView::takeVectorTileTextureToAppend()
+{
+    auto retVal = std::move(vectorTileTextureToAppend_);
     return retVal;
 }
 
@@ -143,14 +148,13 @@ bool MosaicView::getUseLinearFilter() const
 
 void MosaicView::setTiles(const QHash<QUuid, Tile> &tiles)
 {
-    qDebug() << "MosaicView::setTiles" << tiles.size();
+    //qDebug() << "MosaicView::setTiles" << tiles.size();
 
     if (auto* r = RENDER_IMPL(MosaicView); r) {
 
         updateTileTextureTask(tiles);
 
         r->tiles_ = tiles;
-
 
         Q_EMIT changed();
     }
@@ -196,23 +200,27 @@ void MosaicView::setColorTableTextureTask(const std::vector<uint8_t> &colorTable
 
 void MosaicView::updateTileTextureTask(const QHash<QUuid, Tile>& newTiles) // maybe from dataProcessor
 {
-    if (auto* r = RENDER_IMPL(MosaicView); r) {
-        QHash<QUuid, std::vector<uint8_t>> tasks;
+    //qDebug() << "MosaicView::updateTileTextureTask" << newTiles.size();
 
+    if (newTiles.empty()) {
+        return;
+    }
+
+    if (auto* r = RENDER_IMPL(MosaicView); r) {
         for (auto it = r->tiles_.cbegin(); it != r->tiles_.cend(); ++it) {
-            const QUuid& tileUuid = it.key();
-            if (auto it = newTiles.find(tileUuid); it == newTiles.end()) { // del
-                tasks.insert(it.key(), {});
+            const Tile& tile = it.value();
+            if (auto id = tile.getTextureId(); id) {
+                vectorTileTextureIdToDelete_.push_back(id);
             }
         }
 
+        vectorTileTextureToAppend_.clear();
+        vectorTileTextureToAppend_.reserve(newTiles.size());
         for (auto it = newTiles.cbegin(); it != newTiles.cend(); ++it) {
             const QUuid& tileUuid = it.key();
             const Tile& tile = it.value();
-            tasks.insert(tileUuid, tile.getImageDataCRef());
+            vectorTileTextureToAppend_.push_back(std::make_pair(tileUuid, tile.getImageDataCRef()));
         }
-
-        tileTextureTasks_.swap(tasks);
     }
 }
 
@@ -239,94 +247,50 @@ void MosaicView::MosaicViewRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
-    {
-        auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
-        if (!shaderProgram) {
-            qWarning() << "Shader program 'mosaic' not found!";
-            return;
-        }
-
-        // tiles
-        for (auto& itm : tiles_) {
-            if (!itm.getIsInited()) {
-                continue;
-            }
-            // grid/contour
-            if (tileGridVisible_) {
-                itm.getGridRenderImplRef().render(ctx, mvp, shaderProgramMap);
-                itm.getContourRenderImplRef().render(ctx, mvp, shaderProgramMap);
-            }
-
-            shaderProgram->bind();
-            shaderProgram->setUniformValue("mvp", mvp);
-
-            int positionLoc = shaderProgram->attributeLocation("position");
-            int texCoordLoc = shaderProgram->attributeLocation("texCoord");
-
-            shaderProgram->enableAttributeArray(positionLoc);
-            shaderProgram->enableAttributeArray(texCoordLoc);
-
-            shaderProgram->setAttributeArray(positionLoc , itm.getHeightVerticesConstRef().constData());
-            shaderProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
-
-            {
-                QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-
-                if (itm.getTextureId()) {
-                    glFuncs->glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, itm.getTextureId());
-                    shaderProgram->setUniformValue("indexedTexture", 0);
-                }
-
-                if (colorTableTextureId_) {
-                    glFuncs->glActiveTexture(GL_TEXTURE1);
-                    glBindTexture(colorTableTextureType_, colorTableTextureId_);
-                    shaderProgram->setUniformValue("colorTable", 1);
-                }
-            }
-
-            ctx->glDrawElements(GL_TRIANGLES, itm.getHeightIndicesRef().size(), GL_UNSIGNED_INT, itm.getHeightIndicesRef().constData());
-
-            shaderProgram->disableAttributeArray(texCoordLoc);
-            shaderProgram->disableAttributeArray(positionLoc);
-
-            shaderProgram->release();
-        }
+    auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
+    if (!shaderProgram) {
+        qWarning() << "Shader program 'mosaic' not found!";
+        return;
     }
 
-    {
-        auto shaderProgram = shaderProgramMap.value("static", nullptr);
-        if (!shaderProgram) {
-            qWarning() << "Shader program 'static' not found!";
-            return;
+    // tiles
+    for (auto& itm : tiles_) {
+        if (!itm.getIsInited()) {
+            continue;
+        }
+        GLuint textureId = itm.getTextureId();
+        if (!textureId || !colorTableTextureId_) {
+            continue;
         }
 
         shaderProgram->bind();
         shaderProgram->setUniformValue("mvp", mvp);
 
-        int posLoc = shaderProgram->attributeLocation("position");
-        shaderProgram->enableAttributeArray(posLoc);
+        int positionLoc = shaderProgram->attributeLocation("position");
+        int texCoordLoc = shaderProgram->attributeLocation("texCoord");
 
-        // main line
-        if (measLinesVertices_.size() >= 4) {
-            shaderProgram->setUniformValue("color", QVector4D(0.031f, 0.69f, 0.98f, 1.0f));
-            glLineWidth(3.0f);
-            QVector<QVector3D> lastFourVertices = measLinesVertices_.mid(measLinesVertices_.size() - 4, 4);
-            shaderProgram->setAttributeArray(posLoc, lastFourVertices.constData());
-            ctx->glDrawArrays(GL_LINES, 0, 4);
-            glLineWidth(1.0f);
-        }
+        shaderProgram->enableAttributeArray(positionLoc);
+        shaderProgram->enableAttributeArray(texCoordLoc);
 
-        // measure lines
-        if (measLineVisible_) {
-            shaderProgram->setAttributeArray(posLoc, measLinesVertices_.constData());
-            shaderProgram->setUniformValue("color", QVector4D(0.0f, 1.0f, 0.0f, 1.0f));
-            ctx->glDrawElements(GL_LINES, measLinesEvenIndices_.size(), GL_UNSIGNED_INT, measLinesEvenIndices_.constData());
-            shaderProgram->setUniformValue("color", QVector4D(1.0f, 0.0f, 0.0f, 1.0f));
-            ctx->glDrawElements(GL_LINES, measLinesOddIndices_.size(), GL_UNSIGNED_INT, measLinesOddIndices_.constData());
-        }
+        shaderProgram->setAttributeArray(positionLoc , itm.getHeightVerticesConstRef().constData());
+        shaderProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
 
-        shaderProgram->disableAttributeArray(posLoc);
+
+        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+
+        glFuncs->glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        shaderProgram->setUniformValue("indexedTexture", 0);
+
+        glFuncs->glActiveTexture(GL_TEXTURE1);
+        glBindTexture(colorTableTextureType_, colorTableTextureId_);
+        shaderProgram->setUniformValue("colorTable", 1);
+
+        ctx->glDrawElements(GL_TRIANGLES, itm.getHeightIndicesRef().size(), GL_UNSIGNED_INT, itm.getHeightIndicesRef().constData());
+
+        shaderProgram->disableAttributeArray(texCoordLoc);
+        shaderProgram->disableAttributeArray(positionLoc);
+
         shaderProgram->release();
     }
 }

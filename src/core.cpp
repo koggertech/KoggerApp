@@ -1648,6 +1648,7 @@ void Core::createScene3dConnections()
     });
 
     // res work proc
+    // Isobaths
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,                scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLabels,              Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineSegments,        Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsPts,                   scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setPts,                 Qt::QueuedConnection);
@@ -1658,7 +1659,11 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineStepSize,        Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsTextureTask,           scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setTextureTask,         Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsColorIntervalsSize,    scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setColorIntervalsSize,  Qt::QueuedConnection);
+    // Mosaic
+    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,     scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::setColorTableTextureTask,  Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,          scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::setTiles,                  Qt::QueuedConnection);
 
+    QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
 
 void Core::setDataProcessorConnections()

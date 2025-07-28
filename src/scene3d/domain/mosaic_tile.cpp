@@ -5,7 +5,7 @@ Tile::Tile(QVector3D origin, bool generateGridContour) :
     id_(QUuid::createUuid()),
     origin_(origin),
     textureId_(0),
-    isUpdate_(false),
+    isPostUpdate_(false),
     isInited_(false),
     generateGridContour_(generateGridContour)
 { }
@@ -117,9 +117,9 @@ void Tile::setTextureId(GLuint val)
     textureId_ = val;
 }
 
-void Tile::setIsUpdate(bool state)
+void Tile::setIsPostUpdate(bool state)
 {
-    isUpdate_ = state;
+    isPostUpdate_ = state;
 }
 
 QUuid Tile::getUuid() const
@@ -142,9 +142,9 @@ GLuint Tile::getTextureId() const
     return textureId_;
 }
 
-int Tile::getIsUpdate() const
+int Tile::getIsPostUpdate() const
 {
-    return isUpdate_;
+    return isPostUpdate_;
 }
 
 std::vector<uint8_t>& Tile::getImageDataRef()

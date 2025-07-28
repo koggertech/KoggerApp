@@ -48,9 +48,10 @@ public:
     void setMeasLineVisible(bool state);
     void setTileGridVisible(bool state);
     void setUseLinearFilter(bool state);
-    QHash<QUuid, std::vector<uint8_t>> takeTileTextureTasks();
-    std::vector<uint8_t>               takeColorTableTextureTask();
-    GLuint                             takeColorTableDeleteTextureId();
+    QVector<GLuint>                                 takeVectorTileTextureIdToDelete();
+    QVector<std::pair<QUuid, std::vector<uint8_t>>> takeVectorTileTextureToAppend();
+    std::vector<uint8_t>                            takeColorTableTextureTask();
+    GLuint                                          takeColorTableDeleteTextureId();
     GLuint                             getTextureIdByTileId(QUuid tileId);
     GLuint                             getColorTableTextureId() const;
     bool                               getUseLinearFilter() const;
@@ -69,4 +70,6 @@ private:
     GLuint colorTableDeleteTextureId_ = 0; // delete
     QHash<QUuid, std::vector<uint8_t>> tileTextureTasks_; // append/delete(if val == std::vector<uint8_t>>())
     bool useLinearFilter_ = false;
+    QVector<GLuint> vectorTileTextureIdToDelete_;
+    QVector<std::pair<QUuid, std::vector<uint8_t>>> vectorTileTextureToAppend_;
 };

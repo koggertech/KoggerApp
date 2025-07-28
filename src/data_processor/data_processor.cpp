@@ -28,6 +28,7 @@ DataProcessor::DataProcessor(QObject *parent)
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorType>("DataProcessorState");
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
+    qRegisterMetaType<QHash<QUuid, Tile>>("QHash<QUuid, Tile>");
 
     mosaicProcessor_.setGlobalMeshPtr(&globalMesh_);
 }
@@ -299,6 +300,11 @@ void DataProcessor::setMosaicGenerateGridContour(bool state)
     //qDebug() << "DataProcessor::setMosaicGenerateGridContour" << state;
 
     mosaicProcessor_.setGenerateGridContour(state);
+}
+
+void DataProcessor::askColorTableForMosaic()
+{
+    mosaicProcessor_.askColorTableForMosaicView();
 }
 
 void DataProcessor::handleWorkerFinished()

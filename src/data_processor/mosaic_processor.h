@@ -41,6 +41,7 @@ public:
     void setResolution(float pixPerMeters);
     void setGenerageGridContour(bool state);
 
+    void askColorTableForMosaicView(); // first init colorTable in render
 
 private:
     void postUpdate();

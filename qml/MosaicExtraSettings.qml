@@ -328,7 +328,7 @@ MenuFrame {
                 SpinBoxCustom {
                     id: mosaicResolutionSpinBox
                     implicitWidth: 200
-                    from: 1
+                    from: 5
                     to: 100
                     stepSize: 5
                     value: 10

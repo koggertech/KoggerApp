@@ -18,12 +18,12 @@ public:
     void updateHeightIndices();
 
     void setTextureId(GLuint val);
-    void setIsUpdate(bool state);
+    void setIsPostUpdate(bool state);
     QUuid                                    getUuid() const;
     QVector3D                                getOrigin() const;
     bool                                     getIsInited() const;
     GLuint                                   getTextureId() const;
-    int                                      getIsUpdate() const;
+    int                                      getIsPostUpdate() const;
     std::vector<uint8_t>&                    getImageDataRef();
     const std::vector<uint8_t>&              getImageDataCRef() const;
     QVector<QVector3D>&                      getHeightVerticesRef();
@@ -49,7 +49,7 @@ private:
     SceneObject::RenderImplementation gridRenderImpl_;
     SceneObject::RenderImplementation contourRenderImpl_;
     GLuint textureId_;
-    bool isUpdate_;
+    bool isPostUpdate_;
     bool isInited_;
     bool generateGridContour_;
 };

@@ -1036,32 +1036,27 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
 #endif
 }
 
-void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const // TODO CHECK
 {
     auto mosaicPtr = viewPtr->getMosaicViewPtr();
 
-    auto tasks = mosaicPtr->takeTileTextureTasks();
+    // delete
+    {
+        auto tasks = mosaicPtr->takeVectorTileTextureIdToDelete();
 
-    for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-        const QUuid& tileId = it.key();
-        const std::vector<uint8_t>& image = it.value();
-        GLuint textureId = viewPtr->getMosaicViewPtr()->getTextureIdByTileId(tileId);
-
-        if (image.empty()) { // delete
-            mosaicPtr->setTextureIdByTileId(tileId, 0);
-            glDeleteTextures(1, &textureId);
-            continue;
+        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
+            glDeleteTextures(1, it);
         }
+    }
 
-        if (textureId) {
-            glBindTexture(GL_TEXTURE_2D, textureId);
+    // append
+    {
+        auto tasks = mosaicPtr->takeVectorTileTextureToAppend();
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
 
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RED, GL_UNSIGNED_BYTE, image.data());
-        }
-        else {
+            GLuint textureId = 0;
+
             glGenTextures(1, &textureId);
             glBindTexture(GL_TEXTURE_2D, textureId);
 
@@ -1071,13 +1066,13 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, it->second.data());
 
-            mosaicPtr->setTextureIdByTileId(tileId, textureId);
+            mosaicPtr->setTextureIdByTileId(it->first, textureId);
+
+            QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
+            glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
         }
-
-        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-        glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
     }
 }
 

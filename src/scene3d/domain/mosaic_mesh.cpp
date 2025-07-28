@@ -132,6 +132,11 @@ void GlobalMesh::setGenerateGridContour(bool state)
     generateGridContour_ = state;
 }
 
+const std::vector<Tile *> &GlobalMesh::getTilesCRef() const
+{
+    return tiles_;
+}
+
 std::vector<std::vector<Tile *> > &GlobalMesh::getTileMatrixRef()
 {
     return tileMatrix_;

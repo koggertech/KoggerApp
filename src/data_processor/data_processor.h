@@ -62,6 +62,7 @@ public slots:
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
     void setMosaicGenerateGridContour(bool state);
+    void askColorTableForMosaic();
 
 signals:
     // this
@@ -86,6 +87,7 @@ signals:
     void sendIsobathsColorIntervalsSize(int size);
     // MosaicProcessor
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
+    void sendMosaicTiles(QHash<QUuid, Tile> tiles);
 
 private slots:
     // IsobathsProcessor
