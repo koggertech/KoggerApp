@@ -136,16 +136,8 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
         return;
     }
 
-    bottomTrackCounter_ = indxs.last(); //
-
-    // calc isobaths
     if (updateIsobaths_) {
-        enqueueWork(indxs, false, false); // TODO move to this thread
-    }
-
-    // test cals mosaic
-    if (updateMosaic_) {
-        mosaicProcessor_.startUpdateDataInThread(bottomTrackCounter_, 0);
+        enqueueWork(indxs, false, false); // TODO move to this thread?
     }
 }
 
@@ -162,6 +154,15 @@ void DataProcessor::onPositionAdded(uint64_t indx)
 void DataProcessor::onAttitudeAdded(uint64_t indx)
 {
     attitudeCounter_ = indx;
+}
+
+void DataProcessor::onMosaicCanCalc(uint64_t indx)
+{
+    //qDebug() << "DataProcessor::onMosaicCanCalc" << indx;
+
+    if (updateMosaic_) {
+        mosaicProcessor_.startUpdateDataInThread(indx, 0);
+    }
 }
 
 void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam &bottomTrackParam_)

@@ -29,6 +29,7 @@ signals:
     void attitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
     void bottomTrack3DAdded(const QVector<int>& indx);
+    void mosaicCanCalc(uint64_t indx);
 
 public slots:
     // Dataset
@@ -41,6 +42,7 @@ public slots:
 
 private:
     bool canEmitHorizon(bool beenChanged) const;
+    void tryEmitMosaicIndx();
 
 private:
     bool emitChanges_;
@@ -53,4 +55,5 @@ private:
     uint64_t attitudeIndx_;
     uint64_t bottomTrackIndx_;
     QVector<int> bottomTrack3DIndxs_;
+    uint64_t mosaicIndx_;
 };

@@ -44,6 +44,7 @@ public slots:
     void onEpochAdded(uint64_t indx);
     void onPositionAdded(uint64_t indx);
     void onAttitudeAdded(uint64_t indx);
+    void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
     // IsobathsProcessor

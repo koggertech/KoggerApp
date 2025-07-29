@@ -12,7 +12,8 @@ DataHorizon::DataHorizon() :
     positionIndx_(0),
     chartIndx_(0),
     attitudeIndx_(0),
-    bottomTrackIndx_(0)
+    bottomTrackIndx_(0),
+    mosaicIndx_(0)
 {
 #ifdef SEPARATE_READING
     isSeparateReading_ = true;
@@ -31,6 +32,7 @@ void DataHorizon::clear()
     attitudeIndx_ = 0;
     bottomTrackIndx_ = 0;
     bottomTrack3DIndxs_.clear();
+    mosaicIndx_ = 0;
 }
 
 void DataHorizon::setEmitChanges(bool state)
@@ -89,6 +91,8 @@ void DataHorizon::onAddedChart(uint64_t indx)
     if (canEmitHorizon(beenChanged)) {
         emit chartAdded(chartIndx_);
     }
+
+    tryEmitMosaicIndx();
 }
 
 void DataHorizon::onAddedAttitude(uint64_t indx)
@@ -102,6 +106,8 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
     if (canEmitHorizon(beenChanged)) {
         emit attitudeAdded(attitudeIndx_);
     }
+
+    tryEmitMosaicIndx();
 }
 
 void DataHorizon::onAddedBottomTrack(uint64_t indx)
@@ -119,6 +125,8 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
     if (canEmitHorizon(beenChanged)) {
         emit bottomTrackAdded(bottomTrackIndx_);
     }
+
+    tryEmitMosaicIndx();
 }
 
 void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx)
@@ -154,4 +162,13 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
     }
 
     return retVal;
+}
+
+void DataHorizon::tryEmitMosaicIndx()
+{
+    uint64_t minMosaicHorizon = std::min(std::min(bottomTrackIndx_, chartIndx_), attitudeIndx_);
+    if (minMosaicHorizon > mosaicIndx_) {
+        mosaicIndx_ = minMosaicHorizon;
+        emit mosaicCanCalc(mosaicIndx_);
+    }
 }

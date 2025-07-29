@@ -190,6 +190,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
     if (!isAppend) {
         resetDataProcessorConnections();
         datasetPtr_->resetDataset();
+        dataHorizon_->clear();
         QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
         setDataProcessorConnections();
     }
@@ -235,6 +236,7 @@ bool Core::closeLogFile(bool onOpen)
 
         if (datasetPtr_) {
             datasetPtr_->resetDataset();
+            dataHorizon_->clear();
         }
 
         QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
@@ -295,6 +297,7 @@ void Core::onFileOpenBreaked(bool onOpen)
     fileIsCompleteOpened_ = false;
     if (datasetPtr_) {
         datasetPtr_->resetDataset();
+        dataHorizon_->clear();
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
@@ -331,6 +334,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
         if (!isAppend) {
             resetDataProcessorConnections();
             datasetPtr_->resetDataset();
+            dataHorizon_->clear();
             QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
             setDataProcessorConnections();
         }
@@ -395,8 +399,10 @@ bool Core::closeLogFile()
 
     createLinkManagerConnections();
 
-    if (datasetPtr_)
+    if (datasetPtr_) {
         datasetPtr_->resetDataset();
+    }
+    dataHorizon_->clear();
 
     QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
 
@@ -1665,6 +1671,7 @@ void Core::setDataProcessorConnections()
     // from dataHorizon
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,         dataProcessor_, &DataProcessor::onChartsAdded,        Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded,   Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,      dataProcessor_, &DataProcessor::onMosaicCanCalc,      Qt::QueuedConnection));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing,   datasetPtr_, &Dataset::onDistCompleted,               Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));
