@@ -90,10 +90,6 @@ signals:
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
     void sendMosaicTiles(QHash<QUuid, Tile> tiles);
 
-private slots:
-    // IsobathsProcessor
-    void handleWorkerFinished();
-
 private:
     // this
     void changeState(const DataProcessorType& state);
@@ -102,7 +98,7 @@ private:
     void clearMosaicProcessing();
     void clearAllProcessings();
     // IsobathsProcessor
-    void enqueueWork(const QVector<int>& indxs, bool rebuildLinesLabels, bool rebuildAll);
+    void doIsobathsWork(const QVector<int>& indxs, bool rebuildLinesLabels, bool rebuildAll);
 
 private:
     friend class BottomTrackProcessor;
@@ -128,10 +124,4 @@ private:
     bool isOpeningFile_;
     // BottomTrackProcessor
     int bottomTrackWindowCounter_;
-    // IsobathsProcessor
-    QFuture<void> isobathsWorkerFuture_;
-    QFutureWatcher<void> isobathsWorkerWatcher_;
-    QMutex isobathsPendingMtx_;
-    QVector<int> isobathsPendingIndxs_;
-    PendingWork isobathsPending_;
 };

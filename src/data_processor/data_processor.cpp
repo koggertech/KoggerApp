@@ -47,7 +47,7 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
     surfaceProcessor_.setDatasetPtr(datasetPtr_);
 }
 
-void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr) // TODO: using BottomTrack data from this?
+void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
 {
     isobathsProcessor_.setBottomTrackPtr(bottomTrackPtr);
 }
@@ -137,7 +137,7 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
     }
 
     if (updateIsobaths_) {
-        enqueueWork(indxs, false, false); // TODO move to this thread?
+        doIsobathsWork(indxs, false, false);
     }
 }
 
@@ -208,7 +208,7 @@ void DataProcessor::setIsobathsLineStepSize(float val)
 
     emit sendIsobathsLineStepSize(isobathsProcessor_.getLineStepSize());
 
-    enqueueWork({}, true, false);
+    doIsobathsWork({}, true, false);
 }
 
 void DataProcessor::setIsobathsLabelStepSize(float val)
@@ -221,7 +221,7 @@ void DataProcessor::setIsobathsLabelStepSize(float val)
 
     isobathsProcessor_.setLabelStepSize(val);
 
-    enqueueWork({}, true, false);
+    doIsobathsWork({}, true, false);
 }
 
 void DataProcessor::setIsobathsEdgeLimit(int val)
@@ -234,7 +234,7 @@ void DataProcessor::setIsobathsEdgeLimit(int val)
 
     isobathsProcessor_.setEdgeLimit(static_cast<float>(val));
 
-    enqueueWork({}, true, true);
+    doIsobathsWork({}, true, true);
 }
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
@@ -305,17 +305,6 @@ void DataProcessor::askColorTableForMosaic()
     mosaicProcessor_.askColorTableForMosaicView();
 }
 
-void DataProcessor::handleWorkerFinished()
-{
-    QMutexLocker lk(&isobathsPendingMtx_);
-    if (!isobathsPending_.indxs.isEmpty() || isobathsPending_.rebuildLineLabels) {
-        PendingWork copy = isobathsPending_;
-        isobathsPending_ = PendingWork{};
-        lk.unlock();
-        enqueueWork(copy.indxs, copy.rebuildLineLabels, copy.rebuildAll);
-    }
-}
-
 void DataProcessor::changeState(const DataProcessorType& state)
 {
     state_ = state;
@@ -331,24 +320,12 @@ void DataProcessor::clearBottomTrackProcessing()
 
 void DataProcessor::clearIsobathsProcessing()
 {
-    if (isobathsWorkerFuture_.isRunning()) {
-        isobathsWorkerFuture_.cancel();
-        isobathsWorkerFuture_.waitForFinished();
-    }
-
-    {
-        QMutexLocker lk(&isobathsPendingMtx_);
-        isobathsPending_.clear();
-    }
-
     isobathsProcessor_.clear();
 }
 
 void DataProcessor::clearMosaicProcessing()
 {
     mosaicProcessor_.clear();
-
-    globalMesh_.clear();
 }
 
 void DataProcessor::clearAllProcessings()
@@ -356,52 +333,23 @@ void DataProcessor::clearAllProcessings()
     clearBottomTrackProcessing();
     clearIsobathsProcessing();
     clearMosaicProcessing();
+
+    globalMesh_.clear();
 }
 
-void DataProcessor::enqueueWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)
+void DataProcessor::doIsobathsWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)
 {
-    {
-        QMutexLocker lk(&isobathsPendingMtx_);
-        isobathsPending_.indxs += indxs;
-        isobathsPending_.rebuildLineLabels |= rebuildLinesLabels;
-        isobathsPending_.rebuildAll |= rebuildAll;
+    if (rebuildAll) {
+        isobathsProcessor_.rebuildTrianglesBuffers();
+        isobathsProcessor_.fullRebuildLinesLabels();
+        isobathsProcessor_.rebuildColorIntervals();
     }
-
-    if (isobathsWorkerFuture_.isRunning()) {
-        return;
-    }
-
-    isobathsWorkerFuture_ = QtConcurrent::run([this] {
-        if (isobathsWorkerFuture_.isCanceled()) {
-            return;
+    else {
+        if (!indxs.isEmpty()) {
+            isobathsProcessor_.onUpdatedBottomTrackData(indxs);
         }
-
-        PendingWork todo;
-        {
-            QMutexLocker lk(&isobathsPendingMtx_);
-            todo = std::move(isobathsPending_);
-            isobathsPending_.clear();
-        }
-
-        if (todo.rebuildAll) {
-            isobathsProcessor_.rebuildTrianglesBuffers();
+        if (rebuildLinesLabels) {
             isobathsProcessor_.fullRebuildLinesLabels();
-            isobathsProcessor_.rebuildColorIntervals(); //
         }
-        else {
-            // TODO: more accuracy
-            if (!todo.indxs.isEmpty()) {
-                isobathsProcessor_.onUpdatedBottomTrackData(todo.indxs);
-            }
-            if (todo.rebuildLineLabels) {
-                isobathsProcessor_.fullRebuildLinesLabels();
-            }
-        }
-    });
-
-    if (!isobathsWorkerWatcher_.isRunning()) {
-        connect(&isobathsWorkerWatcher_, &QFutureWatcher<void>::finished, this, &DataProcessor::handleWorkerFinished, Qt::QueuedConnection);
     }
-
-    isobathsWorkerWatcher_.setFuture(isobathsWorkerFuture_);
 }
