@@ -873,6 +873,7 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
         Epoch::Echogram* chart = epPtr->chart(channelId);
         if (chart) {
             chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
+            emit bottomTrackAdded(epIndx);
         }
     }
 }

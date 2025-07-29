@@ -11,14 +11,14 @@ DataHorizon::DataHorizon() :
     epochIndx_(0),
     positionIndx_(0),
     chartIndx_(0),
-    attitudeIndx_(0)
+    attitudeIndx_(0),
+    bottomTrackIndx_(0)
 {
 #ifdef SEPARATE_READING
     isSeparateReading_ = true;
 #endif
 
     qRegisterMetaType<uint64_t>("uint64_t");
-    qRegisterMetaType<ChannelId>("ChannelId");
 }
 
 void DataHorizon::clear()
@@ -29,6 +29,8 @@ void DataHorizon::clear()
     positionIndx_ = 0;
     chartIndx_ = 0;
     attitudeIndx_ = 0;
+    bottomTrackIndx_ = 0;
+    bottomTrack3DIndxs_.clear();
 }
 
 void DataHorizon::setEmitChanges(bool state)
@@ -102,16 +104,33 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
     }
 }
 
-void DataHorizon::onAddedBottomTrack(const QVector<int>& indx)
+void DataHorizon::onAddedBottomTrack(uint64_t indx)
 {
     //qDebug() << "DataHorizon::onAddedBottomTrack" << indx;
 
-    bool beenChanged = true; //bottomTrackIndxs_ != indx;
+    if (indx < bottomTrackIndx_) { // discard changes by editing bTr on plot
+        return;
+    }
 
-    bottomTrackIndxs_ = indx;
+    bool beenChanged = bottomTrackIndx_ != indx;
+
+    bottomTrackIndx_ = indx;
 
     if (canEmitHorizon(beenChanged)) {
-        emit bottomTrackAdded(bottomTrackIndxs_);
+        emit bottomTrackAdded(bottomTrackIndx_);
+    }
+}
+
+void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx)
+{
+    //qDebug() << "DataHorizon::onAddedBottomTrack3D" << indx;
+
+    bool beenChanged = true; //bottomTrackIndxs_ != indx;
+
+    bottomTrack3DIndxs_ = indx;
+
+    if (canEmitHorizon(beenChanged)) {
+        emit bottomTrack3DAdded(bottomTrack3DIndxs_);
     }
 }
 

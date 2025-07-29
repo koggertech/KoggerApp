@@ -136,7 +136,7 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
         return;
     }
 
-    bottomTrackCounter_ = indxs.last();
+    bottomTrackCounter_ = indxs.last(); //
 
     // calc isobaths
     if (updateIsobaths_) {

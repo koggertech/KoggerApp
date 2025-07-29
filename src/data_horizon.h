@@ -2,8 +2,6 @@
 
 #include <QObject>
 
-#include "dataset_defs.h"
-
 
 class DataHorizon : public QObject
 {
@@ -21,14 +19,16 @@ public:
     uint64_t getPositionIndx() const { return positionIndx_; };
     uint64_t getChartIndx() const { return chartIndx_; };
     uint64_t getAttitudeIndx() const { return attitudeIndx_; };
-    QVector<int> getBottomTrackIndx() const { return bottomTrackIndxs_; };
+    uint64_t getBottomTrackIndx() const { return bottomTrackIndx_; };
+    QVector<int> getBottomTrack3DIndx() const { return bottomTrack3DIndxs_; };
 
 signals:
     void epochAdded(uint64_t indx);
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx);
     void attitudeAdded(uint64_t indx);
-    void bottomTrackAdded(const QVector<int>& indx);
+    void bottomTrackAdded(uint64_t indx);
+    void bottomTrack3DAdded(const QVector<int>& indx);
 
 public slots:
     // Dataset
@@ -36,7 +36,8 @@ public slots:
     void onAddedPosition(uint64_t indx);
     void onAddedChart(uint64_t indx);
     void onAddedAttitude(uint64_t indx);
-    void onAddedBottomTrack(const QVector<int>& indx);
+    void onAddedBottomTrack(uint64_t indx); // from bottom track algorithm
+    void onAddedBottomTrack3D(const QVector<int>& indx); // from 2D (editing), 3D
 
 private:
     bool canEmitHorizon(bool beenChanged) const;
@@ -50,5 +51,6 @@ private:
     uint64_t positionIndx_;
     uint64_t chartIndx_;
     uint64_t attitudeIndx_;
-    QVector<int> bottomTrackIndxs_;
+    uint64_t bottomTrackIndx_;
+    QVector<int> bottomTrack3DIndxs_;
 };

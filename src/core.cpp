@@ -1582,10 +1582,11 @@ void Core::createDatasetConnections()
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs,    this,               &Core::onRedrawEpochs);
 
     // DataHorizon
-    QObject::connect(datasetPtr_, &Dataset::epochAdded,      dataHorizon_.get(), &DataHorizon::onAddedEpoch);
-    QObject::connect(datasetPtr_, &Dataset::positionAdded,   dataHorizon_.get(), &DataHorizon::onAddedPosition);
-    QObject::connect(datasetPtr_, &Dataset::chartAdded,      dataHorizon_.get(), &DataHorizon::onAddedChart);
-    QObject::connect(datasetPtr_, &Dataset::attitudeAdded,   dataHorizon_.get(), &DataHorizon::onAddedAttitude);
+    QObject::connect(datasetPtr_, &Dataset::epochAdded,       dataHorizon_.get(), &DataHorizon::onAddedEpoch);
+    QObject::connect(datasetPtr_, &Dataset::positionAdded,    dataHorizon_.get(), &DataHorizon::onAddedPosition);
+    QObject::connect(datasetPtr_, &Dataset::chartAdded,       dataHorizon_.get(), &DataHorizon::onAddedChart);
+    QObject::connect(datasetPtr_, &Dataset::attitudeAdded,    dataHorizon_.get(), &DataHorizon::onAddedAttitude);
+    QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack);
 }
 
 int Core::getDataProcessorState() const
@@ -1637,15 +1638,8 @@ void Core::destroyDataProcessor()
 void Core::createScene3dConnections()
 {
     QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
-
-    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints, this, [this](const QVector<int>& indxs) {
-        if (indxs.empty()) {
-            dataHorizon_->onAddedBottomTrack(scene3dViewPtr_->bottomTrack()->getAllIndxs());
-        }
-        else {
-            dataHorizon_->onAddedBottomTrack(indxs);
-        }
-    });
+    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints,
+                     this, [this](const QVector<int>& indxs) { dataHorizon_->onAddedBottomTrack3D(indxs.empty() ? scene3dViewPtr_->bottomTrack()->getAllIndxs() : indxs); });
 
     // res work proc
     // Isobaths
@@ -1669,8 +1663,8 @@ void Core::createScene3dConnections()
 void Core::setDataProcessorConnections()
 {
     // from dataHorizon
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,       dataProcessor_, &DataProcessor::onChartsAdded,        Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrackAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded,   Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,         dataProcessor_, &DataProcessor::onChartsAdded,        Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded,   Qt::QueuedConnection));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing,   datasetPtr_, &Dataset::onDistCompleted,               Qt::QueuedConnection));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));

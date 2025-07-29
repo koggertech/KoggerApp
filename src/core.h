@@ -197,7 +197,7 @@ private:
     // data processor
     DataProcessor* dataProcessor_;
     QThread* dataProcThread_;
-    std::unique_ptr<DataHorizon> dataHorizon_;
+    std::unique_ptr<DataHorizon> dataHorizon_; // this thread
 
 #ifdef SEPARATE_READING
     QString tryOpenedfilePath_;

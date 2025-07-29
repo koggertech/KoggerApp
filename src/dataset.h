@@ -238,6 +238,7 @@ signals:
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx); // without ChartId
     void attitudeAdded(uint64_t indx);
+    void bottomTrackAdded(uint64_t indx);
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
     void dataUpdate();
