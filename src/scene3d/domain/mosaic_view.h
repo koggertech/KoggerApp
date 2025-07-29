@@ -5,7 +5,7 @@
 #include <QVector3D>
 #include <QUuid>
 
-#include "mosaic_tile.h"
+#include "surface_tile.h"
 #include "scene_object.h"
 
 
@@ -28,7 +28,7 @@ public:
 
         virtual void updateBounds() override final;
 
-        QHash<QUuid, Tile> tiles_; // from dataProcessor
+        QHash<QUuid, SurfaceTile> tiles_; // from dataProcessor
         QVector<QVector3D> measLinesVertices_; // from dataProcessor
         QVector<int> measLinesEvenIndices_; // from dataProcessor
         QVector<int> measLinesOddIndices_; // from dataProcessor
@@ -57,14 +57,14 @@ public:
     bool                               getUseLinearFilter() const;
 
 public slots: // from dataprocessor
-    void setTiles(const QHash<QUuid, Tile>& tiles);
+    void setTiles(const QHash<QUuid, SurfaceTile>& tiles);
     void setMeasLinesVertices(const QVector<QVector3D>& measLinesVertices);
     void setMeasLinesEvenIndices(const QVector<int>& measLinesEvenIndices);
     void setMeasLinesOddIndices(const QVector<int>& measLinesOddIndices);
     void setColorTableTextureTask(const std::vector<uint8_t>& colorTableTextureTask);
 
 private:
-    void updateTileTextureTask(const QHash<QUuid, Tile>& newTiles);
+    void updateTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles);
 
     std::vector<uint8_t> colorTableTextureTask_; // append
     GLuint colorTableDeleteTextureId_ = 0; // delete

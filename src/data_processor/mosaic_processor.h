@@ -1,12 +1,8 @@
 #pragma once
 
-#include <QMutex>
-#include <QQueue>
-#include <QReadWriteLock>
-
 #include "dataset_defs.h"
-#include "dataset.h"
-#include "mosaic_tile.h"
+#include "epoch.h"
+#include "surface_tile.h"
 #include "draw_utils.h"
 
 using namespace mosaic;
@@ -14,7 +10,7 @@ using namespace mosaic;
 
 class Dataset;
 class DataProcessor;
-class GlobalMesh;
+class SurfaceMesh;
 class MosaicProcessor
 {
 public:
@@ -24,12 +20,11 @@ public:
     void clear();
 
     void setDatasetPtr(Dataset* datasetPtr);
-    void setGlobalMeshPtr(GlobalMesh* globalMeshPtr);
-
+    void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
 
     // PROCESSING
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
-    void startUpdateDataInThread(int endIndx, int endOffset = 0);
+    void updateDataWrapper(int endIndx, int endOffset = 0);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void setGenerateGridContour(bool state);
     void setColorTableThemeById(int id);
@@ -38,14 +33,14 @@ public:
     void setColorTableHighLevel(float val);
     void setLAngleOffset(float val);
     void setRAngleOffset(float val);
-    void setResolution(float pixPerMeters);
+    void setTileResolution(float tileResolution);
     void setGenerageGridContour(bool state);
 
     void askColorTableForMosaicView(); // first init colorTable in render
 
 private:
     void postUpdate();
-    void updateUnmarkedHeightVertices(Tile* tilePtr) const;
+    void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
     void updateData(int endIndx, int endOffset = 0);
     inline bool checkLength(float dist) const;
     MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
@@ -58,20 +53,20 @@ private:
 
     mosaic::PlotColorTable colorTable_;
     DataProcessor* dataProcessor_;
-    Dataset* datasetPtr_ = nullptr;
-    GlobalMesh* globalMeshPtr_ = nullptr;
+    Dataset* datasetPtr_;
+    SurfaceMesh* surfaceMeshPtr_;
     MatrixParams lastMatParams_;
-    float tileResolution_ = 0.1f;
-    uint64_t currIndxSec_ = 0;
+    float tileResolution_;
+    uint64_t currIndxSec_;
     ChannelId segFChannelId_;
-    uint8_t segFSubChannelId_ = 0;
+    uint8_t segFSubChannelId_;
     ChannelId segSChannelId_;
-    uint8_t segSSubChannelId_ = 0;
-    int tileSidePixelSize_ = 256;
-    int tileHeightMatrixRatio_ = 16;
-    int lastCalcEpoch_ = 0;
-    int lastAcceptedEpoch_ = 0;
-    float lAngleOffset_ = 0.0f;
-    float rAngleOffset_ = 0.0f;
-    bool generateGridContour_ = false;
+    uint8_t segSSubChannelId_;
+    int tileSidePixelSize_;
+    int tileHeightMatrixRatio_;
+    int lastCalcEpoch_;
+    int lastAcceptedEpoch_;
+    float lAngleOffset_;
+    float rAngleOffset_;
+    bool generateGridContour_;
 };

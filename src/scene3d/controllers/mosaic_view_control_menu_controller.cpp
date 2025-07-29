@@ -197,7 +197,7 @@ void MosaicViewControlMenuController::onSetResolution(float val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
         }
     }
     else {
@@ -210,15 +210,14 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this](){
             if (graphicsSceneViewPtr_) {
-
                 if (dataProcessorPtr_) {
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic",              Qt::QueuedConnection, Q_ARG(bool, updateState_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicGenerateGridContour", Qt::QueuedConnection, Q_ARG(bool, generateGridContour_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTheme", Qt::QueuedConnection, Q_ARG(int, themeId_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLevels", Qt::QueuedConnection, Q_ARG(float, lowLevel_), Q_ARG(float, highLevel_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLAngleOffset", Qt::QueuedConnection, Q_ARG(float, lAngleOffset_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicRAngleOffset", Qt::QueuedConnection, Q_ARG(float, rAngleOffset_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTheme",               Qt::QueuedConnection, Q_ARG(int, themeId_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLevels",              Qt::QueuedConnection, Q_ARG(float, lowLevel_), Q_ARG(float, highLevel_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLAngleOffset",        Qt::QueuedConnection, Q_ARG(float, lAngleOffset_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicRAngleOffset",        Qt::QueuedConnection, Q_ARG(float, rAngleOffset_));
+                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
                 }
 
                 if (auto mosaicPtr = graphicsSceneViewPtr_->getMosaicViewPtr(); mosaicPtr) {

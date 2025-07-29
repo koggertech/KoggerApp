@@ -8,6 +8,7 @@
 IsobathsProcessor::IsobathsProcessor(DataProcessor* parent) :
     dataProcessor_(parent),
     bottomTrackPtr_(nullptr),
+    surfaceMeshPtr_(nullptr),
     lastCellPoint_({ -1, -1 }),
     minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
@@ -49,6 +50,11 @@ void IsobathsProcessor::clear()
 void IsobathsProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
 {
     bottomTrackPtr_ = bottomTrackPtr;
+}
+
+void IsobathsProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
+{
+    surfaceMeshPtr_ = surfaceMeshPtr;
 }
 
 void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)

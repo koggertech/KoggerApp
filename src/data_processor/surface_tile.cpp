@@ -1,7 +1,7 @@
-#include "mosaic_tile.h"
+#include "surface_tile.h"
 
 
-Tile::Tile(QVector3D origin, bool generateGridContour) :
+SurfaceTile::SurfaceTile(QVector3D origin, bool generateGridContour) :
     id_(QUuid::createUuid()),
     origin_(origin),
     textureId_(0),
@@ -10,7 +10,7 @@ Tile::Tile(QVector3D origin, bool generateGridContour) :
     generateGridContour_(generateGridContour)
 { }
 
-void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
+void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
 {
     // image data
     imageData_.resize(sidePixelSize * sidePixelSize, 0);
@@ -44,7 +44,7 @@ void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
     isInited_ = true;
 }
 
-void Tile::updateHeightIndices()
+void SurfaceTile::updateHeightIndices()
 {
     // height indices
     heightIndices_.clear();
@@ -112,86 +112,86 @@ void Tile::updateHeightIndices()
     }
 }
 
-void Tile::setTextureId(GLuint val)
+void SurfaceTile::setTextureId(GLuint val)
 {
     textureId_ = val;
 }
 
-void Tile::setIsPostUpdate(bool state)
+void SurfaceTile::setIsPostUpdate(bool state)
 {
     isPostUpdate_ = state;
 }
 
-QUuid Tile::getUuid() const
+QUuid SurfaceTile::getUuid() const
 {
     return id_;
 }
 
-QVector3D Tile::getOrigin() const
+QVector3D SurfaceTile::getOrigin() const
 {
     return origin_;
 }
 
-bool Tile::getIsInited() const
+bool SurfaceTile::getIsInited() const
 {
     return isInited_;
 }
 
-GLuint Tile::getTextureId() const
+GLuint SurfaceTile::getTextureId() const
 {
     return textureId_;
 }
 
-int Tile::getIsPostUpdate() const
+int SurfaceTile::getIsPostUpdate() const
 {
     return isPostUpdate_;
 }
 
-std::vector<uint8_t>& Tile::getImageDataRef()
+std::vector<uint8_t>& SurfaceTile::getImageDataRef()
 {
     return imageData_;
 }
 
-const std::vector<uint8_t> &Tile::getImageDataCRef() const
+const std::vector<uint8_t> &SurfaceTile::getImageDataCRef() const
 {
     return imageData_;
 }
 
-QVector<QVector3D>& Tile::getHeightVerticesRef()
+QVector<QVector3D>& SurfaceTile::getHeightVerticesRef()
 {
     return heightVertices_;
 }
 
-QVector<HeightType> &Tile::getHeightMarkVerticesRef()
+QVector<HeightType> &SurfaceTile::getHeightMarkVerticesRef()
 {
     return heightMarkVertices_;
 }
 
-const QVector<QVector2D>& Tile::getTextureVerticesRef() const
+const QVector<QVector2D>& SurfaceTile::getTextureVerticesRef() const
 {
     return textureVertices_;
 }
 
-const QVector<QVector3D>& Tile::getHeightVerticesConstRef() const
+const QVector<QVector3D>& SurfaceTile::getHeightVerticesConstRef() const
 {
     return heightVertices_;
 }
 
-const QVector<int>& Tile::getHeightIndicesRef() const
+const QVector<int>& SurfaceTile::getHeightIndicesRef() const
 {
     return heightIndices_;
 }
 
-const SceneObject::RenderImplementation& Tile::getGridRenderImplRef() const
+const SceneObject::RenderImplementation& SurfaceTile::getGridRenderImplRef() const
 {
     return gridRenderImpl_;
 }
-const SceneObject::RenderImplementation& Tile::getContourRenderImplRef() const
+const SceneObject::RenderImplementation& SurfaceTile::getContourRenderImplRef() const
 {
     return contourRenderImpl_;
 }
 
-bool Tile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
+bool SurfaceTile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
 {
     if (qFuzzyIsNull(heightVertices_[topLeft].z()) || // someone zero
         qFuzzyIsNull(heightVertices_[topRight].z()) ||

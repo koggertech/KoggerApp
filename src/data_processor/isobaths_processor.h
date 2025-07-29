@@ -14,6 +14,7 @@ using namespace IsobathUtils;
 
 
 class BottomTrack;
+class SurfaceMesh;
 class DataProcessor;
 class IsobathsProcessor
 {
@@ -24,6 +25,7 @@ public:
     void clear();
 
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
+    void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
 
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void rebuildColorIntervals();
@@ -53,6 +55,7 @@ private:
 private:
     DataProcessor* dataProcessor_;
     BottomTrack* bottomTrackPtr_;
+    SurfaceMesh* surfaceMeshPtr_;
     delaunay::Delaunay delaunayProc_;
     IsoState isobathsState_;
     QReadWriteLock lock_;

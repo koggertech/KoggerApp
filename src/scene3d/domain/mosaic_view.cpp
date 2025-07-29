@@ -146,7 +146,7 @@ bool MosaicView::getUseLinearFilter() const
     return useLinearFilter_;
 }
 
-void MosaicView::setTiles(const QHash<QUuid, Tile> &tiles)
+void MosaicView::setTiles(const QHash<QUuid, SurfaceTile> &tiles)
 {
     //qDebug() << "MosaicView::setTiles" << tiles.size();
 
@@ -198,7 +198,7 @@ void MosaicView::setColorTableTextureTask(const std::vector<uint8_t> &colorTable
     Q_EMIT changed();
 }
 
-void MosaicView::updateTileTextureTask(const QHash<QUuid, Tile>& newTiles) // maybe from dataProcessor
+void MosaicView::updateTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles) // maybe from dataProcessor
 {
     //qDebug() << "MosaicView::updateTileTextureTask" << newTiles.size();
 
@@ -208,7 +208,7 @@ void MosaicView::updateTileTextureTask(const QHash<QUuid, Tile>& newTiles) // ma
 
     if (auto* r = RENDER_IMPL(MosaicView); r) {
         for (auto it = r->tiles_.cbegin(); it != r->tiles_.cend(); ++it) {
-            const Tile& tile = it.value();
+            const SurfaceTile& tile = it.value();
             if (auto id = tile.getTextureId(); id) {
                 vectorTileTextureIdToDelete_.push_back(id);
             }
@@ -218,7 +218,7 @@ void MosaicView::updateTileTextureTask(const QHash<QUuid, Tile>& newTiles) // ma
         vectorTileTextureToAppend_.reserve(newTiles.size());
         for (auto it = newTiles.cbegin(); it != newTiles.cend(); ++it) {
             const QUuid& tileUuid = it.key();
-            const Tile& tile = it.value();
+            const SurfaceTile& tile = it.value();
             vectorTileTextureToAppend_.push_back(std::make_pair(tileUuid, tile.getImageDataCRef()));
         }
     }

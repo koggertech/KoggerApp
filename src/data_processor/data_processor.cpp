@@ -9,7 +9,7 @@
 DataProcessor::DataProcessor(QObject *parent)
     : QObject(parent),
     datasetPtr_(nullptr),
-    globalMesh_(256, 16, 0.1f),
+    surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
     bottomTrackProcessor_(this),
     isobathsProcessor_(this),
     mosaicProcessor_(this),
@@ -25,14 +25,16 @@ DataProcessor::DataProcessor(QObject *parent)
     updateMosaic_(false),
     isOpeningFile_(false),
     bottomTrackWindowCounter_(0),
-    mosaicCounter_(0)
+    mosaicCounter_(0),
+    tileResolution_(defaultTileResolution)
 {
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorType>("DataProcessorState");
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
-    qRegisterMetaType<QHash<QUuid, Tile>>("QHash<QUuid, Tile>");
+    qRegisterMetaType<QHash<QUuid, SurfaceTile>>("QHash<QUuid, SurfaceTile>");
 
-    mosaicProcessor_.setGlobalMeshPtr(&globalMesh_);
+    isobathsProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
+    mosaicProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
 }
 
 DataProcessor::~DataProcessor()
@@ -144,7 +146,7 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
     }
 
     if (updateMosaic_) {
-        mosaicProcessor_.startUpdateDataInThread(mosaicCounter_, 0);
+        mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
     }
 }
 
@@ -270,11 +272,25 @@ void DataProcessor::setMosaicRAngleOffset(float val)
     mosaicProcessor_.setRAngleOffset(val);
 }
 
-void DataProcessor::setMosaicResolution(float val)
+void DataProcessor::setMosaicTileResolution(float val)
 {
     //qDebug() << "DataProcessor::setMosaicResolution" << val;
 
-    mosaicProcessor_.setResolution(val);
+    if (qFuzzyIsNull(val)) {
+        return;
+    }
+
+    const float convertedResolution = 1.0f / val;
+
+    if (qFuzzyCompare(1.0f + tileResolution_, 1.0f + convertedResolution)) {
+        return;
+    }
+
+    tileResolution_ = convertedResolution;
+
+    surfaceMesh_.reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, tileResolution_);
+
+    mosaicProcessor_.setTileResolution(tileResolution_);
 }
 
 void DataProcessor::setMosaicLevels(float lowLevel, float highLevel)
@@ -339,7 +355,7 @@ void DataProcessor::clearAllProcessings()
     clearIsobathsProcessing();
     clearMosaicProcessing();
 
-    globalMesh_.clear();
+    surfaceMesh_.clear();
 }
 
 void DataProcessor::doIsobathsWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)

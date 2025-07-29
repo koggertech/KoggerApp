@@ -9,16 +9,21 @@
 #include <QOpenGLFunctions>
 #include "scene_object.h"
 
+
+static constexpr int   defaultTileSidePixelSize     = 256;
+static constexpr int   defaultTileHeightMatrixRatio = 16;
+static constexpr float defaultTileResolution        = 1.0f / 10.f;
+
 enum class HeightType {
     kUndefined = 0,
     kMosaic,
     kIsobaths
 };
 
-class Tile {
+class SurfaceTile {
 public:
     /*methods*/
-    Tile(QVector3D origin, bool generateGridContour);
+    SurfaceTile(QVector3D origin, bool generateGridContour);
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices();
 

@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QVector>
 #include <QVector3D>
-#include "mosaic_mesh.h"
+#include "surface_mesh.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
@@ -58,7 +58,7 @@ public slots:
     void setMosaicTheme(int indx);
     void setMosaicLAngleOffset(float val);
     void setMosaicRAngleOffset(float val);
-    void setMosaicResolution(float val);
+    void setMosaicTileResolution(float val);
     void setMosaicLevels(float lowLevel, float highLevel);
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
@@ -88,7 +88,7 @@ signals:
     void sendIsobathsColorIntervalsSize(int size);
     // MosaicProcessor
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
-    void sendMosaicTiles(QHash<QUuid, Tile> tiles);
+    void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles);
 
 private:
     // this
@@ -107,7 +107,7 @@ private:
 
     // this
     Dataset* datasetPtr_;
-    GlobalMesh globalMesh_;
+    SurfaceMesh surfaceMesh_;
     BottomTrackProcessor bottomTrackProcessor_; // need Charts
     IsobathsProcessor isobathsProcessor_; // need BottomTrack to calc
     MosaicProcessor mosaicProcessor_; // need BottomTrack, Charts, Attitude to calc
@@ -126,4 +126,6 @@ private:
     int bottomTrackWindowCounter_;
     // MosaicProcessor
     int mosaicCounter_;
+    // Surface
+    float tileResolution_;
 };

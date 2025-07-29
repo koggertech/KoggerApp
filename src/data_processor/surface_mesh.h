@@ -3,16 +3,16 @@
 #include <vector>
 #include <QVector3D>
 #include "draw_utils.h"
-#include "mosaic_tile.h"
+#include "surface_tile.h"
 
 
 using namespace mosaic;
 
-class GlobalMesh {
+class SurfaceMesh {
 public:
     /*methods*/
-    GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
-    ~GlobalMesh();
+    SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
+    ~SurfaceMesh();
 
     void reinit(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
     bool concatenate(MatrixParams& actualMatParams);    
@@ -21,9 +21,9 @@ public:
     void clear();
 
     void setGenerateGridContour(bool state);
-    const std::vector<Tile*>&        getTilesCRef() const;
-    std::vector<std::vector<Tile*>>& getTileMatrixRef();
-    Tile*                            getTilePtrById(QUuid tileId);
+    const std::vector<SurfaceTile*>&        getTilesCRef() const;
+    std::vector<std::vector<SurfaceTile*>>& getTileMatrixRef();
+    SurfaceTile*                            getTilePtrById(QUuid tileId);
     int                              getPixelWidth() const;
     int                              getPixelHeight() const;
     int                              getTileSidePixelSize() const;
@@ -43,8 +43,8 @@ private:
     float getHeightMeters() const;
 
     /*data*/
-    std::vector<Tile*> tiles_;
-    std::vector<std::vector<Tile*>> tileMatrix_;
+    std::vector<SurfaceTile*> tiles_;
+    std::vector<std::vector<SurfaceTile*>> tileMatrix_;
     QVector3D origin_;
     float tileResolution_;
     float tileSideMeterSize_;

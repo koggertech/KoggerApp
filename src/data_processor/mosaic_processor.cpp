@@ -6,10 +6,22 @@
 #include "dataset.h"
 
 
-MosaicProcessor::MosaicProcessor(DataProcessor* parent) :
-    dataProcessor_(parent)
+MosaicProcessor::MosaicProcessor(DataProcessor* parent)
+    : dataProcessor_(parent),
+    datasetPtr_(nullptr),
+    surfaceMeshPtr_(nullptr),
+    tileResolution_(defaultTileResolution),
+    currIndxSec_(0),
+    segFSubChannelId_(0),
+    segSSubChannelId_(0),
+    tileSidePixelSize_(defaultTileSidePixelSize),
+    tileHeightMatrixRatio_(defaultTileHeightMatrixRatio),
+    lastCalcEpoch_(0),
+    lastAcceptedEpoch_(0),
+    lAngleOffset_(0.0f),
+    rAngleOffset_(0.0f),
+    generateGridContour_(false)
 {
-
 }
 
 MosaicProcessor::~MosaicProcessor()
@@ -35,9 +47,9 @@ void MosaicProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void MosaicProcessor::setGlobalMeshPtr(GlobalMesh *globalMeshPtr)
+void MosaicProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
 {
-    globalMeshPtr_ = globalMeshPtr;
+    surfaceMeshPtr_ = surfaceMeshPtr;
 }
 
 void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId)
@@ -50,20 +62,15 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
     segSSubChannelId_ = secondSubChId;
 }
 
-void MosaicProcessor::startUpdateDataInThread(int endIndx, int endOffset)
+void MosaicProcessor::updateDataWrapper(int endIndx, int endOffset)
 {
-    //qDebug() << "MosaicProcessor::startUpdateDataInThread" << endIndx << endOffset;
+    //qDebug() << "MosaicProcessor::startUpdateData" << endIndx << endOffset;
 
     dataProcessor_->changeState(DataProcessorType::kMosaic);
 
-    //QThreadPool* threadPool = QThreadPool::globalInstance();
-    //
-    //QtConcurrent::run(threadPool, [this, endIndx, endOffset]() {
-        updateData(endIndx, endOffset);
-    //});
+    updateData(endIndx, endOffset);
 
     dataProcessor_->changeState(DataProcessorType::kUndefined);
-
 }
 
 void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)//
@@ -74,12 +81,12 @@ void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMat
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
     tileResolution_ = tileResolution;
 
-    globalMeshPtr_->reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);//
+    surfaceMeshPtr_->reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);//
 }
 
 void MosaicProcessor::setGenerateGridContour(bool state)
 {
-    globalMeshPtr_->setGenerateGridContour(state);
+    surfaceMeshPtr_->setGenerateGridContour(state);
 }
 
 
@@ -147,12 +154,9 @@ void MosaicProcessor::setRAngleOffset(float val)
     rAngleOffset_ = val;
 }
 
-void MosaicProcessor::setResolution(float pixPerMeters)
+void MosaicProcessor::setTileResolution(float tileResolution)
 {
-    tileResolution_ = 1.0f / pixPerMeters;
-
-    // TODO
-    globalMeshPtr_->reinit(256, 16, tileResolution_);
+    tileResolution_ = tileResolution;
 }
 
 void MosaicProcessor::setGenerageGridContour(bool state)
@@ -169,24 +173,24 @@ void MosaicProcessor::postUpdate()
 {
     //qDebug() << "tileResolution_" << tileResolution_;
 
-    if (!globalMeshPtr_->getIsInited()) {
+    if (!surfaceMeshPtr_->getIsInited()) {
         return;
     }
 
-    auto updateVerticesIndices = [this](Tile* tilePtr, bool isNew) -> void {
+    auto updateVerticesIndices = [this](SurfaceTile* tilePtr, bool isNew) -> void {
         if (!isNew) {
             updateUnmarkedHeightVertices(tilePtr);
         }
         tilePtr->updateHeightIndices();
     };
 
-    int tileMatrixYSize = globalMeshPtr_->getTileMatrixRef().size();
-    int tileMatrixXSize = globalMeshPtr_->getTileMatrixRef().at(0).size();
+    int tileMatrixYSize = surfaceMeshPtr_->getTileMatrixRef().size();
+    int tileMatrixXSize = surfaceMeshPtr_->getTileMatrixRef().at(0).size();
 
     for (int i = 0; i < tileMatrixYSize; ++i) {
         for (int j = 0; j < tileMatrixXSize; ++j) {
 
-            auto& tileRef = globalMeshPtr_->getTileMatrixRef()[i][j];
+            auto& tileRef = surfaceMeshPtr_->getTileMatrixRef()[i][j];
             if (!tileRef->getIsPostUpdate()) {
                 continue;
             }
@@ -200,7 +204,7 @@ void MosaicProcessor::postUpdate()
 
             int yIndx = i + 1; // by row
             if (tileMatrixYSize > yIndx) {
-                auto& rowTileRef = globalMeshPtr_->getTileMatrixRef()[yIndx][j];
+                auto& rowTileRef = surfaceMeshPtr_->getTileMatrixRef()[yIndx][j];
                 if (!rowTileRef->getIsInited()) {
                     rowTileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
@@ -222,7 +226,7 @@ void MosaicProcessor::postUpdate()
 
             int xIndx = j - 1; // by column
             if (xIndx > -1 && tileMatrixXSize > xIndx) {
-                auto& colTileRef = globalMeshPtr_->getTileMatrixRef()[i][xIndx];
+                auto& colTileRef = surfaceMeshPtr_->getTileMatrixRef()[i][xIndx];
                 if (!colTileRef->getIsInited()) {
                     colTileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
@@ -245,8 +249,8 @@ void MosaicProcessor::postUpdate()
     }
 
     // to MosaicView
-    const auto& tilesRef = globalMeshPtr_->getTilesCRef();
-    QHash<QUuid, Tile> res;
+    const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
+    QHash<QUuid, SurfaceTile> res;
     res.reserve(tilesRef.size());
     for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
@@ -254,7 +258,7 @@ void MosaicProcessor::postUpdate()
     emit dataProcessor_->sendMosaicTiles(res);
 }
 
-void MosaicProcessor::updateUnmarkedHeightVertices(Tile* tilePtr) const
+void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
 {
     if (!tilePtr) {
         return;
@@ -306,9 +310,6 @@ void MosaicProcessor::updateUnmarkedHeightVertices(Tile* tilePtr) const
 
 void MosaicProcessor::updateData(int endIndx, int endOffset)
 {
-    std::unique_ptr<QMutexLocker> locker;
-
-
     if (!datasetPtr_) {
         return;
     }
@@ -395,7 +396,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
 
     concatenateMatrixParameters(actualMatParams, newMatrixParams);
 
-    bool meshUpdated = globalMeshPtr_->concatenate(actualMatParams);
+    bool meshUpdated = surfaceMeshPtr_->concatenate(actualMatParams);
     if (meshUpdated) {
         // qDebug() << "actual matrix:";
         // actualMatParams.print(qDebug());
@@ -403,8 +404,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
         // globalMeshPtr_->printMatrix();
     }
 
-    auto gMeshWidthPixs = globalMeshPtr_->getPixelWidth(); // for bypass
-    auto gMeshHeightPixs = globalMeshPtr_->getPixelHeight();
+    auto gMeshWidthPixs = surfaceMeshPtr_->getPixelWidth(); // for bypass
+    auto gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
 
     constexpr int sampleLimiter = 2;
@@ -489,8 +490,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
         // first segment
         QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
         QVector3D segFPhEndPnt = segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
-        auto segFBegPixPos = globalMeshPtr_->convertPhToPixCoords(segFPhBegPnt);
-        auto segFEndPixPos = globalMeshPtr_->convertPhToPixCoords(segFPhEndPnt);
+        auto segFBegPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhBegPnt);
+        auto segFEndPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhEndPnt);
         int segFPixX1 = segFBegPixPos.x();
         int segFPixY1 = segFBegPixPos.y();
         int segFPixX2 = segFEndPixPos.x();
@@ -504,8 +505,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
         // second segment
         QVector3D segSPhBegPnt = segSIsOdd ? measLinesVertices[segSBegVertIndx] : measLinesVertices[segSEndVertIndx];
         QVector3D segSPhEndPnt = segSIsOdd ? measLinesVertices[segSEndVertIndx] : measLinesVertices[segSBegVertIndx];
-        auto segSBegPixPos = globalMeshPtr_->convertPhToPixCoords(segSPhBegPnt);
-        auto segSEndPixPos = globalMeshPtr_->convertPhToPixCoords(segSPhEndPnt);
+        auto segSBegPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSPhBegPnt);
+        auto segSEndPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSPhEndPnt);
         int segSPixX1 = segSBegPixPos.x();
         int segSPixY1 = segSBegPixPos.y();
         int segSPixX2 = segSEndPixPos.x();
@@ -559,8 +560,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                 }
             }
 
-            auto segFCurrPixPos = globalMeshPtr_->convertPhToPixCoords(segFCurrPhPos);
-            auto segSCurrPixPos = globalMeshPtr_->convertPhToPixCoords(segSCurrPhPos);
+            auto segFCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFCurrPhPos);
+            auto segSCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSCurrPhPos);
 
             // color interpolation between two pixels
             int interpPixX1 = segFCurrPixPos.x();
@@ -584,13 +585,13 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
                             int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
 
-                            int tileSidePixelSize = globalMeshPtr_->getTileSidePixelSize();
+                            int tileSidePixelSize = surfaceMeshPtr_->getTileSidePixelSize();
                             int meshIndxX = bypassInterpX / tileSidePixelSize;
-                            int meshIndxY = (globalMeshPtr_->getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
+                            int meshIndxY = (surfaceMeshPtr_->getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
                             int tileIndxX = bypassInterpX % tileSidePixelSize;
                             int tileIndxY = bypassInterpY % tileSidePixelSize;
 
-                            auto& tileRef = globalMeshPtr_->getTileMatrixRef()[meshIndxY][meshIndxX];
+                            auto& tileRef = surfaceMeshPtr_->getTileMatrixRef()[meshIndxY][meshIndxX];
                             if (!tileRef->getIsInited()) {
                                 tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                             }
@@ -601,7 +602,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             *(imageRef.data() + tileIndxY * bytesPerLine + tileIndxX) = interpColorIndx;
 
                             // height matrix
-                            int stepSizeHeightMatrix = globalMeshPtr_->getStepSizeHeightMatrix();
+                            int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
                             int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
                             tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
