@@ -9,6 +9,11 @@
 #include <QOpenGLFunctions>
 #include "scene_object.h"
 
+enum class HeightType {
+    kUndefined = 0,
+    kMosaic,
+    kIsobaths
+};
 
 class Tile {
 public:
@@ -27,7 +32,7 @@ public:
     std::vector<uint8_t>&                    getImageDataRef();
     const std::vector<uint8_t>&              getImageDataCRef() const;
     QVector<QVector3D>&                      getHeightVerticesRef();
-    QVector<char>&                           getHeightMarkVerticesRef();
+    QVector<HeightType>&                     getHeightMarkVerticesRef();
     const QVector<QVector2D>&                getTextureVerticesRef() const;
     const QVector<QVector3D>&                getHeightVerticesConstRef() const;
     const QVector<int>&                      getHeightIndicesRef() const;
@@ -43,7 +48,7 @@ private:
     QVector3D origin_;
     std::vector<uint8_t> imageData_;
     QVector<QVector3D> heightVertices_;
-    QVector<char> heightMarkVertices_;
+    QVector<HeightType> heightMarkVertices_; // mosaic trace or not
     QVector<int> heightIndices_;
     QVector<QVector2D> textureVertices_;
     SceneObject::RenderImplementation gridRenderImpl_;

@@ -215,7 +215,7 @@ void MosaicProcessor::postUpdate()
                         continue;
                     }
                     topTileVertRef[rowIndxTo][2] = tileVertRef[rowIndxFrom][2];
-                    topTileMarkVertRef[rowIndxTo] = '1';
+                    topTileMarkVertRef[rowIndxTo] = HeightType::kMosaic;
                 }
                 updateVerticesIndices (rowTileRef, true);
             }
@@ -236,7 +236,7 @@ void MosaicProcessor::postUpdate()
                         continue;
                     }
                     leftTileVertRef[colIndxTo][2] = tileVertRef[colIndxFrom][2];
-                    leftTileMarkVertRef[colIndxTo] = '1';
+                    leftTileMarkVertRef[colIndxTo] = HeightType::kMosaic;
                 }
                 updateVerticesIndices (colTileRef, true);
             }
@@ -271,7 +271,7 @@ void MosaicProcessor::updateUnmarkedHeightVertices(Tile* tilePtr) const
 
     auto writeHeight = [&](int toIndx, int fromIndx) -> bool {
         if (fromIndx >= 0 && fromIndx < hVSize) {
-            if (heightMarkVerticesRef[fromIndx] == '1') {
+            if (heightMarkVerticesRef[fromIndx] == HeightType::kMosaic) {
                 heightVerticesRef[toIndx][2] = heightVerticesRef[fromIndx][2];
                 return true;
             }
@@ -281,7 +281,7 @@ void MosaicProcessor::updateUnmarkedHeightVertices(Tile* tilePtr) const
 
     int sideSize = std::sqrt(hVSize);
     for (int i = 0; i < hVSize; ++i) {
-        if (heightMarkVerticesRef[i] == '0') {
+        if (heightMarkVerticesRef[i] == HeightType::kUndefined) {
             if (i % sideSize) {
                 if (writeHeight(i, i - 1) ||
                     writeHeight(i, (i - 1) - sideSize) ||
@@ -605,7 +605,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
                             tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
-                            tileRef->getHeightMarkVerticesRef()[hVIndx] = '1';
+                            tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
                             tileRef->setIsPostUpdate(true);
                         }
                     }

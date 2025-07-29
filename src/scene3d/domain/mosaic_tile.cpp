@@ -27,7 +27,7 @@ void Tile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
             float y = origin_.y() + i * heightPixelStep;
             int currIndx = i * heightMatSideSize + j;
             heightVertices_[currIndx] = QVector3D(x, y, 0.0f);
-            heightMarkVertices_[currIndx] = '0';
+            heightMarkVertices_[currIndx] = HeightType::kUndefined;
         }
     }
 
@@ -162,7 +162,7 @@ QVector<QVector3D>& Tile::getHeightVerticesRef()
     return heightVertices_;
 }
 
-QVector<char> &Tile::getHeightMarkVerticesRef()
+QVector<HeightType> &Tile::getHeightMarkVerticesRef()
 {
     return heightMarkVertices_;
 }
