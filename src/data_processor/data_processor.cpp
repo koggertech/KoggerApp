@@ -8,23 +8,24 @@
 
 DataProcessor::DataProcessor(QObject *parent)
     : QObject(parent),
-      datasetPtr_(nullptr),
-      globalMesh_(256, 16, 0.1f),
-      bottomTrackProcessor_(this),
-      isobathsProcessor_(this),
-      mosaicProcessor_(this),
-      surfaceProcessor_(this),
-      state_(DataProcessorType::kUndefined),
-      chartsCounter_(0),
-      bottomTrackCounter_(0),
-      epochCounter_(0),
-      positionCounter_(0),
-      attitudeCounter_(0),
-      updateBottomTrack_(false),
-      updateIsobaths_(false),
-      updateMosaic_(false),
-      isOpeningFile_(false),
-      bottomTrackWindowCounter_(0)
+    datasetPtr_(nullptr),
+    globalMesh_(256, 16, 0.1f),
+    bottomTrackProcessor_(this),
+    isobathsProcessor_(this),
+    mosaicProcessor_(this),
+    surfaceProcessor_(this),
+    state_(DataProcessorType::kUndefined),
+    chartsCounter_(0),
+    bottomTrackCounter_(0),
+    epochCounter_(0),
+    positionCounter_(0),
+    attitudeCounter_(0),
+    updateBottomTrack_(false),
+    updateIsobaths_(false),
+    updateMosaic_(false),
+    isOpeningFile_(false),
+    bottomTrackWindowCounter_(0),
+    mosaicCounter_(0)
 {
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorType>("DataProcessorState");
@@ -68,6 +69,7 @@ void DataProcessor::clear(DataProcessorType procType)
     epochCounter_ = 0;
     positionCounter_ = 0;
     attitudeCounter_ = 0;
+    mosaicCounter_ = 0;
 }
 
 void DataProcessor::setUpdateBottomTrack(bool state)
@@ -131,13 +133,18 @@ void DataProcessor::onChartsAdded(uint64_t indx)
 
 void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
 {    
-    // qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << QThread::currentThreadId() << indxs.size();
+    //qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << indxs.size();
+
     if (indxs.empty()) {
         return;
     }
 
     if (updateIsobaths_) {
         doIsobathsWork(indxs, false, false);
+    }
+
+    if (updateMosaic_) {
+        mosaicProcessor_.startUpdateDataInThread(mosaicCounter_, 0);
     }
 }
 
@@ -160,9 +167,7 @@ void DataProcessor::onMosaicCanCalc(uint64_t indx)
 {
     //qDebug() << "DataProcessor::onMosaicCanCalc" << indx;
 
-    if (updateMosaic_) {
-        mosaicProcessor_.startUpdateDataInThread(indx, 0);
-    }
+    mosaicCounter_ = indx;
 }
 
 void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam &bottomTrackParam_)

@@ -124,4 +124,6 @@ private:
     bool isOpeningFile_;
     // BottomTrackProcessor
     int bottomTrackWindowCounter_;
+    // MosaicProcessor
+    int mosaicCounter_;
 };
