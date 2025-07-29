@@ -236,7 +236,7 @@ signals:
     // data horizon
     void epochAdded(uint64_t indx);
     void positionAdded(uint64_t indx);
-    void chartAdded(const ChannelId& channelId, uint64_t indx);
+    void chartAdded(uint64_t indx); // without ChartId
     void attitudeAdded(uint64_t indx);
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);

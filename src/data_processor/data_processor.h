@@ -39,7 +39,7 @@ public slots:
     void setUpdateMosaic (bool state);
     void setIsOpeningFile (bool state);
     // from DataHorizon
-    void onChartsAdded(const ChannelId& channelId, uint64_t indx); // external calling realtime
+    void onChartsAdded(uint64_t indx); // external calling realtime
     void onBottomTrackAdded(const QVector<int>& indxs);
     void onEpochAdded(uint64_t indx);
     void onPositionAdded(uint64_t indx);
@@ -111,12 +111,12 @@ private:
     // this
     Dataset* datasetPtr_;
     GlobalMesh globalMesh_;
-    BottomTrackProcessor bottomTrackProcessor_;
-    IsobathsProcessor isobathsProcessor_;
-    MosaicProcessor mosaicProcessor_;
+    BottomTrackProcessor bottomTrackProcessor_; // need Charts
+    IsobathsProcessor isobathsProcessor_; // need BottomTrack to calc
+    MosaicProcessor mosaicProcessor_; // need BottomTrack, Charts, Attitude to calc
     SurfaceProcessor surfaceProcessor_;
-    QHash<ChannelId, uint64_t> chartsCounter_;
     DataProcessorType state_;
+    uint64_t chartsCounter_;
     uint64_t bottomTrackCounter_;
     uint64_t epochCounter_;
     uint64_t positionCounter_;

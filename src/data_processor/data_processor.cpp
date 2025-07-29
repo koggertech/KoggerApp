@@ -15,6 +15,7 @@ DataProcessor::DataProcessor(QObject *parent)
       mosaicProcessor_(this),
       surfaceProcessor_(this),
       state_(DataProcessorType::kUndefined),
+      chartsCounter_(0),
       bottomTrackCounter_(0),
       epochCounter_(0),
       positionCounter_(0),
@@ -62,7 +63,7 @@ void DataProcessor::clear(DataProcessorType procType)
     }
 
     // this
-    chartsCounter_.clear();
+    chartsCounter_ = 0;
     bottomTrackCounter_ = 0;
     epochCounter_ = 0;
     positionCounter_ = 0;
@@ -95,11 +96,9 @@ void DataProcessor::setIsOpeningFile(bool state)
     isOpeningFile_ = state;
 }
 
-void DataProcessor::onChartsAdded(const ChannelId& channelId, uint64_t indx)
+void DataProcessor::onChartsAdded(uint64_t indx)
 {
-    Q_UNUSED(channelId);
-
-    chartsCounter_[channelId] = indx;
+    chartsCounter_ = indx;
 
 #ifndef SEPARATE_READING
     if (isOpeningFile_) {
@@ -122,10 +121,8 @@ void DataProcessor::onChartsAdded(const ChannelId& channelId, uint64_t indx)
 
             const auto channels = datasetPtr_->channelsList(); //
             for (auto it = channels.begin(); it != channels.end(); ++it) {
-              //  qDebug() << it->channelId_.isValid();
                 bottomTrackProcessor_.bottomTrackProcessing(it->channelId_, ChannelId(), btP);
             }
-            //bottomTrackProcessor_.bottomTrackProcessing(channelId, ChannelId(), btP); // TODO: fix
 
             bottomTrackWindowCounter_ = currCount;
         }

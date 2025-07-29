@@ -10,7 +10,7 @@ DataHorizon::DataHorizon() :
     isSeparateReading_(false),
     epochIndx_(0),
     positionIndx_(0),
-    chartIndx_(std::make_pair(ChannelId(), 0)),
+    chartIndx_(0),
     attitudeIndx_(0)
 {
 #ifdef SEPARATE_READING
@@ -27,7 +27,7 @@ void DataHorizon::clear()
 
     epochIndx_ = 0;
     positionIndx_ = 0;
-    chartIndx_ = std::make_pair(ChannelId(), 0);
+    chartIndx_ = 0;
     attitudeIndx_ = 0;
 }
 
@@ -42,10 +42,10 @@ void DataHorizon::setIsFileOpening(bool state)
 
     isFileOpening_ = state;
 
-    if (emitChanges_ && !isSeparateReading_ && !isFileOpening_) { // emit all
+    if (!isFileOpening_ && !isSeparateReading_ && emitChanges_) { // emit all
         emit epochAdded(epochIndx_);
         emit positionAdded(positionIndx_);
-        emit chartAdded(chartIndx_.first, chartIndx_.second);
+        emit chartAdded(chartIndx_);
         emit attitudeAdded(attitudeIndx_);
     }
 }
@@ -76,16 +76,16 @@ void DataHorizon::onAddedPosition(uint64_t indx)
     }
 }
 
-void DataHorizon::onAddedChart(const ChannelId& channelId, uint64_t indx)
+void DataHorizon::onAddedChart(uint64_t indx)
 {
-    //qDebug() << "DataHorizon::onAddedChart" << indx << channelId.toShortName();
+    //qDebug() << "DataHorizon::onAddedChart" << indx;
 
-    bool beenChanged = indx != chartIndx_.second; // TODO: delete this (fix on processing)
+    bool beenChanged = indx != chartIndx_; // TODO: delete this (fix on processing)
 
-    chartIndx_ = std::make_pair(channelId, indx);
+    chartIndx_ = indx;
 
     if (canEmitHorizon(beenChanged)) {
-        emit chartAdded(chartIndx_.first, chartIndx_.second);
+        emit chartAdded(chartIndx_);
     }
 }
 

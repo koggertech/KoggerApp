@@ -192,7 +192,7 @@ void MosaicView::setMeasLinesOddIndices(const QVector<int> &measLinesOddIndices)
 
 void MosaicView::setColorTableTextureTask(const std::vector<uint8_t> &colorTableTextureTask)
 {
-    qDebug() << "MosaicView::setColorTableTextureTask" << colorTableTextureTask.size();
+    //qDebug() << "MosaicView::setColorTableTextureTask" << colorTableTextureTask.size();
 
     colorTableTextureTask_ = colorTableTextureTask;
     Q_EMIT changed();

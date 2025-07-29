@@ -296,7 +296,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
 
     int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
     emit dataUpdate();
-    emit chartAdded(channelId, lastIndx);
+    emit chartAdded(lastIndx);
 }
 
 void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
