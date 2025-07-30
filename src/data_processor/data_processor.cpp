@@ -33,6 +33,7 @@ DataProcessor::DataProcessor(QObject *parent)
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
     qRegisterMetaType<QHash<QUuid, SurfaceTile>>("QHash<QUuid, SurfaceTile>");
 
+    surfaceProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
     isobathsProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
     mosaicProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
 }
@@ -47,11 +48,11 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
 
     bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
     mosaicProcessor_.setDatasetPtr(datasetPtr_);
-    surfaceProcessor_.setDatasetPtr(datasetPtr_);
 }
 
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
 {
+    surfaceProcessor_.setBottomTrackPtr(bottomTrackPtr);
     isobathsProcessor_.setBottomTrackPtr(bottomTrackPtr);
 }
 
@@ -139,6 +140,10 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
 
     if (indxs.empty()) {
         return;
+    }
+
+    if (updateIsobaths_ || updateMosaic_) {
+        surfaceProcessor_.onUpdatedBottomTrackData(indxs);
     }
 
     if (updateIsobaths_) {
@@ -366,6 +371,7 @@ void DataProcessor::doIsobathsWork(const QVector<int> &indxs, bool rebuildLinesL
         isobathsProcessor_.rebuildColorIntervals();
     }
     else {
+        // TODO: now surface
         if (!indxs.isEmpty()) {
             isobathsProcessor_.onUpdatedBottomTrackData(indxs);
         }

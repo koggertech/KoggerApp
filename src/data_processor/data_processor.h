@@ -17,7 +17,8 @@ enum class DataProcessorType {
     kUndefined = 0,
     kBottomTrack,
     kIsobaths,
-    kMosaic
+    kMosaic,
+    kSurface
 };
 
 class Dataset;
@@ -101,6 +102,7 @@ private:
     void doIsobathsWork(const QVector<int>& indxs, bool rebuildLinesLabels, bool rebuildAll);
 
 private:
+    friend class SurfaceProcessor;
     friend class BottomTrackProcessor;
     friend class IsobathsProcessor;
     friend class MosaicProcessor;
