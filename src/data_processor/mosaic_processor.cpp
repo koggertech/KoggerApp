@@ -605,8 +605,12 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
                             int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
-                            tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
-                            tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
+
+                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kIsobaths) {
+                                tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
+                                tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
+                            }
+
                             tileRef->setIsPostUpdate(true);
                         }
                     }

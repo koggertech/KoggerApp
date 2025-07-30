@@ -120,20 +120,37 @@ inline void concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams
 
 inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
 {
-    MatrixParams retVal;
+    mosaic::MatrixParams retVal;
 
     if (vertices.isEmpty()) {
         return retVal;
     }
 
-    auto [minX, maxX] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.x() < b.x(); });
-    auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
 
-    retVal.originX = minX->x();
-    retVal.originY = minY->y();
+    for (const auto& v : vertices)
+    {
+        if (!std::isfinite(v.x()) || !std::isfinite(v.y()) || !std::isfinite(v.z())) {
+            continue;
+        }
 
-    retVal.width  = static_cast<int>(std::ceil(maxX->x() - minX->x()));
-    retVal.height = static_cast<int>(std::ceil(maxY->y() - minY->y()));
+        minX = std::min(minX, v.x());
+        maxX = std::max(maxX, v.x());
+        minY = std::min(minY, v.y());
+        maxY = std::max(maxY, v.y());
+    }
+
+    if (minX == std::numeric_limits<float>::max()) {
+        return retVal;
+    }
+
+    retVal.originX = minX;
+    retVal.originY = minY;
+    retVal.width   = static_cast<int>(std::ceil(maxX - minX));
+    retVal.height  = static_cast<int>(std::ceil(maxY - minY));
 
     return retVal;
 }

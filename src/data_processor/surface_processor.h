@@ -14,6 +14,7 @@
 class BottomTrack;
 class DataProcessor;
 class SurfaceMesh;
+class SurfaceTile;
 class SurfaceProcessor
 {
 public:
@@ -25,6 +26,10 @@ public:
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
+    void setTileResolution(float tileResolution);
+
+private:
+    void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
 
 private:
     DataProcessor* dataProcessor_;
@@ -38,9 +43,12 @@ private:
     QHash<int, uint64_t> bTrToTrIndxs_;
     QPointF origin_;
     QPair<int,int> lastCellPoint_;
+    float tileResolution_;
     float minZ_;
     float maxZ_;
     float edgeLimit_;
+    int tileSidePixelSize_;
+    int tileHeightMatrixRatio_;
     int cellPx_;
     bool originSet_;
 

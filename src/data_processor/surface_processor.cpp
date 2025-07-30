@@ -1,9 +1,11 @@
 #include "isobaths_processor.h"
 
+#include <cmath>
 #include <QDebug>
 #include "data_processor.h"
 #include "bottom_track.h"
 #include "surface_mesh.h"
+#include "surface_tile.h"
 
 
 SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
@@ -11,9 +13,12 @@ SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
     bottomTrackPtr_(nullptr),
     surfaceMeshPtr_(nullptr),
     lastCellPoint_({ -1, -1 }),
+    tileResolution_(defaultTileResolution),
     minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
     edgeLimit_(20.0f),
+    tileSidePixelSize_(defaultTileSidePixelSize),
+    tileHeightMatrixRatio_(defaultTileHeightMatrixRatio),
     cellPx_(1),
     originSet_ (false)
 {
@@ -204,18 +209,19 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         }
 
         // вершины
-        pts[trBase    ] = fvec(pt[t.a]);
-        pts[trBase + 1] = fvec(pt[t.b]);
-        pts[trBase + 2] = fvec(pt[t.c]);
 
-        // рёбра
-        edgePts[edgBase    ] = pts[trBase];
-        edgePts[edgBase + 1] = pts[trBase + 1];
-        edgePts[edgBase + 2] = pts[trBase + 1];
-        edgePts[edgBase + 3] = pts[trBase + 2];
-        edgePts[edgBase + 4] = pts[trBase + 2];
-        edgePts[edgBase + 5] = pts[trBase];
+        QVector3D p1 = fvec(pt[t.a]);
+        QVector3D p2 = fvec(pt[t.b]);
+        QVector3D p3  = fvec(pt[t.c]);
 
+
+            pts[trBase    ] = p1;
+            pts[trBase + 1] = p2;
+            pts[trBase + 2] = p3;
+
+
+
+       
         // экстремумы
         newMinZ = std::min(newMinZ, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
         newMaxZ = std::max(newMaxZ, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
@@ -269,6 +275,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     //auto gMeshWidthPixs = surfaceMeshPtr_->getPixelWidth(); // for bypass
     //auto gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
+    //static QSet<SurfaceTile*> changedTiles;      // переспользуем между вызовами
+    //changedTiles.clear();
 
 
     //qDebug() << "TRACE HEIGHTS";
@@ -290,13 +298,9 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
             continue;
         }
 
-        // рёбра
-        auto p11 = pts[trBase];
-        auto p12 = pts[trBase + 1];
-        auto p21 = pts[trBase + 1];
-        auto p22 = pts[trBase + 2];
-        auto p31 = pts[trBase + 2];
-        auto p32 = pts[trBase];
+        //auto p1 = pts[trBase];
+        //auto p2 = pts[trBase + 1];
+        //auto p3 = pts[trBase + 2];
 
         //qDebug() << "edges";
         //qDebug() << p11 << p12;
@@ -306,30 +310,95 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
 
         //  HERE WE NEED TRACE THIS TRIANGLE TO TILES IN SURFACE MESH
 
-
-        surfaceMeshPtr_;
-
-
+        //writeTriangleToMesh(p1, p2, p3, changedTiles);  // A,B,C – любые три вершины тр‑ка
     }
 
+    //for (SurfaceTile* t : std::as_const(changedTiles)) {
+    //    t->updateHeightIndices();
+    //}
 
-
-    // emit dataProcessor_->sendIsobathsPts(pts_);
-    // emit dataProcessor_->sendIsobathsEdgePts(edgePts_);
 
     if (zChanged) {
         minZ_ = newMinZ;
         maxZ_ = newMaxZ;
-
         //emit dataProcessor_->sendIsobathsMinZ(minZ_);
         //emit dataProcessor_->sendIsobathsMaxZ(maxZ_);
-        //
-        //rebuildColorIntervals();
-        //fullRebuildLinesLabels();
-    }
-    else if (!updsTrIndx.isEmpty()) {
-        //incrementalProcessLinesLabels(updsTrIndx);
     }
 
     dataProcessor_->changeState(DataProcessorType::kUndefined);
+}
+
+void SurfaceProcessor::setTileResolution(float tileResolution)
+{
+    tileResolution_ = tileResolution;
+}
+
+void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile *> &updatedTiles)
+{
+    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
+        return;
+    }
+
+    const int stepPix = surfaceMeshPtr_->getStepSizeHeightMatrix();
+    const int tileSidePix = surfaceMeshPtr_->getTileSidePixelSize();
+    const int hvSide = tileSidePix / stepPix + 1;
+    const float res = tileResolution_;
+
+    const int meshW = surfaceMeshPtr_->getPixelWidth();
+    const int meshH = surfaceMeshPtr_->getPixelHeight();
+    const int numTilesY = surfaceMeshPtr_->getNumHeightTiles();
+
+    QVector3D Ap = surfaceMeshPtr_->convertPhToPixCoords(A);
+    QVector3D Bp = surfaceMeshPtr_->convertPhToPixCoords(B);
+    QVector3D Cp = surfaceMeshPtr_->convertPhToPixCoords(C);
+
+    int minPx = std::floor(std::min({Ap.x(), Bp.x(), Cp.x()}));
+    int maxPx = std::ceil (std::max({Ap.x(), Bp.x(), Cp.x()}));
+    int minPy = std::floor(std::min({Ap.y(), Bp.y(), Cp.y()}));
+    int maxPy = std::ceil (std::max({Ap.y(), Bp.y(), Cp.y()}));
+
+    int startX = std::clamp((minPx / stepPix) * stepPix, 0, meshW-1);
+    int endX   = std::clamp((maxPx / stepPix) * stepPix, 0, meshW-1);
+    int startY = std::clamp((minPy / stepPix) * stepPix, 0, meshH-1);
+    int endY   = std::clamp((maxPy / stepPix) * stepPix, 0, meshH-1);
+
+    auto area2 = [](const QVector3D& p, const QVector3D& q, const QVector3D& r)
+    { return (q.x()-p.x())*(r.y()-p.y()) - (q.y()-p.y())*(r.x()-p.x()); };
+
+    const float denom = area2(Ap, Bp, Cp);
+    if (qFuzzyIsNull(denom)) {
+        return;
+    }
+
+    for (int py = startY; py <= endY; py += stepPix) {
+        for (int px = startX; px <= endX; px += stepPix) {
+            QVector3D Ppix(px, py, 0.0f);
+
+            float w0 = area2(Bp, Cp, Ppix) / denom;
+            float w1 = area2(Cp, Ap, Ppix) / denom;
+            float w2 = 1.0f - w0 - w1;
+            if (w0 < 0.f || w1 < 0.f || w2 < 0.f) {
+                continue;
+            }
+
+            const float z = w0 * A.z() + w1 * B.z() + w2 * C.z();
+
+            int tileX = px / tileSidePix;
+            int tileY = (numTilesY - 1) - py / tileSidePix;
+
+            int locX  = px % tileSidePix;
+            int locY  = py % tileSidePix;
+            int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
+
+            SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
+            if (!tile->getIsInited()) {
+                tile->init(tileSidePix, surfaceMeshPtr_->getStepSizeHeightMatrix()-1, res);
+            }
+
+            tile->getHeightVerticesRef()[hvIdx][2]  = z;
+            tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kIsobaths;
+            tile->setIsPostUpdate(true);
+            updatedTiles.insert(tile);
+        }
+    }
 }
