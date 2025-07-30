@@ -43,8 +43,6 @@ private:
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
     void updateData(int endIndx, int endOffset = 0);
     inline bool checkLength(float dist) const;
-    MatrixParams getMatrixParams(const QVector<QVector3D> &vertices) const;
-    void concatenateMatrixParameters(MatrixParams& srcDst, const MatrixParams& src) const;
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
 
 private:

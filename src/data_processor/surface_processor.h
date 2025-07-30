@@ -8,6 +8,7 @@
 #include <QVector>
 #include <QVector3D>
 #include "delaunay.h"
+#include "draw_utils.h"
 
 
 class BottomTrack;
@@ -42,4 +43,6 @@ private:
     float edgeLimit_;
     int cellPx_;
     bool originSet_;
+
+    mosaic::MatrixParams lastMatParams_;
 };

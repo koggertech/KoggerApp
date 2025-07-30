@@ -1,17 +1,19 @@
 #pragma once
 
+#include <cmath>
 #include <vector>
 #include <stdint.h>
 #include <QColor>
 #include <QRgb>
 #include <QRectF>
 #include <QVector>
+#include <QVector3D>
 #include <QVector4D>
 #include <QOpenGLFunctions>
 #include <QDebug>
 
-
 constexpr float rgbMaxValue = 255.0f;
+
 
 namespace mosaic {
 class PlotColorTable // TODO: copy-paste from Plot2DEchogram
@@ -90,6 +92,53 @@ struct MatrixParams {
         stream << " originY:" << originY << "\n";
     }
 };
+
+inline void concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams &src)
+{
+    if (!srcDst.isValid() && !src.isValid())
+        return;
+
+    if (!srcDst.isValid()) {
+        srcDst = src;
+        return;
+    }
+
+    if (!src.isValid()) {
+        return;
+    }
+
+    int maxX = std::max(srcDst.originX + srcDst.width, src.originX + src.width);
+    int maxY = std::max(srcDst.originY + srcDst.height, src.originY + src.height);
+
+    srcDst.originX = std::min(srcDst.originX, src.originX);
+    srcDst.originY = std::min(srcDst.originY, src.originY);
+
+    srcDst.width = static_cast<int>(std::ceil(maxX - srcDst.originX));
+    srcDst.height = static_cast<int>(std::ceil(maxY - srcDst.originY));
+}
+
+
+inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
+{
+    MatrixParams retVal;
+
+    if (vertices.isEmpty()) {
+        return retVal;
+    }
+
+    auto [minX, maxX] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.x() < b.x(); });
+    auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
+
+    retVal.originX = minX->x();
+    retVal.originY = minY->y();
+
+    retVal.width  = static_cast<int>(std::ceil(maxX->x() - minX->x()));
+    retVal.height = static_cast<int>(std::ceil(maxY->y() - minY->y()));
+
+    return retVal;
+}
+
+
 } // namespace mosaic
 
 namespace DrawUtils

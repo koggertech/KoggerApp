@@ -35,6 +35,7 @@ void SurfaceProcessor::clear()
     minZ_ = std::numeric_limits<float>::max();
     maxZ_ = std::numeric_limits<float>::lowest();
     originSet_ = false;
+    lastMatParams_ = mosaic::MatrixParams();
 }
 
 void SurfaceProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
@@ -92,7 +93,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     QSet<int> updsTrIndx;
     bool beenManualChanged = false;
 
-    for (int itm : indxs) {
+    for (int itm : indxs) { // delaunay
         const auto &point = bTrData[itm];
 
         if (!std::isfinite(point.z())) {
@@ -164,17 +165,22 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         }
     }
 
+
+
+
+
+
+
     const int triCount = tr.size();
 
-    // TODO: trace these triangles to mest
-    QVector<QVector3D> pts_; // render
-    QVector<QVector3D> edgePts_; // render
+    QVector<QVector3D> pts;
+    QVector<QVector3D> edgePts;
 
-    if (pts_.size() < triCount * 3) {
-        pts_.resize(triCount * 3);
+    if (pts.size() < triCount * 3) {
+        pts.resize(triCount * 3);
     }
-    if (edgePts_.size() < triCount * 6) {
-        edgePts_.resize(triCount * 6);
+    if (edgePts.size() < triCount * 6) {
+        edgePts.resize(triCount * 6);
     }
 
     double newMinZ = std::numeric_limits<float>::max();
@@ -189,36 +195,35 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
 
         const int trBase  = triIdx * 3;
-        const int edgBase = triIdx * 6;
+        const int edgBase = triIdx * 3 * 2;
 
         if (!draw) {
-            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = nanVec();
-            std::fill_n(edgePts_.begin() + edgBase, 6, nanVec());
+            pts[trBase] = pts[trBase + 1] = pts[trBase + 2] = nanVec();
+            std::fill_n(edgePts.begin() + edgBase, 6, nanVec());
             continue;
         }
 
         // вершины
-        pts_[trBase    ] = fvec(pt[t.a]);
-        pts_[trBase + 1] = fvec(pt[t.b]);
-        pts_[trBase + 2] = fvec(pt[t.c]);
+        pts[trBase    ] = fvec(pt[t.a]);
+        pts[trBase + 1] = fvec(pt[t.b]);
+        pts[trBase + 2] = fvec(pt[t.c]);
 
         // рёбра
-        edgePts_[edgBase    ] = pts_[trBase];
-        edgePts_[edgBase + 1] = pts_[trBase + 1];
-        edgePts_[edgBase + 2] = pts_[trBase + 1];
-        edgePts_[edgBase + 3] = pts_[trBase + 2];
-        edgePts_[edgBase + 4] = pts_[trBase + 2];
-        edgePts_[edgBase + 5] = pts_[trBase];
+        edgePts[edgBase    ] = pts[trBase];
+        edgePts[edgBase + 1] = pts[trBase + 1];
+        edgePts[edgBase + 2] = pts[trBase + 1];
+        edgePts[edgBase + 3] = pts[trBase + 2];
+        edgePts[edgBase + 4] = pts[trBase + 2];
+        edgePts[edgBase + 5] = pts[trBase];
 
         // экстремумы
         newMinZ = std::min(newMinZ, std::min({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
         newMaxZ = std::max(newMaxZ, std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
     }
 
-    // // TODO
-    // emit dataProcessor_->sendIsobathsPts(pts_);
-    // emit dataProcessor_->sendIsobathsEdgePts(edgePts_);
 
+
+    // CALC Z RANGE
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
         float currMax = std::numeric_limits<float>::lowest();
@@ -239,6 +244,78 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     }
 
     const bool zChanged = !qFuzzyCompare(1.0 + minZ_, 1.0 + newMinZ) || !qFuzzyCompare(1.0 + maxZ_, 1.0 + newMaxZ);
+
+
+
+    // UPDATE MESH BOUNDARIES
+    MatrixParams actualMatParams(lastMatParams_);
+    MatrixParams newMatrixParams = getMatrixParams(pts);
+    if (newMatrixParams.isValid()) {
+        concatenateMatrixParameters(actualMatParams, newMatrixParams);
+        bool meshSizeUpdated = surfaceMeshPtr_->concatenate(actualMatParams);
+        Q_UNUSED(meshSizeUpdated)
+        //if (meshSizeUpdated) {
+        //    qDebug() << "UPDATED MESH BOUNDARIES";
+        //    qDebug() << "actual matrix:";
+        //    actualMatParams.print(qDebug());
+        //    qDebug() << "surface mesh:";
+        //    surfaceMeshPtr_->printMatrix();
+        //}
+        lastMatParams_ = actualMatParams;
+    }
+
+
+
+    //auto gMeshWidthPixs = surfaceMeshPtr_->getPixelWidth(); // for bypass
+    //auto gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
+
+
+
+    //qDebug() << "TRACE HEIGHTS";
+    // TRACE HEIGHT
+    for (auto triIdx : updsTrIndx) {
+        if (triIdx < 0 || triIdx >= triCount) {
+            continue;
+        }
+
+        const auto &t = tr[triIdx];
+        bool inWork = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+
+        const int trBase  = triIdx * 3;
+        const int edgBase = triIdx * 3 * 2;
+
+        if (!inWork) {
+            pts[trBase] = pts[trBase + 1] = pts[trBase + 2] = nanVec();
+            std::fill_n(edgePts.begin() + edgBase, 6, nanVec());
+            continue;
+        }
+
+        // рёбра
+        auto p11 = pts[trBase];
+        auto p12 = pts[trBase + 1];
+        auto p21 = pts[trBase + 1];
+        auto p22 = pts[trBase + 2];
+        auto p31 = pts[trBase + 2];
+        auto p32 = pts[trBase];
+
+        //qDebug() << "edges";
+        //qDebug() << p11 << p12;
+        //qDebug() << p21 << p22;
+        //qDebug() << p31 << p32;
+
+
+        //  HERE WE NEED TRACE THIS TRIANGLE TO TILES IN SURFACE MESH
+
+
+        surfaceMeshPtr_;
+
+
+    }
+
+
+
+    // emit dataProcessor_->sendIsobathsPts(pts_);
+    // emit dataProcessor_->sendIsobathsEdgePts(edgePts_);
 
     if (zChanged) {
         minZ_ = newMinZ;

@@ -659,50 +659,6 @@ bool MosaicProcessor::checkLength(float dist) const
     return true;
 }
 
-MatrixParams MosaicProcessor::getMatrixParams(const QVector<QVector3D> &vertices) const
-{
-    MatrixParams retVal;
-
-    if (vertices.isEmpty()) {
-        return retVal;
-    }
-
-    auto [minX, maxX] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.x() < b.x(); });
-    auto [minY, maxY] = std::minmax_element(vertices.begin(), vertices.end(), [](const QVector3D &a, const QVector3D &b) { return a.y() < b.y(); });
-
-    retVal.originX = minX->x();
-    retVal.originY  = minY->y();
-
-    retVal.width = static_cast<int>(std::ceil(maxX->x() -  minX->x()));
-    retVal.height = static_cast<int>(std::ceil(maxY->y() - minY->y()));
-
-    return retVal;
-}
-
-void MosaicProcessor::concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams &src) const
-{
-    if (!srcDst.isValid() && !src.isValid())
-        return;
-
-    if (!srcDst.isValid()) {
-        srcDst = src;
-        return;
-    }
-
-    if (!src.isValid()) {
-        return;
-    }
-
-    int maxX = std::max(srcDst.originX + srcDst.width, src.originX + src.width);
-    int maxY = std::max(srcDst.originY + srcDst.height, src.originY + src.height);
-
-    srcDst.originX = std::min(srcDst.originX, src.originX);
-    srcDst.originY = std::min(srcDst.originY, src.originY);
-
-    srcDst.width = static_cast<int>(std::ceil(maxX - srcDst.originX));
-    srcDst.height = static_cast<int>(std::ceil(maxY - srcDst.originY));
-}
-
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 {
     int retVal{ 0 };
