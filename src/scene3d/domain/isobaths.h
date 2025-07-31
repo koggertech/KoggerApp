@@ -48,8 +48,6 @@ public:
     explicit Isobaths(QObject* parent = nullptr);
     virtual ~Isobaths();
 
-    void clear();
-
     QVector<uint8_t> takeTextureTask();
     GLuint getDeinitTextureTask() const;
     GLuint getTextureId() const;
@@ -60,6 +58,8 @@ public:
     void setEdgesVisible(bool state);
 
 public slots: // from dataprocessor
+    void clear();
+
     void setLabels(const QVector<IsobathUtils::LabelParameters>& labels);
     void setLineSegments(const QVector<QVector3D>& lineSegments);
     void setPts(const QVector<QVector3D>& pts);

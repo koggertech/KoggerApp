@@ -156,10 +156,11 @@ void MosaicViewControlMenuController::onLevelChanged(float lowLevel, float highL
 void MosaicViewControlMenuController::onUpdateClicked()
 {
     if (graphicsSceneViewPtr_) {
-        // TODO completely rebuild !!!
-        //if (dataProcessorPtr_) {
-        //    QMetaObject::invokeMethod(dataProcessorPtr_, "UPDATE", Qt::QueuedConnection, Q_ARG());
-        //}
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "clear", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "clear", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
+        }
     }
 }
 

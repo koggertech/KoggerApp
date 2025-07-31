@@ -1662,6 +1662,12 @@ void Core::createScene3dConnections()
     // Mosaic
     QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,     scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::setColorTableTextureTask,  Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,          scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::setTiles,                  Qt::QueuedConnection);
+    // clear render
+    QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared, scene3dViewPtr_->bottomTrack().get(),      &BottomTrack::clearData, Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,    scene3dViewPtr_->getIsobathsPtr().get(),   &Isobaths::clear,        Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,      scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::clear,      Qt::QueuedConnection);
+    //QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared, TODO Qt::QueuedConnection);
+    //QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,     TODO Qt::QueuedConnection);
 
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }

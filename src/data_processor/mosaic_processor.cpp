@@ -33,10 +33,10 @@ void MosaicProcessor::clear()
     lastMatParams_ = kmath::MatrixParams();
     currIndxSec_ = 0;
 
-    segFChannelId_ = ChannelId();
-    segFSubChannelId_ = 0;
-    segSChannelId_ = ChannelId();
-    segSSubChannelId_ = 0;
+    //segFChannelId_ = ChannelId();
+    //segFSubChannelId_ = 0;
+    //segSChannelId_ = ChannelId();
+    //segSSubChannelId_ = 0;
 
     lastCalcEpoch_ = 0;
     lastAcceptedEpoch_ = 0;
@@ -317,6 +317,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
 
     bool segFIsValid = segFChannelId_.isValid();
     bool segSIsValid = segSChannelId_.isValid();
+
+    qDebug() << segFChannelId_.toShortName() << segSChannelId_.toShortName();
 
     if (!segFIsValid && !segSIsValid) {
         return;

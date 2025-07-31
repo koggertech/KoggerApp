@@ -41,8 +41,6 @@ public:
     explicit MosaicView(QObject* parent = nullptr);
     virtual ~MosaicView();
 
-    void clear();
-
     void setTextureIdByTileId(QUuid tileId, GLuint textureId);
     void setColorTableTextureId(GLuint value);
     void setMeasLineVisible(bool state);
@@ -57,6 +55,8 @@ public:
     bool                               getUseLinearFilter() const;
 
 public slots: // from dataprocessor
+    void clear();
+
     void setTiles(const QHash<QUuid, SurfaceTile>& tiles);
     void setMeasLinesVertices(const QVector<QVector3D>& measLinesVertices);
     void setMeasLinesEvenIndices(const QVector<int>& measLinesEvenIndices);
