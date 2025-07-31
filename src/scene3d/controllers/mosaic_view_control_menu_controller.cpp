@@ -10,7 +10,7 @@ MosaicViewControlMenuController::MosaicViewControlMenuController(QObject *parent
       dataProcessorPtr_(nullptr),
       pendingLambda_(nullptr),
       visibility_(false),
-      usingFilter_(false),
+      usingFilter_(true),
       gridVisible_(false),
       measLineVisible_(false),
       resolution_(10.0f), // pixPerMeters

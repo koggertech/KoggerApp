@@ -67,9 +67,9 @@ private:
     void updateTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles);
 
     std::vector<uint8_t> colorTableTextureTask_; // append
-    GLuint colorTableDeleteTextureId_ = 0; // delete
+    GLuint colorTableDeleteTextureId_; // delete
     QHash<QUuid, std::vector<uint8_t>> tileTextureTasks_; // append/delete(if val == std::vector<uint8_t>>())
-    bool useLinearFilter_ = false;
+    bool useLinearFilter_;
     QVector<GLuint> vectorTileTextureIdToDelete_;
     QVector<std::pair<QUuid, std::vector<uint8_t>>> vectorTileTextureToAppend_;
 };

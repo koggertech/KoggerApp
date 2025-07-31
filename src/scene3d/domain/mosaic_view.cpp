@@ -1,8 +1,10 @@
 #include "mosaic_view.h"
 
 
-MosaicView::MosaicView(QObject* parent) :
-    SceneObject(new MosaicViewRenderImplementation, parent)
+MosaicView::MosaicView(QObject* parent)
+    : SceneObject(new MosaicViewRenderImplementation, parent),
+    colorTableDeleteTextureId_(0),
+    useLinearFilter_(true)
 {
 }
 
