@@ -3,6 +3,7 @@
 #include <QDebug>
 #include "data_processor.h"
 #include "bottom_track.h"
+#include "math_defs.h"
 
 
 IsobathsProcessor::IsobathsProcessor(DataProcessor* parent) :
@@ -74,22 +75,6 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         bTrData = bottomTrackPtr_->cdata(); //
     }
 
-    const auto dist2 = [](const QPointF &a, const QPointF &b) {
-        double dx = a.x() - b.x();
-        double dy = a.y() - b.y();
-        return dx * dx + dy * dy;
-    };
-
-    const auto fvec = [](const delaunay::Point &p) {
-        return QVector3D(float(p.x), float(p.y), float(p.z));
-    };
-
-    const auto nanVec = [] {
-        return QVector3D(std::numeric_limits<float>::quiet_NaN(),
-                         std::numeric_limits<float>::quiet_NaN(),
-                         std::numeric_limits<float>::quiet_NaN());
-    };
-
     const auto registerTriangle = [&](int triIdx) {
         const auto &t = tr[triIdx];
         pointToTris_[t.a] << triIdx;
@@ -134,7 +119,7 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         if (cellPoints_.contains(cid)) {
             if (!cellPointsInTri_.contains(cid)) {
                 const auto &lastPoint = cellPoints_[cid];
-                const bool currNearest = dist2({ point.x(), point.y() }, center) < dist2({ lastPoint.x(), lastPoint.y() }, center);
+                const bool currNearest = kmath::dist2({ point.x(), point.y() }, center) < kmath::dist2({ lastPoint.x(), lastPoint.y() }, center);
 
                 if (currNearest) {
                     cellPoints_[cid] = point;
@@ -196,15 +181,15 @@ void IsobathsProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         const int edgBase = triIdx * 6;
 
         if (!draw) {
-            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = nanVec();
-            std::fill_n(edgePts_.begin() + edgBase, 6, nanVec());
+            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = kmath::nanVec();
+            std::fill_n(edgePts_.begin() + edgBase, 6, kmath::nanVec());
             continue;
         }
 
         // вершины
-        pts_[trBase    ] = fvec(pt[t.a]);
-        pts_[trBase + 1] = fvec(pt[t.b]);
-        pts_[trBase + 2] = fvec(pt[t.c]);
+        pts_[trBase    ] = kmath::fvec(pt[t.a]);
+        pts_[trBase + 1] = kmath::fvec(pt[t.b]);
+        pts_[trBase + 2] = kmath::fvec(pt[t.c]);
 
         // рёбра
         edgePts_[edgBase    ] = pts_[trBase];
@@ -375,8 +360,8 @@ void IsobathsProcessor::fullRebuildLinesLabels()
             float curOff = 0.0f;
             bool placedLabel = false;
 
-            while (nextMark < cumulativeShift + polylineLen + epsilon_) {
-                while (curSeg < segLen.size() && curOff + segLen[curSeg] < nextMark - cumulativeShift - epsilon_) {
+            while (nextMark < cumulativeShift + polylineLen + kmath::fltEps) {
+                while (curSeg < segLen.size() && curOff + segLen[curSeg] < nextMark - cumulativeShift - kmath::fltEps) {
                     curOff += segLen[curSeg];
                     ++curSeg;
                 }
@@ -433,16 +418,6 @@ void IsobathsProcessor::rebuildTrianglesBuffers()
     pts_.resize (triCnt * 3);
     edgePts_.resize(triCnt * 6);
 
-    const auto nanVec = [] {
-        return QVector3D(std::numeric_limits<float>::quiet_NaN(),
-                         std::numeric_limits<float>::quiet_NaN(),
-                         std::numeric_limits<float>::quiet_NaN());
-    };
-
-    const auto fvec = [](const delaunay::Point &p) {
-        return QVector3D(float(p.x), float(p.y), float(p.z));
-    };
-
     minZ_ =  std::numeric_limits<float>::max();
     maxZ_ = -std::numeric_limits<float>::max();
 
@@ -454,15 +429,15 @@ void IsobathsProcessor::rebuildTrianglesBuffers()
         bool draw = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
 
         if (!draw) {
-            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = nanVec();
-            std::fill_n(edgePts_.begin() + edgBase, 6, nanVec());
+            pts_[trBase] = pts_[trBase + 1] = pts_[trBase + 2] = kmath::nanVec();
+            std::fill_n(edgePts_.begin() + edgBase, 6, kmath::nanVec());
             continue;
         }
 
         // вершины
-        pts_[trBase    ] = fvec(pt[t.a]);
-        pts_[trBase + 1] = fvec(pt[t.b]);
-        pts_[trBase + 2] = fvec(pt[t.c]);
+        pts_[trBase    ] = kmath::fvec(pt[t.a]);
+        pts_[trBase + 1] = kmath::fvec(pt[t.b]);
+        pts_[trBase + 2] = kmath::fvec(pt[t.c]);
 
         // рёбра
         edgePts_[edgBase    ] = pts_[trBase];
@@ -640,7 +615,7 @@ void IsobathsProcessor::incrementalProcessLinesLabels(const QSet<int> &updsTrInd
             float next = 0.f;
             for (int i = 0; i + 1 < poly.size(); ++i) {
                 float segLen = (poly[i + 1] - poly[i]).length();
-                while (accLen + segLen >= next - epsilon_) {
+                while (accLen + segLen >= next - kmath::fltEps) {
                     float t = (next - accLen) / segLen;
                     QVector3D pos = poly[i] + t * (poly[i + 1] - poly[i]);
                     QVector3D dir = (poly[i + 1] - poly[i]).normalized();
@@ -755,7 +730,7 @@ void IsobathsProcessor::edgeIntersection(const QVector3D &vertA, const QVector3D
     QVector3D fVertA = { vertA.x(), vertA.y(), vertA.z() + zShift };
     QVector3D fVertB = { vertB.x(), vertB.y(), vertB.z() + zShift };
 
-    if (std::fabs(zA - level) < epsilon_ && std::fabs(zB - level) < epsilon_) { // обе на уровне
+    if (std::fabs(zA - level) < kmath::fltEps && std::fabs(zB - level) < kmath::fltEps) { // обе на уровне
         out.append(fVertA);
         out.append(fVertB);
         return;
@@ -763,11 +738,11 @@ void IsobathsProcessor::edgeIntersection(const QVector3D &vertA, const QVector3D
     if ((zA - level) * (zB - level) > 0.f) { // нет пересечения
         return;
     }
-    if (std::fabs(zA - level) < epsilon_) { // a на уровне
+    if (std::fabs(zA - level) < kmath::fltEps) { // a на уровне
         out.append(fVertA);
         return;
     }
-    if (std::fabs(zB - level) < epsilon_) { // b на уровне
+    if (std::fabs(zB - level) < kmath::fltEps) { // b на уровне
         out.append(fVertB);
         return;
     }

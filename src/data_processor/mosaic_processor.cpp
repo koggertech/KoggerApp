@@ -30,7 +30,7 @@ MosaicProcessor::~MosaicProcessor()
 
 void MosaicProcessor::clear()
 {
-    lastMatParams_ = MatrixParams();
+    lastMatParams_ = kmath::MatrixParams();
     currIndxSec_ = 0;
 
     segFChannelId_ = ChannelId();
@@ -328,8 +328,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
     }
 
     // prepare intermediate data (selecting epochs to process)
-    MatrixParams actualMatParams(lastMatParams_);
-    MatrixParams newMatrixParams;
+    kmath::MatrixParams actualMatParams(lastMatParams_);
+    kmath::MatrixParams newMatrixParams;
     QVector<QVector3D> measLinesVertices;
     QVector<int> measLinesEvenIndices;
     QVector<int> measLinesOddIndices;
@@ -389,7 +389,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
 
     lastCalcEpoch_ = epochCount;
 
-    newMatrixParams = getMatrixParams(measLinesVertices);
+    newMatrixParams = kmath::getMatrixParams(measLinesVertices);
     if (!newMatrixParams.isValid()) {
         return;
     }

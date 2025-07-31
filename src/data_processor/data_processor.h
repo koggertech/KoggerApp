@@ -72,6 +72,7 @@ signals:
     void bottomTrackProcessingCleared();
     void isobathsProcessingCleared();
     void mosaicProcessingCleared();
+    void surfaceProcessingCleared();
     void allProcessingCleared();
     // BottomTrackProcessor
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
@@ -97,6 +98,7 @@ private:
     void clearBottomTrackProcessing();
     void clearIsobathsProcessing();
     void clearMosaicProcessing();
+    void clearSurfaceProcessing();
     void clearAllProcessings();
     // IsobathsProcessor
     void doIsobathsWork(const QVector<int>& indxs, bool rebuildLinesLabels, bool rebuildAll);

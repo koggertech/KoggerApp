@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-using namespace mosaic;
-
 
 SurfaceMesh::SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
     tileResolution_(tileResolution),
@@ -30,7 +28,7 @@ void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
 
-bool SurfaceMesh::concatenate(MatrixParams &actualMatParams)
+bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
 {
     if (!actualMatParams.isValid()) {
         return false;
@@ -187,7 +185,7 @@ bool SurfaceMesh::getIsInited() const
     return !tiles_.empty();
 }
 
-void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const MatrixParams &matrixParams)
+void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const kmath::MatrixParams &matrixParams)
 {
     numWidthTiles_ = numWidthTiles;
     numHeightTiles_ = numHeightTiles;

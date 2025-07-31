@@ -1,62 +1,18 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
-#include <vector>
-#include <stdint.h>
-#include <QColor>
-#include <QRgb>
-#include <QRectF>
+#include <limits>
 #include <QVector>
 #include <QVector3D>
-#include <QVector4D>
-#include <QOpenGLFunctions>
 #include <QDebug>
+#include "delaunay_defs.h"
 
-constexpr float rgbMaxValue = 255.0f;
 
+namespace kmath {
 
-namespace mosaic {
-class PlotColorTable // TODO: copy-paste from Plot2DEchogram
-{
-public:
-    /*structures*/
-    enum class ThemeId {
-        kUndefined,
-        kClassic,
-        kSepia,
-        kWRGBD,
-        kWB,
-        kBW
-    };
-
-    /*methods*/
-    PlotColorTable();
-
-    void setTheme(int id); // emun ThemeId
-    void setLevels(float low, float high);
-    void setLowLevel(float val);
-    void setHighLevel(float val);
-    int                     getTheme()      const;
-    std::pair<float, float> getLevels()     const;
-    float                   getLowLevel()   const;
-    float                   getHighLevel()  const;
-    QVector<QRgb>           getColorTable() const;
-    std::vector<uint8_t>    getRgbaColors() const;
-
-private:
-    /*methods*/
-    void update();
-    void setColorScheme(const QVector<QColor>& colors, const QVector<int>& levels);
-
-    /*data*/
-    int themeId_;
-    QVector<QRgb> colorTable_;
-    QVector<QRgb> colorTableWithLevels_;
-    float lowLevel_;
-    float highLevel_;
-    std::vector<uint8_t> rgbaColors_;
-};
-
+static constexpr float fltEps = std::numeric_limits<float>::epsilon();
+static constexpr float dblEps = std::numeric_limits<double>::epsilon();
 
 struct MatrixParams {
     MatrixParams() :
@@ -120,7 +76,7 @@ inline void concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams
 
 inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
 {
-    mosaic::MatrixParams retVal;
+    MatrixParams retVal;
 
     if (vertices.isEmpty()) {
         return retVal;
@@ -155,28 +111,28 @@ inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
     return retVal;
 }
 
-
-} // namespace mosaic
-
-namespace DrawUtils
+inline double dist2(const QPointF &a, const QPointF &b)
 {
-    /**
-     * @brief Converts color from QColor to QVector4D
-     * @param[in] color Color object for convertion
-     * @return Vector that contains normalized color
-     */
-    inline QVector4D colorToVector4d(const QColor &color)
-    {
-        return {static_cast <float>(color.red())   / rgbMaxValue,
-                static_cast <float>(color.green()) / rgbMaxValue,
-                static_cast <float>(color.blue())  / rgbMaxValue,
-                static_cast <float>(color.alpha()) / rgbMaxValue};
-    }
-
-    inline QRectF viewportRect(QOpenGLFunctions* ctx)
-    {
-        GLint viewport[4];
-        ctx->glGetIntegerv(GL_VIEWPORT, viewport);
-        return QRectF(viewport[0], viewport[1], viewport[2], viewport[3]);
-    }
+    double dx = a.x() - b.x();
+    double dy = a.y() - b.y();
+    return dx * dx + dy * dy;
 }
+
+inline QVector3D fvec(const delaunay::Point &p)
+{
+    return QVector3D(float(p.x), float(p.y), float(p.z));
+}
+
+inline QVector3D nanVec()
+{
+    return QVector3D(std::numeric_limits<float>::quiet_NaN(),
+                     std::numeric_limits<float>::quiet_NaN(),
+                     std::numeric_limits<float>::quiet_NaN());
+}
+
+inline float twiceArea(const QVector3D& p, const QVector3D& q, const QVector3D& r) // удвоенная площадь с ориентацией
+{
+    return (q.x() - p.x()) * (r.y() - p.y()) - (q.y() - p.y()) * (r.x() - p.x());
+}
+
+} // namespace kmath

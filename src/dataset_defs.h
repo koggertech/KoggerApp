@@ -7,7 +7,7 @@
 #include <QObject>
 #include <QString>
 #include <QUuid>
-
+#include "math_defs.h"
 #include "dsp_defs.h"
 
 
@@ -241,7 +241,7 @@ typedef struct NED {
             }
 
             double c = acos(arg);
-            double k = (fabs(c) < __DBL_EPSILON__) ? 1.0 : (c / sin(c));
+            double k = (fabs(c) < kmath::dblEps) ? 1.0 : (c / sin(c));
 
             n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
             e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;

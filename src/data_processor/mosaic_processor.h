@@ -4,6 +4,7 @@
 #include "epoch.h"
 #include "surface_tile.h"
 #include "draw_utils.h"
+#include "math_defs.h"
 
 using namespace mosaic;
 
@@ -53,7 +54,7 @@ private:
     DataProcessor* dataProcessor_;
     Dataset* datasetPtr_;
     SurfaceMesh* surfaceMeshPtr_;
-    MatrixParams lastMatParams_;
+    kmath::MatrixParams lastMatParams_;
     float tileResolution_;
     uint64_t currIndxSec_;
     ChannelId segFChannelId_;

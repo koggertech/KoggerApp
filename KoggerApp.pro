@@ -27,9 +27,11 @@ HEADERS += \
     src/hotkeys_manager.h \
     src/id_binnary.h \
     src/delaunay.h \
+    src/delaunay_defs.h \
     src/logger.h \
     src/map_defs.h \
     src/isobaths_defs.h \
+    src/math_defs.h \
     src/mav_link_conf.h \
     src/proto_binnary.h \
     src/stream_list.h \

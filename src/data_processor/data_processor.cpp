@@ -63,6 +63,7 @@ void DataProcessor::clear(DataProcessorType procType)
     case DataProcessorType::kBottomTrack: clearBottomTrackProcessing(); emit bottomTrackProcessingCleared(); break;
     case DataProcessorType::kIsobaths:    clearIsobathsProcessing();    emit isobathsProcessingCleared();    break;
     case DataProcessorType::kMosaic:      clearMosaicProcessing();      emit mosaicProcessingCleared();      break;
+    case DataProcessorType::kSurface:     clearSurfaceProcessing();     emit mosaicProcessingCleared();      break;
     default: break;
     }
 
@@ -240,11 +241,14 @@ void DataProcessor::setIsobathsEdgeLimit(int val)
 {
     //qDebug() << "DataProcessor::setIsobathsEdgeLimit" << val;
 
-    if (qFuzzyCompare(isobathsProcessor_.getEdgeLimit(), static_cast<float>(val))) {
+    auto edgeLimit = static_cast<float>(val);
+
+    if (qFuzzyCompare(isobathsProcessor_.getEdgeLimit(), edgeLimit)) {
         return;
     }
 
-    isobathsProcessor_.setEdgeLimit(static_cast<float>(val));
+    surfaceProcessor_.setEdgeLimit(edgeLimit);
+    isobathsProcessor_.setEdgeLimit(edgeLimit);
 
     doIsobathsWork({}, true, true);
 }
@@ -295,6 +299,7 @@ void DataProcessor::setMosaicTileResolution(float val)
 
     surfaceMesh_.reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, tileResolution_);
 
+    surfaceProcessor_.setTileResolution(tileResolution_);
     mosaicProcessor_.setTileResolution(tileResolution_);
 }
 
@@ -354,11 +359,17 @@ void DataProcessor::clearMosaicProcessing()
     mosaicProcessor_.clear();
 }
 
+void DataProcessor::clearSurfaceProcessing()
+{
+    surfaceProcessor_.clear();
+}
+
 void DataProcessor::clearAllProcessings()
 {
     clearBottomTrackProcessing();
     clearIsobathsProcessing();
     clearMosaicProcessing();
+    clearSurfaceProcessing();
 
     surfaceMesh_.clear();
 }

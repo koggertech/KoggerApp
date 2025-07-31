@@ -2,11 +2,9 @@
 
 #include <vector>
 #include <QVector3D>
-#include "draw_utils.h"
 #include "surface_tile.h"
+#include "math_defs.h"
 
-
-using namespace mosaic;
 
 class SurfaceMesh {
 public:
@@ -15,7 +13,7 @@ public:
     ~SurfaceMesh();
 
     void reinit(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
-    bool concatenate(MatrixParams& actualMatParams);    
+    bool concatenate(kmath::MatrixParams& actualMatParams);
     QVector3D convertPhToPixCoords(QVector3D phCoords) const;
     void printMatrix() const;
     void clear();
@@ -34,7 +32,7 @@ public:
 
 private:
     /*methods*/
-    void initializeMatrix(int numWidthTiles, int numHeightTiles, const MatrixParams& matrixParams);
+    void initializeMatrix(int numWidthTiles, int numHeightTiles, const kmath::MatrixParams& matrixParams);
     void resizeColumnsRight(int columnsToAdd);
     void resizeRowsTop(int rowsToAdd);
     void resizeColumnsLeft(int columnsToAdd);

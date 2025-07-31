@@ -8,7 +8,7 @@
 #include <QVector>
 #include <QVector3D>
 #include "delaunay.h"
-#include "draw_utils.h"
+#include "math_defs.h"
 
 
 class BottomTrack;
@@ -27,6 +27,7 @@ public:
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
     void onUpdatedBottomTrackData(const QVector<int>& indxs);
     void setTileResolution(float tileResolution);
+    void setEdgeLimit(float val);
 
 private:
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
@@ -52,5 +53,5 @@ private:
     int cellPx_;
     bool originSet_;
 
-    mosaic::MatrixParams lastMatParams_;
+    kmath::MatrixParams lastMatParams_;
 };

@@ -5,6 +5,7 @@
 #include <QSet>
 #include <QVector>
 #include <QVector3D>
+#include "math_defs.h"
 
 
 namespace IsobathUtils {
@@ -14,8 +15,6 @@ using IsobathsSegVec = QVector<IsobathsSeg>;
 using IsobathsPolyline = QVector<QVector3D>;
 using IsobathsPolylines = QVector<IsobathsPolyline>;
 
-// constants
-static constexpr float epsilon_ = 1e-6f;
 
 // functions
 template <typename T>
@@ -106,7 +105,7 @@ inline const QVector<QVector3D>& colorPalette(int themeId)
     return palettes[std::clamp(themeId, 0, palettes.size() - 1)];
 }
 
-inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = epsilon_)
+inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = kmath::fltEps)
 {
     return (a - b).lengthSquared() < eps * eps;
 }
