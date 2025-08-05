@@ -164,7 +164,7 @@ void MosaicProcessor::setGenerageGridContour(bool state)
     generateGridContour_ = state;
 }
 
-void MosaicProcessor::askColorTableForMosaicView()
+void MosaicProcessor::askColorTableForMosaic()
 {
     emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
 }
@@ -248,7 +248,7 @@ void MosaicProcessor::postUpdate()
         }
     }
 
-    // to MosaicView
+    // to SurfaceView
     const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
     QHash<QUuid, SurfaceTile> res;
     res.reserve(tilesRef.size());

@@ -26,7 +26,7 @@ HEADERS += \
     $$PWD/polygon_group.h \
     $$PWD/polygon_object.h \
     $$PWD/quad.h \
-    $$PWD/mosaic_view.h \
+    $$PWD/surface_view.h \
     $$PWD/isobaths.h \
     $$PWD/triangle.h \
     $$PWD/usbl_view.h \
@@ -48,6 +48,6 @@ SOURCES += \
     $$PWD/point_object.cpp \
     $$PWD/polygon_group.cpp \
     $$PWD/polygon_object.cpp \
-    $$PWD/mosaic_view.cpp \
+    $$PWD/surface_view.cpp \
     $$PWD/isobaths.cpp \
     $$PWD/usbl_view.cpp

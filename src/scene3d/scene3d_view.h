@@ -6,7 +6,7 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "ray_caster.h"
-#include "mosaic_view.h"
+#include "surface_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
@@ -136,12 +136,12 @@ public:
         // maps
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
         // mosaic
-        void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
-        void processTileTexture(GraphicsScene3dView* viewPtr) const;
+        void processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const;
+        void processMosaicTileTexture(GraphicsScene3dView* viewPtr) const;
         // image
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
         // isobaths
-        void processIsobathsTexture(GraphicsScene3dView* viewPtr) const;
+        void processSurfaceTexture(GraphicsScene3dView* viewPtr) const;
 
         QString checkOpenGLError() const;
 
@@ -178,7 +178,7 @@ public:
     std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
     std::shared_ptr<Isobaths> getIsobathsPtr() const;
-    std::shared_ptr<MosaicView> getMosaicViewPtr() const;
+    std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
     std::shared_ptr<Contacts> getContactsPtr() const;
@@ -258,7 +258,7 @@ private:
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
     std::shared_ptr<Isobaths> isobaths_;
-    std::shared_ptr<MosaicView> mosaicView_;
+    std::shared_ptr<SurfaceView> surfaceView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
     std::shared_ptr<Contacts> contacts_;

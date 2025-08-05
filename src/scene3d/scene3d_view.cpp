@@ -18,7 +18,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
     isobaths_(std::make_shared<Isobaths>()),
-    mosaicView_(std::make_shared<MosaicView>()),
+    surfaceView_(std::make_shared<SurfaceView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
     contacts_(std::make_shared<Contacts>(this)),
@@ -49,7 +49,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     imageView_->setView(this);
 
     QObject::connect(isobaths_.get(), &Isobaths::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(mosaicView_.get(), &MosaicView::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
@@ -63,7 +63,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
     QObject::connect(isobaths_.get(), &Isobaths::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(mosaicView_.get(), &MosaicView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(contacts_.get(), &Contacts::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -106,9 +106,9 @@ std::shared_ptr<Isobaths> GraphicsScene3dView::getIsobathsPtr() const
     return isobaths_;
 }
 
-std::shared_ptr<MosaicView> GraphicsScene3dView::getMosaicViewPtr() const
+std::shared_ptr<SurfaceView> GraphicsScene3dView::getSurfaceViewPtr() const
 {
-    return mosaicView_;
+    return surfaceView_;
 }
 
 std::shared_ptr<ImageView> GraphicsScene3dView::getImageViewPtr() const
@@ -169,7 +169,7 @@ Dataset *GraphicsScene3dView::dataset() const
 void GraphicsScene3dView::clear(bool cleanMap)
 {
     isobaths_->clear();
-    mosaicView_->clear();
+    surfaceView_->clear();
     contacts_->clear();
     imageView_->clear();//
     if (cleanMap) {
@@ -678,7 +678,7 @@ void GraphicsScene3dView::updateBounds()
                    .merge(boatTrack_->bounds())
                    .merge(m_polygonGroup->bounds())
                    .merge(m_pointGroup->bounds())
-                   .merge(mosaicView_->bounds())
+                   .merge(surfaceView_->bounds())
                    .merge(imageView_->bounds())
                    .merge(usblView_->bounds());
 
@@ -888,10 +888,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
 
     // process textures
     processMapTextures(view);
-    processColorTableTexture(view);
-    processTileTexture(view);
+    processMosaicColorTableTexture(view);
+    processMosaicTileTexture(view);
     processImageTexture(view);
-    processIsobathsTexture(view);
+    processSurfaceTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -904,7 +904,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
     m_renderer->isobathsRenderImpl_         = *(dynamic_cast<Isobaths::IsobathsRenderImplementation*>(view->isobaths_->m_renderImpl));
-    m_renderer->mosaicViewRenderImpl_       = *(dynamic_cast<MosaicView::MosaicViewRenderImplementation*>(view->mosaicView_->m_renderImpl));
+    m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
@@ -981,22 +981,22 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
     }
 }
 
-void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const
 {
-    auto mosaicPtr = viewPtr->getMosaicViewPtr();
+    auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
     // del
-    if (auto cTTDId = mosaicPtr->takeColorTableDeleteTextureId(); cTTDId) {
-        mosaicPtr->setColorTableTextureId(0);
+    if (auto cTTDId = surfacePtr->takeMosaicColorTableDeleteTextureId(); cTTDId) {
+        surfacePtr->setMosaicColorTableTextureId(0);
         glDeleteTextures(1, &cTTDId);
     }
 
-    auto task = mosaicPtr->takeColorTableTextureTask();
+    auto task = surfacePtr->takeMosaicColorTableTextureTask();
     if (task.empty()) {
         return;
     }
 
-    GLuint colorTableTextureId = mosaicPtr->getColorTableTextureId();
+    GLuint colorTableTextureId = surfacePtr->getMosaicColorTableTextureId();
 
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
     if (colorTableTextureId) {
@@ -1014,7 +1014,7 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
 
-        mosaicPtr->setColorTableTextureId(colorTableTextureId);
+        surfacePtr->setColorTableTextureId(colorTableTextureId);
     }
 #else
     if (colorTableTextureId) {
@@ -1031,18 +1031,18 @@ void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3
 
         glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
 
-        mosaicPtr->setColorTableTextureId(colorTableTextureId);
+        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
     }
 #endif
 }
 
-void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const // TODO CHECK
+void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3dView* viewPtr) const // TODO CHECK
 {
-    auto mosaicPtr = viewPtr->getMosaicViewPtr();
+    auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
     // delete
     {
-        auto tasks = mosaicPtr->takeVectorTileTextureIdToDelete();
+        auto tasks = surfacePtr->takeMosaicVectorTileTextureIdToDelete();
 
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
             glDeleteTextures(1, it);
@@ -1051,7 +1051,7 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
 
     // append
     {
-        auto tasks = mosaicPtr->takeVectorTileTextureToAppend();
+        auto tasks = surfacePtr->takeMosaicVectorTileTextureToAppend();
 
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
 
@@ -1060,15 +1060,15 @@ void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView*
             glGenTextures(1, &textureId);
             glBindTexture(GL_TEXTURE_2D, textureId);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getMosaicViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, defaultTileSidePixelSize, defaultTileSidePixelSize, 0, GL_RED, GL_UNSIGNED_BYTE, it->second.data());
 
-            mosaicPtr->setTextureIdByTileId(it->first, textureId);
+            surfacePtr->setMosaicTextureIdByTileId(it->first, textureId);
 
             QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
             glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
@@ -1111,7 +1111,7 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
     task = QImage();
 }
 
-void GraphicsScene3dView::InFboRenderer::processIsobathsTexture(GraphicsScene3dView *viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processSurfaceTexture(GraphicsScene3dView *viewPtr) const
 {
     // init/reinit
     auto isobathsPtr = viewPtr->getIsobathsPtr();

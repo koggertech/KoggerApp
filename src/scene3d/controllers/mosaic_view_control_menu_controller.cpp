@@ -46,7 +46,7 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
     visibility_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getMosaicViewPtr()->setVisible(visibility_);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setVisible(visibility_);
     }
     else {
         tryInitPendingLambda();
@@ -58,7 +58,6 @@ void MosaicViewControlMenuController::onUseFilterChanged(bool state)
     usingFilter_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getMosaicViewPtr()->setUseLinearFilter(usingFilter_);
     }
     else {
         tryInitPendingLambda();
@@ -70,7 +69,6 @@ void MosaicViewControlMenuController::onGridVisibleChanged(bool state)
     gridVisible_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getMosaicViewPtr()->setTileGridVisible(gridVisible_);
     }
     else {
         tryInitPendingLambda();
@@ -82,7 +80,6 @@ void MosaicViewControlMenuController::onMeasLineVisibleChanged(bool state)
     measLineVisible_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getMosaicViewPtr()->setMeasLineVisible(measLineVisible_);
     }
     else {
         tryInitPendingLambda();
@@ -92,7 +89,7 @@ void MosaicViewControlMenuController::onMeasLineVisibleChanged(bool state)
 void MosaicViewControlMenuController::onClearClicked()
 {
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getMosaicViewPtr()->clear();
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->clear();
     }
 }
 
@@ -221,11 +218,8 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
                 }
 
-                if (auto mosaicPtr = graphicsSceneViewPtr_->getMosaicViewPtr(); mosaicPtr) {
+                if (auto mosaicPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); mosaicPtr) {
                     mosaicPtr->setVisible(visibility_);
-                    mosaicPtr->setUseLinearFilter(usingFilter_);
-                    mosaicPtr->setTileGridVisible(gridVisible_);
-                    mosaicPtr->setMeasLineVisible(measLineVisible_);
                 }
             }
         };

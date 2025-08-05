@@ -37,7 +37,7 @@ public:
     void setTileResolution(float tileResolution);
     void setGenerageGridContour(bool state);
 
-    void askColorTableForMosaicView(); // first init colorTable in render
+    void askColorTableForMosaic(); // first init colorTable in render
 
 private:
     void postUpdate();

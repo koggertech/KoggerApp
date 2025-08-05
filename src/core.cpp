@@ -1146,7 +1146,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
 
 void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
 {
-    if (scene3dViewPtr_ && scene3dViewPtr_->getMosaicViewPtr() && datasetPtr_) {
+    if (datasetPtr_ && dataProcessor_ && scene3dViewPtr_) {
         auto [ch1, sub1, name1] = datasetPtr_->channelIdFromName(firstChStr);
         auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(secondChStr);
 
@@ -1660,12 +1660,12 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsTextureTask,           scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setTextureTask,         Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsColorIntervalsSize,    scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setColorIntervalsSize,  Qt::QueuedConnection);
     // Mosaic
-    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,     scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::setColorTableTextureTask,  Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,          scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::setTiles,                  Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,     scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMosaicColorTableTextureTask,  Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,          scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTiles,                  Qt::QueuedConnection);
     // clear render
-    QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared, scene3dViewPtr_->bottomTrack().get(),      &BottomTrack::clearData, Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,    scene3dViewPtr_->getIsobathsPtr().get(),   &Isobaths::clear,        Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,      scene3dViewPtr_->getMosaicViewPtr().get(), &MosaicView::clear,      Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared, scene3dViewPtr_->bottomTrack().get(),       &BottomTrack::clearData, Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,    scene3dViewPtr_->getIsobathsPtr().get(),    &Isobaths::clear,        Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,      scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::clear,      Qt::QueuedConnection);
     //QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared, TODO Qt::QueuedConnection);
     //QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,     TODO Qt::QueuedConnection);
 

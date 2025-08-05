@@ -89,7 +89,7 @@ public:
         PointGroup   = 5,
         PolygonGroup = 6,
         UsblView     = 7,
-        MosaicView   = 8,
+        SurfaceView  = 8,
         ImageView    = 9,
         MapView      = 10,
         Contacts     = 11,

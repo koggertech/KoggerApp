@@ -333,7 +333,7 @@ void DataProcessor::setMosaicGenerateGridContour(bool state)
 
 void DataProcessor::askColorTableForMosaic()
 {
-    mosaicProcessor_.askColorTableForMosaicView();
+    mosaicProcessor_.askColorTableForMosaic();
 }
 
 void DataProcessor::changeState(const DataProcessorType& state)
