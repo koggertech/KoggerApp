@@ -255,7 +255,7 @@ void MosaicProcessor::postUpdate()
     for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
-    emit dataProcessor_->sendMosaicTiles(res);
+    emit dataProcessor_->sendMosaicTiles(res, true);
 }
 
 void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
@@ -599,7 +599,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             }
 
                             // image
-                            auto& imageRef = tileRef->getImageDataRef();
+                            auto& imageRef = tileRef->getMosaicImageDataRef();
                             int bytesPerLine = std::sqrt(imageRef.size());
                             *(imageRef.data() + tileIndxY * bytesPerLine + tileIndxX) = interpColorIndx;
 

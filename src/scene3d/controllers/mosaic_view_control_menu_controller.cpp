@@ -46,7 +46,7 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
     visibility_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getSurfaceViewPtr()->setVisible(visibility_);
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setMVisible(visibility_);
     }
     else {
         tryInitPendingLambda();
@@ -218,8 +218,8 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
                 }
 
-                if (auto mosaicPtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); mosaicPtr) {
-                    mosaicPtr->setVisible(visibility_);
+                if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
+                    surfacePtr->setMVisible(visibility_);
                 }
             }
         };

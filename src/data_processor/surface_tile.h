@@ -27,18 +27,18 @@ public:
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices();
 
-    void setTextureId(GLuint val);
+    void setMosaicTextureId(GLuint val);
     void setIsPostUpdate(bool state);
     QUuid                                    getUuid() const;
     QVector3D                                getOrigin() const;
     bool                                     getIsInited() const;
-    GLuint                                   getTextureId() const;
+    GLuint                                   getMosaicTextureId() const;
     int                                      getIsPostUpdate() const;
-    std::vector<uint8_t>&                    getImageDataRef();
-    const std::vector<uint8_t>&              getImageDataCRef() const;
+    std::vector<uint8_t>&                    getMosaicImageDataRef();
+    const std::vector<uint8_t>&              getMosaicImageDataCRef() const;
     QVector<QVector3D>&                      getHeightVerticesRef();
     QVector<HeightType>&                     getHeightMarkVerticesRef();
-    const QVector<QVector2D>&                getTextureVerticesRef() const;
+    const QVector<QVector2D>&                getMosaicTextureVerticesRef() const;
     const QVector<QVector3D>&                getHeightVerticesConstRef() const;
     const QVector<int>&                      getHeightIndicesRef() const;
     const SceneObject::RenderImplementation& getGridRenderImplRef() const;

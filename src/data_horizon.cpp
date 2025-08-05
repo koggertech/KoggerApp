@@ -51,6 +51,7 @@ void DataHorizon::setIsFileOpening(bool state)
         emit positionAdded(positionIndx_);
         emit chartAdded(chartIndx_);
         emit attitudeAdded(attitudeIndx_);
+        tryCalcAndEmitMosaicIndx();
     }
 }
 
@@ -90,9 +91,8 @@ void DataHorizon::onAddedChart(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit chartAdded(chartIndx_);
+        tryCalcAndEmitMosaicIndx();
     }
-
-    tryEmitMosaicIndx();
 }
 
 void DataHorizon::onAddedAttitude(uint64_t indx)
@@ -105,9 +105,8 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit attitudeAdded(attitudeIndx_);
+        tryCalcAndEmitMosaicIndx();
     }
-
-    tryEmitMosaicIndx();
 }
 
 void DataHorizon::onAddedBottomTrack(uint64_t indx)
@@ -124,9 +123,8 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit bottomTrackAdded(bottomTrackIndx_);
+        tryCalcAndEmitMosaicIndx();
     }
-
-    tryEmitMosaicIndx();
 }
 
 void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx)
@@ -156,7 +154,7 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
         }
     }
     else {
-        if(!isFileOpening_ && beenChanged) {
+        if (!isFileOpening_ && beenChanged) {
             retVal = true;
         }
     }
@@ -164,7 +162,7 @@ bool DataHorizon::canEmitHorizon(bool beenChanged) const
     return retVal;
 }
 
-void DataHorizon::tryEmitMosaicIndx()
+void DataHorizon::tryCalcAndEmitMosaicIndx()
 {
     uint64_t minMosaicHorizon = std::min(std::min(bottomTrackIndx_, chartIndx_), attitudeIndx_);
     if (minMosaicHorizon > mosaicIndx_) {

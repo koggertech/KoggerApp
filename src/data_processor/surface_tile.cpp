@@ -112,7 +112,7 @@ void SurfaceTile::updateHeightIndices()
     }
 }
 
-void SurfaceTile::setTextureId(GLuint val)
+void SurfaceTile::setMosaicTextureId(GLuint val)
 {
     textureId_ = val;
 }
@@ -137,7 +137,7 @@ bool SurfaceTile::getIsInited() const
     return isInited_;
 }
 
-GLuint SurfaceTile::getTextureId() const
+GLuint SurfaceTile::getMosaicTextureId() const
 {
     return textureId_;
 }
@@ -147,12 +147,12 @@ int SurfaceTile::getIsPostUpdate() const
     return isPostUpdate_;
 }
 
-std::vector<uint8_t>& SurfaceTile::getImageDataRef()
+std::vector<uint8_t>& SurfaceTile::getMosaicImageDataRef()
 {
     return imageData_;
 }
 
-const std::vector<uint8_t> &SurfaceTile::getImageDataCRef() const
+const std::vector<uint8_t> &SurfaceTile::getMosaicImageDataCRef() const
 {
     return imageData_;
 }
@@ -167,7 +167,7 @@ QVector<HeightType> &SurfaceTile::getHeightMarkVerticesRef()
     return heightMarkVertices_;
 }
 
-const QVector<QVector2D>& SurfaceTile::getTextureVerticesRef() const
+const QVector<QVector2D>& SurfaceTile::getMosaicTextureVerticesRef() const
 {
     return textureVertices_;
 }

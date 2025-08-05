@@ -53,7 +53,6 @@ void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
 {
     surfaceProcessor_.setBottomTrackPtr(bottomTrackPtr);
-    isobathsProcessor_.setBottomTrackPtr(bottomTrackPtr);
 }
 
 void DataProcessor::clear(DataProcessorType procType)
@@ -135,8 +134,8 @@ void DataProcessor::onChartsAdded(uint64_t indx)
     }
 }
 
-void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
-{    
+void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes from 3D
+{
     //qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << indxs.size();
 
     if (indxs.empty()) {
@@ -147,9 +146,9 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs)
         surfaceProcessor_.onUpdatedBottomTrackData(indxs);
     }
 
-    if (updateIsobaths_) {
-        doIsobathsWork(indxs, false, false);
-    }
+    //if (updateIsobaths_) {
+    //    doIsobathsWork(indxs, false, false);
+    //}
 
     if (updateMosaic_) {
         mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
@@ -183,42 +182,45 @@ void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const Chann
     bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam_);
 }
 
-void DataProcessor::setIsobathsColorTableThemeById(int id)
+void DataProcessor::setSurfaceColorTableThemeById(int id)
 {
-    //qDebug() << "DataProcessor::setColorTableThemeById" << id;
+    //qDebug() << "DataProcessor::setSurfaceColorTableThemeById" << id;
 
-    if (isobathsProcessor_.getThemeId() == id) {
+    if (surfaceProcessor_.getThemeId() == id) {
         return;
     }
 
-    isobathsProcessor_.setThemeId(id);
+    surfaceProcessor_.setThemeId(id);
 
-    isobathsProcessor_.rebuildColorIntervals();
+    surfaceProcessor_.rebuildColorIntervals();
 }
 
-void DataProcessor::setIsobathsSurfaceStepSize(float val)
+void DataProcessor::setSurfaceStepSize(float val)
 {
-    //qDebug() << "DataProcessor::setIsobathsSurfaceStepSize" << val;
+    //qDebug() << "DataProcessor::setSurfaceStepSize" << val;
 
-    if (qFuzzyCompare(isobathsProcessor_.getSurfaceStepSize(), val)) {
+    if (qFuzzyCompare(surfaceProcessor_.getSurfaceStepSize(), val)) {
         return;
     }
 
-    isobathsProcessor_.setSurfaceStepSize(val);
+    surfaceProcessor_.setSurfaceStepSize(val);
+    isobathsProcessor_.setLineStepSize(val);
 
-    isobathsProcessor_.rebuildColorIntervals();
+    surfaceProcessor_.rebuildColorIntervals();
 }
 
 void DataProcessor::setIsobathsLineStepSize(float val)
 {
     //qDebug() << "DataProcessor::setIsobathsLineStepSize" << val;
 
-    if (qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
+    if (qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) { // also for surface
         return;
     }
 
+    surfaceProcessor_.setSurfaceStepSize(val);
     isobathsProcessor_.setLineStepSize(val);
 
+    emit sendSurfaceStepSize(surfaceProcessor_.getSurfaceStepSize());
     emit sendIsobathsLineStepSize(isobathsProcessor_.getLineStepSize());
 
     doIsobathsWork({}, true, false);
@@ -237,18 +239,17 @@ void DataProcessor::setIsobathsLabelStepSize(float val)
     doIsobathsWork({}, true, false);
 }
 
-void DataProcessor::setIsobathsEdgeLimit(int val)
+void DataProcessor::setSurfaceEdgeLimit(int val)
 {
     //qDebug() << "DataProcessor::setIsobathsEdgeLimit" << val;
 
     auto edgeLimit = static_cast<float>(val);
 
-    if (qFuzzyCompare(isobathsProcessor_.getEdgeLimit(), edgeLimit)) {
+    if (qFuzzyCompare(surfaceProcessor_.getEdgeLimit(), edgeLimit)) {
         return;
     }
 
     surfaceProcessor_.setEdgeLimit(edgeLimit);
-    isobathsProcessor_.setEdgeLimit(edgeLimit);
 
     doIsobathsWork({}, true, true);
 }
@@ -379,7 +380,7 @@ void DataProcessor::doIsobathsWork(const QVector<int> &indxs, bool rebuildLinesL
     if (rebuildAll) {
         isobathsProcessor_.rebuildTrianglesBuffers();
         isobathsProcessor_.fullRebuildLinesLabels();
-        isobathsProcessor_.rebuildColorIntervals();
+        surfaceProcessor_.rebuildColorIntervals();
     }
     else {
         // TODO: now surface

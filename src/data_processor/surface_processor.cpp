@@ -209,6 +209,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         t->updateHeightIndices();
     }
 
+    propagateBorderHeights();
+
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
         float currMax = std::numeric_limits<float>::lowest();
@@ -230,9 +232,19 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
 
     const bool zChanged = !qFuzzyCompare(1.0 + minZ_, 1.0 + lastMinZ) || !qFuzzyCompare(1.0 + maxZ_, 1.0 + lastMaxZ);
     if (zChanged) {
-        //emit dataProcessor_->sendIsobathsMinZ(minZ_); // maybe calc in BottomTrackProcessing?
-        //emit dataProcessor_->sendIsobathsMaxZ(maxZ_);
+        rebuildColorIntervals();
+        emit dataProcessor_->sendSurfaceMinZ(minZ_);
+        emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }
+
+    // to SurfaceView
+    const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
+    QHash<QUuid, SurfaceTile> res;
+    res.reserve(tilesRef.size());
+    for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
+        res.insert((*it)->getUuid(), (*(*it)));
+    }
+    emit dataProcessor_->sendMosaicTiles(res, false);
 
     dataProcessor_->changeState(DataProcessorType::kUndefined);
 }
@@ -245,6 +257,54 @@ void SurfaceProcessor::setTileResolution(float tileResolution)
 void SurfaceProcessor::setEdgeLimit(float val)
 {
     edgeLimit_ = val;
+}
+
+void SurfaceProcessor::rebuildColorIntervals()
+{
+    int levelCount = static_cast<int>(((maxZ_ - minZ_) / surfaceStepSize_) + 1);
+    if (levelCount <= 0) {
+        return;
+    }
+
+    colorIntervals_.clear();
+    QVector<QVector3D> palette = generateExpandedPalette(levelCount);
+    colorIntervals_.reserve(levelCount);
+
+    for (int i = 0; i < levelCount; ++i) {
+        colorIntervals_.append({ minZ_ + i * surfaceStepSize_, palette[i] });
+    }
+
+    levelStep_ = surfaceStepSize_;
+
+    emit dataProcessor_->sendSurfaceColorIntervalsSize(static_cast<int>(colorIntervals_.size()));
+    emit dataProcessor_->sendSurfaceStepSize(levelStep_);
+
+    updateTexture();
+}
+
+void SurfaceProcessor::setSurfaceStepSize(float val)
+{
+    surfaceStepSize_ = val;
+}
+
+void SurfaceProcessor::setThemeId(int val)
+{
+    themeId_ = val;
+}
+
+float SurfaceProcessor::getEdgeLimit() const
+{
+    return edgeLimit_;
+}
+
+float SurfaceProcessor::getSurfaceStepSize() const
+{
+    return surfaceStepSize_;
+}
+
+int SurfaceProcessor::getThemeId() const
+{
+    return themeId_;
 }
 
 void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile*> &updatedTiles)
@@ -307,6 +367,124 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
             tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kIsobaths;
             tile->setIsPostUpdate(true);
             updatedTiles.insert(tile);
+        }
+    }
+}
+
+QVector<QVector3D> SurfaceProcessor::generateExpandedPalette(int totalColors) const
+{
+    const auto &palette = colorPalette(themeId_);
+    const int paletteSize = palette.size();
+
+    QVector<QVector3D> retVal;
+
+    if (totalColors <= 1 || paletteSize == 0) {
+        retVal.append(paletteSize > 0 ? palette.first() : QVector3D(1.0f, 1.0f, 1.0f)); // fallback: white
+        return retVal;
+    }
+
+    retVal.reserve(totalColors);
+
+    for (int i = 0; i < totalColors; ++i) {
+        float t = static_cast<float>(i) / static_cast<float>(totalColors - 1);
+        float ft = t * (paletteSize - 1);
+        int i0 = static_cast<int>(ft);
+        int i1 = std::min(i0 + 1, paletteSize - 1);
+        float l = ft - static_cast<float>(i0);
+        retVal.append((1.f - l) * palette[i0] + l * palette[i1]);
+    }
+
+    return retVal;
+}
+
+void SurfaceProcessor::updateTexture() const
+{
+    int paletteSize = colorIntervals_.size();
+    if (paletteSize == 0) {
+        return;
+    }
+
+    QVector<uint8_t> textureTask;
+    textureTask.resize(paletteSize * 4);
+    for (int i = 0; i < paletteSize; ++i) {
+        const QVector3D &c = colorIntervals_[i].color;
+        textureTask[i * 4 + 0] = static_cast<uint8_t>(qBound(0.f, c.x() * 255.f, 255.f));
+        textureTask[i * 4 + 1] = static_cast<uint8_t>(qBound(0.f, c.y() * 255.f, 255.f));
+        textureTask[i * 4 + 2] = static_cast<uint8_t>(qBound(0.f, c.z() * 255.f, 255.f));
+        textureTask[i * 4 + 3] = 255;
+    }
+
+    emit dataProcessor_->sendSurfaceTextureTask(textureTask);
+}
+
+void SurfaceProcessor::propagateBorderHeights()
+{
+    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
+        return;
+    }
+
+    const int stepPix  = surfaceMeshPtr_->getStepSizeHeightMatrix();
+    const int hvSide   = surfaceMeshPtr_->getTileSidePixelSize() / stepPix + 1;
+    const int tilesY   = surfaceMeshPtr_->getNumHeightTiles();
+    const int tilesX   = surfaceMeshPtr_->getNumWidthTiles();
+
+    auto& matrix = surfaceMeshPtr_->getTileMatrixRef();
+
+    auto copyRow = [&](SurfaceTile* src, SurfaceTile* dst, int rowFrom, int rowTo) {
+        auto& vSrc = src->getHeightVerticesRef();
+        auto& vDst = dst->getHeightVerticesRef();
+        auto& mDst = dst->getHeightMarkVerticesRef();
+        for (int k = 0; k < hvSide; ++k) {
+            int iFrom = rowFrom * hvSide + k;
+            int iTo   = rowTo   * hvSide + k;
+            if (!qFuzzyIsNull(vSrc[iFrom].z())) {
+                vDst[iTo][2] = vSrc[iFrom][2];
+                mDst[iTo]    = HeightType::kIsobaths;
+            }
+        }
+    };
+
+    auto copyCol = [&](SurfaceTile* src, SurfaceTile* dst, int colFrom, int colTo) {
+        auto& vSrc = src->getHeightVerticesRef();
+        auto& vDst = dst->getHeightVerticesRef();
+        auto& mDst = dst->getHeightMarkVerticesRef();
+        for (int k = 0; k < hvSide; ++k) {
+            int iFrom = k * hvSide + colFrom;
+            int iTo   = k * hvSide + colTo;
+            if (!qFuzzyIsNull(vSrc[iFrom].z())) {
+                vDst[iTo][2] = vSrc[iFrom][2];
+                mDst[iTo]    = HeightType::kIsobaths;
+            }
+        }
+    };
+
+    for (int ty = 0; ty < tilesY; ++ty) {
+        for (int tx = 0; tx < tilesX; ++tx) {
+            SurfaceTile* t = matrix[ty][tx];
+            if (!t->getIsPostUpdate()) {
+                continue;
+            }
+
+            t->updateHeightIndices();
+            t->setIsPostUpdate(false);
+
+            if (ty + 1 < tilesY) { // вверх, строка 0 в последнюю верхнего тайла
+                SurfaceTile* top = matrix[ty + 1][tx];
+                if (!top->getIsInited()) {
+                    top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                }
+                copyRow(t, top, 0, hvSide - 1);
+                top->updateHeightIndices();
+            }
+
+            if (tx > 0) { // влево, столбец 0 в правый столбец левого тайла
+                SurfaceTile* left = matrix[ty][tx - 1];
+                if (!left->getIsInited()) {
+                    left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                }
+                copyCol(t, left, 0, hvSide - 1);
+                left->updateHeightIndices();
+            }
         }
     }
 }

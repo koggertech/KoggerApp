@@ -42,7 +42,7 @@ public slots:
 
 private:
     bool canEmitHorizon(bool beenChanged) const;
-    void tryEmitMosaicIndx();
+    void tryCalcAndEmitMosaicIndx();
 
 private:
     bool emitChanges_;

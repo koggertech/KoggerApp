@@ -36,7 +36,6 @@ Core::Core() :
     createLinkManagerConnections();
     createControllers();
     createDatasetConnections();
-    QObject::connect(this, &Core::sendIsFileOpening, this, &Core::onSendIsFileOpening);
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
@@ -261,6 +260,7 @@ void Core::onFileStartOpening()
     qDebug() << "file start opening!";
     isFileOpening_ = true;
     emit sendIsFileOpening();
+    dataHorizon_->setIsFileOpening(isFileOpening_);
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->forceUpdateDatasetLlaRef();
@@ -337,6 +337,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             dataHorizon_->clear();
             QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
             setDataProcessorConnections();
+            dataHorizon_->setIsFileOpening(isFileOpening_);
         }
 
         if (scene3dViewPtr_) {
@@ -1293,6 +1294,7 @@ void Core::onFileStopsOpening()
 {
     isFileOpening_ = false;
     emit sendIsFileOpening();
+    dataHorizon_->setIsFileOpening(isFileOpening_);
 }
 
 void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
@@ -1600,15 +1602,6 @@ int Core::getDataProcessorState() const
     return static_cast<int>(dataProcessorState_);
 }
 
-void Core::onSendIsFileOpening()
-{
-    dataHorizon_->setIsFileOpening(isFileOpening_);
-
-    if (scene3dViewPtr_) {
-        scene3dViewPtr_->setIsFileOpening(isFileOpening_);
-    }
-}
-
 void Core::createDataProcessor()
 {
     dataProcThread_ = new QThread(this);
@@ -1648,17 +1641,18 @@ void Core::createScene3dConnections()
                      this, [this](const QVector<int>& indxs) { dataHorizon_->onAddedBottomTrack3D(indxs.empty() ? scene3dViewPtr_->bottomTrack()->getAllIndxs() : indxs); });
 
     // res work proc
+    // Surface
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTextureTask,           scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTextureTask,         Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceMinZ,                  scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMinZ,                Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceMaxZ,                  scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMaxZ,                Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceStepSize,              scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setSurfaceStep,         Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceColorIntervalsSize,    scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setColorIntervalsSize,  Qt::QueuedConnection);
     // Isobaths
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,                scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLabels,              Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineSegments,        Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsPts,                   scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setPts,                 Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsEdgePts,               scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setEdgePts,             Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsMinZ,                  scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setMinZ,                Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsMaxZ,                  scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setMaxZ,                Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLevelStep,             scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLevelStep,           Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineStepSize,        Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsTextureTask,           scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setTextureTask,         Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsColorIntervalsSize,    scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setColorIntervalsSize,  Qt::QueuedConnection);
     // Mosaic
     QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,     scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMosaicColorTableTextureTask,  Qt::QueuedConnection);
     QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,          scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTiles,                  Qt::QueuedConnection);

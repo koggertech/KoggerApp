@@ -48,12 +48,14 @@ public slots:
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
+    // SurfaceProcessor
+    void setSurfaceColorTableThemeById(int id);
+    void setSurfaceStepSize(float val);
+    void setSurfaceEdgeLimit(int val);
+
     // IsobathsProcessor
-    void setIsobathsColorTableThemeById(int id);
-    void setIsobathsSurfaceStepSize(float val);
     void setIsobathsLineStepSize(float val);
     void setIsobathsLabelStepSize(float val);
-    void setIsobathsEdgeLimit(int val);
     // MosaicProcessor
     void setMosaicChannels(const ChannelId& ch1, uint8_t sub1, const ChannelId& ch2, uint8_t sub2);
     void setMosaicTheme(int indx);
@@ -77,20 +79,21 @@ signals:
     // BottomTrackProcessor
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
     void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP);
+    // SurfaceProcessor
+    void sendSurfaceMinZ(float minZ);
+    void sendSurfaceMaxZ(float maxZ);
+    void sendSurfaceTextureTask(const QVector<uint8_t>& textureTask);
+    void sendSurfaceColorIntervalsSize(int size);
+    void sendSurfaceStepSize(float lineStepSize);
     // IsobathsProcessor
     void sendIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels);
     void sendIsobathsLineSegments(const QVector<QVector3D>& lineSegments);
     void sendIsobathsPts(const QVector<QVector3D>& pts);
     void sendIsobathsEdgePts(const QVector<QVector3D>& edgePts);
-    void sendIsobathsMinZ(float minZ);
-    void sendIsobathsMaxZ(float maxZ);
-    void sendIsobathsLevelStep(float levelStep);
     void sendIsobathsLineStepSize(float lineStepSize);
-    void sendIsobathsTextureTask(const QVector<uint8_t>& textureTask);
-    void sendIsobathsColorIntervalsSize(int size);
     // MosaicProcessor
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
-    void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles);
+    void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles, bool useTextures);
 
 private:
     // this

@@ -49,18 +49,19 @@ void IsobathsControlMenuController::tryInitPendingLambda()
             if (graphicsSceneViewPtr_) {
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths",               Qt::QueuedConnection, Q_ARG(bool,  processState_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsSurfaceStepSize",      Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLineStepSize",         Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize",        Qt::QueuedConnection, Q_ARG(float, labelStepSize_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsColorTableThemeById",  Qt::QueuedConnection, Q_ARG(int,   themeId_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsEdgeLimit",            Qt::QueuedConnection, Q_ARG(int,   edgeLimit_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceColorTableThemeById",   Qt::QueuedConnection, Q_ARG(int,   themeId_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceStepSize",              Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceEdgeLimit",             Qt::QueuedConnection, Q_ARG(int,   edgeLimit_));
+                }
+
+                if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
+                    surfacePtr->setIVisible(visibility_);
                 }
 
                 if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
                     isobathsPtr->setVisible(visibility_);
-                    isobathsPtr->setEdgesVisible(edgesVisible_);
-                    isobathsPtr->setTrianglesVisible(trianglesVisible_);
-                    isobathsPtr->setDebugMode(debugModeView_);
                 }
             }
         };
@@ -72,6 +73,7 @@ void IsobathsControlMenuController::onIsobathsVisibilityCheckBoxCheckedChanged(b
     visibility_ = checked;
 
     if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->getSurfaceViewPtr()->setIVisible(checked);
         graphicsSceneViewPtr_->getIsobathsPtr()->setVisible(checked);
 
         if (visibility_) {
@@ -97,7 +99,6 @@ void IsobathsControlMenuController::onTrianglesVisible(bool state)
     trianglesVisible_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getIsobathsPtr()->setTrianglesVisible(trianglesVisible_);
     }
     else {
         tryInitPendingLambda();
@@ -109,7 +110,6 @@ void IsobathsControlMenuController::onEdgesVisible(bool state)
     edgesVisible_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getIsobathsPtr()->setEdgesVisible(edgesVisible_ );
     }
     else {
         tryInitPendingLambda();
@@ -122,7 +122,7 @@ void IsobathsControlMenuController::onSetSurfaceLineStepSize(float val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsSurfaceStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
             QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLineStepSize",    Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
         }
     }
@@ -151,7 +151,7 @@ void IsobathsControlMenuController::onThemeChanged(int val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsColorTableThemeById", Qt::QueuedConnection, Q_ARG(int, themeId_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceColorTableThemeById", Qt::QueuedConnection, Q_ARG(int, themeId_));
         }
     }
     else {
@@ -164,7 +164,6 @@ void IsobathsControlMenuController::onDebugModeView(bool state)
     debugModeView_ = state;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->getIsobathsPtr()->setDebugMode(debugModeView_);
     }
     else {
         tryInitPendingLambda();
@@ -202,7 +201,7 @@ void IsobathsControlMenuController::onEdgeLimitChanged(int val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsEdgeLimit", Qt::QueuedConnection, Q_ARG(int, edgeLimit_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceEdgeLimit", Qt::QueuedConnection, Q_ARG(int, edgeLimit_));
         }
     }
     else {

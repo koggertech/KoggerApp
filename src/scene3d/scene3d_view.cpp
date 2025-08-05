@@ -418,11 +418,6 @@ void GraphicsScene3dView::setGridVisibility(bool state)
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::setIsFileOpening(bool state)
-{
-    isFileOpening_ = state;
-}
-
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -986,12 +981,12 @@ void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(Graphics
     auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
     // del
-    if (auto cTTDId = surfacePtr->takeMosaicColorTableDeleteTextureId(); cTTDId) {
+    if (auto cTTDId = surfacePtr->takeMosaicColorTableToDelete(); cTTDId) {
         surfacePtr->setMosaicColorTableTextureId(0);
         glDeleteTextures(1, &cTTDId);
     }
 
-    auto task = surfacePtr->takeMosaicColorTableTextureTask();
+    auto task = surfacePtr->takeMosaicColorTableToAppend();
     if (task.empty()) {
         return;
     }
@@ -1042,7 +1037,7 @@ void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3
 
     // delete
     {
-        auto tasks = surfacePtr->takeMosaicVectorTileTextureIdToDelete();
+        auto tasks = surfacePtr->takeMosaicTileTextureToDelete();
 
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
             glDeleteTextures(1, it);
@@ -1051,7 +1046,7 @@ void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3
 
     // append
     {
-        auto tasks = surfacePtr->takeMosaicVectorTileTextureToAppend();
+        auto tasks = surfacePtr->takeMosaicTileTextureToAppend();
 
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
 
@@ -1114,14 +1109,14 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
 void GraphicsScene3dView::InFboRenderer::processSurfaceTexture(GraphicsScene3dView *viewPtr) const
 {
     // init/reinit
-    auto isobathsPtr = viewPtr->getIsobathsPtr();
-    auto task = isobathsPtr->takeTextureTask();
+    auto surfacePtr = viewPtr->getSurfaceViewPtr();
+    auto task = surfacePtr->takeSurfaceColorTableToAppend();
 
     if (task.empty()) {
         return;
     }
 
-    GLuint textureId = isobathsPtr->getTextureId();
+    GLuint textureId = surfacePtr->getSurfaceColorTableTextureId();
 
     if (textureId) {
         glDeleteTextures(1, &textureId);
@@ -1137,10 +1132,10 @@ void GraphicsScene3dView::InFboRenderer::processSurfaceTexture(GraphicsScene3dVi
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
 
-    isobathsPtr->setTextureId(textureId);
+    surfacePtr->setSurfaceColorTableTextureId(textureId);
 
     // deleting
-    auto textureIdtoDel = isobathsPtr->getDeinitTextureTask();
+    auto textureIdtoDel = surfacePtr->takeSurfaceColorTableToDelete();
     if (textureIdtoDel) {
         glDeleteTextures(1, &textureIdtoDel);
     }
