@@ -175,9 +175,11 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
-    auto shaderProgram = shaderProgramMap.value("mosaic", nullptr);
-    if (!shaderProgram) {
-        qWarning() << "Shader program 'mosaic' not found!";
+    auto mShP = shaderProgramMap.value("mosaic", nullptr);
+    auto iShP = shaderProgramMap.value("isobaths", nullptr);
+
+    if (!mShP || !iShP) {
+        qWarning() << "Shader program 'mosaic'|'isobaths' not found!";
         return;
     }
 
@@ -186,39 +188,40 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         if (!itm.getIsInited()) {
             continue;
         }
+
+        auto& shP = mShP;
         GLuint textureId = itm.getTextureId();
         if (!textureId || !mosaicColorTableTextureId_) {
-            continue;
+            shP = iShP; // TODO
         }
 
-        shaderProgram->bind();
-        shaderProgram->setUniformValue("mvp", mvp);
+        shP->bind();
+        shP->setUniformValue("mvp", mvp);
 
-        int positionLoc = shaderProgram->attributeLocation("position");
-        int texCoordLoc = shaderProgram->attributeLocation("texCoord");
+        int positionLoc = shP->attributeLocation("position");
+        int texCoordLoc = shP->attributeLocation("texCoord");
 
-        shaderProgram->enableAttributeArray(positionLoc);
-        shaderProgram->enableAttributeArray(texCoordLoc);
+        shP->enableAttributeArray(positionLoc);
+        shP->enableAttributeArray(texCoordLoc);
 
-        shaderProgram->setAttributeArray(positionLoc , itm.getHeightVerticesConstRef().constData());
-        shaderProgram->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
-
+        shP->setAttributeArray(positionLoc , itm.getHeightVerticesConstRef().constData());
+        shP->setAttributeArray(texCoordLoc, itm.getTextureVerticesRef().constData());
 
         QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
 
         glFuncs->glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureId);
-        shaderProgram->setUniformValue("indexedTexture", 0);
+        shP->setUniformValue("indexedTexture", 0);
 
         glFuncs->glActiveTexture(GL_TEXTURE1);
         glBindTexture(mosaicColorTableTextureType_, mosaicColorTableTextureId_);
-        shaderProgram->setUniformValue("colorTable", 1);
+        shP->setUniformValue("colorTable", 1);
 
         ctx->glDrawElements(GL_TRIANGLES, itm.getHeightIndicesRef().size(), GL_UNSIGNED_INT, itm.getHeightIndicesRef().constData());
 
-        shaderProgram->disableAttributeArray(texCoordLoc);
-        shaderProgram->disableAttributeArray(positionLoc);
+        shP->disableAttributeArray(texCoordLoc);
+        shP->disableAttributeArray(positionLoc);
 
-        shaderProgram->release();
+        shP->release();
     }
 }
