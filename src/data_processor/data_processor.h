@@ -52,7 +52,6 @@ public slots:
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceStepSize(float val);
     void setSurfaceEdgeLimit(int val);
-
     // IsobathsProcessor
     void setIsobathsLineStepSize(float val);
     void setIsobathsLabelStepSize(float val);
@@ -67,6 +66,10 @@ public slots:
     void setMosaicHighLevel(float val);
     void setMosaicGenerateGridContour(bool state);
     void askColorTableForMosaic();
+
+    //
+    void setMinZ(float minZ);
+    void setMaxZ(float maxZ);
 
 signals:
     // this

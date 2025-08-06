@@ -55,7 +55,7 @@ MenuFrame {
                 model: [qsTr("Midnight"), qsTr("Default"), qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
                 currentIndex: 0
                 onCurrentIndexChanged: {
-                    IsobathsControlMenuController.onThemeChanged(currentIndex)
+                    IsobathsViewControlMenuController.onThemeChanged(currentIndex)
                 }
 
                 onFocusChanged: {
@@ -65,7 +65,7 @@ MenuFrame {
                 }
 
                 Component.onCompleted: {
-                    IsobathsControlMenuController.onThemeChanged(currentIndex)
+                    IsobathsViewControlMenuController.onThemeChanged(currentIndex)
                 }
 
                 Settings {
@@ -95,11 +95,11 @@ MenuFrame {
                 }
 
                 Component.onCompleted: {
-                    IsobathsControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
+                    IsobathsViewControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
                 }
 
                 onValueChanged: {
-                    IsobathsControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
+                    IsobathsViewControlMenuController.onEdgeLimitChanged(isobathsEdgeLimitSpinBox.value)
                 }
 
                 Settings {
@@ -146,11 +146,11 @@ MenuFrame {
                 }
 
                 Component.onCompleted: {
-                    IsobathsControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
+                    IsobathsViewControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
                 }
 
                 onRealValueChanged: {
-                    IsobathsControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
+                    IsobathsViewControlMenuController.onSetSurfaceLineStepSize(isobathsSurfaceLineStepSizeSpinBox.realValue)
                 }
 
                 Settings {
@@ -182,11 +182,11 @@ MenuFrame {
         //         }
 
         //         Component.onCompleted: {
-        //             IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
+        //             IsobathsViewControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
         //         }
 
         //         onValueChanged: {
-        //             IsobathsControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
+        //             IsobathsViewControlMenuController.onSetLabelStepSize(isobathsLabelStepSpinBox.value)
         //         }
 
         //         Settings {
@@ -202,7 +202,7 @@ MenuFrame {
         //     visible: isobathsDebugModeCheckButton.checked
 
         //     onCheckedChanged: {
-        //         IsobathsControlMenuController.onTrianglesVisible(checked);
+        //         IsobathsViewControlMenuController.onTrianglesVisible(checked);
         //     }
 
         //     onFocusChanged: {
@@ -217,7 +217,7 @@ MenuFrame {
         //     visible: isobathsDebugModeCheckButton.checked
 
         //     onCheckedChanged: {
-        //         IsobathsControlMenuController.onEdgesVisible(checked);
+        //         IsobathsViewControlMenuController.onEdgesVisible(checked);
         //     }
 
         //     onFocusChanged: {
@@ -232,7 +232,7 @@ MenuFrame {
         //     checked: false
 
         //     onCheckedChanged: {
-        //         IsobathsControlMenuController.onDebugModeView(checked);
+        //         IsobathsViewControlMenuController.onDebugModeView(checked);
         //     }
 
         //     onFocusChanged: {
@@ -245,7 +245,7 @@ MenuFrame {
         //     text: qsTr("Clear")
         //     Layout.fillWidth: true
         //     onClicked: {
-        //         IsobathsControlMenuController.onResetIsobathsButtonClicked()
+        //         IsobathsViewControlMenuController.onResetIsobathsButtonClicked()
         //     }
 
         //     onFocusChanged: {
@@ -259,8 +259,8 @@ MenuFrame {
         //     Layout.fillWidth: true
 
         //     onClicked: {
-        //         //IsobathsControlMenuController.onResetIsobathsButtonClicked()
-        //         IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
+        //         //IsobathsViewControlMenuController.onResetIsobathsButtonClicked()
+        //         IsobathsViewControlMenuController.onUpdateIsobathsButtonClicked()
         //     }
 
         //     onFocusChanged: {

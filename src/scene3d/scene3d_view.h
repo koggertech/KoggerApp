@@ -17,7 +17,7 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-#include "isobaths.h"
+#include "isobaths_view.h"
 #include "data_processor.h"
 
 
@@ -135,12 +135,12 @@ public:
 
         // maps
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
-        // mosaic
+        // mosaic on surface
         void processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const;
         void processMosaicTileTexture(GraphicsScene3dView* viewPtr) const;
         // image
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
-        // isobaths
+        // surface
         void processSurfaceTexture(GraphicsScene3dView* viewPtr) const;
 
         QString checkOpenGLError() const;
@@ -177,7 +177,7 @@ public:
     Renderer *createRenderer() const override;
     std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
-    std::shared_ptr<Isobaths> getIsobathsPtr() const;
+    std::shared_ptr<IsobathsView> getIsobathsViewPtr() const;
     std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
@@ -256,7 +256,7 @@ private:
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
-    std::shared_ptr<Isobaths> isobaths_;
+    std::shared_ptr<IsobathsView> isobathsView_;
     std::shared_ptr<SurfaceView> surfaceView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;

@@ -8,12 +8,12 @@
 
 
 class GraphicsScene3dView;
-class IsobathsControlMenuController : public QmlComponentController
+class IsobathsViewControlMenuController : public QmlComponentController
 {
     Q_OBJECT
 
 public:
-    explicit IsobathsControlMenuController(QObject* parent = nullptr);
+    explicit IsobathsViewControlMenuController(QObject* parent = nullptr);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor *dataProcessorPtr);

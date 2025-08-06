@@ -15,7 +15,7 @@ HEADERS += \
     $$PWD/scene3d_control_menu_controller.h \
     $$PWD/scene3d_toolbar_controller.h \
     $$PWD/mosaic_view_control_menu_controller.h \
-    $$PWD/isobaths_control_menu_controller.h \
+    $$PWD/isobaths_view_control_menu_controller.h \
     $$PWD/usbl_view_control_menu_controller.h
 
 SOURCES += \
@@ -32,5 +32,5 @@ SOURCES += \
     $$PWD/scene3d_control_menu_controller.cpp \
     $$PWD/scene3d_toolbar_controller.cpp \
     $$PWD/mosaic_view_control_menu_controller.cpp \
-    $$PWD/isobaths_control_menu_controller.cpp \
+    $$PWD/isobaths_view_control_menu_controller.cpp \
     $$PWD/usbl_view_control_menu_controller.cpp

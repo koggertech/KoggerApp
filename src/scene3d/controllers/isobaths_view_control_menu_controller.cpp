@@ -1,8 +1,8 @@
-#include "isobaths_control_menu_controller.h"
+#include "isobaths_view_control_menu_controller.h"
 #include "scene3d_view.h"
 
 
-IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
+IsobathsViewControlMenuController::IsobathsViewControlMenuController(QObject* parent)
     : QmlComponentController(parent),
       graphicsSceneViewPtr_(nullptr),
       dataProcessorPtr_(nullptr),
@@ -20,7 +20,7 @@ IsobathsControlMenuController::IsobathsControlMenuController(QObject* parent)
     qRegisterMetaType<DataProcessorType>("DataProcessorType");
 }
 
-void IsobathsControlMenuController::setGraphicsSceneView(GraphicsScene3dView* sceneView)
+void IsobathsViewControlMenuController::setGraphicsSceneView(GraphicsScene3dView* sceneView)
 {
     graphicsSceneViewPtr_ = sceneView;
 
@@ -32,17 +32,17 @@ void IsobathsControlMenuController::setGraphicsSceneView(GraphicsScene3dView* sc
     }
 }
 
-void IsobathsControlMenuController::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+void IsobathsViewControlMenuController::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
 {
     dataProcessorPtr_ = dataProcessorPtr;
 }
 
-void IsobathsControlMenuController::findComponent()
+void IsobathsViewControlMenuController::findComponent()
 {
     m_component = m_engine->findChild<QObject*>("activeObjectParamsMenuLoader");
 }
 
-void IsobathsControlMenuController::tryInitPendingLambda()
+void IsobathsViewControlMenuController::tryInitPendingLambda()
 {
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
@@ -60,21 +60,21 @@ void IsobathsControlMenuController::tryInitPendingLambda()
                     surfacePtr->setIVisible(visibility_);
                 }
 
-                if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsPtr(); isobathsPtr) {
-                    isobathsPtr->setVisible(visibility_);
+                if (auto isobathsViewPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsViewPtr) {
+                    isobathsViewPtr->setVisible(visibility_);
                 }
             }
         };
     }
 }
 
-void IsobathsControlMenuController::onIsobathsVisibilityCheckBoxCheckedChanged(bool checked)
+void IsobathsViewControlMenuController::onIsobathsVisibilityCheckBoxCheckedChanged(bool checked)
 {
     visibility_ = checked;
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setIVisible(checked);
-        graphicsSceneViewPtr_->getIsobathsPtr()->setVisible(checked);
+        graphicsSceneViewPtr_->getIsobathsViewPtr()->setVisible(checked);
 
         if (visibility_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
@@ -85,7 +85,7 @@ void IsobathsControlMenuController::onIsobathsVisibilityCheckBoxCheckedChanged(b
     }
 }
 
-void IsobathsControlMenuController::onUpdateIsobathsButtonClicked()
+void IsobathsViewControlMenuController::onUpdateIsobathsButtonClicked()
 {
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
@@ -94,7 +94,7 @@ void IsobathsControlMenuController::onUpdateIsobathsButtonClicked()
     }
 }
 
-void IsobathsControlMenuController::onTrianglesVisible(bool state)
+void IsobathsViewControlMenuController::onTrianglesVisible(bool state)
 {
     trianglesVisible_ = state;
 
@@ -105,7 +105,7 @@ void IsobathsControlMenuController::onTrianglesVisible(bool state)
     }
 }
 
-void IsobathsControlMenuController::onEdgesVisible(bool state)
+void IsobathsViewControlMenuController::onEdgesVisible(bool state)
 {
     edgesVisible_ = state;
 
@@ -116,7 +116,7 @@ void IsobathsControlMenuController::onEdgesVisible(bool state)
     }
 }
 
-void IsobathsControlMenuController::onSetSurfaceLineStepSize(float val)
+void IsobathsViewControlMenuController::onSetSurfaceLineStepSize(float val)
 {
     surfaceLineStepSize_ = val;
 
@@ -131,7 +131,7 @@ void IsobathsControlMenuController::onSetSurfaceLineStepSize(float val)
     }
 }
 
-void IsobathsControlMenuController::onSetLabelStepSize(int val)
+void IsobathsViewControlMenuController::onSetLabelStepSize(int val)
 {
     labelStepSize_ = val;
 
@@ -145,7 +145,7 @@ void IsobathsControlMenuController::onSetLabelStepSize(int val)
     }
 }
 
-void IsobathsControlMenuController::onThemeChanged(int val)
+void IsobathsViewControlMenuController::onThemeChanged(int val)
 {
     themeId_ = val;
 
@@ -159,7 +159,7 @@ void IsobathsControlMenuController::onThemeChanged(int val)
     }
 }
 
-void IsobathsControlMenuController::onDebugModeView(bool state)
+void IsobathsViewControlMenuController::onDebugModeView(bool state)
 {
     debugModeView_ = state;
 
@@ -170,7 +170,7 @@ void IsobathsControlMenuController::onDebugModeView(bool state)
     }
 }
 
-void IsobathsControlMenuController::onProcessStateChanged(bool state)
+void IsobathsViewControlMenuController::onProcessStateChanged(bool state)
 {
     processState_ = state;
 
@@ -184,18 +184,18 @@ void IsobathsControlMenuController::onProcessStateChanged(bool state)
     }
 }
 
-void IsobathsControlMenuController::onResetIsobathsButtonClicked()
+void IsobathsViewControlMenuController::onResetIsobathsButtonClicked()
 {
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "clear", Qt::QueuedConnection, Q_ARG(DataProcessorType , DataProcessorType::kIsobaths));
         }
 
-        graphicsSceneViewPtr_->getIsobathsPtr()->clear();
+        graphicsSceneViewPtr_->getIsobathsViewPtr()->clear();
     }
 }
 
-void IsobathsControlMenuController::onEdgeLimitChanged(int val)
+void IsobathsViewControlMenuController::onEdgeLimitChanged(int val)
 {
     edgeLimit_ = val;
 

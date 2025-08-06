@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <cstdint>
+#include <functional>
 #include <QHash>
 #include <QPair>
 #include <QSet>
@@ -111,6 +114,12 @@ inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = kmath::f
 }
 
 // structs
+struct VKey {
+    int64_t x = -1;
+    int64_t y = -1;
+    bool operator==(const VKey& o) const { return x==o.x && y==o.y; }
+};
+
 struct IsoState {
     QHash<int, IsobathsSegVec> hashSegsByLvl;
     QHash<int, IsobathsPolylines> polylinesByLevel;
@@ -156,4 +165,22 @@ struct PendingWork {
     }
 };
 
+struct TrIndxs {
+    int a = -1;
+    int b = -1;
+    int c = -1;
+};
+
 } // namespace IsobathUtils
+
+
+namespace std {
+
+template<>
+struct hash<IsobathUtils::VKey>{
+    size_t operator()(const IsobathUtils::VKey& k) const noexcept {
+        return (uint64_t(k.x) << 32) ^ uint64_t(k.y);
+    }
+};
+
+} // namespace std

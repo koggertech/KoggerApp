@@ -247,17 +247,17 @@ Item  {
                     }
 
                     onCheckedChanged: {
-                        IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility
-                        IsobathsControlMenuController.onProcessStateChanged(checked); // calculation state
+                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility
+                        IsobathsViewControlMenuController.onProcessStateChanged(checked); // calculation state
 
                         if (checked) {
-                            IsobathsControlMenuController.onUpdateIsobathsButtonClicked()
+                            IsobathsViewControlMenuController.onUpdateIsobathsButtonClicked()
                         }
                     }
 
                     Component.onCompleted: {
-                        IsobathsControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-                        IsobathsControlMenuController.onProcessStateChanged(checked);
+                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+                        IsobathsViewControlMenuController.onProcessStateChanged(checked);
                     }
 
                     property bool isobathsLongPressTriggered: false

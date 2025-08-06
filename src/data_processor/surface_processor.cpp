@@ -233,6 +233,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     const bool zChanged = !qFuzzyCompare(1.0 + minZ_, 1.0 + lastMinZ) || !qFuzzyCompare(1.0 + maxZ_, 1.0 + lastMaxZ);
     if (zChanged) {
         rebuildColorIntervals();
+        dataProcessor_->setMinZ(minZ_);
+        dataProcessor_->setMaxZ(maxZ_);
         emit dataProcessor_->sendSurfaceMinZ(minZ_);
         emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }

@@ -146,9 +146,9 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes fro
         surfaceProcessor_.onUpdatedBottomTrackData(indxs);
     }
 
-    //if (updateIsobaths_) {
-    //    doIsobathsWork(indxs, false, false);
-    //}
+    if (updateIsobaths_) {
+        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    }
 
     if (updateMosaic_) {
         mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
@@ -223,7 +223,7 @@ void DataProcessor::setIsobathsLineStepSize(float val)
     emit sendSurfaceStepSize(surfaceProcessor_.getSurfaceStepSize());
     emit sendIsobathsLineStepSize(isobathsProcessor_.getLineStepSize());
 
-    doIsobathsWork({}, true, false);
+    //doIsobathsWork({}, true, false);
 }
 
 void DataProcessor::setIsobathsLabelStepSize(float val)
@@ -236,7 +236,7 @@ void DataProcessor::setIsobathsLabelStepSize(float val)
 
     isobathsProcessor_.setLabelStepSize(val);
 
-    doIsobathsWork({}, true, false);
+    //doIsobathsWork({}, true, false);
 }
 
 void DataProcessor::setSurfaceEdgeLimit(int val)
@@ -251,7 +251,7 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 
     surfaceProcessor_.setEdgeLimit(edgeLimit);
 
-    doIsobathsWork({}, true, true);
+    //doIsobathsWork({}, true, true);
 }
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
@@ -337,6 +337,16 @@ void DataProcessor::askColorTableForMosaic()
     mosaicProcessor_.askColorTableForMosaic();
 }
 
+void DataProcessor::setMinZ(float minZ)
+{
+    isobathsProcessor_.setMinZ(minZ);
+}
+
+void DataProcessor::setMaxZ(float maxZ)
+{
+    isobathsProcessor_.setMaxZ(maxZ);
+}
+
 void DataProcessor::changeState(const DataProcessorType& state)
 {
     state_ = state;
@@ -377,18 +387,18 @@ void DataProcessor::clearAllProcessings()
 
 void DataProcessor::doIsobathsWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)
 {
-    if (rebuildAll) {
-        isobathsProcessor_.rebuildTrianglesBuffers();
-        isobathsProcessor_.fullRebuildLinesLabels();
-        surfaceProcessor_.rebuildColorIntervals();
-    }
-    else {
-        // TODO: now surface
-        if (!indxs.isEmpty()) {
-            isobathsProcessor_.onUpdatedBottomTrackData(indxs);
-        }
-        if (rebuildLinesLabels) {
-            isobathsProcessor_.fullRebuildLinesLabels();
-        }
-    }
+    // if (rebuildAll) {
+    //     //isobathsProcessor_.rebuildTrianglesBuffers();
+    //     isobathsProcessor_.fullRebuildLinesLabels();
+    //     surfaceProcessor_.rebuildColorIntervals();
+    // }
+    // else {
+    //     // TODO: now surface
+    //     if (!indxs.isEmpty()) {
+    //         isobathsProcessor_.onUpdatedBottomTrackData(indxs);
+    //     }
+    //     if (rebuildLinesLabels) {
+    //         isobathsProcessor_.fullRebuildLinesLabels();
+    //     }
+    // }
 }

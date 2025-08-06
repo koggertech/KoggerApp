@@ -18,7 +18,7 @@
 #include "boat_track_control_menu_controller.h"
 #include "navigation_arrow_control_menu_controller.h"
 #include "bottom_track_control_menu_controller.h"
-#include "isobaths_control_menu_controller.h"
+#include "isobaths_view_control_menu_controller.h"
 #include "mosaic_view_control_menu_controller.h"
 #include "image_view_control_menu_controller.h"
 #include "map_view_control_menu_controller.h"
@@ -181,7 +181,7 @@ private:
     std::shared_ptr<BottomTrackControlMenuController> bottomTrackControlMenuController_;
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;
-    std::shared_ptr<IsobathsControlMenuController> isobathsControlMenuController_;
+    std::shared_ptr<IsobathsViewControlMenuController> isobathsViewControlMenuController_;
     std::shared_ptr<MosaicViewControlMenuController> mosaicViewControlMenuController_;
     std::shared_ptr<ImageViewControlMenuController> imageViewControlMenuController_;
     std::shared_ptr<MapViewControlMenuController> mapViewControlMenuController_;

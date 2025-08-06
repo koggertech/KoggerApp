@@ -197,8 +197,6 @@ void SurfaceView::setMinZ(float minZ)
 
 void SurfaceView::setMaxZ(float maxZ)
 {
-    //qDebug() << "Isobaths::setMaxZ" << maxZ;
-
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
         r->maxZ_ = maxZ;
         Q_EMIT changed();
@@ -217,8 +215,6 @@ void SurfaceView::setSurfaceStep(float surfaceStep)
 
 void SurfaceView::setTextureTask(const QVector<uint8_t> &textureTask)
 {
-    //qDebug() << "Isobaths::setTextureTask" << textureTask.size();
-
     textureTask_ = textureTask;
 
     Q_EMIT changed();

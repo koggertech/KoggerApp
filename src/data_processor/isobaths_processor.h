@@ -1,67 +1,48 @@
 #pragma once
 
-#include <stdint.h>
-#include <QHash>
-#include <QPair>
-#include <QReadWriteLock>
 #include <QVector>
 #include <QVector3D>
-
 #include "isobaths_defs.h"
+#include "surface_mesh.h"
 
 using namespace IsobathUtils;
 
 
-class BottomTrack;
-class SurfaceMesh;
 class DataProcessor;
 class IsobathsProcessor
 {
 public:
-    explicit IsobathsProcessor(DataProcessor* parent);
-    ~IsobathsProcessor();
+    explicit IsobathsProcessor(DataProcessor* dataProcessorPtr);
+    ~IsobathsProcessor() = default;
 
     void clear();
-
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
+    void onUpdatedBottomTrackData();
 
-    void onUpdatedBottomTrackData(const QVector<int>& indxs); // ON UPDATED MESH
-
-    void fullRebuildLinesLabels();
-    void rebuildTrianglesBuffers();
-
-    void setLabelStepSize(float val);
-    void setLineStepSize(float val);
-
+    void  setMinZ(float v);
+    void  setMaxZ(float v);
+    void  setLineStepSize(float v);
+    void  setLabelStepSize(float v);
+    float getLineStepSize()  const;
     float getLabelStepSize() const;
-    float getLineStepSize() const;
-
 
 private:
-    void incrementalProcessLinesLabels(const QSet<int>& updsTrIndx);
-    void buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& polylines) const;
-    void edgeIntersection(const QVector3D& vertA, const QVector3D& vertB, float level, QVector<QVector3D>& out) const;
-    void filterNearbyLabels(const QVector<LabelParameters>& inputData, QVector<LabelParameters>& outputData) const;
+    void fullRebuildLinesLabels();
+
+    void buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& p) const;
+    void edgeIntersection(const QVector3D& u,const QVector3D& v,float L, QVector<QVector3D>& out) const;
+    void filterNearbyLabels(const QVector<LabelParameters>& in, QVector<LabelParameters>& out) const;
 
 private:
-    DataProcessor* dataProcessor_;
+    DataProcessor* dataProcessorPtr_;
     SurfaceMesh* surfaceMeshPtr_;
-
-    IsoState isobathsState_;
-    QReadWriteLock lock_;
-    QHash<uint64_t, QVector<int>> pointToTris_;
-    QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
-    QHash<QPair<int,int>, int>  cellPointsInTri_;
-    QHash<int, uint64_t> bTrToTrIndxs_;
-    QVector<LabelParameters> labels_; // render
-    QVector<QVector3D> pts_; // render
-    QVector<QVector3D> edgePts_; // render
-    QVector<QVector3D> lineSegments_; // render
-    QPointF origin_;
-    QPair<int,int> lastCellPoint_;
-    float minZ_; // render
-    float maxZ_; // render
-    float lineStepSize_; // render
+    std::vector<QVector3D> vertPool_;
+    std::vector<HeightType> vertMark_;
+    std::vector<TrIndxs> tris_;
+    QVector<QVector3D> lineSegments_;
+    QVector<LabelParameters> labels_;
+    float minZ_;
+    float maxZ_;
+    float lineStepSize_;
     float labelStepSize_;
-    int themeId_;
 };

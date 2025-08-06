@@ -56,7 +56,7 @@ void Core::setEngine(QQmlApplicationEngine *engine)
     qmlAppEnginePtr_->rootContext()->setContextProperty("BoatTrackControlMenuController",       boatTrackControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("NavigationArrowControlMenuController", navigationArrowControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("BottomTrackControlMenuController",     bottomTrackControlMenuController_.get());
-    qmlAppEnginePtr_->rootContext()->setContextProperty("IsobathsControlMenuController",        isobathsControlMenuController_.get());
+    qmlAppEnginePtr_->rootContext()->setContextProperty("IsobathsViewControlMenuController",    isobathsViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MosaicViewControlMenuController",      mosaicViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("ImageViewControlMenuController",       imageViewControlMenuController_.get());
     qmlAppEnginePtr_->rootContext()->setContextProperty("MapViewControlMenuController",         mapViewControlMenuController_.get());
@@ -1101,9 +1101,9 @@ void Core::UILoad(QObject* object, const QUrl& url)
     bottomTrackControlMenuController_->setQmlEngine(object);
     bottomTrackControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
-    isobathsControlMenuController_->setQmlEngine(object);
-    isobathsControlMenuController_->setDataProcessorPtr(dataProcessor_);
-    isobathsControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
+    isobathsViewControlMenuController_->setQmlEngine(object);
+    isobathsViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
+    isobathsViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
     mosaicViewControlMenuController_->setQmlEngine(object);
     mosaicViewControlMenuController_->setDataProcessorPtr(dataProcessor_);
@@ -1321,8 +1321,8 @@ void Core::createControllers()
     bottomTrackControlMenuController_     = std::make_shared<BottomTrackControlMenuController>();
     mpcFilterControlMenuController_       = std::make_shared<MpcFilterControlMenuController>();
     npdFilterControlMenuController_       = std::make_shared<NpdFilterControlMenuController>();
-    isobathsControlMenuController_        = std::make_shared<IsobathsControlMenuController>();
-    mosaicViewControlMenuController_    = std::make_shared<MosaicViewControlMenuController>();
+    isobathsViewControlMenuController_    = std::make_shared<IsobathsViewControlMenuController>();
+    mosaicViewControlMenuController_      = std::make_shared<MosaicViewControlMenuController>();
     imageViewControlMenuController_       = std::make_shared<ImageViewControlMenuController>();
     mapViewControlMenuController_         = std::make_shared<MapViewControlMenuController>();
     pointGroupControlMenuController_      = std::make_shared<PointGroupControlMenuController>();
@@ -1641,25 +1641,24 @@ void Core::createScene3dConnections()
                      this, [this](const QVector<int>& indxs) { dataHorizon_->onAddedBottomTrack3D(indxs.empty() ? scene3dViewPtr_->bottomTrack()->getAllIndxs() : indxs); });
 
     // res work proc
+    auto connType = Qt::QueuedConnection;
     // Surface
-    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTextureTask,           scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTextureTask,         Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceMinZ,                  scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMinZ,                Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceMaxZ,                  scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMaxZ,                Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceStepSize,              scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setSurfaceStep,         Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceColorIntervalsSize,    scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setColorIntervalsSize,  Qt::QueuedConnection);
-    // Isobaths
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,                scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLabels,              Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineSegments,        Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsPts,                   scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setPts,                 Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsEdgePts,               scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setEdgePts,             Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,          scene3dViewPtr_->getIsobathsPtr().get(), &Isobaths::setLineStepSize,        Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTextureTask,        scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTextureTask,                 connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceMinZ,               scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMinZ,                        connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceMaxZ,               scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMaxZ,                        connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceStepSize,           scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setSurfaceStep,                 connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceColorIntervalsSize, scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setColorIntervalsSize,          connType);
+    // IsobathsView
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLabels,            scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLabels,                     connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineSegments,      scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLineSegments,               connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendIsobathsLineStepSize,      scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::setLineStepSize,               connType);
     // Mosaic
-    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,     scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMosaicColorTableTextureTask,  Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,          scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTiles,                  Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,          scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setMosaicColorTableTextureTask, connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendMosaicTiles,               scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::setTiles,                       connType);
     // clear render
-    QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared, scene3dViewPtr_->bottomTrack().get(),       &BottomTrack::clearData, Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,    scene3dViewPtr_->getIsobathsPtr().get(),    &Isobaths::clear,        Qt::QueuedConnection);
-    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,      scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::clear,      Qt::QueuedConnection);
+    QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared,  scene3dViewPtr_->bottomTrack().get(),       &BottomTrack::clearData,                      connType);
+    QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,     scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::clear,                         connType);
+    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,       scene3dViewPtr_->getSurfaceViewPtr().get(), &SurfaceView::clear,                          connType);
     //QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared, TODO Qt::QueuedConnection);
     //QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,     TODO Qt::QueuedConnection);
 
@@ -1669,13 +1668,14 @@ void Core::createScene3dConnections()
 void Core::setDataProcessorConnections()
 {
     // from dataHorizon
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,         dataProcessor_, &DataProcessor::onChartsAdded,        Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded, dataProcessor_, &DataProcessor::onBottomTrackAdded,   Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,      dataProcessor_, &DataProcessor::onMosaicCanCalc,      Qt::QueuedConnection));
+    auto connType = Qt::QueuedConnection;
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,                    dataProcessor_, &DataProcessor::onChartsAdded,           connType));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrackAdded,      connType));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
 
-    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::distCompletedByProcessing,   datasetPtr_, &Dataset::onDistCompleted,               Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_, &Dataset::onLastBottomTrackEpochChanged, Qt::QueuedConnection));
-    dataProcessorConnections_.append(QObject::connect(dataProcessor_, &DataProcessor::sendState,                   this,        &Core::onDataProcesstorStateChanged,     Qt::QueuedConnection));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessing,   datasetPtr_,    &Dataset::onDistCompleted,               connType));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_,    &Dataset::onLastBottomTrackEpochChanged, connType));
+    dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::sendState,                   this,           &Core::onDataProcesstorStateChanged,     connType));
 }
 
 void Core::resetDataProcessorConnections()
