@@ -50,11 +50,11 @@ public slots:
     void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
-    void setSurfaceStepSize(float val);
     void setSurfaceEdgeLimit(int val);
     // IsobathsProcessor
-    void setIsobathsLineStepSize(float val);
     void setIsobathsLabelStepSize(float val);
+    // Surface/IsobathsProcessor
+    void setSurfaceIsobathsStepSize(float val);
     // MosaicProcessor
     void setMosaicChannels(const ChannelId& ch1, uint8_t sub1, const ChannelId& ch2, uint8_t sub2);
     void setMosaicTheme(int indx);
@@ -106,8 +106,6 @@ private:
     void clearMosaicProcessing();
     void clearSurfaceProcessing();
     void clearAllProcessings();
-    // IsobathsProcessor
-    void doIsobathsWork(const QVector<int>& indxs, bool rebuildLinesLabels, bool rebuildAll);
 
 private:
     friend class SurfaceProcessor;

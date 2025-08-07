@@ -195,37 +195,6 @@ void DataProcessor::setSurfaceColorTableThemeById(int id)
     surfaceProcessor_.rebuildColorIntervals();
 }
 
-void DataProcessor::setSurfaceStepSize(float val)
-{
-    //qDebug() << "DataProcessor::setSurfaceStepSize" << val;
-
-    if (qFuzzyCompare(surfaceProcessor_.getSurfaceStepSize(), val)) {
-        return;
-    }
-
-    surfaceProcessor_.setSurfaceStepSize(val);
-    isobathsProcessor_.setLineStepSize(val);
-
-    surfaceProcessor_.rebuildColorIntervals();
-}
-
-void DataProcessor::setIsobathsLineStepSize(float val)
-{
-    //qDebug() << "DataProcessor::setIsobathsLineStepSize" << val;
-
-    if (qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) { // also for surface
-        return;
-    }
-
-    surfaceProcessor_.setSurfaceStepSize(val);
-    isobathsProcessor_.setLineStepSize(val);
-
-    emit sendSurfaceStepSize(surfaceProcessor_.getSurfaceStepSize());
-    emit sendIsobathsLineStepSize(isobathsProcessor_.getLineStepSize());
-
-    //doIsobathsWork({}, true, false);
-}
-
 void DataProcessor::setIsobathsLabelStepSize(float val)
 {
     //qDebug() << "DataProcessor::setIsobathsLabelStepSize" << val;
@@ -236,7 +205,22 @@ void DataProcessor::setIsobathsLabelStepSize(float val)
 
     isobathsProcessor_.setLabelStepSize(val);
 
-    //doIsobathsWork({}, true, false);
+    isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+}
+
+void DataProcessor::setSurfaceIsobathsStepSize(float val)
+{
+    if (!qFuzzyCompare(surfaceProcessor_.getSurfaceStepSize(), val)) {
+        surfaceProcessor_.setSurfaceStepSize(val);
+        emit sendSurfaceStepSize(val);
+        surfaceProcessor_.rebuildColorIntervals();
+    }
+
+    if (!qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
+        isobathsProcessor_.setLineStepSize(val);
+        emit sendIsobathsLineStepSize(val);
+        isobathsProcessor_.onUpdatedBottomTrackData();
+    }
 }
 
 void DataProcessor::setSurfaceEdgeLimit(int val)
@@ -251,7 +235,7 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 
     surfaceProcessor_.setEdgeLimit(edgeLimit);
 
-    //doIsobathsWork({}, true, true);
+    isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
 }
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
@@ -383,22 +367,4 @@ void DataProcessor::clearAllProcessings()
     clearSurfaceProcessing();
 
     surfaceMesh_.clear();
-}
-
-void DataProcessor::doIsobathsWork(const QVector<int> &indxs, bool rebuildLinesLabels, bool rebuildAll)
-{
-    // if (rebuildAll) {
-    //     //isobathsProcessor_.rebuildTrianglesBuffers();
-    //     isobathsProcessor_.fullRebuildLinesLabels();
-    //     surfaceProcessor_.rebuildColorIntervals();
-    // }
-    // else {
-    //     // TODO: now surface
-    //     if (!indxs.isEmpty()) {
-    //         isobathsProcessor_.onUpdatedBottomTrackData(indxs);
-    //     }
-    //     if (rebuildLinesLabels) {
-    //         isobathsProcessor_.fullRebuildLinesLabels();
-    //     }
-    // }
 }

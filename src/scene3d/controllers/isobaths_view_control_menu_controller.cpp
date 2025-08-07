@@ -49,10 +49,9 @@ void IsobathsViewControlMenuController::tryInitPendingLambda()
             if (graphicsSceneViewPtr_) {
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths",               Qt::QueuedConnection, Q_ARG(bool,  processState_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLineStepSize",         Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceIsobathsStepSize",      Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize",        Qt::QueuedConnection, Q_ARG(float, labelStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceColorTableThemeById",   Qt::QueuedConnection, Q_ARG(int,   themeId_));
-                    QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceStepSize",              Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceEdgeLimit",             Qt::QueuedConnection, Q_ARG(int,   edgeLimit_));
                 }
 
@@ -122,8 +121,7 @@ void IsobathsViewControlMenuController::onSetSurfaceLineStepSize(float val)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
-            QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLineStepSize",    Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceIsobathsStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
         }
     }
     else {
