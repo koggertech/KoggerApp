@@ -146,12 +146,12 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes fro
         surfaceProcessor_.onUpdatedBottomTrackData(indxs);
     }
 
-    if (updateIsobaths_) {
-        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
-    }
-
     if (updateMosaic_) {
         mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
+    }
+
+    if (updateIsobaths_) {
+        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
     }
 }
 
@@ -192,7 +192,9 @@ void DataProcessor::setSurfaceColorTableThemeById(int id)
 
     surfaceProcessor_.setThemeId(id);
 
-    surfaceProcessor_.rebuildColorIntervals();
+    if (updateIsobaths_ || updateMosaic_) {
+        surfaceProcessor_.rebuildColorIntervals();
+    }
 }
 
 void DataProcessor::setIsobathsLabelStepSize(float val)
@@ -205,7 +207,9 @@ void DataProcessor::setIsobathsLabelStepSize(float val)
 
     isobathsProcessor_.setLabelStepSize(val);
 
-    isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    if (updateIsobaths_) {
+        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    }
 }
 
 void DataProcessor::setSurfaceIsobathsStepSize(float val)
@@ -213,13 +217,17 @@ void DataProcessor::setSurfaceIsobathsStepSize(float val)
     if (!qFuzzyCompare(surfaceProcessor_.getSurfaceStepSize(), val)) {
         surfaceProcessor_.setSurfaceStepSize(val);
         emit sendSurfaceStepSize(val);
-        surfaceProcessor_.rebuildColorIntervals();
+        if (updateIsobaths_ || updateMosaic_) {
+            surfaceProcessor_.rebuildColorIntervals();
+        }
     }
 
     if (!qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
         isobathsProcessor_.setLineStepSize(val);
         emit sendIsobathsLineStepSize(val);
-        isobathsProcessor_.onUpdatedBottomTrackData();
+        if (updateIsobaths_ || updateMosaic_) {
+            isobathsProcessor_.onUpdatedBottomTrackData();
+        }
     }
 }
 
@@ -235,7 +243,9 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 
     surfaceProcessor_.setEdgeLimit(edgeLimit);
 
-    isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    if (updateIsobaths_) {
+        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    }
 }
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
@@ -243,6 +253,8 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
     //qDebug() << "DataProcessor::setMosaicChannels" << ch1.toShortName() << sub1 << ch2.toShortName() << sub2;
 
     mosaicProcessor_.setChannels(ch1, sub1, ch2, sub2);
+
+    // do calc?
 }
 
 void DataProcessor::setMosaicTheme(int indx)
