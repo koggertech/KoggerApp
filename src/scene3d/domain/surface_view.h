@@ -59,6 +59,9 @@ public:
     void setIVisible(bool state);
     void setMVisible(bool state);
 
+    bool getMVisible() const { auto* r = RENDER_IMPL(SurfaceView); return r->mVis_; }
+    bool getIVisible() const { auto* r = RENDER_IMPL(SurfaceView); return r->iVis_; }
+
 public slots: // from dataprocessor
     void clear();
     void setTiles(const QHash<QUuid, SurfaceTile>& tiles, bool useTextures); // TODO: separate (now from mosaic)

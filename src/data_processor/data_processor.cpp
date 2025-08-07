@@ -241,7 +241,12 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
         return;
     }
 
-    surfaceProcessor_.setEdgeLimit(edgeLimit);
+    surfaceProcessor_.setEdgeLimit(edgeLimit); // тот же расчет
+
+    if (updateMosaic_) {
+        mosaicProcessor_.clear();
+        mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
+    }
 
     if (updateIsobaths_) {
         isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
