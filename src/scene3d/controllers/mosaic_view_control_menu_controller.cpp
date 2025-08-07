@@ -47,6 +47,7 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
 
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setMVisible(visibility_);
+        graphicsSceneViewPtr_->getIsobathsViewPtr()->setMVisible(visibility_);
     }
     else {
         tryInitPendingLambda();
@@ -220,6 +221,9 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
 
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
                     surfacePtr->setMVisible(visibility_);
+                }
+                if (auto isobathsPtr = graphicsSceneViewPtr_->getIsobathsViewPtr(); isobathsPtr) {
+                    isobathsPtr->setMVisible(visibility_);
                 }
             }
         };

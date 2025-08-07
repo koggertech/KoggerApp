@@ -70,7 +70,7 @@ void IsobathsView::IsobathsViewRenderImplementation::render(QOpenGLFunctions *ct
                                                             const QMap<QString,
                                                             std::shared_ptr<QOpenGLShaderProgram>> &spMap) const
 {
-    if (!m_isVisible || lineSegments_.isEmpty()) {
+    if (mVis_ || !m_isVisible || lineSegments_.isEmpty()) {
         return;
     }
 

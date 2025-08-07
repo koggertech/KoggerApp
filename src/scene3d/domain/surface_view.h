@@ -27,16 +27,15 @@ public:
         friend class SurfaceView;
 
         QHash<QUuid, SurfaceTile> tiles_; // from dataProcessor
+        GLuint surfaceColorTableTextureId_;
         GLuint mosaicColorTableTextureId_;
         GLenum mosaicColorTableTextureType_;
         float minZ_; // from dataprocessor
         float maxZ_; // from dataprocessor
         float surfaceStep_; // from dataprocessor
         int colorIntervalsSize_; // from dataprocessor
-        GLuint textureId_;
-
-        bool iVis_ = false;
-        bool mVis_ = false;
+        bool iVis_;
+        bool mVis_;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
@@ -58,8 +57,7 @@ public:
     void setSurfaceColorTableTextureId(GLuint textureId);
 
     void setIVisible(bool state);
-    void setMVisible(bool state);;
-
+    void setMVisible(bool state);
 
 public slots: // from dataprocessor
     void clear();
@@ -81,9 +79,6 @@ private:
     GLuint                                          mosaicColorTableToDelete_;
     QVector<std::pair<QUuid, std::vector<uint8_t>>> mosaicTileTextureToAppend_;
     QVector<GLuint>                                 mosaicTileTextureToDelete_;
-
-    QVector<uint8_t> textureTask_;
-    GLuint toDeleteId_;
-
-
+    QVector<uint8_t>                                surfaceColorTableToAppend_;
+    GLuint                                          surfaceColorTableToDelete_;
 };

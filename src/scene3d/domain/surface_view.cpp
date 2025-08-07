@@ -4,7 +4,7 @@
 SurfaceView::SurfaceView(QObject* parent)
     : SceneObject(new SurfaceViewRenderImplementation, parent),
     mosaicColorTableToDelete_(0),
-    toDeleteId_(0)
+    surfaceColorTableToDelete_(0)
 {}
 
 SurfaceView::~SurfaceView()
@@ -21,7 +21,7 @@ SurfaceView::~SurfaceView()
     r->mosaicColorTableTextureId_ = 0;
 
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
-        toDeleteId_ = r->textureId_;
+        surfaceColorTableToDelete_ = r->surfaceColorTableTextureId_;
     }
 }
 
@@ -95,22 +95,21 @@ GLuint SurfaceView::takeMosaicColorTableToDelete()
 
 QVector<uint8_t> SurfaceView::takeSurfaceColorTableToAppend()
 {
-    //qDebug() << "t" << textureTask_.size();
-    auto retVal = std::move(textureTask_);
+    auto retVal = std::move(surfaceColorTableToAppend_);
     return retVal;
 }
 
 GLuint SurfaceView::takeSurfaceColorTableToDelete()
 {
     GLuint retVal = 0;
-    std::swap(toDeleteId_, retVal);
+    std::swap(surfaceColorTableToDelete_, retVal);
     return retVal;
 }
 
 GLuint SurfaceView::getSurfaceColorTableTextureId() const
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
-        return r->textureId_;
+        return r->surfaceColorTableTextureId_;
     }
 
     return 0;
@@ -119,7 +118,7 @@ GLuint SurfaceView::getSurfaceColorTableTextureId() const
 void SurfaceView::setSurfaceColorTableTextureId(GLuint textureId)
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
-        r->textureId_ = textureId;
+        r->surfaceColorTableTextureId_ = textureId;
         Q_EMIT changed();
     }
 }
@@ -157,7 +156,7 @@ void SurfaceView::clear()
     r->maxZ_ = std::numeric_limits<float>::lowest();
     r->colorIntervalsSize_ = -1;
 
-    textureTask_.clear();
+    surfaceColorTableToAppend_.clear();
 
 
     Q_EMIT changed();
@@ -215,7 +214,7 @@ void SurfaceView::setSurfaceStep(float surfaceStep)
 
 void SurfaceView::setTextureTask(const QVector<uint8_t> &textureTask)
 {
-    textureTask_ = textureTask;
+    surfaceColorTableToAppend_ = textureTask;
 
     Q_EMIT changed();
 }
@@ -256,13 +255,15 @@ void SurfaceView::updateMosaicTileTextureTask(const QHash<QUuid, SurfaceTile>& n
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // SurfaceViewRenderImplementation
-SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation() :
+SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
+    : surfaceColorTableTextureId_(0),
     mosaicColorTableTextureId_(0),
     minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
     surfaceStep_(3.0f),
     colorIntervalsSize_(-1),
-    textureId_(0)
+    iVis_(false),
+    mVis_(false)
 {
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
     colorTableTextureType_ = GL_TEXTURE_2D;
@@ -296,33 +297,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
         GLuint textureId = itm.getMosaicTextureId();
 
-        if (iVis_ && !mVis_) {
-            auto &shP = iShP;
-            shP->bind();
-
-            shP->setUniformValue("matrix",     mvp);
-            shP->setUniformValue("depthMin",   minZ_);
-            shP->setUniformValue("levelStep",  surfaceStep_);
-            shP->setUniformValue("levelCount", colorIntervalsSize_);
-            shP->setUniformValue("linePass",   false);   // ни линий, ни лейблов
-
-            ctx->glActiveTexture(GL_TEXTURE0);
-            ctx->glBindTexture(GL_TEXTURE_2D, textureId_);
-            shP->setUniformValue("paletteSampler", 0);
-
-            const int posLoc = shP->attributeLocation("position");
-            shP->enableAttributeArray(posLoc);
-            shP->setAttributeArray(posLoc, itm.getHeightVerticesConstRef().constData());
-
-            ctx->glDrawElements(GL_TRIANGLES,
-                                itm.getHeightIndicesRef().size(),
-                                GL_UNSIGNED_INT,
-                                itm.getHeightIndicesRef().constData());
-
-            shP->disableAttributeArray(posLoc);
-            shP->release();
-        }
-        else if (mVis_) {
+        if (mVis_) {
             auto& shP = mShP;
 
             shP->bind();
@@ -355,6 +330,32 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->disableAttributeArray(texCoordLoc);
             shP->disableAttributeArray(positionLoc);
 
+            shP->release();
+        }
+        else if (iVis_) {
+            auto &shP = iShP;
+            shP->bind();
+
+            shP->setUniformValue("matrix",     mvp);
+            shP->setUniformValue("depthMin",   minZ_);
+            shP->setUniformValue("levelStep",  surfaceStep_);
+            shP->setUniformValue("levelCount", colorIntervalsSize_);
+            shP->setUniformValue("linePass",   false);   // ни линий, ни лейблов
+
+            ctx->glActiveTexture(GL_TEXTURE0);
+            ctx->glBindTexture(GL_TEXTURE_2D, surfaceColorTableTextureId_);
+            shP->setUniformValue("paletteSampler", 0);
+
+            const int posLoc = shP->attributeLocation("position");
+            shP->enableAttributeArray(posLoc);
+            shP->setAttributeArray(posLoc, itm.getHeightVerticesConstRef().constData());
+
+            ctx->glDrawElements(GL_TRIANGLES,
+                                itm.getHeightIndicesRef().size(),
+                                GL_UNSIGNED_INT,
+                                itm.getHeightIndicesRef().constData());
+
+            shP->disableAttributeArray(posLoc);
             shP->release();
         }
     }

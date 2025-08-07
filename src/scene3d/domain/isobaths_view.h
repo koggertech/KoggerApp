@@ -31,12 +31,14 @@ public:
         QVector3D color_;
         float distToFocusPoint_;
         float lineStepSize_; // from dataprocessor
+        bool mVis_ = false;
     };
 
     explicit IsobathsView(QObject* parent = nullptr);
     virtual ~IsobathsView();
 
     void setCameraDistToFocusPoint(float val);
+    void setMVisible(bool state) { auto* r = RENDER_IMPL(IsobathsView); r->mVis_ = state; Q_EMIT changed(); };
 
 public slots:
     void clear();
