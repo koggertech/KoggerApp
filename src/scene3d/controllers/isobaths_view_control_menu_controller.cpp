@@ -76,7 +76,9 @@ void IsobathsViewControlMenuController::onIsobathsVisibilityCheckBoxCheckedChang
         graphicsSceneViewPtr_->getIsobathsViewPtr()->setVisible(checked);
 
         if (visibility_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
+            if (dataProcessorPtr_) {
+                QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
+            }
         }
     }
     else {

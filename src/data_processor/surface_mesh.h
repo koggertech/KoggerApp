@@ -18,6 +18,9 @@ public:
     void printMatrix() const;
     void clear();
 
+    void clearHeightData();
+    bool hasData() const;
+
     void setGenerateGridContour(bool state);
     const std::vector<SurfaceTile*>&        getTilesCRef() const;
     std::vector<std::vector<SurfaceTile*>>& getTileMatrixRef();
@@ -36,7 +39,7 @@ private:
     void resizeColumnsRight(int columnsToAdd);
     void resizeRowsTop(int rowsToAdd);
     void resizeColumnsLeft(int columnsToAdd);
-    void resizeRowsBottom(int rowsToAdd);    
+    void resizeRowsBottom(int rowsToAdd);
     float getWidthMeters() const;
     float getHeightMeters() const;
 

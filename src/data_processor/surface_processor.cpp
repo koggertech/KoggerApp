@@ -259,6 +259,8 @@ void SurfaceProcessor::setTileResolution(float tileResolution)
 void SurfaceProcessor::setEdgeLimit(float val)
 {
     edgeLimit_ = val;
+
+    refreshAfterEdgeLimitChange();
 }
 
 void SurfaceProcessor::rebuildColorIntervals()
@@ -489,4 +491,76 @@ void SurfaceProcessor::propagateBorderHeights()
             }
         }
     }
+}
+
+void SurfaceProcessor::refreshAfterEdgeLimitChange()
+{
+    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
+        return;
+    }
+
+    surfaceMeshPtr_->clearHeightData(); // TODO: conflict with mosaic heights
+
+    const auto& tr = delaunayProc_.getTriangles();
+    const auto& pt = delaunayProc_.getPoints();
+    QSet<SurfaceTile*> changedTiles;
+
+    for (std::size_t i = 0; i < tr.size(); ++i) {
+        const auto& t = tr[i];
+        if (t.is_bad || t.a < 4 || t.b < 4 || t.c < 4) {
+            continue;
+        }
+        if (t.longest_edge_dist > edgeLimit_) {
+            continue;
+        }
+
+        QVector3D A = kmath::fvec(pt[t.a]);
+        QVector3D B = kmath::fvec(pt[t.b]);
+        QVector3D C = kmath::fvec(pt[t.c]);
+        writeTriangleToMesh(A,B,C, changedTiles);
+    }
+
+    for (SurfaceTile* t : std::as_const(changedTiles)) {
+        t->updateHeightIndices();
+    }
+
+    propagateBorderHeights();
+
+    float lastMinZ = minZ_;
+    float lastMaxZ = maxZ_;
+
+    float currMin = std::numeric_limits<float>::max();
+    float currMax = std::numeric_limits<float>::lowest();
+    for (auto t : tr) {
+        bool inWork = !(t.a < 4 || t.b < 4 || t.c < 4 || t.is_bad || t.longest_edge_dist > edgeLimit_);
+        if (!inWork) {
+            continue;
+        }
+        currMin = std::fmin(currMin, std::min({ pt[t.a].z, pt[t.b].z , pt[t.c].z }));
+        currMax = std::fmax(currMax, std::max({ pt[t.a].z, pt[t.b].z , pt[t.c].z }));
+    }
+    if (currMin != std::numeric_limits<float>::max()) {
+        minZ_ = currMin;
+    }
+    if (currMax != std::numeric_limits<float>::lowest()) {
+        maxZ_ = currMax;
+    }
+
+    const bool zChanged = !qFuzzyCompare(1.0 + minZ_, 1.0 + lastMinZ) || !qFuzzyCompare(1.0 + maxZ_, 1.0 + lastMaxZ);
+    if (zChanged) {
+        rebuildColorIntervals();
+        dataProcessor_->setMinZ(minZ_);
+        dataProcessor_->setMaxZ(maxZ_);
+        emit dataProcessor_->sendSurfaceMinZ(minZ_);
+        emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
+    }
+
+    // to SurfaceView
+    const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
+    QHash<QUuid, SurfaceTile> res;
+    res.reserve(tilesRef.size());
+    for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
+        res.insert((*it)->getUuid(), (*(*it)));
+    }
+    emit dataProcessor_->sendMosaicTiles(res, false);
 }

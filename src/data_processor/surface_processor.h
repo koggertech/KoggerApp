@@ -41,6 +41,7 @@ private:
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture() const;
     void propagateBorderHeights();
+    void refreshAfterEdgeLimitChange();
 
 private:
     DataProcessor* dataProcessor_;
