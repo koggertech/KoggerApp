@@ -48,7 +48,7 @@ void SurfaceView::setMosaicColorTableTextureId(GLuint value)
     }
 }
 
-GLuint SurfaceView::getMosaicTextureIdByTileId(QUuid tileId)
+GLuint SurfaceView::getMosaicTextureIdByTileId(QUuid tileId) const
 {
     GLuint retVal = 0;
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
@@ -113,6 +113,18 @@ GLuint SurfaceView::getSurfaceColorTableTextureId() const
     }
 
     return 0;
+}
+
+bool SurfaceView::getMVisible() const
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    return r->mVis_;
+}
+
+bool SurfaceView::getIVisible() const
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    return r->iVis_;
 }
 
 void SurfaceView::setSurfaceColorTableTextureId(GLuint textureId)
@@ -309,8 +321,8 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->enableAttributeArray(positionLoc);
             shP->enableAttributeArray(texCoordLoc);
 
-            shP->setAttributeArray(positionLoc, itm.getHeightVerticesConstRef().constData());
-            shP->setAttributeArray(texCoordLoc, itm.getMosaicTextureVerticesRef().constData());
+            shP->setAttributeArray(positionLoc, itm.getHeightVerticesCRef().constData());
+            shP->setAttributeArray(texCoordLoc, itm.getMosaicTextureVerticesCRef().constData());
 
             QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
 
@@ -323,9 +335,9 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->setUniformValue("colorTable", 1);
 
             ctx->glDrawElements(GL_TRIANGLES,
-                                itm.getHeightIndicesRef().size(),
+                                itm.getHeightIndicesCRef().size(),
                                 GL_UNSIGNED_INT,
-                                itm.getHeightIndicesRef().constData());
+                                itm.getHeightIndicesCRef().constData());
 
             shP->disableAttributeArray(texCoordLoc);
             shP->disableAttributeArray(positionLoc);
@@ -348,12 +360,12 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
             const int posLoc = shP->attributeLocation("position");
             shP->enableAttributeArray(posLoc);
-            shP->setAttributeArray(posLoc, itm.getHeightVerticesConstRef().constData());
+            shP->setAttributeArray(posLoc, itm.getHeightVerticesCRef().constData());
 
             ctx->glDrawElements(GL_TRIANGLES,
-                                itm.getHeightIndicesRef().size(),
+                                itm.getHeightIndicesCRef().size(),
                                 GL_UNSIGNED_INT,
-                                itm.getHeightIndicesRef().constData());
+                                itm.getHeightIndicesCRef().constData());
 
             shP->disableAttributeArray(posLoc);
             shP->release();

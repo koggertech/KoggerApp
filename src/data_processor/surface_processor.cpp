@@ -369,7 +369,7 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
 
             tile->getHeightVerticesRef()[hvIdx][2]  = interpZ;
             tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kIsobaths;
-            tile->setIsPostUpdate(true);
+            tile->setIsUpdated(true);
             updatedTiles.insert(tile);
         }
     }
@@ -465,12 +465,12 @@ void SurfaceProcessor::propagateBorderHeights()
     for (int ty = 0; ty < tilesY; ++ty) {
         for (int tx = 0; tx < tilesX; ++tx) {
             SurfaceTile* t = matrix[ty][tx];
-            if (!t->getIsPostUpdate()) {
+            if (!t->getIsUpdated()) {
                 continue;
             }
 
             t->updateHeightIndices();
-            t->setIsPostUpdate(false);
+            t->setIsUpdated(false);
 
             if (ty + 1 < tilesY) { // вверх, строка 0 в последнюю верхнего тайла
                 SurfaceTile* top = matrix[ty + 1][tx];

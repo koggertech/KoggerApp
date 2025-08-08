@@ -21,7 +21,6 @@ public:
     Q_INVOKABLE void onGridVisibleChanged(bool state);
     Q_INVOKABLE void onMeasLineVisibleChanged(bool state);
     Q_INVOKABLE void onClearClicked();
-    Q_INVOKABLE void onGenerateGridContourChanged(bool state);
     Q_INVOKABLE void onUpdateStateChanged(bool state);
     Q_INVOKABLE void onThemeChanged(int val);
     Q_INVOKABLE void onLevelChanged(float lowLevel, float highLevel);
@@ -45,7 +44,6 @@ private:
     bool gridVisible_;
     bool measLineVisible_;
     float resolution_;
-    bool generateGridContour_;
     bool updateState_;
     int themeId_;
     float lowLevel_;

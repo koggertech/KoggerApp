@@ -7,7 +7,6 @@
 #include <QVector3D>
 #include <QVector2D>
 #include <QOpenGLFunctions>
-#include "scene_object.h"
 
 
 static constexpr int   defaultTileSidePixelSize     = 256;
@@ -23,43 +22,38 @@ enum class HeightType {
 class SurfaceTile {
 public:
     /*methods*/
-    SurfaceTile(QVector3D origin, bool generateGridContour);
+    SurfaceTile(QVector3D origin);
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
-    void updateHeightIndices();
+    void updateHeightIndices(); // обновляет индексы для отрисовки
 
-    void setMosaicTextureId(GLuint val);
-    void setIsPostUpdate(bool state);
-    QUuid                                    getUuid() const;
-    QVector3D                                getOrigin() const;
-    bool                                     getIsInited() const;
-    GLuint                                   getMosaicTextureId() const;
-    int                                      getIsPostUpdate() const;
-    std::vector<uint8_t>&                    getMosaicImageDataRef();
-    const std::vector<uint8_t>&              getMosaicImageDataCRef() const;
-    QVector<QVector3D>&                      getHeightVerticesRef();
-    QVector<HeightType>&                     getHeightMarkVerticesRef();
-    const QVector<QVector2D>&                getMosaicTextureVerticesRef() const;
-    const QVector<QVector3D>&                getHeightVerticesConstRef() const;
-    const QVector<int>&                      getHeightIndicesRef() const;
-    const SceneObject::RenderImplementation& getGridRenderImplRef() const;
-    const SceneObject::RenderImplementation& getContourRenderImplRef() const;
+    void                        setMosaicTextureId(GLuint val);
+    void                        setIsUpdated(bool state);
+    QUuid                       getUuid() const;
+    QVector3D                   getOrigin() const;
+    bool                        getIsInited() const;
+    GLuint                      getMosaicTextureId() const;
+    int                         getIsUpdated() const;
+    std::vector<uint8_t>&       getMosaicImageDataRef();
+    const std::vector<uint8_t>& getMosaicImageDataCRef() const;
+    QVector<QVector3D>&         getHeightVerticesRef();
+    QVector<HeightType>&        getHeightMarkVerticesRef();
+    const QVector<QVector2D>&   getMosaicTextureVerticesCRef() const;
+    const QVector<QVector3D>&   getHeightVerticesCRef() const;
+    const QVector<int>&         getHeightIndicesCRef() const;
 
 private:
     /*methods*/
-    bool checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const;
+    inline bool checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const;
 
     /*data*/
     QUuid id_;
     QVector3D origin_;
-    std::vector<uint8_t> imageData_;
-    QVector<QVector3D> heightVertices_;
-    QVector<HeightType> heightMarkVertices_; // mosaic trace or not
-    QVector<int> heightIndices_;
-    QVector<QVector2D> textureVertices_;
-    SceneObject::RenderImplementation gridRenderImpl_;
-    SceneObject::RenderImplementation contourRenderImpl_;
+    std::vector<uint8_t> imageData_;        // текстура
+    QVector<QVector3D> heightVertices_;     // матрица высот //
+    QVector<HeightType> heightMarkVertices_;// что будем процессить в матрице высот //
+    QVector<int> heightIndices_;            // что будем рисовать в матрице высот ////
+    QVector<QVector2D> textureVertices_;    // текстурные координаты //
     GLuint textureId_;
-    bool isPostUpdate_;
-    bool isInited_;
-    bool generateGridContour_;
+    bool isUpdated_;
+    bool isInited_; //
 };

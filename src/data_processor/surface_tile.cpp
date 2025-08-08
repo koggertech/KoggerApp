@@ -1,14 +1,15 @@
 #include "surface_tile.h"
 
+#include <cmath>
 
-SurfaceTile::SurfaceTile(QVector3D origin, bool generateGridContour) :
+
+SurfaceTile::SurfaceTile(QVector3D origin) :
     id_(QUuid::createUuid()),
     origin_(origin),
     textureId_(0),
-    isPostUpdate_(false),
-    isInited_(false),
-    generateGridContour_(generateGridContour)
-{ }
+    isUpdated_(false),
+    isInited_(false)
+{}
 
 void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
 {
@@ -38,9 +39,6 @@ void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolutio
         }
     }
 
-    gridRenderImpl_.setColor(QColor(0,255,100));
-    contourRenderImpl_.setColor(QColor(255,0,0));
-
     isInited_ = true;
 }
 
@@ -68,48 +66,6 @@ void SurfaceTile::updateHeightIndices()
             heightIndices_.append(bottomRight); // 2--3
         }
     }
-
-    if (generateGridContour_) {
-        // grid
-        QVector<QVector3D> grid;
-        grid.reserve((heightIndices_.size() / 6) * 8);
-        for (int i = 0; i < heightIndices_.size(); i += 6) {
-            QVector3D A = heightVertices_[heightIndices_[i]];
-            QVector3D B = heightVertices_[heightIndices_[i + 1]];
-            QVector3D C = heightVertices_[heightIndices_[i + 2]];
-            QVector3D D = heightVertices_[heightIndices_[i + 5]];
-            A.setZ(A.z() + 0.02);
-            B.setZ(B.z() + 0.02);
-            C.setZ(C.z() + 0.02);
-            D.setZ(D.z() + 0.02);
-            grid.append({ A, B,
-                          B, D,
-                          A, C,
-                          C, D });
-        }
-        gridRenderImpl_.setData(grid, GL_LINES);
-
-        // contour
-        float zShift = 0.1f;
-        int lastIndex = heightMatSideSize - 1;
-        QVector<QVector3D> contour;
-        contour.reserve(lastIndex * 8);
-        auto addContourLine = [&](QVector3D A, QVector3D B) {
-            A.setZ(A.z() + zShift);
-            B.setZ(B.z() + zShift);
-            contour.append(A);
-            contour.append(B);
-        };
-        for (int i = 0; i < lastIndex; ++i) {
-            addContourLine(heightVertices_[i], heightVertices_[i + 1]); // top
-            addContourLine(heightVertices_[lastIndex * heightMatSideSize + i], // bottom
-                           heightVertices_[lastIndex * heightMatSideSize + (i + 1)]);
-            addContourLine(heightVertices_[(i + 1) * heightMatSideSize], heightVertices_[i * heightMatSideSize]); // left
-            addContourLine(heightVertices_[i * heightMatSideSize + lastIndex], // right
-                           heightVertices_[(i + 1) * heightMatSideSize + lastIndex]);
-        }
-        contourRenderImpl_.setData(contour, GL_LINES);
-    }
 }
 
 void SurfaceTile::setMosaicTextureId(GLuint val)
@@ -117,9 +73,9 @@ void SurfaceTile::setMosaicTextureId(GLuint val)
     textureId_ = val;
 }
 
-void SurfaceTile::setIsPostUpdate(bool state)
+void SurfaceTile::setIsUpdated(bool state)
 {
-    isPostUpdate_ = state;
+    isUpdated_ = state;
 }
 
 QUuid SurfaceTile::getUuid() const
@@ -142,9 +98,9 @@ GLuint SurfaceTile::getMosaicTextureId() const
     return textureId_;
 }
 
-int SurfaceTile::getIsPostUpdate() const
+int SurfaceTile::getIsUpdated() const
 {
-    return isPostUpdate_;
+    return isUpdated_;
 }
 
 std::vector<uint8_t>& SurfaceTile::getMosaicImageDataRef()
@@ -167,35 +123,26 @@ QVector<HeightType> &SurfaceTile::getHeightMarkVerticesRef()
     return heightMarkVertices_;
 }
 
-const QVector<QVector2D>& SurfaceTile::getMosaicTextureVerticesRef() const
+const QVector<QVector2D>& SurfaceTile::getMosaicTextureVerticesCRef() const
 {
     return textureVertices_;
 }
 
-const QVector<QVector3D>& SurfaceTile::getHeightVerticesConstRef() const
+const QVector<QVector3D>& SurfaceTile::getHeightVerticesCRef() const
 {
     return heightVertices_;
 }
 
-const QVector<int>& SurfaceTile::getHeightIndicesRef() const
+const QVector<int>& SurfaceTile::getHeightIndicesCRef() const
 {
     return heightIndices_;
 }
 
-const SceneObject::RenderImplementation& SurfaceTile::getGridRenderImplRef() const
-{
-    return gridRenderImpl_;
-}
-const SceneObject::RenderImplementation& SurfaceTile::getContourRenderImplRef() const
-{
-    return contourRenderImpl_;
-}
-
 bool SurfaceTile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const
 {
-    if (qFuzzyIsNull(heightVertices_[topLeft].z()) || // someone zero
-        qFuzzyIsNull(heightVertices_[topRight].z()) ||
-        qFuzzyIsNull(heightVertices_[bottomLeft].z()) ||
+    if (qFuzzyIsNull(heightVertices_[topLeft].z())     || // someone zero
+        qFuzzyIsNull(heightVertices_[topRight].z())    ||
+        qFuzzyIsNull(heightVertices_[bottomLeft].z())  ||
         qFuzzyIsNull(heightVertices_[bottomRight].z())) {
         return false;
     }

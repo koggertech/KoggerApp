@@ -43,8 +43,14 @@ public:
 
     void   setMosaicTextureIdByTileId(QUuid tileId, GLuint textureId);
     void   setMosaicColorTableTextureId(GLuint value);
-    GLuint getMosaicTextureIdByTileId(QUuid tileId);
+    void   setSurfaceColorTableTextureId(GLuint textureId);
+    void   setIVisible(bool state);
+    void   setMVisible(bool state);
+    GLuint getMosaicTextureIdByTileId(QUuid tileId) const;
     GLuint getMosaicColorTableTextureId() const;
+    GLuint getSurfaceColorTableTextureId() const;
+    bool   getMVisible() const;
+    bool   getIVisible() const;
 
     QVector<GLuint>                                 takeMosaicTileTextureToDelete();
     QVector<std::pair<QUuid, std::vector<uint8_t>>> takeMosaicTileTextureToAppend();
@@ -53,23 +59,12 @@ public:
     QVector<uint8_t>                                takeSurfaceColorTableToAppend();
     GLuint                                          takeSurfaceColorTableToDelete();
 
-    GLuint getSurfaceColorTableTextureId() const;
-    void setSurfaceColorTableTextureId(GLuint textureId);
-
-    void setIVisible(bool state);
-    void setMVisible(bool state);
-
-    bool getMVisible() const { auto* r = RENDER_IMPL(SurfaceView); return r->mVis_; }
-    bool getIVisible() const { auto* r = RENDER_IMPL(SurfaceView); return r->iVis_; }
-
 public slots: // from dataprocessor
     void clear();
     void setTiles(const QHash<QUuid, SurfaceTile>& tiles, bool useTextures); // TODO: separate (now from mosaic)
     void setMosaicColorTableTextureTask(const std::vector<uint8_t>& colorTableTextureTask);
-
     void setMinZ(float minZ);
     void setMaxZ(float maxZ);
-
     void setSurfaceStep(float surfaceStep);
     void setTextureTask(const QVector<uint8_t>& textureTask);
     void setColorIntervalsSize(int size);

@@ -124,7 +124,7 @@ void DataProcessor::onChartsAdded(uint64_t indx)
             btP.indexFrom = std::max(0, windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1) - additionalBTPGap);
             btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
 
-            const auto channels = datasetPtr_->channelsList(); //
+            const auto channels = datasetPtr_->channelsList();
             for (auto it = channels.begin(); it != channels.end(); ++it) {
                 bottomTrackProcessor_.bottomTrackProcessing(it->channelId_, ChannelId(), btP);
             }
@@ -324,13 +324,6 @@ void DataProcessor::setMosaicHighLevel(float val)
     //qDebug() << "DataProcessor::setMosaicHighLevel" << val;
 
     mosaicProcessor_.setColorTableHighLevel(val);
-}
-
-void DataProcessor::setMosaicGenerateGridContour(bool state)
-{
-    //qDebug() << "DataProcessor::setMosaicGenerateGridContour" << state;
-
-    mosaicProcessor_.setGenerateGridContour(state);
 }
 
 void DataProcessor::askColorTableForMosaic()

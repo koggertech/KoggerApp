@@ -84,12 +84,6 @@ void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMat
     surfaceMeshPtr_->reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);//
 }
 
-void MosaicProcessor::setGenerateGridContour(bool state)
-{
-    surfaceMeshPtr_->setGenerateGridContour(state);
-}
-
-
 void MosaicProcessor::setColorTableThemeById(int id)
 {
     if (colorTable_.getTheme() == id) {
@@ -191,12 +185,12 @@ void MosaicProcessor::postUpdate()
         for (int j = 0; j < tileMatrixXSize; ++j) {
 
             auto& tileRef = surfaceMeshPtr_->getTileMatrixRef()[i][j];
-            if (!tileRef->getIsPostUpdate()) {
+            if (!tileRef->getIsUpdated()) {
                 continue;
             }
 
             updateVerticesIndices (tileRef, false);
-            tileRef->setIsPostUpdate(false);
+            tileRef->setIsUpdated(false);
 
             // fix height matrixs
             auto& tileVertRef = tileRef->getHeightVerticesRef();
@@ -613,7 +607,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                                 tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
                             }
 
-                            tileRef->setIsPostUpdate(true);
+                            tileRef->setIsUpdated(true);
                         }
                     }
                 }

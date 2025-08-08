@@ -64,7 +64,6 @@ public slots:
     void setMosaicLevels(float lowLevel, float highLevel);
     void setMosaicLowLevel(float val);
     void setMosaicHighLevel(float val);
-    void setMosaicGenerateGridContour(bool state);
     void askColorTableForMosaic();
 
     //

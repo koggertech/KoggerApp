@@ -8,14 +8,13 @@ SurfaceMesh::SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float
     numWidthTiles_(0),
     numHeightTiles_(0),
     tileSidePixelSize_(tileSidePixelSize),
-    tileHeightMatrixRatio_(tileHeightMatrixRatio),
-    generateGridContour_(false)
+    tileHeightMatrixRatio_(tileHeightMatrixRatio)
 {
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
 
 SurfaceMesh::~SurfaceMesh()
-{ }
+{}
 
 void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
@@ -153,11 +152,6 @@ bool SurfaceMesh::hasData() const
     return !tiles_.empty();
 }
 
-void SurfaceMesh::setGenerateGridContour(bool state)
-{
-    generateGridContour_ = state;
-}
-
 const std::vector<SurfaceTile *> &SurfaceMesh::getTilesCRef() const
 {
     return tiles_;
@@ -230,7 +224,7 @@ void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const 
 
             if (!tileMatrix_[i][j]) {
                 tiles_.push_back(new SurfaceTile( { origin_.x() + j * tileSideMeterSize_,
-                                           origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+                                           origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }));
                 tileMatrix_[i][j] = tiles_.back();
             }
         }
@@ -249,7 +243,7 @@ void SurfaceMesh::resizeColumnsLeft(int columnsToAdd)
 
         for (int j = 0; j < columnsToAdd; ++j) {
             tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -268,7 +262,7 @@ void SurfaceMesh::resizeRowsBottom(int rowsToAdd)
 
         for (int j = 0; j < numWidthTiles_; ++j) {
             tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+                                       origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
         cnt++;
@@ -286,7 +280,7 @@ void SurfaceMesh::resizeColumnsRight(int columnsToAdd)
 
         for (int j = oldNumWidthTiles; j < oldNumWidthTiles + columnsToAdd; ++j) {
             tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -308,7 +302,7 @@ void SurfaceMesh::resizeRowsTop(int rowsToAdd)
 
         for (int j = 0; j < numWidthTiles_; ++j) {
             tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+                                       origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
     }

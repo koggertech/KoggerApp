@@ -140,7 +140,7 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     vDict.reserve(1 << 20); // 1 Mb
 
     for (auto* tile: surfaceMeshPtr_->getTilesCRef()) {
-        const auto& V = tile->getHeightVerticesConstRef();
+        const auto& V = tile->getHeightVerticesCRef();
         const auto& M = tile->getHeightMarkVerticesRef();
         const int N  = qRound(std::sqrt(V.size()));
 

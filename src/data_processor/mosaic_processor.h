@@ -27,7 +27,6 @@ public:
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
     void updateDataWrapper(int endIndx, int endOffset = 0);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
-    void setGenerateGridContour(bool state);
     void setColorTableThemeById(int id);
     void setColorTableLevels(float lowVal, float highVal);
     void setColorTableLowLevel(float val);

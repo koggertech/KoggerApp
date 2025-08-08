@@ -500,31 +500,6 @@ MenuFrame {
 //         property alias mosaicMeasLinesVisible: mosaicMeasLinesVisible.checked
 //     }
 // }
-// CheckButton {
-//     id: mosaicGenerateGridContour
-//     text: qsTr("Generate grid/contour")
-//     Layout.fillWidth: true
-//     Layout.preferredWidth: 200
-//     checked: false
-//     //visible: core.isSeparateReading
-
-//     onClicked: {
-//         MosaicViewControlMenuController.onGenerateGridContourChanged(checked)
-//     }
-
-//     onFocusChanged: {
-//         mosaicViewSettings.focus = true
-//     }
-
-//     Component.onCompleted: {
-//         MosaicViewControlMenuController.onGenerateGridContourChanged(checked)
-//     }
-
-//     Settings {
-//         property alias mosaicGenerateGridContour: mosaicGenerateGridContour.checked
-//     }
-// }
-
 // CButton {
 //     text: qsTr("Clear")
 //     Layout.fillWidth: true

@@ -21,17 +21,16 @@ public:
     void clearHeightData();
     bool hasData() const;
 
-    void setGenerateGridContour(bool state);
     const std::vector<SurfaceTile*>&        getTilesCRef() const;
     std::vector<std::vector<SurfaceTile*>>& getTileMatrixRef();
     SurfaceTile*                            getTilePtrById(QUuid tileId);
-    int                              getPixelWidth() const;
-    int                              getPixelHeight() const;
-    int                              getTileSidePixelSize() const;
-    int                              getNumWidthTiles() const;
-    int                              getNumHeightTiles() const;
-    int                              getStepSizeHeightMatrix() const;
-    bool                             getIsInited() const;
+    int                                     getPixelWidth() const;
+    int                                     getPixelHeight() const;
+    int                                     getTileSidePixelSize() const;
+    int                                     getNumWidthTiles() const;
+    int                                     getNumHeightTiles() const;
+    int                                     getStepSizeHeightMatrix() const;
+    bool                                    getIsInited() const;
 
 private:
     /*methods*/
@@ -53,5 +52,4 @@ private:
     int numHeightTiles_;
     int tileSidePixelSize_;
     int tileHeightMatrixRatio_;
-    bool generateGridContour_;
 };
