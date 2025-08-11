@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <QMutex>
 #include <QVector>
 #include <QVector3D>
 #include <QUuid>
@@ -68,14 +69,17 @@ public slots: // from dataprocessor
     void setSurfaceStep(float surfaceStep);
     void setTextureTask(const QVector<uint8_t>& textureTask);
     void setColorIntervalsSize(int size);
+    void removeTiles(const QSet<QUuid>& ids); 
 
 private:
     void updateMosaicTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles);
 
 private:
+    QMutex mosaicTexTasksMutex_;
+
     std::vector<uint8_t>                            mosaicColorTableToAppend_;
     GLuint                                          mosaicColorTableToDelete_;
-    QVector<std::pair<QUuid, std::vector<uint8_t>>> mosaicTileTextureToAppend_;
+    QHash<QUuid, std::vector<uint8_t>>              mosaicTileTextureToAppend_; // по ключу хранится последнее изображение
     QVector<GLuint>                                 mosaicTileTextureToDelete_;
     QVector<uint8_t>                                surfaceColorTableToAppend_;
     GLuint                                          surfaceColorTableToDelete_;

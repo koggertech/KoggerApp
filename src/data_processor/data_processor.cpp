@@ -301,6 +301,9 @@ void DataProcessor::setMosaicTileResolution(float val)
 
     surfaceMesh_.reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, tileResolution_);
 
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared(); //
+
     surfaceProcessor_.setTileResolution(tileResolution_);
     mosaicProcessor_.setTileResolution(tileResolution_);
 }

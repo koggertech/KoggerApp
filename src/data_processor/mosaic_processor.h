@@ -39,7 +39,7 @@ public:
     void askColorTableForMosaic(); // first init colorTable in render
 
 private:
-    void postUpdate();
+    void postUpdate(QSet<SurfaceTile*>& changedTiles);
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
     void updateData(int endIndx, int endOffset = 0);
     inline bool checkLength(float dist) const;

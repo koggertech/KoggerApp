@@ -70,14 +70,27 @@ GLuint SurfaceView::getMosaicColorTableTextureId() const
 
 QVector<GLuint> SurfaceView::takeMosaicTileTextureToDelete()
 {
-    auto retVal = std::move(mosaicTileTextureToDelete_);
-    return retVal;
+    QMutexLocker lock(&mosaicTexTasksMutex_);
+
+    std::sort(mosaicTileTextureToDelete_.begin(), mosaicTileTextureToDelete_.end());
+    mosaicTileTextureToDelete_.erase(std::unique(mosaicTileTextureToDelete_.begin(), mosaicTileTextureToDelete_.end()), mosaicTileTextureToDelete_.end());
+
+    QVector<GLuint> out;
+    out.swap(mosaicTileTextureToDelete_);
+    return out;
 }
 
 QVector<std::pair<QUuid, std::vector<uint8_t> > > SurfaceView::takeMosaicTileTextureToAppend()
 {
-    auto retVal = std::move(mosaicTileTextureToAppend_);
-    return retVal;
+    QMutexLocker lock(&mosaicTexTasksMutex_);
+
+    QVector<std::pair<QUuid, std::vector<uint8_t>>> out;
+    out.reserve(mosaicTileTextureToAppend_.size());
+    for (auto it = mosaicTileTextureToAppend_.cbegin(); it != mosaicTileTextureToAppend_.cend(); ++it) {
+        out.push_back({ it.key(), it.value() });
+    }
+    mosaicTileTextureToAppend_.clear();
+    return out;
 }
 
 std::vector<uint8_t> SurfaceView::takeMosaicColorTableToAppend()
@@ -163,6 +176,10 @@ void SurfaceView::clear()
 
     r->tiles_.clear();
 
+    {
+        QMutexLocker lock(&mosaicTexTasksMutex_);
+        mosaicTileTextureToAppend_.clear();
+    }
 
     r->minZ_ = std::numeric_limits<float>::max();
     r->maxZ_ = std::numeric_limits<float>::lowest();
@@ -180,11 +197,26 @@ void SurfaceView::setTiles(const QHash<QUuid, SurfaceTile> &tiles, bool useTextu
     //qDebug() << "SurfaceView::setTiles" << tiles.size();
 
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
-        if (useTextures){
-            updateMosaicTileTextureTask(tiles);
+        auto& rTRef = r->tiles_;
+
+        for (auto itT = tiles.cbegin(); itT != tiles.cend(); ++itT) {
+            auto& iKey   = itT.key();
+            auto& iValue = itT.value();
+
+            if (auto itRT = rTRef.find(iKey); itRT != rTRef.end()) { //refresh
+                auto& itRTVRef = itRT.value();
+                const auto savedTexId = itRTVRef.textureId_;
+                itRTVRef = std::move(iValue);
+                itRTVRef.textureId_ = savedTexId;
+            }
+            else {
+                rTRef.insert(iKey, iValue);
+            }
         }
 
-        r->tiles_ = tiles;
+        if (useTextures) {
+            updateMosaicTileTextureTask(tiles);
+        }
 
         Q_EMIT changed();
     }
@@ -239,28 +271,50 @@ void SurfaceView::setColorIntervalsSize(int size)
     }
 }
 
-void SurfaceView::updateMosaicTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles) // maybe from dataProcessor
+void SurfaceView::removeTiles(const QSet<QUuid> &ids)
 {
-    //qDebug() << "SurfaceView::updateTileTextureTask" << newTiles.size();
+    if (ids.isEmpty()) return;
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        for (const auto& id : ids) {
+            auto it = r->tiles_.find(id);
+            if (it != r->tiles_.end()) {
+                if (auto oldId = it.value().getMosaicTextureId(); oldId != 0) {
+                    mosaicTileTextureToDelete_.append(oldId);
+                }
+                r->tiles_.erase(it);
+            }
+        }
+        Q_EMIT changed();
+    }
+}
 
-    if (newTiles.empty()) {
+void SurfaceView::updateMosaicTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles)
+{
+    if (newTiles.isEmpty()) {
+        return;
+    }
+    auto* r = RENDER_IMPL(SurfaceView);
+
+    if (!r) {
         return;
     }
 
-    if (auto* r = RENDER_IMPL(SurfaceView); r) {
-        for (auto it = r->tiles_.cbegin(); it != r->tiles_.cend(); ++it) {
-            const SurfaceTile& tile = it.value();
-            if (auto id = tile.getMosaicTextureId(); id) {
-                mosaicTileTextureToDelete_.push_back(id);
-            }
-        }
+    {
+        QMutexLocker lock(&mosaicTexTasksMutex_);
+        auto& rTiles = r->tiles_;
 
-        mosaicTileTextureToAppend_.clear();
-        mosaicTileTextureToAppend_.reserve(newTiles.size());
         for (auto it = newTiles.cbegin(); it != newTiles.cend(); ++it) {
-            const QUuid& tileUuid = it.key();
-            const SurfaceTile& tile = it.value();
-            mosaicTileTextureToAppend_.push_back(std::make_pair(tileUuid, tile.getMosaicImageDataCRef()));
+            const auto& key   = it.key();
+            const auto& value = it.value();
+
+            if (auto rIt = rTiles.find(key); rIt != rTiles.end()) { // только апдейт
+                auto& tile = rIt.value();
+                tile.imageData_ = value.imageData_;
+                mosaicTileTextureToAppend_.insert(key, tile.getMosaicImageDataCRef());
+            }
+            else {
+                qWarning() << "SurfaceView: no tile for key" << key;
+            }
         }
     }
 }

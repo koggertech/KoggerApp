@@ -1038,35 +1038,54 @@ void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3
     // delete
     {
         auto tasks = surfacePtr->takeMosaicTileTextureToDelete();
-
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-            glDeleteTextures(1, it);
+            if (*it != 0) {
+                glDeleteTextures(1, &(*it));
+            }
         }
     }
 
-    // append
+    // append or update
     {
         auto tasks = surfacePtr->takeMosaicTileTextureToAppend();
 
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
+            const auto& tileId = it->first;
+            const auto& data   = it->second;
 
-            GLuint textureId = 0;
+            if (data.empty()) {
+                continue;
+            }
 
-            glGenTextures(1, &textureId);
-            glBindTexture(GL_TEXTURE_2D, textureId);
+            const GLuint existingId = surfacePtr->getMosaicTextureIdByTileId(tileId);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            if (existingId) { // update
+                glBindTexture(GL_TEXTURE_2D, existingId);
 
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, defaultTileSidePixelSize, defaultTileSidePixelSize, 0, GL_RED, GL_UNSIGNED_BYTE, it->second.data());
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, defaultTileSidePixelSize, defaultTileSidePixelSize, GL_RED, GL_UNSIGNED_BYTE, data.data());
 
-            surfacePtr->setMosaicTextureIdByTileId(it->first, textureId);
+                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+                gl->glGenerateMipmap(GL_TEXTURE_2D);
+            }
+            else { // create
+                GLuint texId = 0;
+                glGenTextures(1, &texId);
+                glBindTexture(GL_TEXTURE_2D, texId);
 
-            QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-            glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, defaultTileSidePixelSize, defaultTileSidePixelSize, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
+
+                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+                gl->glGenerateMipmap(GL_TEXTURE_2D);
+
+                surfacePtr->setMosaicTextureIdByTileId(tileId, texId);
+            }
         }
     }
 }

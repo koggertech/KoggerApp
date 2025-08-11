@@ -239,11 +239,10 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }
 
-    // to SurfaceView
-    const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
+    // to SurfaceView только измененные тайлы
     QHash<QUuid, SurfaceTile> res;
-    res.reserve(tilesRef.size());
-    for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
+    res.reserve(changedTiles.size());
+    for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
     emit dataProcessor_->sendMosaicTiles(res, false);
@@ -555,11 +554,11 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
         emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }
 
-    // to SurfaceView
+    // to SurfaceView все тайлы
     const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
     QHash<QUuid, SurfaceTile> res;
     res.reserve(tilesRef.size());
-    for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
+    for (auto it = tilesRef.cbegin(); it != tilesRef.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
     emit dataProcessor_->sendMosaicTiles(res, false);

@@ -42,6 +42,8 @@ public:
     const QVector<int>&         getHeightIndicesCRef() const;
 
 private:
+    friend class SurfaceView;
+
     /*methods*/
     inline bool checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const;
 

@@ -163,7 +163,7 @@ void MosaicProcessor::askColorTableForMosaic()
     emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
 }
 
-void MosaicProcessor::postUpdate()
+void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
 {
     //qDebug() << "tileResolution_" << tileResolution_;
 
@@ -171,7 +171,7 @@ void MosaicProcessor::postUpdate()
         return;
     }
 
-    auto updateVerticesIndices = [this](SurfaceTile* tilePtr, bool isNew) -> void {
+    auto updateVerticesIndices = [&, this](SurfaceTile* tilePtr, bool isNew) -> void {
         if (!isNew) {
             updateUnmarkedHeightVertices(tilePtr);
         }
@@ -202,6 +202,7 @@ void MosaicProcessor::postUpdate()
                 if (!rowTileRef->getIsInited()) {
                     rowTileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
+                changedTiles.insert(rowTileRef);
 
                 int topStartIndx = numHeightVertBySide * (numHeightVertBySide - 1);
                 auto& topTileVertRef = rowTileRef->getHeightVerticesRef();
@@ -224,6 +225,7 @@ void MosaicProcessor::postUpdate()
                 if (!colTileRef->getIsInited()) {
                     colTileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
+                changedTiles.insert(colTileRef);
 
                 auto& leftTileVertRef = colTileRef->getHeightVerticesRef();
                 auto& leftTileMarkVertRef = colTileRef->getHeightMarkVerticesRef();
@@ -238,15 +240,13 @@ void MosaicProcessor::postUpdate()
                 }
                 updateVerticesIndices (colTileRef, true);
             }
-
         }
     }
 
     // to SurfaceView
-    const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
     QHash<QUuid, SurfaceTile> res;
-    res.reserve(tilesRef.size());
-    for (auto it = tilesRef.begin(); it != tilesRef.cend(); ++it) {
+    res.reserve(changedTiles.size());
+    for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
     emit dataProcessor_->sendMosaicTiles(res, true);
@@ -312,7 +312,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
     bool segFIsValid = segFChannelId_.isValid();
     bool segSIsValid = segSChannelId_.isValid();
 
-    qDebug() << segFChannelId_.toShortName() << segSChannelId_.toShortName();
+    //qDebug() << segFChannelId_.toShortName() << segSChannelId_.toShortName();
 
     if (!segFIsValid && !segSIsValid) {
         return;
@@ -423,6 +423,9 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
         }
         return indx;
     };
+
+    static QSet<SurfaceTile*> changedTiles;
+    changedTiles.clear();
 
     // processing
     for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
@@ -608,6 +611,8 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             }
 
                             tileRef->setIsUpdated(true);
+
+                            changedTiles.insert(tileRef);
                         }
                     }
                 }
@@ -642,7 +647,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
 
     lastMatParams_ = actualMatParams;
 
-    postUpdate();
+    postUpdate(changedTiles);
 
     //auto renderImpl = RENDER_IMPL(MosaicProcessor);
     //renderImpl->measLinesVertices_.append(std::move(measLinesVertices));
