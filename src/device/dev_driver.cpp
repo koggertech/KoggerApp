@@ -54,6 +54,8 @@ DevDriver::DevDriver(QObject *parent)
 
     regID(idUSBL = new IDBinUsblSolution(), &DevDriver::receivedUSBL);
 
+    regID(idUSBLControl = new IDBinUsblControl(), &DevDriver::receivedUSBLControl);
+
 #ifndef SEPARATE_READING
     connect(&m_processTimer, &QTimer::timeout, this, &DevDriver::process);
 #endif
@@ -477,12 +479,27 @@ QUuid DevDriver::getLinkUuid() const
 
 void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
     if(!m_state.connect) return;
-    idUSBL->askBeacon(ask);
+    idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
 }
 
 void DevDriver::enableBeaconOnce(float timeout) {
     if(!m_state.connect) return;
-    idUSBL->enableBeaconOnce(timeout);
+    // idUSBL->enableBeaconOnce(timeout);
+}
+
+void DevDriver::acousticPingRequest(uint8_t address, uint32_t timeout_us) {
+    if(!m_state.connect) return;
+    idUSBLControl->pingRequest(timeout_us, address);
+}
+
+void DevDriver::acousticResponceFilter(uint8_t address) {
+    if(!m_state.connect) return;
+    idUSBLControl->setResponseAddressFilter(address);
+}
+
+void DevDriver::acousticResponceTimeout(uint32_t timeout_us) {
+    if(!m_state.connect) return;
+    idUSBLControl->setResponseTimeout(timeout_us);
 }
 
 void DevDriver::doRequestAll()
@@ -1351,6 +1368,19 @@ void DevDriver::receivedNav(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
+
+    if(resp == respNone) {
+        if(ver == v1) {
+            core.consoleInfo(QString("ROV: yaw: %1, pitch: %2, roll: %3, lat: %4, lon: %5, depth: %6")
+                                .arg(idNav->yaw()).arg(idNav->pitch()).arg(idNav->roll())
+                                .arg(idNav->latitude()).arg(idNav->longitude())
+                                .arg(idNav->depth())
+                             );
+            emit positionComplete(idNav->latitude(), idNav->longitude(), 0, 0);
+            emit attitudeComplete(idNav->yaw(), idNav->pitch(), idNav->roll());
+            emit depthComplete(idNav->depth());
+        }
+    }
 }
 
 void DevDriver::receivedDVL(Type type, Version ver, Resp resp) {
@@ -1386,6 +1416,10 @@ void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
             emit beaconActivationComplete(0);
         }
     }
+
+}
+
+void DevDriver::receivedUSBLControl(Type type, Version ver, Resp resp) {
 
 }
 

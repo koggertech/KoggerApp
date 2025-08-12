@@ -140,7 +140,8 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
         if (frame.completeAsKBP() || frame.completeAsKBP2()) {
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
-            if (isConsoled_ && (link != NULL) && !(frame.id() == 32 || frame.id() == 33))
+            //   && (link != NULL)
+            if (isConsoled_ && !(frame.id() == 32 || frame.id() == 33))
                 core.consoleProto(frame);
 
 #if !defined(Q_OS_ANDROID)
@@ -806,6 +807,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);
+
+    connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete);
+    connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 
     dev->startConnection(link != NULL);
 #endif

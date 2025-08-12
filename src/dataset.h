@@ -576,6 +576,10 @@ public:
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
 
+    void setDepth(float depth);
+    float getDepth();
+    bool isDepthAvail() { return isfinite(depth_); }
+
     void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
     ComplexSignals& complexSignals() { return _complex; }
     //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
@@ -972,6 +976,8 @@ protected:
         }
     } _attitude;
 
+    float depth_ = NAN;
+
     ComplexSignals _complex;
 
     IDBinDVL::BeamSolution _dopplerBeams[4];
@@ -1166,6 +1172,8 @@ public slots:
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
     void addPositionRTK(Position position);
+
+    void addDepth(float depth);
 
     void addGnssVelocity(double h_speed, double course);
 

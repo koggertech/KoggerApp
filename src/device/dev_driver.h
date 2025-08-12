@@ -195,7 +195,8 @@ signals:
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);
     void beaconActivationComplete(uint8_t id);
 
-    void positionComplete(uint32_t date, uint32_t time, double lat, double lon);
+    void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
+    void depthComplete(float depth);
     void chartSetupChanged();
     void dspSetupChanged();
     void distSetupChanged();
@@ -253,6 +254,10 @@ public slots:
     void askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask);
     void enableBeaconOnce(float timeout);
 
+    void acousticPingRequest(uint8_t address, uint32_t timeout_us = 0xFFFFFFFF);
+    void acousticResponceFilter(uint8_t address);
+    void acousticResponceTimeout(uint32_t timeout_us = 0xFFFFFFFF);
+
 #ifdef SEPARATE_READING
     Q_INVOKABLE void initProcessTimerConnects();
     Q_INVOKABLE void initChildsTimersConnects();
@@ -292,6 +297,7 @@ protected:
     IDBinDVLMode* idDVLMode = NULL;
 
     IDBinUsblSolution* idUSBL = NULL;
+    IDBinUsblControl* idUSBLControl = NULL;
 
 //    QHash<ID, IDBin*> hashIDParsing;
 //    QHash<ID, ParseCallback> hashIDCallback;
@@ -406,6 +412,7 @@ protected slots:
     void receivedDVLMode(Type type, Version ver, Resp resp);
 
     void receivedUSBL(Type type, Version ver, Resp resp);
+    void receivedUSBLControl(Type type, Version ver, Resp resp);
 
 private:
     bool datasetState_;

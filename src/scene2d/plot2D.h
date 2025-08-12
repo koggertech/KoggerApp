@@ -22,6 +22,7 @@
 #include "plot2D_grid.h"
 #include "plot2D_quadrature.h"
 #include "plot2D_rangefinder.h"
+#include "plot2d_depth.h"
 #include "plot2D_usbl_solution.h"
 #include "dataset.h"
 
@@ -146,6 +147,7 @@ protected:
     Plot2DGrid grid_;
     Plot2DQuadrature quadrature_;
     Plot2DRangefinder rangefinder_;
+    Plot2DDepth depth_;
     Plot2DUSBLSolution usblSolution_;
     Dataset* datasetPtr_;
     std::function<void()> pendingBtpLambda_;

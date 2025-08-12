@@ -135,6 +135,14 @@ void Epoch::setPositionRef(LLARef* ref) {
     }
 }
 
+void Epoch::setDepth(float depth) {
+    depth_ = depth;
+}
+
+float Epoch::getDepth() {
+    return depth_;
+}
+
 void Epoch::setGnssVelocity(double h_speed, double course) {
     _GnssData.hspeed = h_speed;
     _GnssData.course = course;
@@ -972,6 +980,7 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 void Dataset::addAtt(float yaw, float pitch, float roll) {
     Epoch* last_epoch = last();
     if(last_epoch->isAttAvail()) {
+        // last_epoch = addNewEpoch();
     }
 
     last_epoch->setAtt(yaw, pitch, roll);
@@ -1030,6 +1039,14 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 void Dataset::addPositionRTK(Position position) {
     Epoch* last_epoch = last();
     last_epoch->setExternalPosition(position);
+}
+
+void Dataset::addDepth(float depth) {
+    Epoch* last_epoch = last();
+    if(last_epoch->isDepthAvail()) {
+        last_epoch = addNewEpoch();
+    }
+    last_epoch->setDepth(depth);
 }
 
 void Dataset::addGnssVelocity(double h_speed, double course) {
