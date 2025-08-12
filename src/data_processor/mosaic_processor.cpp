@@ -2,6 +2,7 @@
 
 #include <QtMath>
 #include <QDebug>
+#include <optional>
 #include "data_processor.h"
 #include "dataset.h"
 
