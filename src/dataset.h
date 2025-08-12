@@ -258,6 +258,7 @@ protected:
     uint64_t testTime_ = 1740466541;
 #endif
 
+    DatasetChannel firstChannelId_ = DatasetChannel(); // TODO: temp solution
     QVector<DatasetChannel> channelsSetup_;
 
     void validateChannelList(const ChannelId& channelId, uint8_t subChannelId);

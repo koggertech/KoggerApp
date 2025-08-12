@@ -649,6 +649,7 @@ void Dataset::resetDataset()
     {
         QWriteLocker locker(&lock_);
         channelsSetup_.clear();
+        firstChannelId_ = DatasetChannel();
     }
 
     pool_.clear();
@@ -869,12 +870,24 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
         return;
     }
 
+    bool settedChart = false;
+
     if (epPtr->chartAvail(channelId)) {
         Epoch::Echogram* chart = epPtr->chart(channelId);
         if (chart) {
             chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
-            emit bottomTrackAdded(epIndx);
+            settedChart = true;
         }
+    }
+
+    if (settedChart) {
+        if (firstChannelId_.channelId_ != channelId) { // only if first channel updated
+            return;
+        }
+
+        int guardInterval = bottomTrackParam_.windowSize; // bottomTrack will proceed epIndx - guardInterval in next iteration
+        int compIndx = epIndx > guardInterval ? epIndx - guardInterval : epIndx;
+        emit bottomTrackAdded(compIndx);
     }
 }
 
@@ -893,6 +906,10 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
 
     {
         QWriteLocker locker(&lock_);
+
+        if (channelsSetup_.empty()) {
+            firstChannelId_ = DatasetChannel(channelId, subChannelId); //
+        }
 
         for (int16_t i = 0; i < channelsSetup_.size(); ++i) {
             if (channelsSetup_.at(i).channelId_ == channelId &&
