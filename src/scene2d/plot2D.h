@@ -22,7 +22,7 @@
 #include "plot2D_grid.h"
 #include "plot2D_quadrature.h"
 #include "plot2D_rangefinder.h"
-#include "plot2d_depth.h"
+#include "plot2D_depth.h"
 #include "plot2D_usbl_solution.h"
 #include "dataset.h"
 

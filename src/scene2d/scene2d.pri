@@ -21,7 +21,7 @@ HEADERS += \
     $$PWD/plot2D_quadrature.h \
     $$PWD/plot2D_rangefinder.h \
     $$PWD/plot2D_usbl_solution.h \
-    $$PWD/plot2d_depth.h \
+    $$PWD/plot2D_depth.h \
     $$PWD/qPlot2D.h
 
 SOURCES += \
@@ -40,5 +40,5 @@ SOURCES += \
     $$PWD/plot2D_quadrature.cpp \
     $$PWD/plot2D_rangefinder.cpp \
     $$PWD/plot2D_usbl_solution.cpp \
-    $$PWD/plot2d_depth.cpp \
+    $$PWD/plot2D_depth.cpp \
     $$PWD/qPlot2D.cpp
