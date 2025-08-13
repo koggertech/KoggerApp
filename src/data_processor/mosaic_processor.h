@@ -26,6 +26,7 @@ public:
     // PROCESSING
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
     void updateDataWrapper(int endIndx, int endOffset = 0);
+    void updateDataWrapper(const QVector<int>& indxs);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void setColorTableThemeById(int id);
     void setColorTableLevels(float lowVal, float highVal);
@@ -42,13 +43,10 @@ private:
     void postUpdate(QSet<SurfaceTile*>& changedTiles);
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
     void updateData(int endIndx, int endOffset = 0);
-    inline bool checkLength(float dist) const;
+    void updateData(const QVector<int>& indxs);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
 
 private:
-    static constexpr int colorTableSize_ = 255;
-    static constexpr int interpLineWidth_ = 1;
-
     mosaic::PlotColorTable colorTable_;
     DataProcessor* dataProcessor_;
     Dataset* datasetPtr_;

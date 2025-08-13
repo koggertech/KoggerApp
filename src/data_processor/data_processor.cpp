@@ -374,7 +374,8 @@ void DataProcessor::flushPendingWork()
     }
 
     if (updateMosaic_) {
-        mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
+        //mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
+        mosaicProcessor_.updateDataWrapper(vec);
     }
 
     if (updateIsobaths_) {
