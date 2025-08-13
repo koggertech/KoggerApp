@@ -811,8 +811,13 @@ void MosaicProcessor::updateData(const QVector<int> &indxs)
             segSCharts->updateCompesated();
         }
 
-        if (!isfinite(segFIsOdd ? segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance() : segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance()) ||
-            !isfinite(segSIsOdd ? segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance() : segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance())) {
+        auto sFF = segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance();
+        auto sFS = segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance();
+        auto sSF = segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance();
+        auto sSS = segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance();
+
+        if (!isfinite(segFIsOdd ? sFF : sFS) ||
+            !isfinite(segSIsOdd ? sSF : sSS)) {
             continue;
         }
 

@@ -872,11 +872,15 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
 
     bool settedChart = false;
 
-    if (epPtr->chartAvail(channelId)) {
-        Epoch::Echogram* chart = epPtr->chart(channelId);
-        if (chart) {
-            chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
-            settedChart = true;
+    // for all sub ch
+    auto numSubChs = epPtr->getChartsSizeByChannelId(channelId);
+    for (int subChId = 0; subChId < numSubChs; ++subChId) {
+        if (epPtr->chartAvail(channelId, subChId)) {
+            Epoch::Echogram* chart = epPtr->chart(channelId, subChId);
+            if (chart) {
+                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
+                settedChart = true;
+            }
         }
     }
 
