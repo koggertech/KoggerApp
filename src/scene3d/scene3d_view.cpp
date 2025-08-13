@@ -1009,7 +1009,7 @@ void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(Graphics
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
 
-        surfacePtr->setColorTableTextureId(colorTableTextureId);
+        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
     }
 #else
     if (colorTableTextureId) {

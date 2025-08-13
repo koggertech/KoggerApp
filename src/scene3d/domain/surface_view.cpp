@@ -332,7 +332,7 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     mVis_(false)
 {
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    colorTableTextureType_ = GL_TEXTURE_2D;
+    mosaicColorTableTextureType_ = GL_TEXTURE_2D;
 #else
     mosaicColorTableTextureType_ = GL_TEXTURE_1D;
 #endif
