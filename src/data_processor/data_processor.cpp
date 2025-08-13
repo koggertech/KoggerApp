@@ -36,6 +36,11 @@ DataProcessor::DataProcessor(QObject *parent)
     surfaceProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
     isobathsProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
     mosaicProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
+
+    pendingBtTimer_.setParent(this);
+    pendingBtTimer_.setSingleShot(true);
+    pendingBtTimer_.setInterval(10);
+    connect(&pendingBtTimer_, &QTimer::timeout, this, &DataProcessor::flushPendingWork);
 }
 
 DataProcessor::~DataProcessor()
@@ -67,6 +72,7 @@ void DataProcessor::clear(DataProcessorType procType)
     }
 
     // this
+    pendingBtIndxs_.clear();
     chartsCounter_ = 0;
     bottomTrackCounter_ = 0;
     epochCounter_ = 0;
@@ -140,7 +146,7 @@ void DataProcessor::onChartsAdded(uint64_t indx)
     }
 }
 
-void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes from 3D
+void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes from 3D (conn,open file, edit echo)
 {
     //qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << indxs.size();
 
@@ -148,16 +154,12 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes fro
         return;
     }
 
-    if (updateIsobaths_ || updateMosaic_) {
-        surfaceProcessor_.onUpdatedBottomTrackData(indxs);
+    for (int v : indxs) {
+        pendingBtIndxs_.insert(v);
     }
 
-    if (updateMosaic_) {
-        mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
-    }
-
-    if (updateIsobaths_) {
-        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    if (!pendingBtTimer_.isActive()) {
+        pendingBtTimer_.start();
     }
 }
 
@@ -348,6 +350,35 @@ void DataProcessor::setMinZ(float minZ)
 void DataProcessor::setMaxZ(float maxZ)
 {
     isobathsProcessor_.setMaxZ(maxZ);
+}
+
+void DataProcessor::flushPendingWork()
+{
+    if (pendingBtIndxs_.isEmpty()) {
+        return;
+    }
+
+    QVector<int> vec;
+    vec.reserve(pendingBtIndxs_.size());
+    for (auto it = pendingBtIndxs_.cbegin(); it != pendingBtIndxs_.cend(); ++it) {
+        vec.append(*it);
+    }
+
+    pendingBtIndxs_.clear();
+
+    std::sort(vec.begin(), vec.end());
+
+    if (updateIsobaths_ || updateMosaic_) {
+        surfaceProcessor_.onUpdatedBottomTrackData(vec);
+    }
+
+    if (updateMosaic_) {
+        mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
+    }
+
+    if (updateIsobaths_) {
+        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    }
 }
 
 void DataProcessor::changeState(const DataProcessorType& state)

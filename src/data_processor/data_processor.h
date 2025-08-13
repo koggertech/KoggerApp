@@ -4,6 +4,8 @@
 #include <QFutureWatcher>
 #include <QMutex>
 #include <QObject>
+#include <QSet>
+#include <QTimer>
 #include <QVector>
 #include <QVector3D>
 #include "surface_mesh.h"
@@ -97,6 +99,9 @@ signals:
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
     void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles, bool useTextures);
 
+private slots:
+    void flushPendingWork();
+
 private:
     // this
     void changeState(const DataProcessorType& state);
@@ -135,4 +140,7 @@ private:
     int mosaicCounter_;
     // Surface
     float tileResolution_;
+
+    QSet<int> pendingBtIndxs_;
+    QTimer    pendingBtTimer_;
 };
