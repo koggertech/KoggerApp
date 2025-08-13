@@ -135,9 +135,10 @@ void DataProcessor::onChartsAdded(uint64_t indx)
             //     bottomTrackProcessor_.bottomTrackProcessing(it->channelId_, ChannelId(), btP);
             // }
 
-            if(channels.size() >= 2) {
+            if (channels.size() >= 2) { // TODO
                 bottomTrackProcessor_.bottomTrackProcessing(channels[0], channels[1], btP);
-            } else if(channels.size() == 1) {
+            }
+            else if (channels.size() == 1) {
                 bottomTrackProcessor_.bottomTrackProcessing(channels[0], DatasetChannel(), btP);
             }
 

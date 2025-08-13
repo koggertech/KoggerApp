@@ -632,7 +632,9 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
                 btp->indexTo = cursor_.getIndex(x_start + x_length);
 
                 QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
-                                          Q_ARG(ChannelId, cursor_.channel1), Q_ARG(ChannelId, cursor_.channel2), Q_ARG(BottomTrackParam, *btp));
+                                          Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)),
+                                          Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel2, cursor_.subChannel2)),
+                                          Q_ARG(BottomTrackParam, *btp));
             }
         }
 

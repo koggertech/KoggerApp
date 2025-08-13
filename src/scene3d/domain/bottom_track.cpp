@@ -99,9 +99,17 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                     btp->indexFrom = itm.first;
                     btp->indexTo = itm.second;
 
-                    for (auto it = channels.begin(); it != channels.end(); ++it) {
+                    if (channels.size() >= 2) { // TODO
                         QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
-                                                  Q_ARG(ChannelId, it->channelId_), Q_ARG(ChannelId, ChannelId()), Q_ARG(BottomTrackParam, btP));
+                                                  Q_ARG(DatasetChannel, channels[0]),
+                                                  Q_ARG(DatasetChannel, channels[1]),
+                                                  Q_ARG(BottomTrackParam, btP));
+                    }
+                    else if (channels.size() == 1) {
+                        QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                                  Q_ARG(DatasetChannel, channels[0]),
+                                                  Q_ARG(DatasetChannel, DatasetChannel()),
+                                                  Q_ARG(BottomTrackParam, btP));
                     }
                 }
                 else {
