@@ -47,7 +47,7 @@ public slots:
     void onAttitudeAdded(uint64_t indx);
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
-    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
+    void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);

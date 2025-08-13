@@ -14,6 +14,7 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     , m_updateTimer(new QTimer(this))
 {
     qRegisterMetaType<ChannelId>("ChannelId");
+    qRegisterMetaType<DatasetChannel>("DatasetChannel");
 
 //    setRenderTarget(QQuickPaintedItem::FramebufferObject);
 //    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
@@ -215,7 +216,7 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
             btpPtr->offset.z = offsetz;
 
             QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
-                                      Q_ARG(ChannelId, cursor_.channel1), Q_ARG(ChannelId, cursor_.channel2), Q_ARG(BottomTrackParam, *btpPtr));
+                                      Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)), Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel2, cursor_.subChannel2)), Q_ARG(BottomTrackParam, *btpPtr));
         }
     }
     plotUpdate();

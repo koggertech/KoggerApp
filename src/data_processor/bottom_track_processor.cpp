@@ -25,7 +25,7 @@ void BottomTrackProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void BottomTrackProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam& btP)
+void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP)
 {
     auto size = btP.indexTo + btP.windowSize / 2;
 
@@ -96,16 +96,55 @@ void BottomTrackProcessor::bottomTrackProcessing(const ChannelId &channel1, cons
     for(int iepoch = epoch_min_index; iepoch < epoch_max_index; iepoch++) {
 
         Epoch epoch = datasetPtr_->fromIndexCopy(iepoch);
-        if(!epoch.chartAvail(channel1)) {
+
+        Epoch::Echogram* chart = NULL;
+        uint8_t* data = NULL;
+        int data_size = 0;
+
+        bool ch1_avail = epoch.chartAvail(channel1.channelId_, channel1.subChannelId_);
+        bool ch2_avail = epoch.chartAvail(channel2.channelId_, channel2.subChannelId_);
+
+        if(ch1_avail && ch2_avail) {
+            Epoch::Echogram* chart1 = epoch.chart(channel1.channelId_, channel1.subChannelId_);
+            uint8_t* data1 = (uint8_t*)chart1->amplitude.constData();
+            const int data_size1 = chart1->amplitude.size();
+
+            Epoch::Echogram* chart2 = epoch.chart(channel2.channelId_, channel2.subChannelId_);
+            uint8_t* data2 = (uint8_t*)chart2->amplitude.constData();
+            const int data_size2 = chart2->amplitude.size();
+
+            if(chart1->resolution == chart2->resolution && data_size1 == data_size2) {
+                QVector<uint8_t> data12(data_size1);
+                uint8_t* data12_data = (uint8_t*)data12.constData();
+
+                for(int idata = 0;idata < data_size1; idata++) {
+                    data12_data[idata] = ((uint16_t)data1[idata] + (uint16_t)data2[idata])>>2; //+ (uint16_t)data2[idata]
+                }
+
+                chart = chart1;
+                data = data12_data;
+                data_size = data_size1;
+            } else {
+                chart = chart1;
+                data = data1;
+                data_size = data_size1;
+            }
+        } else if(ch1_avail && !ch2_avail) {
+            chart = epoch.chart(channel1.channelId_, channel1.subChannelId_);
+            data = (uint8_t*)chart->amplitude.constData();
+            data_size = chart->amplitude.size();
+        } else if(!ch1_avail && ch2_avail) {
+            chart = epoch.chart(channel2.channelId_, channel2.subChannelId_);
+            data = (uint8_t*)chart->amplitude.constData();
+            data_size = chart->amplitude.size();
+        }
+
+        if(data == NULL) {
             continue;
         }
 
         epoch_counter++;
 
-        Epoch::Echogram* chart = epoch.chart(channel1);
-
-        uint8_t* data = (uint8_t*)chart->amplitude.constData();
-        const int data_size = chart->amplitude.size();
 
         int cash_ind = (epoch_counter-1)%btP.windowSize;
 
@@ -258,24 +297,24 @@ void BottomTrackProcessor::bottomTrackProcessing(const ChannelId &channel1, cons
     for(int iepoch = epoch_start_index; iepoch < epoch_stop_index; iepoch++) {
         Epoch epPtr = datasetPtr_->fromIndexCopy(iepoch);
 
-        if(epPtr.chartAvail(channel1)) {
-            Epoch::Echogram* chart = epPtr.chart(channel1);
+        if(epPtr.chartAvail(channel1.channelId_, channel1.subChannelId_)) {
+            Epoch::Echogram* chart = epPtr.chart(channel1.channelId_, channel1.subChannelId_);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                emit dataProcessor_->distCompletedByProcessing(iepoch, channel1, dist); //запись в датасет
+                emit dataProcessor_->distCompletedByProcessing(iepoch, channel1.channelId_, dist); //запись в датасет
             }
         }
 
-        if(epPtr.chartAvail(channel2)) {
-            Epoch::Echogram* chart = epPtr.chart(channel2);
+        if(epPtr.chartAvail(channel2.channelId_, channel2.subChannelId_)) {
+            Epoch::Echogram* chart = epPtr.chart(channel2.channelId_, channel2.subChannelId_);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                emit dataProcessor_->distCompletedByProcessing(iepoch, channel2, dist);
+                emit dataProcessor_->distCompletedByProcessing(iepoch, channel2.channelId_, dist);
             }
         }
     }
 
     dataProcessor_->changeState(DataProcessorType::kUndefined);
 
-    emit dataProcessor_->lastBottomTrackEpochChanged(channel1, size, btP);
+    emit dataProcessor_->lastBottomTrackEpochChanged(channel1.channelId_, size, btP);
 }

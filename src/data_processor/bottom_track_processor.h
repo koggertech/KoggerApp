@@ -17,7 +17,7 @@ public:
     void clear();
     void setDatasetPtr(Dataset* datasetPtr);
 
-    void bottomTrackProcessing(const ChannelId& channel1, const ChannelId& channel2, const BottomTrackParam& bottomTrackParam_); // external calling not realtime
+    void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam_); // external calling not realtime
 
 private:
     DataProcessor* dataProcessor_;

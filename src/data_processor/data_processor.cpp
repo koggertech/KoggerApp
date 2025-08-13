@@ -125,8 +125,14 @@ void DataProcessor::onChartsAdded(uint64_t indx)
             btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
 
             const auto channels = datasetPtr_->channelsList();
-            for (auto it = channels.begin(); it != channels.end(); ++it) {
-                bottomTrackProcessor_.bottomTrackProcessing(it->channelId_, ChannelId(), btP);
+            // for (auto it = channels.begin(); it != channels.end(); ++it) {
+            //     bottomTrackProcessor_.bottomTrackProcessing(it->channelId_, ChannelId(), btP);
+            // }
+
+            if(channels.size() >= 2) {
+                bottomTrackProcessor_.bottomTrackProcessing(channels[0], channels[1], btP);
+            } else if(channels.size() == 1) {
+                bottomTrackProcessor_.bottomTrackProcessing(channels[0], DatasetChannel(), btP);
             }
 
             bottomTrackWindowCounter_ = currCount;
@@ -177,7 +183,7 @@ void DataProcessor::onMosaicCanCalc(uint64_t indx)
     mosaicCounter_ = indx;
 }
 
-void DataProcessor::bottomTrackProcessing(const ChannelId &channel1, const ChannelId &channel2, const BottomTrackParam &bottomTrackParam_)
+void DataProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam &bottomTrackParam_)
 {
     bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam_);
 }
