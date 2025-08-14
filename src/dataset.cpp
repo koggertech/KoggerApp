@@ -652,6 +652,8 @@ void Dataset::resetDataset()
         firstChannelId_ = DatasetChannel();
     }
 
+    bSProc_->clear();
+
     pool_.clear();
     _llaRef.isInit = false;
     lastBottomTrackEpoch_ = 0;
