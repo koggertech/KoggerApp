@@ -39,7 +39,6 @@ public:
     virtual SceneObjectType type() const override final;
     virtual bool eventFilter(QObject *watched, QEvent *event) override final;
     void setDatasetPtr(Dataset* datasetPtr);
-    void setSelectedIndices(const QHash<int, int>& selectedIndices);
     void onPositionAdded(uint64_t indx);
 
 public Q_SLOTS:
@@ -57,8 +56,5 @@ protected:
 
 private:
     Dataset* datasetPtr_;
-
     QHash<int, int> selectedIndices_;
-    uint64_t lastEpoch_;
-    uint64_t validPosCounter_;
 };

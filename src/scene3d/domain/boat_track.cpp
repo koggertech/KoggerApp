@@ -8,9 +8,7 @@
 
 BoatTrack::BoatTrack(GraphicsScene3dView* view, QObject* parent) :
     SceneObject(new BoatTrackRenderImplementation, view, parent),
-    datasetPtr_(nullptr),
-    lastEpoch_(0),
-    validPosCounter_(0)
+    datasetPtr_(nullptr)
 {
     setPrimitiveType(GL_LINE_STRIP);
 }
@@ -46,11 +44,6 @@ void BoatTrack::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void BoatTrack::setSelectedIndices(const QHash<int, int> &selectedIndices)
-{
-    selectedIndices_ = selectedIndices;
-}
-
 void BoatTrack::onPositionAdded(uint64_t indx)
 {
     if (!datasetPtr_) {
@@ -58,22 +51,25 @@ void BoatTrack::onPositionAdded(uint64_t indx)
     }
 
     const int toIndx = indx;
-    const int fromIndx = lastEpoch_;
+    const int fromIndx = 0; //lastEpoch_;
     if (fromIndx > toIndx) {
         return;
     }
 
+    QVector<QVector3D> prepData(toIndx, QVector3D());
+    selectedIndices_.clear();
+    uint64_t validPosCounter = 0;
+
     for (int i = fromIndx; i < toIndx; ++i) {
         if (auto* ep = datasetPtr_->fromIndex(i); ep) {
             if (auto posNed = ep->getPositionGNSS().ned; posNed.isCoordinatesValid()) {
-                appendData(QVector3D(posNed.n, posNed.e, 0));
-                selectedIndices_.insert(validPosCounter_, i);
-                ++validPosCounter_;
+                prepData[i] = QVector3D(posNed.n, posNed.e, 0);
+                selectedIndices_.insert(validPosCounter++, i);
             }
         }
     }
 
-    lastEpoch_ = toIndx;
+    SceneObject::setData(prepData, GL_LINES);
 }
 
 void BoatTrack::clearData()
@@ -83,8 +79,6 @@ void BoatTrack::clearData()
     r->bottomTrackVertice_ = QVector3D();
 
     selectedIndices_.clear();
-    lastEpoch_ = 0;
-    validPosCounter_ = 0;
 
     SceneObject::clearData();
 }
