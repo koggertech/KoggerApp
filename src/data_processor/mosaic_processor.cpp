@@ -798,27 +798,24 @@ void MosaicProcessor::updateData(const QVector<int> &indxs)
             continue;
         }
 
-        auto segFCharts = segFEpoch.chart(segFIsOdd ? segSChannelId_ : segFChannelId_, segFIsOdd ? segSSubChannelId_ : segFSubChannelId_);
-        auto segSCharts = segSEpoch.chart(segSIsOdd ? segSChannelId_ : segFChannelId_, segSIsOdd ? segSSubChannelId_ : segFSubChannelId_);
+        auto segFCh  = segFIsOdd ? segSChannelId_    : segFChannelId_;
+        auto segFSCh = segFIsOdd ? segSSubChannelId_ : segFSubChannelId_;
+        auto segSCh  = segSIsOdd ? segSChannelId_    : segFChannelId_;
+        auto segSSCh = segSIsOdd ? segSSubChannelId_ : segFSubChannelId_;
+        auto* segFCharts = segFEpoch.chart(segFCh, segFSCh);
+        auto* segSCharts = segSEpoch.chart(segSCh, segSSCh);
         if (!segFCharts || !segSCharts) {
             continue;
         }
-
+        if (!isfinite(segFCharts->bottomProcessing.getDistance()) ||
+            !isfinite(segSCharts->bottomProcessing.getDistance())) {
+            continue;
+        }
         if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
             segFCharts->updateCompesated();
         }
         if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
             segSCharts->updateCompesated();
-        }
-
-        auto sFF = segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance();
-        auto sFS = segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance();
-        auto sSF = segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance();
-        auto sSS = segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance();
-
-        if (!isfinite(segFIsOdd ? sFF : sFS) ||
-            !isfinite(segSIsOdd ? sSF : sSS)) {
-            continue;
         }
 
         // Bresenham
