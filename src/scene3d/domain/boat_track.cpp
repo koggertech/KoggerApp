@@ -69,7 +69,7 @@ void BoatTrack::onPositionAdded(uint64_t indx)
         }
     }
 
-    SceneObject::setData(prepData, GL_LINES);
+    SceneObject::setData(prepData, GL_LINE_STRIP);
 }
 
 void BoatTrack::clearData()
