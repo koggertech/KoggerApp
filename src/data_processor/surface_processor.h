@@ -40,7 +40,7 @@ private:
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture() const;
-    void propagateBorderHeights();
+    void propagateBorderHeights(QSet<SurfaceTile*>& changedTiles);
     void refreshAfterEdgeLimitChange();
 
 private:

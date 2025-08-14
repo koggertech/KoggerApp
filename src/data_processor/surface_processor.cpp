@@ -205,11 +205,11 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         }
     }
 
+    propagateBorderHeights(changedTiles);
+
     for (SurfaceTile* t : std::as_const(changedTiles)) {
         t->updateHeightIndices();
     }
-
-    propagateBorderHeights();
 
     if (beenManualChanged) {
         float currMin = std::numeric_limits<float>::max();
@@ -420,7 +420,7 @@ void SurfaceProcessor::updateTexture() const
     emit dataProcessor_->sendSurfaceTextureTask(textureTask);
 }
 
-void SurfaceProcessor::propagateBorderHeights()
+void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 {
     if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
         return;
@@ -468,16 +468,14 @@ void SurfaceProcessor::propagateBorderHeights()
                 continue;
             }
 
-            t->updateHeightIndices();
-            t->setIsUpdated(false);
-
             if (ty + 1 < tilesY) { // вверх, строка 0 в последнюю верхнего тайла
                 SurfaceTile* top = matrix[ty + 1][tx];
                 if (!top->getIsInited()) {
                     top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 copyRow(t, top, 0, hvSide - 1);
-                top->updateHeightIndices();
+                top->setIsUpdated(true);
+                changedTiles.insert(top);
             }
 
             if (tx > 0) { // влево, столбец 0 в правый столбец левого тайла
@@ -486,9 +484,34 @@ void SurfaceProcessor::propagateBorderHeights()
                     left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 copyCol(t, left, 0, hvSide - 1);
-                left->updateHeightIndices();
+                left->setIsUpdated(true);
+                changedTiles.insert(left);
+            }
+
+            if (ty + 1 < tilesY && tx > 0) { // диагональный узел
+                SurfaceTile* topLeft = matrix[ty + 1][tx - 1];
+                if (!topLeft->getIsInited()) {
+                    topLeft->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                }
+                auto& vSrc = t->getHeightVerticesRef();
+                auto& vDst = topLeft->getHeightVerticesRef();
+                auto& mDst = topLeft->getHeightMarkVerticesRef();
+
+                const int srcTL = 0;
+                const int dstBR = hvSide * hvSide - 1;
+                if (!qFuzzyIsNull(vSrc[srcTL].z())) {
+                    vDst[dstBR][2] = vSrc[srcTL][2];
+                    mDst[dstBR]    = HeightType::kIsobaths;
+                    topLeft->setIsUpdated(true);
+                    changedTiles.insert(topLeft);
+                }
             }
         }
+    }
+
+    for (SurfaceTile* t : std::as_const(changedTiles)) {
+        t->updateHeightIndices();
+        t->setIsUpdated(false);
     }
 }
 
@@ -519,11 +542,11 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
         writeTriangleToMesh(A,B,C, changedTiles);
     }
 
+    propagateBorderHeights(changedTiles);
+
     for (SurfaceTile* t : std::as_const(changedTiles)) {
         t->updateHeightIndices();
     }
-
-    propagateBorderHeights();
 
     float lastMinZ = minZ_;
     float lastMaxZ = maxZ_;
