@@ -118,14 +118,14 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
     if (frame.isComplete()) {
 
-#if !defined(Q_OS_ANDROID)
-        if (frame.isStream())
-            streamList_.append(&frame);
-        if (frame.id() == ID_STREAM)
-            streamList_.parse(&frame);
-        if (streamList_.isListChenged())
-            emit streamChanged();
-#endif
+// #if !defined(Q_OS_ANDROID)
+//         if (frame.isStream())
+//             streamList_.append(&frame);
+//         if (frame.id() == ID_STREAM)
+//             streamList_.parse(&frame);
+//         if (streamList_.isListChenged())
+//             emit streamChanged();
+// #endif
 
         if (link != NULL) {
             if (frame.isProxy() || frame.completeAsKBP()) {
