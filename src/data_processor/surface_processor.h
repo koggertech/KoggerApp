@@ -37,6 +37,17 @@ public:
     int getThemeId() const;
 
 private:
+    enum class PointRole {
+        Center = 0,
+        Left,
+        Right
+    };
+
+    static inline uint64_t makeKey(int idx, PointRole r)
+    {
+        return (static_cast<uint64_t>(static_cast<uint32_t>(idx)) << 8) | static_cast<uint64_t>(r);
+    }
+
     void writeTriangleToMesh(const QVector3D& A, const QVector3D& B, const QVector3D& C, QSet<SurfaceTile*>& updatedTiles);
     QVector<QVector3D> generateExpandedPalette(int totalColors) const;
     void updateTexture() const;
@@ -48,25 +59,24 @@ private:
     BottomTrack* bottomTrackPtr_;
     SurfaceMesh* surfaceMeshPtr_;
     delaunay::Delaunay delaunayProc_;
+    kmath::MatrixParams lastMatParams_;
     QReadWriteLock lock_;
     QHash<uint64_t, QVector<int>> pointToTris_;
     QHash<QPair<int,int>, QVector3D>  cellPoints_; // fir - virt indx, sec - indx in tr
     QHash<QPair<int,int>, int>  cellPointsInTri_;
-    QHash<int, uint64_t> bTrToTrIndxs_;
+    QHash<QPair<int,int>, uint64_t> cellOwner_; // cid -> sourceKey
+    QHash<uint64_t, uint64_t> srcToTri_; // sourceKey -> pointIdx
+    std::array<QPair<int,int>, 3> lastCellByRole_;
     QVector<IsobathUtils::ColorInterval> colorIntervals_; // render
     QPointF origin_;
-    QPair<int,int> lastCellPoint_;
-    float levelStep_ = 3.0f;
     float tileResolution_;
     float minZ_;
     float maxZ_;
     float edgeLimit_;
-    float surfaceStepSize_ = 0.0f;
+    float surfaceStepSize_;
     int tileSidePixelSize_;
     int tileHeightMatrixRatio_;
-    int themeId_ = 0;
+    int themeId_;
     int cellPx_;
     bool originSet_;
-
-    kmath::MatrixParams lastMatParams_;
 };

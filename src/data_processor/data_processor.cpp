@@ -234,7 +234,7 @@ void DataProcessor::setSurfaceIsobathsStepSize(float val)
     if (!qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
         isobathsProcessor_.setLineStepSize(val);
         emit sendIsobathsLineStepSize(val);
-        if (updateIsobaths_ || updateMosaic_) {
+        if (updateIsobaths_) {
             isobathsProcessor_.onUpdatedBottomTrackData();
         }
     }
