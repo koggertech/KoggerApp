@@ -29,6 +29,7 @@ public:
     Q_INVOKABLE void onProcessStateChanged(bool state);
     Q_INVOKABLE void onResetIsobathsButtonClicked();
     Q_INVOKABLE void onEdgeLimitChanged(int val);
+    Q_INVOKABLE void onSetExtraWidth(int val);
 
 protected:
     virtual void findComponent() override;
@@ -45,6 +46,7 @@ private:
     int themeId_;
     int labelStepSize_;
     int edgeLimit_;
+    int extraWidth_;
     bool visibility_;
     bool edgesVisible_;
     bool trianglesVisible_;

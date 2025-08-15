@@ -24,6 +24,7 @@ SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
     tileHeightMatrixRatio_(defaultTileHeightMatrixRatio),
     themeId_(0),
     cellPx_(1),
+    extraWidth_(0),
     originSet_ (false)
 {
 }
@@ -90,7 +91,11 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     bool beenManualChanged = false;
 
     auto computeLR = [&](int idx, QVector3D& leftP, QVector3D& rightP) -> bool {
-        constexpr float kOffsetMeters = 10.0f;
+        if (!extraWidth_) {
+            return false;
+        }
+
+        const float kOffsetMeters = static_cast<float>(extraWidth_);
         const QVector3D& p = bTrData[idx];
 
         QVector2D dir2d(0.f, 0.f);
@@ -386,6 +391,11 @@ void SurfaceProcessor::setThemeId(int val)
     themeId_ = val;
 }
 
+void SurfaceProcessor::setExtraWidth(int val)
+{
+    extraWidth_ = val;
+}
+
 float SurfaceProcessor::getEdgeLimit() const
 {
     return edgeLimit_;
@@ -399,6 +409,11 @@ float SurfaceProcessor::getSurfaceStepSize() const
 int SurfaceProcessor::getThemeId() const
 {
     return themeId_;
+}
+
+int SurfaceProcessor::getExtraWidth() const
+{
+    return extraWidth_;
 }
 
 void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &B, const QVector3D &C, QSet<SurfaceTile*> &updatedTiles)

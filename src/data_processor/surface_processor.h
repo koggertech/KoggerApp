@@ -32,9 +32,11 @@ public:
     void rebuildColorIntervals();
     void setSurfaceStepSize(float val);
     void setThemeId(int val);
+    void setExtraWidth(int val);
     float getEdgeLimit() const;
     float getSurfaceStepSize() const;
     int getThemeId() const;
+    int getExtraWidth() const;
 
 private:
     enum class PointRole {
@@ -78,5 +80,6 @@ private:
     int tileHeightMatrixRatio_;
     int themeId_;
     int cellPx_;
+    int extraWidth_;
     bool originSet_;
 };

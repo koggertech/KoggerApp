@@ -262,6 +262,15 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
     }
 }
 
+void DataProcessor::setExtraWidth(int val)
+{
+    if (surfaceProcessor_.getExtraWidth() == val) {
+        return;
+    }
+
+    surfaceProcessor_.setExtraWidth(val);
+}
+
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
 {
     //qDebug() << "DataProcessor::setMosaicChannels" << ch1.toShortName() << sub1 << ch2.toShortName() << sub2;

@@ -4,18 +4,19 @@
 
 IsobathsViewControlMenuController::IsobathsViewControlMenuController(QObject* parent)
     : QmlComponentController(parent),
-      graphicsSceneViewPtr_(nullptr),
-      dataProcessorPtr_(nullptr),
-      pendingLambda_(nullptr),
-      surfaceLineStepSize_(3.0f),
-      themeId_(0),
-      labelStepSize_(100),
-      edgeLimit_(20),
-      visibility_(false),
-      edgesVisible_(false),
-      trianglesVisible_(false),
-      debugModeView_(false),
-      processState_(true)
+    graphicsSceneViewPtr_(nullptr),
+    dataProcessorPtr_(nullptr),
+    pendingLambda_(nullptr),
+    surfaceLineStepSize_(3.0f),
+    themeId_(0),
+    labelStepSize_(100),
+    edgeLimit_(20),
+    extraWidth_(0),
+    visibility_(false),
+    edgesVisible_(false),
+    trianglesVisible_(false),
+    debugModeView_(false),
+    processState_(true)
 {
     qRegisterMetaType<DataProcessorType>("DataProcessorType");
 }
@@ -53,6 +54,7 @@ void IsobathsViewControlMenuController::tryInitPendingLambda()
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize",        Qt::QueuedConnection, Q_ARG(float, labelStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceColorTableThemeById",   Qt::QueuedConnection, Q_ARG(int,   themeId_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceEdgeLimit",             Qt::QueuedConnection, Q_ARG(int,   edgeLimit_));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setExtraWidth",                   Qt::QueuedConnection, Q_ARG(int,   extraWidth_));
                 }
 
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {
@@ -202,6 +204,20 @@ void IsobathsViewControlMenuController::onEdgeLimitChanged(int val)
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceEdgeLimit", Qt::QueuedConnection, Q_ARG(int, edgeLimit_));
+        }
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void IsobathsViewControlMenuController::onSetExtraWidth(int val)
+{
+    extraWidth_ = val;
+
+    if (graphicsSceneViewPtr_) {
+        if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setExtraWidth", Qt::QueuedConnection, Q_ARG(int, extraWidth_));
         }
     }
     else {

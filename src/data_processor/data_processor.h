@@ -53,6 +53,7 @@ public slots:
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);
+    void setExtraWidth(int val);
     // IsobathsProcessor
     void setIsobathsLabelStepSize(float val);
     // Surface/IsobathsProcessor

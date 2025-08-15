@@ -159,6 +159,39 @@ MenuFrame {
             }
         }
 
+        RowLayout {
+            CText {
+                text: qsTr("Extra width, m:")
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+            SpinBoxCustom {
+                id: extraWidthSpinBox
+                implicitWidth: 200
+                from: 0
+                to: 100
+                stepSize: 5
+                value: 0
+                editable: false
+
+                onFocusChanged: {
+                    isobathsSettings.focus = true
+                }
+
+                onValueChanged: {
+                    IsobathsViewControlMenuController.onSetExtraWidth(value)
+                }
+                Component.onCompleted: {
+                    IsobathsViewControlMenuController.onSetExtraWidth(value)
+                }
+
+                Settings {
+                    property alias extraWidthSpinBox: extraWidthSpinBox.value
+                }
+            }
+        }
+
         // RowLayout {
         //     visible: !isobathsDebugModeCheckButton.checked
 
