@@ -267,7 +267,8 @@ public:
         float maxRange = NAN;
 
         if (channel == CHANNEL_NONE && channel2 == CHANNEL_NONE) {
-            for (const auto& echogramList : charts_) {
+            for (auto it = charts_.cbegin(), end = charts_.cend(); it != end; ++it) {
+                const auto &echogramList = it.value();
                 for (const auto& ech : echogramList) {
                     float r = ech.range();
                     if (std::isfinite(r) && (!std::isfinite(maxRange) || r > maxRange)) {
@@ -276,11 +277,13 @@ public:
                     }
                 }
             }
-        } else {
+        }
+        else {
             auto extractMaxFromChannel = [this](const ChannelId& ch) -> float {
                 float result = NAN;
                 if (charts_.contains(ch)) {
-                    for (const auto& ech : charts_[ch]) {
+                    const auto& chChartsCRef = charts_[ch];
+                    for (const auto& ech : chChartsCRef) {
                         float r = ech.range();
                         if (std::isfinite(r) && (!std::isfinite(result) || r > result)) {
                             result = r;
