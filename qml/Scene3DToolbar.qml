@@ -230,7 +230,7 @@ Item  {
                     implicitHeight: theme.controlHeight * 1.3
                     implicitWidth: theme.controlHeight * 1.3
 
-                    property bool pulse: core.dataProcessorState === 2
+                    property bool pulse: core.dataProcessorState === 2 || core.dataProcessorState === 4
 
                     SequentialAnimation {
                         id: pulseIsobathsAnimation
