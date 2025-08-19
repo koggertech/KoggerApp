@@ -262,8 +262,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         const QVector3D& point = bTrData[itm];
         if (!std::isfinite(point.z())) continue;
         processOneCenter(point);
-
-
     }
 
     const int triCount = static_cast<int>(tr.size());
@@ -556,7 +554,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
             int iTo   = rowTo   * hvSide + k;
             if (!qFuzzyIsNull(vSrc[iFrom].z())) {
                 vDst[iTo][2] = vSrc[iFrom][2];
-                mDst[iTo]    = HeightType::kTriangulation;
+                mDst[iTo]    = HeightType::kExrtapolation;
             }
         }
     };
@@ -570,7 +568,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
             int iTo   = k * hvSide + colTo;
             if (!qFuzzyIsNull(vSrc[iFrom].z())) {
                 vDst[iTo][2] = vSrc[iFrom][2];
-                mDst[iTo]    = HeightType::kTriangulation;
+                mDst[iTo]    = HeightType::kExrtapolation;
             }
         }
     };
@@ -615,7 +613,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
                 const int dstBR = hvSide * hvSide - 1;
                 if (!qFuzzyIsNull(vSrc[srcTL].z())) {
                     vDst[dstBR][2] = vSrc[srcTL][2];
-                    mDst[dstBR]    = HeightType::kTriangulation;
+                    mDst[dstBR]    = HeightType::kExrtapolation;
                     topLeft->setIsUpdated(true);
                     changedTiles.insert(topLeft);
                 }
