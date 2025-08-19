@@ -621,13 +621,13 @@ void GraphicsScene3dView::setDataset(Dataset *dataset)
     forceUpdateDatasetLlaRef();
 
     QObject::connect(datasetPtr_, &Dataset::bottomTrackUpdated,
-                     this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
+                     this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch, bool manual) -> void {
                          auto chList = datasetPtr_->channelsList();
                          if (!datasetPtr_ || chList.empty() || chList.first().channelId_ != channelId) {
                              return;
                          }
                          clearComboSelectionRect();
-                         m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
+                         m_bottomTrack->isEpochsChanged(lEpoch, rEpoch, manual);
 
                      }, Qt::DirectConnection);
 

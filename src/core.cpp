@@ -1638,7 +1638,7 @@ void Core::createScene3dConnections()
 {
     QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
     QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints,
-                     this, [this](const QVector<int>& indxs) { dataHorizon_->onAddedBottomTrack3D(indxs.empty() ? scene3dViewPtr_->bottomTrack()->getAllIndxs() : indxs); });
+                     this, [this](const QVector<int>& indxs, bool manual) { dataHorizon_->onAddedBottomTrack3D(indxs.empty() ? scene3dViewPtr_->bottomTrack()->getAllIndxs() : indxs, manual); });
 
     // res work proc
     auto connType = Qt::QueuedConnection;

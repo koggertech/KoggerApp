@@ -54,8 +54,10 @@ void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
 {
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
-void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
+void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool manual)
 {
+    qDebug() << "SurfaceProcessor::onUpdatedBottomTrackData: manual" << manual;
+
     if (indxs.empty()) {
         return;
     }

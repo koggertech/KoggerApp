@@ -53,7 +53,7 @@ public:
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     virtual void clearData() override;
-    void isEpochsChanged(int lEpoch, int rEpoch);
+    void isEpochsChanged(int lEpoch, int rEpoch, bool manual);
     void resetVertexSelection();
     void selectEpoch(int epochIndex, const ChannelId& channelId);
     void setVisibleState(bool state);
@@ -64,7 +64,7 @@ Q_SIGNALS:
     void epochErased(int epochIndex);
     void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
-    void updatedPoints(const QVector<int>& indx);
+    void updatedPoints(const QVector<int>& indx, bool manual);
 
 protected:
     friend class GraphicsScene3dView;
@@ -73,7 +73,7 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
-    void updateRenderData(bool redrawAll, int lEpoch = 0, int rEpoch = 0);
+    void updateRenderData(bool redrawAll, int lEpoch = 0, int rEpoch = 0, bool manual = false);
 
 private:
     QVector<QPair<int, int>> getSubarrays(const QVector<int>& sequenceVector); // TODO: to utils

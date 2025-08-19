@@ -897,13 +897,13 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
     }
 }
 
-void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP)
+void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual)
 {
     bottomTrackParam_ = btP;
     lastBottomTrackEpoch_ = val;
 
     emit dataUpdate();
-    emit bottomTrackUpdated(channelId, bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo);
+    emit bottomTrackUpdated(channelId, bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo, manual);
 }
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)

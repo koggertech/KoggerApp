@@ -43,13 +43,13 @@ public slots:
     void setIsOpeningFile (bool state);
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
-    void onBottomTrackAdded(const QVector<int>& indxs);
+    void onBottomTrackAdded(const QVector<int>& indxs, bool manual);
     void onEpochAdded(uint64_t indx);
     void onPositionAdded(uint64_t indx);
     void onAttitudeAdded(uint64_t indx);
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
-    void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam_); // CALC BOTTOM TRACK BY BUTTON
+    void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam, bool manual); // CALC BOTTOM TRACK BY BUTTON
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);
@@ -83,7 +83,7 @@ signals:
     void allProcessingCleared();
     // BottomTrackProcessor
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
-    void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP);
+    void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
     // SurfaceProcessor
     void sendSurfaceMinZ(float minZ);
     void sendSurfaceMaxZ(float maxZ);
@@ -143,5 +143,6 @@ private:
     float tileResolution_;
 
     QSet<int> pendingBtIndxs_;
-    QTimer    pendingBtTimer_;
+    bool pendingBtManualState_;
+    QTimer pendingBtTimer_;
 };

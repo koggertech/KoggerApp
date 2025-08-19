@@ -26,7 +26,8 @@ DataProcessor::DataProcessor(QObject *parent)
     isOpeningFile_(false),
     bottomTrackWindowCounter_(0),
     mosaicCounter_(0),
-    tileResolution_(defaultTileResolution)
+    tileResolution_(defaultTileResolution),
+    pendingBtManualState_(false)
 {
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<DataProcessorType>("DataProcessorState");
@@ -73,6 +74,7 @@ void DataProcessor::clear(DataProcessorType procType)
 
     // this
     pendingBtIndxs_.clear();
+    pendingBtManualState_ = false;
     chartsCounter_ = 0;
     bottomTrackCounter_ = 0;
     epochCounter_ = 0;
@@ -136,10 +138,10 @@ void DataProcessor::onChartsAdded(uint64_t indx)
             // }
 
             if (channels.size() >= 2) { // TODO
-                bottomTrackProcessor_.bottomTrackProcessing(channels[0], channels[1], btP);
+                bottomTrackProcessor_.bottomTrackProcessing(channels[0], channels[1], btP, false);
             }
             else if (channels.size() == 1) {
-                bottomTrackProcessor_.bottomTrackProcessing(channels[0], DatasetChannel(), btP);
+                bottomTrackProcessor_.bottomTrackProcessing(channels[0], DatasetChannel(), btP, false);
             }
 
             bottomTrackWindowCounter_ = currCount;
@@ -147,7 +149,7 @@ void DataProcessor::onChartsAdded(uint64_t indx)
     }
 }
 
-void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes from 3D (conn,open file, edit echo)
+void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual) // indexes from 3D (conn,open file, edit echo)
 {
     //qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << indxs.size();
 
@@ -158,6 +160,8 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs) // indexes fro
     for (int v : indxs) {
         pendingBtIndxs_.insert(v);
     }
+
+    pendingBtManualState_ = manual;
 
     if (!pendingBtTimer_.isActive()) {
         pendingBtTimer_.start();
@@ -186,9 +190,9 @@ void DataProcessor::onMosaicCanCalc(uint64_t indx)
     mosaicCounter_ = indx;
 }
 
-void DataProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam &bottomTrackParam_)
+void DataProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam &bottomTrackParam, bool manual)
 {
-    bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam_);
+    bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam, manual);
 }
 
 void DataProcessor::setSurfaceColorTableThemeById(int id)
@@ -375,11 +379,12 @@ void DataProcessor::flushPendingWork()
     }
 
     pendingBtIndxs_.clear();
+    bool manualState = pendingBtManualState_;
 
     std::sort(vec.begin(), vec.end());
 
     if (updateIsobaths_ || updateMosaic_) {
-        surfaceProcessor_.onUpdatedBottomTrackData(vec);
+        surfaceProcessor_.onUpdatedBottomTrackData(vec, manualState);
     }
 
     if (updateMosaic_) {

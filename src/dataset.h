@@ -230,7 +230,7 @@ public slots:
     void interpolateData(bool fromStart);
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
-    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP);
+    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
 
 signals:
     // data horizon
@@ -242,7 +242,7 @@ signals:
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
     void dataUpdate();
-    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch);
+    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch, bool manual);
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);

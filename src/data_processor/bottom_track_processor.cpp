@@ -25,7 +25,7 @@ void BottomTrackProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP)
+void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP, bool manual)
 {
     auto size = btP.indexTo + btP.windowSize / 2;
 
@@ -316,5 +316,5 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
     dataProcessor_->changeState(DataProcessorType::kUndefined);
 
-    emit dataProcessor_->lastBottomTrackEpochChanged(channel1.channelId_, size, btP);
+    emit dataProcessor_->lastBottomTrackEpochChanged(channel1.channelId_, size, btP, manual);
 }

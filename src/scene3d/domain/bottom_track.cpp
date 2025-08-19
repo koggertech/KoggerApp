@@ -103,13 +103,15 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                         QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
                                                   Q_ARG(DatasetChannel, channels[0]),
                                                   Q_ARG(DatasetChannel, channels[1]),
-                                                  Q_ARG(BottomTrackParam, btP));
+                                                  Q_ARG(BottomTrackParam, btP),
+                                                  Q_ARG(bool, true)/*manual*/);
                     }
                     else if (channels.size() == 1) {
                         QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
                                                   Q_ARG(DatasetChannel, channels[0]),
                                                   Q_ARG(DatasetChannel, DatasetChannel()),
-                                                  Q_ARG(BottomTrackParam, btP));
+                                                  Q_ARG(BottomTrackParam, btP),
+                                                  Q_ARG(bool, true)/*manual*/);
                     }
                 }
                 else {
@@ -117,7 +119,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                 }
             }
 
-            updateRenderData(true);
+            updateRenderData(true, 0, 0, true);
             emit datasetPtr_->dataUpdate();
         }
     };
@@ -141,7 +143,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             }
             if (isSomethingDeleted) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-                updateRenderData(true);
+                updateRenderData(true, 0, 0, true);
                 emit datasetPtr_->dataUpdate();
             }
         }
@@ -161,7 +163,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
     }
 }
 
-void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
+void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch, bool manual)
 {
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
         auto datasetChannels = datasetPtr_->channelsList();
@@ -171,8 +173,7 @@ void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
         else {
             visibleChannel_ = DatasetChannel();
         }
-
-        updateRenderData(false, lEpoch, rEpoch);
+        updateRenderData(false, lEpoch, rEpoch, manual);
         Q_EMIT epochListChanged();
     }
 }
@@ -369,7 +370,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         }
         if (isSomethingDeleted) {
             RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-            updateRenderData(true);
+            updateRenderData(true, 0, 0, true);
             emit datasetPtr_->dataUpdate();
         }
     }
@@ -388,14 +389,14 @@ void BottomTrack::keyPressEvent(Qt::Key key)
             }
             if (isSomethingDeleted) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-                updateRenderData(true);
+                updateRenderData(true, 0, 0, true);
                 emit datasetPtr_->dataUpdate();
             }
         }
     }
 }
 
-void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
+void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool manual)
 {
     if (!visibleChannel_.channelId_.isValid()) {
         return;
@@ -476,7 +477,7 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
         //uint64_t currLastIndx = static_cast<uint64_t>(updatedByIndxs.at(updatedByIndxs.size() - 1)); // TODO: from-to
-        emit updatedPoints(updatedByIndxs);
+        emit updatedPoints(updatedByIndxs, manual);
     }
 
     for (auto& itm : updatedByIndxs) {
@@ -484,7 +485,7 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch)
     }
 
     if (defMode || needRetriangle) {
-        emit updatedPoints(QVector<int>()); // completely redraw
+        emit updatedPoints(QVector<int>(), manual); // completely redraw
     }
 }
 

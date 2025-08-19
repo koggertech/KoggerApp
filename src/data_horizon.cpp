@@ -127,7 +127,7 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
     }
 }
 
-void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx)
+void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx, bool manual)
 {
     //qDebug() << "DataHorizon::onAddedBottomTrack3D" << indx;
 
@@ -136,7 +136,7 @@ void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx)
     bottomTrack3DIndxs_ = indx;
 
     if (canEmitHorizon(beenChanged)) {
-        emit bottomTrack3DAdded(bottomTrack3DIndxs_);
+        emit bottomTrack3DAdded(bottomTrack3DIndxs_, manual);
     }
 }
 
