@@ -15,8 +15,9 @@ static constexpr float defaultTileResolution        = 1.0f / 10.f;
 
 enum class HeightType {
     kUndefined = 0,
+    kExrtapolation,
     kMosaic,
-    kIsobaths
+    kTriangulation
 };
 
 class SurfaceTile {

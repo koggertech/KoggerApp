@@ -659,7 +659,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
                             int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
 
-                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kIsobaths) {
+                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kTriangulation) {
                                 tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
                                 tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
                             }
@@ -968,7 +968,7 @@ void MosaicProcessor::updateData(const QVector<int> &indxs)
                             int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
                             int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
 
-                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kIsobaths) {
+                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kTriangulation) {
                                 tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
                                 tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
                             }

@@ -13,7 +13,6 @@ SurfaceProcessor::SurfaceProcessor(DataProcessor* parent) :
     dataProcessor_(parent),
     bottomTrackPtr_(nullptr),
     surfaceMeshPtr_(nullptr),
-    lastCellByRole_({{ {-1,-1}, {-1,-1}, {-1,-1} }}),
     origin_(0.0f, 0.0f),
     tileResolution_(defaultTileResolution),
     minZ_(std::numeric_limits<float>::max()),
@@ -40,9 +39,6 @@ void SurfaceProcessor::clear()
     pointToTris_.clear();
     cellPoints_.clear();
     cellPointsInTri_.clear();
-    cellOwner_.clear();
-    srcToTri_.clear();
-    lastCellByRole_ = {{ {-1,-1}, {-1,-1}, {-1,-1} }};
     origin_ = QPointF(0.0f, 0.0f);
     minZ_ = std::numeric_limits<float>::max();
     maxZ_ = std::numeric_limits<float>::lowest();
@@ -58,7 +54,6 @@ void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
 {
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
-
 void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
 {
     if (indxs.empty()) {
@@ -90,52 +85,149 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
     QSet<int> updsTrIndx;
     bool beenManualChanged = false;
 
-    auto computeLR = [&](int idx, QVector3D& leftP, QVector3D& rightP) -> bool {
-        if (!extraWidth_) {
-            return false;
-        }
+    static QSet<SurfaceTile*> changedTiles;
+    changedTiles.clear();
 
-        const float kOffsetMeters = static_cast<float>(extraWidth_);
-        const QVector3D& p = bTrData[idx];
-
-        QVector2D dir2d(0.f, 0.f);
-        if (idx + 1 < bTrData.size()) {
-            const QVector3D& n = bTrData[idx + 1];
-            dir2d = QVector2D(n.x() - p.x(), n.y() - p.y());
+    auto ensureMeshCoversDisk = [&](const QVector3D& P, float radiusM) -> void { // расширение меша для экстраполяции
+        QVector<QVector3D> tri(4);
+        tri[0] = QVector3D(P.x() + radiusM, P.y(),           P.z());
+        tri[1] = QVector3D(P.x(),           P.y() + radiusM, P.z());
+        tri[2] = QVector3D(P.x() - radiusM, P.y(),           P.z());
+        tri[3] = QVector3D(P.x(),           P.y() - radiusM, P.z());
+        kmath::MatrixParams actual(lastMatParams_);
+        kmath::MatrixParams mp = kmath::getMatrixParams(tri);
+        if (mp.isValid()) {
+            concatenateMatrixParameters(actual, mp);
+            if (surfaceMeshPtr_->concatenate(actual)) {
+                lastMatParams_ = actual;
+            }
         }
-        if (dir2d.lengthSquared() < kmath::fltEps && idx > 0) {
+    };
+
+    auto dirForIndexPix = [&](int idx, QVector2D& udirPix) -> bool { // направление движения
+        const QVector3D& p  = bTrData[idx];
+        const QVector3D  pP = surfaceMeshPtr_->convertPhToPixCoords(p);
+
+        QVector2D v0(0.f, 0.f); // prev -> curr
+        QVector2D v1(0.f, 0.f); // curr -> next
+
+        if (idx > 0) {
             const QVector3D& pr = bTrData[idx - 1];
-            dir2d = QVector2D(p.x() - pr.x(), p.y() - pr.y());
+            const QVector3D  prP = surfaceMeshPtr_->convertPhToPixCoords(pr);
+            v0 = QVector2D(pP.x() - prP.x(), pP.y() - prP.y());
+            if (v0.lengthSquared() > kmath::fltEps) {
+                v0.normalize();
+            }
         }
 
-        if (dir2d.lengthSquared() < kmath::fltEps) {
+        if (idx + 1 < bTrData.size()) {
+            const QVector3D& nx = bTrData[idx + 1];
+            const QVector3D  nxP = surfaceMeshPtr_->convertPhToPixCoords(nx);
+            v1 = QVector2D(nxP.x() - pP.x(), nxP.y() - pP.y());
+            if (v1.lengthSquared() > kmath::fltEps) {
+                v1.normalize();
+            }
+        }
+
+        if (v0.lengthSquared() <= kmath::fltEps && v1.lengthSquared() <= kmath::fltEps) {
             return false;
         }
 
-        QVector2D u = dir2d.normalized();
-        QVector2D left2d(-u.y(),  u.x());
-        QVector2D rght2d( u.y(), -u.x());
+        QVector2D v = v1.lengthSquared() > kmath::fltEps && v0.lengthSquared() > kmath::fltEps ? (v0 + v1) : (v1.lengthSquared() > kmath::fltEps ? v1 : v0);
+        if (v.lengthSquared() <= kmath::fltEps) {
+            return false;
+        }
 
-        leftP  = QVector3D(p.x() + kOffsetMeters * left2d.x(), p.y() + kOffsetMeters * left2d.y(), p.z());
-        rightP = QVector3D(p.x() + kOffsetMeters * rght2d.x(), p.y() + kOffsetMeters * rght2d.y(), p.z());
-
+        udirPix = v.normalized();
         return true;
     };
 
-    auto processOneShared = [&](const QVector3D& pnt, uint64_t sourceKey, QPair<int,int>& lastCellRef) -> void {
-        if (srcToTri_.contains(sourceKey)) {
-            const uint64_t pIdx = srcToTri_[sourceKey];
-            auto& dp = delaunayProc_.getPointsRef()[pIdx];
-            if (!qFuzzyCompare(static_cast<float>(dp.z), pnt.z())) {
-                dp.z = pnt.z();
-                beenManualChanged = true;
-                for (int triIdx : pointToTris_.value(pIdx)) {
-                    updsTrIndx.insert(triIdx);
-                }
-            }
+
+    auto paintDiskExtrapolated = [&](const QVector3D& P, const QVector2D* udirOpt, QSet<SurfaceTile*>& changed) { // покраска в радиусе extraWidth_/2
+        if (extraWidth_ <= 0) {
             return;
         }
 
+        const float radiusM = 0.5f * static_cast<float>(extraWidth_);
+        ensureMeshCoversDisk(P, radiusM); // расширяем меш под диск
+
+        QVector3D Ppix = surfaceMeshPtr_->convertPhToPixCoords(P);
+        QVector3D Qpix = surfaceMeshPtr_->convertPhToPixCoords(QVector3D(P.x() + radiusM, P.y(), P.z()));
+        const float radiusPxF = std::fabs(Qpix.x() - Ppix.x());
+        const int   radiusPx  = std::max(1, static_cast<int>(std::round(radiusPxF)));
+
+        const int stepPix     = surfaceMeshPtr_->getStepSizeHeightMatrix();
+        const int tileSidePix = surfaceMeshPtr_->getTileSidePixelSize();
+        const int hvSide      = tileSidePix / stepPix + 1;
+        const int tilesY      = surfaceMeshPtr_->getNumHeightTiles();
+        const int meshW       = surfaceMeshPtr_->getPixelWidth();
+        const int meshH       = surfaceMeshPtr_->getPixelHeight();
+
+        int minPx = std::clamp(((int)std::floor(Ppix.x()) - radiusPx) / stepPix * stepPix, 0, meshW - 1);
+        int maxPx = std::clamp(((int)std::ceil (Ppix.x()) + radiusPx) / stepPix * stepPix, 0, meshW - 1);
+        int minPy = std::clamp(((int)std::floor(Ppix.y()) - radiusPx) / stepPix * stepPix, 0, meshH - 1);
+        int maxPy = std::clamp(((int)std::ceil (Ppix.y()) + radiusPx) / stepPix * stepPix, 0, meshH - 1);
+
+        const int cx = static_cast<int>(std::round(Ppix.x()));
+        const int cy = static_cast<int>(std::round(Ppix.y()));
+        const int r2 = radiusPx * radiusPx;
+
+        const bool useDir = (udirOpt && udirOpt->lengthSquared() > 0.f);
+        const float ux = useDir ? udirOpt->x() : 0.f;
+        const float uy = useDir ? udirOpt->y() : 0.f;
+
+        for (int py = minPy; py <= maxPy; py += stepPix) {
+            for (int px = minPx; px <= maxPx; px += stepPix) {
+                const int dx = px - cx;
+                const int dy = py - cy;
+                if (dx * dx + dy * dy > r2) {
+                    continue; // вне круга
+                }
+                if (dx == 0 && dy == 0) {
+                    continue; // центр
+                }
+
+
+                bool isFront = true; // круг на forward/backward
+                if (useDir) {
+                    const float dot = static_cast<float>(dx) * ux + static_cast<float>(dy) * uy;
+                    isFront = (dot >= 0.f);
+                }
+
+                int tileX = px / tileSidePix;
+                int tileY = (tilesY - 1) - py / tileSidePix;
+                int locX  = px % tileSidePix;
+                int locY  = py % tileSidePix;
+                int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
+
+                SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
+                if (!tile->getIsInited()) {
+                    tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+                }
+
+                auto& mark = tile->getHeightMarkVerticesRef()[hvIdx];
+
+                if (isFront) {
+                    if (mark == HeightType::kTriangulation || mark == HeightType::kMosaic) {
+                        continue;
+                    }
+                }
+                else {
+                    if (mark != HeightType::kUndefined) {
+                        continue; // сзади — только Undefined
+                    }
+                }
+
+                tile->getHeightVerticesRef()[hvIdx][2] = P.z();
+                mark = HeightType::kExrtapolation;
+
+                tile->setIsUpdated(true);
+                changed.insert(tile);
+            }
+        }
+    };
+
+    auto processOneCenter = [&](const QVector3D& pnt) -> void {
         if (!originSet_) {
             origin_    = { pnt.x(), pnt.y() };
             originSet_ = true;
@@ -144,120 +236,34 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         const int ix = qRound((pnt.x() - origin_.x()) / cellPx_);
         const int iy = qRound((pnt.y() - origin_.y()) / cellPx_);
         const QPair<int,int> cid(ix, iy);
-        const QPointF center(origin_.x() + static_cast<float>(ix) * cellPx_, origin_.y() + static_cast<float>(iy) * cellPx_);
 
-        const bool cellAlreadyCommitted = cellPointsInTri_.contains(cid);
-        if (!cellAlreadyCommitted) {
-            if (cellPoints_.contains(cid)) {
-                const QVector3D& last = cellPoints_[cid];
-                const bool currNearest = kmath::dist2({ pnt.x(), pnt.y() }, center) < kmath::dist2({ last.x(), last.y() }, center);
-
-                if (currNearest) {
-                    cellPoints_[cid] = pnt;
-                    cellOwner_[cid]  = sourceKey;
-                }
-            }
-            else {
-                cellPoints_[cid] = pnt;
-                cellOwner_[cid]  = sourceKey;
-            }
-        }
-
-        if (lastCellRef != cid) {
-            const bool lastValid = (lastCellRef.first != -1 || lastCellRef.second != -1);
-            if (lastValid && !cellPointsInTri_.contains(lastCellRef) && cellPoints_.contains(lastCellRef)) {
-                const QVector3D& commitP = cellPoints_[lastCellRef];
-                const auto res = delaunayProc_.addPoint({ commitP.x(), commitP.y(), commitP.z() });
-                for (int triIdx : res.newTriIdx) {
-                    registerTriangle(triIdx);
+        if (auto it = cellPointsInTri_.find(cid); it != cellPointsInTri_.end()) { // обновление Z координаты у центральной точки
+            const int pIdx = it.value();
+            auto& dp = delaunayProc_.getPointsRef()[pIdx];
+            if (!qFuzzyCompare(static_cast<float>(dp.z), pnt.z())) {
+                dp.z = pnt.z();
+                beenManualChanged = true;
+                for (int triIdx : pointToTris_.value(pIdx)) {
                     updsTrIndx.insert(triIdx);
                 }
-
-                const uint64_t ownerKey = cellOwner_.value(lastCellRef, 0);
-                if (ownerKey) {
-                    srcToTri_[ownerKey] = res.pointIdx;
-                }
-                cellPointsInTri_[lastCellRef] = res.pointIdx;
-
-                cellPoints_.remove(lastCellRef);
-                cellOwner_.remove(lastCellRef);
             }
-
-            lastCellRef = cid;
+        }
+        else { // добавление новой точки
+            const auto res = delaunayProc_.addPoint({ pnt.x(), pnt.y(), pnt.z() });
+            for (int triIdx : res.newTriIdx) {
+                registerTriangle(triIdx);
+                updsTrIndx.insert(triIdx);
+            }
+            cellPointsInTri_[cid] = res.pointIdx;
         }
     };
 
-    auto updatePointsOnSegment = [&](const QVector3D& A, const QVector3D& B, float newZ) -> void { // Bresenham
-        if (!originSet_) {
-            return;
-        }
-
-        auto ix = [&](float x) {
-            return qRound((x - origin_.x()) / cellPx_);
-        };
-        auto iy = [&](float y) {
-            return qRound((y - origin_.y()) / cellPx_);
-        };
-
-        int x0 = ix(A.x());
-        int y0 = iy(A.y());
-        int x1 = ix(B.x());
-        int y1 = iy(B.y());
-
-        int dx = std::abs(x1 - x0);
-        int dy = std::abs(y1 - y0);
-        int sx = (x0 < x1) ? 1 : -1;
-        int sy = (y0 < y1) ? 1 : -1;
-        int err = dx - dy;
-
-        int x = x0, y = y0;
-        while (true) {
-            const QPair<int,int> cid(x,y);
-            if (auto it = cellPointsInTri_.find(cid); it != cellPointsInTri_.end()) {
-                const int pIdx = it.value();
-                auto& dp = delaunayProc_.getPointsRef()[pIdx];
-                if (!qFuzzyCompare(static_cast<float>(dp.z), newZ)) {
-                    dp.z = newZ;
-                    beenManualChanged = true;
-                    for (int triIdx : pointToTris_.value(pIdx)) {
-                        updsTrIndx.insert(triIdx);
-                    }
-                }
-            }
-
-            if (x == x1 && y == y1) {
-                break;
-            }
-
-            int e2 = err << 1;
-            if (e2 > -dy) {
-                err -= dy;
-                x   += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y   += sy;
-            }
-        }
-    };
-
-    for (int itm : indxs) {
+    for (int itm : indxs) { // добавление в триангуляцию
         const QVector3D& point = bTrData[itm];
-        if (!std::isfinite(point.z())) {
-            continue;
-        }
+        if (!std::isfinite(point.z())) continue;
+        processOneCenter(point);
 
-        processOneShared(point, makeKey(itm, PointRole::Center), lastCellByRole_[static_cast<int>(PointRole::Center)]);
 
-        QVector3D leftP, rightP;
-        if (computeLR(itm, leftP, rightP)) {
-            processOneShared(leftP,  makeKey(itm, PointRole::Left),  lastCellByRole_[static_cast<int>(PointRole::Left)]);
-            processOneShared(rightP, makeKey(itm, PointRole::Right), lastCellByRole_[static_cast<int>(PointRole::Right)]);
-
-            const float centerZ = point.z();
-            updatePointsOnSegment(point, leftP,  centerZ);
-            updatePointsOnSegment(point, rightP, centerZ);
-        }
     }
 
     const int triCount = static_cast<int>(tr.size());
@@ -268,11 +274,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
 
     float lastMinZ = minZ_;
     float lastMaxZ = maxZ_;
-
-    static QSet<SurfaceTile*> changedTiles;
-    changedTiles.clear();
-
-    for (int triIdx : std::as_const(updsTrIndx)) {
+    for (int triIdx : std::as_const(updsTrIndx)) { // трассировака треугольников в меш
         if (triIdx < 0 || triIdx >= triCount) {
             continue;
         }
@@ -303,8 +305,14 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs)
         maxZ_ = std::max(static_cast<double>(maxZ_), std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
     }
 
-    propagateBorderHeights(changedTiles);
+    for (int itm : indxs) { // экстраполяция кругом
+        const QVector3D& point = bTrData[itm];
+        QVector2D udirPix;
+        const bool haveDir = dirForIndexPix(itm, udirPix);
+        paintDiskExtrapolated(point, haveDir ? &udirPix : nullptr, changedTiles);
+    }
 
+    propagateBorderHeights(changedTiles);
     for (SurfaceTile* t : std::as_const(changedTiles)) {
         t->updateHeightIndices();
         t->setIsUpdated(false);
@@ -473,7 +481,7 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
             }
 
             tile->getHeightVerticesRef()[hvIdx][2]  = interpZ;
-            tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kIsobaths;
+            tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kTriangulation;
             tile->setIsUpdated(true);
             updatedTiles.insert(tile);
         }
@@ -548,7 +556,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
             int iTo   = rowTo   * hvSide + k;
             if (!qFuzzyIsNull(vSrc[iFrom].z())) {
                 vDst[iTo][2] = vSrc[iFrom][2];
-                mDst[iTo]    = HeightType::kIsobaths;
+                mDst[iTo]    = HeightType::kTriangulation;
             }
         }
     };
@@ -562,7 +570,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
             int iTo   = k * hvSide + colTo;
             if (!qFuzzyIsNull(vSrc[iFrom].z())) {
                 vDst[iTo][2] = vSrc[iFrom][2];
-                mDst[iTo]    = HeightType::kIsobaths;
+                mDst[iTo]    = HeightType::kTriangulation;
             }
         }
     };
@@ -607,7 +615,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
                 const int dstBR = hvSide * hvSide - 1;
                 if (!qFuzzyIsNull(vSrc[srcTL].z())) {
                     vDst[dstBR][2] = vSrc[srcTL][2];
-                    mDst[dstBR]    = HeightType::kIsobaths;
+                    mDst[dstBR]    = HeightType::kTriangulation;
                     topLeft->setIsUpdated(true);
                     changedTiles.insert(topLeft);
                 }
