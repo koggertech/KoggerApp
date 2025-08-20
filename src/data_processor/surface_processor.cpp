@@ -144,7 +144,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     };
 
     auto paintDiskExtrapolated = [&](const QVector3D& P, const QVector2D* udirOpt, QSet<SurfaceTile*>& changed) {
-        if (extraWidth_ <= 0) {
+        if (!surfaceMeshPtr_->getIsInited() || extraWidth_ <= 0) {
             return;
         }
 
@@ -246,7 +246,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     };
 
     auto paintTwoLinesManual = [&](const QVector3D& point, const QVector2D* dirVecPix, QSet<SurfaceTile*>& changed) {  // экстраполяция двумя линиями пятном
-        if (extraWidth_ <= 0) {
+        if (!surfaceMeshPtr_->getIsInited() || extraWidth_ <= 0) {
             return;
         }
 
