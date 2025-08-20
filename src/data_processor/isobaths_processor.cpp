@@ -129,6 +129,8 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         return;
     }
 
+    dataProcessorPtr_->sendState(DataProcessorType::kIsobaths);
+
     lineSegments_.clear();
     labels_.clear();
 
@@ -267,6 +269,8 @@ void IsobathsProcessor::fullRebuildLinesLabels()
 
     filterNearbyLabels(resLabels, labels_);
     lineSegments_ = std::move(resLines);
+
+    dataProcessorPtr_->sendState(DataProcessorType::kUndefined);
 
     emit dataProcessorPtr_->sendIsobathsLineSegments(lineSegments_);
     emit dataProcessorPtr_->sendIsobathsLabels(labels_);
