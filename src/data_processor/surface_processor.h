@@ -26,7 +26,7 @@ public:
 
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
-    void onUpdatedBottomTrackData(const QVector<int>& indxs, bool manual);
+    void onUpdatedBottomTrackData(const QVector<QPair<char, int>>& indxs);
     void setTileResolution(float tileResolution);
     void setEdgeLimit(float val);
     void rebuildColorIntervals();

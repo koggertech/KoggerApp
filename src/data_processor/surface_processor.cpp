@@ -55,7 +55,7 @@ void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
 
-void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool manual)
+void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> &indxs)
 {
     if (indxs.empty()) {
         return;
@@ -373,8 +373,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         }
     };
 
-    for (int itm : indxs) { // добавление в триангуляцию
-        const QVector3D& point = bTrData[itm];
+    for (const auto& itm : indxs) { // добавление в триангуляцию
+        const QVector3D& point = bTrData[itm.second];
         if (!std::isfinite(point.z())) continue;
         processOneCenter(point);
     }
@@ -418,11 +418,11 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         maxZ_ = std::max(static_cast<double>(maxZ_), std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
     }
 
-    for (int itm : indxs) { // экстраполяция
-        const QVector3D& point = bTrData[itm];
+    for (const auto& itm : indxs) { // экстраполяция
+        const QVector3D& point = bTrData[itm.second];
         QVector2D dirVecPix;
-        const bool haveDir = dirForIndexPix(itm, dirVecPix);
-        if (manual) {
+        const bool haveDir = dirForIndexPix(itm.second, dirVecPix);
+        if (itm.first == '1') {
             paintTwoLinesManual(point, haveDir ? &dirVecPix : nullptr, changedTiles);
         }
         else {

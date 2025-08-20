@@ -106,7 +106,7 @@ void MosaicProcessor::updateDataWrapper(int endIndx, int endOffset)
     dataProcessor_->changeState(DataProcessorType::kUndefined);
 }
 
-void MosaicProcessor::updateDataWrapper(const QVector<int> &indxs)
+void MosaicProcessor::updateDataWrapper(const QVector<QPair<char, int>>& indxs)
 {
     if (!datasetPtr_ || indxs.isEmpty()) {
         return;
@@ -710,7 +710,7 @@ void MosaicProcessor::updateData(int endIndx, int endOffset)
     //renderImpl->createBounds();
 }
 
-void MosaicProcessor::updateData(const QVector<int> &indxs)
+void MosaicProcessor::updateData(const QVector<QPair<char, int>>& indxs)
 {
     if (!datasetPtr_ || indxs.empty()) {
         return;
@@ -733,8 +733,9 @@ void MosaicProcessor::updateData(const QVector<int> &indxs)
     QVector<int>       epochIndxs;
 
     // prepare intermediate data (selecting epochs to process)
-    for (int i : indxs) {
-        if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
+    for (const auto& i : indxs) {
+        int indx = i.second;
+        if (auto epoch = datasetPtr_->fromIndex(indx); epoch) {
             auto pos = epoch->getPositionGNSS().ned;
             auto yaw = epoch->yaw();
 
@@ -750,7 +751,7 @@ void MosaicProcessor::updateData(const QVector<int> &indxs)
                         measLinesEvenIndices.append(currIndxSec_++);
                         measLinesEvenIndices.append(currIndxSec_++);
                         isOdds.append('0');
-                        epochIndxs.append(i);
+                        epochIndxs.append(indx);
                     }
                 }
 
@@ -763,7 +764,7 @@ void MosaicProcessor::updateData(const QVector<int> &indxs)
                         measLinesOddIndices.append(currIndxSec_++);
                         measLinesOddIndices.append(currIndxSec_++);
                         isOdds.append('1');
-                        epochIndxs.append(i);
+                        epochIndxs.append(indx);
                     }
                 }
             }

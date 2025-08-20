@@ -72,6 +72,8 @@ public slots:
     //
     void setMinZ(float minZ);
     void setMaxZ(float maxZ);
+    void onIsobathsUpdated();
+    void onMosaicUpdated();
 
 signals:
     // this
@@ -101,7 +103,9 @@ signals:
     void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles, bool useTextures);
 
 private slots:
-    void flushPendingWork();
+    void flushSurfacePendingWork();
+    void flushIsobathsPendingWork();
+    void flushMosaicPendingWork();
 
 private:
     // this
@@ -142,7 +146,9 @@ private:
     // Surface
     float tileResolution_;
 
-    QSet<int> pendingBtIndxs_;
-    bool pendingBtManualState_;
-    QTimer pendingBtTimer_;
+    QSet<int> epIndxsFromBottomTrack_;
+    QSet<QPair<char, int>> pendingSurfaceIndxs_;
+    QSet<int> pendingMosaicIndxs_;
+    bool pendingIsobathsWork_;
+    QTimer pendingWorkTimer_;
 };
