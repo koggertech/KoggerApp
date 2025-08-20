@@ -54,10 +54,9 @@ void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
 {
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
+
 void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool manual)
 {
-    qDebug() << "SurfaceProcessor::onUpdatedBottomTrackData: manual" << manual;
-
     if (indxs.empty()) {
         return;
     }
@@ -151,7 +150,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         }
 
         const float radiusM = 0.5f * static_cast<float>(extraWidth_);
-        ensureMeshCoversDisk(P, radiusM); // расширяем меш под диск
+        ensureMeshCoversDisk(P, radiusM); // расширяем меш
 
         QVector3D Ppix = surfaceMeshPtr_->convertPhToPixCoords(P);
         QVector3D Qpix = surfaceMeshPtr_->convertPhToPixCoords(QVector3D(P.x() + radiusM, P.y(), P.z()));
@@ -229,6 +228,103 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         }
     };
 
+    auto paintTwoLinesManual = [&](const QVector3D& point, const QVector2D* dirVecPix, QSet<SurfaceTile*>& changed) {  // экстраполяция двумя линиями пятном
+        if (extraWidth_ <= 0) {
+            return;
+        }
+
+        const float radiusM = 0.5f * static_cast<float>(extraWidth_);
+        ensureMeshCoversDisk(point, radiusM);
+
+        // центр и радиус в ПИКСЕЛЯХ
+        const QVector3D pointPix3D = surfaceMeshPtr_->convertPhToPixCoords(point);
+        const QVector2D point2D(pointPix3D.x(), pointPix3D.y());
+        const QVector3D qPix = surfaceMeshPtr_->convertPhToPixCoords(QVector3D(point.x() + radiusM, point.y(), point.z()));
+        const int radiusPx = std::max(1, static_cast<int>(std::round(std::fabs(qPix.x() - pointPix3D.x()))));
+
+        const int stepPix     = surfaceMeshPtr_->getStepSizeHeightMatrix();
+        const int tileSidePix = surfaceMeshPtr_->getTileSidePixelSize();
+        const int hvSide      = tileSidePix / stepPix + 1;
+        const int tilesY      = surfaceMeshPtr_->getNumHeightTiles();
+        const int meshW       = surfaceMeshPtr_->getPixelWidth();
+        const int meshH       = surfaceMeshPtr_->getPixelHeight();
+
+        auto writeCell = [&](int px, int py, bool strongWrite) {
+            px = std::clamp((px / stepPix) * stepPix, 0, meshW - 1);
+            py = std::clamp((py / stepPix) * stepPix, 0, meshH - 1);
+
+            const int tileX = px / tileSidePix;
+            const int tileY = (tilesY - 1) - py / tileSidePix;
+            const int locX  = px % tileSidePix;
+            const int locY  = py % tileSidePix;
+            const int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
+
+            SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
+            if (!tile->getIsInited()) {
+                tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+            }
+
+            auto& mark = tile->getHeightMarkVerticesRef()[hvIdx];
+            if (strongWrite) { // линия не трогает ни мозайку, ни триангуляцию
+                if (mark == HeightType::kMosaic || mark == HeightType::kTriangulation) {
+                    return;
+                }
+            }
+            else {
+                if (!(mark == HeightType::kExrtapolation || mark == HeightType::kUndefined)) { // только старая экстраполяция/undefined
+                    return;
+                }
+            }
+
+            tile->getHeightVerticesRef()[hvIdx][2] = point.z();
+            mark = HeightType::kExrtapolation;
+            tile->setIsUpdated(true);
+            changed.insert(tile);
+        };
+
+        auto writeCellWithNeighbors = [&](int px, int py) {            
+            writeCell(px, py, true); // основная точка
+
+            writeCell(px + stepPix, py, false); // 8-соседей
+            writeCell(px - stepPix, py, false);
+            writeCell(px, py + stepPix, false);
+            writeCell(px, py - stepPix, false);
+            writeCell(px + stepPix, py + stepPix, false);
+            writeCell(px + stepPix, py - stepPix, false);
+            writeCell(px - stepPix, py + stepPix, false);
+            writeCell(px - stepPix, py - stepPix, false);
+        };
+
+        QVector2D dir = (dirVecPix && dirVecPix->lengthSquared() > 0.f) ? (*dirVecPix) : QVector2D(1.f, 0.f); // направление; если не смогли — по оси X
+        dir.normalize();
+        const QVector2D n(-dir.y(), dir.x());   // перпендикуляр «влево»
+
+        const QVector2D L = point2D + n * float(radiusPx);
+        const QVector2D R = point2D - n * float(radiusPx);
+
+        auto paintLineAB = [&](const QVector2D& A, const QVector2D& B) {
+            const float dx = B.x() - A.x();
+            const float dy = B.y() - A.y();
+            const float len = std::hypot(dx, dy);
+            const int steps = std::max(1, static_cast<int>(std::ceil(len / float(stepPix))));
+
+            for (int i = 0; i <= steps; ++i) {
+                const float t = (steps == 0) ? 1.f : float(i) / float(steps);
+                const int px = static_cast<int>(std::round(A.x() + t * dx));
+                const int py = static_cast<int>(std::round(A.y() + t * dy));
+                writeCellWithNeighbors(px, py);
+            }
+        };
+
+        paintLineAB(L, point2D);
+        paintLineAB(R, point2D);
+
+        const int cx = static_cast<int>(std::round(point2D.x()));
+        const int cy = static_cast<int>(std::round(point2D.y()));
+        writeCellWithNeighbors(cx, cy);
+    };
+
+    // --- добавление/обновление центральных точек (по клеткам) ---
     auto processOneCenter = [&](const QVector3D& pnt) -> void {
         if (!originSet_) {
             origin_    = { pnt.x(), pnt.y() };
@@ -305,11 +401,17 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         maxZ_ = std::max(static_cast<double>(maxZ_), std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
     }
 
-    for (int itm : indxs) { // экстраполяция кругом
+    for (int itm : indxs) { // экстраполяция
         const QVector3D& point = bTrData[itm];
-        QVector2D udirPix;
-        const bool haveDir = dirForIndexPix(itm, udirPix);
-        paintDiskExtrapolated(point, haveDir ? &udirPix : nullptr, changedTiles);
+        QVector2D dirVecPix;
+        const bool haveDir = dirForIndexPix(itm, dirVecPix);
+
+        if (manual) {
+            paintTwoLinesManual(point, haveDir ? &dirVecPix : nullptr, changedTiles);
+        }
+        else {
+            paintDiskExtrapolated(point, haveDir ? &dirVecPix : nullptr, changedTiles);
+        }
     }
 
     propagateBorderHeights(changedTiles);

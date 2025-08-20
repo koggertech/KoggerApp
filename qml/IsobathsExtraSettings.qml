@@ -171,7 +171,7 @@ MenuFrame {
                 implicitWidth: 200
                 from: 0
                 to: 100
-                stepSize: 5
+                stepSize: 1
                 value: 0
                 editable: false
 
