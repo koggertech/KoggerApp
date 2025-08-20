@@ -199,7 +199,7 @@ int qPlot2D::getThemeId() const
     return Plot2D::getThemeId();
 }
 
-void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
+void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual) {
     if (datasetPtr_ != nullptr) {
         if (auto btpPtr = datasetPtr_->getBottomTrackParamPtr(); btpPtr) {
             btpPtr->preset = static_cast<BottomTrackPreset>(preset);
@@ -219,7 +219,7 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
                                       Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)),
                                       Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel2, cursor_.subChannel2)),
                                       Q_ARG(BottomTrackParam, *btpPtr),
-                                      Q_ARG(bool, true)/*manual*/);
+                                      Q_ARG(bool, manual));
         }
     }
     plotUpdate();

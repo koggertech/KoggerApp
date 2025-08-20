@@ -143,19 +143,13 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         return true;
     };
 
-
-    auto paintDiskExtrapolated = [&](const QVector3D& P, const QVector2D* udirOpt, QSet<SurfaceTile*>& changed) { // покраска в радиусе extraWidth_/2
+    auto paintDiskExtrapolated = [&](const QVector3D& P, const QVector2D* udirOpt, QSet<SurfaceTile*>& changed) {
         if (extraWidth_ <= 0) {
             return;
         }
 
         const float radiusM = 0.5f * static_cast<float>(extraWidth_);
         ensureMeshCoversDisk(P, radiusM); // расширяем меш
-
-        QVector3D Ppix = surfaceMeshPtr_->convertPhToPixCoords(P);
-        QVector3D Qpix = surfaceMeshPtr_->convertPhToPixCoords(QVector3D(P.x() + radiusM, P.y(), P.z()));
-        const float radiusPxF = std::fabs(Qpix.x() - Ppix.x());
-        const int   radiusPx  = std::max(1, static_cast<int>(std::round(radiusPxF)));
 
         const int stepPix     = surfaceMeshPtr_->getStepSizeHeightMatrix();
         const int tileSidePix = surfaceMeshPtr_->getTileSidePixelSize();
@@ -164,13 +158,28 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         const int meshW       = surfaceMeshPtr_->getPixelWidth();
         const int meshH       = surfaceMeshPtr_->getPixelHeight();
 
-        int minPx = std::clamp(((int)std::floor(Ppix.x()) - radiusPx) / stepPix * stepPix, 0, meshW - 1);
-        int maxPx = std::clamp(((int)std::ceil (Ppix.x()) + radiusPx) / stepPix * stepPix, 0, meshW - 1);
-        int minPy = std::clamp(((int)std::floor(Ppix.y()) - radiusPx) / stepPix * stepPix, 0, meshH - 1);
-        int maxPy = std::clamp(((int)std::ceil (Ppix.y()) + radiusPx) / stepPix * stepPix, 0, meshH - 1);
+        auto roundToGrid = [&](float v) -> int {
+            return static_cast<int>(std::round(v / float(stepPix))) * stepPix;
+        };
+        auto clampGrid = [&](int v, int hi) -> int {
+            v = std::clamp(v, 0, hi);
+            int r = v % stepPix;
+            if (r != 0) v -= r;
+            return std::clamp(v, 0, hi);
+        };
 
-        const int cx = static_cast<int>(std::round(Ppix.x()));
-        const int cy = static_cast<int>(std::round(Ppix.y()));
+        const QVector3D Ppix3 = surfaceMeshPtr_->convertPhToPixCoords(P);
+        const QVector3D Qpix3 = surfaceMeshPtr_->convertPhToPixCoords(QVector3D(P.x() + radiusM, P.y(), P.z()));
+        const float radiusPxF = std::fabs(Qpix3.x() - Ppix3.x());
+        const int   radiusPx  = std::max(1, static_cast<int>(std::ceil(radiusPxF + 0.5f /*запас*/ * stepPix)));
+
+        const int minPx = clampGrid(roundToGrid(Ppix3.x() - radiusPx), meshW - 1);
+        const int maxPx = clampGrid(roundToGrid(Ppix3.x() + radiusPx), meshW - 1);
+        const int minPy = clampGrid(roundToGrid(Ppix3.y() - radiusPx), meshH - 1);
+        const int maxPy = clampGrid(roundToGrid(Ppix3.y() + radiusPx), meshH - 1);
+
+        const int cx = static_cast<int>(std::round(Ppix3.x()));
+        const int cy = static_cast<int>(std::round(Ppix3.y()));
         const int r2 = radiusPx * radiusPx;
 
         const bool useDir = (udirOpt && udirOpt->lengthSquared() > 0.f);
@@ -188,18 +197,26 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
                     continue; // центр
                 }
 
-
                 bool isFront = true; // круг на forward/backward
                 if (useDir) {
                     const float dot = static_cast<float>(dx) * ux + static_cast<float>(dy) * uy;
                     isFront = (dot >= 0.f);
                 }
 
-                int tileX = px / tileSidePix;
-                int tileY = (tilesY - 1) - py / tileSidePix;
-                int locX  = px % tileSidePix;
-                int locY  = py % tileSidePix;
-                int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
+                const int tileX = px / tileSidePix;
+                const int tileY = (tilesY - 1) - py / tileSidePix;
+                const int locX  = px - tileX * tileSidePix;
+                const int locY  = py - ((tilesY - 1 - tileY) * tileSidePix);
+
+                int hx = (locX + stepPix / 2) / stepPix;
+                if (hx >= hvSide) {
+                    hx = hvSide - 1;
+                }
+                int hy = (locY + stepPix / 2) / stepPix;
+                if (hy >= hvSide) {
+                    hy = hvSide - 1;
+                }
+                const int hvIdx = hy * hvSide + hx;
 
                 SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
                 if (!tile->getIsInited()) {
@@ -405,7 +422,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         const QVector3D& point = bTrData[itm];
         QVector2D dirVecPix;
         const bool haveDir = dirForIndexPix(itm, dirVecPix);
-
         if (manual) {
             paintTwoLinesManual(point, haveDir ? &dirVecPix : nullptr, changedTiles);
         }
@@ -444,6 +460,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<int> &indxs, bool 
         rebuildColorIntervals();
         dataProcessor_->setMinZ(minZ_);
         dataProcessor_->setMaxZ(maxZ_);
+
         emit dataProcessor_->sendSurfaceMinZ(minZ_);
         emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }

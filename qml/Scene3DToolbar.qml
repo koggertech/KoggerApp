@@ -197,8 +197,8 @@ Item  {
                 }
 
                 onCheckedChanged: {
+                    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked) // calc state
                     BottomTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
-                    Scene3dToolBarController.onUpdateBottomTrackCheckButtonCheckedChanged(checked)
 
                     if (checked) {
                         toolbarRoot.updateBottomTrack()
@@ -247,12 +247,8 @@ Item  {
                     }
 
                     onCheckedChanged: {
-                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility
                         IsobathsViewControlMenuController.onProcessStateChanged(checked); // calculation state
-
-                        if (checked) {
-                            IsobathsViewControlMenuController.onUpdateIsobathsButtonClicked()
-                        }
+                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility and calc
                     }
 
                     Component.onCompleted: {
@@ -347,12 +343,8 @@ Item  {
                     }
 
                     onCheckedChanged: {
-                        MosaicViewControlMenuController.onVisibilityChanged(checked)
                         MosaicViewControlMenuController.onUpdateStateChanged(checked)
-
-                        if (checked) {
-                            MosaicViewControlMenuController.onUpdateClicked()
-                        }
+                        MosaicViewControlMenuController.onVisibilityChanged(checked) // vis an calc
                     }
 
                     Component.onCompleted: {

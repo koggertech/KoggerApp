@@ -47,6 +47,14 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
     if (graphicsSceneViewPtr_) {
         graphicsSceneViewPtr_->getSurfaceViewPtr()->setMVisible(visibility_);
         graphicsSceneViewPtr_->getIsobathsViewPtr()->setMVisible(visibility_);
+
+        if (state) {
+                //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
+                QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
+                QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection,
+                                          Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()),
+                                          Q_ARG(bool, false));
+        }
     }
     else {
         tryInitPendingLambda();
@@ -138,13 +146,15 @@ void MosaicViewControlMenuController::onLevelChanged(float lowLevel, float highL
 
 void MosaicViewControlMenuController::onUpdateClicked()
 {
-    if (graphicsSceneViewPtr_) {
-        if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "clear", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
-            QMetaObject::invokeMethod(dataProcessorPtr_, "clear", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
-            QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
-        }
-    }
+    //if (graphicsSceneViewPtr_) {
+    //    if (dataProcessorPtr_) {
+    //        //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
+    //        QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
+    //        QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection,
+    //                                  Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()),
+    //                                  Q_ARG(bool, true));
+    //    }
+    //}
 }
 
 void MosaicViewControlMenuController::onSetLAngleOffset(float val)

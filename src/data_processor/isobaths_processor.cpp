@@ -43,8 +43,8 @@ void IsobathsProcessor::clear()
     vertPool_.clear();
     vertMark_.clear();
     tris_.clear();
-    minZ_ = std::numeric_limits<float>::max();
-    maxZ_ = std::numeric_limits<float>::lowest();
+    //minZ_ = std::numeric_limits<float>::max();
+    //maxZ_ = std::numeric_limits<float>::lowest();
 }
 
 void IsobathsProcessor::setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr)

@@ -171,7 +171,8 @@ GridLayout {
                                                  bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
                                                  bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
                                                  bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
-                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0)
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0,
+                                                 false)
                 }
             }
 
@@ -186,8 +187,8 @@ GridLayout {
                                                 bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
-                                                bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0
-                                                );
+                                                bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0,
+                                                false);
                 }
             }
 

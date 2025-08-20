@@ -61,7 +61,7 @@ void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
     surfaceProcessor_.setBottomTrackPtr(bottomTrackPtr);
 }
 
-void DataProcessor::clear(DataProcessorType procType)
+void DataProcessor::clearProcessing(DataProcessorType procType)
 {
     switch (procType) {
     case DataProcessorType::kUndefined:   clearAllProcessings();        emit allProcessingCleared();         break;
@@ -151,8 +151,6 @@ void DataProcessor::onChartsAdded(uint64_t indx)
 
 void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual) // indexes from 3D (conn,open file, edit echo)
 {
-    //qDebug() << "DataProcessor::onUpdatedBottomTrackDataWrapper" << indxs.size();
-
     if (indxs.empty()) {
         return;
     }

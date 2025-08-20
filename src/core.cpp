@@ -190,7 +190,7 @@ void Core::openLogFile(const QString &filePath, bool isAppend, bool onCustomEven
         resetDataProcessorConnections();
         datasetPtr_->resetDataset();
         dataHorizon_->clear();
-        QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
         setDataProcessorConnections();
     }
 
@@ -238,7 +238,7 @@ bool Core::closeLogFile(bool onOpen)
             dataHorizon_->clear();
         }
 
-        QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
 
         if (scene3dViewPtr_) {
             scene3dViewPtr_->clear();
@@ -300,7 +300,7 @@ void Core::onFileOpenBreaked(bool onOpen)
         dataHorizon_->clear();
     }
 
-    QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
@@ -335,7 +335,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             resetDataProcessorConnections();
             datasetPtr_->resetDataset();
             dataHorizon_->clear();
-            QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
             setDataProcessorConnections();
             dataHorizon_->setIsFileOpening(isFileOpening_);
         }
@@ -405,7 +405,7 @@ bool Core::closeLogFile()
     }
     dataHorizon_->clear();
 
-    QMetaObject::invokeMethod(dataProcessor_, "clear", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
 
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();

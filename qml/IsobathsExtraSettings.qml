@@ -169,10 +169,10 @@ MenuFrame {
             SpinBoxCustom {
                 id: extraWidthSpinBox
                 implicitWidth: 200
-                from: 0
+                from: 5
                 to: 100
                 stepSize: 1
-                value: 0
+                value: 5
                 editable: false
 
                 onFocusChanged: {

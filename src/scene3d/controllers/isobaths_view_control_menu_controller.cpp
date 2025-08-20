@@ -79,7 +79,13 @@ void IsobathsViewControlMenuController::onIsobathsVisibilityCheckBoxCheckedChang
 
         if (visibility_) {
             if (dataProcessorPtr_) {
-                QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
+                if (checked) {
+                    //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kIsobaths));
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection,
+                                              Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()),
+                                              Q_ARG(bool, false));
+                }
             }
         }
     }
@@ -90,11 +96,13 @@ void IsobathsViewControlMenuController::onIsobathsVisibilityCheckBoxCheckedChang
 
 void IsobathsViewControlMenuController::onUpdateIsobathsButtonClicked()
 {
-    if (graphicsSceneViewPtr_) {
-        if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection, Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()));
-        }
-    }
+    //if (graphicsSceneViewPtr_) {
+    //    if (dataProcessorPtr_) {
+    //        QMetaObject::invokeMethod(dataProcessorPtr_, "onBottomTrackAdded", Qt::QueuedConnection,
+    //                                  Q_ARG(QVector<int>, graphicsSceneViewPtr_->bottomTrack()->getAllIndxs()),
+    //                                  Q_ARG(bool, false));
+    //    }
+    //}
 }
 
 void IsobathsViewControlMenuController::onTrianglesVisible(bool state)
@@ -190,7 +198,7 @@ void IsobathsViewControlMenuController::onResetIsobathsButtonClicked()
 {
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
-            QMetaObject::invokeMethod(dataProcessorPtr_, "clear", Qt::QueuedConnection, Q_ARG(DataProcessorType , DataProcessorType::kIsobaths));
+            QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType , DataProcessorType::kIsobaths));
         }
 
         graphicsSceneViewPtr_->getIsobathsViewPtr()->clear();

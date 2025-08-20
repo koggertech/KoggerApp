@@ -36,7 +36,7 @@ public:
 public slots:
     // this
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
-    void clear(DataProcessorType = DataProcessorType::kUndefined);
+    void clearProcessing(DataProcessorType = DataProcessorType::kUndefined);
     void setUpdateBottomTrack (bool state);
     void setUpdateIsobaths (bool state);
     void setUpdateMosaic (bool state);
