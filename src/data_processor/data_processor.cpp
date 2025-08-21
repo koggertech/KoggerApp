@@ -87,23 +87,41 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
 
 void DataProcessor::setUpdateBottomTrack(bool state)
 {
-    //qDebug() << "DataProcessor::setUpdateBottomTrack" << state;
-
     updateBottomTrack_ = state;
+
+    if ((updateBottomTrack_ || updateIsobaths_ || updateMosaic_) && !pendingSurfaceIndxs_.empty()) {
+        if (!pendingWorkTimer_.isActive()) {
+            pendingWorkTimer_.start();
+        }
+    }
 }
 
 void DataProcessor::setUpdateIsobaths(bool state)
 {
-    //qDebug() << "DataProcessor::setUpdateIsobaths" << state;
-
     updateIsobaths_ = state;
+
+    if (updateIsobaths_) {
+        if (!pendingWorkTimer_.isActive()) {
+            pendingWorkTimer_.start();
+        }
+    }
 }
 
 void DataProcessor::setUpdateMosaic(bool state)
 {
-    //qDebug() << "DataProcessor::setUpdateMosaic" << state;
-
     updateMosaic_ = state;
+
+    if (updateMosaic_ && !pendingMosaicIndxs_.empty()) {
+        if (!pendingWorkTimer_.isActive()) {
+            pendingWorkTimer_.start();
+        }
+    } else if (!updateMosaic_) {
+        pendingIsobathsWork_ = true; // мозайка могла изменить поверхность
+
+        if (!pendingWorkTimer_.isActive()) {
+            pendingWorkTimer_.start();
+        }
+    }
 }
 
 void DataProcessor::setIsOpeningFile(bool state)
@@ -159,18 +177,9 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual) /
 
     for (int v : indxs) {
         epIndxsFromBottomTrack_.insert(v);
-
-        if (updateBottomTrack_ || updateIsobaths_ || updateMosaic_) {
-            pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', v));
-        }
-
-        if (updateIsobaths_) {
-            pendingIsobathsWork_ = true;
-        }
-
-        if (updateMosaic_) {
-            pendingMosaicIndxs_.insert(v);
-        }
+        pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', v));
+        pendingIsobathsWork_ = true;
+        pendingMosaicIndxs_.insert(v);
     }
 
     if (!pendingWorkTimer_.isActive()) {
@@ -392,15 +401,8 @@ void DataProcessor::onIsobathsUpdated()
 
 void DataProcessor::onMosaicUpdated()
 {
-    if (!updateMosaic_ || epIndxsFromBottomTrack_.empty()) {
+    if (!updateMosaic_ || pendingMosaicIndxs_.empty()) {
         return;
-    }
-
-    // all indxs
-    for (int v : epIndxsFromBottomTrack_) {
-        if (updateMosaic_) {
-            pendingMosaicIndxs_.insert(v);
-        }
     }
 
     if (!pendingWorkTimer_.isActive()) {
@@ -411,48 +413,44 @@ void DataProcessor::onMosaicUpdated()
 void DataProcessor::flushSurfacePendingWork()
 {
     if (!pendingSurfaceIndxs_.isEmpty()) {
-        QVector<QPair<char, int>> vec;
-        vec.reserve(pendingSurfaceIndxs_.size());
-        for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
-            vec.append(*it);
-        }
-        std::sort(vec.begin(), vec.end());
-
         if (updateBottomTrack_ || updateIsobaths_ || updateMosaic_) {
+            QVector<QPair<char, int>> vec;
+            vec.reserve(pendingSurfaceIndxs_.size());
+            for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
+                vec.append(*it);
+            }
+            std::sort(vec.begin(), vec.end());
             surfaceProcessor_.onUpdatedBottomTrackData(vec);
+            pendingSurfaceIndxs_.clear();
         };
-
-        pendingSurfaceIndxs_.clear();
     }
 }
 
 void DataProcessor::flushIsobathsPendingWork()
 {
     if (pendingIsobathsWork_) {
-        if (updateIsobaths_) {
+        if (updateIsobaths_ && !updateMosaic_ /*т.к. не рисуются изобаты при мозайке*/) {
             isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
-        }
 
-        pendingIsobathsWork_ = false;
+            pendingIsobathsWork_ = false;
+        }
     }
 }
 
 void DataProcessor::flushMosaicPendingWork()
 {
     if (!pendingMosaicIndxs_.isEmpty()) {
-        QVector<QPair<char, int>> vec;
-        vec.reserve(pendingMosaicIndxs_.size());
-        for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
-            vec.append(qMakePair('0', *it));
-        }
-        std::sort(vec.begin(), vec.end());
-
         if (updateMosaic_) {
-            //mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
-            mosaicProcessor_.updateDataWrapper(vec);
-        }
 
-        pendingMosaicIndxs_.clear();
+            QVector<QPair<char, int>> vec;
+            vec.reserve(pendingMosaicIndxs_.size());
+            for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
+                vec.append(qMakePair('0', *it));
+            }
+            std::sort(vec.begin(), vec.end());
+            mosaicProcessor_.updateDataWrapper(vec);
+            pendingMosaicIndxs_.clear();
+        }
     }
 }
 
@@ -470,19 +468,16 @@ void DataProcessor::clearBottomTrackProcessing()
 
 void DataProcessor::clearIsobathsProcessing()
 {
-    pendingIsobathsWork_ = false;
     isobathsProcessor_.clear();
 }
 
 void DataProcessor::clearMosaicProcessing()
 {
-    pendingMosaicIndxs_.clear();
     mosaicProcessor_.clear();
 }
 
 void DataProcessor::clearSurfaceProcessing()
 {
-    pendingSurfaceIndxs_.clear();
     surfaceProcessor_.clear();
 }
 
@@ -492,9 +487,9 @@ void DataProcessor::clearAllProcessings()
     clearIsobathsProcessing();
     clearMosaicProcessing();
     clearSurfaceProcessing();
-    pendingIsobathsWork_ = false;
-    pendingMosaicIndxs_.clear();
-    pendingSurfaceIndxs_.clear();
+    pendingIsobathsWork_ = false; 
+    pendingMosaicIndxs_.clear(); 
+    pendingSurfaceIndxs_.clear(); 
     epIndxsFromBottomTrack_.clear();
     surfaceMesh_.clear();
 }
