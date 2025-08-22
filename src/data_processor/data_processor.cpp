@@ -305,9 +305,33 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
 {
     //qDebug() << "DataProcessor::setMosaicChannels" << ch1.toShortName() << sub1 << ch2.toShortName() << sub2;
 
+    const auto fCh = mosaicProcessor_.getFirstChannelId();
+    const auto sCh = mosaicProcessor_.getSecondChannelId();
+
+    if (fCh == qMakePair(ch1, sub1) &&
+        sCh == qMakePair(ch2, sub2)) {
+        return;
+    }
+
+    surfaceMesh_.clear();
     mosaicProcessor_.setChannels(ch1, sub1, ch2, sub2);
 
-    // do calc?
+    // чистка рендера
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
+
+    // установка полной задачи
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        const auto itm = *it;
+        pendingMosaicIndxs_.insert(itm);
+        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+    }
+    pendingIsobathsWork_ = true;
+
+    if (!pendingWorkTimer_.isActive()) {
+        pendingWorkTimer_.start();
+    }
 }
 
 void DataProcessor::setMosaicTheme(int indx)

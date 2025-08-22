@@ -38,6 +38,9 @@ public:
 
     void askColorTableForMosaic(); // first init colorTable in render
 
+    QPair<ChannelId, uint8_t> getFirstChannelId()  const { return qMakePair(segFChannelId_, segFSubChannelId_); };
+    QPair<ChannelId, uint8_t> getSecondChannelId() const { return qMakePair(segSChannelId_, segSSubChannelId_); };
+
 private:
     void postUpdate(QSet<SurfaceTile*>& changedTiles);
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
