@@ -95,18 +95,7 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
     segSSubChannelId_ = secondSubChId;
 }
 
-void MosaicProcessor::updateDataWrapper(int endIndx, int endOffset)
-{
-    //qDebug() << "MosaicProcessor::startUpdateData" << endIndx << endOffset;
-
-    dataProcessor_->changeState(DataProcessorType::kMosaic);
-
-    updateData(endIndx, endOffset);
-
-    dataProcessor_->changeState(DataProcessorType::kUndefined);
-}
-
-void MosaicProcessor::updateDataWrapper(const QVector<QPair<char, int>>& indxs)
+void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 {
     if (!datasetPtr_ || indxs.isEmpty()) {
         return;
@@ -114,8 +103,39 @@ void MosaicProcessor::updateDataWrapper(const QVector<QPair<char, int>>& indxs)
 
     dataProcessor_->changeState(DataProcessorType::kMosaic);
 
-    updateData(indxs);
+    QVector<int> vec = indxs;
+    const int firstNow = vec.first();
 
+    if (lastAcceptedEpoch_ >= 0 && lastAcceptedEpoch_ < firstNow) {
+        const int gap = firstNow - lastAcceptedEpoch_;
+
+        if (gap > 1) { // дыра слева [lastAcceptedEpoch_, firstNow)
+            QVector<int> left;
+            left.reserve(gap);
+            for (int i = lastAcceptedEpoch_; i < firstNow; ++i) {
+                left.push_back(i);
+            }
+
+            left += vec;
+            vec.swap(left);
+        }
+        else { // gap == 1
+             vec.prepend(lastAcceptedEpoch_); // стык одним элементом
+        }
+    }
+    else {
+        //
+    }
+
+    //qDebug() << "task";
+    //qDebug() << vec;
+    //for (int i = 1; i < vec.size(); ++i) {
+    //   if (vec[i] != vec[i - 1] + 1) {
+    //       qWarning() << "Hole in mosaic task" << vec[i - 1] << "and" << vec[i];
+    //   }
+    //}
+
+    updateData(vec);
     dataProcessor_->changeState(DataProcessorType::kUndefined);
 }
 
@@ -378,339 +398,7 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
     }
 }
 
-void MosaicProcessor::updateData(int endIndx, int endOffset)
-{
-    if (!datasetPtr_) {
-        return;
-    }
-
-    bool segFIsValid = segFChannelId_.isValid();
-    bool segSIsValid = segSChannelId_.isValid();
-
-    //qDebug() << segFChannelId_.toShortName() << segSChannelId_.toShortName();
-
-    if (!segFIsValid && !segSIsValid) {
-        return;
-    }
-
-    int epochCount = (endIndx == 0 ? datasetPtr_->size() : endIndx) - endOffset;
-    if (epochCount < 4) {
-        return;
-    }
-
-    // prepare intermediate data (selecting epochs to process)
-    kmath::MatrixParams actualMatParams(lastMatParams_);
-    kmath::MatrixParams newMatrixParams;
-    QVector<QVector3D> measLinesVertices;
-    QVector<int> measLinesEvenIndices;
-    QVector<int> measLinesOddIndices;
-    QVector<char> isOdds;
-    QVector<int> epochIndxs;
-
-    for (int i = lastAcceptedEpoch_; i < epochCount; ++i) {
-        bool isAcceptedEpoch = false;
-
-        if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            auto pos = epoch->getPositionGNSS().ned;
-            auto yaw = epoch->yaw();
-            if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
-                bool acceptedEven = false, acceptedOdd = false;
-                double azRad = qDegreesToRadians(yaw);
-
-                if (segFIsValid) {
-                    if (auto segFCharts = epoch->chart(segFChannelId_, segFSubChannelId_); segFCharts) {
-                        double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
-                        float lDist = segFCharts->range();
-
-                        measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
-                        measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                        measLinesEvenIndices.append(currIndxSec_++);
-                        measLinesEvenIndices.append(currIndxSec_++);
-                        isOdds.append('0');
-                        epochIndxs.append(i);
-                        acceptedEven = true;
-                    }
-                }
-
-                if (segSIsValid) {
-                    if (auto segSCharts = epoch->chart(segSChannelId_, segSSubChannelId_); segSCharts) {
-                        double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
-                        float rDist = segSCharts ->range();
-
-                        measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                        measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
-                        measLinesOddIndices.append(currIndxSec_++);
-                        measLinesOddIndices.append(currIndxSec_++);
-                        isOdds.append('1');
-                        epochIndxs.append(i);
-                        acceptedOdd = true;
-                    }
-                }
-
-                if (acceptedEven || acceptedOdd) {
-                    isAcceptedEpoch = true;
-                }
-            }
-        }
-
-        if (isAcceptedEpoch) {
-            lastAcceptedEpoch_ = i;
-        }
-    }
-
-    lastCalcEpoch_ = epochCount;
-
-    newMatrixParams = kmath::getMatrixParams(measLinesVertices);
-    if (!newMatrixParams.isValid()) {
-        return;
-    }
-
-    concatenateMatrixParameters(actualMatParams, newMatrixParams);
-
-    bool meshUpdated = surfaceMeshPtr_->concatenate(actualMatParams);
-    if (meshUpdated) {
-        // qDebug() << "actual matrix:";
-        // actualMatParams.print(qDebug());
-        // qDebug() << "globalmesh:";
-        // globalMeshPtr_->printMatrix();
-    }
-
-    auto gMeshWidthPixs = surfaceMeshPtr_->getPixelWidth(); // for bypass
-    auto gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
-
-    static QSet<SurfaceTile*> changedTiles;
-    changedTiles.clear();
-
-    // processing
-    for (int i = 0; i < measLinesVertices.size(); i += 2) { // 2 - step for segment
-        if (i + 5 > measLinesVertices.size() - 1) {
-            break;
-        }
-
-        int segFBegVertIndx = i;
-        int segFEndVertIndx = i + 1;
-        int segSBegVertIndx = i + 2;
-        int segSEndVertIndx = i + 3;
-
-        int segFIndx = i / 2;
-        int segSIndx = (i + 2) / 2;
-        // going to next epoch if needed
-        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] ||
-            isOdds[segFIndx] != isOdds[segSIndx]) {
-            ++segSIndx;
-            segSBegVertIndx += 2;
-            segSEndVertIndx += 2;
-        }
-        // compliance check
-        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] ||
-            isOdds[segFIndx] != isOdds[segSIndx]) {
-            continue;
-        }
-        // epochs checking
-        auto segFEpochPtr = datasetPtr_->fromIndex(epochIndxs[segFIndx]);
-        auto segSEpochPtr = datasetPtr_->fromIndex(epochIndxs[segSIndx]);
-        if (!segFEpochPtr || !segSEpochPtr) {
-            continue;
-        }
-        Epoch segFEpoch = *segFEpochPtr; // _plot might be reallocated
-        Epoch segSEpoch = *segSEpochPtr;
-        // isOdd checking
-        bool segFIsOdd = isOdds[segFIndx] == '1';
-        bool segSIsOdd = isOdds[segSIndx] == '1';
-        if (segFIsOdd != segSIsOdd) {
-            continue;
-        }
-        // segments checking
-        auto segFCharts = segFEpoch.chart(segFIsOdd ? segSChannelId_ : segFChannelId_, segFIsOdd ? segSSubChannelId_ : segFSubChannelId_);
-        auto segSCharts = segSEpoch.chart(segSIsOdd ? segSChannelId_ : segFChannelId_, segSIsOdd ? segSSubChannelId_ : segFSubChannelId_);
-        if (!segFCharts || !segSCharts) {
-            continue;
-        }
-        // update compensated TODO: to proc
-        if (segFCharts->amplitude.size() != segFCharts->compensated.size()) {
-            segFCharts->updateCompesated();
-        }
-        if (segSCharts->amplitude.size() != segSCharts->compensated.size()) {
-            segSCharts->updateCompesated();
-        }
-        // dist procs checking
-        if (!isfinite(segFIsOdd ? segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance() : segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance()) ||
-            !isfinite(segSIsOdd ? segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance() : segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance())) {
-            continue;
-        }
-
-        // Bresenham
-        // first segment
-        QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
-        QVector3D segFPhEndPnt = segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
-        auto segFBegPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhBegPnt);
-        auto segFEndPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhEndPnt);
-        int segFPixX1 = segFBegPixPos.x();
-        int segFPixY1 = segFBegPixPos.y();
-        int segFPixX2 = segFEndPixPos.x();
-        int segFPixY2 = segFEndPixPos.y();
-        float segFPixTotDist = std::sqrt(std::pow(segFPixX2 - segFPixX1, 2) + std::pow(segFPixY2 - segFPixY1, 2));
-        int segFPixDx = std::abs(segFPixX2 - segFPixX1);
-        int segFPixDy = std::abs(segFPixY2 - segFPixY1);
-        int segFPixSx = (segFPixX1 < segFPixX2) ? 1 : -1;
-        int segFPixSy = (segFPixY1 < segFPixY2) ? 1 : -1;
-        int segFPixErr = segFPixDx - segFPixDy;
-        // second segment
-        QVector3D segSPhBegPnt = segSIsOdd ? measLinesVertices[segSBegVertIndx] : measLinesVertices[segSEndVertIndx];
-        QVector3D segSPhEndPnt = segSIsOdd ? measLinesVertices[segSEndVertIndx] : measLinesVertices[segSBegVertIndx];
-        auto segSBegPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSPhBegPnt);
-        auto segSEndPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSPhEndPnt);
-        int segSPixX1 = segSBegPixPos.x();
-        int segSPixY1 = segSBegPixPos.y();
-        int segSPixX2 = segSEndPixPos.x();
-        int segSPixY2 = segSEndPixPos.y();
-        float segSPixTotDist = std::sqrt(std::pow(segSPixX2 - segSPixX1, 2) + std::pow(segSPixY2 - segSPixY1, 2));
-        int segSPixDx = std::abs(segSPixX2 - segSPixX1);
-        int segSPixDy = std::abs(segSPixY2 - segSPixY1);
-        int segSPixSx = (segSPixX1 < segSPixX2) ? 1 : -1;
-        int segSPixSy = (segSPixY1 < segSPixY2) ? 1 : -1;
-        int segSPixErr = segSPixDx - segSPixDy;
-
-        // pixel length checking
-        if (!checkLength(segFPixTotDist) ||
-            !checkLength(segSPixTotDist)) {
-            continue;
-        }
-
-        float segFDistProc = -1.0f * static_cast<float>(segFIsOdd ? segFEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance() : segFEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance());
-        float segSDistProc = -1.0f * static_cast<float>(segSIsOdd ? segSEpoch.chart(segFChannelId_, segFSubChannelId_)->bottomProcessing.getDistance() : segSEpoch.chart(segSChannelId_, segSSubChannelId_)->bottomProcessing.getDistance());
-        float segFPhDistX = segFPhEndPnt.x() - segFPhBegPnt.x();
-        float segFPhDistY = segFPhEndPnt.y() - segFPhBegPnt.y();
-        float segSPhDistX = segSPhEndPnt.x() - segSPhBegPnt.x();
-        float segSPhDistY = segSPhEndPnt.y() - segSPhBegPnt.y();
-
-        auto segFInterpNED = segFEpoch.getPositionGNSS().ned;
-        auto segSInterpNED = segSEpoch.getPositionGNSS().ned;
-        QVector3D segFBoatPos(segFInterpNED.n, segFInterpNED.e, 0.0f);
-        QVector3D segSBoatPos(segSInterpNED.n, segSInterpNED.e, 0.0f);
-
-        // follow the first segment
-        while (true) {
-            // first segment
-            float segFPixCurrDist = std::sqrt(std::pow(segFPixX1 - segFPixX2, 2) + std::pow(segFPixY1 - segFPixY2, 2));
-            float segFProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
-            QVector3D segFCurrPhPos(segFPhBegPnt.x() + segFProgByPix * segFPhDistX, segFPhBegPnt.y() + segFProgByPix * segFPhDistY, segFDistProc);
-            // second segment, calc corresponding progress using smoothed interpolation
-            float segSCorrProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX, segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY, segSDistProc);
-
-            auto indxF = sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos));
-            auto indxS = sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos));
-            int segFColorIndx = 0;
-            int segSColorIndx = 0;
-
-            bool bothValid = indxF && indxS;
-            if (bothValid) {
-                segFColorIndx = getColorIndx(segFCharts, *indxF);
-                segSColorIndx = getColorIndx(segSCharts, *indxS);
-                if (segFColorIndx == 0 && segSColorIndx == 0) {
-                    bothValid = false;
-                }
-            }
-
-            auto segFCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFCurrPhPos);
-            auto segSCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSCurrPhPos);
-
-            // color interpolation between two pixels
-            int interpPixX1 = segFCurrPixPos.x();
-            int interpPixY1 = segFCurrPixPos.y();
-            int interpPixX2 = segSCurrPixPos.x();
-            int interpPixY2 = segSCurrPixPos.y();
-            int interpPixDistX = interpPixX2 - interpPixX1;
-            int interpPixDistY = interpPixY2 - interpPixY1;
-            float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
-
-            // interpolate
-            if (bothValid && checkLength(interpPixTotDist)) {
-                for (int step = 0; step <= interpPixTotDist; ++step) {
-                    float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
-                    int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
-                    int interpY = interpPixY1 + interpProgressByPixel * interpPixDistY;
-                    auto interpColorIndx = static_cast<uint8_t>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
-
-                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) { // bypass
-                        for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
-                            int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
-                            int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
-
-                            int tileSidePixelSize = surfaceMeshPtr_->getTileSidePixelSize();
-                            int meshIndxX = bypassInterpX / tileSidePixelSize;
-                            int meshIndxY = (surfaceMeshPtr_->getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
-                            int tileIndxX = bypassInterpX % tileSidePixelSize;
-                            int tileIndxY = bypassInterpY % tileSidePixelSize;
-
-                            auto& tileRef = surfaceMeshPtr_->getTileMatrixRef()[meshIndxY][meshIndxX];
-                            if (!tileRef->getIsInited()) {
-                                tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                            }
-
-                            // image
-                            auto& imageRef = tileRef->getMosaicImageDataRef();
-                            int bytesPerLine = std::sqrt(imageRef.size());
-                            *(imageRef.data() + tileIndxY * bytesPerLine + tileIndxX) = interpColorIndx;
-
-                            // height matrix
-                            int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
-                            int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
-                            int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
-
-                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kTriangulation) {
-                                tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
-                                tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
-                            }
-
-                            tileRef->setIsUpdated(true);
-
-                            changedTiles.insert(tileRef);
-                        }
-                    }
-                }
-            }
-
-            // break at the end of the first segment
-            if (segFPixX1 == segFPixX2 && segFPixY1 == segFPixY2) {
-                break;
-            }
-
-            // Bresenham
-            int segFPixE2 = 2 * segFPixErr;
-            if (segFPixE2 > -segFPixDy) {
-                segFPixErr -= segFPixDy;
-                segFPixX1 += segFPixSx;
-            }
-            if (segFPixE2 < segFPixDx) {
-                segFPixErr += segFPixDx;
-                segFPixY1 += segFPixSy;
-            }
-            int segSPixE2 = 2 * segSPixErr;
-            if (segSPixE2 > -segSPixDy) {
-                segSPixErr -= segSPixDy;
-                segSPixX1 += segSPixSx;
-            }
-            if (segSPixE2 < segSPixDx) {
-                segSPixErr += segSPixDx;
-                segSPixY1 += segSPixSy;
-            }
-        }
-    }
-
-    lastMatParams_ = actualMatParams;
-
-    postUpdate(changedTiles);
-
-    //auto renderImpl = RENDER_IMPL(MosaicProcessor);
-    //renderImpl->measLinesVertices_.append(std::move(measLinesVertices));
-    //renderImpl->measLinesEvenIndices_.append(std::move(measLinesEvenIndices));
-    //renderImpl->measLinesOddIndices_.append(std::move(measLinesOddIndices));
-    //renderImpl->createBounds();
-}
-
-void MosaicProcessor::updateData(const QVector<QPair<char, int>>& indxs)
+void MosaicProcessor::updateData(const QVector<int>& indxs)
 {
     if (!datasetPtr_ || indxs.empty()) {
         return;
@@ -734,40 +422,49 @@ void MosaicProcessor::updateData(const QVector<QPair<char, int>>& indxs)
 
     // prepare intermediate data (selecting epochs to process)
     for (const auto& i : indxs) {
-        int indx = i.second;
-        if (auto epoch = datasetPtr_->fromIndex(indx); epoch) {
+        bool isAcceptedEpoch = false;
+        if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
             auto pos = epoch->getPositionGNSS().ned;
             auto yaw = epoch->yaw();
-
             if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
+                bool acceptedEven = false, acceptedOdd = false;
                 double azRad = qDegreesToRadians(yaw);
-
                 if (segFIsValid) {
                     if (auto segFCharts = epoch->chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                         double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
-                        float  lDist     = segFCharts->range();
+                        float lDist = segFCharts->range();
                         measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
                         measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
                         measLinesEvenIndices.append(currIndxSec_++);
                         measLinesEvenIndices.append(currIndxSec_++);
                         isOdds.append('0');
-                        epochIndxs.append(indx);
+                        epochIndxs.append(i);
+                        acceptedEven = true;
                     }
                 }
 
                 if (segSIsValid) {
                     if (auto segSCharts = epoch->chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                         double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
-                        float  rDist      = segSCharts->range();
+                        float rDist = segSCharts->range();
                         measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
                         measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
                         measLinesOddIndices.append(currIndxSec_++);
                         measLinesOddIndices.append(currIndxSec_++);
                         isOdds.append('1');
-                        epochIndxs.append(indx);
+                        epochIndxs.append(i);
+                        acceptedOdd = true;
                     }
                 }
+
+                if (acceptedEven || acceptedOdd) {
+                    isAcceptedEpoch = true;
+                }
             }
+        }
+
+        if (isAcceptedEpoch) {
+            lastAcceptedEpoch_ = i;
         }
     }
 

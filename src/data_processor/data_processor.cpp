@@ -76,7 +76,6 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     }
 
     // this
-    pendingSurfaceIndxs_.clear();
     chartsCounter_ = 0;
     bottomTrackCounter_ = 0;
     epochCounter_ = 0;
@@ -175,12 +174,12 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual) /
         return;
     }
 
-    for (int v : indxs) {
-        epIndxsFromBottomTrack_.insert(v);
-        pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', v));
-        pendingIsobathsWork_ = true;
-        pendingMosaicIndxs_.insert(v);
+    for (int itm : indxs) {
+        epIndxsFromBottomTrack_.insert(itm);
+        pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', itm));
+        pendingMosaicIndxs_.insert(itm);
     }
+    pendingIsobathsWork_ = true;
 
     if (!pendingWorkTimer_.isActive()) {
         pendingWorkTimer_.start();
@@ -275,13 +274,21 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 
     surfaceProcessor_.setEdgeLimit(edgeLimit); // тот же расчет
 
-    if (updateMosaic_) {
-        mosaicProcessor_.clear();
-        mosaicProcessor_.updateDataWrapper(mosaicCounter_, 0);
-    }
+    // чистка рендера
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared(); //
 
-    if (updateIsobaths_) {
-        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    // установка полной задачи
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        const auto itm = *it;
+        pendingMosaicIndxs_.insert(itm);
+        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+    }
+    pendingIsobathsWork_ = true;
+
+    if (!pendingWorkTimer_.isActive()) {
+        pendingWorkTimer_.start();
     }
 }
 
@@ -342,12 +349,25 @@ void DataProcessor::setMosaicTileResolution(float val)
 
     surfaceMesh_.reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, tileResolution_);
 
-    emit isobathsProcessingCleared();
-    emit surfaceProcessingCleared();
-    emit mosaicProcessingCleared(); //
-
     surfaceProcessor_.setTileResolution(tileResolution_);
     mosaicProcessor_.setTileResolution(tileResolution_);
+
+    // чистка рендера
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
+
+    // установка полной задачи
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        const auto itm = *it;
+        pendingMosaicIndxs_.insert(itm);
+        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+    }
+    pendingIsobathsWork_ = true;
+
+    if (!pendingWorkTimer_.isActive()) {
+        pendingWorkTimer_.start();
+    }
 }
 
 void DataProcessor::setMosaicLevels(float lowLevel, float highLevel)
@@ -419,7 +439,9 @@ void DataProcessor::flushSurfacePendingWork()
             for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
                 vec.append(*it);
             }
-            std::sort(vec.begin(), vec.end());
+            std::sort(vec.begin(), vec.end(), [](const QPair<char, int>& a, const QPair<char, int>& b) {
+                return a.second < b.second;
+            });
             surfaceProcessor_.onUpdatedBottomTrackData(vec);
             pendingSurfaceIndxs_.clear();
         };
@@ -441,13 +463,15 @@ void DataProcessor::flushMosaicPendingWork()
 {
     if (!pendingMosaicIndxs_.isEmpty()) {
         if (updateMosaic_) {
-
-            QVector<QPair<char, int>> vec;
+            QVector<int> vec;
             vec.reserve(pendingMosaicIndxs_.size());
             for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
-                vec.append(qMakePair('0', *it));
+                if (mosaicCounter_ > *it) {
+                    vec.append(*it);
+                }
             }
             std::sort(vec.begin(), vec.end());
+
             mosaicProcessor_.updateDataWrapper(vec);
             pendingMosaicIndxs_.clear();
         }

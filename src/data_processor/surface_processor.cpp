@@ -460,7 +460,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         rebuildColorIntervals();
         dataProcessor_->setMinZ(minZ_);
         dataProcessor_->setMaxZ(maxZ_);
-
         emit dataProcessor_->sendSurfaceMinZ(minZ_);
         emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }

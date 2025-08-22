@@ -181,9 +181,9 @@ void SurfaceView::clear()
         mosaicTileTextureToAppend_.clear();
     }
 
-    r->minZ_ = std::numeric_limits<float>::max();
-    r->maxZ_ = std::numeric_limits<float>::lowest();
-    r->colorIntervalsSize_ = -1;
+    //r->minZ_ = std::numeric_limits<float>::max();
+    //r->maxZ_ = std::numeric_limits<float>::lowest();
+    //r->colorIntervalsSize_ = -1;
 
     surfaceColorTableToAppend_.clear();
 

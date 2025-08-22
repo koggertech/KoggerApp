@@ -25,8 +25,7 @@ public:
 
     // PROCESSING
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
-    void updateDataWrapper(int endIndx, int endOffset = 0);
-    void updateDataWrapper(const QVector<QPair<char, int>>& indxs);
+    void updateDataWrapper(const QVector<int>& indxs);
     void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void setColorTableThemeById(int id);
     void setColorTableLevels(float lowVal, float highVal);
@@ -42,8 +41,7 @@ public:
 private:
     void postUpdate(QSet<SurfaceTile*>& changedTiles);
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
-    void updateData(int endIndx, int endOffset = 0);
-    void updateData(const QVector<QPair<char, int>>& indxs);
+    void updateData(const QVector<int>& indxs);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
 
 private:
