@@ -65,7 +65,7 @@ public:
         QReadLocker rl(&poolMtx_);
 
         const int index = validIndex(index_offset);
-        if (index < 0) {
+        if (channelsSetup_.empty() || index < 0) {
             return Epoch{};
         }
 
@@ -79,7 +79,7 @@ public:
         QReadLocker rl(&poolMtx_);
 
         const int currSize = pool_.size();
-        if (currSize == 0)
+        if (channelsSetup_.empty() || currSize == 0)
             return {};
 
         int indx = validIndex(index_offset);
