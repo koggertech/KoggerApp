@@ -182,10 +182,13 @@ void Epoch::setEncoders(float enc1, float enc2, float enc3) {
 
 int Epoch::chartSize(const ChannelId &channelId, uint8_t subChannelId)
 {
-    if (chartAvail(channelId, subChannelId)) {
-        return charts_[channelId][subChannelId].amplitude.size();
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return -1;
     }
-    return -1;
+
+    const auto& v = it.value();
+    return hasIndex(v, subChannelId) ? v.at(subChannelId).amplitude.size() : -1;
 }
 
 bool Epoch::chartAvail()
@@ -195,15 +198,13 @@ bool Epoch::chartAvail()
 
 bool Epoch::chartAvail(const ChannelId &channelId, uint8_t subChannelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-
-        if (hasIndex(echograms, subChannelId)) {
-            return echograms[subChannelId].amplitude.size() > 0;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return false;
     }
 
-    return false;
+    const auto& echograms = it.value();
+    return hasIndex(echograms, subChannelId) && !echograms.at(subChannelId).amplitude.isEmpty();
 }
 
 QList<ChannelId> Epoch::chartChannels()
@@ -222,13 +223,13 @@ Epoch::Echogram *Epoch::chart(const ChannelId &channelId, uint8_t subChannelId)
 
 Epoch::Echogram Epoch::chartCopy(const ChannelId &channelId, uint8_t subChannelId) const
 {
-    Epoch::Echogram retVal;
-
-    if (chartAvail(channelId, subChannelId)) {
-        retVal = charts_[channelId][subChannelId];
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return {};
     }
 
-    return retVal;
+    const auto& v = it.value();
+    return hasIndex(v, subChannelId) ? v.at(subChannelId) : Epoch::Echogram{};
 }
 
 void Epoch::setAtt(float yaw, float pitch, float roll, DataType dataType) {

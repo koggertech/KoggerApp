@@ -123,7 +123,11 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
     addNewEpoch();
     //    }
 
-    pool_[endIndex()].setEvent(timestamp, id, unixt);
+    {
+        QWriteLocker wl(&poolMtx_);
+        pool_[endIndex()].setEvent(timestamp, id, unixt);
+    }
+
     emit dataUpdate();
 }
 
@@ -957,13 +961,26 @@ void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannel
 
 Epoch *Dataset::addNewEpoch()
 {
-    QWriteLocker wl(&poolMtx_);
+    bool beenAdded = false;
+    int indxAdded = -1;
+    Epoch* ptrAdded = nullptr;
 
-    uint64_t newSize = pool_.size() + 1;
-    pool_.resize(pool_.size() + 1);
-    auto* lastEpoch = last();
-    emit epochAdded(newSize);
-    return lastEpoch;
+    {
+        QWriteLocker wl(&poolMtx_);
+
+        uint64_t newSize = pool_.size() + 1;
+        pool_.resize(newSize);
+        ptrAdded = last();
+
+        beenAdded = true;
+        indxAdded = newSize;
+    }
+
+    if (beenAdded) {
+        emit epochAdded(indxAdded);
+    }
+
+    return ptrAdded;
 }
 
 bool Dataset::shouldAddNewEpoch(const ChannelId &channelId, uint8_t numSubChannels) const

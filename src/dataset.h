@@ -64,12 +64,15 @@ public:
     Epoch fromIndexCopy(int index_offset = 0) {
         QReadLocker rl(&poolMtx_);
 
-        int index = validIndex(index_offset);
-        if(index >= 0) {
-            return pool_[index];
+        const int index = validIndex(index_offset);
+        if (index < 0) {
+            return Epoch{};
         }
 
-        return Epoch();
+        const Epoch &src = pool_.at(index);
+        Epoch copy = src;
+
+        return copy;
     }
 
     Epoch::Echogram fromIndexCopyEchogram(int index_offset, const ChannelId& channelId) {

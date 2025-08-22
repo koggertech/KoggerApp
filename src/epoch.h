@@ -132,6 +132,27 @@ public:
     };
 
     Epoch();
+
+    bool isValid() const {
+        if (flags.eventAvail) return true;
+        if (!charts_.isEmpty()) return true;
+        if (flags.posAvail) return true;
+        if (flags.tempAvail) return true;
+        if (flags.distAvail) return true;
+
+        return false;
+    }
+
+    bool operator==(const Epoch& other) const {
+        return _eventId == other._eventId &&
+               _eventTimestamp_us == other._eventTimestamp_us &&
+               _eventUnix == other._eventUnix;
+    }
+
+    bool operator!=(const Epoch& other) const {
+        return !(*this == other);
+    }
+
     void setEvent(int timestamp, int id, int unixt);
     void setChart(const ChannelId& channelId, const QVector<QVector<uint8_t>>& chartData, float resolution, float offset);
     void setChartBySubChannelId(const ChannelId& channelId, uint8_t subChannelId, const QVector<uint8_t>& chartData, float resolution, float offset);

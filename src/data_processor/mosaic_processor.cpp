@@ -423,43 +423,47 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     // prepare intermediate data (selecting epochs to process)
     for (const auto& i : indxs) {
         bool isAcceptedEpoch = false;
-        if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            auto pos = epoch->getPositionGNSS().ned;
-            auto yaw = epoch->yaw();
-            if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
-                bool acceptedEven = false, acceptedOdd = false;
-                double azRad = qDegreesToRadians(yaw);
-                if (segFIsValid) {
-                    if (auto segFCharts = epoch->chart(segFChannelId_, segFSubChannelId_); segFCharts) {
-                        double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
-                        float lDist = segFCharts->range();
-                        measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
-                        measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                        measLinesEvenIndices.append(currIndxSec_++);
-                        measLinesEvenIndices.append(currIndxSec_++);
-                        isOdds.append('0');
-                        epochIndxs.append(i);
-                        acceptedEven = true;
-                    }
-                }
 
-                if (segSIsValid) {
-                    if (auto segSCharts = epoch->chart(segSChannelId_, segSSubChannelId_); segSCharts) {
-                        double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
-                        float rDist = segSCharts->range();
-                        measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                        measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
-                        measLinesOddIndices.append(currIndxSec_++);
-                        measLinesOddIndices.append(currIndxSec_++);
-                        isOdds.append('1');
-                        epochIndxs.append(i);
-                        acceptedOdd = true;
-                    }
-                }
+        auto epoch = datasetPtr_->fromIndexCopy(i);
+        if (!epoch.isValid()) {
+            continue;
+        }
 
-                if (acceptedEven || acceptedOdd) {
-                    isAcceptedEpoch = true;
+        auto pos = epoch.getPositionGNSS().ned;
+        auto yaw = epoch.yaw();
+        if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
+            bool acceptedEven = false, acceptedOdd = false;
+            double azRad = qDegreesToRadians(yaw);
+            if (segFIsValid) {
+                if (auto segFCharts = epoch.chart(segFChannelId_, segFSubChannelId_); segFCharts) {
+                    double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
+                    float lDist = segFCharts->range();
+                    measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
+                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                    measLinesEvenIndices.append(currIndxSec_++);
+                    measLinesEvenIndices.append(currIndxSec_++);
+                    isOdds.append('0');
+                    epochIndxs.append(i);
+                    acceptedEven = true;
                 }
+            }
+
+            if (segSIsValid) {
+                if (auto segSCharts = epoch.chart(segSChannelId_, segSSubChannelId_); segSCharts) {
+                    double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
+                    float rDist = segSCharts->range();
+                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                    measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                    measLinesOddIndices.append(currIndxSec_++);
+                    measLinesOddIndices.append(currIndxSec_++);
+                    isOdds.append('1');
+                    epochIndxs.append(i);
+                    acceptedOdd = true;
+                }
+            }
+
+            if (acceptedEven || acceptedOdd) {
+                isAcceptedEpoch = true;
             }
         }
 
@@ -511,14 +515,11 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             continue;
         }
 
-        auto segFEpochPtr = datasetPtr_->fromIndex(epochIndxs[segFIndx]);
-        auto segSEpochPtr = datasetPtr_->fromIndex(epochIndxs[segSIndx]);
-        if (!segFEpochPtr || !segSEpochPtr) {
+        auto segFEpoch = datasetPtr_->fromIndexCopy(epochIndxs[segFIndx]);
+        auto segSEpoch = datasetPtr_->fromIndexCopy(epochIndxs[segSIndx]);
+        if (!segFEpoch.isValid() || !segSEpoch.isValid()) {
             continue;
         }
-
-        Epoch segFEpoch = *segFEpochPtr;
-        Epoch segSEpoch = *segSEpochPtr;
 
         bool segFIsOdd = isOdds[segFIndx] == '1';
         bool segSIsOdd = isOdds[segSIndx] == '1';

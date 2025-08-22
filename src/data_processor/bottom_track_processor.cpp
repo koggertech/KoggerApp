@@ -96,6 +96,9 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     for(int iepoch = epoch_min_index; iepoch < epoch_max_index; iepoch++) {
 
         Epoch epoch = datasetPtr_->fromIndexCopy(iepoch);
+        if (!epoch.isValid()) {
+            continue;
+        }
 
         Epoch::Echogram* chart = NULL;
         uint8_t* data = NULL;
