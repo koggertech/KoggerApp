@@ -1,5 +1,7 @@
 #include "surface_view.h"
 
+#include <QFile>
+
 
 SurfaceView::SurfaceView(QObject* parent)
     : SceneObject(new SurfaceViewRenderImplementation, parent),
@@ -117,6 +119,77 @@ GLuint SurfaceView::takeSurfaceColorTableToDelete()
     GLuint retVal = 0;
     std::swap(surfaceColorTableToDelete_, retVal);
     return retVal;
+}
+
+void SurfaceView::setLlaRef(LLARef llaRef)
+{
+    llaRef_ = llaRef;
+}
+
+void SurfaceView::saveVerticesToFile(const QString &path)
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    if (!r) {
+        qWarning() << "SurfaceView::saveVerticesToFile: no render impl";
+        return;
+    }
+
+#ifdef Q_OS_ANDROID
+    const QString filePath = path;
+#else
+    const QString filePath = QUrl(path).toLocalFile();
+#endif
+
+    QFile file(filePath);
+    if (!file.open(QFile::WriteOnly | QFile::Text)) {
+        qWarning() << "Failed to open file for writing:" << filePath;
+        return;
+    }
+
+    QTextStream out(&file);
+    out.setLocale(QLocale::c());
+    out.setRealNumberNotation(QTextStream::FixedNotation);
+    out.setRealNumberPrecision(8);
+    out << "lat,lon,alt,x,y,z\n";
+
+    for (auto it = r->tiles_.cbegin(); it != r->tiles_.cend(); ++it) {
+        const SurfaceTile& tile = it.value();
+        if (!tile.getIsInited())
+            continue;
+
+        const QVector<QVector3D>& verts = tile.getHeightVerticesCRef();
+        const QVector<HeightType>& marks = tile.heightMarkVertices_;
+
+        if (verts.isEmpty() || marks.isEmpty())
+            continue;
+
+
+        const QVector3D& v = verts[0]; // левая верхняя вершина (0,0) => idx = 0
+        if (marks[0] == HeightType::kUndefined) {
+            continue;
+        }
+
+        if (!std::isfinite(v.x()) || !std::isfinite(v.y()) || !std::isfinite(v.z())) {
+            continue;
+        }
+
+        double lat = std::numeric_limits<double>::quiet_NaN();
+        double lon = std::numeric_limits<double>::quiet_NaN();
+
+        if (llaRef_.isInit) {
+            NED ned(v.x(), v.y(), v.z());
+            LLA lla(&ned, &llaRef_);
+            if (std::isfinite(lla.latitude) && std::isfinite(lla.longitude)) {
+                lat = lla.latitude;
+                lon = lla.longitude;
+            }
+        }
+
+        out << lat << "," << lon << "," << v.z() << ","
+            << v.x() << "," << v.y() << "," << v.z() << "\n";
+    }
+
+    file.close();
 }
 
 GLuint SurfaceView::getSurfaceColorTableTextureId() const

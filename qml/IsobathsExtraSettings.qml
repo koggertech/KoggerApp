@@ -192,6 +192,54 @@ MenuFrame {
             }
         }
 
+        RowLayout {
+            CTextField {
+                id: exportSurfacePathText
+                hoverEnabled: true
+                Layout.maximumWidth: 200
+                Layout.fillWidth: true
+                placeholderText: qsTr("Enter path")
+            }
+
+            CButton {
+                text: "..."
+                Layout.fillWidth: false
+
+                onClicked: {
+                    exportSurfaceFileDialog.open()
+                }
+            }
+
+            FileDialog {
+                id: exportSurfaceFileDialog
+                folder: shortcuts.home
+                selectFolder: false
+                selectExisting: false
+                selectMultiple: false
+                defaultSuffix: "csv"
+                nameFilters: ["CSV Files (*.csv)", "All Files (*)"]
+
+                onAccepted: {
+                    exportSurfacePathText.text = exportSurfaceFileDialog.fileUrl
+                }
+            }
+
+            CButton {
+                text: qsTr("Export to CSV")
+                Layout.fillWidth: true
+                onClicked: Scene3DControlMenuController.onExportToCSVButtonClicked(exportSurfacePathText.text)
+            }
+
+
+            Settings {
+                property alias exportSurfaceFolder: exportSurfaceFileDialog.folder
+            }
+
+            Settings {
+                property alias exportSurfaceFolderText: exportSurfacePathText.text
+            }
+        }
+
         // RowLayout {
         //     visible: !isobathsDebugModeCheckButton.checked
 

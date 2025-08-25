@@ -8,6 +8,7 @@
 
 #include "surface_tile.h"
 #include "scene_object.h"
+#include "dataset_defs.h"
 
 
 class SurfaceView : public SceneObject
@@ -60,6 +61,9 @@ public:
     QVector<uint8_t>                                takeSurfaceColorTableToAppend();
     GLuint                                          takeSurfaceColorTableToDelete();
 
+    void setLlaRef(LLARef llaRef);
+    void saveVerticesToFile(const QString& path);
+
 public slots: // from dataprocessor
     void clear();
     void setTiles(const QHash<QUuid, SurfaceTile>& tiles, bool useTextures); // TODO: separate (now from mosaic)
@@ -83,4 +87,5 @@ private:
     QVector<GLuint>                                 mosaicTileTextureToDelete_;
     QVector<uint8_t>                                surfaceColorTableToAppend_;
     GLuint                                          surfaceColorTableToDelete_;
+    LLARef llaRef_;
 };
