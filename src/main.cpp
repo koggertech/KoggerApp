@@ -12,7 +12,8 @@
 #include <QFile>
 #include <QByteArray>
 #include <QQuickWindow>
-
+#include <QSql>
+#include <QSqlDatabase>
 #include "qPlot2D.h"
 #include "dataset.h"
 #include "console.h"
@@ -127,6 +128,10 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+    QCoreApplication::addLibraryPath(QStringLiteral("assets:/qt/plugins"));
+    QCoreApplication::addLibraryPath(QStringLiteral(":/android_rcc_bundle/plugins"));
+    //qputenv("QT_DEBUG_PLUGINS", "1");
+    //qDebug() << "libraryPaths =" << QCoreApplication::libraryPaths();
     loadLanguage(app);
 
     setApplicationDisplayName(app);
@@ -148,7 +153,7 @@ int main(int argc, char *argv[])
 
     core.consoleInfo("Run...");
     core.setEngine(&engine);
-
+    //qDebug() << "SQL drivers =" << QSqlDatabase::drivers(); // тут должен появиться QSQLITE
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
                      &app,      [url](QObject *obj, const QUrl &objUrl) {
