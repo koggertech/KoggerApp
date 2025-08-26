@@ -323,7 +323,7 @@ MenuFrame {
             }
             RowLayout {
                 CText {
-                    text: qsTr("Resolution, pix/m:")
+                    text: qsTr("Res., px/m:")
                 }
                 Item {
                     Layout.fillWidth: true
