@@ -490,7 +490,7 @@ void DataProcessor::flushMosaicPendingWork()
             QVector<int> vec;
             vec.reserve(pendingMosaicIndxs_.size());
             for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
-                if (mosaicCounter_ > *it) {
+                if (mosaicCounter_ >= *it) {
                     vec.append(*it);
                 }
             }
