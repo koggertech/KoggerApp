@@ -29,8 +29,6 @@ Core::Core() :
 {
     qRegisterMetaType<uint8_t>("uint8_t");
 
-    qDebug() << "Core ctr" << QThread::currentThreadId();
-
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
