@@ -1658,9 +1658,9 @@ void Core::createScene3dConnections()
     // clear render
     QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared,  scene3dViewPtr_->bottomTrack().get(),           &BottomTrack::clearData,                      connType);
     QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,     scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::clear,                         connType);
-    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,       this, [](){ qDebug() << "TODO: mosaicProcessingCleared"; },                                   connType); // тут тайлы не трогаем и картинку в них пока
+    QObject::connect(dataProcessor_, &DataProcessor::mosaicProcessingCleared,       this, [](){ /*qDebug() << "TODO: mosaicProcessingCleared";*/ },                                   connType); // тут тайлы не трогаем и картинку в них пока
     QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared,      scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::clear,                          connType);
-    QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ qDebug() << "TODO: allProcessingCleared"; },                                      connType); // TODO
+    QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ /*qDebug() << "TODO: allProcessingCleared";*/ },                                      connType); // TODO
 
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
