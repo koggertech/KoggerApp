@@ -170,7 +170,7 @@ Item  {
                 backColor: theme.controlBackColor
                 borderColor: theme.controlBackColor
                 checkedBorderColor: theme.controlBorderColor
-                checked: true
+                checked: false
                 implicitHeight: theme.controlHeight * 1.3
                 implicitWidth: theme.controlHeight * 1.3
 
@@ -211,7 +211,7 @@ Item  {
                 }
 
                 Settings {
-                    property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
+                    //property alias bottomTrackCheckButton: bottomTrackCheckButton.checked
                 }
             }
 
@@ -226,7 +226,7 @@ Item  {
                     backColor: theme.controlBackColor
                     borderColor: theme.controlBackColor
                     checkedBorderColor: theme.controlBorderColor
-                    checked: true
+                    checked: false
                     implicitHeight: theme.controlHeight * 1.3
                     implicitWidth: theme.controlHeight * 1.3
 
@@ -297,7 +297,7 @@ Item  {
                     }
 
                     Settings {
-                        property alias isobathsCheckButton: isobathsCheckButton.checked
+                        //property alias isobathsCheckButton: isobathsCheckButton.checked
                     }
                 }
 
@@ -322,7 +322,7 @@ Item  {
                     backColor: theme.controlBackColor
                     borderColor: theme.controlBackColor
                     checkedBorderColor: theme.controlBorderColor
-                    checked: true
+                    checked: false
                     implicitHeight: theme.controlHeight * 1.3
                     implicitWidth: theme.controlHeight * 1.3
 
@@ -395,7 +395,7 @@ Item  {
 
 
                     Settings {
-                        property alias mosaicViewCheckButton: mosaicViewCheckButton.checked
+                        //property alias mosaicViewCheckButton: mosaicViewCheckButton.checked
                     }
                 }
 
