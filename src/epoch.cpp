@@ -144,6 +144,16 @@ void Epoch::setPositionRef(LLARef* ref) {
     }
 }
 
+void Epoch::setDepth(float depth)
+{
+    depth_ = depth;
+}
+
+float Epoch::getDepth()
+{
+    return depth_;
+}
+
 void Epoch::setPositionDataType(DataType dataType)
 {
     _positionGNSS.dataType = dataType;

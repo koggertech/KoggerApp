@@ -834,9 +834,29 @@ public:
     ID id() override { return ID_NAV; }
     Resp  parsePayload(FrameParser &proto) override;
 
-    double latitude, longitude;
-    float accuracy;
+    struct SimpleNav {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v1; }
+
+        float yaw = NAN;
+        float pitch = NAN;
+        float roll = NAN;
+        double latitude = NAN;
+        double longitude = NAN;
+        float depth  = NAN;
+    } __attribute__((packed));
+
+    double latitude() { return _nav.latitude; }
+    double longitude() { return _nav.longitude; }
+
+    float yaw() { return _nav.yaw; }
+    float pitch() { return _nav.pitch; }
+    float roll() { return _nav.roll; }
+
+    float depth() { return _nav.depth; }
+
 protected:
+    SimpleNav _nav;
 };
 
 class IDBinDVL : public IDBin
@@ -1041,6 +1061,67 @@ public:
 protected:
     UsblSolution _usblSolution;
     BeaconActivationResponce _beaconResponcel;
+};
+
+class IDBinUsblControl : public IDBin
+{
+    Q_OBJECT
+public:
+    explicit IDBinUsblControl() : IDBin() {
+    }
+
+    ID id() override { return ID_USBL_CONTROL; }
+    Resp  parsePayload(FrameParser &proto) override;
+
+    // Fire SIGNAL_SYNC_MASTER and SIGNAL_ADDRESS_MASTER (if enabled by "address") in a sequence
+    // If (timeout_us > 0) then it will fire the signal sequence by trigger event,
+    // else immediately (not precise time) by this CMD
+    struct USBLPingRequest {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v1; }
+        // 0: immediately by this CMD
+        // 0xFFFFFFFF: trigger always enabled
+        // otherwise: enable tx trigger for a certain time after setting the value
+
+        uint32_t timeout_us = 0;
+        // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
+        uint8_t address = 0;
+    } __attribute__((packed));
+
+    // Regular addresses
+    struct USBLPingAddresses {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v2; }
+
+        uint8_t cur_position = 1; // 1-8, 0 is reserved
+        uint8_t max_position = 1; // 1-8, 0 is reserved
+        // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
+        uint8_t address[8] = {0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    } __attribute__((packed));
+
+    struct USBLResponseTimeout {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v3; }
+        // 0: silent mode, response disabled
+        // 0xFFFFFFFF: response always enabled
+        // otherwise: enable response for a certain time after setting the value
+        uint32_t timeout_us = 0;
+    } __attribute__((packed));
+
+    // Filter for incoming addresses
+    struct USBLResponseAddressFilter {
+        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr Version getVer() { return v4; }
+        // 1-8 are addresses, 0: promisc address, 0xFF: disabled address slot
+        uint8_t address = 0;
+    } __attribute__((packed));
+
+    void pingRequest(uint32_t timeout_us, uint8_t address);
+    void setResponseTimeout(uint32_t timeout_us);
+    void setResponseAddressFilter(uint8_t address);
+
+protected:
+
 };
 
 

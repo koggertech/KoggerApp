@@ -91,6 +91,7 @@ signals:
     void rangefinderComplete(const ChannelId& channelId, float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
     void positionCompleteRTK(Position position);
+    void depthComplete(float depth);
     void gnssVelocityComplete(double hSpeed, double course);
     void attitudeComplete(float yaw, float pitch, float roll);
     void encoderComplete(float e1, float e2, float e3);

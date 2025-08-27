@@ -85,13 +85,17 @@ typedef enum ID {
 
     ID_STREAM = 0x40,
 
-    ID_NAV = 0x64,
-
     ID_DVL_BEAM = 120,
     ID_DVL_VEL = 121,
     ID_DVL_MODE = 122,
 
+    ID_NAV = 0x64,
+
     ID_USBL_SOLUTION = 0x65,
+
+    ID_SIGNAL_ENCODER = 0x66, // 102
+    ID_SIGNAL_DECODER = 0x67, // 103
+    ID_USBL_CONTROL = 0x68, // 104
 
     ID_GFW = 200,
 

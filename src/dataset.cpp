@@ -298,7 +298,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
-    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: Ð½Ðµ Ð¿Ñ€Ð¾ÑÑ‚Ð¾ ÐºÐ¾Ð»-Ð²Ð¾ ÑÐ¿Ð¾Ñ… - Ð¾ÐºÐ½Ð¾ Ð½Ð°Ð·Ð°Ð´, Ð° Ð¿Ð¾ÑÐ»ÐµÐ´Ð½ÑÑ Ð½ÐµÐ¸Ð·Ð¼ÐµÐ½Ð½Ð°Ñ ÑÐ¿Ð¾Ñ…Ð° Ð¿Ð¾ Ñ‡Ð°Ñ€Ñ‚Ð°Ð¼
+    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: íå ïðîñòî êîë-âî ýïîõ - îêíî íàçàä, à ïîñëåäíÿÿ íåèçìåííàÿ ýïîõà ïî ÷àðòàì
     emit dataUpdate();
     emit chartAdded(lastIndx);
 }
@@ -506,6 +506,7 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
 
     Epoch* last_epoch = last();
     if(last_epoch->isAttAvail()) {
+        // last_epoch = addNewEpoch();
     }
 
     last_epoch->setAtt(yaw, pitch, roll);
@@ -567,6 +568,14 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 void Dataset::addPositionRTK(Position position) {
     Epoch* last_epoch = last();
     last_epoch->setExternalPosition(position);
+}
+
+void Dataset::addDepth(float depth) {
+    Epoch* last_epoch = last();
+    if(last_epoch->isDepthAvail()) {
+        last_epoch = addNewEpoch();
+    }
+    last_epoch->setDepth(depth);
 }
 
 void Dataset::addGnssVelocity(double h_speed, double course) {

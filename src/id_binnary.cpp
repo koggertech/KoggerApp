@@ -423,8 +423,9 @@ Resp IDBinTemp::parsePayload(FrameParser &proto) {
 
 
 Resp IDBinNav::parsePayload(FrameParser &proto) {
-    if(proto.ver() == v0) {
-
+    if(SimpleNav::getVer()) {
+        SimpleNav nav = proto.read<SimpleNav>();
+        _nav = nav;
     } else {
         return respErrorVersion;
     }
@@ -1078,3 +1079,38 @@ void IDBinUsblSolution::enableBeaconOnce(float timeout) {
 }
 
 
+
+Resp IDBinUsblControl::parsePayload(FrameParser &proto) {
+
+    return respOk;
+}
+
+void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address) {
+    ProtoBinOut ping_req;
+    ping_req.create(SETTING, USBLPingRequest::getVer(), id(), m_address);
+    USBLPingRequest req = {timeout_us, address};
+    ping_req.write<USBLPingRequest>(req);
+    ping_req.end();
+
+    emit binFrameOut(ping_req);
+}
+
+void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
+    ProtoBinOut ping_resp_t;
+    ping_resp_t.create(SETTING, USBLResponseTimeout::getVer(), id(), m_address);
+    USBLResponseTimeout req = {timeout_us};
+    ping_resp_t.write<USBLResponseTimeout>(req);
+    ping_resp_t.end();
+
+    emit binFrameOut(ping_resp_t);
+}
+
+void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
+    ProtoBinOut ping_resp_a;
+    ping_resp_a.create(SETTING, USBLResponseAddressFilter::getVer(), id(), m_address);
+    USBLResponseAddressFilter req = {address};
+    ping_resp_a.write<USBLResponseAddressFilter>(req);
+    ping_resp_a.end();
+
+    emit binFrameOut(ping_resp_a);
+}

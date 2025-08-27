@@ -169,6 +169,12 @@ public:
     void setPositionNED(const NED& ned);
     void setExternalPosition(Position position);
     void setPositionRef(LLARef* ref);
+
+    void setDepth(float depth);
+    float getDepth();
+    bool isDepthAvail() { return isfinite(depth_); }
+
+
     void setPositionDataType(DataType dataType);
     DataType getPositionDataType() const { return _positionGNSS.dataType; };
 
@@ -616,4 +622,7 @@ protected:
         bool isDVLSolutionAvail = false;
 
     } flags;
+
+    float depth_ = NAN;
+
 };

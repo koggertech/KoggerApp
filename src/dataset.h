@@ -197,6 +197,8 @@ public slots:
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
     void addPositionRTK(Position position);
 
+    void addDepth(float depth);
+
     void addGnssVelocity(double h_speed, double course);
 
 //    void addDateTime(int year, );

@@ -18,6 +18,7 @@ Plot2D::Plot2D()
     usblSolution_.setVisible(true);
     bottomProcessing_.setVisible(true);
     rangefinder_.setVisible(true);
+    depth_.setVisible(true);
     grid_.setVisible(true);
     aim_.setVisible(true);
     quadrature_.setVisible(false);
@@ -163,6 +164,7 @@ void Plot2D::draw(QPainter *painterPtr)
     usblSolution_.draw(this, datasetPtr_);
     bottomProcessing_.draw(this, datasetPtr_);
     rangefinder_.draw(this, datasetPtr_);
+    depth_.draw(this, datasetPtr_);
     gnss_.draw(this, datasetPtr_);
     quadrature_.draw(this, datasetPtr_);
 
