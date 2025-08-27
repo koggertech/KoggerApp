@@ -298,7 +298,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
-    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
+    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: РЅРµ РїСЂРѕСЃС‚Рѕ РєРѕР»-РІРѕ СЌРїРѕС… - РѕРєРЅРѕ РЅР°Р·Р°Рґ, Р° РїРѕСЃР»РµРґРЅСЏСЏ РЅРµРёР·РјРµРЅРЅР°СЏ СЌРїРѕС…Р° РїРѕ С‡Р°СЂС‚Р°Рј
     emit dataUpdate();
     emit chartAdded(lastIndx);
 }
