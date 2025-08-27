@@ -1,8 +1,6 @@
 #include "bottom_track.h"
 #include "scene3d_view.h"
 #include "epoch_event.h"
-//#include "text_renderer.h" TODO
-#include "draw_utils.h"
 #include "boat_track.h"
 #include <QtOpenGLExtensions/QOpenGLExtensions>
 
@@ -60,6 +58,11 @@ void BottomTrack::setDatasetPtr(Dataset* datasetPtr) {
     datasetPtr_ = datasetPtr;
 }
 
+void BottomTrack::setDataProcessorPtr(DataProcessor* dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+}
+
 void BottomTrack::actionEvent(ActionEvent actionEvent)
 {
     auto minMaxFunc = [this](bool isMin) -> void {
@@ -89,14 +92,26 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             sequenceVector.shrink_to_fit();
             const auto subArraysVec{ getSubarrays(sequenceVector) };
             const auto channels = datasetPtr_->channelsList();
+            const auto btP = datasetPtr_->getBottomTrackParam();
 
             for (auto& itm : subArraysVec) {
                 if (auto* btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
                     btp->indexFrom = itm.first;
                     btp->indexTo = itm.second;
 
-                    for (auto it = channels.begin(); it != channels.end(); ++it) {
-                        datasetPtr_->bottomTrackProcessing(it->channelId_, ChannelId()); // TODO check
+                    if (channels.size() >= 2) { // TODO
+                        QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                                  Q_ARG(DatasetChannel, channels[0]),
+                                                  Q_ARG(DatasetChannel, channels[1]),
+                                                  Q_ARG(BottomTrackParam, btP),
+                                                  Q_ARG(bool, true)/*manual*/);
+                    }
+                    else if (channels.size() == 1) {
+                        QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                                  Q_ARG(DatasetChannel, channels[0]),
+                                                  Q_ARG(DatasetChannel, DatasetChannel()),
+                                                  Q_ARG(BottomTrackParam, btP),
+                                                  Q_ARG(bool, true)/*manual*/);
                     }
                 }
                 else {
@@ -104,7 +119,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                 }
             }
 
-            updateRenderData();
+            updateRenderData(true, 0, 0, true);
             emit datasetPtr_->dataUpdate();
         }
     };
@@ -128,7 +143,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             }
             if (isSomethingDeleted) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-                updateRenderData();
+                updateRenderData(true, 0, 0, true);
                 emit datasetPtr_->dataUpdate();
             }
         }
@@ -148,7 +163,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
     }
 }
 
-void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
+void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch, bool manual)
 {
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
         auto datasetChannels = datasetPtr_->channelsList();
@@ -158,8 +173,7 @@ void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch)
         else {
             visibleChannel_ = DatasetChannel();
         }
-
-        updateRenderData(lEpoch, rEpoch);
+        updateRenderData(false, lEpoch, rEpoch, manual);
         Q_EMIT epochListChanged();
     }
 }
@@ -179,16 +193,15 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 void BottomTrack::clearData()
 {
     firstLIndx_ = -1;
+    lastIndx_ = -1;
     vertex2Epoch_.clear();
     epoch2Vertex_.clear();
+    allIndxs_.clear();
     renderData_.clear();
     visibleChannel_ = DatasetChannel();
 
     auto r = RENDER_IMPL(BottomTrack);
     r->selectedVertexIndices_.clear();
-
-    r->surfaceUpdated_ = false;
-    r->sideScanUpdated_ = false;
 
     SceneObject::clearData();
 }
@@ -230,11 +243,14 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
         return;
 
     auto* epoch = datasetPtr_->fromIndex(epochIndex);
+    NED nedPos = epoch->getPositionGNSS().ned;
+
     auto indxFromMap = vertex2Epoch_.key(epochIndex);
 
     if (!epoch ||
-        !epoch->getPositionGNSS().ned.isCoordinatesValid() ||
+        !nedPos.isCoordinatesValid() ||
         (epochIndex && !indxFromMap)) {
+        //qDebug() << "invalid pos on bottom track" << epochIndex << indxFromMap;
         return;
     }
 
@@ -246,24 +262,11 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
     Q_EMIT changed();
 }
 
-void BottomTrack::surfaceUpdated()
+void BottomTrack::setVisibleState(bool state)
 {
-    RENDER_IMPL(BottomTrack)->surfaceUpdated_ = true;
-}
+    SceneObject::setVisible(state);
 
-void BottomTrack::sideScanUpdated()
-{
-    RENDER_IMPL(BottomTrack)->sideScanUpdated_ = true;
-}
-
-void BottomTrack::surfaceStateChanged(bool state)
-{
-    RENDER_IMPL(BottomTrack)->surfaceState_ = state;
-}
-
-void BottomTrack::setSideScanVisibleState(bool state)
-{
-    RENDER_IMPL(BottomTrack)->sideScanVisibleState_ = state;
+    m_view->getBoatTrackPtr()->setBottomTrackVisibleState(state);
 }
 
 void BottomTrack::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
@@ -317,9 +320,11 @@ void BottomTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
         if (buttons.testFlag(Qt::LeftButton)) {
             auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
             if (!hits.isEmpty()) {
-                RENDER_IMPL(BottomTrack)->selectedVertexIndices_ = {hits.first().indices().first};
+                auto* r = RENDER_IMPL(BottomTrack);
+
+                r->selectedVertexIndices_ = {hits.first().indices().first};
                 auto epochIndex = vertex2Epoch_.value({hits.first().indices().first});
-                m_view->boatTrack()->selectEpoch(epochIndex);
+                m_view->getBoatTrackPtr()->selectEpoch(epochIndex);
                 auto epochEvent = new EpochEvent(EpochSelected3d, datasetPtr_->fromIndex(epochIndex),epochIndex, visibleChannel_);
                 QCoreApplication::postEvent(this, epochEvent);
             }
@@ -365,7 +370,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         }
         if (isSomethingDeleted) {
             RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-            updateRenderData();
+            updateRenderData(true, 0, 0, true);
             emit datasetPtr_->dataUpdate();
         }
     }
@@ -375,79 +380,83 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         if (!indices.isEmpty()) {
             bool isSomethingDeleted{ false };
             for (const auto& verticeIndex : indices) {
-                const auto epochIndex{ vertex2Epoch_.value(verticeIndex) };
-                if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
+                const auto epochIndx{ vertex2Epoch_.value(verticeIndex) };
+                if (auto epoch{ datasetPtr_->fromIndex(epochIndx) }) {
                     epoch->clearDistProcessing(visibleChannel_.channelId_);
-                    Q_EMIT epochErased(epochIndex);
+                    Q_EMIT epochErased(epochIndx);
                     isSomethingDeleted = true;
                 }
             }
             if (isSomethingDeleted) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-                updateRenderData();
+                updateRenderData(true, 0, 0, true);
                 emit datasetPtr_->dataUpdate();
             }
         }
     }
 }
 
-void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
+void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool manual)
 {
     if (!visibleChannel_.channelId_.isValid()) {
         return;
     }
 
-    int range = rEpoch - lEpoch;
-    if (range < 1 || lEpoch < 0 || rEpoch < 0 || firstLIndx_ > lEpoch) {
+    const int range = rEpoch - lEpoch;
+    if (range < 0 || lEpoch < 0 || rEpoch < 0) {
         return;
     }
 
+    const bool interCall = (rEpoch == 0) && (lEpoch == 0);
+    const bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
+    const bool defMode = interCall || updateAll || redrawAll;
+
+    if (firstLIndx_ > lEpoch && !defMode) {
+        return;
+    }
     if (firstLIndx_ == -1) {
         firstLIndx_ = lEpoch;
     }
 
-    bool interCall = (rEpoch == 0) && (lEpoch == 0);
-    bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
-    bool defMode = interCall || updateAll;
-
     RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-
-    if (defMode) {
-        vertex2Epoch_.clear();
-        epoch2Vertex_.clear();
-        renderData_.clear();
-    }
 
     QVector<int> updatedByIndxs;
     updatedByIndxs.reserve(range);
 
-    auto appendData = [&](const Position& pos, float dist, int epochIdx) -> void {
+    auto appendData = [&](const NED& pos, float dist, int epochIdx) -> void {
         int vIdx = renderData_.size();
-        renderData_.append(QVector3D(pos.ned.n, pos.ned.e, dist));
+        renderData_.append(QVector3D(pos.n, pos.e, dist));
         vertex2Epoch_.insert(vIdx, epochIdx); // vertice -> epoch
         epoch2Vertex_.insert(epochIdx, vIdx); // vertice -> epoch
 
         updatedByIndxs.append(vIdx);
+        lastIndx_ = rEpoch;
+
     };
 
     int currMin = defMode ? 0 : lEpoch;
     int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
 
     if (defMode) {
+        vertex2Epoch_.clear();
+        epoch2Vertex_.clear();
+        renderData_.clear();
         renderData_.reserve(currMax);
     }
 
+    bool needRetriangle = false;
+
     for (int i = currMin; i < currMax; ++i) {
         if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            const auto pos = epoch->getPositionGNSS();
-            if (!pos.ned.isCoordinatesValid()) {
+            NED pos = epoch->getPositionGNSS().ned;
+            if (!pos.isCoordinatesValid()) {
                 continue;
             }
 
             const float dist = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
-            //if (!std::isfinite(dist)) {
-            //    continue;
-            //}
+            if (!std::isfinite(dist)) {
+                needRetriangle = true;
+            }
 
             if (defMode) {
                 appendData(pos, dist, i);
@@ -467,8 +476,36 @@ void BottomTrack::updateRenderData(int lEpoch, int rEpoch)
 
     if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
-        emit updatedDataByIndxs(updatedByIndxs);
+        //uint64_t currLastIndx = static_cast<uint64_t>(updatedByIndxs.at(updatedByIndxs.size() - 1)); // TODO: from-to
+        emit updatedPoints(updatedByIndxs, manual);
     }
+
+    for (auto& itm : updatedByIndxs) {
+        allIndxs_.insert(itm);
+    }
+
+    if (defMode || needRetriangle) {
+        emit updatedPoints(QVector<int>(), manual); // completely redraw
+    }
+}
+
+QVector<int> BottomTrack::getAllIndxs()
+{
+    QVector<int> retVal(allIndxs_.begin(), allIndxs_.end());
+    std::sort(retVal.begin(), retVal.end());
+    return retVal;
+}
+
+QVector<int> BottomTrack::getRemainingIndxs()
+{
+    QVector<int> retVal;
+    retVal.reserve(allIndxs_.size());
+
+    std::copy_if(allIndxs_.begin(), allIndxs_.end(), std::back_inserter(retVal),
+                 [this](int v) { return v > lastIndx_; });
+
+    std::sort(retVal.begin(), retVal.end());
+    return retVal;
 }
 
 QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceVector)
@@ -498,11 +535,7 @@ QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceV
 }
 
 //-----------------------RenderImplementation-----------------------------//
-BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation() :
-    surfaceUpdated_(false),
-    sideScanUpdated_(false),
-    surfaceState_(true),
-    sideScanVisibleState_(true)
+BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation()
 {}
 
 BottomTrack::BottomTrackRenderImplementation::~BottomTrackRenderImplementation()
@@ -530,20 +563,12 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
     QOpenGLShaderProgram* shaderProgram = nullptr;
     int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    if ((surfaceUpdated_ && surfaceState_) || (sideScanUpdated_ && sideScanVisibleState_)) {
-        shaderProgram = shaderProgramMap["static"].get();
-        shaderProgram->bind();
-        colorLoc = shaderProgram->uniformLocation("color");
-        shaderProgram->setUniformValue(colorLoc,QVector4D(1.0f, 0.2f, 0.2f, 1.0f));
-    }
-    else {
-        shaderProgram = shaderProgramMap["height"].get();
-        shaderProgram->bind();
-        maxZLoc = shaderProgram->uniformLocation("max_z");
-        minZLoc = shaderProgram->uniformLocation("min_z");
-        shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
-        shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
-    }
+    shaderProgram = shaderProgramMap["height"].get();
+    shaderProgram->bind();
+    maxZLoc = shaderProgram->uniformLocation("max_z");
+    minZLoc = shaderProgram->uniformLocation("min_z");
+    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
 
     posLoc = shaderProgram->attributeLocation("position");
     matrixLoc = shaderProgram->uniformLocation("matrix");

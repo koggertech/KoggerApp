@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QList>
+#include <QMap>
 #include <QVector>
 #include <QTimer>
 #include "dataset_defs.h"

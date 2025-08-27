@@ -78,7 +78,6 @@
         <file>BottomTrackControlMenu.qml</file>
         <file>MpcFilterControlMenu.qml</file>
         <file>NpdFilterControlMenu.qml</file>
-        <file>SurfaceControlMenu.qml</file>
         <file>PointGroupControlMenu.qml</file>
         <file>PolygonGroupControlMenu.qml</file>
         <file>fit-in-view.svg</file>
@@ -96,5 +95,8 @@
         <file>CPopup.qml</file>
         <file>CMouseOpacityArea.qml</file>
         <file>CContact.qml</file>
+        <file>Settings3DExtraSettings.qml</file>
+        <file>IsobathsExtraSettings.qml</file>
+        <file>MosaicExtraSettings.qml</file>
     </qresource>
 </RCC>

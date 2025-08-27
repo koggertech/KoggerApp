@@ -23,7 +23,7 @@ public:
         void appendPointRenderImpl(PointObject::PointObjectRenderImplementation* impl);
         void removeRenderAt(int index);
     private:
-        virtual void createBounds() override;
+        virtual void updateBounds() override;
 
     protected:
         QList <PointObject::PointObjectRenderImplementation> m_pointRenderImplList;

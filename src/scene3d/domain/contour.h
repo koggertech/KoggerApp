@@ -23,7 +23,7 @@ protected:
     QColor m_keyPointsColor = QColor(255.0f, 255.0f, 255.0f, 255.0f);
 
 private:
-    friend class Surface;
+    //friend class Surface;
 };
 
 #endif // CONTOUR_H

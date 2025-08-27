@@ -134,6 +134,29 @@ void SceneObject::setData(const QVector<QVector3D> &data, int primitiveType)
     Q_EMIT boundsChanged();
 }
 
+void SceneObject::appendData(const QVector<QVector3D> &data)
+{
+    m_renderImpl->appendData(data);
+
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
+}
+
+void SceneObject::appendData(const QVector3D &data)
+{
+    m_renderImpl->appendData(data);
+
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
+}
+
+void SceneObject::setPrimitiveType(int primitiveType)
+{
+    m_renderImpl->setPrimitiveType(primitiveType);
+
+    Q_EMIT changed();
+}
+
 void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
 {
     if(m_filter == filter)
@@ -147,7 +170,7 @@ void SceneObject::setFilter(std::shared_ptr<AbstractEntityDataFilter> filter)
 void SceneObject::removeVertex(int index)
 {
     m_renderImpl->removeVertex(index);
-    m_renderImpl->createBounds();
+    m_renderImpl->updateBounds();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -242,7 +265,30 @@ void SceneObject::RenderImplementation::setData(const QVector<QVector3D> &data, 
 
     m_data = data;
 
-    createBounds();
+    updateBounds();
+}
+
+void SceneObject::RenderImplementation::appendData(const QVector<QVector3D>& data)
+{
+    for (const auto& itm : data) {
+        m_data.append(itm);
+    }
+
+    updateBounds();
+}
+
+void SceneObject::RenderImplementation::appendData(const QVector3D& data)
+{
+    m_data.append(data);
+
+    updateBounds();
+}
+
+void SceneObject::RenderImplementation::setPrimitiveType(int primitiveType)
+{
+    if (m_primitiveType != primitiveType) {
+        m_primitiveType = primitiveType;
+    }
 }
 
 void SceneObject::RenderImplementation::setColor(QColor color)
@@ -267,7 +313,7 @@ void SceneObject::RenderImplementation::clearData()
 {
     m_data.clear();
 
-    createBounds();
+    updateBounds();
 }
 
 QVector<QVector3D> SceneObject::RenderImplementation::data() const
@@ -312,10 +358,10 @@ void SceneObject::RenderImplementation::removeVertex(int index)
 
     m_data.removeAt(index);
 
-    createBounds();
+    updateBounds();
 }
 
-void SceneObject::RenderImplementation::createBounds()
+void SceneObject::RenderImplementation::updateBounds()
 {
     if (m_data.isEmpty()) {
         m_bounds = Cube();

@@ -17,13 +17,12 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_camera(std::make_shared<Camera>(this)),
     m_axesThumbnailCamera(std::make_shared<Camera>()),
     m_rayCaster(std::make_shared<RayCaster>()),
-    m_surface(std::make_shared<Surface>()),
+    isobathsView_(std::make_shared<IsobathsView>()),
     surfaceView_(std::make_shared<SurfaceView>()),
-    sideScanView_(std::make_shared<SideScanView>()),
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
     contacts_(std::make_shared<Contacts>(this)),
-    m_boatTrack(std::make_shared<BoatTrack>(this, this)),
+    boatTrack_(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
     m_pointGroup(std::make_shared<PointGroup>()),
@@ -31,17 +30,12 @@ GraphicsScene3dView::GraphicsScene3dView() :
     m_planeGrid(std::make_shared<PlaneGrid>()),
     navigationArrow_(std::make_shared<NavigationArrow>()),
     usblView_(std::make_shared<UsblView>()),
-    tileManager_(std::make_shared<map::TileManager>(this)),
-    updateIsobaths_(false),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
     switchedToBottomTrackVertexComboSelectionMode_(false),
-    bottomTrackWindowCounter_(-1),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
-    trackLastData_(false),
-    updateBottomTrack_(false),
-    isOpeningFile_(false)
+    trackLastData_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -49,25 +43,17 @@ GraphicsScene3dView::GraphicsScene3dView() :
 
     m_camera->setCameraListener(m_axesThumbnailCamera.get());
 
-    m_boatTrack->setColor({80,0,180});
-    m_boatTrack->setWidth(6.0f);
+    boatTrack_->setColor({80,0,180});
+    boatTrack_->setWidth(6.0f);
 
-    sideScanView_->setView(this);
     imageView_->setView(this);
 
-#ifdef SEPARATE_READING
-    updateMosaic_ = true;
-#else
-    updateMosaic_ = false;
-#endif
-
-    QObject::connect(m_surface.get(), &Surface::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(isobathsView_.get(), &IsobathsView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(surfaceView_.get(), &SurfaceView::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(sideScanView_.get(), &SideScanView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
-    QObject::connect(m_boatTrack.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(boatTrack_.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_pointGroup.get(), &PointGroup::changed, this, &QQuickFramebufferObject::update);
@@ -76,9 +62,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(navigationArrow_.get(), &NavigationArrow::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(usblView_.get(), &UsblView::changed, this, &QQuickFramebufferObject::update);
 
-    QObject::connect(m_surface.get(), &Surface::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(isobathsView_.get(), &IsobathsView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(surfaceView_.get(), &SurfaceView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(sideScanView_.get(), &SideScanView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(imageView_.get(), &ImageView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(mapView_.get(), &MapView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(contacts_.get(), &Contacts::boundsChanged, this, &GraphicsScene3dView::updateBounds);
@@ -86,26 +71,12 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_pointGroup.get(), &PointGroup::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(m_coordAxes.get(), &CoordinateAxes::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-    QObject::connect(m_boatTrack.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
+    QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
-    // map
-    QObject::connect(this, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
-
-    auto connType = Qt::DirectConnection;
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvAppendTile,         mapView_.get(),                      &MapView::onTileAppend,             connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvDeleteTile,         mapView_.get(),                      &MapView::onTileDelete,             connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileImage,    mapView_.get(),                      &MapView::onTileImageUpdated,       connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvUpdateTileVertices, mapView_.get(),                      &MapView::onTileVerticesUpdated,    connType);
-    QObject::connect(tileManager_->getTileSetPtr().get(), &map::TileSet::mvClearAppendTasks,   mapView_.get(),                      &MapView::onClearAppendTasks,       connType);
-    QObject::connect(mapView_.get(),                      &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(), &map::TileSet::onDeletedFromAppend, connType);
-
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
-
-    QObject::connect(m_bottomTrack.get(), &BottomTrack::updatedDataByIndxs, surfaceView_.get(), &SurfaceView::onUpdatedBottomTrackDataWrapper);
 
     updatePlaneGrid();
 }
@@ -120,9 +91,9 @@ QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
     return new GraphicsScene3dView::InFboRenderer();
 }
 
-std::shared_ptr<BoatTrack> GraphicsScene3dView::boatTrack() const
+std::shared_ptr<BoatTrack> GraphicsScene3dView::getBoatTrackPtr() const
 {
-    return m_boatTrack;
+    return boatTrack_;
 }
 
 std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
@@ -130,19 +101,14 @@ std::shared_ptr<BottomTrack> GraphicsScene3dView::bottomTrack() const
     return m_bottomTrack;
 }
 
-std::shared_ptr<Surface> GraphicsScene3dView::surface() const
+std::shared_ptr<IsobathsView> GraphicsScene3dView::getIsobathsViewPtr() const
 {
-    return m_surface;
+    return isobathsView_;
 }
 
 std::shared_ptr<SurfaceView> GraphicsScene3dView::getSurfaceViewPtr() const
 {
     return surfaceView_;
-}
-
-std::shared_ptr<SideScanView> GraphicsScene3dView::getSideScanViewPtr() const
-{
-    return sideScanView_;
 }
 
 std::shared_ptr<ImageView> GraphicsScene3dView::getImageViewPtr() const
@@ -197,21 +163,19 @@ bool GraphicsScene3dView::sceneBoundingBoxVisible() const
 
 Dataset *GraphicsScene3dView::dataset() const
 {
-    return m_dataset;
+    return datasetPtr_;
 }
 
 void GraphicsScene3dView::clear(bool cleanMap)
 {
-    m_surface->clearData();
+    isobathsView_->clear();
     surfaceView_->clear();
-    sideScanView_->clear();
     contacts_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
     }
-    bottomTrackWindowCounter_ = -1;
-    m_boatTrack->clearData();
+    boatTrack_->clearData();
     m_bottomTrack->clearData();
     m_polygonGroup->clearData();
     m_pointGroup->clearData();
@@ -242,29 +206,12 @@ QVector3D GraphicsScene3dView::calculateIntersectionPoint(const QVector3D &rayOr
     return retVal;
 }
 
-void GraphicsScene3dView::setUpdateMosaic(bool state)
-{
-    updateMosaic_ = state;
-}
-
-void GraphicsScene3dView::setUpdateIsobaths(bool state)
-{
-    updateIsobaths_ = state;
-}
-
-void GraphicsScene3dView::interpolateDatasetEpochs(bool fromStart)
-{
-    if (m_dataset) {
-        m_dataset->interpolateData(fromStart);
-    }
-}
-
 void GraphicsScene3dView::switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y)
 {
     switchedToBottomTrackVertexComboSelectionMode_ = true;
 
     m_bottomTrack->resetVertexSelection();
-    m_boatTrack->clearSelectedEpoch();
+    boatTrack_->clearSelectedEpoch();
     lastMode_ = m_mode;
     m_mode = ActiveMode::BottomTrackVertexComboSelectionMode;
     m_comboSelectionRect.setTopLeft({ static_cast<int>(x), static_cast<int>(height() - y) });
@@ -380,9 +327,9 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
 
     if (!wasMoved_ && wasMovedMouseButton_ == Qt::MouseButton::NoButton) {
         m_bottomTrack->resetVertexSelection();
-        m_boatTrack->clearSelectedEpoch();
+        boatTrack_->clearSelectedEpoch();
         m_bottomTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
-        m_boatTrack->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
+        boatTrack_->mousePressEvent(Qt::MouseButton::LeftButton, x, y);
     }
 
     switchedToBottomTrackVertexComboSelectionMode_ = false;
@@ -459,14 +406,16 @@ void GraphicsScene3dView::setTrackLastData(bool state)
     trackLastData_ = state;
 }
 
-void GraphicsScene3dView::setUpdateBottomTrack(bool state)
+void GraphicsScene3dView::setTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint textureId)
 {
-    updateBottomTrack_ = state;
+    emit sendMapTextureIdByTileIndx(tileIndx, textureId);
 }
 
-void GraphicsScene3dView::setIsFileOpening(bool state)
+void GraphicsScene3dView::setGridVisibility(bool state)
 {
-    isFileOpening_ = state;
+    gridVisibility_ = state;
+
+    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -494,21 +443,16 @@ void GraphicsScene3dView::setNeedToResetStartPos(bool state)
     needToResetStartPos_ = state;
 }
 
-void GraphicsScene3dView::forceUpdateDatasetRef()
+void GraphicsScene3dView::forceUpdateDatasetLlaRef()
 {
-    if (m_dataset) {
-        auto ref = m_dataset->getLlaRef();
+    if (datasetPtr_) {
+        auto ref = datasetPtr_->getLlaRef();
         m_camera->datasetLlaRef_ = ref.isInit ? ref : LLARef(m_camera->yerevanLla);
     }
 
     m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
 
     QQuickFramebufferObject::update();
-}
-
-void GraphicsScene3dView::setOpeningFileState(bool state)
-{
-    isOpeningFile_ = state;
 }
 
 void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -582,14 +526,14 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setLastEpochFocusView()
 {
-#ifndef SEPARATE_READING
-    if (isFileOpening_) {
+    auto* epoch = datasetPtr_->last();
+    if (!epoch) {
         return;
     }
-#endif
 
-    auto* epoch = m_dataset->last();
-    QVector3D currPos(epoch->getPositionGNSS().ned.n, epoch->getPositionGNSS().ned.e, 1);
+    NED posNed = epoch->getPositionGNSS().ned;
+
+    QVector3D currPos(posNed.n, posNed.e, 1);
 
     m_camera->focusOnPosition(currPos);
     updatePlaneGrid();
@@ -605,7 +549,7 @@ void GraphicsScene3dView::setIdleMode()
 
     clearComboSelectionRect();
     m_bottomTrack->resetVertexSelection();
-    m_boatTrack->clearSelectedEpoch();
+    boatTrack_->clearSelectedEpoch();
 
     QQuickFramebufferObject::update();
 }
@@ -660,88 +604,46 @@ void GraphicsScene3dView::setPolygonEditingMode()
 
 void GraphicsScene3dView::setDataset(Dataset *dataset)
 {
-    if (m_dataset)
-        QObject::disconnect(m_dataset);
-
-    m_dataset = dataset;
-
-    if (!m_dataset)
+    if (!dataset) {
         return;
+    }
 
-    m_boatTrack->setDatasetPtr(m_dataset);
-    m_bottomTrack->setDatasetPtr(m_dataset);
-    sideScanView_->setDatasetPtr(m_dataset);
-    contacts_->setDatasetPtr(m_dataset);
-    surfaceView_->setBottomTrackPtr(m_bottomTrack.get());
+    if (datasetPtr_) {
+        QObject::disconnect(datasetPtr_);
+    }
 
-    forceUpdateDatasetRef();
+    datasetPtr_ = dataset;
 
-    QObject::connect(m_dataset, &Dataset::bottomTrackUpdated,
-                     this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch) -> void {
-                                    auto fCh = m_dataset->channelsList().first();
-                                    if (!m_dataset || fCh.channelId_ != channelId) {
-                                        return;
-                                    }
-                                    clearComboSelectionRect();
-                                    m_bottomTrack->isEpochsChanged(lEpoch, rEpoch);
-                                    if (updateMosaic_) {
-                                        interpolateDatasetEpochs(false);
-                                    }
-                                }, Qt::DirectConnection);
+    boatTrack_->setDatasetPtr(datasetPtr_);
+    m_bottomTrack->setDatasetPtr(datasetPtr_);
+    contacts_->setDatasetPtr(datasetPtr_);
 
-    QObject::connect(m_dataset, &Dataset::boatTrackUpdated,
-                      this,     [this]() -> void {
-                                    m_boatTrack->setData(m_dataset->boatTrack(), GL_LINE_STRIP);
+    forceUpdateDatasetLlaRef();
 
-                                    const Position pos = m_dataset->getLastPosition();
-                                    navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), m_dataset->getLastYaw() - 90.f);
+    QObject::connect(datasetPtr_, &Dataset::bottomTrackUpdated,
+                     this,      [this](const ChannelId& channelId, int lEpoch, int rEpoch, bool manual) -> void {
+                         auto chList = datasetPtr_->channelsList();
+                         if (!datasetPtr_ || chList.empty() || chList.first().channelId_ != channelId) {
+                             return;
+                         }
+                         clearComboSelectionRect();
+                         m_bottomTrack->isEpochsChanged(lEpoch, rEpoch, manual);
 
-                                    if (trackLastData_) {
-                                        setLastEpochFocusView();
-                                    }
+                     }, Qt::DirectConnection);
 
-#ifndef SEPARATE_READING
-                                    if (isOpeningFile_) {
-                                        return;
-                                    }
-#endif
-
-                                    if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
-                                        auto* btP = m_dataset->getBottomTrackParamPtr();
-
-                                        const int endIndx    = m_dataset->endIndex();
-                                        const int windowSize = btP->windowSize;
-
-                                        int currCount = std::floor(endIndx / windowSize);
-                                        if (bottomTrackWindowCounter_ != currCount) {
-
-                                            btP->indexFrom = windowSize * bottomTrackWindowCounter_ - (windowSize / 2 + 1);
-                                            btP->indexTo   = windowSize * currCount - (windowSize / 2 + 1);
-
-                                            const auto channels = m_dataset->channelsList();
-                                            for (auto it = channels.begin(); it != channels.end(); ++it) {
-                                                m_dataset->bottomTrackProcessing(it->channelId_, ChannelId());
-                                            }
-
-                                            bottomTrackWindowCounter_ = currCount;;
-                                        }
-                                    }
-                                }, Qt::DirectConnection);
-
-    QObject::connect(m_dataset, &Dataset::updatedInterpolatedData,
-                     this,      [this](int indx) -> void {
-                                    if (sideScanView_->getWorkMode() == SideScanView::Mode::kRealtime) {
-                                        m_bottomTrack->sideScanUpdated();
-                                        sideScanView_->startUpdateDataInThread(indx);
-                                    }
-                                }, Qt::DirectConnection);
-
-    QObject::connect(m_dataset, &Dataset::updatedLlaRef,
+    QObject::connect(datasetPtr_, &Dataset::updatedLlaRef,
                      this,      [this]() -> void {
-                                   m_surface->setLlaRef(m_dataset->getLlaRef());
-                                   forceUpdateDatasetRef();
-                                   fitAllInView();
-                                }, Qt::DirectConnection);
+                         surfaceView_->setLlaRef(datasetPtr_->getLlaRef());
+                         forceUpdateDatasetLlaRef();
+                         fitAllInView();
+                     }, Qt::DirectConnection);
+}
+
+void GraphicsScene3dView::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
+
+    m_bottomTrack->setDataProcessorPtr(dataProcessorPtr_);
 }
 
 void GraphicsScene3dView::addPoints(QVector<QVector3D> positions, QColor color, float width) {
@@ -766,14 +668,13 @@ void GraphicsScene3dView::setQmlAppEngine(QQmlApplicationEngine* engine)
 
 void GraphicsScene3dView::updateBounds()
 {
-    m_bounds = m_boatTrack->bounds()
-                   .merge(m_surface->bounds())
-                   .merge(surfaceView_->bounds())
+    m_bounds = boatTrack_->bounds()
+                   .merge(isobathsView_->bounds())
                    .merge(m_bottomTrack->bounds())
-                   .merge(m_boatTrack->bounds())
+                   .merge(boatTrack_->bounds())
                    .merge(m_polygonGroup->bounds())
                    .merge(m_pointGroup->bounds())
-                   .merge(sideScanView_->bounds())
+                   .merge(surfaceView_->bounds())
                    .merge(imageView_->bounds())
                    .merge(usblView_->bounds());
 
@@ -939,8 +840,21 @@ void GraphicsScene3dView::updateMapView()
 
 void GraphicsScene3dView::updateViews()
 {
-    if (surfaceView_) {
-        surfaceView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    if (isobathsView_) {
+        isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
+    }
+}
+
+void GraphicsScene3dView::onPositionAdded(uint64_t indx)
+{
+    boatTrack_->onPositionAdded(indx);
+
+    if (const Position pos = datasetPtr_->fromIndex(indx)->getPositionGNSS(); pos.ned.isCoordinatesValid()) {
+        navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), datasetPtr_->getLastYaw() - 90.f);
+    }
+
+    if (trackLastData_) {
+        setLastEpochFocusView();
     }
 }
 
@@ -970,10 +884,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
 
     // process textures
     processMapTextures(view);
-    processColorTableTexture(view);
-    processTileTexture(view);
+    processMosaicColorTableTexture(view);
+    processMosaicTileTexture(view);
     processImageTexture(view);
-    processSurfaceViewTexture(view);
+    processSurfaceTexture(view);
 
     //read from renderer
     view->m_model = m_renderer->m_model;
@@ -983,11 +897,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     // write to renderer
     m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
-    m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->m_boatTrack->m_renderImpl));
+    m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
-    m_renderer->m_surfaceRenderImpl         = *(dynamic_cast<Surface::SurfaceRenderImplementation*>(view->m_surface->m_renderImpl));
+    m_renderer->isobathsViewRenderImpl_     = *(dynamic_cast<IsobathsView::IsobathsViewRenderImplementation*>(view->isobathsView_->m_renderImpl));
     m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
-    m_renderer->sideScanViewRenderImpl_     = *(dynamic_cast<SideScanView::SideScanViewRenderImplementation*>(view->sideScanView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
@@ -1002,6 +915,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_verticalScale             = view->m_verticalScale;
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
+    m_renderer->gridVisibility_             = view->gridVisibility_;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
@@ -1031,7 +945,7 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
         mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId);
-        viewPtr->tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
+        viewPtr->setTextureIdByTileIndx(tileIndx, textureId);
     }
 
     // update image
@@ -1056,101 +970,124 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
 
     // deleting
     auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
-    for (GLuint textureId : deleteTasks) {
-        if (textureId != 0) {
-            glDeleteTextures(1, &textureId);
+    for (auto it = deleteTasks.constBegin(); it != deleteTasks.constEnd(); ++it) {
+        if (*it != 0) {
+            glDeleteTextures(1, &*it);
         }
     }
 }
 
-void GraphicsScene3dView::InFboRenderer::processColorTableTexture(GraphicsScene3dView* viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const
 {
-    auto sideScanPtr = viewPtr->getSideScanViewPtr();
-    auto task = sideScanPtr->getColorTableTextureTask();
-    if (!task.empty()) {
-        GLuint colorTableTextureId = sideScanPtr->getColorTableTextureId();
+    auto surfacePtr = viewPtr->getSurfaceViewPtr();
+
+    // del
+    if (auto cTTDId = surfacePtr->takeMosaicColorTableToDelete(); cTTDId) {
+        surfacePtr->setMosaicColorTableTextureId(0);
+        glDeleteTextures(1, &cTTDId);
+    }
+
+    auto task = surfacePtr->takeMosaicColorTableToAppend();
+    if (task.empty()) {
+        return;
+    }
+
+    GLuint colorTableTextureId = surfacePtr->getMosaicColorTableTextureId();
 
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-        if (colorTableTextureId) {
-            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-        }
-        else {
-            glGenTextures(1, &colorTableTextureId);
-            glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-            sideScanPtr->setColorTableTextureId(colorTableTextureId);
-        }
-#else
-         if (colorTableTextureId) {
-             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-             glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-         }
-         else {
-             glGenTextures(1, &colorTableTextureId);
-             glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-
-             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-             glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-             glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-             sideScanPtr->setColorTableTextureId(colorTableTextureId);
-         }
-#endif
+    if (colorTableTextureId) {
+        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
     }
+    else {
+        glGenTextures(1, &colorTableTextureId);
+        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+
+        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
+    }
+#else
+    if (colorTableTextureId) {
+        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+    }
+    else {
+        glGenTextures(1, &colorTableTextureId);
+        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
+
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+
+        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
+    }
+#endif
 }
 
-void GraphicsScene3dView::InFboRenderer::processTileTexture(GraphicsScene3dView* viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3dView* viewPtr) const // TODO CHECK
 {
-    auto sideScanPtr = viewPtr->getSideScanViewPtr();
+    auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
-    auto tasks = sideScanPtr->getTileTextureTasks();
-
-    for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-        const QUuid& tileId = it.key();
-        const std::vector<uint8_t>& image = it.value();
-        GLuint textureId = viewPtr->getSideScanViewPtr()->getTextureIdByTileId(tileId);
-
-        if (image == std::vector<uint8_t>()) { // delete
-            sideScanPtr->setTextureIdByTileId(tileId, 0);
-            glDeleteTextures(1, &textureId);
-            continue;
+    // delete
+    {
+        auto tasks = surfacePtr->takeMosaicTileTextureToDelete();
+        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
+            if (*it != 0) {
+                glDeleteTextures(1, &(*it));
+            }
         }
+    }
 
-        if (textureId) {
-            glBindTexture(GL_TEXTURE_2D, textureId);
+    // append or update
+    {
+        auto tasks = surfacePtr->takeMosaicTileTextureToAppend();
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST); // may be changed
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
+        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
+            const auto& tileId = it->first;
+            const auto& data   = it->second;
 
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 256, 256, GL_RED, GL_UNSIGNED_BYTE, image.data());
+            if (data.empty()) {
+                continue;
+            }
+
+            const GLuint existingId = surfacePtr->getMosaicTextureIdByTileId(tileId);
+
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+            if (existingId) { // update
+                glBindTexture(GL_TEXTURE_2D, existingId);
+
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, defaultTileSidePixelSize, defaultTileSidePixelSize, GL_RED, GL_UNSIGNED_BYTE, data.data());
+
+                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+                gl->glGenerateMipmap(GL_TEXTURE_2D);
+            }
+            else { // create
+                GLuint texId = 0;
+                glGenTextures(1, &texId);
+                glBindTexture(GL_TEXTURE_2D, texId);
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, defaultTileSidePixelSize, defaultTileSidePixelSize, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
+
+                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+                gl->glGenerateMipmap(GL_TEXTURE_2D);
+
+                surfacePtr->setMosaicTextureIdByTileId(tileId, texId);
+            }
         }
-        else {
-            glGenTextures(1, &textureId);
-            glBindTexture(GL_TEXTURE_2D, textureId);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, viewPtr->getSideScanViewPtr()->getUseLinearFilter() ? GL_LINEAR : GL_NEAREST);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 256, 256, 0, GL_RED, GL_UNSIGNED_BYTE, image.data());
-
-            sideScanPtr->setTextureIdByTileId(tileId, textureId);
-        }
-
-        QOpenGLFunctions* glFuncs = QOpenGLContext::currentContext()->functions();
-        glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
     }
 }
 
@@ -1189,16 +1126,17 @@ void GraphicsScene3dView::InFboRenderer::processImageTexture(GraphicsScene3dView
     task = QImage();
 }
 
-void GraphicsScene3dView::InFboRenderer::processSurfaceViewTexture(GraphicsScene3dView *viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processSurfaceTexture(GraphicsScene3dView *viewPtr) const
 {
     // init/reinit
-    auto surfaceViewPtr = viewPtr->getSurfaceViewPtr();
-    auto& task = surfaceViewPtr->getTextureTasksRef();
+    auto surfacePtr = viewPtr->getSurfaceViewPtr();
+    auto task = surfacePtr->takeSurfaceColorTableToAppend();
 
-    if (task.empty())
+    if (task.empty()) {
         return;
+    }
 
-    GLuint textureId = surfaceViewPtr->getTextureId();
+    GLuint textureId = surfacePtr->getSurfaceColorTableTextureId();
 
     if (textureId) {
         glDeleteTextures(1, &textureId);
@@ -1214,11 +1152,10 @@ void GraphicsScene3dView::InFboRenderer::processSurfaceViewTexture(GraphicsScene
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.constData());
 
-    surfaceViewPtr->setTextureId(textureId);
-    task.clear();
+    surfacePtr->setSurfaceColorTableTextureId(textureId);
 
     // deleting
-    auto textureIdtoDel = surfaceViewPtr->getDeinitTextureTask();
+    auto textureIdtoDel = surfacePtr->takeSurfaceColorTableToDelete();
     if (textureIdtoDel) {
         glDeleteTextures(1, &textureIdtoDel);
     }
@@ -1227,7 +1164,7 @@ void GraphicsScene3dView::InFboRenderer::processSurfaceViewTexture(GraphicsScene
 GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :
     viewPtr_(viewPtr)
 {
-    setIsometricView();
+    setMapView();
 }
 
 GraphicsScene3dView::Camera::Camera(qreal pitch,

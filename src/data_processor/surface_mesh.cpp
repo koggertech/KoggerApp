@@ -1,26 +1,22 @@
-#include "global_mesh.h"
+#include "surface_mesh.h"
 
 #include <cmath>
-#include "side_scan_view.h"
 
 
-using namespace sscan;
-
-GlobalMesh::GlobalMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
+SurfaceMesh::SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
     tileResolution_(tileResolution),
     numWidthTiles_(0),
     numHeightTiles_(0),
     tileSidePixelSize_(tileSidePixelSize),
-    tileHeightMatrixRatio_(tileHeightMatrixRatio),
-    generateGridContour_(false)
+    tileHeightMatrixRatio_(tileHeightMatrixRatio)
 {
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
 
-GlobalMesh::~GlobalMesh()
-{ }
+SurfaceMesh::~SurfaceMesh()
+{}
 
-void GlobalMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
+void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
     clear();
 
@@ -31,7 +27,7 @@ void GlobalMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float 
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
 
-bool GlobalMesh::concatenate(MatrixParams &actualMatParams)
+bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
 {
     if (!actualMatParams.isValid()) {
         return false;
@@ -86,14 +82,14 @@ bool GlobalMesh::concatenate(MatrixParams &actualMatParams)
     return resized;
 }
 
-QVector3D GlobalMesh::convertPhToPixCoords(QVector3D physicsCoordinate) const
+QVector3D SurfaceMesh::convertPhToPixCoords(QVector3D physicsCoordinate) const
 {
     return QVector3D((std::fabs(origin_.x() - physicsCoordinate.x())) / tileResolution_,
                      (std::fabs(origin_.y() - physicsCoordinate.y())) / tileResolution_,
                      0);
 }
 
-void GlobalMesh::printMatrix() const
+void SurfaceMesh::printMatrix() const
 {
     qDebug() << "origin:" << origin_;
     qDebug() << "tiles (WxH): " << numWidthTiles_ << "x" << numHeightTiles_;;
@@ -115,7 +111,7 @@ void GlobalMesh::printMatrix() const
     qDebug() << "\n";
 }
 
-void GlobalMesh::clear()
+void SurfaceMesh::clear()
 {
     origin_ = QVector3D();
     for (auto& itm: tiles_) {
@@ -128,17 +124,45 @@ void GlobalMesh::clear()
     numHeightTiles_ = 0;
 }
 
-void GlobalMesh::setGenerateGridContour(bool state)
+void SurfaceMesh::clearHeightData()
 {
-    generateGridContour_ = state;
+    if (tiles_.empty()) {
+        return;
+    }
+
+    for (SurfaceTile* tile : tiles_){
+        if (!tile || !tile->getIsInited()) {
+            continue;
+        }
+
+        auto& verts = tile->getHeightVerticesRef();
+        auto& marks = tile->getHeightMarkVerticesRef();
+
+        for (int i = 0; i < verts.size(); ++i) {
+            verts[i][2] = 0.0f;
+            marks[i]    = HeightType::kUndefined;
+        }
+
+        tile->updateHeightIndices();
+    }
 }
 
-std::vector<std::vector<Tile *> > &GlobalMesh::getTileMatrixRef()
+bool SurfaceMesh::hasData() const
+{
+    return !tiles_.empty();
+}
+
+const std::vector<SurfaceTile *> &SurfaceMesh::getTilesCRef() const
+{
+    return tiles_;
+}
+
+std::vector<std::vector<SurfaceTile *> > &SurfaceMesh::getTileMatrixRef()
 {
     return tileMatrix_;
 }
 
-Tile* GlobalMesh::getTilePtrById(QUuid tileId)
+SurfaceTile* SurfaceMesh::getTilePtrById(QUuid tileId)
 {
     for (auto& itm : tiles_) {
         if (itm->getUuid() == tileId) {
@@ -148,42 +172,42 @@ Tile* GlobalMesh::getTilePtrById(QUuid tileId)
     return nullptr;
 }
 
-int GlobalMesh::getPixelWidth() const
+int SurfaceMesh::getPixelWidth() const
 {
     return numWidthTiles_ * tileSidePixelSize_;
 }
 
-int GlobalMesh::getPixelHeight() const
+int SurfaceMesh::getPixelHeight() const
 {
     return numHeightTiles_ * tileSidePixelSize_;
 }
 
-int GlobalMesh::getTileSidePixelSize() const
+int SurfaceMesh::getTileSidePixelSize() const
 {
     return tileSidePixelSize_;
 }
 
-int GlobalMesh::getNumWidthTiles() const
+int SurfaceMesh::getNumWidthTiles() const
 {
     return numWidthTiles_;
 }
 
-int GlobalMesh::getNumHeightTiles() const
+int SurfaceMesh::getNumHeightTiles() const
 {
     return numHeightTiles_;
 }
 
-int GlobalMesh::getStepSizeHeightMatrix() const
+int SurfaceMesh::getStepSizeHeightMatrix() const
 {
     return tileSidePixelSize_ / tileHeightMatrixRatio_;
 }
 
-bool GlobalMesh::getIsInited() const
+bool SurfaceMesh::getIsInited() const
 {
     return !tiles_.empty();
 }
 
-void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const MatrixParams &matrixParams)
+void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const kmath::MatrixParams &matrixParams)
 {
     numWidthTiles_ = numWidthTiles;
     numHeightTiles_ = numHeightTiles;
@@ -199,15 +223,15 @@ void GlobalMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const M
         for (int j = 0; j < numWidthTiles_; ++j) {
 
             if (!tileMatrix_[i][j]) {
-                tiles_.push_back(new Tile( { origin_.x() + j * tileSideMeterSize_,
-                                           origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+                tiles_.push_back(new SurfaceTile( { origin_.x() + j * tileSideMeterSize_,
+                                           origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }));
                 tileMatrix_[i][j] = tiles_.back();
             }
         }
     }
 }
 
-void GlobalMesh::resizeColumnsLeft(int columnsToAdd)
+void SurfaceMesh::resizeColumnsLeft(int columnsToAdd)
 {
     for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) {
         int oldSize = tileMatrix_[i].size();
@@ -218,8 +242,8 @@ void GlobalMesh::resizeColumnsLeft(int columnsToAdd)
         }
 
         for (int j = 0; j < columnsToAdd; ++j) {
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+            tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -227,7 +251,7 @@ void GlobalMesh::resizeColumnsLeft(int columnsToAdd)
     numWidthTiles_ += columnsToAdd;
 }
 
-void GlobalMesh::resizeRowsBottom(int rowsToAdd)
+void SurfaceMesh::resizeRowsBottom(int rowsToAdd)
 {
     int oldHeight = tileMatrix_.size();
     tileMatrix_.resize(oldHeight + rowsToAdd);
@@ -237,8 +261,8 @@ void GlobalMesh::resizeRowsBottom(int rowsToAdd)
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+            tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + (rowsToAdd - cnt - 1) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
         cnt++;
@@ -247,7 +271,7 @@ void GlobalMesh::resizeRowsBottom(int rowsToAdd)
     numHeightTiles_ += rowsToAdd;
 }
 
-void GlobalMesh::resizeColumnsRight(int columnsToAdd)
+void SurfaceMesh::resizeColumnsRight(int columnsToAdd)
 {
     int oldNumWidthTiles = numWidthTiles_;
 
@@ -255,8 +279,8 @@ void GlobalMesh::resizeColumnsRight(int columnsToAdd)
         tileMatrix_[i].resize(oldNumWidthTiles + columnsToAdd);
 
         for (int j = oldNumWidthTiles; j < oldNumWidthTiles + columnsToAdd; ++j) {
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+            tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -264,7 +288,7 @@ void GlobalMesh::resizeColumnsRight(int columnsToAdd)
     numWidthTiles_ += columnsToAdd;
 }
 
-void GlobalMesh::resizeRowsTop(int rowsToAdd)
+void SurfaceMesh::resizeRowsTop(int rowsToAdd)
 {
     tileMatrix_.resize(numHeightTiles_ + rowsToAdd);
 
@@ -277,8 +301,8 @@ void GlobalMesh::resizeRowsTop(int rowsToAdd)
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            tiles_.push_back(new Tile({ origin_.x() + j * tileSideMeterSize_,
-                                       origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }, generateGridContour_));
+            tiles_.push_back(new SurfaceTile({ origin_.x() + j * tileSideMeterSize_,
+                                       origin_.y() + ((numHeightTiles_ + rowsToAdd - 1) - i) * tileSideMeterSize_, 0.0f }));
             tileMatrix_[i][j] = tiles_.back();
         }
     }
@@ -286,12 +310,12 @@ void GlobalMesh::resizeRowsTop(int rowsToAdd)
     numHeightTiles_ += rowsToAdd;
 }
 
-float GlobalMesh::getWidthMeters() const
+float SurfaceMesh::getWidthMeters() const
 {
     return numWidthTiles_ * tileSideMeterSize_;
 }
 
-float GlobalMesh::getHeightMeters() const
+float SurfaceMesh::getHeightMeters() const
 {
     return numHeightTiles_ * tileSideMeterSize_;
 }

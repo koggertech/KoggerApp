@@ -17,6 +17,7 @@ public:
 
     Q_INVOKABLE void onVerticalScaleSliderValueChanged(float value);
     Q_INVOKABLE void onShowSceneBoundingBoxCheckBoxChecked(bool checked);
+    Q_INVOKABLE void onExportToCSVButtonClicked(const QString& path);
 
 protected:
     virtual void findComponent() override;

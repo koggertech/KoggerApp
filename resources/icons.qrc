@@ -12,6 +12,7 @@
         <file>icons/ui/direction.svg</file>
         <file>icons/ui/direction_arrows.svg</file>
         <file>icons/ui/direction_horizontal.svg</file>
+        <file>icons/ui/double_route.svg</file>
         <file>icons/ui/eraser.svg</file>
         <file>icons/ui/eye_cog.svg</file>
         <file>icons/ui/file.svg</file>
@@ -26,6 +27,7 @@
         <file>icons/ui/focus_2.svg</file>
         <file>icons/ui/gps.svg</file>
         <file>icons/ui/grid_4x4.svg</file>
+        <file>icons/ui/isobaths.svg</file>
         <file>icons/ui/hand_finger.svg</file>
         <file>icons/ui/home.svg</file>
         <file>icons/ui/ironing_3.svg</file>
@@ -59,6 +61,7 @@
         <file>icons/ui/satellite.svg</file>
         <file>icons/ui/separator_horizontal.svg</file>
         <file>icons/ui/settings.svg</file>
+        <file>icons/ui/side_scan.svg</file>
         <file>icons/ui/speedboat.svg</file>
         <file>icons/ui/stack.svg</file>
         <file>icons/ui/stack_backward.svg</file>

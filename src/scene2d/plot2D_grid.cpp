@@ -1,7 +1,7 @@
 #include "plot2D_grid.h"
 #include "plot2D.h"
+#include "math_defs.h"
 
-constexpr float epsilon = 0.001f;
 
 Plot2DGrid::Plot2DGrid() : angleVisibility_(false)
 {}
@@ -59,7 +59,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if (cursor.distance.isValid()) {
         p->setFont(QFont("Asap", 26, QFont::Normal));
         float val{ cursor.distance.to };
-        bool isInteger = std::abs(val - std::round(val)) < epsilon;
+        bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
         QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
         p->drawText(imageWidth - textXOffset / 2 - rangeText.count() * 25, imageHeight - 10, rangeText);
     }
@@ -81,7 +81,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
             p->setPen(pen);
             p->setFont(QFont("Asap", 40, QFont::Normal));
             float val{ round(distance * 100.f) / 100.f };
-            bool isInteger = std::abs(val - std::round(val)) < epsilon;
+            bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
             QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
             p->drawText(imageWidth / 2 - rangeText.count() * 32, imageHeight - 15, rangeText);
         }
@@ -90,6 +90,10 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if(true) {
         Epoch* lastEpoch = dataset->last();
         Epoch* preLastEpoch = dataset->lastlast();
+
+        Q_UNUSED(lastEpoch)
+        Q_UNUSED(preLastEpoch)
+
         float temp = NAN;
         temp = dataset->getLastTemp();
 
@@ -117,7 +121,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
             p->setPen(pen);
             p->setFont(QFont("Asap", 40, QFont::Normal));
             float val{ round(temp * 100.f) / 100.f };
-            bool isInteger = std::abs(val - std::round(val)) < epsilon;
+            bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
             QString rangeText = QString::number(val, 'f', isInteger ? 0 : 1) + QObject::tr("°");
             p->drawText(imageWidth / 2 - 300, imageHeight - 15, rangeText);
         }

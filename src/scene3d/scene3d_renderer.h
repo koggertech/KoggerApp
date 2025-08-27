@@ -3,9 +3,8 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "bottom_track.h"
-#include "surface.h"
+#include "isobaths_view.h"
 #include "surface_view.h"
-#include "side_scan_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
@@ -64,9 +63,8 @@ private:
     GraphicsScene3dView::Camera m_axesThumbnailCamera;
     CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
-    Surface::SurfaceRenderImplementation m_surfaceRenderImpl;
+    IsobathsView::IsobathsViewRenderImplementation isobathsViewRenderImpl_;
     SurfaceView::SurfaceViewRenderImplementation surfaceViewRenderImpl_;
-    SideScanView::SideScanViewRenderImplementation sideScanViewRenderImpl_;
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
@@ -85,4 +83,5 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     GLuint VAO, VBO;
     float scaleFactor_;
+    float gridVisibility_ = true;
 };

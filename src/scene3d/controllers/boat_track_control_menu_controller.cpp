@@ -23,7 +23,7 @@ void BoatTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool che
     visibility_ = checked;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->boatTrack()->setVisible(checked);
+        graphicsSceneViewPtr_->getBoatTrackPtr()->setVisible(checked);
     }
     else {
         tryInitPendingLambda();
@@ -45,7 +45,7 @@ void BoatTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *s
 BoatTrack *BoatTrackControlMenuController::boatTrack() const
 {
     if (graphicsSceneViewPtr_) {
-        return graphicsSceneViewPtr_->boatTrack().get();
+        return graphicsSceneViewPtr_->getBoatTrackPtr().get();
     }
 
     return nullptr;
@@ -56,7 +56,7 @@ void BoatTrackControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
-                if (auto bTPtr = graphicsSceneViewPtr_->boatTrack(); bTPtr) {
+                if (auto bTPtr = graphicsSceneViewPtr_->getBoatTrackPtr(); bTPtr) {
                     bTPtr->setVisible(visibility_);
                 }
             }

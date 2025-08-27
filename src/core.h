@@ -9,6 +9,7 @@
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
+#include "data_processor.h"
 #include "qPlot2D.h"
 #include "logger.h"
 #include "console.h"
@@ -17,9 +18,8 @@
 #include "boat_track_control_menu_controller.h"
 #include "navigation_arrow_control_menu_controller.h"
 #include "bottom_track_control_menu_controller.h"
-#include "surface_control_menu_controller.h"
-#include "surface_view_control_menu_controller.h"
-#include "side_scan_view_control_menu_controller.h"
+#include "isobaths_view_control_menu_controller.h"
+#include "mosaic_view_control_menu_controller.h"
 #include "image_view_control_menu_controller.h"
 #include "map_view_control_menu_controller.h"
 #include "usbl_view_control_menu_controller.h"
@@ -31,7 +31,10 @@
 #include "scene3d_control_menu_controller.h"
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
+#include "tile_manager.h"
 //#include <FileReader.h>
+#include "data_horizon.h"
+#include "data_processor_defs.h"
 
 
 class Core : public QObject
@@ -51,15 +54,15 @@ public:
     Q_PROPERTY(int  fixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
     Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
     Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
-    Q_PROPERTY(bool isMosaicUpdatingInThread READ getIsMosaicUpdatingInThread NOTIFY isMosaicUpdatingInThreadUpdated)
-    Q_PROPERTY(bool isSideScanPerformanceMode READ getIsSideScanPerformanceMode NOTIFY isSideScanPerformanceModeUpdated)
     Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
     Q_PROPERTY(QString ch1Name READ getChannel1Name NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString ch2Name READ getChannel2Name NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(int dataProcessorState READ getDataProcessorState NOTIFY dataProcessorStateChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
     Dataset* getDatasetPtr();
+    DataProcessor* getDataProcessorPtr() const;
     DeviceManagerWrapper* getDeviceManagerWrapperPtr() const;
     LinkManagerWrapper* getLinkManagerWrapperPtr() const;
     void stopLinkManagerTimer() const;
@@ -111,16 +114,12 @@ public slots:
     void setTimelinePosition(double position);
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
-    void setSideScanChannels(const QString& firstChStr, const QString& secondChStr);
+    void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
     bool getIsFileOpening() const;
-    void setIsMosaicUpdatingInThread(bool state);
-    void setSideScanWorkMode(SideScanView::Mode mode);
-    bool getIsMosaicUpdatingInThread() const;
-    bool getIsSideScanPerformanceMode() const;
     bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
-    void onSendIsFileOpening();
+    int getDataProcessorState() const;
 
 #ifdef FLASHER
     void connectOpenedLinkAsFlasher(QString pn);
@@ -140,20 +139,29 @@ signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();
     void sendIsFileOpening();
-    void isMosaicUpdatingInThreadUpdated();
-    void isSideScanPerformanceModeUpdated();
     void channelListUpdated();
+    void dataProcessorStateChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
 #endif
-private slots:
 
 private slots:
     void onFileStopsOpening();
+    void onSendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId); // TODO: maybe store map texture id in mapView
+    void onDataProcesstorStateChanged(const DataProcessorType& state);
 
 private:
     /*methods*/
+    void createMapTileManagerConnections();
+    void createDatasetConnections();
+    void createDataProcessor();
+    void destroyDataProcessor();
+    void createScene3dConnections();
+
+    void setDataProcessorConnections();
+    void resetDataProcessorConnections();
+
     ConsoleListModel* consoleList();
     void createControllers();
     void createDeviceManagerConnections();
@@ -173,9 +181,8 @@ private:
     std::shared_ptr<BottomTrackControlMenuController> bottomTrackControlMenuController_;
     std::shared_ptr<MpcFilterControlMenuController> mpcFilterControlMenuController_;
     std::shared_ptr<NpdFilterControlMenuController> npdFilterControlMenuController_;
-    std::shared_ptr<SurfaceControlMenuController> surfaceControlMenuController_;
-    std::shared_ptr<SurfaceViewControlMenuController> surfaceViewControlMenuController_;
-    std::shared_ptr<SideScanViewControlMenuController> sideScanViewControlMenuController_;
+    std::shared_ptr<IsobathsViewControlMenuController> isobathsViewControlMenuController_;
+    std::shared_ptr<MosaicViewControlMenuController> mosaicViewControlMenuController_;
     std::shared_ptr<ImageViewControlMenuController> imageViewControlMenuController_;
     std::shared_ptr<MapViewControlMenuController> mapViewControlMenuController_;
     std::shared_ptr<PointGroupControlMenuController> pointGroupControlMenuController_;
@@ -185,6 +192,11 @@ private:
     std::shared_ptr<UsblViewControlMenuController> usblViewControlMenuController_;
     std::unique_ptr<DeviceManagerWrapper> deviceManagerWrapperPtr_;
     std::unique_ptr<LinkManagerWrapper> linkManagerWrapperPtr_;
+    std::unique_ptr<map::TileManager> tileManager_;
+    // data processor
+    DataProcessor* dataProcessor_;
+    QThread* dataProcThread_;
+    std::unique_ptr<DataHorizon> dataHorizon_; // this thread
 
 #ifdef SEPARATE_READING
     QString tryOpenedfilePath_;
@@ -207,8 +219,6 @@ private:
     QString sChName_;
 
     bool isFileOpening_;
-    bool isMosaicUpdatingInThread_;
-    bool isSideScanPerformanceMode_;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)
@@ -225,4 +235,7 @@ private slots:
 signals:
     void dev_flasher_changed();
 #endif
+
+    QVector<QMetaObject::Connection> dataProcessorConnections_;
+    DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
 };

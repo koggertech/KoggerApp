@@ -8,6 +8,8 @@ Plot2D::Plot2D()
     , isHorizontal_(true)
     , isEnabled_(true)
 {
+    qRegisterMetaType<ChannelId>("ChannelId");
+
     echogram_.setVisible(true);
     attitude_.setVisible(true);
     encoder_.setVisible(true);
@@ -53,6 +55,11 @@ void Plot2D::setDataset(Dataset *dataset)
         pendingBtpLambda_();
         pendingBtpLambda_ = nullptr;
     }
+}
+
+void Plot2D::setDataProcessorPtr(DataProcessor *dataProcessorPtr)
+{
+    dataProcessorPtr_ = dataProcessorPtr;
 }
 
 float Plot2D::getDepthByMousePos(int mouseX, int mouseY, bool isHorizontal) const
@@ -589,7 +596,6 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
     int epoch_index = cursor_.getIndex(x_start);
     cursor_.currentEpochIndx = epoch_index;
     cursor_.lastEpochIndx = cursor_.currentEpochIndx;
-
     sendSyncEvent(epoch_index, EpochSelected2d);
 
     if(cursor_.tool() > MouseToolNothing && !isSync) {
@@ -603,7 +609,6 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
             const ChannelId channel2 = cursor_.channel2;
 
             if(epoch != NULL) {
-
                 float image_y_pos = ((float)y_start + (float)x_ind*y_scale);
                 float dist = abs(image_y_pos*image_distance_ratio + distance_from);
 
@@ -627,12 +632,17 @@ void Plot2D::setMousePosition(int x, int y, bool isSync) {
             if (auto btp = datasetPtr_->getBottomTrackParamPtr(); btp) {
                 btp->indexFrom = cursor_.getIndex(x_start);
                 btp->indexTo = cursor_.getIndex(x_start + x_length);
-                datasetPtr_->bottomTrackProcessing(cursor_.channel1, cursor_.channel2);
+
+                QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                          Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)),
+                                          Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel2, cursor_.subChannel2)),
+                                          Q_ARG(BottomTrackParam, *btp),
+                                          Q_ARG(bool, true)/*manual*/);
             }
         }
 
         if(cursor_.tool() == MouseToolDistance || cursor_.tool() == MouseToolDistanceErase) {
-            emit datasetPtr_->bottomTrackUpdated(cursor_.channel1, cursor_.getIndex(x_start), cursor_.getIndex(x_start + x_length));
+            emit datasetPtr_->bottomTrackUpdated(cursor_.channel1, cursor_.getIndex(x_start), cursor_.getIndex(x_start + x_length), true);
         }
     }
 

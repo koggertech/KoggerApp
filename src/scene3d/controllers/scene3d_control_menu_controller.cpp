@@ -26,6 +26,18 @@ void Scene3DControlMenuController::onShowSceneBoundingBoxCheckBoxChecked(bool ch
     m_graphicsSceneView->setSceneBoundingBoxVisible(checked);
 }
 
+void Scene3DControlMenuController::onExportToCSVButtonClicked(const QString &path)
+{
+    if (!m_graphicsSceneView) {
+        qDebug().noquote() << "m_graphicsSceneView is nullptr!";
+        return;
+    }
+
+    // qDebug().noquote() << "Surface processor is busy!";
+
+    m_graphicsSceneView->getSurfaceViewPtr()->saveVerticesToFile(path);
+}
+
 void Scene3DControlMenuController::findComponent()
 {
 

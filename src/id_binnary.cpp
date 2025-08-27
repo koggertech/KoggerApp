@@ -340,7 +340,7 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
             RawData& raw = _rawData[ch_group];
             int ready_samples = raw.samplesPerChannel();
 
-            if(ready_samples == header.localOffset) {
+            if (static_cast<uint32_t>(ready_samples) == header.localOffset) {
                 if(expected_data_offset == raw.data.size()) {
                     raw.data.append(data);
                 } else {

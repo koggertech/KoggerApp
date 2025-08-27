@@ -3,6 +3,7 @@ DEPENDPATH *= $$PWD
 
 HEADERS += \
     $$PWD/abstract_entity_data_filter.h \
+    $$PWD/draw_utils.h \
     $$PWD/max_points_filter.h \
     $$PWD/nearest_point_filter.h \
     $$PWD/ray.h \
@@ -10,6 +11,7 @@ HEADERS += \
     $$PWD/text_renderer.h
 
 SOURCES += \
+    $$PWD/draw_utils.cpp \
     $$PWD/max_points_filter.cpp \
     $$PWD/nearest_point_filter.cpp \
     $$PWD/ray.cpp \

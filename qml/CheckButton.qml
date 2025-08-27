@@ -16,11 +16,14 @@ Button {
     property color checkedBorderColor: "transparent"
     property color borderColor: theme.controlSolidBorderColor
     property string iconSource: ""
+    property real   iconScale: 0.80
 
     implicitHeight: theme.controlHeight
     //implicitWidth: icon.width + textWidth + leftPadding + rightPadding
 
     icon.source: iconSource
+    icon.width:  control.height * iconScale
+    icon.height: control.height * iconScale
 
     hoverEnabled: true
     padding: 0
