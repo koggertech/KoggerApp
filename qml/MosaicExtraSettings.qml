@@ -52,103 +52,88 @@ MenuFrame {
         }
     }
 
-    RowLayout {
-        ColumnLayout { // levels
-            CText {
+    ColumnLayout {
+        RowLayout {
+            spacing: 16
+
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.topMargin: 0
-                Layout.preferredWidth: theme.controlHeight*1.2
-                horizontalAlignment: Text.AlignHCenter
-                text: mosaicLevelsSlider.stopValue
-                small: true
+                height: 2
+                color: "#808080"
             }
-            ChartLevel {
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                Layout.preferredWidth: theme.controlHeight * 1.2
-                id: mosaicLevelsSlider
-                Layout.alignment: Qt.AlignHCenter
 
-                onStartValueChanged: {
-                   MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
-                }
-
-                onStopValueChanged: {
-                   MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
-                }
-
-                Component.onCompleted: {
-                    MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
-                }
-
-                Settings {
-                    property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
-                    property alias mosaicLevelsStop: mosaicLevelsSlider.stopValue
-                }
-            }
             CText {
-                Layout.fillWidth: true
-                Layout.preferredWidth: theme.controlHeight * 1.2
-                Layout.bottomMargin: 0
-                horizontalAlignment: Text.AlignHCenter
+                text: qsTr("Mosaic settings")
+            }
 
-                text: mosaicLevelsSlider.startValue
-                small: true
+            Rectangle {
+                Layout.fillWidth: true
+                height: 2
+                color: "#808080"
             }
         }
-
-        ColumnLayout {
-            RowLayout {
+        RowLayout {
+            ColumnLayout { // levels
                 CText {
-                    text: qsTr("Theme:")
-                }
-                Item {
                     Layout.fillWidth: true
+                    Layout.topMargin: 0
+                    Layout.preferredWidth: theme.controlHeight*1.2
+                    horizontalAlignment: Text.AlignHCenter
+                    text: mosaicLevelsSlider.stopValue
+                    small: true
                 }
-                CCombo {
-                    id: mosaicTheme
-                    Layout.preferredWidth: 200
+                ChartLevel {
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    id: mosaicLevelsSlider
+                    Layout.alignment: Qt.AlignHCenter
 
-                    model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
-                    currentIndex: 0
-                    onCurrentIndexChanged: {
-                        MosaicViewControlMenuController.onThemeChanged(currentIndex)
+                    onStartValueChanged: {
+                       MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
 
-                    onFocusChanged: {
-                        if (Qt.platform.os === 'android') {
-                            mosaicViewSettings.focus = true
-                        }
+                    onStopValueChanged: {
+                       MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
 
                     Component.onCompleted: {
-                        MosaicViewControlMenuController.onThemeChanged(currentIndex)
+                        MosaicViewControlMenuController.onLevelChanged(startValue, stopValue);
                     }
 
                     Settings {
-                        property alias mosaicTheme: mosaicTheme.currentIndex
+                        property alias mosaicLevelsStart: mosaicLevelsSlider.startValue
+                        property alias mosaicLevelsStop: mosaicLevelsSlider.stopValue
                     }
+                }
+                CText {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: theme.controlHeight * 1.2
+                    Layout.bottomMargin: 0
+                    horizontalAlignment: Text.AlignHCenter
+
+                    text: mosaicLevelsSlider.startValue
+                    small: true
                 }
             }
 
-            RowLayout {
-                CText {
-                    text: qsTr("Channels:")
-                }
-                Item {
-                    Layout.fillWidth: true
-                }
-                ColumnLayout {
-                    id: rowDataset
-
-                    implicitWidth: 200
-
-                    CCombo  {
-                        id: channel1Combo
+            ColumnLayout {
+                RowLayout {
+                    CText {
+                        text: qsTr("Theme:")
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    CCombo {
+                        id: mosaicTheme
                         Layout.preferredWidth: 200
 
-                        property bool suppressTextSignal: false
-                        visible: true
+                        model: [qsTr("Blue"), qsTr("Sepia"), qsTr("WRGBD"), qsTr("WhiteBlack"), qsTr("BlackWhite")]
+                        currentIndex: 0
+                        onCurrentIndexChanged: {
+                            MosaicViewControlMenuController.onThemeChanged(currentIndex)
+                        }
 
                         onFocusChanged: {
                             if (Qt.platform.os === 'android') {
@@ -156,170 +141,206 @@ MenuFrame {
                             }
                         }
 
-                        onCurrentTextChanged: {
-                            if (suppressTextSignal) {
-                                return
-                            }
-
-                            mosaicViewSettings.setChannelNamesToBackend()
-                        }
-
                         Component.onCompleted: {
-                            model = dataset.channelsNameList()
-
-                            let index = model.indexOf(core.ch1Name)
-                            if (index >= 0) {
-                                channel1Combo.currentIndex = index
-                            }
+                            MosaicViewControlMenuController.onThemeChanged(currentIndex)
                         }
 
-                        Connections {
-                            target: core
-                            function onChannelListUpdated() {
-                                let list = dataset.channelsNameList()
+                        Settings {
+                            property alias mosaicTheme: mosaicTheme.currentIndex
+                        }
+                    }
+                }
 
-                                channel1Combo.suppressTextSignal = true
+                RowLayout {
+                    CText {
+                        text: qsTr("Channels:")
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    ColumnLayout {
+                        id: rowDataset
 
-                                channel1Combo.model = []
-                                channel1Combo.model = list
+                        implicitWidth: 200
 
-                                let newIndex = list.indexOf(core.ch1Name)
-                                if (newIndex >= 0) {
-                                    channel1Combo.currentIndex = newIndex
+                        CCombo  {
+                            id: channel1Combo
+                            Layout.preferredWidth: 200
+
+                            property bool suppressTextSignal: false
+                            visible: true
+
+                            onFocusChanged: {
+                                if (Qt.platform.os === 'android') {
+                                    mosaicViewSettings.focus = true
                                 }
-                                else {
-                                    channel1Combo.currentIndex = 0
+                            }
+
+                            onCurrentTextChanged: {
+                                if (suppressTextSignal) {
+                                    return
                                 }
 
                                 mosaicViewSettings.setChannelNamesToBackend()
+                            }
 
-                                channel1Combo.suppressTextSignal = false
+                            Component.onCompleted: {
+                                model = dataset.channelsNameList()
+
+                                let index = model.indexOf(core.ch1Name)
+                                if (index >= 0) {
+                                    channel1Combo.currentIndex = index
+                                }
+                            }
+
+                            Connections {
+                                target: core
+                                function onChannelListUpdated() {
+                                    let list = dataset.channelsNameList()
+
+                                    channel1Combo.suppressTextSignal = true
+
+                                    channel1Combo.model = []
+                                    channel1Combo.model = list
+
+                                    let newIndex = list.indexOf(core.ch1Name)
+                                    if (newIndex >= 0) {
+                                        channel1Combo.currentIndex = newIndex
+                                    }
+                                    else {
+                                        channel1Combo.currentIndex = 0
+                                    }
+
+                                    mosaicViewSettings.setChannelNamesToBackend()
+
+                                    channel1Combo.suppressTextSignal = false
+                                }
+                            }
+                        }
+
+                        CCombo  {
+                            id: channel2Combo
+
+                            property bool suppressTextSignal: false
+
+                            Layout.preferredWidth: 200
+                            visible: true
+
+                            onFocusChanged: {
+                                if (Qt.platform.os === 'android') {
+                                    mosaicViewSettings.focus = true
+                                }
+                            }
+
+                            onCurrentTextChanged: {
+                                if (suppressTextSignal) {
+                                    return
+                                }
+
+                                mosaicViewSettings.setChannelNamesToBackend()
+                            }
+
+                            Component.onCompleted: {
+                                model = dataset.channelsNameList()
+
+                                let index = model.indexOf(core.ch2Name)
+                                if (index >= 0) {
+                                    channel2Combo.currentIndex = index
+                                }
+                            }
+
+                            Connections {
+                                target: core
+                                function onChannelListUpdated() {
+                                    let list = dataset.channelsNameList()
+
+                                    channel2Combo.suppressTextSignal = true
+
+                                    channel2Combo.model = []
+                                    channel2Combo.model = list
+
+                                    let newIndex = list.indexOf(core.ch2Name)
+
+                                    if (newIndex >= 0) {
+                                        channel2Combo.currentIndex = newIndex
+                                    }
+                                    else {
+                                        channel2Combo.currentIndex = 0
+                                    }
+
+                                    mosaicViewSettings.setChannelNamesToBackend()
+
+                                    channel2Combo.suppressTextSignal = false
+                                }
                             }
                         }
                     }
+                }
 
-                    CCombo  {
-                        id: channel2Combo
+                RowLayout {
+                    CText {
+                        text: qsTr("Angle, °:")
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    ColumnLayout {
+                        SpinBoxCustom  {
+                            id: mosaicLAngleOffset
+                            implicitWidth: 200
+                            from: -90
+                            to: 90
+                            stepSize: 1
+                            value: 0
+                            editable: false
 
-                        property bool suppressTextSignal: false
+                            onValueChanged: {
+                                MosaicViewControlMenuController.onSetLAngleOffset(value)
+                            }
 
-                        Layout.preferredWidth: 200
-                        visible: true
-
-                        onFocusChanged: {
-                            if (Qt.platform.os === 'android') {
+                            onFocusChanged: {
                                 mosaicViewSettings.focus = true
                             }
-                        }
 
-                        onCurrentTextChanged: {
-                            if (suppressTextSignal) {
-                                return
+                            Component.onCompleted: {
+                                MosaicViewControlMenuController.onSetLAngleOffset(value)
                             }
 
-                            mosaicViewSettings.setChannelNamesToBackend()
-                        }
-
-                        Component.onCompleted: {
-                            model = dataset.channelsNameList()
-
-                            let index = model.indexOf(core.ch2Name)
-                            if (index >= 0) {
-                                channel2Combo.currentIndex = index
+                            Settings {
+                                property alias mosaicLAngleOffset: mosaicLAngleOffset.value
                             }
                         }
 
-                        Connections {
-                            target: core
-                            function onChannelListUpdated() {
-                                let list = dataset.channelsNameList()
+                        SpinBoxCustom  {
+                            id: mosaicRAngleOffset
+                            implicitWidth: 200
+                            from: -90
+                            to: 90
+                            stepSize: 1
+                            value: 0
+                            editable: false
 
-                                channel2Combo.suppressTextSignal = true
+                            onValueChanged: {
+                                MosaicViewControlMenuController.onSetRAngleOffset(value)
+                            }
 
-                                channel2Combo.model = []
-                                channel2Combo.model = list
+                            onFocusChanged: {
+                                mosaicViewSettings.focus = true
+                            }
 
-                                let newIndex = list.indexOf(core.ch2Name)
+                            Component.onCompleted: {
+                                MosaicViewControlMenuController.onSetRAngleOffset(value)
+                            }
 
-                                if (newIndex >= 0) {
-                                    channel2Combo.currentIndex = newIndex
-                                }
-                                else {
-                                    channel2Combo.currentIndex = 0
-                                }
-
-                                mosaicViewSettings.setChannelNamesToBackend()
-
-                                channel2Combo.suppressTextSignal = false
+                            Settings {
+                                property alias mosaicRAngleOffset: mosaicRAngleOffset.value
                             }
                         }
                     }
-                }
-            }
-
-            RowLayout {
-                CText {
-                    text: qsTr("Angle, °:")
                 }
                 Item {
-                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                 }
-                ColumnLayout {
-                    SpinBoxCustom  {
-                        id: mosaicLAngleOffset
-                        implicitWidth: 200
-                        from: -90
-                        to: 90
-                        stepSize: 1
-                        value: 0
-                        editable: false
-
-                        onValueChanged: {
-                            MosaicViewControlMenuController.onSetLAngleOffset(value)
-                        }
-
-                        onFocusChanged: {
-                            mosaicViewSettings.focus = true
-                        }
-
-                        Component.onCompleted: {
-                            MosaicViewControlMenuController.onSetLAngleOffset(value)
-                        }
-
-                        Settings {
-                            property alias mosaicLAngleOffset: mosaicLAngleOffset.value
-                        }
-                    }
-
-                    SpinBoxCustom  {
-                        id: mosaicRAngleOffset
-                        implicitWidth: 200
-                        from: -90
-                        to: 90
-                        stepSize: 1
-                        value: 0
-                        editable: false
-
-                        onValueChanged: {
-                            MosaicViewControlMenuController.onSetRAngleOffset(value)
-                        }
-
-                        onFocusChanged: {
-                            mosaicViewSettings.focus = true
-                        }
-
-                        Component.onCompleted: {
-                            MosaicViewControlMenuController.onSetRAngleOffset(value)
-                        }
-
-                        Settings {
-                            property alias mosaicRAngleOffset: mosaicRAngleOffset.value
-                        }
-                    }
-                }
-            }
-            Item {
-                Layout.fillHeight: true
             }
         }
     }

@@ -42,6 +42,25 @@ MenuFrame {
 
     ColumnLayout {
         RowLayout {
+            spacing: 16
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 2
+                color: "#808080"
+            }
+
+            CText {
+                text: qsTr("Isobaths settings")
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 2
+                color: "#808080"
+            }
+        }
+        RowLayout {
             //visible: !isobathsDebugModeCheckButton.checked
             CText {
                 text: qsTr("Theme:")
