@@ -12,7 +12,7 @@ DevSettingsBox {
     // property bool isBeacon: dev ? (dev.isUSBLBeacon) ? true : false : false
 
     property bool scanEnable: scanEnableButton.checked
-    property bool isUSBL: modeButton.checked
+    property bool isUSBL: false //modeButton.checked
 
     ColumnLayout {
         id: columnItem
