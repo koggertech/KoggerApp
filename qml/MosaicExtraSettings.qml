@@ -341,6 +341,38 @@ MenuFrame {
                 Item {
                     Layout.fillHeight: true
                 }
+                RowLayout {
+                    CText {
+                        text: qsTr("Res., px/m:")
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    SpinBoxCustom {
+                        id: mosaicResolutionSpinBox
+                        implicitWidth: 200
+                        from: 5
+                        to: 100
+                        stepSize: 5
+                        value: 10
+                        editable: false
+
+                        onFocusChanged: {
+                            mosaicViewSettings.focus = true
+                        }
+
+                        onValueChanged: {
+                            MosaicViewControlMenuController.onSetResolution(value)
+                        }
+                        Component.onCompleted: {
+                            MosaicViewControlMenuController.onSetResolution(value)
+                        }
+
+                        Settings {
+                            property alias mosaicResolutionSpinBox: mosaicResolutionSpinBox.value
+                        }
+                    }
+                }
             }
         }
     }
