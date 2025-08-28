@@ -62,6 +62,11 @@ Item  {
                 implicitHeight: theme.controlHeight * 1.3
                 implicitWidth: theme.controlHeight * 1.3
 
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Reset camera")
+                    popupPosition: "topRight"
+                }
+
                 hoverEnabled: true
                 onHoveredChanged: {
                     toolbarRoot.isFitViewCheckButtonHovered = hovered
@@ -151,6 +156,11 @@ Item  {
                     toolbarRoot.isBoatTrackCheckButtonHovered = hovered
                 }
 
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Boat track")
+                    popupPosition: "topRight"
+                }
+
                 onCheckedChanged: {
                     BoatTrackControlMenuController.onVisibilityCheckBoxCheckedChanged(checked)
                 }
@@ -177,6 +187,11 @@ Item  {
                 hoverEnabled: true
 
                 property bool pulse: core.dataProcessorState === 1
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Bottom track")
+                    popupPosition: "topRight"
+                }
 
                 SequentialAnimation {
                     id: pulseBottomTrackAnimation

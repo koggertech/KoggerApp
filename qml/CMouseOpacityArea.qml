@@ -9,6 +9,8 @@ MouseArea {
 
     property bool isMouseAccepted: false
     property string toolTipText: qsTr("Tooltip")
+    property string popupPosition: "bottomRight"
+    property point popupOffset: Qt.point(10, 10)
 
     onPressed: {
         if (mouse.source === 2) {
@@ -49,5 +51,7 @@ MouseArea {
     CPopup {
         id: customToolTip
         popupText: toolTipText
+        popupPosition: hoverArea.popupPosition
+        popupOffset: hoverArea.popupOffset
     }
 }
