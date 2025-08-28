@@ -513,6 +513,14 @@ void GraphicsScene3dView::setCancelZoomView()
 }
 
 void GraphicsScene3dView::setMapView() {
+    auto datasetLlaRef = datasetPtr_->getLlaRef();
+    if (datasetLlaRef.isInit) {
+        m_camera->viewLlaRef_ = datasetPtr_->getLlaRef();
+    }
+    else {
+        m_camera->viewLlaRef_ = m_camera->yerevanLla;
+    }
+
     m_camera->setMapView();
     m_axesThumbnailCamera->setMapView();
 
