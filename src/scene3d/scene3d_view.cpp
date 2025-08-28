@@ -847,11 +847,23 @@ void GraphicsScene3dView::updateViews()
 
 void GraphicsScene3dView::onPositionAdded(uint64_t indx)
 {
+    if (!datasetPtr_) {
+        return;
+    }
+
+    auto* epPtr = datasetPtr_->fromIndex(indx);
+    if (!epPtr) {
+        return;
+    }
+
+    const Position pos = epPtr->getPositionGNSS();
+    if (!pos.ned.isCoordinatesValid()) {
+        return;
+    }
+
     boatTrack_->onPositionAdded(indx);
 
-    if (const Position pos = datasetPtr_->fromIndex(indx)->getPositionGNSS(); pos.ned.isCoordinatesValid()) {
-        navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), datasetPtr_->getLastYaw() - 90.f);
-    }
+    navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), datasetPtr_->getLastYaw() - 90.f);
 
     if (trackLastData_) {
         setLastEpochFocusView();
