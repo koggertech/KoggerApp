@@ -83,7 +83,7 @@ private:
     QHash<VerticeIndex,EpochIndex> vertex2Epoch_;
     QHash<VerticeIndex,EpochIndex> epoch2Vertex_;
     QSet<int> allIndxs_;
-    DatasetChannel visibleChannel_;
+    DatasetChannel visibleChannel_; // ?!
     Dataset* datasetPtr_;
     DataProcessor* dataProcessorPtr_;
     QVector<QVector3D> renderData_;

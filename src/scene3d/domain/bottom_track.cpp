@@ -136,7 +136,11 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             for (const auto& verticeIndex : indices) {
                 const auto epochIndex{ vertex2Epoch_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndex) }) {
-                    epoch->clearDistProcessing(visibleChannel_.channelId_);
+                    const auto channels = datasetPtr_->channelsList(); // TODO
+                    for (const auto& itm : channels) {
+                        epoch->clearDistProcessing(itm.channelId_);
+                    }
+
                     Q_EMIT epochErased(epochIndex);
                     isSomethingDeleted = true;
                 }
@@ -168,7 +172,7 @@ void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch, bool manual)
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
         auto datasetChannels = datasetPtr_->channelsList();
         if (!datasetChannels.isEmpty()) {
-            visibleChannel_ = datasetChannels.first();
+            visibleChannel_ = datasetChannels.first(); // ?!
         }
         else {
             visibleChannel_ = DatasetChannel();
@@ -363,6 +367,11 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         for (const auto& verticeIndex : indices) {
             const auto epochIndx{ vertex2Epoch_.value(verticeIndex) };
             if (auto epoch{ datasetPtr_->fromIndex(epochIndx) }) {
+                const auto channels = datasetPtr_->channelsList(); // TODO
+                for (const auto& itm : channels) {
+                    epoch->clearDistProcessing(itm.channelId_);
+                }
+
                 epoch->clearDistProcessing(visibleChannel_.channelId_);
                 Q_EMIT epochErased(epochIndx);
                 isSomethingDeleted = true;
@@ -382,7 +391,10 @@ void BottomTrack::keyPressEvent(Qt::Key key)
             for (const auto& verticeIndex : indices) {
                 const auto epochIndx{ vertex2Epoch_.value(verticeIndex) };
                 if (auto epoch{ datasetPtr_->fromIndex(epochIndx) }) {
-                    epoch->clearDistProcessing(visibleChannel_.channelId_);
+                    const auto channels = datasetPtr_->channelsList(); // TODO
+                    for (const auto& itm : channels) {
+                        epoch->clearDistProcessing(itm.channelId_);
+                    }
                     Q_EMIT epochErased(epochIndx);
                     isSomethingDeleted = true;
                 }
@@ -478,7 +490,6 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
 
     if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
-        //uint64_t currLastIndx = static_cast<uint64_t>(updatedByIndxs.at(updatedByIndxs.size() - 1)); // TODO: from-to
         emit updatedPoints(updatedByIndxs, manual, isDel);
     }
 
