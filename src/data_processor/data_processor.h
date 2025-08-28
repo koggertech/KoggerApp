@@ -43,7 +43,7 @@ public slots:
     void setIsOpeningFile (bool state);
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
-    void onBottomTrackAdded(const QVector<int>& indxs, bool manual);
+    void onBottomTrackAdded(const QVector<int>& indxs, bool manual, bool isDel);
     void onEpochAdded(uint64_t indx);
     void onPositionAdded(uint64_t indx);
     void onAttitudeAdded(uint64_t indx);

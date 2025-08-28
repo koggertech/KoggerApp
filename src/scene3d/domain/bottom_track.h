@@ -64,7 +64,7 @@ Q_SIGNALS:
     void epochErased(int epochIndex);
     void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
-    void updatedPoints(const QVector<int>& indx, bool manual);
+    void updatedPoints(const QVector<int>& indx, bool manual, bool isDel);
 
 protected:
     friend class GraphicsScene3dView;

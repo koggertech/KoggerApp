@@ -1638,9 +1638,16 @@ void Core::destroyDataProcessor()
 void Core::createScene3dConnections()
 {
     QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
-    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints,
-                     this, [this](const QVector<int>& indxs, bool manual) { dataHorizon_->onAddedBottomTrack3D(indxs.empty() ? scene3dViewPtr_->bottomTrack()->getAllIndxs() : indxs, manual); });
-
+    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints, this, [this](const QVector<int>& indxs, bool manual, bool isDel) {
+        if (indxs.empty()) {
+            if (!manual) {
+                dataHorizon_->onAddedBottomTrack3D(scene3dViewPtr_->bottomTrack()->getAllIndxs(), manual, isDel);
+            }
+        }
+        else {
+            dataHorizon_->onAddedBottomTrack3D(indxs, manual, isDel);
+        }
+    });
     // res work proc
     auto connType = Qt::QueuedConnection;
     // Surface

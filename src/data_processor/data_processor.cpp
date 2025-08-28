@@ -168,16 +168,18 @@ void DataProcessor::onChartsAdded(uint64_t indx)
     }
 }
 
-void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual) // indexes from 3D (conn,open file, edit echo)
+void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual, bool isDel) // indexes from 3D (conn,open file, edit echo)
 {
     if (indxs.empty()) {
         return;
     }
 
     for (int itm : indxs) {
-        epIndxsFromBottomTrack_.insert(itm);
-        pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', itm));
-        pendingMosaicIndxs_.insert(itm);
+        if (!isDel) {
+            epIndxsFromBottomTrack_.insert(itm);
+            pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', itm));
+            pendingMosaicIndxs_.insert(itm);
+        }
     }
     pendingIsobathsWork_ = true;
 

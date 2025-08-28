@@ -474,10 +474,12 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
         }
     }
 
+    bool isDel = !updatedByIndxs.empty() && !renderData_.isEmpty() && needRetriangle;
+
     if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
         //uint64_t currLastIndx = static_cast<uint64_t>(updatedByIndxs.at(updatedByIndxs.size() - 1)); // TODO: from-to
-        emit updatedPoints(updatedByIndxs, manual);
+        emit updatedPoints(updatedByIndxs, manual, isDel);
     }
 
     for (auto& itm : updatedByIndxs) {
@@ -485,7 +487,7 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
     }
 
     if (defMode || needRetriangle) {
-        emit updatedPoints(QVector<int>(), manual); // completely redraw
+        emit updatedPoints(QVector<int>(), manual, isDel); // completely redraw
     }
 }
 

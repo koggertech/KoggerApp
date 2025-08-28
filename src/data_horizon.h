@@ -28,7 +28,7 @@ signals:
     void chartAdded(uint64_t indx);
     void attitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
-    void bottomTrack3DAdded(const QVector<int>& indx, bool manual);
+    void bottomTrack3DAdded(const QVector<int>& indx, bool manual, bool isDel);
     void mosaicCanCalc(uint64_t indx);
 
 public slots:
@@ -38,7 +38,7 @@ public slots:
     void onAddedChart(uint64_t indx);
     void onAddedAttitude(uint64_t indx);
     void onAddedBottomTrack(uint64_t indx); // from bottom track algorithm
-    void onAddedBottomTrack3D(const QVector<int>& indx, bool manual); // from 2D (editing), 3D
+    void onAddedBottomTrack3D(const QVector<int>& indx, bool manual, bool isDel); // from 2D (editing), 3D
 
 private:
     bool canEmitHorizon(bool beenChanged) const;
