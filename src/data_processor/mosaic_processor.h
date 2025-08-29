@@ -46,6 +46,7 @@ private:
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
     void updateData(const QVector<int>& indxs);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
+    bool canceled() const noexcept;
 
 private:
     mosaic::PlotColorTable colorTable_;

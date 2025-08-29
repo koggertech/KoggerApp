@@ -1,14 +1,16 @@
 #pragma once
 
-#include <QFuture>
-#include <QFutureWatcher>
-#include <QMutex>
+#include <atomic>
 #include <QObject>
-#include <QSet>
 #include <QTimer>
+#include <QSet>
 #include <QVector>
 #include <QVector3D>
+#include <QPair>
+#include <QThread>
+#include <QUuid>
 #include "surface_mesh.h"
+#include "dataset_defs.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
@@ -23,15 +25,27 @@ enum class DataProcessorType {
     kSurface
 };
 
+enum WorkFlag : quint32 {
+    WF_None     = 0,
+    WF_Surface  = 1u << 0,
+    WF_Mosaic   = 1u << 1,
+    WF_Isobaths = 1u << 2,
+    WF_All      = WF_Surface | WF_Mosaic | WF_Isobaths
+};
+Q_DECLARE_FLAGS(WorkSet, WorkFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(WorkSet)
+
 class Dataset;
-class DataProcessor : public QObject
-{
+class BottomTrack;
+class ComputeWorker;
+class DataProcessor : public QObject {
     Q_OBJECT
 public:
     explicit DataProcessor(QObject* parent = nullptr);
     ~DataProcessor() override;
 
     void setDatasetPtr(Dataset* datasetPtr);
+    inline bool isCancelRequested() const noexcept { return cancelRequested_.load(); }
 
 public slots:
     // this
@@ -74,6 +88,7 @@ public slots:
     void setMaxZ(float maxZ);
     void onIsobathsUpdated();
     void onMosaicUpdated();
+    void requestCancel() noexcept;
 
 signals:
     // this
@@ -103,9 +118,10 @@ signals:
     void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles, bool useTextures);
 
 private slots:
-    void flushSurfacePendingWork();
-    void flushIsobathsPendingWork();
-    void flushMosaicPendingWork();
+    void runCoalescedWork();
+    void startTimerIfNeeded();
+    void onWorkerFinished(); // слот на сигнал ComputeWorker::jobFinished
+    void postState(DataProcessorType s);
 
 private:
     // this
@@ -115,6 +131,9 @@ private:
     void clearMosaicProcessing();
     void clearSurfaceProcessing();
     void clearAllProcessings();
+    void scheduleLatest(WorkSet mask = WorkSet(WF_All),
+                        bool replace = false,
+                        bool clearUnrequestedPending = false) noexcept;
 
 private:
     friend class SurfaceProcessor;
@@ -125,10 +144,11 @@ private:
     // this
     Dataset* datasetPtr_;
     SurfaceMesh surfaceMesh_;
-    BottomTrackProcessor bottomTrackProcessor_; // need Charts
-    IsobathsProcessor isobathsProcessor_; // need BottomTrack to calc
-    MosaicProcessor mosaicProcessor_; // need BottomTrack, Charts, Attitude to calc
-    SurfaceProcessor surfaceProcessor_;
+    
+    // рабочая нить и воркер
+    QThread computeThread_;
+    ComputeWorker* worker_;
+
     DataProcessorType state_;
     uint64_t chartsCounter_;
     uint64_t bottomTrackCounter_;
@@ -151,4 +171,10 @@ private:
     QSet<int> pendingMosaicIndxs_;
     bool pendingIsobathsWork_;
     QTimer pendingWorkTimer_;
+
+    // отмена/планирование
+    std::atomic_bool cancelRequested_{false};
+    std::atomic_bool jobRunning_{false};
+    std::atomic_bool nextRunPending_{false};
+    std::atomic<uint32_t> requestedMask_{0};
 };

@@ -1,19 +1,22 @@
 #include "data_processor.h"
 
+#include <cmath>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QMetaObject>
 #include <QDebug>
-#include "bottom_track.h"
+#include <QtGlobal>
+#include <cmath>
+#include "compute_worker.h"
 #include "dataset.h"
 
+
+static inline uint32_t toMask(WorkSet s){ return static_cast<uint32_t>(s); }
 
 DataProcessor::DataProcessor(QObject *parent)
     : QObject(parent),
     datasetPtr_(nullptr),
     surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
-    bottomTrackProcessor_(this),
-    isobathsProcessor_(this),
-    mosaicProcessor_(this),
-    surfaceProcessor_(this),
+    worker_(nullptr),
     state_(DataProcessorType::kUndefined),
     chartsCounter_(0),
     bottomTrackCounter_(0),
@@ -27,55 +30,68 @@ DataProcessor::DataProcessor(QObject *parent)
     bottomTrackWindowCounter_(0),
     mosaicCounter_(0),
     tileResolution_(defaultTileResolution),
-    pendingIsobathsWork_(false)
+    pendingIsobathsWork_(false),
+    cancelRequested_(false),
+    jobRunning_(false),
+    nextRunPending_(false),
+    requestedMask_(0)
 {
+    qRegisterMetaType<WorkBundle>("WorkBundle");
+    qRegisterMetaType<DatasetChannel>("DatasetChannel");
+    qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
-    qRegisterMetaType<DataProcessorType>("DataProcessorState");
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
     qRegisterMetaType<QHash<QUuid, SurfaceTile>>("QHash<QUuid, SurfaceTile>");
-
-    surfaceProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
-    isobathsProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
-    mosaicProcessor_.setSurfaceMeshPtr(&surfaceMesh_);
+    qRegisterMetaType<Dataset*>("Dataset*");
+    qRegisterMetaType<std::uint8_t>("std::uint8_t");
 
     pendingWorkTimer_.setParent(this);
     pendingWorkTimer_.setSingleShot(true);
     pendingWorkTimer_.setInterval(10);
-    connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::flushSurfacePendingWork);
-    connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::flushIsobathsPendingWork);
-    connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::flushMosaicPendingWork);
+    connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::runCoalescedWork);
+
+    worker_ = new ComputeWorker(this, datasetPtr_, &surfaceMesh_);
+    worker_->moveToThread(&computeThread_);
+    connect(worker_, &ComputeWorker::jobFinished, this, &DataProcessor::onWorkerFinished, Qt::QueuedConnection);
+    computeThread_.setObjectName("ComputeWorkerThread");
+    computeThread_.start();
 }
 
 DataProcessor::~DataProcessor()
 {
+    requestCancel();
+    computeThread_.quit();
+    computeThread_.wait();
+    worker_->deleteLater();
 }
 
 void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
 {
     datasetPtr_ = datasetPtr;
 
-    bottomTrackProcessor_.setDatasetPtr(datasetPtr_);
-    mosaicProcessor_.setDatasetPtr(datasetPtr_);
+    QMetaObject::invokeMethod(worker_, "setDatasetPtr", Qt::QueuedConnection, Q_ARG(Dataset*, datasetPtr_));
 }
 
 void DataProcessor::setBottomTrackPtr(BottomTrack *bottomTrackPtr)
 {
-    surfaceProcessor_.setBottomTrackPtr(bottomTrackPtr);
+    QMetaObject::invokeMethod(worker_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, bottomTrackPtr));
 }
 
 void DataProcessor::clearProcessing(DataProcessorType procType)
 {
     // TODO отдельный сброс настроек
+
+    requestCancel();
+
     switch (procType) {
     case DataProcessorType::kUndefined:   clearAllProcessings();        emit allProcessingCleared();         break;
     case DataProcessorType::kBottomTrack: clearBottomTrackProcessing(); emit bottomTrackProcessingCleared(); break;
     case DataProcessorType::kIsobaths:    clearIsobathsProcessing();    emit isobathsProcessingCleared();    break;
     case DataProcessorType::kMosaic:      clearMosaicProcessing();      emit mosaicProcessingCleared();      break;
-    case DataProcessorType::kSurface:     clearSurfaceProcessing();     emit surfaceProcessingCleared();      break;
+    case DataProcessorType::kSurface:     clearSurfaceProcessing();     emit surfaceProcessingCleared();     break;
     default: break;
     }
 
-    // this
     chartsCounter_ = 0;
     bottomTrackCounter_ = 0;
     epochCounter_ = 0;
@@ -89,9 +105,7 @@ void DataProcessor::setUpdateBottomTrack(bool state)
     updateBottomTrack_ = state;
 
     if ((updateBottomTrack_ || updateIsobaths_ || updateMosaic_) && !pendingSurfaceIndxs_.empty()) {
-        if (!pendingWorkTimer_.isActive()) {
-            pendingWorkTimer_.start();
-        }
+        scheduleLatest(WorkSet(WF_Surface));
     }
 }
 
@@ -100,9 +114,7 @@ void DataProcessor::setUpdateIsobaths(bool state)
     updateIsobaths_ = state;
 
     if (updateIsobaths_) {
-        if (!pendingWorkTimer_.isActive()) {
-            pendingWorkTimer_.start();
-        }
+        scheduleLatest(WorkSet(WF_Isobaths));
     }
 }
 
@@ -111,15 +123,11 @@ void DataProcessor::setUpdateMosaic(bool state)
     updateMosaic_ = state;
 
     if (updateMosaic_ && !pendingMosaicIndxs_.empty()) {
-        if (!pendingWorkTimer_.isActive()) {
-            pendingWorkTimer_.start();
-        }
-    } else if (!updateMosaic_) {
-        pendingIsobathsWork_ = true; // мозайка могла изменить поверхность
-
-        if (!pendingWorkTimer_.isActive()) {
-            pendingWorkTimer_.start();
-        }
+        scheduleLatest(WorkSet(WF_Mosaic));
+    }
+    else if (!updateMosaic_) {
+        pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
+        scheduleLatest(WorkSet(WF_Isobaths));
     }
 }
 
@@ -141,7 +149,7 @@ void DataProcessor::onChartsAdded(uint64_t indx)
     if (updateMosaic_ || updateIsobaths_ || updateBottomTrack_) {
         auto btP = datasetPtr_->getBottomTrackParam();
 
-        const int endIndx    = indx;
+        const int endIndx    = static_cast<int>(indx);
         const int windowSize = btP.windowSize;
 
         int currCount = std::floor(endIndx / windowSize);
@@ -152,25 +160,23 @@ void DataProcessor::onChartsAdded(uint64_t indx)
             btP.indexTo   = std::max(0, windowSize * currCount - (windowSize / 2 + 1) - additionalBTPGap);
 
             const auto channels = datasetPtr_->channelsList();
-            // for (auto it = channels.begin(); it != channels.end(); ++it) {
-            //     bottomTrackProcessor_.bottomTrackProcessing(it->channelId_, ChannelId(), btP);
-            // }
-
-            if (channels.size() >= 2) { // TODO
-                bottomTrackProcessor_.bottomTrackProcessing(channels[0], channels[1], btP, false);
+            if (!channels.isEmpty()) {
+                const DatasetChannel ch1 = channels[0];
+                const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
+                QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                          Q_ARG(DatasetChannel, ch1),
+                                          Q_ARG(DatasetChannel, ch2),
+                                          Q_ARG(BottomTrackParam, btP),
+                                          Q_ARG(bool, false));
             }
-            else if (channels.size() == 1) {
-                bottomTrackProcessor_.bottomTrackProcessing(channels[0], DatasetChannel(), btP, false);
-            }
-
             bottomTrackWindowCounter_ = currCount;
         }
     }
 }
 
-void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual, bool isDel) // indexes from 3D (conn,open file, edit echo)
+void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual, bool isDel)
 {
-    if (indxs.empty()) {
+    if (indxs.isEmpty()) {
         return;
     }
 
@@ -183,14 +189,12 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual, b
     }
     pendingIsobathsWork_ = true;
 
-    if (!pendingWorkTimer_.isActive()) {
-        pendingWorkTimer_.start();
-    }
+    scheduleLatest(WorkSet(WF_All));
 }
 
 void DataProcessor::onEpochAdded(uint64_t indx)
 {
-    epochCounter_ = indx;
+    epochCounter_    = indx;
 }
 
 void DataProcessor::onPositionAdded(uint64_t indx)
@@ -205,231 +209,134 @@ void DataProcessor::onAttitudeAdded(uint64_t indx)
 
 void DataProcessor::onMosaicCanCalc(uint64_t indx)
 {
-    //qDebug() << "DataProcessor::onMosaicCanCalc" << indx;
-
-    mosaicCounter_ = indx;
+    mosaicCounter_   = indx;
 }
 
-void DataProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam &bottomTrackParam, bool manual)
+void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const DatasetChannel &ch2, const BottomTrackParam &p, bool manual)
 {
-    bottomTrackProcessor_.bottomTrackProcessing(channel1, channel2, bottomTrackParam, manual);
+    QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
+                              Q_ARG(DatasetChannel, ch1),
+                              Q_ARG(DatasetChannel, ch2),
+                              Q_ARG(BottomTrackParam, p),
+                              Q_ARG(bool, manual));
 }
 
 void DataProcessor::setSurfaceColorTableThemeById(int id)
 {
-    //qDebug() << "DataProcessor::setSurfaceColorTableThemeById" << id;
-
-    if (surfaceProcessor_.getThemeId() == id) {
-        return;
-    }
-
-    surfaceProcessor_.setThemeId(id);
-
-    if (updateIsobaths_ || updateMosaic_) {
-        surfaceProcessor_.rebuildColorIntervals();
-    }
-}
-
-void DataProcessor::setIsobathsLabelStepSize(float val)
-{
-    //qDebug() << "DataProcessor::setIsobathsLabelStepSize" << val;
-
-    if (qFuzzyCompare(isobathsProcessor_.getLabelStepSize(), val)) {
-        return;
-    }
-
-    isobathsProcessor_.setLabelStepSize(val);
-
-    if (updateIsobaths_) {
-        isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
-    }
-}
-
-void DataProcessor::setSurfaceIsobathsStepSize(float val)
-{
-    if (!qFuzzyCompare(surfaceProcessor_.getSurfaceStepSize(), val)) {
-        surfaceProcessor_.setSurfaceStepSize(val);
-        emit sendSurfaceStepSize(val);
-        if (updateIsobaths_ || updateMosaic_) {
-            surfaceProcessor_.rebuildColorIntervals();
-        }
-    }
-
-    if (!qFuzzyCompare(isobathsProcessor_.getLineStepSize(), val)) {
-        isobathsProcessor_.setLineStepSize(val);
-        emit sendIsobathsLineStepSize(val);
-        if (updateIsobaths_) {
-            isobathsProcessor_.onUpdatedBottomTrackData();
-        }
-    }
+    QMetaObject::invokeMethod(worker_, "setSurfaceThemeId", Qt::QueuedConnection, Q_ARG(int, id));
 }
 
 void DataProcessor::setSurfaceEdgeLimit(int val)
 {
-    //qDebug() << "DataProcessor::setIsobathsEdgeLimit" << val;
-
-    auto edgeLimit = static_cast<float>(val);
-
-    if (qFuzzyCompare(surfaceProcessor_.getEdgeLimit(), edgeLimit)) {
-        return;
-    }
-
-    surfaceProcessor_.setEdgeLimit(edgeLimit); // тот же расчет
-
-    // чистка рендера
-    emit isobathsProcessingCleared();
-    emit surfaceProcessingCleared();
-    emit mosaicProcessingCleared(); //
-
-    // установка полной задачи
-    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-        const auto itm = *it;
-        pendingMosaicIndxs_.insert(itm);
-        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
-    }
-    pendingIsobathsWork_ = true;
-
-    if (!pendingWorkTimer_.isActive()) {
-        pendingWorkTimer_.start();
-    }
+    QMetaObject::invokeMethod(worker_, "setSurfaceEdgeLimit", Qt::QueuedConnection, Q_ARG(float, float(val)));
 }
 
 void DataProcessor::setExtraWidth(int val)
 {
-    if (surfaceProcessor_.getExtraWidth() == val) {
-        return;
-    }
+    QMetaObject::invokeMethod(worker_, "setSurfaceExtraWidth", Qt::QueuedConnection, Q_ARG(int, val));
+}
 
-    surfaceProcessor_.setExtraWidth(val);
+void DataProcessor::setIsobathsLabelStepSize(float val)
+{
+    QMetaObject::invokeMethod(worker_, "setIsobathsLabelStepSize", Qt::QueuedConnection, Q_ARG(float, val));
+}
+
+void DataProcessor::setSurfaceIsobathsStepSize(float val)
+{
+    QMetaObject::invokeMethod(worker_, "setSurfaceIsobathsStepSize", Qt::QueuedConnection, Q_ARG(float, val));
 }
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
 {
-    //qDebug() << "DataProcessor::setMosaicChannels" << ch1.toShortName() << sub1 << ch2.toShortName() << sub2;
-
-    const auto fCh = mosaicProcessor_.getFirstChannelId();
-    const auto sCh = mosaicProcessor_.getSecondChannelId();
-
-    if (fCh == qMakePair(ch1, sub1) &&
-        sCh == qMakePair(ch2, sub2)) {
-        return;
-    }
-
     surfaceMesh_.clear();
-    mosaicProcessor_.setChannels(ch1, sub1, ch2, sub2);
 
-    // чистка рендера
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
 
-    // установка полной задачи
+    QMetaObject::invokeMethod(worker_, "setMosaicChannels", Qt::QueuedConnection,
+                              Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1),
+                              Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
+
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-        const auto itm = *it;
-        pendingMosaicIndxs_.insert(itm);
-        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+        pendingMosaicIndxs_.insert(*it);
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
     }
     pendingIsobathsWork_ = true;
 
-    if (!pendingWorkTimer_.isActive()) {
-        pendingWorkTimer_.start();
-    }
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }
 
 void DataProcessor::setMosaicTheme(int indx)
 {
-    //qDebug() << "DataProcessor::setMosaicTheme" << indx;
-
-    mosaicProcessor_.setColorTableThemeById(indx);
+    QMetaObject::invokeMethod(worker_, "setMosaicTheme", Qt::QueuedConnection, Q_ARG(int, indx));
 }
 
 void DataProcessor::setMosaicLAngleOffset(float val)
 {
-    //qDebug() << "DataProcessor::setMosaicLAngleOffset" << val;
-
-    mosaicProcessor_.setLAngleOffset(val);
+    QMetaObject::invokeMethod(worker_, "setMosaicLAngleOffset", Qt::QueuedConnection, Q_ARG(float, val));
 }
 
 void DataProcessor::setMosaicRAngleOffset(float val)
 {
-    //qDebug() << "DataProcessor::setMosaicRAngleOffset" << val;
-
-    mosaicProcessor_.setRAngleOffset(val);
+    QMetaObject::invokeMethod(worker_, "setMosaicRAngleOffset", Qt::QueuedConnection, Q_ARG(float, val));
 }
 
 void DataProcessor::setMosaicTileResolution(float val)
 {
-    //qDebug() << "DataProcessor::setMosaicResolution" << val;
-
     if (qFuzzyIsNull(val)) {
         return;
     }
 
     const float convertedResolution = 1.0f / val;
-
     if (qFuzzyCompare(1.0f + tileResolution_, 1.0f + convertedResolution)) {
         return;
     }
 
     tileResolution_ = convertedResolution;
 
-    surfaceMesh_.reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, tileResolution_);
-
-    surfaceProcessor_.setTileResolution(tileResolution_);
-    mosaicProcessor_.setTileResolution(tileResolution_);
-
-    // чистка рендера
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
 
-    // установка полной задачи
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-        const auto itm = *it;
-        pendingMosaicIndxs_.insert(itm);
-        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+        pendingMosaicIndxs_.insert(*it);
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
     }
     pendingIsobathsWork_ = true;
 
-    if (!pendingWorkTimer_.isActive()) {
-        pendingWorkTimer_.start();
-    }
+    QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }
 
 void DataProcessor::setMosaicLevels(float lowLevel, float highLevel)
 {
-    //qDebug() << "DataProcessor::setMosaicLevels" << lowLevel << highLevel;
-
-    mosaicProcessor_.setColorTableLevels(lowLevel, highLevel);
+    QMetaObject::invokeMethod(worker_, "setMosaicLevels", Qt::QueuedConnection, Q_ARG(float, lowLevel), Q_ARG(float, highLevel));
 }
 
 void DataProcessor::setMosaicLowLevel(float val)
 {
-    //qDebug() << "DataProcessor::setMosaicLowLevel" << val;
-
-    mosaicProcessor_.setColorTableLowLevel(val);
+    QMetaObject::invokeMethod(worker_, "setMosaicLowLevel", Qt::QueuedConnection, Q_ARG(float, val));
 }
 
 void DataProcessor::setMosaicHighLevel(float val)
 {
-    //qDebug() << "DataProcessor::setMosaicHighLevel" << val;
-
-    mosaicProcessor_.setColorTableHighLevel(val);
+    QMetaObject::invokeMethod(worker_, "setMosaicHighLevel", Qt::QueuedConnection, Q_ARG(float, val));
 }
 
 void DataProcessor::askColorTableForMosaic()
 {
-    mosaicProcessor_.askColorTableForMosaic();
+    QMetaObject::invokeMethod(worker_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
 
 void DataProcessor::setMinZ(float minZ)
 {
-    isobathsProcessor_.setMinZ(minZ);
+    QMetaObject::invokeMethod(worker_, "setMinZ", Qt::QueuedConnection, Q_ARG(float, minZ));
 }
 
 void DataProcessor::setMaxZ(float maxZ)
 {
-    isobathsProcessor_.setMaxZ(maxZ);
+    QMetaObject::invokeMethod(worker_, "setMaxZ", Qt::QueuedConnection, Q_ARG(float, maxZ));
 }
 
 void DataProcessor::onIsobathsUpdated()
@@ -440,95 +347,124 @@ void DataProcessor::onIsobathsUpdated()
 
     pendingIsobathsWork_ = true;
 
-    if (!pendingWorkTimer_.isActive()) {
-        pendingWorkTimer_.start();
-    }
+    scheduleLatest(WorkSet(WF_Isobaths));
 }
 
-void DataProcessor::onMosaicUpdated()
-{
-    if (!updateMosaic_ || pendingMosaicIndxs_.empty()) {
+void DataProcessor::onMosaicUpdated() {
+    if (!updateMosaic_ || pendingMosaicIndxs_.isEmpty()) {
         return;
     }
 
-    if (!pendingWorkTimer_.isActive()) {
-        pendingWorkTimer_.start();
-    }
+    scheduleLatest(WorkSet(WF_Mosaic));
 }
 
-void DataProcessor::flushSurfacePendingWork()
+void DataProcessor::runCoalescedWork()
 {
-    if (!pendingSurfaceIndxs_.isEmpty()) {
-        if (updateBottomTrack_ || updateIsobaths_ || updateMosaic_) {
-            QVector<QPair<char, int>> vec;
-            vec.reserve(pendingSurfaceIndxs_.size());
-            for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
-                vec.append(*it);
-            }
-            std::sort(vec.begin(), vec.end(), [](const QPair<char, int>& a, const QPair<char, int>& b) {
-                return a.second < b.second;
-            });
-            surfaceProcessor_.onUpdatedBottomTrackData(vec);
-            pendingSurfaceIndxs_.clear();
-        };
+    if (jobRunning_.load()) {
+        return;
     }
-}
 
-void DataProcessor::flushIsobathsPendingWork()
-{
-    if (pendingIsobathsWork_) {
-        if (updateIsobaths_ && !updateMosaic_ /*т.к. не рисуются изобаты при мозайке*/) {
-            isobathsProcessor_.onUpdatedBottomTrackData(); // full rebuild
+    const uint32_t maskNow = requestedMask_.exchange(0);
+    const bool wantSurface  = maskNow & WF_Surface;
+    const bool wantMosaic   = maskNow & WF_Mosaic;
+    const bool wantIsobaths = maskNow & WF_Isobaths;
 
-            pendingIsobathsWork_ = false;
+    WorkBundle wb;
+
+    if (wantSurface && !pendingSurfaceIndxs_.isEmpty()
+        && (updateBottomTrack_ || updateIsobaths_ || updateMosaic_)) {
+        wb.surfaceVec.reserve(pendingSurfaceIndxs_.size());
+
+        for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
+            wb.surfaceVec.append(*it);
         }
+
+        std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(),
+                  [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
+
+        pendingSurfaceIndxs_.clear();
+    }
+    //qDebug() << " runCoalescedWork pendingMosaicIndxs_" << pendingMosaicIndxs_.size();
+
+    if (wantMosaic && !pendingMosaicIndxs_.isEmpty() && updateMosaic_) {
+        wb.mosaicVec.reserve(pendingMosaicIndxs_.size());
+        for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
+            if (mosaicCounter_ >= *it) {
+                wb.mosaicVec.append(*it);
+            }
+        }
+
+        std::sort(wb.mosaicVec.begin(), wb.mosaicVec.end());
+        pendingMosaicIndxs_.clear();
+    }
+
+    if (wantIsobaths && pendingIsobathsWork_ && updateIsobaths_ && !updateMosaic_) {
+        wb.doIsobaths = true;
+        pendingIsobathsWork_ = false;
+    }
+
+    if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths) {
+        return;
+    }
+
+    nextRunPending_.store(false);
+    cancelRequested_.store(false);
+    jobRunning_.store(true);
+
+    // queue в воркер в его поток
+    QMetaObject::invokeMethod(worker_, "processBundle", Qt::QueuedConnection, Q_ARG(WorkBundle, wb));
+}
+
+void DataProcessor::startTimerIfNeeded()
+{
+    if (QThread::currentThread() == this->thread()) {
+        if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+    }
+    else {
+        QMetaObject::invokeMethod(this, [this](){
+            if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+        }, Qt::QueuedConnection);
     }
 }
 
-void DataProcessor::flushMosaicPendingWork()
+void DataProcessor::onWorkerFinished()
 {
-    if (!pendingMosaicIndxs_.isEmpty()) {
-        if (updateMosaic_) {
-            QVector<int> vec;
-            vec.reserve(pendingMosaicIndxs_.size());
-            for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
-                if (mosaicCounter_ >= *it) {
-                    vec.append(*it);
-                }
-            }
-            std::sort(vec.begin(), vec.end());
+    jobRunning_.store(false);
 
-            mosaicProcessor_.updateDataWrapper(vec);
-            pendingMosaicIndxs_.clear();
-        }
+    if (nextRunPending_.load()) {
+        startTimerIfNeeded();
     }
+}
+
+void DataProcessor::postState(DataProcessorType s)
+{
+    emit sendState(state_ = s);
 }
 
 void DataProcessor::changeState(const DataProcessorType& state)
 {
-    state_ = state;
-    emit sendState(state_);
+    emit sendState(state_ = state);
 }
 
 void DataProcessor::clearBottomTrackProcessing()
 {
     bottomTrackWindowCounter_ = 0;
-    bottomTrackProcessor_.clear();
+    // очистить в воркере
 }
 
 void DataProcessor::clearIsobathsProcessing()
 {
-    isobathsProcessor_.clear();
+    // очистить в воркере
 }
 
 void DataProcessor::clearMosaicProcessing()
 {
-    mosaicProcessor_.clear();
+    // очистить в воркере
 }
 
 void DataProcessor::clearSurfaceProcessing()
 {
-    surfaceProcessor_.clear();
+    // очистить в воркере
 }
 
 void DataProcessor::clearAllProcessings()
@@ -537,9 +473,43 @@ void DataProcessor::clearAllProcessings()
     clearIsobathsProcessing();
     clearMosaicProcessing();
     clearSurfaceProcessing();
-    pendingIsobathsWork_ = false; 
-    pendingMosaicIndxs_.clear(); 
-    pendingSurfaceIndxs_.clear(); 
+    pendingIsobathsWork_ = false;
+    pendingMosaicIndxs_.clear();
+    pendingSurfaceIndxs_.clear();
     epIndxsFromBottomTrack_.clear();
     surfaceMesh_.clear();
+}
+
+void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnrequestedPending) noexcept
+{
+    const uint32_t m = toMask(mask);
+    if (replace) {
+        requestedMask_.store(m);
+    }
+    else {
+        requestedMask_.fetch_or(m);
+    }
+
+    if (clearUnrequestedPending) {
+        if (!(m & WF_Surface)) {
+            pendingSurfaceIndxs_.clear();
+        }
+        if (!(m & WF_Mosaic)) {
+            pendingMosaicIndxs_.clear();
+        }
+        if (!(m & WF_Isobaths)) {
+            pendingIsobathsWork_ = false;
+        }
+    }
+
+    nextRunPending_.store(true);
+    cancelRequested_.store(true); // остановка воркеру
+
+    startTimerIfNeeded();
+}
+
+void DataProcessor::requestCancel() noexcept
+{
+    nextRunPending_.store(true);
+    cancelRequested_.store(true);
 }

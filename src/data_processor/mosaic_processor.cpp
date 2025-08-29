@@ -101,7 +101,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
         return;
     }
 
-    dataProcessor_->changeState(DataProcessorType::kMosaic);
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
 
     QVector<int> vec = indxs;
     const int firstNow = vec.first();
@@ -136,7 +136,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     //}
 
     updateData(vec);
-    dataProcessor_->changeState(DataProcessorType::kUndefined);
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
 void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)//
@@ -252,7 +252,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
     for (int i = 0; i < tilesY; ++i) {
         for (int j = 0; j < tilesX; ++j) {
             auto* tile = matrix[i][j];
-            if (!tile->getIsUpdated()) {
+            if (!tile || !tile->getIsUpdated()) {
                 continue;
             }
 
@@ -264,6 +264,10 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
 
             if (i + 1  < tilesY) { // вверх (строка 0 -> последняя строка верхнего тайла)
                 auto* top = matrix[i + 1][j];
+                if (!top) {
+                    continue;
+                }
+
                 if (!top->getIsInited()) {
                     top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
@@ -287,6 +291,10 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
 
             if (j - 1 >= 0) { // влево (столбец 0 -> правый столбец левого тайла)
                 auto* left = matrix[i][j - 1];
+                if (!left) {
+                    continue;
+                }
+
                 if (!left->getIsInited()) {
                     left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
@@ -308,6 +316,10 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
 
             if (i + 1 < tilesY && j - 1 >= 0) { // диагональ: top-left, узел (0,0) текущего -> (hvSide - 1,hvSide - 1) диагонального тайла
                 SurfaceTile* diag = matrix[i + 1][j - 1];
+                if (!diag) {
+                    continue;
+                }
+
                 if (!diag->getIsInited()) {
                     diag->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
@@ -488,6 +500,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     changedTiles.clear();
 
     for (int i = 0; i < measLinesVertices.size(); i += 2) {
+        if (canceled()) {
+            return;
+        }
+
         if (i + 5 > measLinesVertices.size() - 1) {
             break;
         }
@@ -729,4 +745,7 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
     }
 
     return retVal;
+}
+bool MosaicProcessor::canceled() const noexcept {
+    return dataProcessor_ && dataProcessor_->isCancelRequested();
 }
