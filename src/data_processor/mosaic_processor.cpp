@@ -60,6 +60,7 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent)
     rAngleOffset_(0.0f),
     generateGridContour_(false)
 {
+    qRegisterMetaType<std::vector<uint8_t>>("std::vector<uint8_t>");
 }
 
 MosaicProcessor::~MosaicProcessor()
@@ -158,7 +159,7 @@ void MosaicProcessor::setColorTableThemeById(int id)
 
     colorTable_.setTheme(id);
 
-    emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
+    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 void MosaicProcessor::setColorTableLevels(float lowVal, float highVal)
@@ -171,7 +172,7 @@ void MosaicProcessor::setColorTableLevels(float lowVal, float highVal)
 
     colorTable_.setLevels(lowVal, highVal);
 
-    emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
+    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 void MosaicProcessor::setColorTableLowLevel(float val)
@@ -182,7 +183,7 @@ void MosaicProcessor::setColorTableLowLevel(float val)
 
     colorTable_.setLowLevel(val);
 
-    emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
+    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 void MosaicProcessor::setColorTableHighLevel(float val)
@@ -193,7 +194,7 @@ void MosaicProcessor::setColorTableHighLevel(float val)
 
     colorTable_.setHighLevel(val);
 
-    emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
+    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 void MosaicProcessor::setLAngleOffset(float val)
@@ -226,7 +227,7 @@ void MosaicProcessor::setGenerageGridContour(bool state)
 
 void MosaicProcessor::askColorTableForMosaic()
 {
-    emit dataProcessor_->sendMosaicColorTable(colorTable_.getRgbaColors());
+    QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
 void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)

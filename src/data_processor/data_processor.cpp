@@ -441,6 +441,11 @@ void DataProcessor::postState(DataProcessorType s)
     emit sendState(state_ = s);
 }
 
+void DataProcessor::postMosaicColorTable(std::vector<uint8_t> t)
+{
+    emit sendMosaicColorTable(t);
+}
+
 void DataProcessor::changeState(const DataProcessorType& state)
 {
     emit sendState(state_ = state);

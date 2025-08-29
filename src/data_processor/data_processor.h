@@ -121,7 +121,10 @@ private slots:
     void runCoalescedWork();
     void startTimerIfNeeded();
     void onWorkerFinished(); // слот на сигнал ComputeWorker::jobFinished
+
+    // Mosaic
     void postState(DataProcessorType s);
+    void postMosaicColorTable(std::vector<uint8_t> t);
 
 private:
     // this
