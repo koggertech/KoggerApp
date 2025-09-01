@@ -122,19 +122,19 @@ private slots:
 
     // All
     void postState(DataProcessorType s);
-
-    // Mosaic/Surface
+    // BottomTrack
+    void postDistCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
+    void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
+    // Surface/Mosaic
     void postSurfaceTiles(const TileMap& tiles, bool useTextures);
-
-    // Mosaic
-    void postMosaicColorTable(const std::vector<uint8_t>& t);
-
     // Surface
     void postMinZ(float val);
     void postMaxZ(float val);
     void postSurfaceColorTable(const std::vector<uint8_t>& t);
     void postSurfaceColorIntervalsSize(int size);
     void postSurfaceStepSize(float lineStepSize);
+    // Mosaic
+    void postMosaicColorTable(const std::vector<uint8_t>& t);
 
 private:
     // this

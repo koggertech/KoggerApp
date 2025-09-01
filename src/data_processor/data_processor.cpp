@@ -431,6 +431,16 @@ void DataProcessor::postState(DataProcessorType s)
     emit sendState(state_ = s);
 }
 
+void DataProcessor::postDistCompletedByProcessing(int epIndx, const ChannelId &channelId, float dist)
+{
+    emit distCompletedByProcessing(epIndx, channelId, dist);
+}
+
+void DataProcessor::postLastBottomTrackEpochChanged(const ChannelId &channelId, int val, const BottomTrackParam &btP, bool manual)
+{
+    emit lastBottomTrackEpochChanged(channelId, val, btP, manual);
+}
+
 void DataProcessor::postMosaicColorTable(const std::vector<uint8_t>& t)
 {
     emit sendMosaicColorTable(t);
