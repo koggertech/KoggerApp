@@ -152,6 +152,14 @@ void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1,
 void ComputeWorker::processBundle(const WorkBundle& wb)
 {
     // последовательно. cабы сами шлют сигналы наружу
+    if (!wb.bottomJobs.isEmpty() && !isCanceled()) {
+        for (const auto& j : wb.bottomJobs) {
+            if (isCanceled()) break;
+            bottom_.bottomTrackProcessing(j.ch1, j.ch2, j.p, j.manual);
+            if (isCanceled()) break;
+        }
+    }
+
     if (!wb.surfaceVec.isEmpty() && !isCanceled()) {
         surface_.onUpdatedBottomTrackData(wb.surfaceVec);
     }

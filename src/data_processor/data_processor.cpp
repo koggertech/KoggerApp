@@ -36,6 +36,7 @@ DataProcessor::DataProcessor(QObject *parent)
     nextRunPending_(false),
     requestedMask_(0)
 {
+    qRegisterMetaType<BottomTrackJob>("BottomTrackJob");
     qRegisterMetaType<WorkBundle>("WorkBundle");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
     qRegisterMetaType<ChannelId>("ChannelId");
@@ -163,11 +164,8 @@ void DataProcessor::onChartsAdded(uint64_t indx)
             if (!channels.isEmpty()) {
                 const DatasetChannel ch1 = channels[0];
                 const DatasetChannel ch2 = (channels.size() >= 2) ? channels[1] : DatasetChannel();
-                QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
-                                          Q_ARG(DatasetChannel, ch1),
-                                          Q_ARG(DatasetChannel, ch2),
-                                          Q_ARG(BottomTrackParam, btP),
-                                          Q_ARG(bool, false));
+                pendingBottomTrackJobs_.append(BottomTrackJob{ch1, ch2, btP, /*manual*/false});
+                scheduleLatest(WorkSet(WF_BottomTrack));
             }
             bottomTrackWindowCounter_ = currCount;
         }
@@ -214,11 +212,8 @@ void DataProcessor::onMosaicCanCalc(uint64_t indx)
 
 void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const DatasetChannel &ch2, const BottomTrackParam &p, bool manual)
 {
-    QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
-                              Q_ARG(DatasetChannel, ch1),
-                              Q_ARG(DatasetChannel, ch2),
-                              Q_ARG(BottomTrackParam, p),
-                              Q_ARG(bool, manual));
+    pendingBottomTrackJobs_.append(BottomTrackJob{ch1, ch2, p, manual});
+    scheduleLatest(WorkSet(WF_BottomTrack));
 }
 
 void DataProcessor::setSurfaceColorTableThemeById(int id)
@@ -358,8 +353,14 @@ void DataProcessor::runCoalescedWork()
     const bool wantSurface  = maskNow & WF_Surface;
     const bool wantMosaic   = maskNow & WF_Mosaic;
     const bool wantIsobaths = maskNow & WF_Isobaths;
+    const bool wantBottom   = maskNow & WF_BottomTrack;
 
     WorkBundle wb;
+
+    if (wantBottom && !pendingBottomTrackJobs_.isEmpty()) {
+        wb.bottomJobs = std::move(pendingBottomTrackJobs_);
+        pendingBottomTrackJobs_.clear();
+    }
 
     if (wantSurface && !pendingSurfaceIndxs_.isEmpty()
         && (updateBottomTrack_ || updateIsobaths_ || updateMosaic_)) {
@@ -393,7 +394,7 @@ void DataProcessor::runCoalescedWork()
         pendingIsobathsWork_ = false;
     }
 
-    if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths) {
+    if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths && wb.bottomJobs.isEmpty()) {
         return;
     }
 
@@ -538,6 +539,9 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
         }
         if (!(m & WF_Isobaths)) {
             pendingIsobathsWork_ = false;
+        }
+        if (!(m & WF_BottomTrack)) {
+            pendingBottomTrackJobs_.clear();
         }
     }
 

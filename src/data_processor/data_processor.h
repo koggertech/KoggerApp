@@ -26,15 +26,17 @@ enum class DataProcessorType {
 };
 
 enum WorkFlag : quint32 {
-    WF_None     = 0,
-    WF_Surface  = 1u << 0,
-    WF_Mosaic   = 1u << 1,
-    WF_Isobaths = 1u << 2,
+    WF_None        = 0,
+    WF_Surface     = 1u << 0,
+    WF_Mosaic      = 1u << 1,
+    WF_Isobaths    = 1u << 2,
+    WF_BottomTrack = 1u << 3,
     WF_All      = WF_Surface | WF_Mosaic | WF_Isobaths
 };
 Q_DECLARE_FLAGS(WorkSet, WorkFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(WorkSet)
 
+struct BottomTrackJob;
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
@@ -183,6 +185,7 @@ private:
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
     QSet<int> pendingMosaicIndxs_;
     bool pendingIsobathsWork_;
+    QVector<BottomTrackJob> pendingBottomTrackJobs_;
     QTimer pendingWorkTimer_;
 
     // отмена/планирование
