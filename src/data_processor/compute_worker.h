@@ -10,16 +10,10 @@
 #include "mosaic_processor.h"
 #include "bottom_track_processor.h"
 
-struct BottomTrackJob {
-    DatasetChannel ch1;
-    DatasetChannel ch2;
-    BottomTrackParam p;
-    bool manual{false};
-};
+
 struct WorkBundle {
     QVector<QPair<char,int>> surfaceVec;
     QVector<int>             mosaicVec;
-    QVector<BottomTrackJob>  bottomJobs;
     bool                     doIsobaths{false};
 };
 Q_DECLARE_METATYPE(WorkBundle)
