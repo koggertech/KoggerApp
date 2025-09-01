@@ -464,7 +464,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
     }
 
-    QHash<QUuid, SurfaceTile> res;
+    TileMap res;
     res.reserve(changedTiles.size());
     for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
@@ -806,7 +806,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
 
     // to SurfaceView все тайлы
     const auto& tilesRef = surfaceMeshPtr_->getTilesCRef();
-    QHash<QUuid, SurfaceTile> res;
+    TileMap res;
     res.reserve(tilesRef.size());
     for (auto it = tilesRef.cbegin(); it != tilesRef.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));

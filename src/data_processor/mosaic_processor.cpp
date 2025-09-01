@@ -61,6 +61,7 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent)
     generateGridContour_(false)
 {
     qRegisterMetaType<std::vector<uint8_t>>("std::vector<uint8_t>");
+    qRegisterMetaType<TileMap>("TileMap");
 }
 
 MosaicProcessor::~MosaicProcessor()
@@ -353,12 +354,13 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
     }
 
     // to SurfaceView
-    QHash<QUuid, SurfaceTile> res;
+    TileMap res;
     res.reserve(changedTiles.size());
     for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
-    emit dataProcessor_->sendMosaicTiles(res, true);
+
+    QMetaObject::invokeMethod(dataProcessor_, "postMosaicTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
 }
 
 void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const

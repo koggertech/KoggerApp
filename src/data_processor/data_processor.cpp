@@ -41,7 +41,7 @@ DataProcessor::DataProcessor(QObject *parent)
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
     qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
-    qRegisterMetaType<QHash<QUuid, SurfaceTile>>("QHash<QUuid, SurfaceTile>");
+    qRegisterMetaType<TileMap>("TileMap");
     qRegisterMetaType<Dataset*>("Dataset*");
     qRegisterMetaType<std::uint8_t>("std::uint8_t");
 
@@ -441,9 +441,14 @@ void DataProcessor::postState(DataProcessorType s)
     emit sendState(state_ = s);
 }
 
-void DataProcessor::postMosaicColorTable(std::vector<uint8_t> t)
+void DataProcessor::postMosaicColorTable(const std::vector<uint8_t>& t)
 {
     emit sendMosaicColorTable(t);
+}
+
+void DataProcessor::postMosaicTiles(const TileMap& tiles, bool useTextures)
+{
+    emit sendMosaicTiles(tiles, useTextures);
 }
 
 void DataProcessor::changeState(const DataProcessorType& state)

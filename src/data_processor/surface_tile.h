@@ -9,6 +9,9 @@
 #include <QOpenGLFunctions>
 
 
+class SurfaceTile;
+using TileMap = QHash<QUuid, SurfaceTile>;
+
 static constexpr int   defaultTileSidePixelSize     = 256;
 static constexpr int   defaultTileHeightMatrixRatio = 16;
 static constexpr float defaultTileResolution        = 1.0f / 10.f;

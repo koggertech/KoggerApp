@@ -115,7 +115,7 @@ signals:
     void sendIsobathsLineStepSize(float lineStepSize);
     // MosaicProcessor
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
-    void sendMosaicTiles(QHash<QUuid, SurfaceTile> tiles, bool useTextures);
+    void sendMosaicTiles(const TileMap& tiles, bool useTextures);
 
 private slots:
     void runCoalescedWork();
@@ -124,7 +124,8 @@ private slots:
 
     // Mosaic
     void postState(DataProcessorType s);
-    void postMosaicColorTable(std::vector<uint8_t> t);
+    void postMosaicColorTable(const std::vector<uint8_t>& t);
+    void postMosaicTiles(const TileMap& tiles, bool useTextures);
 
 private:
     // this
