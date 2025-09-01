@@ -9,8 +9,6 @@ BottomTrackProcessor::BottomTrackProcessor(DataProcessor* parent) :
     dataProcessor_(parent),
     datasetPtr_(nullptr)
 {
-    qRegisterMetaType<ChannelId>("ChannelId");
-    qRegisterMetaType<BottomTrackParam>("BottomTrackParam");
 }
 
 BottomTrackProcessor::~BottomTrackProcessor()
@@ -33,7 +31,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 
     if(btP.indexFrom < 0 || btP.indexTo < 0) { return; }
 
-    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kBottomTrack));
+    dataProcessor_->changeState(DataProcessorType::kBottomTrack);
 
     int epoch_min_index = btP.indexFrom - btP.windowSize/2;
 
@@ -96,10 +94,6 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     int epoch_counter = 0;
 
     for(int iepoch = epoch_min_index; iepoch < epoch_max_index; iepoch++) {
-        if (canceled()) {
-            QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
-            return;
-        }
 
         Epoch epoch = datasetPtr_->fromIndexCopy(iepoch);
         if (!epoch.isValid()) {
@@ -310,10 +304,7 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             Epoch::Echogram* chart = epPtr.chart(channel1.channelId_, channel1.subChannelId_);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                QMetaObject::invokeMethod(dataProcessor_, "postDistCompletedByProcessing", Qt::QueuedConnection,
-                                          Q_ARG(int, iepoch),
-                                          Q_ARG(ChannelId, channel1.channelId_),
-                                          Q_ARG(float, dist));
+                emit dataProcessor_->distCompletedByProcessing(iepoch, channel1.channelId_, dist); //запись в датасет
             }
         }
 
@@ -321,23 +312,12 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
             Epoch::Echogram* chart = epPtr.chart(channel2.channelId_, channel2.subChannelId_);
             if(chart->bottomProcessing.source < Epoch::DistProcessing::DistanceSourceDirectHand) {
                 float dist = bottom_track[iepoch - epoch_min_index];
-                QMetaObject::invokeMethod(dataProcessor_, "postDistCompletedByProcessing", Qt::QueuedConnection,
-                                          Q_ARG(int, iepoch),
-                                          Q_ARG(ChannelId, channel2.channelId_),
-                                          Q_ARG(float, dist));
+                emit dataProcessor_->distCompletedByProcessing(iepoch, channel2.channelId_, dist);
             }
         }
     }
 
-    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
-    QMetaObject::invokeMethod(dataProcessor_, "postLastBottomTrackEpochChanged", Qt::QueuedConnection,
-                              Q_ARG(ChannelId, channel1.channelId_),
-                              Q_ARG(int, size),
-                              Q_ARG(BottomTrackParam, btP),
-                              Q_ARG(bool, manual));
-}
+    dataProcessor_->changeState(DataProcessorType::kUndefined);
 
-bool BottomTrackProcessor::canceled() const noexcept
-{
-    return dataProcessor_ && dataProcessor_->isCancelRequested();
+    emit dataProcessor_->lastBottomTrackEpochChanged(channel1.channelId_, size, btP, manual);
 }
