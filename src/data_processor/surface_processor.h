@@ -44,6 +44,7 @@ private:
     void updateTexture() const;
     void propagateBorderHeights(QSet<SurfaceTile*>& changedTiles);
     void refreshAfterEdgeLimitChange();
+    bool canceled() const noexcept;
 
 private:
     DataProcessor* dataProcessor_;

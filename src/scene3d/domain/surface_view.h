@@ -58,7 +58,7 @@ public:
     QVector<std::pair<QUuid, std::vector<uint8_t>>> takeMosaicTileTextureToAppend();
     std::vector<uint8_t>                            takeMosaicColorTableToAppend();
     GLuint                                          takeMosaicColorTableToDelete();
-    QVector<uint8_t>                                takeSurfaceColorTableToAppend();
+    std::vector<uint8_t>                            takeSurfaceColorTableToAppend();
     GLuint                                          takeSurfaceColorTableToDelete();
 
     void setLlaRef(LLARef llaRef);
@@ -71,7 +71,7 @@ public slots: // from dataprocessor
     void setMinZ(float minZ);
     void setMaxZ(float maxZ);
     void setSurfaceStep(float surfaceStep);
-    void setTextureTask(const QVector<uint8_t>& textureTask);
+    void setTextureTask(const std::vector<uint8_t>& textureTask);
     void setColorIntervalsSize(int size);
     void removeTiles(const QSet<QUuid>& ids); 
 
@@ -85,7 +85,7 @@ private:
     GLuint                                          mosaicColorTableToDelete_;
     QHash<QUuid, std::vector<uint8_t>>              mosaicTileTextureToAppend_; // по ключу хранится последнее изображение
     QVector<GLuint>                                 mosaicTileTextureToDelete_;
-    QVector<uint8_t>                                surfaceColorTableToAppend_;
+    std::vector<uint8_t>                            surfaceColorTableToAppend_;
     GLuint                                          surfaceColorTableToDelete_;
     LLARef llaRef_;
 };

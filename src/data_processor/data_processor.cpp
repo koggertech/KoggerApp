@@ -329,16 +329,6 @@ void DataProcessor::askColorTableForMosaic()
     QMetaObject::invokeMethod(worker_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
 
-void DataProcessor::setMinZ(float minZ)
-{
-    QMetaObject::invokeMethod(worker_, "setMinZ", Qt::QueuedConnection, Q_ARG(float, minZ));
-}
-
-void DataProcessor::setMaxZ(float maxZ)
-{
-    QMetaObject::invokeMethod(worker_, "setMaxZ", Qt::QueuedConnection, Q_ARG(float, maxZ));
-}
-
 void DataProcessor::onIsobathsUpdated()
 {
     if (!updateIsobaths_) {
@@ -446,9 +436,38 @@ void DataProcessor::postMosaicColorTable(const std::vector<uint8_t>& t)
     emit sendMosaicColorTable(t);
 }
 
-void DataProcessor::postMosaicTiles(const TileMap& tiles, bool useTextures)
+void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 {
-    emit sendMosaicTiles(tiles, useTextures);
+    emit sendSurfaceTiles(tiles, useTextures);
+}
+
+void DataProcessor::postMinZ(float val)
+{
+    QMetaObject::invokeMethod(worker_, "setMinZ", Qt::QueuedConnection, Q_ARG(float, val));
+
+    emit sendSurfaceMinZ(val);
+}
+
+void DataProcessor::postMaxZ(float val)
+{
+    QMetaObject::invokeMethod(worker_, "setMaxZ", Qt::QueuedConnection, Q_ARG(float, val));
+
+    emit sendSurfaceMaxZ(val);
+}
+
+void DataProcessor::postSurfaceColorTable(const std::vector<uint8_t> &t)
+{
+    emit sendSurfaceTextureTask(t);
+}
+
+void DataProcessor::postSurfaceColorIntervalsSize(int size)
+{
+    emit sendSurfaceColorIntervalsSize(size);
+}
+
+void DataProcessor::postSurfaceStepSize(float lineStepSize)
+{
+    emit sendSurfaceStepSize(lineStepSize);
 }
 
 void DataProcessor::changeState(const DataProcessorType& state)

@@ -71,7 +71,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         return;
     }
 
-    dataProcessor_->changeState(DataProcessorType::kSurface);
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
 
     auto& tr = delaunayProc_.getTriangles();
     auto& pt = delaunayProc_.getPoints();
@@ -374,6 +374,11 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     };
 
     for (const auto& itm : indxs) { // добавление в триангуляцию
+        if (canceled()) {
+            QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
+            return;
+        }
+
         const QVector3D& point = bTrData[itm.second];
         if (!std::isfinite(point.z())) continue;
         processOneCenter(point);
@@ -381,13 +386,18 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
 
     const int triCount = static_cast<int>(tr.size());
     if (!triCount) {
-        dataProcessor_->changeState(DataProcessorType::kUndefined);
+        QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
         return;
     }
 
     float lastMinZ = minZ_;
     float lastMaxZ = maxZ_;
     for (int triIdx : std::as_const(updsTrIndx)) { // трассировака треугольников в меш
+        if (canceled()) {
+            QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
+            return;
+        }
+
         if (triIdx < 0 || triIdx >= triCount) {
             continue;
         }
@@ -458,10 +468,9 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     const bool zChanged = !qFuzzyCompare(1.0 + minZ_, 1.0 + lastMinZ) || !qFuzzyCompare(1.0 + maxZ_, 1.0 + lastMaxZ);
     if (zChanged) {
         rebuildColorIntervals();
-        dataProcessor_->setMinZ(minZ_);
-        dataProcessor_->setMaxZ(maxZ_);
-        emit dataProcessor_->sendSurfaceMinZ(minZ_);
-        emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
+
+        QMetaObject::invokeMethod(dataProcessor_, "postMinZ", Qt::QueuedConnection, Q_ARG(float, minZ_));
+        QMetaObject::invokeMethod(dataProcessor_, "postMaxZ", Qt::QueuedConnection, Q_ARG(float, maxZ_));
     }
 
     TileMap res;
@@ -469,9 +478,9 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
-    emit dataProcessor_->sendMosaicTiles(res, false);
 
-    dataProcessor_->changeState(DataProcessorType::kUndefined);
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
 void SurfaceProcessor::setTileResolution(float tileResolution)
@@ -501,8 +510,8 @@ void SurfaceProcessor::rebuildColorIntervals()
         colorIntervals_.append({ minZ_ + i * surfaceStepSize_, palette[i] });
     }
 
-    emit dataProcessor_->sendSurfaceColorIntervalsSize(static_cast<int>(colorIntervals_.size()));
-    emit dataProcessor_->sendSurfaceStepSize(surfaceStepSize_);
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceColorIntervalsSize", Qt::QueuedConnection, Q_ARG(int, static_cast<int>(colorIntervals_.size())));
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceStepSize", Qt::QueuedConnection, Q_ARG(float, surfaceStepSize_));
 
     updateTexture();
 }
@@ -639,7 +648,7 @@ void SurfaceProcessor::updateTexture() const
         return;
     }
 
-    QVector<uint8_t> textureTask;
+    std::vector<uint8_t> textureTask;
     textureTask.resize(paletteSize * 4);
     for (int i = 0; i < paletteSize; ++i) {
         const QVector3D &c = colorIntervals_[i].color;
@@ -649,7 +658,7 @@ void SurfaceProcessor::updateTexture() const
         textureTask[i * 4 + 3] = 255;
     }
 
-    emit dataProcessor_->sendSurfaceTextureTask(textureTask);
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, textureTask));
 }
 
 void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
@@ -798,10 +807,9 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
     const bool zChanged = !qFuzzyCompare(1.0 + minZ_, 1.0 + lastMinZ) || !qFuzzyCompare(1.0 + maxZ_, 1.0 + lastMaxZ);
     if (zChanged) {
         rebuildColorIntervals();
-        dataProcessor_->setMinZ(minZ_);
-        dataProcessor_->setMaxZ(maxZ_);
-        emit dataProcessor_->sendSurfaceMinZ(minZ_);
-        emit dataProcessor_->sendSurfaceMaxZ(maxZ_);
+
+        QMetaObject::invokeMethod(dataProcessor_, "postMinZ", Qt::QueuedConnection, Q_ARG(float, minZ_));
+        QMetaObject::invokeMethod(dataProcessor_, "postMaxZ", Qt::QueuedConnection, Q_ARG(float, maxZ_));
     }
 
     // to SurfaceView все тайлы
@@ -811,5 +819,11 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
     for (auto it = tilesRef.cbegin(); it != tilesRef.cend(); ++it) {
         res.insert((*it)->getUuid(), (*(*it)));
     }
-    emit dataProcessor_->sendMosaicTiles(res, false);
+
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
+}
+
+bool SurfaceProcessor::canceled() const noexcept
+{
+    return dataProcessor_ && dataProcessor_->isCancelRequested();
 }

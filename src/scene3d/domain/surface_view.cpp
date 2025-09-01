@@ -108,7 +108,7 @@ GLuint SurfaceView::takeMosaicColorTableToDelete()
     return retVal;
 }
 
-QVector<uint8_t> SurfaceView::takeSurfaceColorTableToAppend()
+std::vector<uint8_t> SurfaceView::takeSurfaceColorTableToAppend()
 {
     auto retVal = std::move(surfaceColorTableToAppend_);
     return retVal;
@@ -329,7 +329,7 @@ void SurfaceView::setSurfaceStep(float surfaceStep)
     }
 }
 
-void SurfaceView::setTextureTask(const QVector<uint8_t> &textureTask)
+void SurfaceView::setTextureTask(const std::vector<uint8_t> &textureTask)
 {
     surfaceColorTableToAppend_ = textureTask;
 

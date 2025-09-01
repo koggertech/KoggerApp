@@ -84,8 +84,6 @@ public slots:
     void askColorTableForMosaic();
 
     //
-    void setMinZ(float minZ);
-    void setMaxZ(float maxZ);
     void onIsobathsUpdated();
     void onMosaicUpdated();
     void requestCancel() noexcept;
@@ -104,7 +102,7 @@ signals:
     // SurfaceProcessor
     void sendSurfaceMinZ(float minZ);
     void sendSurfaceMaxZ(float maxZ);
-    void sendSurfaceTextureTask(const QVector<uint8_t>& textureTask);
+    void sendSurfaceTextureTask(const std::vector<uint8_t>& textureTask);
     void sendSurfaceColorIntervalsSize(int size);
     void sendSurfaceStepSize(float lineStepSize);
     // IsobathsProcessor
@@ -115,17 +113,28 @@ signals:
     void sendIsobathsLineStepSize(float lineStepSize);
     // MosaicProcessor
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
-    void sendMosaicTiles(const TileMap& tiles, bool useTextures);
+    void sendSurfaceTiles(const TileMap& tiles, bool useTextures);
 
 private slots:
     void runCoalescedWork();
     void startTimerIfNeeded();
     void onWorkerFinished(); // слот на сигнал ComputeWorker::jobFinished
 
-    // Mosaic
+    // All
     void postState(DataProcessorType s);
+
+    // Mosaic/Surface
+    void postSurfaceTiles(const TileMap& tiles, bool useTextures);
+
+    // Mosaic
     void postMosaicColorTable(const std::vector<uint8_t>& t);
-    void postMosaicTiles(const TileMap& tiles, bool useTextures);
+
+    // Surface
+    void postMinZ(float val);
+    void postMaxZ(float val);
+    void postSurfaceColorTable(const std::vector<uint8_t>& t);
+    void postSurfaceColorIntervalsSize(int size);
+    void postSurfaceStepSize(float lineStepSize);
 
 private:
     // this

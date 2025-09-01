@@ -360,7 +360,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
         res.insert((*it)->getUuid(), (*(*it)));
     }
 
-    QMetaObject::invokeMethod(dataProcessor_, "postMosaicTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
 }
 
 void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
