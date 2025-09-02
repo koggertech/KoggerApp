@@ -173,7 +173,11 @@ void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1,
                                           const BottomTrackParam& p,
                                           bool manual)
 {
+    emit bottomTrackStarted();
+
     bottom_.bottomTrackProcessing(ch1, ch2, p, manual);
+
+    emit bottomTrackFinished();
 }
 
 void ComputeWorker::processBundle(const WorkBundle& wb)

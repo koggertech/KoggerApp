@@ -138,6 +138,9 @@ private slots:
     void postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels);
     void postIsobathsLineSegments(const QVector<QVector3D>& lineSegments);
 
+    void onBottomTrackStarted();
+    void onBottomTrackFinished();
+
 private:
     // this
     void changeState(const DataProcessorType& state);
@@ -191,4 +194,5 @@ private:
     std::atomic_bool jobRunning_{false};
     std::atomic_bool nextRunPending_{false};
     std::atomic<uint32_t> requestedMask_{0};
+    bool btBusy_{false};
 };

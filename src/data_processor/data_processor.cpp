@@ -51,7 +51,11 @@ DataProcessor::DataProcessor(QObject *parent)
 
     worker_ = new ComputeWorker(this, datasetPtr_);
     worker_->moveToThread(&computeThread_);
-    connect(worker_, &ComputeWorker::jobFinished, this, &DataProcessor::onWorkerFinished, Qt::QueuedConnection);
+
+    connect(worker_, &ComputeWorker::jobFinished,          this, &DataProcessor::onWorkerFinished,      Qt::QueuedConnection);
+    connect(worker_, &ComputeWorker::bottomTrackStarted,   this, &DataProcessor::onBottomTrackStarted,  Qt::QueuedConnection);
+    connect(worker_, &ComputeWorker::bottomTrackFinished,  this, &DataProcessor::onBottomTrackFinished, Qt::QueuedConnection);
+
     computeThread_.setObjectName("ComputeWorkerThread");
     computeThread_.start();
 }
@@ -213,6 +217,11 @@ void DataProcessor::onMosaicCanCalc(uint64_t indx)
 
 void DataProcessor::bottomTrackProcessing(const DatasetChannel &ch1, const DatasetChannel &ch2, const BottomTrackParam &p, bool manual)
 {
+    if (btBusy_) {
+        //qDebug() << "bt skip - busy";
+        return;
+    }
+
     QMetaObject::invokeMethod(worker_, "bottomTrackProcessing", Qt::QueuedConnection,
                               Q_ARG(DatasetChannel, ch1),
                               Q_ARG(DatasetChannel, ch2),
@@ -466,6 +475,16 @@ void DataProcessor::postIsobathsLineSegments(const QVector<QVector3D>& lineSegme
     emit sendIsobathsLineSegments(lineSegments);
 }
 
+void DataProcessor::onBottomTrackStarted()
+{
+    btBusy_ = true;
+}
+
+void DataProcessor::onBottomTrackFinished()
+{
+    btBusy_ = false;
+}
+
 void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels)
 {
     emit sendIsobathsLabels(labels);
@@ -521,6 +540,7 @@ void DataProcessor::changeState(const DataProcessorType& state)
 void DataProcessor::clearBottomTrackProcessing()
 {
     bottomTrackWindowCounter_ = 0;
+    btBusy_ = false;
 
     QMetaObject::invokeMethod(worker_, "clearBottomTrack", Qt::QueuedConnection);
 }
@@ -553,6 +573,7 @@ void DataProcessor::clearAllProcessings()
     pendingSurfaceIndxs_.clear();
     epIndxsFromBottomTrack_.clear();
     bottomTrackWindowCounter_ = 0;
+    btBusy_ = false;
 
     QMetaObject::invokeMethod(worker_, "clearAll", Qt::QueuedConnection);
 

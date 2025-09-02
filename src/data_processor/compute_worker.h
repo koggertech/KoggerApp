@@ -67,6 +67,8 @@ public slots:
 
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)
+    void bottomTrackStarted();
+    void bottomTrackFinished();
 
 private:
     inline bool isCanceled() const noexcept;
