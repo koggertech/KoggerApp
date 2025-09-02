@@ -28,13 +28,15 @@ static int findOrAddVertex(const QVector3D& vertice,
 }
 
 IsobathsProcessor::IsobathsProcessor(DataProcessor* dataProcessorPtr):
-    dataProcessorPtr_(dataProcessorPtr),
+    dataProcessor_(dataProcessorPtr),
     surfaceMeshPtr_(nullptr),
     minZ_(std::numeric_limits<float>::max()),
     maxZ_(std::numeric_limits<float>::lowest()),
     lineStepSize_(3.0f),
     labelStepSize_(100.f)
-{}
+{
+    qRegisterMetaType<QVector<IsobathUtils::LabelParameters>>("QVector<IsobathUtils::LabelParameters>");
+}
 
 void IsobathsProcessor::clear()
 {
@@ -129,7 +131,7 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         return;
     }
 
-    dataProcessorPtr_->sendState(DataProcessorType::kIsobaths);
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kIsobaths));
 
     lineSegments_.clear();
     labels_.clear();
@@ -148,6 +150,10 @@ void IsobathsProcessor::fullRebuildLinesLabels()
 
         if (N < 2) {
             continue;
+        }
+
+        if (canceled()) {
+            return;
         }
 
         for (int y = 0; y < N - 1; ++y) {
@@ -183,6 +189,10 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         const HeightType mA = vertMark_[t.a];
         const HeightType mB = vertMark_[t.b];
         const HeightType mC = vertMark_[t.c];
+
+        if (canceled()) {
+            return;
+        }
 
         if (mA == HeightType::kUndefined ||
             mB == HeightType::kUndefined ||
@@ -234,6 +244,10 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         // лейбы
         float distNext = 0.0f;
         for (const auto& p : polys) {
+            if (canceled()) {
+                return;
+            }
+
             QVector<float> segLen(p.size() - 1);
             float polyLen = 0.0f;
 
@@ -270,10 +284,10 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     filterNearbyLabels(resLabels, labels_);
     lineSegments_ = std::move(resLines);
 
-    dataProcessorPtr_->sendState(DataProcessorType::kUndefined);
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 
-    emit dataProcessorPtr_->sendIsobathsLineSegments(lineSegments_);
-    emit dataProcessorPtr_->sendIsobathsLabels(labels_);
+    QMetaObject::invokeMethod(dataProcessor_, "postIsobathsLineSegments", Qt::QueuedConnection, Q_ARG(QVector<QVector3D>, lineSegments_));
+    QMetaObject::invokeMethod(dataProcessor_, "postIsobathsLabels", Qt::QueuedConnection, Q_ARG(QVector<IsobathUtils::LabelParameters>, labels_));
 }
 
 void IsobathsProcessor::buildPolylines(const IsobathsSegVec& segs, IsobathsPolylines& polys) const
@@ -361,4 +375,9 @@ void IsobathsProcessor::filterNearbyLabels(const QVector<LabelParameters>& in, Q
             grid[qMakePair(cx, cy)] << lbl.pos;
         }
     }
+}
+
+bool IsobathsProcessor::canceled() const noexcept
+{
+    return dataProcessor_ && dataProcessor_->isCancelRequested();
 }

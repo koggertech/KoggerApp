@@ -749,6 +749,7 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 
     return retVal;
 }
-bool MosaicProcessor::canceled() const noexcept {
+bool MosaicProcessor::canceled() const noexcept
+{
     return dataProcessor_ && dataProcessor_->isCancelRequested();
 }

@@ -244,6 +244,14 @@ void DataProcessor::setIsobathsLabelStepSize(float val)
 void DataProcessor::setSurfaceIsobathsStepSize(float val)
 {
     QMetaObject::invokeMethod(worker_, "setSurfaceIsobathsStepSize", Qt::QueuedConnection, Q_ARG(float, val));
+
+    pendingIsobathsWork_ = true;
+
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    }
+
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
@@ -444,6 +452,16 @@ void DataProcessor::postLastBottomTrackEpochChanged(const ChannelId &channelId, 
 void DataProcessor::postMosaicColorTable(const std::vector<uint8_t>& t)
 {
     emit sendMosaicColorTable(t);
+}
+
+void DataProcessor::postIsobathsLineSegments(const QVector<QVector3D>& lineSegments)
+{
+    emit sendIsobathsLineSegments(lineSegments);
+}
+
+void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels)
+{
+    emit sendIsobathsLabels(labels);
 }
 
 void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)

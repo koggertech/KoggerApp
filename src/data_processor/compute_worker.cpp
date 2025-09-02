@@ -67,8 +67,6 @@ void ComputeWorker::setSurfaceIsobathsStepSize(float v)
 {
     surface_.setSurfaceStepSize(v);
     isobaths_.setLineStepSize(v);
-
-    surface_.rebuildColorIntervals(); // или сначала считать общее кол-во
 }
 
 void ComputeWorker::setIsobathsLabelStepSize(float v)
@@ -151,9 +149,11 @@ void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1,
 
 void ComputeWorker::processBundle(const WorkBundle& wb)
 {
+    //qDebug() << "task" <<  wb.doIsobaths;
     // последовательно. cабы сами шлют сигналы наружу
     if (!wb.surfaceVec.isEmpty() && !isCanceled()) {
         surface_.onUpdatedBottomTrackData(wb.surfaceVec);
+        surface_.rebuildColorIntervals();
     }
 
     if (!wb.mosaicVec.isEmpty() && !isCanceled()) {

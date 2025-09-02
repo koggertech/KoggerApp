@@ -135,6 +135,9 @@ private slots:
     void postSurfaceStepSize(float lineStepSize);
     // Mosaic
     void postMosaicColorTable(const std::vector<uint8_t>& t);
+    // Isobaths
+    void postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels);
+    void postIsobathsLineSegments(const QVector<QVector3D>& lineSegments);
 
 private:
     // this

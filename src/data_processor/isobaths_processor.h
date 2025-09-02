@@ -33,8 +33,10 @@ private:
     void edgeIntersection(const QVector3D& u,const QVector3D& v,float L, QVector<QVector3D>& out) const;
     void filterNearbyLabels(const QVector<LabelParameters>& in, QVector<LabelParameters>& out) const;
 
+    bool canceled() const noexcept;
+
 private:
-    DataProcessor* dataProcessorPtr_;
+    DataProcessor* dataProcessor_;
     SurfaceMesh* surfaceMeshPtr_;
     std::vector<QVector3D> vertPool_;
     std::vector<HeightType> vertMark_;
