@@ -755,7 +755,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
         return;
     }
 
-    surfaceMeshPtr_->clearHeightData(); // TODO: conflict with mosaic heights
+    surfaceMeshPtr_->clearHeightData(HeightType::kTriangulation); // TODO: conflict with mosaic heights
 
     const auto& tr = delaunayProc_.getTriangles();
     const auto& pt = delaunayProc_.getPoints();

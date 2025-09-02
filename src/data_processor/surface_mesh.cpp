@@ -124,7 +124,7 @@ void SurfaceMesh::clear()
     numHeightTiles_ = 0;
 }
 
-void SurfaceMesh::clearHeightData()
+void SurfaceMesh::clearHeightData(HeightType heightType)
 {
     if (tiles_.empty()) {
         return;
@@ -139,8 +139,11 @@ void SurfaceMesh::clearHeightData()
         auto& marks = tile->getHeightMarkVerticesRef();
 
         for (int i = 0; i < verts.size(); ++i) {
-            verts[i][2] = 0.0f;
-            marks[i]    = HeightType::kUndefined;
+            if (heightType  == HeightType::kUndefined ||
+                marks[i] == heightType) {
+                verts[i][2] = 0.0f;
+                marks[i]    = HeightType::kUndefined;
+            }
         }
 
         tile->updateHeightIndices();

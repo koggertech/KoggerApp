@@ -18,7 +18,7 @@ public:
     void printMatrix() const;
     void clear();
 
-    void clearHeightData();
+    void clearHeightData(HeightType heightType = HeightType::kUndefined);
     bool hasData() const;
 
     const std::vector<SurfaceTile*>&        getTilesCRef() const;
