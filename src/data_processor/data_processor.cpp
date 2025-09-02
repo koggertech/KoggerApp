@@ -15,7 +15,6 @@ static inline uint32_t toMask(WorkSet s){ return static_cast<uint32_t>(s); }
 DataProcessor::DataProcessor(QObject *parent)
     : QObject(parent),
     datasetPtr_(nullptr),
-    surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
     worker_(nullptr),
     state_(DataProcessorType::kUndefined),
     chartsCounter_(0),
@@ -50,7 +49,7 @@ DataProcessor::DataProcessor(QObject *parent)
     pendingWorkTimer_.setInterval(10);
     connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::runCoalescedWork);
 
-    worker_ = new ComputeWorker(this, datasetPtr_, &surfaceMesh_);
+    worker_ = new ComputeWorker(this, datasetPtr_);
     worker_->moveToThread(&computeThread_);
     connect(worker_, &ComputeWorker::jobFinished, this, &DataProcessor::onWorkerFinished, Qt::QueuedConnection);
     computeThread_.setObjectName("ComputeWorkerThread");
@@ -264,7 +263,7 @@ void DataProcessor::setSurfaceIsobathsStepSize(float val)
 
 void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const ChannelId &ch2, uint8_t sub2)
 {
-    surfaceMesh_.clear();
+    QMetaObject::invokeMethod(worker_, "clearAll", Qt::QueuedConnection);
 
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
@@ -514,35 +513,44 @@ void DataProcessor::changeState(const DataProcessorType& state)
 void DataProcessor::clearBottomTrackProcessing()
 {
     bottomTrackWindowCounter_ = 0;
-    // очистить в воркере
+
+    QMetaObject::invokeMethod(worker_, "clearBottomTrack", Qt::QueuedConnection);
 }
 
 void DataProcessor::clearIsobathsProcessing()
 {
-    // очистить в воркере
+    pendingIsobathsWork_ = false;
+
+    QMetaObject::invokeMethod(worker_, "clearIsobaths", Qt::QueuedConnection);
 }
 
 void DataProcessor::clearMosaicProcessing()
 {
-    // очистить в воркере
+    pendingMosaicIndxs_.clear();
+
+    QMetaObject::invokeMethod(worker_, "clearMosaic", Qt::QueuedConnection);
 }
 
 void DataProcessor::clearSurfaceProcessing()
 {
-    // очистить в воркере
+    pendingSurfaceIndxs_.clear();
+
+    QMetaObject::invokeMethod(worker_, "clearSurface", Qt::QueuedConnection);
 }
 
 void DataProcessor::clearAllProcessings()
 {
-    clearBottomTrackProcessing();
-    clearIsobathsProcessing();
-    clearMosaicProcessing();
-    clearSurfaceProcessing();
     pendingIsobathsWork_ = false;
     pendingMosaicIndxs_.clear();
     pendingSurfaceIndxs_.clear();
     epIndxsFromBottomTrack_.clear();
-    surfaceMesh_.clear();
+    bottomTrackWindowCounter_ = 0;
+
+    QMetaObject::invokeMethod(worker_, "clearAll", Qt::QueuedConnection);
+
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
 }
 
 void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnrequestedPending) noexcept

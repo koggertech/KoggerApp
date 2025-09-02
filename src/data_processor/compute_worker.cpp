@@ -1,17 +1,17 @@
 #include "compute_worker.h"
 #include "data_processor.h"
 #include "dataset.h"
+#include "surface_mesh.h"
 #include <QMetaType>
 #include <QDebug>
 
 ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
                              Dataset* dataset,
-                             SurfaceMesh* surfaceMesh,
                              QObject* parent)
     : QObject(parent),
       dp_(ownerDp),
       dataset_(dataset),
-      surfaceMesh_(surfaceMesh),
+      surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
       surface_(ownerDp),
       isobaths_(ownerDp),
       mosaic_(ownerDp),
@@ -19,15 +19,45 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
 
-    surface_.setSurfaceMeshPtr(surfaceMesh_);
-    isobaths_.setSurfaceMeshPtr(surfaceMesh_);
-    mosaic_.setSurfaceMeshPtr(surfaceMesh_);
+    surface_.setSurfaceMeshPtr(&surfaceMesh_);
+    isobaths_.setSurfaceMeshPtr(&surfaceMesh_);
+    mosaic_.setSurfaceMeshPtr(&surfaceMesh_);
 
     bottom_.setDatasetPtr(dataset_);
     mosaic_.setDatasetPtr(dataset_);
 }
 
 ComputeWorker::~ComputeWorker() = default;
+
+void ComputeWorker::clearAll()
+{
+    surface_.clear();
+    mosaic_.clear();
+    isobaths_.clear();
+    bottom_.clear();
+
+    surfaceMesh_.clear();
+}
+
+void ComputeWorker::clearSurface()
+{
+    surface_.clear();
+}
+
+void ComputeWorker::clearMosaic()
+{
+    mosaic_.clear();
+}
+
+void ComputeWorker::clearIsobaths()
+{
+    isobaths_.clear();
+}
+
+void ComputeWorker::clearBottomTrack()
+{
+    bottom_.clear();
+}
 
 inline bool ComputeWorker::isCanceled() const noexcept
 {
@@ -77,10 +107,9 @@ void ComputeWorker::setIsobathsLabelStepSize(float v)
 void ComputeWorker::setMosaicChannels(const ChannelId& ch1, uint8_t sub1,
                                       const ChannelId& ch2, uint8_t sub2)
 {
-    surfaceMesh_->clear();
-    mosaic_.setChannels(ch1, sub1, ch2, sub2);
+    clearAll();
 
-    // TODO: чистки рендера
+    mosaic_.setChannels(ch1, sub1, ch2, sub2);
 }
 
 void ComputeWorker::setMosaicTheme(int id)
@@ -119,7 +148,7 @@ void ComputeWorker::setMosaicTileResolution(float res)
         return;
     }
 
-    surfaceMesh_->reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, res);
+    surfaceMesh_.reinit(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, res);
     surface_.setTileResolution(res);
     mosaic_.setTileResolution(res);
 }

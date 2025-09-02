@@ -9,7 +9,6 @@
 #include <QPair>
 #include <QThread>
 #include <QUuid>
-#include "surface_mesh.h"
 #include "dataset_defs.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
@@ -159,7 +158,6 @@ private:
 
     // this
     Dataset* datasetPtr_;
-    SurfaceMesh surfaceMesh_;
     
     // рабочая нить и воркер
     QThread computeThread_;

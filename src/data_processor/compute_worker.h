@@ -11,7 +11,8 @@
 #include "bottom_track_processor.h"
 
 
-struct WorkBundle {
+struct WorkBundle
+{
     QVector<QPair<char,int>> surfaceVec;
     QVector<int>             mosaicVec;
     bool                     doIsobaths{false};
@@ -19,18 +20,28 @@ struct WorkBundle {
 Q_DECLARE_METATYPE(WorkBundle)
 
 class Dataset;
-class SurfaceMesh;
 class DataProcessor;
-class ComputeWorker : public QObject {
+class SurfaceMesh;
+
+class ComputeWorker : public QObject
+{
     Q_OBJECT
+
 public:
     explicit ComputeWorker(DataProcessor* ownerDp,
                            Dataset* dataset,
-                           SurfaceMesh* surfaceMesh,
                            QObject* parent = nullptr);
     ~ComputeWorker();
 
 public slots:
+    // service
+    void clearAll();
+    void clearSurface();
+    void clearMosaic();
+    void clearIsobaths();
+    void clearBottomTrack();
+
+    // settings
     void setDatasetPtr(Dataset* ds);
     void setBottomTrackPtr(BottomTrack* bt);
     void setSurfaceThemeId(int id);
@@ -47,12 +58,11 @@ public slots:
     void setMosaicHighLevel(float v);
     void setMosaicTileResolution(float res);
     void askColorTableForMosaic();
-
     void setMinZ(float v);
     void setMaxZ(float v);
 
+    // tasks
     void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual);
-
     void processBundle(const WorkBundle& wb); // выполнить пачку задач последовательно
 
 signals:
@@ -64,7 +74,7 @@ private:
 private:
     DataProcessor*       dp_;
     Dataset*             dataset_;
-    SurfaceMesh*         surfaceMesh_;
+    SurfaceMesh          surfaceMesh_;
 
     SurfaceProcessor     surface_;
     IsobathsProcessor    isobaths_;
