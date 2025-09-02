@@ -262,8 +262,8 @@ Item  {
                     }
 
                     onCheckedChanged: {
-                        IsobathsViewControlMenuController.onProcessStateChanged(checked); // calculation state
-                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked) // visibility and calc
+                        IsobathsViewControlMenuController.onProcessStateChanged(checked); // calc state/calc
+                        IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
                     }
 
                     Component.onCompleted: {
@@ -358,8 +358,8 @@ Item  {
                     }
 
                     onCheckedChanged: {
-                        MosaicViewControlMenuController.onUpdateStateChanged(checked)
-                        MosaicViewControlMenuController.onVisibilityChanged(checked) // vis an calc
+                        MosaicViewControlMenuController.onUpdateStateChanged(checked) // calc state/calc
+                        MosaicViewControlMenuController.onVisibilityChanged(checked)
                     }
 
                     Component.onCompleted: {

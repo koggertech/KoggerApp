@@ -51,7 +51,7 @@ void MosaicViewControlMenuController::onVisibilityChanged(bool state)
         if (state) {
                 //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
                 //QMetaObject::invokeMethod(dataProcessorPtr_, "clearProcessing", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
-                QMetaObject::invokeMethod(dataProcessorPtr_, "onMosaicUpdated", Qt::QueuedConnection);
+                //QMetaObject::invokeMethod(dataProcessorPtr_, "onMosaicUpdated", Qt::QueuedConnection);
         }
     }
     else {
