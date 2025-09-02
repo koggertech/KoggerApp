@@ -229,6 +229,14 @@ void DataProcessor::setSurfaceColorTableThemeById(int id)
 void DataProcessor::setSurfaceEdgeLimit(int val)
 {
     QMetaObject::invokeMethod(worker_, "setSurfaceEdgeLimit", Qt::QueuedConnection, Q_ARG(float, float(val)));
+
+    pendingIsobathsWork_ = true;
+
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    }
+
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }
 
 void DataProcessor::setExtraWidth(int val)
