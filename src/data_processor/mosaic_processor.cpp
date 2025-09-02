@@ -258,6 +258,8 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                 continue;
             }
 
+            changedTiles.insert(tile);
+
             auto& vSrc = tile->getHeightVerticesRef();
             const int hvSide = std::sqrt(vSrc.size());
             if (hvSide <= 1) {
@@ -479,11 +481,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
             if (acceptedEven || acceptedOdd) {
                 isAcceptedEpoch = true;
+                lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
             }
-        }
-
-        if (isAcceptedEpoch) {
-            lastAcceptedEpoch_ = i;
         }
     }
 

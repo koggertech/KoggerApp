@@ -484,7 +484,7 @@ void DataProcessor::postMinZ(float val)
 
     pendingIsobathsWork_ = true;
 
-    scheduleLatest(WorkSet(WF_Isobaths), /*replace*/true);
+    scheduleLatest(WorkSet(WF_Isobaths));
 }
 
 void DataProcessor::postMaxZ(float val)
@@ -495,7 +495,7 @@ void DataProcessor::postMaxZ(float val)
 
     pendingIsobathsWork_ = true;
 
-    scheduleLatest(WorkSet(WF_Isobaths), /*replace*/true);
+    scheduleLatest(WorkSet(WF_Isobaths));
 }
 
 void DataProcessor::postSurfaceColorTable(const std::vector<uint8_t> &t)
@@ -584,7 +584,10 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
     }
 
     nextRunPending_.store(true);
-    cancelRequested_.store(true); // остановка воркеру
+
+    if (replace && jobRunning_.load()) {
+        cancelRequested_.store(true);
+    }
 
     startTimerIfNeeded();
 }
