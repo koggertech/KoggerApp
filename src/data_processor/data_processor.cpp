@@ -480,14 +480,22 @@ void DataProcessor::postMinZ(float val)
 {
     QMetaObject::invokeMethod(worker_, "setMinZ", Qt::QueuedConnection, Q_ARG(float, val));
 
-    emit sendSurfaceMinZ(val);
+    emit sendSurfaceMinZ(val); // to surface view
+
+    pendingIsobathsWork_ = true;
+
+    scheduleLatest(WorkSet(WF_Isobaths), /*replace*/true);
 }
 
 void DataProcessor::postMaxZ(float val)
 {
     QMetaObject::invokeMethod(worker_, "setMaxZ", Qt::QueuedConnection, Q_ARG(float, val));
 
-    emit sendSurfaceMaxZ(val);
+    emit sendSurfaceMaxZ(val); // to surface view
+
+    pendingIsobathsWork_ = true;
+
+    scheduleLatest(WorkSet(WF_Isobaths), /*replace*/true);
 }
 
 void DataProcessor::postSurfaceColorTable(const std::vector<uint8_t> &t)
