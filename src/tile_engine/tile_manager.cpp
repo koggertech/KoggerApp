@@ -27,6 +27,7 @@ TileManager::TileManager(QObject *parent) :
 
     QThread* dbThread = new QThread();
     tileDB_->moveToThread(dbThread);
+    dbThread->setObjectName("MapDBThread");
 
     auto dbConnType = Qt::AutoConnection;
     // tileDB_ <-> tileSet_

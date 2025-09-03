@@ -182,14 +182,11 @@ include($$PWD/src/tile_engine/tile_engine.pri)
 android {
     QT -= widgets
     QT += androidextras svg
-
+    QTPLUGIN += qsqlite
     ANDROID_TARGET_SDK_VERSION = 34
     ANDROID_ABIS = armeabi-v7a arm64-v8a
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/platform/android
     ANDROID_EXTRA_PLUGINS += $$[QT_INSTALL_PLUGINS]/sqldrivers
-    ANDROID_EXTRA_LIBS += \
-        $$[QT_INSTALL_PLUGINS]/sqldrivers/libplugins_sqldrivers_qsqlite_arm64-v8a.so \
-        $$[QT_INSTALL_PLUGINS]/sqldrivers/libplugins_sqldrivers_qsqlite_armeabi-v7a.so
 
     CONFIG += mobility
 

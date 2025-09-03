@@ -128,6 +128,10 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     QGuiApplication app(argc, argv);
+
+    //qDebug() << "Lib paths:" << QCoreApplication::libraryPaths();
+    //qDebug() << "SQL drivers:" << QSqlDatabase::drivers();
+
     QCoreApplication::addLibraryPath(QStringLiteral("assets:/qt/plugins"));
     QCoreApplication::addLibraryPath(QStringLiteral(":/android_rcc_bundle/plugins"));
     //qputenv("QT_DEBUG_PLUGINS", "1");

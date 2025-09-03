@@ -14,7 +14,6 @@ Core::Core() :
     consolePtr_(new Console),
     deviceManagerWrapperPtr_(std::make_unique<DeviceManagerWrapper>(this)),
     linkManagerWrapperPtr_(std::make_unique<LinkManagerWrapper>(this)),
-    tileManager_(std::make_unique<map::TileManager>(this)),
     dataProcessor_(nullptr),
     dataProcThread_(nullptr),
     dataHorizon_(std::make_unique<DataHorizon>()),
@@ -1565,6 +1564,8 @@ void Core::loadLLARefFromSettings()
 
 void Core::createMapTileManagerConnections()
 {
+    tileManager_ = std::make_unique<map::TileManager>(this);
+
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
 
@@ -1612,6 +1613,8 @@ void Core::createDataProcessor()
 
     QObject::connect(dataProcThread_, &QThread::finished, dataProcessor_,  &QObject::deleteLater);
     QObject::connect(dataProcThread_, &QThread::finished, dataProcThread_, &QObject::deleteLater);
+
+    dataProcThread_->setObjectName("DataProcThread");
 
     setDataProcessorConnections();
 
