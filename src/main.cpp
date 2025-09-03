@@ -88,6 +88,7 @@ void setApplicationDisplayName(QGuiApplication& app)
 
 void registerQmlMetaTypes()
 {
+    qmlRegisterType<GraphicsScene3dView>("SceneGraphRendering", 1, 0,"GraphicsScene3dView");
     qmlRegisterType<qPlot2D>( "WaterFall", 1, 0, "WaterFall");
     qmlRegisterType<BottomTrack>("BottomTrack", 1, 0, "BottomTrack");
     qRegisterMetaType<BottomTrack::ActionEvent>("BottomTrack::ActionEvent");
