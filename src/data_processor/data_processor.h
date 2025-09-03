@@ -40,7 +40,7 @@ class ComputeWorker;
 class DataProcessor : public QObject {
     Q_OBJECT
 public:
-    explicit DataProcessor(QObject* parent = nullptr);
+    explicit DataProcessor(QObject* parent = nullptr, Dataset* datasetPtr = nullptr);
     ~DataProcessor() override;
 
     void setDatasetPtr(Dataset* datasetPtr);

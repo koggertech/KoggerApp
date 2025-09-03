@@ -31,9 +31,17 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
 {
     auto size = btP.indexTo + btP.windowSize / 2;
 
-    if(btP.indexFrom < 0 || btP.indexTo < 0) { return; }
-
-    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kBottomTrack));
+    if (!datasetPtr_) {
+        qWarning() << "[BT] dataset is null";
+        return;
+    }
+    if (!datasetPtr_->size()) {
+        qWarning() << "[BT] !datasetPtr_->size()";
+        return;
+    }
+    if (btP.indexFrom < 0 || btP.indexTo < 0) { 
+        return; 
+    }
 
     int epoch_min_index = btP.indexFrom - btP.windowSize/2;
 
@@ -46,6 +54,12 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
     if(epoch_max_index >= size) {
         epoch_max_index = size;
     }
+
+    if (epoch_max_index == epoch_min_index) {
+        return;
+    }
+
+    QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kBottomTrack));
 
     QVector<int32_t> summ;
 

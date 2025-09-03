@@ -1606,9 +1606,7 @@ int Core::getDataProcessorState() const
 void Core::createDataProcessor()
 {
     dataProcThread_ = new QThread(this);
-    dataProcessor_  = new DataProcessor;
-
-    dataProcessor_->setDatasetPtr(datasetPtr_);
+    dataProcessor_  = new DataProcessor(nullptr, datasetPtr_);
 
     dataProcessor_->moveToThread(dataProcThread_);
 

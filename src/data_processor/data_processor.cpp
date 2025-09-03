@@ -12,9 +12,9 @@
 
 static inline uint32_t toMask(WorkSet s){ return static_cast<uint32_t>(s); }
 
-DataProcessor::DataProcessor(QObject *parent)
+DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     : QObject(parent),
-    datasetPtr_(nullptr),
+    datasetPtr_(datasetPtr),
     worker_(nullptr),
     state_(DataProcessorType::kUndefined),
     chartsCounter_(0),
@@ -50,6 +50,8 @@ DataProcessor::DataProcessor(QObject *parent)
     connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::runCoalescedWork);
 
     worker_ = new ComputeWorker(this, datasetPtr_);
+    worker_->setDatasetPtr(datasetPtr_);
+
     worker_->moveToThread(&computeThread_);
 
     connect(worker_, &ComputeWorker::jobFinished,          this, &DataProcessor::onWorkerFinished,      Qt::QueuedConnection);
