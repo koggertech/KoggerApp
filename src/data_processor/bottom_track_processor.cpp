@@ -35,10 +35,10 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
         qWarning() << "[BT] dataset is null";
         return;
     }
-    if (!datasetPtr_->size()) {
-        qWarning() << "[BT] !datasetPtr_->size()";
-        return;
-    }
+    //if (!datasetPtr_->size()) {
+    //    qWarning() << "[BT] !datasetPtr_->size()";
+    //    return;
+    //}
     if (btP.indexFrom < 0 || btP.indexTo < 0) { 
         return; 
     }
