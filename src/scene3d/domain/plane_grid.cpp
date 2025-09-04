@@ -134,26 +134,20 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glLineWidth(1.0f);
 
     /*----------------------------dimentions plane----------------------------*/
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    ctx->glLineWidth(4.0f);
+    ctx->glEnable(GL_BLEND);
+    ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ctx->glLineWidth(1.0f);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 200.0f, 255.0f, 200.0f)));
     shaderProgram->setAttributeArray(posLoc, sceneBoundsPlane.constData());
-    // ctx->glDrawArrays(GL_QUADS, 0, sceneBoundsPlane.size());
-    ctx->glLineWidth(1.0f);
-    glDisable(GL_BLEND);
+    ctx->glDrawArrays(GL_LINE_LOOP, 0, sceneBoundsPlane.size());
+    ctx->glDisable(GL_BLEND);
 
     /*----------------------------dimentions lines----------------------------*/
-    glEnable(2852);
-    
-    ctx->glLineWidth(4.0f);
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 255.0f)));
     shaderProgram->setAttributeArray(posLoc, horzSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, horzSizeLine.size());
     shaderProgram->setAttributeArray(posLoc, vertSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, vertSizeLine.size());
-
-    glDisable(2852);
 
     /*----------------------------dimentions lines reference----------------------------*/
     shaderProgram->setAttributeArray(posLoc, horzReferenceLines.constData());
@@ -251,26 +245,20 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
     ctx->glLineWidth(1.0f);
 
     /*----------------------------dimentions plane----------------------------*/
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    ctx->glLineWidth(4.0f);
+    ctx->glEnable(GL_BLEND);
+    ctx->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ctx->glLineWidth(1.0f);
     shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 200.0f, 255.0f, 200.0f)));
     shaderProgram->setAttributeArray(posLoc, sceneBoundsPlane.constData());
-    // ctx->glDrawArrays(GL_QUADS, 0, sceneBoundsPlane.size());
-    ctx->glLineWidth(1.0f);
-    glDisable(GL_BLEND);
+    ctx->glDrawArrays(GL_LINE_LOOP, 0, sceneBoundsPlane.size());
+    ctx->glDisable(GL_BLEND);
 
     /*----------------------------dimentions lines----------------------------*/
-    glEnable(2852);
-    
-    ctx->glLineWidth(4.0f);
-    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 0.0f)));
+    shaderProgram->setUniformValue(colorLoc, DrawUtils::colorToVector4d(QColor(0.0f, 104.0f, 145.0f, 255.0f)));
     shaderProgram->setAttributeArray(posLoc, horzSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, horzSizeLine.size());
     shaderProgram->setAttributeArray(posLoc, vertSizeLine.constData());
     ctx->glDrawArrays(GL_LINES, 0, vertSizeLine.size());
-
-    glDisable(2852);
 
     // TODO
     /*----------------------------dimentions lines reference----------------------------*/
@@ -314,5 +302,8 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                                     ctx,
                                     textProjection
                                     );*/
+
+    shaderProgram->disableAttributeArray(posLoc);
+    shaderProgram->release();
 }
 
