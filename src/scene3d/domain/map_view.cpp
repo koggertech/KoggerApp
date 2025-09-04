@@ -210,14 +210,7 @@ void MapView::MapViewRenderImplementation::processPendingTextureTasks(QOpenGLFun
             gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-            auto ge = gl->glGetError();
-            if (ge != GL_NO_ERROR) qWarning() << "GL err bef TexImage:" << ge;
-
             gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, tight.constData());
-
-            ge = gl->glGetError();
-            if (ge != GL_NO_ERROR) qWarning() << "GL err after TexImage:" << ge;
-
 
             auto it = tilesHash_.find(idx);
             if (it != tilesHash_.end()) {
@@ -261,9 +254,6 @@ void MapView::MapViewRenderImplementation::processPendingTextureTasks(QOpenGLFun
                 gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-                auto ge = gl->glGetError();
-                if (ge != GL_NO_ERROR) qWarning() << "GL err bef TexImage:" << ge;
 
                 gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, tight.constData());
 
