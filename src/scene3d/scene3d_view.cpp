@@ -815,29 +815,6 @@ void GraphicsScene3dView::updateMapView()
         else {
             emit sendLlaRef(m_camera->viewLlaRef_);
         }
-
-        /*
-        // debug
-        LLA debugltLla(llaVerts[0].latitude, llaVerts[0].longitude, 0.0f);
-        LLA debuglbLla(llaVerts[1].latitude, llaVerts[1].longitude, 0.0f);
-        LLA debugrbLla(llaVerts[2].latitude, llaVerts[2].longitude, 0.0f);
-        LLA debugrtLla(llaVerts[3].latitude, llaVerts[3].longitude, 0.0f);
-        NED ltN(&debugltLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        NED lbN(&debuglbLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        NED rbN(&debugrbLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        NED rtN(&debugrtLla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        QVector<LLA> requestNed;
-        requestNed.append(LLA(ltN.n, ltN.e, 0.0f));
-        requestNed.append(LLA(lbN.n, lbN.e, 0.0f));
-        requestNed.append(LLA(rbN.n, rbN.e, 0.0f));
-        requestNed.append(LLA(rtN.n, rtN.e, 0.0f));
-        QVector<LLA> windowNed;
-        windowNed.append(LLA(ltNed.n, ltNed.e, 0.0f));
-        windowNed.append(LLA(lbNed.n, lbNed.e, 0.0f));
-        windowNed.append(LLA(rbNed.n, rbNed.e, 0.0f));
-        windowNed.append(LLA(rtNed.n, rtNed.e, 0.0f));
-        mapView_->setRectVertices(requestNed, windowNed, canRequest, m_camera->getIsPerspective(), QVector3D(m_camera->m_lookAt.x(), m_camera->m_lookAt.y(), 0.0f));
-        */
     } // is rect
     else {
         emit sendLlaRef(m_camera->viewLlaRef_);
@@ -922,7 +899,6 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->isobathsViewRenderImpl_     = *(dynamic_cast<IsobathsView::IsobathsViewRenderImplementation*>(view->isobathsView_->m_renderImpl));
     m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
-    m_renderer->mapViewRenderImpl_          = *(dynamic_cast<MapView::MapViewRenderImplementation*>(view->mapView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
@@ -948,53 +924,23 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
 
 void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView *viewPtr) const
 {
-    auto mapViewPtr = viewPtr->getMapViewPtr();
+    auto& r = m_renderer->mapViewRenderImpl_;
 
-    // appending
-    auto appendTasks = mapViewPtr->getInitTileTextureTasks();
-    for (auto it = appendTasks.begin(); it != appendTasks.end(); ++it) {
-        const map::TileIndex& tileIndx = it->first;
-        const QImage& image = it->second;
-        GLuint textureId = 0;
-        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glImage.width(), glImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-        mapViewPtr->setTextureIdByTileIndx(tileIndx, textureId);
-        viewPtr->setTextureIdByTileIndx(tileIndx, textureId);
+    auto* src = dynamic_cast<MapView::MapViewRenderImplementation*>(viewPtr->mapView_->m_renderImpl);
+    r.copyCpuSideFrom(*src);
+
+    auto init = viewPtr->mapView_->takeInitTileTasks();
+    r.pendingInit_.reserve(r.pendingInit_.size() + init.size());
+    for (auto& itm : init) {
+        r.pendingInit_.push_back({ itm.first, std::move(itm.second) });
     }
-
-    // update image
-    auto refreshTasks = mapViewPtr->getUpdateTileTextureTasks();
-    for (auto it = refreshTasks.begin(); it != refreshTasks.end(); ++it) {
-        const map::TileIndex& tileIndx = it->first;
-        GLuint textureId = viewPtr->getMapViewPtr()->getTextureIdByTileIndex(tileIndx);
-
-        if (!textureId) {
-            continue;
-        }
-
-        const QImage& image = it->second;
-        QImage glImage = image.convertToFormat(QImage::Format_RGBA8888);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    auto upd = viewPtr->mapView_->takeUpdateTileTasks();
+    r.pendingUpdate_.reserve(r.pendingUpdate_.size() + upd.size());
+    for (auto& itm : upd) {
+        r.pendingUpdate_.push_back({ itm.first, std::move(itm.second) });
     }
-
-    // deleting
-    auto deleteTasks = mapViewPtr->getDeinitTileTextureTasks();
-    for (auto it = deleteTasks.constBegin(); it != deleteTasks.constEnd(); ++it) {
-        if (*it != 0) {
-            glDeleteTextures(1, &*it);
-        }
-    }
+    auto del = viewPtr->mapView_->takeDeleteTileTasks();
+    r.pendingDelete_ += del;
 }
 
 void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const
