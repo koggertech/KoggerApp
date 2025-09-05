@@ -147,6 +147,8 @@ MapView::MapViewRenderImplementation::MapViewRenderImplementation()
 
 void MapView::MapViewRenderImplementation::copyCpuSideFrom(const MapView::MapViewRenderImplementation& s)
 {
+    m_isVisible = s.m_isVisible;
+
     for (const auto& [idx, srcTile] : s.tilesHash_) { // update verts, not textId
         auto it = tilesHash_.find(idx);
         if (it == tilesHash_.end()) {
