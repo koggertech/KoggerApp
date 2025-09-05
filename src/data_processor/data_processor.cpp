@@ -387,16 +387,14 @@ void DataProcessor::runCoalescedWork()
 
     WorkBundle wb;
 
-    if (wantSurface && !pendingSurfaceIndxs_.isEmpty()
-        && (updateBottomTrack_ || updateIsobaths_ || updateMosaic_)) {
+    if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (updateBottomTrack_ || updateIsobaths_ || updateMosaic_)) {
         wb.surfaceVec.reserve(pendingSurfaceIndxs_.size());
 
         for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
             wb.surfaceVec.append(*it);
         }
 
-        std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(),
-                  [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
+        std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(), [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
 
         pendingSurfaceIndxs_.clear();
     }
