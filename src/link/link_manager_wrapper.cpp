@@ -46,6 +46,8 @@ LinkManagerWrapper::LinkManagerWrapper(QObject* parent) : QObject(parent)
     }, connectionType);
 
     workerObject_->moveToThread(workerThread_.get());
+    workerThread_->setObjectName("LinkThread");
+
     workerThread_->start();
 }
 

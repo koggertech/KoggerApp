@@ -45,6 +45,9 @@ public:
                             const QMap <QString, std::shared_ptr <QOpenGLShaderProgram>>& shaderProgramMap) const;
 
         virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS);
+        virtual void appendData(const QVector<QVector3D>& data);
+        virtual void appendData(const QVector3D& data);
+        virtual void setPrimitiveType(int primitiveType);
         virtual void setColor(QColor color);
         virtual void setWidth(qreal width);
         virtual void setVisible(bool isVisible);
@@ -59,7 +62,7 @@ public:
         void removeVertex(int index);
 
     protected:
-        virtual void createBounds();
+        virtual void updateBounds();
 
     protected:
         QVector<QVector3D> m_data;
@@ -78,20 +81,19 @@ public:
     virtual ~SceneObject();
 
     enum class SceneObjectType{
-        BottomTrack  = 0,
-        Surface      = 1,
-        Point        = 2,
-        Polygon      = 3,
-        PointGroup   = 4,
-        PolygonGroup = 5,
-        Unknown      = 6,
-        BoatTrack    = 7,
-        UsblView     = 8,
-        SideScanView = 9,
-        ImageView    = 10,
-        MapView      = 11,
-        Contacts     = 12,
-        SurfaceView  = 13
+        Unknown      = 0,
+        BoatTrack    = 1,
+        BottomTrack  = 2,
+        Point        = 3,
+        Polygon      = 4,
+        PointGroup   = 5,
+        PolygonGroup = 6,
+        UsblView     = 7,
+        SurfaceView  = 8,
+        ImageView    = 9,
+        MapView      = 10,
+        Contacts     = 11,
+        IsobathsView = 12
     };
 
     Q_ENUM(SceneObjectType)
@@ -136,6 +138,9 @@ public Q_SLOTS:
     //! @brief Устанавливает набор вершин объекта.
     //! @param[in] data - ссылка на набор вершин.
     virtual void setData(const QVector <QVector3D>& data, int primitiveType = GL_POINTS);
+    virtual void appendData(const QVector<QVector3D>& data);
+    virtual void appendData(const QVector3D& data);
+    void setPrimitiveType(int primitiveType);
     virtual void clearData();
     void setVisible(bool isVisible);
     void setColor(QColor color);

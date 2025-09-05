@@ -69,7 +69,7 @@ void Contacts::clear()
 
     auto* r = RENDER_IMPL(Contacts);
     r->clear();
-    r->createBounds();
+    r->updateBounds();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -311,7 +311,9 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
     QRectF vport = DrawUtils::viewportRect(ctx);
 
+#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
     ctx->glEnable(34370);
+#endif
 
     for (auto it = points_.begin(); it != points_.end(); ++it) {
         if (!isfinite(it->lat) || !isfinite(it->lon)) {
@@ -331,7 +333,9 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         ctx->glDrawArrays(GL_POINTS, 0, vecP.size());
     }
 
+#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
     ctx->glDisable(34370);
+#endif
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->setUniformValue(isTriangleLoc, false);

@@ -6,8 +6,7 @@
 #include "coordinate_axes.h"
 #include "plane_grid.h"
 #include "ray_caster.h"
-#include "surface.h"
-#include "side_scan_view.h"
+#include "surface_view.h"
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
@@ -18,8 +17,8 @@
 #include "ray.h"
 #include "navigation_arrow.h"
 #include "usbl_view.h"
-#include "tile_manager.h"
-#include "surface_view.h"
+#include "isobaths_view.h"
+#include "data_processor.h"
 
 
 class Dataset;
@@ -134,11 +133,15 @@ public:
     private:
         friend class GraphicsScene3dView;
 
+        // maps
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
-        void processColorTableTexture(GraphicsScene3dView* viewPtr) const;
-        void processTileTexture(GraphicsScene3dView* viewPtr) const;
+        // mosaic on surface
+        void processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const;
+        void processMosaicTileTexture(GraphicsScene3dView* viewPtr) const;
+        // image
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
-        void processSurfaceViewTexture(GraphicsScene3dView* viewPtr) const;
+        // surface
+        void processSurfaceTexture(GraphicsScene3dView* viewPtr) const;
 
         QString checkOpenGLError() const;
 
@@ -172,11 +175,10 @@ public:
      * @return renderer
      */
     Renderer *createRenderer() const override;
-    std::shared_ptr<BoatTrack> boatTrack() const;
+    std::shared_ptr<BoatTrack> getBoatTrackPtr() const;
     std::shared_ptr<BottomTrack> bottomTrack() const;
-    std::shared_ptr<Surface> surface() const;
+    std::shared_ptr<IsobathsView> getIsobathsViewPtr() const;
     std::shared_ptr<SurfaceView> getSurfaceViewPtr() const;
-    std::shared_ptr<SideScanView> getSideScanViewPtr() const;
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
     std::shared_ptr<Contacts> getContactsPtr() const;
@@ -190,13 +192,9 @@ public:
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
     QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
-    void setUpdateMosaic(bool state);
-    void setUpdateIsobaths(bool state);
-    void interpolateDatasetEpochs(bool fromStart);
     void updateProjection();
     void setNeedToResetStartPos(bool state);
-    void forceUpdateDatasetRef();
-    void setOpeningFileState(bool state);
+    void forceUpdateDatasetLlaRef();
 
     Q_INVOKABLE void switchToBottomTrackVertexComboSelectionMode(qreal x, qreal y);
     Q_INVOKABLE void mousePressTrigger(Qt::MouseButtons mouseButton, qreal x, qreal y, Qt::Key keyboardKey = Qt::Key::Key_unknown);
@@ -208,8 +206,8 @@ public:
     Q_INVOKABLE void bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent);
 
     void setTrackLastData(bool state);
-    void setUpdateBottomTrack(bool state);
-    void setIsFileOpening(bool state);
+    void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void setGridVisibility(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -228,16 +226,21 @@ public Q_SLOTS:
     void setPolygonCreationMode();
     void setPolygonEditingMode();
     void setDataset(Dataset* dataset);
+    void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void addPoints(QVector<QVector3D>, QColor color, float width = 1);
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
     void updateViews();
 
+    // from DataHorizon
+    void onPositionAdded(uint64_t indx);
+
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void sendLlaRef(LLARef viewLlaRef);
     void cameraIsMoved();
+    void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 private:
     void updateBounds();
@@ -253,13 +256,12 @@ private:
     QPointF m_startMousePos = {0.0f, 0.0f};
     QPointF m_lastMousePos = {0.0f, 0.0f};
     std::shared_ptr<RayCaster> m_rayCaster;
-    std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<IsobathsView> isobathsView_;
     std::shared_ptr<SurfaceView> surfaceView_;
-    std::shared_ptr<SideScanView> sideScanView_;
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
     std::shared_ptr<Contacts> contacts_;
-    std::shared_ptr<BoatTrack> m_boatTrack;
+    std::shared_ptr<BoatTrack> boatTrack_;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;
     std::shared_ptr<PointGroup> m_pointGroup;
@@ -268,7 +270,6 @@ private:
     std::shared_ptr<SceneObject> m_vertexSynchroCursour;
     std::shared_ptr<NavigationArrow> navigationArrow_;
     std::shared_ptr<UsblView> usblView_;
-    std::shared_ptr<map::TileManager> tileManager_;
 
     QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
@@ -279,9 +280,8 @@ private:
     Ray m_ray;
     float m_verticalScale = 1.0f;
     bool m_isSceneBoundingBoxVisible = true;
-    Dataset* m_dataset = nullptr;
-    bool updateMosaic_;
-    bool updateIsobaths_;
+    Dataset* datasetPtr_ = nullptr;
+    DataProcessor* dataProcessorPtr_ = nullptr;
 #if defined (Q_OS_ANDROID) || defined (LINUX_ES)
     static constexpr double mouseThreshold_{ 15.0 };
 #else
@@ -298,13 +298,10 @@ private:
     Qt::MouseButtons wasMovedMouseButton_;
     QObject* qmlRootObject_ = nullptr;
     bool switchedToBottomTrackVertexComboSelectionMode_;
-    int bottomTrackWindowCounter_;
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
-    bool updateBottomTrack_;
-    bool isOpeningFile_;
-    bool isFileOpening_ = false;
+    bool gridVisibility_ = true;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

@@ -183,8 +183,10 @@ void Logger::loggingCsvStream()
     if (!csvData_.csvHatWrited)
         writeCsvHat();
 
-    if (epoch->getPositionGNSS().lla.isCoordinatesValid()) {
-        csvData_.lastCsvPos = epoch->getPositionGNSS();
+    Position epPos = epoch->getPositionGNSS();
+
+    if (epPos.lla.isCoordinatesValid()) {
+        csvData_.lastCsvPos = epPos;
     }
 
     if (epoch->rangeFinder()) {

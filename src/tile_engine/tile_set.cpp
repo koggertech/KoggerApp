@@ -1,5 +1,7 @@
 #include "tile_set.h"
 
+#include <QPainter>
+
 
 namespace map {
 

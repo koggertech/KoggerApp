@@ -118,14 +118,14 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
     if (frame.isComplete()) {
 
-#if !defined(Q_OS_ANDROID)
-        if (frame.isStream())
-            streamList_.append(&frame);
-        if (frame.id() == ID_STREAM)
-            streamList_.parse(&frame);
-        if (streamList_.isListChenged())
-            emit streamChanged();
-#endif
+// #if !defined(Q_OS_ANDROID)
+//         if (frame.isStream())
+//             streamList_.append(&frame);
+//         if (frame.id() == ID_STREAM)
+//             streamList_.parse(&frame);
+//         if (streamList_.isListChenged())
+//             emit streamChanged();
+// #endif
 
         if (link != NULL) {
             if (frame.isProxy() || frame.completeAsKBP()) {
@@ -140,8 +140,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
         if (frame.completeAsKBP() || frame.completeAsKBP2()) {
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
-            if (isConsoled_ && (link != NULL) && !(frame.id() == 32 || frame.id() == 33))
+            if (isConsoled_ && link && !(frame.id() == 32 || frame.id() == 33)) { // link ptr check added
                 core.consoleProto(frame);
+            }
 
 #if !defined(Q_OS_ANDROID)
             if (frame.id() == ID_TIMESTAMP && frame.ver() == v1) {
@@ -806,6 +807,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged);
+
+    connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete);
+    connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete);
 
     dev->startConnection(link != NULL);
 #endif

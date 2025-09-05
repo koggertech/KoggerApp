@@ -19,6 +19,7 @@ DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     deviceManagerConnections_.append(QObject::connect(workerObject_.get(), &DeviceManager::chartLossesChanged,   this,                &DeviceManagerWrapper::calcAverageChartLosses,    connectionType));
 
     workerObject_->moveToThread(workerThread_.get());
+    workerThread_->setObjectName("DevManThread");
     workerThread_->start();
 #else
     auto connectionType = Qt::DirectConnection;

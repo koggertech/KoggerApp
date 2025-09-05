@@ -103,7 +103,7 @@ void ImageView::updateTexture(const QString& imagePath, QVector3D lt, QVector3D 
     renderImpl->indices_ = indices;
     renderImpl->texCoords_ = texCoords;
     renderImpl->m_data = vertices;
-    renderImpl->createBounds();
+    renderImpl->updateBounds();
 
     Q_EMIT boundsChanged();
     Q_EMIT changed();

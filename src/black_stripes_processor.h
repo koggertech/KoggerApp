@@ -5,7 +5,10 @@
 #include <QPair>
 #include <QVector>
 
-#include "dataset.h"
+#include "dataset_defs.h"
+#include "epoch.h"
+#include "id_binnary.h"
+
 
 using VecCntAndBrightness = QVector<QPair<uint8_t, uint8_t>>; // first - counter, second - brightness
 

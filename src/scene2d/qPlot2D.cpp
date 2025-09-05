@@ -13,6 +13,9 @@ qPlot2D::qPlot2D(QQuickItem* parent)
     : QQuickPaintedItem(parent)
     , m_updateTimer(new QTimer(this))
 {
+    qRegisterMetaType<ChannelId>("ChannelId");
+    qRegisterMetaType<DatasetChannel>("DatasetChannel");
+
 //    setRenderTarget(QQuickPaintedItem::FramebufferObject);
 //    connect(m_updateTimer, &QTimer::timeout, this, [&] { update(); });
     m_updateTimer->start(30);
@@ -87,6 +90,15 @@ void qPlot2D::setPlot(Dataset *dataset) {
     setDataset(dataset);
     connect(dataset, &Dataset::dataUpdate, this, &qPlot2D::dataUpdate);
 //    connect(m_plot, &Dataset::updatedImage, this, [&] { updater(); });
+}
+
+void qPlot2D::setDataProcessor(DataProcessor *dataProcessorPtr)
+{
+    if (!dataProcessorPtr) {
+        return;
+    }
+
+    Plot2D::setDataProcessorPtr(dataProcessorPtr);
 }
 
 void qPlot2D::plotUpdate()
@@ -187,7 +199,7 @@ int qPlot2D::getThemeId() const
     return Plot2D::getThemeId();
 }
 
-void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz) {
+void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, float range_min, float range_max, float gain_slope, float threshold, float offsetx, float offsety, float offsetz, bool manual) {
     if (datasetPtr_ != nullptr) {
         if (auto btpPtr = datasetPtr_->getBottomTrackParamPtr(); btpPtr) {
             btpPtr->preset = static_cast<BottomTrackPreset>(preset);
@@ -203,7 +215,11 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
             btpPtr->offset.y = offsety;
             btpPtr->offset.z = offsetz;
 
-            datasetPtr_->bottomTrackProcessing(cursor_.channel1, cursor_.channel2);
+            QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
+                                      Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)),
+                                      Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel2, cursor_.subChannel2)),
+                                      Q_ARG(BottomTrackParam, *btpPtr),
+                                      Q_ARG(bool, manual));
         }
     }
     plotUpdate();

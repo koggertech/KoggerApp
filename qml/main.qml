@@ -77,9 +77,14 @@ ApplicationWindow  {
         }
     }
 
+    function handleUpdateBottomTrack() {
+        menuBar.updateBottomTrack()
+    }
+
     Component.onCompleted: {
         theme.updateResCoeff()
 
+        scene3DToolbar.updateBottomTrack.connect(handleUpdateBottomTrack)
         menuBar.languageChanged.connect(handleChildSignal)
         menuBar.syncPlotEnabled.connect(handleSyncPlotEnabled)
         waterViewFirst.plotCursorChanged.connect(handlePlotCursorChanged)
@@ -248,9 +253,6 @@ ApplicationWindow  {
             }
             if (fn === "updateBottomTrack") {
                 menuBar.updateBottomTrack()
-            }
-            if (fn === "updateSurface") {
-                scene3DToolbar.updateSurface()
             }
             if (fn === "updateMosaic") {
                 scene3DToolbar.updateMosaic()
@@ -465,22 +467,6 @@ ApplicationWindow  {
 
                 property bool longPressTriggered: false
 
-                KWaitProgressBar{
-                    id:        surfaceProcessingProgressBar
-                    objectName: "surfaceProcessingProgressBar"
-                    text:      qsTr("Calculating surface\nPlease wait...")
-                    textColor: "white"
-                    visible:   false
-                }
-
-                KWaitProgressBar{
-                    id:        sideScanProcessingProgressBar
-                    objectName: "sideScanProcessingProgressBar"
-                    text:      qsTr("Calculating mosaic\nPlease wait...")
-                    textColor: "white"
-                    visible:  core.isMosaicUpdatingInThread && core.isSideScanPerformanceMode
-                }
-
                 PinchArea {
                     id:           pinch3D
                     anchors.fill: parent
@@ -595,7 +581,7 @@ ApplicationWindow  {
                     id:                       scene3DToolbar
                     // anchors.bottom:              parent.bottom
                     y:renderer.height - height - 2
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    //anchors.horizontalCenter: parent.horizontalCenter
                     // anchors.rightMargin:      20
                     Keys.forwardTo:           [mousearea3D]
                 }
@@ -1014,18 +1000,6 @@ ApplicationWindow  {
     function onMenuBarSettingsOpened() {
         waterViewFirst.closeSettings()
         waterViewSecond.closeSettings()
-    }
-
-    Connections {
-        target: SurfaceControlMenuController
-
-        function onSurfaceProcessorTaskStarted() {
-            surfaceProcessingProgressBar.visible = true
-        }
-
-        function onSurfaceProcessorTaskFinished() {
-            surfaceProcessingProgressBar.visible = false
-        }
     }
 
     // banner on file opening

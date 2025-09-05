@@ -6,7 +6,8 @@ import QtQuick.Controls.Styles 1.4
 Button {
     id: control
     checkable: true
-    property bool active: false
+    property bool active: checked || down
+
     property int borderWidth: 1
     property color color: theme.textColor
     property color checkedColor: "black"
@@ -15,12 +16,16 @@ Button {
     property color checkedBorderColor: "transparent"
     property color borderColor: theme.controlSolidBorderColor
     property string iconSource: ""
+    property real   iconScale: 0.80
 
     implicitHeight: theme.controlHeight
     //implicitWidth: icon.width + textWidth + leftPadding + rightPadding
 
     icon.source: iconSource
+    icon.width:  control.height * iconScale
+    icon.height: control.height * iconScale
 
+    hoverEnabled: true
     padding: 0
     rightPadding: text === "" ? 2 : 6
     leftPadding: icon.source == "" ? 6 : 2
@@ -30,10 +35,10 @@ Button {
 
 
     font: theme.textFont
-    palette.buttonText: checked ? checkedColor : color
-    palette.brightText: checked ? checkedColor : color
+    palette.buttonText: active ? checkedColor : color
+    palette.brightText: active ? checkedColor : color
 
-    icon.color: checked ? checkedColor : color
+    icon.color: active ? checkedColor : color
 
     background: Rectangle {
         id: backRect
@@ -42,8 +47,19 @@ Button {
         radius: 2
         height: parent.height
         width: parent.width
-        color: control.checked ? control.checkedBackColor : control.backColor
-        border.color: control.checked ? control.checkedBorderColor : control.borderColor
+        color: control.active ? control.checkedBackColor : control.backColor
+        border.color: control.active ? control.checkedBorderColor : control.borderColor
         border.width: control.borderWidth
+    }
+
+    onCheckableChanged: {
+        if (!checkable && checked) {
+            checked = false
+        }
+    }
+
+    scale: pressed ? 0.96 : 1
+    Behavior on scale {
+        NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
     }
 }

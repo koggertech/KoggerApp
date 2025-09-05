@@ -19,31 +19,11 @@ void BottomTrackControlMenuController::onVisibilityCheckBoxCheckedChanged(bool c
     visibility_ = checked;
 
     if (graphicsSceneViewPtr_) {
-        graphicsSceneViewPtr_->bottomTrack()->setVisible(checked);
+        graphicsSceneViewPtr_->bottomTrack()->setVisibleState(checked);
     }
     else {
         tryInitPendingLambda();
     }
-}
-
-void BottomTrackControlMenuController::onSurfaceUpdated()
-{
-    if (!graphicsSceneViewPtr_)
-        return;
-
-    auto bottomTrack = graphicsSceneViewPtr_->bottomTrack();
-
-    QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceUpdated");
-}
-
-void BottomTrackControlMenuController::onSurfaceStateChanged(bool state)
-{
-    if (!graphicsSceneViewPtr_)
-        return;
-
-    auto bottomTrack = graphicsSceneViewPtr_->bottomTrack();
-
-    QMetaObject::invokeMethod(reinterpret_cast<BottomTrack*>(bottomTrack.get()), "surfaceStateChanged", Q_ARG(bool, state));
 }
 
 void BottomTrackControlMenuController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
@@ -72,7 +52,7 @@ void BottomTrackControlMenuController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
                 if (auto bTPtr = graphicsSceneViewPtr_->bottomTrack(); bTPtr) {
-                    bTPtr->setVisible(visibility_);
+                    bTPtr->setVisibleState(visibility_);
                 }
             }
         };

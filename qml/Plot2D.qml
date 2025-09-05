@@ -408,7 +408,6 @@ WaterFall {
 
                         function setChannelNamesToBackend() {
                             plotDatasetChannelFromStrings(channel1Combo.currentText, channel2Combo.currentText)
-                            core.setSideScanChannels(channel1Combo.currentText, channel2Combo.currentText);
                             plotCursorChanged(indx, cursorFrom(), cursorTo())
                         }
 
@@ -729,6 +728,20 @@ WaterFall {
                             text: "Z"
                             //                        onCheckedChanged: setDopplerInstrumentVis(checked)
                             //                        Component.onCompleted: setDopplerInstrumentVis(checked)
+                        }
+                    }
+
+                    RowLayout {
+                        visible: instruments > 1
+                        id: acousticAngleGroup
+                        spacing: 0
+
+                        CCheck {
+                            id: acousticAngleVisible
+                            Layout.fillWidth: true
+                            text: qsTr("Acoustic angle")
+                            onCheckedChanged: plotAcousticAngleVisible(checked);
+                            Component.onCompleted: plotAcousticAngleVisible(checked);
                         }
                     }
 

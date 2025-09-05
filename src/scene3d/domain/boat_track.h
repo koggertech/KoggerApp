@@ -31,6 +31,7 @@ public:
         friend class BoatTrack;
         QVector3D boatTrackVertice_;
         QVector3D bottomTrackVertice_;
+        bool bottomTrackVisibleState_ = true;
     };
 
     explicit BoatTrack(GraphicsScene3dView* view = nullptr, QObject* parent = nullptr);
@@ -38,12 +39,12 @@ public:
     virtual SceneObjectType type() const override final;
     virtual bool eventFilter(QObject *watched, QEvent *event) override final;
     void setDatasetPtr(Dataset* datasetPtr);
-    void setSelectedIndices(const QHash<int, int>& selectedIndices);
+    void onPositionAdded(uint64_t indx);
 
 public Q_SLOTS:
-    virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override final;
     virtual void clearData() override final;
     void selectEpoch(int epochIndex);
+    void setBottomTrackVisibleState(bool state);
     void clearSelectedEpoch();
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override final;
 

@@ -11,8 +11,8 @@ Item {
 
     property var lastItem: menuSettings
     //property bool isConsoleVisible: consoleEnable.checked // TODO
-    property bool is3DVisible: settings3DButton.checked
-    property bool is2DVisible: visible2dButton.checked
+    property bool is3DVisible: visible3DButton.checked
+    property bool is2DVisible: visible2DButton.checked
     property int numPlots: appSettings.numPlots
     property bool syncPlots: appSettings.syncPlots
     property int instruments:  appSettings.instruments
@@ -36,13 +36,13 @@ Item {
     }
 
     function click2D() {
-        visible2dButton.checked = !visible2dButton.checked;
-        visible2dButton.clicked()
+        visible2DButton.checked = !visible2DButton.checked;
+        visible2DButton.clicked()
     }
 
     function click3D() {
-        settings3DButton.checked = !settings3DButton.checked;
-        settings3DButton.clicked()
+        visible3DButton.checked = !visible3DButton.checked;
+        visible3DButton.clicked()
     }
 
     function closeMenus() {
@@ -127,26 +127,14 @@ Item {
                 }
             }
 
-            /*MenuButton {
-                id: menu3DSettings
-                visible: instruments > 0
-                icon.source: "./3dcube.svg"
-
-                Layout.fillWidth: true
-
-                onPressed: {
-                    itemChangeActive(menu3DSettings)
-                }
-            }*/
-
             CheckButton {
-                id: settings3DButton
-                visible: instruments > 0
-                implicitWidth: theme.controlHeight*1.2
+                id: visible3DButton
+                implicitWidth: theme.controlHeight * 1.2
                 icon.source: "qrc:/icons/ui/map.svg"
                 backColor: theme.controlBackColor
                 borderColor:  theme.controlBackColor
                 checkedBorderColor: "black"
+                checked: true
 
                 CMouseOpacityArea {
                     toolTipText: qsTr("Display 3D")
@@ -154,38 +142,42 @@ Item {
                 }
 
                 onClicked: {
-                    if(!settings3DButton.checked && !visible2dButton.checked) {
-                        visible2dButton.checked = true
+                    if (!visible3DButton.checked && !visible2DButton.checked) {
+                        visible2DButton.checked = true
                     }
+                }
+
+                Settings {
+                    id: visible3DSettings
+                    property alias visible3DButtonChecked: visible3DButton.checked
                 }
             }
 
             CheckButton {
-                id: visible2dButton
-                visible: instruments > 0
-                implicitWidth: theme.controlHeight*1.2
+                id: visible2DButton
+                implicitWidth: theme.controlHeight * 1.2
                 icon.source: "qrc:/icons/ui/ripple.svg"
+                backColor: theme.controlBackColor
+                borderColor:  theme.controlBackColor
+                checkedBorderColor: "black"
+                checked: true
 
                 CMouseOpacityArea {
                     toolTipText: qsTr("Display 2D")
                     onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()
                 }
 
-                backColor: theme.controlBackColor
-                borderColor:  theme.controlBackColor
-                checkedBorderColor: "black"
-
-                checked: true
                 onClicked: {
-                    if(!settings3DButton.checked && !visible2dButton.checked) {
-                        settings3DButton.checked = true
+                    if (!visible3DButton.checked && !visible2DButton.checked) {
+                        visible3DButton.checked = true
                     }
                 }
-            }
 
-            //MouseOpacityArea {
-            //    id: menuMouseArea
-            //}
+                Settings {
+                    id: visible2DSettings
+                    property alias visible2DButtonChecked: visible2DButton.checked
+                }
+            }
         }
 
         DeviceSettingsViewer {

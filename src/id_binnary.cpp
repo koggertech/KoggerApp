@@ -324,10 +324,33 @@ Resp IDBinChart::parsePayload(FrameParser &proto) {
         proto.read(&header);
 
         int avail = proto.readAvailable();
-        RawData raw_data;
-        raw_data.header = header;
-        raw_data.data = QByteArray((char*)proto.read(avail), avail);
-        emit rawDataRecieved(raw_data);
+        QByteArray data = QByteArray((char*)proto.read(avail), avail);
+        int expected_data_offset = header.localOffset*(header.dataSize+1)*header.channelCount;
+
+        int ch_group = header.channelGroup;
+
+        if(header.localOffset == 0) {
+            if(_rawData[ch_group].data.size() != 0) {
+                _rawDataComplete[ch_group] = std::move(_rawData[ch_group]);
+                emit rawDataRecieved(_rawDataComplete[ch_group]);
+            }
+
+            _rawData[ch_group] = {header, data};
+        } else  if(_rawData.contains(ch_group)){
+            RawData& raw = _rawData[ch_group];
+            int ready_samples = raw.samplesPerChannel();
+
+            if (static_cast<uint32_t>(ready_samples) == header.localOffset) {
+                if(expected_data_offset == raw.data.size()) {
+                    raw.data.append(data);
+                } else {
+                    qDebug() << "Raw data error: data offset";
+                }
+            } else {
+                raw.data.insert(expected_data_offset, data);
+               qDebug() << "Raw data error: sample counter";
+            }
+        }
     }
     else {
         return respErrorVersion;
@@ -400,8 +423,9 @@ Resp IDBinTemp::parsePayload(FrameParser &proto) {
 
 
 Resp IDBinNav::parsePayload(FrameParser &proto) {
-    if(proto.ver() == v0) {
-
+    if(SimpleNav::getVer()) {
+        SimpleNav nav = proto.read<SimpleNav>();
+        _nav = nav;
     } else {
         return respErrorVersion;
     }
@@ -1055,3 +1079,38 @@ void IDBinUsblSolution::enableBeaconOnce(float timeout) {
 }
 
 
+
+Resp IDBinUsblControl::parsePayload(FrameParser &proto) {
+
+    return respOk;
+}
+
+void IDBinUsblControl::pingRequest(uint32_t timeout_us, uint8_t address) {
+    ProtoBinOut ping_req;
+    ping_req.create(SETTING, USBLPingRequest::getVer(), id(), m_address);
+    USBLPingRequest req = {timeout_us, address};
+    ping_req.write<USBLPingRequest>(req);
+    ping_req.end();
+
+    emit binFrameOut(ping_req);
+}
+
+void IDBinUsblControl::setResponseTimeout(uint32_t timeout_us) {
+    ProtoBinOut ping_resp_t;
+    ping_resp_t.create(SETTING, USBLResponseTimeout::getVer(), id(), m_address);
+    USBLResponseTimeout req = {timeout_us};
+    ping_resp_t.write<USBLResponseTimeout>(req);
+    ping_resp_t.end();
+
+    emit binFrameOut(ping_resp_t);
+}
+
+void IDBinUsblControl::setResponseAddressFilter(uint8_t address) {
+    ProtoBinOut ping_resp_a;
+    ping_resp_a.create(SETTING, USBLResponseAddressFilter::getVer(), id(), m_address);
+    USBLResponseAddressFilter req = {address};
+    ping_resp_a.write<USBLResponseAddressFilter>(req);
+    ping_resp_a.end();
+
+    emit binFrameOut(ping_resp_a);
+}
