@@ -62,3 +62,13 @@ void DeviceManagerWrapper::calcAverageChartLosses()
     averageChartLosses_ = std::max(0, std::min(100, 100 - getWorker()->calcAverageChartLosses()));
     emit this->chartLossesChanged();
 }
+
+void DeviceManagerWrapper::setProtoBinConsoled(bool state)
+{
+    getWorker()->setProtoBinConsoled(state);
+}
+
+void DeviceManagerWrapper::setUSBLBeaconDirectAsk(bool is_ask)
+{
+    getWorker()->setUSBLBeaconDirectAsk(is_ask);
+}

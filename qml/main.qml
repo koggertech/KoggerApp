@@ -756,7 +756,9 @@ ApplicationWindow  {
                         instruments: menuBar.instruments
                         indx: 2
 
-                        isEnabled: enabled
+                        onEnabledChanged: {
+                            waterViewSecond.setPlotEnabled(enabled)
+                        }
 
                         onVisibleChanged: {
                             if (visible && menuBar.syncPlots) {

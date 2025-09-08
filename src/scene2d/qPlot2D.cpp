@@ -184,6 +184,11 @@ void qPlot2D::updateContact()
     Plot2D::updateContact();
 }
 
+void qPlot2D::setPlotEnabled(bool state)
+{
+    Plot2D::setPlotEnabled(state);
+}
+
 float qPlot2D::getLowEchogramLevel() const
 {
     return Plot2D::getEchogramLowLevel();

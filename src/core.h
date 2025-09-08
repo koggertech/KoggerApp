@@ -34,7 +34,6 @@
 #include "tile_manager.h"
 //#include <FileReader.h>
 #include "data_horizon.h"
-#include "data_processor_defs.h"
 
 
 class Core : public QObject
@@ -45,19 +44,14 @@ public:
     Core();
     ~Core();
 
-    Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
-    Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
-    Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
-    Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
-    Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
-    Q_PROPERTY(int  fixBlackStripesForwardSteps WRITE setFixBlackStripesForwardSteps)
-    Q_PROPERTY(int  fixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
-    Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
-    Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
-    Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
-    Q_PROPERTY(QString ch1Name READ getChannel1Name NOTIFY channelListUpdated FINAL)
-    Q_PROPERTY(QString ch2Name READ getChannel2Name NOTIFY channelListUpdated FINAL)
-    Q_PROPERTY(int dataProcessorState READ getDataProcessorState NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(bool              isFactoryMode                READ  isFactoryMode         CONSTANT)
+    Q_PROPERTY(ConsoleListModel* consoleList                  READ  consoleList           CONSTANT)
+    Q_PROPERTY(bool              isSeparateReading            READ  getIsSeparateReading  CONSTANT)
+    Q_PROPERTY(QString           filePath                     READ  getFilePath           NOTIFY filePathChanged)
+    Q_PROPERTY(bool              isFileOpening                READ  getIsFileOpening      NOTIFY sendIsFileOpening)
+    Q_PROPERTY(QString           ch1Name                      READ  getChannel1Name       NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(QString           ch2Name                      READ  getChannel2Name       NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(int               dataProcessorState           READ  getDataProcessorState NOTIFY dataProcessorStateChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -115,11 +109,8 @@ public slots:
     void resetAim();
     void UILoad(QObject* object, const QUrl& url);
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
-    bool getIsFileOpening() const;
-    bool getIsSeparateReading() const;
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
-    int getDataProcessorState() const;
 
 #ifdef FLASHER
     void connectOpenedLinkAsFlasher(QString pn);
@@ -131,6 +122,9 @@ public slots:
     Q_INVOKABLE void setPosZeroing(bool state);
 #endif
 
+    Q_INVOKABLE bool getIsFileOpening() const;
+    Q_INVOKABLE bool getIsSeparateReading() const;
+    Q_INVOKABLE int getDataProcessorState() const;
     Q_INVOKABLE QString getChannel1Name() const;
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);

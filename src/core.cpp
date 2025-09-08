@@ -603,9 +603,14 @@ void Core::upgradeChanged(int progressStatus)
 
 void Core::setKlfLogging(bool isLogging)
 {
-    if (isLogging == this->getIsKlfLogging())
+    //qDebug() << "setKlfLogging" << isLogging;
+
+    if (isLogging == this->getIsKlfLogging()) {
         return;
+    }
+
     this->getIsKlfLogging() ? logger_.stopKlfLogging() : logger_.startNewKlfLog();
+
     isLoggingKlf_ = isLogging;
 }
 
@@ -637,9 +642,14 @@ bool Core::getIsKlfLogging()
 
 void Core::setCsvLogging(bool isLogging)
 {
-    if (isLogging == this->getIsCsvLogging())
+    //qDebug() << "setCsvLogging" << isLogging;
+
+    if (isLogging == this->getIsCsvLogging()) {
         return;
+    }
+
     this->getIsCsvLogging() ? logger_.stopCsvLogging() : logger_.startNewCsvLog();
+
     isLoggingCsv_ = isLogging;
 }
 
@@ -652,7 +662,7 @@ bool Core::exportComplexToCSV(QString file_path) {
     QString export_file_name = isOpenedFile() ? openedfilePath_.section('/', -1).section('.', 0, 0) : QDateTime::currentDateTime().toString("yyyy.MM.dd_hh:mm:ss").replace(':', '.');
     logger_.creatExportStream(file_path + "/" + export_file_name + ".csv");
 
-    auto ch_list = datasetPtr_->channelsList();
+    //auto ch_list = datasetPtr_->channelsList();
     // _dataset->setRefPosition(1518);
 
     for(int i = 0; i < datasetPtr_->size(); i++) {

@@ -477,12 +477,18 @@ QUuid DevDriver::getLinkUuid() const
     return linkUuid_;
 }
 
-void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask) {
+void DevDriver::askBeaconPosition(IDBinUsblSolution::USBLRequestBeacon ask)
+{
+    Q_UNUSED(ask)
+
     if(!m_state.connect) return;
     idUSBLControl->pingRequest(0xFFFFFFFF, 0xFF);
 }
 
-void DevDriver::enableBeaconOnce(float timeout) {
+void DevDriver::enableBeaconOnce(float timeout)
+{
+    Q_UNUSED(timeout)
+
     if(!m_state.connect) return;
     // idUSBL->enableBeaconOnce(timeout);
 }
@@ -1419,8 +1425,11 @@ void DevDriver::receivedUSBL(Type type, Version ver, Resp resp) {
 
 }
 
-void DevDriver::receivedUSBLControl(Type type, Version ver, Resp resp) {
-
+void DevDriver::receivedUSBLControl(Type type, Version ver, Resp resp)
+{
+    Q_UNUSED(type)
+    Q_UNUSED(ver)
+    Q_UNUSED(resp)
 }
 
 void DevDriver::process() {

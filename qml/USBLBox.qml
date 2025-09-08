@@ -58,7 +58,7 @@ DevSettingsBox {
                 visible: false
                 iconSource: "qrc:/icons/ui/repeat.svg"
                 onCheckedChanged: {
-                    // deviceManagerWrapper.isbeaconDirectQueueAsk = checked
+                    // deviceManagerWrapper.setUSBLBeaconDirectAsk(checked)
                     scanEnable = checked
                 }
             }
