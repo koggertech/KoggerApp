@@ -138,9 +138,9 @@ MenuFrame {
             SpinBoxCustom {
                 id: isobathsSurfaceLineStepSizeSpinBox
                 implicitWidth: 200
-                from: 10
+                from: 1
                 to: 200
-                stepSize: 5
+                stepSize: 1
                 value: 10
                 editable: false
 
