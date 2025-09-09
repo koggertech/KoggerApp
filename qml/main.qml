@@ -7,6 +7,7 @@ import QtQuick.Dialogs 1.2
 import QtQuick.Controls 2.15
 import WaterFall 1.0
 import KoggerCommon 1.0
+import BottomTrack 1.0
 
 
 ApplicationWindow  {

@@ -486,11 +486,14 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
         }
     }
 
-    bool isDel = !updatedByIndxs.empty() && !renderData_.isEmpty() && needRetriangle;
+    bool isDelManual = !updatedByIndxs.empty() && !renderData_.isEmpty() && needRetriangle;
+    if (!manual) {
+        isDelManual = false;
+    }
 
     if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
         SceneObject::setData(renderData_, GL_LINE_STRIP);
-        emit updatedPoints(updatedByIndxs, manual, isDel);
+        emit updatedPoints(updatedByIndxs, manual, isDelManual);
     }
 
     for (auto& itm : updatedByIndxs) {
@@ -498,7 +501,7 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
     }
 
     if (defMode || needRetriangle) {
-        emit updatedPoints(QVector<int>(), manual, isDel); // completely redraw
+        emit updatedPoints(QVector<int>(), manual, isDelManual); // completely redraw
     }
 }
 
