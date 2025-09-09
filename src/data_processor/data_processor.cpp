@@ -185,16 +185,17 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual, b
         return;
     }
 
-    for (int itm : indxs) {
-        if (!isDel) {
+    if (!isDel) {
+        for (int itm : indxs) {
             epIndxsFromBottomTrack_.insert(itm);
             pendingSurfaceIndxs_.insert(qMakePair(manual ? '1' : '0', itm));
             pendingMosaicIndxs_.insert(itm);
         }
-    }
-    pendingIsobathsWork_ = true;
 
-    scheduleLatest(WorkSet(WF_All));
+        pendingIsobathsWork_ = true;
+
+        scheduleLatest(WorkSet(WF_All));
+    }
 }
 
 void DataProcessor::onEpochAdded(uint64_t indx)
