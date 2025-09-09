@@ -565,5 +565,4 @@ bool TileSet::updateVertices(Tile* tile) const
     return false;
 }
 
-
 } // namespace map

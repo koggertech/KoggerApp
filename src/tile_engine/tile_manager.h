@@ -10,11 +10,10 @@
 #include "tile_provider.h"
 #include "tile_downloader.h"
 #include "tile_db.h"
-#include "dataset.h"
+#include "dataset_defs.h"
 
 
 namespace map {
-
 
 class TileManager : public QObject
 {
@@ -40,7 +39,6 @@ private:
     static constexpr int minTilesCapacity_{ 400 };
     static constexpr int maxConcurrentDownloads_{ 10 };
 };
-
 
 } // namespace map
 

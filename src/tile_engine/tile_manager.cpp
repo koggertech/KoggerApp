@@ -10,7 +10,6 @@
 
 namespace map {
 
-
 TileManager::TileManager(QObject *parent) :
     QObject(parent),
     tileProvider_(std::make_shared<TileGoogleProvider>()),
@@ -218,6 +217,5 @@ void TileManager::getLlaRef(LLARef viewLlaRef)
 {
     tileSet_->onNewLlaRef(viewLlaRef);
 }
-
 
 } // namespace map
