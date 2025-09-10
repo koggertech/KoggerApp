@@ -8,6 +8,7 @@
 #include <cmath>
 #include "compute_worker.h"
 #include "dataset.h"
+#include "data_processor_defs.h"
 
 
 static inline uint32_t toMask(WorkSet s){ return static_cast<uint32_t>(s); }
@@ -618,4 +619,37 @@ void DataProcessor::requestCancel() noexcept
 {
     nextRunPending_.store(true);
     cancelRequested_.store(true);
+}
+
+void DataProcessor::onUpdateMosaic(int zoom)
+{
+    float val = ZL[zoom - 1].pxPerMeter;
+    qDebug() << "taked res" << val;
+
+    if (!std::isfinite(val)) {
+        return;
+    }
+
+    const float convertedResolution = 1.0f / val;
+    //qDebug() << tileResolution_ << convertedResolution;
+    if (qFuzzyCompare(1.0f + tileResolution_, 1.0f + convertedResolution)) {
+        return;
+    }
+
+    qDebug() << "onUpdateMosaic" << zoom;
+
+    tileResolution_ = convertedResolution;
+
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
+
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingMosaicIndxs_.insert(*it);
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    }
+    pendingIsobathsWork_ = true;
+
+    QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }

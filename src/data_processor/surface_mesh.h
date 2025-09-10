@@ -1,9 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <QHash>
 #include <QVector3D>
 #include "surface_tile.h"
 #include "math_defs.h"
+#include "data_processor_defs.h"
 
 
 class SurfaceMesh {
@@ -23,7 +25,8 @@ public:
 
     const std::vector<SurfaceTile*>&        getTilesCRef() const;
     std::vector<std::vector<SurfaceTile*>>& getTileMatrixRef();
-    SurfaceTile*                            getTilePtrById(QUuid tileId);
+    SurfaceTile*                            getTilePtrByKey(const TileKey& key);
+    int                                     getCurrentZoom() const;
     int                                     getPixelWidth() const;
     int                                     getPixelHeight() const;
     int                                     getTileSidePixelSize() const;
@@ -45,6 +48,8 @@ private:
     /*data*/
     std::vector<SurfaceTile*> tiles_;
     std::vector<std::vector<SurfaceTile*>> tileMatrix_;
+    QHash<TileKey, SurfaceTile*> tileByKey_; // new map
+    int   zoomIndex_{1};                     // 0..6
     QVector3D origin_;
     float tileResolution_;
     float tileSideMeterSize_;

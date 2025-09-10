@@ -27,7 +27,7 @@ SurfaceView::~SurfaceView()
     }
 }
 
-void SurfaceView::setMosaicTextureIdByTileId(QUuid tileId, GLuint textureId)
+void SurfaceView::setMosaicTextureIdByTileId(const TileKey& tileId, GLuint textureId)
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
         if (auto it = r->tiles_.find(tileId); it != r->tiles_.end()) {
@@ -50,7 +50,7 @@ void SurfaceView::setMosaicColorTableTextureId(GLuint value)
     }
 }
 
-GLuint SurfaceView::getMosaicTextureIdByTileId(QUuid tileId) const
+GLuint SurfaceView::getMosaicTextureIdByTileId(const TileKey& tileId) const
 {
     GLuint retVal = 0;
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
@@ -82,11 +82,11 @@ QVector<GLuint> SurfaceView::takeMosaicTileTextureToDelete()
     return out;
 }
 
-QVector<std::pair<QUuid, std::vector<uint8_t> > > SurfaceView::takeMosaicTileTextureToAppend()
+QVector<std::pair<TileKey, std::vector<uint8_t> > > SurfaceView::takeMosaicTileTextureToAppend()
 {
     QMutexLocker lock(&mosaicTexTasksMutex_);
 
-    QVector<std::pair<QUuid, std::vector<uint8_t>>> out;
+    QVector<std::pair<TileKey, std::vector<uint8_t>>> out;
     out.reserve(mosaicTileTextureToAppend_.size());
     for (auto it = mosaicTileTextureToAppend_.cbegin(); it != mosaicTileTextureToAppend_.cend(); ++it) {
         out.push_back({ it.key(), it.value() });
@@ -265,7 +265,7 @@ void SurfaceView::clear()
     Q_EMIT boundsChanged();
 }
 
-void SurfaceView::setTiles(const QHash<QUuid, SurfaceTile> &tiles, bool useTextures)
+void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTextures)
 {
     //qDebug() << "SurfaceView::setTiles" << tiles.size();
 
@@ -344,7 +344,7 @@ void SurfaceView::setColorIntervalsSize(int size)
     }
 }
 
-void SurfaceView::removeTiles(const QSet<QUuid> &ids)
+void SurfaceView::removeTiles(const QSet<TileKey>& ids)
 {
     if (ids.isEmpty()) return;
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
@@ -361,7 +361,7 @@ void SurfaceView::removeTiles(const QSet<QUuid> &ids)
     }
 }
 
-void SurfaceView::updateMosaicTileTextureTask(const QHash<QUuid, SurfaceTile>& newTiles)
+void SurfaceView::updateMosaicTileTextureTask(const QHash<TileKey, SurfaceTile>& newTiles)
 {
     if (newTiles.isEmpty()) {
         return;

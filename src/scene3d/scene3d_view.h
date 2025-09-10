@@ -232,6 +232,7 @@ public Q_SLOTS:
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
     void updateViews();
+    void onCameraMoved();
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
@@ -239,6 +240,7 @@ public Q_SLOTS:
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void sendLlaRef(LLARef viewLlaRef);
+    void sendDataZoom(int zoom);
     void cameraIsMoved();
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
@@ -302,6 +304,7 @@ private:
     float lastCameraDist_;
     bool trackLastData_;
     bool gridVisibility_ = true;
+    int zoomData_{-1};
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

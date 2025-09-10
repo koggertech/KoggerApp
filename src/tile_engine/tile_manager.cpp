@@ -3,7 +3,6 @@
 #include <QDebug>
 #include <QUrl>
 #include <QThread>
-
 #include "map_defs.h"
 #include "tile_google_provider.h"
 

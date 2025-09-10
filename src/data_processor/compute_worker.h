@@ -4,7 +4,6 @@
 #include <QVector>
 #include <QPair>
 #include <QSet>
-#include <QUuid>
 #include "surface_processor.h"
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"

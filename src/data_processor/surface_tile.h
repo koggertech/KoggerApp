@@ -2,15 +2,15 @@
 
 #include <stdint.h>
 #include <vector>
-#include <QUuid>
 #include <QVector>
 #include <QVector3D>
 #include <QVector2D>
 #include <QOpenGLFunctions>
+#include "data_processor_defs.h"
 
 
 class SurfaceTile;
-using TileMap = QHash<QUuid, SurfaceTile>;
+using TileMap = QHash<TileKey, SurfaceTile>;
 
 static constexpr int   defaultTileSidePixelSize     = 256;
 static constexpr int   defaultTileHeightMatrixRatio = 16;
@@ -26,13 +26,13 @@ enum class HeightType {
 class SurfaceTile {
 public:
     /*methods*/
-    SurfaceTile(QVector3D origin);
+    SurfaceTile(const TileKey& key, QVector3D origin);
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices(); // обновляет индексы для отрисовки
 
     void                        setMosaicTextureId(GLuint val);
     void                        setIsUpdated(bool state);
-    QUuid                       getUuid() const;
+    const TileKey&              getKey() const;
     QVector3D                   getOrigin() const;
     bool                        getIsInited() const;
     GLuint                      getMosaicTextureId() const;
@@ -52,7 +52,7 @@ private:
     inline bool checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const;
 
     /*data*/
-    QUuid id_;
+    TileKey   key_;
     QVector3D origin_;
     std::vector<uint8_t> imageData_;        // текстура
     QVector<QVector3D> heightVertices_;     // матрица высот //

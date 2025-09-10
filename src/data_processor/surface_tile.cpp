@@ -3,8 +3,8 @@
 #include <cmath>
 
 
-SurfaceTile::SurfaceTile(QVector3D origin) :
-    id_(QUuid::createUuid()),
+SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
+    key_(key),
     origin_(origin),
     textureId_(0),
     isUpdated_(false),
@@ -78,9 +78,9 @@ void SurfaceTile::setIsUpdated(bool state)
     isUpdated_ = state;
 }
 
-QUuid SurfaceTile::getUuid() const
+const TileKey &SurfaceTile::getKey() const
 {
-    return id_;
+    return key_;
 }
 
 QVector3D SurfaceTile::getOrigin() const

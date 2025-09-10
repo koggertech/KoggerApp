@@ -8,7 +8,6 @@
 #include <QVector3D>
 #include <QPair>
 #include <QThread>
-#include <QUuid>
 #include "dataset_defs.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
@@ -86,6 +85,8 @@ public slots:
     void onIsobathsUpdated();
     void onMosaicUpdated();
     void requestCancel() noexcept;
+
+    void onUpdateMosaic(int zoom); // temp
 
 signals:
     // this

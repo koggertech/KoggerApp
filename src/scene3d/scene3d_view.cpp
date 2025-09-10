@@ -10,6 +10,7 @@
 #include <QVector3D>
 
 #include "map_defs.h"
+#include "data_processor_defs.h"
 
 
 GraphicsScene3dView::GraphicsScene3dView() :
@@ -75,6 +76,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::onCameraMoved, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
@@ -828,6 +830,19 @@ void GraphicsScene3dView::updateViews()
     if (isobathsView_) {
         isobathsView_->setCameraDistToFocusPoint(m_camera->distForMapView());
     }
+}
+
+void GraphicsScene3dView::onCameraMoved()
+{
+    int currZoom = pickZoomByDistance(m_camera->distForMapView());
+
+    if (currZoom == zoomData_) {
+        return;
+    }
+
+    zoomData_ = currZoom;
+
+    emit sendDataZoom(zoomData_);
 }
 
 void GraphicsScene3dView::onPositionAdded(uint64_t indx)

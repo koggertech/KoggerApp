@@ -474,7 +474,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     TileMap res;
     res.reserve(changedTiles.size());
     for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
-        res.insert((*it)->getUuid(), (*(*it)));
+        res.insert((*it)->getKey(), (*(*it)));
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
@@ -813,7 +813,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
     TileMap res;
     res.reserve(tilesRef.size());
     for (auto it = tilesRef.cbegin(); it != tilesRef.cend(); ++it) {
-        res.insert((*it)->getUuid(), (*(*it)));
+        res.insert((*it)->getKey(), (*(*it)));
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
