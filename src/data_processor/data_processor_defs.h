@@ -2,6 +2,7 @@
 #include <QHash>
 #include <QDebug>
 #include <cmath>
+#include <QVector2D>
 
 
 static constexpr struct {
@@ -114,4 +115,22 @@ namespace mosaic {
     //     kRealtime,
     //     kPerformance
     // };
+}
+
+inline int tileIndexFromCoord(double coordMeters, double tileSideMeters) {
+    return (int)std::floor(coordMeters / tileSideMeters);
+}
+
+inline TileKey tileKeyFromWorld(float worldX, float worldY, int zoom, int tileSidePx = 256)
+{
+    const float tileSideMeters = tileSideMetersFromZoom(zoom, tileSidePx);
+    const int x = tileIndexFromCoord(worldX, tileSideMeters);
+    const int y = tileIndexFromCoord(worldY, tileSideMeters);
+    return { x, y, zoom };
+}
+
+inline QVector2D worldOriginFromKey(const TileKey& k, int tileSidePx = 256)
+{
+    const float S = tileSideMetersFromZoom(k.zoom, tileSidePx);
+    return { k.x * S, k.y * S }; // общий “якорь” = (0,0)
 }

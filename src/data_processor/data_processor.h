@@ -13,6 +13,7 @@
 #include "isobaths_processor.h"
 #include "mosaic_processor.h"
 #include "surface_processor.h"
+#include "mosaic_db.h"
 
 
 enum class DataProcessorType {
@@ -88,7 +89,16 @@ public slots:
 
     void onUpdateMosaic(int zoom); // temp
 
+    void setFilePath(QString filePath);
+
+private slots:
+    void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
+
 signals:
+	// db
+    void dbLoadTilesForZoom(int zoom, quint64 seq);
+    void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tile_px, int hm_ratio);
+
     // this
     void sendState(DataProcessorType state);
     void bottomTrackProcessingCleared();
@@ -196,4 +206,16 @@ private:
     std::atomic_bool nextRunPending_{false};
     std::atomic<uint32_t> requestedMask_{0};
     bool btBusy_{false};
+
+    // db
+    MosaicDB* db_{nullptr};
+    QThread   dbThread_;
+    QString   filePath_;
+    quint64   reqSeq_{0};            // id запросов в БД
+    int       engineVer_{1};
+    int       currentZoom_{0};       // какой зум реально показан в рендере
+    int       requestedZoom_{0};     // какой зум сейчас просим у БД
+    bool      dbInFlight_{false};    // есть активная загрузка из БД
+    bool      loadingFromDb_{false};
+    bool      persistToDb_{true};    // опциональный тумблер - временно не писать в БД
 };

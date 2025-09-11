@@ -9,23 +9,7 @@
 //
 //}
 
-inline int tileIndexFromCoord(double coordMeters, double tileSideMeters) {
-    return (int)std::floor(coordMeters / tileSideMeters);
-}
 
-inline TileKey tileKeyFromWorld(float worldX, float worldY, int zoom, int tileSidePx = 256)
-{
-    const float tileSideMeters = tileSideMetersFromZoom(zoom, tileSidePx);
-    const int x = tileIndexFromCoord(worldX, tileSideMeters);
-    const int y = tileIndexFromCoord(worldY, tileSideMeters);
-    return { x, y, zoom };
-}
-
-inline QVector2D worldOriginFromKey(const TileKey& k, int tileSidePx = 256)
-{
-    const float tileSideMeters = tileSideMetersFromZoom(k.zoom, tileSidePx);
-    return { k.x * tileSideMeters, k.y * tileSideMeters };
-}
 
 SurfaceMesh::SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
     tileResolution_(tileResolution),
@@ -244,7 +228,7 @@ void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const 
     numHeightTiles_ = numHeightTiles;
 
     origin_ = QVector3D(matrixParams.originX, matrixParams.originY, 0);
-
+    qDebug() << "SurfaceMesh::initializeMatrix" << origin_;
     tileMatrix_.resize(numHeightTiles_);
     for (int i = 0; i < numHeightTiles_; ++i) {
         tileMatrix_[i].resize(numWidthTiles_);

@@ -66,6 +66,14 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
 DataProcessor::~DataProcessor()
 {
     requestCancel();
+
+    if (db_) {
+        dbThread_.quit();
+        dbThread_.wait();
+        db_->deleteLater();
+        db_ = nullptr;
+    }
+
     computeThread_.quit();
     computeThread_.wait();
     worker_->deleteLater();
@@ -194,6 +202,8 @@ void DataProcessor::onBottomTrackAdded(const QVector<int> &indxs, bool manual, b
         }
 
         pendingIsobathsWork_ = true;
+
+        //return; // TODO: ruins last saving if run on file opening
 
         scheduleLatest(WorkSet(WF_All));
     }
@@ -494,7 +504,15 @@ void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParamete
 
 void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 {
+    if (tiles.isEmpty()) {
+        return;
+    }
+
     emit sendSurfaceTiles(tiles, useTextures);
+
+    if (persistToDb_ && db_ && useTextures && !loadingFromDb_) {
+        emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
+    }
 }
 
 void DataProcessor::postMinZ(float val)
@@ -570,6 +588,8 @@ void DataProcessor::clearSurfaceProcessing()
 
 void DataProcessor::clearAllProcessings()
 {
+    filePath_.clear();
+
     pendingIsobathsWork_ = false;
     pendingMosaicIndxs_.clear();
     pendingSurfaceIndxs_.clear();
@@ -623,23 +643,104 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateMosaic(int zoom)
 {
-    float val = ZL[zoom - 1].pxPerMeter;
-    qDebug() << "taked res" << val;
+    if (zoom < 1 || zoom > 7) return;
 
-    if (!std::isfinite(val)) {
+    if (zoom == currentZoom_) {
+        qDebug() << "Skip: zoom already applied" << zoom;
         return;
     }
 
-    const float convertedResolution = 1.0f / val;
-    //qDebug() << tileResolution_ << convertedResolution;
-    if (qFuzzyCompare(1.0f + tileResolution_, 1.0f + convertedResolution)) {
+    requestedZoom_ = zoom;
+
+    const float pxPerMeter = ZL[zoom - 1].pxPerMeter;
+    if (!std::isfinite(pxPerMeter)) return;
+    tileResolution_ = 1.0f / pxPerMeter;
+
+    emit mosaicProcessingCleared();
+    emit surfaceProcessingCleared();
+
+    if (db_) {
+        if (!dbInFlight_) {
+            dbInFlight_ = true;
+            const auto seq = ++reqSeq_;
+            QMetaObject::invokeMethod(db_, [this, seq, zoom](){
+                db_->loadTilesForZoom(zoom, seq);
+            }, Qt::QueuedConnection);
+        }
+    }
+}
+
+void DataProcessor::setFilePath(QString filePath)
+{
+    qDebug() << "DataProcessor::setFilePath" << filePath;
+
+    filePath_ = filePath;
+
+    if (!db_) {
+        db_ = new MosaicDB(filePath_);
+        db_->moveToThread(&dbThread_);
+        connect(&dbThread_, &QThread::started, db_, [this](){
+            if (!db_->open()) {
+                qWarning() << "DB open failed";
+            }
+        }, Qt::QueuedConnection);
+
+        connect(this, &DataProcessor::dbLoadTilesForZoom,
+                db_, &MosaicDB::loadTilesForZoom, Qt::QueuedConnection);
+        connect(this, &DataProcessor::dbSaveTiles,
+                db_, &MosaicDB::saveTiles, Qt::QueuedConnection);
+
+        connect(db_, &MosaicDB::tilesLoadedForZoom,
+                this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
+
+        dbThread_.setObjectName("MosaicDBThread");
+        dbThread_.start();
+    }
+}
+
+void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
+{
+    dbInFlight_ = false;
+
+    if (zoom != requestedZoom_) { 
+        return; 
+    }
+
+    if (!dbTiles.isEmpty()) {
+        TileMap out; out.reserve(dbTiles.size());
+        for (const DbTile& dt : dbTiles) {
+            SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
+            tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
+            if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
+                auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
+                auto& img = tile.getMosaicImageDataRef();
+                if (int(bytes.size()) == int(img.size())) {
+                    memcpy(img.data(), bytes.data(), size_t(bytes.size()));
+                }
+            }
+            if (dt.hasHeight && !dt.heightBlob.isEmpty()) {
+                auto& verts = tile.getHeightVerticesRef();
+                MosaicDB::unpackFloat32(dt.heightBlob, verts, dt.hmRatio);
+            }
+            if (dt.hasMarks && !dt.marksBlob.isEmpty()) {
+                auto& marks = tile.getHeightMarkVerticesRef();
+                MosaicDB::unpackMarksU8(dt.marksBlob, marks);
+            }
+            tile.updateHeightIndices();
+            tile.setIsUpdated(false);
+            out.insert(dt.key, std::move(tile));
+        }
+
+        qDebug() << "LOADED" << zoom << out.size();
+        loadingFromDb_ = true;
+        emit sendSurfaceTiles(out, true);
+        loadingFromDb_ = false;
+
+        currentZoom_ = zoom;
         return;
     }
 
-    qDebug() << "onUpdateMosaic" << zoom;
-
-    tileResolution_ = convertedResolution;
-
+    //  иначе расчёт
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
@@ -652,4 +753,6 @@ void DataProcessor::onUpdateMosaic(int zoom)
 
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
     scheduleLatest(WorkSet(WF_All), /*replace*/true);
+
+    currentZoom_ = zoom;
 }

@@ -333,6 +333,7 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
             datasetPtr_->resetDataset();
             dataHorizon_->clear();
             QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+            QMetaObject::invokeMethod(dataProcessor_, "setFilePath", Qt::QueuedConnection, Q_ARG(QString, localfilePath));
             setDataProcessorConnections();
             dataHorizon_->setIsFileOpening(isFileOpening_);
         }
