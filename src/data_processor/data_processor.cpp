@@ -67,12 +67,7 @@ DataProcessor::~DataProcessor()
 {
     requestCancel();
 
-    if (db_) {
-        dbThread_.quit();
-        dbThread_.wait();
-        db_->deleteLater();
-        db_ = nullptr;
-    }
+    closeDB();
 
     computeThread_.quit();
     computeThread_.wait();
@@ -589,6 +584,7 @@ void DataProcessor::clearSurfaceProcessing()
 
 void DataProcessor::clearAllProcessings()
 {
+    closeDB();
     filePath_.clear();
 
     pendingIsobathsWork_ = false;
@@ -636,6 +632,39 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
     startTimerIfNeeded();
 }
 
+void DataProcessor::openDB()
+{
+    if (!db_) {
+        db_ = new MosaicDB(filePath_);
+        db_->moveToThread(&dbThread_);
+        connect(&dbThread_, &QThread::started, db_, [this](){
+            if (!db_->open()) {
+                qWarning() << "DB open failed";
+            }
+        }, Qt::QueuedConnection);
+
+        connect(this, &DataProcessor::dbLoadTilesForZoom, db_,  &MosaicDB::loadTilesForZoom,            Qt::QueuedConnection);
+        connect(this, &DataProcessor::dbSaveTiles,        db_,  &MosaicDB::saveTiles,                   Qt::QueuedConnection);
+        connect(db_,  &MosaicDB::tilesLoadedForZoom,      this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
+
+        dbThread_.setObjectName("MosaicDBThread");
+        dbThread_.start();
+
+        qDebug() << "DB opened by path" << filePath_;
+    }
+}
+
+void DataProcessor::closeDB()
+{
+    if (db_) {
+        dbThread_.quit();
+        dbThread_.wait();
+        db_->deleteLater();
+        db_ = nullptr;
+        qDebug() << "DB close by path" << filePath_;
+    }
+}
+
 void DataProcessor::requestCancel() noexcept
 {
     nextRunPending_.store(true);
@@ -673,30 +702,9 @@ void DataProcessor::onUpdateMosaic(int zoom)
 
 void DataProcessor::setFilePath(QString filePath)
 {
-    qDebug() << "DataProcessor::setFilePath" << filePath;
-
     filePath_ = filePath;
 
-    if (!db_) {
-        db_ = new MosaicDB(filePath_);
-        db_->moveToThread(&dbThread_);
-        connect(&dbThread_, &QThread::started, db_, [this](){
-            if (!db_->open()) {
-                qWarning() << "DB open failed";
-            }
-        }, Qt::QueuedConnection);
-
-        connect(this, &DataProcessor::dbLoadTilesForZoom,
-                db_, &MosaicDB::loadTilesForZoom, Qt::QueuedConnection);
-        connect(this, &DataProcessor::dbSaveTiles,
-                db_, &MosaicDB::saveTiles, Qt::QueuedConnection);
-
-        connect(db_, &MosaicDB::tilesLoadedForZoom,
-                this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
-
-        dbThread_.setObjectName("MosaicDBThread");
-        dbThread_.start();
-    }
+    openDB();
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)

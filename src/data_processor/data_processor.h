@@ -166,6 +166,8 @@ private:
     void scheduleLatest(WorkSet mask = WorkSet(WF_All),
                         bool replace = false,
                         bool clearUnrequestedPending = false) noexcept;
+    void openDB();
+    void closeDB();
 
 private:
     friend class SurfaceProcessor;
