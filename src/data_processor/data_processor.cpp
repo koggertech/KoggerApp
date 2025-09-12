@@ -510,7 +510,8 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 
     emit sendSurfaceTiles(tiles, useTextures);
 
-    if (persistToDb_ && db_ && useTextures && !loadingFromDb_) {
+    qDebug() << "CALCULATED" << currentZoom_ << tiles.size() << useTextures;
+    if (persistToDb_ && db_ && useTextures && !loadingFromDb_) { // только с мозайки сохраняем
         emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
     }
 }
@@ -740,7 +741,7 @@ void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTile
         return;
     }
 
-    //  иначе расчёт
+    //  иначе расчёт по всем эпохам
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();

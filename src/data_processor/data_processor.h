@@ -50,9 +50,12 @@ public slots:
     // this
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void clearProcessing(DataProcessorType = DataProcessorType::kUndefined);
+
+    // from 3d controller (visibility)
     void setUpdateBottomTrack (bool state);
     void setUpdateIsobaths (bool state);
     void setUpdateMosaic (bool state);
+
     void setIsOpeningFile (bool state);
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
@@ -87,8 +90,8 @@ public slots:
     void onMosaicUpdated();
     void requestCancel() noexcept;
 
+    // zoom
     void onUpdateMosaic(int zoom); // temp
-
     void setFilePath(QString filePath);
 
 private slots:
