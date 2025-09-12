@@ -21,6 +21,8 @@ MosaicDB::MosaicDB(const QString& klfPath, QObject* parent)
 {
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
+
+    connName_ = QStringLiteral("mosaicdb-%1").arg(reinterpret_cast<quintptr>(this));
 }
 
 MosaicDB::~MosaicDB()
@@ -30,7 +32,7 @@ MosaicDB::~MosaicDB()
 
 bool MosaicDB::open()
 {
-    db_ = QSqlDatabase::addDatabase("QSQLITE", QString("mosaicdb-%1").arg(reinterpret_cast<quintptr>(this)));
+    db_ = QSqlDatabase::addDatabase("QSQLITE", connName_);
     db_.setDatabaseName(dbPath_);
 
     if (!db_.open()) {
@@ -44,6 +46,17 @@ bool MosaicDB::open()
     q.exec("PRAGMA temp_store=MEMORY;");
 
     return ensureSchema();
+}
+
+void MosaicDB::close()
+{
+    if (db_.isOpen()) {
+        db_.close();
+    }
+
+    const QString name = db_.connectionName();
+    db_ = QSqlDatabase();
+    QSqlDatabase::removeDatabase(name);
 }
 
 bool MosaicDB::ensureSchema()

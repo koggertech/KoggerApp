@@ -144,6 +144,7 @@ void ComputeWorker::setMosaicHighLevel(float v)
 
 void ComputeWorker::setMosaicTileResolution(float res)
 {
+    //qDebug() << "ComputeWorker::setMosaicTileResolution" << res;
     if (res <= 0.f) {
         return;
     }

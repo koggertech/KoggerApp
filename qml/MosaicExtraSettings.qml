@@ -356,16 +356,17 @@ MenuFrame {
                         stepSize: 5
                         value: 10
                         editable: false
+                        enabled: false
 
                         onFocusChanged: {
                             mosaicViewSettings.focus = true
                         }
 
                         onValueChanged: {
-                            MosaicViewControlMenuController.onSetResolution(value)
+              //              MosaicViewControlMenuController.onSetResolution(value)
                         }
                         Component.onCompleted: {
-                            MosaicViewControlMenuController.onSetResolution(value)
+              //              MosaicViewControlMenuController.onSetResolution(value)
                         }
 
                         Settings {

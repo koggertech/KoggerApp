@@ -36,6 +36,7 @@ public:
 
 public slots:
     bool open();
+    void close();
 
     void loadTilesForZoom(int zoom,  quint64 seq);
     void saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
@@ -60,4 +61,5 @@ private:
     QSqlDatabase db_;
     QString      klfPath_;
     QString      dbPath_;
+    QString      connName_;
 };

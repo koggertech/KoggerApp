@@ -317,6 +317,7 @@ void DataProcessor::setMosaicRAngleOffset(float val)
 
 void DataProcessor::setMosaicTileResolution(float val)
 {
+    //qDebug() << "DataProcessor::setMosaicTileResolution" << val;
     if (qFuzzyIsNull(val)) {
         return;
     }
@@ -505,7 +506,7 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 
     emit sendSurfaceTiles(tiles, useTextures);
 
-    qDebug() << "CALCULATED" << currentZoom_ << tiles.size() << useTextures;
+    qDebug() << "CALCULATED" << requestedZoom_ << tiles.size() << useTextures;
     if (persistToDb_ && db_ && useTextures && !loadingFromDb_) { // только с мозайки сохраняем
         emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
     }
@@ -637,6 +638,7 @@ void DataProcessor::openDB()
     if (!db_) {
         db_ = new MosaicDB(filePath_);
         db_->moveToThread(&dbThread_);
+        connect(&dbThread_, &QThread::finished, db_, &QObject::deleteLater);
         connect(&dbThread_, &QThread::started, db_, [this](){
             if (!db_->open()) {
                 qWarning() << "DB open failed";
@@ -656,13 +658,17 @@ void DataProcessor::openDB()
 
 void DataProcessor::closeDB()
 {
-    if (db_) {
-        dbThread_.quit();
-        dbThread_.wait();
-        db_->deleteLater();
-        db_ = nullptr;
-        qDebug() << "DB close by path" << filePath_;
+    if (!db_) {
+        return;
     }
+
+    QMetaObject::invokeMethod(db_, "close", Qt::BlockingQueuedConnection);
+    db_->deleteLater();
+
+    dbThread_.quit();
+    dbThread_.wait();
+    db_ = nullptr;
+    qDebug() << "DB close by path" << filePath_;
 }
 
 void DataProcessor::requestCancel() noexcept
@@ -673,6 +679,7 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateMosaic(int zoom)
 {
+    //qDebug() << "DataProcessor::onUpdateMosaic" << zoom;
     if (zoom < 1 || zoom > 7) return;
 
     if (zoom == currentZoom_) {
@@ -683,7 +690,11 @@ void DataProcessor::onUpdateMosaic(int zoom)
     requestedZoom_ = zoom;
 
     const float pxPerMeter = ZL[zoom - 1].pxPerMeter;
-    if (!std::isfinite(pxPerMeter)) return;
+    if (!std::isfinite(pxPerMeter)) {
+        return;
+    }
+    //qDebug() << "pxPerMeter" << pxPerMeter;
+
     tileResolution_ = 1.0f / pxPerMeter;
 
     emit mosaicProcessingCleared();

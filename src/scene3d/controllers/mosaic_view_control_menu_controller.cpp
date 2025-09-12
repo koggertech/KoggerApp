@@ -187,6 +187,8 @@ void MosaicViewControlMenuController::onSetResolution(float val)
 {
     resolution_ = val;
 
+    return;
+
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, resolution_));
@@ -208,7 +210,7 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLevels",              Qt::QueuedConnection, Q_ARG(float, lowLevel_), Q_ARG(float, highLevel_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicLAngleOffset",        Qt::QueuedConnection, Q_ARG(float, lAngleOffset_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicRAngleOffset",        Qt::QueuedConnection, Q_ARG(float, rAngleOffset_));
-                   QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
+                   //QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTileResolution",      Qt::QueuedConnection, Q_ARG(float, resolution_));
                 }
 
                 if (auto surfacePtr = graphicsSceneViewPtr_->getSurfaceViewPtr(); surfacePtr) {

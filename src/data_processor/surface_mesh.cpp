@@ -31,10 +31,10 @@ void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float
     tileSidePixelSize_ = tileSidePixelSize;
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
     tileResolution_ = tileResolution;
-
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 
     zoomIndex_ = zoomFromMpp(tileResolution_);
+    //qDebug() << "SurfaceMesh::reinit res" << tileResolution_ << "AND ZOOM INDX" << zoomIndex_;
 }
 
 bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
