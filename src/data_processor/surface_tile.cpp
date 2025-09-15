@@ -8,7 +8,10 @@ SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
     origin_(origin),
     textureId_(0),
     isUpdated_(false),
-    isInited_(false)
+    isInited_(false),
+    sidePixelSize_(defaultTileSidePixelSize),
+    heightMatrixRatio_(defaultTileHeightMatrixRatio),
+    resolution_(defaultTileResolution)
 {}
 
 void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
@@ -38,6 +41,10 @@ void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolutio
             textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1), float(i) / (heightMatSideSize - 1)));
         }
     }
+
+    sidePixelSize_ = sidePixelSize;
+    heightMatrixRatio_ = heightMatrixRatio;
+    resolution_ = resolution;
 
     isInited_ = true;
 }
@@ -136,6 +143,37 @@ const QVector<QVector3D>& SurfaceTile::getHeightVerticesCRef() const
 const QVector<int>& SurfaceTile::getHeightIndicesCRef() const
 {
     return heightIndices_;
+}
+
+int SurfaceTile::sidePixelSize() const
+{
+    return sidePixelSize_;
+}
+
+int SurfaceTile::heightMatrixRatio() const
+{
+    return heightMatrixRatio_;
+}
+
+float SurfaceTile::resolution() const
+{
+    return resolution_;
+}
+
+float SurfaceTile::sideWorld() const
+{
+    return sidePixelSize_ * resolution_;
+}
+
+void SurfaceTile::footprint(float &x0, float &x1, float &y0, float &y1) const
+{
+    const float s = sideWorld();
+    x0 = origin_.x();
+    y0 = origin_.y();
+    x1 = x0 + s;
+    y1 = y0 + s;
+    if (x0 > x1) std::swap(x0, x1);
+    if (y0 > y1) std::swap(y0, y1);
 }
 
 bool SurfaceTile::checkVerticesDepth(int topLeft, int topRight, int bottomLeft, int bottomRight) const

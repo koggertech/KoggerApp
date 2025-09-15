@@ -44,6 +44,12 @@ public:
     const QVector<QVector2D>&   getMosaicTextureVerticesCRef() const;
     const QVector<QVector3D>&   getHeightVerticesCRef() const;
     const QVector<int>&         getHeightIndicesCRef() const;
+    // tile size
+    int sidePixelSize() const;
+    int heightMatrixRatio() const;
+    float resolution() const;
+    float sideWorld() const;
+    void footprint(float& x0, float& x1, float& y0, float& y1) const;
 
 private:
     friend class SurfaceView;
@@ -62,4 +68,8 @@ private:
     GLuint textureId_;
     bool isUpdated_;
     bool isInited_; //
+    // tile size
+    int   sidePixelSize_;
+    int   heightMatrixRatio_;
+    float resolution_;
 };

@@ -291,7 +291,10 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
             updateMosaicTileTextureTask(tiles);
         }
 
+        r->updateBounds();
+
         Q_EMIT changed();
+        Q_EMIT boundsChanged();
     }
 }
 
@@ -498,4 +501,46 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->release();
         }
     }
+}
+
+void SurfaceView::SurfaceViewRenderImplementation::updateBounds()
+{
+    if (tiles_.isEmpty()) {
+        m_bounds = Cube();
+        return;
+    }
+
+    bool anyTile = false;
+    float xMin = 0.f, xMax = 0.f;
+    float yMin = 0.f, yMax = 0.f;
+
+    for (auto it = tiles_.cbegin(); it != tiles_.cend(); ++it) {
+        const SurfaceTile& t = it.value();
+
+        if (!t.getIsInited()) {
+            continue;
+        }
+
+        float x0, x1, y0, y1;
+        t.footprint(x0, x1, y0, y1);
+
+        if (!anyTile) {
+            xMin = x0; xMax = x1;
+            yMin = y0; yMax = y1;
+            anyTile = true;
+        }
+        else {
+            if (x0 < xMin) xMin = x0;
+            if (x1 > xMax) xMax = x1;
+            if (y0 < yMin) yMin = y0;
+            if (y1 > yMax) yMax = y1;
+        }
+    }
+
+    if (!anyTile) {
+        m_bounds = Cube();
+        return;
+    }
+
+    m_bounds = Cube(xMin, xMax, yMin, yMax, 0, 0);
 }

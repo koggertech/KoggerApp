@@ -24,6 +24,8 @@ public:
                             const QMap<QString,
                             std::shared_ptr<QOpenGLShaderProgram>>& shaderProgramMap) const override final;
     private:
+        void updateBounds() override final;
+
         friend class SurfaceView;
 
         QHash<TileKey, SurfaceTile> tiles_; // from dataProcessor
