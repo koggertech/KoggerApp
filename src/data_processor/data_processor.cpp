@@ -24,6 +24,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     positionCounter_(0),
     attitudeCounter_(0),
     updateBottomTrack_(false),
+    updateSurface_(false),
     updateIsobaths_(false),
     updateMosaic_(false),
     isOpeningFile_(false),
@@ -113,7 +114,16 @@ void DataProcessor::setUpdateBottomTrack(bool state)
 {
     updateBottomTrack_ = state;
 
-    if ((updateBottomTrack_ || updateIsobaths_ || updateMosaic_) && !pendingSurfaceIndxs_.empty()) {
+    if ((updateBottomTrack_ || updateSurface_ || updateIsobaths_ || updateMosaic_) && !pendingSurfaceIndxs_.empty()) {
+        scheduleLatest(WorkSet(WF_Surface));
+    }
+}
+
+void DataProcessor::setUpdateSurface(bool state)
+{
+    updateSurface_ = state;
+
+    if (updateSurface_ && !pendingSurfaceIndxs_.isEmpty()) {
         scheduleLatest(WorkSet(WF_Surface));
     }
 }
@@ -131,8 +141,8 @@ void DataProcessor::setUpdateMosaic(bool state)
 {
     updateMosaic_ = state;
 
-    if (updateMosaic_ && !pendingMosaicIndxs_.empty()) {
-        scheduleLatest(WorkSet(WF_Mosaic));
+    if (updateMosaic_) {
+        requestTilesFromDB();
     }
     else if (!updateMosaic_) {
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
@@ -395,7 +405,7 @@ void DataProcessor::runCoalescedWork()
 
     WorkBundle wb;
 
-    if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (updateBottomTrack_ || updateIsobaths_ || updateMosaic_)) {
+    if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && updateSurface_) {
         wb.surfaceVec.reserve(pendingSurfaceIndxs_.size());
 
         for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
@@ -506,7 +516,7 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 
     emit sendSurfaceTiles(tiles, useTextures);
 
-    qDebug() << "CALCULATED" << requestedZoom_ << tiles.size() << useTextures;
+    qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() <<"mosaic:"<< useTextures;
     if (persistToDb_ && db_ && useTextures && !loadingFromDb_) { // только с мозайки сохраняем
         emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
     }
@@ -671,6 +681,19 @@ void DataProcessor::closeDB()
     qDebug() << "DB close by path" << filePath_;
 }
 
+void DataProcessor::requestTilesFromDB()
+{
+    if (db_) {
+        if (!dbInFlight_) {
+            dbInFlight_ = true;
+            const auto seq = ++reqSeq_;
+            QMetaObject::invokeMethod(db_, [this, seq](){
+                db_->loadTilesForZoom(requestedZoom_, seq);
+            }, Qt::QueuedConnection);
+        }
+    }
+}
+
 void DataProcessor::requestCancel() noexcept
 {
     nextRunPending_.store(true);
@@ -679,8 +702,9 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateMosaic(int zoom)
 {
-    //qDebug() << "DataProcessor::onUpdateMosaic" << zoom;
-    if (zoom < 1 || zoom > 7) return;
+    if (zoom < 1 || zoom > 7) {
+        return;
+    }
 
     if (zoom == currentZoom_) {
         qDebug() << "Skip: zoom already applied" << zoom;
@@ -696,19 +720,16 @@ void DataProcessor::onUpdateMosaic(int zoom)
     //qDebug() << "pxPerMeter" << pxPerMeter;
 
     tileResolution_ = 1.0f / pxPerMeter;
+    QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+
+    if (!updateMosaic_) {
+        return;
+    }
 
     emit mosaicProcessingCleared();
     emit surfaceProcessingCleared();
 
-    if (db_) {
-        if (!dbInFlight_) {
-            dbInFlight_ = true;
-            const auto seq = ++reqSeq_;
-            QMetaObject::invokeMethod(db_, [this, seq, zoom](){
-                db_->loadTilesForZoom(zoom, seq);
-            }, Qt::QueuedConnection);
-        }
-    }
+    requestTilesFromDB();
 }
 
 void DataProcessor::setFilePath(QString filePath)

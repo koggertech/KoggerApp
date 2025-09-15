@@ -53,6 +53,7 @@ public slots:
 
     // from 3d controller (visibility)
     void setUpdateBottomTrack (bool state);
+    void setUpdateSurface(bool state);
     void setUpdateIsobaths (bool state);
     void setUpdateMosaic (bool state);
 
@@ -168,6 +169,7 @@ private:
                         bool clearUnrequestedPending = false) noexcept;
     void openDB();
     void closeDB();
+    void requestTilesFromDB();
 
 private:
     friend class SurfaceProcessor;
@@ -178,7 +180,6 @@ private:
     // this
     Dataset* datasetPtr_;
     
-    // рабочая нить и воркер
     QThread computeThread_;
     ComputeWorker* worker_;
 
@@ -189,6 +190,7 @@ private:
     uint64_t positionCounter_;
     uint64_t attitudeCounter_;
     bool updateBottomTrack_;
+    bool updateSurface_;
     bool updateIsobaths_;
     bool updateMosaic_;
     bool isOpeningFile_;

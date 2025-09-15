@@ -138,6 +138,7 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     //}
 
     updateData(vec);
+
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 

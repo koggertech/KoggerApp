@@ -49,6 +49,7 @@ void IsobathsViewControlMenuController::tryInitPendingLambda()
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
                 if (dataProcessorPtr_) {
+                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateSurface",                Qt::QueuedConnection, Q_ARG(bool,  processState_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths",               Qt::QueuedConnection, Q_ARG(bool,  processState_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setSurfaceIsobathsStepSize",      Qt::QueuedConnection, Q_ARG(float, surfaceLineStepSize_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setIsobathsLabelStepSize",        Qt::QueuedConnection, Q_ARG(float, labelStepSize_));
@@ -184,6 +185,7 @@ void IsobathsViewControlMenuController::onProcessStateChanged(bool state)
 
     if (graphicsSceneViewPtr_) {
         if (dataProcessorPtr_) {
+            QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateSurface",  Qt::QueuedConnection, Q_ARG(bool, processState_));
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths", Qt::QueuedConnection, Q_ARG(bool, processState_));
         }
     }

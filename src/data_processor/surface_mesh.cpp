@@ -102,7 +102,8 @@ QVector3D SurfaceMesh::convertPhToPixCoords(QVector3D physicsCoordinate) const
 void SurfaceMesh::printMatrix() const
 {
     qDebug() << "origin:" << origin_;
-    qDebug() << "tiles (WxH): " << numWidthTiles_ << "x" << numHeightTiles_;;
+    qDebug() << "tiles (WxH): " << numWidthTiles_ << "x" << numHeightTiles_ << "size" << tiles_.size();
+    qDebug() << "resol:" << tileResolution_ << "zomInxd:" << zoomIndex_;
 
     for (auto& itmI : tileMatrix_) {
         QString rowOutput;
@@ -228,7 +229,7 @@ void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const 
     numHeightTiles_ = numHeightTiles;
 
     origin_ = QVector3D(matrixParams.originX, matrixParams.originY, 0);
-    qDebug() << "SurfaceMesh::initializeMatrix" << origin_;
+    //qDebug() << "SurfaceMesh::initializeMatrix" << origin_;
     tileMatrix_.resize(numHeightTiles_);
     for (int i = 0; i < numHeightTiles_; ++i) {
         tileMatrix_[i].resize(numWidthTiles_);
