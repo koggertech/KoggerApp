@@ -1,7 +1,25 @@
 #include "surface_view.h"
 
+#include "draw_utils.h"
+#include "text_renderer.h"
 #include <QFile>
 
+
+static inline QVector2D projectToScreen(const QVector3D& p, const QMatrix4x4& mvp, const QRect& viewport)
+{
+    const QVector4D clip = mvp * QVector4D(p, 1.0f);
+    const float w = clip.w();
+
+    if (qFuzzyIsNull(w)) {
+        return QVector2D(NAN, NAN);
+    }
+
+    const QVector3D ndc(clip.x()/w, clip.y()/w, clip.z()/w);
+    const float x = viewport.x() + (ndc.x() * 0.5f + 0.5f) * viewport.width();
+    const float y = viewport.y() + (ndc.y() * 0.5f + 0.5f) * viewport.height();
+
+    return QVector2D(x, y);
+}
 
 SurfaceView::SurfaceView(QObject* parent)
     : SceneObject(new SurfaceViewRenderImplementation, parent),
@@ -431,7 +449,6 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
-    // tiles TODO OPTIMIZE
     for (auto& itm : tiles_) {
         if (!itm.getIsInited()) {
             continue;
@@ -499,6 +516,103 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
 
             shP->disableAttributeArray(posLoc);
             shP->release();
+        }
+    }
+
+    // debug info
+    auto lineProg = shaderProgramMap.value("static", nullptr);
+    if (!lineProg) {
+        qWarning() << "Shader program 'static' not found! Tile frames disabled.";
+        return;
+    }
+
+    // tile bounds
+    {
+        lineProg->bind();
+        const int posLoc   = lineProg->attributeLocation("position");
+        const int matLoc   = lineProg->uniformLocation("matrix");
+        const int colorLoc = lineProg->uniformLocation("color");
+        const int widthLoc = lineProg->uniformLocation("width");
+        const int triLoc   = lineProg->uniformLocation("isTriangle");
+
+        lineProg->setUniformValue(matLoc, mvp);
+        lineProg->setUniformValue(colorLoc, QVector4D(1.0f,1.0f,1.0f,1.0f));
+        lineProg->setUniformValue(widthLoc, 1.0f);
+        lineProg->setUniformValue(triLoc, false);
+
+        lineProg->enableAttributeArray(posLoc);
+
+        ctx->glDisable(GL_DEPTH_TEST);
+
+        QVector<QVector3D> rect(4);
+        for (auto it = tiles_.cbegin(); it != tiles_.cend(); ++it) {
+            const SurfaceTile& t = it.value();
+            //if (!t.getIsInited()) {
+            //    continue;
+            //}
+
+            float x0, x1, y0, y1;
+            t.footprint(x0, x1, y0, y1);
+
+            rect[0] = QVector3D(x0, y0, 0.0f);
+            rect[1] = QVector3D(x1, y0, 0.0f);
+            rect[2] = QVector3D(x1, y1, 0.0f);
+            rect[3] = QVector3D(x0, y1, 0.0f);
+
+            lineProg->setAttributeArray(posLoc, rect.constData());
+            ctx->glDrawArrays(GL_LINE_LOOP, 0, 4);
+        }
+
+        ctx->glEnable(GL_DEPTH_TEST);
+
+        lineProg->disableAttributeArray(posLoc);
+        lineProg->setUniformValue(triLoc, false);
+        lineProg->release();
+    }
+
+    {
+        QRectF vport = DrawUtils::viewportRect(ctx);
+        QMatrix4x4 textProjection;
+        textProjection.ortho(vport.toRect());
+
+        const float padX     = 4.0f;
+        const float padY     = 4.0f;
+        const float keyDY    = 14.0f;
+        const float scaleStr = 0.4f;
+
+        for (auto it = tiles_.cbegin(); it != tiles_.cend(); ++it) {
+            const TileKey& key   = it.key();
+            const SurfaceTile& t = it.value();
+
+            //if (!t.getIsInited()) {
+            //    continue;
+            //}
+
+            float x0, x1, y0, y1;
+            t.footprint(x0, x1, y0, y1);
+
+            const QVector3D originWorld(x0, y0, 0.0f);
+            QVector2D scr = projectToScreen(originWorld, mvp, vport.toRect());
+            if (!std::isfinite(scr.x()) || !std::isfinite(scr.y())) {
+                continue;
+            }
+
+            { // origin
+                QVector2D p = scr;
+                p.setY(vport.height() - p.y() - padY);
+                p.setX(p.x() + padX);
+                const QString label = QStringLiteral("%1 %2") .arg(x0, 0, 'f', 1) .arg(y0, 0, 'f', 1);
+                TextRenderer::instance().render(label, scaleStr, p, false, ctx, textProjection, shaderProgramMap);
+            }
+
+            { // key
+                QString keyStr = QString("%1 %2 %3").arg(key.x).arg(key.y).arg(key.zoom);
+                QVector2D p = scr;
+                p.setY(p.y() + keyDY);
+                p.setY(vport.height() - p.y() - padY);
+                p.setX(p.x() + padX);
+                TextRenderer::instance().render(keyStr, scaleStr, p, false, ctx, textProjection, shaderProgramMap);
+            }
         }
     }
 }
