@@ -33,11 +33,16 @@ GraphicsScene3dView::GraphicsScene3dView() :
     usblView_(std::make_shared<UsblView>()),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
+    qmlRootObject_(nullptr),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
-    trackLastData_(false)
+    trackLastData_(false),
+    gridVisibility_(true),
+    dataZoomIndx_(-1),
+    cameraIsMoveUp_(false)
 {
+    qRegisterMetaType<QVector<NED>>("QVector<NED>");
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -781,7 +786,7 @@ void GraphicsScene3dView::updateMapView()
             QVector<LLA> llaVerts;
 
             float dist = m_camera->distForMapView();
-            bool moveUp = dist > lastCameraDist_;
+            cameraIsMoveUp_ = dist > lastCameraDist_;
             lastCameraDist_ = dist;
 
             NED ltNed(minX, minY, 0.0);
@@ -813,7 +818,7 @@ void GraphicsScene3dView::updateMapView()
             llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
             llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
 
-            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp, m_camera->getCameraTilt());
+            emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, cameraIsMoveUp_, m_camera->getCameraTilt());
         }
         else {
             emit sendLlaRef(m_camera->viewLlaRef_);
@@ -892,11 +897,12 @@ void GraphicsScene3dView::updateSurfaceView()
             NED rbNed(maxX, maxY, 0.0);
             NED rtNed(maxX, minY, 0.0);
 
-            qDebug() << zoomData_;
-            qDebug() << minX << maxX << minY << maxY;
-            qDebug() << "";
+            // qDebug() << zoomData_;
+            // qDebug() << minX << maxX << minY << maxY;
+            // qDebug() << "";
+            QVector<NED> nedVerts = { ltNed, lbNed, rbNed, rtNed };
 
-            //emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp, m_camera->getCameraTilt());
+            emit sendDataRectRequest(nedVerts, dataZoomIndx_, cameraIsMoveUp_ /*from upd map*/);
         }
     }
 }
@@ -912,13 +918,13 @@ void GraphicsScene3dView::onCameraMoved()
 {
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
-    if (currZoom == zoomData_) {
+    if (currZoom == dataZoomIndx_) {
         return;
     }
 
-    zoomData_ = currZoom;
+    dataZoomIndx_ = currZoom;
 
-    emit sendDataZoom(zoomData_);
+    emit sendDataZoom(dataZoomIndx_);
 }
 
 void GraphicsScene3dView::onPositionAdded(uint64_t indx)

@@ -14,6 +14,7 @@
 #include "mosaic_processor.h"
 #include "surface_processor.h"
 #include "mosaic_db.h"
+#include "mosaic_index_provider.h"
 
 
 enum class DataProcessorType {
@@ -95,6 +96,8 @@ public slots:
     void onUpdateMosaic(int zoom); // temp
     void setFilePath(QString filePath);
 
+    void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp);
+
 private slots:
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
 
@@ -170,6 +173,7 @@ private:
     void openDB();
     void closeDB();
     void requestTilesFromDB();
+    void initMosaicIndexProvider();
 
 private:
     friend class SurfaceProcessor;
@@ -177,7 +181,11 @@ private:
     friend class IsobathsProcessor;
     friend class MosaicProcessor;
 
+    const int kFirstZoom = 1;
+    const int kLastZoom  = 7;
+
     // this
+    MosaicIndexProvider mosaicIndexProvider_;
     Dataset* datasetPtr_;
     
     QThread computeThread_;

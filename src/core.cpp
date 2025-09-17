@@ -1683,6 +1683,9 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::surfaceProcessingCleared,      scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::clear,                          connType);
     QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ /*qDebug() << "TODO: allProcessingCleared";*/ },                                  connType); // TODO
 
+    // data tiles request
+    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataRectRequest,   dataProcessor_, &DataProcessor::onSendDataRectRequest,   connType);
+
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
 

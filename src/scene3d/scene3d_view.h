@@ -240,6 +240,7 @@ public Q_SLOTS:
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
+    void sendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp);
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void cameraIsMoved();
@@ -299,13 +300,14 @@ private:
 
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
-    QObject* qmlRootObject_ = nullptr;
+    QObject* qmlRootObject_;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
-    bool gridVisibility_ = true;
-    int zoomData_{-1};
+    bool gridVisibility_;
+    int dataZoomIndx_;
+    bool cameraIsMoveUp_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

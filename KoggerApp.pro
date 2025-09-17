@@ -37,7 +37,8 @@ HEADERS += \
     src/stream_list.h \
     src/stream_list_model.h \
     src/themes.h \
-    src/xtf_conf.h
+    src/xtf_conf.h \
+    src/mosaic_index_provider.h
 
 ### SOURCES
 SOURCES += \
@@ -56,8 +57,8 @@ SOURCES += \
     src/map_defs.cpp \
     src/proto_binnary.cpp \
     src/stream_list.cpp \
-    src/stream_list_model.cpp
-
+    src/stream_list_model.cpp \
+    src/mosaic_index_provider.cpp
 
 FLASHER {
     DEFINES += FLASHER

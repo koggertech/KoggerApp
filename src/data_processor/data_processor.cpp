@@ -46,6 +46,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<Dataset*>("Dataset*");
     qRegisterMetaType<std::uint8_t>("std::uint8_t");
 
+    initMosaicIndexProvider();
+
     pendingWorkTimer_.setParent(this);
     pendingWorkTimer_.setSingleShot(true);
     pendingWorkTimer_.setInterval(10);
@@ -694,6 +696,25 @@ void DataProcessor::requestTilesFromDB()
     }
 }
 
+void DataProcessor::initMosaicIndexProvider()
+{
+    QVector<ZoomInfo> zs;
+    zs.reserve(kLastZoom - kFirstZoom + 1);
+
+    for (int z = kFirstZoom; z <= kLastZoom; ++z) {
+        const float pxPerMeter = ZL[z - 1].pxPerMeter;
+        if (!(pxPerMeter > 0.0f && std::isfinite(pxPerMeter))) continue;
+
+        ZoomInfo zi;
+        zi.z          = z;
+        zi.tileSizePx = defaultTileSidePixelSize;
+
+        zs.push_back(zi);
+    }
+
+    mosaicIndexProvider_.setZooms(std::move(zs));
+}
+
 void DataProcessor::requestCancel() noexcept
 {
     nextRunPending_.store(true);
@@ -702,7 +723,7 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateMosaic(int zoom)
 {
-    if (zoom < 1 || zoom > 7) {
+    if (zoom < kFirstZoom || zoom > kLastZoom) {
         return;
     }
 
@@ -737,6 +758,54 @@ void DataProcessor::setFilePath(QString filePath)
     filePath_ = filePath;
 
     openDB();
+}
+
+void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp)
+{
+    if (rect.size() < 4) {
+        return;
+    }
+
+    double minN = std::numeric_limits<double>::max();
+    double minE = std::numeric_limits<double>::max();
+    double maxN = std::numeric_limits<double>::lowest();
+    double maxE = std::numeric_limits<double>::lowest();
+    for (const auto& p : rect) {
+        minN = std::min(minN, p.n);
+        minE = std::min(minE, p.e);
+        maxN = std::max(maxN, p.n);
+        maxE = std::max(maxE, p.e);
+    }
+
+    qDebug() << minN << minE << maxN << maxE;
+
+    const QRectF viewRect(QPointF(minN, minE), QPointF(maxN, maxE));
+    const int kPadTiles = 0;
+    const QSet<TileKey> curr = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, kPadTiles);
+
+    // debug
+    int minX = std::numeric_limits<int>::max();
+    int maxX = std::numeric_limits<int>::min();
+    int minY = std::numeric_limits<int>::max();
+    int maxY = std::numeric_limits<int>::min();
+
+    for (const auto& t : curr) {
+        minX = qMin(minX, t.x);
+        maxX = qMax(maxX, t.x);
+        minY = qMin(minY, t.y);
+        maxY = qMax(maxY, t.y);
+    }
+
+
+    qDebug() << "tiles";
+    qDebug() << "zoom:" << zoomIndx << moveUp;
+    qDebug() << "size:" << curr.size();
+    qDebug() << "ix:[" << minX << ".." << maxX << "]"
+             << "iy:[" << minY << ".." << maxY << "]";
+    //for (const auto& itm : curr) {
+    //    qDebug() << itm.x << itm.y << itm.zoom;
+    //}
+    qDebug() << "";
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
