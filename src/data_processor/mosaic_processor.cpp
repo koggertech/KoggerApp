@@ -250,16 +250,12 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
         return;
     }
 
-    const QSet<SurfaceTile*> primaryChanged = changedTiles;
-
     for (int i = 0; i < tilesY; ++i) {
         for (int j = 0; j < tilesX; ++j) {
             auto* tile = matrix[i][j];
             if (!tile || !tile->getIsUpdated()) {
                 continue;
             }
-
-            changedTiles.insert(tile);
 
             auto& vSrc = tile->getHeightVerticesRef();
             const int hvSide = std::sqrt(vSrc.size());
@@ -290,7 +286,6 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     }
                 }
                 top->setIsUpdated(true);
-                changedTiles.insert(top);
             }
 
 
@@ -316,7 +311,6 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     }
                 }
                 left->setIsUpdated(true);
-                changedTiles.insert(left);
             }
 
             if (i + 1 < tilesY && j - 1 >= 0) { // диагональ: top-left, узел (0,0) текущего -> (hvSide - 1,hvSide - 1) диагонального тайла
@@ -338,29 +332,19 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     mDiag[dstBR]    = HeightType::kMosaic;
                 }
                 diag->setIsUpdated(true);
-                changedTiles.insert(diag);
             }
         }
     }
 
-    for (SurfaceTile* itm : std::as_const(primaryChanged)) {
-        if (itm) {
-            updateUnmarkedHeightVertices(itm);
-        }
-    }
-
-    for (SurfaceTile* itm : std::as_const(changedTiles)) {
-        if (itm) {
-            itm->updateHeightIndices();
-            itm->setIsUpdated(false);
-        }
-    }
-
-    // to SurfaceView
     TileMap res;
     res.reserve(changedTiles.size());
-    for (auto it = changedTiles.cbegin(); it != changedTiles.cend(); ++it) {
-        res.insert((*it)->getKey(), (*(*it)));
+    for (SurfaceTile* itm : std::as_const(changedTiles)) {
+        if (itm) {
+            updateUnmarkedHeightVertices(itm);
+            itm->updateHeightIndices();
+            itm->setIsUpdated(false);
+            res.insert((itm)->getKey(), (*itm));
+        }
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
