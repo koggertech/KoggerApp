@@ -231,6 +231,7 @@ public Q_SLOTS:
     void setQmlRootObject(QObject* object);
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
+    void updateSurfaceView();
     void updateViews();
     void onCameraMoved();
 

@@ -514,12 +514,12 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
         return;
     }
 
-    emit sendSurfaceTiles(tiles, useTextures);
-
     qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() <<"mosaic:"<< useTextures;
     if (persistToDb_ && db_ && useTextures && !loadingFromDb_) { // только с мозайки сохраняем
         emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
     }
+
+    emit sendSurfaceTiles(tiles, useTextures); // to render
 }
 
 void DataProcessor::postMinZ(float val)

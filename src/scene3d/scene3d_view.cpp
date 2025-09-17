@@ -76,9 +76,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
 
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::onCameraMoved, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::onCameraMoved,     Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView,     Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateSurfaceView, Qt::DirectConnection);
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews,       Qt::DirectConnection);
 
     updatePlaneGrid();
 }
@@ -722,15 +723,15 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    float reductorFactor = -0.05f; // debug
+    updateProjection();
+
+    float reductorFactor = -0.05f;
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
         {       reductorFactor,  1.0f - reductorFactor }, // lb
         {1.0f - reductorFactor , 1.0f - reductorFactor }, // rb
         {1.0f - reductorFactor ,        reductorFactor }  // rt
     };
-
-    updateProjection();
 
     // calc ned
     float minX = std::numeric_limits<float>::max();
@@ -776,42 +777,42 @@ void GraphicsScene3dView::updateMapView()
             }
         }
 
-        QVector<LLA> llaVerts;
-
-        float dist = m_camera->distForMapView();
-        bool moveUp = dist > lastCameraDist_;
-        lastCameraDist_ = dist;
-
-        NED ltNed(minX, minY, 0.0);
-        NED lbNed(minX, maxY, 0.0);
-        NED rbNed(maxX, maxY, 0.0);
-        NED rtNed(maxX, minY, 0.0);
-        LLA ltLla(&ltNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        LLA lbLla(&lbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        LLA rbLla(&rbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-        LLA rtLla(&rtNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
-
-        ltLla.latitude = map::clampLatitude(ltLla.latitude);
-        lbLla.latitude = map::clampLatitude(lbLla.latitude);
-        rbLla.latitude = map::clampLatitude(rbLla.latitude);
-        rtLla.latitude = map::clampLatitude(rtLla.latitude);
-
-        double edge = 180.0;
-        if (ltLla.longitude >  edge) ltLla.longitude =  edge;
-        if (ltLla.longitude < -edge) ltLla.longitude = -edge;
-        if (lbLla.longitude >  edge) lbLla.longitude =  edge;
-        if (lbLla.longitude < -edge) lbLla.longitude = -edge;
-        if (rbLla.longitude >  edge) rbLla.longitude =  edge;
-        if (rbLla.longitude < -edge) rbLla.longitude = -edge;
-        if (rtLla.longitude >  edge) rtLla.longitude =  edge;
-        if (rtLla.longitude < -edge) rtLla.longitude = -edge;
-
-        llaVerts.append(LLA(ltLla.latitude, ltLla.longitude, dist));
-        llaVerts.append(LLA(lbLla.latitude, lbLla.longitude, dist));
-        llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
-        llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
-
         if (canRequest) {
+            QVector<LLA> llaVerts;
+
+            float dist = m_camera->distForMapView();
+            bool moveUp = dist > lastCameraDist_;
+            lastCameraDist_ = dist;
+
+            NED ltNed(minX, minY, 0.0);
+            NED lbNed(minX, maxY, 0.0);
+            NED rbNed(maxX, maxY, 0.0);
+            NED rtNed(maxX, minY, 0.0);
+            LLA ltLla(&ltNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+            LLA lbLla(&lbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+            LLA rbLla(&rbNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+            LLA rtLla(&rtNed, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+
+            ltLla.latitude = map::clampLatitude(ltLla.latitude);
+            lbLla.latitude = map::clampLatitude(lbLla.latitude);
+            rbLla.latitude = map::clampLatitude(rbLla.latitude);
+            rtLla.latitude = map::clampLatitude(rtLla.latitude);
+
+            double edge = 180.0;
+            if (ltLla.longitude >  edge) ltLla.longitude =  edge;
+            if (ltLla.longitude < -edge) ltLla.longitude = -edge;
+            if (lbLla.longitude >  edge) lbLla.longitude =  edge;
+            if (lbLla.longitude < -edge) lbLla.longitude = -edge;
+            if (rbLla.longitude >  edge) rbLla.longitude =  edge;
+            if (rbLla.longitude < -edge) rbLla.longitude = -edge;
+            if (rtLla.longitude >  edge) rtLla.longitude =  edge;
+            if (rtLla.longitude < -edge) rtLla.longitude = -edge;
+
+            llaVerts.append(LLA(ltLla.latitude, ltLla.longitude, dist));
+            llaVerts.append(LLA(lbLla.latitude, lbLla.longitude, dist));
+            llaVerts.append(LLA(rbLla.latitude, rbLla.longitude, dist));
+            llaVerts.append(LLA(rtLla.latitude, rtLla.longitude, dist));
+
             emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp, m_camera->getCameraTilt());
         }
         else {
@@ -821,8 +822,83 @@ void GraphicsScene3dView::updateMapView()
     else {
         emit sendLlaRef(m_camera->viewLlaRef_);
     }
+}
 
-    QQuickFramebufferObject::update();
+void GraphicsScene3dView::updateSurfaceView()
+{
+    if (!m_camera || !surfaceView_) {
+        return;
+    }
+
+    if (!surfaceView_->isVisible()) {
+        return;
+    }
+
+    float reductorFactor = -0.05f;
+    QVector<QPair<float, float>> cornerMultipliers = {
+        {       reductorFactor,         reductorFactor }, // lt
+        {       reductorFactor,  1.0f - reductorFactor }, // lb
+        {1.0f - reductorFactor , 1.0f - reductorFactor }, // rb
+        {1.0f - reductorFactor ,        reductorFactor }  // rt
+    };
+
+    // calc ned
+    float minX = std::numeric_limits<float>::max();
+    float minY = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float maxY = std::numeric_limits<float>::lowest();
+
+    bool allPointsAreValid{ true };
+    for (const auto& multiplier : cornerMultipliers) {
+        float currWidth  = width() * multiplier.first;
+        float currHeight = height() * multiplier.second;
+
+        QVector3D point;
+        if (m_camera->getIsPerspective()) {
+            auto toOrigin = QVector3D(currWidth, currHeight, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto toEnd = QVector3D(currWidth, currHeight,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto toDist = (toEnd - toOrigin).normalized();
+            point = calculateIntersectionPoint(toOrigin, toDist, 0);
+        }
+        else {
+            point = QVector3D(currWidth, currHeight, 0.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        }
+
+        if (point == QVector3D()) {
+            allPointsAreValid = false;
+            break;
+        }
+
+        minX = std::min(minX, point.x());
+        minY = std::min(minY, point.y());
+        maxX = std::max(maxX, point.x());
+        maxY = std::max(maxY, point.y());
+    }
+
+    if (allPointsAreValid) {
+        bool canRequest{ true };
+        if (m_camera->getAngleToGround() > 5.0f) {
+            const float maxSideSize = 14000.f;
+            float maxS = std::pow(maxSideSize, 2.0f);
+            float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
+            if (rectArea > maxS) { // TODO: using Z coeff
+                canRequest = false;
+            }
+        }
+
+        if (canRequest) {
+            NED ltNed(minX, minY, 0.0);
+            NED lbNed(minX, maxY, 0.0);
+            NED rbNed(maxX, maxY, 0.0);
+            NED rtNed(maxX, minY, 0.0);
+
+            qDebug() << zoomData_;
+            qDebug() << minX << maxX << minY << maxY;
+            qDebug() << "";
+
+            //emit sendRectRequest(llaVerts, m_camera->getIsPerspective(), m_camera->viewLlaRef_, moveUp, m_camera->getCameraTilt());
+        }
+    }
 }
 
 void GraphicsScene3dView::updateViews()
