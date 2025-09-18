@@ -33,7 +33,9 @@ QSet<TileKey> MosaicIndexProvider::tilesInRectNed(const QRectF& rectNedIn, int z
     QRectF rect = rectNedIn.normalized();
 
     const double S = double(tileSideMetersFromZoom(z, zi->tileSizePx));
+
     qDebug() << "m" << S;
+
     if (!(S > 0.0)) {
         return {};
     }

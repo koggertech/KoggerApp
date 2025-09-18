@@ -777,7 +777,7 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
         maxE = std::max(maxE, p.e);
     }
 
-    qDebug() << minN << minE << maxN << maxE;
+    // qDebug() << minN << minE << maxN << maxE;
 
     const QRectF viewRect(QPointF(minN, minE), QPointF(maxN, maxE));
     const int kPadTiles = 0;
@@ -795,7 +795,6 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
         minY = qMin(minY, t.y);
         maxY = qMax(maxY, t.y);
     }
-
 
     qDebug() << "tiles";
     qDebug() << "zoom:" << zoomIndx << moveUp;

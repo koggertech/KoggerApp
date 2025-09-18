@@ -287,6 +287,8 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
 {
     //qDebug() << "SurfaceView::setTiles" << tiles.size();
 
+    clear();
+
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
         auto& rTRef = r->tiles_;
 

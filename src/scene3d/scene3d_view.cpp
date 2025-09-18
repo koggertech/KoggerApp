@@ -839,6 +839,11 @@ void GraphicsScene3dView::updateSurfaceView()
         return;
     }
 
+    float dist = m_camera->distForMapView();
+    if (dist > 3200.0f) {
+        return;
+    }
+
     float reductorFactor = -0.05f;
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
