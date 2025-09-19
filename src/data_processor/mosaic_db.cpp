@@ -6,6 +6,17 @@
 #include <QDebug>
 
 
+static QString makeXYOrClause(int pairCount) {
+    QStringList parts;
+    parts.reserve(pairCount);
+
+    for (int i = 0; i < pairCount; ++i) {
+        parts << "(x=? AND y=?)";
+    }
+
+    return parts.join(" OR ");
+}
+
 static QString dbPathForKlf(const QString& klfPath)
 {
     QFileInfo fi(klfPath);
@@ -57,6 +68,30 @@ void MosaicDB::close()
     const QString name = db_.connectionName();
     db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(name);
+}
+
+void MosaicDB::checkAnyTileForZoom(int zoom)
+{
+    bool exists = false;
+
+    if (db_.isOpen()) {
+        QSqlQuery q(db_);
+
+        if (q.prepare("SELECT 1 FROM tiles WHERE zoom=? LIMIT 1")) {
+            q.addBindValue(zoom);
+            if (!q.exec()) {
+                qWarning() << "checkAnyTileForZoom exec:" << q.lastError();
+            }
+            else {
+                exists = q.next();
+            }
+        }
+        else {
+            qWarning() << "checkAnyTileForZoom prepare:" << q.lastError();
+        }
+    }
+
+    emit anyTileForZoom(zoom, exists);
 }
 
 bool MosaicDB::ensureSchema()
@@ -166,7 +201,7 @@ void MosaicDB::unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks)
     }
 }
 
-void MosaicDB::loadTilesForZoom(int zoom, quint64 seq)
+void MosaicDB::loadTilesForZoom(int zoom)
 {
     QList<DbTile> out;
     QSqlQuery q(db_);
@@ -178,7 +213,7 @@ void MosaicDB::loadTilesForZoom(int zoom, quint64 seq)
     q.addBindValue(zoom);
     if (!q.exec()) {
         qWarning() << "loadTilesForZoom:" << q.lastError();
-        emit tilesLoadedForZoom(zoom, out, seq);
+        emit tilesLoadedForZoom(zoom, out);
         return;
     }
 
@@ -202,7 +237,7 @@ void MosaicDB::loadTilesForZoom(int zoom, quint64 seq)
         out.push_back(std::move(t));
     }
 
-    emit tilesLoadedForZoom(zoom, out, seq);
+    emit tilesLoadedForZoom(zoom, out);
 }
 
 void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio)
@@ -282,4 +317,81 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
     }
 
     db_.commit();
+}
+
+void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
+{
+    if (!db_.isOpen() || keys.isEmpty()) {
+        emit tilesLoadedForKeys({});
+        return;
+    }
+
+    QHash<int, QVector<TileKey>> groupedByZoom;
+    groupedByZoom.reserve(keys.size());
+    for (const auto& k : keys) {
+        groupedByZoom[k.zoom].push_back(k);
+    }
+
+    QList<DbTile> out;
+    out.reserve(keys.size());
+
+    for (auto it = groupedByZoom.cbegin(); it != groupedByZoom.cend(); ++it) {
+        const int z = it.key();
+        const QVector<TileKey>& list = it.value();
+
+        for (int start = 0; start < list.size(); start += kMaxPairsPerBatch_) { // step by batch
+            const int count = std::min(kMaxPairsPerBatch_, list.size() - start);
+
+            const QString sql =
+                QStringLiteral(
+                    "SELECT x,y,zoom,origin_x,origin_y,tile_px,hm_ratio,"
+                    "       mosaic_blob, height_blob, marks_blob,"
+                    "       has_mosaic, has_height, has_marks "
+                    "FROM tiles "
+                    "WHERE zoom=? AND ( %1 );")
+                    .arg(makeXYOrClause(count));
+
+            QSqlQuery q(db_);
+            if (!q.prepare(sql)) {
+                qWarning() << "prepare failed:" << q.lastError();
+                continue;
+            }
+
+            q.addBindValue(z);
+            for (int i = 0; i < count; ++i) {
+                const TileKey& k = list[start + i];
+                q.addBindValue(k.x);
+                q.addBindValue(k.y);
+            }
+
+            if (!q.exec()) {
+                qWarning() << "exec failed:" << q.lastError();
+                continue;
+            }
+
+            while (q.next()) {
+                DbTile t;
+                t.key.x    = q.value(0).toInt();
+                t.key.y    = q.value(1).toInt();
+                t.key.zoom = q.value(2).toInt();
+
+                t.originX  = q.value(3).toFloat();
+                t.originY  = q.value(4).toFloat();
+                t.tilePx   = q.value(5).toInt();
+                t.hmRatio  = q.value(6).toInt();
+
+                t.mosaicBlob = q.value(7).toByteArray();
+                t.heightBlob = q.value(8).toByteArray();
+                t.marksBlob  = q.value(9).toByteArray();
+
+                t.hasMosaic  = q.value(10).toInt() != 0;
+                t.hasHeight  = q.value(11).toInt() != 0;
+                t.hasMarks   = q.value(12).toInt() != 0;
+
+                out.push_back(std::move(t));
+            }
+        }
+    }
+
+    emit tilesLoadedForKeys(out);
 }

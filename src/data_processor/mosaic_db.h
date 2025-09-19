@@ -38,11 +38,15 @@ public slots:
     bool open();
     void close();
 
-    void loadTilesForZoom(int zoom,  quint64 seq);
+    void checkAnyTileForZoom(int zoom);
+    void loadTilesForZoom(int zoom);
     void saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
+    void loadTilesForKeys(const QSet<TileKey>& keys);
 
 signals:
-    void tilesLoadedForZoom(int zoom, const QList<DbTile>& tiles, quint64 seq);
+    void anyTileForZoom(int zoom, bool exists);
+    void tilesLoadedForZoom(int zoom, const QList<DbTile>& tiles);
+    void tilesLoadedForKeys(const QList<DbTile>& tiles);
 
 private:
     friend class DataProcessor;
@@ -58,6 +62,7 @@ private:
     static void       unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks);
 
 private:
+    const int    kMaxPairsPerBatch_ = 128;
     QSqlDatabase db_;
     QString      klfPath_;
     QString      dbPath_;

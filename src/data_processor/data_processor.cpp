@@ -11,6 +11,22 @@
 #include "data_processor_defs.h"
 
 
+// static TileDiff diffTiles(const QSet<TileKey>& prev, const QSet<TileKey>& curr)
+// {
+//     TileDiff d;
+
+//     d.stayed = prev;
+//     d.stayed.intersect(curr);
+
+//     d.added = curr;
+//     d.added.subtract(prev);
+
+//     d.removed = prev;
+//     d.removed.subtract(curr);
+
+//     return d;
+// }
+
 static inline uint32_t toMask(WorkSet s){ return static_cast<uint32_t>(s); }
 
 DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
@@ -35,7 +51,13 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     cancelRequested_(false),
     jobRunning_(false),
     nextRunPending_(false),
-    requestedMask_(0)
+    requestedMask_(0),
+    btBusy_(false),
+    db_(nullptr),
+    engineVer_(1),
+    currentZoom_(0),
+    requestedZoom_(0),
+    dbInWork_(false)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
@@ -45,6 +67,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<TileMap>("TileMap");
     qRegisterMetaType<Dataset*>("Dataset*");
     qRegisterMetaType<std::uint8_t>("std::uint8_t");
+    qRegisterMetaType<QSet<TileKey>>("QSet<TileKey>");
 
     initMosaicIndexProvider();
 
@@ -144,7 +167,7 @@ void DataProcessor::setUpdateMosaic(bool state)
     updateMosaic_ = state;
 
     if (updateMosaic_) {
-        requestTilesFromDB();
+        requestTilesFromDB(); // TODO!!!
     }
     else if (!updateMosaic_) {
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
@@ -470,6 +493,45 @@ void DataProcessor::onWorkerFinished()
     }
 }
 
+void DataProcessor::onDbTilesLoadedForKeys(const QList<DbTile> &dbTiles)
+{
+    //qDebug() << "DataProcessor::onDbTilesLoadedForKeys size:" << dbTiles.size();
+
+    dbInWork_ = false;
+
+    if (!dbTiles.isEmpty()) {
+        TileMap out; out.reserve(dbTiles.size());
+        for (const DbTile& dt : dbTiles) {
+            SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
+            tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
+
+            if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
+                auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
+                auto& img = tile.getMosaicImageDataRef();
+                if (int(bytes.size()) == int(img.size())) {
+                    memcpy(img.data(), bytes.data(), size_t(bytes.size()));
+                }
+            }
+            if (dt.hasHeight && !dt.heightBlob.isEmpty()) {
+                auto& verts = tile.getHeightVerticesRef();
+                MosaicDB::unpackFloat32(dt.heightBlob, verts, dt.hmRatio);
+            }
+            if (dt.hasMarks && !dt.marksBlob.isEmpty()) {
+                auto& marks = tile.getHeightMarkVerticesRef();
+                MosaicDB::unpackMarksU8(dt.marksBlob, marks);
+            }
+
+            tile.updateHeightIndices();
+            tile.setIsUpdated(false);
+            out.insert(dt.key, std::move(tile));
+        }
+
+        emit sendSurfaceTiles(out, /*useTextures=*/true);
+    }
+
+    flushPendingDbKeys();
+}
+
 void DataProcessor::postState(DataProcessorType s)
 {
     emit sendState(state_ = s);
@@ -505,6 +567,43 @@ void DataProcessor::onBottomTrackFinished()
     btBusy_ = false;
 }
 
+void DataProcessor::requestTilesFromDBForKeys(const QSet<TileKey> &keys)
+{
+    if (!db_ || keys.isEmpty()) {
+        return;
+    }
+
+    for (const auto& k : keys) { // merge request
+        dbPendingKeys_.insert(k);
+    }
+
+    flushPendingDbKeys();
+}
+
+void DataProcessor::flushPendingDbKeys()
+{
+    if (!db_ || dbPendingKeys_.isEmpty() || dbInWork_) {
+        return;
+    }
+
+    QSet<TileKey> batch;
+    int n = 0;
+    for (auto it = dbPendingKeys_.cbegin(); it != dbPendingKeys_.cend(); ++it) {
+        batch.insert(*it);
+        if (++n >= kMaxDbKeysPerReq_) {
+            break;
+        }
+    }
+
+    for (const auto& k : batch) {
+        dbPendingKeys_.remove(k);
+    }
+
+    dbInWork_ = true;
+
+    emit dbLoadTilesForKeys(batch);
+}
+
 void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels)
 {
     emit sendIsobathsLabels(labels);
@@ -517,7 +616,7 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
     }
 
     qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() <<"mosaic:"<< useTextures;
-    if (persistToDb_ && db_ && useTextures && !loadingFromDb_) { // только с мозайки сохраняем
+    if (db_ && useTextures) { // только с мозайки сохраняем
         emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
     }
 
@@ -657,9 +756,13 @@ void DataProcessor::openDB()
             }
         }, Qt::QueuedConnection);
 
-        connect(this, &DataProcessor::dbLoadTilesForZoom, db_,  &MosaicDB::loadTilesForZoom,            Qt::QueuedConnection);
-        connect(this, &DataProcessor::dbSaveTiles,        db_,  &MosaicDB::saveTiles,                   Qt::QueuedConnection);
-        connect(db_,  &MosaicDB::tilesLoadedForZoom,      this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
+        connect(this, &DataProcessor::dbLoadTilesForZoom,    db_,  &MosaicDB::loadTilesForZoom,            Qt::QueuedConnection);
+        connect(this, &DataProcessor::dbSaveTiles,           db_,  &MosaicDB::saveTiles,                   Qt::QueuedConnection);
+        connect(db_,  &MosaicDB::tilesLoadedForZoom,         this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
+        connect(this, &DataProcessor::dbLoadTilesForKeys,    db_,  &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
+        connect(db_,  &MosaicDB::tilesLoadedForKeys,         this, &DataProcessor::onDbTilesLoadedForKeys, Qt::QueuedConnection);
+        connect(this, &DataProcessor::dbCheckAnyTileForZoom, db_,  &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
+        connect(db_,  &MosaicDB::anyTileForZoom,             this, &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
 
         dbThread_.setObjectName("MosaicDBThread");
         dbThread_.start();
@@ -686,12 +789,9 @@ void DataProcessor::closeDB()
 void DataProcessor::requestTilesFromDB()
 {
     if (db_) {
-        if (!dbInFlight_) {
-            dbInFlight_ = true;
-            const auto seq = ++reqSeq_;
-            QMetaObject::invokeMethod(db_, [this, seq](){
-                db_->loadTilesForZoom(requestedZoom_, seq);
-            }, Qt::QueuedConnection);
+        if (!dbInWork_) {
+            dbInWork_ = true;
+            QMetaObject::invokeMethod(db_, [this](){ db_->loadTilesForZoom(requestedZoom_); }, Qt::QueuedConnection);
         }
     }
 }
@@ -721,7 +821,7 @@ void DataProcessor::requestCancel() noexcept
     cancelRequested_.store(true);
 }
 
-void DataProcessor::onUpdateMosaic(int zoom)
+void DataProcessor::onUpdateMosaic(int zoom) // calc or db
 {
     if (zoom < kFirstZoom || zoom > kLastZoom) {
         return;
@@ -750,7 +850,7 @@ void DataProcessor::onUpdateMosaic(int zoom)
     emit mosaicProcessingCleared();
     emit surfaceProcessingCleared();
 
-    requestTilesFromDB();
+    emit dbCheckAnyTileForZoom(requestedZoom_);
 }
 
 void DataProcessor::setFilePath(QString filePath)
@@ -762,6 +862,10 @@ void DataProcessor::setFilePath(QString filePath)
 
 void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp)
 {
+    if (!updateSurface_ && !updateMosaic_) {
+        return;
+    }
+
     if (rect.size() < 4) {
         return;
     }
@@ -777,75 +881,134 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
         maxE = std::max(maxE, p.e);
     }
 
-    // qDebug() << minN << minE << maxN << maxE;
-
     const QRectF viewRect(QPointF(minN, minE), QPointF(maxN, maxE));
     const int kPadTiles = 0;
     const QSet<TileKey> curr = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, kPadTiles);
 
-    // debug
-    int minX = std::numeric_limits<int>::max();
-    int maxX = std::numeric_limits<int>::min();
-    int minY = std::numeric_limits<int>::max();
-    int maxY = std::numeric_limits<int>::min();
-
-    for (const auto& t : curr) {
-        minX = qMin(minX, t.x);
-        maxX = qMax(maxX, t.x);
-        minY = qMin(minY, t.y);
-        maxY = qMax(maxY, t.y);
+    if (zoomIndx == requestedZoom_ && curr.size() == visibleTiles_.size() && curr == visibleTiles_) {
+        return;
     }
 
-    qDebug() << "tiles";
-    qDebug() << "zoom:" << zoomIndx << moveUp;
-    qDebug() << "size:" << curr.size();
-    qDebug() << "ix:[" << minX << ".." << maxX << "]"
-             << "iy:[" << minY << ".." << maxY << "]";
-    //for (const auto& itm : curr) {
-    //    qDebug() << itm.x << itm.y << itm.zoom;
-    //}
-    qDebug() << "";
+    // TODO: calc added, removed, stayed tiles
+    // TileDiff d;
+    // if (zoomIndx != requestedZoom_) {
+    //     d.added   = curr;
+    //     d.removed = visibleTiles_;
+    // }
+    // else {
+    //     d = diffTiles(visibleTiles_, curr);
+    // }
+
+    //////////////////////////////////////////////////////////////////////////////
+    // debug
+    if (false) {
+        int minX =  std::numeric_limits<int>::max();
+        int maxX = -std::numeric_limits<int>::max();
+        int minY =  std::numeric_limits<int>::max();
+        int maxY = -std::numeric_limits<int>::max();
+        for (const auto& t : curr) {
+            minX = qMin(minX, t.x);
+            maxX = qMax(maxX, t.x);
+            minY = qMin(minY, t.y);
+            maxY = qMax(maxY, t.y);
+        }
+        qDebug() << "tiles";
+        qDebug() << "zoom:" << zoomIndx << "moveUp:" << moveUp;
+        qDebug() << "size:" << curr.size();
+        //qDebug() << "size:" << curr.size()
+        //         << "added:" << d.added.size()
+        //         << "removed:" << d.removed.size()
+        //         << "stayed:" << d.stayed.size();
+        qDebug() << "ix:[" << minX << ".." << maxX << "] iy:[" << minY << ".." << maxY << "]";
+
+        //for (auto it = d.removed.cbegin(); it != d.removed.cend(); ++it) {
+        //    qDebug() << "   rem" << it->x << it->y;
+        //}
+        //for (auto it = d.added.cbegin(); it != d.added.cend(); ++it) {
+        //    qDebug() << "   add" << it->x << it->y;
+        //}
+    }
+    //////////////////////////////////////////////////////////////////////////////
+
+    //QSet<TileKey> drawNow = d.added;
+    //drawNow.unite(d.stayed);
+    //requestTilesFromDBForKeys(drawNow);
+
+    requestTilesFromDBForKeys(curr);
+
+    visibleTiles_ = curr;
+    requestedZoom_  = zoomIndx;
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
 {
-    dbInFlight_ = false;
+    qDebug() << "DataProcessor::onDbTilesLoadedForZoom size" << dbTiles.size();
+    dbInWork_ = false;
 
     if (zoom != requestedZoom_) { 
         return; 
     }
 
     if (!dbTiles.isEmpty()) {
-        TileMap out; out.reserve(dbTiles.size());
-        for (const DbTile& dt : dbTiles) {
-            SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
-            tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
-            if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
-                auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
-                auto& img = tile.getMosaicImageDataRef();
-                if (int(bytes.size()) == int(img.size())) {
-                    memcpy(img.data(), bytes.data(), size_t(bytes.size()));
-                }
-            }
-            if (dt.hasHeight && !dt.heightBlob.isEmpty()) {
-                auto& verts = tile.getHeightVerticesRef();
-                MosaicDB::unpackFloat32(dt.heightBlob, verts, dt.hmRatio);
-            }
-            if (dt.hasMarks && !dt.marksBlob.isEmpty()) {
-                auto& marks = tile.getHeightMarkVerticesRef();
-                MosaicDB::unpackMarksU8(dt.marksBlob, marks);
-            }
-            tile.updateHeightIndices();
-            tile.setIsUpdated(false);
-            out.insert(dt.key, std::move(tile));
-        }
+        // TODO: test on keys
+        // TileMap out; out.reserve(dbTiles.size());
+        // for (const DbTile& dt : dbTiles) {
+        //     SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
+        //     tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
+        //     if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
+        //         auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
+        //         auto& img = tile.getMosaicImageDataRef();
+        //         if (int(bytes.size()) == int(img.size())) {
+        //             memcpy(img.data(), bytes.data(), size_t(bytes.size()));
+        //         }
+        //     }
+        //     if (dt.hasHeight && !dt.heightBlob.isEmpty()) {
+        //         auto& verts = tile.getHeightVerticesRef();
+        //         MosaicDB::unpackFloat32(dt.heightBlob, verts, dt.hmRatio);
+        //     }
+        //     if (dt.hasMarks && !dt.marksBlob.isEmpty()) {
+        //         auto& marks = tile.getHeightMarkVerticesRef();
+        //         MosaicDB::unpackMarksU8(dt.marksBlob, marks);
+        //     }
+        //     tile.updateHeightIndices();
+        //     tile.setIsUpdated(false);
+        //     out.insert(dt.key, std::move(tile));
+        // }
 
-        qDebug() << "LOADED" << zoom << out.size();
-        loadingFromDb_ = true;
-        emit sendSurfaceTiles(out, true);
-        loadingFromDb_ = false;
+        // qDebug() << "LOADED" << zoom << out.size();
+        // emit sendSurfaceTiles(out, true);
 
-        currentZoom_ = zoom;
+        // currentZoom_ = zoom;
+        return;
+    }
+
+    //  иначе расчёт по всем эпохам
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
+
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingMosaicIndxs_.insert(*it);
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    }
+    pendingIsobathsWork_ = true;
+
+    QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
+
+    currentZoom_ = zoom;
+}
+
+void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
+{
+    qDebug() << "DataProcessor::onDbAnyTileForZoom, zoom" << zoom << "exist" << exists;
+    dbInWork_ = false;
+
+    if (zoom != requestedZoom_) {
+        return;
+    }
+
+    if (exists) {
         return;
     }
 

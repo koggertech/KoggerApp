@@ -17,6 +17,12 @@
 #include "mosaic_index_provider.h"
 
 
+struct TileDiff {
+    QSet<TileKey> added;
+    QSet<TileKey> removed;
+    QSet<TileKey> stayed;
+};
+
 enum class DataProcessorType {
     kUndefined = 0,
     kBottomTrack,
@@ -99,12 +105,17 @@ public slots:
     void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp);
 
 private slots:
+    //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
+    void onDbTilesLoadedForKeys(const QList<DbTile>& dbTiles);
+    void onDbAnyTileForZoom(int zoom, bool exists);
 
 signals:
-	// db
-    void dbLoadTilesForZoom(int zoom, quint64 seq);
+    // db
+    void dbCheckAnyTileForZoom(int zoom);
+    void dbLoadTilesForZoom(int zoom);
     void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tile_px, int hm_ratio);
+    void dbLoadTilesForKeys(const QSet<TileKey>& keys);
 
     // this
     void sendState(DataProcessorType state);
@@ -160,6 +171,9 @@ private slots:
     void onBottomTrackFinished();
 
 private:
+    void requestTilesFromDBForKeys(const QSet<TileKey>& keys);
+    void flushPendingDbKeys();
+
     // this
     void changeState(const DataProcessorType& state);
     void clearBottomTrackProcessing();
@@ -183,6 +197,7 @@ private:
 
     const int kFirstZoom = 1;
     const int kLastZoom  = 7;
+    const int kMaxDbKeysPerReq_ = 1024;
 
     // this
     MosaicIndexProvider mosaicIndexProvider_;
@@ -209,28 +224,25 @@ private:
     // Surface
     float tileResolution_;
 
-    QSet<int> epIndxsFromBottomTrack_;
+    // processing (scheduling/interrupt)
+    QSet<int>              epIndxsFromBottomTrack_;
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
-    QSet<int> pendingMosaicIndxs_;
-    bool pendingIsobathsWork_;
-    QTimer pendingWorkTimer_;
-
-    // отмена/планирование
-    std::atomic_bool cancelRequested_{false};
-    std::atomic_bool jobRunning_{false};
-    std::atomic_bool nextRunPending_{false};
-    std::atomic<uint32_t> requestedMask_{0};
-    bool btBusy_{false};
-
+    QSet<int>              pendingMosaicIndxs_;
+    bool                   pendingIsobathsWork_;
+    QTimer                 pendingWorkTimer_;
+    std::atomic_bool       cancelRequested_;
+    std::atomic_bool       jobRunning_;
+    std::atomic_bool       nextRunPending_;
+    std::atomic<uint32_t>  requestedMask_;
+    bool                   btBusy_;
     // db
-    MosaicDB* db_{nullptr};
-    QThread   dbThread_;
-    QString   filePath_;
-    quint64   reqSeq_{0};            // id запросов в БД
-    int       engineVer_{1};
-    int       currentZoom_{0};       // какой зум реально показан в рендере
-    int       requestedZoom_{0};     // какой зум сейчас просим у БД
-    bool      dbInFlight_{false};    // есть активная загрузка из БД
-    bool      loadingFromDb_{false};
-    bool      persistToDb_{true};    // опциональный тумблер - временно не писать в БД
+    MosaicDB*              db_;
+    QThread                dbThread_;
+    QString                filePath_;
+    int                    engineVer_;
+    int                    currentZoom_;
+    int                    requestedZoom_;
+    bool                   dbInWork_;
+    QSet<TileKey>          visibleTiles_;
+    QSet<TileKey>          dbPendingKeys_;
 };
