@@ -23,6 +23,13 @@ struct TileDiff {
     QSet<TileKey> stayed;
 };
 
+enum class DataSource {
+    kUndefined = 0,
+    kCalculation,
+    kHotCache,
+    kDataBase
+};
+
 enum class DataProcessorType {
     kUndefined = 0,
     kBottomTrack,
@@ -102,7 +109,8 @@ public slots:
     void onUpdateMosaic(int zoom); // temp
     void setFilePath(QString filePath);
 
-    void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp);
+    void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp); // на движение камеры
+    void tryUpdRenderByLastRequest(DataSource sourceType); // на эвент
 
 private slots:
     //db
@@ -113,8 +121,7 @@ private slots:
 signals:
     // db
     void dbCheckAnyTileForZoom(int zoom);
-    void dbLoadTilesForZoom(int zoom);
-    void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tile_px, int hm_ratio);
+    void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
     void dbLoadTilesForKeys(const QSet<TileKey>& keys);
 
     // this
@@ -181,12 +188,10 @@ private:
     void clearMosaicProcessing();
     void clearSurfaceProcessing();
     void clearAllProcessings();
-    void scheduleLatest(WorkSet mask = WorkSet(WF_All),
-                        bool replace = false,
-                        bool clearUnrequestedPending = false) noexcept;
+    void scheduleLatest(WorkSet mask = WorkSet(WF_All), bool replace = false, bool clearUnrequestedPending = false) noexcept;
     void openDB();
     void closeDB();
-    void requestTilesFromDB();
+    void requestTilesFromDB();//
     void initMosaicIndexProvider();
 
 private:
@@ -197,7 +202,7 @@ private:
 
     const int kFirstZoom = 1;
     const int kLastZoom  = 7;
-    const int kMaxDbKeysPerReq_ = 1024;
+    const int kMaxDbKeysPerReq_ = 2048;
 
     // this
     MosaicIndexProvider mosaicIndexProvider_;
@@ -245,4 +250,5 @@ private:
     bool                   dbInWork_;
     QSet<TileKey>          visibleTiles_;
     QSet<TileKey>          dbPendingKeys_;
+    QSet<TileKey>          lastRequestedTiles_;
 };
