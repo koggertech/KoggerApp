@@ -11,7 +11,8 @@ HEADERS *= \
     $$PWD/surface_mesh.h \
     $$PWD/surface_tile.h \
     $$PWD/compute_worker.h \
-    $$PWD/mosaic_db.h
+    $$PWD/mosaic_db.h \
+    $$PWD/hot_tile_cache.h
 
 SOURCES *= \
     $$PWD/bottom_track_processor.cpp \
@@ -22,4 +23,5 @@ SOURCES *= \
     $$PWD/surface_mesh.cpp \
     $$PWD/surface_tile.cpp \
     $$PWD/compute_worker.cpp \
-    $$PWD/mosaic_db.cpp
+    $$PWD/mosaic_db.cpp \
+	$$PWD/hot_tile_cache.cpp

@@ -21,8 +21,8 @@ ZL[] = {
 
 inline int pickZoomByDistance(float meters)
 {
-    if (meters < 50.f)   return 1;   // 100 px/m
-    if (meters < 100.f)  return 2;   // 50
+    if (meters < 30.f)   return 1;   // 100 px/m
+    if (meters < 80.f)   return 2;   // 50
     if (meters < 200.f)  return 3;   // 25
     if (meters < 400.f)  return 4;   // 12.5
     if (meters < 800.f)  return 5;   // 6.25

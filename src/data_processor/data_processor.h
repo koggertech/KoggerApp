@@ -15,6 +15,7 @@
 #include "surface_processor.h"
 #include "mosaic_db.h"
 #include "mosaic_index_provider.h"
+#include "hot_tile_cache.h"
 
 
 struct TileDiff {
@@ -251,4 +252,8 @@ private:
     QSet<TileKey>          visibleTiles_;
     QSet<TileKey>          dbPendingKeys_;
     QSet<TileKey>          lastRequestedTiles_;
+    // hot cache
+    HotTileCache           hotCache_{2048}; // LRU
+    QSet<TileKey>          requestedKeys_;  // копия lastRequestedTiles
+    QSet<TileKey>          readyKeys_;      // какие ключи уже готовы (кэш + БД)
 };
