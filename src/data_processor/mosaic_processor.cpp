@@ -270,6 +270,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                 }
 
                 if (!top->getIsInited()) {
+                    continue; // TODO: check
                     top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
 
@@ -296,6 +297,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                 }
 
                 if (!left->getIsInited()) {
+                    continue; // TODO: check
                     left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
 
@@ -320,6 +322,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                 }
 
                 if (!diag->getIsInited()) {
+                    continue; // TODO: check
                     diag->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 auto& vDiag = diag->getHeightVerticesRef();
@@ -346,6 +349,14 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
             res.insert((itm)->getKey(), (*itm));
         }
     }
+
+    //const int beforeTracked = surfaceMeshPtr_->currentInitedTiles();
+    //const int beforeScan    = surfaceMeshPtr_->scanInitedTiles();
+    surfaceMeshPtr_->onTilesWritten(changedTiles); // метка тайлов/ужимка
+    //const int afterTracked = surfaceMeshPtr_->currentInitedTiles();
+    //const int afterScan    = surfaceMeshPtr_->scanInitedTiles();
+    //qDebug() << "[Mosaic] inited tiles tracked" << beforeTracked << "->" << afterTracked
+    //         << "/ scan" << beforeScan << "->" << afterScan;
 
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
 }
@@ -476,9 +487,28 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     concatenateMatrixParameters(actualMatParams, newMatrixParams);
 
     surfaceMeshPtr_->concatenate(actualMatParams);
-
     const int gMeshWidthPixs  = surfaceMeshPtr_->getPixelWidth();
     const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
+
+
+    // prefetch tiles from hotCache (dataprocessor)
+    {
+        QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/1);
+
+        QSet<TileKey> need;
+        need.reserve(toRestore.size());
+        for (const auto& k : toRestore) {
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(k)) {
+                if (!t->getIsInited()) {
+                    need.insert(k);
+                }
+            }
+        }
+
+        qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
+        prefetchFromHotCache(need);
+    }
+
 
     static QSet<SurfaceTile*> changedTiles;
     changedTiles.clear();
@@ -652,7 +682,11 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                             int tileIndxX = bypassInterpX % tileSidePixelSize;
                             int tileIndxY = bypassInterpY % tileSidePixelSize;
 
-                            auto& tileRef = surfaceMeshPtr_->getTileMatrixRef()[meshIndxY][meshIndxX];
+                            auto* tileRef = surfaceMeshPtr_->getTileByXYIndxs(meshIndxY, meshIndxX);
+                            if (!tileRef) {
+                                continue;
+                            }
+
                             if (!tileRef->getIsInited()) {
                                 tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                             }
@@ -733,4 +767,175 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 bool MosaicProcessor::canceled() const noexcept
 {
     return dataProcessor_ && dataProcessor_->isCancelRequested();
+}
+
+QSet<TileKey> MosaicProcessor::forecastTilesToTouch(const QVector<QVector3D>& meas, const QVector<char>& isOdds, const QVector<int>& epochIndxs, int marginTiles) const
+{
+    QSet<TileKey> retVal;
+
+    if (!surfaceMeshPtr_ || meas.size() < 4) {
+        return retVal;
+    }
+
+    const int tilePx = surfaceMeshPtr_->getTileSidePixelSize();
+    const int H = surfaceMeshPtr_->getNumHeightTiles();
+    const int W = surfaceMeshPtr_->getNumWidthTiles();
+    auto clamp = [](int v, int lo, int hi){ return std::min(std::max(v, lo), hi); };
+
+    const int stridePx = std::max(8, tilePx / 2);
+    const int m = std::max(0, marginTiles);
+
+    auto pushIdxWithMargin = [&](int mx, int my){
+        const int x0 = clamp(mx - m, 0, W - 1);
+        const int x1 = clamp(mx + m, 0, W - 1);
+        const int y0 = clamp(my - m, 0, H - 1);
+        const int y1 = clamp(my + m, 0, H - 1);
+        for (int ty = y0; ty <= y1; ++ty) {
+            for (int tx = x0; tx <= x1; ++tx) {
+                if (auto* t = surfaceMeshPtr_->getTileByXYIndxs(ty, tx)) {
+                    retVal.insert(t->getKey());
+                }
+            }
+        }
+    };
+
+    auto addPix = [&](int pixX, int pixY){
+        int mx = clamp(pixX / tilePx,          0, W - 1);
+        int my = clamp((H - 1) - pixY / tilePx,0, H - 1);
+        pushIdxWithMargin(mx, my);
+    };
+
+    auto addLineTiles = [&](int x1, int y1, int x2, int y2){
+        int ax1 = clamp(x1 / tilePx,           0, W - 1);
+        int ay1 = clamp((H - 1) - y1 / tilePx, 0, H - 1);
+        int ax2 = clamp(x2 / tilePx,           0, W - 1);
+        int ay2 = clamp((H - 1) - y2 / tilePx, 0, H - 1);
+
+        int dx = std::abs(ax2 - ax1), sx = ax1 < ax2 ? 1 : -1;
+        int dy = -std::abs(ay2 - ay1), sy = ay1 < ay2 ? 1 : -1;
+        int err = dx + dy, x = ax1, y = ay1;
+
+        while (true) {
+            pushIdxWithMargin(x, y);
+            if (x == ax2 && y == ay2) {
+                break;
+            }
+
+            int e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x += sx;
+            }
+
+            if (e2 <= dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+    };
+
+    for (int i = 0; i + 3 < meas.size(); i += 2) {
+        int segFBegVertIndx = i,     segFEndVertIndx = i + 1;
+        int segSBegVertIndx = i + 2, segSEndVertIndx = i + 3;
+
+        int segFIndx = i / 2;
+        int segSIndx = (i + 2) / 2;
+
+        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] || isOdds[segFIndx] != isOdds[segSIndx]) {
+            ++segSIndx; segSBegVertIndx += 2; segSEndVertIndx += 2;
+        }
+        if (segSIndx >= epochIndxs.size()) {
+            break;
+        }
+
+        if (epochIndxs[segFIndx] == epochIndxs[segSIndx] || isOdds[segFIndx] != isOdds[segSIndx]) {
+            continue;
+        }
+
+        const bool segFIsOdd = isOdds[segFIndx] == '1';
+        const bool segSIsOdd = isOdds[segSIndx] == '1';
+        if (segFIsOdd != segSIsOdd) {
+            continue;
+        }
+
+        auto Fbeg = surfaceMeshPtr_->convertPhToPixCoords(segFIsOdd ? meas[segFBegVertIndx] : meas[segFEndVertIndx]);
+        auto Fend = surfaceMeshPtr_->convertPhToPixCoords(segFIsOdd ? meas[segFEndVertIndx] : meas[segFBegVertIndx]);
+        auto Sbeg = surfaceMeshPtr_->convertPhToPixCoords(segSIsOdd ? meas[segSBegVertIndx] : meas[segSEndVertIndx]);
+        auto Send = surfaceMeshPtr_->convertPhToPixCoords(segSIsOdd ? meas[segSEndVertIndx] : meas[segSBegVertIndx]);
+
+        const int Fx1 = int(Fbeg.x()), Fy1 = int(Fbeg.y());
+        const int Fx2 = int(Fend.x()), Fy2 = int(Fend.y());
+        const int Sx1 = int(Sbeg.x()), Sy1 = int(Sbeg.y());
+        const int Sx2 = int(Send.x()), Sy2 = int(Send.y());
+
+        const float Ftot = std::hypot(Fx2 - Fx1, Fy2 - Fy1);
+        if (Ftot <= 0.0f) {
+            continue;
+        }
+
+        const int steps = std::max(1, int(std::ceil(Ftot / float(stridePx))));
+        for (int s = 0; s <= steps; ++s) {
+            float tt = float(s) / float(steps);
+            const int Fx = int(std::lround(Fx1 + tt * (Fx2 - Fx1)));
+            const int Fy = int(std::lround(Fy1 + tt * (Fy2 - Fy1)));
+            const int Sx = int(std::lround(Sx1 + tt * (Sx2 - Sx1)));
+            const int Sy = int(std::lround(Sy1 + tt * (Sy2 - Sy1)));
+            addPix(Fx, Fy);
+            addPix(Sx, Sy);
+            addLineTiles(Fx, Fy, Sx, Sy);
+        }
+    }
+
+    return retVal;
+}
+
+void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles)
+{
+    if (!surfaceMeshPtr_ || tiles.isEmpty()) {
+        return;
+    }
+
+    for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+        SurfaceTile* dst = surfaceMeshPtr_->getTilePtrByKey(it.key());
+
+        if (!dst) {
+            continue;
+        }
+        if (!dst->getIsInited()) {
+            dst->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+        }
+        const auto& src = it.value();
+
+        // image
+        auto& di = dst->getMosaicImageDataRef();
+        const auto& si = src.getMosaicImageDataCRef();
+        if (di.size() == si.size() && !si.empty()) {
+            memcpy(di.data(), si.data(), size_t(di.size()));
+        }
+        // heights & marks
+        dst->getHeightVerticesRef()     = src.getHeightVerticesCRef();
+        dst->getHeightMarkVerticesRef() = src.getHeightMarkVerticesCRef();
+
+        dst->updateHeightIndices();
+        dst->setIsUpdated(false);
+    }
+}
+
+bool MosaicProcessor::prefetchFromHotCache(const QSet<TileKey> &keys)
+{
+    if (!dataProcessor_ || keys.isEmpty()) {
+        return false;
+    }
+
+    QSet<TileKey> missing;
+    TileMap got;
+
+    QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, got), Q_ARG(QSet<TileKey>, keys), Q_ARG(QSet<TileKey>*, &missing) );
+
+    if (!got.isEmpty()) {
+        putTilesIntoMesh(got);
+        return true;
+    }
+
+    return false;
 }

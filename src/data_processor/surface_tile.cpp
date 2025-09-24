@@ -20,45 +20,53 @@ void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolutio
     imageData_.resize(sidePixelSize * sidePixelSize, 0);
 
     // height vertices
-    int heightMatSideSize = heightMatrixRatio + 1;
-    float heightPixelStep = (sidePixelSize / heightMatrixRatio) * resolution;
-    int heightMatSize = std::pow(heightMatSideSize, 2);
+    const int   heightMatSideSize = heightMatrixRatio + 1;
+    const float heightPixelStep = (sidePixelSize / heightMatrixRatio) * resolution;
+    const int   heightMatSize = std::pow(heightMatSideSize, 2);
     heightVertices_.resize(heightMatSize);
     heightMarkVertices_.resize(heightMatSize);
     for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
-            float x = origin_.x() + j * heightPixelStep;
-            float y = origin_.y() + i * heightPixelStep;
-            int currIndx = i * heightMatSideSize + j;
-            heightVertices_[currIndx] = QVector3D(x, y, 0.0f);
+            const float x = origin_.x() + j * heightPixelStep;
+            const float y = origin_.y() + i * heightPixelStep;
+            const int   currIndx = i * heightMatSideSize + j;
+            heightVertices_[currIndx]     = QVector3D(x, y, 0.0f);
             heightMarkVertices_[currIndx] = HeightType::kUndefined;
         }
     }
 
     // texture vertices
+    textureVertices_.clear();
+    textureVertices_.reserve(heightMatSideSize * heightMatSideSize);
     for (int i = 0; i < heightMatSideSize; ++i) {
         for (int j = 0; j < heightMatSideSize; ++j) {
-            textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1), float(i) / (heightMatSideSize - 1)));
+            textureVertices_.append(QVector2D(float(j) / (heightMatSideSize - 1),
+                                              float(i) / (heightMatSideSize - 1)));
         }
     }
 
-    sidePixelSize_ = sidePixelSize;
+    sidePixelSize_     = sidePixelSize;
     heightMatrixRatio_ = heightMatrixRatio;
-    resolution_ = resolution;
+    resolution_        = resolution;
+    isInited_          = true;
+    isUpdated_         = false;
 
-    isInited_ = true;
+    updateHeightIndices();
 }
 
 void SurfaceTile::updateHeightIndices()
 {
     // height indices
     heightIndices_.clear();
-    int heightMatSideSize = std::sqrt(static_cast<int>(heightVertices_.size()));
-    for (int i = 0; i < heightMatSideSize - 1; ++i) { // -1 для норм прохода
-        for (int j = 0; j < heightMatSideSize - 1; ++j) {
-            int topLeft = i * heightMatSideSize + j;
+
+    const int side = int(std::sqrt(double(heightVertices_.size())));
+    if (side <= 1) return;
+
+    for (int i = 0; i < side - 1; ++i) { // -1 для норм прохода
+        for (int j = 0; j < side - 1; ++j) {
+            int topLeft = i * side + j;
             int topRight = topLeft + 1;
-            int bottomLeft = (i + 1) * heightMatSideSize + j;
+            int bottomLeft = (i + 1) * side + j;
             int bottomRight = bottomLeft + 1;
 
             if (!checkVerticesDepth(topLeft, topRight, bottomLeft, bottomRight)) {
@@ -73,6 +81,20 @@ void SurfaceTile::updateHeightIndices()
             heightIndices_.append(bottomRight); // 2--3
         }
     }
+}
+
+void SurfaceTile::resetInitData()
+{
+    textureId_ = 0;
+    isUpdated_ = false;
+
+    std::vector<uint8_t>().swap(imageData_);
+    heightVertices_.squeeze();
+    heightMarkVertices_.squeeze();
+    heightIndices_.squeeze();
+    textureVertices_.squeeze();
+
+    isInited_ = false;
 }
 
 void SurfaceTile::setMosaicTextureId(GLuint val)
@@ -138,6 +160,11 @@ const QVector<QVector2D>& SurfaceTile::getMosaicTextureVerticesCRef() const
 const QVector<QVector3D>& SurfaceTile::getHeightVerticesCRef() const
 {
     return heightVertices_;
+}
+
+const QVector<HeightType> &SurfaceTile::getHeightMarkVerticesCRef() const
+{
+    return heightMarkVertices_;
 }
 
 const QVector<int>& SurfaceTile::getHeightIndicesCRef() const

@@ -25,6 +25,9 @@ public:
 
     const std::vector<SurfaceTile*>&        getTilesCRef() const;
     std::vector<std::vector<SurfaceTile*>>& getTileMatrixRef();
+
+    inline SurfaceTile* getTileByXYIndxs(int ix, int iy) { return tileMatrix_[ix][iy]; }
+
     SurfaceTile*                            getTilePtrByKey(const TileKey& key);
     int                                     getCurrentZoom() const;
     int                                     getPixelWidth() const;
@@ -35,6 +38,15 @@ public:
     int                                     getStepSizeHeightMatrix() const;
     bool                                    getIsInited() const;
 
+    // LRU
+    void setMaxInitedTiles(int maxTiles); // 0 - no limit
+    int  getMaxInitedTiles() const;
+    int  currentInitedTiles() const;
+    int  scanInitedTiles(); // debug
+    void onTilesWritten(const QSet<SurfaceTile*>& written);
+    void touch(const TileKey& key);
+    void resetTileByKey(const TileKey& key);
+
 private:
     /*methods*/
     void initializeMatrix(int numWidthTiles, int numHeightTiles, const kmath::MatrixParams& matrixParams);
@@ -44,6 +56,10 @@ private:
     void resizeRowsBottom(int rowsToAdd);
     float getWidthMeters() const;
     float getHeightMeters() const;
+
+    // LRU
+    void evictIfNeeded();
+    void registerNewTile(SurfaceTile* t);
 
     /*data*/
     std::vector<SurfaceTile*> tiles_;
@@ -57,4 +73,12 @@ private:
     int numHeightTiles_;
     int tileSidePixelSize_;
     int tileHeightMatrixRatio_;
+
+    // LRU
+    QHash<TileKey, uint64_t> lru_;
+    uint64_t                 tick_;
+    int                      maxTrackedTiles_;
+    QSet<TileKey>            initedKeys_;
+    int                      initedCount_;
+
 };

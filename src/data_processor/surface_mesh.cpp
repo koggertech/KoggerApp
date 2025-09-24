@@ -16,13 +16,18 @@ SurfaceMesh::SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float
     numWidthTiles_(0),
     numHeightTiles_(0),
     tileSidePixelSize_(tileSidePixelSize),
-    tileHeightMatrixRatio_(tileHeightMatrixRatio)
+    tileHeightMatrixRatio_(tileHeightMatrixRatio),
+    tick_(1),
+    maxTrackedTiles_(0),
+    initedCount_(0)
 {
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 }
 
 SurfaceMesh::~SurfaceMesh()
-{}
+{
+    clear();
+}
 
 void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
@@ -132,6 +137,11 @@ void SurfaceMesh::clear()
     tileMatrix_.clear();
     tileByKey_.clear();
 
+    lru_.clear();
+    initedKeys_.clear();
+    tick_ = 1;
+    initedCount_ = 0;
+
     numWidthTiles_ = 0;
     numHeightTiles_ = 0;
 }
@@ -223,6 +233,112 @@ bool SurfaceMesh::getIsInited() const
     return !tiles_.empty();
 }
 
+void SurfaceMesh::setMaxInitedTiles(int maxTiles)
+{
+    maxTrackedTiles_ = std::max(0, maxTiles);
+    evictIfNeeded();
+}
+
+int SurfaceMesh::getMaxInitedTiles() const
+{
+    return maxTrackedTiles_;
+}
+
+int SurfaceMesh::currentInitedTiles() const
+{
+    return initedCount_;
+}
+
+int SurfaceMesh::scanInitedTiles()
+{
+    int total = 0;
+    int hSize = getNumHeightTiles();
+    int wSize = getNumWidthTiles();
+
+    for (int y = 0; y < hSize; ++y) {
+        for (int x = 0; x < wSize; ++x) {
+            if (auto* t = tileMatrix_[y][x]; t && t->getIsInited()) {
+                ++total;
+            }
+        }
+    }
+
+    return total;
+}
+
+void SurfaceMesh::onTilesWritten(const QSet<SurfaceTile*>& written)
+{
+    for (auto* t : written) {
+        if (!t) {
+            continue;
+        }
+
+        const TileKey key = t->getKey();
+        touch(key);
+
+        if (t->getIsInited() && !initedKeys_.contains(key)) {
+            initedKeys_.insert(key);
+            ++initedCount_;
+        }
+    }
+
+    evictIfNeeded();
+}
+
+void SurfaceMesh::touch(const TileKey &key)
+{
+    auto& m = lru_[key];
+    m = ++tick_;
+}
+
+void SurfaceMesh::resetTileByKey(const TileKey& key)
+{
+    if (auto* t = getTilePtrByKey(key)) {
+        const bool wasInited = t->getIsInited();
+        t->resetInitData();
+
+        if (wasInited && !t->getIsInited()) {
+            if (initedKeys_.remove(key) > 0) {
+                initedCount_ = std::max(0, initedCount_ - 1);
+            }
+        }
+
+        lru_.remove(key);
+        //qDebug() << "reset" << key.x << key.y << key.zoom;
+    }
+}
+
+void SurfaceMesh::evictIfNeeded() // ужать до лимита
+{
+    if (maxTrackedTiles_ <= 0) { // без лимита
+        return;
+    }
+
+    while (initedCount_ > maxTrackedTiles_) {
+        TileKey victim;
+        uint64_t best = std::numeric_limits<uint64_t>::max();
+
+        for (auto it = lru_.cbegin(); it != lru_.cend(); ++it) { // ищем старейший
+            auto* t = getTilePtrByKey(it.key());
+
+            if (!t || !t->getIsInited()) {
+                continue;
+            }
+
+            if (it.value() < best) {
+                best = it.value();
+                victim = it.key();
+            }
+        }
+
+        if (best == std::numeric_limits<uint64_t>::max()) {
+            break;
+        }
+
+        resetTileByKey(victim);
+    }
+}
+
 void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const kmath::MatrixParams &matrixParams)
 {
     numWidthTiles_ = numWidthTiles;
@@ -252,6 +368,7 @@ void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles, const 
                 tiles_.push_back(tile);
                 tileMatrix_[i][j] = tile;
                 tileByKey_.insert(key, tile);
+                registerNewTile(tile);
             }
         }
     }
@@ -281,6 +398,7 @@ void SurfaceMesh::resizeColumnsLeft(int columnsToAdd)
             tiles_.push_back(tile);
             tileMatrix_[i][j] = tile;
             tileByKey_.insert(key, tile);
+            registerNewTile(tile);
         }
     }
 
@@ -310,6 +428,7 @@ void SurfaceMesh::resizeRowsBottom(int rowsToAdd)
             tiles_.push_back(tile);
             tileMatrix_[i][j] = tile;
             tileByKey_.insert(key, tile);
+            registerNewTile(tile);
         }
         cnt++;
     }
@@ -338,6 +457,7 @@ void SurfaceMesh::resizeColumnsRight(int columnsToAdd)
             tiles_.push_back(tile);
             tileMatrix_[i][j] = tile;
             tileByKey_.insert(key, tile);
+            registerNewTile(tile);
         }
     }
 
@@ -370,6 +490,7 @@ void SurfaceMesh::resizeRowsTop(int rowsToAdd)
             tiles_.push_back(tile);
             tileMatrix_[i][j] = tile;
             tileByKey_.insert(key, tile);
+            registerNewTile(tile);
         }
     }
 
@@ -384,4 +505,13 @@ float SurfaceMesh::getWidthMeters() const
 float SurfaceMesh::getHeightMeters() const
 {
     return numHeightTiles_ * tileSideMeterSize_;
+}
+
+void SurfaceMesh::registerNewTile(SurfaceTile *t)
+{
+    if (!t) {
+        return;
+    }
+
+    lru_.insert(t->getKey(), 0);
 }

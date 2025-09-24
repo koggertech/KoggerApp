@@ -30,6 +30,8 @@ public:
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices(); // обновляет индексы для отрисовки
 
+    void resetInitData();
+
     void                        setMosaicTextureId(GLuint val);
     void                        setIsUpdated(bool state);
     const TileKey&              getKey() const;
@@ -43,6 +45,7 @@ public:
     QVector<HeightType>&        getHeightMarkVerticesRef();
     const QVector<QVector2D>&   getMosaicTextureVerticesCRef() const;
     const QVector<QVector3D>&   getHeightVerticesCRef() const;
+    const QVector<HeightType>&  getHeightMarkVerticesCRef() const;
     const QVector<int>&         getHeightIndicesCRef() const;
     // tile size
     int sidePixelSize() const;

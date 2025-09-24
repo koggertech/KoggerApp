@@ -48,6 +48,11 @@ private:
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;
     bool canceled() const noexcept;
 
+    // prepairing tiles
+    QSet<TileKey> forecastTilesToTouch(const QVector<QVector3D>& meas, const QVector<char>& isOdds, const QVector<int>& epochIndxs, int marginTiles = 0) const;
+    void putTilesIntoMesh(const TileMap& tiles);
+    bool prefetchFromHotCache(const QSet<TileKey>& keys);
+
 private:
     mosaic::PlotColorTable colorTable_;
     DataProcessor* dataProcessor_;

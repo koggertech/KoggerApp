@@ -113,6 +113,8 @@ public slots:
     void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp); // на движение камеры
     void tryUpdRenderByLastRequest(DataSource sourceType); // на эвент
 
+    TileMap fetchFromHotCache(const QSet<TileKey>& keys, QSet<TileKey>* missing);
+
 private slots:
     //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);

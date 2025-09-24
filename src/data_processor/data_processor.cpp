@@ -504,9 +504,9 @@ void DataProcessor::onDbTilesLoadedForKeys(const QList<DbTile> &dbTiles)
     dbInWork_ = false;
 
     if (!dbTiles.isEmpty()) {
-        TileMap out; 
+        TileMap out;
         out.reserve(dbTiles.size());
-        QVector<TileKey> justLoaded; 
+        QVector<TileKey> justLoaded;
         justLoaded.reserve(dbTiles.size());
 
         for (const DbTile& dt : dbTiles) {
@@ -657,10 +657,13 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
         return;
     }
 
-    qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() <<"mosaic:"<< useTextures;
-    if (db_ && useTextures) { // только с мозайки сохраняем
+    //qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() <<"mosaic:"<< useTextures;
+    if (useTextures) { // только с мозайки сохраняем
         hotCache_.putBatch(tiles, useTextures);
-        emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
+
+        if (db_) {
+            emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
+        }
     }
 
     bool anyInserted = false;
@@ -1102,6 +1105,11 @@ void DataProcessor::tryUpdRenderByLastRequest(DataSource sourceType)
     default:
         break;
     }
+}
+
+TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey> *missing)
+{
+    return hotCache_.getForKeys(keys, missing);
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
