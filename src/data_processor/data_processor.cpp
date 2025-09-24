@@ -657,7 +657,7 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
         return;
     }
 
-    //qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() <<"mosaic:"<< useTextures;
+    //qDebug() << "CALCULATED zoom:" << requestedZoom_ << "tiles:" << tiles.size() << "mosaic:" << useTextures;
     if (useTextures) { // только с мозайки сохраняем
         hotCache_.putBatch(tiles, useTextures);
 
@@ -965,6 +965,8 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     lastRequestedTiles_ = curr;
     requestedZoom_      = zoomIndx;
 
+    requestedKeys_ = lastRequestedTiles_;
+
     if (!updateSurface_ && !updateMosaic_) {
         return;
     }
@@ -1019,7 +1021,6 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     //requestTilesFromDBForKeys(drawNow);
 
     visibleTiles_ = curr;
-    requestedKeys_ = lastRequestedTiles_;
 
     // чистка старых запросов
     for (auto it = dbPendingKeys_.begin(); it != dbPendingKeys_.end(); ) {

@@ -497,15 +497,16 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
         QSet<TileKey> need;
         need.reserve(toRestore.size());
-        for (const auto& k : toRestore) {
-            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(k)) {
+        for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
+            auto cKey = *it;
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey)) {
                 if (!t->getIsInited()) {
-                    need.insert(k);
+                    need.insert(cKey);
                 }
             }
         }
 
-        qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
+        //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
         prefetchFromHotCache(need);
     }
 
