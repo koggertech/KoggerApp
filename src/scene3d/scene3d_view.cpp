@@ -885,6 +885,13 @@ void GraphicsScene3dView::updateSurfaceView()
         maxY = std::max(maxY, point.y());
     }
 
+    if (minX == std::numeric_limits<float>::max() ||
+        minY == std::numeric_limits<float>::max() ||
+        maxX == std::numeric_limits<float>::lowest() ||
+        maxY == std::numeric_limits<float>::lowest()) {
+        return;
+    }
+
     if (allPointsAreValid) {
         bool canRequest{ true };
         if (m_camera->getAngleToGround() > 5.0f) {
