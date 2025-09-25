@@ -153,6 +153,8 @@ signals:
     void sendMosaicColorTable(const std::vector<uint8_t>& colorTable);
     void sendSurfaceTiles(const TileMap& tiles, bool useTextures);
 
+    void sendSurfaceTilesIncremental(const TileMap& upserts, const QSet<TileKey>& fullVisibleNow);
+
 private slots:
     void runCoalescedWork();
     void startTimerIfNeeded();
@@ -196,6 +198,8 @@ private:
     void closeDB();
     void requestTilesFromDB();//
     void initMosaicIndexProvider();
+
+    void emitDelta(TileMap&& upserts, DataSource src);
 
 private:
     friend class SurfaceProcessor;
@@ -258,4 +262,5 @@ private:
     HotTileCache           hotCache_{2048}; // LRU
     QSet<TileKey>          requestedKeys_;  // копия lastRequestedTiles
     QSet<TileKey>          readyKeys_;      // какие ключи уже готовы (кэш + БД)
+    QSet<TileKey>          renderedKeys_;   // что уже есть в рендере
 };

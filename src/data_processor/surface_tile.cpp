@@ -11,7 +11,8 @@ SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
     isInited_(false),
     sidePixelSize_(defaultTileSidePixelSize),
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
-    resolution_(defaultTileResolution)
+    resolution_(defaultTileResolution),
+    updateHint_(UpdateHint::kUndefined)
 {}
 
 void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
@@ -95,6 +96,16 @@ void SurfaceTile::resetInitData()
     textureVertices_.squeeze();
 
     isInited_ = false;
+}
+
+void SurfaceTile::setUpdateHint(UpdateHint h)
+{
+    updateHint_ = h;
+}
+
+UpdateHint SurfaceTile::updateHint() const
+{
+    return updateHint_;
 }
 
 void SurfaceTile::setMosaicTextureId(GLuint val)

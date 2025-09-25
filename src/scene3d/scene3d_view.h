@@ -136,8 +136,8 @@ public:
         // maps
         void processMapTextures(GraphicsScene3dView* viewPtr) const;
         // mosaic on surface
-        void processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const;
-        void processMosaicTileTexture(GraphicsScene3dView* viewPtr) const;
+        void processMosaicColorTableTexture(QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const;
+        void processMosaicTileTexture      (QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const;
         // image
         void processImageTexture(GraphicsScene3dView* viewPtr) const;
         // surface

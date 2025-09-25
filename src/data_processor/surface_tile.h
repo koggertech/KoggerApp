@@ -8,6 +8,12 @@
 #include <QOpenGLFunctions>
 #include "data_processor_defs.h"
 
+enum class UpdateHint : uint8_t
+{
+    kUndefined = 0,
+    kUpdateTexture,
+    kAddOrUpdateTexture
+};
 
 class SurfaceTile;
 using TileMap = QHash<TileKey, SurfaceTile>;
@@ -30,7 +36,10 @@ public:
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices(); // обновляет индексы для отрисовки
 
-    void resetInitData();
+    void       resetInitData();
+
+    void       setUpdateHint(UpdateHint h);
+    UpdateHint updateHint() const;
 
     void                        setMosaicTextureId(GLuint val);
     void                        setIsUpdated(bool state);
@@ -75,4 +84,5 @@ private:
     int   sidePixelSize_;
     int   heightMatrixRatio_;
     float resolution_;
+    UpdateHint updateHint_;
 };

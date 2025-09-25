@@ -210,6 +210,26 @@ void SurfaceView::saveVerticesToFile(const QString &path)
     file.close();
 }
 
+bool SurfaceView::trySetMosaicTextureId(const TileKey &key, GLuint texId)
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        if (auto it = r->tiles_.find(key); it != r->tiles_.end()) {
+            it.value().setMosaicTextureId(texId);
+            Q_EMIT changed();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool SurfaceView::hasTile(const TileKey &key) const
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        return r->tiles_.contains(key);
+    }
+    return false;
+}
+
 GLuint SurfaceView::getSurfaceColorTableTextureId() const
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
@@ -316,6 +336,73 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
         Q_EMIT changed();
         Q_EMIT boundsChanged();
     }
+}
+
+void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, const QSet<TileKey> &fullVisibleNow)
+{
+    auto* r = RENDER_IMPL(SurfaceView);
+    if (!r) {
+        return;
+    }
+
+    auto& cur = r->tiles_;
+
+    // to del
+    QSet<TileKey> toRemove;
+    toRemove.reserve(cur.size());
+    for (auto it = cur.cbegin(); it != cur.cend(); ++it) {
+        if (!fullVisibleNow.contains(it.key())) {
+            toRemove.insert(it.key());
+        }
+    }
+
+    if (!toRemove.isEmpty()) {
+        QMutexLocker lk(&mosaicTexTasksMutex_);
+        for (const auto& k : toRemove) {
+            if (auto it = cur.find(k); it != cur.end()) {
+                if (GLuint oldId = it.value().getMosaicTextureId(); oldId) {
+                    mosaicTileTextureToDelete_.append(oldId);
+                }
+                cur.erase(it);
+            }
+
+            mosaicTileTextureToAppend_.remove(k); // удалить все неактуальные задания на этот ключ
+        }
+    }
+
+    // add/upd
+    {
+        QMutexLocker lk(&mosaicTexTasksMutex_);
+        for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
+            const TileKey& key = it.key();
+            const auto& inTile = it.value();
+
+            auto curIt = cur.find(key);
+            if (curIt == cur.end()) {
+                cur.insert(key, inTile);
+                if (inTile.updateHint() == UpdateHint::kAddOrUpdateTexture ||
+                    inTile.updateHint() == UpdateHint::kUpdateTexture ||
+                    !inTile.getMosaicImageDataCRef().empty()) {
+                    mosaicTileTextureToAppend_.insert(key, inTile.getMosaicImageDataCRef());
+                }
+            }
+            else {
+                GLuint texId = curIt.value().getMosaicTextureId();
+                curIt.value() = inTile;
+                curIt.value().setMosaicTextureId(texId);
+
+                if (inTile.updateHint() == UpdateHint::kUpdateTexture ||
+                    inTile.updateHint() == UpdateHint::kAddOrUpdateTexture)
+                {
+                    mosaicTileTextureToAppend_.insert(key, curIt.value().getMosaicImageDataCRef());
+                }
+            }
+        }
+    }
+
+    r->updateBounds();
+    Q_EMIT changed();
+    Q_EMIT boundsChanged();
 }
 
 void SurfaceView::setMosaicColorTableTextureTask(const std::vector<uint8_t> &colorTableTextureTask)
@@ -426,13 +513,7 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     colorIntervalsSize_(-1),
     iVis_(false),
     mVis_(false)
-{
-#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    mosaicColorTableTextureType_ = GL_TEXTURE_2D;
-#else
-    mosaicColorTableTextureType_ = GL_TEXTURE_1D;
-#endif
-}
+{}
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
                                                             const QMatrix4x4 &mvp,
@@ -480,7 +561,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
             shP->setUniformValue("indexedTexture", 0);
 
             glFuncs->glActiveTexture(GL_TEXTURE1);
-            glBindTexture(mosaicColorTableTextureType_, mosaicColorTableTextureId_);
+            glBindTexture(GL_TEXTURE_2D, mosaicColorTableTextureId_);
             shP->setUniformValue("colorTable", 1);
 
             ctx->glDrawElements(GL_TRIANGLES,

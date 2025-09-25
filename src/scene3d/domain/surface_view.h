@@ -31,7 +31,6 @@ public:
         QHash<TileKey, SurfaceTile> tiles_; // from dataProcessor
         GLuint surfaceColorTableTextureId_;
         GLuint mosaicColorTableTextureId_;
-        GLenum mosaicColorTableTextureType_;
         float minZ_; // from dataprocessor
         float maxZ_; // from dataprocessor
         float surfaceStep_; // from dataprocessor
@@ -64,9 +63,13 @@ public:
     void setLlaRef(LLARef llaRef);
     void saveVerticesToFile(const QString& path);
 
+    bool trySetMosaicTextureId(const TileKey& key, GLuint texId);
+    bool hasTile(const TileKey& key) const;
+
 public slots: // from dataprocessor
     void clear();
     void setTiles(const QHash<TileKey, SurfaceTile>& tiles, bool useTextures); // TODO: separate (now from mosaic)
+    void setTilesIncremental(const QHash<TileKey, SurfaceTile>& tiles, const QSet<TileKey>& fullVisibleNow /*все видимые на кадре*/);
     void setMosaicColorTableTextureTask(const std::vector<uint8_t>& colorTableTextureTask);
     void setMinZ(float minZ);
     void setMaxZ(float maxZ);

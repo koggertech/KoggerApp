@@ -983,6 +983,7 @@ void GraphicsScene3dView::InFboRenderer::render()
 void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * fbo)
 {
     auto view = qobject_cast<GraphicsScene3dView*>(fbo);
+    auto* glFuncs = QOpenGLContext::currentContext()->functions();
 
     if (!view) {
         return;
@@ -990,8 +991,8 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
 
     // process textures
     processMapTextures(view);
-    processMosaicColorTableTexture(view);
-    processMosaicTileTexture(view);
+    processMosaicColorTableTexture(glFuncs, view);
+    processMosaicTileTexture      (glFuncs, view);
     processImageTexture(view);
     processSurfaceTexture(view);
 
@@ -1052,117 +1053,120 @@ void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView 
     r.pendingDelete_ += del;
 }
 
-void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(GraphicsScene3dView* viewPtr) const
+void GraphicsScene3dView::InFboRenderer::processMosaicColorTableTexture(QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const
 {
     auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
     // del
     if (auto cTTDId = surfacePtr->takeMosaicColorTableToDelete(); cTTDId) {
+        glFuncs->glDeleteTextures(1, &cTTDId);
         surfacePtr->setMosaicColorTableTextureId(0);
-        glDeleteTextures(1, &cTTDId);
     }
 
-    auto task = surfacePtr->takeMosaicColorTableToAppend();
-    if (task.empty()) {
+    // add/upd
+    auto bytes = surfacePtr->takeMosaicColorTableToAppend();
+    if (bytes.empty()) {
         return;
     }
 
-    GLuint colorTableTextureId = surfacePtr->getMosaicColorTableTextureId();
+    const GLsizei texWidth = GLsizei(bytes.size() / 4);
+    GLint prevUnpack = 4;
+    glFuncs->glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpack);
+    glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
-    if (colorTableTextureId) {
-        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, task.size() / 4, 1, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
+    GLuint texId = surfacePtr->getMosaicColorTableTextureId();
+
+    if (!texId) {
+        glFuncs->glGenTextures(1, &texId);
+        surfacePtr->setMosaicColorTableTextureId(texId);
+        glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
+
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+        glFuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes.data());
     }
     else {
-        glGenTextures(1, &colorTableTextureId);
-        glBindTexture(GL_TEXTURE_2D, colorTableTextureId);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, task.size() / 4, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
+        glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
+        glFuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texWidth, 1, GL_RGBA, GL_UNSIGNED_BYTE, bytes.data());
     }
-#else
-    if (colorTableTextureId) {
-        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
-        glTexSubImage1D(GL_TEXTURE_1D, 0, 0, task.size() / 4, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-    }
-    else {
-        glGenTextures(1, &colorTableTextureId);
-        glBindTexture(GL_TEXTURE_1D, colorTableTextureId);
 
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, task.size() / 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, task.data());
-
-        surfacePtr->setMosaicColorTableTextureId(colorTableTextureId);
-    }
-#endif
+    glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpack);
 }
 
-void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(GraphicsScene3dView* viewPtr) const // TODO CHECK
+void GraphicsScene3dView::InFboRenderer::processMosaicTileTexture(QOpenGLFunctions* glFuncs, GraphicsScene3dView* viewPtr) const // TODO CHECK
 {
     auto surfacePtr = viewPtr->getSurfaceViewPtr();
 
-    // delete
+    // del
     {
         auto tasks = surfacePtr->takeMosaicTileTextureToDelete();
-        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-            if (*it != 0) {
-                glDeleteTextures(1, &(*it));
+        for (auto it = tasks.cbegin(); it != tasks.cend(); ++it) {
+            auto id = *it;
+            if (id) {
+                glFuncs->glDeleteTextures(1, &id);
             }
         }
     }
 
-    // append or update
+    // 2) add/upd
     {
         auto tasks = surfacePtr->takeMosaicTileTextureToAppend();
+        if (tasks.isEmpty()) {
+            return;
+        }
 
-        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-            const auto& tileId = it->first;
-            const auto& data   = it->second;
+        GLint prevUnpack = 4;
+        glFuncs->glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevUnpack);
+        glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        const GLsizei W = defaultTileSidePixelSize;
+        const GLsizei H = defaultTileSidePixelSize;
+
+        for (auto it = tasks.cbegin(); it != tasks.cend(); ++it) {
+            auto iTask = *it;
+            const TileKey& tileId = iTask.first;
+            const auto&    data   = iTask.second;
 
             if (data.empty()) {
                 continue;
             }
 
-            const GLuint existingId = surfacePtr->getMosaicTextureIdByTileId(tileId);
+            // if (!surfacePtr->hasTile(tileId)) { // eсли тайла уже нет
+            //     continue;
+            // }
 
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            GLuint texId = surfacePtr->getMosaicTextureIdByTileId(tileId);
+            if (texId) {
+                glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
+                glFuncs->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, W, H, GL_RED, GL_UNSIGNED_BYTE, data.data());
+                glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
-            if (existingId) { // update
-                glBindTexture(GL_TEXTURE_2D, existingId);
-
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, defaultTileSidePixelSize, defaultTileSidePixelSize, GL_RED, GL_UNSIGNED_BYTE, data.data());
-
-                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-                gl->glGenerateMipmap(GL_TEXTURE_2D);
             }
-            else { // create
-                GLuint texId = 0;
-                glGenTextures(1, &texId);
-                glBindTexture(GL_TEXTURE_2D, texId);
+            else {
+                glFuncs->glGenTextures(1, &texId);
+                glFuncs->glBindTexture(GL_TEXTURE_2D, texId);
 
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glFuncs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, defaultTileSidePixelSize, defaultTileSidePixelSize, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
 
-                QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-                gl->glGenerateMipmap(GL_TEXTURE_2D);
+                glFuncs->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, W, H, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
+                glFuncs->glGenerateMipmap(GL_TEXTURE_2D);
 
-                surfacePtr->setMosaicTextureIdByTileId(tileId, texId);
+                if (!surfacePtr->trySetMosaicTextureId(tileId, texId)) { // если тайла нет — удаляем текстуру
+                    glFuncs->glDeleteTextures(1, &texId);
+                }
             }
         }
+
+        glFuncs->glBindTexture(GL_TEXTURE_2D, 0);
+        glFuncs->glPixelStorei(GL_UNPACK_ALIGNMENT, prevUnpack);
     }
 }
 
