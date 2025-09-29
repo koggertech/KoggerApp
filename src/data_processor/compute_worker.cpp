@@ -19,7 +19,7 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
 
-    surfaceMesh_.setMaxInitedTiles(100);
+    surfaceMesh_.setMaxInitedTiles(0);
 
     surface_.setSurfaceMeshPtr(&surfaceMesh_);
     isobaths_.setSurfaceMeshPtr(&surfaceMesh_);

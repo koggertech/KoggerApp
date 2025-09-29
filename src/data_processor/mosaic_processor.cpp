@@ -352,7 +352,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
 
     //const int beforeTracked = surfaceMeshPtr_->currentInitedTiles();
     //const int beforeScan    = surfaceMeshPtr_->scanInitedTiles();
-    surfaceMeshPtr_->onTilesWritten(changedTiles); // метка тайлов/ужимка
+    //surfaceMeshPtr_->onTilesWritten(changedTiles); // метка тайлов/ужимка
     //const int afterTracked = surfaceMeshPtr_->currentInitedTiles();
     //const int afterScan    = surfaceMeshPtr_->scanInitedTiles();
     //qDebug() << "[Mosaic] inited tiles tracked" << beforeTracked << "->" << afterTracked
@@ -491,24 +491,24 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
 
-    // prefetch tiles from hotCache (dataprocessor)
-    {
-        QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/1);
+    // // prefetch tiles from hotCache (dataprocessor)
+    // {
+    //     QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/1);
 
-        QSet<TileKey> need;
-        need.reserve(toRestore.size());
-        for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
-            auto cKey = *it;
-            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey)) {
-                if (!t->getIsInited()) {
-                    need.insert(cKey);
-                }
-            }
-        }
+    //     QSet<TileKey> need;
+    //     need.reserve(toRestore.size());
+    //     for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
+    //         auto cKey = *it;
+    //         if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey)) {
+    //             if (!t->getIsInited()) {
+    //                 need.insert(cKey);
+    //             }
+    //         }
+    //     }
 
-        //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
-        prefetchFromHotCache(need);
-    }
+    //     //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
+    //     prefetchFromHotCache(need);
+    // }
 
 
     static QSet<SurfaceTile*> changedTiles;
