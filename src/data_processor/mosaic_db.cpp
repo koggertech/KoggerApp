@@ -201,45 +201,6 @@ void MosaicDB::unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks)
     }
 }
 
-void MosaicDB::loadTilesForZoom(int zoom)
-{
-    QList<DbTile> out;
-    QSqlQuery q(db_);
-    q.prepare("SELECT x,y,tile_px,hm_ratio,origin_x,origin_y,"
-              "has_mosaic,mosaic_blob,"
-              "has_height,height_fmt,height_blob,"
-              "has_marks,marks_fmt,marks_blob "
-              "FROM tiles WHERE zoom=?");
-    q.addBindValue(zoom);
-    if (!q.exec()) {
-        qWarning() << "loadTilesForZoom:" << q.lastError();
-        emit tilesLoadedForZoom(zoom, out);
-        return;
-    }
-
-    while (q.next()) {
-        DbTile t;
-        t.key.x      = q.value(0).toInt();
-        t.key.y      = q.value(1).toInt();
-        t.key.zoom   = zoom;
-        t.tilePx    = q.value(2).toInt();
-        t.hmRatio   = q.value(3).toInt();
-        t.originX   = q.value(4).toDouble();
-        t.originY   = q.value(5).toDouble();
-        t.hasMosaic = q.value(6).toInt();
-        t.mosaicBlob= q.value(7).toByteArray();
-        t.hasHeight = q.value(8).toInt();
-        t.heightFmt = q.value(9).toInt();
-        t.heightBlob= q.value(10).toByteArray();
-        t.hasMarks  = q.value(11).toInt();
-        t.marksFmt  = q.value(12).toInt();
-        t.marksBlob = q.value(13).toByteArray();
-        out.push_back(std::move(t));
-    }
-
-    emit tilesLoadedForZoom(zoom, out);
-}
-
 void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio)
 {
     QSqlQuery q(db_);
@@ -335,6 +296,8 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
     QList<DbTile> out;
     out.reserve(keys.size());
 
+    //qDebug() << "MosaicDB::loadTilesForKeys" << keys.size();
+
     for (auto it = groupedByZoom.cbegin(); it != groupedByZoom.cend(); ++it) {
         const int z = it.key();
         const QVector<TileKey>& list = it.value();
@@ -392,6 +355,8 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
             }
         }
     }
+
+    //qDebug() << "MosaicDB::loadTilesForKeys OUT" << out.size();
 
     emit tilesLoadedForKeys(out);
 }

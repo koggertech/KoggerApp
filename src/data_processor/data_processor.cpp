@@ -72,9 +72,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     btBusy_(false),
     db_(nullptr),
     engineVer_(1),
-    currentZoom_(0),
-    requestedZoom_(0),
-    dbInWork_(false)
+    dbInWork_(false),
+    lastZoom_(0)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
@@ -184,7 +183,7 @@ void DataProcessor::setUpdateMosaic(bool state)
     updateMosaic_ = state;
 
     if (updateMosaic_) {
-        emit dbCheckAnyTileForZoom(requestedZoom_);
+        emit dbCheckAnyTileForZoom(lastZoom_);
     }
     else if (!updateMosaic_) {
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
@@ -514,75 +513,65 @@ void DataProcessor::onWorkerFinished()
     }
 }
 
-void DataProcessor::onDbTilesLoadedForKeys(const QList<DbTile> &dbTiles)
+void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
 {
-    //qDebug() << "DataProcessor::onDbTilesLoadedForKeys size:" << dbTiles.size();
-
     dbInWork_ = false;
+    dbInWorkKeys_.clear();
 
-    QVector<TileKey> justLoaded;
-    if (!dbTiles.isEmpty()) {
-        TileMap out;
-        out.reserve(dbTiles.size());
-        justLoaded.reserve(dbTiles.size());
+    TileMap outTiles; // for HotCache
+    outTiles.reserve(dbTiles.size());
+    QVector<TileKey> loadedKeys;
+    loadedKeys.reserve(dbTiles.size());
 
-        for (const DbTile& dt : dbTiles) {
-            if (!requestedKeys_.contains(dt.key)) {
-                continue;
-            }
-
-            SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
-            tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
-            if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
-                auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
-                auto& img = tile.getMosaicImageDataRef();
-                if (int(bytes.size()) == int(img.size())) {
-                    memcpy(img.data(), bytes.data(), size_t(bytes.size()));
-                }
-            }
-            if (dt.hasHeight && !dt.heightBlob.isEmpty()) {
-                auto& verts = tile.getHeightVerticesRef();
-                MosaicDB::unpackFloat32(dt.heightBlob, verts, dt.hmRatio);
-            }
-            if (dt.hasMarks && !dt.marksBlob.isEmpty()) {
-                auto& marks = tile.getHeightMarkVerticesRef();
-                MosaicDB::unpackMarksU8(dt.marksBlob, marks);
-            }
-
-            tile.updateHeightIndices();
-            tile.setIsUpdated(false);
-
-            justLoaded.push_back(dt.key);
-            out.insert(dt.key, std::move(tile));
-        }
-
-        if (!out.isEmpty()) {
-            hotCache_.putBatch(std::move(out), /*useTextures=*/true);
-            for (const auto& k : justLoaded) {
-                readyKeys_.insert(k);
+    for (const DbTile& dt : dbTiles) {
+        SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
+        tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
+        if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
+            auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
+            auto& img = tile.getMosaicImageDataRef();
+            if (static_cast<int>(bytes.size()) == int(img.size())) {
+                memcpy(img.data(), bytes.data(), size_t(bytes.size()));
             }
         }
+        if (dt.hasHeight && !dt.heightBlob.isEmpty()) {
+            auto& verts = tile.getHeightVerticesRef();
+            MosaicDB::unpackFloat32(dt.heightBlob, verts, dt.hmRatio);
+        }
+        if (dt.hasMarks && !dt.marksBlob.isEmpty()) {
+            auto& marks = tile.getHeightMarkVerticesRef();
+            MosaicDB::unpackMarksU8(dt.marksBlob, marks);
+        }
+        tile.updateHeightIndices();
+        tile.setIsUpdated(false);
+
+        outTiles.insert(dt.key, std::move(tile));
+        loadedKeys.push_back(dt.key);
     }
 
-    // отправляем только новые из БД, которые видимы и ещё не отрисованы
-    if (!justLoaded.isEmpty()) {
-        QSet<TileKey> fresh;
-        for (const auto& k : justLoaded) {
-            if (visibleTiles_.contains(k) && !renderedKeys_.contains(k)) {
-                fresh.insert(k);
+    if (!outTiles.isEmpty()) { // в горячий кеш
+        hotCache_.putBatch(std::move(outTiles), /*useTextures=*/true);
+    }
+
+    if (!loadedKeys.isEmpty()) { // В рендер — только видимые и не отрисованные
+        QSet<TileKey> addNow;
+        for (const auto& k : loadedKeys) {
+            if (lastKeys_.contains(k) && !renderedKeys_.contains(k)) {
+                addNow.insert(k);
             }
         }
-
-        if (!fresh.isEmpty()) {
+        if (!addNow.isEmpty()) {
             QSet<TileKey> dummy;
-            TileMap delta = hotCache_.getForKeys(fresh, &dummy);
+            TileMap delta = hotCache_.getForKeys(addNow, &dummy);
             if (!delta.isEmpty()) {
                 emitDelta(std::move(delta), DataSource::kDataBase);
             }
         }
     }
 
-    flushPendingDbKeys();
+    // Следующая пачка, если есть запустится
+    if (!dbPendingKeys_.isEmpty()) {
+        flushPendingDbKeys();
+    }
 }
 
 void DataProcessor::postState(DataProcessorType s)
@@ -620,15 +609,13 @@ void DataProcessor::onBottomTrackFinished()
     btBusy_ = false;
 }
 
-void DataProcessor::requestTilesFromDBForKeys(const QSet<TileKey> &keys)
+void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 {
     if (!db_ || keys.isEmpty()) {
         return;
     }
 
-    for (const auto& k : keys) { // merge request
-        dbPendingKeys_.insert(k);
-    }
+    dbPendingKeys_.unite(keys);
 
     flushPendingDbKeys();
 }
@@ -639,32 +626,27 @@ void DataProcessor::flushPendingDbKeys()
         return;
     }
 
-    QSet<TileKey> batch;
-    int n = 0;
+    QSet<TileKey> dbReq;
+    for (auto it = dbPendingKeys_.begin(); it != dbPendingKeys_.end(); ) {
+        const auto& itVal = *it;
+        if (!dbInWorkKeys_.contains(itVal)) {
+            dbReq.insert(itVal);
+            dbInWorkKeys_.insert(itVal);
 
-    for (auto it = dbPendingKeys_.begin(); it != dbPendingKeys_.end() && n < kMaxDbKeysPerReq_; ) {
-        if (requestedKeys_.contains(*it)) {
-            batch.insert(*it);
             it = dbPendingKeys_.erase(it);
-            ++n;
         }
         else {
             ++it;
         }
     }
 
-    for (auto it = dbPendingKeys_.begin(); it != dbPendingKeys_.end() && n < kMaxDbKeysPerReq_; ) {
-        batch.insert(*it);
-        it = dbPendingKeys_.erase(it);
-        ++n;
-    }
-
-    if (batch.isEmpty()) {
+    if (dbReq.isEmpty()) {
         return;
     }
 
     dbInWork_ = true;
-    emit dbLoadTilesForKeys(batch);
+
+    emit dbLoadTilesForKeys(dbReq);
 }
 
 void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels)
@@ -678,28 +660,26 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
         return;
     }
 
-    // складываем в кэш/БД без флага обновления текстуры
-    TileMap tilesForCache = tiles;
-    markTilesBySource(tilesForCache, DataSource::kHotCache); // для кэша hint = None
     if (useTextures) {
-        hotCache_.putBatch(tilesForCache, /*useTextures=*/true);
+        hotCache_.putBatch(tiles, /*useTextures=*/true);
         if (db_) {
-            emit dbSaveTiles(engineVer_, tilesForCache, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
+            emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
         }
     }
 
-    // в рендер только то, что сейчас видно
-    TileMap upserts;
+    // в рендер — только видимые
+    TileMap prepaired;
     for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
         const auto& k = it.key();
-        if (visibleTiles_.contains(k)) {
-            upserts.insert(k, it.value());
+        if (lastKeys_.contains(k)) {
+            prepaired.insert(k, it.value());
         }
     }
-
-    if (!upserts.isEmpty()) {
-        emitDelta(std::move(upserts), DataSource::kCalculation);
+    if (prepaired.isEmpty()) {
+        return;
     }
+
+    emitDelta(std::move(prepaired), DataSource::kCalculation);
 }
 
 void DataProcessor::postMinZ(float val)
@@ -776,7 +756,6 @@ void DataProcessor::clearSurfaceProcessing()
 void DataProcessor::clearAllProcessings()
 {
     closeDB();
-    filePath_.clear();
     pendingWorkTimer_.stop();
     pendingIsobathsWork_ = false;
     pendingMosaicIndxs_.clear();
@@ -799,15 +778,15 @@ void DataProcessor::clearAllProcessings()
     jobRunning_ = false;
     nextRunPending_ = false;
     requestedMask_ = 0;
-    requestedZoom_ = 0;
-    dbInWork_ = false;
-    visibleTiles_.clear();
-    dbPendingKeys_.clear();
-    lastRequestedTiles_.clear();
 
     hotCache_.clear();
-    requestedKeys_.clear();
-    readyKeys_.clear();
+    filePath_.clear();
+    dbInWork_ = false;
+    lastViewRect_ = QRectF();
+    lastZoom_ = 0;
+    lastKeys_.clear();
+    dbPendingKeys_.clear();
+    dbInWorkKeys_.clear();
     renderedKeys_.clear();
 
     emit isobathsProcessingCleared();
@@ -861,7 +840,7 @@ void DataProcessor::openDB()
         connect(this, &DataProcessor::dbSaveTiles,           db_,  &MosaicDB::saveTiles,                   Qt::QueuedConnection);
         connect(db_,  &MosaicDB::tilesLoadedForZoom,         this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
         connect(this, &DataProcessor::dbLoadTilesForKeys,    db_,  &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
-        connect(db_,  &MosaicDB::tilesLoadedForKeys,         this, &DataProcessor::onDbTilesLoadedForKeys, Qt::QueuedConnection);
+        connect(db_,  &MosaicDB::tilesLoadedForKeys,         this, &DataProcessor::onDbTilesLoaded, Qt::QueuedConnection);
         connect(this, &DataProcessor::dbCheckAnyTileForZoom, db_,  &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
         connect(db_,  &MosaicDB::anyTileForZoom,             this, &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
 
@@ -887,16 +866,6 @@ void DataProcessor::closeDB()
     qDebug() << "DB close by path" << filePath_;
 }
 
-void DataProcessor::requestTilesFromDB()
-{
-    if (db_) {
-        if (!dbInWork_) {
-            dbInWork_ = true;
-            QMetaObject::invokeMethod(db_, [this](){ db_->loadTilesForZoom(requestedZoom_); }, Qt::QueuedConnection);
-        }
-    }
-}
-
 void DataProcessor::initMosaicIndexProvider()
 {
     QVector<ZoomInfo> zs;
@@ -918,21 +887,50 @@ void DataProcessor::initMosaicIndexProvider()
 
 void DataProcessor::emitDelta(TileMap &&upserts, DataSource src)
 {
-    // Помечаем апдейты по источнику
-    if (!upserts.isEmpty()) {
-        markTilesBySource(upserts, src);
+    if (upserts.isEmpty()) {
+        return;
     }
 
-    // Шлём в рендер: он сам удалит всё, чего нет во fullVisibleNow
-    emit sendSurfaceTilesIncremental(upserts, visibleTiles_);
+    markTilesBySource(upserts, src);
 
-    // Поддерживаем локальное состояние «что отрисовано»
-    // 1) выкидываем то, что больше не видно
-    renderedKeys_.intersect(visibleTiles_);
-    // 2) добавляем/обновляем то, что только что отправили
+    // в рендер: сам удалит всё, чего нет
+    emit sendSurfaceTilesIncremental(upserts, lastKeys_);
+
+    // «что отрисовано»
+    renderedKeys_.intersect(lastKeys_); // выкидываем то, что больше не видно (проверить)
     for (auto it = upserts.cbegin(); it != upserts.cend(); ++it) {
         renderedKeys_.insert(it.key());
     }
+}
+
+void DataProcessor::pumpVisible()
+{
+    QSet<TileKey> needAdd = lastKeys_;
+
+    // check RENDER, PENDING DB/PROC
+    needAdd.subtract(renderedKeys_);
+    needAdd.subtract(dbPendingKeys_);
+    if (needAdd.empty()) {
+        //qDebug() << "needAdd.empty() - return";
+        return;
+    }
+
+    // CHECK IN HOT CACHE
+    QSet<TileKey> missFromHotCache;
+    TileMap fromHotCache = hotCache_.getForKeys(needAdd, &missFromHotCache);
+    if (!fromHotCache.isEmpty()) {
+        emitDelta(std::move(fromHotCache), DataSource::kHotCache);
+    }
+    if (missFromHotCache.isEmpty()) {
+        return;
+    }
+
+    requestTilesFromDB(missFromHotCache);
+}
+
+bool DataProcessor::isValidZoomIndx(int zoomIndx) const
+{
+    return zoomIndx >= kFirstZoom && zoomIndx <= kLastZoom;
 }
 
 void DataProcessor::requestCancel() noexcept
@@ -947,12 +945,12 @@ void DataProcessor::onUpdateMosaic(int zoom) // calc or db
         return;
     }
 
-    if (zoom == currentZoom_) {
+    if (zoom == lastZoom_) {
         qDebug() << "Skip: zoom already applied" << zoom;
         return;
     }
 
-    requestedZoom_ = zoom;
+    lastZoom_ = zoom;
 
     const float pxPerMeter = ZL[zoom - 1].pxPerMeter;
     if (!std::isfinite(pxPerMeter)) {
@@ -970,7 +968,7 @@ void DataProcessor::onUpdateMosaic(int zoom) // calc or db
     emit mosaicProcessingCleared();
     emit surfaceProcessingCleared();
 
-    emit dbCheckAnyTileForZoom(requestedZoom_);
+    emit dbCheckAnyTileForZoom(lastZoom_);
 }
 
 void DataProcessor::setFilePath(QString filePath)
@@ -982,14 +980,17 @@ void DataProcessor::setFilePath(QString filePath)
 
 void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp)
 {
-    if (rect.size() < 4) {
+    Q_UNUSED(moveUp)
+
+    if (rect.size() < 4 || !isValidZoomIndx(zoomIndx)) {
         return;
     }
 
-    double minN = std::numeric_limits<double>::max();
-    double minE = std::numeric_limits<double>::max();
-    double maxN = std::numeric_limits<double>::lowest();
-    double maxE = std::numeric_limits<double>::lowest();
+    // dimensions
+    double minN =  std::numeric_limits<double>::max();
+    double minE =  std::numeric_limits<double>::max();
+    double maxN = -std::numeric_limits<double>::max();
+    double maxE = -std::numeric_limits<double>::max();
     for (const auto& p : rect) {
         minN = std::min(minN, p.n);
         minE = std::min(minE, p.e);
@@ -997,49 +998,39 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
         maxE = std::max(maxE, p.e);
     }
 
+    // rect
     const QRectF viewRect(QPointF(minN, minE), QPointF(maxN, maxE));
-    const QSet<TileKey> curr = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, 1);
+    if (viewRect == lastViewRect_) {
+        return;
+    }
 
-    const QSet<TileKey> prevVisible = visibleTiles_;
-    lastRequestedTiles_ = curr;
-    requestedZoom_      = zoomIndx;
+    // tiles
+    const auto tiles = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, /*padTiles*/1);
+    if (tiles == lastKeys_) {
+        return;
+    }
 
-    requestedKeys_ = lastRequestedTiles_;
-    visibleTiles_  = requestedKeys_;
+
+    // store new req
+    lastViewRect_ = viewRect;
+    lastKeys_     = tiles;
+    lastZoom_     = zoomIndx;
+
 
     if (!updateSurface_ && !updateMosaic_) {
         return;
     }
 
-    // кого надо добавить в отрисовку (в рендере их ещё нет)
-    QSet<TileKey> needAdd = visibleTiles_;
-    needAdd.subtract(renderedKeys_);
-
-    QSet<TileKey> missing;
-    TileMap cachedAdd = hotCache_.getForKeys(needAdd, &missing);
-
-    // если есть что добавить из кэша — сразу шлём дельту с полным списком видимых
-    if (!cachedAdd.isEmpty()) {
-        emitDelta(std::move(cachedAdd), DataSource::kHotCache);
+    if (state_ != DataProcessorType::kUndefined) {
+        return;
     }
 
-    // если просто поменялась видимость (удаления), но нечего добавлять — пошлём пустую дельту, чтобы рендер удалил лишнее
-    if (cachedAdd.isEmpty() && (prevVisible != visibleTiles_)) {
-        emitDelta(TileMap{}, DataSource::kUndefined);
-    }
-
-    // чего нет — дозакажем из БД
-    if (!missing.isEmpty()) {
-        requestTilesFromDBForKeys(missing);
-    }
+    pumpVisible();
 }
 
 void DataProcessor::tryUpdRenderByLastRequest(DataSource sourceType)
 {
     switch (sourceType) {
-    case DataSource::kUndefined: {
-        break;
-    }
     case DataSource::kCalculation: {
         emit isobathsProcessingCleared();
         emit surfaceProcessingCleared();
@@ -1055,43 +1046,11 @@ void DataProcessor::tryUpdRenderByLastRequest(DataSource sourceType)
         scheduleLatest(WorkSet(WF_All), /*replace*/true);
         break;
     }
-    case DataSource::kHotCache: {
-        if (requestedKeys_.isEmpty()) {
-            requestedKeys_ = lastRequestedTiles_;
-        }
-
-        // отправляем только то, чего ещё нет в рендере
-        QSet<TileKey> needAdd = requestedKeys_;
-        needAdd.subtract(renderedKeys_);
-
-        if (!needAdd.isEmpty()) {
-            QSet<TileKey> missing;
-            TileMap cached = hotCache_.getForKeys(needAdd, &missing);
-            if (!cached.isEmpty()) {
-                emitDelta(std::move(cached), DataSource::kHotCache);
-            }
-            if (!missing.isEmpty()) {
-                requestTilesFromDBForKeys(missing);
-            }
-        } else {
-            // поддержим удаление по актуальной видимости
-            emitDelta(TileMap{}, DataSource::kUndefined);
-        }
-        break;
-    }
-    case DataSource::kDataBase: {
-        if (!requestedKeys_.isEmpty()) {
-            QSet<TileKey> need = requestedKeys_;
-            for (const auto& k : std::as_const(renderedKeys_)) {
-                need.remove(k);
-            }
-            if (!need.isEmpty()) {
-                requestTilesFromDBForKeys(need);
-            }
-        }
-        break;
-    }
+    case DataSource::kHotCache:
+    case DataSource::kDataBase:
     default:
+        // докачка по текущему visibleTiles_
+        pumpVisible();
         break;
     }
 }
@@ -1106,7 +1065,7 @@ void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTile
     qDebug() << "DataProcessor::onDbTilesLoadedForZoom size" << dbTiles.size();
     dbInWork_ = false;
 
-    if (zoom != requestedZoom_) {
+    if (zoom != lastZoom_) {
         return;
     }
 
@@ -1129,24 +1088,13 @@ void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTile
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
     scheduleLatest(WorkSet(WF_All), /*replace*/true);
 
-    currentZoom_ = zoom;
 }
 
 void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
 {
+    Q_UNUSED(zoom)
+
     //qDebug() << "DataProcessor::onDbAnyTileForZoom, zoom" << zoom << "exist" << exists;
-    dbInWork_ = false;
-    currentZoom_ = zoom;
 
-    if (zoom != requestedZoom_) {
-        return;
-    }
-
-    if (exists) {
-        tryUpdRenderByLastRequest(DataSource::kHotCache);
-        tryUpdRenderByLastRequest(DataSource::kDataBase);
-        return;
-    }
-
-    tryUpdRenderByLastRequest(DataSource::kCalculation);
+    !exists ? tryUpdRenderByLastRequest(DataSource::kCalculation) : tryUpdRenderByLastRequest(DataSource::kUndefined);
 }

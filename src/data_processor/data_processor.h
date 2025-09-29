@@ -118,7 +118,7 @@ public slots:
 private slots:
     //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
-    void onDbTilesLoadedForKeys(const QList<DbTile>& dbTiles);
+    void onDbTilesLoaded(const QList<DbTile>& dbTiles);
     void onDbAnyTileForZoom(int zoom, bool exists);
 
 signals:
@@ -183,7 +183,7 @@ private slots:
     void onBottomTrackFinished();
 
 private:
-    void requestTilesFromDBForKeys(const QSet<TileKey>& keys);
+    void requestTilesFromDB(const QSet<TileKey>& keys);
     void flushPendingDbKeys();
 
     // this
@@ -196,10 +196,11 @@ private:
     void scheduleLatest(WorkSet mask = WorkSet(WF_All), bool replace = false, bool clearUnrequestedPending = false) noexcept;
     void openDB();
     void closeDB();
-    void requestTilesFromDB();//
     void initMosaicIndexProvider();
 
     void emitDelta(TileMap&& upserts, DataSource src);
+    void pumpVisible();
+    bool isValidZoomIndx(int zoomIndx) const;;
 
 private:
     friend class SurfaceProcessor;
@@ -209,7 +210,6 @@ private:
 
     const int kFirstZoom = 1;
     const int kLastZoom  = 7;
-    const int kMaxDbKeysPerReq_ = 2048;
 
     // this
     MosaicIndexProvider mosaicIndexProvider_;
@@ -236,6 +236,7 @@ private:
     // Surface
     float tileResolution_;
 
+
     // processing (scheduling/interrupt)
     QSet<int>              epIndxsFromBottomTrack_;
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
@@ -247,20 +248,17 @@ private:
     std::atomic_bool       nextRunPending_;
     std::atomic<uint32_t>  requestedMask_;
     bool                   btBusy_;
-    // db
+    // hot cache/db
+    HotTileCache           hotCache_{2048}; // LRU
     MosaicDB*              db_;
     QThread                dbThread_;
     QString                filePath_;
     int                    engineVer_;
-    int                    currentZoom_;
-    int                    requestedZoom_;
     bool                   dbInWork_;
-    QSet<TileKey>          visibleTiles_;
+    QRectF                 lastViewRect_;
+    int                    lastZoom_;
+    QSet<TileKey>          lastKeys_;
     QSet<TileKey>          dbPendingKeys_;
-    QSet<TileKey>          lastRequestedTiles_;
-    // hot cache
-    HotTileCache           hotCache_{2048}; // LRU
-    QSet<TileKey>          requestedKeys_;  // копия lastRequestedTiles
-    QSet<TileKey>          readyKeys_;      // какие ключи уже готовы (кэш + БД)
-    QSet<TileKey>          renderedKeys_;   // что уже есть в рендере
+    QSet<TileKey>          dbInWorkKeys_;
+    QSet<TileKey>          renderedKeys_;
 };

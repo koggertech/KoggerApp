@@ -39,7 +39,6 @@ public slots:
     void close();
 
     void checkAnyTileForZoom(int zoom);
-    void loadTilesForZoom(int zoom); //
     void saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
     void loadTilesForKeys(const QSet<TileKey>& keys);
 
