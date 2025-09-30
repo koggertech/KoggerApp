@@ -70,6 +70,17 @@ bool HotTileCache::contains(const TileKey &k) const
     return index_.contains(k);
 }
 
+bool HotTileCache::checkAnyTileForZoom(int targetZoom) const
+{
+    for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
+        if (it.key().zoom == targetZoom) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 size_t HotTileCache::size() const
 {
     return size_t(index_.size());

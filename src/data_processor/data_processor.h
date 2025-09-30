@@ -84,7 +84,7 @@ public slots:
     void setFilePath(QString filePath);
 
     void onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp); // на движение камеры
-    void tryUpdRenderByLastRequest(DataSource sourceType); // на эвент
+    void tryCalcTiles();
 
     TileMap fetchFromHotCache(const QSet<TileKey>& keys, QSet<TileKey>* missing);
 

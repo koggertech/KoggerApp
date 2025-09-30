@@ -19,6 +19,7 @@ public:
     void putBatch(TileMap&& tiles, DataSource source, bool useTextures);
     TileMap getForKeys(const QSet<TileKey>& keys, QSet<TileKey>* missing);
     bool contains(const TileKey& k) const;
+    bool checkAnyTileForZoom(int targetZoom) const;
     size_t size() const;
 
 private:

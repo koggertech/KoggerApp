@@ -185,7 +185,12 @@ void DataProcessor::setUpdateMosaic(bool state)
     updateMosaic_ = state;
 
     if (updateMosaic_) {
-        emit dbCheckAnyTileForZoom(lastZoom_);
+        if (hotCache_.checkAnyTileForZoom(lastZoom_)) {
+            pumpVisible();
+        }
+        else {
+            emit dbCheckAnyTileForZoom(lastZoom_);
+        }
     }
     else if (!updateMosaic_) {
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
@@ -1026,7 +1031,12 @@ void DataProcessor::onUpdateMosaic(int zoom) // calc or db
     emit mosaicProcessingCleared();
     emit surfaceProcessingCleared();
 
-    emit dbCheckAnyTileForZoom(lastZoom_);
+    if (hotCache_.checkAnyTileForZoom(lastZoom_)) {
+        pumpVisible();
+    }
+    else {
+        emit dbCheckAnyTileForZoom(lastZoom_);
+    }
 }
 
 void DataProcessor::setFilePath(QString filePath)
@@ -1085,31 +1095,20 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     pumpVisible();
 }
 
-void DataProcessor::tryUpdRenderByLastRequest(DataSource sourceType)
+void DataProcessor::tryCalcTiles()
 {
-    switch (sourceType) {
-    case DataSource::kCalculation: {
-        emit isobathsProcessingCleared();
-        emit surfaceProcessingCleared();
-        emit mosaicProcessingCleared();
+    emit isobathsProcessingCleared();
+    emit surfaceProcessingCleared();
+    emit mosaicProcessingCleared();
 
-        for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-            pendingMosaicIndxs_.insert(*it);
-            pendingSurfaceIndxs_.insert(qMakePair('0', *it));
-        }
-        pendingIsobathsWork_ = true;
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingMosaicIndxs_.insert(*it);
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    }
+    pendingIsobathsWork_ = true;
 
-        QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
-        scheduleLatest(WorkSet(WF_All), /*replace*/true);
-        break;
-    }
-    case DataSource::kHotCache:
-    case DataSource::kDataBase:
-    default:
-        // докачка по текущему visibleTiles_
-        pumpVisible();
-        break;
-    }
+    QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
+    scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }
 
 TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey> *missing)
@@ -1158,5 +1157,10 @@ void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
 
     //qDebug() << "DataProcessor::onDbAnyTileForZoom, zoom" << zoom << "exist" << exists;
 
-    !exists ? tryUpdRenderByLastRequest(DataSource::kCalculation) : tryUpdRenderByLastRequest(DataSource::kUndefined);
+    if (exists) {
+        pumpVisible();
+    }
+    else {
+        tryCalcTiles();
+    }
 }
