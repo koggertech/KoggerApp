@@ -20,37 +20,6 @@
 #include "hot_tile_cache.h"
 
 
-struct TileDiff {
-    QSet<TileKey> added;
-    QSet<TileKey> removed;
-    QSet<TileKey> stayed;
-};
-
-enum class DataSource {
-    kUndefined = 0,
-    kCalculation,
-    kHotCache,
-    kDataBase
-};
-
-enum class DataProcessorType {
-    kUndefined = 0,
-    kBottomTrack,
-    kIsobaths,
-    kMosaic,
-    kSurface
-};
-
-enum WorkFlag : quint32 {
-    WF_None     = 0,
-    WF_Surface  = 1u << 0,
-    WF_Mosaic   = 1u << 1,
-    WF_Isobaths = 1u << 2,
-    WF_All      = WF_Surface | WF_Mosaic | WF_Isobaths
-};
-Q_DECLARE_FLAGS(WorkSet, WorkFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(WorkSet)
-
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
@@ -62,6 +31,9 @@ public:
 
     void setDatasetPtr(Dataset* datasetPtr);
     inline bool isCancelRequested() const noexcept { return cancelRequested_.load(); }
+
+    void onDbSaveTile(const SurfaceTile& tile);
+    void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
 
 public slots:
     // this
@@ -168,7 +140,7 @@ private slots:
     void postDistCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
     void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
     // Surface/Mosaic
-    void postSurfaceTiles(const TileMap& tiles, bool useTextures);
+    void postSurfaceTiles(TileMap tiles, bool useTextures);
     // Surface
     void postMinZ(float val);
     void postMaxZ(float val);

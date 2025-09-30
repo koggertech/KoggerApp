@@ -1,4 +1,5 @@
 #include "hot_tile_cache.h"
+#include "data_processor.h"
 
 
 HotTileCache::HotTileCache(size_t maxCapacity, size_t minCapacity)
@@ -14,6 +15,11 @@ void HotTileCache::clear()
     index_.clear();
 }
 
+void HotTileCache::setDataProcessorPtr(DataProcessor *ptr)
+{
+    dataProcPtr_ = ptr;
+}
+
 void HotTileCache::setCapacity(size_t maxCap, size_t minCap)
 {
     maxCapacity_ = maxCap;
@@ -21,19 +27,13 @@ void HotTileCache::setCapacity(size_t maxCap, size_t minCap)
     evictIfNeeded();
 }
 
-void HotTileCache::putBatch(const TileMap& tiles, bool useTextures)
-{
-    for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
-        upsertCopy(it.key(), it.value(), useTextures);
-    }
-}
-
-void HotTileCache::putBatch(TileMap&& tiles, bool useTextures)
+void HotTileCache::putBatch(TileMap&& tiles, DataSource source, bool useTextures)
 {
     for (auto it = tiles.begin(); it != tiles.end(); ++it) {
         TileKey     key = it.key();
         SurfaceTile val = std::move(it.value());
-        upsertMove(std::move(key), std::move(val), useTextures);
+
+        upsertMove(std::move(key), std::move(val), source, useTextures);
     }
 
     tiles.clear();
@@ -80,35 +80,19 @@ void HotTileCache::touch(ListIt it)
     nodes_.splice(nodes_.begin(), nodes_, it);
 }
 
-void HotTileCache::upsertCopy(const TileKey &key, const SurfaceTile &val, bool useTextures)
-{
-    auto it = index_.find(key);
-
-    if (it != index_.end()) {
-        ListIt nodeIt = it.value();
-        nodeIt->tile        = val;
-        nodeIt->hasTextures = useTextures;
-        touch(nodeIt);
-    }
-    else {
-        nodes_.push_front(Node{ key, val, useTextures });
-        index_.insert(nodes_.front().key, nodes_.begin());
-        evictIfNeeded();
-    }
-}
-
-void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, bool useTextures)
+void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source, bool useTextures)
 {
     auto it = index_.find(key);
 
     if (it != index_.end()) {
         ListIt nodeIt = it.value();
         nodeIt->tile        = std::move(val);
+        nodeIt->source      = source;
         nodeIt->hasTextures = useTextures;
         touch(nodeIt);
     }
     else {
-        nodes_.push_front(Node{ std::move(key), std::move(val), useTextures });
+        nodes_.push_front(Node{ std::move(key), std::move(val), source, useTextures });
         index_.insert(nodes_.front().key, nodes_.begin());
         evictIfNeeded();
     }
@@ -123,6 +107,11 @@ void HotTileCache::evictIfNeeded()
     while (size_t(index_.size()) > maxCapacity_) {
         while (size_t(index_.size()) > minCapacity_) {
             auto last = std::prev(nodes_.end());
+
+            if (last->source == DataSource::kCalculation) {
+                dataProcPtr_->onDbSaveTile(last->tile);
+            }
+
             index_.remove(last->key);
             nodes_.erase(last);
 

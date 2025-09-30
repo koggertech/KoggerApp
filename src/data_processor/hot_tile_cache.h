@@ -3,17 +3,20 @@
 #include <list>
 #include <QHash>
 #include <QSet>
+#include "data_processor_defs.h"
 #include "surface_tile.h"
 
 
+class DataProcessor;
 class HotTileCache {
 public:
-    explicit HotTileCache(size_t maxCapacity = 2048, size_t minCapacity = 1536);
+    explicit HotTileCache(size_t maxCapacity = 2048, size_t minCapacity = 1024);
 
     void clear();
+
+    void setDataProcessorPtr(DataProcessor* ptr);;
     void setCapacity(size_t maxCap, size_t minCap = 0);
-    void putBatch(const TileMap& tiles, bool useTextures);
-    void putBatch(TileMap&& tiles, bool useTextures);
+    void putBatch(TileMap&& tiles, DataSource source, bool useTextures);
     TileMap getForKeys(const QSet<TileKey>& keys, QSet<TileKey>* missing);
     bool contains(const TileKey& k) const;
     size_t size() const;
@@ -22,16 +25,17 @@ private:
     struct Node {
         TileKey     key;
         SurfaceTile tile;
+        DataSource  source = DataSource::kUndefined;
         bool        hasTextures = false;
     };
     using ListIt = std::list<Node>::iterator;
 
     void touch(ListIt it);
-    void upsertCopy(const TileKey& key, const SurfaceTile& val, bool useTextures);
-    void upsertMove(TileKey key, SurfaceTile&& val, bool useTextures);
+    void upsertMove(TileKey key, SurfaceTile&& val, DataSource source, bool useTextures);
     void evictIfNeeded();
 
 private:
+    DataProcessor* dataProcPtr_{ nullptr };
     size_t maxCapacity_;
     size_t minCapacity_;
     std::list<Node> nodes_;

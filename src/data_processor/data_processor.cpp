@@ -85,6 +85,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     qRegisterMetaType<std::uint8_t>("std::uint8_t");
     qRegisterMetaType<QSet<TileKey>>("QSet<TileKey>");
 
+    hotCache_.setDataProcessorPtr(this);
+
     initMosaicIndexProvider();
 
     pendingWorkTimer_.setParent(this);
@@ -552,7 +554,7 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
     }
 
     if (!outTiles.isEmpty()) { // в горячий кеш
-        hotCache_.putBatch(std::move(outTiles), /*useTextures=*/true);
+        hotCache_.putBatch(std::move(outTiles), DataSource::kDataBase, /*useTextures=*/true);
     }
 
     if (!loadedKeys.isEmpty()) { // В рендер — только видимые и не отрисованные
@@ -666,7 +668,7 @@ void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParamete
     emit sendIsobathsLabels(labels);
 }
 
-void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
+void DataProcessor::postSurfaceTiles(TileMap tiles, bool useTextures)
 {
     if (tiles.isEmpty()) {
         return;
@@ -674,13 +676,6 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 
     for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) { // удалить из не найдено
         nfErase(it.key());
-    }
-
-    if (useTextures) {
-        hotCache_.putBatch(tiles, /*useTextures=*/true);
-        if (db_) {
-            emit dbSaveTiles(engineVer_, tiles, useTextures, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
-        }
     }
 
     // в рендер — только видимые
@@ -691,11 +686,14 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
             prepaired.insert(k, it.value());
         }
     }
-    if (prepaired.isEmpty()) {
-        return;
+
+    if (useTextures) {
+        hotCache_.putBatch(std::move(tiles), DataSource::kCalculation, /*useTextures=*/true);
     }
 
-    emitDelta(std::move(prepaired), DataSource::kCalculation);
+    if (!prepaired.isEmpty()) {
+        emitDelta(std::move(prepaired), DataSource::kCalculation);
+    }
 }
 
 void DataProcessor::postMinZ(float val)
@@ -1117,6 +1115,21 @@ void DataProcessor::tryUpdRenderByLastRequest(DataSource sourceType)
 TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey> *missing)
 {
     return hotCache_.getForKeys(keys, missing);
+}
+
+void DataProcessor::onDbSaveTile(const SurfaceTile &tile)
+{
+    qDebug() << "saving" << tile.getKey();
+
+    QHash<TileKey, SurfaceTile> tiles;
+    tiles.insert(tile.getKey(), tile);
+
+    emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
+}
+
+void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
+{
+    emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
