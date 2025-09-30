@@ -1,6 +1,8 @@
 #pragma once
 
 #include <atomic>
+#include <list>
+#include <QHash>
 #include <QObject>
 #include <QTimer>
 #include <QSet>
@@ -200,7 +202,11 @@ private:
 
     void emitDelta(TileMap&& upserts, DataSource src);
     void pumpVisible();
-    bool isValidZoomIndx(int zoomIndx) const;;
+    bool isValidZoomIndx(int zoomIndx) const;
+
+    // not found LRU
+    inline void nfTouch(const TileKey& k);
+    inline void nfErase(const TileKey& k);
 
 private:
     friend class SurfaceProcessor;
@@ -208,8 +214,10 @@ private:
     friend class IsobathsProcessor;
     friend class MosaicProcessor;
 
-    const int kFirstZoom = 1;
-    const int kLastZoom  = 7;
+    static constexpr int maxZoom_         = 1;
+    static constexpr int minZoom_         = 7;
+    static constexpr int hotCacheSize_    = 2048;
+    static constexpr int dbNotFoundLimit_ = 2048;
 
     // this
     MosaicIndexProvider mosaicIndexProvider_;
@@ -249,7 +257,7 @@ private:
     std::atomic<uint32_t>  requestedMask_;
     bool                   btBusy_;
     // hot cache/db
-    HotTileCache           hotCache_{2048}; // LRU
+    HotTileCache           hotCache_{ hotCacheSize_ }; // LRU
     MosaicDB*              db_;
     QThread                dbThread_;
     QString                filePath_;
@@ -261,4 +269,9 @@ private:
     QSet<TileKey>          dbPendingKeys_;
     QSet<TileKey>          dbInWorkKeys_;
     QSet<TileKey>          renderedKeys_;
+
+    // not found LRU
+    QSet<TileKey>                                dbNotFoundIndxs_;
+    std::list<TileKey>                           dbNotFoundOrder_; // LRU: front - oldest
+    QHash<TileKey, std::list<TileKey>::iterator> dbNotFoundPos_;
 };

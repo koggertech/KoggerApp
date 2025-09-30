@@ -516,6 +516,7 @@ void DataProcessor::onWorkerFinished()
 void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
 {
     dbInWork_ = false;
+    const QSet<TileKey> requestedNow = dbInWorkKeys_;
     dbInWorkKeys_.clear();
 
     TileMap outTiles; // for HotCache
@@ -546,6 +547,8 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
 
         outTiles.insert(dt.key, std::move(tile));
         loadedKeys.push_back(dt.key);
+
+        nfErase(dt.key);
     }
 
     if (!outTiles.isEmpty()) { // в горячий кеш
@@ -565,6 +568,15 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
             if (!delta.isEmpty()) {
                 emitDelta(std::move(delta), DataSource::kDataBase);
             }
+        }
+    }
+
+    if (!requestedNow.isEmpty()) { // ключи что бд не отдала -помечаем не найдено
+        QSet<TileKey> loadedSet(loadedKeys.cbegin(), loadedKeys.cend());
+        QSet<TileKey> notFoundNow = requestedNow;
+        notFoundNow.subtract(loadedSet);
+        for (const auto& k : notFoundNow) {
+            nfTouch(k);
         }
     }
 
@@ -658,6 +670,10 @@ void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 {
     if (tiles.isEmpty()) {
         return;
+    }
+
+    for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) { // удалить из не найдено
+        nfErase(it.key());
     }
 
     if (useTextures) {
@@ -789,6 +805,10 @@ void DataProcessor::clearAllProcessings()
     dbInWorkKeys_.clear();
     renderedKeys_.clear();
 
+    dbNotFoundIndxs_.clear();
+    dbNotFoundOrder_.clear();
+    dbNotFoundPos_.clear();
+
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
@@ -869,9 +889,9 @@ void DataProcessor::closeDB()
 void DataProcessor::initMosaicIndexProvider()
 {
     QVector<ZoomInfo> zs;
-    zs.reserve(kLastZoom - kFirstZoom + 1);
+    zs.reserve(minZoom_ - maxZoom_ + 1);
 
-    for (int z = kFirstZoom; z <= kLastZoom; ++z) {
+    for (int z = maxZoom_; z <= minZoom_; ++z) {
         const float pxPerMeter = ZL[z - 1].pxPerMeter;
         if (!(pxPerMeter > 0.0f && std::isfinite(pxPerMeter))) continue;
 
@@ -925,12 +945,52 @@ void DataProcessor::pumpVisible()
         return;
     }
 
+    missFromHotCache.subtract(dbNotFoundIndxs_); // убрать те, которых нет в бд
+
+    if (missFromHotCache.isEmpty()) {
+        return;
+    }
+
     requestTilesFromDB(missFromHotCache);
 }
 
 bool DataProcessor::isValidZoomIndx(int zoomIndx) const
 {
-    return zoomIndx >= kFirstZoom && zoomIndx <= kLastZoom;
+    return zoomIndx >= maxZoom_ && zoomIndx <= minZoom_;
+}
+
+void DataProcessor::nfTouch(const TileKey &k)
+{
+    auto it = dbNotFoundPos_.find(k);
+    if (it != dbNotFoundPos_.end()) {
+        dbNotFoundOrder_.splice(dbNotFoundOrder_.end(), dbNotFoundOrder_, it.value()); // в хвост
+        return;
+    }
+
+    dbNotFoundOrder_.push_back(k); // новый
+    auto newIt = dbNotFoundOrder_.end();
+    --newIt; // только что добавленный
+    dbNotFoundPos_.insert(k, newIt);
+    dbNotFoundIndxs_.insert(k);
+
+    if (static_cast<int>(dbNotFoundOrder_.size()) > dbNotFoundLimit_) { // переполнение
+        const TileKey& old = dbNotFoundOrder_.front();
+        dbNotFoundPos_.remove(old);
+        dbNotFoundIndxs_.remove(old);
+        dbNotFoundOrder_.pop_front();
+    }
+}
+
+void DataProcessor::nfErase(const TileKey &k)
+{
+    auto it = dbNotFoundPos_.find(k);
+    if (it == dbNotFoundPos_.end()) {
+        return;
+    }
+
+    dbNotFoundOrder_.erase(it.value());
+    dbNotFoundPos_.erase(it);
+    dbNotFoundIndxs_.remove(k);
 }
 
 void DataProcessor::requestCancel() noexcept
@@ -941,7 +1001,7 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateMosaic(int zoom) // calc or db
 {
-    if (zoom < kFirstZoom || zoom > kLastZoom) {
+    if (!isValidZoomIndx(zoom)) {
         return;
     }
 
@@ -1015,7 +1075,6 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     lastViewRect_ = viewRect;
     lastKeys_     = tiles;
     lastZoom_     = zoomIndx;
-
 
     if (!updateSurface_ && !updateMosaic_) {
         return;
