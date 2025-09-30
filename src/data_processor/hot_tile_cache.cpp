@@ -104,12 +104,14 @@ void HotTileCache::evictIfNeeded()
         return;
     }
 
+    QHash<TileKey, SurfaceTile> evictedBatch;
+
     while (size_t(index_.size()) > maxCapacity_) {
         while (size_t(index_.size()) > minCapacity_) {
             auto last = std::prev(nodes_.end());
 
             if (last->source == DataSource::kCalculation) {
-                dataProcPtr_->onDbSaveTile(last->tile);
+                evictedBatch.insert(last->key, last->tile);
             }
 
             index_.remove(last->key);
@@ -123,5 +125,9 @@ void HotTileCache::evictIfNeeded()
         if (size_t(index_.size()) <= maxCapacity_) {
             break;
         }
+    }
+
+    if (!evictedBatch.isEmpty()) {
+        dataProcPtr_->onDbSaveTiles(evictedBatch);
     }
 }

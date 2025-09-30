@@ -1117,16 +1117,6 @@ TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey
     return hotCache_.getForKeys(keys, missing);
 }
 
-void DataProcessor::onDbSaveTile(const SurfaceTile &tile)
-{
-    qDebug() << "saving" << tile.getKey();
-
-    QHash<TileKey, SurfaceTile> tiles;
-    tiles.insert(tile.getKey(), tile);
-
-    emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
-}
-
 void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 {
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);

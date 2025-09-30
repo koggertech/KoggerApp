@@ -32,7 +32,6 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
     inline bool isCancelRequested() const noexcept { return cancelRequested_.load(); }
 
-    void onDbSaveTile(const SurfaceTile& tile);
     void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
 
 public slots:
