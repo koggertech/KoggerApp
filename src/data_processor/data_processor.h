@@ -155,6 +155,9 @@ private slots:
     void onBottomTrackStarted();
     void onBottomTrackFinished();
 
+    // db
+    void onSendSavedKeys(QVector<TileKey> savedKeys);
+
 private:
     void requestTilesFromDB(const QSet<TileKey>& keys);
     void flushPendingDbKeys();

@@ -86,6 +86,12 @@ size_t HotTileCache::size() const
     return size_t(index_.size());
 }
 
+void HotTileCache::onSendSavedTiles(const QVector<TileKey> &savedKeys)
+{
+    // del saved
+    qDebug() << "HotTileCache::onSendSavedTiles" << savedKeys.size();
+}
+
 void HotTileCache::touch(ListIt it)
 {
     nodes_.splice(nodes_.begin(), nodes_, it);
@@ -117,7 +123,7 @@ void HotTileCache::evictIfNeeded()
 
     QHash<TileKey, SurfaceTile> evictedBatch;
 
-    while (size_t(index_.size()) > maxCapacity_) {
+    if (size_t(index_.size()) > maxCapacity_) {
         while (size_t(index_.size()) > minCapacity_) {
             auto last = std::prev(nodes_.end());
 
@@ -131,10 +137,6 @@ void HotTileCache::evictIfNeeded()
             if (size_t(index_.size()) <= minCapacity_) {
                 break;
             }
-        }
-
-        if (size_t(index_.size()) <= maxCapacity_) {
-            break;
         }
     }
 

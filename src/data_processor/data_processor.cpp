@@ -628,6 +628,11 @@ void DataProcessor::onBottomTrackFinished()
     btBusy_ = false;
 }
 
+void DataProcessor::onSendSavedKeys(QVector<TileKey> savedKeys)
+{
+    hotCache_.onSendSavedTiles(savedKeys);
+}
+
 void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 {
     if (!db_ || keys.isEmpty()) {
@@ -866,6 +871,8 @@ void DataProcessor::openDB()
         connect(db_,  &MosaicDB::tilesLoadedForKeys,         this, &DataProcessor::onDbTilesLoaded, Qt::QueuedConnection);
         connect(this, &DataProcessor::dbCheckAnyTileForZoom, db_,  &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
         connect(db_,  &MosaicDB::anyTileForZoom,             this, &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
+        // db
+        connect(db_,  &MosaicDB::sendSavedKeys,              this, &DataProcessor::onSendSavedKeys,        Qt::QueuedConnection);
 
         dbThread_.setObjectName("MosaicDBThread");
         dbThread_.start();

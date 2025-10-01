@@ -22,6 +22,8 @@ public:
     bool checkAnyTileForZoom(int targetZoom) const;
     size_t size() const;
 
+    void onSendSavedTiles(const QVector<TileKey>& savedKeys);
+
 private:
     struct Node {
         TileKey     key;

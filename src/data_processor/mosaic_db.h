@@ -46,6 +46,7 @@ signals:
     void anyTileForZoom(int zoom, bool exists);
     void tilesLoadedForZoom(int zoom, const QList<DbTile>& tiles);
     void tilesLoadedForKeys(const QList<DbTile>& tiles);
+    void sendSavedKeys(QVector<TileKey> savedKeys);
 
 private:
     friend class DataProcessor;

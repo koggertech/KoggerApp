@@ -32,6 +32,7 @@ MosaicDB::MosaicDB(const QString& klfPath, QObject* parent)
 {
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
+    qRegisterMetaType<QVector<TileKey>>("QVector<TileKey>");
 
     connName_ = QStringLiteral("mosaicdb-%1").arg(reinterpret_cast<quintptr>(this));
 }
@@ -223,6 +224,8 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         );
 
     const qint64 now = QDateTime::currentSecsSinceEpoch();
+    QVector<TileKey> savedKeys;
+    savedKeys.reserve(tiles.size());
 
     for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
         const TileKey& k = it.key();
@@ -273,11 +276,19 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         q.addBindValue(now);
         q.addBindValue(engineVer);
 
-        if (!q.exec()) qWarning() << "saveTiles exec:" << q.lastError() << "key" << k;
+        if (!q.exec()) {
+            qWarning() << "saveTiles exec:" << q.lastError() << "key" << k;
+        }
+        else {
+            savedKeys.push_back(k);
+        }
+
         q.finish();
     }
 
     db_.commit();
+
+    emit sendSavedKeys(savedKeys);
 }
 
 void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
