@@ -191,7 +191,7 @@ private:
     static constexpr int maxZoom_         = 1;
     static constexpr int minZoom_         = 7;
     static constexpr int hotCacheSize_    = 2048;
-    static constexpr int dbNotFoundLimit_ = 2048;
+    static constexpr int dbNotFoundLimit_ = 4096;
 
     // this
     MosaicIndexProvider mosaicIndexProvider_;

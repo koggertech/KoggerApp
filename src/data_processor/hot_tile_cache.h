@@ -28,8 +28,9 @@ private:
     struct Node {
         TileKey     key;
         SurfaceTile tile;
-        DataSource  source = DataSource::kUndefined;
+        DataSource  source      = DataSource::kUndefined;
         bool        hasTextures = false;
+        bool        blocked     = false;
     };
     using ListIt = std::list<Node>::iterator;
 

@@ -37,6 +37,10 @@ void HotTileCache::putBatch(TileMap&& tiles, DataSource source, bool useTextures
     }
 
     tiles.clear();
+
+    if (size() > maxCapacity_) {
+        evictIfNeeded();
+    }
 }
 
 TileMap HotTileCache::getForKeys(const QSet<TileKey>& keys, QSet<TileKey>* missing)
@@ -88,30 +92,69 @@ size_t HotTileCache::size() const
 
 void HotTileCache::onSendSavedTiles(const QVector<TileKey> &savedKeys)
 {
-    // del saved
-    qDebug() << "HotTileCache::onSendSavedTiles" << savedKeys.size();
+    for (const TileKey& k : savedKeys) {
+        auto it = index_.find(k);
+        if (it == index_.end()) {
+            continue;
+        }
+
+        ListIt nodeIt = it.value();
+        if (!nodeIt->blocked) { // узел уже обновили более свежими данными — игнорируем старый ACK
+            continue;
+        }
+
+        index_.remove(k);
+        nodes_.erase(nodeIt);
+    }
 }
 
 void HotTileCache::touch(ListIt it)
 {
+    if (it->blocked) { // если заблокирован и ждёт ACK то не двигаем с хвостп
+        return;
+    }
+
     nodes_.splice(nodes_.begin(), nodes_, it);
 }
 
 void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source, bool useTextures)
 {
     auto it = index_.find(key);
+    const bool incomingIsCalc = (source == DataSource::kCalculation);
 
     if (it != index_.end()) {
         ListIt nodeIt = it.value();
-        nodeIt->tile        = std::move(val);
-        nodeIt->source      = source;
-        nodeIt->hasTextures = useTextures;
-        touch(nodeIt);
+
+        const bool curBlocked   = nodeIt->blocked;
+        const bool curIsCalc    = (nodeIt->source == DataSource::kCalculation);
+
+        if (curBlocked) {
+            if (!incomingIsCalc) { // узел заблокирован и пришла db-версия - игнорируем
+                return;
+            }
+            else {
+                // узел заблокирован и пришёл новый расчёт - пишем и снимаем блок (чтобы ACK не удалил)
+                nodeIt->tile        = std::move(val);
+                nodeIt->source      = source;
+                nodeIt->hasTextures = useTextures;
+                nodeIt->blocked     = false; // снимаем блок
+                touch(nodeIt);
+            }
+        }
+        else {
+            if (curIsCalc && !incomingIsCalc) { // в кеше расчёт (актуальнее), а пришло из БД - игнорируем
+                return;
+            }
+
+            nodeIt->tile        = std::move(val); // иначе принимаем обновление
+            nodeIt->source      = source;
+            nodeIt->hasTextures = useTextures;
+            touch(nodeIt);
+        }
     }
     else {
-        nodes_.push_front(Node{ std::move(key), std::move(val), source, useTextures });
+        nodes_.push_front(Node{ std::move(key), std::move(val), source, useTextures, /*blocked*/false }); // новый узел
         index_.insert(nodes_.front().key, nodes_.begin());
-        evictIfNeeded();
     }
 }
 
@@ -121,26 +164,58 @@ void HotTileCache::evictIfNeeded()
         return;
     }
 
-    QHash<TileKey, SurfaceTile> evictedBatch;
+    const size_t total = size();
+    if (total <= maxCapacity_) {
+        return;
+    }
 
-    if (size_t(index_.size()) > maxCapacity_) {
-        while (size_t(index_.size()) > minCapacity_) {
-            auto last = std::prev(nodes_.end());
+    // Считаем текущее число НЕзаблокированных (горячих)
+    size_t unblocked = 0, blocked = 0;
+    for (const auto& n : nodes_) {
+        n.blocked ? ++blocked : ++unblocked;
+    }
 
-            if (last->source == DataSource::kCalculation) {
-                evictedBatch.insert(last->key, last->tile);
-            }
+    //qDebug() << " --- evict start total:" << total << "unblocked:" << unblocked << "blocked:" << blocked << "max:" << maxCapacity_ << "min:" << minCapacity_;
 
-            index_.remove(last->key);
-            nodes_.erase(last);
+    QHash<TileKey, SurfaceTile> toSave;
 
-            if (size_t(index_.size()) <= minCapacity_) {
+    // Ужимаем только незаблокированную часть до minCapacity_
+    // total может стать > maxCapacity_, если почти все стали blocked — это ок. удатся после onSendSavedTiles().
+    while (unblocked > minCapacity_ && !nodes_.empty()) {
+        auto it = nodes_.end();
+        bool found = false;
+
+        while (it != nodes_.begin()) { // ищем с хвоста первый незаблокированный
+            --it;
+
+            if (!it->blocked) {
+                found = true;
                 break;
             }
         }
+
+        if (!found) {
+            break;
+        }
+
+        if (it->source == DataSource::kCalculation) { // после процессинга блокируем в кеше и отправим в БД
+            it->blocked = true;
+            toSave.insert(it->key, it->tile);
+
+            --unblocked;
+            ++blocked;
+        }
+        else { // узел из БД/кэша удаляем сразу
+            const TileKey key = it->key;
+            index_.remove(key);
+            it = nodes_.erase(it);
+
+            --unblocked;
+        }
     }
 
-    if (!evictedBatch.isEmpty()) {
-        dataProcPtr_->onDbSaveTiles(evictedBatch);
+    if (!toSave.isEmpty() && dataProcPtr_) {
+        dataProcPtr_->onDbSaveTiles(toSave);
+    //    qDebug() << " --- evict save batch:" << toSave.size() << "unblocked(now):" << unblocked;
     }
 }
