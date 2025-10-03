@@ -90,10 +90,10 @@ void SurfaceTile::resetInitData()
     isUpdated_ = false;
 
     std::vector<uint8_t>().swap(imageData_);
-    heightVertices_.squeeze();
-    heightMarkVertices_.squeeze();
-    heightIndices_.squeeze();
-    textureVertices_.squeeze();
+    QVector<QVector3D>().swap(heightVertices_);
+    QVector<HeightType>().swap(heightMarkVertices_);
+    QVector<int>().swap(heightIndices_);
+    QVector<QVector2D>().swap(textureVertices_);
 
     isInited_ = false;
 }

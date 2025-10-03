@@ -1141,7 +1141,14 @@ void DataProcessor::tryCalcTiles()
 
 TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey> *missing)
 {
-    return hotCache_.getForKeys(keys, missing);
+    auto retVal = hotCache_.getForKeys(keys, missing);
+
+    //if (!missing->empty())
+    //{
+    //    qDebug() << "perhaps marginTiles" << missing->size();
+    //}
+
+    return retVal;
 }
 
 void DataProcessor::shutdown()
