@@ -185,7 +185,7 @@ void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1,
 
 void ComputeWorker::processBundle(const WorkBundle& wb)
 {
-    //qDebug() << "task" <<  wb.doIsobaths;
+    //qDebug() << "ComputeWorker::processBundle task, mos:" << wb.mosaicVec.size() << "sur:" <<  wb.surfaceVec << "iso:" << wb.doIsobaths;
     // последовательно. cабы сами шлют сигналы наружу
     if (!wb.surfaceVec.isEmpty() && !isCanceled()) {
         surface_.onUpdatedBottomTrackData(wb.surfaceVec);

@@ -70,9 +70,10 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     nextRunPending_(false),
     requestedMask_(0),
     btBusy_(false),
-    db_(nullptr),
+    dbReader_(nullptr),
+    dbReaderInWork_(false),
+    dbWriter_(nullptr),
     engineVer_(1),
-    dbInWork_(false),
     lastZoom_(0)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
@@ -109,13 +110,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
 
 DataProcessor::~DataProcessor()
 {
-    requestCancel();
-
-    closeDB();
-
-    computeThread_.quit();
-    computeThread_.wait();
-    worker_->deleteLater();
+    // shutdown(); // from about to quit
 }
 
 void DataProcessor::setDatasetPtr(Dataset *datasetPtr)
@@ -522,7 +517,7 @@ void DataProcessor::onWorkerFinished()
 
 void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
 {
-    dbInWork_ = false;
+    dbReaderInWork_ = false;
     const QSet<TileKey> requestedNow = dbInWorkKeys_;
     dbInWorkKeys_.clear();
 
@@ -635,7 +630,7 @@ void DataProcessor::onSendSavedKeys(QVector<TileKey> savedKeys)
 
 void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 {
-    if (!db_ || keys.isEmpty()) {
+    if (!dbReader_ || keys.isEmpty()) {
         return;
     }
 
@@ -646,7 +641,7 @@ void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
 
 void DataProcessor::flushPendingDbKeys()
 {
-    if (!db_ || dbPendingKeys_.isEmpty() || dbInWork_) {
+    if (!dbReader_ || dbPendingKeys_.isEmpty() || dbReaderInWork_) {
         return;
     }
 
@@ -668,9 +663,8 @@ void DataProcessor::flushPendingDbKeys()
         return;
     }
 
-    dbInWork_ = true;
-
-    emit dbLoadTilesForKeys(dbReq);
+    dbReaderInWork_ = true;
+    emit dbLoadTilesForKeys(dbReq); // to READER
 }
 
 void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels)
@@ -805,7 +799,7 @@ void DataProcessor::clearAllProcessings()
 
     hotCache_.clear();
     filePath_.clear();
-    dbInWork_ = false;
+    dbReaderInWork_ = false;
     lastViewRect_ = QRectF();
     lastZoom_ = 0;
     lastKeys_.clear();
@@ -855,45 +849,70 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
 
 void DataProcessor::openDB()
 {
-    if (!db_) {
-        db_ = new MosaicDB(filePath_);
-        db_->moveToThread(&dbThread_);
-        connect(&dbThread_, &QThread::finished, db_, &QObject::deleteLater);
-        connect(&dbThread_, &QThread::started, db_, [this](){
-            if (!db_->open()) {
-                qWarning() << "DB open failed";
-            }
-        }, Qt::QueuedConnection);
-
-        connect(this, &DataProcessor::dbSaveTiles,           db_,  &MosaicDB::saveTiles,                   Qt::QueuedConnection);
-        connect(db_,  &MosaicDB::tilesLoadedForZoom,         this, &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
-        connect(this, &DataProcessor::dbLoadTilesForKeys,    db_,  &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
-        connect(db_,  &MosaicDB::tilesLoadedForKeys,         this, &DataProcessor::onDbTilesLoaded, Qt::QueuedConnection);
-        connect(this, &DataProcessor::dbCheckAnyTileForZoom, db_,  &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
-        connect(db_,  &MosaicDB::anyTileForZoom,             this, &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
-        // db
-        connect(db_,  &MosaicDB::sendSavedKeys,              this, &DataProcessor::onSendSavedKeys,        Qt::QueuedConnection);
-
-        dbThread_.setObjectName("MosaicDBThread");
-        dbThread_.start();
-
-        qDebug() << "DB opened by path" << filePath_;
+    if (dbReader_ || dbWriter_ || filePath_.isEmpty()) {
+        return;
     }
+
+    // init
+    // writer (схема, вкл WAL)
+    dbWriter_ = new MosaicDB(filePath_, DbRole::Writer);
+    dbWriter_->moveToThread(&dbWriteThread_);
+    connect(&dbWriteThread_, &QThread::finished, dbWriter_, &QObject::deleteLater);
+    connect(&dbWriteThread_, &QThread::started,  dbWriter_, [this]() {
+                                                                if (!dbWriter_->open()) {
+                                                                    qWarning() << "DB Writer open failed";
+                                                                }
+                                                            }, Qt::QueuedConnection);
+
+    // reader
+    dbReader_ = new MosaicDB(filePath_, DbRole::Reader);
+    dbReader_->moveToThread(&dbReadThread_);
+    connect(&dbReadThread_, &QThread::finished,  dbReader_, &QObject::deleteLater);
+    connect(&dbReadThread_, &QThread::started,   dbReader_, [this]() {
+                                                                if (!dbReader_->open()) {
+                                                                    qWarning() << "DB Reader open failed";
+                                                                }
+                                                            }, Qt::QueuedConnection);
+
+    // work
+    // запись
+    connect(this,      &DataProcessor::dbSaveTiles,           dbWriter_, &MosaicDB::saveTiles,                   Qt::QueuedConnection);
+    connect(dbWriter_, &MosaicDB::sendSavedKeys,              this,      &DataProcessor::onSendSavedKeys,        Qt::QueuedConnection);
+    // чтение
+    connect(this,      &DataProcessor::dbLoadTilesForKeys,    dbReader_, &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
+    connect(dbReader_, &MosaicDB::tilesLoadedForKeys,         this,      &DataProcessor::onDbTilesLoaded,        Qt::QueuedConnection);
+    connect(this,      &DataProcessor::dbCheckAnyTileForZoom, dbReader_, &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
+    connect(dbReader_, &MosaicDB::anyTileForZoom,             this,      &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
+    // TODO
+    connect(dbReader_, &MosaicDB::tilesLoadedForZoom,         this,      &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
+
+    dbWriteThread_.setObjectName("MosaicDBWriterThread");
+    dbReadThread_.setObjectName("MosaicDBReaderThread");
+    dbWriteThread_.start();
+    dbReadThread_.start();
+
+    qDebug() << "DB opened (WAL) by path" << filePath_;
 }
 
 void DataProcessor::closeDB()
 {
-    if (!db_) {
-        return;
+    // Reader
+    if (dbReader_) {
+        QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        dbReadThread_.quit();
+        dbReadThread_.wait();
+        dbReader_ = nullptr;
     }
 
-    QMetaObject::invokeMethod(db_, "close", Qt::BlockingQueuedConnection);
-    db_->deleteLater();
+    // Writer
+    if (dbWriter_) {
+        QMetaObject::invokeMethod(dbWriter_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        dbWriteThread_.quit();
+        dbWriteThread_.wait();
+        dbWriter_ = nullptr;
+    }
 
-    dbThread_.quit();
-    dbThread_.wait();
-    db_ = nullptr;
-    qDebug() << "DB close by path" << filePath_;
+    qDebug() << "DB closed";
 }
 
 void DataProcessor::initMosaicIndexProvider()
@@ -948,6 +967,7 @@ void DataProcessor::pumpVisible()
     // CHECK IN HOT CACHE
     QSet<TileKey> missFromHotCache;
     TileMap fromHotCache = hotCache_.getForKeys(needAdd, &missFromHotCache);
+
     if (!fromHotCache.isEmpty()) {
         emitDelta(std::move(fromHotCache), DataSource::kHotCache);
     }
@@ -1095,9 +1115,10 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
         return;
     }
 
-    if (state_ != DataProcessorType::kUndefined) {
-        return;
-    }
+    // check // calc starts in in updateMosaic
+    //if (state_ != DataProcessorType::kUndefined) {
+    //    return;
+    //}
 
     pumpVisible();
 }
@@ -1123,6 +1144,31 @@ TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey
     return hotCache_.getForKeys(keys, missing);
 }
 
+void DataProcessor::shutdown()
+{
+    requestCancel();
+
+    if (dbReader_) {
+        QMetaObject::invokeMethod(dbReader_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        dbReadThread_.quit();
+        dbReadThread_.wait();
+        dbReader_ = nullptr;
+    }
+
+    if (dbWriter_) {
+        QMetaObject::invokeMethod(dbWriter_, "finalizeAndClose", Qt::BlockingQueuedConnection);
+        dbWriteThread_.quit();
+        dbWriteThread_.wait();
+        dbWriter_ = nullptr;
+    }
+
+    computeThread_.quit();
+    computeThread_.wait();
+    worker_->deleteLater();
+
+    qDebug() << "DataProcessor::shutdown()";
+}
+
 void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 {
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
@@ -1131,7 +1177,7 @@ void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)
 {
     qDebug() << "DataProcessor::onDbTilesLoadedForZoom size" << dbTiles.size();
-    dbInWork_ = false;
+    dbReaderInWork_ = false;
 
     if (zoom != lastZoom_) {
         return;

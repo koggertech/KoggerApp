@@ -88,6 +88,8 @@ public slots:
 
     TileMap fetchFromHotCache(const QSet<TileKey>& keys, QSet<TileKey>* missing);
 
+    void shutdown(); // correct termination of processes 
+
 private slots:
     //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
@@ -232,11 +234,13 @@ private:
     bool                   btBusy_;
     // hot cache/db
     HotTileCache           hotCache_{ hotCacheSize_ }; // LRU
-    MosaicDB*              db_;
-    QThread                dbThread_;
+    MosaicDB*              dbReader_;
+    bool                   dbReaderInWork_;
+    MosaicDB*              dbWriter_;
+    QThread                dbReadThread_;
+    QThread                dbWriteThread_;
     QString                filePath_;
     int                    engineVer_;
-    bool                   dbInWork_;
     QRectF                 lastViewRect_;
     int                    lastZoom_;
     QSet<TileKey>          lastKeys_;

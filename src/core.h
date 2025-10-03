@@ -73,6 +73,7 @@ public:
     void removeDeviceManagerConnections();
 #endif
     QHash<QUuid, QString> getLinkNames() const;
+    void shutdownDataProcessor();
 
 public slots:
 #ifdef SEPARATE_READING

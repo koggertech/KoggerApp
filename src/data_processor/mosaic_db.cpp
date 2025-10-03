@@ -6,6 +6,26 @@
 #include <QDebug>
 
 
+static bool runWalCheckpoint(QSqlDatabase& db, const char* mode, int& busy, int& log, int& ckpt)
+{
+    QSqlQuery q(db);
+    if (!q.exec(QString("PRAGMA wal_checkpoint(%1);").arg(mode))) {
+        qWarning() << "wal_checkpoint" << mode << "failed:" << q.lastError();
+        return false;
+    }
+    if (!q.next()) { // busy, log, checkpointed
+        return false;
+    }
+
+    busy = q.value(0).toInt();
+    log  = q.value(1).toInt();
+    ckpt = q.value(2).toInt();
+
+    q.finish();
+
+    return true;
+}
+
 static QString makeXYOrClause(int pairCount) {
     QStringList parts;
     parts.reserve(pairCount);
@@ -25,16 +45,18 @@ static QString dbPathForKlf(const QString& klfPath)
     return dir + "/" + base + ".mosaic.db";
 }
 
-MosaicDB::MosaicDB(const QString& klfPath, QObject* parent)
+MosaicDB::MosaicDB(const QString& klfPath, DbRole role, QObject* parent)
     : QObject(parent),
     klfPath_(klfPath),
-    dbPath_(dbPathForKlf(klfPath))
+    dbPath_(dbPathForKlf(klfPath)),
+    role_(role)
 {
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
     qRegisterMetaType<QVector<TileKey>>("QVector<TileKey>");
 
-    connName_ = QStringLiteral("mosaicdb-%1").arg(reinterpret_cast<quintptr>(this));
+    const char* suffix = (role_ == DbRole::Reader ? "reader" : "writer");
+    connName_ = QStringLiteral("mosaicdb-%1-%2").arg(reinterpret_cast<quintptr>(this)).arg(suffix);
 }
 
 MosaicDB::~MosaicDB()
@@ -47,17 +69,33 @@ bool MosaicDB::open()
     db_ = QSqlDatabase::addDatabase("QSQLITE", connName_);
     db_.setDatabaseName(dbPath_);
 
+    // conn options
+    QString opts = QString("QSQLITE_BUSY_TIMEOUT=%1;").arg(busyTimeoutMs_);
+    if (role_ == DbRole::Reader) {
+        opts += "QSQLITE_OPEN_READONLY=1;";
+    }
+    db_.setConnectOptions(opts);
+
     if (!db_.open()) {
         qWarning() << "MosaicDB open failed:" << db_.lastError();
         return false;
     }
 
     QSqlQuery q(db_);
-    q.exec("PRAGMA journal_mode=DELETE;");
+    if (!q.exec("PRAGMA journal_mode=WAL;")) {
+        qWarning() << "PRAGMA journal_mode=WAL failed:" << q.lastError();
+    }
     q.exec("PRAGMA synchronous=NORMAL;");
+    q.exec(QString("PRAGMA busy_timeout=%1;").arg(busyTimeoutMs_));
     q.exec("PRAGMA temp_store=MEMORY;");
+    q.exec("PRAGMA wal_autocheckpoint=1000;");
+    q.exec("PRAGMA journal_size_limit=134217728;"); // 128 МБ
 
-    return ensureSchema();
+    if (role_ == DbRole::Writer) {
+        return ensureSchema();
+    }
+
+    return true;
 }
 
 void MosaicDB::close()
@@ -69,6 +107,28 @@ void MosaicDB::close()
     const QString name = db_.connectionName();
     db_ = QSqlDatabase();
     QSqlDatabase::removeDatabase(name);
+}
+
+void MosaicDB::finalizeAndClose()
+{
+    if (!db_.isOpen()) {
+        return;
+    }
+
+    if (role_ == DbRole::Writer) { // writer — аккуратно удалить WAL
+        int busy = 0;
+        int log = 0;
+        int ckpt = 0;
+        runWalCheckpoint(db_, "RESTART", busy, log, ckpt);
+        if (busy == 0 && log == ckpt) {
+            runWalCheckpoint(db_, "TRUNCATE", busy, log, ckpt);
+        }
+    }
+
+    db_.close();
+    const QString name = db_.connectionName();
+    db_ = QSqlDatabase(); // разлинковать объект от подключения
+    QSqlDatabase::removeDatabase(name); // убрать из пула
 }
 
 void MosaicDB::checkAnyTileForZoom(int zoom)
@@ -90,6 +150,8 @@ void MosaicDB::checkAnyTileForZoom(int zoom)
         else {
             qWarning() << "checkAnyTileForZoom prepare:" << q.lastError();
         }
+
+        q.finish();
     }
 
     emit anyTileForZoom(zoom, exists);
@@ -288,6 +350,8 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
 
     db_.commit();
 
+    checkpointIfWalTooBig(128ll * 1024 * 1024); // порог 128
+
     emit sendSavedKeys(savedKeys);
 }
 
@@ -364,10 +428,80 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
 
                 out.push_back(std::move(t));
             }
+
+            q.finish();
         }
     }
 
     //qDebug() << "MosaicDB::loadTilesForKeys OUT" << out.size();
 
     emit tilesLoadedForKeys(out);
+}
+
+void MosaicDB::walCheckpointPassive()
+{
+    if (role_ != DbRole::Writer) {
+        return;
+    }
+    int busy = 0;
+    int log = 0;
+    int ckpt = 0;
+
+    if (runWalCheckpoint(db_, "PASSIVE", busy, log, ckpt)) {
+        qDebug() << "[WAL] PASSIVE busy=" << busy << "log=" << log << "ckpt=" << ckpt;
+    }
+}
+
+void MosaicDB::walCheckpointRestart()
+{
+    if (role_ != DbRole::Writer) {
+        return;
+    }
+
+    int busy = 0;
+    int log = 0;
+    int ckpt = 0;
+
+    if (runWalCheckpoint(db_, "RESTART", busy, log, ckpt)) {
+        qDebug() << "[WAL] RESTART busy=" << busy << "log=" << log << "ckpt=" << ckpt;
+    }
+}
+
+void MosaicDB::walCheckpointTruncate()
+{
+    if (role_ != DbRole::Writer) {
+        return;
+    }
+
+    int busy = 0;
+    int log = 0;
+    int ckpt = 0;
+
+    if (runWalCheckpoint(db_, "TRUNCATE", busy, log, ckpt)) {
+        qDebug() << "[WAL] TRUNCATE busy=" << busy << "log=" << log << "ckpt=" << ckpt;
+    }
+}
+
+void MosaicDB::checkpointIfWalTooBig(uint64_t limitBytes)
+{
+    if (role_ != DbRole::Writer) {
+        return;
+    }
+
+    QFileInfo fi(dbPath_ + "-wal");
+    if (!fi.exists()) {
+        return;
+    }
+
+    const uint64_t sz = fi.size();
+    if (sz <= limitBytes) {
+        return;
+    }
+
+    walCheckpointPassive();
+
+    QFileInfo fi2(dbPath_ + "-wal"); // если wal всё ещё большой — ждём, пока текущие читатели отпустят снапшоты
+    if (fi2.exists() && static_cast<uint64_t>(fi2.size()) > limitBytes) {
+        walCheckpointRestart();
+    }
 }

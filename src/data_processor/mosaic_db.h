@@ -9,6 +9,8 @@
 #include "surface_tile.h"
 
 
+enum class DbRole { Reader, Writer };
+
 struct DbTile {
     TileKey     key;
     int         tilePx      = defaultTileSidePixelSize;
@@ -31,16 +33,22 @@ class MosaicDB : public QObject
 {
     Q_OBJECT
 public:
-    explicit MosaicDB(const QString& klfPath, QObject* parent = nullptr);
+    explicit MosaicDB(const QString& klfPath, DbRole role, QObject* parent = nullptr);
     ~MosaicDB();
 
 public slots:
     bool open();
     void close();
+    void finalizeAndClose();
 
     void checkAnyTileForZoom(int zoom);
     void saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
     void loadTilesForKeys(const QSet<TileKey>& keys);
+
+    void walCheckpointPassive();
+    void walCheckpointRestart();
+    void walCheckpointTruncate();
+    void checkpointIfWalTooBig(uint64_t limitBytes = 128ll * 1024 * 1024);
 
 signals:
     void anyTileForZoom(int zoom, bool exists);
@@ -62,9 +70,11 @@ private:
     static void       unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks);
 
 private:
-    const int    kMaxPairsPerBatch_ = 128;
+    const int    kMaxPairsPerBatch_ = 128; // запись пачками
+    const int    busyTimeoutMs_ = 2000;
     QSqlDatabase db_;
     QString      klfPath_;
     QString      dbPath_;
     QString      connName_;
+    DbRole       role_;
 };

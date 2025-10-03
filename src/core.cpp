@@ -1472,6 +1472,11 @@ QHash<QUuid, QString> Core::getLinkNames() const
     return retVal;
 }
 
+void Core::shutdownDataProcessor()
+{
+    QMetaObject::invokeMethod(dataProcessor_, "shutdown", Qt::BlockingQueuedConnection);
+}
+
 bool Core::isOpenedFile() const
 {
     return !openedfilePath_.isEmpty();
@@ -1581,7 +1586,6 @@ void Core::createMapTileManagerConnections()
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef,      tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
     auto connType = Qt::DirectConnection;
-    QObject::connect(scene3dViewPtr_,                        &GraphicsScene3dView::sendDataZoom,  dataProcessor_,                         &DataProcessor::onUpdateMosaic,     connType);
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvAppendTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileAppend,             connType);
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvDeleteTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileDelete,             connType);
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvUpdateTileImage,    scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileImageUpdated,       connType);
@@ -1685,7 +1689,9 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ /*qDebug() << "TODO: allProcessingCleared";*/    },                               connType);
 
     // data tiles request
-    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataRectRequest,   dataProcessor_, &DataProcessor::onSendDataRectRequest,   connType);
+    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataRectRequest,   dataProcessor_, &DataProcessor::onSendDataRectRequest, connType); // отправляет запрос на рендер данных
+    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataZoom,          dataProcessor_, &DataProcessor::onUpdateMosaic,        connType); // отправляет зум и чекает в кеше/бд наличие (совместить?)
+
 
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
