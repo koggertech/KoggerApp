@@ -252,4 +252,6 @@ private:
     QSet<TileKey>                                dbNotFoundIndxs_;
     std::list<TileKey>                           dbNotFoundOrder_; // LRU: front - oldest
     QHash<TileKey, std::list<TileKey>::iterator> dbNotFoundPos_;
+
+    bool dbIsReady_;
 };

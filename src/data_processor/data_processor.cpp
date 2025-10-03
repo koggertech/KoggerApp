@@ -74,7 +74,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     dbReaderInWork_(false),
     dbWriter_(nullptr),
     engineVer_(1),
-    lastZoom_(0)
+    lastZoom_(0),
+    dbIsReady_(false)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
@@ -184,7 +185,9 @@ void DataProcessor::setUpdateMosaic(bool state)
             pumpVisible();
         }
         else {
-            emit dbCheckAnyTileForZoom(lastZoom_);
+            if (dbIsReady_) {
+                emit dbCheckAnyTileForZoom(lastZoom_);
+            }
         }
     }
     else if (!updateMosaic_) {
@@ -663,8 +666,10 @@ void DataProcessor::flushPendingDbKeys()
         return;
     }
 
-    dbReaderInWork_ = true;
-    emit dbLoadTilesForKeys(dbReq); // to READER
+    if (dbIsReady_) {
+        dbReaderInWork_ = true;
+        emit dbLoadTilesForKeys(dbReq); // to READER
+    }
 }
 
 void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParameters>& labels)
@@ -853,45 +858,49 @@ void DataProcessor::openDB()
         return;
     }
 
-    // init
-    // writer (схема, вкл WAL)
+    // writer
     dbWriter_ = new MosaicDB(filePath_, DbRole::Writer);
     dbWriter_->moveToThread(&dbWriteThread_);
+
     connect(&dbWriteThread_, &QThread::finished, dbWriter_, &QObject::deleteLater);
     connect(&dbWriteThread_, &QThread::started,  dbWriter_, [this]() {
-                                                                if (!dbWriter_->open()) {
-                                                                    qWarning() << "DB Writer open failed";
-                                                                }
-                                                            }, Qt::QueuedConnection);
+        if (!dbWriter_->open()) {
+            qWarning() << "DB Writer open failed";
+        }
+    }, Qt::QueuedConnection);
 
-    // reader
-    dbReader_ = new MosaicDB(filePath_, DbRole::Reader);
-    dbReader_->moveToThread(&dbReadThread_);
-    connect(&dbReadThread_, &QThread::finished,  dbReader_, &QObject::deleteLater);
-    connect(&dbReadThread_, &QThread::started,   dbReader_, [this]() {
-                                                                if (!dbReader_->open()) {
-                                                                    qWarning() << "DB Reader open failed";
-                                                                }
-                                                            }, Qt::QueuedConnection);
+    // схема готова - запускаем reader
+    connect(dbWriter_, &MosaicDB::schemaReady, this, [this]() {
+        dbIsReady_ = true;
 
-    // work
-    // запись
-    connect(this,      &DataProcessor::dbSaveTiles,           dbWriter_, &MosaicDB::saveTiles,                   Qt::QueuedConnection);
-    connect(dbWriter_, &MosaicDB::sendSavedKeys,              this,      &DataProcessor::onSendSavedKeys,        Qt::QueuedConnection);
-    // чтение
-    connect(this,      &DataProcessor::dbLoadTilesForKeys,    dbReader_, &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
-    connect(dbReader_, &MosaicDB::tilesLoadedForKeys,         this,      &DataProcessor::onDbTilesLoaded,        Qt::QueuedConnection);
-    connect(this,      &DataProcessor::dbCheckAnyTileForZoom, dbReader_, &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
-    connect(dbReader_, &MosaicDB::anyTileForZoom,             this,      &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
-    // TODO
-    connect(dbReader_, &MosaicDB::tilesLoadedForZoom,         this,      &DataProcessor::onDbTilesLoadedForZoom, Qt::QueuedConnection);
+        // reader
+        dbReader_ = new MosaicDB(filePath_, DbRole::Reader);
+        dbReader_->moveToThread(&dbReadThread_);
+        connect(&dbReadThread_, &QThread::finished, dbReader_, &QObject::deleteLater);
+        connect(&dbReadThread_, &QThread::started,  dbReader_, [this]() {
+            if (!dbReader_->open()) {
+                qWarning() << "DB Reader open failed";
+            }
+        }, Qt::QueuedConnection);
+
+        // reader conns
+        connect(this,      &DataProcessor::dbLoadTilesForKeys,    dbReader_, &MosaicDB::loadTilesForKeys,            Qt::QueuedConnection);
+        connect(dbReader_, &MosaicDB::tilesLoadedForKeys,         this,      &DataProcessor::onDbTilesLoaded,        Qt::QueuedConnection);
+        connect(this,      &DataProcessor::dbCheckAnyTileForZoom, dbReader_, &MosaicDB::checkAnyTileForZoom,         Qt::QueuedConnection);
+        connect(dbReader_, &MosaicDB::anyTileForZoom,             this,      &DataProcessor::onDbAnyTileForZoom,     Qt::QueuedConnection);
+
+        dbReadThread_.setObjectName("MosaicDBReaderThread");
+        dbReadThread_.start();
+
+        flushPendingDbKeys(); // были запросы
+    }, Qt::QueuedConnection);
+
+    // writer conns
+    connect(this,      &DataProcessor::dbSaveTiles,  dbWriter_, &MosaicDB::saveTiles,            Qt::QueuedConnection);
+    connect(dbWriter_, &MosaicDB::sendSavedKeys,     this,      &DataProcessor::onSendSavedKeys, Qt::QueuedConnection);
 
     dbWriteThread_.setObjectName("MosaicDBWriterThread");
-    dbReadThread_.setObjectName("MosaicDBReaderThread");
     dbWriteThread_.start();
-    dbReadThread_.start();
-
-    qDebug() << "DB opened (WAL) by path" << filePath_;
 }
 
 void DataProcessor::closeDB()
@@ -911,6 +920,8 @@ void DataProcessor::closeDB()
         dbWriteThread_.wait();
         dbWriter_ = nullptr;
     }
+
+    dbIsReady_ = false;
 
     qDebug() << "DB closed";
 }
@@ -1062,7 +1073,9 @@ void DataProcessor::onUpdateMosaic(int zoom) // calc or db
         pumpVisible();
     }
     else {
-        emit dbCheckAnyTileForZoom(lastZoom_);
+        if (dbIsReady_) {
+            emit dbCheckAnyTileForZoom(lastZoom_);
+        }
     }
 }
 
@@ -1172,6 +1185,8 @@ void DataProcessor::shutdown()
     computeThread_.quit();
     computeThread_.wait();
     worker_->deleteLater();
+
+    dbIsReady_ = false;
 
     qDebug() << "DataProcessor::shutdown()";
 }

@@ -82,17 +82,31 @@ bool MosaicDB::open()
     }
 
     QSqlQuery q(db_);
-    if (!q.exec("PRAGMA journal_mode=WAL;")) {
-        qWarning() << "PRAGMA journal_mode=WAL failed:" << q.lastError();
-    }
-    q.exec("PRAGMA synchronous=NORMAL;");
-    q.exec(QString("PRAGMA busy_timeout=%1;").arg(busyTimeoutMs_));
-    q.exec("PRAGMA temp_store=MEMORY;");
-    q.exec("PRAGMA wal_autocheckpoint=1000;");
-    q.exec("PRAGMA journal_size_limit=134217728;"); // 128 МБ
 
     if (role_ == DbRole::Writer) {
-        return ensureSchema();
+        if (q.exec("PRAGMA journal_mode;") && q.next()) {
+            const auto cur = q.value(0).toString();
+            q.finish();
+            if (cur.compare("wal", Qt::CaseInsensitive)) {
+                QSqlQuery q2(db_);
+                if (q2.exec("PRAGMA journal_mode=WAL;") && q2.next() && !q2.value(0).toString().compare("wal", Qt::CaseInsensitive)) {
+                    //qDebug() << "db starts in wal mode";
+                }
+            }
+        }
+
+        q.exec("PRAGMA synchronous=NORMAL;");
+        q.exec(QString("PRAGMA busy_timeout=%1;").arg(busyTimeoutMs_));
+        q.exec("PRAGMA temp_store=MEMORY;");
+        q.exec("PRAGMA wal_autocheckpoint=1000;");
+        q.exec("PRAGMA journal_size_limit=134217728;");
+
+        ensureSchema();
+
+        emit schemaReady(); //
+    }
+    else {
+        q.exec(QString("PRAGMA busy_timeout=%1;").arg(busyTimeoutMs_));
     }
 
     return true;
