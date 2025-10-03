@@ -1,4 +1,5 @@
 #include "mosaic_db.h"
+#include <QFile>
 #include <QFileInfo>
 #include <QDir>
 #include <QSqlError>
@@ -45,11 +46,13 @@ static QString dbPathForKlf(const QString& klfPath)
     return dir + "/" + base + ".mosaic.db";
 }
 
-MosaicDB::MosaicDB(const QString& klfPath, DbRole role, QObject* parent)
+MosaicDB::MosaicDB(const QString& klfPath, DbRole role, bool deleteOnClose, QObject* parent)
     : QObject(parent),
     klfPath_(klfPath),
     dbPath_(dbPathForKlf(klfPath)),
-    role_(role)
+    role_(role),
+    deleteOnClose_(deleteOnClose),
+    filesDeleted_(false)
 {
     qRegisterMetaType<QList<DbTile>>("QList<DbTile>");
     qRegisterMetaType<QHash<TileKey,SurfaceTile>>("QHash<TileKey,SurfaceTile>");
@@ -61,7 +64,20 @@ MosaicDB::MosaicDB(const QString& klfPath, DbRole role, QObject* parent)
 
 MosaicDB::~MosaicDB()
 {
-    if (db_.isOpen()) db_.close();
+//    finalizeAndClose();
+
+    if (db_.isOpen()) {
+        db_.close();
+    }
+
+    if (deleteOnClose_ && role_ == DbRole::Writer && !filesDeleted_) {
+        const QString name = db_.connectionName();
+        if (!name.isEmpty()) {
+            db_ = QSqlDatabase();
+            QSqlDatabase::removeDatabase(name);
+        }
+        removeDbFiles();
+    }
 }
 
 bool MosaicDB::open()
@@ -125,6 +141,8 @@ void MosaicDB::close()
 
 void MosaicDB::finalizeAndClose()
 {
+    //qDebug() << "MosaicDB::finalizeAndClose()" << connName_ << static_cast<int>(role_);
+
     if (!db_.isOpen()) {
         return;
     }
@@ -143,6 +161,10 @@ void MosaicDB::finalizeAndClose()
     const QString name = db_.connectionName();
     db_ = QSqlDatabase(); // разлинковать объект от подключения
     QSqlDatabase::removeDatabase(name); // убрать из пула
+
+    if (deleteOnClose_ && role_ == DbRole::Writer && !filesDeleted_) {
+        removeDbFiles();
+    }
 }
 
 void MosaicDB::checkAnyTileForZoom(int zoom)
@@ -276,6 +298,37 @@ void MosaicDB::unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks)
         memcpy(&v, p++, 1);
         marks[i] = static_cast<HeightType>(v);
     }
+}
+
+bool MosaicDB::removeDbFiles()
+{
+    if (dbPath_.isEmpty()) {
+        return false;
+    }
+
+    bool ok = true;
+    const QString mainPath = dbPath_;
+    const QString walPath  = dbPath_ + "-wal";
+    const QString shmPath  = dbPath_ + "-shm";
+
+    auto rm = [&](const QString& p){
+        if (!QFileInfo::exists(p)) return true;
+        if (!QFile::remove(p)) {
+            qWarning() << "[MosaicDB] failed to remove" << p;
+            return false;
+        }
+        return true;
+    };
+
+    ok = rm(walPath) && ok;
+    ok = rm(shmPath) && ok;
+    ok = rm(mainPath) && ok;
+
+    if (ok) {
+        qDebug() << "[MosaicDB] removed db files:" << mainPath;
+    }
+
+    return filesDeleted_ = ok;
 }
 
 void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio)

@@ -192,7 +192,8 @@ private:
 
     static constexpr int maxZoom_         = 1;
     static constexpr int minZoom_         = 7;
-    static constexpr int hotCacheSize_    = 2048;
+    static constexpr int hotCacheMaxSize_    = 2048;
+    static constexpr int hotCacheMinSize_    = 1024;
     static constexpr int dbNotFoundLimit_ = 4096;
 
     // this
@@ -233,7 +234,7 @@ private:
     std::atomic<uint32_t>  requestedMask_;
     bool                   btBusy_;
     // hot cache/db
-    HotTileCache           hotCache_{ hotCacheSize_ }; // LRU
+    HotTileCache           hotCache_; // LRU
     MosaicDB*              dbReader_;
     bool                   dbReaderInWork_;
     MosaicDB*              dbWriter_;

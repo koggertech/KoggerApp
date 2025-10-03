@@ -10,7 +10,7 @@
 class DataProcessor;
 class HotTileCache {
 public:
-    explicit HotTileCache(size_t maxCapacity = 2048, size_t minCapacity = 1024);
+    HotTileCache(size_t maxCapacity, size_t minCapacity);
 
     void clear();
 

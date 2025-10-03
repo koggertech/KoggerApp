@@ -38,9 +38,7 @@ void HotTileCache::putBatch(TileMap&& tiles, DataSource source, bool useTextures
 
     tiles.clear();
 
-    if (size() > maxCapacity_) {
-        evictIfNeeded();
-    }
+    evictIfNeeded();
 }
 
 TileMap HotTileCache::getForKeys(const QSet<TileKey>& keys, QSet<TileKey>* missing)

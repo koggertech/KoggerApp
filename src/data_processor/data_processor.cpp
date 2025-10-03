@@ -70,6 +70,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     nextRunPending_(false),
     requestedMask_(0),
     btBusy_(false),
+    hotCache_(hotCacheMaxSize_, hotCacheMinSize_),
     dbReader_(nullptr),
     dbReaderInWork_(false),
     dbWriter_(nullptr),
@@ -859,7 +860,7 @@ void DataProcessor::openDB()
     }
 
     // writer
-    dbWriter_ = new MosaicDB(filePath_, DbRole::Writer);
+    dbWriter_ = new MosaicDB(filePath_, DbRole::Writer, false /*deleting temp db files*/);
     dbWriter_->moveToThread(&dbWriteThread_);
 
     connect(&dbWriteThread_, &QThread::finished, dbWriter_, &QObject::deleteLater);
@@ -1166,6 +1167,8 @@ TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey
 
 void DataProcessor::shutdown()
 {
+    //qDebug() << "DataProcessor::shutdown()";
+
     requestCancel();
 
     if (dbReader_) {
