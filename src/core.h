@@ -32,9 +32,7 @@
 #include "device_manager_wrapper.h"
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
-//#include <FileReader.h>
 #include "data_horizon.h"
-#include "data_processor_defs.h"
 
 
 class Core : public QObject
@@ -45,10 +43,13 @@ public:
     Core();
     ~Core();
 
+    Q_PROPERTY(bool isGPSAlive READ getIsGPSAlive NOTIFY isGPSAliveChanged)
+
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
+    Q_PROPERTY(bool useGPS WRITE setUseGPS)
     Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
     Q_PROPERTY(int  fixBlackStripesForwardSteps WRITE setFixBlackStripesForwardSteps)
     Q_PROPERTY(int  fixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
@@ -80,7 +81,10 @@ public:
 #endif
     QHash<QUuid, QString> getLinkNames() const;
 
-public slots:
+public slots:    
+    void setIsGPSAlive(bool state) { qDebug() << "Core::setIsGPSAlive" << state; isGPSAlive_ = state; emit isGPSAliveChanged(); }
+    bool getIsGPSAlive() const { return isGPSAlive_; };
+
 #ifdef SEPARATE_READING
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile(bool onOpen = false);
@@ -104,6 +108,7 @@ public slots:
     void setFixBlackStripesBackwardSteps(int val);
     bool getIsKlfLogging();
     void setCsvLogging(bool isLogging);
+    void setUseGPS(bool state);
     bool getIsCsvLogging();
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
@@ -142,6 +147,9 @@ signals:
     void channelListUpdated();
     void dataProcessorStateChanged();
 
+    void isGPSAliveChanged();
+
+
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
 #endif
@@ -150,6 +158,7 @@ private slots:
     void onFileStopsOpening();
     void onSendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId); // TODO: maybe store map texture id in mapView
     void onDataProcesstorStateChanged(const DataProcessorType& state);
+    void onSendFrameInputToLogger(QUuid uuid, Link* link, FrameParser frame);
 
 private:
     /*methods*/
@@ -219,6 +228,10 @@ private:
     QString sChName_;
 
     bool isFileOpening_;
+
+    bool isGPSAlive_ = false;
+
+
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

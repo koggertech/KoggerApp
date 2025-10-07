@@ -1,6 +1,7 @@
 #include "device_manager.h"
 #include "device_defs.h"
 #include <QDateTime>
+#include "location_reader.h"
 #include "core.h"
 extern Core core;
 
@@ -116,6 +117,10 @@ QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
 
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
+    if (loggingStarted_) {
+        emit sendFrameInputToLogger(uuid, link, frame);
+    }
+
     if (frame.isComplete()) {
 
 // #if !defined(Q_OS_ANDROID)
@@ -611,12 +616,16 @@ void DeviceManager::setUSBLBeaconDirectAsk(bool is_ask) {
     }
 }
 
-void DeviceManager::onLoggingKlfStarted()
+void DeviceManager::onLoggingKlfStarted(bool started)
 {
-    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-        QHash<int, DevQProperty*> devs = i.value();
-        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
-            k.value()->requestSetup();
+    loggingStarted_ = started;
+
+    if (loggingStarted_) {
+        for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+            QHash<int, DevQProperty*> devs = i.value();
+            for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+                k.value()->requestSetup();
+            }
         }
     }
 }
@@ -678,6 +687,58 @@ void DeviceManager::onUpgradingFirmwareDone()
     upgradeUuid_ = QUuid();
     upgradeAddr_ = 0;
     upgradeData_.clear();
+}
+
+void DeviceManager::createLocationReader() // TODO
+{
+    locReader_ = std::make_unique<LocationReader>(this);
+    connect(locReader_.get(), &LocationReader::positionUpdated, this, &DeviceManager::onPositionUpdated, Qt::AutoConnection);
+
+    connect(locReader_.get(), &LocationReader::gpsAlive, &core, &Core::setIsGPSAlive, Qt::AutoConnection);
+
+
+}
+
+void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
+{
+    if (!useGPS_) {
+        return;
+    }
+
+
+    IDBinNav::SimpleNav smplNav;
+    smplNav.latitude = info.coordinate().latitude();
+    smplNav.longitude = info.coordinate().longitude();
+    smplNav.depth = 0;
+    smplNav.yaw = info.attribute(QGeoPositionInfo::Attribute::Direction) ;
+    smplNav.pitch = 0;
+    smplNav.roll = 0;
+
+    emit positionComplete(smplNav.latitude, smplNav.longitude, info.timestamp().toSecsSinceEpoch(), info.timestamp().toMSecsSinceEpoch());
+    emit attitudeComplete(smplNav.yaw, 0.0, 0.0);
+
+    // LOGGING
+    if (loggingStarted_) {
+        ProtoBinOut req_out;
+        req_out.create(Parsers::CONTENT, IDBinNav::SimpleNav::getVer(), IDBinNav::SimpleNav::getId(), 0/*m_address*/);
+        req_out.write<IDBinNav::SimpleNav>(smplNav);
+        req_out.end();
+
+        //QString str1 = "emit coords 1 " + QString::number(smplNav.latitude, 'f', 4) + " " + QString::number(smplNav.longitude, 'f', 4) + " " + QString::number(smplNav.depth, 'f', 4) + " "
+        //+ QString::number(smplNav.yaw, 'f', 4) + " " + QString::number(smplNav.pitch, 'f', 4) + " " + QString::number(smplNav.roll, 'f', 4);
+        //core.consoleInfo(str1);
+        //QString str2 = "emit coords 2 " + QString::number(req_out.binError()) + " " + QString::number(req_out.isComplete()) + " " + QString::number(req_out.payloadLen()) + " " + QString::number(req_out.frameLen()) + " "
+        //               + QString::number(req_out.readAvailable()) + " " + QString::number(req_out.availContext());
+        //core.consoleInfo(str2);
+
+        emit sendFrameInputToLogger(QUuid(), nullptr, req_out);
+    }
+}
+
+void DeviceManager::setUseGPS(bool state)
+{
+    qDebug() << "DeviceManager::setUseGPS" << state;
+    useGPS_ = state;
 }
 
 DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)

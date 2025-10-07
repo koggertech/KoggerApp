@@ -390,16 +390,24 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
 bool Core::closeLogFile()
 {
-    if (!isOpenedFile())
-        return false;
+    //if (!isOpenedFile())
+    //    return false;
 
     emit deviceManagerWrapperPtr_->sendCloseFile();
 
     createLinkManagerConnections();
 
+
+    //qDebug() << "bef" <<  datasetPtr_->getLlaRef().refLla.latitude <<
+    //    datasetPtr_->getLlaRef().refLla.longitude;
+
     if (datasetPtr_) {
         datasetPtr_->resetDataset();
     }
+
+    //qDebug() << "aft" <<  datasetPtr_->getLlaRef().refLla.latitude <<
+    //    datasetPtr_->getLlaRef().refLla.longitude;
+
     dataHorizon_->clear();
 
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
@@ -641,6 +649,14 @@ void Core::setCsvLogging(bool isLogging)
         return;
     this->getIsCsvLogging() ? logger_.stopCsvLogging() : logger_.startNewCsvLog();
     isLoggingCsv_ = isLogging;
+}
+
+void Core::setUseGPS(bool state)
+{
+    qDebug() << "Core::setUseGPS" << state;
+
+    QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, state));
+
 }
 
 bool Core::getIsCsvLogging()
@@ -1140,6 +1156,7 @@ void Core::UILoad(QObject* object, const QUrl& url)
     createScene3dConnections();
 
     QMetaObject::invokeMethod(dataProcessor_, "setBottomTrackPtr", Qt::QueuedConnection, Q_ARG(BottomTrack*, scene3dViewPtr_->bottomTrack().get()));
+    QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "createLocationReader", Qt::QueuedConnection);
 }
 
 void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
@@ -1283,7 +1300,7 @@ QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
 
     retVal["x"] = mousePos.x();
     retVal["y"] = mousePos.y();
-    
+
     return retVal;
 }
 
@@ -1334,6 +1351,8 @@ void Core::createDeviceManagerConnections()
 {
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::AutoConnection;
 
+    deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendFrameInputToLogger, this, &Core::onSendFrameInputToLogger,  deviceManagerConnection));
+
     //
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendChartSetup,         datasetPtr_, &Dataset::setChartSetup,   deviceManagerConnection));
     deviceManagerWrapperConnections_.append(QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendTranscSetup,        datasetPtr_, &Dataset::setTranscSetup,  deviceManagerConnection));
@@ -1376,6 +1395,8 @@ void Core::createDeviceManagerConnections()
 {
     Qt::ConnectionType deviceManagerConnection = Qt::ConnectionType::DirectConnection;
 
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendFrameInputToLogger, this, &Core::onSendFrameInputToLogger,  deviceManagerConnection);
+
     //
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendChartSetup,         datasetPtr_, &Dataset::setChartSetup,   deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendTranscSetup,        datasetPtr_, &Dataset::setTranscSetup,  deviceManagerConnection);
@@ -1400,7 +1421,7 @@ void Core::createDeviceManagerConnections()
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileOpened,             this,        &Core::onFileOpened,       deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::encoderComplete,        datasetPtr_, &Dataset::addEncoder,      deviceManagerConnection);
     QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::fileStopsOpening,       this,        &Core::onFileStopsOpening, deviceManagerConnection);
-    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendProtoFrame, &logger_, &Logger::receiveProtoFrame, deviceManagerConnection);    
+    QObject::connect(deviceManagerWrapperPtr_->getWorker(), &DeviceManager::sendProtoFrame, &logger_, &Logger::receiveProtoFrame, deviceManagerConnection);
     QObject::connect(&logger_, &Logger::loggingKlfStarted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLoggingKlfStarted, deviceManagerConnection);
 
 }
@@ -1413,13 +1434,6 @@ void Core::createLinkManagerConnections()
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkClosed,  deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkClosed,   linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkOpened,   linkManagerConnection));
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkDeleted, deviceManagerWrapperPtr_->getWorker(), &DeviceManager::onLinkDeleted,  linkManagerConnection));
-    linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::frameReady,  this, [this](QUuid uuid, Link* link, FrameParser frame) {
-                                                                                                                                    if (getIsKlfLogging()) {
-                                                                                                                                        QMetaObject::invokeMethod(&logger_, [this, uuid, link, frame]() {
-                                                                                                                                                logger_.onFrameParserReceiveKlf(uuid, link, frame);
-                                                                                                                                            }, Qt::QueuedConnection);
-                                                                                                                                    }
-                                                                                                                                 }, linkManagerConnection));
 
     linkManagerWrapperConnections_.append(QObject::connect(linkManagerWrapperPtr_->getWorker(), &LinkManager::linkOpened,  this, [this]() {
 #ifdef SEPARATE_READING
@@ -1584,6 +1598,14 @@ void Core::onDataProcesstorStateChanged(const DataProcessorType& state)
 {
     dataProcessorState_ = state;
     emit dataProcessorStateChanged();
+}
+
+void Core::onSendFrameInputToLogger(QUuid uuid, Link *link, FrameParser frame)
+{
+    // qDebug() << "Core::onSendFrameInputToLogger" << frame.availContext();
+    if (getIsKlfLogging()) {
+        logger_.onFrameParserReceiveKlf(uuid, link, frame);
+    }
 }
 
 void Core::createDatasetConnections()

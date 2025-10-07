@@ -513,16 +513,29 @@ ColumnLayout {
             icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
         }
 
+        // TODO
+        //CheckButton {
+        //    id: importCheck
+        //    text: "Import"
+        //    checked: false
+        //}
+
         CheckButton {
-            id: importCheck
-            text: "Import"
-            checked: false
+            id: gpsCheck
+            text: qsTr("GPS")
+            //checkedColor: core.isGPSAlive ? "green" : "red"
+            //color: "yellow"
+            //backColor: gpsCheck.checked ? "" : "blue"
+            checkedBackColor: core.isGPSAlive ? "green" : "red"
+
+            Layout.alignment: Qt.AlignRight
+            onCheckedChanged: core.useGPS = checked
         }
     }
 
     ParamGroup {
         groupName: "CSV import"
-        visible: importCheck.checked
+        visible: false //importCheck.checked // TODO
         Layout.margins: 24
 
         RowLayout {

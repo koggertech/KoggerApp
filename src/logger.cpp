@@ -61,7 +61,7 @@ bool Logger::startNewKlfLog()
     }
 
     if (isOpen) {
-        emit loggingKlfStarted();
+        emit loggingKlfStarted(true);
     }
 
     return isOpen;
@@ -75,6 +75,8 @@ bool Logger::stopKlfLogging()
 
     klfLogFile_->close();
     klfCurrentIteration_ = 0;
+
+    emit loggingKlfStarted(false);
 
     return true;
 }

@@ -5,15 +5,16 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QGeoPositionInfoSource>
 #include <QUuid>
 #include "link.h"
 #include "stream_list.h"
 #include "dev_q_property.h"
 #include "proto_binnary.h"
 #include "id_binnary.h"
-#include "dataset.h"
 
 
+class LocationReader;
 class DeviceManager : public QObject
 {
     Q_OBJECT
@@ -55,13 +56,20 @@ public slots:
     bool isbeaconDirectQueueAsk() { return isUSBLBeaconDirectAsk; }
     void setUSBLBeaconDirectAsk(bool is_ask);
 
-    void onLoggingKlfStarted();
+    void onLoggingKlfStarted(bool started);
     void onSendRequestAll(QUuid uuid);
 
     void onStartUpgradingFirmware(QUuid linkUuid, uint8_t address, const QByteArray& firmware);
     void onUpgradingFirmwareDone();
 
+    void createLocationReader();
+    void onPositionUpdated(const QGeoPositionInfo& info);
+
+    void setUseGPS(bool state);
+
 signals:
+    void sendFrameInputToLogger(QUuid uuid, Link* link, FrameParser frame);
+
     //
     void sendChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
     void sendTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
@@ -165,6 +173,9 @@ private:
     QUuid upgradeUuid_;
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
+    bool loggingStarted_ = false;
+    std::unique_ptr<LocationReader> locReader_;
+    bool useGPS_{ false };
 
 private slots:
     void readyReadProxy(Link* link);

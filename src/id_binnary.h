@@ -835,7 +835,7 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
 
     struct SimpleNav {
-        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr ID getId() { return ID_NAV; }
         static constexpr Version getVer() { return v1; }
 
         float yaw = NAN;

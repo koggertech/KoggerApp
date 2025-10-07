@@ -20,7 +20,7 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
 
 signals:
-    void loggingKlfStarted();
+    void loggingKlfStarted(bool started);
 
 public slots:
     // .klf
