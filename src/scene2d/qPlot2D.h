@@ -100,7 +100,7 @@ public slots:
     void plotRangefinderVisible(bool visible) { setRangefinderVisible(visible); }
     void plotRangefinderTheme(int theme_id) { setRangefinderTheme(theme_id); }
     void plotAttitudeVisible(bool visible) { setAttitudeVisible(visible); }
-
+    void plotTemperatureVisible(bool visible) { setTemperatureVisible(visible); }
     void plotDopplerBeamVisible(bool visible, int beam_filter) { setDopplerBeamVisible(visible, beam_filter); }
     void plotDopplerInstrumentVisible(bool visible) { setDopplerInstrumentVisible(visible); }
 

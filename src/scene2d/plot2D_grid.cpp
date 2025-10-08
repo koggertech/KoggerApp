@@ -116,7 +116,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
         // }
         // qDebug() << "Plot temp end: " << temp;
 
-        if (isfinite(temp)) {
+        if (temperatureVisible_ && isfinite(temp)) {
             pen.setColor(QColor(80, 200, 0));
             p->setPen(pen);
             p->setFont(QFont("Asap", 40, QFont::Normal));

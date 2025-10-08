@@ -381,6 +381,11 @@ void Plot2D::setAttitudeVisible(bool visible) {
     plotUpdate();
 }
 
+void Plot2D::setTemperatureVisible(bool visible) {
+    grid_.setTemperatureVisible(visible);
+    plotUpdate();
+}
+
 void Plot2D::setDopplerBeamVisible(bool visible, int beam_filter) {
     dvlBeamVelocity_.setVisible(visible);
     dvlBeamVelocity_.setBeamFilter(beam_filter);

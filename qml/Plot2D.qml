@@ -620,6 +620,14 @@ WaterFall {
                         Component.onCompleted: plotAttitudeVisible(checked)
                     }
 
+                    CCheck {
+                        visible: instruments > 1
+                        id: temperatureVisible
+                        text: qsTr("Temperature")
+                        onCheckedChanged: plotTemperatureVisible(checked)
+                        Component.onCompleted: plotTemperatureVisible(checked)
+                    }
+
                     RowLayout {
                         visible: instruments > 1
                         id: dopplerBeamVisibleGroup
@@ -976,6 +984,7 @@ WaterFall {
                         property alias rangefinderVisible: rangefinderVisible.checked
                         property alias postProcVisible: bottomTrackVisible.checked
                         property alias ahrsVisible: ahrsVisible.checked
+                        property alias temperatureVisible: temperatureVisible.checked
                         property alias gridVisible: gridVisible.checked
                         property alias dopplerBeamVisible: dopplerBeamVisible.checked
                         property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
