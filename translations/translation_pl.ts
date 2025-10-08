@@ -231,6 +231,11 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../qml/ConnectionViewer.qml" line="525"/>
+        <source>GPS</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>REC KLF</source>
         <translation type="vanished">ZAPIS KLF</translation>
     </message>
@@ -239,14 +244,14 @@
         <translation type="vanished">ZAPISCSV</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="738"/>
-        <location filename="../qml/ConnectionViewer.qml" line="903"/>
+        <location filename="../qml/ConnectionViewer.qml" line="751"/>
+        <location filename="../qml/ConnectionViewer.qml" line="916"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="929"/>
-        <location filename="../qml/ConnectionViewer.qml" line="963"/>
+        <location filename="../qml/ConnectionViewer.qml" line="942"/>
+        <location filename="../qml/ConnectionViewer.qml" line="976"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
@@ -1342,72 +1347,77 @@
         <translation>Ratio</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="636"/>
+        <location filename="../qml/Plot2D.qml" line="626"/>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="644"/>
         <source>Doppler Beams</source>
         <translation>Promienie Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="701"/>
+        <location filename="../qml/Plot2D.qml" line="709"/>
         <source>Doppler Instrument</source>
         <translation>Instrument Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="742"/>
+        <location filename="../qml/Plot2D.qml" line="750"/>
         <source>Acoustic angle</source>
         <translation>Kąt akustyczny</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="754"/>
+        <location filename="../qml/Plot2D.qml" line="762"/>
         <source>Doppler Profiler</source>
         <translation>Profil Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="764"/>
+        <location filename="../qml/Plot2D.qml" line="772"/>
         <source>GNSS data</source>
         <translation>Dane GNSS</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="783"/>
+        <location filename="../qml/Plot2D.qml" line="791"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="789"/>
+        <location filename="../qml/Plot2D.qml" line="797"/>
         <source>fill</source>
         <translation>wypełnienie</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="828"/>
+        <location filename="../qml/Plot2D.qml" line="836"/>
         <source>Angle range, °</source>
         <translation>Zakres kątowy, °</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="880"/>
+        <location filename="../qml/Plot2D.qml" line="888"/>
         <source>Velocity range, m/s</source>
         <translation>Zakres prędkości, m/s</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="937"/>
+        <location filename="../qml/Plot2D.qml" line="945"/>
         <source>Distance auto range</source>
         <translation>Automatyczny zakres odległości</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="953"/>
+        <location filename="../qml/Plot2D.qml" line="961"/>
         <source>Last data       </source>
         <translation>Ostatnie dane       </translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="953"/>
+        <location filename="../qml/Plot2D.qml" line="961"/>
         <source>Last on screen</source>
         <translation>Ostatnie na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="953"/>
+        <location filename="../qml/Plot2D.qml" line="961"/>
         <source>Max on screen</source>
         <translation>Maks. na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="969"/>
+        <location filename="../qml/Plot2D.qml" line="977"/>
         <source>Horizontal</source>
         <translation>Poziomy</translation>
     </message>
@@ -1552,7 +1562,7 @@
         <translation type="vanished">Boost: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1452"/>
+        <location filename="../src/core.cpp" line="1460"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -2161,22 +2171,22 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../qml/main.qml" line="20"/>
+        <location filename="../qml/main.qml" line="21"/>
         <source>KoggerApp, KOGGER</source>
         <translation>KoggerApp, KOGGER</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="122"/>
+        <location filename="../qml/main.qml" line="123"/>
         <source>Undefined</source>
         <translation>niezdefiniowany</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="136"/>
+        <location filename="../qml/main.qml" line="137"/>
         <source>Please restart the application to apply the language change</source>
         <translation>Proszę zrestartować aplikację, aby zastosować zmianę języka</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="145"/>
+        <location filename="../qml/main.qml" line="146"/>
         <source>Ok</source>
         <translation>Ok</translation>
     </message>
@@ -2193,12 +2203,12 @@ Please wait...</source>
 Proszę czekać...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="921"/>
+        <location filename="../qml/main.qml" line="924"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="928"/>
+        <location filename="../qml/main.qml" line="931"/>
         <source> %</source>
         <translation></translation>
     </message>
@@ -2209,12 +2219,12 @@ Please wait...</source>
 Proszę czekać...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="921"/>
+        <location filename="../qml/main.qml" line="924"/>
         <source> V   </source>
         <translation> V   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="921"/>
+        <location filename="../qml/main.qml" line="924"/>
         <source> A   </source>
         <translation> A   </translation>
     </message>
@@ -2223,7 +2233,7 @@ Proszę czekać...</translation>
         <translation type="vanished"> m/s</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1022"/>
+        <location filename="../qml/main.qml" line="1025"/>
         <source>Please wait, the file is opening</source>
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>
