@@ -607,6 +607,8 @@ void Core::setKlfLogging(bool isLogging)
         return;
     this->getIsKlfLogging() ? logger_.stopKlfLogging() : logger_.startNewKlfLog();
     isLoggingKlf_ = isLogging;
+
+    emit loggingKlfChanged();
 }
 
 void Core::setFixBlackStripesState(bool state)

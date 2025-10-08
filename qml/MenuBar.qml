@@ -101,7 +101,7 @@ Item {
                 id: menuSettings
                 icon.source: "qrc:/icons/ui/plug.svg"
                 Layout.fillWidth: true
-
+                isKlfLogging: core.isKlfLogging
                 CMouseOpacityArea {
                     toolTipText: qsTr("Connections")
                     onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()

@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
     Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
     Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
+    Q_PROPERTY(bool isKlfLogging READ getIsKlfLogging NOTIFY loggingKlfChanged)
     Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
     Q_PROPERTY(bool useGPS WRITE setUseGPS)
     Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
@@ -146,9 +147,8 @@ signals:
     void sendIsFileOpening();
     void channelListUpdated();
     void dataProcessorStateChanged();
-
     void isGPSAliveChanged();
-
+    void loggingKlfChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
