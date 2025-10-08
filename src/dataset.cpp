@@ -97,7 +97,7 @@ void Dataset::setLlaRef(const LLARef &val, LlaRefState state)
         llaRefState_ = state;
 
         emit updatedLlaRef();
-        qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
+        //qDebug() << "Dataset::setLlaRef setted" << _llaRef.refLla.latitude << _llaRef.refLla.longitude << static_cast<int>(llaRefState_);
     }
 }
 
@@ -554,10 +554,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
             lastEp = addNewEpoch();
         }
         uint64_t lastIndx = pool_.size() - 1;
-        qDebug() << "111";
-
-        auto a = LlaRefState::kConnection; // TODO
-        setLlaRef(LLARef(pos.lla), a/*getCurrentLlaRefState()*/);
+        setLlaRef(LLARef(pos.lla), LlaRefState::kConnection/*getCurrentLlaRefState()*/); // TODO
         lastEp->setPositionLLA(pos);
         lastEp->setPositionRef(&_llaRef);
         lastEp->setPositionDataType(DataType::kRaw);
@@ -813,7 +810,6 @@ void Dataset::setRefPosition(Epoch* epoch) {
 
 void Dataset::setRefPosition(Position ref_pos) {
     if(ref_pos.lla.isCoordinatesValid()) {
-        qDebug() << "222";
         setLlaRef(LLARef(ref_pos.lla), getCurrentLlaRefState());
         for(int iepoch = 0; iepoch < size(); iepoch++) {
             Epoch* epoch = fromIndex(iepoch);

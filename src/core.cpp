@@ -390,35 +390,27 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 
 bool Core::closeLogFile()
 {
-    //if (!isOpenedFile())
-    //    return false;
+    // qDebug() << "Core::closeLogFile()";
 
-    emit deviceManagerWrapperPtr_->sendCloseFile();
-
-    createLinkManagerConnections();
-
-
-    //qDebug() << "bef" <<  datasetPtr_->getLlaRef().refLla.latitude <<
-    //    datasetPtr_->getLlaRef().refLla.longitude;
-
+    // clear dataset & render & processing
     if (datasetPtr_) {
         datasetPtr_->resetDataset();
     }
-
-    //qDebug() << "aft" <<  datasetPtr_->getLlaRef().refLla.latitude <<
-    //    datasetPtr_->getLlaRef().refLla.longitude;
-
-    dataHorizon_->clear();
-
-    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
-
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
         scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
     }
+    dataHorizon_->clear();
+    QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
 
+    // restore link's
+    if (!isOpenedFile()) {
+        return false;
+    }
+
+    emit deviceManagerWrapperPtr_->sendCloseFile();
+    createLinkManagerConnections();
     openedfilePath_.clear();
-
     linkManagerWrapperPtr_->openClosedLinks();
 
     return true;
