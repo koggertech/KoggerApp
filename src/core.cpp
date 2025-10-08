@@ -391,10 +391,8 @@ void Core::openLogFile(const QString& filePath, bool isAppend, bool onCustomEven
 bool Core::closeLogFile()
 {
     // qDebug() << "Core::closeLogFile()";
-
-    // clear dataset & render & processing
     if (datasetPtr_) {
-        datasetPtr_->resetDataset();
+        datasetPtr_->resetRenderBuffers();
     }
     if (scene3dViewPtr_) {
         scene3dViewPtr_->clear();
@@ -403,11 +401,17 @@ bool Core::closeLogFile()
     dataHorizon_->clear();
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
 
-    // restore link's
+
+
     if (!isOpenedFile()) {
         return false;
     }
 
+
+
+    if (datasetPtr_) {
+        datasetPtr_->resetDataset();
+    }
     emit deviceManagerWrapperPtr_->sendCloseFile();
     createLinkManagerConnections();
     openedfilePath_.clear();

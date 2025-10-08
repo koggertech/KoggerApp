@@ -207,6 +207,7 @@ public slots:
     void mergeGnssTrack(QList<Position> track);
 
     void resetDataset();
+    void resetRenderBuffers();
     void resetDistProcessing();
 
     void setChannelOffset(const ChannelId& channelId, float x, float y, float z);

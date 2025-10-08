@@ -688,6 +688,21 @@ void Dataset::resetDataset()
     emit dataUpdate();
 }
 
+void Dataset::resetRenderBuffers()
+{
+    tracks.clear();
+    pool_.clear();
+    _lastYaw = 0;
+    _lastPitch = 0;
+    _lastRoll = 0;
+    lastTemp_ = NAN;
+    interpolator_.clear();
+    _llaRef = LLARef();
+    llaRefState_ = LlaRefState::kUndefined;
+    bSProc_->clear();
+    lastBottomTrackEpoch_ = 0;
+}
+
 void Dataset::resetDistProcessing() {
 //     int pool_size = size();
 //     for(int i = 0; i < pool_size; i++) {
