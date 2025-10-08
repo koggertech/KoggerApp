@@ -807,10 +807,12 @@ ApplicationWindow  {
         }
     }
 
+
+    // бровь
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
+        visible: false // (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
         isDraggable: true
         isOpacityControlled: true
         Keys.forwardTo: [splitLayer]
