@@ -871,12 +871,6 @@ QStringList Dataset::channelsNameList()
     return result;
 }
 
-void Dataset::interpolateData(bool fromStart)
-{
-    interpolator_.interpolatePos(fromStart);
-    interpolator_.interpolateAtt(fromStart);
-}
-
 void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist)
 {
     Epoch* epPtr = fromIndex(epIndx);
@@ -916,7 +910,18 @@ void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val,
     lastBottomTrackEpoch_ = val;
 
     emit dataUpdate();
-    emit bottomTrackUpdated(channelId, bottomTrackParam_.indexFrom, bottomTrackParam_.indexTo, manual);
+
+    int epoch_min_index = btP.indexFrom - btP.windowSize/2;
+
+    if(epoch_min_index < 0) {
+        epoch_min_index = 0;
+    }
+
+    const int minMagicRenderGap = std::max(3, bottomTrackParam_.windowSize);
+    const int lEpoch = bottomTrackParam_.indexFrom - minMagicRenderGap;
+    const int rEpoch = bottomTrackParam_.indexTo   - minMagicRenderGap;
+
+    emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual);
 }
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)

@@ -231,9 +231,6 @@ public slots:
 
     QStringList channelsNameList();
 
-
-    void interpolateData(bool fromStart);
-
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
     void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
 

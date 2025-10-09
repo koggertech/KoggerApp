@@ -27,7 +27,7 @@ signals:
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx);
     void attitudeAdded(uint64_t indx);
-    void bottomTrackAdded(uint64_t indx);
+    void bottomTrackAdded(uint64_t indx); //
     void bottomTrack3DAdded(const QVector<int>& indx, bool manual, bool isDel);
     void mosaicCanCalc(uint64_t indx);
 
