@@ -909,19 +909,12 @@ void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val,
     bottomTrackParam_ = btP;
     lastBottomTrackEpoch_ = val;
 
-    emit dataUpdate();
-
-    int epoch_min_index = btP.indexFrom - btP.windowSize/2;
-
-    if(epoch_min_index < 0) {
-        epoch_min_index = 0;
-    }
-
     const int minMagicRenderGap = std::max(3, bottomTrackParam_.windowSize);
-    const int lEpoch = bottomTrackParam_.indexFrom - minMagicRenderGap;
-    const int rEpoch = bottomTrackParam_.indexTo   - minMagicRenderGap;
+    const int lEpoch = std::max(0, bottomTrackParam_.indexFrom - minMagicRenderGap);
+    const int rEpoch = std::max(0, bottomTrackParam_.indexTo   - minMagicRenderGap);
 
-    emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual);
+    emit dataUpdate(); // for 2D
+    emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual); // 3D
 }
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
