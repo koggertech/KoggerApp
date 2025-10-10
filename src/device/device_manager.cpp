@@ -146,7 +146,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
             if (isConsoled_ && link && !(frame.id() == 32 || frame.id() == 33)) { // link ptr check added
+#ifndef SEPARATE_READING
                 core.consoleProto(frame);
+#endif
             }
 
 #if !defined(Q_OS_ANDROID)
@@ -181,8 +183,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
         if (frame.isCompleteAsNMEA()) {
             ProtoNMEA& prot_nmea = (ProtoNMEA&)frame;
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
+#ifndef SEPARATE_READING
             core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
-
+#endif
             if (prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
                 prot_nmea.skip();
@@ -292,13 +295,17 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 }
 
                 // if (isConsoled_) {
+#ifndef SEPARATE_READING
                     core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
                                          .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
-                // }
+#endif
+                    // }
             }
             else {
                 // if (isConsoled_)
+#ifndef SEPARATE_READING
                     core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
+#endif
             }
         }
 
@@ -342,7 +349,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     vru_.armState = (int)heartbeat.isArmed();
                     int flight_mode = (int)heartbeat.customMode();
                     if (flight_mode != vru_.flightMode) {
+#ifndef SEPARATE_READING
                         core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
+#endif
                     }
                     vru_.flightMode = flight_mode;
                     emit vruChanged();
@@ -366,8 +375,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                         emit attitudeComplete(yaw, attitude.pitchDeg(), attitude.rollDeg());
                     }
                 }
+#ifndef SEPARATE_READING
 
                 core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+#endif
             }
             else {
                 if (link != nullptr) {
@@ -525,7 +536,9 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             proxyLinkUuid_ = uuid;
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         } else if(link->attribute() == LinkAttribute::kLinkAttributeBoot) {
+#ifndef SEPARATE_READING
             core.consoleInfo("Device: Boot opened");
+#endif
         } else {
             getDevice(uuid, link, 0);
         }
@@ -563,7 +576,9 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
 void DeviceManager::binFrameOut(ProtoBinOut protoOut)
 {
     if (isConsoled_ && protoOut.id() != 33) {
+#ifndef SEPARATE_READING
         core.consoleProto(protoOut, false);
+#endif
     }
     emit sendProtoFrame(protoOut);
 }
@@ -692,11 +707,8 @@ void DeviceManager::onUpgradingFirmwareDone()
 void DeviceManager::createLocationReader() // TODO
 {
     locReader_ = std::make_unique<LocationReader>(this);
-    connect(locReader_.get(), &LocationReader::positionUpdated, this, &DeviceManager::onPositionUpdated, Qt::AutoConnection);
-
-    connect(locReader_.get(), &LocationReader::gpsAlive, &core, &Core::setIsGPSAlive, Qt::AutoConnection);
-
-
+    connect(locReader_.get(), &LocationReader::positionUpdated, this, &DeviceManager::onPositionUpdated, Qt::QueuedConnection);
+    connect(locReader_.get(), &LocationReader::gpsAlive, &core, &Core::setIsGPSAlive, Qt::QueuedConnection);
 }
 
 void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
@@ -704,7 +716,6 @@ void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
     if (!useGPS_) {
         return;
     }
-
 
     IDBinNav::SimpleNav smplNav;
     smplNav.latitude = info.coordinate().latitude();
@@ -826,6 +837,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete, connType);
+    connect(dev, &DevQProperty::tempComplete, this, &DeviceManager::tempComplete, connType);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete, connType);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete, connType);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete, connType);
@@ -865,6 +877,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved);
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete);
+    connect(dev, &DevQProperty::tempComplete, this, &DeviceManager::tempComplete);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
     connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);

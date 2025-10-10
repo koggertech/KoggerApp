@@ -598,8 +598,12 @@ void Dataset::addGnssVelocity(double h_speed, double course) {
 }
 
 void Dataset::addTemp(float temp_c) {
+    //qDebug() << "Dataset::addTemp" << temp_c;
     lastTemp_ = temp_c;
     Epoch* last_epoch = last();
+    if (!last_epoch) {
+        return;
+    }
     last_epoch->setTemp(temp_c);
     // qDebug() << "Dataset Temp: " << temp_c;
 
