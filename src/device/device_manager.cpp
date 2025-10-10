@@ -832,6 +832,9 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete, connType);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
 
+    connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete, connType);
+    connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete, connType);
+
     dev->moveToThread(qApp->thread());
     dev->getProcessTimer()->moveToThread(qApp->thread());
     QList<QTimer*> timers = dev->getChildTimers();

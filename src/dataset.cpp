@@ -554,7 +554,9 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
             lastEp = addNewEpoch();
         }
         uint64_t lastIndx = pool_.size() - 1;
-        setLlaRef(LLARef(pos.lla), LlaRefState::kConnection/*getCurrentLlaRefState()*/); // TODO
+        if (!getLlaRef().isInit) {
+            setLlaRef(LLARef(pos.lla), getCurrentLlaRefState()); // TODO
+        }
         lastEp->setPositionLLA(pos);
         lastEp->setPositionRef(&_llaRef);
         lastEp->setPositionDataType(DataType::kRaw);
