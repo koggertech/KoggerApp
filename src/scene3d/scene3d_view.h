@@ -116,6 +116,15 @@ public:
         LLARef datasetLlaRef_;
         LLA yerevanLla = LLA(40.1852f, 44.5149f, 0.0f);
         LLARef viewLlaRef_ = LLARef(yerevanLla);
+
+        // yaw фильтр
+        float navYawFilteredRad_        = 0.f;
+        bool  navYawInited_             = false;
+        QElapsedTimer navYawTmr_;
+        float navYawTauSec_             = 1.2;
+        float navYawDeadbandRad_        = qDegreesToRadians(2.0f);
+        float navYawMaxRateRadPerSec_   = qDegreesToRadians(90.0f);
+        float navYawSnapRad_            = qDegreesToRadians(120.0f);
     };
 
     //Renderer

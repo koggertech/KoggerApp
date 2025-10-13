@@ -1,14 +1,11 @@
 #include "scene3d_view.h"
-#include "scene3d_renderer.h"
-#include <dataset.h>
-
 #include <cmath>
 #include <memory.h>
 #include <math.h>
-
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
-
+#include "scene3d_renderer.h"
+#include "dataset.h"
 #include "map_defs.h"
 
 
@@ -547,6 +544,10 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigatorView)
 {
+    if (!m_camera->isPerspective_) {
+        return;
+    }
+
     const QVector3D currPos = boatTrack_->getLastPos();
     if (currPos == QVector3D()) {
         return;
@@ -555,21 +556,86 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
     QVector3D focusPoint = currPos;
 
     if (useAngle) {
-        float yawDeg = boatTrack_->getLastYaw();
+        const float yawDeg = boatTrack_->getLastYaw();
         if (std::isfinite(yawDeg)) {
-            m_camera->m_rotAngle = { -yawDeg * static_cast<float>(M_PI) / 180.0f , m_camera->m_rotAngle.y()  };
+            const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
+
+            if (!m_camera->navYawInited_) {
+                m_camera->navYawFilteredRad_ = targetYaw;
+                m_camera->navYawInited_ = true;
+                m_camera->navYawTmr_.restart();
+            }
+
+            double dt = m_camera->navYawTmr_.restart() / 1000.0;
+            if (dt <= 0.0 || dt > 0.5) { // dt с защитой
+                dt = 0.016; // 60hz
+            }
+
+            float diff = shortestDiff(m_camera->navYawFilteredRad_, targetYaw); // разница по кратчайшей дуге + deadband
+            if (std::fabs(diff) < m_camera->navYawDeadbandRad_) {
+                diff = 0.f;
+            }
+
+            // мгновенно щёлкаем, если разворот огромный (перескок через ±π и т.п.)
+            if (std::fabs(diff) > m_camera->navYawSnapRad_) {
+                m_camera->navYawFilteredRad_ = targetYaw;
+            }
+            else {
+                const float alpha = 1.0f - std::exp(-float(dt) / m_camera->navYawTauSec_); // time-based EMA: alpha = 1 - exp(-dt/tau)
+                float step = diff * alpha;
+
+                const float maxStep = m_camera->navYawMaxRateRadPerSec_ * float(dt); // ограничение скорости поворота (slew rate limit)
+                if (step >  maxStep) {
+                    step =  maxStep;
+                }
+                if (step < -maxStep) {
+                    step = -maxStep;
+                }
+
+                m_camera->navYawFilteredRad_ = wrapPi(m_camera->navYawFilteredRad_ + step);
+            }
+
+            m_camera->m_rotAngle.setX(m_camera->navYawFilteredRad_);
         }
     }
+    //else {
+    //    // держим фильтр синхронным с ручным yaw
+    //    m_camera->navYawInited_      = true;
+    //    m_camera->navYawFilteredRad_ = m_camera->m_rotAngle.x();
+    //    m_camera->navYawTmr_.restart();
+    //}
 
-    if (useNavigatorView) { // TODO
-        //const QVector3D northDir(1.f, 0.f, 0.f); // <-- поменяй, если Z это не север
-        //const float offset = std::max(10.0f, static_cast<float>(m_camera->distToFocusPoint()) * 0.2f);
-        //focusPoint += northDir.normalized() * offset;
+    if (useNavigatorView) {
+        // смещение
+        const float yawRadForDir = -m_camera->m_rotAngle.x();
+        QVector3D forwardXY(std::cos(yawRadForDir), std::sin(yawRadForDir), 0.0f);
+        if (!forwardXY.isNull()) {
+            forwardXY.normalize();
+        }
+        const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
+        const float kMin      = 10.0f;
+        const float kFrac     = 0.30f;
+        const float kMaxFrac  = 0.85f;
+        float offset = std::max(kMin, dist * kFrac);
+        offset = std::min(offset, dist * kMaxFrac);
+        focusPoint += forwardXY * offset;
+
+        // тангаж
+        const float targetPitchRad = qDegreesToRadians(30.0f);
+        const float alpha = 0.3f;
+        const float curr = m_camera->m_rotAngle.y();
+        float next = curr + (targetPitchRad - curr) * alpha;
+        if (next < 0.0f) {
+            next = 0.0f;
+        }
+        if (next > float(M_PI_2)) {
+            next = float(M_PI_2);
+        }
+        m_camera->m_rotAngle.setY(next);
     }
 
     m_camera->focusOnPosition(focusPoint);
     updatePlaneGrid();
-
     QQuickFramebufferObject::update();
     emit cameraIsMoved();
 }
@@ -1154,6 +1220,10 @@ GraphicsScene3dView::Camera::Camera(GraphicsScene3dView* viewPtr) :
     viewPtr_(viewPtr)
 {
     setMapView();
+
+    if (viewPtr) { // for main cam
+        navYawTmr_.start();
+    }
 }
 
 GraphicsScene3dView::Camera::Camera(qreal pitch,
