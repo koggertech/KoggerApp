@@ -79,7 +79,7 @@ Item  {
             }
 
             Item {
-                visible: false
+                //visible: false
                 id:     locationWrapper
                 width : locationCheckButton.implicitWidth
                 height: locationCheckButton.implicitHeight
@@ -95,15 +95,11 @@ Item  {
                     implicitWidth:      theme.controlHeight * 1.3
 
                     onCheckedChanged: {
-                        // Scene3D
-                        //IsobathsViewControlMenuController.onProcessStateChanged(checked); // calc state/calc
-                        //IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
+                        Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
                     }
 
                     Component.onCompleted: {
-                        // Scene3D
-                        //IsobathsViewControlMenuController.onIsobathsVisibilityCheckBoxCheckedChanged(checked)
-                        //IsobathsViewControlMenuController.onProcessStateChanged(checked);
+                        Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
                     }
 
                     property bool locationLongPressTriggered: false

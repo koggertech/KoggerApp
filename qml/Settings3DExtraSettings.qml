@@ -104,33 +104,33 @@ MenuFrame {
             }
         }
 
-        CheckButton {
-            id: trackLastDataCheckButton
-            objectName: "trackLastDataCheckButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: false
-            iconSource: "qrc:/icons/ui/location.svg"
-            text: qsTr("Follow last location")
-            Layout.fillWidth: true
+        // CheckButton {
+        //     id: trackLastDataCheckButton
+        //     objectName: "trackLastDataCheckButton"
+        //     backColor: theme.controlBackColor
+        //     borderColor: theme.controlBackColor
+        //     checkedBorderColor: theme.controlBorderColor
+        //     checked: false
+        //     iconSource: "qrc:/icons/ui/location.svg"
+        //     text: qsTr("Follow last location")
+        //     Layout.fillWidth: true
 
-            onToggled: {
-                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-            }
+        //     onToggled: {
+        //         Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+        //     }
 
-            onFocusChanged: {
-                settings3DSettings.focus = true
-            }
+        //     onFocusChanged: {
+        //         settings3DSettings.focus = true
+        //     }
 
-            Component.onCompleted: {
-                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-            }
+        //     Component.onCompleted: {
+        //         Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+        //     }
 
-            Settings {
-                property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
-            }
-        }
+        //     Settings {
+        //         property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
+        //     }
+        // }
 
         CheckButton {
             id: gridCheckButton

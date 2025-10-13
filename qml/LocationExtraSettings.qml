@@ -12,7 +12,7 @@ MenuFrame {
     property CheckButton locationCheckButton
 
     visible: Qt.platform.os === "android"
-             ? (locationCheckButton.locationLongPressTriggered || locationTheme.activeFocus)
+             ? locationCheckButton.locationLongPressTriggered
              : (locationCheckButton.hovered                    ||
                 isHovered)
 
