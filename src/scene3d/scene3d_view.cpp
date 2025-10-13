@@ -544,19 +544,17 @@ void GraphicsScene3dView::setMapView() {
 
 void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigatorView)
 {
-    if (!m_camera->isPerspective_) {
+    if (!m_camera->isPerspective_ || !datasetPtr_) {
         return;
     }
 
-    const QVector3D currPos = boatTrack_->getLastPos();
-    if (currPos == QVector3D()) {
+    auto* epoch = datasetPtr_->last();
+    if (!epoch) {
         return;
     }
-
-    QVector3D focusPoint = currPos;
 
     if (useAngle) {
-        const float yawDeg = boatTrack_->getLastYaw();
+        const float yawDeg = datasetPtr_->getLastYaw();
         if (std::isfinite(yawDeg)) {
             const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
 
@@ -567,7 +565,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
             }
 
             double dt = m_camera->navYawTmr_.restart() / 1000.0;
-            if (dt <= 0.0 || dt > 0.5) { // dt с защитой
+            if (dt <= 0.0 || dt > 0.5) {
                 dt = 0.016; // 60hz
             }
 
@@ -576,15 +574,15 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
                 diff = 0.f;
             }
 
-            // мгновенно щёлкаем, если разворот огромный (перескок через ±π и т.п.)
+
             if (std::fabs(diff) > m_camera->navYawSnapRad_) {
                 m_camera->navYawFilteredRad_ = targetYaw;
             }
             else {
-                const float alpha = 1.0f - std::exp(-float(dt) / m_camera->navYawTauSec_); // time-based EMA: alpha = 1 - exp(-dt/tau)
+                const float alpha = 1.0f - std::exp(-float(dt) / m_camera->navYawTauSec_); // time-based EMA
                 float step = diff * alpha;
 
-                const float maxStep = m_camera->navYawMaxRateRadPerSec_ * float(dt); // ограничение скорости поворота (slew rate limit)
+                const float maxStep = m_camera->navYawMaxRateRadPerSec_ * float(dt); // ограничение скорости поворота
                 if (step >  maxStep) {
                     step =  maxStep;
                 }
@@ -598,12 +596,16 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
             m_camera->m_rotAngle.setX(m_camera->navYawFilteredRad_);
         }
     }
-    //else {
-    //    // держим фильтр синхронным с ручным yaw
-    //    m_camera->navYawInited_      = true;
-    //    m_camera->navYawFilteredRad_ = m_camera->m_rotAngle.x();
-    //    m_camera->navYawTmr_.restart();
-    //}
+
+    // pos
+    NED posNed = epoch->getPositionGNSS().ned;
+    QVector3D currPos(posNed.n, posNed.e, 1);
+    if (currPos == QVector3D()) {
+        return;
+    }
+
+    QVector3D focusPoint = currPos;
+
 
     if (useNavigatorView) {
         // смещение

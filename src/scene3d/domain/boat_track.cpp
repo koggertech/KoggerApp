@@ -66,10 +66,10 @@ void BoatTrack::onPositionAdded(uint64_t indx)
                 prepData[i] = QVector3D(posNed.n, posNed.e, 0);
                 selectedIndices_.insert(validPosCounter++, i);
 
-                lastPos_ = prepData[i];
-                if (float yaw = ep->yaw(); std::isfinite(yaw)) {
-                    lastYaw_ = ep->yaw();
-                }
+                //lastPos_ = prepData[i]; // TODO
+                //if (float yaw = ep->yaw(); std::isfinite(yaw)) {
+                //    lastYaw_ = ep->yaw();
+                //}
             }
         }
     }

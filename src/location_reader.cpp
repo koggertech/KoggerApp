@@ -67,10 +67,10 @@ void LocationReader::onPositionUpdated(const QGeoPositionInfo &info)
     gpsWatchdog_.start();
 
     QGeoCoordinate c = info.coordinate();
-
-    QString str =   "Lat: " + QString::number(c.latitude(), 'f', 4) + " "
+    QString str =   "Lat: " + QString::number(c.latitude(), 'f', 4)  + " "
                   + "Lon: " + QString::number(c.longitude(), 'f', 4) + " "
-                  + "Alt: " + QString::number(c.altitude(), 'f', 4);
+                  + "Alt: " + QString::number(c.altitude(), 'f', 4)  + " "
+                  + "Yaw: " + QString::number(info.attribute(QGeoPositionInfo::Attribute::Direction), 'f', 4);
 
     core.consoleInfo(str);
 
