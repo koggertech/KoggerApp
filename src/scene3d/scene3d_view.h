@@ -208,6 +208,8 @@ public:
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void setGridVisibility(bool state);
+    void setUseAngleLocation(bool state);
+    void setNavigatorViewLocation(bool state);
 
 protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
@@ -218,7 +220,7 @@ public Q_SLOTS:
     void setIsometricView();
     void setCancelZoomView();
     void setMapView();
-    void setLastEpochFocusView();
+    void setLastEpochFocusView(bool useAngle, bool useNavigatorView);
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
@@ -301,7 +303,9 @@ private:
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
-    bool gridVisibility_ = true;
+    bool gridVisibility_;
+    bool useAngleLocation_;
+    bool navigatorViewLocation_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

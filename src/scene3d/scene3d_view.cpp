@@ -35,7 +35,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     switchedToBottomTrackVertexComboSelectionMode_(false),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
-    trackLastData_(false)
+    trackLastData_(false),
+    gridVisibility_(true),
+    useAngleLocation_(false),
+    navigatorViewLocation_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -418,6 +421,16 @@ void GraphicsScene3dView::setGridVisibility(bool state)
     QQuickFramebufferObject::update();
 }
 
+void GraphicsScene3dView::setUseAngleLocation(bool state)
+{
+    useAngleLocation_ = state;
+}
+
+void GraphicsScene3dView::setNavigatorViewLocation(bool state)
+{
+    navigatorViewLocation_ = state;
+}
+
 void GraphicsScene3dView::updateProjection()
 {
     QMatrix4x4 currProj;
@@ -532,22 +545,32 @@ void GraphicsScene3dView::setMapView() {
     emit cameraIsMoved();
 }
 
-void GraphicsScene3dView::setLastEpochFocusView()
+void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigatorView)
 {
-    auto* epoch = datasetPtr_->last();
-    if (!epoch) {
+    const QVector3D currPos = boatTrack_->getLastPos();
+    if (currPos == QVector3D()) {
         return;
     }
 
-    NED posNed = epoch->getPositionGNSS().ned;
+    QVector3D focusPoint = currPos;
 
-    QVector3D currPos(posNed.n, posNed.e, 1);
+    if (useAngle) {
+        float yawDeg = boatTrack_->getLastYaw();
+        if (std::isfinite(yawDeg)) {
+            m_camera->m_rotAngle = { -yawDeg * static_cast<float>(M_PI) / 180.0f , m_camera->m_rotAngle.y()  };
+        }
+    }
 
-    m_camera->focusOnPosition(currPos);
+    if (useNavigatorView) { // TODO
+        //const QVector3D northDir(1.f, 0.f, 0.f); // <-- поменяй, если Z это не север
+        //const float offset = std::max(10.0f, static_cast<float>(m_camera->distToFocusPoint()) * 0.2f);
+        //focusPoint += northDir.normalized() * offset;
+    }
+
+    m_camera->focusOnPosition(focusPoint);
     updatePlaneGrid();
 
     QQuickFramebufferObject::update();
-
     emit cameraIsMoved();
 }
 
@@ -851,7 +874,7 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
     navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), datasetPtr_->getLastYaw() - 90.f);
 
     if (trackLastData_) {
-        setLastEpochFocusView();
+        setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_);
     }
 }
 

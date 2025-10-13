@@ -65,6 +65,11 @@ void BoatTrack::onPositionAdded(uint64_t indx)
             if (auto posNed = ep->getPositionGNSS().ned; posNed.isCoordinatesValid()) {
                 prepData[i] = QVector3D(posNed.n, posNed.e, 0);
                 selectedIndices_.insert(validPosCounter++, i);
+
+                lastPos_ = prepData[i];
+                if (float yaw = ep->yaw(); std::isfinite(yaw)) {
+                    lastYaw_ = ep->yaw();
+                }
             }
         }
     }

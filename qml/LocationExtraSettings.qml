@@ -71,7 +71,7 @@ MenuFrame {
             Layout.fillWidth: true
 
             onToggled: {
-                //Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
             }
 
             onFocusChanged: {
@@ -79,7 +79,7 @@ MenuFrame {
             }
 
             Component.onCompleted: {
-                //Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                Scene3dToolBarController.onUseAngleLocationButtonChanged(checked)
             }
 
             Settings {
@@ -98,7 +98,7 @@ MenuFrame {
             Layout.fillWidth: true
 
             onToggled: {
-                //Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
             }
 
             onFocusChanged: {
@@ -106,7 +106,7 @@ MenuFrame {
             }
 
             Component.onCompleted: {
-                //Scene3dToolBarController.onBottomTrackVertexEditingModeButtonChecked(checked)
+                Scene3dToolBarController.onNavigatorLocationButtonChanged(checked)
             }
 
             Settings {
