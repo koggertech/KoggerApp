@@ -244,6 +244,11 @@
         <translation>Выберите файл</translation>
     </message>
     <message>
+        <location filename="../qml/ConnectionViewer.qml" line="1018"/>
+        <source>Undefined</source>
+        <translation>Неопределён</translation>
+    </message>
+    <message>
         <source>undefined</source>
         <translation type="vanished">неопределен</translation>
     </message>
@@ -264,8 +269,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="849"/>
-        <location filename="../src/dataset.cpp" line="851"/>
+        <location filename="../src/dataset.cpp" line="891"/>
+        <location filename="../src/dataset.cpp" line="893"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -1105,6 +1110,24 @@
     </message>
 </context>
 <context>
+    <name>LocationExtraSettings</name>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="53"/>
+        <source>Location settings</source>
+        <translation>Слежение за лодкой</translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="70"/>
+        <source>Use angle</source>
+        <translation>Использовать ориентацию</translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="97"/>
+        <source>Navigator view</source>
+        <translation>Вид навигатора</translation>
+    </message>
+</context>
+<context>
     <name>MenuBar</name>
     <message>
         <location filename="../qml/MenuBar.qml" line="106"/>
@@ -1458,12 +1481,12 @@
     <message>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="47"/>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="63"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="85"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="88"/>
         <source> m</source>
         <translation> м</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="125"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="131"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -1542,7 +1565,7 @@
         <translation type="vanished">Буст: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1460"/>
+        <location filename="../src/core.cpp" line="1466"/>
         <source>File</source>
         <translation>Файл</translation>
     </message>
@@ -1803,17 +1826,17 @@
         <translation type="vanished">пн</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="66"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="67"/>
         <source>Reset camera</source>
         <translation>Сбросить камеру</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="160"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="240"/>
         <source>Boat track</source>
         <translation>Трек лодки</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="192"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="272"/>
         <source>Bottom track</source>
         <translation>Трек дна</translation>
     </message>
@@ -1859,9 +1882,8 @@
         <translation>Синхр. эхограммы</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="115"/>
         <source>Follow last location</source>
-        <translation>Следовать за данными</translation>
+        <translation type="vanished">Следовать за данными</translation>
     </message>
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="143"/>

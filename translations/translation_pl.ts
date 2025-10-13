@@ -236,6 +236,11 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../qml/ConnectionViewer.qml" line="1018"/>
+        <source>Undefined</source>
+        <translation>niezdefiniowany</translation>
+    </message>
+    <message>
         <source>REC KLF</source>
         <translation type="vanished">ZAPIS KLF</translation>
     </message>
@@ -276,8 +281,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="849"/>
-        <location filename="../src/dataset.cpp" line="851"/>
+        <location filename="../src/dataset.cpp" line="891"/>
+        <location filename="../src/dataset.cpp" line="893"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
@@ -1125,6 +1130,24 @@
     </message>
 </context>
 <context>
+    <name>LocationExtraSettings</name>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="53"/>
+        <source>Location settings</source>
+        <translation>Śledzenie łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="70"/>
+        <source>Use angle</source>
+        <translation>Użyj orientacji</translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="97"/>
+        <source>Navigator view</source>
+        <translation>Widok nawigatora</translation>
+    </message>
+</context>
+<context>
     <name>MenuBar</name>
     <message>
         <location filename="../qml/MenuBar.qml" line="106"/>
@@ -1478,12 +1501,12 @@
     <message>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="47"/>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="63"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="85"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="88"/>
         <source> m</source>
         <translation> m</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="125"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="131"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -1562,7 +1585,7 @@
         <translation type="vanished">Boost: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1460"/>
+        <location filename="../src/core.cpp" line="1466"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -1815,17 +1838,17 @@
         <translation type="vanished">Wybierz plik obrazu (.png, .jpg, .bmp)</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="66"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="67"/>
         <source>Reset camera</source>
         <translation>Zresetuj kamerę</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="160"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="240"/>
         <source>Boat track</source>
         <translation>Ślad łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="192"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="272"/>
         <source>Bottom track</source>
         <translation>Śledzenie dna</translation>
     </message>
@@ -1871,9 +1894,8 @@
         <translation>Sync. echogramów</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="115"/>
         <source>Follow last location</source>
-        <translation>Śledź ostatnią lokalizację</translation>
+        <translation type="vanished">Śledź ostatnią lokalizację</translation>
     </message>
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="143"/>

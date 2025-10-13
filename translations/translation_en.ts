@@ -243,6 +243,11 @@
         <source>Please choose a file</source>
         <translation></translation>
     </message>
+    <message>
+        <location filename="../qml/ConnectionViewer.qml" line="1018"/>
+        <source>Undefined</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>Console</name>
@@ -260,8 +265,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="849"/>
-        <location filename="../src/dataset.cpp" line="851"/>
+        <location filename="../src/dataset.cpp" line="891"/>
+        <location filename="../src/dataset.cpp" line="893"/>
         <source>None</source>
         <translation></translation>
     </message>
@@ -949,6 +954,24 @@
     </message>
 </context>
 <context>
+    <name>LocationExtraSettings</name>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="53"/>
+        <source>Location settings</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="70"/>
+        <source>Use angle</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="97"/>
+        <source>Navigator view</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
     <name>MenuBar</name>
     <message>
         <location filename="../qml/MenuBar.qml" line="106"/>
@@ -1295,12 +1318,12 @@
     <message>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="47"/>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="63"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="85"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="88"/>
         <source> m</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="125"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="131"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -1355,7 +1378,7 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1460"/>
+        <location filename="../src/core.cpp" line="1466"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -1424,17 +1447,17 @@
 <context>
     <name>Scene3DToolbar</name>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="66"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="67"/>
         <source>Reset camera</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="160"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="240"/>
         <source>Boat track</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="192"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="272"/>
         <source>Bottom track</source>
         <translation></translation>
     </message>
@@ -1477,11 +1500,6 @@
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
         <source>Sync with echogram</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="115"/>
-        <source>Follow last location</source>
         <translation></translation>
     </message>
     <message>
