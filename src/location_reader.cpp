@@ -12,13 +12,14 @@ extern Core core;
 LocationReader::LocationReader(QObject *parent)
     : QObject(parent)
 {
+    //qDebug() << "LocationReader ctr";
+
 #ifdef Q_OS_WINDOWS
-    // 50 точек вокруг Ереванского озера, курс рассчитан как азимут к следующей точке
     demoTrack_ = buildYerevanLakeDemoTrack();
     demoIndex_ = 0;
 
     timer_.setParent(this);
-    timer_.setInterval(1000); // 1 секунда
+    timer_.setInterval(1000);
     connect(&timer_, &QTimer::timeout, this, &LocationReader::onPositionUpdatedSec);
     timer_.start();
 #else
@@ -34,17 +35,18 @@ LocationReader::LocationReader(QObject *parent)
 #endif
 
 
-    // --- GPS watchdog: single-shot на 3 сек; обновления будут его перезапускать
     gpsWatchdog_.setParent(this);
     gpsWatchdog_.setSingleShot(true);
     gpsWatchdog_.setTimerType(Qt::PreciseTimer);
     gpsWatchdog_.setInterval(3000);
     connect(&gpsWatchdog_, &QTimer::timeout, this, &LocationReader::onGpsTimeout);
-    gpsWatchdog_.start(); // если за первые 3 сек апдейта не будет — пришлём false
+    gpsWatchdog_.start();
 }
 
 LocationReader::~LocationReader()
 {
+    //qDebug() << "LocationReader dtr";
+
 #ifdef Q_OS_WINDOWS
     if (timer_.isActive()) {
         timer_.stop();
@@ -58,8 +60,11 @@ LocationReader::~LocationReader()
 
 void LocationReader::onPositionUpdated(const QGeoPositionInfo &info)
 {
-    if (!gpsAlive_) { gpsAlive_ = true; emit gpsAlive(true); }
-    gpsWatchdog_.start(); // перезапуск 3-секундного таймера
+    if (!gpsAlive_) {
+        gpsAlive_ = true;
+        emit gpsAlive(true);
+    }
+    gpsWatchdog_.start();
 
     QGeoCoordinate c = info.coordinate();
 
@@ -80,11 +85,13 @@ void LocationReader::onGpsTimeout()
     }
 }
 
-
 void LocationReader::onPositionUpdatedSec()
 {
-    if (!gpsAlive_) { gpsAlive_ = true; emit gpsAlive(true); }
-    gpsWatchdog_.start(); // перезапуск 3-секундного таймера
+    if (!gpsAlive_) {
+        gpsAlive_ = true;
+        emit gpsAlive(true);
+    }
+    gpsWatchdog_.start();
 
     if (demoTrack_.isEmpty()) {
         return;
@@ -93,7 +100,6 @@ void LocationReader::onPositionUpdatedSec()
     QGeoPositionInfo info = demoTrack_.at(demoIndex_); // get next point
     info.setTimestamp(QDateTime::currentDateTime());
 
-    // (по желанию) лог в консоль
     const QGeoCoordinate& c = info.coordinate();
     QString str = QStringLiteral("Lat: %1 Lon: %2 Alt: %3  Head: %4  Time: %5")
                      .arg(c.latitude(),  0, 'f', 6)
@@ -139,7 +145,7 @@ QVector<QGeoPositionInfo> LocationReader::buildYerevanLakeDemoTrack() const
         QGeoPositionInfo pi;
         pi.setCoordinate(cur);
         pi.setAttribute(QGeoPositionInfo::Direction, az);
-        track.push_back(pi); // Метку времени поставим при отправке (чтобы была «реальная» текущая)
+        track.push_back(pi);
     }
 
     return track;

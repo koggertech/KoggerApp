@@ -479,8 +479,8 @@ void DeviceManager::openFile(QString filePath)
                 file.close();
                 return;
             }
-            if (sleepCnt > 500) {
-                QThread::msleep(50);
+            if (sleepCnt > 100) {
+                QThread::msleep(10);
                 sleepCnt = 0;
             }
             ++sleepCnt;
@@ -704,11 +704,32 @@ void DeviceManager::onUpgradingFirmwareDone()
     upgradeData_.clear();
 }
 
-void DeviceManager::createLocationReader() // TODO
+void DeviceManager::createLocationReader()
 {
-    locReader_ = std::make_unique<LocationReader>(this);
-    connect(locReader_.get(), &LocationReader::positionUpdated, this, &DeviceManager::onPositionUpdated, Qt::QueuedConnection);
-    connect(locReader_.get(), &LocationReader::gpsAlive, &core, &Core::setIsGPSAlive, Qt::QueuedConnection);
+    //qDebug() << "DeviceManager::createLocationReader";
+
+    if (locReader_) {
+        return;
+    }
+
+    locReader_ = new LocationReader(this);
+    connect(locReader_, &LocationReader::positionUpdated, this, &DeviceManager::onPositionUpdated, Qt::QueuedConnection);
+    connect(locReader_, &LocationReader::gpsAlive, &core, &Core::setIsGPSAlive, Qt::QueuedConnection);
+}
+
+void DeviceManager::destroyLocationReader()
+{
+    if (!locReader_) {
+        return;
+    }
+
+    locReader_->deleteLater();
+    locReader_ = nullptr;
+}
+
+void DeviceManager::shutdown()
+{
+    destroyLocationReader();
 }
 
 void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)

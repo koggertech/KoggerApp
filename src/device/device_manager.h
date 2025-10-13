@@ -63,6 +63,9 @@ public slots:
     void onUpgradingFirmwareDone();
 
     void createLocationReader();
+    void destroyLocationReader();
+    void shutdown();
+
     void onPositionUpdated(const QGeoPositionInfo& info);
 
     void setUseGPS(bool state);
@@ -175,7 +178,7 @@ private:
     uint8_t upgradeAddr_;
     QByteArray upgradeData_;
     bool loggingStarted_ = false;
-    std::unique_ptr<LocationReader> locReader_;
+    LocationReader* locReader_;
     bool useGPS_{ false };
 
 private slots:
