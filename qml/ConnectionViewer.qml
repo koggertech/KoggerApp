@@ -1015,10 +1015,10 @@ ColumnLayout {
         Repeater {
             model: devList
             delegate: CButton {
-                text: modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]"
+                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
                 Layout.fillWidth: true
                 opacity: dev === modelData ? 1 : 0.5
-                visible: modelData.devType === 0 ? false : true
+                visible: modelData ? (modelData.devType === 0 ? false : true) : false
 
                 onClicked: {
                     dev = modelData
