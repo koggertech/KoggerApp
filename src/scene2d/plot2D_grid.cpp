@@ -67,6 +67,9 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if (_rangeFinderLastVisible && cursor.distance.isValid()) {
         Epoch* lastEpoch = dataset->last();
         Epoch* preLastEpoch = dataset->lastlast();
+        if (!lastEpoch || !preLastEpoch) {
+            return false;
+        }
         float distance = NAN;
 
         if (lastEpoch != NULL && isfinite(lastEpoch->rangeFinder())) {
@@ -90,6 +93,9 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     if(true) {
         Epoch* lastEpoch = dataset->last();
         Epoch* preLastEpoch = dataset->lastlast();
+        if (!lastEpoch || !preLastEpoch) {
+            return false;
+        }
 
         Q_UNUSED(lastEpoch)
         Q_UNUSED(preLastEpoch)

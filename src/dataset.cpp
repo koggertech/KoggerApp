@@ -133,6 +133,9 @@ void Dataset::addEvent(int timestamp, int id, int unixt) {
 
 void Dataset::addEncoder(float angle1_deg, float angle2_deg, float angle3_deg) {
     Epoch* last_epoch = last();
+    if (!last_epoch) {
+        return;
+    }
     if(last_epoch->isEncodersSeted()) {
         last_epoch = addNewEpoch();
     }
@@ -310,6 +313,9 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
     int size = raw_data.samplesPerChannel();
 
     Epoch* last_epoch = last();
+    if (!last_epoch) {
+        return;
+    }
     ComplexSignals& compex_signals = last_epoch->complexSignals();
 
     ChannelId dev_id(channelId.uuid, header.channelGroup); // channelId.uuid
@@ -382,6 +388,9 @@ void Dataset::addDist(const ChannelId& channelId, int dist)
 void Dataset::addRangefinder(const ChannelId& channelId, float distance)
 {
     Epoch* epoch = last();
+    if (!epoch) {
+        return;
+    }
     if (epoch->distAvail()) {
         epoch = addNewEpoch();
     }
@@ -505,6 +514,9 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
     uint64_t lastIndx = pool_.size() - 1;
 
     Epoch* last_epoch = last();
+    if (!last_epoch) {
+        return;
+    }
     if(last_epoch->isAttAvail()) {
         // last_epoch = addNewEpoch();
     }
@@ -543,6 +555,9 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
 void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec)
 {
     Epoch* lastEp = last();
+    if (!lastEp) {
+        return;
+    }
 
     Position pos;
     pos.lla = LLA(lat, lon);
@@ -569,11 +584,17 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
 void Dataset::addPositionRTK(Position position) {
     Epoch* last_epoch = last();
+    if (!last_epoch) {
+        return;
+    }
     last_epoch->setExternalPosition(position);
 }
 
 void Dataset::addDepth(float depth) {
     Epoch* last_epoch = last();
+    if (!last_epoch) {
+        return;
+    }
     if(last_epoch->isDepthAvail()) {
         last_epoch = addNewEpoch();
     }
