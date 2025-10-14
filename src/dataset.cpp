@@ -577,8 +577,29 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         lastEp->setPositionDataType(DataType::kRaw);
         interpolator_.interpolatePos(false);
         //qDebug() << "add pos for" << lastIndx;
+
+        boatLatitute_ = pos.lla.latitude;
+        boatLongitude_ = pos.lla.longitude;
+
+        if (isValidActiveContactIndx()) {
+            if (auto* ep = fromIndex(activeContactIndx_); ep) {
+                const double latTarget = ep->getPositionGNSS().lla.latitude;
+                const double lonTarget = ep->getPositionGNSS().lla.longitude;
+                const double latBoat = pos.lla.latitude;
+                const double lonBoat = pos.lla.longitude;
+
+                distToActiveContact_ = distanceMetersLLA(latBoat, lonBoat, latTarget, lonTarget);
+
+                const double yawDeg = _lastYaw;
+                if (std::isfinite(yawDeg)) {
+                    angleToActiveContact_ = angleToTargetDeg(latBoat, lonBoat, latTarget, lonTarget, yawDeg);
+                }
+            }
+        }
+
         emit positionAdded(lastIndx);
         emit dataUpdate();
+        emit lastPositionChanged();
     }
 }
 
@@ -711,7 +732,12 @@ void Dataset::resetDataset()
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
 
-    activeContactIndx_ = -1;
+    activeContactIndx_    = -1;
+    boatLatitute_         = 0.0f;
+    boatLongitude_        = 0.0f;
+    distToActiveContact_  = 0.0f;
+    angleToActiveContact_ = 0.0f;
+
     emit channelsUpdated();
     emit dataUpdate();
 }
@@ -1091,8 +1117,8 @@ std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QStrin
 
 void Dataset::setActiveContactIndx(int64_t indx)
 {
-//    qDebug() << "Dataset::setActiveContactIndx" << indx;
     activeContactIndx_ = indx;
+    emit activeContactChanged();
     emit dataUpdate();
 }
 

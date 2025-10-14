@@ -811,6 +811,42 @@ ApplicationWindow  {
     }
 
 
+    MenuFrame {
+        id: activeContactStatus
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: dataset.isActiveContactIndxValid
+        isDraggable: true
+        isOpacityControlled: true
+
+        ColumnLayout {
+            CText {
+                id: boatLatitude
+                rightPadding: 4
+                leftPadding: 4
+                text: dataset.boatLatitude.toFixed(4)
+            }
+            CText {
+                id: boatLongitude
+                rightPadding: 4
+                leftPadding: 4
+                text: dataset.boatLongitude.toFixed(4)
+            }
+            CText {
+                id: distToContact
+                rightPadding: 4
+                leftPadding: 4
+                text: dataset.distToContact.toFixed(4)
+            }
+            CText {
+                id: angleToContact
+                rightPadding: 4
+                leftPadding: 4
+                text: dataset.angleToContact.toFixed(4)
+            }
+        }
+    }
+
     // бровь
     MenuFrame {
         anchors.top: parent.top

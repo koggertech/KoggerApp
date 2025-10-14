@@ -34,6 +34,12 @@ public:
         kConnection
     };
 
+    Q_PROPERTY(float boatLatitude         READ getBoatLatitude NOTIFY lastPositionChanged)
+    Q_PROPERTY(float boatLongitude        READ getBoatLongitude NOTIFY lastPositionChanged)
+    Q_PROPERTY(float distToContact        READ getDistToContact NOTIFY lastPositionChanged)
+    Q_PROPERTY(float angleToContact       READ getAngleToContact NOTIFY lastPositionChanged)
+    Q_PROPERTY(bool isActiveContactIndxValid READ isValidActiveContactIndx NOTIFY activeContactChanged)
+
     /*methods*/
     Dataset();
     ~Dataset();
@@ -177,6 +183,11 @@ public:
 
 public slots:
     friend class DataProcessor;
+    bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1; };
+    float getBoatLatitude()          const { return boatLatitute_;            };
+    float getBoatLongitude()         const { return boatLongitude_;           };
+    float getDistToContact()         const { return distToActiveContact_;     };
+    float getAngleToContact()        const { return angleToActiveContact_;    };
 
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
@@ -255,6 +266,8 @@ signals:
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);
+    void lastPositionChanged();
+    void activeContactChanged();
 
 protected:
 
@@ -321,5 +334,9 @@ private:
     QList<QString> channelsNames_;
     QList<ChannelId> channelsIds_;
     QList<uint8_t> subChannelIds_;
-    int64_t activeContactIndx_ = -1;
+    int64_t activeContactIndx_  = -1;
+    float boatLatitute_         = 0.0f;
+    float boatLongitude_        = 0.0f;
+    float distToActiveContact_  = 0.0f;
+    float angleToActiveContact_ = 0.0f;
 };
