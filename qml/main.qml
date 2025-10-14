@@ -595,6 +595,9 @@ ApplicationWindow  {
                     onInputAccepted: {
                         contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
                     }
+                    onSetActiveButtonClicked: {
+                        contacts.setActiveContact(contactDialog.indx)
+                    }
                     onSetButtonClicked: {
                         contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
                     }

@@ -4,10 +4,11 @@
 #include <QEvent>
 #include <dataset.h>
 
-static const QEvent::Type EpochSelected3d = static_cast<QEvent::Type>(QEvent::User + 1);
-static const QEvent::Type EpochSelected2d = static_cast<QEvent::Type>(QEvent::User + 2);
-static const QEvent::Type ContactCreated  = static_cast<QEvent::Type>(QEvent::User + 3);
-static const QEvent::Type ContactDeleted  = static_cast<QEvent::Type>(QEvent::User + 4);
+static const QEvent::Type EpochSelected3d      = static_cast<QEvent::Type>(QEvent::User + 1);
+static const QEvent::Type EpochSelected2d      = static_cast<QEvent::Type>(QEvent::User + 2);
+static const QEvent::Type ContactCreated       = static_cast<QEvent::Type>(QEvent::User + 3);
+static const QEvent::Type ContactDeleted       = static_cast<QEvent::Type>(QEvent::User + 4);
+static const QEvent::Type ContactActiveChanged = static_cast<QEvent::Type>(QEvent::User + 5);
 
 class Epoch;
 class EpochEvent : public QEvent

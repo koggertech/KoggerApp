@@ -1021,6 +1021,10 @@ WaterFall {
             plot.updateContact()
         }
 
+        onSetActiveButtonClicked: {
+            plot.setActiveContact(contactDialog.indx)
+        }
+
         onInputAccepted: {
             contactDialog.visible = false
             plot.updateContact()

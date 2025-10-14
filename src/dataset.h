@@ -172,6 +172,9 @@ public:
 
     std::tuple<ChannelId, uint8_t, QString> channelIdFromName(const QString& name) const;
 
+    void setActiveContactIndx(int64_t indx);
+    int64_t getActiveContactIndx() const;
+
 public slots:
     friend class DataProcessor;
 
@@ -318,4 +321,5 @@ private:
     QList<QString> channelsNames_;
     QList<ChannelId> channelsIds_;
     QList<uint8_t> subChannelIds_;
+    int64_t activeContactIndx_ = -1;
 };

@@ -116,6 +116,12 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
         }
     }
 
+    if (event->type() == ContactActiveChanged) {
+        //qDebug() << "EVENT" << epIndx;
+        r->activeContactIndx_ = epIndx;
+        beenUpdated = true;
+    }
+
     if (beenUpdated) {
         Q_EMIT changed();
     }
@@ -180,6 +186,35 @@ bool Contacts::deleteContact(int indx)
     r->points_.remove(indx);
 
     contactBounds_.remove(indx);
+
+    Q_EMIT changed();
+
+    return true;
+}
+
+bool Contacts::setActiveContact(int indx)
+{
+    if (!datasetPtr_) {
+        qDebug() << "Plot2D::setActiveContact returned: !_dataset";
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Plot2D::setActiveContact returned: !ep";
+        return false;
+    }
+
+    auto* r = RENDER_IMPL(Contacts);
+    auto currActiveIndx = datasetPtr_->getActiveContactIndx();
+    if (currActiveIndx == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+        r->activeContactIndx_ = -1;
+    }
+    else {
+        datasetPtr_->setActiveContactIndx(indx);
+        r->activeContactIndx_ = indx;
+    }
 
     Q_EMIT changed();
 
@@ -327,7 +362,8 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
 
         bool isIntersects = it.key() == intersectedEpochIndx_;
-        shaderProgram->setUniformValue(colorLoc, isIntersects ? QVector4D(0.0f, 0.67f, 0.0f, 1.0f) : QVector4D(0.67f, 0.0f, 0.0f, 1.0f));
+        QVector4D markerColor = isIntersects ? QVector4D(0.0f, 0.67f, 0.0f, 1.0f) : (activeContactIndx_ == it.key() ? QVector4D(0.0f, 0.0f, 0.67f, 1.0f) : QVector4D(0.67f, 0.0f, 0.0f, 1.0f));
+        shaderProgram->setUniformValue(colorLoc, markerColor);
         QVector<QVector3D> vecP = { p };
         shaderProgram->setAttributeArray(posLoc, vecP.constData());
         ctx->glDrawArrays(GL_POINTS, 0, vecP.size());
@@ -363,6 +399,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
 void Contacts::ContactsRenderImplementation::clear()
 {
+    activeContactIndx_ = -1;
     intersectedEpochIndx_ = -1;
     points_.clear();
 }

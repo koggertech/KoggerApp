@@ -802,6 +802,33 @@ bool Plot2D::setContact(int indx, const QString& text)
     return true;
 }
 
+bool Plot2D::setActiveContact(int indx)
+{
+    if (!datasetPtr_) {
+        qDebug() << "Plot2D::setActiveContact returned: !_dataset";
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Plot2D::setActiveContact returned: !ep";
+        return false;
+    }
+
+    auto currActiveIndx = datasetPtr_->getActiveContactIndx();
+    if (currActiveIndx == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+        sendSyncEvent(-1, ContactActiveChanged);
+    }
+    else {
+        datasetPtr_->setActiveContactIndx(indx);
+        sendSyncEvent(indx, ContactActiveChanged);
+    }
+
+    plotUpdate();
+    return true;
+}
+
 bool Plot2D::deleteContact(int indx)
 {
     if (!datasetPtr_) {

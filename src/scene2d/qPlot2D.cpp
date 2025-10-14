@@ -174,6 +174,11 @@ bool qPlot2D::setContact(int indx, const QString& text)
     return Plot2D::setContact(indx, text);
 }
 
+bool qPlot2D::setActiveContact(int indx)
+{
+    return Plot2D::setActiveContact(indx);
+}
+
 bool qPlot2D::deleteContact(int indx)
 {
     return Plot2D::deleteContact(indx);

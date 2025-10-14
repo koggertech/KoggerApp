@@ -711,6 +711,7 @@ void Dataset::resetDataset()
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
 
+    activeContactIndx_ = -1;
     emit channelsUpdated();
     emit dataUpdate();
 }
@@ -1086,4 +1087,16 @@ std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QStrin
     }
 
     return retVal;
+}
+
+void Dataset::setActiveContactIndx(int64_t indx)
+{
+//    qDebug() << "Dataset::setActiveContactIndx" << indx;
+    activeContactIndx_ = indx;
+    emit dataUpdate();
+}
+
+int64_t Dataset::getActiveContactIndx() const
+{
+    return activeContactIndx_;
 }
