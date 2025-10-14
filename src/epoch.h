@@ -24,7 +24,8 @@ public:
             info.clear();
             lat      = 0.0f;
             lon      = 0.0f;
-            distance = 0.0f;
+            echogramDistance = 0.0f;
+            depth    = 0.0f;
             nedX     = 0.0f;
             nedY     = 0.0f;
             cursorX  = -1;
@@ -35,7 +36,8 @@ public:
         QString info;
         float   lat = 0.0f;
         float   lon = 0.0f;
-        float   distance = 0.0f;
+        float   echogramDistance = 0.0f;
+        float   depth = 0.0f;
         float   nedX = 0.0f;
         float   nedY = 0.0f;
         int     cursorX = -1;

@@ -99,10 +99,10 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
             if (contact.isValid()) {
                 ContactInfo cInfo;
                 cInfo.info = contact.info;
-                cInfo.nedPos = { contact.nedX, contact.nedY, -contact.distance };
+                cInfo.nedPos = { contact.nedX, contact.nedY, -contact.depth };
                 cInfo.lat = contact.lat;
                 cInfo.lon = contact.lon;
-                cInfo.depth = contact.distance;
+                cInfo.depth = contact.depth;
 
                 r->points_.insert(epIndx, cInfo);
                 beenUpdated = true;
@@ -217,7 +217,7 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 info_ = ep->contact_.info;
                 lat_ = ep->contact_.lat;
                 lon_ = ep->contact_.lon;
-                depth_ = ep->contact_.distance;
+                depth_ = ep->contact_.echogramDistance;
             }
         }
     }

@@ -34,7 +34,7 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
             const float canvasHeight = canvas.height();
             float valueRange = cursor.distance.to - cursor.distance.from;
             float valueScale = canvasHeight / valueRange;
-            float yPos = (epoch->contact_.distance - cursor.distance.from) * valueScale;
+            float yPos = (epoch->contact_.echogramDistance - cursor.distance.from) * valueScale;
             bool intersects = false;
 
             auto& epRect = epoch->contact_.rectEcho;
@@ -60,7 +60,7 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
                     info_ = epoch->contact_.info;
                     lat_ = epoch->contact_.lat;
                     lon_ = epoch->contact_.lon;
-                    depth_ = epoch->contact_.distance;
+                    depth_ = epoch->contact_.echogramDistance;
                     setVisibleContact(true);
                     intersects = true;
                 }

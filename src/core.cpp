@@ -995,7 +995,7 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                 row_data.append(",");
             }
             if (contactDistance) {
-                row_data.append(QString::number(contact.distance, 'f', 4));
+                row_data.append(QString::number(contact.echogramDistance, 'f', 4));
             }
         }
 
