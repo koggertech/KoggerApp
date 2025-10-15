@@ -790,7 +790,7 @@ ApplicationWindow  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-                        barWidth: 50
+                        barWidth: 50 * theme.resCoeff
                         onValueChanged: {
                             core.setTimelinePosition(value);
                         }
@@ -846,7 +846,7 @@ ApplicationWindow  {
                 visible: dataset.isLastDepthValid
                 text: activeContactStatus.depthStr
                 font.bold: true
-                font.pixelSize: 40
+                font.pixelSize: 40 * theme.resCoeff
                 font.family: "monospace"
                 leftPadding: 4
             }
@@ -859,7 +859,7 @@ ApplicationWindow  {
                     leftPadding: 4
                     rightPadding: 4
                     font.bold: true
-                    font.pixelSize: 16
+                    font.pixelSize: 16 * theme.resCoeff
                 }
 
                 RowLayout {
@@ -885,7 +885,7 @@ ApplicationWindow  {
                     leftPadding: 4
                     rightPadding: 4
                     font.bold: true
-                    font.pixelSize: 16
+                    font.pixelSize: 16 * theme.resCoeff
                 }
 
                 RowLayout {

@@ -4,6 +4,9 @@
 #include "epoch_event.h"
 #include "text_renderer.h"
 
+#include "themes.h"
+extern Themes theme;
+
 
 Contacts::Contacts(QObject *parent) :
     SceneObject(new ContactsRenderImplementation, parent),
@@ -64,6 +67,14 @@ void Contacts::setContactVisible(bool state)
 
 void Contacts::clear()
 {
+    indx_ = -1;
+    positionX_ = -1;
+    positionY_ = -1;
+    info_.clear();
+    lat_ = 0.0;
+    lon_ = 0.0;
+    depth_ = 0.0;
+
     contactBounds_.clear();
     //datasetPtr_ = nullptr;
 
@@ -188,6 +199,7 @@ bool Contacts::deleteContact(int indx)
 
     auto* r = RENDER_IMPL(Contacts);
     r->points_.remove(indx);
+    r->contactBounds_.remove(indx);
 
     contactBounds_.remove(indx);
 
@@ -239,7 +251,14 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     int intersectedEpochIndx = -1;
     QPointF cursorPos(x, y);
     for (auto it = contactBounds_.begin(); it != contactBounds_.end(); ++it) {
-        if (it.value().contains(cursorPos)) {
+        auto rect = it.value();
+
+        if (!std::isfinite(rect.x()) ||
+            !std::isfinite(rect.y())) {
+            continue;
+        }
+
+        if (rect.contains(cursorPos)) {
             intersectedEpochIndx = it.key();
             break;
         }
@@ -334,7 +353,7 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
     shaderProgram->bind();
 
-    float pointSize = 50.0f;
+    float pointSize = 50.0f * theme.getResolutionCoeff();
     int posLoc        = shaderProgram->attributeLocation ("position");
     int matrixLoc     = shaderProgram->uniformLocation   ("matrix");
     int colorLoc      = shaderProgram->uniformLocation   ("color");
@@ -406,4 +425,5 @@ void Contacts::ContactsRenderImplementation::clear()
     activeContactIndx_ = -1;
     intersectedEpochIndx_ = -1;
     points_.clear();
+    contactBounds_.clear();
 }
