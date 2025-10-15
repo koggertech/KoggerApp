@@ -70,9 +70,9 @@ void DataInterpolator::interpolatePos(bool fromStart)
         const quint64 startTimeNs = convertToNanosecs(startPos.time.sec, startPos.time.nanoSec);
         const quint64 endTimeNs   = convertToNanosecs(endPos.time.sec,   endPos.time.nanoSec);
         const bool haveTimes = (startTimeNs != 0 || endTimeNs != 0) && (endTimeNs > startTimeNs);
-        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : 0ULL;
+        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : zeroNsecs;
 
-        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : 100'000'000ULL;
+        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : oneHundredNsecs;
 
         int cnt = 1;
         for (int j = firstValidIndex + 1; j < secondValidIndex; ++j, ++cnt) {
@@ -185,9 +185,9 @@ void DataInterpolator::interpolateAtt(bool fromStart)
         const quint64 endTimeNs   = convertToNanosecs(endEpoch->getPositionGNSS().time.sec,
                                                     endEpoch->getPositionGNSS().time.nanoSec);
         const bool haveTimes = (startTimeNs != 0 || endTimeNs != 0) && (endTimeNs > startTimeNs);
-        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : 0ULL;
+        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : zeroNsecs;
 
-        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : 100'000'000ULL;
+        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : oneHundredNsecs;
 
         int cnt = 1;
         for (int j = fromIndx; j < toIndx; ++j, ++cnt) {
@@ -282,21 +282,21 @@ float DataInterpolator::interpDist(float start, float end, float progress) const
 
 qint64 DataInterpolator::calcTimeDiffInNanoSecs(time_t startSecs, int startNanoSecs, time_t endSecs, int endNanoSecs) const
 {
-    qint64 stTime = static_cast<qint64>(startSecs) * 1'000'000'000 + startNanoSecs;
-    qint64 enTime = static_cast<qint64>(endSecs)   * 1'000'000'000 + endNanoSecs;
+    qint64 stTime = static_cast<qint64>(startSecs) * oneSecInNsecs + startNanoSecs;
+    qint64 enTime = static_cast<qint64>(endSecs)   * oneSecInNsecs + endNanoSecs;
 
     return enTime - stTime;
 }
 
 qint64 DataInterpolator::convertToNanosecs(time_t secs, int nanoSecs) const
 {
-    return static_cast<qint64>(secs) * 1'000'000'000 + nanoSecs;
+    return static_cast<qint64>(secs) * oneSecInNsecs + nanoSecs;
 }
 
 std::pair<time_t, int> DataInterpolator::convertFromNanosecs(qint64 totalNanoSecs) const
 {
-    time_t seconds  = static_cast<time_t>(totalNanoSecs / 1'000'000'000);
-    int nanoseconds = static_cast<int>(totalNanoSecs % 1'000'000'000);
+    time_t seconds  = static_cast<time_t>(totalNanoSecs / oneSecInNsecs);
+    int nanoseconds = static_cast<int>(totalNanoSecs % oneSecInNsecs);
 
     return { seconds, nanoseconds };
 }
