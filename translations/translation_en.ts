@@ -1316,19 +1316,19 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="36"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="37"/>
         <source> m/s    </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="47"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="74"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="99"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="48"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="77"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="105"/>
         <source> m</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="142"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="148"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -1664,27 +1664,67 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="963"/>
+        <location filename="../qml/main.qml" line="839"/>
+        <source> m</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="840"/>
+        <source>°</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="847"/>
+        <source>Boat position</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="854"/>
+        <source>Lat.:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="861"/>
+        <source>Lon.:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="871"/>
+        <source>Active point</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="878"/>
+        <source>Dist.:</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="885"/>
+        <source>Ang.:</source>
+        <translation>Az.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="1006"/>
         <source> V   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="963"/>
+        <location filename="../qml/main.qml" line="1006"/>
         <source> A   </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="963"/>
+        <location filename="../qml/main.qml" line="1006"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="970"/>
+        <location filename="../qml/main.qml" line="1013"/>
         <source> %</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1064"/>
+        <location filename="../qml/main.qml" line="1107"/>
         <source>Please wait, the file is opening</source>
         <translation></translation>
     </message>
