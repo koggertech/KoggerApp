@@ -41,7 +41,7 @@
 <context>
     <name>CContact</name>
     <message>
-        <location filename="../qml/CContact.qml" line="60"/>
+        <location filename="../qml/CContact.qml" line="65"/>
         <source>Enter text</source>
         <translation>Введите текст</translation>
     </message>
@@ -269,8 +269,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="891"/>
-        <location filename="../src/dataset.cpp" line="893"/>
+        <location filename="../src/dataset.cpp" line="918"/>
+        <location filename="../src/dataset.cpp" line="920"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -1390,37 +1390,42 @@
         <translation>заполнить</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="836"/>
+        <location filename="../qml/Plot2D.qml" line="813"/>
+        <source>invert</source>
+        <translation>инвертировать</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="851"/>
         <source>Angle range, °</source>
         <translation>Диапазон углов, °</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="888"/>
+        <location filename="../qml/Plot2D.qml" line="903"/>
         <source>Velocity range, m/s</source>
         <translation>Диапазон скоростей, м/с</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="945"/>
+        <location filename="../qml/Plot2D.qml" line="960"/>
         <source>Distance auto range</source>
         <translation>Автоматическая дистанция</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="961"/>
+        <location filename="../qml/Plot2D.qml" line="976"/>
         <source>Last data       </source>
         <translation>Последние данные       </translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="961"/>
+        <location filename="../qml/Plot2D.qml" line="976"/>
         <source>Last on screen</source>
         <translation>Последний на экране</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="961"/>
+        <location filename="../qml/Plot2D.qml" line="976"/>
         <source>Max on screen</source>
         <translation>Максимальный на экране</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="977"/>
+        <location filename="../qml/Plot2D.qml" line="992"/>
         <source>Horizontal</source>
         <translation>Горизонтальный режим</translation>
     </message>
@@ -1480,13 +1485,13 @@
     </message>
     <message>
         <location filename="../src/scene2d/plot2D_grid.cpp" line="47"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="63"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="88"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="74"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="99"/>
         <source> m</source>
         <translation> м</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="131"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="142"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -2205,12 +2210,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="924"/>
+        <location filename="../qml/main.qml" line="963"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="931"/>
+        <location filename="../qml/main.qml" line="970"/>
         <source> %</source>
         <translation> %</translation>
     </message>
@@ -2221,12 +2226,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="924"/>
+        <location filename="../qml/main.qml" line="963"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="924"/>
+        <location filename="../qml/main.qml" line="963"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
@@ -2235,7 +2240,7 @@ Please wait...</source>
         <translation type="vanished"> м/с</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1025"/>
+        <location filename="../qml/main.qml" line="1064"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

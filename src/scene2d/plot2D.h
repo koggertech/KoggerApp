@@ -104,6 +104,7 @@ public:
 
     void setGridVetricalNumber(int grids);
     void setGridFillWidth(bool state);
+    void setGridInvert(bool state);
     void setAngleVisibility(bool state);
     void setAngleRange(int angleRange);
 

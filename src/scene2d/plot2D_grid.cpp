@@ -25,6 +25,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
     const int imageHeight{ canvas.height() }, imageWidth{ canvas.width() },
         linesCount{ _lines }, textXOffset{ 30 }, textYOffset{ 10 };
 
+    // линии
     for (int i = 1; i < linesCount; ++i) {
         const int posY = i * imageHeight / linesCount;
 
@@ -47,23 +48,39 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
             lineText.append( { QString::number(rangeVal, 'f', 2) + QObject::tr(" m") } );
         }
 
-        if (isFillWidth())
-            p->drawLine(0, posY, imageWidth, posY);
-        else
-            p->drawLine(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY, imageWidth, posY); // line
+        const int textW = fm.horizontalAdvance(lineText);
 
-        if (!lineText.isEmpty())
-            p->drawText(imageWidth - fm.horizontalAdvance(lineText) - textXOffset, posY - textYOffset, lineText);
+        if (isFillWidth()) {
+            p->drawLine(0, posY, imageWidth, posY);
+        }
+        else {
+            if (invert_) {
+                p->drawLine(0, posY, textW + textXOffset, posY);
+            }
+            else {
+                p->drawLine(imageWidth - textW - textXOffset, posY, imageWidth, posY);
+            }
+        }
+
+        if (!lineText.isEmpty()) {
+            const int textX = invert_ ? textXOffset : (imageWidth - textW - textXOffset);
+            p->drawText(textX, posY - textYOffset, lineText);
+        }
     }
 
+    // глубина графика
     if (cursor.distance.isValid()) {
         p->setFont(QFont("Asap", 26, QFont::Normal));
+        QFontMetrics fm2(p->font());
         float val{ cursor.distance.to };
         bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
         QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
-        p->drawText(imageWidth - textXOffset / 2 - rangeText.count() * 25, imageHeight - 10, rangeText);
+        const int w = fm2.horizontalAdvance(rangeText);
+        const int x = invert_ ? (textXOffset * 2) : (imageWidth - textXOffset / 2 - w);
+        p->drawText(x, imageHeight - 10, rangeText);
     }
 
+    // rangefinder
     if (_rangeFinderLastVisible && cursor.distance.isValid()) {
         Epoch* lastEpoch = dataset->last();
         Epoch* preLastEpoch = dataset->lastlast();

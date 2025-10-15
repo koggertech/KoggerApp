@@ -111,6 +111,7 @@ public slots:
 
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
     void plotGridFillWidth(bool state) { setGridFillWidth(state); };
+    void plotGridInvert(bool state) { setGridInvert(state); };
     void plotAngleVisibility(bool state)   { setAngleVisibility(state); }
     void plotAngleRange(int angleRange) { setAngleRange(angleRange); }
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }

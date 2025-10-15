@@ -422,6 +422,12 @@ void Plot2D::setGridFillWidth(bool state)
     plotUpdate();
 }
 
+void Plot2D::setGridInvert(bool state)
+{
+    grid_.setInvert(state);
+    plotUpdate();
+}
+
 void Plot2D::setAngleVisibility(bool state)
 {
     grid_.setAngleVisibility(state);

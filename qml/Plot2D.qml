@@ -807,6 +807,21 @@ WaterFall {
                                     property alias fillWidthGrid: fillWidthGrid.checked
                                 }
                             }
+                            CCheck {
+                                id: invertGrid
+                                Layout.fillWidth: true
+                                text: qsTr("invert")
+                                onCheckedChanged: plotGridInvert(checked)
+                                visible: gridVisible.checked
+
+                                Component.onCompleted: {
+                                    plotGridInvert(checked)
+                                }
+                                Settings {
+                                    category: "Plot2D_" + plot.indx
+                                    property alias invertGrid: invertGrid.checked
+                                }
+                            }
                         }
 
                         SpinBoxCustom {
