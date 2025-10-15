@@ -246,6 +246,7 @@ public Q_SLOTS:
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
+    void setIsNorth(bool state);
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -315,6 +316,7 @@ private:
     bool gridVisibility_;
     bool useAngleLocation_;
     bool navigatorViewLocation_;
+    bool isNorth_ = false;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

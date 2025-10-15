@@ -12,7 +12,8 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       updateBottomTrack_(false),
       gridVisibility_(true),
       useAngleLocation_(false),
-      navigatorViewLocation_(false)
+      navigatorViewLocation_(false),
+      isNorth_(false)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
@@ -122,6 +123,18 @@ void Scene3dToolBarController::onNavigatorLocationButtonChanged(bool state)
     }
 }
 
+void Scene3dToolBarController::onIsNorthLocationButtonChanged(bool state)
+{
+    isNorth_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setIsNorth(isNorth_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
@@ -153,6 +166,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setGridVisibility(gridVisibility_);
                 graphicsScene3dViewPtr_->setNavigatorViewLocation(navigatorViewLocation_);
                 graphicsScene3dViewPtr_->setUseAngleLocation(useAngleLocation_);
+                graphicsScene3dViewPtr_->setIsNorth(isNorth_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

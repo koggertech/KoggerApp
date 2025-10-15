@@ -286,7 +286,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         cameraWasMoved = true;
 #else
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
-            if (m_camera->getIsPerspective()) {
+            if (m_camera->getIsPerspective() && !isNorth_) {
                 m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
                 m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
                 m_startMousePos = { x, y };
@@ -358,8 +358,10 @@ void GraphicsScene3dView::mouseWheelTrigger(Qt::MouseButtons mouseButton, qreal 
         setVerticalScale(tempVerticalScale);
     }
     else if (keyboardKey == Qt::Key_Shift) {
-        angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
-        cameraWasMoved = true;
+        if (!isNorth_) {
+            angleDelta.y() > 0.0f ? shiftCameraZAxis(5) : shiftCameraZAxis(-5);
+            cameraWasMoved = true;
+        }
     }
     else {
         m_camera->zoom(angleDelta.y());
@@ -378,8 +380,10 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 {
     m_camera->zoom(scaleDelta);
 
-    m_camera->rotate(prevCenter, currCenter, angleDelta, height());
-    m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta , height());
+    if (!isNorth_) {
+        m_camera->rotate(prevCenter, currCenter, angleDelta, height());
+        m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta , height());
+    }
 
     updatePlaneGrid();
     QQuickFramebufferObject::update();
@@ -553,7 +557,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
         return;
     }
 
-    if (useAngle) {
+    if (useAngle && !isNorth_) {
         const float yawDeg = datasetPtr_->getLastYaw();
         if (std::isfinite(yawDeg)) {
             const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
@@ -623,7 +627,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
         focusPoint += forwardXY * offset;
 
         // тангаж
-        const float targetPitchRad = qDegreesToRadians(30.0f);
+        const float targetPitchRad = isNorth_ ? 0.0f : qDegreesToRadians(30.0f);
         const float alpha = 0.3f;
         const float curr = m_camera->m_rotAngle.y();
         float next = curr + (targetPitchRad - curr) * alpha;
@@ -944,6 +948,28 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
     if (trackLastData_) {
         setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_);
     }
+}
+
+void GraphicsScene3dView::setIsNorth(bool state)
+{
+    if (isNorth_ == state) {
+        return;
+    }
+
+    isNorth_ = state;
+
+    if (isNorth_ && m_camera && m_camera->getIsPerspective()) {
+        m_camera->resetRotationAngle();
+        if (m_axesThumbnailCamera) {
+            m_axesThumbnailCamera->resetRotationAngle();
+        }
+
+        m_camera->resetZAxis();
+        updateProjection();
+    }
+
+    QQuickFramebufferObject::update();
+    emit cameraIsMoved();
 }
 
 //---------------------Renderer---------------------------//

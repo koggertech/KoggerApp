@@ -269,8 +269,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="918"/>
-        <location filename="../src/dataset.cpp" line="920"/>
+        <location filename="../src/dataset.cpp" line="929"/>
+        <location filename="../src/dataset.cpp" line="931"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -1882,7 +1882,11 @@
         <translation>Сбросить зум</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
+        <source>Is North mode</source>
+        <translation type="vanished">Режим Север</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="114"/>
         <source>Sync with echogram</source>
         <translation>Синхр. эхограммы</translation>
     </message>
@@ -1891,17 +1895,22 @@
         <translation type="vanished">Следовать за данными</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="143"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
+        <source>North mode</source>
+        <translation>Режим Север</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="170"/>
         <source>Grid visibility</source>
         <translation>Сетка</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="171"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="198"/>
         <source>Boat visibility</source>
         <translation>Лодка</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="199"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="226"/>
         <source>Map visibility</source>
         <translation>Карта</translation>
     </message>
@@ -2199,41 +2208,44 @@
     </message>
     <message>
         <location filename="../qml/main.qml" line="839"/>
+        <location filename="../qml/main.qml" line="841"/>
         <source> m</source>
         <translation> м</translation>
     </message>
     <message>
+        <location filename="../qml/main.qml" line="837"/>
+        <location filename="../qml/main.qml" line="838"/>
         <location filename="../qml/main.qml" line="840"/>
         <source>°</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="847"/>
+        <location filename="../qml/main.qml" line="858"/>
         <source>Boat position</source>
         <translation>Позиция лодки</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="854"/>
+        <location filename="../qml/main.qml" line="867"/>
         <source>Lat.:</source>
         <translation>Шир.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="861"/>
+        <location filename="../qml/main.qml" line="874"/>
         <source>Lon.:</source>
         <translation>Долг.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="871"/>
+        <location filename="../qml/main.qml" line="884"/>
         <source>Active point</source>
         <translation>Активная точка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="878"/>
+        <location filename="../qml/main.qml" line="893"/>
         <source>Dist.:</source>
         <translation>Дист.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="885"/>
+        <location filename="../qml/main.qml" line="900"/>
         <source>Ang.:</source>
         <translation>Аз.:</translation>
     </message>
@@ -2250,12 +2262,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1006"/>
+        <location filename="../qml/main.qml" line="1021"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1013"/>
+        <location filename="../qml/main.qml" line="1028"/>
         <source> %</source>
         <translation> %</translation>
     </message>
@@ -2266,12 +2278,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1006"/>
+        <location filename="../qml/main.qml" line="1021"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1006"/>
+        <location filename="../qml/main.qml" line="1021"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
@@ -2280,7 +2292,7 @@ Please wait...</source>
         <translation type="vanished"> м/с</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1107"/>
+        <location filename="../qml/main.qml" line="1122"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

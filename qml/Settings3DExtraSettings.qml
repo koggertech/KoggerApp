@@ -78,6 +78,33 @@ MenuFrame {
         }
 
         CheckButton {
+            id: isNorthViewButton
+            objectName: "isNorthViewButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            iconSource: "qrc:/icons/ui/location_pin.svg"
+            text: qsTr("North mode")
+            Layout.fillWidth: true
+
+            onToggled: {
+                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
+            }
+
+            onFocusChanged: {
+                settings3DSettings.focus = true
+            }
+
+            Component.onCompleted: {
+                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
+            }
+
+            Settings {
+                property alias isNorthViewButton: isNorthViewButton.checked
+            }
+        }
+
+        CheckButton {
             id: selectionToolButton
             objectName: "selectionToolButton"
             backColor: theme.controlBackColor

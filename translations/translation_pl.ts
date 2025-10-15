@@ -281,8 +281,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="918"/>
-        <location filename="../src/dataset.cpp" line="920"/>
+        <location filename="../src/dataset.cpp" line="929"/>
+        <location filename="../src/dataset.cpp" line="931"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
@@ -1894,7 +1894,11 @@
         <translation>Zresetuj powiększenie</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
+        <source>Is North mode</source>
+        <translation type="vanished">Tryb północny</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="114"/>
         <source>Sync with echogram</source>
         <translation>Sync. echogramów</translation>
     </message>
@@ -1903,17 +1907,22 @@
         <translation type="vanished">Śledź ostatnią lokalizację</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="143"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
+        <source>North mode</source>
+        <translation>Tryb północny</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="170"/>
         <source>Grid visibility</source>
         <translation>Widoczność siatki</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="171"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="198"/>
         <source>Boat visibility</source>
         <translation>Widoczność łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="199"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="226"/>
         <source>Map visibility</source>
         <translation>Widoczność mapy</translation>
     </message>
@@ -2219,41 +2228,44 @@
     </message>
     <message>
         <location filename="../qml/main.qml" line="839"/>
+        <location filename="../qml/main.qml" line="841"/>
         <source> m</source>
         <translation> m</translation>
     </message>
     <message>
+        <location filename="../qml/main.qml" line="837"/>
+        <location filename="../qml/main.qml" line="838"/>
         <location filename="../qml/main.qml" line="840"/>
         <source>°</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="847"/>
+        <location filename="../qml/main.qml" line="858"/>
         <source>Boat position</source>
         <translation>Pozycja łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="854"/>
+        <location filename="../qml/main.qml" line="867"/>
         <source>Lat.:</source>
         <translation>Szer.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="861"/>
+        <location filename="../qml/main.qml" line="874"/>
         <source>Lon.:</source>
         <translation>Dług.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="871"/>
+        <location filename="../qml/main.qml" line="884"/>
         <source>Active point</source>
         <translation>Punkt aktywny</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="878"/>
+        <location filename="../qml/main.qml" line="893"/>
         <source>Dist.:</source>
         <translation>Dyst.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="885"/>
+        <location filename="../qml/main.qml" line="900"/>
         <source>Ang.:</source>
         <translation>Az.:</translation>
     </message>
@@ -2270,12 +2282,12 @@ Please wait...</source>
 Proszę czekać...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1006"/>
+        <location filename="../qml/main.qml" line="1021"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1013"/>
+        <location filename="../qml/main.qml" line="1028"/>
         <source> %</source>
         <translation></translation>
     </message>
@@ -2286,12 +2298,12 @@ Please wait...</source>
 Proszę czekać...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1006"/>
+        <location filename="../qml/main.qml" line="1021"/>
         <source> V   </source>
         <translation> V   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1006"/>
+        <location filename="../qml/main.qml" line="1021"/>
         <source> A   </source>
         <translation> A   </translation>
     </message>
@@ -2300,7 +2312,7 @@ Proszę czekać...</translation>
         <translation type="vanished"> m/s</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1107"/>
+        <location filename="../qml/main.qml" line="1122"/>
         <source>Please wait, the file is opening</source>
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>
