@@ -89,7 +89,7 @@ MenuFrame {
 
         CheckButton {
             id: navigationViewButton
-            objectName: "selectionToolButton"
+            objectName: "navigationViewButton"
             backColor: theme.controlBackColor
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
