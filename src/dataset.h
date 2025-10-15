@@ -39,6 +39,7 @@ public:
     Q_PROPERTY(float distToContact        READ getDistToContact NOTIFY lastPositionChanged)
     Q_PROPERTY(float angleToContact       READ getAngleToContact NOTIFY lastPositionChanged)
     Q_PROPERTY(bool isActiveContactIndxValid READ isValidActiveContactIndx NOTIFY activeContactChanged)
+    Q_PROPERTY(bool isBoatCoordinateValid READ isValidBoatCoordinate NOTIFY lastPositionChanged)
 
     /*methods*/
     Dataset();
@@ -184,6 +185,7 @@ public:
 public slots:
     friend class DataProcessor;
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1; };
+    bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     float getBoatLatitude()          const { return boatLatitute_;            };
     float getBoatLongitude()         const { return boatLongitude_;           };
     float getDistToContact()         const { return distToActiveContact_;     };

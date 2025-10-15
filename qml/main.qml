@@ -813,36 +813,79 @@ ApplicationWindow  {
 
     MenuFrame {
         id: activeContactStatus
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        visible: dataset.isActiveContactIndxValid
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 12
+        visible: dataset.isBoatCoordinateValid
         isDraggable: true
         isOpacityControlled: true
+        horizontalMargins: 12
+        verticalMargins: 10
+        spacing: 8
+
+        function toDMS(value, isLat) {
+            var hemi = isLat ? (value >= 0 ? "N" : "S") : (value >= 0 ? "E" : "W");
+            //var v = Math.abs(value);
+            //var d = Math.floor(v);
+            //var mFloat = (v - d) * 60.0;
+            //var m = Math.floor(mFloat);
+            //var s = (mFloat - m) * 60.0;
+            //return hemi + " " + d + "° " + m + "' " + s.toFixed(1) + "\"";
+            return hemi + " " + Math.abs(value.toFixed(4));
+        }
+
+        property string latDms: toDMS(dataset.boatLatitude,  true)
+        property string lonDms: toDMS(dataset.boatLongitude, false)
+        property string distStr: dataset.distToContact.toFixed(1) + qsTr(" m")
+        property string angStr: dataset.angleToContact.toFixed(1) + qsTr("°")
 
         ColumnLayout {
-            CText {
-                id: boatLatitude
-                rightPadding: 4
-                leftPadding: 4
-                text: dataset.boatLatitude.toFixed(4)
+            spacing: 6
+
+            ColumnLayout {
+                CText {
+                    text: qsTr("Boat position")
+                    leftPadding: 4
+                    rightPadding: 4
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: activeContactStatus.latDms; }
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: activeContactStatus.lonDms; }
+                }
             }
-            CText {
-                id: boatLongitude
-                rightPadding: 4
-                leftPadding: 4
-                text: dataset.boatLongitude.toFixed(4)
-            }
-            CText {
-                id: distToContact
-                rightPadding: 4
-                leftPadding: 4
-                text: dataset.distToContact.toFixed(4)
-            }
-            CText {
-                id: angleToContact
-                rightPadding: 4
-                leftPadding: 4
-                text: dataset.angleToContact.toFixed(4)
+
+            ColumnLayout {
+                visible: dataset.isActiveContactIndxValid
+
+                CText {
+                    text: qsTr("Active point")
+                    leftPadding: 4
+                    rightPadding: 4
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Dist.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: activeContactStatus.distStr; }
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Ang.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: activeContactStatus.angStr; }
+                }
             }
         }
     }
