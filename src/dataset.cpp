@@ -740,6 +740,8 @@ void Dataset::resetDataset()
 
     emit channelsUpdated();
     emit dataUpdate();
+    emit lastPositionChanged();
+    emit activeContactChanged();
 }
 
 void Dataset::resetRenderBuffers()
