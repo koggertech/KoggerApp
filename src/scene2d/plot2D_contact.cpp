@@ -62,7 +62,7 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
                     info_ = epoch->contact_.info;
                     lat_ = epoch->contact_.lat;
                     lon_ = epoch->contact_.lon;
-                    depth_ = epoch->contact_.echogramDistance;
+                    depth_ = epoch->contact_.depth;// echogramDistance;
                     setVisibleContact(true);
                     intersects = true;
                 }

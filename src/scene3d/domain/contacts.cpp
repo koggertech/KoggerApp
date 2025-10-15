@@ -275,7 +275,7 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 info_ = ep->contact_.info;
                 lat_ = ep->contact_.lat;
                 lon_ = ep->contact_.lon;
-                depth_ = ep->contact_.echogramDistance;
+                depth_ = ep->contact_.depth;// echogramDistance;
             }
         }
     }
