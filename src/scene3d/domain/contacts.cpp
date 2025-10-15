@@ -180,6 +180,10 @@ bool Contacts::deleteContact(int indx)
 
     ep->contact_.clear();
 
+    if (datasetPtr_->getActiveContactIndx() == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+    }
+
     emit datasetPtr_->dataUpdate();
 
     auto* r = RENDER_IMPL(Contacts);

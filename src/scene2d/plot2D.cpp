@@ -852,6 +852,10 @@ bool Plot2D::deleteContact(int indx)
 
     ep->contact_.clear();
 
+    if (datasetPtr_->getActiveContactIndx() == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+    }
+
     sendSyncEvent(indx, ContactDeleted);
 
     plotUpdate();
