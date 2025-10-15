@@ -747,6 +747,7 @@ void Dataset::resetDataset()
     angleToActiveContact_ = 0.0f;
     lastDepth_            = 0.0f;
 
+    emit lastDepthChanged();
     emit channelsUpdated();
     emit dataUpdate();
     emit lastPositionChanged();
