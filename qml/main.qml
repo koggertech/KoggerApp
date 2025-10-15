@@ -790,7 +790,7 @@ ApplicationWindow  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-
+                        barWidth: 50
                         onValueChanged: {
                             core.setTimelinePosition(value);
                         }
