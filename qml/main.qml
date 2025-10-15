@@ -834,31 +834,44 @@ ApplicationWindow  {
             return hemi + " " + Math.abs(value.toFixed(4));
         }
 
-        property string latDms: toDMS(dataset.boatLatitude,  true)
-        property string lonDms: toDMS(dataset.boatLongitude, false)
+        property string latDms: toDMS(dataset.boatLatitude,  true) + qsTr("°")
+        property string lonDms: toDMS(dataset.boatLongitude, false) + qsTr("°")
         property string distStr: dataset.distToContact.toFixed(1) + qsTr(" m")
         property string angStr: dataset.angleToContact.toFixed(1) + qsTr("°")
+        property string depthStr: dataset.depth.toFixed(1) + qsTr(" m")
 
         ColumnLayout {
             spacing: 6
+            CText {
+                visible: dataset.isLastDepthValid
+                text: activeContactStatus.depthStr
+                font.bold: true
+                font.pixelSize: 40
+                font.family: "monospace"
+                leftPadding: 4
+            }
 
             ColumnLayout {
+                visible: dataset.isBoatCoordinateValid
+
                 CText {
                     text: qsTr("Boat position")
                     leftPadding: 4
                     rightPadding: 4
+                    font.bold: true
+                    font.pixelSize: 16
                 }
 
                 RowLayout {
                     spacing: 6
-                    CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4 }
+                    CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4; }
                     Item  { Layout.fillWidth: true }
                     CText { text: activeContactStatus.latDms; }
                 }
 
                 RowLayout {
                     spacing: 6
-                    CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4 }
+                    CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4; }
                     Item  { Layout.fillWidth: true }
                     CText { text: activeContactStatus.lonDms; }
                 }
@@ -871,6 +884,8 @@ ApplicationWindow  {
                     text: qsTr("Active point")
                     leftPadding: 4
                     rightPadding: 4
+                    font.bold: true
+                    font.pixelSize: 16
                 }
 
                 RowLayout {

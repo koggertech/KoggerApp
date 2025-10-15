@@ -382,6 +382,9 @@ void Dataset::addDist(const ChannelId& channelId, int dist)
     }
 
     pool_[pool_index].setDist(channelId, dist);
+
+    setLastDepth(dist);
+
     emit dataUpdate();
 }
 
@@ -394,6 +397,8 @@ void Dataset::addRangefinder(const ChannelId& channelId, float distance)
     if (epoch->distAvail()) {
         epoch = addNewEpoch();
     }
+
+    setLastDepth(distance * 1000);
 
     epoch->setDist(channelId, distance * 1000);
 
@@ -619,6 +624,9 @@ void Dataset::addDepth(float depth) {
     if(last_epoch->isDepthAvail()) {
         last_epoch = addNewEpoch();
     }
+
+    setLastDepth(depth);
+
     last_epoch->setDepth(depth);
 }
 
@@ -737,6 +745,7 @@ void Dataset::resetDataset()
     boatLongitude_        = 0.0f;
     distToActiveContact_  = 0.0f;
     angleToActiveContact_ = 0.0f;
+    lastDepth_            = 0.0f;
 
     emit channelsUpdated();
     emit dataUpdate();
@@ -971,6 +980,8 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
     }
 
     if (settedChart) {
+        setLastDepth(dist);
+
         if (firstChannelId_.channelId_ != channelId) { // only if first channel updated
             return;
         }
@@ -1095,6 +1106,13 @@ void Dataset::updateEpochWithChart(const ChannelId &channelId, const ChartParame
     epoch.setChart(channelId, data, resolution, offset);
     epoch.setRecParameters(channelId, recParam);
     epoch.setChartParameters(channelId, chartParams);
+}
+
+void Dataset::setLastDepth(float val)
+{
+    lastDepth_ = val;
+
+    emit lastDepthChanged();
 }
 
 std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QString& name) const

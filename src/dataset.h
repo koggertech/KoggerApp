@@ -34,12 +34,14 @@ public:
         kConnection
     };
 
-    Q_PROPERTY(float boatLatitude         READ getBoatLatitude NOTIFY lastPositionChanged)
-    Q_PROPERTY(float boatLongitude        READ getBoatLongitude NOTIFY lastPositionChanged)
-    Q_PROPERTY(float distToContact        READ getDistToContact NOTIFY lastPositionChanged)
-    Q_PROPERTY(float angleToContact       READ getAngleToContact NOTIFY lastPositionChanged)
-    Q_PROPERTY(bool isActiveContactIndxValid READ isValidActiveContactIndx NOTIFY activeContactChanged)
-    Q_PROPERTY(bool isBoatCoordinateValid READ isValidBoatCoordinate NOTIFY lastPositionChanged)
+    Q_PROPERTY(float boatLatitude             READ getBoatLatitude          NOTIFY lastPositionChanged)
+    Q_PROPERTY(float boatLongitude            READ getBoatLongitude         NOTIFY lastPositionChanged)
+    Q_PROPERTY(float distToContact            READ getDistToContact         NOTIFY lastPositionChanged)
+    Q_PROPERTY(float angleToContact           READ getAngleToContact        NOTIFY lastPositionChanged)
+    Q_PROPERTY(bool  isActiveContactIndxValid READ isValidActiveContactIndx NOTIFY activeContactChanged)
+    Q_PROPERTY(bool  isBoatCoordinateValid    READ isValidBoatCoordinate    NOTIFY lastPositionChanged)
+    Q_PROPERTY(float isLastDepthValid         READ isValidLastDepth         NOTIFY lastDepthChanged)
+    Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
 
     /*methods*/
     Dataset();
@@ -186,10 +188,12 @@ public slots:
     friend class DataProcessor;
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1; };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
+    bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
     float getBoatLatitude()          const { return boatLatitute_;            };
     float getBoatLongitude()         const { return boatLongitude_;           };
     float getDistToContact()         const { return distToActiveContact_;     };
     float getAngleToContact()        const { return angleToActiveContact_;    };
+    float getLastDepth()             const { return lastDepth_;               };
 
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
@@ -270,6 +274,7 @@ signals:
     void redrawEpochs(const QSet<int>& indxs);
     void lastPositionChanged();
     void activeContactChanged();
+    void lastDepthChanged();
 
 protected:
 
@@ -316,6 +321,7 @@ private:
     LlaRefState getCurrentLlaRefState() const;
     bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
+    void setLastDepth(float val);
 
     /*data*/
     mutable QReadWriteLock lock_;
@@ -341,4 +347,5 @@ private:
     float boatLongitude_        = 0.0f;
     float distToActiveContact_  = 0.0f;
     float angleToActiveContact_ = 0.0f;
+    float lastDepth_            = 0.0f;
 };
