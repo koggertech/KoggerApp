@@ -943,7 +943,9 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
 
     boatTrack_->onPositionAdded(indx);
 
-    navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), datasetPtr_->getLastYaw() - 90.f);
+    if (float lastYaw = datasetPtr_->getLastYaw(); std::isfinite(lastYaw)) {
+        navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), lastYaw - 90.f);
+    }
 
     if (trackLastData_) {
         setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_);
