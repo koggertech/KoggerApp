@@ -107,7 +107,7 @@ void LocationReader::onPositionUpdatedSec()
                      .arg(c.altitude(),  0, 'f', 1)
                      .arg(info.attribute(QGeoPositionInfo::Direction), 0, 'f', 1)
                      .arg(info.timestamp().toString(Qt::ISODate));
-    core.consoleInfo(str);
+    //core.consoleInfo(str);
 
     emit positionUpdated(info);
 
