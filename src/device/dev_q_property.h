@@ -11,6 +11,7 @@ public:
         DevDriver(parent){
     }
 
+#ifndef SEPARATE_READING
     Q_PROPERTY(int distMax READ distMax WRITE setDistMax NOTIFY distSetupChanged)
     Q_PROPERTY(int distDeadZone READ distDeadZone WRITE setDistDeadZone NOTIFY distSetupChanged)
     Q_PROPERTY(int distConfidence READ distConfidence WRITE setConfidence NOTIFY distSetupChanged)
@@ -69,6 +70,7 @@ public:
     Q_PROPERTY(bool isSoundSpeedSupport READ isSoundSpeedSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isAddressSupport READ isAddressSupport NOTIFY deviceVersionChanged)
     Q_PROPERTY(bool isUpgradeSupport READ isUpgradeSupport NOTIFY deviceVersionChanged)
+#endif
 
 };
 
