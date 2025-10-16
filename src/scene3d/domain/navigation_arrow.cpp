@@ -22,8 +22,15 @@ NavigationArrow::NavigationArrowRenderImplementation::~NavigationArrowRenderImpl
 void NavigationArrow::setPositionAndAngle(const QVector3D& position, float degAngle)
 {
     auto* r = RENDER_IMPL(NavigationArrow);
-    r->position_ = position;
-    r->angle_ = degAngle;
+
+    if (std::isfinite(position.x()) &&
+        std::isfinite(position.y())) {
+        r->position_ = position;
+    }
+
+    if (std::isfinite(degAngle)) {
+        r->angle_ = degAngle;
+    }
 
     Q_EMIT changed();
 }

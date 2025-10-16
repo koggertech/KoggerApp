@@ -72,7 +72,7 @@ void LocationReader::onPositionUpdated(const QGeoPositionInfo &info)
                   + "Alt: " + QString::number(c.altitude(), 'f', 4)  + " "
                   + "Yaw: " + QString::number(info.attribute(QGeoPositionInfo::Attribute::Direction), 'f', 4);
 
-    core.consoleInfo(str);
+    //core.consoleInfo(str);
 
     emit positionUpdated(info);
 }

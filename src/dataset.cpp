@@ -575,7 +575,8 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         }
         uint64_t lastIndx = pool_.size() - 1;
         if (!getLlaRef().isInit) {
-            setLlaRef(LLARef(pos.lla), getCurrentLlaRefState()); // TODO
+            LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
+            setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
         }
         lastEp->setPositionLLA(pos);
         lastEp->setPositionRef(&_llaRef);

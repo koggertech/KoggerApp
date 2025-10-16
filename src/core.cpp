@@ -1564,7 +1564,7 @@ void Core::loadLLARefFromSettings()
         ref.isInit = settings.value("isInit", false).toBool();
         settings.endGroup();
 
-        datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kSettings);
+        datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kUndefined/*kSettings*/); // TODO!!!
 
         //qDebug() << "loaded: " << ref.refLla.latitude << ref.refLla.longitude;
     }
