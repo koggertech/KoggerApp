@@ -439,8 +439,6 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
     // prepare intermediate data (selecting epochs to process)
     for (const auto& i : indxs) {
-        bool isAcceptedEpoch = false;
-
         auto epoch = datasetPtr_->fromIndexCopy(i);
         if (!epoch.isValid()) {
             continue;
@@ -480,7 +478,6 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             }
 
             if (acceptedEven || acceptedOdd) {
-                isAcceptedEpoch = true;
                 lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
             }
         }

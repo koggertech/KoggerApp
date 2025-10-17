@@ -527,7 +527,6 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
     }
 
     last_epoch->setAtt(yaw, pitch, roll);
-    last_epoch->isAttAvail();
 
     _lastYaw = yaw;
     _lastPitch = pitch;
@@ -725,6 +724,7 @@ void Dataset::resetDataset()
     bSProc_->clear();
 
     pool_.clear();
+    pool_.shrink_to_fit();//
     _llaRef.isInit = false;
     lastBottomTrackEpoch_ = 0;
     resetDistProcessing();
