@@ -521,15 +521,23 @@ ColumnLayout {
         //}
 
         CheckButton {
-            id: gpsCheck
+            id: gpsCheckButton
             text: qsTr("GPS")
-            //checkedColor: core.isGPSAlive ? "green" : "red"
-            //color: "yellow"
-            //backColor: gpsCheck.checked ? "" : "blue"
             checkedBackColor: core.isGPSAlive ? "green" : "red"
 
             Layout.alignment: Qt.AlignRight
-            onCheckedChanged: core.useGPS = checked
+            onCheckedChanged: {
+
+                core.useGPS = checked
+            }
+
+            Component.onCompleted: {
+                core.useGPS = checked
+            }
+
+            Settings {
+                property alias gpsCheckButton: gpsCheckButton.checked
+            }
         }
     }
 
