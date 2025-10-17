@@ -618,7 +618,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
         if (!forwardXY.isNull()) {
             forwardXY.normalize();
         }
-        const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView()));
+        const float dist = std::max(1.0f, static_cast<float>(m_camera->distForMapView())) * 0.7f;
         const float kMin      = 10.0f;
         const float kFrac     = 0.30f;
         const float kMaxFrac  = 0.85f;
