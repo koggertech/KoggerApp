@@ -77,13 +77,16 @@ void DataInterpolator::interpolatePos(bool fromStart)
         int cnt = 1;
         for (int j = firstValidIndex + 1; j < secondValidIndex; ++j, ++cnt) {
             if (auto* ep = datasetPtr_->fromIndex(j)) {
-                quint64 currentNs = haveTimes ? (convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec)) : (startTimeNs + stepNs * cnt);
-
-                if (!haveTimes) {
-                    const auto t = convertFromNanosecs(currentNs);
-                    ep->setGNSSSec(t.first);
-                    ep->setGNSSNanoSec(t.second);
-                }
+                // quint64 currentNs = haveTimes ? (convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec)) : (startTimeNs + stepNs * cnt);
+                // if (!haveTimes) {
+                //     const auto t = convertFromNanosecs(currentNs);
+                //     ep->setGNSSSec(t.first);
+                //     ep->setGNSSNanoSec(t.second);
+                // }
+                quint64 currentNs = (startTimeNs + stepNs * cnt);
+                const auto t = convertFromNanosecs(currentNs);
+                ep->setGNSSSec(t.first);
+                ep->setGNSSNanoSec(t.second);
 
                 double progress = haveTimes ? double(currentNs - startTimeNs) / double(timeDiffNs) : double(cnt) / double(numSteps);
                 if (!haveTimes || currentNs <= startTimeNs || currentNs >= endTimeNs) {

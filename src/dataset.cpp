@@ -566,6 +566,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
     Position pos;
     pos.lla = LLA(lat, lon);
     pos.time = DateTime(unix_time, nanosec);
+    const bool oneHzNoTimestamp = (unix_time == 0 && nanosec == 0);
 
     if (pos.lla.isCoordinatesValid()) {
         if (lastEp->getPositionGNSS().lla.isCoordinatesValid()) {
@@ -581,6 +582,39 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         lastEp->setPositionRef(&_llaRef);
         lastEp->setPositionDataType(DataType::kRaw);
         interpolator_.interpolatePos(false);
+
+        if (Epoch* prevEp = lastlast(); prevEp) {
+            const auto& prev = prevEp->getPositionGNSS();
+            if (prev.lla.isCoordinatesValid()) {
+                const double dist = distanceMetersLLA(prev.lla.latitude, prev.lla.longitude, pos.lla.latitude,  pos.lla.longitude);
+
+                if (oneHzNoTimestamp) {
+                    speed_ = (dist / 0.1) * 3.6; // TODO: kostyl
+                }
+                else {
+                    const auto& c = pos.time;
+                    const auto& p = prev.time;
+
+                    int64_t dsec  = int64_t(c.sec)     - int64_t(p.sec);
+                    int64_t dnano = int64_t(c.nanoSec) - int64_t(p.nanoSec);
+                    if (dnano < 0) {
+                        dsec -= 1;
+                        dnano += 1000000000;
+                    }
+
+                    double dt = double(dsec) + double(dnano) * 1e-9;
+
+                    if (dt <= 0.0) {
+                        dt = 1.0;
+                    }
+
+                    speed_ = (dist / dt) * 3.6;
+                }
+
+                emit speedChanged();
+            }
+        }
+
         //qDebug() << "add pos for" << lastIndx;
 
         boatLatitute_ = pos.lla.latitude;

@@ -232,19 +232,19 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="751"/>
-        <location filename="../qml/ConnectionViewer.qml" line="916"/>
+        <location filename="../qml/ConnectionViewer.qml" line="759"/>
+        <location filename="../qml/ConnectionViewer.qml" line="924"/>
         <source>Enter path</source>
         <translation>Выберите путь</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="942"/>
-        <location filename="../qml/ConnectionViewer.qml" line="976"/>
+        <location filename="../qml/ConnectionViewer.qml" line="950"/>
+        <location filename="../qml/ConnectionViewer.qml" line="984"/>
         <source>Please choose a file</source>
         <translation>Выберите файл</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="1018"/>
+        <location filename="../qml/ConnectionViewer.qml" line="1026"/>
         <source>Undefined</source>
         <translation>Неопределён</translation>
     </message>
@@ -269,8 +269,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="929"/>
-        <location filename="../src/dataset.cpp" line="931"/>
+        <location filename="../src/dataset.cpp" line="965"/>
+        <location filename="../src/dataset.cpp" line="967"/>
         <source>None</source>
         <translation>Отсутствует</translation>
     </message>
@@ -2220,32 +2220,37 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="858"/>
+        <location filename="../qml/main.qml" line="842"/>
+        <source> km/h</source>
+        <translation> км/ч</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="872"/>
         <source>Boat position</source>
         <translation>Позиция лодки</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="867"/>
+        <location filename="../qml/main.qml" line="881"/>
         <source>Lat.:</source>
         <translation>Шир.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="874"/>
+        <location filename="../qml/main.qml" line="888"/>
         <source>Lon.:</source>
         <translation>Долг.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="884"/>
+        <location filename="../qml/main.qml" line="898"/>
         <source>Active point</source>
         <translation>Активная точка</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="893"/>
+        <location filename="../qml/main.qml" line="907"/>
         <source>Dist.:</source>
         <translation>Дист.:</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="900"/>
+        <location filename="../qml/main.qml" line="914"/>
         <source>Ang.:</source>
         <translation>Аз.:</translation>
     </message>
@@ -2262,12 +2267,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1021"/>
+        <location filename="../qml/main.qml" line="1035"/>
         <source> m/s </source>
         <translation> м/с </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1028"/>
+        <location filename="../qml/main.qml" line="1042"/>
         <source> %</source>
         <translation> %</translation>
     </message>
@@ -2278,12 +2283,12 @@ Please wait...</source>
 Пожалуйста, подождите...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1021"/>
+        <location filename="../qml/main.qml" line="1035"/>
         <source> V   </source>
         <translation> В   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1021"/>
+        <location filename="../qml/main.qml" line="1035"/>
         <source> A   </source>
         <translation> А   </translation>
     </message>
@@ -2292,7 +2297,7 @@ Please wait...</source>
         <translation type="vanished"> м/с</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1122"/>
+        <location filename="../qml/main.qml" line="1136"/>
         <source>Please wait, the file is opening</source>
         <translation>Пожалуйста подождите, файл открывается</translation>
     </message>

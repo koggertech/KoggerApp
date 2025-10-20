@@ -42,6 +42,8 @@ public:
     Q_PROPERTY(bool  isBoatCoordinateValid    READ isValidBoatCoordinate    NOTIFY lastPositionChanged)
     Q_PROPERTY(float isLastDepthValid         READ isValidLastDepth         NOTIFY lastDepthChanged)
     Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
+    Q_PROPERTY(float isSpeedValid             READ isValidSpeed             NOTIFY speedChanged)
+    Q_PROPERTY(float speed                    READ getSpeed                 NOTIFY speedChanged)
 
     /*methods*/
     Dataset();
@@ -186,15 +188,16 @@ public:
 
 public slots:
     friend class DataProcessor;
-    bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1; };
+    bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
-    float getBoatLatitude()          const { return boatLatitute_;            };
-    float getBoatLongitude()         const { return boatLongitude_;           };
-    float getDistToContact()         const { return distToActiveContact_;     };
-    float getAngleToContact()        const { return angleToActiveContact_;    };
-    float getLastDepth()             const { return lastDepth_;               };
-
+    bool isValidSpeed() const              { return qFuzzyIsNull(speed_);      };
+    float getBoatLatitude() const          { return boatLatitute_;             };
+    float getBoatLongitude() const         { return boatLongitude_;            };
+    float getDistToContact() const         { return distToActiveContact_;      };
+    float getAngleToContact() const        { return angleToActiveContact_;     };
+    float getLastDepth() const             { return lastDepth_;                };
+    float getSpeed() const                 { return speed_;                    };
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
     void addTimestamp(int timestamp);
@@ -275,6 +278,7 @@ signals:
     void lastPositionChanged();
     void activeContactChanged();
     void lastDepthChanged();
+    void speedChanged();
 
 protected:
 
@@ -348,4 +352,5 @@ private:
     float distToActiveContact_  = 0.0f;
     float angleToActiveContact_ = 0.0f;
     float lastDepth_            = 0.0f;
+    float speed_                = 0.0f;
 };

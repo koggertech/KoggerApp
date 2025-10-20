@@ -839,16 +839,30 @@ ApplicationWindow  {
         property string distStr: dataset.distToContact.toFixed(1) + qsTr(" m")
         property string angStr: dataset.angleToContact.toFixed(1) + qsTr("°")
         property string depthStr: dataset.depth.toFixed(1) + qsTr(" m")
+        property string speedStr: dataset.speed.toFixed(1) + qsTr(" km/h")
 
         ColumnLayout {
             spacing: 6
-            CText {
-                visible: dataset.isLastDepthValid
-                text: activeContactStatus.depthStr
-                font.bold: true
-                font.pixelSize: 40 * theme.resCoeff
-                font.family: "monospace"
-                leftPadding: 4
+
+            ColumnLayout {
+
+                CText {
+                    visible: dataset.isLastDepthValid
+                    text: activeContactStatus.depthStr
+                    font.bold: true
+                    font.pixelSize: 40 * theme.resCoeff
+                    font.family: "monospace"
+                    leftPadding: 4
+                }
+
+                CText {
+                    visible: dataset.isValidSpeed
+                    text: activeContactStatus.speedStr
+                    font.bold: true
+                    font.pixelSize: 40 * theme.resCoeff
+                    font.family: "monospace"
+                    leftPadding: 4
+                }
             }
 
             ColumnLayout {
