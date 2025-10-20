@@ -823,23 +823,52 @@ ApplicationWindow  {
         verticalMargins: 10
         spacing: 8
 
+        function lpad(s, w, ch) {
+            s = String(s)
+            while (s.length < w) s = (ch || ' ') + s
+            return s
+        }
+        function formatFixed(value, fracDigits, intWidth) {
+            if (!isFinite(value)) return lpad("-", intWidth + 1 + fracDigits)
+            var sign = value < 0 ? "-" : " "
+            var abs  = Math.abs(value)
+            var s    = abs.toFixed(fracDigits)
+            var p    = s.split(".")
+            var intP = lpad(p[0], intWidth, " ")
+            return sign + intP + (fracDigits > 0 ? "." + p[1] : "")
+        }
         function toDMS(value, isLat) {
             var hemi = isLat ? (value >= 0 ? "N" : "S") : (value >= 0 ? "E" : "W");
-            //var v = Math.abs(value);
-            //var d = Math.floor(v);
-            //var mFloat = (v - d) * 60.0;
-            //var m = Math.floor(mFloat);
-            //var s = (mFloat - m) * 60.0;
-            //return hemi + " " + d + "° " + m + "' " + s.toFixed(1) + "\"";
-            return hemi + " " + Math.abs(value.toFixed(4));
+            var abs  = Math.abs(value)
+            var s    = abs.toFixed(4)
+            var p    = s.split(".")
+            var intP = lpad(p[0], 3, " ")
+            return hemi + " " + intP + "." + p[1]
         }
 
-        property string latDms: toDMS(dataset.boatLatitude,  true) + qsTr("°")
-        property string lonDms: toDMS(dataset.boatLongitude, false) + qsTr("°")
-        property string distStr: dataset.distToContact.toFixed(1) + qsTr(" m")
-        property string angStr: dataset.angleToContact.toFixed(1) + qsTr("°")
-        property string depthStr: dataset.depth.toFixed(1) + qsTr(" m")
-        property string speedStr: dataset.speed.toFixed(1) + qsTr(" km/h")
+        property string latDms: ""
+        property string lonDms: ""
+        property string distStr: ""
+        property string angStr: ""
+        property string depthStr: ""
+        property string speedStr: ""
+
+        function updateFields() {
+            latDms   = toDMS(dataset.boatLatitude,  true)  + qsTr("°")
+            lonDms   = toDMS(dataset.boatLongitude, false) + qsTr("°")
+            distStr  = formatFixed(dataset.distToContact, 1, 3) + qsTr(" m")
+            angStr   = formatFixed(dataset.angleToContact, 1, 3) + qsTr("°")
+            depthStr = formatFixed(dataset.depth, 1, 3) + qsTr(" m")
+            speedStr = formatFixed(dataset.speed, 1, 3) + qsTr(" km/h")
+        }
+
+        Timer {
+            interval: 333
+            repeat: true
+            running: activeContactStatus.visible
+            triggeredOnStart: true
+            onTriggered: activeContactStatus.updateFields()
+        }
 
         ColumnLayout {
             spacing: 6
