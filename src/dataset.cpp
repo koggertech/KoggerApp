@@ -404,7 +404,7 @@ void Dataset::addRangefinder(const ChannelId& channelId, float distance)
         epoch = addNewEpoch();
     }
 
-    setLastDepth(distance * 1000);
+    setLastDepth(distance);
 
     epoch->setDist(channelId, distance * 1000);
 
