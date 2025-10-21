@@ -602,8 +602,8 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
     }
 
     // pos
-    NED posNed = epoch->getPositionGNSS().ned;
-    QVector3D currPos(posNed.n, posNed.e, 1);
+    NED boatPosNed = epoch->getPositionGNSS().ned;
+    QVector3D currPos(boatPosNed.n, boatPosNed.e, 1);
     if (currPos == QVector3D()) {
         return;
     }
@@ -936,19 +936,19 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         return;
     }
 
-    const Position pos = epPtr->getPositionGNSS();
-    if (!pos.ned.isCoordinatesValid()) {
+    const Position boatPos = epPtr->getPositionGNSS();
+    if (!boatPos.ned.isCoordinatesValid()) {
         return;
     }
 
-    boatTrack_->onPositionAdded(indx);
+    boatTrack_->onPositionAdded(indx); // сюда лодка
 
     if (float lastYaw = datasetPtr_->getLastYaw(); std::isfinite(lastYaw)) {
-        navigationArrow_->setPositionAndAngle(QVector3D(pos.ned.n, pos.ned.e, !isfinite(pos.ned.d) ? 0.f : pos.ned.d), lastYaw - 90.f);
+        navigationArrow_->setPositionAndAngle(QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d), lastYaw - 90.f); // сюда лодка
     }
 
     if (trackLastData_) {
-        setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_);
+        setLastEpochFocusView(useAngleLocation_, navigatorViewLocation_); // сюда лодка
     }
 }
 

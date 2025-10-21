@@ -167,6 +167,7 @@ public:
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setPositionLLA(Position position);
+    void setSonarPosition(Position val);
     void setPositionLLA(const LLA& lla);
     void setPositionNED(const NED& ned);
     void setExternalPosition(Position position);
@@ -180,6 +181,8 @@ public:
     void setPositionDataType(DataType dataType);
     DataType getPositionDataType() const { return _positionGNSS.dataType; };
 
+    void setSonarPositionDataType(DataType dataType);
+    DataType getSonarPositionDataType() const { return sonarPosition_.dataType; };
     void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
     ComplexSignals& complexSignals() { return _complex; }
     //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
@@ -412,6 +415,7 @@ public:
 
     Position getPositionGNSS() { return _positionGNSS; }
     Position getExternalPosition() { return _positionExternal; }
+    Position getSonarPosition() { return sonarPosition_; }
 
     uint32_t positionTimeUnix() { return _positionGNSS.time.sec; }
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
@@ -588,6 +592,7 @@ protected:
 
     Position _positionGNSS;
     Position _positionExternal;
+    Position sonarPosition_;
 
     struct {
         double hspeed = NAN;
@@ -619,6 +624,7 @@ protected:
         bool distAvail = false;
 
         bool posAvail = false;
+        bool sonarPosAvail = false;
 
         bool tempAvail = false;
         bool isDVLSolutionAvail = false;

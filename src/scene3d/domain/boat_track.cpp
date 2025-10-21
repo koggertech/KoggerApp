@@ -62,8 +62,8 @@ void BoatTrack::onPositionAdded(uint64_t indx)
 
     for (int i = fromIndx; i < toIndx; ++i) {
         if (auto* ep = datasetPtr_->fromIndex(i); ep) {
-            if (auto posNed = ep->getPositionGNSS().ned; posNed.isCoordinatesValid()) {
-                prepData[i] = QVector3D(posNed.n, posNed.e, 0);
+            if (auto boatPosNed = ep->getPositionGNSS().ned; boatPosNed.isCoordinatesValid()) {
+                prepData[i] = QVector3D(boatPosNed.n, boatPosNed.e, 0);
                 selectedIndices_.insert(validPosCounter++, i);
 
                 //lastPos_ = prepData[i]; // TODO
@@ -94,11 +94,11 @@ void BoatTrack::selectEpoch(int epochIndex)
         return;
 
     if (auto* epoch = datasetPtr_->fromIndex(epochIndex); epoch) {
-        NED epNed = epoch->getPositionGNSS().ned;
+        NED boatPosNed = epoch->getPositionGNSS().ned;
 
-        if (epNed.isCoordinatesValid()) {
+        if (boatPosNed.isCoordinatesValid()) {
             auto* r = RENDER_IMPL(BoatTrack);
-            r->boatTrackVertice_ = QVector3D(epNed.n, epNed.e, 0.0f);
+            r->boatTrackVertice_ = QVector3D(boatPosNed.n, boatPosNed.e, 0.0f);
 
             // channel select logic from bottomTrack
             bool beenBottomSelected{ false };
@@ -106,7 +106,7 @@ void BoatTrack::selectEpoch(int epochIndex)
             if (datasetPtr_) {
                 if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
                     if (float distance = -1.f * static_cast<float>(epoch->distProccesing(datasetChannels.first().channelId_)); isfinite(distance)) {
-                        r->bottomTrackVertice_ = QVector3D(epNed.n, epNed.e, distance);
+                        r->bottomTrackVertice_ = QVector3D(boatPosNed.n, boatPosNed.e, distance); //
                         beenBottomSelected = true;
                     }
                 }
@@ -154,9 +154,9 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                     if (selectedIndices_.size() > (indice + 1)) {
                         auto epochIndx = selectedIndices_[indice];
                         if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {
-                            NED epNed = epoch->getPositionGNSS().ned;
+                            NED boatPosNed = epoch->getPositionGNSS().ned;
 
-                            QVector3D pos(epNed.n, epNed.e, 0.0f);
+                            QVector3D pos(boatPosNed.n, boatPosNed.e, 0.0f);
                             RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
 
                             if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {

@@ -188,6 +188,7 @@ public:
 
 public slots:
     friend class DataProcessor;
+    void onSonarPosCanCalc(uint64_t indx);
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
     bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
     bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
@@ -206,6 +207,7 @@ public slots:
     void setChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
     void setTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
     void setSoundSpeed (const ChannelId& channelId, uint32_t soundSpeed);
+    void setSonarOffset(float x, float y, float z);
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
@@ -353,4 +355,6 @@ private:
     float angleToActiveContact_ = 0.0f;
     float lastDepth_            = 0.0f;
     float speed_                = 0.0f;
+    QVector3D sonarOffset_;
+    uint64_t sonarPosIndx_;
 };

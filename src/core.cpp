@@ -732,7 +732,7 @@ bool Core::exportUSBLToCSV(QString filePath)
         if (epoch == NULL)
             continue;
 
-        NED posNed = epoch->getPositionGNSS().ned;
+        NED boatPosNed = epoch->getPositionGNSS().ned;
 
         // pos.ned.isCoordinatesValid() && epoch->isAttAvail() &&
         if( epoch->isUsblSolutionAvailable()) {
@@ -740,7 +740,7 @@ bool Core::exportUSBLToCSV(QString filePath)
 
             row_data.append(QString("%1").arg(i));
             row_data.append(QString(",%1,%2,%3").arg(epoch->yaw()).arg(epoch->pitch()).arg(epoch->roll()));
-            row_data.append(QString(",%1,%2").arg(posNed.n).arg(posNed.e));
+            row_data.append(QString(",%1,%2").arg(boatPosNed.n).arg(boatPosNed.e));
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().ping_counter).arg(epoch->usblSolution().carrier_counter).arg(epoch->usblSolution().snr));
             row_data.append(QString(",%1,%2,%3").arg(epoch->usblSolution().azimuth_deg).arg(epoch->usblSolution().elevation_deg).arg(epoch->usblSolution().distance_m));
 
@@ -862,19 +862,19 @@ bool Core::exportPlotAsCVS(QString filePath, const ChannelId& channelId, float d
                 if (!epoch->isPosAvail())
                     continue;
 
-                Position pos = epoch->getPositionGNSS();
+                Position boatPos = epoch->getPositionGNSS();
 
-                if (pos.lla.isCoordinatesValid()) {
+                if (boatPos.lla.isCoordinatesValid()) {
                     if (!lla_ref.isInit) {
-                        lla_ref = LLARef(pos.lla);
-                        pos.LLA2NED(&lla_ref);
-                        last_pos_ned = pos.ned;
+                        lla_ref = LLARef(boatPos.lla);
+                        boatPos.LLA2NED(&lla_ref);
+                        last_pos_ned = boatPos.ned;
                     }
                     else {
-                        pos.LLA2NED(&lla_ref);
-                        float dif_n = pos.ned.n - last_pos_ned.n;
-                        float dif_e = pos.ned.e - last_pos_ned.e;
-                        last_pos_ned = pos.ned;
+                        boatPos.LLA2NED(&lla_ref);
+                        float dif_n = boatPos.ned.n - last_pos_ned.n;
+                        float dif_e = boatPos.ned.e - last_pos_ned.e;
+                        last_pos_ned = boatPos.ned;
                         decimation_path += sqrtf(dif_n*dif_n + dif_e*dif_e);
                         if(decimation_path < decimation_m)
                             continue;
@@ -1703,6 +1703,8 @@ void Core::setDataProcessorConnections()
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,                    dataProcessor_, &DataProcessor::onChartsAdded,           connType));
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrackAdded,      connType));
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
+
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::sonarPosCanCalc,               datasetPtr_,    &Dataset::onSonarPosCanCalc,             connType));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessing,   datasetPtr_,    &Dataset::onDistCompleted,               connType));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_,    &Dataset::onLastBottomTrackEpochChanged, connType));

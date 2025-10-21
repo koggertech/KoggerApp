@@ -444,7 +444,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             continue;
         }
 
-        auto pos = epoch.getPositionGNSS().ned;
+        auto pos = epoch.getSonarPosition().ned;
         auto yaw = epoch.yaw();
         if (isfinite(pos.n) && isfinite(pos.e) && isfinite(yaw)) {
             bool acceptedEven = false, acceptedOdd = false;
@@ -607,8 +607,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         float segSPhDistX = segSPhEndPnt.x() - segSPhBegPnt.x();
         float segSPhDistY = segSPhEndPnt.y() - segSPhBegPnt.y();
 
-        auto segFInterpNED = segFEpoch.getPositionGNSS().ned;
-        auto segSInterpNED = segSEpoch.getPositionGNSS().ned;
+        auto segFInterpNED = segFEpoch.getSonarPosition().ned;
+        auto segSInterpNED = segSEpoch.getSonarPosition().ned;
         QVector3D segFBoatPos(segFInterpNED.n, segFInterpNED.e, 0.0f);
         QVector3D segSBoatPos(segSInterpNED.n, segSInterpNED.e, 0.0f);
 

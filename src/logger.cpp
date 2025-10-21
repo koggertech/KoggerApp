@@ -185,10 +185,10 @@ void Logger::loggingCsvStream()
     if (!csvData_.csvHatWrited)
         writeCsvHat();
 
-    Position epPos = epoch->getPositionGNSS();
+    Position boatPos = epoch->getPositionGNSS();
 
-    if (epPos.lla.isCoordinatesValid()) {
-        csvData_.lastCsvPos = epPos;
+    if (boatPos.lla.isCoordinatesValid()) {
+        csvData_.lastCsvPos = boatPos;
     }
 
     if (epoch->rangeFinder()) {

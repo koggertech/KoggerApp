@@ -83,7 +83,7 @@ void DataInterpolator::interpolatePos(bool fromStart)
                 //     ep->setGNSSSec(t.first);
                 //     ep->setGNSSNanoSec(t.second);
                 // }
-                quint64 currentNs = (startTimeNs + stepNs * cnt);
+                quint64 currentNs = (startTimeNs + stepNs * cnt); // такое только в позиции
                 const auto t = convertFromNanosecs(currentNs);
                 ep->setGNSSSec(t.first);
                 ep->setGNSSNanoSec(t.second);

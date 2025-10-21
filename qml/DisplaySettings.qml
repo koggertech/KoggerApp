@@ -151,6 +151,84 @@ GridLayout {
                     }
                 }
             }
+
+            RowLayout {
+                CCheck {
+                    id: sonarOffsetCheckButton
+                    Layout.fillWidth: true
+                    text: qsTr("S.offset, mm:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                        else {
+                            dataset.setSonarOffset(0, 0, 0)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueX
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueX: sonarOffsetValueX.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueY
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueY: sonarOffsetValueY.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    visible: false
+                    id: sonarOffsetValueZ
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueZ: sonarOffsetValueZ.value
+                    }
+                }
+            }
         }
 
         ParamGroup {

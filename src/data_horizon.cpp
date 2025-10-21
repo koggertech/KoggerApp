@@ -13,7 +13,8 @@ DataHorizon::DataHorizon() :
     chartIndx_(0),
     attitudeIndx_(0),
     bottomTrackIndx_(0),
-    mosaicIndx_(0)
+    mosaicIndx_(0),
+    sonarIndx_(0)
 {
 #ifdef SEPARATE_READING
     isSeparateReading_ = true;
@@ -33,6 +34,7 @@ void DataHorizon::clear()
     bottomTrackIndx_ = 0;
     bottomTrack3DIndxs_.clear();
     mosaicIndx_ = 0;
+    sonarIndx_ = 0;
 }
 
 void DataHorizon::setEmitChanges(bool state)
@@ -51,6 +53,7 @@ void DataHorizon::setIsFileOpening(bool state)
         emit positionAdded(positionIndx_);
         emit chartAdded(chartIndx_);
         emit attitudeAdded(attitudeIndx_);
+        tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
     }
 }
@@ -78,6 +81,7 @@ void DataHorizon::onAddedPosition(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit positionAdded(positionIndx_);
+        tryCalcAndEmitSonarPosIndx();
     }
 }
 
@@ -105,6 +109,7 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit attitudeAdded(attitudeIndx_);
+        tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
     }
 }
@@ -168,5 +173,14 @@ void DataHorizon::tryCalcAndEmitMosaicIndx()
     if (minMosaicHorizon > mosaicIndx_) {
         mosaicIndx_ = minMosaicHorizon;
         emit mosaicCanCalc(mosaicIndx_);
+    }
+}
+
+void DataHorizon::tryCalcAndEmitSonarPosIndx()
+{
+    uint64_t minSonarIndx = std::min(positionIndx_, attitudeIndx_);
+    if (minSonarIndx > sonarIndx_) {
+        sonarIndx_ = minSonarIndx;
+        emit sonarPosCanCalc(sonarIndx_);
     }
 }

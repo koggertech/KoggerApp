@@ -554,3 +554,20 @@ static inline double angleToTargetDeg(double latBoat, double lonBoat, double lat
     const double headTrue    = norm360(headingDeg);
     return std::abs(norm180(bearingTrue - headTrue));
 }
+
+static inline NED fruOffsetToNed(const QVector3D& offFru, double yawDeg)
+{
+    const double psi = yawDeg * M_DEG_TO_RAD;
+    const double c = std::cos(psi);
+    const double s = std::sin(psi);
+
+    const double x = offFru.x();
+    const double y = offFru.y();
+    const double z = offFru.z();
+
+    const double dN =  x * c - y * s;
+    const double dE =  x * s + y * c;
+    const double dD = -z;
+
+    return NED(dN, dE, dD);
+}

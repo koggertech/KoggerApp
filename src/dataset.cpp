@@ -7,7 +7,8 @@ extern Core core;
 Dataset::Dataset() :
     interpolator_(this),
     lastBottomTrackEpoch_(0),
-    bSProc_(new BlackStripesProcessor())
+    bSProc_(new BlackStripesProcessor()),
+    sonarPosIndx_(0)
 {
     qRegisterMetaType<ChannelId>("ChannelId");
     resetDataset();
@@ -159,6 +160,11 @@ void Dataset::setTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t 
 void Dataset::setSoundSpeed(const ChannelId& channelId, uint32_t soundSpeed)
 {
     usingRecordParameters_[channelId].soundSpeed  = soundSpeed;
+}
+
+void Dataset::setSonarOffset(float x, float y, float z)
+{
+    sonarOffset_ = QVector3D(x, y, z);
 }
 
 void Dataset::setChartSetup(const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset)
@@ -622,7 +628,7 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
         if (isValidActiveContactIndx()) {
             if (auto* ep = fromIndex(activeContactIndx_); ep) {
-                const double latTarget = ep->getPositionGNSS().lla.latitude;
+                const double latTarget = ep->getPositionGNSS().lla.latitude; // тут координата контакта?
                 const double lonTarget = ep->getPositionGNSS().lla.longitude;
                 const double latBoat = pos.lla.latitude;
                 const double lonBoat = pos.lla.longitude;
@@ -709,15 +715,15 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
 
     for(int iepoch = 0; iepoch < psize; iepoch++) {
         Epoch* epoch =  fromIndex(iepoch);
-        Position p_internal = epoch->getPositionGNSS();
+        Position boatPos = epoch->getPositionGNSS();
 
         DateTime time_epoch = *epoch->time();
         if(time_epoch.sec > 0) {
-            p_internal.time = *epoch->time();
-            p_internal.time.sec -= 18;
+            boatPos.time = *epoch->time();
+            boatPos.time.sec -= 18;
         }
 
-        int64_t internal_ns  = p_internal.time.sec*1e9+p_internal.time.nanoSec;
+        int64_t internal_ns  = boatPos.time.sec*1e9+boatPos.time.nanoSec;
 
 
         if(internal_ns > 0) {
@@ -781,6 +787,8 @@ void Dataset::resetDataset()
     distToActiveContact_  = 0.0f;
     angleToActiveContact_ = 0.0f;
     lastDepth_            = 0.0f;
+
+    sonarPosIndx_ = 0;
 
     emit lastDepthChanged();
     emit channelsUpdated();
@@ -875,7 +883,7 @@ void Dataset::usblProcessing() {
 
     for(int i = from_index; i < to_size; i+=1) {
         Epoch* epoch = fromIndex(i);
-        Position pos = epoch->getPositionGNSS();
+        Position boatPos = epoch->getPositionGNSS();
 
         // if(pos.lla.isCoordinatesValid() && !pos.ned.isCoordinatesValid()) {
         //     if(!_llaRef.isInit) {
@@ -884,8 +892,8 @@ void Dataset::usblProcessing() {
         //     pos.LLA2NED(&_llaRef);
         // }
 
-        if(pos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
-            double n = pos.ned.n, e = pos.ned.e;
+        if(boatPos.ned.isCoordinatesValid() && epoch->isAttAvail() && epoch->isUsblSolutionAvailable()) {
+            double n = boatPos.ned.n, e = boatPos.ned.e;
             Q_UNUSED(n);
             Q_UNUSED(e);
             double yaw = epoch->yaw();
@@ -1181,4 +1189,28 @@ void Dataset::setActiveContactIndx(int64_t indx)
 int64_t Dataset::getActiveContactIndx() const
 {
     return activeContactIndx_;
+}
+
+void Dataset::onSonarPosCanCalc(uint64_t indx)
+{
+    for (uint64_t i = sonarPosIndx_ + 1; i <= indx; ++i) {
+        if (auto* ep = fromIndex(i); ep) {
+            if (sonarOffset_.isNull()) {
+                ep->setSonarPosition(ep->getPositionGNSS());
+            }
+            else {
+                Position boatPos = ep->getPositionGNSS();
+                const NED d = fruOffsetToNed(sonarOffset_, ep->yaw());
+                NED sonarNed(boatPos.ned.n + d.n, boatPos.ned.e + d.e, /*always zero*/0.0);
+                LLA sonarLla(&sonarNed, &_llaRef, /*spherical=*/true);
+                boatPos.lla      = sonarLla;
+                boatPos.LLA2NED(&_llaRef); // ned
+                ep->setSonarPosition(boatPos);
+            }
+
+            ep->setSonarPositionDataType(ep->getPositionDataType());
+        }
+    }
+
+    sonarPosIndx_ = indx;
 }

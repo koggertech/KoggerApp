@@ -30,6 +30,7 @@ signals:
     void bottomTrackAdded(uint64_t indx);
     void bottomTrack3DAdded(const QVector<int>& indx, bool manual, bool isDel);
     void mosaicCanCalc(uint64_t indx);
+    void sonarPosCanCalc(uint64_t indx);
 
 public slots:
     // Dataset
@@ -43,6 +44,7 @@ public slots:
 private:
     bool canEmitHorizon(bool beenChanged) const;
     void tryCalcAndEmitMosaicIndx();
+    void tryCalcAndEmitSonarPosIndx();
 
 private:
     bool emitChanges_;
@@ -56,4 +58,5 @@ private:
     uint64_t bottomTrackIndx_;
     QVector<int> bottomTrack3DIndxs_;
     uint64_t mosaicIndx_;
+    uint64_t sonarIndx_;
 };
