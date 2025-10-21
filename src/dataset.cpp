@@ -628,8 +628,8 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
         if (isValidActiveContactIndx()) {
             if (auto* ep = fromIndex(activeContactIndx_); ep) {
-                const double latTarget = ep->getPositionGNSS().lla.latitude; // тут координата контакта?
-                const double lonTarget = ep->getPositionGNSS().lla.longitude;
+                const double latTarget = ep->contact_.lat;
+                const double lonTarget = ep->contact_.lon;
                 const double latBoat = pos.lla.latitude;
                 const double lonBoat = pos.lla.longitude;
 
