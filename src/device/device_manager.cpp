@@ -194,10 +194,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 core.consoleProto(frame);
             }
 
-            // if(frame.id() == ID_DBG && frame.ver() == 0) {
-            //     SignalSymbol sym = frame.read<SignalSymbol>();
-            //     core.consoleInfo(toQString(sym));
-            // }
+            if(frame.id() == ID_DBG && frame.ver() == 0) {
+                SignalSymbol sym = frame.read<SignalSymbol>();
+                core.consoleInfo(toQString(sym));
+            }
 
             if(frame.id() == ID_DBG && frame.ver() == 1) {
                 uint8_t rx_data_bytes_ref[12] = {0x69, 0xcf, 0x0c, 0x2a, 0x11, 0x7d, 0x9c, 0x35, 0x3f, 0x45, 0xda, 0x3d};
@@ -210,7 +210,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 if(is_right) {
                     core.consoleInfo("Bytes: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_data_bytes, 12).toHex(' ')));
                 } else {
-                    core.consoleInfo("!!!ERROR Bytes: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_data_bytes, 12).toHex(' ')));
+                    core.consoleInfo("Bytes: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_data_bytes, 12).toHex(' ')) + "    !!!ERROR");
                 }
 
             }
@@ -226,7 +226,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 if(is_right) {
                     core.consoleInfo("MSG: "+ QString::fromUtf8(QByteArray::fromRawData((char*)rx_msg, 4).toHex(' ')));
                 } else {
-                    core.consoleWarning("!!!ERROR MSG: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_msg, 4).toHex(' ')));
+                    core.consoleWarning("MSG: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_msg, 4).toHex(' ')) + "    !!!ERROR");
                 }
             }
 
