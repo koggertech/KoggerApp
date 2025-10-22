@@ -98,6 +98,7 @@ typedef enum ID {
     ID_USBL_CONTROL = 0x68, // 104
 
     ID_GFW = 200,
+    ID_DBG = 250,
 
     sizer = 0xFFFF
 } ID;

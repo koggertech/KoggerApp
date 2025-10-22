@@ -114,6 +114,56 @@ QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
     return list;
 }
 
+// If SYMBOL_NONE is defined elsewhere, include that header instead.
+#define SYMBOL_NONE -2
+
+struct SignalSymbol {
+    int32_t val = SYMBOL_NONE;
+    float   sync_ratio_db   = NAN;
+    float   peak_val        = NAN;
+    float   snr             = NAN;
+    float   position_offset = 0.0f;
+    int64_t carrier_counter = 0;
+    int32_t symbol_counter  = 0;
+};
+
+// Optional: map known symbol codes to names
+static inline QString symbolName(int32_t v)
+{
+    switch (v) {
+    case SYMBOL_NONE: return QStringLiteral("SYMBOL_NONE");
+    default:          return QString::number(v);
+    }
+}
+
+// Helper: format float with fixed precision, show "NaN" if it is NaN
+static inline QString f3(float x)
+{
+    return std::isnan(x) ? QStringLiteral("NaN") : QString::number(x, 'f', 3);
+}
+
+// Convert struct to QString
+static inline QString toQString(const SignalSymbol &s)
+{
+    return QStringLiteral("SignalSymbol{val=%1, sync_ratio_db=%2, peak_val=%3, snr=%4, "
+                          "position_offset=%5, carrier_counter=%6, symbol_counter=%7}")
+        .arg(symbolName(s.val))
+        .arg(f3(s.sync_ratio_db))
+        .arg(f3(s.peak_val))
+        .arg(f3(s.snr))
+        .arg(f3(s.position_offset))
+        .arg(s.carrier_counter)
+        .arg(s.symbol_counter);
+}
+
+// (Nice to have) QDebug overload for qDebug() << obj;
+inline QDebug operator<<(QDebug dbg, const SignalSymbol &s)
+{
+    QDebugStateSaver saver(dbg);
+    dbg.nospace() << toQString(s);
+    return dbg;
+}
+
 void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 {
     if (frame.isComplete()) {
@@ -142,6 +192,42 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
             if (isConsoled_ && link && !(frame.id() == 32 || frame.id() == 33)) { // link ptr check added
                 core.consoleProto(frame);
+            }
+
+            // if(frame.id() == ID_DBG && frame.ver() == 0) {
+            //     SignalSymbol sym = frame.read<SignalSymbol>();
+            //     core.consoleInfo(toQString(sym));
+            // }
+
+            if(frame.id() == ID_DBG && frame.ver() == 1) {
+                uint8_t rx_data_bytes_ref[12] = {0x69, 0xcf, 0x0c, 0x2a, 0x11, 0x7d, 0x9c, 0x35, 0x3f, 0x45, 0xda, 0x3d};
+                uint8_t rx_data_bytes[12] = {};
+                frame.read(rx_data_bytes, 12);
+
+                int i = 0;
+                for(; i < 12 &&  rx_data_bytes_ref[i] == rx_data_bytes[i]; i++) { }
+                bool is_right = i==12;
+                if(is_right) {
+                    core.consoleInfo("Bytes: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_data_bytes, 12).toHex(' ')));
+                } else {
+                    core.consoleInfo("!!!ERROR Bytes: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_data_bytes, 12).toHex(' ')));
+                }
+
+            }
+
+            if(frame.id() == ID_DBG && frame.ver() == 2) {
+                uint8_t rx_msg_ref[] = {0xd3, 0x84, 0x5d, 0xfa};
+                uint8_t rx_msg[4] = {};
+                frame.read(rx_msg, 4);
+
+                int i = 0;
+                for(; i < 4 &&  rx_msg_ref[i] == rx_msg[i]; i++) { }
+                bool is_right = i==4;
+                if(is_right) {
+                    core.consoleInfo("MSG: "+ QString::fromUtf8(QByteArray::fromRawData((char*)rx_msg, 4).toHex(' ')));
+                } else {
+                    core.consoleWarning("!!!ERROR MSG: " + QString::fromUtf8(QByteArray::fromRawData((char*)rx_msg, 4).toHex(' ')));
+                }
             }
 
 #if !defined(Q_OS_ANDROID)
