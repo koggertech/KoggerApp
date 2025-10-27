@@ -42,7 +42,7 @@ public:
     QPair<ChannelId, uint8_t> getSecondChannelId() const { return qMakePair(segSChannelId_, segSSubChannelId_); };
 
 private:
-    void postUpdate(QSet<SurfaceTile*>& changedTiles);
+    void postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<SurfaceTile*>& changedOut);
     void updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const;
     void updateData(const QVector<int>& indxs);
     inline int getColorIndx(Epoch::Echogram* charts, int ampIndx) const;

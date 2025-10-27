@@ -43,7 +43,7 @@ public:
     int  getMaxInitedTiles() const;
     int  currentInitedTiles() const;
     int  scanInitedTiles(); // debug
-    void onTilesWritten(const QSet<SurfaceTile*>& written);
+    void onTilesAppended(const QSet<SurfaceTile*>& written);
     void touch(const TileKey& key);
     void resetTileByKey(const TileKey& key);
 

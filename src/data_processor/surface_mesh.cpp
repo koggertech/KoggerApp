@@ -269,7 +269,7 @@ int SurfaceMesh::scanInitedTiles()
     return total;
 }
 
-void SurfaceMesh::onTilesWritten(const QSet<SurfaceTile*>& written)
+void SurfaceMesh::onTilesAppended(const QSet<SurfaceTile*>& written)
 {
     for (auto* t : written) {
         if (!t) {

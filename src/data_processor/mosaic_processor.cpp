@@ -232,114 +232,194 @@ void MosaicProcessor::askColorTableForMosaic()
     QMetaObject::invokeMethod(dataProcessor_, "postMosaicColorTable", Qt::QueuedConnection, Q_ARG(std::vector<uint8_t>, colorTable_.getRgbaColors()));
 }
 
-void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
+// Шьём только ВВЕРХ и ВЛЕВО и в тот угол
+// Причина: у каждого шва/угла ровно один владелец, это исключает двойную запись, гарантируя одинаковые значения по обе стороны шва
+void MosaicProcessor::postUpdate(const QSet<SurfaceTile*>& updatedIn, QSet<SurfaceTile*>& changedOut)
 {
-    //qDebug() << "tileResolution_" << tileResolution_;
-
-    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited()) {
+    if (!surfaceMeshPtr_ || !surfaceMeshPtr_->getIsInited() || updatedIn.isEmpty()) {
         return;
     }
 
     auto& matrix = surfaceMeshPtr_->getTileMatrixRef();
-    int tilesY = matrix.size();
+    const int tilesY = matrix.size();
     if (tilesY == 0) {
         return;
     }
-    int tilesX = matrix.at(0).size();
+
+    const int tilesX = matrix.at(0).size();
     if (tilesX == 0) {
         return;
     }
 
-    for (int i = 0; i < tilesY; ++i) {
-        for (int j = 0; j < tilesX; ++j) {
-            auto* tile = matrix[i][j];
-            if (!tile || !tile->getIsUpdated()) {
-                continue;
-            }
-
-            auto& vSrc = tile->getHeightVerticesRef();
-            const int hvSide = std::sqrt(vSrc.size());
-            if (hvSide <= 1) {
-                continue;
-            }
-
-            if (i + 1  < tilesY) { // вверх (строка 0 -> последняя строка верхнего тайла)
-                auto* top = matrix[i + 1][j];
-                if (!top) {
-                    continue;
-                }
-
-                if (!top->getIsInited()) { // TODO PREFETCH!
-                    continue; // TODO: !!!
-                    top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
-
-                auto& vTop = top->getHeightVerticesRef();
-                auto& mTop = top->getHeightMarkVerticesRef();
-
-                const int topLastRowStart = hvSide * (hvSide - 1);
-                for (int k = 0; k < hvSide; ++k) {
-                    const int srcIndx = k;
-                    const int dstIndx = topLastRowStart + k;
-                    if (!qFuzzyIsNull(vSrc[srcIndx][2])) {
-                        vTop[dstIndx][2] = vSrc[srcIndx][2];
-                        mTop[dstIndx] = HeightType::kMosaic;
-                    }
-                }
-                top->setIsUpdated(true);
-                changedTiles.insert(top); // TODO: !!!
-            }
-
-
-            if (j - 1 >= 0) { // влево (столбец 0 -> правый столбец левого тайла)
-                auto* left = matrix[i][j - 1];
-                if (!left) {
-                    continue;
-                }
-
-                if (!left->getIsInited()) { // TODO PREFETCH!
-                    continue; // TODO: !!!
-                    left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
-
-                auto& vLeft = left->getHeightVerticesRef();
-                auto& mLeft = left->getHeightMarkVerticesRef();
-
-                for (int k = 0; k < hvSide; ++k) {
-                    const int srcIndx = (k == 0 ? 0 : k * hvSide);
-                    const int dstIndx = ((k + 1) * hvSide - 1);
-                    if (!qFuzzyIsNull(vSrc[srcIndx][2])) {
-                        vLeft[dstIndx][2] = vSrc[srcIndx][2];
-                        mLeft[dstIndx] = HeightType::kMosaic;
-                    }
-                }
-                left->setIsUpdated(true);
-                changedTiles.insert(left); // TODO: !!!
-            }
-
-            if (i + 1 < tilesY && j - 1 >= 0) { // диагональ: top-left, узел (0,0) текущего -> (hvSide - 1,hvSide - 1) диагонального тайла
-                SurfaceTile* diag = matrix[i + 1][j - 1];
-                if (!diag) {
-                    continue;
-                }
-
-                if (!diag->getIsInited()) { // TODO PREFETCH!
-                    continue; // TODO: !!!
-                    diag->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
-                auto& vDiag = diag->getHeightVerticesRef();
-                auto& mDiag = diag->getHeightMarkVerticesRef();
-
-                const int srcTL = 0;                    // (0, 0)
-                const int dstBR = hvSide * hvSide - 1;  // (hvSide-1, hvSide-1)
-                if (!qFuzzyIsNull(vSrc[srcTL][2])) {
-                    vDiag[dstBR][2] = vSrc[srcTL][2];
-                    mDiag[dstBR]    = HeightType::kMosaic;
-                }
-                diag->setIsUpdated(true);
-                changedTiles.insert(diag); // TODO: !!!
+    // helpers
+    auto findIJ = [&](SurfaceTile* t, int& oi, int& oj)->bool {
+        for (int i = 0; i < tilesY; ++i) {
+            for (int j = 0; j < tilesX; ++j) {
+                if (matrix[i][j] == t) { oi = i; oj = j; return true; }
             }
         }
+        return false;
+    };
+    auto copyRow = [&](QVector<QVector3D>& from,
+                       int fromRow, QVector<QVector3D>& to, QVector<HeightType>& mTo,
+                       int toRow, int hvSide)
+    {
+        const int fromStart = fromRow * hvSide;
+        const int toStart   = toRow   * hvSide;
+        for (int k = 0; k < hvSide; ++k) {
+            const int si = fromStart + k;
+            const int di = toStart   + k;
+            if (!qFuzzyIsNull(from[si][2])) {
+                to[di][2] = from[si][2];
+                mTo[di]   = HeightType::kMosaic;
+            }
+        }
+    };
+    auto copyCol = [&](QVector<QVector3D>& from,
+                       int fromCol, QVector<QVector3D>& to, QVector<HeightType>& mTo,
+                       int toCol, int hvSide)
+    {
+        for (int k = 0; k < hvSide; ++k) {
+            const int si = k * hvSide + fromCol;
+            const int di = k * hvSide + toCol;
+            if (!qFuzzyIsNull(from[si][2])) {
+                to[di][2] = from[si][2];
+                mTo[di]   = HeightType::kMosaic;
+            }
+        }
+    };
+    auto copyCorner = [&](QVector<QVector3D>& from, int si,
+                          QVector<QVector3D>& to,   QVector<HeightType>& mTo,   int di)
+    {
+        if (!qFuzzyIsNull(from[si][2])) {
+            to[di][2] = from[si][2];
+            mTo[di]   = HeightType::kMosaic;
+        }
+    };
+
+    for (SurfaceTile* tile : updatedIn) {
+        if (!tile || !tile->getIsUpdated()) {
+            continue;
+        }
+
+        int i = -1, j = -1;
+        if (!findIJ(tile, i, j)) {
+            continue;
+        }
+
+        auto& vSrc = tile->getHeightVerticesRef();
+        const int n = vSrc.size();
+        const int hvSide = int(std::sqrt(double(n)));
+        if (hvSide * hvSide != n || hvSide <= 1) {
+            continue;
+        }
+
+        // Индексы углов текущего тайла
+        const int TL = 0;
+        // const int TR = hvSide - 1;
+        // const int BL = hvSide * (hvSide - 1);
+        const int BR = hvSide * hvSide - 1;
+
+        // 4 стороны
+        // TOP: текущая верхняя строка -> нижняя строка top-соседа (i+1, j)
+        if (i + 1 < tilesY) {
+            SurfaceTile* top = matrix[i + 1][j];
+            if (top && top->getIsInited()) {
+                auto& vTop = top->getHeightVerticesRef();
+                auto& mTop = top->getHeightMarkVerticesRef();
+                copyRow(vSrc,
+                        /*fromRow=*/0, vTop, mTop,
+                        /*toRow=*/hvSide - 1, hvSide);
+                top->setIsUpdated(true);
+                changedOut.insert(top);
+            }
+        }
+        // // BOTTOM: текущая нижняя строка -> верхняя строка bottom-соседа (i-1, j)
+        // if (i - 1 >= 0) {
+        //     SurfaceTile* bottom = matrix[i - 1][j];
+        //     if (bottom && bottom->getIsInited()) {
+        //         auto& vBtm = bottom->getHeightVerticesRef();
+        //         auto& mBtm = bottom->getHeightMarkVerticesRef();
+        //         copyRow(vSrc,
+        //                 /*fromRow=*/hvSide - 1, vBtm, mBtm,
+        //                 /*toRow=*/0, hvSide);
+        //         bottom->setIsUpdated(true);
+        //         changedOut.insert(bottom);
+        //     }
+        // }
+        // LEFT: текущий левый столбец -> правый столбец left-соседа (i, j-1)
+        if (j - 1 >= 0) {
+            SurfaceTile* left = matrix[i][j - 1];
+            if (left && left->getIsInited()) {
+                auto& vLeft = left->getHeightVerticesRef();
+                auto& mLeft = left->getHeightMarkVerticesRef();
+                copyCol(vSrc,
+                        /*fromCol=*/0, vLeft, mLeft,
+                        /*toCol=*/hvSide - 1, hvSide);
+                left->setIsUpdated(true);
+                changedOut.insert(left);
+            }
+        }
+
+        // // RIGHT: текущий правый столбец -> левый столбец right-соседа (i, j+1)
+        // if (j + 1 < tilesX) {
+        //     SurfaceTile* right = matrix[i][j + 1];
+        //     if (right && right->getIsInited()) {
+        //         auto& vRight = right->getHeightVerticesRef();
+        //         auto& mRight = right->getHeightMarkVerticesRef();
+        //         copyCol(vSrc,
+        //                 /*fromCol=*/hvSide - 1, vRight, mRight,
+        //                 /*toCol=*/0, hvSide);
+        //         right->setIsUpdated(true);
+        //         changedOut.insert(right);
+        //     }
+        // }
+
+        // 4 угла
+        // TOP-LEFT (i+1, j-1): TL -> BR
+        if (i + 1 < tilesY && j - 1 >= 0) {
+            SurfaceTile* diag = matrix[i + 1][j - 1];
+            if (diag && diag->getIsInited()) {
+                auto& vD = diag->getHeightVerticesRef();
+                auto& mD = diag->getHeightMarkVerticesRef();
+                copyCorner(vSrc, TL, vD, mD, BR);
+                diag->setIsUpdated(true);
+                changedOut.insert(diag);
+            }
+        }
+        // // TOP-RIGHT (i+1, j+1): TR -> BL
+        // if (i + 1 < tilesY && j + 1 < tilesX) {
+        //     SurfaceTile* diag = matrix[i + 1][j + 1];
+        //     if (diag && diag->getIsInited()) {
+        //         auto& vD = diag->getHeightVerticesRef();
+        //         auto& mD = diag->getHeightMarkVerticesRef();
+        //         copyCorner(vSrc, TR, vD, mD, BL);
+        //         diag->setIsUpdated(true);
+        //         changedOut.insert(diag);
+        //     }
+        // }
+        // // BOTTOM-LEFT (i-1, j-1): BL -> TR
+        // if (i - 1 >= 0 && j - 1 >= 0) {
+        //     SurfaceTile* diag = matrix[i - 1][j - 1];
+        //     if (diag && diag->getIsInited()) {
+        //         auto& vD = diag->getHeightVerticesRef();
+        //         auto& mD = diag->getHeightMarkVerticesRef();
+        //         copyCorner(vSrc, BL, vD, mD, TR);
+        //         diag->setIsUpdated(true);
+        //         changedOut.insert(diag);
+        //     }
+        // }
+        // // BOTTOM-RIGHT (i-1, j+1): BR -> TL
+        // if (i - 1 >= 0 && j + 1 < tilesX) {
+        //     SurfaceTile* diag = matrix[i - 1][j + 1];
+        //     if (diag && diag->getIsInited()) {
+        //         auto& vD = diag->getHeightVerticesRef();
+        //         auto& mD = diag->getHeightMarkVerticesRef();
+        //         copyCorner(vSrc, BR, vD, mD, TL);
+        //         diag->setIsUpdated(true);
+        //         changedOut.insert(diag);
+        //     }
+        // }
     }
 }
 
@@ -473,26 +553,26 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
 
-    // // prefetch tiles from hotCache (dataprocessor)
-    // {
-    //     QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/0);
+    // prefetch tiles from hotCache (dataprocessor)
+    {
+        QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/1/*for prefetch*/);
 
-    //     QSet<TileKey> need;
-    //     need.reserve(toRestore.size());
-    //     for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
-    //         auto cKey = *it;
-    //         if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
-    //             if (!t->getIsInited()) {
-    //                 need.insert(cKey);
-    //             }
-    //         }
-    //     }
+        QSet<TileKey> need;
+        need.reserve(toRestore.size());
+        for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
+            auto cKey = *it;
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
+                if (!t->getIsInited()) {
+                    need.insert(cKey);
+                }
+            }
+        }
 
-    //     if (need.size()) {
-    //         //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
-    //         prefetchFromHotCache(need);
-    //     }
-    // }
+        if (need.size()) {
+            //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
+            prefetchFromHotCache(need);
+        }
+    }
 
 
     static QSet<SurfaceTile*> changedTiles;
@@ -730,8 +810,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     }
 
     lastMatParams_ = actualMatParams;
-    
-    //postUpdate(changedTiles); // TODO!!!!!!!!!
+
+    QSet<SurfaceTile*> changedOut;
+    postUpdate(changedTiles, changedOut);
+    changedTiles.unite(changedOut);
 
     TileMap res;
     res.reserve(changedTiles.size());
@@ -748,7 +830,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
     //const int beforeTracked = surfaceMeshPtr_->currentInitedTiles();
     //const int beforeScan    = surfaceMeshPtr_->scanInitedTiles();
-    surfaceMeshPtr_->onTilesWritten(changedTiles); // метка тайлов/ужимка
+    surfaceMeshPtr_->onTilesAppended(changedTiles); // метка тайлов/ужимка
     //const int afterTracked = surfaceMeshPtr_->currentInitedTiles();
     //const int afterScan    = surfaceMeshPtr_->scanInitedTiles();
     //qDebug() << "[Mosaic] inited tiles tracked" << beforeTracked << "->" << afterTracked
@@ -881,11 +963,13 @@ QSet<TileKey> MosaicProcessor::forecastTilesToTouch(const QVector<QVector3D>& me
         const int Sx2 = int(Send.x()), Sy2 = int(Send.y());
 
         const float Ftot = std::hypot(Fx2 - Fx1, Fy2 - Fy1);
-        if (Ftot <= 0.0f) {
+        const float Stot = std::hypot(Sx2 - Sx1, Sy2 - Sy1);
+        const float longest = std::max(Ftot, Stot);
+        if (longest <= 0.0f) {
             continue;
         }
 
-        const int steps = std::max(1, int(std::ceil(Ftot / float(stridePx))));
+        const int steps = std::max(1, int(std::ceil(longest / float(stridePx))));
         for (int s = 0; s <= steps; ++s) {
             float tt = float(s) / float(steps);
             const int Fx = int(std::lround(Fx1 + tt * (Fx2 - Fx1)));
@@ -908,7 +992,8 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles)
     }
 
     for (auto it = tiles.cbegin(); it != tiles.cend(); ++it) {
-        SurfaceTile* dst = surfaceMeshPtr_->getTilePtrByKey(it.key());
+        auto tKey = it.key();
+        SurfaceTile* dst = surfaceMeshPtr_->getTilePtrByKey(tKey);
 
         if (!dst) {
             continue;
@@ -930,6 +1015,8 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles)
 
         dst->updateHeightIndices();
         dst->setIsUpdated(false);
+
+        surfaceMeshPtr_->touch(tKey);
     }
 }
 
@@ -947,7 +1034,8 @@ bool MosaicProcessor::prefetchFromHotCache(const QSet<TileKey> &keys)
     //qDebug() << "fetch" << keys.size() << got.size();
 
     if (!got.isEmpty()) {
-        putTilesIntoMesh(got);
+        putTilesIntoMesh(got); // TODO: он кладет без evicted!!!
+
         return true;
     }
 
