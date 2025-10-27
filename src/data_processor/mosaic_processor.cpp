@@ -269,8 +269,8 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     continue;
                 }
 
-                if (!top->getIsInited()) {
-                    continue; // TODO: check
+                if (!top->getIsInited()) { // TODO PREFETCH!
+                    continue; // TODO: !!!
                     top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
 
@@ -287,6 +287,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     }
                 }
                 top->setIsUpdated(true);
+                changedTiles.insert(top); // TODO: !!!
             }
 
 
@@ -296,8 +297,8 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     continue;
                 }
 
-                if (!left->getIsInited()) {
-                    continue; // TODO: check
+                if (!left->getIsInited()) { // TODO PREFETCH!
+                    continue; // TODO: !!!
                     left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
 
@@ -313,6 +314,7 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     }
                 }
                 left->setIsUpdated(true);
+                changedTiles.insert(left); // TODO: !!!
             }
 
             if (i + 1 < tilesY && j - 1 >= 0) { // диагональ: top-left, узел (0,0) текущего -> (hvSide - 1,hvSide - 1) диагонального тайла
@@ -321,8 +323,8 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     continue;
                 }
 
-                if (!diag->getIsInited()) {
-                    continue; // TODO: check
+                if (!diag->getIsInited()) { // TODO PREFETCH!
+                    continue; // TODO: !!!
                     diag->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 auto& vDiag = diag->getHeightVerticesRef();
@@ -335,30 +337,10 @@ void MosaicProcessor::postUpdate(QSet<SurfaceTile*>& changedTiles)
                     mDiag[dstBR]    = HeightType::kMosaic;
                 }
                 diag->setIsUpdated(true);
+                changedTiles.insert(diag); // TODO: !!!
             }
         }
     }
-
-    TileMap res;
-    res.reserve(changedTiles.size());
-    for (SurfaceTile* itm : std::as_const(changedTiles)) {
-        if (itm) {
-            updateUnmarkedHeightVertices(itm);
-            itm->updateHeightIndices();
-            itm->setIsUpdated(false);
-            res.insert((itm)->getKey(), (*itm));
-        }
-    }
-
-    //const int beforeTracked = surfaceMeshPtr_->currentInitedTiles();
-    //const int beforeScan    = surfaceMeshPtr_->scanInitedTiles();
-    surfaceMeshPtr_->onTilesWritten(changedTiles); // метка тайлов/ужимка
-    //const int afterTracked = surfaceMeshPtr_->currentInitedTiles();
-    //const int afterScan    = surfaceMeshPtr_->scanInitedTiles();
-    //qDebug() << "[Mosaic] inited tiles tracked" << beforeTracked << "->" << afterTracked
-    //         << "/ scan" << beforeScan << "->" << afterScan;
-
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
 }
 
 void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
@@ -478,8 +460,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             }
         }
     }
-
-    newMatrixParams = kmath::getMatrixParams(measLinesVertices);
+    const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
+    newMatrixParams = kmath::getMatrixParams(measLinesVertices, tileSideMeters);
     if (!newMatrixParams.isValid()) {
         return;
     }
@@ -491,26 +473,26 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
 
-    // prefetch tiles from hotCache (dataprocessor)
-    {
-        QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/0);
+    // // prefetch tiles from hotCache (dataprocessor)
+    // {
+    //     QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, /*marginTiles=*/0);
 
-        QSet<TileKey> need;
-        need.reserve(toRestore.size());
-        for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
-            auto cKey = *it;
-            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
-                if (!t->getIsInited()) {
-                    need.insert(cKey);
-                }
-            }
-        }
+    //     QSet<TileKey> need;
+    //     need.reserve(toRestore.size());
+    //     for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
+    //         auto cKey = *it;
+    //         if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
+    //             if (!t->getIsInited()) {
+    //                 need.insert(cKey);
+    //             }
+    //         }
+    //     }
 
-        if (need.size()) {
-            //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
-            prefetchFromHotCache(need);
-        }
-    }
+    //     if (need.size()) {
+    //         //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
+    //         prefetchFromHotCache(need);
+    //     }
+    // }
 
 
     static QSet<SurfaceTile*> changedTiles;
@@ -691,13 +673,16 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                             }
 
                             if (!tileRef->getIsInited()) {
+                                //qDebug() << "INIT KEY" << tileRef->getKey();
                                 tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                             }
 
                             // image
                             auto& imageRef = tileRef->getMosaicImageDataRef();
                             int bytesPerLine = std::sqrt(imageRef.size());
-                            *(imageRef.data() + tileIndxY * bytesPerLine + tileIndxX) = interpColorIndx;
+
+                            auto shift = tileIndxY * bytesPerLine + tileIndxX;
+                            *(imageRef.data() + shift) = interpColorIndx;
 
                             // height matrix
                             int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
@@ -745,7 +730,31 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     }
 
     lastMatParams_ = actualMatParams;
-    postUpdate(changedTiles);
+    
+    //postUpdate(changedTiles); // TODO!!!!!!!!!
+
+    TileMap res;
+    res.reserve(changedTiles.size());
+    for (SurfaceTile* itm : std::as_const(changedTiles)) {
+        if (!itm || !itm->getIsInited()) {
+            continue;
+        }
+
+        updateUnmarkedHeightVertices(itm);
+        itm->updateHeightIndices();
+        itm->setIsUpdated(false);
+        res.insert((itm)->getKey(), (*itm));
+    }
+
+    //const int beforeTracked = surfaceMeshPtr_->currentInitedTiles();
+    //const int beforeScan    = surfaceMeshPtr_->scanInitedTiles();
+    surfaceMeshPtr_->onTilesWritten(changedTiles); // метка тайлов/ужимка
+    //const int afterTracked = surfaceMeshPtr_->currentInitedTiles();
+    //const int afterScan    = surfaceMeshPtr_->scanInitedTiles();
+    //qDebug() << "[Mosaic] inited tiles tracked" << beforeTracked << "->" << afterTracked
+    //         << "/ scan" << beforeScan << "->" << afterScan;
+
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
 }
 
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
@@ -904,7 +913,7 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles)
         if (!dst) {
             continue;
         }
-        if (!dst->getIsInited()) {
+        if (!dst->getIsInited()) { // TODO PREFETCH!
             dst->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
         }
         const auto& src = it.value();
@@ -934,6 +943,8 @@ bool MosaicProcessor::prefetchFromHotCache(const QSet<TileKey> &keys)
     TileMap got;
 
     QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, got), Q_ARG(QSet<TileKey>, keys), Q_ARG(QSet<TileKey>*, &missing) );
+
+    //qDebug() << "fetch" << keys.size() << got.size();
 
     if (!got.isEmpty()) {
         putTilesIntoMesh(got);

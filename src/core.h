@@ -233,4 +233,9 @@ signals:
 
     QVector<QMetaObject::Connection> dataProcessorConnections_;
     DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
+
+    ChannelId lastCh1_;
+    uint8_t   lastSub1_;
+    ChannelId lastCh2_;
+    uint8_t   lastSub2_;
 };

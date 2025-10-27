@@ -24,7 +24,9 @@ Core::Core() :
     isLoggingKlf_(false),
     isLoggingCsv_(false),
     filePath_(),
-    isFileOpening_(false)
+    isFileOpening_(false),
+    lastSub1_(0),
+    lastSub2_(0)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
 
@@ -1163,7 +1165,15 @@ void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChS
         Q_UNUSED(name1)
         Q_UNUSED(name2)
 
-        QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels", Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
+        if (lastCh1_  != ch1  || lastSub1_ != sub1 ||
+            lastCh2_  != ch2  || lastSub2_ != sub2) {
+            QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels",
+                                      Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
+            lastCh1_  = ch1;
+            lastSub1_ = sub1;
+            lastCh2_  = ch2;
+            lastSub2_ = sub2;
+        }
     }
 }
 

@@ -659,6 +659,7 @@ void Dataset::mergeGnssTrack(QList<Position> track) {
 
 void Dataset::resetDataset()
 {
+    //qDebug() << "Dataset::resetDataset()";
     {
         QWriteLocker locker(&lock_);
         channelsSetup_.clear();

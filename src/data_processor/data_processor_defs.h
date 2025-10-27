@@ -143,7 +143,7 @@ namespace mosaic {
 }
 
 inline int tileIndexFromCoord(double coordMeters, double tileSideMeters) {
-    return (int)std::floor(coordMeters / tileSideMeters);
+    return static_cast<int>(std::floor(coordMeters / tileSideMeters));
 }
 
 inline TileKey tileKeyFromWorld(float worldX, float worldY, int zoom, int tileSidePx = 256)

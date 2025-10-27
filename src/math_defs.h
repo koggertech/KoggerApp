@@ -51,9 +51,6 @@ struct MatrixParams {
 
 inline void concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams &src)
 {
-    if (!srcDst.isValid() && !src.isValid())
-        return;
-
     if (!srcDst.isValid()) {
         srcDst = src;
         return;
@@ -74,11 +71,11 @@ inline void concatenateMatrixParameters(MatrixParams &srcDst, const MatrixParams
 }
 
 
-inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
+inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices,float tileSideMeters)
 {
     MatrixParams retVal;
 
-    if (vertices.isEmpty()) {
+    if (vertices.isEmpty() || !(tileSideMeters > 0.0f)) {
         return retVal;
     }
 
@@ -87,8 +84,7 @@ inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
     float minY = std::numeric_limits<float>::max();
     float maxY = std::numeric_limits<float>::lowest();
 
-    for (const auto& v : vertices)
-    {
+    for (const auto& v : vertices) {
         if (!std::isfinite(v.x()) || !std::isfinite(v.y()) || !std::isfinite(v.z())) {
             continue;
         }
@@ -98,15 +94,24 @@ inline MatrixParams getMatrixParams(const QVector<QVector3D> &vertices)
         minY = std::min(minY, v.y());
         maxY = std::max(maxY, v.y());
     }
-
     if (minX == std::numeric_limits<float>::max()) {
         return retVal;
     }
 
-    retVal.originX = minX;
-    retVal.originY = minY;
-    retVal.width   = static_cast<int>(std::ceil(maxX - minX));
-    retVal.height  = static_cast<int>(std::ceil(maxY - minY));
+    const int tx0 = int(std::floor(minX / tileSideMeters));
+    const int ty0 = int(std::floor(minY / tileSideMeters));
+    const int tx1 = int(std::floor((maxX - fltEps) / tileSideMeters));
+    const int ty1 = int(std::floor((maxY - fltEps) / tileSideMeters));
+
+    const int nx = tx1 - tx0 + 1;
+    const int ny = ty1 - ty0 + 1;
+
+    retVal.originX = tx0 * tileSideMeters;
+    retVal.originY = ty0 * tileSideMeters;
+
+    retVal.width  = int(std::floor(nx * tileSideMeters - fltEps));
+    retVal.height = int(std::floor(ny * tileSideMeters - fltEps));
+    // qDebug() << retVal.originX << retVal.originY << retVal.width << retVal.height;
 
     return retVal;
 }

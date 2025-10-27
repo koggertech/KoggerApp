@@ -19,7 +19,7 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
 
-    surfaceMesh_.setMaxInitedTiles(512); // не меньше, чем для разовой трассировки
+    surfaceMesh_.setMaxInitedTiles(256); // не меньше, чем для разовой трассировки
 
     surface_.setSurfaceMeshPtr(&surfaceMesh_);
     isobaths_.setSurfaceMeshPtr(&surfaceMesh_);

@@ -96,7 +96,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         tri[2] = QVector3D(P.x() - radiusM, P.y(),           P.z());
         tri[3] = QVector3D(P.x(),           P.y() - radiusM, P.z());
         kmath::MatrixParams actual(lastMatParams_);
-        kmath::MatrixParams mp = kmath::getMatrixParams(tri);
+        const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
+        kmath::MatrixParams mp = kmath::getMatrixParams(tri, tileSideMeters);
         if (mp.isValid()) {
             concatenateMatrixParameters(actual, mp);
             if (surfaceMeshPtr_->concatenate(actual)) {
@@ -219,7 +220,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
                 const int hvIdx = hy * hvSide + hx;
 
                 SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
-                if (!tile->getIsInited()) {
+                if (!tile->getIsInited()) { // TODO PREFETCH!
                     tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
                 }
 
@@ -277,7 +278,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             const int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
 
             SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
-            if (!tile->getIsInited()) {
+            if (!tile->getIsInited()) { // TODO PREFETCH!
                 tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
             }
 
@@ -414,7 +415,8 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         pts[2] = kmath::fvec(pt[t.c]);
 
         kmath::MatrixParams actualMatParams(lastMatParams_);
-        kmath::MatrixParams newMatrixParams = kmath::getMatrixParams(pts);
+        const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
+        kmath::MatrixParams newMatrixParams = kmath::getMatrixParams(pts, tileSideMeters);
         if (newMatrixParams.isValid()) {
             concatenateMatrixParameters(actualMatParams, newMatrixParams);
             if (surfaceMeshPtr_->concatenate(actualMatParams)) {
@@ -601,7 +603,7 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
             int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
 
             SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
-            if (!tile->getIsInited()) {
+            if (!tile->getIsInited()) { // TODO PREFETCH!
                 tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
             }
 
@@ -709,7 +711,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
             if (ty + 1 < tilesY) { // вверх, строка 0 в последнюю верхнего тайла
                 SurfaceTile* top = matrix[ty + 1][tx];
-                if (!top->getIsInited()) {
+                if (!top->getIsInited()) { // TODO PREFETCH!
                     top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 copyRow(t, top, 0, hvSide - 1);
@@ -719,7 +721,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
             if (tx > 0) { // влево, столбец 0 в правый столбец левого тайла
                 SurfaceTile* left = matrix[ty][tx - 1];
-                if (!left->getIsInited()) {
+                if (!left->getIsInited()) { // TODO PREFETCH!
                     left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 copyCol(t, left, 0, hvSide - 1);
@@ -729,7 +731,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
             if (ty + 1 < tilesY && tx > 0) { // диагональный узел
                 SurfaceTile* topLeft = matrix[ty + 1][tx - 1];
-                if (!topLeft->getIsInited()) {
+                if (!topLeft->getIsInited()) { // TODO PREFETCH!
                     topLeft->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
                 }
                 auto& vSrc = t->getHeightVerticesRef();

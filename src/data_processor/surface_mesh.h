@@ -49,11 +49,11 @@ public:
 
 private:
     /*methods*/
-    void initializeMatrix(int numWidthTiles, int numHeightTiles, const kmath::MatrixParams& matrixParams);
-    void resizeColumnsRight(int columnsToAdd);
-    void resizeRowsTop(int rowsToAdd);
+    void initializeMatrix(int numWidthTiles, int numHeightTiles);
     void resizeColumnsLeft(int columnsToAdd);
     void resizeRowsBottom(int rowsToAdd);
+    void resizeColumnsRight(int columnsToAdd);
+    void resizeRowsTop(int rowsToAdd);
     float getWidthMeters() const;
     float getHeightMeters() const;
 
