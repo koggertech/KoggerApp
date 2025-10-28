@@ -39,11 +39,10 @@ public:
     bool                                    getIsInited() const;
 
     // LRU
-    void setMaxInitedTiles(int maxTiles); // 0 - no limit
-    int  getMaxInitedTiles() const;
+    void setLRUWatermarks(int highA, int lowB);
     int  currentInitedTiles() const;
     int  scanInitedTiles(); // debug
-    void onTilesAppended(const QSet<SurfaceTile*>& written);
+    void setTileUsed(const QSet<SurfaceTile*>& written, bool evict);
     void touch(const TileKey& key);
     void resetTileByKey(const TileKey& key);
 
@@ -59,7 +58,6 @@ private:
 
     // LRU
     void evictIfNeeded();
-    void registerNewTile(SurfaceTile* t);
 
     /*data*/
     std::vector<SurfaceTile*> tiles_;
@@ -75,10 +73,7 @@ private:
     int tileHeightMatrixRatio_;
 
     // LRU
-    QHash<TileKey, uint64_t> lru_;
-    uint64_t                 tick_;
-    int                      maxTrackedTiles_;
-    QSet<TileKey>            initedKeys_;
-    int                      initedCount_;
-
+    QHash<TileKey, qint64> lru_;
+    int  highWM_;
+    int  lowWM_;
 };

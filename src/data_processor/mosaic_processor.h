@@ -54,6 +54,7 @@ private:
     bool prefetchFromHotCache(const QSet<TileKey>& keys);
 
 private:
+    const int expandMargin_ = 1;
     mosaic::PlotColorTable colorTable_;
     DataProcessor* dataProcessor_;
     Dataset* datasetPtr_;
