@@ -76,4 +76,8 @@ private:
     QHash<TileKey, qint64> lru_;
     int  highWM_;
     int  lowWM_;
+
+    // индекс тайла x,y у origin_
+    qint64 baseTx_ = 0;
+    qint64 baseTy_ = 0;
 };

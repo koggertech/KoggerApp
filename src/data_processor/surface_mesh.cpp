@@ -40,43 +40,46 @@ bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
         return false;
     }
 
-    if (tileMatrix_.empty()) {
-        const int baseTx = static_cast<int>(std::floor(actualMatParams.originX / tileSideMeterSize_));
-        const int baseTy = static_cast<int>(std::floor(actualMatParams.originY / tileSideMeterSize_));
-        origin_.setX(baseTx * tileSideMeterSize_);
-        origin_.setY(baseTy * tileSideMeterSize_);
+    const double S = double(tileSideMeterSize_);
 
-        const float right  = actualMatParams.originX + actualMatParams.width;
-        const float top    = actualMatParams.originY + actualMatParams.height;
-        const int newNumWidthTiles  = static_cast<int>(std::ceil((right  - origin_.x()) / tileSideMeterSize_));
-        const int newNumHeightTiles = static_cast<int>(std::ceil((top    - origin_.y()) / tileSideMeterSize_));
+    auto ceilTiles = [&](double delta)->int {
+        if (delta <= 0.0) return 0;
+        const double epsS = S * 1e-6;
+        return int(std::floor((delta + epsS) / S));
+    };
+
+    if (tileMatrix_.empty()) {
+        const int baseTx = int(std::floor(actualMatParams.originX / S));
+        const int baseTy = int(std::floor(actualMatParams.originY / S));
+        origin_.setX(baseTx * S);
+        origin_.setY(baseTy * S);
+
+        const double right  = actualMatParams.originX + actualMatParams.width;
+        const double top    = actualMatParams.originY + actualMatParams.height;
+        const int newNumWidthTiles  = int(std::ceil((right  - origin_.x()) / S));
+        const int newNumHeightTiles = int(std::ceil((top    - origin_.y()) / S));
 
         initializeMatrix(newNumWidthTiles, newNumHeightTiles);
         return true;
     }
 
-    int columnsToAddLeft = 0, columnsToAddRight = 0, rowsToAddTop = 0, rowsToAddBottom = 0;
-    if (actualMatParams.originX < origin_.x()) {
-        columnsToAddLeft = std::ceil((origin_.x() - actualMatParams.originX) / tileSideMeterSize_);
-    }
-    if ((actualMatParams.originX + actualMatParams.width) > (origin_.x() + getWidthMeters())) {
-        columnsToAddRight = std::ceil(((actualMatParams.originX + actualMatParams.width) - (origin_.x() + getWidthMeters())) / tileSideMeterSize_);
-    }
-    if ((actualMatParams.originY + actualMatParams.height) > (origin_.y() + getHeightMeters()) ) {
-        rowsToAddTop = std::ceil(((actualMatParams.originY + actualMatParams.height) - (origin_.y() + getHeightMeters())) / tileSideMeterSize_);
-    }
-    if (actualMatParams.originY < origin_.y()) {
-        rowsToAddBottom = std::ceil((origin_.y() - actualMatParams.originY) / tileSideMeterSize_);
-    }
+    const double currRight = origin_.x() + double(getWidthMeters());
+    const double currTop   = origin_.y() + double(getHeightMeters());
+
+    const int columnsToAddLeft  = ceilTiles(origin_.x() - actualMatParams.originX);
+    const int columnsToAddRight = ceilTiles((actualMatParams.originX + actualMatParams.width)  - currRight);
+    const int rowsToAddTop      = ceilTiles((actualMatParams.originY + actualMatParams.height) - currTop);
+    const int rowsToAddBottom   = ceilTiles(origin_.y() - actualMatParams.originY);
 
     bool resized = false;
+
     if (columnsToAddLeft > 0) {
-        origin_.setX(origin_.x() - columnsToAddLeft * tileSideMeterSize_);
+        origin_.setX(origin_.x() - columnsToAddLeft * S);
         resizeColumnsLeft(columnsToAddLeft);
         resized = true;
     }
     if (rowsToAddBottom > 0) {
-        origin_.setY(origin_.y() - rowsToAddBottom * tileSideMeterSize_);
+        origin_.setY(origin_.y() - rowsToAddBottom * S);
         resizeRowsBottom(rowsToAddBottom);
         resized = true;
     }
@@ -94,9 +97,12 @@ bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
 
 QVector3D SurfaceMesh::convertPhToPixCoords(QVector3D physicsCoordinate) const
 {
-    return QVector3D((physicsCoordinate.x() - origin_.x()) / tileResolution_,
-                     (physicsCoordinate.y() - origin_.y()) / tileResolution_,
-                     0.0f);
+    const double invRes = 1.0 / double(tileResolution_);
+    return QVector3D(
+        float( (double(physicsCoordinate.x()) - double(origin_.x())) * invRes ),
+        float( (double(physicsCoordinate.y()) - double(origin_.y())) * invRes ),
+        0.0f
+        );
 }
 
 void SurfaceMesh::printMatrix() const
@@ -136,6 +142,9 @@ void SurfaceMesh::clear()
 
     numWidthTiles_ = 0;
     numHeightTiles_ = 0;
+
+    baseTx_ = 0;
+    baseTy_ = 0;
 }
 
 void SurfaceMesh::clearHeightData(HeightType heightType)
@@ -318,32 +327,35 @@ void SurfaceMesh::evictIfNeeded() // ужать до лимита
     }
 }
 
-void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles)
+void SurfaceMesh::initializeMatrix(int newW, int newH)
 {
-    numWidthTiles_  = numWidthTiles;
-    numHeightTiles_ = numHeightTiles;
+    numWidthTiles_  = newW;
+    numHeightTiles_ = newH;
 
-    const int baseTx = tileIndexFromCoord(origin_.x(), tileSideMeterSize_);
-    const int baseTy = tileIndexFromCoord(origin_.y(), tileSideMeterSize_);
-    origin_.setX(baseTx * tileSideMeterSize_);
-    origin_.setY(baseTy * tileSideMeterSize_);
+    const double S = double(tileSideMeterSize_);
+
+    baseTx_ = tileIndexFromCoord(origin_.x(), S);
+    baseTy_ = tileIndexFromCoord(origin_.y(), S);
+
+    origin_.setX(float(baseTx_ * S));
+    origin_.setY(float(baseTy_ * S));
 
     tileMatrix_.assign(numHeightTiles_, std::vector<SurfaceTile*>(numWidthTiles_, nullptr));
 
     for (int i = 0; i < numHeightTiles_; ++i) {
         for (int j = 0; j < numWidthTiles_; ++j) {
-            const QVector3D tileOrigin{
-                origin_.x() + j * tileSideMeterSize_,
-                origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_,
-                0.0f
-            };
+            const long long keyX = baseTx_ + j;
+            const long long keyY = baseTy_ + ((numHeightTiles_ - 1) - i);
 
-            const int tx = baseTx + j;
-            const int ty = baseTy + ((numHeightTiles_ - 1) - i);
-            const TileKey key{ tx, ty, zoomIndex_ };
+            const QVector3D tileOrigin(
+                float(keyX * S),
+                float(keyY * S),
+                0.0f
+                );
+
+            const TileKey key{ int(keyX), int(keyY), zoomIndex_ };
 
             auto* tile = new SurfaceTile(key, tileOrigin);
-
             tiles_.push_back(tile);
             tileMatrix_[i][j] = tile;
             tileByKey_.insert(key, tile);
@@ -351,33 +363,30 @@ void SurfaceMesh::initializeMatrix(int numWidthTiles, int numHeightTiles)
     }
 }
 
-void SurfaceMesh::resizeColumnsLeft(int columnsToAdd)
+void SurfaceMesh::resizeColumnsLeft(int add)
 {
-    if (columnsToAdd <= 0) {
+    if (add <= 0) {
         return;
     }
-;
-    const int baseTx = tileIndexFromCoord(origin_.x(), tileSideMeterSize_);
-    const int baseTy = tileIndexFromCoord(origin_.y(), tileSideMeterSize_);
 
-    for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) {
-        const int oldSize = static_cast<int>(tileMatrix_[i].size());
-        tileMatrix_[i].resize(oldSize + columnsToAdd);
+    const double S = double(tileSideMeterSize_);
 
-        for (int j = oldSize - 1; j >= 0; --j) { // сдвиг вправо
-            tileMatrix_[i][j + columnsToAdd] = tileMatrix_[i][j];
+    baseTx_ -= add; // смещение базового индекса, а не origin через double
+    origin_.setX(float(baseTx_ * S));
+
+    for (int i = 0; i < numHeightTiles_; ++i) {
+        const int oldW = int(tileMatrix_[i].size());
+        tileMatrix_[i].resize(oldW + add);
+        for (int j = oldW - 1; j >= 0; --j) { // сдвиг вправо
+            tileMatrix_[i][j + add] = tileMatrix_[i][j];
         }
 
-        for (int j = 0; j < columnsToAdd; ++j) { // новые слева
-            const QVector3D tileOrigin{
-                origin_.x() + j * tileSideMeterSize_,
-                origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_,
-                0.0f
-            };
+        for (int j = 0; j < add; ++j) { // новые слева
+            const long long keyX = baseTx_ + j;
+            const long long keyY = baseTy_ + ((numHeightTiles_ - 1) - i);
 
-            const int tx = baseTx + j;
-            const int ty = baseTy + ((numHeightTiles_ - 1) - i);
-            const TileKey key{ tx, ty, zoomIndex_ };
+            const QVector3D tileOrigin(float(keyX * S), float(keyY * S), 0.0f);
+            const TileKey key{ int(keyX), int(keyY), zoomIndex_ };
 
             auto* tile = new SurfaceTile(key, tileOrigin);
             tiles_.push_back(tile);
@@ -386,35 +395,33 @@ void SurfaceMesh::resizeColumnsLeft(int columnsToAdd)
         }
     }
 
-    numWidthTiles_ += columnsToAdd;
+    numWidthTiles_ += add;
 }
 
-void SurfaceMesh::resizeRowsBottom(int rowsToAdd)
+void SurfaceMesh::resizeRowsBottom(int add)
 {
-    if (rowsToAdd <= 0) {
+    if (add <= 0) {
         return;
     }
 
-    const int baseTx = tileIndexFromCoord(origin_.x(), tileSideMeterSize_);
-    const int baseTy = tileIndexFromCoord(origin_.y(), tileSideMeterSize_);
-    const int oldH = static_cast<int>(tileMatrix_.size());
-    const int newH = numHeightTiles_ + rowsToAdd;
+    const double S = double(tileSideMeterSize_);
 
-    tileMatrix_.resize(oldH + rowsToAdd);
+    baseTy_ -= add; // базовый индекс вниз
+    origin_.setY(float(baseTy_ * S));
 
-    for (int i = oldH; i < oldH + rowsToAdd; ++i) {
+    const int oldH = numHeightTiles_;
+    const int newH = oldH + add;
+
+    tileMatrix_.resize(newH);
+    for (int i = oldH; i < newH; ++i) {
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            const QVector3D tileOrigin{
-                origin_.x() + j * tileSideMeterSize_,
-                origin_.y() + ((newH - 1) - i) * tileSideMeterSize_,
-                0.0f
-            };
+            const long long keyX = baseTx_ + j;
+            const long long keyY = baseTy_ + ((newH - 1) - i);
 
-            const int tx = baseTx + j;
-            const int ty = baseTy + ((newH - 1) - i);
-            const TileKey key{ tx, ty, zoomIndex_ };
+            const QVector3D tileOrigin(float(keyX * S), float(keyY * S), 0.0f);
+            const TileKey key{ int(keyX), int(keyY), zoomIndex_ };
 
             auto* tile = new SurfaceTile(key, tileOrigin);
             tiles_.push_back(tile);
@@ -426,29 +433,24 @@ void SurfaceMesh::resizeRowsBottom(int rowsToAdd)
     numHeightTiles_ = newH;
 }
 
-void SurfaceMesh::resizeColumnsRight(int columnsToAdd)
+void SurfaceMesh::resizeColumnsRight(int add)
 {
-    if (columnsToAdd <= 0) {
+    if (add <= 0) {
         return;
     }
 
-    const int baseTx = tileIndexFromCoord(origin_.x(), tileSideMeterSize_);
-    const int baseTy = tileIndexFromCoord(origin_.y(), tileSideMeterSize_);
+    const double S = double(tileSideMeterSize_);
     const int oldW = numWidthTiles_;
 
-    for (int i = 0; i < static_cast<int>(tileMatrix_.size()); ++i) {
-        tileMatrix_[i].resize(oldW + columnsToAdd);
+    for (int i = 0; i < numHeightTiles_; ++i) {
+        tileMatrix_[i].resize(oldW + add);
 
-        for (int j = oldW; j < oldW + columnsToAdd; ++j) {
-            const QVector3D tileOrigin{
-                origin_.x() + j * tileSideMeterSize_,
-                origin_.y() + ((numHeightTiles_ - 1) - i) * tileSideMeterSize_,
-                0.0f
-            };
+        for (int j = oldW; j < oldW + add; ++j) {
+            const long long keyX = baseTx_ + j;
+            const long long keyY = baseTy_ + ((numHeightTiles_ - 1) - i);
 
-            const int tx = baseTx + j;
-            const int ty = baseTy + ((numHeightTiles_ - 1) - i);
-            const TileKey key{ tx, ty, zoomIndex_ };
+            const QVector3D tileOrigin(float(keyX * S), float(keyY * S), 0.0f);
+            const TileKey key{ int(keyX), int(keyY), zoomIndex_ };
 
             auto* tile = new SurfaceTile(key, tileOrigin);
             tiles_.push_back(tile);
@@ -457,37 +459,32 @@ void SurfaceMesh::resizeColumnsRight(int columnsToAdd)
         }
     }
 
-    numWidthTiles_ += columnsToAdd;
+    numWidthTiles_ += add;
 }
 
-void SurfaceMesh::resizeRowsTop(int rowsToAdd)
+void SurfaceMesh::resizeRowsTop(int add)
 {
-    if (rowsToAdd <= 0) {
+    if (add <= 0) {
         return;
     }
 
-    const int baseTx = tileIndexFromCoord(origin_.x(), tileSideMeterSize_);
-    const int baseTy = tileIndexFromCoord(origin_.y(), tileSideMeterSize_);
-    const int newH = numHeightTiles_ + rowsToAdd;
+    const double S = double(tileSideMeterSize_);
+    const int newH = numHeightTiles_ + add;
 
-    tileMatrix_.resize(newH); // расширяем и сдвигаем вниз
-    for (int i = newH - 1; i >= rowsToAdd; --i) {
-        tileMatrix_[i] = std::move(tileMatrix_[i - rowsToAdd]);
+    tileMatrix_.resize(newH);
+    for (int i = newH - 1; i >= add; --i) {
+        tileMatrix_[i] = std::move(tileMatrix_[i - add]);
     }
 
-    for (int i = 0; i < rowsToAdd; ++i) { // новые строки сверху
+    for (int i = 0; i < add; ++i) {
         tileMatrix_[i].resize(numWidthTiles_);
 
         for (int j = 0; j < numWidthTiles_; ++j) {
-            const QVector3D tileOrigin{
-                origin_.x() + j * tileSideMeterSize_,
-                origin_.y() + ((newH - 1) - i) * tileSideMeterSize_,
-                0.0f
-            };
+            const long long keyX = baseTx_ + j;
+            const long long keyY = baseTy_ + ((newH - 1) - i);
 
-            const int tx = baseTx + j;
-            const int ty = baseTy + ((newH - 1) - i);
-            const TileKey key{ tx, ty, zoomIndex_ };
+            const QVector3D tileOrigin(float(keyX * S), float(keyY * S), 0.0f);
+            const TileKey key{ int(keyX), int(keyY), zoomIndex_ };
 
             auto* tile = new SurfaceTile(key, tileOrigin);
             tiles_.push_back(tile);
@@ -495,7 +492,6 @@ void SurfaceMesh::resizeRowsTop(int rowsToAdd)
             tileByKey_.insert(key, tile);
         }
     }
-
     numHeightTiles_ = newH;
 }
 

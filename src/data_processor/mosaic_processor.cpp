@@ -548,12 +548,29 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
     concatenateMatrixParameters(actualMatParams, newMatrixParams);
 
-    const float marginMeters  = expandMargin_ * (tileSidePixelSize_ * tileResolution_);
+    const float marginMeters  = expandMargin_ * tileSideMeters;
     kmath::MatrixParams expanded = actualMatParams;
     expanded.originX -= marginMeters;
     expanded.originY -= marginMeters;
     expanded.width   += 2 * marginMeters;
     expanded.height  += 2 * marginMeters;
+
+    const double S = double(tileSidePixelSize_ * tileResolution_);
+    auto snapDown = [&](double v){ return std::floor(v / S) * S; };
+    auto snapUp   = [&](double v){ return std::ceil (v / S) * S; };
+
+    {
+        const double x0 = snapDown(expanded.originX);
+        const double y0 = snapDown(expanded.originY);
+        const double x1 = snapUp  (expanded.originX + expanded.width);
+        const double y1 = snapUp  (expanded.originY + expanded.height);
+
+        expanded.originX = float(x0);
+        expanded.originY = float(y0);
+        expanded.width   = int(std::lround(x1 - x0));
+        expanded.height  = int(std::lround(y1 - y0));
+    }
+
     surfaceMeshPtr_->concatenate(expanded);
 
     const int gMeshWidthPixs  = surfaceMeshPtr_->getPixelWidth();
@@ -815,7 +832,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         }
     }
 
-    lastMatParams_ = expanded;
+    lastMatParams_ = actualMatParams;
 
     QSet<SurfaceTile*> changedOut;
     postUpdate(changedTiles, changedOut);
