@@ -1691,6 +1691,8 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::sendMosaicColorTable,          scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setMosaicColorTableTextureTask, connType);
     QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTiles,              scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setTiles,                       connType); // TODO: del
     QObject::connect(dataProcessor_, &DataProcessor::sendSurfaceTilesIncremental,   scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setTilesIncremental,            connType);
+    QObject::connect(dataProcessor_, &DataProcessor::sendTraceLines,                scene3dViewPtr_->getSurfaceViewPtr().get(),     &SurfaceView::setTraceLines,                  connType);
+
     // clear render
     QObject::connect(dataProcessor_, &DataProcessor::bottomTrackProcessingCleared,  scene3dViewPtr_->bottomTrack().get(),           &BottomTrack::clearData,                      connType);
     QObject::connect(dataProcessor_, &DataProcessor::isobathsProcessingCleared,     scene3dViewPtr_->getIsobathsViewPtr().get(),    &IsobathsView::clear,                         connType);
@@ -1701,7 +1703,6 @@ void Core::createScene3dConnections()
     // data tiles request
     QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataRectRequest,   dataProcessor_, &DataProcessor::onSendDataRectRequest, connType); // отправляет запрос на рендер данных
     QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataZoom,          dataProcessor_, &DataProcessor::onUpdateMosaic,        connType); // отправляет зум и чекает в кеше/бд наличие (совместить?)
-
 
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }

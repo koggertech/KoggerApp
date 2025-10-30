@@ -106,6 +106,7 @@ private slots:
     void onDbAnyTileForZoom(int zoom, bool exists);
 
 signals:
+    void sendTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
     // db
     void dbCheckAnyTileForZoom(int zoom);
     void dbSaveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles, bool useTextures, int tilePx, int hmRatio);
@@ -140,6 +141,8 @@ signals:
     void sendSurfaceTilesIncremental(const TileMap& upserts, const QSet<TileKey>& fullVisibleNow);
 
 private slots:
+    void postTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
+
     void runCoalescedWork();
     void startTimerIfNeeded();
     void onWorkerFinished(); // слот на сигнал ComputeWorker::jobFinished

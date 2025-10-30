@@ -230,6 +230,19 @@ bool SurfaceView::hasTile(const TileKey &key) const
     return false;
 }
 
+void SurfaceView::setTraceLines(const QVector3D &leftBeg, const QVector3D &leftEnd, const QVector3D &rightBeg, const QVector3D &rightEnd)
+{
+    if (auto* r = RENDER_IMPL(SurfaceView); r) {
+        r->lastLeftLine_.resize(2);
+        r->lastRightLine_.resize(2);
+        r->lastLeftLine_[0]  = leftBeg;
+        r->lastLeftLine_[1]  = leftEnd;
+        r->lastRightLine_[0] = rightBeg;
+        r->lastRightLine_[1] = rightEnd;
+        Q_EMIT changed();
+    }
+}
+
 GLuint SurfaceView::getSurfaceColorTableTextureId() const
 {
     if (auto* r = RENDER_IMPL(SurfaceView); r) {
@@ -298,6 +311,8 @@ void SurfaceView::clear()
 
     surfaceColorTableToAppend_.clear();
 
+    r->lastLeftLine_.clear();
+    r->lastRightLine_.clear();
 
     Q_EMIT changed();
     Q_EMIT boundsChanged();
@@ -512,7 +527,9 @@ SurfaceView::SurfaceViewRenderImplementation::SurfaceViewRenderImplementation()
     surfaceStep_(3.0f),
     colorIntervalsSize_(-1),
     iVis_(false),
-    mVis_(false)
+    mVis_(false),
+    traceWidth_(2.0f),
+    traceVisible_(true)
 {}
 
 void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
@@ -602,13 +619,44 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         }
     }
 
-    // debug info
     auto lineProg = shaderProgramMap.value("static", nullptr);
     if (!lineProg) {
         qWarning() << "Shader program 'static' not found! Tile frames disabled.";
         return;
     }
 
+    { // лучи
+        if (traceVisible_ && lastLeftLine_.size() == 2 && lastRightLine_.size() == 2) {
+            lineProg->bind();
+
+            const int posLoc   = lineProg->attributeLocation("position");
+            const int matLoc   = lineProg->uniformLocation("matrix");
+            const int colorLoc = lineProg->uniformLocation("color");
+            const int widthLoc = lineProg->uniformLocation("width");
+            const int triLoc   = lineProg->uniformLocation("isTriangle");
+
+            lineProg->setUniformValue(matLoc, mvp);
+            lineProg->setUniformValue(triLoc, false);
+            lineProg->setUniformValue(widthLoc, traceWidth_);
+
+            lineProg->enableAttributeArray(posLoc);
+
+            ctx->glLineWidth(traceWidth_);
+            lineProg->setUniformValue(colorLoc, QVector4D(0.0f, 0.8f, 1.0f, 0.0f));
+            lineProg->setAttributeArray(posLoc, lastLeftLine_.constData());
+            ctx->glDrawArrays(GL_LINES, 0, 2);
+            lineProg->setUniformValue(colorLoc, QVector4D(0.0f, 0.8f, 1.0f, 0.0f));
+            lineProg->setAttributeArray(posLoc, lastRightLine_.constData());
+            ctx->glDrawArrays(GL_LINES, 0, 2);
+            ctx->glLineWidth(1.0);
+
+            lineProg->disableAttributeArray(posLoc);
+            lineProg->release();
+        }
+    }
+
+    //return;
+    // debug info
     // tile bounds
     {
         lineProg->bind();

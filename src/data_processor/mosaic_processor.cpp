@@ -496,6 +496,9 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     QVector<char>      isOdds; // 0 - even, 1 - odd
     QVector<int>       epochIndxs;
 
+    QVector3D lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
+    bool      haveLastPair = false;
+
     // prepare intermediate data (selecting epochs to process)
     for (const auto& i : indxs) {
         auto epoch = datasetPtr_->fromIndexCopy(i);
@@ -512,8 +515,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 if (auto segFCharts = epoch.chart(segFChannelId_, segFSubChannelId_); segFCharts) {
                     double leftAzRad = azRad - M_PI_2 + qDegreesToRadians(lAngleOffset_);
                     float lDist = segFCharts->range();
-                    measLinesVertices.append(QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f));
-                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
+                    lastLeftBeg = QVector3D(pos.n + lDist * qCos(leftAzRad), pos.e + lDist * qSin(leftAzRad), 0.0f);
+                    lastLeftEnd = QVector3D(pos.n, pos.e, 0.0f);
+                    measLinesVertices.append(lastLeftBeg);
+                    measLinesVertices.append(lastLeftEnd);
                     measLinesEvenIndices.append(currIndxSec_++);
                     measLinesEvenIndices.append(currIndxSec_++);
                     isOdds.append('0');
@@ -526,8 +531,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 if (auto segSCharts = epoch.chart(segSChannelId_, segSSubChannelId_); segSCharts) {
                     double rightAzRad = azRad + M_PI_2 - qDegreesToRadians(rAngleOffset_);
                     float rDist = segSCharts->range();
-                    measLinesVertices.append(QVector3D(pos.n, pos.e, 0.0f));
-                    measLinesVertices.append(QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f));
+                    lastRightBeg = QVector3D(pos.n, pos.e, 0.0f);
+                    lastRightEnd = QVector3D(pos.n + rDist * qCos(rightAzRad), pos.e + rDist * qSin(rightAzRad), 0.0f);
+                    measLinesVertices.append(lastRightBeg);
+                    measLinesVertices.append(lastRightEnd);
                     measLinesOddIndices.append(currIndxSec_++);
                     measLinesOddIndices.append(currIndxSec_++);
                     isOdds.append('1');
@@ -539,8 +546,13 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             if (acceptedEven || acceptedOdd) {
                 lastAcceptedEpoch_ = std::max(lastAcceptedEpoch_, i);
             }
+
+            if (acceptedEven && acceptedOdd) {
+                haveLastPair = true;
+            }
         }
     }
+
     const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
     newMatrixParams = kmath::getMatrixParams(measLinesVertices, tileSideMeters);
     if (!newMatrixParams.isValid()) {
@@ -861,6 +873,15 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     //         << "/ scan" << beforeScan << "->" << afterScan;
 
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+
+    if (haveLastPair) {
+        QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
+            Q_ARG(QVector3D, lastLeftBeg),
+            Q_ARG(QVector3D, lastLeftEnd),
+            Q_ARG(QVector3D, lastRightBeg),
+            Q_ARG(QVector3D, lastRightEnd)
+            );
+    }
 }
 
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const

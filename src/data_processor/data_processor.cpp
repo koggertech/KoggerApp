@@ -1285,7 +1285,6 @@ void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTile
 
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
     scheduleLatest(WorkSet(WF_All), /*replace*/true);
-
 }
 
 void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
@@ -1300,4 +1299,9 @@ void DataProcessor::onDbAnyTileForZoom(int zoom, bool exists)
     else {
         tryCalcTiles();
     }
+}
+
+void DataProcessor::postTraceLines(const QVector3D &leftBeg, const QVector3D &leftEnd, const QVector3D &rightBeg, const QVector3D &rightEnd)
+{
+    emit sendTraceLines(leftBeg, leftEnd, rightBeg, rightEnd);
 }

@@ -37,6 +37,10 @@ public:
         int colorIntervalsSize_; // from dataprocessor
         bool iVis_;
         bool mVis_;
+        QVector<QVector3D> lastLeftLine_;
+        QVector<QVector3D> lastRightLine_;
+        float traceWidth_;
+        bool  traceVisible_;
     };
 
     explicit SurfaceView(QObject* parent = nullptr);
@@ -65,6 +69,8 @@ public:
 
     bool trySetMosaicTextureId(const TileKey& key, GLuint texId);
     bool hasTile(const TileKey& key) const;
+
+    void setTraceLines(const QVector3D& leftBeg, const QVector3D& leftEnd, const QVector3D& rightBeg, const QVector3D& rightEnd);
 
 public slots: // from dataprocessor
     void clear();
