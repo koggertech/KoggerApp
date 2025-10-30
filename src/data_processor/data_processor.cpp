@@ -76,7 +76,8 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     dbWriter_(nullptr),
     engineVer_(1),
     lastZoom_(0),
-    dbIsReady_(false)
+    dbIsReady_(false),
+    prefetchTick_(0)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
@@ -141,6 +142,10 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     case DataProcessorType::kSurface:     clearSurfaceProcessing();     emit surfaceProcessingCleared();     break;
     default: break;
     }
+
+    // prefetch db
+    clearDbNotFoundCache();
+    prefetchTick_ = 0;
 
     chartsCounter_ = 0;
     bottomTrackCounter_ = 0;
@@ -557,17 +562,19 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
         nfErase(dt.key);
     }
 
-    if (!outTiles.isEmpty()) { // в горячий кеш
+    if (!outTiles.isEmpty()) {
         hotCache_.putBatch(std::move(outTiles), DataSource::kDataBase, /*useTextures=*/true);
+        notifyPrefetchProgress(); // сообщить префетчерам
     }
 
-    if (!loadedKeys.isEmpty()) { // В рендер — только видимые и не отрисованные
+    if (!loadedKeys.isEmpty()) {
         QSet<TileKey> addNow;
         for (const auto& k : loadedKeys) {
             if (lastKeys_.contains(k) && !renderedKeys_.contains(k)) {
                 addNow.insert(k);
             }
         }
+
         if (!addNow.isEmpty()) {
             QSet<TileKey> dummy;
             TileMap delta = hotCache_.getForKeys(addNow, &dummy);
@@ -577,16 +584,18 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
         }
     }
 
-    if (!requestedNow.isEmpty()) { // ключи что бд не отдала -помечаем не найдено
+    if (!requestedNow.isEmpty()) {
         QSet<TileKey> loadedSet(loadedKeys.cbegin(), loadedKeys.cend());
         QSet<TileKey> notFoundNow = requestedNow;
         notFoundNow.subtract(loadedSet);
-        for (const auto& k : notFoundNow) {
-            nfTouch(k);
+        if (!notFoundNow.isEmpty()) {
+            for (const auto& k : notFoundNow) {
+                nfTouch(k);
+            }
+            notifyPrefetchProgress(); // сообщить префетчерам
         }
     }
 
-    // Следующая пачка, если есть запустится
     if (!dbPendingKeys_.isEmpty()) {
         flushPendingDbKeys();
     }
@@ -643,6 +652,21 @@ void DataProcessor::requestTilesFromDB(const QSet<TileKey>& keys)
     flushPendingDbKeys();
 }
 
+quint64 DataProcessor::prefetchProgressTick() const
+{
+    return prefetchTick_.load(std::memory_order_relaxed);
+}
+
+void DataProcessor::prefetchWait(quint64 lastTick)
+{
+    QMutexLocker lk(&prefetchMu_);
+
+    // ждём пока тик изменится (или разбудят)
+    while (prefetchTick_.load(std::memory_order_relaxed) == lastTick) {
+        prefetchCv_.wait(&prefetchMu_);
+    }
+}
+
 void DataProcessor::flushPendingDbKeys()
 {
     if (!dbReader_ || dbPendingKeys_.isEmpty() || dbReaderInWork_) {
@@ -650,12 +674,13 @@ void DataProcessor::flushPendingDbKeys()
     }
 
     QSet<TileKey> dbReq;
-    for (auto it = dbPendingKeys_.begin(); it != dbPendingKeys_.end(); ) {
-        const auto& itVal = *it;
-        if (!dbInWorkKeys_.contains(itVal)) {
-            dbReq.insert(itVal);
-            dbInWorkKeys_.insert(itVal);
+    dbReq.reserve(dbPendingKeys_.size());
 
+    for (auto it = dbPendingKeys_.begin(); it != dbPendingKeys_.end(); ) {
+        const auto& k = *it;
+        if (!dbInWorkKeys_.contains(k)) {
+            dbReq.insert(k);
+            dbInWorkKeys_.insert(k);
             it = dbPendingKeys_.erase(it);
         }
         else {
@@ -667,9 +692,9 @@ void DataProcessor::flushPendingDbKeys()
         return;
     }
 
-    if (dbIsReady_) {
+    if (dbIsReady_.load(std::memory_order_relaxed)) {
         dbReaderInWork_ = true;
-        emit dbLoadTilesForKeys(dbReq); // to READER
+        emit dbLoadTilesForKeys(dbReq);
     }
 }
 
@@ -699,6 +724,7 @@ void DataProcessor::postSurfaceTiles(TileMap tiles, bool useTextures)
 
     if (useTextures) {
         hotCache_.putBatch(std::move(tiles), DataSource::kCalculation, /*useTextures=*/true);
+        notifyPrefetchProgress(); // сообщить префетчерам
     }
 
     if (!prepaired.isEmpty()) {
@@ -872,7 +898,7 @@ void DataProcessor::openDB()
 
     // схема готова - запускаем reader
     connect(dbWriter_, &MosaicDB::schemaReady, this, [this]() {
-        dbIsReady_ = true;
+        dbIsReady_.store(true, std::memory_order_relaxed);
 
         // reader
         dbReader_ = new MosaicDB(filePath_, DbRole::Reader);
@@ -922,7 +948,8 @@ void DataProcessor::closeDB()
         dbWriter_ = nullptr;
     }
 
-    dbIsReady_ = false;
+    dbIsReady_.store(false, std::memory_order_relaxed);
+    notifyPrefetchProgress(); // сообщить префетчерам
 
     qDebug() << "DB closed";
 }
@@ -1039,6 +1066,7 @@ void DataProcessor::requestCancel() noexcept
 {
     nextRunPending_.store(true);
     cancelRequested_.store(true);
+    notifyPrefetchProgress(); // сообщить префетчерам
 }
 
 void DataProcessor::onUpdateMosaic(int zoom) // calc or db
@@ -1134,7 +1162,7 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     //    return;
     //}
 
-    pumpVisible();
+    //pumpVisible();
 }
 
 void DataProcessor::tryCalcTiles()
@@ -1163,6 +1191,18 @@ TileMap DataProcessor::fetchFromHotCache(const QSet<TileKey> &keys, QSet<TileKey
     //}
 
     return retVal;
+}
+
+void DataProcessor::filterNotFoundOut(const QSet<TileKey> &in, QSet<TileKey> *out)
+{
+    if (!out) {
+        return;
+    }
+
+    QSet<TileKey> res = in;
+    res.subtract(dbNotFoundIndxs_);
+
+    *out = std::move(res);
 }
 
 void DataProcessor::shutdown()
@@ -1194,9 +1234,28 @@ void DataProcessor::shutdown()
     qDebug() << "DataProcessor::shutdown()";
 }
 
+bool DataProcessor::isDbReady() const noexcept
+{
+    return dbIsReady_.load(std::memory_order_relaxed);
+}
+
 void DataProcessor::onDbSaveTiles(const QHash<TileKey, SurfaceTile> &tiles)
 {
     emit dbSaveTiles(engineVer_, tiles, true, defaultTileSidePixelSize, defaultTileHeightMatrixRatio);
+}
+
+void DataProcessor::notifyPrefetchProgress()
+{
+    QMutexLocker lk(&prefetchMu_);
+    prefetchTick_.fetch_add(1, std::memory_order_relaxed);
+    prefetchCv_.wakeAll();
+}
+
+void DataProcessor::clearDbNotFoundCache()
+{
+    dbNotFoundIndxs_.clear();
+    dbNotFoundOrder_.clear();
+    dbNotFoundPos_.clear();
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)

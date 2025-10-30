@@ -2,6 +2,7 @@
 
 #include <QtMath>
 #include <QDebug>
+#include <QThread>
 #include <optional>
 #include "data_processor.h"
 #include "dataset.h"
@@ -1059,17 +1060,75 @@ bool MosaicProcessor::prefetchFromHotCache(const QSet<TileKey> &keys)
         return false;
     }
 
+    Q_ASSERT(QThread::currentThread() != dataProcessor_->thread());
+
+    TileMap allGot;
     QSet<TileKey> missing;
-    TileMap got;
 
-    QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, got), Q_ARG(QSet<TileKey>, keys), Q_ARG(QSet<TileKey>*, &missing) );
+    auto putAllGotTiles = [&]() -> bool {
+        if (!allGot.isEmpty()) {
+            putTilesIntoMesh(allGot);
+        }
 
-    //qDebug() << "fetch" << keys.size() << got.size();
+        return !allGot.isEmpty();
+    };
 
-    if (!got.isEmpty()) {
-        putTilesIntoMesh(got);
-        return true;
+    // забрать с хот кэша
+    if (!QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, allGot), Q_ARG(QSet<TileKey>, keys), Q_ARG(QSet<TileKey>*, &missing))) {
+        qWarning() << "[prefetch] invoke fetchFromHotCache failed";
     }
 
-    return false;
+    // вычесть то, чего нет в БД
+    QSet<TileKey> waiting;
+    if (!QMetaObject::invokeMethod(dataProcessor_, "filterNotFoundOut", Qt::BlockingQueuedConnection, Q_ARG(QSet<TileKey>, missing), Q_ARG(QSet<TileKey>*, &waiting))) {
+        qWarning() << "[prefetch] invoke filterNotFoundOut failed";
+    }
+
+    // нечего ждать,  бд не готова - выход
+    if (waiting.isEmpty() || !dataProcessor_->isDbReady()) {
+        return putAllGotTiles();
+    }
+
+    // цикл ожидания поступлений из БД
+    while (!waiting.isEmpty()) {
+        // попросить БД
+        QMetaObject::invokeMethod(dataProcessor_, "requestTilesFromDB", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, waiting));
+
+        // засечь тик и уснуть до прогресса
+        quint64 t0 = 0;
+        if (!QMetaObject::invokeMethod(dataProcessor_, "prefetchProgressTick", Qt::BlockingQueuedConnection, Q_RETURN_ARG(quint64, t0))) {
+            qWarning() << "[prefetch] invoke prefetchProgressTick failed";
+        }
+
+        // корректное ожидание через паблик-API
+        dataProcessor_->prefetchWait(t0);
+
+        if (canceled()) {
+            break;
+        }
+
+        // попробуем снова забрать с горячего кеша (в него пишет БД)
+        QSet<TileKey> stillMissing;
+        TileMap newlyGot;
+
+        if (!QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection, Q_RETURN_ARG(TileMap, newlyGot), Q_ARG(QSet<TileKey>, waiting), Q_ARG(QSet<TileKey>*, &stillMissing))) {
+            qWarning() << "[prefetch] invoke fetchFromHotCache (retry) failed";
+        }
+
+        // что осталось уйдёт в ожидание
+        if (!QMetaObject::invokeMethod(dataProcessor_, "filterNotFoundOut", Qt::BlockingQueuedConnection, Q_ARG(QSet<TileKey>, stillMissing), Q_ARG(QSet<TileKey>*, &stillMissing))) {
+            qWarning() << "[prefetch] invoke filterNotFoundOut (retry) failed";
+        }
+
+        // аккумуляция результата
+        for (auto it = newlyGot.cbegin(); it != newlyGot.cend(); ++it) {
+            allGot.insert(it.key(), it.value());
+        }
+
+        // на следующий поиск
+        waiting.swap(stillMissing);
+    }
+
+    // выход
+    return putAllGotTiles();
 }

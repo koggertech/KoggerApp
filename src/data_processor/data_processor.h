@@ -3,6 +3,7 @@
 #include <atomic>
 #include <list>
 #include <QHash>
+#include <QMutex>
 #include <QObject>
 #include <QTimer>
 #include <QSet>
@@ -10,6 +11,8 @@
 #include <QVector3D>
 #include <QPair>
 #include <QThread>
+#include <QWaitCondition>
+
 #include "dataset_defs.h"
 #include "bottom_track_processor.h"
 #include "isobaths_processor.h"
@@ -23,6 +26,7 @@
 class Dataset;
 class BottomTrack;
 class ComputeWorker;
+
 class DataProcessor : public QObject {
     Q_OBJECT
 public:
@@ -33,6 +37,7 @@ public:
     inline bool isCancelRequested() const noexcept { return cancelRequested_.load(); }
 
     void onDbSaveTiles(const QHash<TileKey, SurfaceTile>& tiles);
+    bool isDbReady() const noexcept;
 
 public slots:
     // this
@@ -88,7 +93,11 @@ public slots:
 
     TileMap fetchFromHotCache(const QSet<TileKey>& keys, QSet<TileKey>* missing);
 
-    void shutdown(); // correct termination of processes 
+    void requestTilesFromDB(const QSet<TileKey>& keys);
+    void filterNotFoundOut(const QSet<TileKey>& in, QSet<TileKey>* out);
+    quint64 prefetchProgressTick() const;
+    void prefetchWait(quint64 lastTick);
+    void shutdown(); // correct termination of processes
 
 private slots:
     //db
@@ -161,7 +170,6 @@ private slots:
     void onSendSavedKeys(QVector<TileKey> savedKeys);
 
 private:
-    void requestTilesFromDB(const QSet<TileKey>& keys);
     void flushPendingDbKeys();
 
     // this
@@ -183,6 +191,9 @@ private:
     // not found LRU
     inline void nfTouch(const TileKey& k);
     inline void nfErase(const TileKey& k);
+
+    void notifyPrefetchProgress();
+    void clearDbNotFoundCache();
 
 private:
     friend class SurfaceProcessor;
@@ -254,5 +265,9 @@ private:
     std::list<TileKey>                           dbNotFoundOrder_; // LRU: front - oldest
     QHash<TileKey, std::list<TileKey>::iterator> dbNotFoundPos_;
 
-    bool dbIsReady_;
+    // prefetch
+    std::atomic_bool     dbIsReady_;
+    QMutex               prefetchMu_;
+    QWaitCondition       prefetchCv_;
+    std::atomic<quint64> prefetchTick_;
 };
