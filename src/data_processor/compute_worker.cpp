@@ -109,9 +109,9 @@ void ComputeWorker::setIsobathsLabelStepSize(float v)
 void ComputeWorker::setMosaicChannels(const ChannelId& ch1, uint8_t sub1,
                                       const ChannelId& ch2, uint8_t sub2)
 {
-    clearAll();
-
     mosaic_.setChannels(ch1, sub1, ch2, sub2);
+
+    clearAll();
 }
 
 void ComputeWorker::setMosaicTheme(int id)

@@ -71,6 +71,8 @@ MosaicProcessor::~MosaicProcessor()
 
 void MosaicProcessor::clear()
 {
+    //qDebug() << "MosaicProcessor::clear";
+
     lastMatParams_ = kmath::MatrixParams();
     currIndxSec_ = 0;
 
@@ -100,6 +102,8 @@ void MosaicProcessor::setChannels(const ChannelId& firstChId, uint8_t firstSubCh
 
 void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 {
+    //qDebug() << "MosaicProcessor::updateDataWrapper" << indxs;
+
     if (!datasetPtr_ || indxs.isEmpty()) {
         return;
     }
@@ -476,6 +480,8 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
 
 void MosaicProcessor::updateData(const QVector<int>& indxs)
 {
+    //qDebug() << "MosaicProcessor::updateData" << indxs;
+
     if (!datasetPtr_ || indxs.empty()) {
         return;
     }
@@ -593,20 +599,21 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     {
         QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, expandMargin_/*for prefetch*/);
 
-        QSet<TileKey> need;
-        need.reserve(toRestore.size());
-        for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
-            auto cKey = *it;
-            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
-                if (!t->getIsInited()) {
-                    need.insert(cKey);
+        if (!toRestore.isEmpty()) {
+            QSet<TileKey> need;
+            need.reserve(toRestore.size());
+            for (auto it = toRestore.cbegin(); it != toRestore.cend(); ++it) {
+                auto cKey = *it;
+                if (auto* t = surfaceMeshPtr_->getTilePtrByKey(cKey); t) {
+                    if (!t->getIsInited()) {
+                        need.insert(cKey);
+                    }
                 }
             }
-        }
 
-        if (need.size()) {
-            //qDebug() << "[prefetch] need" << need.size() << "of" << toRestore.size();
-            prefetchFromHotCache(need);
+            if (!need.isEmpty()) {
+                prefetchFromHotCache(need);
+            }
         }
     }
 
@@ -917,11 +924,13 @@ QSet<TileKey> MosaicProcessor::forecastTilesToTouch(const QVector<QVector3D>& me
     }
 
     const int tilePx = surfaceMeshPtr_->getTileSidePixelSize();
-    const int H = surfaceMeshPtr_->getNumHeightTiles();
-    const int W = surfaceMeshPtr_->getNumWidthTiles();
-    auto clamp = [](int v, int lo, int hi){ return std::min(std::max(v, lo), hi); };
+    const int H      = surfaceMeshPtr_->getNumHeightTiles();
+    const int W      = surfaceMeshPtr_->getNumWidthTiles();
+    auto clamp = [](int v, int lo, int hi) -> int {
+        return std::min(std::max(v, lo), hi);
+    };
 
-    const int stridePx = std::max(8, tilePx / 2);
+    const int stridePx = std::max(8, tilePx / 4);
     const int m = std::max(0, marginTiles);
 
     auto pushIdxWithMargin = [&](int mx, int my){

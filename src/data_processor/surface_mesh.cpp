@@ -135,9 +135,16 @@ void SurfaceMesh::clear()
         delete itm;
     }
     tiles_.clear();
-    tileMatrix_.clear();
-    tileByKey_.clear();
+    tiles_.shrink_to_fit();
 
+    for (auto& itm : tileMatrix_) {
+        itm.clear();
+        itm.shrink_to_fit();
+    }
+    tileMatrix_.clear();
+    tileMatrix_.shrink_to_fit();
+
+    tileByKey_.clear();
     lru_.clear();
 
     numWidthTiles_ = 0;
@@ -302,7 +309,6 @@ void SurfaceMesh::evictIfNeeded() // ужать до лимита
     if (highWM_ <= 0 || lru_.size() <= highWM_) {
         return;
     }
-    int cnt = 0;
     while (lru_.size() > lowWM_) {
         TileKey victim;
         qint64 oldest = std::numeric_limits<qint64>::max();
@@ -319,11 +325,7 @@ void SurfaceMesh::evictIfNeeded() // ужать до лимита
         if (oldest == std::numeric_limits<qint64>::max()) {
             break;
         }
-        ++cnt;
         resetTileByKey(victim);
-    }
-    if (cnt) {
-        qDebug() << "evicted size" << cnt;
     }
 }
 
