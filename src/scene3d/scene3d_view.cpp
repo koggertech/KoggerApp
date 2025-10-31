@@ -930,6 +930,8 @@ void GraphicsScene3dView::onCameraMoved()
 {
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
+    //currZoom = 2; // 1 - best, 7 (test)
+
     if (currZoom == dataZoomIndx_) {
         return;
     }
