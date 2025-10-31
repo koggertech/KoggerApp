@@ -1162,7 +1162,7 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     //    return;
     //}
 
-    //pumpVisible();
+    pumpVisible();
 }
 
 void DataProcessor::tryCalcTiles()
