@@ -12,12 +12,13 @@ Slider {
 
     property real backHandleX: slider.horizontal ? slider.leftPadding + slider.visualPosition * (slider.width - slider.leftPadding - slider.rightPadding - handleControl.width): slider.leftPadding
     property real backHandleY: slider.horizontal ? slider.topPadding + slider.availableHeight / 2 - handleControl.height / 2 : -slider.topPadding / 2 + slider.visualPosition * (slider.height) - handleControl.height / 2
+    property int barWidth: 10
 
     handle: Rectangle {
         id: handleControl
         x: backHandleX
         y: backHandleY
-        width: 10
+        width: barWidth
         height: slider.height
         color: slider.pressed ? theme.textSolidColor : theme.textColor
     }

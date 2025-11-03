@@ -124,6 +124,12 @@ void Epoch::setPositionLLA(Position position) {
     flags.posAvail = true;
 }
 
+void Epoch::setSonarPosition(Position val)
+{
+    sonarPosition_ = val;
+    flags.sonarPosAvail = true;
+}
+
 void Epoch::setPositionLLA(const LLA &lla)
 {
     _positionGNSS.lla = lla;
@@ -157,6 +163,11 @@ float Epoch::getDepth()
 void Epoch::setPositionDataType(DataType dataType)
 {
     _positionGNSS.dataType = dataType;
+}
+
+void Epoch::setSonarPositionDataType(DataType dataType)
+{
+    sonarPosition_.dataType = dataType;
 }
 
 void Epoch::setGnssVelocity(double h_speed, double course) {

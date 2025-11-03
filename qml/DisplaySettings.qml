@@ -11,6 +11,8 @@ GridLayout {
     property bool syncPlots: plotSyncCheckBox.checked
     property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
+    property bool extraInfoVis: extraInfoPanelVisible.checked
+    property bool autopilotInfofVis: autopilotInfoVisible.checked
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()
@@ -148,6 +150,90 @@ GridLayout {
 
                     Settings {
                         property alias fixBlackStripesBackwardStepsSpinBox: fixBlackStripesBackwardStepsSpinBox.value
+                    }
+                }
+            }
+
+            RowLayout {
+                CCheck {
+                    id: sonarOffsetCheckButton
+                    Layout.fillWidth: true
+                    text: qsTr("S.offset, mm:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                        else {
+                            dataset.setSonarOffset(0, 0, 0)
+                        }
+
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Settings {
+                        property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueX
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueX: sonarOffsetValueX.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueY
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueY: sonarOffsetValueY.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    visible: false
+                    id: sonarOffsetValueZ
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueZ: sonarOffsetValueZ.value
                     }
                 }
             }
@@ -798,7 +884,7 @@ GridLayout {
             }
 
             ParamSetup {
-                paramName: qsTr("Instrumets grade:")
+                paramName: qsTr("Instruments grade:")
 
                 CCombo  {
                     id: instrumentsGradeList
@@ -820,6 +906,22 @@ GridLayout {
             visible: instruments > 1
             groupName: qsTr("Interface")
 
+            CCheck {
+                id: extraInfoPanelVisible
+                text: qsTr("Extra info panel")
+
+                Settings {
+                    property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                }
+            }
+            CCheck {
+                id:  autopilotInfoVisible
+                text: qsTr("Autopilot info")
+
+                Settings {
+                    property alias autopilotInfoVisible: autopilotInfoVisible.checked
+                }
+            }
             CCheck {
                 id: consoleVisible
                 text: qsTr("Console")

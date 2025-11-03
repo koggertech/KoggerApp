@@ -56,11 +56,8 @@ void DataInterpolator::interpolatePos(bool fromStart)
             continue;
         }
 
-        int fromIndx = firstValidIndex + 1;
-        int toIndx = secondValidIndex;
-
         auto* startEpoch = datasetPtr_->fromIndex(firstValidIndex);
-        auto* endEpoch = datasetPtr_->fromIndex(secondValidIndex);
+        auto* endEpoch   = datasetPtr_->fromIndex(secondValidIndex);
         if (!startEpoch || !endEpoch) {
             continue;
         }
@@ -68,24 +65,38 @@ void DataInterpolator::interpolatePos(bool fromStart)
         auto startPos = startEpoch->getPositionGNSS();
         auto endPos = endEpoch->getPositionGNSS();
 
-        auto timeDiffNano = calcTimeDiffInNanoSecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec, endEpoch->getPositionGNSS().time.sec,   endEpoch->getPositionGNSS().time.nanoSec);
-        auto timeOnStep = static_cast<quint64>(timeDiffNano * 1.0f / static_cast<float>(numInterpIndx));
+        const int numSteps = secondValidIndex - firstValidIndex;
+
+        const quint64 startTimeNs = convertToNanosecs(startPos.time.sec, startPos.time.nanoSec);
+        const quint64 endTimeNs   = convertToNanosecs(endPos.time.sec,   endPos.time.nanoSec);
+        const bool haveTimes = (startTimeNs != 0 || endTimeNs != 0) && (endTimeNs > startTimeNs);
+        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : zeroNsecs;
+
+        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : oneHundredNsecs;
 
         int cnt = 1;
-        auto startTime = convertToNanosecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec);
+        for (int j = firstValidIndex + 1; j < secondValidIndex; ++j, ++cnt) {
+            if (auto* ep = datasetPtr_->fromIndex(j)) {
+                // quint64 currentNs = haveTimes ? (convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec)) : (startTimeNs + stepNs * cnt);
+                // if (!haveTimes) {
+                //     const auto t = convertFromNanosecs(currentNs);
+                //     ep->setGNSSSec(t.first);
+                //     ep->setGNSSNanoSec(t.second);
+                // }
+                quint64 currentNs = (startTimeNs + stepNs * cnt); // такое только в позиции
+                const auto t = convertFromNanosecs(currentNs);
+                ep->setGNSSSec(t.first);
+                ep->setGNSSNanoSec(t.second);
 
-        for (int j = fromIndx; j < toIndx; ++j, ++cnt) {
-            if (auto* ep = datasetPtr_->fromIndex(j); ep) {
-                // time
-                auto pTime = convertFromNanosecs(startTime + cnt * timeOnStep);
-                ep->setGNSSSec(pTime.first);
-                ep->setGNSSNanoSec(pTime.second);
-                // pos
-                auto currentTime = convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec);
-                float progress = (currentTime - startTime) * 1.0f / static_cast<float>(timeDiffNano);
-                auto resNed = interpNED(startPos.ned, endPos.ned, progress);
-                auto resLla = interpLLA(startPos.lla, endPos.lla, progress);
-                //qDebug() << "      interp ned" << j << resNed.n << resNed.e << "lla" << resLla.latitude << resLla.longitude;
+                double progress = haveTimes ? double(currentNs - startTimeNs) / double(timeDiffNs) : double(cnt) / double(numSteps);
+                if (!haveTimes || currentNs <= startTimeNs || currentNs >= endTimeNs) {
+                    progress = double(cnt) / double(numSteps);
+                }
+                progress = qBound(0.0, progress, 1.0);
+
+                const auto resNed = interpNED(startPos.ned, endPos.ned, float(progress));
+                const auto resLla = interpLLA(startPos.lla, endPos.lla, float(progress));
+
                 ep->setPositionNED(resNed);
                 ep->setPositionLLA(resLla);
                 ep->setPositionDataType(DataType::kInterpolated);
@@ -169,29 +180,45 @@ void DataInterpolator::interpolateAtt(bool fromStart)
         auto startRoll = startEpoch->roll();
         auto endRoll = endEpoch->roll();
 
-        auto timeDiffNano = calcTimeDiffInNanoSecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec, endEpoch->getPositionGNSS().time.sec,   endEpoch->getPositionGNSS().time.nanoSec);
-        auto timeOnStep = static_cast<quint64>(timeDiffNano * 1.0f / static_cast<float>(numInterpIndx));
 
-        // time
+        const int numSteps = secondValidIndex - firstValidIndex;
+
+        const quint64 startTimeNs = convertToNanosecs(startEpoch->getPositionGNSS().time.sec,
+                                                      startEpoch->getPositionGNSS().time.nanoSec);
+        const quint64 endTimeNs   = convertToNanosecs(endEpoch->getPositionGNSS().time.sec,
+                                                    endEpoch->getPositionGNSS().time.nanoSec);
+        const bool haveTimes = (startTimeNs != 0 || endTimeNs != 0) && (endTimeNs > startTimeNs);
+        const quint64 timeDiffNs = haveTimes ? (endTimeNs - startTimeNs) : zeroNsecs;
+
+        const quint64 stepNs = haveTimes ? (timeDiffNs / numSteps) : oneHundredNsecs;
+
         int cnt = 1;
-        auto startTime = convertToNanosecs(startEpoch->getPositionGNSS().time.sec, startEpoch->getPositionGNSS().time.nanoSec);
-
         for (int j = fromIndx; j < toIndx; ++j, ++cnt) {
             if (auto* ep = datasetPtr_->fromIndex(j); ep) {
-                // time
-                auto pTime = convertFromNanosecs(startTime + cnt * timeOnStep);
-                ep->setGNSSSec(pTime.first);
-                ep->setGNSSNanoSec(pTime.second);
-                // att
-                auto currentTime = convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec);
-                float progress = (currentTime - startTime) * 1.0f / static_cast<float>(timeDiffNano);
-                lastAttInterpIndx_ = j;
-                float resYaw   = interpAttParam(startYaw,   endYaw,   progress);
-                float resPitch = interpAttParam(startPitch, endPitch, progress);
-                float resRoll  = interpAttParam(startRoll,  endRoll,  progress);
-                //qDebug() << "      interp att" << j << resYaw << resPitch << resRoll;
+
+                quint64 currentNs = haveTimes ? convertToNanosecs(ep->getPositionGNSS().time.sec, ep->getPositionGNSS().time.nanoSec) : (startTimeNs + stepNs * cnt);
+
+                if (!haveTimes) {
+                    const auto t = convertFromNanosecs(currentNs);
+                    ep->setGNSSSec(t.first);
+                    ep->setGNSSNanoSec(t.second);
+                }
+
+                double progress = haveTimes
+                                      ? double(currentNs - startTimeNs) / double(timeDiffNs)
+                                      : double(cnt) / double(numSteps);
+                if (!haveTimes || currentNs <= startTimeNs || currentNs >= endTimeNs) {
+                    progress = double(cnt) / double(numSteps);
+                }
+                progress = qBound(0.0, progress, 1.0);
+
+                float resYaw   = interpAttParam(startYaw,   endYaw,   float(progress));
+                float resPitch = interpAttParam(startPitch, endPitch, float(progress));
+                float resRoll  = interpAttParam(startRoll,  endRoll,  float(progress));
+
                 ep->setAtt(resYaw, resPitch, resRoll, DataType::kInterpolated);
                 beenInterp = true;
+                lastAttInterpIndx_ = j;
             }
         }
 
@@ -258,21 +285,21 @@ float DataInterpolator::interpDist(float start, float end, float progress) const
 
 qint64 DataInterpolator::calcTimeDiffInNanoSecs(time_t startSecs, int startNanoSecs, time_t endSecs, int endNanoSecs) const
 {
-    qint64 stTime = static_cast<qint64>(startSecs) * 1'000'000'000 + startNanoSecs;
-    qint64 enTime = static_cast<qint64>(endSecs)   * 1'000'000'000 + endNanoSecs;
+    qint64 stTime = static_cast<qint64>(startSecs) * oneSecInNsecs + startNanoSecs;
+    qint64 enTime = static_cast<qint64>(endSecs)   * oneSecInNsecs + endNanoSecs;
 
     return enTime - stTime;
 }
 
 qint64 DataInterpolator::convertToNanosecs(time_t secs, int nanoSecs) const
 {
-    return static_cast<qint64>(secs) * 1'000'000'000 + nanoSecs;
+    return static_cast<qint64>(secs) * oneSecInNsecs + nanoSecs;
 }
 
 std::pair<time_t, int> DataInterpolator::convertFromNanosecs(qint64 totalNanoSecs) const
 {
-    time_t seconds  = static_cast<time_t>(totalNanoSecs / 1'000'000'000);
-    int nanoseconds = static_cast<int>(totalNanoSecs % 1'000'000'000);
+    time_t seconds  = static_cast<time_t>(totalNanoSecs / oneSecInNsecs);
+    int nanoseconds = static_cast<int>(totalNanoSecs % oneSecInNsecs);
 
     return { seconds, nanoseconds };
 }

@@ -1,5 +1,6 @@
 #include "plot2D.h"
 #include "epoch_event.h"
+#include "qmath.h"
 
 
 Plot2D::Plot2D()
@@ -381,6 +382,11 @@ void Plot2D::setAttitudeVisible(bool visible) {
     plotUpdate();
 }
 
+void Plot2D::setTemperatureVisible(bool visible) {
+    grid_.setTemperatureVisible(visible);
+    plotUpdate();
+}
+
 void Plot2D::setDopplerBeamVisible(bool visible, int beam_filter) {
     dvlBeamVelocity_.setVisible(visible);
     dvlBeamVelocity_.setBeamFilter(beam_filter);
@@ -413,6 +419,12 @@ void Plot2D::setGridVetricalNumber(int grids) {
 void Plot2D::setGridFillWidth(bool state)
 {
     grid_.setFillWidth(state);
+    plotUpdate();
+}
+
+void Plot2D::setGridInvert(bool state)
+{
+    grid_.setInvert(state);
     plotUpdate();
 }
 
@@ -728,8 +740,6 @@ bool Plot2D::setContact(int indx, const QString& text)
     }
 
     ep->contact_.info = text;
-    //qDebug() << "Plot2D::setContact: setted to epoch:" <<  currIndx << text;
-
 
     if (primary) {
         ep->contact_.cursorX = cursor_.contactX;
@@ -740,15 +750,52 @@ bool Plot2D::setContact(int indx, const QString& text)
         float value_scale = float(cursor_.contactY) / canvas_height;
         float cursor_distance = value_scale * value_range + cursor_.distance.from;
 
-        ep->contact_.distance = cursor_distance;
+        const auto [channelId, subIndx, name] = getSelectedChannelId(cursor_distance); // *
+        const float bottomTrack = ep->distProccesing(channelId);
+        const auto  boatNed         = ep->getPositionGNSS().ned;
+        const auto  boatLla         = ep->getPositionGNSS().lla;
 
-        auto pos = ep->getPositionGNSS();
 
-        ep->contact_.nedX = pos.ned.n;
-        ep->contact_.nedY = pos.ned.e;
+        ep->contact_.nedX             = boatNed.n;
+        ep->contact_.nedY             = boatNed.e;
+        ep->contact_.lat              = boatLla.latitude;
+        ep->contact_.lon              = boatLla.longitude;
+        ep->contact_.echogramDistance = cursor_distance;
 
-        ep->contact_.lat = pos.lla.latitude;
-        ep->contact_.lon = pos.lla.longitude;
+
+        if (!cursor_.isChannelDoubled()) { // basic
+            ep->contact_.depth            = cursor_distance;
+        }
+        else { // side scan
+            if (std::fabs(cursor_distance) < std::fabs(bottomTrack)) {
+                ep->contact_.depth            = bottomTrack;
+            }
+            else {
+                const float  calcRange        = std::sqrt(std::max(0.0, std::pow(cursor_distance, 2) - std::pow(bottomTrack, 2)));
+                const bool   goRight          = cursor_distance > 0; // *
+                const float  lAngleOffsetDeg  = 0.f;
+                const float  rAngleOffsetDeg  = 0.f;
+                const double yawRad           = qDegreesToRadians(ep->yaw());
+                const double leftAzRad        = yawRad - M_PI_2 + qDegreesToRadians(lAngleOffsetDeg);
+                const double rightAzRad       = yawRad + M_PI_2 - qDegreesToRadians(rAngleOffsetDeg);
+                const double beamAz           = goRight ? rightAzRad : leftAzRad;
+                const double dN               = calcRange * std::cos(beamAz);
+                const double dE               = calcRange * std::sin(beamAz);
+                const double R                = 6378137.0;
+                const double lat0_deg         = boatLla.latitude;
+                const double lon0_deg         = boatLla.longitude;
+                const double lat0_rad         = qDegreesToRadians(lat0_deg);
+                const double dLat_deg         = (dN / R) * (180.0 / M_PI);
+                const double dLon_deg         = (dE / (R * std::cos(lat0_rad))) * (180.0 / M_PI);
+
+                ep->contact_.nedX             = boatNed.n + dN;
+                ep->contact_.nedY             = boatNed.e + dE;
+                ep->contact_.echogramDistance = cursor_distance;
+                ep->contact_.depth            = bottomTrack;
+                ep->contact_.lat              = lat0_deg + dLat_deg;
+                ep->contact_.lon              = lon0_deg + dLon_deg;
+            }
+        }
     }
     else {
         // update rect
@@ -758,6 +805,33 @@ bool Plot2D::setContact(int indx, const QString& text)
 
     plotUpdate();
 
+    return true;
+}
+
+bool Plot2D::setActiveContact(int indx)
+{
+    if (!datasetPtr_) {
+        qDebug() << "Plot2D::setActiveContact returned: !_dataset";
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Plot2D::setActiveContact returned: !ep";
+        return false;
+    }
+
+    auto currActiveIndx = datasetPtr_->getActiveContactIndx();
+    if (currActiveIndx == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+        sendSyncEvent(-1, ContactActiveChanged);
+    }
+    else {
+        datasetPtr_->setActiveContactIndx(indx);
+        sendSyncEvent(indx, ContactActiveChanged);
+    }
+
+    plotUpdate();
     return true;
 }
 
@@ -777,6 +851,10 @@ bool Plot2D::deleteContact(int indx)
     }
 
     ep->contact_.clear();
+
+    if (datasetPtr_->getActiveContactIndx() == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+    }
 
     sendSyncEvent(indx, ContactDeleted);
 

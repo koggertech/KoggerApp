@@ -58,6 +58,7 @@ public:
         /*data*/
         QMap<int, ContactInfo> points_; // first - epoch index, second - position and text
         int intersectedEpochIndx_;
+        int64_t activeContactIndx_ = -1;
     };
 
     /*methods*/
@@ -83,6 +84,7 @@ public:
 public slots:
     Q_INVOKABLE bool setContact(int indx, const QString& text);
     Q_INVOKABLE bool deleteContact(int indx);
+    Q_INVOKABLE bool setActiveContact(int indx);
     Q_INVOKABLE void update();
 
 signals:

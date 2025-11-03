@@ -61,13 +61,13 @@ public:
                 pingheader.PingNumber = ping_numb;
 
                 Position ext_pos = epoch->getExternalPosition();
-                Position int_pos = epoch->getPositionGNSS();
+                Position boatPos = epoch->getPositionGNSS();
 
                 Position pos;
                 if(ext_pos.lla.isCoordinatesValid()) {
                     pos = ext_pos;
-                } else if(int_pos.lla.isCoordinatesValid()){
-                    pos = int_pos;
+                } else if(boatPos.lla.isCoordinatesValid()){
+                    pos = boatPos;
                 } else {
                     pos.lla.latitude = 0;
                     pos.lla.longitude = 0;

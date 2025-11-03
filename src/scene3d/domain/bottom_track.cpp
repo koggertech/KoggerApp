@@ -247,7 +247,7 @@ void BottomTrack::selectEpoch(int epochIndex, const ChannelId& channelId)
         return;
 
     auto* epoch = datasetPtr_->fromIndex(epochIndex);
-    NED nedPos = epoch->getPositionGNSS().ned;
+    NED nedPos = epoch->getSonarPosition().ned;
 
     auto indxFromMap = vertex2Epoch_.key(epochIndex);
 
@@ -448,6 +448,7 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
 
     int currMin = defMode ? 0 : lEpoch;
     int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
+    //qDebug() << "updateAll" << updateAll << "defMode" << defMode << "currMin" << currMin << "currMax" << currMax << "datasetPtr_->getLastBottomTrackEpoch()" << datasetPtr_->getLastBottomTrackEpoch();
 
     if (defMode) {
         vertex2Epoch_.clear();
@@ -460,7 +461,7 @@ void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool 
 
     for (int i = currMin; i < currMax; ++i) {
         if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            NED pos = epoch->getPositionGNSS().ned;
+            NED pos = epoch->getSonarPosition().ned;
             if (!pos.isCoordinatesValid()) {
                 continue;
             }

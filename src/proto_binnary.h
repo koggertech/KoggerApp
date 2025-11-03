@@ -1162,7 +1162,7 @@ public:
         _frame[0] = 0xbb;
         _frame[1] = 0x55;
         setRoute(route);
-        setMode(type, ver, true);
+        setMode(type, ver, type != CONTENT ? true : false); // TODO: check
         setId(id);
 
         _frameLen = 6;

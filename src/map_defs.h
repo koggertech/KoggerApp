@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <QDebug>
 #include <QDateTime>
 #include <QVector>
+#include <QVector2D>
 #include <QVector3D>
 #include <QImage>
 #include <QPair>
@@ -11,9 +13,20 @@
 #include <QOpenGLFunctions>
 #include <QtMath>
 #include <functional>
+#include "dataset_defs.h"
 
-#include "dataset.h"
 
+static inline float wrapPi(float a)
+{
+    while (a >  M_PI) a -= 2.f * M_PI;
+    while (a <= -M_PI) a += 2.f * M_PI;
+    return a;
+};
+
+static inline float shortestDiff(float from, float to)
+{
+    return wrapPi(to - from);
+};
 
 namespace map {
 

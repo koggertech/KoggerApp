@@ -22,6 +22,7 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
 
     setVisibleContact(false);
 
+    auto activeContactIndx = dataset->getActiveContactIndx();
     for (auto& indx : cursor.indexes) {
         auto* epoch = dataset->fromIndex(indx);
 
@@ -29,12 +30,13 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
             continue;
         }
 
+        bool isActiveContact = activeContactIndx == indx;
         if (epoch->contact_.isValid()) {
             float xPos = cursor.numZeroEpoch + indx - cursor.indexes[0];
             const float canvasHeight = canvas.height();
             float valueRange = cursor.distance.to - cursor.distance.from;
             float valueScale = canvasHeight / valueRange;
-            float yPos = (epoch->contact_.distance - cursor.distance.from) * valueScale;
+            float yPos = (epoch->contact_.echogramDistance - cursor.distance.from) * valueScale;
             bool intersects = false;
 
             auto& epRect = epoch->contact_.rectEcho;
@@ -60,7 +62,7 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
                     info_ = epoch->contact_.info;
                     lat_ = epoch->contact_.lat;
                     lon_ = epoch->contact_.lon;
-                    depth_ = epoch->contact_.distance;
+                    depth_ = epoch->contact_.depth;// echogramDistance;
                     setVisibleContact(true);
                     intersects = true;
                 }
@@ -83,13 +85,15 @@ bool Plot2DContact::draw(Plot2D *parent, Dataset *dataset)
                 p->drawLine(topLeft, topLeft + QPointF(0, -30));
             }
             else {
+                QColor linesColor = isActiveContact ? QColor(0, 0, 190) : QColor(190, 0, 0);
+
                 // red back
                 p->setPen(Qt::NoPen);
-                p->setBrush(QColor(190, 0, 0));
+                p->setBrush(linesColor);
                 p->drawRect(textRect.adjusted(-adjPix, -adjPix, adjPix, adjPix));
                 // lines
                 QPointF topLeft = textRect.adjusted(-adjPix + 1, -adjPix + 1, adjPix, adjPix).topLeft();
-                p->setPen(QPen(QColor(190,0,0), 2));
+                p->setPen(QPen(linesColor, 2));
                 p->drawLine(topLeft, topLeft + QPointF(-30, 0));
                 p->drawLine(topLeft, topLeft + QPointF(0, -30));
                 // gray back
