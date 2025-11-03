@@ -595,8 +595,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     const int gMeshWidthPixs  = surfaceMeshPtr_->getPixelWidth();
     const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
-    // prefetch tiles from hotCache (dataprocessor)
-    {
+    { // prefetch tiles
         QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, expandMargin_/*for prefetch*/);
 
         if (!toRestore.isEmpty()) {
@@ -612,11 +611,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             }
 
             if (!need.isEmpty()) {
-                prefetchFromHotCache(need);
+                prefetchTiles(need);
             }
         }
     }
-
 
     static QSet<SurfaceTile*> changedTiles;
     changedTiles.clear();
@@ -1084,7 +1082,7 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
     return;
 }
 
-bool MosaicProcessor::prefetchFromHotCache(const QSet<TileKey> &keys)
+bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгрузка тайлов с hotCache, db
 {
     if (!dataProcessor_ || keys.isEmpty()) {
         return false;

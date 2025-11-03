@@ -51,7 +51,7 @@ private:
     // prepairing tiles
     QSet<TileKey> forecastTilesToTouch(const QVector<QVector3D>& meas, const QVector<char>& isOdds, const QVector<int>& epochIndxs, int marginTiles = 0) const;
     void putTilesIntoMesh(const TileMap& tiles);
-    bool prefetchFromHotCache(const QSet<TileKey>& keys);
+    bool prefetchTiles(const QSet<TileKey>& keys);
 
 private:
     const int expandMargin_ = 1;
