@@ -190,6 +190,7 @@ signals:
 
     void iqComplete(QByteArray data, uint8_t type);
     void attitudeComplete(float yaw, float pitch, float roll);
+    void tempComplete(float val);
     void distComplete(const ChannelId& channelId, int dist);
 
     void usblSolutionComplete(IDBinUsblSolution::UsblSolution data);

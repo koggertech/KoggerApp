@@ -36,6 +36,7 @@ Item  {
 
     property bool menuOpened:
         settings3DSettings.visible
+    || locationSettings.visible
     || isobathsSettings.visible
     || mosaicViewSettings.visible
 
@@ -74,6 +75,85 @@ Item  {
 
                 onClicked: {
                     Scene3dToolBarController.onSetCameraMapViewButtonClicked()
+                }
+            }
+
+            Item {
+                //visible: false
+                id:     locationWrapper
+                width : locationCheckButton.implicitWidth
+                height: locationCheckButton.implicitHeight
+
+                CheckButton {
+                    id: locationCheckButton
+                    iconSource: "qrc:/icons/ui/location.svg"
+                    backColor:          theme.controlBackColor
+                    borderColor:        theme.controlBackColor
+                    checkedBorderColor: theme.controlBorderColor
+                    checked:            false
+                    implicitHeight:     theme.controlHeight * 1.3
+                    implicitWidth:      theme.controlHeight * 1.3
+
+                    onCheckedChanged: {
+                        Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+                    }
+
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+                    }
+
+                    property bool locationLongPressTriggered: false
+
+                    MouseArea {
+                        id: locationTouchArea
+                        anchors.fill: parent
+                        enabled: Qt.platform.os === "android"
+
+                        onPressed: {
+                            if (enabled) {
+                                locationLongPressTimer.start()
+                                locationCheckButton.locationLongPressTriggered = false
+                            }
+                        }
+
+                        onReleased: {
+                            if (enabled) {
+                                if (!locationCheckButton.locationLongPressTriggered) {
+                                    locationCheckButton.checked = !locationCheckButton.checked
+                                }
+                                locationLongPressTimer.stop()
+                            }
+                        }
+
+                        onCanceled: {
+                            if (enabled) {
+                                locationLongPressTimer.stop()
+                            }
+                        }
+                    }
+
+                    Timer {
+                        id: locationLongPressTimer
+                        interval: 100 // ms
+                        repeat: false
+                        running : false
+                        onTriggered: {
+                            locationCheckButton.locationLongPressTriggered = true;
+                        }
+                    }
+
+                    Settings {
+                        property alias locationCheckButton: locationCheckButton.checked
+                    }
+                }
+
+                LocationExtraSettings {
+                    id: locationSettings
+                    locationCheckButton:      locationCheckButton
+
+                    anchors.bottom:           locationCheckButton.top
+                    anchors.horizontalCenter: locationCheckButton.horizontalCenter
+                    z: 2
                 }
             }
 

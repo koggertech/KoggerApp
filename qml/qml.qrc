@@ -97,6 +97,7 @@
         <file>CContact.qml</file>
         <file>Settings3DExtraSettings.qml</file>
         <file>IsobathsExtraSettings.qml</file>
+        <file>LocationExtraSettings.qml</file>
         <file>MosaicExtraSettings.qml</file>
     </qresource>
 </RCC>

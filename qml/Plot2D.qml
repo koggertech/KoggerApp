@@ -620,6 +620,14 @@ WaterFall {
                         Component.onCompleted: plotAttitudeVisible(checked)
                     }
 
+                    CCheck {
+                        visible: instruments > 1
+                        id: temperatureVisible
+                        text: qsTr("Temperature")
+                        onCheckedChanged: plotTemperatureVisible(checked)
+                        Component.onCompleted: plotTemperatureVisible(checked)
+                    }
+
                     RowLayout {
                         visible: instruments > 1
                         id: dopplerBeamVisibleGroup
@@ -799,6 +807,21 @@ WaterFall {
                                     property alias fillWidthGrid: fillWidthGrid.checked
                                 }
                             }
+                            CCheck {
+                                id: invertGrid
+                                Layout.fillWidth: true
+                                text: qsTr("invert")
+                                onCheckedChanged: plotGridInvert(checked)
+                                visible: gridVisible.checked
+
+                                Component.onCompleted: {
+                                    plotGridInvert(checked)
+                                }
+                                Settings {
+                                    category: "Plot2D_" + plot.indx
+                                    property alias invertGrid: invertGrid.checked
+                                }
+                            }
                         }
 
                         SpinBoxCustom {
@@ -976,6 +999,7 @@ WaterFall {
                         property alias rangefinderVisible: rangefinderVisible.checked
                         property alias postProcVisible: bottomTrackVisible.checked
                         property alias ahrsVisible: ahrsVisible.checked
+                        property alias temperatureVisible: temperatureVisible.checked
                         property alias gridVisible: gridVisible.checked
                         property alias dopplerBeamVisible: dopplerBeamVisible.checked
                         property alias dopplerInstrumentVisible: dopplerInstrumentVisible.checked
@@ -1010,6 +1034,10 @@ WaterFall {
 
         onCopyButtonClicked: {
             plot.updateContact()
+        }
+
+        onSetActiveButtonClicked: {
+            plot.setActiveContact(contactDialog.indx)
         }
 
         onInputAccepted: {

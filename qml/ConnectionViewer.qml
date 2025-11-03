@@ -514,9 +514,30 @@ ColumnLayout {
         }
 
         CheckButton {
-            id: importCheck
-            text: "Import"
-            checked: false
+           id: importCheck
+           text: "Import"
+           checked: false
+        }
+
+        CheckButton {
+            visible: false
+            id: gpsCheckButton
+            text: qsTr("GPS")
+            checkedBackColor: core.isGPSAlive ? "green" : "red"
+
+            Layout.alignment: Qt.AlignRight
+            onCheckedChanged: {
+
+                core.useGPS = checked
+            }
+
+            Component.onCompleted: {
+                core.useGPS = checked
+            }
+
+            Settings {
+                property alias gpsCheckButton: gpsCheckButton.checked
+            }
         }
     }
 
@@ -1002,7 +1023,7 @@ ColumnLayout {
         Repeater {
             model: devList
             delegate: CButton {
-                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : ""
+                text: modelData ? (modelData.devName + " " + modelData.fwVersion + " [" + modelData.devSN + "]") : qsTr("Undefined")
                 Layout.fillWidth: true
                 opacity: dev === modelData ? 1 : 0.5
                 visible: modelData ? (modelData.devType === 0 ? false : true) : false

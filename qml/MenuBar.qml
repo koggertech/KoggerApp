@@ -18,6 +18,8 @@ Item {
     property int instruments:  appSettings.instruments
     property int settingsWidth: theme.controlHeight*20
     property string filePath: devSettings.filePath
+    property bool extraInfoVis: appSettings.extraInfoVis
+    property bool autopilotInfofVis: appSettings.autopilotInfofVis
 
     signal languageChanged(string langStr)
     signal menuBarSettingOpened()
@@ -101,7 +103,7 @@ Item {
                 id: menuSettings
                 icon.source: "qrc:/icons/ui/plug.svg"
                 Layout.fillWidth: true
-
+                isKlfLogging: core.isKlfLogging
                 CMouseOpacityArea {
                     toolTipText: qsTr("Connections")
                     onContainsMouseChanged: containsMouse ? mainLayout.highlightAllButtons() : mainLayout.resetButtonOpacity()

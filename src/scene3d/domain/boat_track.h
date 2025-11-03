@@ -40,6 +40,8 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override final;
     void setDatasetPtr(Dataset* datasetPtr);
     void onPositionAdded(uint64_t indx);
+    QVector3D getLastPos() const { return lastPos_; };
+    float getLastYaw() const { return lastYaw_; };
 
 public Q_SLOTS:
     virtual void clearData() override final;
@@ -57,4 +59,6 @@ protected:
 private:
     Dataset* datasetPtr_;
     QHash<int, int> selectedIndices_;
+    QVector3D lastPos_;
+    float lastYaw_ = 0.0f;
 };

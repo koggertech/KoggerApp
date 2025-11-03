@@ -14,7 +14,20 @@
 #include <QOpenGLFunctions>
 #include <QtMath>
 #include "dataset_defs.h"
+#include "dataset_defs.h"
 
+
+static inline float wrapPi(float a)
+{
+    while (a >  M_PI) a -= 2.f * M_PI;
+    while (a <= -M_PI) a += 2.f * M_PI;
+    return a;
+};
+
+static inline float shortestDiff(float from, float to)
+{
+    return wrapPi(to - from);
+};
 
 namespace map {
 

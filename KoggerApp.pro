@@ -1,4 +1,4 @@
-QT += quick widgets network qml sql concurrent
+QT += quick widgets network qml sql concurrent positioning
 
 #CONFIG += FLASHER
 #CONFIG += SEPARATE_READING # data reception in a separate thread
@@ -38,6 +38,7 @@ HEADERS += \
     src/stream_list_model.h \
     src/themes.h \
     src/xtf_conf.h \
+    src/location_reader.h \
     src/mosaic_index_provider.h
 
 ### SOURCES
@@ -58,6 +59,7 @@ SOURCES += \
     src/proto_binnary.cpp \
     src/stream_list.cpp \
     src/stream_list_model.cpp \
+    src/location_reader.cpp \
     src/mosaic_index_provider.cpp
 
 FLASHER {

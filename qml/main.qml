@@ -595,6 +595,9 @@ ApplicationWindow  {
                     onInputAccepted: {
                         contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
                     }
+                    onSetActiveButtonClicked: {
+                        contacts.setActiveContact(contactDialog.indx)
+                    }
                     onSetButtonClicked: {
                         contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
                     }
@@ -789,7 +792,7 @@ ApplicationWindow  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-
+                        barWidth: 50 * theme.resCoeff
                         onValueChanged: {
                             core.setTimelinePosition(value);
                         }
@@ -809,10 +812,149 @@ ApplicationWindow  {
         }
     }
 
+
+    MenuFrame {
+        id: extraInfoPanel
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 12
+        visible: menuBar.extraInfoVis && !showBanner && dataset.isBoatCoordinateValid
+        isDraggable: true
+        isOpacityControlled: true
+        horizontalMargins: 12
+        verticalMargins: 10
+        spacing: 8
+
+        function lpad(s, w, ch) {
+            s = String(s)
+            while (s.length < w) s = (ch || ' ') + s
+            return s
+        }
+        function formatFixed(value, fracDigits, intWidth) {
+            if (!isFinite(value)) return lpad("-", intWidth + 1 + fracDigits)
+            var sign = value < 0 ? "-" : " "
+            var abs  = Math.abs(value)
+            var s    = abs.toFixed(fracDigits)
+            var p    = s.split(".")
+            var intP = lpad(p[0], intWidth, " ")
+            return sign + intP + (fracDigits > 0 ? "." + p[1] : "")
+        }
+        function toDMS(value, isLat) {
+            var hemi = isLat ? (value >= 0 ? "N" : "S") : (value >= 0 ? "E" : "W");
+            var abs  = Math.abs(value)
+            var s    = abs.toFixed(4)
+            var p    = s.split(".")
+            var intP = lpad(p[0], 3, " ")
+            return hemi + " " + intP + "." + p[1]
+        }
+
+        property string latDms: ""
+        property string lonDms: ""
+        property string distStr: ""
+        property string angStr: ""
+        property string depthStr: ""
+        property string speedStr: ""
+
+        function updateFields() {
+            latDms   = toDMS(dataset.boatLatitude,  true)  + qsTr("°")
+            lonDms   = toDMS(dataset.boatLongitude, false) + qsTr("°")
+            distStr  = formatFixed(dataset.distToContact, 1, 3) + qsTr(" m")
+            angStr   = formatFixed(dataset.angleToContact, 1, 3) + qsTr("°")
+            depthStr = formatFixed(dataset.depth, 1, 3) + qsTr(" m")
+            speedStr = formatFixed(dataset.speed, 1, 3) + qsTr(" km/h")
+        }
+
+        Timer {
+            interval: 333
+            repeat: true
+            running: extraInfoPanel.visible
+            triggeredOnStart: true
+            onTriggered: extraInfoPanel.updateFields()
+        }
+
+        ColumnLayout {
+            spacing: 6
+
+            ColumnLayout {
+
+                CText {
+                    visible: dataset.isLastDepthValid
+                    text: extraInfoPanel.depthStr
+                    font.bold: true
+                    font.pixelSize: 40 * theme.resCoeff
+                    font.family: "monospace"
+                    leftPadding: 4
+                }
+
+                CText {
+                    visible: dataset.isValidSpeed
+                    text: extraInfoPanel.speedStr
+                    font.bold: true
+                    font.pixelSize: 40 * theme.resCoeff
+                    font.family: "monospace"
+                    leftPadding: 4
+                }
+            }
+
+            ColumnLayout {
+                visible: dataset.isBoatCoordinateValid
+
+                CText {
+                    text: qsTr("Boat position")
+                    leftPadding: 4
+                    rightPadding: 4
+                    font.bold: true
+                    font.pixelSize: 16 * theme.resCoeff
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4; }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.latDms; }
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4; }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.lonDms; }
+                }
+            }
+
+            ColumnLayout {
+                visible: dataset.isActiveContactIndxValid
+
+                CText {
+                    text: qsTr("Active point")
+                    leftPadding: 4
+                    rightPadding: 4
+                    font.bold: true
+                    font.pixelSize: 16 * theme.resCoeff
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Dist.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.distStr; }
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Ang.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.angStr; }
+                }
+            }
+        }
+    }
+
+    // бровь
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
+        visible: !showBanner && (deviceManagerWrapper.pilotArmState >= 0) && menuBar.autopilotInfofVis
         isDraggable: true
         isOpacityControlled: true
         Keys.forwardTo: [splitLayer]

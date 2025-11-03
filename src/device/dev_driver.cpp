@@ -391,7 +391,7 @@ void DevDriver::exportSettingsToXML(const QString& filePath) {
     const U1 channelId = 1;
     const auto channel = idDataset->getChannel(channelId);
     xmlWriter.writeTextElement("period_ms", QString::number(channel.period));
-    xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(channelId)).toString());    
+    xmlWriter.writeTextElement("echogram", QVariant(idDataset->getChart_v0(channelId)).toString());
     {
         int state = 0;
         if (idDataset->getDist_v0(channelId) == 1) state = 1;
@@ -1133,7 +1133,9 @@ void DevDriver::receivedTemp(Type type, Version ver, Resp resp) {
     Q_UNUSED(type);
     Q_UNUSED(ver);
     Q_UNUSED(resp);
-    core.getDatasetPtr()->addTemp(idTemp->temp());
+
+    emit tempComplete(idTemp->temp());
+    //core.getDatasetPtr()->addTemp(idTemp->temp());
 }
 
 void DevDriver::receivedDataset(Type type, Version ver, Resp resp) {
@@ -1306,7 +1308,9 @@ void DevDriver::fwUpgradeProcess() {
         emit upgradingFirmwareDone();
         emit upgradingFirmwareDoneDM();
 
+#ifndef SEPARATE_READING
         core.consoleInfo("Upgrade: done");
+#endif
         restartState();
     }
 }
@@ -1324,17 +1328,24 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
                 _lastUpgradeAnswerTime = QDateTime::currentMSecsSinceEpoch();
 
                 if(prog.type == 1) {
+#ifndef SEPARATE_READING
                     core.consoleInfo(QString("Upgrade: back offset condition error with device msg/offset %1 %2, host msg/offset %3 %4").arg(prog.lastNumMsg).arg(prog.lastOffset).arg(idUpdate->currentNumPacket()).arg(idUpdate->currentFwOffset()));
-                } else if(prog.type == 2) {
+#endif
+                }
+                else if(prog.type == 2) {
+#ifndef SEPARATE_READING
                     core.consoleInfo(QString("Upgrade: forward offset condition error with device msg/offset %1 %2, host msg/offset %3 %4").arg(prog.lastNumMsg).arg(prog.lastOffset).arg(idUpdate->currentNumPacket()).arg(idUpdate->currentFwOffset()));
+#endif
                     idUpdate->setUpgradeNewPoint(prog.lastNumMsg, prog.lastOffset);
                 }
 
                 fwUpgradeProcess();
             } else {
                 // if( m_state.in_boot) {
+#ifndef SEPARATE_READING
                     core.consoleInfo("Upgrade: critical error!");
-                    m_upgrade_status = failUpgrade;
+#endif
+                m_upgrade_status = failUpgrade;
 
                     emit upgradingFirmwareDone();
                     emit upgradingFirmwareDoneDM();
@@ -1352,7 +1363,9 @@ void DevDriver::receivedUpdate(Type type, Version ver, Resp resp) {
             }
         } else {
             if( m_state.in_update && m_bootloaderLagacyMode) {
+#ifndef SEPARATE_READING
                 core.consoleInfo("Upgrade: lagacy mode error");
+#endif
                 m_upgrade_status = failUpgrade;
 
                 emit upgradingFirmwareDone();
@@ -1377,11 +1390,13 @@ void DevDriver::receivedNav(Type type, Version ver, Resp resp) {
 
     if(resp == respNone) {
         if(ver == v1) {
+#ifndef SEPARATE_READING
             core.consoleInfo(QString("ROV: yaw: %1, pitch: %2, roll: %3, lat: %4, lon: %5, depth: %6")
                                 .arg(idNav->yaw()).arg(idNav->pitch()).arg(idNav->roll())
                                 .arg(idNav->latitude()).arg(idNav->longitude())
                                 .arg(idNav->depth())
                              );
+#endif
             emit positionComplete(idNav->latitude(), idNav->longitude(), 0, 0);
             emit attitudeComplete(idNav->yaw(), idNav->pitch(), idNav->roll());
             emit depthComplete(idNav->depth());
@@ -1463,7 +1478,9 @@ void DevDriver::process() {
 
                 if(m_state.in_update && !m_bootloaderLagacyMode) {
                     if(curr_time - _lastUpgradeAnswerTime > _timeoutUpgradeAnswerTime && _timeoutUpgradeAnswerTime > 0) {
+#ifndef SEPARATE_READING
                         core.consoleInfo("Upgrade: timeout error!");
+#endif
                         idUpdate->putUpdate(false);
                     }
                 }

@@ -41,7 +41,7 @@
 <context>
     <name>CContact</name>
     <message>
-        <location filename="../qml/CContact.qml" line="60"/>
+        <location filename="../qml/CContact.qml" line="65"/>
         <source>Enter text</source>
         <translation>Wprowadź tekst</translation>
     </message>
@@ -231,6 +231,16 @@
         <translation></translation>
     </message>
     <message>
+        <location filename="../qml/ConnectionViewer.qml" line="525"/>
+        <source>GPS</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/ConnectionViewer.qml" line="1026"/>
+        <source>Undefined</source>
+        <translation>niezdefiniowany</translation>
+    </message>
+    <message>
         <source>REC KLF</source>
         <translation type="vanished">ZAPIS KLF</translation>
     </message>
@@ -239,14 +249,14 @@
         <translation type="vanished">ZAPISCSV</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="738"/>
-        <location filename="../qml/ConnectionViewer.qml" line="903"/>
+        <location filename="../qml/ConnectionViewer.qml" line="759"/>
+        <location filename="../qml/ConnectionViewer.qml" line="924"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/ConnectionViewer.qml" line="929"/>
-        <location filename="../qml/ConnectionViewer.qml" line="963"/>
+        <location filename="../qml/ConnectionViewer.qml" line="950"/>
+        <location filename="../qml/ConnectionViewer.qml" line="984"/>
         <source>Please choose a file</source>
         <translation>Proszę wybrać plik</translation>
     </message>
@@ -271,8 +281,8 @@
 <context>
     <name>Dataset</name>
     <message>
-        <location filename="../src/dataset.cpp" line="849"/>
-        <location filename="../src/dataset.cpp" line="851"/>
+        <location filename="../src/dataset.cpp" line="967"/>
+        <location filename="../src/dataset.cpp" line="969"/>
         <source>None</source>
         <translation>Brak</translation>
     </message>
@@ -516,7 +526,7 @@
 <context>
     <name>DisplaySettings</name>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="30"/>
+        <location filename="../qml/DisplaySettings.qml" line="32"/>
         <source>Plot</source>
         <translation>Wykres</translation>
     </message>
@@ -677,206 +687,225 @@
         <translation type="vanished">Kanał:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="35"/>
+        <location filename="../qml/DisplaySettings.qml" line="37"/>
         <source>Number of graphs:</source>
         <translation>Liczba wykresów:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="54"/>
+        <location filename="../qml/DisplaySettings.qml" line="56"/>
         <source>Synchronization</source>
         <translation>Synchronizacja</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="72"/>
+        <location filename="../qml/DisplaySettings.qml" line="74"/>
         <source>Dataset</source>
         <translation>Zbiór danych</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="80"/>
+        <location filename="../qml/DisplaySettings.qml" line="82"/>
         <source>FBS, f/b</source>
         <translation>FBS, f/b</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="159"/>
+        <location filename="../qml/DisplaySettings.qml" line="161"/>
+        <source>S.offset, mm:</source>
+        <translation>S.przes, mm:</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="245"/>
         <source>Bottom-Track processing</source>
         <translation>Przetwarzanie śledzenia dna</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="197"/>
+        <location filename="../qml/DisplaySettings.qml" line="283"/>
         <source>Preset:</source>
         <translation>Ustaw:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="203"/>
+        <location filename="../qml/DisplaySettings.qml" line="289"/>
         <source>Normal 2D</source>
         <translation>Normalne 2D</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="203"/>
+        <location filename="../qml/DisplaySettings.qml" line="289"/>
         <source>Narrow 2D</source>
         <translation>Wąskie 2D</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="203"/>
+        <location filename="../qml/DisplaySettings.qml" line="289"/>
         <source>Echogram Side-Scan</source>
         <translation>Echogram skanu bocznego</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="225"/>
+        <location filename="../qml/DisplaySettings.qml" line="311"/>
         <source>Gain slope:</source>
         <translation>Nachylenie wzmocnienia:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="281"/>
+        <location filename="../qml/DisplaySettings.qml" line="367"/>
         <source>Threshold:</source>
         <translation>Próg:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="337"/>
+        <location filename="../qml/DisplaySettings.qml" line="423"/>
         <source>Horizontal window:</source>
         <translation>Orientacja pozioma:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="378"/>
+        <location filename="../qml/DisplaySettings.qml" line="464"/>
         <source>Vertical gap, %:</source>
         <translation>Pionowa szczelina, %:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="420"/>
+        <location filename="../qml/DisplaySettings.qml" line="506"/>
         <source>Min range, m:</source>
         <translation>Min. zasięg, m:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="480"/>
+        <location filename="../qml/DisplaySettings.qml" line="566"/>
         <source>Max range, m:</source>
         <translation>Maks. zasięg, m:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="539"/>
+        <location filename="../qml/DisplaySettings.qml" line="625"/>
         <source>Sonar offset XYZ, mm:</source>
         <translation>Przesunięcie sonaru XYZ, mm:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="630"/>
+        <location filename="../qml/DisplaySettings.qml" line="716"/>
         <source>Processing</source>
         <translation>Przetwarzanie</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="641"/>
+        <location filename="../qml/DisplaySettings.qml" line="727"/>
         <source>Export</source>
         <translation>Eksport</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="652"/>
+        <location filename="../qml/DisplaySettings.qml" line="738"/>
         <source>Enter path</source>
         <translation>Wprowadź ścieżkę</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="690"/>
+        <location filename="../qml/DisplaySettings.qml" line="776"/>
         <source>Decimation, m:</source>
         <translation>Redukcja, m:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="710"/>
+        <location filename="../qml/DisplaySettings.qml" line="796"/>
         <source>Export to CSV</source>
         <translation>Eksport do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="722"/>
+        <location filename="../qml/DisplaySettings.qml" line="808"/>
         <source>Export to XTF</source>
         <translation>Eksport do XTF</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="730"/>
+        <location filename="../qml/DisplaySettings.qml" line="816"/>
         <source>Complex signal to CSV</source>
         <translation>Sygnał kompletny do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="738"/>
+        <location filename="../qml/DisplaySettings.qml" line="824"/>
         <source>USBL to CSV</source>
         <translation>USBL do CSV</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="748"/>
+        <location filename="../qml/DisplaySettings.qml" line="834"/>
         <source>Preference</source>
         <translation>Preferencje</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="751"/>
+        <location filename="../qml/DisplaySettings.qml" line="837"/>
         <source>Language:</source>
         <translation>Język:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="756"/>
-        <location filename="../qml/DisplaySettings.qml" line="762"/>
-        <location filename="../qml/DisplaySettings.qml" line="768"/>
+        <location filename="../qml/DisplaySettings.qml" line="842"/>
+        <location filename="../qml/DisplaySettings.qml" line="848"/>
+        <location filename="../qml/DisplaySettings.qml" line="854"/>
         <source>English</source>
         <translation>Angielski</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="756"/>
-        <location filename="../qml/DisplaySettings.qml" line="764"/>
+        <location filename="../qml/DisplaySettings.qml" line="842"/>
+        <location filename="../qml/DisplaySettings.qml" line="850"/>
         <source>Russian</source>
         <translation>Rosyjski</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="756"/>
-        <location filename="../qml/DisplaySettings.qml" line="766"/>
+        <location filename="../qml/DisplaySettings.qml" line="842"/>
+        <location filename="../qml/DisplaySettings.qml" line="852"/>
         <source>Polish</source>
         <translation>Polski</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="783"/>
+        <location filename="../qml/DisplaySettings.qml" line="869"/>
         <source>Display theme:</source>
         <translation>Motyw:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="788"/>
+        <location filename="../qml/DisplaySettings.qml" line="874"/>
         <source>Dark</source>
         <translation>Ciemny</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="788"/>
+        <location filename="../qml/DisplaySettings.qml" line="874"/>
         <source>Super Dark</source>
         <translation>Super Ciemny</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="788"/>
+        <location filename="../qml/DisplaySettings.qml" line="874"/>
         <source>Light</source>
         <translation>Super Ciemny</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="788"/>
+        <location filename="../qml/DisplaySettings.qml" line="874"/>
         <source>Super Light</source>
         <translation>Super Jasny</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="801"/>
-        <source>Instrumets grade:</source>
+        <location filename="../qml/DisplaySettings.qml" line="887"/>
+        <source>Instruments grade:</source>
         <translation>Klasa instrumentów:</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="806"/>
+        <source>Instrumets grade:</source>
+        <translation type="vanished">Klasa instrumentów:</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="892"/>
         <source>Fish Finders</source>
         <translation>Wykrywanie ryb</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="806"/>
+        <location filename="../qml/DisplaySettings.qml" line="892"/>
         <source>Bottom Tracking</source>
         <translation>Śledzenie dna</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="806"/>
+        <location filename="../qml/DisplaySettings.qml" line="892"/>
         <source>Maximum</source>
         <translation>Maksimum</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="821"/>
+        <location filename="../qml/DisplaySettings.qml" line="907"/>
         <source>Interface</source>
         <translation>Interfejs</translation>
     </message>
     <message>
-        <location filename="../qml/DisplaySettings.qml" line="825"/>
+        <location filename="../qml/DisplaySettings.qml" line="911"/>
+        <source>Extra info panel</source>
+        <translation>Dodatkowy panel informacyjny</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="919"/>
+        <source>Autopilot info</source>
+        <translation>Informacje o autopilocie</translation>
+    </message>
+    <message>
+        <location filename="../qml/DisplaySettings.qml" line="927"/>
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
@@ -1120,24 +1149,42 @@
     </message>
 </context>
 <context>
+    <name>LocationExtraSettings</name>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="53"/>
+        <source>Location settings</source>
+        <translation>Śledzenie łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="70"/>
+        <source>Use angle</source>
+        <translation>Użyj orientacji</translation>
+    </message>
+    <message>
+        <location filename="../qml/LocationExtraSettings.qml" line="97"/>
+        <source>Navigator view</source>
+        <translation>Widok nawigatora</translation>
+    </message>
+</context>
+<context>
     <name>MenuBar</name>
     <message>
-        <location filename="../qml/MenuBar.qml" line="106"/>
+        <location filename="../qml/MenuBar.qml" line="108"/>
         <source>Connections</source>
         <translation>Połączenia</translation>
     </message>
     <message>
-        <location filename="../qml/MenuBar.qml" line="121"/>
+        <location filename="../qml/MenuBar.qml" line="123"/>
         <source>Settings</source>
         <translation>Właściwości</translation>
     </message>
     <message>
-        <location filename="../qml/MenuBar.qml" line="140"/>
+        <location filename="../qml/MenuBar.qml" line="142"/>
         <source>Display 3D</source>
         <translation>Wyświetlacz 3D</translation>
     </message>
     <message>
-        <location filename="../qml/MenuBar.qml" line="166"/>
+        <location filename="../qml/MenuBar.qml" line="168"/>
         <source>Display 2D</source>
         <translation>Wyświetlacz 2D</translation>
     </message>
@@ -1342,72 +1389,82 @@
         <translation>Ratio</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="636"/>
+        <location filename="../qml/Plot2D.qml" line="626"/>
+        <source>Temperature</source>
+        <translation>Temperatura</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="644"/>
         <source>Doppler Beams</source>
         <translation>Promienie Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="701"/>
+        <location filename="../qml/Plot2D.qml" line="709"/>
         <source>Doppler Instrument</source>
         <translation>Instrument Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="742"/>
+        <location filename="../qml/Plot2D.qml" line="750"/>
         <source>Acoustic angle</source>
         <translation>Kąt akustyczny</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="754"/>
+        <location filename="../qml/Plot2D.qml" line="762"/>
         <source>Doppler Profiler</source>
         <translation>Profil Dopplera</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="764"/>
+        <location filename="../qml/Plot2D.qml" line="772"/>
         <source>GNSS data</source>
         <translation>Dane GNSS</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="783"/>
+        <location filename="../qml/Plot2D.qml" line="791"/>
         <source>Grid</source>
         <translation>Siatka</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="789"/>
+        <location filename="../qml/Plot2D.qml" line="797"/>
         <source>fill</source>
         <translation>wypełnienie</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="828"/>
+        <location filename="../qml/Plot2D.qml" line="813"/>
+        <source>invert</source>
+        <translation>odwracać</translation>
+    </message>
+    <message>
+        <location filename="../qml/Plot2D.qml" line="851"/>
         <source>Angle range, °</source>
         <translation>Zakres kątowy, °</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="880"/>
+        <location filename="../qml/Plot2D.qml" line="903"/>
         <source>Velocity range, m/s</source>
         <translation>Zakres prędkości, m/s</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="937"/>
+        <location filename="../qml/Plot2D.qml" line="960"/>
         <source>Distance auto range</source>
         <translation>Automatyczny zakres odległości</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="953"/>
+        <location filename="../qml/Plot2D.qml" line="976"/>
         <source>Last data       </source>
         <translation>Ostatnie dane       </translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="953"/>
+        <location filename="../qml/Plot2D.qml" line="976"/>
         <source>Last on screen</source>
         <translation>Ostatnie na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="953"/>
+        <location filename="../qml/Plot2D.qml" line="976"/>
         <source>Max on screen</source>
         <translation>Maks. na ekranie</translation>
     </message>
     <message>
-        <location filename="../qml/Plot2D.qml" line="969"/>
+        <location filename="../qml/Plot2D.qml" line="992"/>
         <source>Horizontal</source>
         <translation>Poziomy</translation>
     </message>
@@ -1461,19 +1518,19 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="36"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="37"/>
         <source> m/s    </source>
         <translation> m/s    </translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="47"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="63"/>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="85"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="48"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="77"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="105"/>
         <source> m</source>
         <translation> m</translation>
     </message>
     <message>
-        <location filename="../src/scene2d/plot2D_grid.cpp" line="125"/>
+        <location filename="../src/scene2d/plot2D_grid.cpp" line="148"/>
         <source>°</source>
         <translation></translation>
     </message>
@@ -1552,7 +1609,7 @@
         <translation type="vanished">Boost: </translation>
     </message>
     <message>
-        <location filename="../src/core.cpp" line="1452"/>
+        <location filename="../src/core.cpp" line="1469"/>
         <source>File</source>
         <translation>File</translation>
     </message>
@@ -1805,17 +1862,17 @@
         <translation type="vanished">Wybierz plik obrazu (.png, .jpg, .bmp)</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="66"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="67"/>
         <source>Reset camera</source>
         <translation>Zresetuj kamerę</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="160"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="240"/>
         <source>Boat track</source>
         <translation>Ślad łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/Scene3DToolbar.qml" line="192"/>
+        <location filename="../qml/Scene3DToolbar.qml" line="272"/>
         <source>Bottom track</source>
         <translation>Śledzenie dna</translation>
     </message>
@@ -1856,27 +1913,35 @@
         <translation>Zresetuj powiększenie</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
+        <source>Is North mode</source>
+        <translation type="vanished">Tryb północny</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="114"/>
         <source>Sync with echogram</source>
         <translation>Sync. echogramów</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="115"/>
         <source>Follow last location</source>
-        <translation>Śledź ostatnią lokalizację</translation>
+        <translation type="vanished">Śledź ostatnią lokalizację</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="143"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="87"/>
+        <source>North mode</source>
+        <translation>Tryb północny</translation>
+    </message>
+    <message>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="170"/>
         <source>Grid visibility</source>
         <translation>Widoczność siatki</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="171"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="198"/>
         <source>Boat visibility</source>
         <translation>Widoczność łodzi</translation>
     </message>
     <message>
-        <location filename="../qml/Settings3DExtraSettings.qml" line="199"/>
+        <location filename="../qml/Settings3DExtraSettings.qml" line="226"/>
         <source>Map visibility</source>
         <translation>Widoczność mapy</translation>
     </message>
@@ -2161,24 +2226,72 @@
 <context>
     <name>main</name>
     <message>
-        <location filename="../qml/main.qml" line="20"/>
+        <location filename="../qml/main.qml" line="21"/>
         <source>KoggerApp, KOGGER</source>
         <translation>KoggerApp, KOGGER</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="122"/>
+        <location filename="../qml/main.qml" line="123"/>
         <source>Undefined</source>
         <translation>niezdefiniowany</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="136"/>
+        <location filename="../qml/main.qml" line="137"/>
         <source>Please restart the application to apply the language change</source>
         <translation>Proszę zrestartować aplikację, aby zastosować zmianę języka</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="145"/>
+        <location filename="../qml/main.qml" line="146"/>
         <source>Ok</source>
         <translation>Ok</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="859"/>
+        <location filename="../qml/main.qml" line="861"/>
+        <source> m</source>
+        <translation> m</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="857"/>
+        <location filename="../qml/main.qml" line="858"/>
+        <location filename="../qml/main.qml" line="860"/>
+        <source>°</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="862"/>
+        <source> km/h</source>
+        <translation> km/h</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="901"/>
+        <source>Boat position</source>
+        <translation>Pozycja łodzi</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="910"/>
+        <source>Lat.:</source>
+        <translation>Szer.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="917"/>
+        <source>Lon.:</source>
+        <translation>Dług.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="927"/>
+        <source>Active point</source>
+        <translation>Punkt aktywny</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="936"/>
+        <source>Dist.:</source>
+        <translation>Dyst.:</translation>
+    </message>
+    <message>
+        <location filename="../qml/main.qml" line="943"/>
+        <source>Ang.:</source>
+        <translation>Az.:</translation>
     </message>
     <message>
         <source>Calculating surface
@@ -2193,12 +2306,12 @@ Please wait...</source>
 Proszę czekać...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="921"/>
+        <location filename="../qml/main.qml" line="1064"/>
         <source> m/s </source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="928"/>
+        <location filename="../qml/main.qml" line="1071"/>
         <source> %</source>
         <translation></translation>
     </message>
@@ -2209,12 +2322,12 @@ Please wait...</source>
 Proszę czekać...</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="921"/>
+        <location filename="../qml/main.qml" line="1064"/>
         <source> V   </source>
         <translation> V   </translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="921"/>
+        <location filename="../qml/main.qml" line="1064"/>
         <source> A   </source>
         <translation> A   </translation>
     </message>
@@ -2223,7 +2336,7 @@ Proszę czekać...</translation>
         <translation type="vanished"> m/s</translation>
     </message>
     <message>
-        <location filename="../qml/main.qml" line="1022"/>
+        <location filename="../qml/main.qml" line="1165"/>
         <source>Please wait, the file is opening</source>
         <translation>Proszę czekać, plik się otwiera</translation>
     </message>

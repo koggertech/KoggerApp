@@ -94,6 +94,7 @@ public:
     void setRangefinderVisible(bool visible);
     void setRangefinderTheme(int theme_id);
     void setAttitudeVisible(bool visible);
+    void setTemperatureVisible(bool visible);
     void setDopplerBeamVisible(bool visible, int beam_filter);
     void setDopplerInstrumentVisible(bool visible);
 
@@ -103,6 +104,7 @@ public:
 
     void setGridVetricalNumber(int grids);
     void setGridFillWidth(bool state);
+    void setGridInvert(bool state);
     void setAngleVisibility(bool state);
     void setAngleRange(int angleRange);
 
@@ -118,6 +120,7 @@ public:
     void simpleSetMousePosition(int x, int y);
     void setMouseTool(MouseTool tool);
     bool setContact(int indx, const QString& text);
+    bool setActiveContact(int indx);
     bool deleteContact(int indx);
     void updateContact();
     void onCursorMoved(int x, int y);
