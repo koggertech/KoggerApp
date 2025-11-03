@@ -14,6 +14,7 @@ public:
 
     void setEmitChanges(bool state);
     void setIsFileOpening(bool state);
+    void setIsAttitudeExpected(bool state);
 
     uint64_t getEpochSize() const { return epochIndx_; };
     uint64_t getPositionIndx() const { return positionIndx_; };
@@ -50,6 +51,7 @@ private:
     bool emitChanges_;
     bool isFileOpening_;
     bool isSeparateReading_;
+    bool isAttitudeExpected_;
 
     uint64_t epochIndx_;
     uint64_t positionIndx_;

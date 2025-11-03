@@ -769,7 +769,7 @@ void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
 
 void DeviceManager::setUseGPS(bool state)
 {
-    qDebug() << "DeviceManager::setUseGPS" << state;
+    //qDebug() << "DeviceManager::setUseGPS" << state;
     useGPS_ = state;
 }
 

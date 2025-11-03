@@ -8,6 +8,7 @@ DataHorizon::DataHorizon() :
     emitChanges_(true),
     isFileOpening_(false),
     isSeparateReading_(false),
+    isAttitudeExpected_(false),
     epochIndx_(0),
     positionIndx_(0),
     chartIndx_(0),
@@ -56,6 +57,12 @@ void DataHorizon::setIsFileOpening(bool state)
         tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
     }
+}
+
+void DataHorizon::setIsAttitudeExpected(bool state)
+{
+    //qDebug() << "DataHorizon::setIsAttitudeExpected" << state;
+    isAttitudeExpected_ = state;
 }
 
 void DataHorizon::onAddedEpoch(uint64_t indx)
@@ -178,7 +185,7 @@ void DataHorizon::tryCalcAndEmitMosaicIndx()
 
 void DataHorizon::tryCalcAndEmitSonarPosIndx()
 {
-    uint64_t minSonarIndx = std::min(positionIndx_, attitudeIndx_);
+    uint64_t minSonarIndx = isAttitudeExpected_ ? std::min(positionIndx_, attitudeIndx_) : positionIndx_;
     if (minSonarIndx > sonarIndx_) {
         sonarIndx_ = minSonarIndx;
         emit sonarPosCanCalc(sonarIndx_);

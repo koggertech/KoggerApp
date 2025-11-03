@@ -952,7 +952,7 @@ ApplicationWindow  {
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: false // (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
+        visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
         isDraggable: true
         isOpacityControlled: true
         Keys.forwardTo: [splitLayer]

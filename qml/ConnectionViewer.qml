@@ -513,14 +513,14 @@ ColumnLayout {
             icon.source: checked ? "qrc:/icons/ui/record_fill.svg": "qrc:/icons/ui/record.svg"
         }
 
-        // TODO
-        //CheckButton {
-        //    id: importCheck
-        //    text: "Import"
-        //    checked: false
-        //}
+        CheckButton {
+           id: importCheck
+           text: "Import"
+           checked: false
+        }
 
         CheckButton {
+            visible: false
             id: gpsCheckButton
             text: qsTr("GPS")
             checkedBackColor: core.isGPSAlive ? "green" : "red"
@@ -543,7 +543,7 @@ ColumnLayout {
 
     ParamGroup {
         groupName: "CSV import"
-        visible: false //importCheck.checked // TODO
+        visible: importCheck.checked
         Layout.margins: 24
 
         RowLayout {

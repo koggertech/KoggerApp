@@ -141,6 +141,8 @@ public slots:
     Q_INVOKABLE QString getChannel2Name() const;
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
+    Q_INVOKABLE void setIsAttitudeExpected(bool state);
+
 signals:
     void connectionChanged(bool duplex = false);
     void filePathChanged();

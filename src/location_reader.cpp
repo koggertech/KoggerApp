@@ -12,9 +12,12 @@ extern Core core;
 LocationReader::LocationReader(QObject *parent)
     : QObject(parent)
 {
+    return; //
+
     //qDebug() << "LocationReader ctr";
 
 #ifdef Q_OS_WINDOWS
+    //TEST TRACK
     demoTrack_ = buildYerevanLakeDemoTrack();
     demoIndex_ = 0;
 
@@ -67,10 +70,10 @@ void LocationReader::onPositionUpdated(const QGeoPositionInfo &info)
     gpsWatchdog_.start();
 
     QGeoCoordinate c = info.coordinate();
-    QString str =   "Lat: " + QString::number(c.latitude(), 'f', 4)  + " "
-                  + "Lon: " + QString::number(c.longitude(), 'f', 4) + " "
-                  + "Alt: " + QString::number(c.altitude(), 'f', 4)  + " "
-                  + "Yaw: " + QString::number(info.attribute(QGeoPositionInfo::Attribute::Direction), 'f', 4);
+    //QString str =   "Lat: " + QString::number(c.latitude(), 'f', 4)  + " "
+    //              + "Lon: " + QString::number(c.longitude(), 'f', 4) + " "
+    //              + "Alt: " + QString::number(c.altitude(), 'f', 4)  + " "
+    //              + "Yaw: " + QString::number(info.attribute(QGeoPositionInfo::Attribute::Direction), 'f', 4);
 
     //core.consoleInfo(str);
 
@@ -101,12 +104,12 @@ void LocationReader::onPositionUpdatedSec()
     info.setTimestamp(QDateTime::currentDateTime());
 
     const QGeoCoordinate& c = info.coordinate();
-    QString str = QStringLiteral("Lat: %1 Lon: %2 Alt: %3  Head: %4  Time: %5")
-                     .arg(c.latitude(),  0, 'f', 6)
-                     .arg(c.longitude(), 0, 'f', 6)
-                     .arg(c.altitude(),  0, 'f', 1)
-                     .arg(info.attribute(QGeoPositionInfo::Direction), 0, 'f', 1)
-                     .arg(info.timestamp().toString(Qt::ISODate));
+    //QString str = QStringLiteral("Lat: %1 Lon: %2 Alt: %3  Head: %4  Time: %5")
+    //                 .arg(c.latitude(),  0, 'f', 6)
+    //                 .arg(c.longitude(), 0, 'f', 6)
+    //                 .arg(c.altitude(),  0, 'f', 1)
+    //                 .arg(info.attribute(QGeoPositionInfo::Direction), 0, 'f', 1)
+    //                 .arg(info.timestamp().toString(Qt::ISODate));
     //core.consoleInfo(str);
 
     emit positionUpdated(info);

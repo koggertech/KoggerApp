@@ -761,15 +761,9 @@ void Dataset::resetDataset()
         firstChannelId_ = DatasetChannel();
     }
 
-    bSProc_->clear();
+    resetRenderBuffers();
 
-    pool_.clear();
-    pool_.shrink_to_fit();//
-    _llaRef.isInit = false;
-    lastBottomTrackEpoch_ = 0;
     resetDistProcessing();
-    interpolator_.clear();
-    llaRefState_ = LlaRefState::kUndefined;
     state_ = DatasetState::kUndefined;
 
 #if defined(FAKE_COORDS)
@@ -777,7 +771,6 @@ void Dataset::resetDataset()
 #endif
 
     usingRecordParameters_.clear();
-    //bSProc_->clear();
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
 
@@ -801,6 +794,7 @@ void Dataset::resetRenderBuffers()
 {
     tracks.clear();
     pool_.clear();
+    pool_.shrink_to_fit();//
     _lastYaw = 0;
     _lastPitch = 0;
     _lastRoll = 0;

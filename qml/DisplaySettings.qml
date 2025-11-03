@@ -165,6 +165,12 @@ GridLayout {
                         else {
                             dataset.setSonarOffset(0, 0, 0)
                         }
+
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setIsAttitudeExpected(checked)
                     }
 
                     Settings {

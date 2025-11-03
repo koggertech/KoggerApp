@@ -651,10 +651,8 @@ void Core::setCsvLogging(bool isLogging)
 
 void Core::setUseGPS(bool state)
 {
-    qDebug() << "Core::setUseGPS" << state;
-
+    //qDebug() << "Core::setUseGPS" << state;
     QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, state));
-
 }
 
 bool Core::getIsCsvLogging()
@@ -1300,6 +1298,11 @@ QVariant Core::getConvertedMousePos(int indx, int mouseX, int mouseY)
     retVal["y"] = mousePos.y();
 
     return retVal;
+}
+
+void Core::setIsAttitudeExpected(bool state)
+{
+    dataHorizon_->setIsAttitudeExpected(state);
 }
 
 void Core::onFileStopsOpening()
