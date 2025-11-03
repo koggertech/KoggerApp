@@ -11,6 +11,8 @@ GridLayout {
     property bool syncPlots: plotSyncCheckBox.checked
     property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
+    property bool extraInfoVis: extraInfoPanelVisible.checked
+    property bool autopilotInfofVis: autopilotInfoVisible.checked
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()
@@ -882,7 +884,7 @@ GridLayout {
             }
 
             ParamSetup {
-                paramName: qsTr("Instrumets grade:")
+                paramName: qsTr("Instruments grade:")
 
                 CCombo  {
                     id: instrumentsGradeList
@@ -904,6 +906,22 @@ GridLayout {
             visible: instruments > 1
             groupName: qsTr("Interface")
 
+            CCheck {
+                id: extraInfoPanelVisible
+                text: qsTr("Extra info panel")
+
+                Settings {
+                    property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                }
+            }
+            CCheck {
+                id:  autopilotInfoVisible
+                text: qsTr("Autopilot info")
+
+                Settings {
+                    property alias autopilotInfoVisible: autopilotInfoVisible.checked
+                }
+            }
             CCheck {
                 id: consoleVisible
                 text: qsTr("Console")

@@ -12,6 +12,8 @@ MenuScroll {
     property int instruments: displaySettings.instruments
     property var targetPlot: null
     property int menuWidth: 200
+    property bool extraInfoVis: displaySettings.extraInfoVis
+    property bool autopilotInfofVis: displaySettings.autopilotInfofVis
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()

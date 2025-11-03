@@ -812,11 +812,11 @@ ApplicationWindow  {
 
 
     MenuFrame {
-        id: activeContactStatus
+        id: extraInfoPanel
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: 12
-        visible: dataset.isBoatCoordinateValid
+        visible: menuBar.extraInfoVis && !showBanner && dataset.isBoatCoordinateValid
         isDraggable: true
         isOpacityControlled: true
         horizontalMargins: 12
@@ -865,9 +865,9 @@ ApplicationWindow  {
         Timer {
             interval: 333
             repeat: true
-            running: activeContactStatus.visible
+            running: extraInfoPanel.visible
             triggeredOnStart: true
-            onTriggered: activeContactStatus.updateFields()
+            onTriggered: extraInfoPanel.updateFields()
         }
 
         ColumnLayout {
@@ -877,7 +877,7 @@ ApplicationWindow  {
 
                 CText {
                     visible: dataset.isLastDepthValid
-                    text: activeContactStatus.depthStr
+                    text: extraInfoPanel.depthStr
                     font.bold: true
                     font.pixelSize: 40 * theme.resCoeff
                     font.family: "monospace"
@@ -886,7 +886,7 @@ ApplicationWindow  {
 
                 CText {
                     visible: dataset.isValidSpeed
-                    text: activeContactStatus.speedStr
+                    text: extraInfoPanel.speedStr
                     font.bold: true
                     font.pixelSize: 40 * theme.resCoeff
                     font.family: "monospace"
@@ -909,14 +909,14 @@ ApplicationWindow  {
                     spacing: 6
                     CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4; }
                     Item  { Layout.fillWidth: true }
-                    CText { text: activeContactStatus.latDms; }
+                    CText { text: extraInfoPanel.latDms; }
                 }
 
                 RowLayout {
                     spacing: 6
                     CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4; }
                     Item  { Layout.fillWidth: true }
-                    CText { text: activeContactStatus.lonDms; }
+                    CText { text: extraInfoPanel.lonDms; }
                 }
             }
 
@@ -935,14 +935,14 @@ ApplicationWindow  {
                     spacing: 6
                     CText { text: qsTr("Dist.:"); opacity: 0.7; leftPadding: 4 }
                     Item  { Layout.fillWidth: true }
-                    CText { text: activeContactStatus.distStr; }
+                    CText { text: extraInfoPanel.distStr; }
                 }
 
                 RowLayout {
                     spacing: 6
                     CText { text: qsTr("Ang.:"); opacity: 0.7; leftPadding: 4 }
                     Item  { Layout.fillWidth: true }
-                    CText { text: activeContactStatus.angStr; }
+                    CText { text: extraInfoPanel.angStr; }
                 }
             }
         }
@@ -952,7 +952,7 @@ ApplicationWindow  {
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
+        visible: !showBanner && (deviceManagerWrapper.pilotArmState >= 0) && menuBar.autopilotInfofVis
         isDraggable: true
         isOpacityControlled: true
         Keys.forwardTo: [splitLayer]
