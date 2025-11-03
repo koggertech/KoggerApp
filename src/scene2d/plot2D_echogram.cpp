@@ -73,8 +73,19 @@ void Plot2DEchogram::setThemeId(int theme_id) {
         coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(20, 5, 80), QColor::fromRgb(50, 180, 230), QColor::fromRgb(190, 240, 250), QColor::fromRgb(255, 255, 255)};
         levels = {0, 30, 130, 220, 255};
     } else if(theme_id == SepiaTheme) {
-        coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(50, 50, 10), QColor::fromRgb(230, 200, 100), QColor::fromRgb(255, 255, 220)};
-        levels = {0, 30, 130, 255};
+        coloros = {
+            QColor::fromRgb(  0,   0,   0),
+            QColor::fromRgb( 28,  10,   0),
+            QColor::fromRgb( 55,  18,   0),
+            QColor::fromRgb( 95,  35,   0),
+            QColor::fromRgb(150,  70,  10),
+            QColor::fromRgb(210, 105,  15),
+            QColor::fromRgb(245, 175,  70),
+            QColor::fromRgb(255, 232, 160)
+        };
+        levels = { 0, 12, 26, 52, 92, 140, 200, 255 };
+        //coloros = { QColor::fromRgb(0, 0, 0), QColor::fromRgb(50, 50, 10), QColor::fromRgb(230, 200, 100), QColor::fromRgb(255, 255, 220)};
+        //levels = {0, 30, 130, 255};
     }else if(theme_id == WRGBDTheme) {
         coloros = {
             QColor::fromRgb(0, 0, 0),
