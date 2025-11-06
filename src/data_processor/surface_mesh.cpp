@@ -6,6 +6,7 @@
 
 SurfaceMesh::SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution) :
     tileResolution_(tileResolution),
+    invRes_(1.0f / tileResolution_),
     numWidthTiles_(0),
     numHeightTiles_(0),
     tileSidePixelSize_(tileSidePixelSize),
@@ -21,6 +22,20 @@ SurfaceMesh::~SurfaceMesh()
     clear();
 }
 
+QSet<SurfaceTile*> SurfaceMesh::getUpdatedTiles() const
+{
+    QSet<SurfaceTile*> retVal;
+    retVal.reserve(tiles_.size());
+
+    for (auto& itm : tiles_) {
+        if (itm->getIsUpdated()) {
+            retVal.insert(itm /*->getKey()*/);
+        }
+    }
+
+    return retVal;
+}
+
 void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)
 {
     clear();
@@ -28,6 +43,8 @@ void SurfaceMesh::reinit(int tileSidePixelSize, int tileHeightMatrixRatio, float
     tileSidePixelSize_ = tileSidePixelSize;
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
     tileResolution_ = tileResolution;
+    invRes_ = 1.0f / tileResolution_;
+
     tileSideMeterSize_ = tileSidePixelSize_ * tileResolution_;
 
     zoomIndex_ = zoomFromMpp(tileResolution_);
@@ -93,16 +110,6 @@ bool SurfaceMesh::concatenate(kmath::MatrixParams &actualMatParams)
     }
 
     return resized;
-}
-
-QVector3D SurfaceMesh::convertPhToPixCoords(QVector3D physicsCoordinate) const
-{
-    const double invRes = 1.0 / double(tileResolution_);
-    return QVector3D(
-        float( (double(physicsCoordinate.x()) - double(origin_.x())) * invRes ),
-        float( (double(physicsCoordinate.y()) - double(origin_.y())) * invRes ),
-        0.0f
-        );
 }
 
 void SurfaceMesh::printMatrix() const
@@ -204,16 +211,6 @@ SurfaceTile *SurfaceMesh::getTilePtrByKey(const TileKey &key)
 int SurfaceMesh::getCurrentZoom() const
 {
     return zoomIndex_;
-}
-
-int SurfaceMesh::getPixelWidth() const
-{
-    return numWidthTiles_ * tileSidePixelSize_;
-}
-
-int SurfaceMesh::getPixelHeight() const
-{
-    return numHeightTiles_ * tileSidePixelSize_;
 }
 
 int SurfaceMesh::getTileSidePixelSize() const

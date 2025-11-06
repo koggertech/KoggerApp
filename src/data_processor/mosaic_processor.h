@@ -54,6 +54,9 @@ private:
     bool prefetchTiles(const QSet<TileKey>& keys);
 
 private:
+    static constexpr int DX[4] = { 1, -1,  0,  0 };
+    static constexpr int DY[4] = { 0,  0,  1, -1 };
+
     const int expandMargin_ = 1;
     mosaic::PlotColorTable colorTable_;
     DataProcessor* dataProcessor_;

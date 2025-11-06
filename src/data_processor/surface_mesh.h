@@ -14,9 +14,9 @@ public:
     SurfaceMesh(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     ~SurfaceMesh();
 
+    QSet<SurfaceTile*> getUpdatedTiles() const;
     void reinit(int tileSidePixelSize, int heightMatrixRatio, float tileResolution);
     bool concatenate(kmath::MatrixParams& actualMatParams);
-    QVector3D convertPhToPixCoords(QVector3D phCoords) const;
     void printMatrix() const;
     void clear();
 
@@ -26,12 +26,20 @@ public:
     const std::vector<SurfaceTile*>&        getTilesCRef() const;
     std::vector<std::vector<SurfaceTile*>>& getTileMatrixRef();
 
-    inline SurfaceTile* getTileByXYIndxs(int ix, int iy) { return tileMatrix_[ix][iy]; }
+    inline SurfaceTile* getTileByXYIndxs(int ix, int iy) noexcept { return tileMatrix_[ix][iy]; }
 
     SurfaceTile*                            getTilePtrByKey(const TileKey& key);
     int                                     getCurrentZoom() const;
-    int                                     getPixelWidth() const;
-    int                                     getPixelHeight() const;
+    inline int getPixelWidth() const noexcept {
+        return numWidthTiles_ * tileSidePixelSize_;
+    };
+    inline int getPixelHeight() const noexcept {
+        return numHeightTiles_ * tileSidePixelSize_;
+    };
+    inline QVector3D convertPhToPixCoords(const QVector3D& phCoords) const noexcept {
+        return QVector3D((phCoords.x() - origin_.x()) * invRes_, (phCoords.y() - origin_.y()) * invRes_, 0.0f);
+    }
+
     int                                     getTileSidePixelSize() const;
     int                                     getNumWidthTiles() const;
     int                                     getNumHeightTiles() const;
@@ -66,6 +74,7 @@ private:
     int   zoomIndex_{1};                     // 0..6
     QVector3D origin_;
     float tileResolution_;
+    float invRes_;
     float tileSideMeterSize_;
     int numWidthTiles_;
     int numHeightTiles_;

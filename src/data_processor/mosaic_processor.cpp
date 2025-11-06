@@ -3,14 +3,12 @@
 #include <QtMath>
 #include <QDebug>
 #include <QThread>
-#include <optional>
 #include "data_processor.h"
 #include "dataset.h"
 
 
 static constexpr int sampleLimiter    = 2;
 static constexpr int colorTableSize_  = 255;
-static constexpr int interpLineWidth_ = 1;
 
 static bool checkLength(float dist)
 {
@@ -20,26 +18,26 @@ static bool checkLength(float dist)
     return true;
 }
 
-static std::optional<int> sampleIndex(Epoch::Echogram *echogramPtr, float dist)
+static int sampleIndex(Epoch::Echogram *echogramPtr, float dist)
 {
     if (!echogramPtr) {
-        return std::nullopt;
+        return -1;
     }
 
     const float resolution = echogramPtr->resolution;
 
     if (resolution <= 0.0f) {
-        return std::nullopt;
+        return -1;
     }
 
     float resDist = dist / resolution;
     if (resDist < 0.f) {
-        return std::nullopt;
+        return -1;
     }
 
     int indx = static_cast<int>(std::round(resDist));
     if (indx >= static_cast<int>(echogramPtr->amplitude.size()) - sampleLimiter) {
-        return std::nullopt;
+        return -1;
     }
 
     return indx;
@@ -480,32 +478,34 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
 
 void MosaicProcessor::updateData(const QVector<int>& indxs)
 {
-    //qDebug() << "MosaicProcessor::updateData" << indxs;
+    //qDebug() << "   MosaicProcessor::updateData";
+
+    bool bench = true;
+    QElapsedTimer et; // test
+    if (bench) {
+        et.start();
+    }
 
     if (!datasetPtr_ || indxs.empty()) {
         return;
     }
-
     const bool segFIsValid = segFChannelId_.isValid();
     const bool segSIsValid = segSChannelId_.isValid();
-
     if (!segFIsValid && !segSIsValid) {
         return;
     }
 
     kmath::MatrixParams actualMatParams(lastMatParams_);
     kmath::MatrixParams newMatrixParams;
+    QVector<QVector3D>  measLinesVertices;
+    QVector<int>        measLinesEvenIndices;
+    QVector<int>        measLinesOddIndices;
+    QVector<char>       isOdds; // 0 - even, 1 - odd
+    QVector<int>        epochIndxs;
+    QVector3D           lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
+    bool                haveLastPair = false;
 
-    QVector<QVector3D> measLinesVertices;
-    QVector<int>       measLinesEvenIndices;
-    QVector<int>       measLinesOddIndices;
-    QVector<char>      isOdds; // 0 - even, 1 - odd
-    QVector<int>       epochIndxs;
-
-    QVector3D lastLeftBeg, lastLeftEnd, lastRightBeg, lastRightEnd;
-    bool      haveLastPair = false;
-
-    // prepare intermediate data (selecting epochs to process)
+    // update matrix
     for (const auto& i : indxs) {
         auto epoch = datasetPtr_->fromIndexCopy(i);
         if (!epoch.isValid()) {
@@ -558,42 +558,34 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             }
         }
     }
-
     const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
     newMatrixParams = kmath::getMatrixParams(measLinesVertices, tileSideMeters);
     if (!newMatrixParams.isValid()) {
         return;
     }
-
     concatenateMatrixParameters(actualMatParams, newMatrixParams);
 
+    // expand surface mesh
     const float marginMeters  = expandMargin_ * tileSideMeters;
     kmath::MatrixParams expanded = actualMatParams;
     expanded.originX -= marginMeters;
     expanded.originY -= marginMeters;
     expanded.width   += 2 * marginMeters;
     expanded.height  += 2 * marginMeters;
-
     const double S = double(tileSidePixelSize_ * tileResolution_);
     auto snapDown = [&](double v){ return std::floor(v / S) * S; };
     auto snapUp   = [&](double v){ return std::ceil (v / S) * S; };
-
     {
-        const double x0 = snapDown(expanded.originX);
-        const double y0 = snapDown(expanded.originY);
-        const double x1 = snapUp  (expanded.originX + expanded.width);
-        const double y1 = snapUp  (expanded.originY + expanded.height);
-
+        const double x0  = snapDown(expanded.originX);
+        const double y0  = snapDown(expanded.originY);
+        const double x1  = snapUp  (expanded.originX + expanded.width);
+        const double y1  = snapUp  (expanded.originY + expanded.height);
         expanded.originX = float(x0);
         expanded.originY = float(y0);
         expanded.width   = int(std::lround(x1 - x0));
         expanded.height  = int(std::lround(y1 - y0));
     }
-
     surfaceMeshPtr_->concatenate(expanded);
-
-    const int gMeshWidthPixs  = surfaceMeshPtr_->getPixelWidth();
-    const int gMeshHeightPixs = surfaceMeshPtr_->getPixelHeight();
 
     { // prefetch tiles
         QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, expandMargin_/*for prefetch*/);
@@ -613,17 +605,51 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             if (!need.isEmpty()) {
                 prefetchTiles(need);
             }
+
+            for (auto it = need.cbegin(); it != need.cend(); ++it) {
+                if (auto* tile = surfaceMeshPtr_->getTilePtrByKey(*it); tile) {
+                    if (!tile->getIsInited()) {
+                        tile->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
+                    }
+                }
+            }
         }
     }
 
-    static QSet<SurfaceTile*> changedTiles;
-    changedTiles.clear();
+    // after expand by martix
+    const int numHeightTiles = surfaceMeshPtr_->getNumHeightTiles();
+    const int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
 
+    // helpers
+    auto putPixel = [&](int x, int y, uint8_t color) -> SurfaceTile* {
+        const int meshX = x / tileSidePixelSize_;
+        const int meshY = (numHeightTiles - 1) - (y / tileSidePixelSize_);
+        SurfaceTile* t  = surfaceMeshPtr_->getTileByXYIndxs(meshY, meshX);
+        if (!t) {
+            return nullptr;
+        }
+
+        const int tileX = x % tileSidePixelSize_;
+        const int tileY = y % tileSidePixelSize_;
+
+        auto& img = t->getMosaicImageDataRef();
+        img.data()[tileY * tileSidePixelSize_ + tileX] = color;
+        t->setIsUpdated(true);
+
+        return t;
+    };
+
+    if (bench) {
+        qDebug() << "prep time,    ms" << et.elapsed(); // test
+        et.restart();
+        et.start();
+    }
+
+    // ray tracing
     for (int i = 0; i < measLinesVertices.size(); i += 2) {
         if (canceled()) {
             return;
         }
-
         if (i + 5 > measLinesVertices.size() - 1) {
             break;
         }
@@ -683,9 +709,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             segSCharts->updateCompesated();
         }
 
-        // Bresenham
-        // first segment
-        QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx]; // physics coordinates
+        // Bresenham, first segment
+        QVector3D segFPhBegPnt = segFIsOdd ? measLinesVertices[segFBegVertIndx] : measLinesVertices[segFEndVertIndx];
         QVector3D segFPhEndPnt = segFIsOdd ? measLinesVertices[segFEndVertIndx] : measLinesVertices[segFBegVertIndx];
         auto segFBegPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhBegPnt);
         auto segFEndPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFPhEndPnt);
@@ -733,152 +758,121 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         QVector3D segFBoatPos(segFInterpNED.n, segFInterpNED.e, 0.0f);
         QVector3D segSBoatPos(segSInterpNED.n, segSInterpNED.e, 0.0f);
 
-        // follow the first segment
+        // select longest ray
+        const bool bigIsF = (segFPixTotDist >= segSPixTotDist);
+        int       bigX1  = bigIsF ? segFPixX1  :  segSPixX1;
+        int       bigY1  = bigIsF ? segFPixY1  :  segSPixY1;
+        const int bigX2  = bigIsF ? segFPixX2  :  segSPixX2;
+        const int bigY2  = bigIsF ? segFPixY2  :  segSPixY2;
+        int       bigErr = bigIsF ? segFPixErr :  segSPixErr;
+        const int bigDx  = bigIsF ? segFPixDx  :  segSPixDx;
+        const int bigDy  = bigIsF ? segFPixDy  :  segSPixDy;
+        const int bigSx  = bigIsF ? segFPixSx  :  segSPixSx;
+        const int bigSy  = bigIsF ? segFPixSy  :  segSPixSy;
+        const float bigTot = std::max(1.0f, bigIsF ? segFPixTotDist : segSPixTotDist);
+
+        auto bresStep = [&]() -> bool {
+            if (bigX1 == bigX2 && bigY1 == bigY2) {
+                return false;
+            }
+
+            int e2 = (bigErr << 1);
+            if (e2 > -bigDy) { bigErr -= bigDy; bigX1 += bigSx; }
+            if (e2 <  bigDx) { bigErr += bigDx; bigY1 += bigSy; }
+
+            return true;
+        };
+
+        // follow the biggest segment
         while (true) {
-            // first segment
-            float segFPixCurrDist = std::sqrt(std::pow(segFPixX1 - segFPixX2, 2) + std::pow(segFPixY1 - segFPixY2, 2));
-            float segFProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist);
-            QVector3D segFCurrPhPos(segFPhBegPnt.x() + segFProgByPix * segFPhDistX, segFPhBegPnt.y() + segFProgByPix * segFPhDistY, segFDistProc);
-            // second segment, calc corresponding progress using smoothed interpolation
-            float segSCorrProgByPix = std::min(1.0f, segFPixCurrDist / segFPixTotDist * segSPixTotDist / segFPixTotDist);
-            QVector3D segSCurrPhPos(segSPhBegPnt.x() + segSCorrProgByPix * segSPhDistX, segSPhBegPnt.y() + segSCorrProgByPix * segSPhDistY, segSDistProc);
+            const float rem = std::sqrt(float((bigX2 - bigX1) * (bigX2 - bigX1) + (bigY2 - bigY1) * (bigY2 - bigY1)));
+            const float t   = std::clamp(rem / bigTot, 0.0f, 1.0f);
+            QVector3D segFCurrPhPos(segFPhBegPnt.x() + t * segFPhDistX, segFPhBegPnt.y() + t * segFPhDistY, segFDistProc);
+            QVector3D segSCurrPhPos(segSPhBegPnt.x() + t * segSPhDistX, segSPhBegPnt.y() + t * segSPhDistY, segSDistProc);
 
-            auto indxF = sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos));
-            auto indxS = sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos));
-            int segFColorIndx = 0;
-            int segSColorIndx = 0;
-
-            bool bothValid = indxF && indxS;
-            if (bothValid) {
-                segFColorIndx = getColorIndx(segFCharts, *indxF);
-                segSColorIndx = getColorIndx(segSCharts, *indxS);
-                if (segFColorIndx == 0 && segSColorIndx == 0) {
-                    bothValid = false;
+            int segFColorIndx = getColorIndx(segFCharts, sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos)));
+            int segSColorIndx = getColorIndx(segSCharts, sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos)));
+            if (!segFColorIndx && !segSColorIndx) {
+                if (!bresStep()) {
+                    break;
                 }
+                continue;
             }
 
             auto segFCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFCurrPhPos);
             auto segSCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSCurrPhPos);
 
-            // color interpolation between two pixels
-            int interpPixX1 = segFCurrPixPos.x();
-            int interpPixY1 = segFCurrPixPos.y();
-            int interpPixX2 = segSCurrPixPos.x();
-            int interpPixY2 = segSCurrPixPos.y();
-            int interpPixDistX = interpPixX2 - interpPixX1;
-            int interpPixDistY = interpPixY2 - interpPixY1;
-            float interpPixTotDist = std::sqrt(std::pow(interpPixDistX, 2) + std::pow(interpPixDistY, 2));
+            int   iPixDistX   = int(segSCurrPixPos.x()) - int(segFCurrPixPos.x());
+            int   iPixDistY   = int(segSCurrPixPos.y()) - int(segFCurrPixPos.y());
+            float iPixTotDist = std::sqrt(std::pow(iPixDistX, 2) + std::pow(iPixDistY, 2));
 
-            // interpolate
-            if (bothValid && checkLength(interpPixTotDist)) {
-                for (int step = 0; step <= interpPixTotDist; ++step) {
-                    float interpProgressByPixel = static_cast<float>(step) / interpPixTotDist;
-                    int interpX = interpPixX1 + interpProgressByPixel * interpPixDistX;
-                    int interpY = interpPixY1 + interpProgressByPixel * interpPixDistY;
-                    auto interpColorIndx = static_cast<uint8_t>((1 - interpProgressByPixel) * segFColorIndx + interpProgressByPixel * segSColorIndx);
+            if (checkLength(iPixTotDist)) { // color interpolation between two pixels
+                for (int step = 0; step <= iPixTotDist; ++step) {
+                    const float iP       = static_cast<float>(step) / iPixTotDist;
+                    const int   iX       = segFCurrPixPos.x() + iP * iPixDistX;
+                    const int   iY       = segFCurrPixPos.y() + iP * iPixDistY;
+                    const auto  iClrIndx = static_cast<uint8_t>((1 - iP) * segFColorIndx + iP * segSColorIndx);
 
-                    for (int offsetX = -interpLineWidth_; offsetX <= interpLineWidth_; ++offsetX) { // bypass
-                        for (int offsetY = -interpLineWidth_; offsetY <= interpLineWidth_; ++offsetY) {
-                            int bypassInterpX = std::min(gMeshWidthPixs - 1, std::max(0, interpX + offsetX)); // cause bypass
-                            int bypassInterpY = std::min(gMeshHeightPixs - 1, std::max(0, interpY + offsetY));
-
-                            int tileSidePixelSize = surfaceMeshPtr_->getTileSidePixelSize();
-                            int meshIndxX = bypassInterpX / tileSidePixelSize;
-                            int meshIndxY = (surfaceMeshPtr_->getNumHeightTiles() - 1) - bypassInterpY / tileSidePixelSize;
-                            int tileIndxX = bypassInterpX % tileSidePixelSize;
-                            int tileIndxY = bypassInterpY % tileSidePixelSize;
-
-                            auto* tileRef = surfaceMeshPtr_->getTileByXYIndxs(meshIndxY, meshIndxX);
-                            if (!tileRef) {
-                                continue;
+                    auto* t = putPixel(iX, iY, iClrIndx);
+                    if (t) {
+                        if (!(step % tileHeightMatrixRatio_)) {
+                            const int tileX    = iX % tileSidePixelSize_;
+                            const int tileY    = iY % tileSidePixelSize_;
+                            const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
+                            const int hIdx     = (tileY / stepSizeHeightMatrix) * numSteps + (tileX / stepSizeHeightMatrix);
+                            auto&     hT       = t->getHeightMarkVerticesRef()[hIdx];
+                            if (hT != HeightType::kTriangulation) {
+                                t->getHeightVerticesRef()[hIdx][2]  = segFCurrPhPos[2];
+                                hT = HeightType::kMosaic;
                             }
-
-                            if (!tileRef->getIsInited()) {
-                                //qDebug() << "INIT KEY" << tileRef->getKey();
-                                tileRef->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                            }
-
-                            // image
-                            auto& imageRef = tileRef->getMosaicImageDataRef();
-                            int bytesPerLine = std::sqrt(imageRef.size());
-
-                            auto shift = tileIndxY * bytesPerLine + tileIndxX;
-                            *(imageRef.data() + shift) = interpColorIndx;
-
-                            // height matrix
-                            int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
-                            int numSteps = tileSidePixelSize / stepSizeHeightMatrix + 1;
-                            int hVIndx = (tileIndxY / stepSizeHeightMatrix) * numSteps + (tileIndxX / stepSizeHeightMatrix);
-
-                            if (tileRef->getHeightMarkVerticesRef()[hVIndx] != HeightType::kTriangulation) {
-                                tileRef->getHeightVerticesRef()[hVIndx][2] = segFCurrPhPos[2];
-                                tileRef->getHeightMarkVerticesRef()[hVIndx] = HeightType::kMosaic;
-                            }
-
-                            tileRef->setIsUpdated(true);
-
-                            changedTiles.insert(tileRef);
                         }
                     }
+
+                    putPixel(iX + DX[0], iY + DY[0], iClrIndx);
+                    putPixel(iX + DX[1], iY + DY[1], iClrIndx);
+                    putPixel(iX + DX[2], iY + DY[2], iClrIndx);
+                    putPixel(iX + DX[3], iY + DY[3], iClrIndx);
                 }
             }
 
-            // break at the end of the first segment
-            if (segFPixX1 == segFPixX2 && segFPixY1 == segFPixY2) {
+            if (!bresStep()) {
                 break;
             }
-
-            // Bresenham
-            int segFPixE2 = 2 * segFPixErr;
-            if (segFPixE2 > -segFPixDy) {
-                segFPixErr -= segFPixDy;
-                segFPixX1 += segFPixSx;
-            }
-            if (segFPixE2 < segFPixDx) {
-                segFPixErr += segFPixDx;
-                segFPixY1 += segFPixSy;
-            }
-            int segSPixE2 = 2 * segSPixErr;
-            if (segSPixE2 > -segSPixDy) {
-                segSPixErr -= segSPixDy;
-                segSPixX1 += segSPixSx;
-            }
-            if (segSPixE2 < segSPixDx) {
-                segSPixErr += segSPixDx;
-                segSPixY1 += segSPixSy;
-            }
-        }
-    }
+        } // while interp line
+    } // for rays
 
     lastMatParams_ = actualMatParams;
 
-    QSet<SurfaceTile*> changedOut;
-    postUpdate(changedTiles, changedOut);
-    changedTiles.unite(changedOut);
+    if (bench) {
+        qDebug() << "trace time,   ms" << et.elapsed();
+        et.restart();
+        et.start();
+    }
 
+    // collect changed tiles
+    QSet<SurfaceTile*> updTiles = surfaceMeshPtr_->getUpdatedTiles();
+    QSet<SurfaceTile*> changedOut;
+    postUpdate(updTiles, changedOut);
+    updTiles.unite(changedOut);
     TileMap res;
-    res.reserve(changedTiles.size());
-    for (SurfaceTile* itm : std::as_const(changedTiles)) {
+    res.reserve(updTiles.size());
+    for (SurfaceTile* itm : std::as_const(updTiles)) {
         if (!itm || !itm->getIsInited()) {
             continue;
         }
-
         updateUnmarkedHeightVertices(itm);
         itm->updateHeightIndices();
         itm->setIsUpdated(false);
         res.insert((itm)->getKey(), (*itm));
     }
+    surfaceMeshPtr_->setTileUsed(updTiles, true); // метка тайлов/ужимка
 
-    //const int beforeTracked = surfaceMeshPtr_->currentInitedTiles();
-    //const int beforeScan    = surfaceMeshPtr_->scanInitedTiles();
-    surfaceMeshPtr_->setTileUsed(changedTiles, true); // метка тайлов/ужимка
-    //const int afterTracked = surfaceMeshPtr_->currentInitedTiles();
-    //const int afterScan    = surfaceMeshPtr_->scanInitedTiles();
-    //qDebug() << "[Mosaic] inited tiles tracked" << beforeTracked << "->" << afterTracked
-    //         << "/ scan" << beforeScan << "->" << afterScan;
+    if (bench) {
+        qDebug() << "post up time, ms" << et.elapsed();
+    }
 
+    // emit data
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
-
     if (haveLastPair) {
         QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
             Q_ARG(QVector3D, lastLeftBeg),
@@ -892,6 +886,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
 {
     int retVal{ 0 };
+
+    if (!charts || ampIndx == -1) {
+        return retVal;
+    }
 
     if (charts->compensated.size() > ampIndx) {
         int cVal = charts->compensated[ampIndx] ;
@@ -1082,7 +1080,7 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
     return;
 }
 
-bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгрузка тайлов с hotCache, db
+bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгрузка тайлов с hotCache, db (dataprocessor)
 {
     if (!dataProcessor_ || keys.isEmpty()) {
         return false;

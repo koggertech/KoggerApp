@@ -21,10 +21,10 @@ inline void markTilesBySource(TileMap& tiles, DataSource src)
         hint = UpdateHint::kUndefined;          // кэш/БД: текстуру не трогаем
     }
 
-    const bool updated = (hint != UpdateHint::kUndefined);
+    //const bool updated = (hint != UpdateHint::kUndefined);
     for (auto it = tiles.begin(); it != tiles.end(); ++it) {
         it.value().setUpdateHint(hint);
-        it.value().setIsUpdated(updated); // на всякий случай держим синхрон
+        //it.value().setIsUpdated(updated); // на всякий случай держим синхрон
     }
 }
 
