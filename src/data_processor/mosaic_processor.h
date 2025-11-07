@@ -54,9 +54,6 @@ private:
     bool prefetchTiles(const QSet<TileKey>& keys);
 
 private:
-    static constexpr int DX[4] = { 1, -1,  0,  0 };
-    static constexpr int DY[4] = { 0,  0,  1, -1 };
-
     const int expandMargin_ = 1;
     mosaic::PlotColorTable colorTable_;
     DataProcessor* dataProcessor_;
@@ -64,6 +61,8 @@ private:
     SurfaceMesh* surfaceMeshPtr_;
     kmath::MatrixParams lastMatParams_;
     float tileResolution_;
+    int pixOnMeters_;
+    int aliasWindow_;
     uint64_t currIndxSec_;
     ChannelId segFChannelId_;
     uint8_t segFSubChannelId_;

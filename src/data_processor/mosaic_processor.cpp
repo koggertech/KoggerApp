@@ -48,6 +48,8 @@ MosaicProcessor::MosaicProcessor(DataProcessor* parent)
     datasetPtr_(nullptr),
     surfaceMeshPtr_(nullptr),
     tileResolution_(defaultTileResolution),
+    pixOnMeters_(std::pow(tileResolution_, -1)),
+    aliasWindow_(100/pixOnMeters_),
     currIndxSec_(0),
     segFSubChannelId_(0),
     segSSubChannelId_(0),
@@ -152,6 +154,8 @@ void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMat
     tileSidePixelSize_ = tileSidePixelSize;
     tileHeightMatrixRatio_ = tileHeightMatrixRatio;
     tileResolution_ = tileResolution;
+    pixOnMeters_ = std::pow(tileResolution_, -1);
+    aliasWindow_ = 100 / pixOnMeters_;
 
     surfaceMeshPtr_->reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);//
 }
@@ -223,6 +227,8 @@ void MosaicProcessor::setRAngleOffset(float val)
 void MosaicProcessor::setTileResolution(float tileResolution)
 {
     tileResolution_ = tileResolution;
+    pixOnMeters_ = std::pow(tileResolution_, -1);
+    aliasWindow_ = 100 / pixOnMeters_;
 }
 
 void MosaicProcessor::setGenerageGridContour(bool state)
@@ -739,7 +745,6 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         int segSPixSx = (segSPixX1 < segSPixX2) ? 1 : -1;
         int segSPixSy = (segSPixY1 < segSPixY2) ? 1 : -1;
         int segSPixErr = segSPixDx - segSPixDy;
-
         // pixel length checking
         if (!checkLength(segFPixTotDist) ||
             !checkLength(segSPixTotDist)) {
@@ -771,21 +776,24 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         const int bigSy  = bigIsF ? segFPixSy  :  segSPixSy;
         const float bigTot = std::max(1.0f, bigIsF ? segFPixTotDist : segSPixTotDist);
 
-        auto bresStep = [&]() -> bool {
-            if (bigX1 == bigX2 && bigY1 == bigY2) {
-                return false;
+        auto bresStep = [&](int& x0, int& y0, const int& x1, const int& y1, int& err, const int& dx, const int& dy, const int& sx,  const int& sy) -> bool {
+            if (x0 == x1 && y0 == y1) {
+                return true;
             }
 
-            int e2 = (bigErr << 1);
-            if (e2 > -bigDy) { bigErr -= bigDy; bigX1 += bigSx; }
-            if (e2 <  bigDx) { bigErr += bigDx; bigY1 += bigSy; }
+            int e2 = (err << 1);
+            if (e2 > -dy) {
+                err -= dy; x0 += sx;
+            }
+            else if (e2 < dx) {
+                err += dx; y0 += sy;
+            }
 
-            return true;
+            return false;
         };
 
-        // follow the biggest segment
-        while (true) {
-            const float rem = std::sqrt(float((bigX2 - bigX1) * (bigX2 - bigX1) + (bigY2 - bigY1) * (bigY2 - bigY1)));
+        while (true) { // follow the biggest segment
+            const float rem = std::sqrt(float((bigX2 - bigX1) * (bigX2 - bigX1) + (bigY2 - bigY1) * (bigY2 - bigY1))); // moving on longest line
             const float t   = std::clamp(rem / bigTot, 0.0f, 1.0f);
             QVector3D segFCurrPhPos(segFPhBegPnt.x() + t * segFPhDistX, segFPhBegPnt.y() + t * segFPhDistY, segFDistProc);
             QVector3D segSCurrPhPos(segSPhBegPnt.x() + t * segSPhDistX, segSPhBegPnt.y() + t * segSPhDistY, segSDistProc);
@@ -793,49 +801,56 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             int segFColorIndx = getColorIndx(segFCharts, sampleIndex(segFCharts, segFCurrPhPos.distanceToPoint(segFBoatPos)));
             int segSColorIndx = getColorIndx(segSCharts, sampleIndex(segSCharts, segSCurrPhPos.distanceToPoint(segSBoatPos)));
             if (!segFColorIndx && !segSColorIndx) {
-                if (!bresStep()) {
+                if (bresStep(bigX1, bigY1, bigX2, bigY2, bigErr, bigDx, bigDy, bigSx, bigSy)) {
                     break;
                 }
                 continue;
             }
-
             auto segFCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segFCurrPhPos);
             auto segSCurrPixPos = surfaceMeshPtr_->convertPhToPixCoords(segSCurrPhPos);
 
-            int   iPixDistX   = int(segSCurrPixPos.x()) - int(segFCurrPixPos.x());
-            int   iPixDistY   = int(segSCurrPixPos.y()) - int(segFCurrPixPos.y());
-            float iPixTotDist = std::sqrt(std::pow(iPixDistX, 2) + std::pow(iPixDistY, 2));
+            // interp Bres
+            int x0 = int(segFCurrPixPos.x());
+            int y0 = int(segFCurrPixPos.y());
+            const int x1 = int(segSCurrPixPos.x());
+            const int y1 = int(segSCurrPixPos.y());
+            const int dx = std::abs(x1 - x0);
+            const int dy = std::abs(y1 - y0);
+            const int sx = (x0 < x1) ? 1 : -1;
+            const int sy = (y0 < y1) ? 1 : -1;
+            int err = dx - dy;
+            const int stepsTot = dx + dy;
 
-            if (checkLength(iPixTotDist)) { // color interpolation between two pixels
-                for (int step = 0; step <= iPixTotDist; ++step) {
-                    const float iP       = static_cast<float>(step) / iPixTotDist;
-                    const int   iX       = segFCurrPixPos.x() + iP * iPixDistX;
-                    const int   iY       = segFCurrPixPos.y() + iP * iPixDistY;
+            if (checkLength(stepsTot)) { // color interpolation between two pixels
+                int stepsDone = 0;
+
+                while (true) { // follow between pixels
+                    const float iP       = static_cast<float>(stepsDone) / float(stepsTot); /*stepsTot*/
                     const auto  iClrIndx = static_cast<uint8_t>((1 - iP) * segFColorIndx + iP * segSColorIndx);
 
-                    auto* t = putPixel(iX, iY, iClrIndx);
-                    if (t) {
-                        if (!(step % tileHeightMatrixRatio_)) {
-                            const int tileX    = iX % tileSidePixelSize_;
-                            const int tileY    = iY % tileSidePixelSize_;
-                            const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
-                            const int hIdx     = (tileY / stepSizeHeightMatrix) * numSteps + (tileX / stepSizeHeightMatrix);
-                            auto&     hT       = t->getHeightMarkVerticesRef()[hIdx];
-                            if (hT != HeightType::kTriangulation) {
-                                t->getHeightVerticesRef()[hIdx][2]  = segFCurrPhPos[2];
-                                hT = HeightType::kMosaic;
-                            }
+                    // рисуем текущий пиксель
+                    auto* t = putPixel(x0, y0, iClrIndx);
+                    if (!(stepsDone % tileHeightMatrixRatio_)) {
+                        const int tileX = x0 % tileSidePixelSize_;
+                        const int tileY = y0 % tileSidePixelSize_;
+                        const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
+                        const int hIdx = (tileY / stepSizeHeightMatrix) * numSteps + (tileX / stepSizeHeightMatrix);
+                        auto& hT = t->getHeightMarkVerticesRef()[hIdx];
+                        if (hT != HeightType::kTriangulation) {
+                            t->getHeightVerticesRef()[hIdx][2] = segFCurrPhPos[2];
+                            hT = HeightType::kMosaic;
                         }
                     }
 
-                    putPixel(iX + DX[0], iY + DY[0], iClrIndx);
-                    putPixel(iX + DX[1], iY + DY[1], iClrIndx);
-                    putPixel(iX + DX[2], iY + DY[2], iClrIndx);
-                    putPixel(iX + DX[3], iY + DY[3], iClrIndx);
+                    if (bresStep(x0, y0, x1, y1, err, dx, dy, sx, sy)) {
+                        break;
+                    }
+
+                    ++stepsDone;
                 }
             }
 
-            if (!bresStep()) {
+            if (bresStep(bigX1, bigY1, bigX2, bigY2, bigErr, bigDx, bigDy, bigSx, bigSy)) {
                 break;
             }
         } // while interp line
@@ -891,17 +906,42 @@ int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
         return retVal;
     }
 
-    if (charts->compensated.size() > ampIndx) {
-        int cVal = charts->compensated[ampIndx] ;
-        cVal = std::min(colorTableSize_, cVal);
-        retVal = cVal;
+    const auto ampSize = charts->compensated.size();
+
+    if (ampSize > ampIndx) {
+        if (aliasWindow_ == 1) {
+            int cVal = charts->compensated[ampIndx] ;
+            cVal = std::min(colorTableSize_, cVal);
+            retVal = cVal;
+        }
+        else { // aliasing
+            const int half  = aliasWindow_ / 2;
+            const int lIndx = ampIndx - half;
+            const int rIndx = ampIndx + half;
+
+            if (lIndx > 0 && ampSize > lIndx &&
+                rIndx > 0 && ampSize > rIndx) {
+                int newColorIndx = 0;
+                for (int i = lIndx; i < rIndx; ++i) {
+                    int cVal = charts->compensated[i] ;
+                    cVal = std::min(colorTableSize_, cVal);
+                    newColorIndx += cVal;
+                }
+                retVal = float(newColorIndx) / float(aliasWindow_);
+            }
+            else {
+                int cVal = charts->compensated[ampIndx] ;
+                cVal = std::min(colorTableSize_, cVal);
+                retVal = cVal;
+            }
+        }
     }
     else {
-        return retVal;
+        return retVal; // если вышел за предел - ноль
     }
 
     if (!retVal) {
-        return ++retVal;
+        return 1;
     }
 
     return retVal;
