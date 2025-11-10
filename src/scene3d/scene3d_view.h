@@ -245,6 +245,7 @@ public Q_SLOTS:
     void updateSurfaceView();
     void updateViews();
     void onCameraMoved();
+    void calcVisEpochIndxs();
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);

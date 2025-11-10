@@ -79,11 +79,14 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(boatTrack_.get(), &PlaneGrid::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(navigationArrow_.get(), &NavigationArrow::boundsChanged, this, &GraphicsScene3dView::updateBounds);
     QObject::connect(usblView_.get(), &UsblView::boundsChanged, this, &GraphicsScene3dView::updateBounds);
-
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::onCameraMoved,     Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateMapView,     Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateSurfaceView, Qt::DirectConnection);
-    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews,       Qt::DirectConnection);
+    
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, [&](){
+        onCameraMoved();
+        updateMapView();
+        updateSurfaceView();
+        updateViews();
+        //calcVisEpochIndxs();
+    }, Qt::DirectConnection);
 
     updatePlaneGrid();
 }
@@ -822,8 +825,6 @@ void GraphicsScene3dView::updateMapView()
         return;
     }
 
-    updateProjection();
-
     float reductorFactor = -0.05f;
     QVector<QPair<float, float>> cornerMultipliers = {
         {       reductorFactor,         reductorFactor }, // lt
@@ -1022,6 +1023,8 @@ void GraphicsScene3dView::updateViews()
 
 void GraphicsScene3dView::onCameraMoved()
 {
+    updateProjection();
+
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
     //currZoom = 2; // 1 - best, 7 (test)
@@ -1033,6 +1036,102 @@ void GraphicsScene3dView::onCameraMoved()
     dataZoomIndx_ = currZoom;
 
     emit sendDataZoom(dataZoomIndx_);
+}
+
+void GraphicsScene3dView::calcVisEpochIndxs()
+{
+    if (!datasetPtr_) {
+        return;
+    }
+    int dSize = datasetPtr_->size();
+    if (!dSize) {
+        return;
+    }
+
+    float reductorFactor = -0.00f;
+    QVector<QPair<float, float>> cornerMultipliers = {
+        {       reductorFactor,         reductorFactor }, // lt
+        {       reductorFactor,  1.0f - reductorFactor }, // lb
+        {1.0f - reductorFactor , 1.0f - reductorFactor }, // rb
+        {1.0f - reductorFactor ,        reductorFactor }  // rt
+    };
+
+    // calc ned
+    float minX = std::numeric_limits<float>::max();
+    float minY = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float maxY = std::numeric_limits<float>::lowest();
+
+    bool allPointsAreValid{ true };
+    for (const auto& multiplier : cornerMultipliers) {
+        float currWidth  = width() * multiplier.first;
+        float currHeight = height() * multiplier.second;
+
+        QVector3D point;
+        if (m_camera->getIsPerspective()) {
+            auto toOrigin = QVector3D(currWidth, currHeight, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto toEnd = QVector3D(currWidth, currHeight,  1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto toDist = (toEnd - toOrigin).normalized();
+            point = calculateIntersectionPoint(toOrigin, toDist, 0);
+        }
+        else {
+            point = QVector3D(currWidth, currHeight, 0.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+        }
+
+        if (point == QVector3D()) {
+            allPointsAreValid = false;
+            break;
+        }
+
+        minX = std::min(minX, point.x());
+        minY = std::min(minY, point.y());
+        maxX = std::max(maxX, point.x());
+        maxY = std::max(maxY, point.y());
+    }
+
+    auto isContans = [&](float n, float e) ->bool {
+
+        if (n > minX &&
+            n < maxX &&
+            e > minY &&
+            e < maxY) {
+            return true;
+        }
+        return false;
+    };
+
+    if (allPointsAreValid) {
+        bool canRequest{ true };
+        if (m_camera->getAngleToGround() > 5.0f) {
+            const float maxSideSize = 14000.f;
+            float maxS = std::pow(maxSideSize, 2.0f);
+            float rectArea = std::fabs(maxX - minX) * std::fabs(maxY - minY);
+            if (rectArea > maxS) { // TODO: using Z coeff
+                canRequest = false;
+            }
+        }
+
+        if (!canRequest) {
+            return;
+        }
+
+        QVector<int> contains;
+        for (int i = 0; i < dSize; ++i) {
+            if (auto* ep = datasetPtr_->fromIndex(i); ep) {
+                auto epNed = ep->getPositionGNSS().ned;
+                if (isContans(epNed.n, epNed.e)) {
+                    contains.push_back(i);
+
+                    //qDebug() << "   ep" << i << "   " << epNed.n << epNed.e;
+                    //qDebug() << "      X range" << minX << maxX;
+                    //qDebug() << "      Y range" << minY << maxY;
+                }
+            }
+        }
+
+        //qDebug() << contains.size();
+        qDebug() << contains;
+    }
 }
 
 void GraphicsScene3dView::onPositionAdded(uint64_t indx)
