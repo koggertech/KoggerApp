@@ -486,7 +486,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 {
     //qDebug() << "   MosaicProcessor::updateData";
 
-    bool bench = true;
+    bool bench = false;
     QElapsedTimer et; // test
     if (bench) {
         et.start();
