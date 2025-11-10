@@ -142,7 +142,28 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
     //   }
     //}
 
-    updateData(vec);
+    const int kStep = 100; // почанково
+    QVector<int> chunk;
+
+    int start = 0;
+    const int last = vec.size() - 1;
+
+    while (start <= last) {
+        int end = qMin(start + kStep, last);
+
+        chunk.clear();
+        chunk.reserve(end - start + 1);
+        for (int i = start; i <= end; ++i) {
+            chunk.push_back(vec[i]);
+        }
+
+        updateData(chunk);
+
+        if (end == last) {
+            break;
+        }
+        start = end;
+    }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
