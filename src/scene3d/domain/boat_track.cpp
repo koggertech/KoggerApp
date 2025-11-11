@@ -77,6 +77,7 @@ void BoatTrack::clearData()
     auto r = RENDER_IMPL(BoatTrack);
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
+    lastIndx_ = 0;
 
     SceneObject::clearData();
 }
