@@ -8,7 +8,8 @@
 
 BoatTrack::BoatTrack(GraphicsScene3dView* view, QObject* parent) :
     SceneObject(new BoatTrackRenderImplementation, view, parent),
-    datasetPtr_(nullptr)
+    datasetPtr_(nullptr),
+    lastIndx_(0)
 {
     setPrimitiveType(GL_LINE_STRIP);
 }
@@ -51,30 +52,24 @@ void BoatTrack::onPositionAdded(uint64_t indx)
     }
 
     const int toIndx = indx;
-    const int fromIndx = 0; //lastEpoch_;
-    if (fromIndx > toIndx) {
+    const int fromIndx = lastIndx_;
+    if (fromIndx >= toIndx) {
         return;
     }
 
-    QVector<QVector3D> prepData(toIndx, QVector3D());
-    selectedIndices_.clear();
-    uint64_t validPosCounter = 0;
+    QVector<QVector3D> prepData(toIndx - fromIndx, QVector3D());
 
-    for (int i = fromIndx; i < toIndx; ++i) {
+    int cnt = 0;
+    for (int i = fromIndx + 1; i <= toIndx; ++i) {
         if (auto* ep = datasetPtr_->fromIndex(i); ep) {
-            if (auto boatPosNed = ep->getPositionGNSS().ned; boatPosNed.isCoordinatesValid()) {
-                prepData[i] = QVector3D(boatPosNed.n, boatPosNed.e, 0);
-                selectedIndices_.insert(validPosCounter++, i);
-
-                //lastPos_ = prepData[i]; // TODO
-                //if (float yaw = ep->yaw(); std::isfinite(yaw)) {
-                //    lastYaw_ = ep->yaw();
-                //}
+            if (auto posNed = ep->getPositionGNSS().ned; posNed.isCoordinatesValid()) {
+                prepData[cnt++] = QVector3D(posNed.n, posNed.e, 0);
             }
         }
     }
+    lastIndx_ = toIndx;
 
-    SceneObject::setData(prepData, GL_LINE_STRIP);
+    SceneObject::appendData(prepData);
 }
 
 void BoatTrack::clearData()
@@ -82,8 +77,6 @@ void BoatTrack::clearData()
     auto r = RENDER_IMPL(BoatTrack);
     r->boatTrackVertice_ = QVector3D();
     r->bottomTrackVertice_ = QVector3D();
-
-    selectedIndices_.clear();
 
     SceneObject::clearData();
 }
@@ -151,18 +144,14 @@ void BoatTrack::mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 auto hits = m_view->m_ray.hitObject(shared_from_this(), Ray::HittingMode::Vertex);
                 if (!hits.isEmpty()) {
                     auto indice = hits.first().indices().first;
-                    if (selectedIndices_.size() > (indice + 1)) {
-                        auto epochIndx = selectedIndices_[indice];
-                        if (auto* epoch = datasetPtr_->fromIndex(epochIndx); epoch) {
-                            NED boatPosNed = epoch->getPositionGNSS().ned;
+                    if (auto* epoch = datasetPtr_->fromIndex(indice); epoch) {
+                        NED epNed = epoch->getPositionGNSS().ned;
 
-                            QVector3D pos(boatPosNed.n, boatPosNed.e, 0.0f);
-                            RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
-
-                            if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
-                                auto epochEvent = new EpochEvent(EpochSelected3d, epoch, epochIndx, datasetChannels.first());
-                                QCoreApplication::postEvent(this, epochEvent);
-                            }
+                        QVector3D pos(epNed.n, epNed.e, 0.0f);
+                        RENDER_IMPL(BoatTrack)->boatTrackVertice_ = pos;
+                        if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
+                            auto epochEvent = new EpochEvent(EpochSelected3d, epoch, indice, datasetChannels.first());
+                            QCoreApplication::postEvent(this, epochEvent);
                         }
                     }
                 }
