@@ -73,7 +73,7 @@ public class KoggerActivity extends QtActivity
     private static HashMap<Integer, Long>               _userDataHashByDeviceId;
     private static final String                         TAG = "Kogger_KoggerActivity";
     private static PowerManager.WakeLock                _wakeLock;
-    private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
+    private static final String                         ACTION_USB_PERMISSION = "org.kogger.koggerapp.action.USB_PERMISSION";
     private static PendingIntent                        _usbPermissionIntent = null;
     // private TaiSync                                     taiSync = null;
     private Timer                                       probeAccessoriesTimer = null;
@@ -202,7 +202,7 @@ public class KoggerActivity extends QtActivity
         super.onCreate(savedInstanceState);
         nativeInit();
         PowerManager pm = (PowerManager)_instance.getSystemService(Context.POWER_SERVICE);
-        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
+        _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "KoggerApp");
         if(_wakeLock != null) {
             _wakeLock.acquire();
         } else {
@@ -232,7 +232,7 @@ public class KoggerActivity extends QtActivity
         // Workaround for QTBUG-73138
         if (_wifiMulticastLock == null) {
             WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
-            _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
+            _wifiMulticastLock = wifi.createMulticastLock("KoggerApp");
             _wifiMulticastLock.setReferenceCounted(true);
         }
 
