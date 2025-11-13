@@ -21,7 +21,6 @@ public:
     uint64_t getChartIndx() const { return chartIndx_; };
     uint64_t getAttitudeIndx() const { return attitudeIndx_; };
     uint64_t getBottomTrackIndx() const { return bottomTrackIndx_; };
-    QVector<int> getBottomTrack3DIndx() const { return bottomTrack3DIndxs_; };
 
 signals:
     void epochAdded(uint64_t indx);
@@ -29,7 +28,7 @@ signals:
     void chartAdded(uint64_t indx);
     void attitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
-    void bottomTrack3DAdded(const QVector<int>& indx, bool manual, bool isDel);
+    void bottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual);
     void mosaicCanCalc(uint64_t indx);
     void sonarPosCanCalc(uint64_t indx);
 
@@ -40,7 +39,7 @@ public slots:
     void onAddedChart(uint64_t indx);
     void onAddedAttitude(uint64_t indx);
     void onAddedBottomTrack(uint64_t indx); // from bottom track algorithm
-    void onAddedBottomTrack3D(const QVector<int>& indx, bool manual, bool isDel); // from 2D (editing), 3D
+    void onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual); // from 2D (editing), 3D
 
 private:
     bool canEmitHorizon(bool beenChanged) const;
@@ -58,7 +57,6 @@ private:
     uint64_t chartIndx_;
     uint64_t attitudeIndx_;
     uint64_t bottomTrackIndx_;
-    QVector<int> bottomTrack3DIndxs_;
     uint64_t mosaicIndx_;
     uint64_t sonarIndx_;
 };

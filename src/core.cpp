@@ -1664,16 +1664,8 @@ void Core::destroyDataProcessor()
 void Core::createScene3dConnections()
 {
     QObject::connect(dataHorizon_.get(), &DataHorizon::positionAdded, scene3dViewPtr_, &GraphicsScene3dView::onPositionAdded);
-    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints, this, [this](const QVector<int>& indxs, bool manual, bool isDel) {
-        if (indxs.empty()) {
-            if (!manual) {
-                dataHorizon_->onAddedBottomTrack3D(scene3dViewPtr_->bottomTrack()->getAllIndxs(), manual, isDel);
-            }
-        }
-        else {
-            dataHorizon_->onAddedBottomTrack3D(indxs, manual, isDel);
-        }
-    });
+    QObject::connect(scene3dViewPtr_->bottomTrack().get(), &BottomTrack::updatedPoints, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack3D);
+
     // res work proc
     auto connType = Qt::QueuedConnection;
     // Surface
@@ -1704,7 +1696,7 @@ void Core::setDataProcessorConnections()
     // from dataHorizon
     auto connType = Qt::QueuedConnection;
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,                    dataProcessor_, &DataProcessor::onChartsAdded,           connType));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrackAdded,      connType));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrack3DAdded,      connType));
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
 
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::sonarPosCanCalc,               datasetPtr_,    &Dataset::onSonarPosCanCalc,             connType));

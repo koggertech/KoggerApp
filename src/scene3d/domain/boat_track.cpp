@@ -57,13 +57,14 @@ void BoatTrack::onPositionAdded(uint64_t indx)
         return;
     }
 
-    QVector<QVector3D> prepData(toIndx - fromIndx, QVector3D());
+    const int need = toIndx - fromIndx;
+    QVector<QVector3D> prepData;
+    prepData.reserve(need);
 
-    int cnt = 0;
     for (int i = fromIndx + 1; i <= toIndx; ++i) {
         if (auto* ep = datasetPtr_->fromIndex(i); ep) {
             if (auto posNed = ep->getPositionGNSS().ned; posNed.isCoordinatesValid()) {
-                prepData[cnt++] = QVector3D(posNed.n, posNed.e, 0);
+                prepData.push_back(QVector3D(posNed.n, posNed.e, 0));
             }
         }
     }

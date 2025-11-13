@@ -27,7 +27,7 @@ void BottomTrackProcessor::setDatasetPtr(Dataset *datasetPtr)
     datasetPtr_ = datasetPtr;
 }
 
-void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP, bool manual)
+void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
     auto size = btP.indexTo + btP.windowSize / 2;
 
@@ -348,7 +348,8 @@ void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1,
                               Q_ARG(ChannelId, channel1.channelId_),
                               Q_ARG(int, size),
                               Q_ARG(BottomTrackParam, btP),
-                              Q_ARG(bool, manual));
+                              Q_ARG(bool, manual),
+                              Q_ARG(bool, redrawAll));
 }
 
 bool BottomTrackProcessor::canceled() const noexcept

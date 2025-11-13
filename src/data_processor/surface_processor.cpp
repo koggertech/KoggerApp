@@ -62,7 +62,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     }
 
     // Delaunay processing
-    QVector<QVector3D> bTrData;
+    QVector<QVector3D> bTrData; // работает по кешу рендера трека дна!!!
     {
         QReadLocker rl(&lock_);
         bTrData = bottomTrackPtr_ ? bottomTrackPtr_->cdata() : QVector<QVector3D>();
