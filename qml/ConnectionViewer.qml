@@ -1,8 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
+import QtCore
+
 
 ColumnLayout {
     property var dev: null
@@ -782,7 +783,7 @@ ColumnLayout {
                 FileDialog {
                     id: importTrackFileDialog
                     title: "Please choose a file"
-                    folder: shortcuts.home
+                    currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
                     //                    fileMode: FileDialog.OpenFiles
 
                     nameFilters: ["Logs (*.csv *.txt)"]
@@ -803,7 +804,7 @@ ColumnLayout {
                 }
 
                 Settings {
-                    property alias importFolder: importTrackFileDialog.folder
+                    property alias importFolder: importTrackFileDialog.currentFolder
                 }
             }
         }
@@ -948,23 +949,29 @@ ColumnLayout {
             FileDialog {
                 id: newFileDialog
                 title: qsTr("Please choose a file")
-                folder: shortcuts.home
+                currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
                 onAccepted: {
-                    pathText.text = newFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+                    const file = newFileDialog.selectedFile
+                    if (!file) {
+                        return
+                    }
 
-                    var name_parts = newFileDialog.fileUrl.toString().split('.')
+                    const fileStr = file.toString()
+                    pathText.text = fileStr.replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
-                    core.openLogFile(pathText.text, false, false);
+                    var name_parts = fileStr.split('.')
+
+                    core.openLogFile(pathText.text, false, false)
                 }
                 onRejected: {
                 }
             }
 
             Settings {
-                property alias logFolder: newFileDialog.folder
+                property alias logFolder: newFileDialog.currentFolder
             }
         }
 
@@ -982,7 +989,7 @@ ColumnLayout {
             FileDialog {
                 id: appendFileDialog
                 title: qsTr("Please choose a file")
-                folder: shortcuts.home
+                currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
@@ -999,7 +1006,7 @@ ColumnLayout {
             }
 
             Settings {
-                property alias logFolder: appendFileDialog.folder
+                property alias logFolder: appendFileDialog.currentFolder
             }
         }
 

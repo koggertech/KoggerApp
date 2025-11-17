@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <QHash>
@@ -123,7 +124,7 @@ inline const QVector<QVector3D>& colorPalette(int themeId)
         }
     };
 
-    return palettes[std::clamp(themeId, 0, palettes.size() - 1)];
+    return palettes[std::clamp(themeId, 0, static_cast<int>(palettes.size() - 1))];
 }
 
 inline bool fuzzyEq(const QVector3D& a, const QVector3D& b, float eps = kmath::fltEps)

@@ -469,9 +469,9 @@ void GraphicsScene3dView::forceUpdateDatasetLlaRef()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
+void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
-    QQuickFramebufferObject::geometryChanged(newGeometry, oldGeometry);
+    QQuickFramebufferObject::geometryChange(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
        updateProjection();

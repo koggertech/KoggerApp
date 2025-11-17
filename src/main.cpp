@@ -14,13 +14,11 @@
 #include <QQuickWindow>
 #include <QSql>
 #include <QSqlDatabase>
+#include <QQuickStyle>
 #include "qPlot2D.h"
-#include "dataset.h"
-#include "console.h"
 #include "core.h"
 #include "themes.h"
 #include "scene_object.h"
-#include "plot2D.h"
 #include "bottom_track.h"
 #if defined(Q_OS_ANDROID)
 #include "platform/android/src/android.h"
@@ -112,11 +110,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion("1-1-1");
 
 #if defined(Q_OS_WIN)
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    //QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Round);
 #endif
 
-    QQuickWindow::setSceneGraphBackend(QSGRendererInterface::OpenGLRhi);
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGLRhi);
 
     QSurfaceFormat format;
 #if defined(Q_OS_ANDROID) || defined(LINUX_ES)
@@ -138,6 +136,8 @@ int main(int argc, char *argv[])
     //qputenv("QT_DEBUG_PLUGINS", "1");
     //qDebug() << "libraryPaths =" << QCoreApplication::libraryPaths();
     loadLanguage(app);
+
+    QQuickStyle::setStyle("Basic");
 
     setApplicationDisplayName(app);
     QQmlApplicationEngine engine;

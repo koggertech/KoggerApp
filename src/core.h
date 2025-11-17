@@ -217,7 +217,7 @@ private:
 
     QQmlApplicationEngine* qmlAppEnginePtr_;
     Dataset* datasetPtr_;
-    GraphicsScene3dView* scene3dViewPtr_;
+    QPointer<GraphicsScene3dView> scene3dViewPtr_;
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;

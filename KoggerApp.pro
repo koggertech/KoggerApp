@@ -1,4 +1,4 @@
-QT += quick widgets network qml sql concurrent positioning
+QT += core gui quick widgets network qml sql concurrent positioning quickcontrols2
 
 #CONFIG += FLASHER
 #CONFIG += SEPARATE_READING # data reception in a separate thread
@@ -161,8 +161,8 @@ linux:!android {
     }
 }
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/mingw-x64/ -lfreetype
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/mingw-x64/ -lfreetype
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/llvm-mingw-x64/ -lfreetype
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/llvm-mingw-x64/ -lfreetype
 
 INCLUDEPATH += $$PWD/third_party/freetype/include
 INCLUDEPATH += $$PWD/src

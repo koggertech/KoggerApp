@@ -12,7 +12,7 @@ MouseArea {
     property string popupPosition: "bottomRight"
     property point popupOffset: Qt.point(10, 10)
 
-    onPressed: {
+    onPressed: function(mouse) {
         if (mouse.source === 2) {
              tooltipTimer.stop()
              customToolTip.close()

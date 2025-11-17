@@ -5,9 +5,9 @@
 #include <QVector3D>
 
 #include "qml_component_controller.h"
+#include "point_group.h"
 
 class GraphicsScene3dView;
-class PointGroup;
 class PointObject;
 class PointGroupControlMenuController : public QmlComponentController
 {

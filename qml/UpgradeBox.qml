@@ -1,8 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
+import QtCore
+
 
 DevSettingsBox {
     id: control
@@ -12,7 +13,7 @@ DevSettingsBox {
     FileDialog {
         id: fileDialog
         title: qsTr("Please choose a file")
-        folder: shortcuts.home
+        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         nameFilters: ["Upgrade files (*.ufw)"]
         onAccepted: {
             pathText.text = fileDialog.fileUrl.toString()
@@ -22,7 +23,7 @@ DevSettingsBox {
     }
 
     Settings {
-        property alias upgradeFolder: fileDialog.folder
+        property alias upgradeFolder: fileDialog.currentFolder
     }
 
     ColumnLayout {

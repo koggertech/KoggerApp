@@ -221,7 +221,7 @@ public:
     void setNavigatorViewLocation(bool state);
 
 protected:
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);

@@ -2,8 +2,9 @@
 
 #include "qml_component_controller.h"
 
+#include "boat_track.h"
 
-class BoatTrack;
+
 class GraphicsScene3dView;
 class BoatTrackControlMenuController : public QmlComponentController
 {

@@ -2,8 +2,8 @@
 #include "scene3d_view.h"
 #include "epoch_event.h"
 #include "boat_track.h"
-#include <QtOpenGLExtensions/QOpenGLExtensions>
-
+#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QHash>
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent) :
@@ -442,31 +442,32 @@ void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool m
     epIndxUpdated.reserve(need);
     vertIndxUpdated.reserve(need);
 
-    for (int i = fromIndx; i < toIndx; ++i) {
+    for (int epIndx = fromIndx; epIndx < toIndx; ++epIndx) {
 
-        auto vIt = epoch2Vertex_.find(i);
+        auto vIt = epoch2Vertex_.find(epIndx);
         if (vIt != epoch2Vertex_.end()) {
-            if (auto* ep = datasetPtr_->fromIndex(i); ep) {
+            if (auto* ep = datasetPtr_->fromIndex(epIndx); ep) {
                 if (auto pos = ep->getSonarPosition().ned; pos.isCoordinatesValid()) {
+                    auto vIndx = *vIt;
                     const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
-                    r->m_data[i].setZ(dist);
+                    r->m_data[vIndx].setZ(dist);
 
-                    epIndxUpdated.push_back(i);
-                    vertIndxUpdated.push_back(*vIt);
+                    epIndxUpdated.push_back(epIndx);
+                    vertIndxUpdated.push_back(vIndx);
                 }
             }
         }
         else {
-            if (auto* ep = datasetPtr_->fromIndex(i); ep) {
+            if (auto* ep = datasetPtr_->fromIndex(epIndx); ep) {
                 if (auto pos = ep->getSonarPosition().ned; pos.isCoordinatesValid()) {
                     const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
                     prepData.push_back(QVector3D(pos.n, pos.e, dist));
 
-                    epIndxUpdated.push_back(i);
+                    epIndxUpdated.push_back(epIndx);
                     vertIndxUpdated.push_back(rSize);
 
-                    vertex2Epoch_.insert(rSize, i);
-                    epoch2Vertex_.insert(i, rSize);
+                    vertex2Epoch_.insert(rSize, epIndx);
+                    epoch2Vertex_.insert(epIndx, rSize);
 
                     rSize++;
                 }
