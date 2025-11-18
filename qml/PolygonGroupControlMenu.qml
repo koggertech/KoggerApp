@@ -2,7 +2,6 @@ import QtQuick 2.12
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.12
 import QtQuick.Dialogs
-import Qt.labs.settings 1.1
 import QtQuick.Controls 1.4
 
 import KoggerCommon 1.0
