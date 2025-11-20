@@ -10,8 +10,8 @@
 #include <QTcpSocket>
 #include <QPointer>
 #if defined(Q_OS_ANDROID)
-#include "platform/android/src/qtandroidserialport/src/qserialport.h"
-#include "platform/android/src/qtandroidserialport/src/qserialportinfo.h"
+#include "qserialport.h"
+#include "qserialportinfo.h"
 #else
 #include <QSerialPort>
 #include <QSerialPortInfo>

@@ -1,6 +1,5 @@
 #include <QGuiApplication>
 #include <QQmlContext>
-#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QTranslator>
 #include <QLocale>
@@ -20,9 +19,6 @@
 #include "themes.h"
 #include "scene_object.h"
 #include "bottom_track.h"
-#if defined(Q_OS_ANDROID)
-#include "platform/android/src/android.h"
-#endif
 
 
 Core core;
@@ -96,8 +92,11 @@ void registerQmlMetaTypes()
 
 int main(int argc, char *argv[])
 {
+    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0");  // TODO: use qt scaling!
+    qputenv("QT_SCALE_FACTOR", "0.5");            //
+
 #if defined(Q_OS_LINUX)
-    QApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
+    QCoreApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
     ::qputenv("QT_SUPPORT_GL_CHILD_WIDGETS", "1");
 #ifdef LINUX_ES
     ::qputenv("QT_OPENGL", "es2");
@@ -167,10 +166,7 @@ int main(int argc, char *argv[])
                                 }, Qt::QueuedConnection);
 
 // file opening on startup
-#ifdef Q_OS_ANDROID
-    checkAndroidWritePermission();
-    tryOpenFileAndroid(engine);
-#else
+#ifndef Q_OS_ANDROID
     if (argc > 1) {
         QObject::connect(&engine,   &QQmlApplicationEngine::objectCreated,
                          &core,     [&argv]() {
