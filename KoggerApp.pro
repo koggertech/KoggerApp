@@ -3,6 +3,7 @@ QT += core gui quick widgets network qml sql concurrent positioning quickcontrol
 #CONFIG += FLASHER
 #CONFIG += SEPARATE_READING # data reception in a separate thread
 #CONFIG += FAKE_COORDS # for measurements at single location
+#CONFIG += SCENE_TESTING # testing 3d scene
 
 CONFIG += c++17 qmltypes
 QML_IMPORT_NAME = SceneGraphRendering
@@ -60,6 +61,7 @@ SOURCES += \
     src/stream_list_model.cpp \
     src/location_reader.cpp
 
+# Defines
 FLASHER {
     DEFINES += FLASHER
     SOURCES += src/flasher/deviceflasher.cpp
@@ -67,12 +69,14 @@ FLASHER {
     SOURCES += src/flasher/flasher.cpp
     HEADERS += src/flasher/flasher.h
 }
-
 SEPARATE_READING {
     DEFINES += SEPARATE_READING
 }
 FAKE_COORDS {
     DEFINES += FAKE_COORDS
+}
+SCENE_TESTING {
+    DEFINES += SCENE_TESTING
 }
 
 TRANSLATIONS += \
