@@ -1,7 +1,7 @@
 QT += core gui quick widgets network qml sql concurrent positioning quickcontrols2
 
 #CONFIG += FLASHER
-CONFIG += SEPARATE_READING # data reception in a separate thread
+#CONFIG += SEPARATE_READING # data reception in a separate thread
 #CONFIG += FAKE_COORDS # for measurements at single location
 #CONFIG += SCENE_TESTING # testing 3d scene
 
