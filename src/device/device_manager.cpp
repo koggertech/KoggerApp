@@ -84,6 +84,11 @@ int DeviceManager::calcAverageChartLosses()
     return retVal;
 }
 
+void DeviceManager::initStreamList()
+{
+    streamList_.initTimer();
+}
+
 QList<DevQProperty *> DeviceManager::getDevList()
 {
     devList_.clear();

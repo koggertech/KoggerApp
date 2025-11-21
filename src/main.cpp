@@ -137,6 +137,7 @@ int main(int argc, char *argv[])
     //qputenv("QT_DEBUG_PLUGINS", "1");
     //qDebug() << "libraryPaths =" << QCoreApplication::libraryPaths();
     loadLanguage(app);
+    core.initStreamList();
 
     QQuickStyle::setStyle("Basic");
 

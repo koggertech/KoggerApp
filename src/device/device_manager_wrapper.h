@@ -42,6 +42,7 @@ public:
     void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
 
     void                 setUSBLBeaconDirectAsk(bool is_ask) { getWorker()->setUSBLBeaconDirectAsk(is_ask); }
+    void initStreamList();
 
     int getAverageChartLosses() const {
         return averageChartLosses_;

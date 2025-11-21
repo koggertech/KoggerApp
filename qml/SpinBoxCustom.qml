@@ -156,6 +156,10 @@ SpinBox {
         }
 
         onPaint: {
+            if (context === null) {
+                return;
+            }
+
             context.reset();
 
             var mid_height = height/2

@@ -37,6 +37,7 @@ public slots:
     Q_INVOKABLE bool isCreatedId(int id);
     Q_INVOKABLE StreamListModel* streamsList();
 
+    void initStreamList();
     void frameInput(QUuid uuid, Link* link, FrameParser frame);
     void openFile(QString filePath);
 #ifdef SEPARATE_READING

@@ -17,6 +17,9 @@ class StreamList : public QObject
 {
 public:
     StreamList();
+    ~StreamList();
+
+    void initTimer();
 
     typedef enum {
         RecordingError,
@@ -143,7 +146,7 @@ protected:
     Stream* _lastStream;
     bool _isListChenged = false;
     StreamListModel _modelList;
-    QTimer _updater;
+    QTimer* _updater = nullptr;
     uint64_t _timeLastGapsUpdate = 0;
     uint64_t _timeLastGapsInsert = 0;
     bool _isInserting = false;

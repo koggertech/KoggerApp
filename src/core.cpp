@@ -1629,6 +1629,11 @@ int Core::getDataProcessorState() const
     return static_cast<int>(dataProcessorState_);
 }
 
+void Core::initStreamList()
+{
+    deviceManagerWrapperPtr_->initStreamList();
+}
+
 void Core::createDataProcessor()
 {
     dataProcThread_ = new QThread(this);

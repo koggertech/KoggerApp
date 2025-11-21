@@ -63,6 +63,15 @@ QUuid DeviceManagerWrapper::getFileUuid() const
     return QUuid(kFileUuidStr);
 }
 
+void DeviceManagerWrapper::initStreamList()
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "initStreamList", Qt::QueuedConnection);
+#else
+    workerObject_->initStreamList();
+#endif
+}
+
 void DeviceManagerWrapper::calcAverageChartLosses()
 {
     averageChartLosses_ = std::max(0, std::min(100, 100 - getWorker()->calcAverageChartLosses()));
