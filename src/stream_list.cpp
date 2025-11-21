@@ -3,7 +3,8 @@
 #include <core.h>
 extern Core core;
 
-StreamList::StreamList() {
+StreamList::StreamList(QObject* parent) : QObject(parent)
+{
 //    createStream(0);
 //    _lastStream = getStream(0);
 //    _lastStreamId = 0;

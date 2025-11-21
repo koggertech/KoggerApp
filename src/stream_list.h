@@ -15,8 +15,9 @@ using namespace Parsers;
 
 class StreamList : public QObject
 {
+    Q_OBJECT
 public:
-    StreamList();
+    explicit StreamList(QObject* parent = nullptr);
     ~StreamList();
 
     void initTimer();

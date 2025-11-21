@@ -10,6 +10,7 @@ DeviceManager::DeviceManager()
     : lastDevs_(nullptr),
       lastDevice_(nullptr),
       mavlinkLink_(nullptr),
+      streamList_(this),
       lastAddress_(-1),
       progress_(0),
       isConsoled_(false),
