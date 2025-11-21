@@ -5,7 +5,7 @@ QT += core gui quick widgets network qml sql concurrent positioning quickcontrol
 #CONFIG += FAKE_COORDS # for measurements at single location
 #CONFIG += SCENE_TESTING # testing 3d scene
 
-CONFIG += c++17 qmltypes
+CONFIG += c++23 qmltypes
 QML_IMPORT_NAME = SceneGraphRendering
 QML_IMPORT_MAJOR_VERSION = 1
 
