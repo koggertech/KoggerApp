@@ -92,8 +92,10 @@ void registerQmlMetaTypes()
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_ANDROID
     qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "0");  // TODO: use qt scaling!
     qputenv("QT_SCALE_FACTOR", "0.5");            //
+#endif
 
 #if defined(Q_OS_LINUX)
     QCoreApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
