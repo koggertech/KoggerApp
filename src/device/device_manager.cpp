@@ -219,10 +219,15 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     prot_nmea.skip();
 
                     uint16_t year = 0;
-                    uint8_t mounth = 0, day = 0;
-                    prot_nmea.readDate(&year, &mounth, & day);
+                    uint8_t month = 0, day = 0;
+                    prot_nmea.readDate(&year, &month, & day);
 
-                    uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
+                    QDate date(year, month, day);
+                    QTime time(h, m, s);
+
+                    QDateTime dt(date, time, QTimeZone::utc());
+                    uint32_t unix_time = static_cast<uint32_t>(dt.toSecsSinceEpoch());
+
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
@@ -246,7 +251,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 if (q == '1' || q == '2' || q == '4' || q == '5') {
                     uint16_t year = 1971;
-                    uint8_t mounth = 1, day = 1;
+                    uint8_t month = 1, day = 1;
 
                     Position pos;
                     pos.lla.latitude = lat;
@@ -254,7 +259,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     pos.lla.altitude = height_msl;
                     pos.lla.source = PositionSourceRTK;
                     pos.lla.altSource = AltitudeSourceRTK;
-                    pos.time = DateTime(year, mounth, day, h, m, s, int64_t(ms)*1000*1000);
+                    pos.time = DateTime(year, month, day, h, m, s, int64_t(ms)*1000*1000);
 
                     if(q == '4') {
                         emit positionCompleteRTK(pos);
@@ -294,7 +299,11 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
 
-                uint32_t unix_time = QDateTime(QDate(year, month, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
+                QDate date(year, month, day);
+                QTime time(h, m, s);
+
+                QDateTime dt(date, time, QTimeZone::utc());
+                uint32_t unix_time = static_cast<uint32_t>(dt.toSecsSinceEpoch());
 
                 if (fix_type > 1 && fix_type < 5) {
                     emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);

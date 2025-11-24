@@ -127,6 +127,11 @@ void Plot2D::addReRenderPlotIndxs(const QSet<int> &indxs)
     echogram_.addReRenderPlotIndxs(indxs);
 }
 
+bool Plot2D::getPlotEnabled() const
+{
+    return isEnabled_;
+}
+
 void Plot2D::setPlotEnabled(bool state)
 {
     isEnabled_ = state;
@@ -257,7 +262,7 @@ void Plot2D::setDataChannel(bool fromGui, const ChannelId& channel, uint8_t subC
     }
 
     resetCash();
-    plotUpdate(); // TODO: this calls from ctr
+    //plotUpdate(); // TODO: this calls from ctr
 }
 
 bool Plot2D::getIsContactChanged()

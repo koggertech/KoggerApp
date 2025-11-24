@@ -103,7 +103,7 @@ bool Plot2DGrid::draw(Plot2D* parent, Dataset* dataset)
             float val{ round(distance * 100.f) / 100.f };
             bool isInteger = std::abs(val - std::round(val)) < kmath::fltEps;
             QString rangeText = QString::number(val, 'f', isInteger ? 0 : 2) + QObject::tr(" m");
-            p->drawText(imageWidth / 2 - rangeText.count() * 32, imageHeight - 15, rangeText);
+            p->drawText(imageWidth / 2 - rangeText.size() * 32, imageHeight - 15, rangeText);
         }
     }
 

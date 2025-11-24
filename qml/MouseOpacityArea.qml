@@ -5,9 +5,9 @@ MouseArea {
     propagateComposedEvents: true
     anchors.fill: parent
     hoverEnabled: true
-    onPressed: mouse.accepted = isMouseAccepted
-    onReleased: mouse.accepted = isMouseAccepted
-    onClicked: mouse.accepted = isMouseAccepted
+    onPressed:  function(mouse) { mouse.accepted = isMouseAccepted }
+    onReleased: function(mouse) { mouse.accepted = isMouseAccepted }
+    onClicked:  function(mouse) { mouse.accepted = isMouseAccepted }
 
     property real offOpacity: 0.5
     property bool isMouseAccepted: false

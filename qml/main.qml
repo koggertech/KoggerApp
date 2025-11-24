@@ -171,13 +171,13 @@ ApplicationWindow  {
     DropArea {
         anchors.fill: parent
 
-        onEntered: {
+        onEntered: function(drag) {
             if (!showBanner) {
                 draggedFilePath = ""
                 if (drag.hasUrls) {
                     for (var i = 0; i < drag.urls.length; ++i) {
                         var url = drag.urls[i]
-                        var filePath = url.replace("file:///", "").toLowerCase()
+                        var filePath = url.toString().replace("file:///", "").toLowerCase()
                         if (filePath.endsWith(".klf") ||
                             filePath.endsWith(".xtf")) {
                             draggedFilePath = filePath

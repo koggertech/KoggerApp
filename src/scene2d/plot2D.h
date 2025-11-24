@@ -42,7 +42,9 @@ public:
 
     void addReRenderPlotIndxs(const QSet<int>& indxs);
 
+    bool getPlotEnabled() const;
     void setPlotEnabled(bool state);
+
     bool plotEnabled() const;
 
     bool isHorizontal();

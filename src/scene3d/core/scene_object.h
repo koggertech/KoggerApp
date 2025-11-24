@@ -20,9 +20,9 @@ class SceneObject : public QObject, public std::enable_shared_from_this<SceneObj
 {
     Q_OBJECT
     Q_PROPERTY(AbstractEntityDataFilter* filter   READ filter                       CONSTANT)
-    Q_PROPERTY(QString                   name     READ name       WRITE setName     CONSTANT)
+    Q_PROPERTY(QString                   name     READ name       WRITE setName)
     Q_PROPERTY(SceneObjectType           type     READ type                         CONSTANT)
-    Q_PROPERTY(bool                      visible  READ isVisible  WRITE setVisible  CONSTANT)
+    Q_PROPERTY(bool                      visible  READ isVisible  WRITE setVisible)
     Q_PROPERTY(QColor                    color    READ color                        CONSTANT)
     Q_PROPERTY(qreal                     width    READ width                        CONSTANT)
 

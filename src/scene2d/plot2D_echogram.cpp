@@ -199,12 +199,12 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 //    _cashPosition = wrap_start_pos;
     for(int column = 0; column < width; column++) {
         if(_cash[column].data.size() != height) {
-//            _cash[column].stateColor = CashLine::CashStateNotValid;
-            _cash[column].state = CashLine::CashStateNotValid;
+//            _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
+            _cash[column].state = CashLine::CashState::CashStateNotValid;
             _cash[column].data.resize(height);
 //            _cash[column].data.fill(0);
             _cash[column].poolIndex = -1;
-            _cash[column].state = CashLine::CashStateEraced;
+            _cash[column].state = CashLine::CashState::CashStateEraced;
             _cash[column].isNeedUpdate = true;
 
             int16_t cash_data_size = _cash[column].data.size();
@@ -239,7 +239,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
                 _cash[column].poolIndex = pool_index_safe;
 
                 if(datasource != NULL) {
-                    _cash[column].state = CashLine::CashStateNotValid;
+                    _cash[column].state = CashLine::CashState::CashStateNotValid;
                     int16_t* cash_data = _cash[column].data.data();
                     int16_t cash_data_size = _cash[column].data.size();
 
@@ -263,7 +263,7 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
                         }
                     }
 
-                    _cash[column].state = CashLine::CashStateValid;
+                    _cash[column].state = CashLine::CashState::CashStateValid;
                     _cash[column].isNeedUpdate = true;
                     uint8_t * img_data = image_data + column;
                     for (int image_row = 0; image_row < cash_data_size; image_row++) {
@@ -271,14 +271,14 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
                         img_data += b_scanline;
                         cash_data++;
                     }
-//                    _cash[column].stateColor = CashLine::CashStateNotValid;
+//                    _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
                 } else {
-                    if(_cash[column].state != CashLine::CashStateEraced) {
-//                        _cash[column].stateColor = CashLine::CashStateNotValid;
-                        _cash[column].state = CashLine::CashStateNotValid;
+                    if(_cash[column].state != CashLine::CashState::CashStateEraced) {
+//                        _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
+                        _cash[column].state = CashLine::CashState::CashStateNotValid;
                         _cash[column].data.fill(0);
                         _cash[column].poolIndex = -1;
-                        _cash[column].state = CashLine::CashStateEraced;
+                        _cash[column].state = CashLine::CashState::CashStateEraced;
                         _cash[column].isNeedUpdate = true;
 
                         int16_t cash_data_size = _cash[column].data.size();
@@ -294,12 +294,12 @@ int Plot2DEchogram::updateCash(Plot2D* parent, Dataset* dataset, int width, int 
 
             }
         } else {
-            if(_cash[column].state != CashLine::CashStateEraced) {
-//                _cash[column].stateColor = CashLine::CashStateNotValid;
-                _cash[column].state = CashLine::CashStateNotValid;
+            if(_cash[column].state != CashLine::CashState::CashStateEraced) {
+//                _cash[column].stateColor = CashLine::CashState::CashStateNotValid;
+                _cash[column].state = CashLine::CashState::CashStateNotValid;
                 _cash[column].data.fill(0);
                 _cash[column].poolIndex = -1;
-                _cash[column].state = CashLine::CashStateEraced;
+                _cash[column].state = CashLine::CashState::CashStateEraced;
                 _cash[column].isNeedUpdate = true;
 
                 int16_t* cash_data = _cash[column].data.data();

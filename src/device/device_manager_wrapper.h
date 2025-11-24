@@ -17,7 +17,7 @@ public:
     ~DeviceManagerWrapper();
 
     Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
-    Q_PROPERTY(bool protoBinConsoled WRITE setProtoBinConsoled)
+    Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled)
     Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
     Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
     Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
@@ -25,7 +25,7 @@ public:
     Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
     Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
     Q_PROPERTY(int averageChartLosses READ getAverageChartLosses NOTIFY chartLossesChanged)
-    Q_PROPERTY(bool isbeaconDirectQueueAsk WRITE setUSBLBeaconDirectAsk)
+    Q_PROPERTY(bool isbeaconDirectQueueAsk READ getUSBLBeaconDirectAsk WRITE setUSBLBeaconDirectAsk)
 
     DeviceManager* getWorker();
     QUuid getFileUuid() const;
@@ -39,9 +39,18 @@ public:
     int                  pilotArmState  () { return getWorker()->pilotArmState();  }
     int                  pilotModeState () { return getWorker()->pilotModeState(); }
 
-    void                 setProtoBinConsoled(bool state) { getWorker()->setProtoBinConsoled(state); }
+    bool getProtoBinConsoled() const { return protoBinConsoledState_; };
+    void setProtoBinConsoled(bool state) {
+        protoBinConsoledState_ = state;
+        getWorker()->setProtoBinConsoled(protoBinConsoledState_);
+    }
 
-    void                 setUSBLBeaconDirectAsk(bool is_ask) { getWorker()->setUSBLBeaconDirectAsk(is_ask); }
+    bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
+    void setUSBLBeaconDirectAsk(bool is_ask) {
+        USBLBeaconDirectAskState_ = is_ask;
+        getWorker()->setUSBLBeaconDirectAsk(USBLBeaconDirectAskState_);
+    }
+
     void initStreamList();
 
     int getAverageChartLosses() const {
@@ -73,4 +82,6 @@ private:
 #endif
 
     int averageChartLosses_;
+    bool protoBinConsoledState_;
+    bool USBLBeaconDirectAskState_;
 }; // class DeviceWrapper

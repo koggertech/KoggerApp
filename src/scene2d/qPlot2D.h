@@ -16,7 +16,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
-    Q_PROPERTY(bool isEnabled WRITE setPlotEnabled)
+    Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
     Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
@@ -85,6 +85,8 @@ public slots:
         auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(ch2Str);
 
         setDataChannel(true, ch1, sub1, name1, ch2, sub2, name2);
+
+        plotUpdate();
     }
 
     ChannelId plotDatasetChannel() { return cursor_.channel1; }

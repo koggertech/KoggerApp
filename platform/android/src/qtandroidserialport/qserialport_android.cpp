@@ -141,6 +141,7 @@ bool QSerialPortPrivate::_stopAsyncRead()
 void QSerialPortPrivate::newDataArrived(const char *bytes, int length)
 {
     Q_Q(QSerialPort);
+    Q_UNUSED(q);
 
     // qCDebug(AndroidSerialPortLog) << "newDataArrived" << length;
 

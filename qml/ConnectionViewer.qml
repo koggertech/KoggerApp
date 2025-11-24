@@ -223,7 +223,7 @@ ColumnLayout {
                             border.color: theme.controlBorderColor
                         }
 
-                        Keys.onPressed: {
+                        Keys.onPressed: function(event) {
                             if (event.key === 16777220) {
                                 console.info(ipAddressText.text)
                             }
@@ -759,7 +759,7 @@ ColumnLayout {
                 text: ""
                 placeholderText: qsTr("Enter path")
 
-                Keys.onPressed: {
+                Keys.onPressed: function(event) {
                     if (event.key === 16777220) {
                         importTrackFileDialog.openCSV();
                     }
@@ -924,7 +924,7 @@ ColumnLayout {
             text: core.filePath
             placeholderText: qsTr("Enter path")
 
-            Keys.onPressed: {
+            Keys.onPressed: function(event) {
                 if (event.key === 16777220 || event.key === Qt.Key_Enter) {
                     core.openLogFile(pathText.text, false, false);
                 }

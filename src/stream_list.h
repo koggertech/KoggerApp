@@ -49,7 +49,8 @@ public:
         FragmentStatus status;
     } Fragment;
 
-    typedef struct {
+    struct Stream
+    {
         uint16_t id = 0;
         RecordingState recordingState = RecordingError;
         UploadingState uploadingState = UploadingError;
@@ -63,7 +64,7 @@ public:
             uint32_t _fillFragments = 0;
         } _counter;
         int modelIndex = -1;
-    } Stream;
+    };
 
     void append(FrameParser* frame) {
         if(frame->isStream()) {

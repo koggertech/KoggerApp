@@ -36,23 +36,25 @@ public:
     void addReRenderPlotIndxs(const QSet<int>& indxs);
 
 protected:
-    typedef struct {
-        typedef enum {
-            CashStateNotValid,
+    struct CashLine
+    {
+        enum class CashState
+        {
+            CashStateNotValid = 0,
             CashStateValid,
             CashStateEraced
-        } CashState;
+        };
 
 
         int poolIndex = -1;
-        CashState state = CashStateNotValid;
+        CashState state = CashState::CashStateNotValid;
         bool isNeedUpdate = true;
 
         QVector<int16_t> data;
 
-//        CashState stateColor = CashStateNotValid;
+//        CashState stateColor = CashState::CashStateNotValid;
 //        QVector<uint16_t> color;
-    } CashLine;
+    };
 
     uint16_t _colorHashMap[256];
     QVector<CashLine> _cash;

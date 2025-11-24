@@ -20,10 +20,10 @@ MouseArea {
 
         mouse.accepted = isMouseAccepted
     }
-    onReleased: {
+    onReleased: function(mouse) {
         mouse.accepted = isMouseAccepted
     }
-    onClicked: {
+    onClicked: function(mouse) {
         if (mouse.source === 2) {
              tooltipTimer.stop()
              customToolTip.close()
