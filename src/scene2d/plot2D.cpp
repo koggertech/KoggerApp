@@ -772,7 +772,10 @@ bool Plot2D::setContact(int indx, const QString& text)
             ep->contact_.depth            = cursor_distance;
         }
         else { // side scan
-            if (std::fabs(cursor_distance) < std::fabs(bottomTrack)) {
+            if (!std::isfinite(bottomTrack)) {
+                ep->contact_.depth            = 0;
+            }
+            else  if (std::fabs(cursor_distance) < std::fabs(bottomTrack)) {
                 ep->contact_.depth            = bottomTrack;
             }
             else {
