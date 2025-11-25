@@ -19,7 +19,7 @@ typedef struct __attribute__((packed)) Complex16 {
     }
 
     float arg() {
-        return std::atan2(imag, real);
+        return atan2(imag, real);
     }
 
     Complex16 mulConj(Complex16 second) {

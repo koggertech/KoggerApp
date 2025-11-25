@@ -3,8 +3,6 @@
 
 #include <QVariantMap>
 
-#include <cmath>
-
 #include <abstract_entity_data_filter.h>
 
 class MaxPointsFilter : public AbstractEntityDataFilter

@@ -26,29 +26,29 @@ public:
 
 signals:
     // TileDB
-    void dbLoadTiles(const QSet<TileIndex>& tileIndices);
+    void dbLoadTiles(const QSet<map::TileIndex>& tileIndices);
     void dbStopAndClearTasks();
-    void dbStopLoadingTile(const TileIndex& tileIndx);
-    void dbSaveTile(const TileIndex& tileIndx, const QImage& image);
+    void dbStopLoadingTile(const map::TileIndex& tileIndx);
+    void dbSaveTile(const map::TileIndex& tileIndx, const QImage& image);
     // MapView
-    void mvAppendTile(const Tile& tile);
-    void mvDeleteTile(const TileIndex& tileIndx);
-    void mvUpdateTileImage(const TileIndex& tileIndx, const QImage& image);
-    void mvUpdateTileVertices(const TileIndex& tile, const QVector<QVector3D>& vertices);
+    void mvAppendTile(const map::Tile& tile);
+    void mvDeleteTile(const map::TileIndex& tileIndx);
+    void mvUpdateTileImage(const map::TileIndex& tileIndx, const QImage& image);
+    void mvUpdateTileVertices(const map::TileIndex& tile, const QVector<QVector3D>& vertices);
     void mvClearAppendTasks();
 
 public slots:
     // TileDB
-    void onTileLoaded(const TileIndex& tileIndx, const QImage& image);
-    void onTileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
-    void onTileLoadStopped(const TileIndex& tileIndx);
-    void onTileSaved(const TileIndex& tileIndx);
+    void onTileLoaded(const map::TileIndex& tileIndx, const QImage& image);
+    void onTileLoadFailed(const map::TileIndex& tileIndx, const QString& errorString);
+    void onTileLoadStopped(const map::TileIndex& tileIndx);
+    void onTileSaved(const map::TileIndex& tileIndx);
     // TileDownloader
-    void onTileDownloaded(const TileIndex& tileIndx, const QImage& image);
-    void onTileDownloadFailed(const TileIndex& tileIndx, const QString& errorString);
-    void onTileDownloadStopped(const TileIndex& tileIndx);
+    void onTileDownloaded(const map::TileIndex& tileIndx, const QImage& image);
+    void onTileDownloadFailed(const map::TileIndex& tileIndx, const QString& errorString);
+    void onTileDownloadStopped(const map::TileIndex& tileIndx);
     // MapView
-    void onDeletedFromAppend(const TileIndex& tileIndx);
+    void onDeletedFromAppend(const map::TileIndex& tileIndx);
 
 private:
     /*methods*/

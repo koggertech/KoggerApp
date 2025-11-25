@@ -3,7 +3,6 @@
 #include <math.h>
 
 #include "point_3d.h"
-#include "equals.h"
 
 template <typename T>
 class Edge

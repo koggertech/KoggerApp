@@ -4,10 +4,8 @@
 #include <QPair>
 #include <QVariantMap>
 
-#include <cmath>
 
 #include "abstract_entity_data_filter.h"
-#include "edge.h"
 
 class NearestPointFilter : public AbstractEntityDataFilter
 {

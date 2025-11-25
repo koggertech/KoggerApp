@@ -121,7 +121,7 @@ QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
     return list;
 }
 
-void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
+void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame)
 {
     if (loggingStarted_) {
         emit sendFrameInputToLogger(uuid, link, frame);
@@ -588,7 +588,7 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
     }
 }
 
-void DeviceManager::binFrameOut(ProtoBinOut protoOut)
+void DeviceManager::binFrameOut(Parsers::ProtoBinOut protoOut)
 {
     if (isConsoled_ && protoOut.id() != 33) {
 #ifndef SEPARATE_READING

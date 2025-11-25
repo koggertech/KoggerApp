@@ -15,9 +15,9 @@ TileProvider::~TileProvider()
 
 }
 
-TileIndex TileProvider::llaToTileIndex(LLA lla, int32_t z)
+map::TileIndex TileProvider::llaToTileIndex(LLA lla, int32_t z)
 {
-    return TileIndex(lonToTileX(lla.longitude, z), latToTileY(lla.latitude, z), z, providerId_);
+    return map::TileIndex(lonToTileX(lla.longitude, z), latToTileY(lla.latitude, z), z, providerId_);
 }
 
 int32_t TileProvider::getProviderId() const

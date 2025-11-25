@@ -38,7 +38,7 @@ public slots:
     Q_INVOKABLE StreamListModel* streamsList();
 
     void initStreamList();
-    void frameInput(QUuid uuid, Link* link, FrameParser frame);
+    void frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void openFile(QString filePath);
 #ifdef SEPARATE_READING
     void closeFile(bool onOpen = false);
@@ -48,7 +48,7 @@ public slots:
     void onLinkOpened(QUuid uuid, Link *link);
     void onLinkClosed(QUuid uuid, Link* link);
     void onLinkDeleted(QUuid uuid, Link* link);
-    void binFrameOut(ProtoBinOut protoOut);
+    void binFrameOut(Parsers::ProtoBinOut protoOut);
     void setProtoBinConsoled(bool isConsoled);
     void upgradeLastDev(QByteArray data);
 
@@ -72,7 +72,7 @@ public slots:
     void setUseGPS(bool state);
 
 signals:
-    void sendFrameInputToLogger(QUuid uuid, Link* link, FrameParser frame);
+    void sendFrameInputToLogger(QUuid uuid, Link* link, Parsers::FrameParser frame);
 
     //
     void sendChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
@@ -97,8 +97,8 @@ signals:
     void devChanged();
     void streamChanged();
     void vruChanged();
-    void writeProxyFrame(FrameParser frame);
-    void writeMavlinkFrame(FrameParser frame);
+    void writeProxyFrame(Parsers::FrameParser frame);
+    void writeMavlinkFrame(Parsers::FrameParser frame);
     void eventComplete(int timestamp, int id, int unixt);
     void rangefinderComplete(const ChannelId& channelId, float distance);
     void positionComplete(double lat, double lon, uint32_t date, uint32_t time);
@@ -112,7 +112,7 @@ signals:
     void chartLossesChanged();
 
     // logger
-    void sendProtoFrame(const ProtoBinOut& protoOut);
+    void sendProtoFrame(const Parsers::ProtoBinOut& protoOut);
 
 #ifdef SEPARATE_READING
     void fileStartOpening();

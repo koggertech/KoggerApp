@@ -52,7 +52,6 @@ SOURCES += \
     src/logger.cpp \
     src/main.cpp \
     src/map_defs.cpp \
-    src/proto_binnary.cpp \
     src/stream_list.cpp \
     src/stream_list_model.cpp \
     src/location_reader.cpp

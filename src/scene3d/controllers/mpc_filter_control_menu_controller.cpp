@@ -2,7 +2,6 @@
 #include "qml_object_names.h"
 #include "scene3d_view.h"
 #include "bottom_track.h"
-#include "max_points_filter.h"
 
 MpcFilterControlMenuController::MpcFilterControlMenuController(GraphicsScene3dView *sceneView, QObject *parent)
     : QmlComponentController(parent)

@@ -3,7 +3,7 @@
 #include <QDebug>
 #include <QFile>
 
-#include "ft2build.h"
+#include <ft2build.h> // NOLINT
 #include FT_FREETYPE_H
 
 

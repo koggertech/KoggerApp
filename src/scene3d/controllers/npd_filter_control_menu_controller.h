@@ -1,7 +1,6 @@
 #ifndef NPDFILTERCONTROLMENUCONTROLLER_H
 #define NPDFILTERCONTROLMENUCONTROLLER_H
 
-#include <memory>
 
 #include "qml_component_controller.h"
 

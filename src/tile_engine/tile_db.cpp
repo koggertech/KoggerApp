@@ -24,7 +24,7 @@ TileDB::~TileDB()
     db_.close();
 }
 
-void TileDB::loadTiles(const QSet<TileIndex> &tileIndices)
+void TileDB::loadTiles(const QSet<map::TileIndex> &tileIndices)
 {
     stopRequested_ = false;
 
@@ -37,7 +37,7 @@ void TileDB::loadTiles(const QSet<TileIndex> &tileIndices)
     processNextTile();
 }
 
-void TileDB::saveTile(const TileIndex &tileIndx, const QImage &image)
+void TileDB::saveTile(const map::TileIndex &tileIndx, const QImage &image)
 {
     QByteArray imageData;
     QBuffer buffer(&imageData);
@@ -58,7 +58,7 @@ void TileDB::saveTile(const TileIndex &tileIndx, const QImage &image)
     emit tileSaved(tileIndx);
 }
 
-void TileDB::stopLoading(const TileIndex& tileIndex)
+void TileDB::stopLoading(const map::TileIndex& tileIndex)
 {
     pendingLoadRequests_.remove(tileIndex);
 

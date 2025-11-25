@@ -10,7 +10,6 @@
 #include "tile_provider.h"
 #include "tile_downloader.h"
 #include "tile_db.h"
-#include "dataset.h"
 
 
 namespace map {
@@ -26,7 +25,7 @@ public:
     std::shared_ptr<TileSet> getTileSetPtr() const;
 
 public slots:
-    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, CameraTilt tiltCam);
+    void getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
     void getLlaRef(LLARef viewLlaRef);
 
 private:
