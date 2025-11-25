@@ -171,7 +171,6 @@ android {
     QT -= widgets
     QT += svg
     QTPLUGIN += qsqlite
-    ANDROID_TARGET_SDK_VERSION = 34
     ANDROID_ABIS = arm64-v8a
     #ANDROID_ABIS = armeabi-v7a
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/platform/android
