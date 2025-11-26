@@ -228,12 +228,12 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram->setAttributeArray(posLoc, &boatTrackVertice_);
 
         ctx->glEnable(34370);
-        ctx->glEnable(GL_POINT_SPRITE);
+        ctx->glEnable(34913);
 
         //qDebug() << "draw" << boatTrackVertice_;
         ctx->glDrawArrays(GL_POINTS, 0, 1);
         ctx->glDisable(34370);
-        ctx->glDisable(GL_POINT_SPRITE);
+        ctx->glDisable(34913);
 
 
         shaderProgram->setUniformValue(isPointLoc,    false);
