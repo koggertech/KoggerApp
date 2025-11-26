@@ -757,14 +757,14 @@ bool Plot2D::setContact(int indx, const QString& text)
 
         const auto [channelId, subIndx, name] = getSelectedChannelId(cursor_distance); // *
         const float bottomTrack = ep->distProccesing(channelId);
-        const auto  boatNed         = ep->getPositionGNSS().ned;
-        const auto  boatLla         = ep->getPositionGNSS().lla;
+        const auto  sonarNed         = ep->getSonarPosition().ned;
+        const auto  sonarLla         = ep->getSonarPosition().lla;
 
 
-        ep->contact_.nedX             = boatNed.n;
-        ep->contact_.nedY             = boatNed.e;
-        ep->contact_.lat              = boatLla.latitude;
-        ep->contact_.lon              = boatLla.longitude;
+        ep->contact_.nedX             = sonarNed.n;
+        ep->contact_.nedY             = sonarNed.e;
+        ep->contact_.lat              = sonarLla.latitude;
+        ep->contact_.lon              = sonarLla.longitude;
         ep->contact_.echogramDistance = cursor_distance;
 
 
@@ -790,14 +790,14 @@ bool Plot2D::setContact(int indx, const QString& text)
                 const double dN               = calcRange * std::cos(beamAz);
                 const double dE               = calcRange * std::sin(beamAz);
                 const double R                = 6378137.0;
-                const double lat0_deg         = boatLla.latitude;
-                const double lon0_deg         = boatLla.longitude;
+                const double lat0_deg         = sonarLla.latitude;
+                const double lon0_deg         = sonarLla.longitude;
                 const double lat0_rad         = qDegreesToRadians(lat0_deg);
                 const double dLat_deg         = (dN / R) * (180.0 / M_PI);
                 const double dLon_deg         = (dE / (R * std::cos(lat0_rad))) * (180.0 / M_PI);
 
-                ep->contact_.nedX             = boatNed.n + dN;
-                ep->contact_.nedY             = boatNed.e + dE;
+                ep->contact_.nedX             = sonarNed.n + dN;
+                ep->contact_.nedY             = sonarNed.e + dE;
                 ep->contact_.echogramDistance = cursor_distance;
                 ep->contact_.depth            = bottomTrack;
                 ep->contact_.lat              = lat0_deg + dLat_deg;
