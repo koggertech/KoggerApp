@@ -4,7 +4,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="auto"
     android:versionCode="1"
-    android:versionName="0.12.4">
+    android:versionName="0.13.0">
 
     <!-- %%INSERT_PERMISSIONS -->
     <uses-permission android:name="android.permission.INTERNET"/>
