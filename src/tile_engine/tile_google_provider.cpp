@@ -74,7 +74,7 @@ int32_t TileGoogleProvider::latToTileY(const double lat, const int z) const
     return tileY;
 }
 
-TileInfo TileGoogleProvider::indexToTileInfo(TileIndex tileIndx, TilePosition pos) const
+map::TileInfo TileGoogleProvider::indexToTileInfo(map::TileIndex tileIndx, map::TilePosition pos) const
 {
     TileInfo info;
     GeoBounds bounds;
@@ -120,7 +120,7 @@ void TileGoogleProvider::generateWords(int x, int y, QString& sec1, QString& sec
     }
 }
 
-QString TileGoogleProvider::createURL(const TileIndex& tileIndx) const
+QString TileGoogleProvider::createURL(const map::TileIndex& tileIndx) const
 {
     QString str1, str2;
     generateWords(tileIndx.x_, tileIndx.y_, str1, str2);

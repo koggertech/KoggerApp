@@ -178,18 +178,18 @@ int BlackStripesProcessor::getLastValidEthalonIndex(const ChannelId& channelId, 
 
     const auto& ethData = direction == Direction::kForward ? forwardEthalonData_ : backwardEthalonData_;
 
-    if (!ethData.contains(channelId)) {
+    auto it = ethData.constFind(channelId);
+    if (it == ethData.cend()) {
         return retVal;
     }
 
-    auto& allChannelData = ethData[channelId];
-
+    const auto& allChannelData = it.value();
 
     if (subChannelId >= allChannelData.size()) {
         return retVal;
     }
 
-    auto& selectedChannelData = allChannelData[subChannelId];
+    const auto& selectedChannelData = allChannelData[subChannelId];
     for (int i = selectedChannelData.size() - 1; i >= 0; --i) {
         if (selectedChannelData.at(i).first) {
             return i;

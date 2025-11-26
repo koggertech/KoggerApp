@@ -4,7 +4,9 @@
 
 DeviceManagerWrapper::DeviceManagerWrapper(QObject* parent) :
     QObject(parent),
-    averageChartLosses_(0)
+    averageChartLosses_(0),
+    protoBinConsoledState_(false),
+    USBLBeaconDirectAskState_(false)
 {
     workerObject_ = std::make_unique<DeviceManager>();
 
@@ -61,6 +63,15 @@ DeviceManager* DeviceManagerWrapper::getWorker()
 QUuid DeviceManagerWrapper::getFileUuid() const
 {
     return QUuid(kFileUuidStr);
+}
+
+void DeviceManagerWrapper::initStreamList()
+{
+#ifdef SEPARATE_READING
+    QMetaObject::invokeMethod(workerObject_.get(), "initStreamList", Qt::QueuedConnection);
+#else
+    workerObject_->initStreamList();
+#endif
 }
 
 void DeviceManagerWrapper::calcAverageChartLosses()

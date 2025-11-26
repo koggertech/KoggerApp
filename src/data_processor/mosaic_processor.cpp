@@ -417,6 +417,10 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
 
 void MosaicProcessor::updateData(const QVector<int>& indxs)
 {
+    // qDebug() << "MosaicProcessor::updateData"
+    //          << "thread =" << QThread::currentThread()
+    //          << "size =" << indxs.size();
+
     if (!datasetPtr_ || indxs.empty()) {
         return;
     }

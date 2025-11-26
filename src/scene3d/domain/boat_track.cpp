@@ -1,6 +1,7 @@
 #include "boat_track.h"
 
-#include <QtOpenGLExtensions/QOpenGLExtensions>
+#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QHash>
 #include "scene3d_view.h"
 #include "epoch_event.h"
@@ -90,6 +91,7 @@ void BoatTrack::selectEpoch(int epochIndex)
 
     if (auto* epoch = datasetPtr_->fromIndex(epochIndex); epoch) {
         NED boatPosNed = epoch->getPositionGNSS().ned;
+        NED sonarPosNed = epoch->getSonarPosition().ned;
 
         if (boatPosNed.isCoordinatesValid()) {
             auto* r = RENDER_IMPL(BoatTrack);
@@ -101,7 +103,7 @@ void BoatTrack::selectEpoch(int epochIndex)
             if (datasetPtr_) {
                 if (auto datasetChannels = datasetPtr_->channelsList(); !datasetChannels.isEmpty()) {
                     if (float distance = -1.f * static_cast<float>(epoch->distProccesing(datasetChannels.first().channelId_)); isfinite(distance)) {
-                        r->bottomTrackVertice_ = QVector3D(boatPosNed.n, boatPosNed.e, distance); //
+                        r->bottomTrackVertice_ = QVector3D(sonarPosNed.n, sonarPosNed.e, distance); //
                         beenBottomSelected = true;
                     }
                 }
@@ -200,45 +202,82 @@ void BoatTrack::BoatTrackRenderImplementation::render(QOpenGLFunctions *ctx,
         return;
     }
 
-    auto shaderProgram = shaderProgramMap["static"].get();
-    shaderProgram->bind();
+    {
+        auto shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
 
-    auto colorLoc  = shaderProgram->uniformLocation("color");
-    auto matrixLoc = shaderProgram->uniformLocation("matrix");
-    auto posLoc    = shaderProgram->attributeLocation("position");
-    int widthLoc   = shaderProgram->uniformLocation("width");
+        int  isPointLoc    = shaderProgram->uniformLocation("isPoint");
+        int  isTriangleLoc = shaderProgram->uniformLocation("isTriangle");
+        shaderProgram->setUniformValue(isPointLoc,    true);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
+        auto colorLoc  = shaderProgram->uniformLocation("color");
+        auto matrixLoc = shaderProgram->uniformLocation("matrix");
+        auto posLoc    = shaderProgram->attributeLocation("position");
+        int widthLoc   = shaderProgram->uniformLocation("width");
 
-    //QVector4D vertexColor(0.03f, 0.69f, 0.98f, 1.0f);
-    QVector4D vertexColor(0.91f, 0.25f, 0.2f, 1.0f);
+        //QVector4D vertexColor(0.03f, 0.69f, 0.98f, 1.0f);
+        QVector4D vertexColor(0.91f, 0.25f, 0.2f, 1.0f);
 
-    shaderProgram->setUniformValue(colorLoc,vertexColor);
-    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
-    shaderProgram->setUniformValue(widthLoc, 12.0f);
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, &boatTrackVertice_);
+        shaderProgram->setUniformValue(colorLoc,vertexColor);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->setUniformValue(widthLoc, 17.0f);
 
-    ctx->glEnable(34370);
-    ctx->glDrawArrays(GL_POINTS, 0, 1);
-    ctx->glDisable(34370);
+        ctx->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, &boatTrackVertice_);
 
-    //------------->Drawing line boatTrack -> bottomTrack<<---------------//
-    if (bottomTrackVertice_.isNull() || !bottomTrackVisibleState_) {
-        return;
+        ctx->glEnable(34370);
+        ctx->glEnable(34913);
+
+        //qDebug() << "draw" << boatTrackVertice_;
+        ctx->glDrawArrays(GL_POINTS, 0, 1);
+        ctx->glDisable(34370);
+        ctx->glDisable(34913);
+
+
+        shaderProgram->setUniformValue(isPointLoc,    false);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
+
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
     }
 
-    QVector4D lineColor(0.91f, 0.25f, 0.2f, 1.0f);
-    shaderProgram->setUniformValue(colorLoc, lineColor);
+    { // line
+        //------------->Drawing line boatTrack -> bottomTrack<<---------------//
+        if (bottomTrackVertice_.isNull() || !bottomTrackVisibleState_) {
+            return;
+        }
 
-    QVector<QVector3D> vertices{ boatTrackVertice_, bottomTrackVertice_ };
+        auto shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
 
-    ctx->glLineWidth(2);
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, vertices.constData(), sizeof(QVector3D));
+        int  isPointLoc    = shaderProgram->uniformLocation("isPoint");
+        int  isTriangleLoc = shaderProgram->uniformLocation("isTriangle");
+        shaderProgram->setUniformValue(isPointLoc,    false);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
+        auto colorLoc  = shaderProgram->uniformLocation("color");
+        auto matrixLoc = shaderProgram->uniformLocation("matrix");
+        auto posLoc    = shaderProgram->attributeLocation("position");
+        int widthLoc   = shaderProgram->uniformLocation("width");
 
-    ctx->glDrawArrays(GL_LINES, 0, 2);
+        QVector4D lineColor(0.91f, 0.25f, 0.2f, 1.0f);
 
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
+        shaderProgram->setUniformValue(colorLoc, lineColor);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->setUniformValue(widthLoc, 12.0f);
+
+        QVector<QVector3D> vertices{ boatTrackVertice_, bottomTrackVertice_ };
+
+        ctx->glLineWidth(2);
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, vertices.constData());
+        ctx->glDrawArrays(GL_LINES, 0, 2);
+        ctx->glLineWidth(1);
+
+        shaderProgram->setUniformValue(isPointLoc,    false);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
+    }
 }

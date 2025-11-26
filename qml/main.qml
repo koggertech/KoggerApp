@@ -2,12 +2,12 @@ import QtQuick 2.15
 import SceneGraphRendering 1.0
 import QtQuick.Window 2.15
 import QtQuick.Layouts 1.15
-import Qt.labs.settings 1.1
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
 import QtQuick.Controls 2.15
 import WaterFall 1.0
 import KoggerCommon 1.0
 import BottomTrack 1.0
+import QtCore
 
 
 ApplicationWindow  {
@@ -171,13 +171,13 @@ ApplicationWindow  {
     DropArea {
         anchors.fill: parent
 
-        onEntered: {
+        onEntered: function(drag) {
             if (!showBanner) {
                 draggedFilePath = ""
                 if (drag.hasUrls) {
                     for (var i = 0; i < drag.urls.length; ++i) {
                         var url = drag.urls[i]
-                        var filePath = url.replace("file:///", "").toLowerCase()
+                        var filePath = url.toString().replace("file:///", "").toLowerCase()
                         if (filePath.endsWith(".klf") ||
                             filePath.endsWith(".xtf")) {
                             draggedFilePath = filePath
@@ -217,7 +217,7 @@ ApplicationWindow  {
         anchors.fill:      parent
         orientation:       Qt.Vertical
 
-        Keys.onReleased: {
+        Keys.onReleased: function(event) {
             let sc = event.nativeScanCode.toString()
             let hotkeyData = hotkeysMapScan[sc];
             if (hotkeyData === undefined) {
@@ -450,7 +450,7 @@ ApplicationWindow  {
 
             property int lastKeyPressed: Qt.Key_unknown
 
-            Keys.onPressed: {
+            Keys.onPressed: function(event) {
                 visualisationLayout.lastKeyPressed = event.key;
             }
 
@@ -460,7 +460,7 @@ ApplicationWindow  {
 
             GraphicsScene3dView {
                 id:                renderer
-                visible: menuBar.is3DVisible
+                visible: (menuBar !== null) ? menuBar.is3DVisible : false
                 objectName: "GraphicsScene3dView"
                 Layout.fillHeight: true
                 Layout.fillWidth:  true
@@ -508,11 +508,11 @@ ApplicationWindow  {
                             mousearea3D.forceActiveFocus();
                         }
 
-                        onWheel: {
+                        onWheel: function(wheel) {
                             renderer.mouseWheelTrigger(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, visualisationLayout.lastKeyPressed)
                         }
 
-                        onPositionChanged: {
+                        onPositionChanged: function(mouse) {
                             if (Qt.platform.os === "android") {
                                 if (!wasMoved) {
                                     var delta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
@@ -531,7 +531,7 @@ ApplicationWindow  {
                             renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
-                        onPressed: {
+                        onPressed: function(mouse) {
                             menuBlock.visible = false
                             startMousePos = Qt.point(mouse.x, mouse.y)
                             wasMoved = false
@@ -543,7 +543,7 @@ ApplicationWindow  {
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
-                        onReleased: {
+                        onReleased: function(mouse) {
                             startMousePos = Qt.point(-1, -1)
                             wasMoved = false
                             longPressTimer.stop()
@@ -1074,7 +1074,7 @@ ApplicationWindow  {
         }
     }
 
-    MenuBar {
+    MainMenuBar {
         id:                menuBar
         objectName:        "menuBar"
         Layout.fillHeight: true

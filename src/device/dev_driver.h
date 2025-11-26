@@ -171,7 +171,7 @@ public:
 
 signals:
     void averageChartLossesChanged();
-    void binFrameOut(ProtoBinOut proto_out);
+    void binFrameOut(Parsers::ProtoBinOut proto_out);
 
     // link
     void startUpgradingFirmware();
@@ -216,7 +216,7 @@ signals:
     void dvlSolutionComplete(IDBinDVL::DVLSolution dvlSolution);
 
 public slots:
-    void protoComplete(FrameParser& proto);
+    void protoComplete(Parsers::FrameParser& proto);
     void startConnection(bool duplex);
     void stopConnection();
     void restartState();
@@ -387,33 +387,33 @@ protected:
     void fwUpgradeProcess();
 
 protected slots:
-    void receivedTimestamp(Type type, Version ver, Resp resp);
-    void receivedDist(Type type, Version ver, Resp resp);
-    void receivedChart(Type type, Version ver, Resp resp);
-    void receivedRaw(RawData raw_data);
-    void receivedAtt(Type type, Version ver, Resp resp);
-    void receivedTemp(Type type, Version ver, Resp resp);
+    void receivedTimestamp  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedDist       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedChart      (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedRaw        (RawData raw_data);
+    void receivedAtt        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedTemp       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
-    void receivedDataset(Type type, Version ver, Resp resp);
-    void receivedDistSetup(Type type, Version ver, Resp resp);
-    void receivedChartSetup(Type type, Version ver, Resp resp);
-    void receivedDSPSetup(Type type, Version ver, Resp resp);
-    void receivedTransc(Type type, Version ver, Resp resp);
-    void receivedSoundSpeed(Type type, Version ver, Resp resp);
-    void receivedUART(Type type, Version ver, Resp resp);
+    void receivedDataset    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedDistSetup  (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedChartSetup (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedDSPSetup   (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedTransc     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedSoundSpeed (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedUART       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
-    void receivedVersion(Type type, Version ver, Resp resp);
-    void receivedMark(Type type, Version ver, Resp resp);
-    void receivedFlash(Type type, Version ver, Resp resp);
-    void receivedBoot(Type type, Version ver, Resp resp);
-    void receivedUpdate(Type type, Version ver, Resp resp);
+    void receivedVersion    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedMark       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedFlash      (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedBoot       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedUpdate     (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
-    void receivedNav(Type type, Version ver, Resp resp);
-    void receivedDVL(Type type, Version ver, Resp resp);
-    void receivedDVLMode(Type type, Version ver, Resp resp);
+    void receivedNav        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedDVL        (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedDVLMode    (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
-    void receivedUSBL(Type type, Version ver, Resp resp);
-    void receivedUSBLControl(Type type, Version ver, Resp resp);
+    void receivedUSBL       (Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
+    void receivedUSBLControl(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp);
 
 private:
     bool datasetState_;

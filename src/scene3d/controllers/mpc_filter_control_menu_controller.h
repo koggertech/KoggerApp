@@ -1,7 +1,6 @@
 #ifndef MPCFILTERCONTROLMENUCONTROLLER_H
 #define MPCFILTERCONTROLMENUCONTROLLER_H
 
-#include <memory>
 
 #include "qml_component_controller.h"
 

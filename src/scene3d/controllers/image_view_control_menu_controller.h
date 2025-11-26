@@ -1,8 +1,9 @@
 #pragma once
 
 #include "qml_component_controller.h"
+#include "image_view.h"
 
-class ImageView;
+
 class GraphicsScene3dView;
 class ImageViewControlMenuController : public QmlComponentController
 {

@@ -830,8 +830,8 @@ void Dataset::setChannelOffset(const ChannelId& channelId, float x, float y, flo
 
 void Dataset::spatialProcessing() {
     auto ch_list = channelsList();
-    for (const auto& channel : ch_list) {
-        ChannelId ich = channel.channelId_;
+    for (auto it = ch_list.cbegin(); it != ch_list.cend(); ++it) {
+        ChannelId ich = it->channelId_;
 
         for(int iepoch = 0; iepoch < size(); iepoch++) {
             Epoch* epoch = fromIndex(iepoch);
@@ -845,11 +845,11 @@ void Dataset::spatialProcessing() {
                 if(data == NULL) { continue; }
 
                 if(ext_pos.ned.isValid()) {
-                    ext_pos.ned.d += channel.localPosition_.z;
+                    ext_pos.ned.d += it->localPosition_.z;
                 }
 
                 if(ext_pos.lla.isValid()) {
-                    ext_pos.lla.altitude -= channel.localPosition_.z;
+                    ext_pos.lla.altitude -= it->localPosition_.z;
                 }
 
                 data->sensorPosition = ext_pos;
@@ -1011,7 +1011,7 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
         if (epPtr->chartAvail(channelId, subChId)) {
             Epoch::Echogram* chart = epPtr->chart(channelId, subChId);
             if (chart) {
-                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
+                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
                 settedChart = true;
             }
         }

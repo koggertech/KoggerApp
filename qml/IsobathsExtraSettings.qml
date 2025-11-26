@@ -1,8 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import Qt.labs.settings 1.1
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
+import QtCore
 
 
 // isobaths extra settings
@@ -229,17 +229,25 @@ MenuFrame {
                 }
             }
 
-            FileDialog {
+            FileDialog  {
                 id: exportSurfaceFileDialog
-                folder: shortcuts.home
-                selectFolder: false
-                selectExisting: false
-                selectMultiple: false
-                defaultSuffix: "csv"
+                title: qsTr("Select folder and set .csv file name")
+
+                currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+
+                fileMode: FileDialog.SaveFile
+
                 nameFilters: ["CSV Files (*.csv)", "All Files (*)"]
+                defaultSuffix: "csv"
 
                 onAccepted: {
-                    exportSurfacePathText.text = exportSurfaceFileDialog.fileUrl
+                    var url = selectedFile.toString()
+
+                    if (!url.toLowerCase().endsWith(".csv")) {
+                        url += ".csv"
+                    }
+
+                    exportSurfacePathText.text = url
                 }
             }
 
@@ -251,7 +259,7 @@ MenuFrame {
 
 
             Settings {
-                property alias exportSurfaceFolder: exportSurfaceFileDialog.folder
+                property alias exportSurfaceFolder: exportSurfaceFileDialog.currentFolder
             }
 
             Settings {

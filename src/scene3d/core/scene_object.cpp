@@ -375,13 +375,13 @@ void SceneObject::RenderImplementation::updateBounds()
     float y_max{ !std::isfinite(m_data.first().y()) ? 0.f : m_data.first().y() };
     float y_min{ y_max };
 
-    for (const auto& itm: qAsConst(m_data)){
-        z_min = std::min(z_min, !std::isfinite(itm.z()) ? 0.f : itm.z());
-        z_max = std::max(z_max, !std::isfinite(itm.z()) ? 0.f : itm.z());
-        x_min = std::min(x_min, !std::isfinite(itm.x()) ? 0.f : itm.x());
-        x_max = std::max(x_max, !std::isfinite(itm.x()) ? 0.f : itm.x());
-        y_min = std::min(y_min, !std::isfinite(itm.y()) ? 0.f : itm.y());
-        y_max = std::max(y_max, !std::isfinite(itm.y()) ? 0.f : itm.y());
+    for (auto it = m_data.cbegin(); it != m_data.cend(); ++it) {
+        z_min = std::min(z_min, !std::isfinite(it->z()) ? 0.f : it->z());
+        z_max = std::max(z_max, !std::isfinite(it->z()) ? 0.f : it->z());
+        x_min = std::min(x_min, !std::isfinite(it->x()) ? 0.f : it->x());
+        x_max = std::max(x_max, !std::isfinite(it->x()) ? 0.f : it->x());
+        y_min = std::min(y_min, !std::isfinite(it->y()) ? 0.f : it->y());
+        y_max = std::max(y_max, !std::isfinite(it->y()) ? 0.f : it->y());
     }
 
     m_bounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);

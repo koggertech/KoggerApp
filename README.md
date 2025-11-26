@@ -13,7 +13,7 @@
 ---
 
 ### 🚤 *Key Features*
-- Multiple connections of Kogger sonars via serial port or UDP network.
+- Multiple connections of Kogger sonars via serial port or TCP/UDP network.
 
 - Autopilot data display (battery level, speed, communication quality).
 
@@ -26,12 +26,6 @@
 - Depth calculation from received sonar data.
 
 - Manual editing of measurement data (depth, bottom surface, etc.).
-
-- Calculation of bottom surface by bottom track.
-<p align="center">
-<img src="resources/webp/readme_md/surface.webp" alt="3d_Surface" width="768">
-<img src="resources/images/readme_md/surface.jpg" alt="3d_Surface_screen" width="768">
-</p>
 
 - Real-time isobaths calculation.
 <p align="center">
@@ -63,16 +57,16 @@
 You can download the latest release from the [Releases page](https://github.com/koggertech/KoggerApp/releases).
 
 🪟 Windows (x86_64):  
-Supported versions: Windows 7 SP1, 8, 8.1, 10, 11.  
+Supported versions: Windows 10 (1809 or later), 11.  
 - Portable: Download .zip. Extract and run "KoggerApp.exe".  
 - Installer: Download and launch the installer (Optionally associates .klf files with the app during setup).
 
-🤖 Android (ARMv7, ARMv8):  
-Supported versions: Android 5.0 (Lollipop) and above.  
+🤖 Android (armeabi-v7a, arm64-v8a):  
+Supported versions: Android 9.0 (Pie, level 28) and above.  
 Download and install the .apk file. You may need to enable "Install from unknown sources" in your device settings.
 
 🐧 Linux (Ubuntu x86_64):  
-Supported distributions: Ubuntu 18.04, 20.04, 22.04, 24.04 and compatible systems.  
+Supported distributions: Ubuntu 22.04, 24.04 and compatible systems.  
 Download the .AppImage file and make it executable:
 ```bash
 chmod +x KoggerApp_version_linux_x86_64.AppImage
@@ -88,17 +82,17 @@ and run:
 *KoggerApp* is a cross-platform C++ Qt QML project, built using a .pro file. You can build it on Windows, Linux, and Android using the appropriate Qt kits and compilers.
 
 🪟 Windows (x86_64):  
-Compiler: MinGW 8.1.0  
-Qt version: Qt 5.15.2 (MinGW)  
+Compiler: LLVM-MinGW 17.0.6  
+Qt version: Qt 6.8.3 (llvm-mingw_64)  
 Steps:
 - Open the .pro file in Qt Creator
-- Select the MinGW 64-bit kit
+- Select the LLVM-MinGW 64-bit kit
 - Click Build > Run qmake, then Build > Build Project
 - Run the application from Qt Creator or find the built binary in build/
 
-🤖 Android (ARMv7, ARMv8)  
-Compiler: Clang from NDK 21.3.6528147  
-Qt version: Qt 5.15.2 for Android  
+🤖 Android (armeabi-v7a, arm64-v8a)  
+Compiler: Clang from NDK 27.3.13750724  
+Qt version: Qt 6.8.3 for Android  
 Set up Android SDK/NDK in Qt Creator (via Tools > Options > Devices > Android)  
 Steps:
 - Open the .pro file in Qt Creator
@@ -107,12 +101,8 @@ Steps:
 - Use the .apk file generated in android-build/ to install on a device
 
 🐧 Linux (Ubuntu x86_64)  
-Compiler: GCC 13  
-Qt version: Qt 5.15.2  
-Required packages:
-```bash
-sudo apt install qtbase5-dev qtdeclarative5-dev qtquickcontrols2-5-dev qt5-qmake build-essential
-```
+Compiler: Clang 18.1.3  
+Qt version: Qt 6.8.3  
 Clone and build:
 ```bash
 git clone https://github.com/koggertech/KoggerApp.git

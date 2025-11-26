@@ -24,7 +24,12 @@ Core::Core() :
     isLoggingKlf_(false),
     isLoggingCsv_(false),
     filePath_(),
-    isFileOpening_(false)
+    isFileOpening_(false),
+    isGPSAlive_(false),
+    isUseGPS_(false),
+    fixBlackStripesState_(false),
+    fixBlackStripesForwardSteps_(0),
+    fixBlackStripesBackwardSteps_(0)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
 
@@ -159,7 +164,16 @@ void Core::consoleProto(FrameParser &parser, bool isIn)
 
     try {
         QString str_data = QByteArray((char*)parser.frame(), parser.frameLen()).toHex();
-        consoleInfo(QString("%1KG[%2]: id %3 v%4, %5, len %6; %7 [ %8 ]").arg(str_dir).arg(parser.route()).arg(parser.id()).arg(parser.ver()).arg(str_mode).arg(parser.payloadLen()).arg(comment).arg(str_data));
+
+        consoleInfo(
+            str_dir % "KG[" % QString::number(parser.route()) % "]: id "
+            % QString::number(parser.id())
+            % " v" % QString::number(parser.ver())
+            % ", " % str_mode
+            % ", len " % QString::number(parser.payloadLen())
+            % "; " % comment
+            % " [ " % str_data % " ]"
+            );
     }
     catch(std::bad_alloc& ex) {
         qCritical().noquote() << __func__ << " --> " << ex.what();
@@ -454,12 +468,14 @@ bool Core::openXTF(const QByteArray& data)
 
     if (!plot2dList_.isEmpty() && plot2dList_.at(0) && channelList.size() >= 2) {
         plot2dList_.at(0)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
+        plot2dList_.at(0)->plotUpdate();
     }
 
     for (int i = 0; i < plot2dList_.size(); i++) {
         if (plot2dList_.at(i) != NULL && i < channelList.size()) {
             if (i == 0) {
                 plot2dList_.at(i)->setDataChannel(false, channelList[0].channelId_, channelList[0].subChannelId_, fChName, channelList[1].channelId_, channelList[1].subChannelId_, sChName);
+                plot2dList_.at(i)->plotUpdate();
             }
         }
     }
@@ -605,18 +621,40 @@ void Core::upgradeChanged(int progressStatus)
     }
 }
 
+bool Core::getKlfLogging() const
+{
+    return isLoggingKlf_;
+}
+
 void Core::setKlfLogging(bool isLogging)
 {
-    if (isLogging == this->getIsKlfLogging())
+    if (isLogging == this->getKlfLogging())
         return;
-    this->getIsKlfLogging() ? logger_.stopKlfLogging() : logger_.startNewKlfLog();
+    this->getKlfLogging() ? logger_.stopKlfLogging() : logger_.startNewKlfLog();
     isLoggingKlf_ = isLogging;
 
     emit loggingKlfChanged();
 }
 
+bool Core::getFixBlackStripesState() const
+{
+    return fixBlackStripesState_;
+}
+
+int Core::getFixBlackStripesForwardSteps() const
+{
+    return fixBlackStripesForwardSteps_;
+}
+
+int Core::getFixBlackStripesBackwardSteps() const
+{
+    return fixBlackStripesBackwardSteps_;
+}
+
 void Core::setFixBlackStripesState(bool state)
 {
+    fixBlackStripesState_ = state;
+
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesState(state);
     }
@@ -624,6 +662,8 @@ void Core::setFixBlackStripesState(bool state)
 
 void Core::setFixBlackStripesForwardSteps(int val)
 {
+    fixBlackStripesForwardSteps_ = val;
+
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesForwardSteps(val);
     }
@@ -631,33 +671,36 @@ void Core::setFixBlackStripesForwardSteps(int val)
 
 void Core::setFixBlackStripesBackwardSteps(int val)
 {
+    fixBlackStripesBackwardSteps_ = val;
+
     if (datasetPtr_) {
         datasetPtr_->setFixBlackStripesBackwardSteps(val);
     }
 }
 
-bool Core::getIsKlfLogging()
+bool Core::getCsvLogging() const
 {
-    return isLoggingKlf_;
+    return isLoggingCsv_;
 }
 
 void Core::setCsvLogging(bool isLogging)
 {
-    if (isLogging == this->getIsCsvLogging())
+    if (isLogging == this->getCsvLogging())
         return;
-    this->getIsCsvLogging() ? logger_.stopCsvLogging() : logger_.startNewCsvLog();
+    this->getCsvLogging() ? logger_.stopCsvLogging() : logger_.startNewCsvLog();
     isLoggingCsv_ = isLogging;
+}
+
+bool Core::getUseGPS() const
+{
+    return isUseGPS_;
 }
 
 void Core::setUseGPS(bool state)
 {
     //qDebug() << "Core::setUseGPS" << state;
-    QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, state));
-}
-
-bool Core::getIsCsvLogging()
-{
-    return isLoggingCsv_;
+    isUseGPS_ = state;
+    QMetaObject::invokeMethod(deviceManagerWrapperPtr_->getWorker(), "setUseGPS", Qt::QueuedConnection, Q_ARG(bool, isUseGPS_));
 }
 
 bool Core::exportComplexToCSV(QString file_path) {
@@ -1236,11 +1279,13 @@ void Core::onChannelsUpdated()
     for (int i = 0; i < numPlots; i++) {
         if (chSize >= 2) {
             plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName, chs[1].channelId_, chs[1].subChannelId_, sChName);
+            plot2dList_.at(i)->plotUpdate();
             fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
             sChName_ = QString("%1|%2|%3").arg(sChName, QString::number(chs[1].channelId_.address), QString::number(chs[1].subChannelId_));
         }
         if (chSize == 1) {
             plot2dList_.at(i)->setDataChannel(false, chs[0].channelId_, chs[0].subChannelId_, fChName);
+            plot2dList_.at(i)->plotUpdate();
             fChName_ = QString("%1|%2|%3").arg(fChName, QString::number(chs[0].channelId_.address), QString::number(chs[0].subChannelId_));
         }
     }
@@ -1603,10 +1648,10 @@ void Core::onDataProcesstorStateChanged(const DataProcessorType& state)
     emit dataProcessorStateChanged();
 }
 
-void Core::onSendFrameInputToLogger(QUuid uuid, Link *link, FrameParser frame)
+void Core::onSendFrameInputToLogger(QUuid uuid, Link *link, const Parsers::FrameParser& frame)
 {
     // qDebug() << "Core::onSendFrameInputToLogger" << frame.availContext();
-    if (getIsKlfLogging()) {
+    if (getKlfLogging()) {
         logger_.onFrameParserReceiveKlf(uuid, link, frame);
     }
 }
@@ -1627,6 +1672,11 @@ void Core::createDatasetConnections()
 int Core::getDataProcessorState() const
 {
     return static_cast<int>(dataProcessorState_);
+}
+
+void Core::initStreamList()
+{
+    deviceManagerWrapperPtr_->initStreamList();
 }
 
 void Core::createDataProcessor()

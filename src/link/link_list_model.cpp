@@ -47,15 +47,15 @@ QHash<QUuid, QString> LinkListModel::getLinkNames() const
     for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
         int line = it.value();
 
-        if (vectors_[LinkListModel::ConnectionStatus][line].toBool()) {
-            auto linkType = vectors_[LinkListModel::LinkType][line].toUInt();
+        if (vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)][line].toBool()) {
+            auto linkType = vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toUInt();
 
             if (linkType == 1) { // uart
-                retVal[it.key()] = vectors_[LinkListModel::PortName][line].toString();
+                retVal[it.key()] = vectors_[static_cast<int>(LinkListModel::Roles::PortName)][line].toString();
             }
             if (linkType == 2 || linkType == 3) {
                 QString type = (linkType == 2) ? "UDP" : "TCP";
-                QString address = vectors_[LinkListModel::Address][line].toString();
+                QString address = vectors_[static_cast<int>(LinkListModel::Roles::Address)][line].toString();
                 retVal[it.key()] = type + "(" + address + ")";
             }
         }
@@ -70,8 +70,8 @@ QList<QPair<QUuid, LinkType>> LinkListModel::getOpenedUuids() const
 
     for (auto it = index_.cbegin(); it != index_.cend(); ++it) {
         int line = it.value();
-        if (vectors_[LinkListModel::ConnectionStatus][line].toBool()) {
-            retVal.append(qMakePair(it.key(), static_cast<::LinkType>(vectors_[LinkListModel::LinkType][line].toInt())));
+        if (vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)][line].toBool()) {
+            retVal.append(qMakePair(it.key(), static_cast<::LinkType>(vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line].toInt())));
         }
     }
 
@@ -83,8 +83,8 @@ int LinkListModel::getSize() const
     return size_;
 }
 
-void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ::ControlType controlType, const QString& portName,
-                                   int baudrate, bool parity, ::LinkType linkType, const QString& address, int sourcePort, int destinationPort,
+void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool receivesData, ControlType controlType, const QString& portName,
+                                   int baudrate, bool parity, LinkType linkType, const QString& address, int sourcePort, int destinationPort,
                                    bool isPinned, bool isHided, bool isNotAvailable, bool autoSpeedSelection, bool isUpgradingState)
 {
     if (isHided)
@@ -96,22 +96,22 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
 
         index_[uuid] = line;
 
-        vectors_[LinkListModel::Uuid].append(uuid);
-        vectors_[LinkListModel::ConnectionStatus].append(connectionStatus);
-        vectors_[LinkListModel::ReceivesData].append(receivesData);
-        vectors_[LinkListModel::ControlType].append(static_cast<int>(controlType));
-        vectors_[LinkListModel::PortName].append(portName);
-        vectors_[LinkListModel::Baudrate].append(baudrate);
-        vectors_[LinkListModel::Parity].append(parity);
-        vectors_[LinkListModel::LinkType].append(static_cast<int>(linkType));
-        vectors_[LinkListModel::Address].append(address);
-        vectors_[LinkListModel::SourcePort].append(sourcePort);
-        vectors_[LinkListModel::DestinationPort].append(destinationPort);
-        vectors_[LinkListModel::IsPinned].append(isPinned);
-        vectors_[LinkListModel::IsHided].append(isHided);
-        vectors_[LinkListModel::IsNotAvailable].append(isNotAvailable);
-        vectors_[LinkListModel::AutoSpeedSelection].append(autoSpeedSelection);
-        vectors_[LinkListModel::IsUpgradingState].append(isUpgradingState);
+        vectors_[static_cast<int>(LinkListModel::Roles::Uuid)].append(uuid);
+        vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)].append(connectionStatus);
+        vectors_[static_cast<int>(LinkListModel::Roles::ReceivesData)].append(receivesData);
+        vectors_[static_cast<int>(LinkListModel::Roles::ControlType)].append(static_cast<int>(controlType));
+        vectors_[static_cast<int>(LinkListModel::Roles::PortName)].append(portName);
+        vectors_[static_cast<int>(LinkListModel::Roles::Baudrate)].append(baudrate);
+        vectors_[static_cast<int>(LinkListModel::Roles::Parity)].append(parity);
+        vectors_[static_cast<int>(LinkListModel::Roles::LinkType)].append(static_cast<int>(linkType));
+        vectors_[static_cast<int>(LinkListModel::Roles::Address)].append(address);
+        vectors_[static_cast<int>(LinkListModel::Roles::SourcePort)].append(sourcePort);
+        vectors_[static_cast<int>(LinkListModel::Roles::DestinationPort)].append(destinationPort);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)].append(isPinned);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsHided)].append(isHided);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)].append(isNotAvailable);
+        vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)].append(autoSpeedSelection);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)].append(isUpgradingState);
 
         ++size_;
         endInsertRows();
@@ -119,22 +119,22 @@ void LinkListModel::doAppendModify(QUuid uuid, bool connectionStatus, bool recei
     else {
         int line = index_[uuid];
 
-        vectors_[LinkListModel::Uuid][line] = uuid;
-        vectors_[LinkListModel::ConnectionStatus][line] = connectionStatus;
-        vectors_[LinkListModel::ReceivesData][line] = receivesData;
-        vectors_[LinkListModel::ControlType][line] = static_cast<int>(controlType);
-        vectors_[LinkListModel::PortName][line] = portName;
-        vectors_[LinkListModel::Baudrate][line] = baudrate;
-        vectors_[LinkListModel::Parity][line] = parity;
-        vectors_[LinkListModel::LinkType][line] = static_cast<int>(linkType);
-        vectors_[LinkListModel::Address][line] = address;
-        vectors_[LinkListModel::SourcePort][line] = sourcePort;
-        vectors_[LinkListModel::DestinationPort][line] = destinationPort;
-        vectors_[LinkListModel::IsPinned][line] = isPinned;
-        vectors_[LinkListModel::IsHided][line] = isHided;
-        vectors_[LinkListModel::IsNotAvailable][line] = isNotAvailable;
-        vectors_[LinkListModel::AutoSpeedSelection][line] = autoSpeedSelection;
-        vectors_[LinkListModel::IsUpgradingState][line] = isUpgradingState;
+        vectors_[static_cast<int>(LinkListModel::Roles::Uuid)][line] = uuid;
+        vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)][line] = connectionStatus;
+        vectors_[static_cast<int>(LinkListModel::Roles::ReceivesData)][line] = receivesData;
+        vectors_[static_cast<int>(LinkListModel::Roles::ControlType)][line] = static_cast<int>(controlType);
+        vectors_[static_cast<int>(LinkListModel::Roles::PortName)][line] = portName;
+        vectors_[static_cast<int>(LinkListModel::Roles::Baudrate)][line] = baudrate;
+        vectors_[static_cast<int>(LinkListModel::Roles::Parity)][line] = parity;
+        vectors_[static_cast<int>(LinkListModel::Roles::LinkType)][line] = static_cast<int>(linkType);
+        vectors_[static_cast<int>(LinkListModel::Roles::Address)][line] = address;
+        vectors_[static_cast<int>(LinkListModel::Roles::SourcePort)][line] = sourcePort;
+        vectors_[static_cast<int>(LinkListModel::Roles::DestinationPort)][line] = destinationPort;
+        vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)][line] = isPinned;
+        vectors_[static_cast<int>(LinkListModel::Roles::IsHided)][line] = isHided;
+        vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)][line] = isNotAvailable;
+        vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)][line] = autoSpeedSelection;
+        vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)][line] = isUpgradingState;
 
         emit dataChanged(index(line, 0), index(line, 0));
     }
@@ -147,22 +147,22 @@ void LinkListModel::doRemove(QUuid uuid)
 
         beginRemoveRows(QModelIndex(), line, line);
 
-        vectors_[LinkListModel::Uuid].erase(vectors_[LinkListModel::Uuid].begin() + line);
-        vectors_[LinkListModel::ConnectionStatus].erase(vectors_[LinkListModel::ConnectionStatus].begin() + line);
-        vectors_[LinkListModel::ReceivesData].erase(vectors_[LinkListModel::ReceivesData].begin() + line);
-        vectors_[LinkListModel::ControlType].erase(vectors_[LinkListModel::ControlType].begin() + line);
-        vectors_[LinkListModel::PortName].erase(vectors_[LinkListModel::PortName].begin() + line);
-        vectors_[LinkListModel::Baudrate].erase(vectors_[LinkListModel::Baudrate].begin() + line);
-        vectors_[LinkListModel::Parity].erase(vectors_[LinkListModel::Parity].begin() + line);
-        vectors_[LinkListModel::LinkType].erase(vectors_[LinkListModel::LinkType].begin() + line);
-        vectors_[LinkListModel::Address].erase(vectors_[LinkListModel::Address].begin() + line);
-        vectors_[LinkListModel::SourcePort].erase(vectors_[LinkListModel::SourcePort].begin() + line);
-        vectors_[LinkListModel::DestinationPort].erase(vectors_[LinkListModel::DestinationPort].begin() + line);
-        vectors_[LinkListModel::IsPinned].erase(vectors_[LinkListModel::IsPinned].begin() + line);
-        vectors_[LinkListModel::IsHided].erase(vectors_[LinkListModel::IsHided].begin() + line);
-        vectors_[LinkListModel::IsNotAvailable].erase(vectors_[LinkListModel::IsNotAvailable].begin() + line);
-        vectors_[LinkListModel::AutoSpeedSelection].erase(vectors_[LinkListModel::AutoSpeedSelection].begin() + line);
-        vectors_[LinkListModel::IsUpgradingState].erase(vectors_[LinkListModel::IsUpgradingState].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::Uuid)].erase(               vectors_[static_cast<int>(LinkListModel::Roles::Uuid)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)].erase(   vectors_[static_cast<int>(LinkListModel::Roles::ConnectionStatus)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::ReceivesData)].erase(       vectors_[static_cast<int>(LinkListModel::Roles::ReceivesData)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::ControlType)].erase(        vectors_[static_cast<int>(LinkListModel::Roles::ControlType)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::PortName)].erase(           vectors_[static_cast<int>(LinkListModel::Roles::PortName)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::Baudrate)].erase(           vectors_[static_cast<int>(LinkListModel::Roles::Baudrate)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::Parity)].erase(             vectors_[static_cast<int>(LinkListModel::Roles::Parity)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::LinkType)].erase(           vectors_[static_cast<int>(LinkListModel::Roles::LinkType)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::Address)].erase(            vectors_[static_cast<int>(LinkListModel::Roles::Address)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::SourcePort)].erase(         vectors_[static_cast<int>(LinkListModel::Roles::SourcePort)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::DestinationPort)].erase(    vectors_[static_cast<int>(LinkListModel::Roles::DestinationPort)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)].erase(           vectors_[static_cast<int>(LinkListModel::Roles::IsPinned)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsHided)].erase(            vectors_[static_cast<int>(LinkListModel::Roles::IsHided)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)].erase(     vectors_[static_cast<int>(LinkListModel::Roles::IsNotAvailable)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)].erase( vectors_[static_cast<int>(LinkListModel::Roles::AutoSpeedSelection)].begin() + line);
+        vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)].erase(   vectors_[static_cast<int>(LinkListModel::Roles::IsUpgradingState)].begin() + line);
 
         index_.remove(uuid);
         for (auto it = index_.begin(); it != index_.end(); ++it) {

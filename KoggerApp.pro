@@ -1,15 +1,12 @@
-QT += quick widgets network qml sql concurrent positioning
+QT += core gui quick widgets network qml sql concurrent positioning quickcontrols2
 
+CONFIG += c++23
 #CONFIG += FLASHER
-#CONFIG += SEPARATE_READING # data reception in a separate thread
-#CONFIG += FAKE_COORDS # for measurements at single location
-
-CONFIG += c++17 qmltypes
-QML_IMPORT_NAME = SceneGraphRendering
-QML_IMPORT_MAJOR_VERSION = 1
-
 
 DEFINES += QT_DEPRECATED_WARNINGS
+#DEFINES += SEPARATE_READING # data reception in a separate thread
+#DEFINES += FAKE_COORDS # for measurements at single location
+#DEFINES += SCENE_TESTING # testing 3d scene
 
 ### HEADERS
 HEADERS += \
@@ -55,7 +52,6 @@ SOURCES += \
     src/logger.cpp \
     src/main.cpp \
     src/map_defs.cpp \
-    src/proto_binnary.cpp \
     src/stream_list.cpp \
     src/stream_list_model.cpp \
     src/location_reader.cpp
@@ -66,13 +62,6 @@ FLASHER {
     HEADERS += src/flasher/deviceflasher.h
     SOURCES += src/flasher/flasher.cpp
     HEADERS += src/flasher/flasher.h
-}
-
-SEPARATE_READING {
-    DEFINES += SEPARATE_READING
-}
-FAKE_COORDS {
-    DEFINES += FAKE_COORDS
 }
 
 TRANSLATIONS += \
@@ -161,8 +150,8 @@ linux:!android {
     }
 }
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/mingw-x64/ -lfreetype
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/mingw-x64/ -lfreetype
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/llvm-mingw-x64/ -lfreetype
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/llvm-mingw-x64/ -lfreetype
 
 INCLUDEPATH += $$PWD/third_party/freetype/include
 INCLUDEPATH += $$PWD/src
@@ -176,29 +165,22 @@ include($$PWD/src/device/device.pri)
 include($$PWD/src/link/link.pri)
 include($$PWD/src/tile_engine/tile_engine.pri)
 
-!android {
-    QT += serialport
-}
-
 android {
+    include($$PWD/platform/android/src/android.pri) # activity, serialport
+
     QT -= widgets
-    QT += androidextras svg
-    QTPLUGIN += qsqlite qandroidbearer
-    ANDROID_TARGET_SDK_VERSION = 34
-    ANDROID_ABIS = armeabi-v7a arm64-v8a
+    QT += svg
+    QTPLUGIN += qsqlite
+    ANDROID_ABIS = arm64-v8a
+    #ANDROID_ABIS = armeabi-v7a
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/platform/android
     ANDROID_EXTRA_PLUGINS += \
-        $$[QT_INSTALL_PLUGINS]/sqldrivers \
-        $$[QT_INSTALL_PLUGINS]/bearer
-
+        $$[QT_INSTALL_PLUGINS]/sqldrivers
     CONFIG += mobility
 
     QMAKE_CXXFLAGS_DEBUG -= -O2
     QMAKE_CXXFLAGS_DEBUG -= -O3
     QMAKE_CXXFLAGS_DEBUG += -O0
-
-    HEADERS += platform/android/src/android.h
-    SOURCES += platform/android/src/android.cpp
 
     DISTFILES += \
         platform/android/AndroidManifest.xml \
@@ -208,8 +190,6 @@ android {
         platform/android/gradlew \
         platform/android/gradlew.bat \
         platform/android/res/values/libs.xml
-
-    include($$PWD/platform/android/src/qtandroidserialport/src/qtandroidserialport.pri)
 
     equals(ANDROID_TARGET_ARCH, arm64-v8a) {
         message("Adding FreeType Lib for arm64-v8a arch")
@@ -224,4 +204,7 @@ android {
 
     message("Building for Android (ARM) with OpenGL ES")
     RESOURCES += platform/android/shaders.qrc
+}
+else {
+    QT += serialport
 }

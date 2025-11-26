@@ -29,13 +29,16 @@ GraphicsScene3dView::GraphicsScene3dView() :
     usblView_(std::make_shared<UsblView>()),
     wasMoved_(false),
     wasMovedMouseButton_(Qt::MouseButton::NoButton),
+    qmlRootObject_(nullptr),
     switchedToBottomTrackVertexComboSelectionMode_(false),
     needToResetStartPos_(false),
     lastCameraDist_(m_camera->distForMapView()),
     trackLastData_(false),
     gridVisibility_(true),
     useAngleLocation_(false),
-    navigatorViewLocation_(false)
+    navigatorViewLocation_(false),
+    isNorth_(false),
+    testingTimer_(nullptr)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -79,11 +82,18 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, &GraphicsScene3dView::updateViews, Qt::DirectConnection);
 
     updatePlaneGrid();
+
+#ifdef SCENE_TESTING
+    initAutoDistTimer();
+#endif
 }
 
 GraphicsScene3dView::~GraphicsScene3dView()
 {
-
+#ifdef SCENE_TESTING
+    testingTimer_->stop();
+    delete testingTimer_;
+#endif
 }
 
 QQuickFramebufferObject::Renderer *GraphicsScene3dView::createRenderer() const
@@ -469,9 +479,9 @@ void GraphicsScene3dView::forceUpdateDatasetLlaRef()
     QQuickFramebufferObject::update();
 }
 
-void GraphicsScene3dView::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
+void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
 {
-    QQuickFramebufferObject::geometryChanged(newGeometry, oldGeometry);
+    QQuickFramebufferObject::geometryChange(newGeometry, oldGeometry);
 
     if (newGeometry.size() != oldGeometry.size()) {
        updateProjection();
@@ -805,6 +815,54 @@ void GraphicsScene3dView::clearComboSelectionRect()
     m_comboSelectionRect = { 0, 0, 0, 0 };
 }
 
+void GraphicsScene3dView::initAutoDistTimer()
+{
+    if (testingTimer_) {
+        return;
+    }
+
+    testingTimer_ = new QTimer();
+    const std::chrono::milliseconds tStep(1);
+    testingTimer_->setInterval(tStep);
+
+    QObject::connect(testingTimer_, &QTimer::timeout, this, [this]()
+                     {
+                        // зум
+                        static float distValue = 10.0f;
+                        static float distStep  = 100.0f;
+                        const  float minHeight = 10.0f;
+                        const  float maxHeight = 50000.0f;
+                        distValue += distStep;
+                        if (distValue >= maxHeight) {
+                            distValue = maxHeight;
+                            distStep = -distStep;
+                        }
+                        else if (distValue <= minHeight) {
+                            distValue = minHeight;
+                            distStep = -distStep;
+                        }
+                        m_camera->setDistance(static_cast<qreal>(distValue));
+
+                        // движение по кругу
+                        static float angleRad     = 0.0f;
+                        const  float angularSpeed = 0.001f;
+                        angleRad += angularSpeed;
+                        if (angleRad > 2.0f * M_PI) {
+                            angleRad -= 2.0f * M_PI;
+                        }
+                        const float radiusKm = 100.0;
+                        const float radiusMeters = radiusKm * 1000.0;
+                        const float x = radiusMeters * qCos(angleRad);
+                        const float y = radiusMeters * qSin(angleRad);
+                        const float z = 0.0;
+                        m_camera->focusOnPosition(QVector3D(x, y, z));
+
+                        emit cameraIsMoved();
+                     });
+
+    testingTimer_->start();
+}
+
 void GraphicsScene3dView::updateMapView()
 {
     if (!m_camera || !mapView_) {
@@ -1037,8 +1095,20 @@ QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferO
 {
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+
+#if defined(Q_OS_ANDROID) || defined(LINUX_ES)
+    format.setSamples(0);
+    constexpr float scale = 1.0f;
+#else
     format.setSamples(4);
-    return new QOpenGLFramebufferObject(size, format);
+    constexpr float scale = 1.0f;
+#endif
+
+    QSize scaledSize = (scale == 1.0f) ? size : (size * scale);
+    scaledSize.setWidth(std::max(1, scaledSize.width()));
+    scaledSize.setHeight(std::max(1, scaledSize.height()));
+
+    return new QOpenGLFramebufferObject(scaledSize, format);
 }
 
 void GraphicsScene3dView::InFboRenderer::processMapTextures(GraphicsScene3dView *viewPtr) const

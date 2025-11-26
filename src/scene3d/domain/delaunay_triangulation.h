@@ -3,15 +3,11 @@
 #include <vector>
 #include <cmath>
 #include <math.h>
-#include <limits>
-#include <type_traits>
-#include <functional>
 #include <memory>
 
 #include "triangle.h"
 #include "point_3d.h"
 
-#include <thread>
 
 template <typename T>
 class Delaunay

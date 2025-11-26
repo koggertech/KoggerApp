@@ -57,7 +57,7 @@ std::shared_ptr<TileSet> TileManager::getTileSetPtr() const
     return tileSet_;
 }
 
-void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, CameraTilt tiltCam)
+void TileManager::getRectRequest(QVector<LLA> request, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam)
 {
     Q_UNUSED(tiltCam);
 

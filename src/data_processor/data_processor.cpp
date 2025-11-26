@@ -103,6 +103,8 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     positionCounter_ = 0;
     attitudeCounter_ = 0;
     mosaicCounter_ = 0;
+
+    postState(DataProcessorType::kUndefined); //
 }
 
 void DataProcessor::setUpdateBottomTrack(bool state)
@@ -387,7 +389,13 @@ void DataProcessor::onMosaicUpdated() {
 
 void DataProcessor::runCoalescedWork()
 {
+    //qDebug() << "DataProcessor::runCoalescedWork";
+
     if (jobRunning_.load()) {
+        return;
+    }
+
+    if (!isCanStartCalculations()) {
         return;
     }
 
@@ -409,26 +417,33 @@ void DataProcessor::runCoalescedWork()
 
         pendingSurfaceIndxs_.clear();
     }
-    //qDebug() << " runCoalescedWork pendingMosaicIndxs_" << pendingMosaicIndxs_.size();
 
     if (wantMosaic && !pendingMosaicIndxs_.isEmpty() && updateMosaic_) {
-        wb.mosaicVec.reserve(pendingMosaicIndxs_.size());
-        for (auto it = pendingMosaicIndxs_.cbegin(); it != pendingMosaicIndxs_.cend(); ++it) {
-            if (mosaicCounter_ >= *it) {
-                wb.mosaicVec.append(*it);
+        auto it = pendingMosaicIndxs_.begin();
+        while (it != pendingMosaicIndxs_.end()) {
+            const int idx = *it;
+
+            if (idx <= mosaicCounter_) {
+                wb.mosaicVec.append(idx);
+                it = pendingMosaicIndxs_.erase(it);
+            }
+            else {
+                ++it;
             }
         }
 
-        std::sort(wb.mosaicVec.begin(), wb.mosaicVec.end());
-        pendingMosaicIndxs_.clear();
+        if (!wb.mosaicVec.isEmpty()) {
+            std::sort(wb.mosaicVec.begin(), wb.mosaicVec.end());
+        }
     }
 
-    if (wantIsobaths && pendingIsobathsWork_ && updateIsobaths_ && !updateMosaic_) {
+    if (wantIsobaths && pendingIsobathsWork_ && updateIsobaths_ && !updateMosaic_) { // ?!
         wb.doIsobaths = true;
         pendingIsobathsWork_ = false;
     }
 
     if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths) {
+        pendingIsobathsWork_ = false;
         return;
     }
 
@@ -503,6 +518,7 @@ void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParamete
 
 void DataProcessor::postSurfaceTiles(const TileMap& tiles, bool useTextures)
 {
+    //qDebug() << "   DataProcessor::postSurfaceTiles" << tiles.size();
     emit sendSurfaceTiles(tiles, useTextures);
 }
 
@@ -623,6 +639,11 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
     }
 
     startTimerIfNeeded();
+}
+
+bool DataProcessor::isCanStartCalculations() const
+{
+    return chartsCounter_ || bottomTrackCounter_ || epochCounter_ || positionCounter_ || attitudeCounter_ || mosaicCounter_;
 }
 
 void DataProcessor::requestCancel() noexcept
