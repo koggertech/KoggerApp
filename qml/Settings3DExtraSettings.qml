@@ -1,8 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import Qt.labs.settings 1.1
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
+import QtCore
 
 
 // settings3D extra settings
@@ -78,6 +78,33 @@ MenuFrame {
         }
 
         CheckButton {
+            id: isNorthViewButton
+            objectName: "isNorthViewButton"
+            backColor: theme.controlBackColor
+            borderColor: theme.controlBackColor
+            checkedBorderColor: theme.controlBorderColor
+            iconSource: "qrc:/icons/ui/location_pin.svg"
+            text: qsTr("North mode")
+            Layout.fillWidth: true
+
+            onToggled: {
+                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
+            }
+
+            onFocusChanged: {
+                settings3DSettings.focus = true
+            }
+
+            Component.onCompleted: {
+                Scene3dToolBarController.onIsNorthLocationButtonChanged(checked)
+            }
+
+            Settings {
+                property alias isNorthViewButton: isNorthViewButton.checked
+            }
+        }
+
+        CheckButton {
             id: selectionToolButton
             objectName: "selectionToolButton"
             backColor: theme.controlBackColor
@@ -104,33 +131,33 @@ MenuFrame {
             }
         }
 
-        CheckButton {
-            id: trackLastDataCheckButton
-            objectName: "trackLastDataCheckButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: false
-            iconSource: "qrc:/icons/ui/location.svg"
-            text: qsTr("Follow last location")
-            Layout.fillWidth: true
+        // CheckButton {
+        //     id: trackLastDataCheckButton
+        //     objectName: "trackLastDataCheckButton"
+        //     backColor: theme.controlBackColor
+        //     borderColor: theme.controlBackColor
+        //     checkedBorderColor: theme.controlBorderColor
+        //     checked: false
+        //     iconSource: "qrc:/icons/ui/location.svg"
+        //     text: qsTr("Follow last location")
+        //     Layout.fillWidth: true
 
-            onToggled: {
-                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-            }
+        //     onToggled: {
+        //         Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+        //     }
 
-            onFocusChanged: {
-                settings3DSettings.focus = true
-            }
+        //     onFocusChanged: {
+        //         settings3DSettings.focus = true
+        //     }
 
-            Component.onCompleted: {
-                Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
-            }
+        //     Component.onCompleted: {
+        //         Scene3dToolBarController.onTrackLastDataCheckButtonCheckedChanged(checked)
+        //     }
 
-            Settings {
-                property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
-            }
-        }
+        //     Settings {
+        //         property alias trackLastDataCheckButton: trackLastDataCheckButton.checked
+        //     }
+        // }
 
         CheckButton {
             id: gridCheckButton

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "qml_component_controller.h"
+#include "map_view.h"
 
 
-class MapView;
 class GraphicsScene3dView;
 class MapViewControlMenuController : public QmlComponentController
 {

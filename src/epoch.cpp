@@ -124,6 +124,12 @@ void Epoch::setPositionLLA(Position position) {
     flags.posAvail = true;
 }
 
+void Epoch::setSonarPosition(Position val)
+{
+    sonarPosition_ = val;
+    flags.sonarPosAvail = true;
+}
+
 void Epoch::setPositionLLA(const LLA &lla)
 {
     _positionGNSS.lla = lla;
@@ -157,6 +163,11 @@ float Epoch::getDepth()
 void Epoch::setPositionDataType(DataType dataType)
 {
     _positionGNSS.dataType = dataType;
+}
+
+void Epoch::setSonarPositionDataType(DataType dataType)
+{
+    sonarPosition_.dataType = dataType;
 }
 
 void Epoch::setGnssVelocity(double h_speed, double course) {
@@ -377,11 +388,15 @@ void Epoch::setSoundSpeed(const ChannelId& channelId, uint32_t soundSpeed)
 // get from first
 uint16_t Epoch::getResolution(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.resol;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.resol;
     }
 
     return 0;
@@ -389,23 +404,31 @@ uint16_t Epoch::getResolution(const ChannelId& channelId) const
 
 uint16_t Epoch::getChartCount(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.count;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.count;
     }
 
     return 0;
 }
 
 uint16_t Epoch::getOffset(const ChannelId& channelId) const
-{
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.offset;
-        }
+{    
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.offset ;
     }
 
     return 0;
@@ -413,11 +436,15 @@ uint16_t Epoch::getOffset(const ChannelId& channelId) const
 
 uint16_t Epoch::getFrequency(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.freq;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.freq ;
     }
 
     return 0;
@@ -425,11 +452,15 @@ uint16_t Epoch::getFrequency(const ChannelId& channelId) const
 
 uint8_t Epoch::getPulse(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.pulse;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.pulse ;
     }
 
     return 0;
@@ -437,22 +468,31 @@ uint8_t Epoch::getPulse(const ChannelId& channelId) const
 
 uint8_t Epoch::getBoost(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.boost;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
     }
 
-    return 0;}
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.boost ;
+    }
+
+    return 0;
+}
 
 uint32_t Epoch::getSoundSpeed(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.recordParameters_.soundSpeed;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return 0;
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.recordParameters_.soundSpeed ;
     }
 
     return 0;
@@ -460,11 +500,15 @@ uint32_t Epoch::getSoundSpeed(const ChannelId& channelId) const
 
 ChartParameters Epoch::getChartParameters(const ChannelId& channelId) const
 {
-    if (charts_.contains(channelId)) {
-        auto& echograms = charts_[channelId];
-        for (auto& iEchogram : echograms) {
-            return iEchogram.chartParameters_;
-        }
+    auto it = charts_.constFind(channelId);
+    if (it == charts_.cend()) {
+        return {};
+    }
+
+    const auto& echograms = it.value();
+
+    for (const auto& iEchogram : echograms) {
+        return iEchogram.chartParameters_;
     }
 
     return {};

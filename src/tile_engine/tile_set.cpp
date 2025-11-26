@@ -103,7 +103,7 @@ void TileSet::setTextureIdByTileIndx(const TileIndex &tileIndx, GLuint textureId
     }
 }
 
-void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image)
+void TileSet::onTileLoaded(const map::TileIndex &tileIndx, const QImage &image)
 {
     dbReq_.remove(tileIndx);
 
@@ -130,7 +130,7 @@ void TileSet::onTileLoaded(const TileIndex &tileIndx, const QImage &image)
     }
 }
 
-void TileSet::onTileLoadFailed(const TileIndex &tileIndx, const QString &errorString)
+void TileSet::onTileLoadFailed(const map::TileIndex &tileIndx, const QString &errorString)
 {
     dbReq_.remove(tileIndx);
 
@@ -144,17 +144,17 @@ void TileSet::onTileLoadFailed(const TileIndex &tileIndx, const QString &errorSt
     }
 }
 
-void TileSet::onTileLoadStopped(const TileIndex &tileIndx)
+void TileSet::onTileLoadStopped(const map::TileIndex &tileIndx)
 {
     dbReq_.remove(tileIndx);
 }
 
-void TileSet::onTileSaved(const TileIndex &tileIndx)
+void TileSet::onTileSaved(const map::TileIndex &tileIndx)
 {
     dbSvd_.remove(tileIndx);
 }
 
-void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image)
+void TileSet::onTileDownloaded(const map::TileIndex &tileIndx, const QImage &image)
 {
     dwReq_.remove(tileIndx);
 
@@ -184,7 +184,7 @@ void TileSet::onTileDownloaded(const TileIndex &tileIndx, const QImage &image)
     }
 }
 
-void TileSet::onTileDownloadFailed(const TileIndex &tileIndx, const QString &errorString)
+void TileSet::onTileDownloadFailed(const map::TileIndex &tileIndx, const QString &errorString)
 {
     dwReq_.remove(tileIndx);
 
@@ -194,12 +194,12 @@ void TileSet::onTileDownloadFailed(const TileIndex &tileIndx, const QString &err
     //qWarning() << "Failed to download tile" << tileIndx << "from:" << tileProvider_.lock()->createURL(tileIndx) << "Error:" << errorString;
 }
 
-void TileSet::onTileDownloadStopped(const TileIndex &tileIndx)
+void TileSet::onTileDownloadStopped(const map::TileIndex &tileIndx)
 {
     dwReq_.remove(tileIndx);
 }
 
-void TileSet::onDeletedFromAppend(const TileIndex &tileIndx)
+void TileSet::onDeletedFromAppend(const map::TileIndex &tileIndx)
 {
     if (auto* tile = getTileByIndx(tileIndx); tile) {
         tile->setInUse(false);

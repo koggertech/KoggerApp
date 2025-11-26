@@ -1,6 +1,5 @@
 #pragma once
 
-#include "scene_object.h"
 
 #include <QOpenGLBuffer>
 #include <QOpenGLTexture>

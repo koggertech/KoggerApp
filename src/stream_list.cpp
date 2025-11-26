@@ -3,13 +3,32 @@
 #include <core.h>
 extern Core core;
 
-StreamList::StreamList() {
+StreamList::StreamList(QObject* parent) : QObject(parent)
+{
 //    createStream(0);
 //    _lastStream = getStream(0);
 //    _lastStreamId = 0;
+}
 
-    _updater.start(100);
-    connect(&_updater, &QTimer::timeout, this, &StreamList::process);
+StreamList::~StreamList()
+{
+    if (!_updater) {
+        return;
+    }
+
+    _updater->stop();
+    delete _updater;
+}
+
+void StreamList::initTimer()
+{
+    if (_updater) {
+        return;
+    }
+
+    _updater = new QTimer(this);
+    connect(_updater, &QTimer::timeout, this, &StreamList::process);
+    _updater->start(100);
 }
 
 void StreamList::debugAddGap(uint32_t start, uint32_t size) {

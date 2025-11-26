@@ -1080,7 +1080,9 @@ void IDBinUsblSolution::enableBeaconOnce(float timeout) {
 
 
 
-Resp IDBinUsblControl::parsePayload(FrameParser &proto) {
+Resp IDBinUsblControl::parsePayload(FrameParser& proto)
+{
+    Q_UNUSED(proto)
 
     return respOk;
 }

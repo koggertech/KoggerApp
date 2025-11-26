@@ -1,9 +1,9 @@
 #pragma once
 
 #include "qml_component_controller.h"
+#include "bottom_track.h"
 
 
-class BottomTrack;
 class GraphicsScene3dView;
 class BottomTrackControlMenuController : public QmlComponentController
 {

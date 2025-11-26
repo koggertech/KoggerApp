@@ -1,8 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
+import QtCore
+
 
 GridLayout {
     id: control
@@ -11,6 +12,8 @@ GridLayout {
     property bool syncPlots: plotSyncCheckBox.checked
     property int instruments: instrumentsGradeList.currentIndex
     property var targetPlot: null
+    property bool extraInfoVis: extraInfoPanelVisible.checked
+    property bool autopilotInfofVis: autopilotInfoVisible.checked
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()
@@ -151,6 +154,90 @@ GridLayout {
                     }
                 }
             }
+
+            RowLayout {
+                CCheck {
+                    id: sonarOffsetCheckButton
+                    Layout.fillWidth: true
+                    text: qsTr("S.offset, mm:")
+
+                    onCheckedChanged: {
+                        if (checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                        else {
+                            dataset.setSonarOffset(0, 0, 0)
+                        }
+
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Component.onCompleted: {
+                        core.setIsAttitudeExpected(checked)
+                    }
+
+                    Settings {
+                        property alias sonarOffsetCheckButton: sonarOffsetCheckButton.checked
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueX
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueX: sonarOffsetValueX.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    id: sonarOffsetValueY
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueY: sonarOffsetValueY.value
+                    }
+                }
+
+                SpinBoxCustom {
+                    visible: false
+                    id: sonarOffsetValueZ
+                    spinner: false
+                    implicitWidth: 65
+                    from: -9999
+                    to: 9999
+                    value: 0
+                    stepSize: 50
+
+                    onValueChanged: {
+                        if (sonarOffsetCheckButton.checked) {
+                            dataset.setSonarOffset(sonarOffsetValueX.value * 0.001, sonarOffsetValueY.value * 0.001, sonarOffsetValueZ.value * 0.001)
+                        }
+                    }
+
+                    Settings {
+                        property alias sonarOffsetValueZ: sonarOffsetValueZ.value
+                    }
+                }
+            }
         }
 
         ParamGroup {
@@ -171,8 +258,7 @@ GridLayout {
                                                  bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
                                                  bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
                                                  bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
-                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0,
-                                                 false)
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0 )
                 }
             }
 
@@ -188,7 +274,7 @@ GridLayout {
                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
                                                 bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0,
-                                                false);
+                                                false/*manual*/);
                 }
             }
 
@@ -661,21 +747,19 @@ GridLayout {
                         onClicked: exportFileDialog.open()
                     }
 
-                    FileDialog {
+                    FolderDialog {
                         id: exportFileDialog
-                        folder: shortcuts.home
-                        selectExisting: true
-                        selectFolder: true
+                        title: qsTr("Select folder for export")
+
+                        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
                         onAccepted: {
-                            exportPathText.text = exportFileDialog.folder.toString()
+                            exportPathText.text = selectedFolder.toString()
                         }
-
-                        onRejected: { }
                     }
 
                     Settings {
-                        property alias exportFolder: exportFileDialog.folder
+                        property alias exportFolder: exportFileDialog.currentFolder
                     }
 
                     Settings {
@@ -798,7 +882,7 @@ GridLayout {
             }
 
             ParamSetup {
-                paramName: qsTr("Instrumets grade:")
+                paramName: qsTr("Instruments grade:")
 
                 CCombo  {
                     id: instrumentsGradeList
@@ -820,6 +904,22 @@ GridLayout {
             visible: instruments > 1
             groupName: qsTr("Interface")
 
+            CCheck {
+                id: extraInfoPanelVisible
+                text: qsTr("Extra info panel")
+
+                Settings {
+                    property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                }
+            }
+            CCheck {
+                id:  autopilotInfoVisible
+                text: qsTr("Autopilot info")
+
+                Settings {
+                    property alias autopilotInfoVisible: autopilotInfoVisible.checked
+                }
+            }
             CCheck {
                 id: consoleVisible
                 text: qsTr("Console")

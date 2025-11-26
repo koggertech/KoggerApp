@@ -26,7 +26,7 @@ public:
 
     void setBottomTrackPtr(BottomTrack* bottomTrackPtr);
     void setSurfaceMeshPtr(SurfaceMesh* surfaceMeshPtr);
-    void onUpdatedBottomTrackData(const QVector<QPair<char, int>>& indxs);
+    void onUpdatedBottomTrackData(const QVector<QPair<char, int>>& indxs); // работает по индексам кеша рендера трека дна!
     void setTileResolution(float tileResolution);
     void setEdgeLimit(float val);
     void rebuildColorIntervals();

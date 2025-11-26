@@ -16,7 +16,7 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 public:
     Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
     Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
-    Q_PROPERTY(bool isEnabled WRITE setPlotEnabled)
+    Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled)
     Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
     Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
     Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
@@ -70,6 +70,7 @@ public slots:
     Q_INVOKABLE void onCursorMoved(int x, int y);
     Q_INVOKABLE void plotMouseTool(int mode);
     Q_INVOKABLE bool setContact(int indx, const QString& text);
+    Q_INVOKABLE bool setActiveContact(int indx);
     Q_INVOKABLE bool deleteContact(int indx);
     Q_INVOKABLE void updateContact();
 
@@ -84,6 +85,8 @@ public slots:
         auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(ch2Str);
 
         setDataChannel(true, ch1, sub1, name1, ch2, sub2, name2);
+
+        plotUpdate();
     }
 
     ChannelId plotDatasetChannel() { return cursor_.channel1; }
@@ -100,7 +103,7 @@ public slots:
     void plotRangefinderVisible(bool visible) { setRangefinderVisible(visible); }
     void plotRangefinderTheme(int theme_id) { setRangefinderTheme(theme_id); }
     void plotAttitudeVisible(bool visible) { setAttitudeVisible(visible); }
-
+    void plotTemperatureVisible(bool visible) { setTemperatureVisible(visible); }
     void plotDopplerBeamVisible(bool visible, int beam_filter) { setDopplerBeamVisible(visible, beam_filter); }
     void plotDopplerInstrumentVisible(bool visible) { setDopplerInstrumentVisible(visible); }
 
@@ -110,6 +113,7 @@ public slots:
 
     void plotGridVerticalNumber(int grids) { setGridVetricalNumber(grids); }
     void plotGridFillWidth(bool state) { setGridFillWidth(state); };
+    void plotGridInvert(bool state) { setGridInvert(state); };
     void plotAngleVisibility(bool state)   { setAngleVisibility(state); }
     void plotAngleRange(int angleRange) { setAngleRange(angleRange); }
     void plotVelocityVisible(bool visible) { setVelocityVisible(visible); }

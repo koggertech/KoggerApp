@@ -3,6 +3,14 @@
 #include <cmath>
 
 
+SurfaceTile::SurfaceTile() :
+    id_(QUuid::createUuid()),
+    origin_(QVector3D(-1.0f, -1.0f, -1.0f)),
+    textureId_(0),
+    isUpdated_(false),
+    isInited_(false)
+{}
+
 SurfaceTile::SurfaceTile(QVector3D origin) :
     id_(QUuid::createUuid()),
     origin_(origin),

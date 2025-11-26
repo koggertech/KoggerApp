@@ -4,7 +4,7 @@
         <file>MenuButton.qml</file>
         <file>CustomGroupBox.qml</file>
         <file>MenuViewer.qml</file>
-        <file>MenuBar.qml</file>
+        <file>MainMenuBar.qml</file>
         <file>ConnectionViewer.qml</file>
         <file>DeviceSettingsViewer.qml</file>
         <file>Console.qml</file>
@@ -97,6 +97,7 @@
         <file>CContact.qml</file>
         <file>Settings3DExtraSettings.qml</file>
         <file>IsobathsExtraSettings.qml</file>
+        <file>LocationExtraSettings.qml</file>
         <file>MosaicExtraSettings.qml</file>
     </qresource>
 </RCC>

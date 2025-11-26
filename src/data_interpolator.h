@@ -25,6 +25,10 @@ private:
     std::pair<time_t, int> convertFromNanosecs(qint64 totalNanoSecs) const; // first - secs, second - nanosecs
 
 private:
+    const quint64 oneSecInNsecs = 1000000000ULL;
+    const quint64 oneHundredNsecs = 100000000ULL;
+    const quint64 zeroNsecs = 0ULL;
+
     Dataset* datasetPtr_;
     int lastAttInterpIndx_;
     int lastPosInterpIndx_;

@@ -19,6 +19,9 @@ public:
     Q_INVOKABLE void onTrackLastDataCheckButtonCheckedChanged(bool state);
     Q_INVOKABLE void onUpdateBottomTrackCheckButtonCheckedChanged(bool state);
     Q_INVOKABLE void onGridVisibilityCheckedChanged(bool state);
+    Q_INVOKABLE void onUseAngleLocationButtonChanged(bool state);
+    Q_INVOKABLE void onNavigatorLocationButtonChanged(bool state);
+    Q_INVOKABLE void onIsNorthLocationButtonChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -36,6 +39,9 @@ private:
     bool trackLastData_;
     bool updateBottomTrack_;
     bool gridVisibility_;
+    bool useAngleLocation_;
+    bool navigatorViewLocation_;
+    bool isNorth_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

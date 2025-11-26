@@ -2,18 +2,20 @@
 # Script downloads tools in out_x64, generates AppDir, builds .AppImage
 
 
-set -e  # exit on any error
 
+set -e  # exit on any error
 # Get absolute project root path (script is in ./scripts)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+
+
 ############################################
 # 1. Project parameters
 # 1.1. Source files
-BIN_PATH="$ROOT_DIR/build/Desktop_Qt_5_15_2_GCC_64bit-Release/KoggerApp"
+BIN_PATH="$ROOT_DIR/build/Desktop_Qt_6_8_3-Release/KoggerApp"
 QML_DIR="$ROOT_DIR/qml"
-ICON_SOURCE="$ROOT_DIR/resources/icons/app/kogger_app.png"          # icon (512x512)
+ICON_SOURCE="$ROOT_DIR/resources/icons/app/kogger_app.png"      # icon (512x512)
 # 1.2. Result folders
 OUT_DIR="$ROOT_DIR/out_x64"
 APPDIR="$OUT_DIR/AppDir"                                        # AppDir
@@ -21,16 +23,21 @@ APPDIR="$OUT_DIR/AppDir"                                        # AppDir
 DESKTOP_FILE="$OUT_DIR/KoggerApp.desktop"                       # automatically generated if not
 ICON_DEST="$APPDIR/usr/share/icons/hicolor/512x512/apps/kogger_app.png"
 # 1.4. Qt system path
-QTDIR="$HOME/Qt/5.15.2/gcc_64"
-
+QMAKE6="/home/architect/Qt/6.8.3/gcc_64/bin/qmake"
+QTDIR="$("$QMAKE6" -query QT_INSTALL_PREFIX)"
+QML2_IMPORT_PATH="$("$QMAKE6" -query QT_INSTALL_QML)"
+QT_PLUGIN_PATH="$("$QMAKE6" -query QT_INSTALL_PLUGINS)"
 export QTDIR
 export PATH="$QTDIR/bin:$PATH"
-export QML2_IMPORT_PATH="$QTDIR/qml"
-export QT_PLUGIN_PATH="$QTDIR/plugins"
-
+export QML2_IMPORT_PATH
+export QT_PLUGIN_PATH
+export LD_LIBRARY_PATH="$QTDIR/lib:$LD_LIBRARY_PATH"
+export QML_SOURCES_PATHS="$QML_DIR"
 # 1.5. Set linuxdeploy, linuxdeploy-plugin-qt
 LINUXDEPLOY="$OUT_DIR/linuxdeploy-x86_64.AppImage"
 LINUXDEPLOY_QT="$OUT_DIR/linuxdeploy-plugin-qt-x86_64.AppImage"
+############################################
+
 
 
 ############################################
@@ -40,6 +47,8 @@ mkdir -p "$OUT_DIR"
 echo "==> Deleting old AppDir, if exist"
 rm -rf "$APPDIR"
 mkdir -p "$APPDIR"
+############################################
+
 
 
 ############################################
@@ -59,6 +68,8 @@ if [ ! -f "$LINUXDEPLOY_QT" ]; then
 else
   echo "==> linuxdeploy-plugin-qt already exist: $LINUXDEPLOY_QT"
 fi
+############################################
+
 
 
 ############################################
@@ -84,6 +95,8 @@ cp "$DESKTOP_FILE" "$APPDIR/usr/share/applications/"
 mkdir -p "$(dirname "$ICON_DEST")"  # usr/share/icons/hicolor/512x512/apps
 echo "==> Copy icon $ICON_SOURCE -> $ICON_DEST"
 cp "$ICON_SOURCE" "$ICON_DEST"
+############################################
+
 
 
 ############################################
@@ -92,30 +105,25 @@ echo "==> Copy binary file $BIN_PATH -> $APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/bin"
 cp "$BIN_PATH" "$APPDIR/usr/bin/"
 chmod +x "$APPDIR/usr/bin/KoggerApp"
-# 5.1 Copy QML modules manually #
-echo "==> Copy QML modules manually"
-QML_SRC="$QTDIR/qml"
-mkdir -p "$APPDIR/usr/qml/QtQuick"
-mkdir -p "$APPDIR/usr/qml/Qt/labs"
-cp -r "$QML_SRC/QtQuick/Controls.2" "$APPDIR/usr/qml/QtQuick/"
-cp -r "$QML_SRC/QtQuick/Dialogs" "$APPDIR/usr/qml/QtQuick/"
-cp -r "$QML_SRC/QtQuick/Layouts" "$APPDIR/usr/qml/QtQuick/"
-cp -r "$QML_SRC/QtQuick/Window.2" "$APPDIR/usr/qml/QtQuick/"
-cp -r "$QML_SRC/Qt/labs/settings" "$APPDIR/usr/qml/Qt/labs/"
+############################################
+
+
 
 ##########################################
 # 6. Building AppImage with linuxdeploy
 echo "==> Run linuxdeploy with --qmldir $QML_DIR"
 # Try set QML path through path for Qt plugin
-LINUXDEPLOY_PLUGIN_QT_QMLDIR="$QML_DIR" \
+QML_SOURCES_PATHS="$QML_DIR" \
 "$LINUXDEPLOY" \
   --appdir "$APPDIR" \
   --desktop-file "$APPDIR/usr/share/applications/$(basename "$DESKTOP_FILE")" \
   --icon-file "$ICON_DEST" \
-  -p qt \
+  --plugin qt \
   -o appimage
 # 6.1 Copy AppImage to $OUT_DIR
 mv KoggerApp-x86_64.AppImage "$OUT_DIR"/
+############################################
+
 
 
 ##########################################
@@ -128,3 +136,4 @@ echo "  chmod +x $OUT_DIR/KoggerApp*.AppImage"
 echo "  ./$OUT_DIR/KoggerApp*.AppImage"
 echo
 echo "Done."
+############################################

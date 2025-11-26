@@ -4,6 +4,9 @@
 #include "epoch_event.h"
 #include "text_renderer.h"
 
+#include "themes.h"
+extern Themes theme;
+
 
 Contacts::Contacts(QObject *parent) :
     SceneObject(new ContactsRenderImplementation, parent),
@@ -64,6 +67,14 @@ void Contacts::setContactVisible(bool state)
 
 void Contacts::clear()
 {
+    indx_ = -1;
+    positionX_ = -1;
+    positionY_ = -1;
+    info_.clear();
+    lat_ = 0.0;
+    lon_ = 0.0;
+    depth_ = 0.0;
+
     contactBounds_.clear();
     //datasetPtr_ = nullptr;
 
@@ -99,10 +110,10 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
             if (contact.isValid()) {
                 ContactInfo cInfo;
                 cInfo.info = contact.info;
-                cInfo.nedPos = { contact.nedX, contact.nedY, -contact.distance };
+                cInfo.nedPos = { contact.nedX, contact.nedY, -contact.depth };
                 cInfo.lat = contact.lat;
                 cInfo.lon = contact.lon;
-                cInfo.depth = contact.distance;
+                cInfo.depth = contact.depth;
 
                 r->points_.insert(epIndx, cInfo);
                 beenUpdated = true;
@@ -114,6 +125,12 @@ bool Contacts::eventFilter(QObject *watched, QEvent *event)
         if (r->points_.remove(epIndx)) {
             beenUpdated = true;
         }
+    }
+
+    if (event->type() == ContactActiveChanged) {
+        //qDebug() << "EVENT" << epIndx;
+        r->activeContactIndx_ = epIndx;
+        beenUpdated = true;
     }
 
     if (beenUpdated) {
@@ -174,12 +191,46 @@ bool Contacts::deleteContact(int indx)
 
     ep->contact_.clear();
 
+    if (datasetPtr_->getActiveContactIndx() == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+    }
+
     emit datasetPtr_->dataUpdate();
 
     auto* r = RENDER_IMPL(Contacts);
     r->points_.remove(indx);
+    r->contactBounds_.remove(indx);
 
     contactBounds_.remove(indx);
+
+    Q_EMIT changed();
+
+    return true;
+}
+
+bool Contacts::setActiveContact(int indx)
+{
+    if (!datasetPtr_) {
+        qDebug() << "Plot2D::setActiveContact returned: !_dataset";
+        return false;
+    }
+
+    auto* ep = datasetPtr_->fromIndex(indx);
+    if (!ep) {
+        qDebug() << "Plot2D::setActiveContact returned: !ep";
+        return false;
+    }
+
+    auto* r = RENDER_IMPL(Contacts);
+    auto currActiveIndx = datasetPtr_->getActiveContactIndx();
+    if (currActiveIndx == indx) {
+        datasetPtr_->setActiveContactIndx(-1);
+        r->activeContactIndx_ = -1;
+    }
+    else {
+        datasetPtr_->setActiveContactIndx(indx);
+        r->activeContactIndx_ = indx;
+    }
 
     Q_EMIT changed();
 
@@ -200,7 +251,14 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
     int intersectedEpochIndx = -1;
     QPointF cursorPos(x, y);
     for (auto it = contactBounds_.begin(); it != contactBounds_.end(); ++it) {
-        if (it.value().contains(cursorPos)) {
+        auto rect = it.value();
+
+        if (!std::isfinite(rect.x()) ||
+            !std::isfinite(rect.y())) {
+            continue;
+        }
+
+        if (rect.contains(cursorPos)) {
             intersectedEpochIndx = it.key();
             break;
         }
@@ -217,7 +275,7 @@ void Contacts::mouseMoveEvent(Qt::MouseButtons buttons, qreal x, qreal y)
                 info_ = ep->contact_.info;
                 lat_ = ep->contact_.lat;
                 lon_ = ep->contact_.lon;
-                depth_ = ep->contact_.distance;
+                depth_ = ep->contact_.depth;// echogramDistance;
             }
         }
     }
@@ -295,25 +353,26 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
     shaderProgram->bind();
 
-    float pointSize = 50.0f;
+    float pointSize = 50.0f * theme.getResolutionCoeff();
     int posLoc        = shaderProgram->attributeLocation ("position");
     int matrixLoc     = shaderProgram->uniformLocation   ("matrix");
     int colorLoc      = shaderProgram->uniformLocation   ("color");
     int widthLoc      = shaderProgram->uniformLocation   ("width");
     int isTriangleLoc = shaderProgram->uniformLocation   ("isTriangle");
+    int isPointLoc    = shaderProgram->uniformLocation   ("isPoint");
 
     shaderProgram->enableAttributeArray(posLoc);
 
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+    shaderProgram->setUniformValue(isPointLoc,    false);
     shaderProgram->setUniformValue(isTriangleLoc, true);
     shaderProgram->setUniformValue(widthLoc, pointSize);
 
 
     QRectF vport = DrawUtils::viewportRect(ctx);
 
-#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
     ctx->glEnable(34370);
-#endif
+    ctx->glEnable(34913);
 
     for (auto it = points_.begin(); it != points_.end(); ++it) {
         if (!isfinite(it->lat) || !isfinite(it->lon)) {
@@ -327,18 +386,19 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         const_cast<ContactsRenderImplementation*>(this)->contactBounds_.insert(it.key(), markerRect);
 
         bool isIntersects = it.key() == intersectedEpochIndx_;
-        shaderProgram->setUniformValue(colorLoc, isIntersects ? QVector4D(0.0f, 0.67f, 0.0f, 1.0f) : QVector4D(0.67f, 0.0f, 0.0f, 1.0f));
+        QVector4D markerColor = isIntersects ? QVector4D(0.0f, 0.67f, 0.0f, 1.0f) : (activeContactIndx_ == it.key() ? QVector4D(0.0f, 0.0f, 0.67f, 1.0f) : QVector4D(0.67f, 0.0f, 0.0f, 1.0f));
+        shaderProgram->setUniformValue(colorLoc, markerColor);
         QVector<QVector3D> vecP = { p };
         shaderProgram->setAttributeArray(posLoc, vecP.constData());
         ctx->glDrawArrays(GL_POINTS, 0, vecP.size());
     }
 
-#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
-    ctx->glDisable(34370);
-#endif
+    ctx->glDisable(34370); // GL_PROGRAM_POINT_SIZE
+    ctx->glDisable(34913); // GL_POINT_SPRITE
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->setUniformValue(isTriangleLoc, false);
+    shaderProgram->setUniformValue(isPointLoc,    false);
     shaderProgram->release();
 
     // text, textback
@@ -363,6 +423,8 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
 
 void Contacts::ContactsRenderImplementation::clear()
 {
+    activeContactIndx_ = -1;
     intersectedEpochIndx_ = -1;
     points_.clear();
+    contactBounds_.clear();
 }

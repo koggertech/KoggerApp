@@ -56,5 +56,5 @@ protected:
 
 private:
     Dataset* datasetPtr_;
-    QHash<int, int> selectedIndices_;
+    int lastIndx_;
 };

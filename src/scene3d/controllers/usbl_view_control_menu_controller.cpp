@@ -1,7 +1,6 @@
 #include "usbl_view_control_menu_controller.h"
 
 #include "scene3d_view.h"
-#include <random>
 
 
 UsblViewControlMenuController::UsblViewControlMenuController(QObject *parent) :

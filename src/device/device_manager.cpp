@@ -1,6 +1,7 @@
 #include "device_manager.h"
 #include "device_defs.h"
 #include <QDateTime>
+#include "location_reader.h"
 #include "core.h"
 extern Core core;
 
@@ -9,6 +10,7 @@ DeviceManager::DeviceManager()
     : lastDevs_(nullptr),
       lastDevice_(nullptr),
       mavlinkLink_(nullptr),
+      streamList_(this),
       lastAddress_(-1),
       progress_(0),
       isConsoled_(false),
@@ -83,6 +85,11 @@ int DeviceManager::calcAverageChartLosses()
     return retVal;
 }
 
+void DeviceManager::initStreamList()
+{
+    streamList_.initTimer();
+}
+
 QList<DevQProperty *> DeviceManager::getDevList()
 {
     devList_.clear();
@@ -114,8 +121,12 @@ QList<DevQProperty *> DeviceManager::getDevList(BoardVersion ver) {
     return list;
 }
 
-void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
+void DeviceManager::frameInput(QUuid uuid, Link* link, Parsers::FrameParser frame)
 {
+    if (loggingStarted_) {
+        emit sendFrameInputToLogger(uuid, link, frame);
+    }
+
     if (frame.isComplete()) {
 
 // #if !defined(Q_OS_ANDROID)
@@ -141,7 +152,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
             DevQProperty* dev = getDevice(uuid, link, frame.route());
 
             if (isConsoled_ && link && !(frame.id() == 32 || frame.id() == 33)) { // link ptr check added
+#ifndef SEPARATE_READING
                 core.consoleProto(frame);
+#endif
             }
 
 #if !defined(Q_OS_ANDROID)
@@ -176,8 +189,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
         if (frame.isCompleteAsNMEA()) {
             ProtoNMEA& prot_nmea = (ProtoNMEA&)frame;
             QString str_data = QByteArray((char*)prot_nmea.frame(), prot_nmea.frameLen() - 2);
+#ifndef SEPARATE_READING
             core.consoleInfo(QString(">> NMEA: %5").arg(str_data));
-
+#endif
             if (prot_nmea.isEqualId("DBT")) {
                 prot_nmea.skip();
                 prot_nmea.skip();
@@ -205,10 +219,15 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     prot_nmea.skip();
 
                     uint16_t year = 0;
-                    uint8_t mounth = 0, day = 0;
-                    prot_nmea.readDate(&year, &mounth, & day);
+                    uint8_t month = 0, day = 0;
+                    prot_nmea.readDate(&year, &month, & day);
 
-                    uint32_t unix_time = QDateTime(QDate(year, mounth, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
+                    QDate date(year, month, day);
+                    QTime time(h, m, s);
+
+                    QDateTime dt(date, time, QTimeZone::utc());
+                    uint32_t unix_time = static_cast<uint32_t>(dt.toSecsSinceEpoch());
+
                     emit positionComplete(lat, lon, unix_time, (uint32_t)ms*1000*1000);
                 }
             }
@@ -232,7 +251,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 if (q == '1' || q == '2' || q == '4' || q == '5') {
                     uint16_t year = 1971;
-                    uint8_t mounth = 1, day = 1;
+                    uint8_t month = 1, day = 1;
 
                     Position pos;
                     pos.lla.latitude = lat;
@@ -240,7 +259,7 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     pos.lla.altitude = height_msl;
                     pos.lla.source = PositionSourceRTK;
                     pos.lla.altSource = AltitudeSourceRTK;
-                    pos.time = DateTime(year, mounth, day, h, m, s, int64_t(ms)*1000*1000);
+                    pos.time = DateTime(year, month, day, h, m, s, int64_t(ms)*1000*1000);
 
                     if(q == '4') {
                         emit positionCompleteRTK(pos);
@@ -276,24 +295,33 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
 
                 ubx_frame.read<U1>();
                 uint8_t satellites_in_used = ubx_frame.read<U1>();
+                Q_UNUSED(satellites_in_used)
 
                 int32_t lon_int = ubx_frame.read<S4>();
                 int32_t lat_int = ubx_frame.read<S4>();
 
-                uint32_t unix_time = QDateTime(QDate(year, month, day), QTime(h, m, s), Qt::TimeSpec::UTC).toSecsSinceEpoch();
+                QDate date(year, month, day);
+                QTime time(h, m, s);
+
+                QDateTime dt(date, time, QTimeZone::utc());
+                uint32_t unix_time = static_cast<uint32_t>(dt.toSecsSinceEpoch());
 
                 if (fix_type > 1 && fix_type < 5) {
                     emit positionComplete(double(lat_int)*0.0000001, double(lon_int)*0.0000001, unix_time, nanosec);
                 }
 
                 // if (isConsoled_) {
+#ifndef SEPARATE_READING
                     core.consoleInfo(QString(">> UBX: NAV_PVT, fix %1, sats %2, lat %3, lon %4, time %5:%6:%7.%8")
                                          .arg(fix_type).arg(satellites_in_used).arg(double(lat_int)*0.0000001).arg(double(lon_int)*0.0000001).arg(h).arg(m).arg(s).arg(nanosec/1000));
-                // }
+#endif
+                    // }
             }
             else {
                 // if (isConsoled_)
+#ifndef SEPARATE_READING
                     core.consoleInfo(QString(">> UBX: class/id 0x%1 0x%2, len %3").arg(ubx_frame.msgClass(), 2, 16, QLatin1Char('0')).arg(ubx_frame.msgId(), 2, 16, QLatin1Char('0')).arg(ubx_frame.frameLen()));
+#endif
             }
         }
 
@@ -337,7 +365,9 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                     vru_.armState = (int)heartbeat.isArmed();
                     int flight_mode = (int)heartbeat.customMode();
                     if (flight_mode != vru_.flightMode) {
+#ifndef SEPARATE_READING
                         core.consoleInfo(QString(">> FC: Flight mode %1").arg(flight_mode));
+#endif
                     }
                     vru_.flightMode = flight_mode;
                     emit vruChanged();
@@ -361,8 +391,10 @@ void DeviceManager::frameInput(QUuid uuid, Link* link, FrameParser frame)
                         emit attitudeComplete(yaw, attitude.pitchDeg(), attitude.rollDeg());
                     }
                 }
+#ifndef SEPARATE_READING
 
                 core.consoleInfo(QString(">> MAVLink v%1: ID %2, comp. id %3, seq numb %4, len %5").arg(mavlink_frame.MAVLinkVersion()).arg(mavlink_frame.msgId()).arg(mavlink_frame.componentID()).arg(mavlink_frame.sequenceNumber()).arg(mavlink_frame.frameLen()));
+#endif
             }
             else {
                 if (link != nullptr) {
@@ -463,8 +495,8 @@ void DeviceManager::openFile(QString filePath)
                 file.close();
                 return;
             }
-            if (sleepCnt > 500) {
-                QThread::msleep(50);
+            if (sleepCnt > 50) {
+                QThread::msleep(1);
                 sleepCnt = 0;
             }
             ++sleepCnt;
@@ -520,7 +552,9 @@ void DeviceManager::onLinkOpened(QUuid uuid, Link *link)
             proxyLinkUuid_ = uuid;
             connect(this, &DeviceManager::writeProxyFrame, link, &Link::writeFrame);
         } else if(link->attribute() == LinkAttribute::kLinkAttributeBoot) {
+#ifndef SEPARATE_READING
             core.consoleInfo("Device: Boot opened");
+#endif
         } else {
             getDevice(uuid, link, 0);
         }
@@ -555,10 +589,12 @@ void DeviceManager::onLinkDeleted(QUuid uuid, Link *link)
     }
 }
 
-void DeviceManager::binFrameOut(ProtoBinOut protoOut)
+void DeviceManager::binFrameOut(Parsers::ProtoBinOut protoOut)
 {
     if (isConsoled_ && protoOut.id() != 33) {
+#ifndef SEPARATE_READING
         core.consoleProto(protoOut, false);
+#endif
     }
     emit sendProtoFrame(protoOut);
 }
@@ -611,12 +647,16 @@ void DeviceManager::setUSBLBeaconDirectAsk(bool is_ask) {
     }
 }
 
-void DeviceManager::onLoggingKlfStarted()
+void DeviceManager::onLoggingKlfStarted(bool started)
 {
-    for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
-        QHash<int, DevQProperty*> devs = i.value();
-        for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
-            k.value()->requestSetup();
+    loggingStarted_ = started;
+
+    if (loggingStarted_) {
+        for (auto i = devTree_.cbegin(), end = devTree_.cend(); i != end; ++i) {
+            QHash<int, DevQProperty*> devs = i.value();
+            for (auto k = devs.cbegin(), end = devs.cend(); k != end; ++k) {
+                k.value()->requestSetup();
+            }
         }
     }
 }
@@ -678,6 +718,75 @@ void DeviceManager::onUpgradingFirmwareDone()
     upgradeUuid_ = QUuid();
     upgradeAddr_ = 0;
     upgradeData_.clear();
+}
+
+void DeviceManager::createLocationReader()
+{
+    //qDebug() << "DeviceManager::createLocationReader";
+
+    if (locReader_) {
+        return;
+    }
+
+    locReader_ = new LocationReader(this);
+    connect(locReader_, &LocationReader::positionUpdated, this, &DeviceManager::onPositionUpdated, Qt::QueuedConnection);
+    connect(locReader_, &LocationReader::gpsAlive, &core, &Core::setIsGPSAlive, Qt::QueuedConnection);
+}
+
+void DeviceManager::destroyLocationReader()
+{
+    if (!locReader_) {
+        return;
+    }
+
+    locReader_->deleteLater();
+    locReader_ = nullptr;
+}
+
+void DeviceManager::shutdown()
+{
+    destroyLocationReader();
+}
+
+void DeviceManager::onPositionUpdated(const QGeoPositionInfo &info)
+{
+    if (!useGPS_) {
+        return;
+    }
+
+    IDBinNav::SimpleNav smplNav;
+    smplNav.latitude = info.coordinate().latitude();
+    smplNav.longitude = info.coordinate().longitude();
+    smplNav.depth = 0;
+    smplNav.yaw = info.attribute(QGeoPositionInfo::Attribute::Direction) ;
+    smplNav.pitch = 0;
+    smplNav.roll = 0;
+
+    emit positionComplete(smplNav.latitude, smplNav.longitude, info.timestamp().toSecsSinceEpoch(), info.timestamp().toMSecsSinceEpoch());
+    emit attitudeComplete(smplNav.yaw, 0.0, 0.0);
+
+    // LOGGING
+    if (loggingStarted_) {
+        ProtoBinOut req_out;
+        req_out.create(Parsers::CONTENT, IDBinNav::SimpleNav::getVer(), IDBinNav::SimpleNav::getId(), 0/*m_address*/);
+        req_out.write<IDBinNav::SimpleNav>(smplNav);
+        req_out.end();
+
+        //QString str1 = "emit coords 1 " + QString::number(smplNav.latitude, 'f', 4) + " " + QString::number(smplNav.longitude, 'f', 4) + " " + QString::number(smplNav.depth, 'f', 4) + " "
+        //+ QString::number(smplNav.yaw, 'f', 4) + " " + QString::number(smplNav.pitch, 'f', 4) + " " + QString::number(smplNav.roll, 'f', 4);
+        //core.consoleInfo(str1);
+        //QString str2 = "emit coords 2 " + QString::number(req_out.binError()) + " " + QString::number(req_out.isComplete()) + " " + QString::number(req_out.payloadLen()) + " " + QString::number(req_out.frameLen()) + " "
+        //               + QString::number(req_out.readAvailable()) + " " + QString::number(req_out.availContext());
+        //core.consoleInfo(str2);
+
+        emit sendFrameInputToLogger(QUuid(), nullptr, req_out);
+    }
+}
+
+void DeviceManager::setUseGPS(bool state)
+{
+    //qDebug() << "DeviceManager::setUseGPS" << state;
+    useGPS_ = state;
 }
 
 DevQProperty* DeviceManager::getDevice(QUuid uuid, Link *link, uint8_t addr)
@@ -765,11 +874,15 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete, connType);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved, connType);
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete, connType);
+    connect(dev, &DevQProperty::tempComplete, this, &DeviceManager::tempComplete, connType);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete, connType);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete, connType);
     connect(dev, &DevQProperty::dopplerBeamComplete, this, &DeviceManager::dopplerBeamComlete, connType);
     connect(dev, &DevQProperty::dvlSolutionComplete, this, &DeviceManager::dvlSolutionComplete, connType);
     connect(dev, &DevQProperty::upgradeProgressChanged, this, &DeviceManager::upgradeProgressChanged, connType);
+
+    connect(dev, &DevQProperty::positionComplete, this, &DeviceManager::positionComplete, connType);
+    connect(dev, &DevQProperty::depthComplete, this, &DeviceManager::depthComplete, connType);
 
     dev->moveToThread(qApp->thread());
     dev->getProcessTimer()->moveToThread(qApp->thread());
@@ -801,6 +914,7 @@ DevQProperty* DeviceManager::createDev(QUuid uuid, Link* link, uint8_t addr)
     connect(dev, &DevQProperty::chartComplete, this, &DeviceManager::chartComplete);
     connect(dev, &DevQProperty::rawDataRecieved, this, &DeviceManager::rawDataRecieved);
     connect(dev, &DevQProperty::attitudeComplete, this, &DeviceManager::attitudeComplete);
+    connect(dev, &DevQProperty::tempComplete, this, &DeviceManager::tempComplete);
     connect(dev, &DevQProperty::distComplete, this, &DeviceManager::distComplete);
     connect(dev, &DevQProperty::usblSolutionComplete, this, &DeviceManager::usblSolutionComplete);
     connect(dev, &DevQProperty::beaconActivationComplete, this, &DeviceManager::beaconActivationReceive);

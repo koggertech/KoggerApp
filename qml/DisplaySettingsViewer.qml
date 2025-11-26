@@ -1,8 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
 
 MenuScroll {
     id: scrollBar
@@ -12,6 +11,8 @@ MenuScroll {
     property int instruments: displaySettings.instruments
     property var targetPlot: null
     property int menuWidth: 200
+    property bool extraInfoVis: displaySettings.extraInfoVis
+    property bool autopilotInfofVis: displaySettings.autopilotInfofVis
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()

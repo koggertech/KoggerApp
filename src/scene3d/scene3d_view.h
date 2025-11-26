@@ -116,6 +116,15 @@ public:
         LLARef datasetLlaRef_;
         LLA yerevanLla = LLA(40.1852f, 44.5149f, 0.0f);
         LLARef viewLlaRef_ = LLARef(yerevanLla);
+
+        // yaw фильтр
+        float navYawFilteredRad_        = 0.f;
+        bool  navYawInited_             = false;
+        QElapsedTimer navYawTmr_;
+        float navYawTauSec_             = 1.2;
+        float navYawDeadbandRad_        = qDegreesToRadians(2.0f);
+        float navYawMaxRateRadPerSec_   = qDegreesToRadians(90.0f);
+        float navYawSnapRad_            = qDegreesToRadians(120.0f);
     };
 
     //Renderer
@@ -208,9 +217,11 @@ public:
     void setTrackLastData(bool state);
     void setTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void setGridVisibility(bool state);
+    void setUseAngleLocation(bool state);
+    void setNavigatorViewLocation(bool state);
 
 protected:
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
@@ -218,7 +229,7 @@ public Q_SLOTS:
     void setIsometricView();
     void setCancelZoomView();
     void setMapView();
-    void setLastEpochFocusView();
+    void setLastEpochFocusView(bool useAngle, bool useNavigatorView);
     void setIdleMode();
     void setVerticalScale(float scale);
     void shiftCameraZAxis(float shift);
@@ -235,6 +246,7 @@ public Q_SLOTS:
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
+    void setIsNorth(bool state);
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -246,6 +258,7 @@ private:
     void updateBounds();
     void updatePlaneGrid();
     void clearComboSelectionRect();
+    void initAutoDistTimer();
 
 private:
     friend class BottomTrack;
@@ -296,12 +309,16 @@ private:
 
     bool wasMoved_;
     Qt::MouseButtons wasMovedMouseButton_;
-    QObject* qmlRootObject_ = nullptr;
+    QObject* qmlRootObject_;
     bool switchedToBottomTrackVertexComboSelectionMode_;
     bool needToResetStartPos_;
     float lastCameraDist_;
     bool trackLastData_;
-    bool gridVisibility_ = true;
+    bool gridVisibility_;
+    bool useAngleLocation_;
+    bool navigatorViewLocation_;
+    bool isNorth_;
+    QTimer* testingTimer_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

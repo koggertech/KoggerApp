@@ -174,6 +174,11 @@ bool qPlot2D::setContact(int indx, const QString& text)
     return Plot2D::setContact(indx, text);
 }
 
+bool qPlot2D::setActiveContact(int indx)
+{
+    return Plot2D::setActiveContact(indx);
+}
+
 bool qPlot2D::deleteContact(int indx)
 {
     return Plot2D::deleteContact(indx);
@@ -219,7 +224,8 @@ void qPlot2D::doDistProcessing(int preset, int window_size, float vertical_gap, 
                                       Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel1, cursor_.subChannel1)),
                                       Q_ARG(DatasetChannel, DatasetChannel(cursor_.channel2, cursor_.subChannel2)),
                                       Q_ARG(BottomTrackParam, *btpPtr),
-                                      Q_ARG(bool, manual));
+                                      Q_ARG(bool, manual),
+                                      Q_ARG(bool, true)/*redraw all*/);
         }
     }
     plotUpdate();

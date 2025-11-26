@@ -1,5 +1,4 @@
 #include "point_group.h"
-#include "draw_utils.h"
 
 PointGroup::PointGroup(QObject *parent)
     : SceneObject(new PointGroupRenderImplementation, parent)
@@ -127,8 +126,9 @@ void PointGroup::PointGroupRenderImplementation::updateBounds()
 {
     Cube bounds;
 
-    for(const auto& pointRenderImpl : m_pointRenderImplList)
-        bounds.merge(pointRenderImpl.bounds());
+    for (auto it = m_pointRenderImplList.cbegin(); it != m_pointRenderImplList.cend(); ++it) {
+        bounds.merge(it->bounds());
+    }
 
     m_bounds = std::move(bounds);
 }

@@ -62,7 +62,7 @@ public slots:
     void setMaxZ(float v);
 
     // tasks
-    void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual);
+    void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll);
     void processBundle(const WorkBundle& wb); // выполнить пачку задач последовательно
 
 signals:

@@ -24,7 +24,8 @@ public:
             info.clear();
             lat      = 0.0f;
             lon      = 0.0f;
-            distance = 0.0f;
+            echogramDistance = 0.0f;
+            depth    = 0.0f;
             nedX     = 0.0f;
             nedY     = 0.0f;
             cursorX  = -1;
@@ -35,7 +36,8 @@ public:
         QString info;
         float   lat = 0.0f;
         float   lon = 0.0f;
-        float   distance = 0.0f;
+        float   echogramDistance = 0.0f;
+        float   depth = 0.0f;
         float   nedX = 0.0f;
         float   nedY = 0.0f;
         int     cursorX = -1;
@@ -43,36 +45,36 @@ public:
         QRectF  rectEcho;
     };
 
-    typedef struct {
-        typedef enum {
+    struct DistProcessing {
+        enum class DistanceSource {
             DistanceSourceNone = 0,
             DistanceSourceProcessing,
             DistanceSourceLoad,
             DistanceSourceConstrainHand,
             DistanceSourceDirectHand,
-        } DistanceSource;
+        };
 
         float distance = NAN;
         float min = NAN;
         float max = NAN;
-        DistanceSource source = DistanceSourceNone;
+        DistanceSource source = DistanceSource::DistanceSourceNone;
 
         Position bottomPoint;
 
         bool isDist() const { return isfinite(distance); }
-        void setDistance(float dist, DistanceSource src = DistanceSourceNone) { distance = dist; source = src; }
-        void clearDistance(DistanceSource src = DistanceSourceNone) { distance = NAN; source = src; }
-        void resetDistance() { distance = NAN; source = DistanceSourceNone; }
+        void setDistance(float dist, DistanceSource src = DistanceSource::DistanceSourceNone) { distance = dist; source = src; }
+        void clearDistance(DistanceSource src = DistanceSource::DistanceSourceNone) { distance = NAN; source = src; }
+        void resetDistance() { distance = NAN; source = DistanceSource::DistanceSourceNone; }
         float getDistance() const { return distance; }
 
-        void setMin(float val, DistanceSource src = DistanceSourceNone) {
+        void setMin(float val, DistanceSource src = DistanceSource::DistanceSourceNone) {
             min = val;
             if(max != NAN && val + 0.05 > max) {
                 max = val + 0.05;
             }
             source = src;
         }
-        void setMax(float val, DistanceSource src = DistanceSourceNone) {
+        void setMax(float val, DistanceSource src = DistanceSource::DistanceSourceNone) {
             max = val;
             if(min != NAN && val - 0.05 < min) {
                 min = val - 0.05;
@@ -82,7 +84,7 @@ public:
 
         float getMax() const { return max; }
         float getMin() const { return min; }
-    } DistProcessing;
+    };
 
     struct Echogram {
         QVector<uint8_t> amplitude;
@@ -165,6 +167,7 @@ public:
     void setDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void setPositionLLA(double lat, double lon, LLARef* ref = NULL, uint32_t unix_time = 0, int32_t nanosec = 0);
     void setPositionLLA(Position position);
+    void setSonarPosition(Position val);
     void setPositionLLA(const LLA& lla);
     void setPositionNED(const NED& ned);
     void setExternalPosition(Position position);
@@ -178,6 +181,8 @@ public:
     void setPositionDataType(DataType dataType);
     DataType getPositionDataType() const { return _positionGNSS.dataType; };
 
+    void setSonarPositionDataType(DataType dataType);
+    DataType getSonarPositionDataType() const { return sonarPosition_.dataType; };
     void setComplexF(const ChannelId& channelId, int group, QVector<ComplexSignal> signal);
     ComplexSignals& complexSignals() { return _complex; }
     //ComplexSignal complexSignal(const ChannelId& channelId) { return _complex[channelId]; }
@@ -204,7 +209,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.setDistance(dist, DistProcessing::DistanceSourceDirectHand);
+                iEchogram.bottomProcessing.setDistance(dist, DistProcessing::DistanceSource::DistanceSourceDirectHand);
             }
         }
     }
@@ -213,7 +218,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.clearDistance(DistProcessing::DistanceSourceDirectHand);
+                iEchogram.bottomProcessing.clearDistance(DistProcessing::DistanceSource::DistanceSourceDirectHand);
             }
         }
     }
@@ -222,7 +227,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.setMin(dist, DistProcessing::DistanceSourceConstrainHand);
+                iEchogram.bottomProcessing.setMin(dist, DistProcessing::DistanceSource::DistanceSourceConstrainHand);
             }
         }
     }
@@ -231,7 +236,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.setMax(dist, DistProcessing::DistanceSourceConstrainHand);
+                iEchogram.bottomProcessing.setMax(dist, DistProcessing::DistanceSource::DistanceSourceConstrainHand);
             }
         }
     }
@@ -410,6 +415,7 @@ public:
 
     Position getPositionGNSS() { return _positionGNSS; }
     Position getExternalPosition() { return _positionExternal; }
+    Position getSonarPosition() { return sonarPosition_; }
 
     uint32_t positionTimeUnix() { return _positionGNSS.time.sec; }
     uint32_t positionTimeNano() { return _positionGNSS.time.nanoSec; }
@@ -586,6 +592,7 @@ protected:
 
     Position _positionGNSS;
     Position _positionExternal;
+    Position sonarPosition_;
 
     struct {
         double hspeed = NAN;
@@ -617,6 +624,7 @@ protected:
         bool distAvail = false;
 
         bool posAvail = false;
+        bool sonarPosAvail = false;
 
         bool tempAvail = false;
         bool isDVLSolutionAvail = false;

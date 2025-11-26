@@ -2,12 +2,12 @@ import QtQuick 2.15
 import SceneGraphRendering 1.0
 import QtQuick.Window 2.15
 import QtQuick.Layouts 1.15
-import Qt.labs.settings 1.1
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs
 import QtQuick.Controls 2.15
 import WaterFall 1.0
 import KoggerCommon 1.0
 import BottomTrack 1.0
+import QtCore
 
 
 ApplicationWindow  {
@@ -171,13 +171,13 @@ ApplicationWindow  {
     DropArea {
         anchors.fill: parent
 
-        onEntered: {
+        onEntered: function(drag) {
             if (!showBanner) {
                 draggedFilePath = ""
                 if (drag.hasUrls) {
                     for (var i = 0; i < drag.urls.length; ++i) {
                         var url = drag.urls[i]
-                        var filePath = url.replace("file:///", "").toLowerCase()
+                        var filePath = url.toString().replace("file:///", "").toLowerCase()
                         if (filePath.endsWith(".klf") ||
                             filePath.endsWith(".xtf")) {
                             draggedFilePath = filePath
@@ -217,7 +217,7 @@ ApplicationWindow  {
         anchors.fill:      parent
         orientation:       Qt.Vertical
 
-        Keys.onReleased: {
+        Keys.onReleased: function(event) {
             let sc = event.nativeScanCode.toString()
             let hotkeyData = hotkeysMapScan[sc];
             if (hotkeyData === undefined) {
@@ -450,7 +450,7 @@ ApplicationWindow  {
 
             property int lastKeyPressed: Qt.Key_unknown
 
-            Keys.onPressed: {
+            Keys.onPressed: function(event) {
                 visualisationLayout.lastKeyPressed = event.key;
             }
 
@@ -460,7 +460,7 @@ ApplicationWindow  {
 
             GraphicsScene3dView {
                 id:                renderer
-                visible: menuBar.is3DVisible
+                visible: (menuBar !== null) ? menuBar.is3DVisible : false
                 objectName: "GraphicsScene3dView"
                 Layout.fillHeight: true
                 Layout.fillWidth:  true
@@ -508,11 +508,11 @@ ApplicationWindow  {
                             mousearea3D.forceActiveFocus();
                         }
 
-                        onWheel: {
+                        onWheel: function(wheel) {
                             renderer.mouseWheelTrigger(wheel.buttons, wheel.x, wheel.y, wheel.angleDelta, visualisationLayout.lastKeyPressed)
                         }
 
-                        onPositionChanged: {
+                        onPositionChanged: function(mouse) {
                             if (Qt.platform.os === "android") {
                                 if (!wasMoved) {
                                     var delta = Math.sqrt(Math.pow((mouse.x - startMousePos.x), 2) + Math.pow((mouse.y - startMousePos.y), 2));
@@ -531,7 +531,7 @@ ApplicationWindow  {
                             renderer.mouseMoveTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
-                        onPressed: {
+                        onPressed: function(mouse) {
                             menuBlock.visible = false
                             startMousePos = Qt.point(mouse.x, mouse.y)
                             wasMoved = false
@@ -543,7 +543,7 @@ ApplicationWindow  {
                             renderer.mousePressTrigger(mouse.buttons, mouse.x, mouse.y, visualisationLayout.lastKeyPressed)
                         }
 
-                        onReleased: {
+                        onReleased: function(mouse) {
                             startMousePos = Qt.point(-1, -1)
                             wasMoved = false
                             longPressTimer.stop()
@@ -594,6 +594,9 @@ ApplicationWindow  {
 
                     onInputAccepted: {
                         contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
+                    }
+                    onSetActiveButtonClicked: {
+                        contacts.setActiveContact(contactDialog.indx)
                     }
                     onSetButtonClicked: {
                         contacts.setContact(contactDialog.indx, contactDialog.inputFieldText)
@@ -787,7 +790,7 @@ ApplicationWindow  {
                         stepSize: 0.0001
                         from: 0
                         to: 1
-
+                        barWidth: 50 * theme.resCoeff
                         onValueChanged: {
                             core.setTimelinePosition(value);
                         }
@@ -807,10 +810,149 @@ ApplicationWindow  {
         }
     }
 
+
+    MenuFrame {
+        id: extraInfoPanel
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 12
+        visible: menuBar.extraInfoVis && !showBanner && dataset.isBoatCoordinateValid
+        isDraggable: true
+        isOpacityControlled: true
+        horizontalMargins: 12
+        verticalMargins: 10
+        spacing: 8
+
+        function lpad(s, w, ch) {
+            s = String(s)
+            while (s.length < w) s = (ch || ' ') + s
+            return s
+        }
+        function formatFixed(value, fracDigits, intWidth) {
+            if (!isFinite(value)) return lpad("-", intWidth + 1 + fracDigits)
+            var sign = value < 0 ? "-" : " "
+            var abs  = Math.abs(value)
+            var s    = abs.toFixed(fracDigits)
+            var p    = s.split(".")
+            var intP = lpad(p[0], intWidth, " ")
+            return sign + intP + (fracDigits > 0 ? "." + p[1] : "")
+        }
+        function toDMS(value, isLat) {
+            var hemi = isLat ? (value >= 0 ? "N" : "S") : (value >= 0 ? "E" : "W");
+            var abs  = Math.abs(value)
+            var s    = abs.toFixed(4)
+            var p    = s.split(".")
+            var intP = lpad(p[0], 3, " ")
+            return hemi + " " + intP + "." + p[1]
+        }
+
+        property string latDms: ""
+        property string lonDms: ""
+        property string distStr: ""
+        property string angStr: ""
+        property string depthStr: ""
+        property string speedStr: ""
+
+        function updateFields() {
+            latDms   = toDMS(dataset.boatLatitude,  true)  + qsTr("°")
+            lonDms   = toDMS(dataset.boatLongitude, false) + qsTr("°")
+            distStr  = formatFixed(dataset.distToContact, 1, 3) + qsTr(" m")
+            angStr   = formatFixed(dataset.angleToContact, 1, 3) + qsTr("°")
+            depthStr = formatFixed(dataset.depth, 1, 3) + qsTr(" m")
+            speedStr = formatFixed(dataset.speed, 1, 3) + qsTr(" km/h")
+        }
+
+        Timer {
+            interval: 333
+            repeat: true
+            running: extraInfoPanel.visible
+            triggeredOnStart: true
+            onTriggered: extraInfoPanel.updateFields()
+        }
+
+        ColumnLayout {
+            spacing: 6
+
+            ColumnLayout {
+
+                CText {
+                    visible: dataset.isLastDepthValid
+                    text: extraInfoPanel.depthStr
+                    font.bold: true
+                    font.pixelSize: 40 * theme.resCoeff
+                    font.family: "monospace"
+                    leftPadding: 4
+                }
+
+                CText {
+                    visible: dataset.isValidSpeed
+                    text: extraInfoPanel.speedStr
+                    font.bold: true
+                    font.pixelSize: 40 * theme.resCoeff
+                    font.family: "monospace"
+                    leftPadding: 4
+                }
+            }
+
+            ColumnLayout {
+                visible: dataset.isBoatCoordinateValid
+
+                CText {
+                    text: qsTr("Boat position")
+                    leftPadding: 4
+                    rightPadding: 4
+                    font.bold: true
+                    font.pixelSize: 16 * theme.resCoeff
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Lat.:"); opacity: 0.7; leftPadding: 4; }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.latDms; }
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Lon.:"); opacity: 0.7; leftPadding: 4; }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.lonDms; }
+                }
+            }
+
+            ColumnLayout {
+                visible: dataset.isActiveContactIndxValid
+
+                CText {
+                    text: qsTr("Active point")
+                    leftPadding: 4
+                    rightPadding: 4
+                    font.bold: true
+                    font.pixelSize: 16 * theme.resCoeff
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Dist.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.distStr; }
+                }
+
+                RowLayout {
+                    spacing: 6
+                    CText { text: qsTr("Ang.:"); opacity: 0.7; leftPadding: 4 }
+                    Item  { Layout.fillWidth: true }
+                    CText { text: extraInfoPanel.angStr; }
+                }
+            }
+        }
+    }
+
+    // бровь
     MenuFrame {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: (deviceManagerWrapper.pilotArmState >= 0) && !showBanner
+        visible: !showBanner && (deviceManagerWrapper.pilotArmState >= 0) && menuBar.autopilotInfofVis
         isDraggable: true
         isOpacityControlled: true
         Keys.forwardTo: [splitLayer]
@@ -932,7 +1074,7 @@ ApplicationWindow  {
         }
     }
 
-    MenuBar {
+    MainMenuBar {
         id:                menuBar
         objectName:        "menuBar"
         Layout.fillHeight: true

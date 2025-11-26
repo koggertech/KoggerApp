@@ -3,10 +3,9 @@
 #include <QColor>
 #include <QThread>
 #include "qml_component_controller.h"
-//#include "usbl_view.h"
+#include "usbl_view.h"
 
 
-class UsblView;
 class GraphicsScene3dView;
 class UsblViewControlMenuController : public QmlComponentController
 {

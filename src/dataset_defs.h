@@ -510,3 +510,64 @@ struct RecordParameters {
 };
 
 typedef QMap<ChannelId, QMap<int, QVector<ComplexSignal>>> ComplexSignals;
+
+static inline double norm360(double a)
+{
+    a = std::fmod(a, 360.0);
+    if (a < 0.0) {
+        a += 360.0;
+    }
+
+    return a;
+}
+static inline double norm180(double a)
+{
+    a = std::fmod(a + 180.0, 360.0);
+    if (a < 0.0) {
+        a += 360.0;
+    }
+
+    return a - 180.0;
+}
+
+static inline double distanceMetersLLA(double latBoat, double lonBoat, double latTarget, double lonTarget)
+{
+    LLARef boatRef(LLA(latBoat, lonBoat, 0.0));
+    LLA    tgt(latTarget, lonTarget, 0.0);
+    NED    bt(&tgt, &boatRef, /*spherical=*/true);
+
+    return std::hypot(bt.n, bt.e);
+}
+
+static inline double angleToTargetDeg(double latBoat, double lonBoat, double latTarget, double lonTarget, double headingDeg)
+{
+    LLARef boatRef(LLA(latBoat, lonBoat, 0.0));
+    LLA    tgt(latTarget, lonTarget, 0.0);
+    NED    bt(&tgt, &boatRef, /*spherical=*/true);
+
+    const double dist = std::hypot(bt.n, bt.e);
+    if (dist < 1e-6) {
+        return 0.0;
+    }
+
+    const double bearingTrue = norm360(std::atan2(bt.e, bt.n) * M_RAD_TO_DEG);
+    const double headTrue    = norm360(headingDeg);
+    return std::abs(norm180(bearingTrue - headTrue));
+}
+
+static inline NED fruOffsetToNed(const QVector3D& offFru, double yawDeg)
+{
+    const double psi = yawDeg * M_DEG_TO_RAD;
+    const double c = std::cos(psi);
+    const double s = std::sin(psi);
+
+    const double x = offFru.x();
+    const double y = offFru.y();
+    const double z = offFru.z();
+
+    const double dN =  x * c - y * s;
+    const double dE =  x * s + y * c;
+    const double dD = -z;
+
+    return NED(dN, dE, dD);
+}

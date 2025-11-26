@@ -34,6 +34,17 @@ public:
         kConnection
     };
 
+    Q_PROPERTY(float boatLatitude             READ getBoatLatitude          NOTIFY lastPositionChanged)
+    Q_PROPERTY(float boatLongitude            READ getBoatLongitude         NOTIFY lastPositionChanged)
+    Q_PROPERTY(float distToContact            READ getDistToContact         NOTIFY lastPositionChanged)
+    Q_PROPERTY(float angleToContact           READ getAngleToContact        NOTIFY lastPositionChanged)
+    Q_PROPERTY(bool  isActiveContactIndxValid READ isValidActiveContactIndx NOTIFY activeContactChanged)
+    Q_PROPERTY(bool  isBoatCoordinateValid    READ isValidBoatCoordinate    NOTIFY lastPositionChanged)
+    Q_PROPERTY(float isLastDepthValid         READ isValidLastDepth         NOTIFY lastDepthChanged)
+    Q_PROPERTY(float depth                    READ getLastDepth             NOTIFY lastDepthChanged)
+    Q_PROPERTY(float isSpeedValid             READ isValidSpeed             NOTIFY speedChanged)
+    Q_PROPERTY(float speed                    READ getSpeed                 NOTIFY speedChanged)
+
     /*methods*/
     Dataset();
     ~Dataset();
@@ -172,9 +183,22 @@ public:
 
     std::tuple<ChannelId, uint8_t, QString> channelIdFromName(const QString& name) const;
 
+    void setActiveContactIndx(int64_t indx);
+    int64_t getActiveContactIndx() const;
+
 public slots:
     friend class DataProcessor;
-
+    void onSonarPosCanCalc(uint64_t indx);
+    bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
+    bool  isValidBoatCoordinate() const    { return !qFuzzyIsNull(boatLatitute_) || !qFuzzyIsNull(boatLongitude_); };
+    bool  isValidLastDepth() const         { return !qFuzzyIsNull(lastDepth_); };
+    bool isValidSpeed() const              { return qFuzzyIsNull(speed_);      };
+    float getBoatLatitude() const          { return boatLatitute_;             };
+    float getBoatLongitude() const         { return boatLongitude_;            };
+    float getDistToContact() const         { return distToActiveContact_;      };
+    float getAngleToContact() const        { return angleToActiveContact_;     };
+    float getLastDepth() const             { return lastDepth_;                };
+    float getSpeed() const                 { return speed_;                    };
     void addEvent(int timestamp, int id, int unixt = 0);
     void addEncoder(float angle1_deg, float angle2_deg = NAN, float angle3_deg = NAN);
     void addTimestamp(int timestamp);
@@ -183,6 +207,7 @@ public slots:
     void setChartSetup (const ChannelId& channelId, uint16_t resol, uint16_t count, uint16_t offset);
     void setTranscSetup(const ChannelId& channelId, uint16_t freq, uint8_t pulse, uint8_t boost);
     void setSoundSpeed (const ChannelId& channelId, uint32_t soundSpeed);
+    void setSonarOffset(float x, float y, float z);
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
@@ -207,6 +232,7 @@ public slots:
     void mergeGnssTrack(QList<Position> track);
 
     void resetDataset();
+    void resetRenderBuffers();
     void resetDistProcessing();
 
     void setChannelOffset(const ChannelId& channelId, float x, float y, float z);
@@ -235,7 +261,7 @@ public slots:
     void interpolateData(bool fromStart);
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
-    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
+    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
 
 signals:
     // data horizon
@@ -247,10 +273,14 @@ signals:
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
     void dataUpdate();
-    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch, bool manual);
+    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch, bool manual, bool redrawAll);
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);
+    void lastPositionChanged();
+    void activeContactChanged();
+    void lastDepthChanged();
+    void speedChanged();
 
 protected:
 
@@ -297,6 +327,7 @@ private:
     LlaRefState getCurrentLlaRefState() const;
     bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
+    void setLastDepth(float val);
 
     /*data*/
     mutable QReadWriteLock lock_;
@@ -317,4 +348,13 @@ private:
     QList<QString> channelsNames_;
     QList<ChannelId> channelsIds_;
     QList<uint8_t> subChannelIds_;
+    int64_t activeContactIndx_  = -1;
+    float boatLatitute_         = 0.0f;
+    float boatLongitude_        = 0.0f;
+    float distToActiveContact_  = 0.0f;
+    float angleToActiveContact_ = 0.0f;
+    float lastDepth_            = 0.0f;
+    float speed_                = 0.0f;
+    QVector3D sonarOffset_;
+    uint64_t sonarPosIndx_;
 };

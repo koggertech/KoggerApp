@@ -8,12 +8,14 @@ DataHorizon::DataHorizon() :
     emitChanges_(true),
     isFileOpening_(false),
     isSeparateReading_(false),
+    isAttitudeExpected_(false),
     epochIndx_(0),
     positionIndx_(0),
     chartIndx_(0),
     attitudeIndx_(0),
     bottomTrackIndx_(0),
-    mosaicIndx_(0)
+    mosaicIndx_(0),
+    sonarIndx_(0)
 {
 #ifdef SEPARATE_READING
     isSeparateReading_ = true;
@@ -31,8 +33,8 @@ void DataHorizon::clear()
     chartIndx_ = 0;
     attitudeIndx_ = 0;
     bottomTrackIndx_ = 0;
-    bottomTrack3DIndxs_.clear();
     mosaicIndx_ = 0;
+    sonarIndx_ = 0;
 }
 
 void DataHorizon::setEmitChanges(bool state)
@@ -51,8 +53,15 @@ void DataHorizon::setIsFileOpening(bool state)
         emit positionAdded(positionIndx_);
         emit chartAdded(chartIndx_);
         emit attitudeAdded(attitudeIndx_);
+        tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
     }
+}
+
+void DataHorizon::setIsAttitudeExpected(bool state)
+{
+    //qDebug() << "DataHorizon::setIsAttitudeExpected" << state;
+    isAttitudeExpected_ = state;
 }
 
 void DataHorizon::onAddedEpoch(uint64_t indx)
@@ -78,6 +87,7 @@ void DataHorizon::onAddedPosition(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit positionAdded(positionIndx_);
+        tryCalcAndEmitSonarPosIndx();
     }
 }
 
@@ -105,6 +115,7 @@ void DataHorizon::onAddedAttitude(uint64_t indx)
 
     if (canEmitHorizon(beenChanged)) {
         emit attitudeAdded(attitudeIndx_);
+        tryCalcAndEmitSonarPosIndx();
         tryCalcAndEmitMosaicIndx();
     }
 }
@@ -127,16 +138,14 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
     }
 }
 
-void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx, bool manual, bool isDel)
+void DataHorizon::onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVector<int>& vertIndx, bool isManual)
 {
     //qDebug() << "DataHorizon::onAddedBottomTrack3D" << indx;
 
-    bool beenChanged = true; //bottomTrackIndxs_ != indx;
-
-    bottomTrack3DIndxs_ = indx;
+    bool beenChanged = true; // NEED COMPARE?
 
     if (canEmitHorizon(beenChanged)) {
-        emit bottomTrack3DAdded(bottomTrack3DIndxs_, manual, isDel);
+        emit bottomTrack3DAdded(epIndxs, vertIndx, isManual);
     }
 }
 
@@ -168,5 +177,14 @@ void DataHorizon::tryCalcAndEmitMosaicIndx()
     if (minMosaicHorizon > mosaicIndx_) {
         mosaicIndx_ = minMosaicHorizon;
         emit mosaicCanCalc(mosaicIndx_);
+    }
+}
+
+void DataHorizon::tryCalcAndEmitSonarPosIndx()
+{
+    uint64_t minSonarIndx = isAttitudeExpected_ ? std::min(positionIndx_, attitudeIndx_) : positionIndx_;
+    if (minSonarIndx > sonarIndx_) {
+        sonarIndx_ = minSonarIndx;
+        emit sonarPosCanCalc(sonarIndx_);
     }
 }

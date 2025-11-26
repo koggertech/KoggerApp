@@ -100,9 +100,9 @@ public:
 #endif
 
 signals:
-    void updateContent(Type type, Version ver, Resp resp, uint8_t address);
+    void updateContent(Parsers::Type type, Parsers::Version ver, Parsers::Resp resp, uint8_t address);
     void dataSend(QByteArray data);
-    void binFrameOut(ProtoBinOut &proto_out);
+    void binFrameOut(Parsers::ProtoBinOut &proto_out);
     void notifyDevDriver(bool state);
 
 protected:
@@ -339,11 +339,12 @@ public:
     ID id() override { return ID_DATASET; }
     Resp  parsePayload(FrameParser &proto) override;
     void startColdStartTimer() override;
-    typedef struct {
+    struct Channel
+    {
         uint8_t id = 0;
         uint32_t period = 0;
         uint32_t mask = 0;
-    } Channel;
+    };
 
     typedef enum {
         MASK_DIST_V0 = 1,
@@ -619,11 +620,12 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
     void startColdStartTimer() override;
 
-    typedef struct {
+    struct UART
+    {
         U1 id = 0;
         U4 baudrate = 115200;
         U1 dev_address = 0;
-    } UART;
+    };
 
     void setBaudrate(U4 baudrate);
     int getBaudrate(int id = 1) { return m_uart[id].baudrate; }
@@ -756,12 +758,13 @@ class IDBinUpdate : public IDBin
 {
     Q_OBJECT
 public:
-    typedef struct __attribute__((packed)){
+    struct __attribute__((packed)) ID_UPGRADE_V0
+    {
        uint16_t lastNumMsg = 0;
        uint32_t lastOffset = 0;
        uint8_t type = 0;
        uint8_t rcvNumMsg = 0;
-    } ID_UPGRADE_V0;
+    };
 
     explicit IDBinUpdate() : IDBin() {
     }
@@ -835,7 +838,7 @@ public:
     Resp  parsePayload(FrameParser &proto) override;
 
     struct SimpleNav {
-        static constexpr ID getId() { return ID_USBL_CONTROL; }
+        static constexpr ID getId() { return ID_NAV; }
         static constexpr Version getVer() { return v1; }
 
         float yaw = NAN;
@@ -869,7 +872,8 @@ public:
     ID id() override { return ID_DVL_VEL; }
     Resp  parsePayload(FrameParser &proto) override;
 
-    typedef struct   __attribute__((packed)) {
+    struct __attribute__((packed)) BeamSolution
+    {
         uint8_t num;
         uint8_t flags;
         float velocity = NAN;
@@ -880,7 +884,7 @@ public:
         uint8_t mode;
         uint8_t coherence[4];
         int8_t difference[4];
-    } BeamSolution;
+    };
 
     typedef struct  __attribute__((packed)) {
         union {
@@ -964,14 +968,15 @@ public:
     ID id() override { return ID_DVL_MODE; }
     Resp  parsePayload(FrameParser &proto) override;
 
-    typedef struct  __attribute__((packed)) {
+    struct __attribute__((packed)) DVLModeSetup
+    {
         uint8_t id = 0;
         uint8_t selection = 1; // 0 - not select, 1 - always
         int8_t gain = 0;
         int8_t curve = 0;
         uint16_t reserved = 0;
         float start = 0, stop = 0; // 0 - ignore
-    } DVLModeSetup;
+    };
 
     void setModes(bool ismode1, bool ismode2, bool ismode3, bool ismode4, float range_mode4);
 
@@ -1071,7 +1076,7 @@ public:
     }
 
     ID id() override { return ID_USBL_CONTROL; }
-    Resp  parsePayload(FrameParser &proto) override;
+    Resp parsePayload(FrameParser& proto) override;
 
     // Fire SIGNAL_SYNC_MASTER and SIGNAL_ADDRESS_MASTER (if enabled by "address") in a sequence
     // If (timeout_us > 0) then it will fire the signal sequence by trigger event,

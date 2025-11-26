@@ -103,13 +103,13 @@ void UsblView::UsblViewRenderImplementation::updateBounds()
         float y_max{ !std::isfinite(itmI.data_.first().y()) ? 0.f : itmI.data_.first().y() };
         float y_min{ y_max };
 
-        for (const auto& itmJ : qAsConst(itmI.data_)){
-            z_min = std::min(z_min, !std::isfinite(itmJ.z()) ? 0.f : itmJ.z());
-            z_max = std::max(z_max, !std::isfinite(itmJ.z()) ? 0.f : itmJ.z());
-            x_min = std::min(x_min, !std::isfinite(itmJ.x()) ? 0.f : itmJ.x());
-            x_max = std::max(x_max, !std::isfinite(itmJ.x()) ? 0.f : itmJ.x());
-            y_min = std::min(y_min, !std::isfinite(itmJ.y()) ? 0.f : itmJ.y());
-            y_max = std::max(y_max, !std::isfinite(itmJ.y()) ? 0.f : itmJ.y());
+        for (auto it = itmI.data_.cbegin(); it != itmI.data_.cend(); ++it) {
+            z_min = std::min(z_min, !std::isfinite(it->z()) ? 0.f : it->z());
+            z_max = std::max(z_max, !std::isfinite(it->z()) ? 0.f : it->z());
+            x_min = std::min(x_min, !std::isfinite(it->x()) ? 0.f : it->x());
+            x_max = std::max(x_max, !std::isfinite(it->x()) ? 0.f : it->x());
+            y_min = std::min(y_min, !std::isfinite(it->y()) ? 0.f : it->y());
+            y_max = std::max(y_max, !std::isfinite(it->y()) ? 0.f : it->y());
         }
 
         curr_bounds = Cube(x_min, x_max, y_min, y_max, z_min, z_max);

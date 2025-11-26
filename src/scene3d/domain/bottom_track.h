@@ -47,13 +47,11 @@ public:
     void setDatasetPtr(Dataset* datasetPtr);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
     void actionEvent(ActionEvent actionEvent);
-    QVector<int> getAllIndxs();
-    QVector<int> getRemainingIndxs();
 
 public Q_SLOTS:
     virtual void setData(const QVector<QVector3D>& data, int primitiveType = GL_POINTS) override;
     virtual void clearData() override;
-    void isEpochsChanged(int lEpoch, int rEpoch, bool manual);
+    void isEpochsChanged(int lEpoch, int rEpoch, bool manual, bool redrawAll);
     void resetVertexSelection();
     void selectEpoch(int epochIndex, const ChannelId& channelId);
     void setVisibleState(bool state);
@@ -64,7 +62,7 @@ Q_SIGNALS:
     void epochErased(int epochIndex);
     void epochSelected(int epochIndex, int channelId);
     void epochListChanged();
-    void updatedPoints(const QVector<int>& indx, bool manual, bool isDel);
+    void updatedPoints(const QVector<int>& epIndx, const QVector<int>& vertIndx, bool isManual);
 
 protected:
     friend class GraphicsScene3dView;
@@ -73,20 +71,19 @@ protected:
     virtual void mousePressEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void mouseReleaseEvent(Qt::MouseButtons buttons, qreal x, qreal y) override;
     virtual void keyPressEvent(Qt::Key key) override;
-    void updateRenderData(bool redrawAll, int lEpoch = 0, int rEpoch = 0, bool manual = false);
+    void updateRenderData(int lEpoch = 0, int rEpoch = 0, bool redrawAll = false, bool manually = false);
 
 private:
     QVector<QPair<int, int>> getSubarrays(const QVector<int>& sequenceVector); // TODO: to utils
+    void clearCache();
 
     using EpochIndex = int;
     using VerticeIndex = int;
-    QHash<VerticeIndex,EpochIndex> vertex2Epoch_;
-    QHash<VerticeIndex,EpochIndex> epoch2Vertex_;
-    QSet<int> allIndxs_;
+
+    QHash<VerticeIndex, EpochIndex> vertex2Epoch_;
+    QHash<VerticeIndex, EpochIndex> epoch2Vertex_;
+
     DatasetChannel visibleChannel_; // ?!
     Dataset* datasetPtr_;
     DataProcessor* dataProcessorPtr_;
-    QVector<QVector3D> renderData_;
-    int firstLIndx_ = -1;
-    int lastIndx_ = -1;
 };
