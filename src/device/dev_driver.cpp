@@ -1464,12 +1464,12 @@ void DevDriver::process() {
         if(m_state.mark) {
             if(idVersion->boardVersion() != BoardNone) {
                 if(m_state.uptime != UptimeFix) {
-                    qDebug() << "UptimeFix";
+                    //qDebug() << "UptimeFix";
                     m_state.uptime = UptimeFix;
                 }
 
                 if(!m_state.connect) {
-                    qDebug() << "connect = true";
+                    //qDebug() << "connect = true";
                     m_state.connect = true;
                 }
 
@@ -1479,12 +1479,12 @@ void DevDriver::process() {
                     // idUpdate->putUpdate();
 
                     QTimer::singleShot(100, idUpdate, SLOT(putUpdate()));
-                    qDebug() << "To upgrading";
+                    //qDebug() << "To upgrading";
                 }
 
                 if(!(m_state.in_boot || m_state.in_update) && m_state.conf < ConfRequest) {
                     requestSetup();
-                    qDebug() << "Request setup";
+                    //qDebug() << "Request setup";
                 }
 
                 if(m_state.in_update && !m_bootloaderLagacyMode) {
@@ -1497,13 +1497,13 @@ void DevDriver::process() {
                 }
             } else {
                 idVersion->requestAll();
-                qDebug() << "Request version again";
+                //qDebug() << "Request version again";
             }
         } else {
             restartState();
             idMark->setMark();
             idVersion->requestAll();
-            qDebug() << "Reset state";
+            //qDebug() << "Reset state";
         }
     }
 }
