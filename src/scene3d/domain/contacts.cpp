@@ -359,19 +359,20 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
     int colorLoc      = shaderProgram->uniformLocation   ("color");
     int widthLoc      = shaderProgram->uniformLocation   ("width");
     int isTriangleLoc = shaderProgram->uniformLocation   ("isTriangle");
+    int isPointLoc    = shaderProgram->uniformLocation   ("isPoint");
 
     shaderProgram->enableAttributeArray(posLoc);
 
     shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+    shaderProgram->setUniformValue(isPointLoc,    false);
     shaderProgram->setUniformValue(isTriangleLoc, true);
     shaderProgram->setUniformValue(widthLoc, pointSize);
 
 
     QRectF vport = DrawUtils::viewportRect(ctx);
 
-#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
     ctx->glEnable(34370);
-#endif
+    ctx->glEnable(34913);
 
     for (auto it = points_.begin(); it != points_.end(); ++it) {
         if (!isfinite(it->lat) || !isfinite(it->lon)) {
@@ -392,12 +393,12 @@ void Contacts::ContactsRenderImplementation::render(QOpenGLFunctions *ctx,
         ctx->glDrawArrays(GL_POINTS, 0, vecP.size());
     }
 
-#if !defined(Q_OS_ANDROID) && !defined(LINUX_ES)
-    ctx->glDisable(34370);
-#endif
+    ctx->glDisable(34370); // GL_PROGRAM_POINT_SIZE
+    ctx->glDisable(34913); // GL_POINT_SPRITE
 
     shaderProgram->disableAttributeArray(posLoc);
     shaderProgram->setUniformValue(isTriangleLoc, false);
+    shaderProgram->setUniformValue(isPointLoc,    false);
     shaderProgram->release();
 
     // text, textback
