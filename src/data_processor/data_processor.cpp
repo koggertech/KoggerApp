@@ -103,6 +103,8 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     positionCounter_ = 0;
     attitudeCounter_ = 0;
     mosaicCounter_ = 0;
+
+    postState(DataProcessorType::kUndefined); //
 }
 
 void DataProcessor::setUpdateBottomTrack(bool state)
@@ -393,6 +395,10 @@ void DataProcessor::runCoalescedWork()
         return;
     }
 
+    if (!isCanStartCalculations()) {
+        return;
+    }
+
     const uint32_t maskNow = requestedMask_.exchange(0);
     const bool wantSurface  = maskNow & WF_Surface;
     const bool wantMosaic   = maskNow & WF_Mosaic;
@@ -431,12 +437,13 @@ void DataProcessor::runCoalescedWork()
         }
     }
 
-    if (wantIsobaths && pendingIsobathsWork_ && updateIsobaths_ && !updateMosaic_) {
+    if (wantIsobaths && pendingIsobathsWork_ && updateIsobaths_ && !updateMosaic_) { // ?!
         wb.doIsobaths = true;
         pendingIsobathsWork_ = false;
     }
 
     if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths) {
+        pendingIsobathsWork_ = false;
         return;
     }
 
@@ -632,6 +639,11 @@ void DataProcessor::scheduleLatest(WorkSet mask, bool replace, bool clearUnreque
     }
 
     startTimerIfNeeded();
+}
+
+bool DataProcessor::isCanStartCalculations() const
+{
+    return chartsCounter_ || bottomTrackCounter_ || epochCounter_ || positionCounter_ || attitudeCounter_ || mosaicCounter_;
 }
 
 void DataProcessor::requestCancel() noexcept
