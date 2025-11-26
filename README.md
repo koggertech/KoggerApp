@@ -101,7 +101,7 @@ Steps:
 - Use the .apk file generated in android-build/ to install on a device
 
 🐧 Linux (Ubuntu x86_64)  
-Compiler: Clang 18  
+Compiler: Clang 18.1.3  
 Qt version: Qt 6.8.3  
 Clone and build:
 ```bash
