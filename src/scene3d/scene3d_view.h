@@ -221,7 +221,7 @@ public:
     void setNavigatorViewLocation(bool state);
 
 protected:
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
+    void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
 public Q_SLOTS:
     void setSceneBoundingBoxVisible(bool visible);
@@ -263,6 +263,7 @@ private:
     void updateBounds();
     void updatePlaneGrid();
     void clearComboSelectionRect();
+    void initAutoDistTimer();
 
 private:
     friend class BottomTrack;
@@ -321,7 +322,8 @@ private:
     bool gridVisibility_;
     bool useAngleLocation_;
     bool navigatorViewLocation_;
-    bool isNorth_ = false;
+    bool isNorth_;
+    QTimer* testingTimer_;
     int dataZoomIndx_;
     bool cameraIsMoveUp_;
 };

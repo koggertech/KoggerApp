@@ -32,6 +32,8 @@ enum class HeightType {
 class SurfaceTile {
 public:
     /*methods*/
+    SurfaceTile();
+    SurfaceTile(QVector3D origin);
     SurfaceTile(const TileKey& key, QVector3D origin);
     void init(int sidePixelSize, int heightMatrixRatio, float resolution);
     void updateHeightIndices(); // обновляет индексы для отрисовки

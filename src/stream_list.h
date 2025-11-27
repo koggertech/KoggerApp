@@ -15,8 +15,12 @@ using namespace Parsers;
 
 class StreamList : public QObject
 {
+    Q_OBJECT
 public:
-    StreamList();
+    explicit StreamList(QObject* parent = nullptr);
+    ~StreamList();
+
+    void initTimer();
 
     typedef enum {
         RecordingError,
@@ -45,7 +49,8 @@ public:
         FragmentStatus status;
     } Fragment;
 
-    typedef struct {
+    struct Stream
+    {
         uint16_t id = 0;
         RecordingState recordingState = RecordingError;
         UploadingState uploadingState = UploadingError;
@@ -59,7 +64,7 @@ public:
             uint32_t _fillFragments = 0;
         } _counter;
         int modelIndex = -1;
-    } Stream;
+    };
 
     void append(FrameParser* frame) {
         if(frame->isStream()) {
@@ -143,7 +148,7 @@ protected:
     Stream* _lastStream;
     bool _isListChenged = false;
     StreamListModel _modelList;
-    QTimer _updater;
+    QTimer* _updater = nullptr;
     uint64_t _timeLastGapsUpdate = 0;
     uint64_t _timeLastGapsInsert = 0;
     bool _isInserting = false;

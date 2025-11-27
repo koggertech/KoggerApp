@@ -45,36 +45,36 @@ public:
         QRectF  rectEcho;
     };
 
-    typedef struct {
-        typedef enum {
+    struct DistProcessing {
+        enum class DistanceSource {
             DistanceSourceNone = 0,
             DistanceSourceProcessing,
             DistanceSourceLoad,
             DistanceSourceConstrainHand,
             DistanceSourceDirectHand,
-        } DistanceSource;
+        };
 
         float distance = NAN;
         float min = NAN;
         float max = NAN;
-        DistanceSource source = DistanceSourceNone;
+        DistanceSource source = DistanceSource::DistanceSourceNone;
 
         Position bottomPoint;
 
         bool isDist() const { return isfinite(distance); }
-        void setDistance(float dist, DistanceSource src = DistanceSourceNone) { distance = dist; source = src; }
-        void clearDistance(DistanceSource src = DistanceSourceNone) { distance = NAN; source = src; }
-        void resetDistance() { distance = NAN; source = DistanceSourceNone; }
+        void setDistance(float dist, DistanceSource src = DistanceSource::DistanceSourceNone) { distance = dist; source = src; }
+        void clearDistance(DistanceSource src = DistanceSource::DistanceSourceNone) { distance = NAN; source = src; }
+        void resetDistance() { distance = NAN; source = DistanceSource::DistanceSourceNone; }
         float getDistance() const { return distance; }
 
-        void setMin(float val, DistanceSource src = DistanceSourceNone) {
+        void setMin(float val, DistanceSource src = DistanceSource::DistanceSourceNone) {
             min = val;
             if(max != NAN && val + 0.05 > max) {
                 max = val + 0.05;
             }
             source = src;
         }
-        void setMax(float val, DistanceSource src = DistanceSourceNone) {
+        void setMax(float val, DistanceSource src = DistanceSource::DistanceSourceNone) {
             max = val;
             if(min != NAN && val - 0.05 < min) {
                 min = val - 0.05;
@@ -84,7 +84,7 @@ public:
 
         float getMax() const { return max; }
         float getMin() const { return min; }
-    } DistProcessing;
+    };
 
     struct Echogram {
         QVector<uint8_t> amplitude;
@@ -209,7 +209,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.setDistance(dist, DistProcessing::DistanceSourceDirectHand);
+                iEchogram.bottomProcessing.setDistance(dist, DistProcessing::DistanceSource::DistanceSourceDirectHand);
             }
         }
     }
@@ -218,7 +218,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.clearDistance(DistProcessing::DistanceSourceDirectHand);
+                iEchogram.bottomProcessing.clearDistance(DistProcessing::DistanceSource::DistanceSourceDirectHand);
             }
         }
     }
@@ -227,7 +227,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.setMin(dist, DistProcessing::DistanceSourceConstrainHand);
+                iEchogram.bottomProcessing.setMin(dist, DistProcessing::DistanceSource::DistanceSourceConstrainHand);
             }
         }
     }
@@ -236,7 +236,7 @@ public:
         if (charts_.contains(channelId)) {
             auto& charts = charts_[channelId];
             for (auto& iEchogram : charts) {
-                iEchogram.bottomProcessing.setMax(dist, DistProcessing::DistanceSourceConstrainHand);
+                iEchogram.bottomProcessing.setMax(dist, DistProcessing::DistanceSource::DistanceSourceConstrainHand);
             }
         }
     }

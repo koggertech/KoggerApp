@@ -34,7 +34,7 @@ TextField {
             control.selectAll();
         }
 
-        onClicked: {
+        onClicked: function(mouse) {
             let cursorPosition = control.positionAt(mouse.x, mouse.y);
             control.cursorPosition = cursorPosition;
             control.forceActiveFocus();

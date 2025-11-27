@@ -1,8 +1,8 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
+import QtCore
 
 import WaterFall 1.0
 
@@ -152,7 +152,7 @@ WaterFall {
                 }
             }
 
-            onClicked: {
+            onClicked: function(mouse) {
                 lastMouseX = mouse.x
                 plot.focus = true
 
@@ -170,7 +170,7 @@ WaterFall {
                 wasMoved = false
             }
 
-            onPressed: {
+            onPressed: function(mouse) {
                 lastMouseX = mouse.x
 
                 if (Qt.platform.os === "android") {
@@ -194,7 +194,7 @@ WaterFall {
                 wasMoved = false
             }
 
-            onReleased: {
+            onReleased: function(mouse) {
                 lastMouseX = -1
 
                 if (Qt.platform.os === "android") {
@@ -229,7 +229,7 @@ WaterFall {
                 plotReleased(indx)
             }
 
-            onPositionChanged: {
+            onPositionChanged: function(mouse) {
                 plot.onCursorMoved(mouse.x, mouse.y)
 
                 if (Qt.platform.os === "android") {
@@ -257,7 +257,7 @@ WaterFall {
                 }
             }
 
-            onWheel: {
+            onWheel: function(wheel) {
                 if (wheel.modifiers & Qt.ControlModifier) {
                     let val = -wheel.angleDelta.y
                     plot.verZoomEvent(val)

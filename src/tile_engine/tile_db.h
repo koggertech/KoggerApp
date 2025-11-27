@@ -22,16 +22,16 @@ public:
 
 public slots:
     void init();
-    void loadTiles(const QSet<TileIndex>& tileIndices);
-    void saveTile(const TileIndex& tileIndx, const QImage& image);
-    void stopLoading(const TileIndex& tileIndx);
+    void loadTiles(const QSet<map::TileIndex>& tileIndices);
+    void saveTile(const map::TileIndex& tileIndx, const QImage& image);
+    void stopLoading(const map::TileIndex& tileIndx);
     void stopAndClearRequests();
 
 signals:
-    void tileLoaded(const TileIndex& tileIndx, const QImage& image);
-    void tileLoadFailed(const TileIndex& tileIndx, const QString& errorString);
-    void tileLoadStopped(const TileIndex& tileIndx);
-    void tileSaved(const TileIndex& tileIndx);
+    void tileLoaded(const map::TileIndex& tileIndx, const QImage& image);
+    void tileLoadFailed(const map::TileIndex& tileIndx, const QString& errorString);
+    void tileLoadStopped(const map::TileIndex& tileIndx);
+    void tileSaved(const map::TileIndex& tileIndx);
 
 private slots:
     void processNextTile();

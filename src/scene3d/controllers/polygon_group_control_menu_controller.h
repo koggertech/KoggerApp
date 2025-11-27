@@ -7,8 +7,9 @@
 #include <memory>
 
 #include "qml_component_controller.h"
+#include "polygon_group.h"
 
-class PolygonGroup;
+
 class GraphicsScene3dView;
 class PointObject;
 class PolygonGroupControlMenuController : public QmlComponentController

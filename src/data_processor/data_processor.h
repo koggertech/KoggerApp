@@ -53,13 +53,13 @@ public slots:
     void setIsOpeningFile (bool state);
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
-    void onBottomTrackAdded(const QVector<int>& indxs, bool manual, bool isDel);
+    void onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int> &vertIndxs, bool manual);
     void onEpochAdded(uint64_t indx);
     void onPositionAdded(uint64_t indx);
     void onAttitudeAdded(uint64_t indx);
     void onMosaicCanCalc(uint64_t indx);
     // BottomTrackProcessor
-    void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam, bool manual); // CALC BOTTOM TRACK BY BUTTON
+    void bottomTrackProcessing(const DatasetChannel& channel1, const DatasetChannel& channel2, const BottomTrackParam& bottomTrackParam, bool manual, bool redrawAll); // CALC BOTTOM TRACK BY BUTTON, qPlot2D
     // SurfaceProcessor
     void setSurfaceColorTableThemeById(int id);
     void setSurfaceEdgeLimit(int val);
@@ -121,7 +121,7 @@ signals:
     void allProcessingCleared();
     // BottomTrackProcessor
     void distCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
-    void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
+    void lastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // SurfaceProcessor
     void sendSurfaceMinZ(float minZ);
     void sendSurfaceMaxZ(float maxZ);
@@ -151,7 +151,7 @@ private slots:
     void postState(DataProcessorType s);
     // BottomTrack
     void postDistCompletedByProcessing(int epIndx, const ChannelId& channelId, float dist);
-    void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
+    void postLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
     // Surface/Mosaic
     void postSurfaceTiles(TileMap tiles, bool useTextures);
     // Surface
@@ -186,6 +186,7 @@ private:
     void openDB();
     void closeDB();
     void initMosaicIndexProvider();
+    bool isCanStartCalculations() const;
 
     void emitDelta(TileMap&& upserts, DataSource src);
     void pumpVisible();
@@ -235,9 +236,9 @@ private:
     // Surface
     float tileResolution_;
 
-
     // processing (scheduling/interrupt)
     QSet<int>              epIndxsFromBottomTrack_;
+    QSet<int> vertIndxsFromBottomTrack_;
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
     QSet<int>              pendingMosaicIndxs_;
     bool                   pendingIsobathsWork_;

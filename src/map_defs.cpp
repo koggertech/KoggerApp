@@ -2,7 +2,6 @@
 
 #include <QPolygonF>
 #include <QPointF>
-#include <cmath>
 
 
 namespace map {

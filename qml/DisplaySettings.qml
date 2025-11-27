@@ -1,8 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
+import QtCore
+
 
 GridLayout {
     id: control
@@ -223,8 +224,7 @@ GridLayout {
                                                  bottomTrackThreshold.checked ? bottomTrackThresholdValue.realValue : 0,
                                                  bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value *  0.001 : 0,
                                                  bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value *  0.001 : 0,
-                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0,
-                                                 false)
+                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueZ.value * -0.001 : 0 )
                 }
             }
 
@@ -240,7 +240,7 @@ GridLayout {
                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueX.value*0.001 : 0,
                                                 bottomTrackSensorOffset.checked ? bottomTrackSensorOffsetValueY.value*0.001 : 0,
                                                 bottomTrackSensorOffset.checked ? -bottomTrackSensorOffsetValueZ.value*0.001 : 0,
-                                                false);
+                                                false/*manual*/);
                 }
             }
 
@@ -713,21 +713,19 @@ GridLayout {
                         onClicked: exportFileDialog.open()
                     }
 
-                    FileDialog {
+                    FolderDialog {
                         id: exportFileDialog
-                        folder: shortcuts.home
-                        selectExisting: true
-                        selectFolder: true
+                        title: qsTr("Select folder for export")
+
+                        currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
                         onAccepted: {
-                            exportPathText.text = exportFileDialog.folder.toString()
+                            exportPathText.text = selectedFolder.toString()
                         }
-
-                        onRejected: { }
                     }
 
                     Settings {
-                        property alias exportFolder: exportFileDialog.folder
+                        property alias exportFolder: exportFileDialog.currentFolder
                     }
 
                     Settings {

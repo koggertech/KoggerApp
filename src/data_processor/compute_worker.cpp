@@ -171,21 +171,18 @@ void ComputeWorker::setMaxZ(float v)
     isobaths_.setMaxZ(v);
 }
 
-void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1,
-                                          const DatasetChannel& ch2,
-                                          const BottomTrackParam& p,
-                                          bool manual)
+void ComputeWorker::bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll)
 {
     emit bottomTrackStarted();
 
-    bottom_.bottomTrackProcessing(ch1, ch2, p, manual);
+    bottom_.bottomTrackProcessing(ch1, ch2, p, manual, redrawAll);
 
     emit bottomTrackFinished();
 }
 
 void ComputeWorker::processBundle(const WorkBundle& wb)
 {
-    //qDebug() << "ComputeWorker::processBundle task, mos:" << wb.mosaicVec.size() << "sur:" <<  wb.surfaceVec << "iso:" << wb.doIsobaths;
+    //qDebug() << "ComputeWorker::processBundle: task" <<  wb.mosaicVec.size() ;
     // последовательно. cабы сами шлют сигналы наружу
     if (!wb.surfaceVec.isEmpty() && !isCanceled()) {
         surface_.onUpdatedBottomTrackData(wb.surfaceVec);

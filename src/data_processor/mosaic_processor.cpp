@@ -505,7 +505,9 @@ void MosaicProcessor::updateUnmarkedHeightVertices(SurfaceTile* tilePtr) const
 
 void MosaicProcessor::updateData(const QVector<int>& indxs)
 {
-    //qDebug() << "   MosaicProcessor::updateData";
+    // qDebug() << "MosaicProcessor::updateData"
+    //          << "thread =" << QThread::currentThread()
+    //          << "size =" << indxs.size();
 
     bool bench = false;
     QElapsedTimer et; // test

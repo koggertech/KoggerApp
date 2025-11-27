@@ -3,6 +3,28 @@
 #include <cmath>
 
 
+SurfaceTile::SurfaceTile() :
+    origin_(QVector3D(-1.0f, -1.0f, -1.0f)),
+    textureId_(0),
+    isUpdated_(false),
+    isInited_(false),
+    sidePixelSize_(defaultTileSidePixelSize),
+    heightMatrixRatio_(defaultTileHeightMatrixRatio),
+    resolution_(defaultTileResolution),
+    updateHint_(UpdateHint::kUndefined)
+{}
+
+SurfaceTile::SurfaceTile(QVector3D origin) :
+    origin_(origin),
+    textureId_(0),
+    isUpdated_(false),
+    isInited_(false),
+    sidePixelSize_(defaultTileSidePixelSize),
+    heightMatrixRatio_(defaultTileHeightMatrixRatio),
+    resolution_(defaultTileResolution),
+    updateHint_(UpdateHint::kUndefined)
+{}
+
 SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
     key_(key),
     origin_(origin),

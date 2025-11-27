@@ -33,7 +33,6 @@ void DataHorizon::clear()
     chartIndx_ = 0;
     attitudeIndx_ = 0;
     bottomTrackIndx_ = 0;
-    bottomTrack3DIndxs_.clear();
     mosaicIndx_ = 0;
     sonarIndx_ = 0;
 }
@@ -139,16 +138,14 @@ void DataHorizon::onAddedBottomTrack(uint64_t indx)
     }
 }
 
-void DataHorizon::onAddedBottomTrack3D(const QVector<int>& indx, bool manual, bool isDel)
+void DataHorizon::onAddedBottomTrack3D(const QVector<int>& epIndxs, const QVector<int>& vertIndx, bool isManual)
 {
     //qDebug() << "DataHorizon::onAddedBottomTrack3D" << indx;
 
-    bool beenChanged = true; //bottomTrackIndxs_ != indx;
-
-    bottomTrack3DIndxs_ = indx;
+    bool beenChanged = true; // NEED COMPARE?
 
     if (canEmitHorizon(beenChanged)) {
-        emit bottomTrack3DAdded(bottomTrack3DIndxs_, manual, isDel);
+        emit bottomTrack3DAdded(epIndxs, vertIndx, isManual);
     }
 }
 

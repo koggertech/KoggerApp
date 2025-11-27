@@ -16,14 +16,16 @@ public:
     DeviceManagerWrapper(QObject* parent = nullptr);
     ~DeviceManagerWrapper();
 
-    Q_PROPERTY(QList<DevQProperty*> devs               READ getDevList            NOTIFY devChanged)
-    Q_PROPERTY(StreamListModel*     streamsList        READ streamsList           NOTIFY streamChanged)
-    Q_PROPERTY(float                vruVoltage         READ vruVoltage            NOTIFY vruChanged)
-    Q_PROPERTY(float                vruCurrent         READ vruCurrent            NOTIFY vruChanged)
-    Q_PROPERTY(float                vruVelocityH       READ vruVelocityH          NOTIFY vruChanged)
-    Q_PROPERTY(int                  pilotArmState      READ pilotArmState         NOTIFY vruChanged)
-    Q_PROPERTY(int                  pilotModeState     READ pilotModeState        NOTIFY vruChanged)
-    Q_PROPERTY(int                  averageChartLosses READ getAverageChartLosses NOTIFY chartLossesChanged)
+    Q_PROPERTY(QList<DevQProperty*> devs READ getDevList NOTIFY devChanged)
+    Q_PROPERTY(bool protoBinConsoled READ getProtoBinConsoled WRITE setProtoBinConsoled)
+    Q_PROPERTY(StreamListModel* streamsList READ streamsList NOTIFY streamChanged)
+    Q_PROPERTY(float vruVoltage READ vruVoltage NOTIFY vruChanged)
+    Q_PROPERTY(float vruCurrent READ vruCurrent NOTIFY vruChanged)
+    Q_PROPERTY(float vruVelocityH READ vruVelocityH NOTIFY vruChanged)
+    Q_PROPERTY(int pilotArmState READ pilotArmState NOTIFY vruChanged)
+    Q_PROPERTY(int pilotModeState READ pilotModeState NOTIFY vruChanged)
+    Q_PROPERTY(int averageChartLosses READ getAverageChartLosses NOTIFY chartLossesChanged)
+    Q_PROPERTY(bool isbeaconDirectQueueAsk READ getUSBLBeaconDirectAsk WRITE setUSBLBeaconDirectAsk)
 
     DeviceManager* getWorker();
     QUuid getFileUuid() const;
@@ -37,17 +39,29 @@ public:
     int                  pilotArmState  () { return getWorker()->pilotArmState();  }
     int                  pilotModeState () { return getWorker()->pilotModeState(); }
 
+    void initStreamList();
 
 
-    int getAverageChartLosses() const {
-        return averageChartLosses_;
-    };
 
 public slots:
     Q_INVOKABLE bool isCreatedId(int id) { return getWorker()->isCreatedId(id); };
     void calcAverageChartLosses();
-    void setProtoBinConsoled(bool state);
-    void setUSBLBeaconDirectAsk(bool is_ask);
+
+    bool getProtoBinConsoled() const { return protoBinConsoledState_; };
+    void setProtoBinConsoled(bool state) {
+        protoBinConsoledState_ = state;
+        getWorker()->setProtoBinConsoled(protoBinConsoledState_);
+    }
+
+    bool getUSBLBeaconDirectAsk() const { return USBLBeaconDirectAskState_; };
+    void setUSBLBeaconDirectAsk(bool is_ask) {
+        USBLBeaconDirectAskState_ = is_ask;
+        getWorker()->setUSBLBeaconDirectAsk(USBLBeaconDirectAskState_);
+    }
+
+    int getAverageChartLosses() const {
+        return averageChartLosses_;
+    };
 
 signals:
     void sendOpenFile(QString path);
@@ -70,4 +84,6 @@ private:
 #endif
 
     int averageChartLosses_;
+    bool protoBinConsoledState_;
+    bool USBLBeaconDirectAskState_;
 }; // class DeviceWrapper

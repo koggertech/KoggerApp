@@ -33,9 +33,9 @@ public:
     void deleteRequest(const TileIndex& tileIndx);
 
 signals:
-    void tileDownloaded(const TileIndex& tileIndx, const QImage& image);
-    void downloadFailed(const TileIndex& tileIndx, const QString& errorString);
-    void downloadStopped(const TileIndex& tileIndx);
+    void tileDownloaded(const map::TileIndex& tileIndx, const QImage& image);
+    void downloadFailed(const map::TileIndex& tileIndx, const QString& errorString);
+    void downloadStopped(const map::TileIndex& tileIndx);
 
 private slots:
     void onTileDownloaded(QNetworkReply *reply);

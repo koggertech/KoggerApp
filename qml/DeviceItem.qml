@@ -1,8 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
-import QtQuick.Dialogs 1.2
-import Qt.labs.settings 1.1
+import QtQuick.Dialogs
 
 
 ColumnLayout {
@@ -205,8 +204,8 @@ ColumnLayout {
                 property var items: [qsTr("Off"), qsTr("On")]
                 property string regExpPattern: "(" + items.join("|") + ")"
 
-                validator: RegExpValidator {
-                    regExp: new RegExp(spinBoxBooster ? spinBoxBooster.regExpPattern : "(Off|On)", "i")
+                validator: RegularExpressionValidator {
+                    regularExpression: new RegExp(spinBoxBooster ? spinBoxBooster.regExpPattern : "(Off|On)", "i")
                 }
 
                 textFromValue: function(value) {

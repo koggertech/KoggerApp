@@ -831,8 +831,8 @@ void Dataset::setChannelOffset(const ChannelId& channelId, float x, float y, flo
 
 void Dataset::spatialProcessing() {
     auto ch_list = channelsList();
-    for (const auto& channel : ch_list) {
-        ChannelId ich = channel.channelId_;
+    for (auto it = ch_list.cbegin(); it != ch_list.cend(); ++it) {
+        ChannelId ich = it->channelId_;
 
         for(int iepoch = 0; iepoch < size(); iepoch++) {
             Epoch* epoch = fromIndex(iepoch);
@@ -846,11 +846,11 @@ void Dataset::spatialProcessing() {
                 if(data == NULL) { continue; }
 
                 if(ext_pos.ned.isValid()) {
-                    ext_pos.ned.d += channel.localPosition_.z;
+                    ext_pos.ned.d += it->localPosition_.z;
                 }
 
                 if(ext_pos.lla.isValid()) {
-                    ext_pos.lla.altitude -= channel.localPosition_.z;
+                    ext_pos.lla.altitude -= it->localPosition_.z;
                 }
 
                 data->sensorPosition = ext_pos;
@@ -1006,7 +1006,7 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
         if (epPtr->chartAvail(channelId, subChId)) {
             Epoch::Echogram* chart = epPtr->chart(channelId, subChId);
             if (chart) {
-                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSourceProcessing);
+                chart->bottomProcessing.setDistance(dist, Epoch::DistProcessing::DistanceSource::DistanceSourceProcessing);
                 settedChart = true;
             }
         }
@@ -1025,7 +1025,7 @@ void Dataset::onDistCompleted(int epIndx, const ChannelId& channelId, float dist
     }
 }
 
-void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual)
+void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
     bottomTrackParam_ = btP;
     lastBottomTrackEpoch_ = val;
@@ -1035,7 +1035,7 @@ void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val,
     const int rEpoch = std::max(0, bottomTrackParam_.indexTo   - minMagicRenderGap);
 
     emit dataUpdate(); // for 2D
-    emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual); // 3D
+    emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual, redrawAll); // 3D
 }
 
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)

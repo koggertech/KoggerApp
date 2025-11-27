@@ -3,7 +3,6 @@
 
 #include "xtf_conf.h"
 #include "dataset.h"
-#include <vector>
 #include <QUuid>
 #include "device_defs.h"
 

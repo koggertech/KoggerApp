@@ -43,23 +43,22 @@ public:
     Core();
     ~Core();
 
-    Q_PROPERTY(bool isGPSAlive READ getIsGPSAlive NOTIFY isGPSAliveChanged)
-
-    Q_PROPERTY(bool isFactoryMode READ isFactoryMode CONSTANT)
-    Q_PROPERTY(ConsoleListModel* consoleList READ consoleList CONSTANT)
-    Q_PROPERTY(bool loggingKlf WRITE setKlfLogging)
-    Q_PROPERTY(bool isKlfLogging READ getIsKlfLogging NOTIFY loggingKlfChanged)
-    Q_PROPERTY(bool loggingCsv WRITE setCsvLogging)
-    Q_PROPERTY(bool useGPS WRITE setUseGPS)
-    Q_PROPERTY(bool fixBlackStripesState WRITE setFixBlackStripesState)
-    Q_PROPERTY(int  fixBlackStripesForwardSteps WRITE setFixBlackStripesForwardSteps)
-    Q_PROPERTY(int  fixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
-    Q_PROPERTY(QString filePath READ getFilePath NOTIFY filePathChanged)
-    Q_PROPERTY(bool isFileOpening READ getIsFileOpening NOTIFY sendIsFileOpening)
-    Q_PROPERTY(bool isSeparateReading READ getIsSeparateReading CONSTANT)
-    Q_PROPERTY(QString ch1Name READ getChannel1Name NOTIFY channelListUpdated FINAL)
-    Q_PROPERTY(QString ch2Name READ getChannel2Name NOTIFY channelListUpdated FINAL)
-    Q_PROPERTY(int dataProcessorState READ getDataProcessorState NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(bool              isGPSAlive                   READ getIsGPSAlive                   NOTIFY isGPSAliveChanged)
+    Q_PROPERTY(bool              isFactoryMode                READ isFactoryMode                   CONSTANT)
+    Q_PROPERTY(ConsoleListModel* consoleList                  READ consoleList                     CONSTANT)
+    Q_PROPERTY(bool              loggingKlf                   READ getKlfLogging                   WRITE setKlfLogging)
+    Q_PROPERTY(bool              isKlfLogging                 READ getKlfLogging                   NOTIFY loggingKlfChanged)
+    Q_PROPERTY(bool              loggingCsv                   READ getCsvLogging                   WRITE setCsvLogging)
+    Q_PROPERTY(bool              useGPS                       READ getUseGPS                       WRITE setUseGPS)
+    Q_PROPERTY(bool              fixBlackStripesState         READ getFixBlackStripesState         WRITE setFixBlackStripesState)
+    Q_PROPERTY(int               fixBlackStripesForwardSteps  READ getFixBlackStripesForwardSteps  WRITE setFixBlackStripesForwardSteps)
+    Q_PROPERTY(int               fixBlackStripesBackwardSteps READ getFixBlackStripesBackwardSteps WRITE setFixBlackStripesBackwardSteps)
+    Q_PROPERTY(QString           filePath                     READ getFilePath                     NOTIFY filePathChanged)
+    Q_PROPERTY(bool              isFileOpening                READ getIsFileOpening                NOTIFY sendIsFileOpening)
+    Q_PROPERTY(bool              isSeparateReading            READ getIsSeparateReading            CONSTANT)
+    Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
+    Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -104,14 +103,18 @@ public slots:
     bool closeProxy();
     bool upgradeFW(const QString& name, QObject* dev);
     void upgradeChanged(int progressStatus);
+    bool getKlfLogging() const;
     void setKlfLogging(bool isLogging);
+    bool getFixBlackStripesState() const;
+    int  getFixBlackStripesForwardSteps() const;
+    int  getFixBlackStripesBackwardSteps() const;
     void setFixBlackStripesState(bool state);
     void setFixBlackStripesForwardSteps(int val);
     void setFixBlackStripesBackwardSteps(int val);
-    bool getIsKlfLogging();
+    bool getCsvLogging() const;
     void setCsvLogging(bool isLogging);
+    bool getUseGPS() const;
     void setUseGPS(bool state);
-    bool getIsCsvLogging();
     bool exportComplexToCSV(QString filePath);
     bool exportUSBLToCSV(QString filePath);
     bool exportPlotAsCVS(QString filePath, const ChannelId& channelId, float decimation = 0);
@@ -124,6 +127,7 @@ public slots:
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
     void onChannelsUpdated();
     void onRedrawEpochs(const QSet<int>& indxs);
+    void initStreamList();
 
 #ifdef FLASHER
     void connectOpenedLinkAsFlasher(QString pn);
@@ -161,7 +165,7 @@ private slots:
     void onFileStopsOpening();
     void onSendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId); // TODO: maybe store map texture id in mapView
     void onDataProcesstorStateChanged(const DataProcessorType& state);
-    void onSendFrameInputToLogger(QUuid uuid, Link* link, FrameParser frame);
+    void onSendFrameInputToLogger(QUuid uuid, Link* link, const Parsers::FrameParser& frame);
 
 private:
     /*methods*/
@@ -218,7 +222,7 @@ private:
 
     QQmlApplicationEngine* qmlAppEnginePtr_;
     Dataset* datasetPtr_;
-    GraphicsScene3dView* scene3dViewPtr_;
+    QPointer<GraphicsScene3dView> scene3dViewPtr_;
     ConverterXTF converterXtf_;
     Logger logger_;
     QList<qPlot2D*> plot2dList_;
@@ -232,9 +236,12 @@ private:
 
     bool isFileOpening_;
 
-    bool isGPSAlive_ = false;
+    bool isGPSAlive_;
+    bool isUseGPS_;
 
-
+    bool fixBlackStripesState_;;
+    int  fixBlackStripesForwardSteps_;
+    int  fixBlackStripesBackwardSteps_;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

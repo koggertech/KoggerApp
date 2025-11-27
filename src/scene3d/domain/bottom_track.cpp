@@ -2,15 +2,15 @@
 #include "scene3d_view.h"
 #include "epoch_event.h"
 #include "boat_track.h"
-#include <QtOpenGLExtensions/QOpenGLExtensions>
-
+#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QHash>
 
 BottomTrack::BottomTrack(GraphicsScene3dView* view, QObject* parent) :
     SceneObject(new BottomTrackRenderImplementation, view, parent),
     datasetPtr_(nullptr)
 {
-
+    setPrimitiveType(GL_LINE_STRIP);
 }
 
 BottomTrack::~BottomTrack()
@@ -104,14 +104,16 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                                                   Q_ARG(DatasetChannel, channels[0]),
                                                   Q_ARG(DatasetChannel, channels[1]),
                                                   Q_ARG(BottomTrackParam, btP),
-                                                  Q_ARG(bool, true)/*manual*/);
+                                                  Q_ARG(bool, true),/*manual*/
+                                                  Q_ARG(bool, false)/*redraw all*/);
                     }
                     else if (channels.size() == 1) {
                         QMetaObject::invokeMethod(dataProcessorPtr_, "bottomTrackProcessing", Qt::QueuedConnection,
                                                   Q_ARG(DatasetChannel, channels[0]),
                                                   Q_ARG(DatasetChannel, DatasetChannel()),
                                                   Q_ARG(BottomTrackParam, btP),
-                                                  Q_ARG(bool, true)/*manual*/);
+                                                  Q_ARG(bool, true),/*manual*/
+                                                  Q_ARG(bool, false));
                     }
                 }
                 else {
@@ -119,7 +121,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
                 }
             }
 
-            updateRenderData(true, 0, 0, true);
+            updateRenderData(0, 0, false, true);
             emit datasetPtr_->dataUpdate();
         }
     };
@@ -147,7 +149,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
             }
             if (isSomethingDeleted) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-                updateRenderData(true, 0, 0, true);
+                updateRenderData(0, 0, false, true);
                 emit datasetPtr_->dataUpdate();
             }
         }
@@ -167,7 +169,7 @@ void BottomTrack::actionEvent(ActionEvent actionEvent)
     }
 }
 
-void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch, bool manual)
+void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch, bool manual, bool redrawAll)
 {
     if (datasetPtr_ && datasetPtr_->getLastBottomTrackEpoch() != 0) {
         auto datasetChannels = datasetPtr_->channelsList();
@@ -177,7 +179,9 @@ void BottomTrack::isEpochsChanged(int lEpoch, int rEpoch, bool manual)
         else {
             visibleChannel_ = DatasetChannel();
         }
-        updateRenderData(false, lEpoch, rEpoch, manual);
+
+        updateRenderData(lEpoch, rEpoch, redrawAll, manual);
+
         Q_EMIT epochListChanged();
     }
 }
@@ -196,12 +200,8 @@ void BottomTrack::setData(const QVector<QVector3D> &data, int primitiveType)
 
 void BottomTrack::clearData()
 {
-    firstLIndx_ = -1;
-    lastIndx_ = -1;
     vertex2Epoch_.clear();
     epoch2Vertex_.clear();
-    allIndxs_.clear();
-    renderData_.clear();
     visibleChannel_ = DatasetChannel();
 
     auto r = RENDER_IMPL(BottomTrack);
@@ -379,7 +379,7 @@ void BottomTrack::keyPressEvent(Qt::Key key)
         }
         if (isSomethingDeleted) {
             RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-            updateRenderData(true, 0, 0, true);
+            updateRenderData(0, 0, false, true);
             emit datasetPtr_->dataUpdate();
         }
     }
@@ -401,128 +401,82 @@ void BottomTrack::keyPressEvent(Qt::Key key)
             }
             if (isSomethingDeleted) {
                 RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
-                updateRenderData(true, 0, 0, true);
+                updateRenderData(0, 0, false, true);
                 emit datasetPtr_->dataUpdate();
             }
         }
     }
 }
 
-void BottomTrack::updateRenderData(bool redrawAll, int lEpoch, int rEpoch, bool manual)
+void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool manually) //
 {
-    if (!visibleChannel_.channelId_.isValid()) {
+    if (!datasetPtr_) {
         return;
     }
 
-    const int range = rEpoch - lEpoch;
-    if (range < 0 || lEpoch < 0 || rEpoch < 0) {
+    bool redrawAll = redraw;
+    if ((!lEpIndx && !rEpIndx) || (lEpIndx == 0 && rEpIndx == datasetPtr_->size())) {
+        redrawAll = true;
+    }
+
+    if (redrawAll) {
+        clearCache();
+    }
+
+    const int toIndx   = redrawAll ? datasetPtr_->getLastBottomTrackEpoch() : rEpIndx;
+    const int fromIndx = redrawAll ?                                      0 : lEpIndx;
+    if (!redrawAll && fromIndx >= toIndx) {
         return;
     }
 
-    const bool interCall = (rEpoch == 0) && (lEpoch == 0);
-    const bool updateAll = (rEpoch - lEpoch) == datasetPtr_->getLastBottomTrackEpoch();
-    const bool defMode = interCall || updateAll || redrawAll;
+    const int need = toIndx - fromIndx;
 
-    if (firstLIndx_ > lEpoch && !defMode) {
-        return;
-    }
-    if (firstLIndx_ == -1) {
-        firstLIndx_ = lEpoch;
-    }
+    auto* r = RENDER_IMPL(BottomTrack);
+    r->selectedVertexIndices_.clear(); // ?
+    int rSize = r->cdata().size();
 
-    RENDER_IMPL(BottomTrack)->selectedVertexIndices_.clear();
+    QVector<QVector3D> prepData;
+    QVector<int>       epIndxUpdated;
+    QVector<int>       vertIndxUpdated;
+    prepData.reserve(need);
+    epIndxUpdated.reserve(need);
+    vertIndxUpdated.reserve(need);
 
-    QVector<int> updatedByIndxs;
-    updatedByIndxs.reserve(range);
+    for (int epIndx = fromIndx; epIndx < toIndx; ++epIndx) {
 
-    auto appendData = [&](const NED& pos, float dist, int epochIdx) -> void {
-        int vIdx = renderData_.size();
-        renderData_.append(QVector3D(pos.n, pos.e, dist));
-        vertex2Epoch_.insert(vIdx, epochIdx); // vertice -> epoch
-        epoch2Vertex_.insert(epochIdx, vIdx); // vertice -> epoch
+        auto vIt = epoch2Vertex_.find(epIndx);
+        if (vIt != epoch2Vertex_.end()) {
+            if (auto* ep = datasetPtr_->fromIndex(epIndx); ep) {
+                if (auto pos = ep->getSonarPosition().ned; pos.isCoordinatesValid()) {
+                    auto vIndx = *vIt;
+                    const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
+                    r->m_data[vIndx].setZ(dist);
 
-        updatedByIndxs.append(vIdx);
-        lastIndx_ = rEpoch;
-
-    };
-
-    int currMin = defMode ? 0 : lEpoch;
-    int currMax = defMode ? datasetPtr_->getLastBottomTrackEpoch() : rEpoch;
-    //qDebug() << "updateAll" << updateAll << "defMode" << defMode << "currMin" << currMin << "currMax" << currMax << "datasetPtr_->getLastBottomTrackEpoch()" << datasetPtr_->getLastBottomTrackEpoch();
-
-    if (defMode) {
-        vertex2Epoch_.clear();
-        epoch2Vertex_.clear();
-        renderData_.clear();
-        renderData_.reserve(currMax);
-    }
-
-    bool needRetriangle = false;
-
-    for (int i = currMin; i < currMax; ++i) {
-        if (auto epoch = datasetPtr_->fromIndex(i); epoch) {
-            NED pos = epoch->getSonarPosition().ned;
-            if (!pos.isCoordinatesValid()) {
-                continue;
+                    epIndxUpdated.push_back(epIndx);
+                    vertIndxUpdated.push_back(vIndx);
+                }
             }
+        }
+        else {
+            if (auto* ep = datasetPtr_->fromIndex(epIndx); ep) {
+                if (auto pos = ep->getSonarPosition().ned; pos.isCoordinatesValid()) {
+                    const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
+                    prepData.push_back(QVector3D(pos.n, pos.e, dist));
 
-            const float dist = -1.f * static_cast<float>(epoch->distProccesing(visibleChannel_.channelId_));
-            if (!std::isfinite(dist)) {
-                needRetriangle = true;
-            }
+                    epIndxUpdated.push_back(epIndx);
+                    vertIndxUpdated.push_back(rSize);
 
-            if (defMode) {
-                appendData(pos, dist, i);
-                continue;
-            }
+                    vertex2Epoch_.insert(rSize, epIndx);
+                    epoch2Vertex_.insert(epIndx, rSize);
 
-            auto vIt = epoch2Vertex_.find(i);
-            if (vIt != epoch2Vertex_.end()) {
-                renderData_[*vIt].setZ(dist);
-                updatedByIndxs.append(*vIt);
-            }
-            else {
-                appendData(pos, dist, i);
+                    rSize++;
+                }
             }
         }
     }
 
-    bool isDelManual = !updatedByIndxs.empty() && !renderData_.isEmpty() && needRetriangle;
-    if (!manual) {
-        isDelManual = false;
-    }
-
-    if (!updatedByIndxs.empty() && !renderData_.isEmpty()) {
-        SceneObject::setData(renderData_, GL_LINE_STRIP);
-        emit updatedPoints(updatedByIndxs, manual, isDelManual);
-    }
-
-    for (auto& itm : updatedByIndxs) {
-        allIndxs_.insert(itm);
-    }
-
-    if (defMode || needRetriangle) {
-        emit updatedPoints(QVector<int>(), manual, isDelManual); // completely redraw
-    }
-}
-
-QVector<int> BottomTrack::getAllIndxs()
-{
-    QVector<int> retVal(allIndxs_.begin(), allIndxs_.end());
-    std::sort(retVal.begin(), retVal.end());
-    return retVal;
-}
-
-QVector<int> BottomTrack::getRemainingIndxs()
-{
-    QVector<int> retVal;
-    retVal.reserve(allIndxs_.size());
-
-    std::copy_if(allIndxs_.begin(), allIndxs_.end(), std::back_inserter(retVal),
-                 [this](int v) { return v > lastIndx_; });
-
-    std::sort(retVal.begin(), retVal.end());
-    return retVal;
+    emit updatedPoints(epIndxUpdated, vertIndxUpdated, manually); // for dataHorizon -> dataProcessor
+    SceneObject::appendData(prepData);
 }
 
 QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceVector)
@@ -551,6 +505,15 @@ QVector<QPair<int, int>> BottomTrack::getSubarrays(const QVector<int>& sequenceV
     return retVal;
 }
 
+void BottomTrack::clearCache()
+{
+    auto* r = RENDER_IMPL(BottomTrack);
+
+    r->m_data.clear();
+    vertex2Epoch_.clear();
+    epoch2Vertex_.clear();
+}
+
 //-----------------------RenderImplementation-----------------------------//
 BottomTrack::BottomTrackRenderImplementation::BottomTrackRenderImplementation()
 {}
@@ -574,82 +537,100 @@ void BottomTrack::BottomTrackRenderImplementation::render(QOpenGLFunctions *ctx,
                                                           const QMatrix4x4 &projection,
                                                           const QMap<QString,std::shared_ptr<QOpenGLShaderProgram>> &shaderProgramMap) const
 {
-    if (!m_isVisible || !shaderProgramMap.contains("height") || !shaderProgramMap.contains("static"))
+    if (!m_isVisible || !shaderProgramMap.contains("height") || !shaderProgramMap.contains("static")) {
         return;
+    }
 
-    QOpenGLShaderProgram* shaderProgram = nullptr;
-    int colorLoc = -1, posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
+    // track
+    {
+        QOpenGLShaderProgram* shaderProgram = nullptr;
+        int posLoc = -1, maxZLoc = -1, minZLoc = -1, matrixLoc = -1;
 
-    shaderProgram = shaderProgramMap["height"].get();
-    shaderProgram->bind();
-    maxZLoc = shaderProgram->uniformLocation("max_z");
-    minZLoc = shaderProgram->uniformLocation("min_z");
-    shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
-    shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
+        shaderProgram = shaderProgramMap["height"].get();
+        shaderProgram->bind();
 
-    posLoc = shaderProgram->attributeLocation("position");
-    matrixLoc = shaderProgram->uniformLocation("matrix");
+        int isPointLoc   = shaderProgram->uniformLocation("isPoint");
+        int isTriangleLoc= shaderProgram->uniformLocation("isTriangle");
+        shaderProgram->setUniformValue(isPointLoc,    true);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
 
-    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, m_data.constData());
+        maxZLoc = shaderProgram->uniformLocation("max_z");
+        minZLoc = shaderProgram->uniformLocation("min_z");
+        shaderProgram->setUniformValue(maxZLoc, m_bounds.maximumZ());
+        shaderProgram->setUniformValue(minZLoc, m_bounds.minimumZ());
 
-    ctx->glLineWidth(4.0);
-    ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
-    ctx->glLineWidth(1.0);
+        posLoc = shaderProgram->attributeLocation("position");
+        matrixLoc = shaderProgram->uniformLocation("matrix");
 
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, m_data.constData());
 
-    //------------->Drawing selected vertices<<---------------//
-    shaderProgram = shaderProgramMap["static"].get();
-    shaderProgram->bind();
+        ctx->glLineWidth(4.0);
+        ctx->glDrawArrays(m_primitiveType, 0, m_data.size());
+        ctx->glLineWidth(1.0);
 
-    colorLoc  = shaderProgram->uniformLocation("color");
-    matrixLoc = shaderProgram->uniformLocation("matrix");
-    posLoc    = shaderProgram->attributeLocation("position");
-    int widthLoc  = shaderProgram->uniformLocation("width");
+        shaderProgram->setUniformValue(isPointLoc,    false);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
 
-    QVector4D vertexColor(0.91f, 0.25f, 0.2f, 1.0f);
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
+    }
 
-    //TODO: Needs to optimize data preparing
-    QVector<QVector3D> selectedVertices;
-    selectedVertices.reserve(selectedVertices.size());
-    for (const auto& i : selectedVertexIndices_)
-        selectedVertices.append(m_data.at(i));
+    {
+        QOpenGLShaderProgram* shaderProgram = nullptr;
+        int colorLoc = -1, posLoc = -1, matrixLoc = -1;
 
-    if (selectedVertices.isEmpty())
-        return;
+        //------------->Drawing selected vertices<<---------------//
+        shaderProgram = shaderProgramMap["static"].get();
+        shaderProgram->bind();
 
-    shaderProgram->setUniformValue(colorLoc,vertexColor);
-    shaderProgram->setUniformValue(matrixLoc, projection * view * model);
-    shaderProgram->setUniformValue(widthLoc, 12.0f);
-    shaderProgram->enableAttributeArray(posLoc);
-    shaderProgram->setAttributeArray(posLoc, selectedVertices.constData());
+        int isPointLoc   = shaderProgram->uniformLocation("isPoint");
+        int isTriangleLoc= shaderProgram->uniformLocation("isTriangle");
+        shaderProgram->setUniformValue(isPointLoc,    true);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
 
-    ctx->glEnable(34370);
-    ctx->glDrawArrays(GL_POINTS, 0, selectedVertices.size());
-    ctx->glDisable(34370);
+        colorLoc  = shaderProgram->uniformLocation("color");
+        matrixLoc = shaderProgram->uniformLocation("matrix");
+        posLoc    = shaderProgram->attributeLocation("position");
+        int widthLoc  = shaderProgram->uniformLocation("width");
 
-    shaderProgram->disableAttributeArray(posLoc);
-    shaderProgram->release();
+        QVector4D vertexColor(0.91f, 0.25f, 0.2f, 1.0f);
 
-    //if (selectedVertices.size() > 1)
-    //    return;
+        //TODO: Needs to optimize data preparing
+        QVector<QVector3D> selectedVertices;
+        selectedVertices.reserve(selectedVertexIndices_.size());
+        for (const auto& i : selectedVertexIndices_) {
+            selectedVertices.append(m_data.at(i));
+        }
 
-    //QRectF vport = DrawUtils::viewportRect(ctx);
+        if (selectedVertices.isEmpty()) {
+            shaderProgram->disableAttributeArray(posLoc);
 
-    //QVector3D p = selectedVertices.first();
-    //QVector2D p_screen = p.project(view * model, projection, vport.toRect()).toVector2D();
-    //p_screen.setY(vport.height() - p_screen.y());
+            shaderProgram->setUniformValue(isPointLoc,    false);
+            shaderProgram->setUniformValue(isTriangleLoc, false);
 
-    //QMatrix4x4 textProjection;
-    //textProjection.ortho(vport.toRect());
+            shaderProgram->release();
+            return;
+        }
 
-    //TextRenderer::instance().render(QString("x=%1 y=%2 z=%3").arg(p.x()).arg(p.y()).arg(p.z()), TODO
-    //                                0.3f,
-    //                                p_screen,
-    //                                ctx,
-    //                                textProjection
-    //                                );
+        shaderProgram->setUniformValue(colorLoc,vertexColor);
+        shaderProgram->setUniformValue(matrixLoc, projection * view * model);
+        shaderProgram->setUniformValue(widthLoc, 17.0f);
+        shaderProgram->enableAttributeArray(posLoc);
+        shaderProgram->setAttributeArray(posLoc, selectedVertices.constData());
+
+        ctx->glEnable(34370);
+        ctx->glEnable(34913);
+
+        ctx->glDrawArrays(GL_POINTS, 0, selectedVertices.size());
+        ctx->glDisable(34370);
+        ctx->glDisable(34913);
+
+        shaderProgram->setUniformValue(isPointLoc,    false);
+        shaderProgram->setUniformValue(isTriangleLoc, false);
+
+        shaderProgram->disableAttributeArray(posLoc);
+        shaderProgram->release();
+    }
 }

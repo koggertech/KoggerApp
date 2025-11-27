@@ -88,7 +88,7 @@ bool MosaicDB::open()
     // conn options
     QString opts = QString("QSQLITE_BUSY_TIMEOUT=%1;").arg(busyTimeoutMs_);
     if (role_ == DbRole::Reader) {
-        opts += "QSQLITE_OPEN_READONLY=1;";
+        opts += "QSQLITE_OPEN_READONLY;";
     }
     db_.setConnectOptions(opts);
 
@@ -445,7 +445,7 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
         const QVector<TileKey>& list = it.value();
 
         for (int start = 0; start < list.size(); start += kMaxPairsPerBatch_) { // step by batch
-            const int count = std::min(kMaxPairsPerBatch_, list.size() - start);
+            const int count = std::min(kMaxPairsPerBatch_, static_cast<int>(list.size() - start));
 
             const QString sql =
                 QStringLiteral(

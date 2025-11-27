@@ -38,9 +38,9 @@ Item {
         id: mouseDragArea
         propagateComposedEvents: true
         anchors.fill: columnItem
-        onPressed: mouse.accepted = true
-        onReleased: mouse.accepted = true
-        onClicked: mouse.accepted = true
+        onPressed:  function(mouse) { mouse.accepted = true }
+        onReleased: function(mouse) { mouse.accepted = true }
+        onClicked:  function(mouse) { mouse.accepted = true }
 
         drag.target: isDraggable ? columnItem : undefined
         drag.axis: Drag.XandYAxis
@@ -61,9 +61,9 @@ Item {
         anchors.fill: columnItem
         anchors.margins: -10 - control.offsetOpacityArea
         hoverEnabled: true
-        onPressed: mouse.accepted = false
-        onReleased: mouse.accepted = false
-        onClicked: mouse.accepted = false
+        onPressed: function(mouse) { mouse.accepted = false }
+        onReleased: function(mouse) { mouse.accepted = false }
+        onClicked: function(mouse) { mouse.accepted = false }
 
         onContainsMouseChanged: {
             containsMouse ? isHovered = true : isHovered = false

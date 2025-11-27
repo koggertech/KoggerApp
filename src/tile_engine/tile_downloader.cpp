@@ -74,7 +74,9 @@ void TileDownloader::stopAndClearRequests()
     downloadQueue_.clear();
 
     QList<QNetworkReply*> repliesToStop = activeReplies_.values();
-    for (auto* reply : repliesToStop) {
+
+    for (auto it = repliesToStop.cbegin(); it != repliesToStop.cend(); ++it) {
+        auto* reply = *it;
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
         stoppedDownloads.insert(index);
         reply->abort();
@@ -95,7 +97,8 @@ void TileDownloader::deleteRequest(const TileIndex& tileIndx)
     }
 
     QList<QNetworkReply*> repliesToStop = activeReplies_.values();
-    for (auto* reply : repliesToStop) {
+    for (auto it = repliesToStop.cbegin(); it != repliesToStop.cend(); ++it) {
+        auto* reply = *it;
         TileIndex index = reply->property("tileIndex").value<TileIndex>();
         if (index == tileIndx) {
             beenDeleted = true;

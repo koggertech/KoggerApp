@@ -14,16 +14,17 @@ class qPlot2D : public QQuickPaintedItem, public Plot2D
 {
     Q_OBJECT
 public:
-    Q_PROPERTY(int     contactPositionX READ getContactPositionX NOTIFY contactChanged)
-    Q_PROPERTY(int     contactPositionY READ getContactPositionY NOTIFY contactChanged)
-    Q_PROPERTY(int     contactIndx      READ getContactIndx      NOTIFY contactChanged)
-    Q_PROPERTY(double  contactLat       READ getContactLat       NOTIFY contactChanged)
-    Q_PROPERTY(double  contactLon       READ getContactLon       NOTIFY contactChanged)
-    Q_PROPERTY(double  contactDepth     READ getContactDepth     NOTIFY contactChanged)
-    Q_PROPERTY(bool    horizontal       READ isHorizontal        WRITE setHorizontal       NOTIFY plotHorizontalChanged)
-    Q_PROPERTY(float   timelinePosition READ timelinePosition    WRITE setTimelinePosition NOTIFY timelinePositionChanged)
-    Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo      NOTIFY contactChanged)
-    Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible   NOTIFY contactChanged)
+    Q_PROPERTY(bool horizontal READ isHorizontal() WRITE setHorizontal)
+    Q_PROPERTY(float timelinePosition READ timelinePosition WRITE setTimelinePosition NOTIFY timelinePositionChanged)
+    Q_PROPERTY(bool isEnabled READ getPlotEnabled WRITE setPlotEnabled)
+    Q_PROPERTY(QString contactInfo      READ getContactInfo      WRITE setContactInfo     NOTIFY contactChanged)
+    Q_PROPERTY(bool    contactVisible   READ getContactVisible   WRITE setContactVisible  NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionX READ getContactPositionX /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactPositionY READ getContactPositionY /*WRITE setContactPosition*/ NOTIFY contactChanged)
+    Q_PROPERTY(int     contactIndx      READ getContactIndx /*WRITE setContactIndx*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLat       READ getContactLat /*WRITE setContactLat*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactLon       READ getContactLon /*WRITE setContactLon*/ NOTIFY contactChanged)
+    Q_PROPERTY(double  contactDepth     READ getContactDepth /*WRITE setContactLon*/ NOTIFY contactChanged)
 
     qPlot2D(QQuickItem* parent = nullptr);
     void paint(QPainter *painter) override;
@@ -86,6 +87,8 @@ public slots:
         auto [ch2, sub2, name2] = datasetPtr_->channelIdFromName(ch2Str);
 
         setDataChannel(true, ch1, sub1, name1, ch2, sub2, name2);
+
+        plotUpdate();
     }
 
     ChannelId plotDatasetChannel() { return cursor_.channel1; }

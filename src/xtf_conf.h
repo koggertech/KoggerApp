@@ -11,7 +11,8 @@ typedef int16_t XTFSHORT;
 typedef int32_t XTFINT;
 typedef int32_t XTFLONG;
 
-typedef struct   __attribute__((packed)) {
+struct __attribute__((packed)) XTFCHANINFO
+{
     XTFBYTE TypeOfChannel = 1; // SUBBOTTOM=0, PORT=1, STBD=2, BATHYMETRY=3
     XTFBYTE SubChannelNumber = 0; // Index for which CHANINFO structure this is.
     XTFWORD CorrectionFlags = 1; // 1=sonar imagery stored as slant-range, 2=sonar imagery stored as ground range (corrected)
@@ -33,10 +34,10 @@ typedef struct   __attribute__((packed)) {
     XTFWORD BeamsPerArray = 0;
     XTFBYTE SampleFormat = 0; // 0 = Legacy, 1 = 4-byte IBM float, 2 = 4-byte integer, 3 = 2-byte integer4 = unused, 5 = 4-byte IEEE float, 6 = unused, 7 = unused, 8 = 1-byte integer
     XTFCHAR ReservedArea2[53] = {};
+};
 
-} XTFCHANINFO;
-
-typedef struct   __attribute__((packed)) {
+struct __attribute__((packed)) XTFFILEHEADER
+{
     XTFBYTE FileFormat = 123;
     XTFBYTE SystemType = 1;
     XTFCHAR RecordingProgramName[8] = {};
@@ -76,10 +77,10 @@ typedef struct   __attribute__((packed)) {
     float MRUOffsetRoll = 0;
 
     XTFCHANINFO ChanInfo[6];
+};
 
-} XTFFILEHEADER;
-
-typedef struct   __attribute__((packed)) {
+struct __attribute__((packed)) XTFPINGHEADER
+{
     XTFWORD MagicNumber = 0xFACE;
     XTFBYTE HeaderType = 0; // 0 = XTF_HEADER_SONAR (Sidescan data), 3 = XTF_HEADER_ATTITUDE (attitude packet)
     XTFBYTE SubChannelNumber = 0; // If HeaderType is bathymetry, this indicates which head; if HeaderType is forward-looking sonar, and then this indicates which array.
@@ -164,9 +165,10 @@ typedef struct   __attribute__((packed)) {
     XTFDWORD OptionalOffsey = 0;
     XTFBYTE CableOutHundredths = 0;
     XTFBYTE ReservedSpace2[6] = {};
-} XTFPINGHEADER;
+};
 
-typedef struct   __attribute__((packed)) {
+struct __attribute__((packed)) XTFPINGCHANHEADER
+{
     XTFWORD ChannelNumber = 0; // 0=port (low frequency), 1=stbd (low frequency), 2=port (high frequency), 3=stbd (high frequency)
     XTFWORD DownsampleMethod = 0; // 2 = MAX; 4 = RMS
     float SlantRange = 0; // Slant range of the data in meters
@@ -191,6 +193,6 @@ typedef struct   __attribute__((packed)) {
     float FixedVSOP = 0; // This is the fixed, along-track size of each ping, stored in centimeters.
     short Weight = 0; // Weighting factor passed by some sonars
     XTFBYTE ReservedSpace[4] = {};
-} XTFPINGCHANHEADER;
+};
 
 #endif // XTFCONF_H

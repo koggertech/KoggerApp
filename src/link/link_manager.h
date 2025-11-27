@@ -7,8 +7,8 @@
 #include <QList>
 #include <QTimer>
 #if defined(Q_OS_ANDROID)
-#include "platform/android/src/qtandroidserialport/src/qserialport.h"
-#include "platform/android/src/qtandroidserialport/src/qserialportinfo.h"
+#include "qserialport.h"
+#include "qserialportinfo.h"
 #else
 #include <QSerialPort>
 #include <QSerialPortInfo>
@@ -51,7 +51,7 @@ public slots:
     void updateDestinationPort(QUuid uuid,int destinationPort);
     void updatePinnedState(QUuid uuid, bool state);
     void updateControlType(QUuid uuid, ControlType controlType);
-    void frameInput(Link* link, FrameParser frame);
+    void frameInput(Link* link, Parsers::FrameParser frame);
     void createAsUdp(QString address, int sourcePort, int destinationPort);
     void createAsTcp(QString address, int sourcePort, int destinationPort);
     void importPinnedLinksFromXML();
@@ -65,7 +65,7 @@ signals:
                         LinkType linkType, QString address, int sourcePort, int destinationPort, bool isPinned, bool isHided, bool isNotAvailable,
                         bool autoSpeedSelection, bool isUpgradingState);
     void deleteModel(QUuid uuid);
-    void frameReady(QUuid uuid, Link* link, FrameParser frame);
+    void frameReady(QUuid uuid, Link* link, Parsers::FrameParser frame);
     void linkClosed(QUuid uuid, Link* link);
     void linkOpened(QUuid uuid, Link* link);
     void linkDeleted(QUuid uuid, Link* link);

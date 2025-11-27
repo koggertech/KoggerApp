@@ -258,7 +258,7 @@ public slots:
     QStringList channelsNameList();
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
-    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual);
+    void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
 
 signals:
     // data horizon
@@ -270,7 +270,7 @@ signals:
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
     void dataUpdate();
-    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch, bool manual);
+    void bottomTrackUpdated(const ChannelId& channelId, int lEpoch, int rEpoch, bool manual, bool redrawAll);
     void updatedLlaRef();
     void channelsUpdated();
     void redrawEpochs(const QSet<int>& indxs);
