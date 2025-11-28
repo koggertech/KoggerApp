@@ -200,7 +200,7 @@ public:
     bool sceneBoundingBoxVisible() const;
     Dataset* dataset() const;
     void clear(bool cleanMap = false);
-    QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ);
+    QVector3D calculateIntersectionPoint(const QVector3D &rayOrigin, const QVector3D &rayDirection, float planeZ) const;
     void updateProjection();
     void setNeedToResetStartPos(bool state);
     void forceUpdateDatasetLlaRef();
@@ -243,9 +243,9 @@ public Q_SLOTS:
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
     void updateSurfaceView();
+    void calcVisEpochIndxs();
     void updateViews();
     void onCameraMoved();
-    void calcVisEpochIndxs();
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
@@ -256,7 +256,6 @@ signals:
     void sendDataRectRequest(QVector<NED> rect, int zoomIndx, bool moveUp);
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
-    void cameraIsMoved();
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
 
 private:
@@ -269,6 +268,7 @@ private:
     friend class BottomTrack;
     friend class BoatTrack;
 
+    std::tuple<float, float, float, float> getFieldViewDim() const;
     std::shared_ptr<Camera> m_camera;
     std::shared_ptr<Camera> m_axesThumbnailCamera;
     QPointF m_startMousePos = {0.0f, 0.0f};
@@ -326,6 +326,10 @@ private:
     QTimer* testingTimer_;
     int dataZoomIndx_;
     bool cameraIsMoveUp_;
+    float lastMinX_;
+    float lastMaxX_;
+    float lastMinY_;
+    float lastMaxY_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
