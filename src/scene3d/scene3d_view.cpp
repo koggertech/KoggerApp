@@ -1033,6 +1033,8 @@ void GraphicsScene3dView::updateSurfaceView()
 
 void GraphicsScene3dView::calcVisEpochIndxs()
 {
+    return;
+
     if (!datasetPtr_) {
         return;
     }
@@ -1068,6 +1070,8 @@ void GraphicsScene3dView::calcVisEpochIndxs()
     //qDebug() << "";
     //qDebug() << contains.size();
     //qDebug() << contains;
+
+    emit sendCameraEpIndxs(contains);
 }
 
 void GraphicsScene3dView::updateViews()

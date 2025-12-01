@@ -209,6 +209,21 @@ void DataProcessor::setIsOpeningFile(bool state)
     isOpeningFile_ = state;
 }
 
+void DataProcessor::onCameraMoved(const QVector<int> &epIndxs)
+{
+    if (epIndxs.isEmpty()) {
+        return;
+    }
+
+    //qDebug() << "add pending" << epIndxs.size();
+
+    for (int itm : epIndxs) {
+        pendingMosaicIndxs_.insert(itm);
+    }
+
+    scheduleLatest(WorkSet(WF_All));
+}
+
 void DataProcessor::onChartsAdded(uint64_t indx)
 {
     chartsCounter_ = indx;

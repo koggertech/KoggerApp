@@ -257,6 +257,7 @@ signals:
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
+    void sendCameraEpIndxs(const QVector<int>& epIndxs);
 
 private:
     void updateBounds();

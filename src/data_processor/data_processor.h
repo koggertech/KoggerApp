@@ -51,6 +51,9 @@ public slots:
     void setUpdateMosaic (bool state);
 
     void setIsOpeningFile (bool state);
+    //
+    void onCameraMoved(const QVector<int>& epIndxs);
+
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
     void onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int> &vertIndxs, bool manual);
