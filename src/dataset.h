@@ -159,6 +159,8 @@ public:
 
     int getLastBottomTrackEpoch() const;
 
+    float getLastArtificalYaw();
+
     float getLastYaw() {
         return _lastYaw;
     }
@@ -220,6 +222,7 @@ public slots:
     void addDVLSolution(IDBinDVL::DVLSolution dvlSolution);
     void addAtt(float yaw, float pitch, float roll);
     void addPosition(double lat, double lon, uint32_t unix_time = 0, int32_t nanosec = 0);
+    void addArtificalYaw();
     void addPositionRTK(Position position);
 
     void addDepth(float depth);
@@ -310,7 +313,8 @@ protected:
 
     QVector<Epoch> pool_;
 
-    float _lastYaw = 0, _lastPitch = 0, _lastRoll = 0;
+    float lastAYaw_ = NAN;
+    float _lastYaw = NAN, _lastPitch = NAN, _lastRoll = NAN;
     float lastTemp_ = NAN;
 
     Epoch* addNewEpoch();

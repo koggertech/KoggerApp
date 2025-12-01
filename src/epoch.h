@@ -196,6 +196,7 @@ public:
     void setTime(int year, int month, int day, int hour, int min, int sec, int nanosec = 0);
 
     void setTemp(float temp_c);
+    void setArtificalYaw(float val) { artificalYaw_ = val; };
     void setAtt(float yaw, float pitch, float roll, DataType dataType = DataType::kRaw);
     DataType getAttDataType() const { return _attitude.dataType; };
 
@@ -390,6 +391,7 @@ public:
     bool temperatureAvail() { return flags.tempAvail; }
 
     bool isAttAvail() { return _attitude.isAvail(); }
+    float getArtificalYaw() const { return artificalYaw_; }
     float yaw() { return _attitude.yaw; }
     float pitch() { return _attitude.pitch; }
     float roll() { return _attitude.roll; }
@@ -632,5 +634,5 @@ protected:
     } flags;
 
     float depth_ = NAN;
-
+    float artificalYaw_ = NAN;
 };

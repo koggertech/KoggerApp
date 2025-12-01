@@ -82,6 +82,11 @@ int Dataset::getLastBottomTrackEpoch() const
     return lastBottomTrackEpoch_;
 }
 
+float Dataset::getLastArtificalYaw()
+{
+    return lastAYaw_;
+}
+
 LLARef Dataset::getLlaRef() const
 {
     return _llaRef;
@@ -635,7 +640,11 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
 
                 distToActiveContact_ = distanceMetersLLA(latBoat, lonBoat, latTarget, lonTarget);
 
-                const double yawDeg = _lastYaw;
+                double yawDeg = _lastYaw;
+                if (!std::isfinite(yawDeg)) {
+                    yawDeg = lastAYaw_;
+                }
+
                 if (std::isfinite(yawDeg)) {
                     angleToActiveContact_ = angleToTargetDeg(latBoat, lonBoat, latTarget, lonTarget, yawDeg);
                 }
@@ -646,6 +655,39 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
         emit dataUpdate();
         emit lastPositionChanged();
     }
+
+    addArtificalYaw();
+}
+
+void Dataset::addArtificalYaw()
+{
+    auto* llPtr = lastlast();
+    auto* lPtr  = last();
+    if (!llPtr || !lPtr) {
+        return;
+    }
+
+    auto llNed = llPtr->getPositionGNSS().ned;
+    auto lNed  = lPtr->getPositionGNSS().ned;
+    if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
+        return;
+    }
+
+    const double dN = lNed.n - llNed.n;
+    const double dE = lNed.e - llNed.e;
+    if (qFuzzyIsNull(dN) && qFuzzyIsNull(dE)) {
+        return;
+    }
+
+    double yawRad = std::atan2(dE, dN);
+    double yawDeg = qRadiansToDegrees(yawRad);
+    if (yawDeg < 0.0) {
+        yawDeg += 360.0;
+    }
+
+    lPtr->setArtificalYaw(static_cast<float>(yawDeg));
+
+    lastAYaw_ = yawDeg;
 }
 
 void Dataset::addPositionRTK(Position position) {
@@ -796,9 +838,10 @@ void Dataset::resetRenderBuffers()
     tracks.clear();
     pool_.clear();
     pool_.shrink_to_fit();//
-    _lastYaw = 0;
-    _lastPitch = 0;
-    _lastRoll = 0;
+    lastAYaw_ = NAN;
+    _lastYaw = NAN;
+    _lastPitch = NAN;
+    _lastRoll = NAN;
     lastTemp_ = NAN;
     interpolator_.clear();
     _llaRef = LLARef();

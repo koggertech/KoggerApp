@@ -1099,7 +1099,13 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
 
     boatTrack_->onPositionAdded(indx); // сюда лодка
 
-    if (float lastYaw = datasetPtr_->getLastYaw(); std::isfinite(lastYaw)) {
+    // Yaw
+    float lastYaw = datasetPtr_->getLastYaw();
+    if (!std::isfinite(lastYaw)) {
+        lastYaw = datasetPtr_->getLastArtificalYaw();
+    }
+
+    if (std::isfinite(lastYaw)) {
         navigationArrow_->setPositionAndAngle(QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d), lastYaw - 90.f); // сюда лодка
     }
 
