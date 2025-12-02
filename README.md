@@ -92,7 +92,7 @@ Steps:
 
 🤖 Android (armeabi-v7a, arm64-v8a)  
 Compiler: Clang from NDK 27.3.13750724  
-Qt version: Qt 6.8.3 for Android  
+Qt version: Qt 6.8.3 (android_armv7 or android_arm64_v8a)  
 Set up Android SDK/NDK in Qt Creator (via Tools > Options > Devices > Android)  
 Steps:
 - Open the .pro file in Qt Creator
@@ -102,7 +102,7 @@ Steps:
 
 🐧 Linux (Ubuntu x86_64)  
 Compiler: Clang 18.1.3  
-Qt version: Qt 6.8.3  
+Qt version: Qt 6.8.3 (gcc)  
 Clone and build:
 ```bash
 git clone https://github.com/koggertech/KoggerApp.git
