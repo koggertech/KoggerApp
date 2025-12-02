@@ -17,6 +17,7 @@ REM 2. Ask if user wants to archive
 set /p archive=Do you want to archive the output directory? (y/n): 
 
 REM 3. Set local paths
+set llvm_mingw=C:\Qt\Tools\llvm-mingw1706_64
 set binPath=build\Desktop_Qt_6_8_3_llvm_mingw_64_bit-Release\release\KoggerApp.exe
 set qmlPath=qml
 set outPath=out_x64
@@ -35,6 +36,17 @@ if exist "%outPath%" (
 REM 5. Deploy and copy binary file
 windeployqt %binPath% -qmldir %qmlPath% -dir %outPath% -no-translations -no-virtualkeyboard
 xcopy "%binPath%" "%outPath%"
+
+REM 6. copy LLVM-MINGW RUNTIME manually
+echo LLVM_MINGW=%llvm_mingw%
+for %%F in (libunwind.dll libc++.dll libwinpthread-1.dll) do (
+    if exist "%llvm_mingw%\bin\%%F" (
+        echo copying %%F
+        copy "%llvm_mingw%\bin\%%F" "%outPath%"
+    ) else (
+        echo NOT FOUND: "%llvm_mingw%\bin\%%F"
+    )
+)
 
 if /i "%archive%"=="y" (
     REM 6. Archiving to .zip 
