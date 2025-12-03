@@ -8,9 +8,15 @@ Dataset::Dataset() :
     interpolator_(this),
     lastBottomTrackEpoch_(0),
     bSProc_(new BlackStripesProcessor()),
-    sonarPosIndx_(0)
+    sonarPosIndx_(0),
+    mosaicFirstSubChId_(0),
+    mosaicSecondSubChId_(0),
+    lastDimRectindx_(0),
+    lAngleOffset_(0.0f),
+    rAngleOffset_(0.0f)
 {
     qRegisterMetaType<ChannelId>("ChannelId");
+    qRegisterMetaType<uint64_t>("uint64_t");
     resetDataset();
 }
 
@@ -82,9 +88,19 @@ int Dataset::getLastBottomTrackEpoch() const
     return lastBottomTrackEpoch_;
 }
 
-float Dataset::getLastArtificalYaw()
+float Dataset::getLastArtificalYaw() const
 {
     return lastAYaw_;
+}
+
+float Dataset::getLastArtificaPitch() const
+{
+    return lastAPitch_;
+}
+
+float Dataset::getLastArtificalRoll() const
+{
+    return lastARoll_;
 }
 
 LLARef Dataset::getLlaRef() const
@@ -420,7 +436,7 @@ void Dataset::addUsblSolution(IDBinUsblSolution::UsblSolution data) {
     int pool_index = endIndex();
     if(pool_index < 0 || pool_[pool_index].isUsblSolutionAvailable() == true) {
         addNewEpoch();
-        pool_index = endIndex();
+        //pool_index = endIndex();
     }
 
     // tracks[data.id].data_.append(QVector3D(data.x_m, data.y_m, data.depth_m));
@@ -685,9 +701,19 @@ void Dataset::addArtificalYaw()
         yawDeg += 360.0;
     }
 
-    lPtr->setArtificalYaw(static_cast<float>(yawDeg));
+    uint64_t indx = pool_.size() - 1;
+    const float aYaw = static_cast<float>(yawDeg);
+    const float aPitch = 0.0f;
+    const float aRoll = 0.0f;
 
-    lastAYaw_ = yawDeg;
+    lPtr->setArtificalAtt(aYaw, aPitch, aRoll);
+    lastAYaw_   = aYaw;
+    lastAPitch_ = aPitch;
+    lastARoll_  = aRoll;
+
+    interpolator_.interpolateArtificalAtt(false);
+
+    emit artificalAttitudeAdded(indx);
 }
 
 void Dataset::addPositionRTK(Position position) {
@@ -826,6 +852,12 @@ void Dataset::resetDataset()
 
     sonarPosIndx_ = 0;
 
+    mosaicFirstChId_.clear();
+    mosaicSecondChId_.clear();
+    mosaicFirstSubChId_ = 0;
+    mosaicSecondSubChId_ = 0;
+    lastDimRectindx_ = 0;
+
     emit lastDepthChanged();
     emit channelsUpdated();
     emit dataUpdate();
@@ -839,6 +871,8 @@ void Dataset::resetRenderBuffers()
     pool_.clear();
     pool_.shrink_to_fit();//
     lastAYaw_ = NAN;
+    lastAPitch_ = NAN;
+    lastARoll_ = NAN;
     _lastYaw = NAN;
     _lastPitch = NAN;
     _lastRoll = NAN;
@@ -1081,6 +1115,13 @@ void Dataset::onLastBottomTrackEpochChanged(const ChannelId& channelId, int val,
     emit bottomTrackUpdated(channelId, lEpoch, rEpoch, manual, redrawAll); // 3D
 }
 
+void Dataset::onDimensionRectCanCalc(uint64_t indx)
+{
+    //qDebug() << "Dataset::onDimensionRectCanCalc" << indx;
+
+    calcDimensionRects(indx);
+}
+
 void Dataset::validateChannelList(const ChannelId &channelId, uint8_t subChannelId)
 {
     int16_t indx = -1;
@@ -1195,6 +1236,116 @@ void Dataset::setLastDepth(float val)
     emit lastDepthChanged();
 }
 
+void Dataset::calcDimensionRects(uint64_t indx)
+{
+    //qDebug() << "void Dataset::calcTracingDimensions()";
+
+    if (!mosaicFirstChId_.isValid() ||
+        !mosaicSecondChId_.isValid()) {
+        return;
+    }
+
+    uint64_t lastIndx = lastDimRectindx_;
+    uint64_t currIndx = indx;
+
+    if (currIndx >= static_cast<uint64_t>(pool_.size())) {
+        qWarning() << "Dataset::calcTracingDimensions out of indxs";
+        return;
+    }
+
+    for (uint64_t i = lastIndx; i < currIndx; ++i) {
+        uint64_t llIndx = i;
+        uint64_t  lIndx = i + 1;
+
+        auto* llPtr = &pool_[llIndx];
+        auto* lPtr  = &pool_[lIndx];
+        if (!llPtr || !lPtr) {
+            qWarning() << "Dataset::calcTracingDimensions: !llPtr || !lPtr";
+            continue;
+        }
+
+        const auto llNed = llPtr->getSonarPosition().ned;
+        const auto lNed  = lPtr->getSonarPosition().ned;
+        if (!llNed.isCoordinatesValid() || !lNed.isCoordinatesValid()) {
+            continue;
+        }
+
+        const auto llYaw = llPtr->tryRetValidYaw();
+        const auto lYaw  = lPtr->tryRetValidYaw();
+        if (!std::isfinite(llYaw) || !std::isfinite(lYaw)) {
+            continue;
+        }
+
+        auto* fChLlCharts = llPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
+        auto* fChlCharts  =  lPtr->chart(mosaicFirstChId_,  mosaicFirstSubChId_);
+        auto* sChLlCharts = llPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+        auto* sChlCharts  =  lPtr->chart(mosaicSecondChId_, mosaicSecondSubChId_);
+
+        if ((!fChLlCharts || !fChlCharts) &&
+            (!sChLlCharts || !sChlCharts)) {
+            continue;
+        }
+
+        lastDimRectindx_ = lIndx; // store progress
+
+        QVector<QVector3D> traceLinesVertices;
+        traceLinesVertices.reserve(8);
+
+        const QVector3D llPos(llNed.n, llNed.e, 0.0f);
+        const QVector3D lPos (lNed.n,  lNed.e,  0.0f);
+
+        const double llAzRad = qDegreesToRadians(llYaw);
+        const double lAzRad  = qDegreesToRadians(lYaw);
+
+        const double firstAngleOffsetDeg  = lAngleOffset_;
+        const double secondAngleOffsetDeg = rAngleOffset_;
+
+        if (fChLlCharts && fChlCharts) {
+            const float llRange = fChLlCharts->range();
+            const float lRange  = fChlCharts->range();
+            const double llLeftAzRad = llAzRad - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+            const double lLeftAzRad  = lAzRad  - M_PI_2 + qDegreesToRadians(firstAngleOffsetDeg);
+
+            QVector3D llBeg(llPos.x() + llRange * std::cos(llLeftAzRad), llPos.y() + llRange * std::sin(llLeftAzRad), 0.0f); // llPtr f ray
+            QVector3D llEnd(llPos);
+            QVector3D lBeg(lPos.x() + lRange * std::cos(lLeftAzRad), lPos.y() + lRange * std::sin(lLeftAzRad), 0.0f); // lPtr f ray
+            QVector3D lEnd(lPos);
+
+            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
+        }
+
+        if (sChLlCharts && sChlCharts) {
+            const float llRange = sChLlCharts->range();
+            const float lRange  = sChlCharts->range();
+
+            const double llRightAzRad = llAzRad + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
+            const double lRightAzRad  = lAzRad  + M_PI_2 - qDegreesToRadians(secondAngleOffsetDeg);
+
+            QVector3D llBeg(llPos.x() + llRange * std::cos(llRightAzRad), llPos.y() + llRange * std::sin(llRightAzRad), 0.0f); // llPtr s ray
+            QVector3D llEnd(llPos);
+            QVector3D lBeg(lPos.x() + lRange * std::cos(lRightAzRad), lPos.y() + lRange * std::sin(lRightAzRad), 0.0f); // lPtr s ray
+            QVector3D lEnd(lPos);
+
+            traceLinesVertices << llBeg << llEnd << lBeg  << lEnd;
+        }
+
+        float minN = std::numeric_limits<float>::max();
+        float maxN = std::numeric_limits<float>::lowest();
+        float minE = std::numeric_limits<float>::max();
+        float maxE = std::numeric_limits<float>::lowest();
+
+        for (auto it = traceLinesVertices.cbegin(); it != traceLinesVertices.cend(); ++it) {
+            minN = std::min(minN, it->x());  // N
+            maxN = std::max(maxN, it->x());
+            minE = std::min(minE, it->y());  // E
+            maxE = std::max(maxE, it->y());
+        }
+
+        //qDebug() << "";
+        //qDebug() << minN << maxN << minE << maxE;
+    }
+}
+
 std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QString& name) const
 {
     auto retVal = std::make_tuple(ChannelId(), 0x00, QString());
@@ -1227,16 +1378,49 @@ int64_t Dataset::getActiveContactIndx() const
     return activeContactIndx_;
 }
 
+void Dataset::setMosaicChannels(const QString& firstChStr, const QString& secondChStr)
+{
+    auto [ch1, sub1, name1] = channelIdFromName(firstChStr);
+    auto [ch2, sub2, name2] = channelIdFromName(secondChStr);
+
+    bool beenChanged = false;
+    if (mosaicFirstChId_     != ch1  ||
+        mosaicSecondChId_    != ch2  ||
+        mosaicFirstSubChId_  != sub1 ||
+        mosaicSecondSubChId_ != sub2) {
+        beenChanged = true;
+    }
+
+    if (beenChanged) {
+        mosaicFirstChId_ = ch1;
+        mosaicSecondChId_ = ch2;
+        mosaicFirstSubChId_ = sub1;
+        mosaicSecondSubChId_ = sub2;
+
+        // TODO: recalc rects on change channels!
+    }
+}
+
+void Dataset::onSetLAngleOffset(float val)
+{
+    lAngleOffset_ = val;
+}
+
+void Dataset::onSetRAngleOffset(float val)
+{
+    rAngleOffset_ = val;
+}
+
 void Dataset::onSonarPosCanCalc(uint64_t indx)
 {
     for (uint64_t i = sonarPosIndx_ + 1; i <= indx; ++i) {
         if (auto* ep = fromIndex(i); ep) {
             if (sonarOffset_.isNull()) {
-                ep->setSonarPosition(ep->getPositionGNSS());
+                ep->setSonarPosition(ep->getPositionGNSS()); // interp been before
             }
             else {
-                Position boatPos = ep->getPositionGNSS();
-                const NED d = fruOffsetToNed(sonarOffset_, ep->yaw());
+                Position boatPos = ep->getPositionGNSS(); // interp been before
+                const NED d = fruOffsetToNed(sonarOffset_, ep->tryRetValidYaw());
                 NED sonarNed(boatPos.ned.n + d.n, boatPos.ned.e + d.e, /*always zero*/0.0);
                 LLA sonarLla(&sonarNed, &_llaRef, /*spherical=*/true);
                 boatPos.lla      = sonarLla;

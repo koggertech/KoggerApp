@@ -76,6 +76,8 @@ public slots:
     Q_INVOKABLE void updateContact();
     void setPlotEnabled(bool state);
 
+    Q_INVOKABLE void mosaicLOffsetChanged(float val);
+    Q_INVOKABLE void mosaicROffsetChanged(float val);
 
     void plotDatasetChannelFromStrings(const QString& ch1Str, const QString& ch2Str)
     {

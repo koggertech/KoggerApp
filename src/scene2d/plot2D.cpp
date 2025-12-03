@@ -8,6 +8,8 @@ Plot2D::Plot2D()
     , pendingBtpLambda_(nullptr)
     , isHorizontal_(true)
     , isEnabled_(true)
+    , lAngleOffsetDeg_(0.0f)
+    , rAngleOffsetDeg_(0.0f)
 {
     qRegisterMetaType<ChannelId>("ChannelId");
 
@@ -781,8 +783,8 @@ bool Plot2D::setContact(int indx, const QString& text)
             else {
                 const float  calcRange        = std::sqrt(std::max(0.0, std::pow(cursor_distance, 2) - std::pow(bottomTrack, 2)));
                 const bool   goRight          = cursor_distance > 0; // *
-                const float  lAngleOffsetDeg  = 0.f;
-                const float  rAngleOffsetDeg  = 0.f;
+                const float  lAngleOffsetDeg  = lAngleOffsetDeg_;
+                const float  rAngleOffsetDeg  = rAngleOffsetDeg_;
                 const double yawRad           = qDegreesToRadians(ep->yaw());
                 const double leftAzRad        = yawRad - M_PI_2 + qDegreesToRadians(lAngleOffsetDeg);
                 const double rightAzRad       = yawRad + M_PI_2 - qDegreesToRadians(rAngleOffsetDeg);
@@ -907,6 +909,16 @@ void Plot2D::plotUpdate() {}
 void Plot2D::sendSyncEvent(int epoch_index, QEvent::Type eventType) {
     Q_UNUSED(epoch_index);
     Q_UNUSED(eventType);
+}
+
+void Plot2D::setMosaicLOffset(float val)
+{
+    lAngleOffsetDeg_ = val;
+}
+
+void Plot2D::setMosaicROffset(float val)
+{
+    rAngleOffsetDeg_ = val;
 }
 
 void Plot2D::reindexingCursor() {

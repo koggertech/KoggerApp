@@ -13,6 +13,7 @@ public:
 
     void interpolatePos(bool fromStart);
     void interpolateAtt(bool fromStart);
+    void interpolateArtificalAtt(bool fromStart);
     void clear();
 
 private:
@@ -31,5 +32,6 @@ private:
 
     Dataset* datasetPtr_;
     int lastAttInterpIndx_;
+    int lastArtificalAttInterpIndx_;
     int lastPosInterpIndx_;
 };

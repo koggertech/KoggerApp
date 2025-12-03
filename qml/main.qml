@@ -100,6 +100,9 @@ ApplicationWindow  {
         waterViewSecond.settingsClicked.connect(onPlotSettingsClicked)
         menuBar.menuBarSettingOpened.connect(onMenuBarSettingsOpened)
 
+        scene3DToolbar.mosaicLAngleOffsetChanged.connect(handleMosaicLOffsetChanged)
+        scene3DToolbar.mosaicRAngleOffsetChanged.connect(handleMosaicROffsetChanged)
+
         if (Qt.platform.os !== "windows") {
             if (appSettings.isFullScreen) {
                 mainview.showFullScreen();
@@ -965,7 +968,7 @@ ApplicationWindow  {
                 CheckButton {
                     // text: checked ? "Armed" : "Disarmed"
                     icon.source: checked ? "qrc:/icons/ui/propeller.svg" : "qrc:/icons/ui/propeller_off.svg"
-                    checked: deviceManagerWrapper.pilotArmState == 1
+                    checked: deviceManagerWrapper.pilotArmState === 1
                     color: "white"
                     backColor: "red"
                     // checkedColor: "white"
@@ -980,7 +983,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/direction_arrows.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 0 // "Manual"
+                    checked: deviceManagerWrapper.pilotModeState === 0 // "Manual"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -990,7 +993,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/route.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 10 // "Auto"
+                    checked: deviceManagerWrapper.pilotModeState === 10 // "Auto"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1000,7 +1003,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/anchor.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 5 // "Loiter"
+                    checked: deviceManagerWrapper.pilotModeState === 5 // "Loiter"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1010,7 +1013,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/map_pin.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 15 // "Guided"
+                    checked: deviceManagerWrapper.pilotModeState === 15 // "Guided"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1020,7 +1023,7 @@ ApplicationWindow  {
                 CheckButton {
                     // Layout.fillWidth: true
                     icon.source: "qrc:/icons/ui/home.svg"
-                    checked: deviceManagerWrapper.pilotModeState == 11 || deviceManagerWrapper.pilotModeState == 12  // "RTL" || "SmartRTL"
+                    checked: deviceManagerWrapper.pilotModeState === 11 || deviceManagerWrapper.pilotModeState === 12  // "RTL" || "SmartRTL"
                     onCheckedChanged: {
                     }
                     ButtonGroup.group: autopilotModeGroup
@@ -1145,6 +1148,14 @@ ApplicationWindow  {
     function onMenuBarSettingsOpened() {
         waterViewFirst.closeSettings()
         waterViewSecond.closeSettings()
+    }
+    function handleMosaicLOffsetChanged(val) {
+        waterViewFirst.mosaicLOffsetChanged(val)
+        waterViewSecond.mosaicLOffsetChanged(val)
+    }
+    function handleMosaicROffsetChanged(val) {
+        waterViewFirst.mosaicROffsetChanged(val)
+        waterViewSecond.mosaicROffsetChanged(val)
     }
 
     // banner on file opening

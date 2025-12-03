@@ -9,6 +9,9 @@ import QtCore
 MenuFrame {
     id: mosaicViewSettings
 
+    signal mosaicLAngleOffsetChanged(int val)
+    signal mosaicRAngleOffsetChanged(int val)
+
     property CheckButton mosaicViewCheckButton
 
     function updateMosaic() {
@@ -295,7 +298,9 @@ MenuFrame {
                             editable: false
 
                             onValueChanged: {
+                                mosaicViewSettings.mosaicLAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
+                                dataset.onSetLAngleOffset(value);
                             }
 
                             onFocusChanged: {
@@ -303,7 +308,9 @@ MenuFrame {
                             }
 
                             Component.onCompleted: {
+                                mosaicViewSettings.mosaicLAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetLAngleOffset(value)
+                                dataset.onSetLAngleOffset(value);
                             }
 
                             Settings {
@@ -321,7 +328,9 @@ MenuFrame {
                             editable: false
 
                             onValueChanged: {
+                                mosaicViewSettings.mosaicRAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
+                                dataset.onSetRAngleOffset(value);
                             }
 
                             onFocusChanged: {
@@ -329,7 +338,9 @@ MenuFrame {
                             }
 
                             Component.onCompleted: {
+                                mosaicViewSettings.mosaicRAngleOffsetChanged(value)
                                 MosaicViewControlMenuController.onSetRAngleOffset(value)
+                                dataset.onSetRAngleOffset(value);
                             }
 
                             Settings {

@@ -194,6 +194,16 @@ void qPlot2D::setPlotEnabled(bool state)
     Plot2D::setPlotEnabled(state);
 }
 
+void qPlot2D::mosaicLOffsetChanged(float val)
+{
+    Plot2D::setMosaicLOffset(val);
+}
+
+void qPlot2D::mosaicROffsetChanged(float val)
+{
+    Plot2D::setMosaicROffset(val);
+}
+
 float qPlot2D::getLowEchogramLevel() const
 {
     return Plot2D::getEchogramLowLevel();

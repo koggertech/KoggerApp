@@ -16,8 +16,16 @@ Item  {
 
     signal updateBottomTrack()
 
+    signal mosaicLAngleOffsetChanged(int val)
+    signal mosaicRAngleOffsetChanged(int val)
+
     function updateMosaic() {
         mosaicViewSettings.updateMosaic()
+    }
+
+    Component.onCompleted: {
+        mosaicViewSettings.mosaicLAngleOffsetChanged.connect(mosaicLAngleOffsetChanged)
+        mosaicViewSettings.mosaicRAngleOffsetChanged.connect(mosaicRAngleOffsetChanged)
     }
 
     // opacity

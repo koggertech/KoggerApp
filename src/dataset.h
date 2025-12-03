@@ -159,9 +159,21 @@ public:
 
     int getLastBottomTrackEpoch() const;
 
-    float getLastArtificalYaw();
+    float getLastArtificalYaw() const;
+    float getLastArtificaPitch() const;
+    float getLastArtificalRoll() const;
 
-    float getLastYaw() {
+    float tryRetLastValidYaw() const {
+        if (isfinite(_lastYaw)) {
+            return _lastYaw;
+        }
+        if (isfinite(lastAYaw_)) {
+            return lastAYaw_;
+        }
+        return NAN;
+    }
+
+    float getLastYaw() const {
         return _lastYaw;
     }
 
@@ -187,8 +199,12 @@ public:
 
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
+    void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
 
 public slots:
+    Q_INVOKABLE void onSetLAngleOffset(float val);
+    Q_INVOKABLE void onSetRAngleOffset(float val);
+
     friend class DataProcessor;
     void onSonarPosCanCalc(uint64_t indx);
     bool  isValidActiveContactIndx() const { return activeContactIndx_ != -1;  };
@@ -262,6 +278,7 @@ public slots:
 
     void onDistCompleted(int epIndx, const ChannelId& channelId, float dist);
     void onLastBottomTrackEpochChanged(const ChannelId& channelId, int val, const BottomTrackParam& btP, bool manual, bool redrawAll);
+    void onDimensionRectCanCalc(uint64_t indx);
 
 signals:
     // data horizon
@@ -269,6 +286,7 @@ signals:
     void positionAdded(uint64_t indx);
     void chartAdded(uint64_t indx); // without ChartId
     void attitudeAdded(uint64_t indx);
+    void artificalAttitudeAdded(uint64_t indx);
     void bottomTrackAdded(uint64_t indx);
     //void interpYaw(int epIndx);
     //void interpPos(int epIndx);
@@ -313,7 +331,7 @@ protected:
 
     QVector<Epoch> pool_;
 
-    float lastAYaw_ = NAN;
+    float lastAYaw_ = NAN, lastAPitch_ = NAN, lastARoll_ = NAN;
     float _lastYaw = NAN, _lastPitch = NAN, _lastRoll = NAN;
     float lastTemp_ = NAN;
 
@@ -329,6 +347,7 @@ private:
     bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void setLastDepth(float val);
+    void calcDimensionRects(uint64_t indx);
 
     /*data*/
     mutable QReadWriteLock lock_;
@@ -358,4 +377,12 @@ private:
     float speed_                = 0.0f;
     QVector3D sonarOffset_;
     uint64_t sonarPosIndx_;
+
+    ChannelId mosaicFirstChId_;
+    ChannelId mosaicSecondChId_;
+    uint8_t mosaicFirstSubChId_;
+    uint8_t mosaicSecondSubChId_;
+    uint64_t lastDimRectindx_;
+    float lAngleOffset_;
+    float rAngleOffset_;
 };

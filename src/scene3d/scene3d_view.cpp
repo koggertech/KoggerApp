@@ -577,7 +577,7 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
     }
 
     if (useAngle && !isNorth_) {
-        const float yawDeg = datasetPtr_->getLastYaw();
+        const float yawDeg = datasetPtr_->tryRetLastValidYaw();
         if (std::isfinite(yawDeg)) {
             const float targetYaw = -yawDeg * static_cast<float>(M_PI) / 180.0f;
 

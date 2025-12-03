@@ -1213,6 +1213,8 @@ void Core::setMosaicChannels(const QString& firstChStr, const QString& secondChS
 
         if (lastCh1_  != ch1  || lastSub1_ != sub1 ||
             lastCh2_  != ch2  || lastSub2_ != sub2) {
+            datasetPtr_->setMosaicChannels(firstChStr, secondChStr); // for calc dim rects
+
             QMetaObject::invokeMethod(dataProcessor_, "setMosaicChannels",
                                       Qt::QueuedConnection, Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1), Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
             lastCh1_  = ch1;
@@ -1678,11 +1680,12 @@ void Core::createDatasetConnections()
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs,    this,               &Core::onRedrawEpochs);
 
     // DataHorizon
-    QObject::connect(datasetPtr_, &Dataset::epochAdded,       dataHorizon_.get(), &DataHorizon::onAddedEpoch);
-    QObject::connect(datasetPtr_, &Dataset::positionAdded,    dataHorizon_.get(), &DataHorizon::onAddedPosition);
-    QObject::connect(datasetPtr_, &Dataset::chartAdded,       dataHorizon_.get(), &DataHorizon::onAddedChart);
-    QObject::connect(datasetPtr_, &Dataset::attitudeAdded,    dataHorizon_.get(), &DataHorizon::onAddedAttitude);
-    QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack);
+    QObject::connect(datasetPtr_, &Dataset::epochAdded,             dataHorizon_.get(), &DataHorizon::onAddedEpoch);
+    QObject::connect(datasetPtr_, &Dataset::positionAdded,          dataHorizon_.get(), &DataHorizon::onAddedPosition);
+    QObject::connect(datasetPtr_, &Dataset::chartAdded,             dataHorizon_.get(), &DataHorizon::onAddedChart);
+    QObject::connect(datasetPtr_, &Dataset::attitudeAdded,          dataHorizon_.get(), &DataHorizon::onAddedAttitude);
+    QObject::connect(datasetPtr_, &Dataset::artificalAttitudeAdded, dataHorizon_.get(), &DataHorizon::onAddedArtificalAttitude);
+    QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded,       dataHorizon_.get(), &DataHorizon::onAddedBottomTrack);
 }
 
 int Core::getDataProcessorState() const
@@ -1769,10 +1772,12 @@ void Core::setDataProcessorConnections()
     // from dataHorizon
     auto connType = Qt::QueuedConnection;
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::chartAdded,                    dataProcessor_, &DataProcessor::onChartsAdded,           connType));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrack3DAdded,      connType));
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::bottomTrack3DAdded,            dataProcessor_, &DataProcessor::onBottomTrack3DAdded,    connType));
 
-    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::sonarPosCanCalc,               datasetPtr_,    &Dataset::onSonarPosCanCalc,             connType));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::sonarPosCanCalc,               datasetPtr_,    &Dataset::onSonarPosCanCalc,             Qt::DirectConnection));
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::dimRectsCanCalc,               datasetPtr_,    &Dataset::onDimensionRectCanCalc,        Qt::DirectConnection));
+
+    dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
 
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::distCompletedByProcessing,   datasetPtr_,    &Dataset::onDistCompleted,               connType));
     dataProcessorConnections_.append(QObject::connect(dataProcessor_,     &DataProcessor::lastBottomTrackEpochChanged, datasetPtr_,    &Dataset::onLastBottomTrackEpochChanged, connType));

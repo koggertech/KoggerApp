@@ -72,6 +72,11 @@ struct ChannelId
         return uuidPart + "|" + addrPart;
     }
 
+    void clear() {
+        uuid = QUuid();
+        address = 0;
+    }
+
     bool operator==(const ChannelId& other) const
     {
         return uuid == other.uuid && address == other.address;
