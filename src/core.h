@@ -33,6 +33,7 @@
 #include "link_manager_wrapper.h"
 #include "tile_manager.h"
 #include "data_horizon.h"
+#include "mosaic_index_provider.h"
 
 
 class Core : public QObject
@@ -60,6 +61,7 @@ public:
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
 
+    MosaicIndexProvider* getMosaicIndexProviderPtr();
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
     Dataset* getDatasetPtr();
@@ -266,4 +268,6 @@ signals:
     uint8_t   lastSub1_;
     ChannelId lastCh2_;
     uint8_t   lastSub2_;
+
+    MosaicIndexProvider mosaicIndexProvider_;
 };

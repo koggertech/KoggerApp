@@ -31,7 +31,8 @@ Core::Core() :
     fixBlackStripesForwardSteps_(0),
     fixBlackStripesBackwardSteps_(0),
     lastSub1_(0),
-    lastSub2_(0)
+    lastSub2_(0),
+    mosaicIndexProvider_(6200)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
 
@@ -50,6 +51,11 @@ Core::Core() :
 Core::~Core()
 {
     destroyDataProcessor();
+}
+
+MosaicIndexProvider *Core::getMosaicIndexProviderPtr()
+{
+    return &mosaicIndexProvider_;
 }
 
 void Core::setEngine(QQmlApplicationEngine *engine)

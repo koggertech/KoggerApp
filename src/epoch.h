@@ -582,6 +582,7 @@ public:
     }
 
     void setTraceTileIndxs(const QMap<int, QSet<TileKey>>& val);
+    QMap<int, QSet<TileKey>>& getTraceTileIndxsPtr();
 
 protected:
     QMap<ChannelId, QVector<Echogram>> charts_; // key - channelId, value - echograms for all addresses

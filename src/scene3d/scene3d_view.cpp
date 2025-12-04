@@ -9,6 +9,9 @@
 #include "map_defs.h"
 #include "data_processor_defs.h"
 
+#include "core.h"
+extern Core core;
+
 
 GraphicsScene3dView::GraphicsScene3dView() :
     QQuickFramebufferObject(),
@@ -1033,8 +1036,6 @@ void GraphicsScene3dView::updateSurfaceView()
 
 void GraphicsScene3dView::calcVisEpochIndxs()
 {
-    return;
-
     if (!datasetPtr_) {
         return;
     }
@@ -1043,26 +1044,24 @@ void GraphicsScene3dView::calcVisEpochIndxs()
         return;
     }
 
-    auto isContans = [&](float n, float e) ->bool {
-        if (n > lastMinX_ &&
-            n < lastMaxX_ &&
-            e > lastMinY_ &&
-            e < lastMaxY_) {
-            return true;
-        }
-        return false;
-    };
+    const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
+    auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 0);
 
     QVector<int> contains;
+
     for (int i = 0; i < dSize; ++i) {
         if (auto* ep = datasetPtr_->fromIndex(i); ep) {
-            auto epNed = ep->getPositionGNSS().ned;
-            if (isContans(epNed.n, epNed.e)) {
-                contains.push_back(i);
+            const auto& map = ep->getTraceTileIndxsPtr();
 
-                //qDebug() << "   ep" << i << "   " << epNed.n << epNed.e;
-                //qDebug() << "      X range" << minX << maxX;
-                //qDebug() << "      Y range" << minY << maxY;
+            auto it = map.constFind(dataZoomIndx_);
+            if (it == map.cend()) {
+                continue;
+            }
+
+            const QSet<TileKey>& someSh = *it;
+
+            if (visTiles.intersects(someSh)) {
+                contains.push_back(i);
             }
         }
     }

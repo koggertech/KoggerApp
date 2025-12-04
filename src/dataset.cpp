@@ -13,8 +13,7 @@ Dataset::Dataset() :
     mosaicSecondSubChId_(0),
     lastDimRectindx_(0),
     lAngleOffset_(0.0f),
-    rAngleOffset_(0.0f),
-    mosaicIndexProvider_(6200)
+    rAngleOffset_(0.0f)
 {
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<uint64_t>("uint64_t");
@@ -1344,7 +1343,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
 
         // rect
         const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-        const auto lvl1 = mosaicIndexProvider_.tilesInRectNed(currRaysRect, 1, /*padTiles*/0); // должны всё покрывать
+        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0); // должны всё покрывать
 
         //qDebug() << minN << maxN << minE << maxE;
 
@@ -1360,7 +1359,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
             }
         };
 
-        for (int z = 2; z <= mosaicIndexProvider_.getMinZoom(); ++z) {
+        for (int z = 2; z <= core.getMosaicIndexProviderPtr()->getMinZoom(); ++z) {
             const auto& prevSet = tilesByZoom[z - 1];
             auto& currSet = tilesByZoom[z];
 

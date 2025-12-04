@@ -14,7 +14,6 @@
 #include "epoch.h"
 #include "id_binnary.h"
 #include "usbl_view.h"
-#include "mosaic_index_provider.h"
 
 
 class Dataset : public QObject
@@ -386,6 +385,4 @@ private:
     uint64_t lastDimRectindx_;
     float lAngleOffset_;
     float rAngleOffset_;
-
-    MosaicIndexProvider mosaicIndexProvider_;
 };
