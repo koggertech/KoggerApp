@@ -208,8 +208,6 @@ private:
     friend class IsobathsProcessor;
     friend class MosaicProcessor;
 
-    static constexpr int maxZoom_         = 1;
-    static constexpr int minZoom_         = 7;
     static constexpr int hotCacheMaxSize_    = 2048;
     static constexpr int hotCacheMinSize_    = 1024;
     static constexpr int dbNotFoundLimit_ = 4096;

@@ -1,11 +1,34 @@
 #include "mosaic_index_provider.h"
+
+#include "data_processor_defs.h"
+#include "surface_tile.h"
 #include <QtMath>
 #include <algorithm>
 
 
-MosaicIndexProvider::MosaicIndexProvider(QVector<ZoomInfo> zooms)
-    : zooms_(std::move(zooms))
-{}
+MosaicIndexProvider::MosaicIndexProvider(uint64_t maxTiles, bool initByDefault) :
+    maxTiles_(maxTiles)
+{
+    if (!initByDefault) {
+        return;
+    }
+
+    QVector<ZoomInfo> zs;
+    zs.reserve(minZoom_ - maxZoom_ + 1);
+
+    for (int z = maxZoom_; z <= minZoom_; ++z) {
+        const float pxPerMeter = ZL[z - 1].pxPerMeter;
+        if (!(pxPerMeter > 0.0f && std::isfinite(pxPerMeter))) continue;
+
+        ZoomInfo zi;
+        zi.z          = z;
+        zi.tileSizePx = defaultTileSidePixelSize;
+
+        zs.push_back(zi);
+    }
+
+    setZooms(std::move(zs));
+}
 
 void MosaicIndexProvider::setZooms(QVector<ZoomInfo> zooms)
 {
@@ -54,13 +77,16 @@ QSet<TileKey> MosaicIndexProvider::tilesInRectNed(const QRectF& rectNedIn, int z
     ix0 -= padTiles; ix1 += padTiles;
     iy0 -= padTiles; iy1 += padTiles;
 
-    if (ix0 > ix1 || iy0 > iy1) return {};
+    if (ix0 > ix1 || iy0 > iy1) {
+        return {};
+    }
 
     const int w = ix1 - ix0 + 1;
     const int h = iy1 - iy0 + 1;
-    const uint64_t maxTiles = 2000; // TODO: вынести в конфиг
     const uint64_t count = (w > 0 && h > 0) ? uint64_t(w) * uint64_t(h) : 0ull;
-    if (count == 0 || count > maxTiles) return {};
+    if (count == 0 || count > maxTiles_) {
+        return {};
+    };
 
     QSet<TileKey> out;
     out.reserve(int(count));

@@ -3,10 +3,13 @@
 #include <math.h>
 #include <stdint.h>
 #include <time.h>
+#include <QMap>
 #include <QPixmap>
 #include <QRectF>
+#include <QSet>
 #include <QVector>
 
+#include "data_processor_defs.h"
 #include "dataset_defs.h"
 #include "id_binnary.h"
 
@@ -577,6 +580,9 @@ public:
         }
         return 0;
     }
+
+    void setTraceTileIndxs(const QMap<int, QSet<TileKey>>& val);
+
 protected:
     QMap<ChannelId, QVector<Echogram>> charts_; // key - channelId, value - echograms for all addresses
     QMap<ChannelId, float> rangefinders_; // ???
@@ -652,4 +658,7 @@ protected:
     } flags;
 
     float depth_ = NAN;
+
+private:
+    QMap<int, QSet<TileKey>> tileKeysToNextEpochByZoom_;
 };

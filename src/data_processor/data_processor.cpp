@@ -91,8 +91,6 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
 
     hotCache_.setDataProcessorPtr(this);
 
-    initMosaicIndexProvider();
-
     pendingWorkTimer_.setParent(this);
     pendingWorkTimer_.setSingleShot(true);
     pendingWorkTimer_.setInterval(10);
@@ -993,25 +991,6 @@ void DataProcessor::closeDB()
     qDebug() << "DB closed";
 }
 
-void DataProcessor::initMosaicIndexProvider()
-{
-    QVector<ZoomInfo> zs;
-    zs.reserve(minZoom_ - maxZoom_ + 1);
-
-    for (int z = maxZoom_; z <= minZoom_; ++z) {
-        const float pxPerMeter = ZL[z - 1].pxPerMeter;
-        if (!(pxPerMeter > 0.0f && std::isfinite(pxPerMeter))) continue;
-
-        ZoomInfo zi;
-        zi.z          = z;
-        zi.tileSizePx = defaultTileSidePixelSize;
-
-        zs.push_back(zi);
-    }
-
-    mosaicIndexProvider_.setZooms(std::move(zs));
-}
-
 void DataProcessor::emitDelta(TileMap &&upserts, DataSource src)
 {
     if (upserts.isEmpty()) {
@@ -1064,7 +1043,7 @@ void DataProcessor::pumpVisible()
 
 bool DataProcessor::isValidZoomIndx(int zoomIndx) const
 {
-    return zoomIndx >= maxZoom_ && zoomIndx <= minZoom_;
+    return zoomIndx >= mosaicIndexProvider_.getMaxZoom() && zoomIndx <= mosaicIndexProvider_.getMinZoom();
 }
 
 void DataProcessor::nfTouch(const TileKey &k)

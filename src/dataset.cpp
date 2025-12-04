@@ -13,7 +13,8 @@ Dataset::Dataset() :
     mosaicSecondSubChId_(0),
     lastDimRectindx_(0),
     lAngleOffset_(0.0f),
-    rAngleOffset_(0.0f)
+    rAngleOffset_(0.0f),
+    mosaicIndexProvider_(6200)
 {
     qRegisterMetaType<ChannelId>("ChannelId");
     qRegisterMetaType<uint64_t>("uint64_t");
@@ -1341,8 +1342,38 @@ void Dataset::calcDimensionRects(uint64_t indx)
             maxE = std::max(maxE, it->y());
         }
 
-        //qDebug() << "";
+        // rect
+        const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+        const auto lvl1 = mosaicIndexProvider_.tilesInRectNed(currRaysRect, 1, /*padTiles*/0); // должны всё покрывать
+
         //qDebug() << minN << maxN << minE << maxE;
+
+        QMap<int, QSet<TileKey>> tilesByZoom;
+        tilesByZoom[1] = lvl1;
+
+        auto parentIndex2 = [](int i) -> int {
+            if (i >= 0) {
+                return i >> 1;
+            }
+            else {
+                return -(((-i) + 1) >> 1);
+            }
+        };
+
+        for (int z = 2; z <= mosaicIndexProvider_.getMinZoom(); ++z) {
+            const auto& prevSet = tilesByZoom[z - 1];
+            auto& currSet = tilesByZoom[z];
+
+            for (const TileKey& k : prevSet) {
+                TileKey parent;
+                parent.zoom = z;
+                parent.x    = parentIndex2(k.x);
+                parent.y    = parentIndex2(k.y);
+                currSet.insert(parent);
+            }
+        }
+
+        llPtr->setTraceTileIndxs(tilesByZoom); // от текущего к следующему
     }
 }
 
