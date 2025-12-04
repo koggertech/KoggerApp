@@ -127,6 +127,7 @@ public:
 
             _disabledTextColor = new QColor(150, 150, 150);
             _disabledBackColor = new QColor(50, 50, 50);
+            _hoveredBackColor = new QColor(80, 80, 80);
 
         } else if(theme_id == 2) {
             _textColor = new QColor(25, 25, 25);
@@ -139,6 +140,7 @@ public:
 
             _disabledTextColor = new QColor(150, 150, 150);
             _disabledBackColor = new QColor(50, 50, 50);
+            _hoveredBackColor = new QColor(230, 230, 230);
 
         } else if(theme_id == 3) {
             _textColor = new QColor(0, 0, 0);
@@ -151,6 +153,7 @@ public:
 
             _disabledTextColor = new QColor(150, 150, 150);
             _disabledBackColor = new QColor(50, 50, 50);
+            _hoveredBackColor = new QColor(235, 235, 235);
         }
 #if defined(Q_OS_ANDROID)
         _controlHeight = 48;
