@@ -824,6 +824,38 @@ void Dataset::resetDataset()
     emit activeContactChanged();
 }
 
+void Dataset::softResetDataset()
+{
+    {
+        QWriteLocker locker(&lock_);
+        channelsSetup_.clear();
+        firstChannelId_ = DatasetChannel();
+    }
+
+    resetRenderBuffers();
+
+    resetDistProcessing();
+    testTime_ = 1740466541;
+    usingRecordParameters_.clear();
+    lastAddChartEpochIndx_.clear();
+    channelsToResizeEthData_.clear();
+
+    activeContactIndx_    = -1;
+    boatLatitute_         = 0.0f;
+    boatLongitude_        = 0.0f;
+    distToActiveContact_  = 0.0f;
+    angleToActiveContact_ = 0.0f;
+    lastDepth_            = 0.0f;
+
+    sonarPosIndx_ = 0;
+
+    emit lastDepthChanged();
+    emit channelsUpdated();
+    emit dataUpdate();
+    emit lastPositionChanged();
+    emit activeContactChanged();
+}
+
 void Dataset::resetRenderBuffers()
 {
     tracks.clear();
@@ -1196,7 +1228,7 @@ void Dataset::tryResetDataset(float lat, float lon)
     //qDebug() << pos.lla.latitude << pos.lla.longitude <<boatLatitute_ << boatLongitude_;
     const double dist = distanceMetersLLA(lat, lon, boatLatitute_, boatLongitude_);
     if (dist > 1e3) {
-        resetDataset();
+        core.onRequestClearing();
     }
 }
 

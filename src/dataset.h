@@ -228,6 +228,7 @@ public slots:
     void mergeGnssTrack(QList<Position> track);
 
     void resetDataset();
+    void softResetDataset();
     void resetRenderBuffers();
     void resetDistProcessing();
 

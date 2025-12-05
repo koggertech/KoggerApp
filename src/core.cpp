@@ -38,6 +38,8 @@ Core::Core() :
     createLinkManagerConnections();
     createControllers();
     createDatasetConnections();
+    createDataHorizonConnections();
+
 #ifdef FLASHER
     connect(&dev_flasher_, &DeviceFlasher::sendStepInfo, this, &Core::dev_flasher_rcv);
 #endif
@@ -415,13 +417,9 @@ bool Core::closeLogFile()
     dataHorizon_->clear();
     QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
 
-
-
     if (!isOpenedFile()) {
         return false;
     }
-
-
 
     if (datasetPtr_) {
         datasetPtr_->resetDataset();
@@ -432,6 +430,29 @@ bool Core::closeLogFile()
     linkManagerWrapperPtr_->openClosedLinks();
 
     return true;
+}
+
+void Core::onRequestClearing()
+{
+    if (isFileOpening_) {
+        return;
+    }
+
+    datasetPtr_->softResetDataset();
+
+    QTimer::singleShot(50, this, [this]() ->void {
+        resetDataProcessorConnections();
+
+        QMetaObject::invokeMethod(dataProcessor_, "clearProcessing", Qt::QueuedConnection);
+
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->clear();
+            scene3dViewPtr_->getNavigationArrowPtr()->resetPositionAndAngle();
+        }
+
+        dataHorizon_->clear();
+        setDataProcessorConnections();
+    });
 }
 
 void Core::onFileOpened()
@@ -1658,13 +1679,6 @@ void Core::createDatasetConnections()
 {
     QObject::connect(datasetPtr_, &Dataset::channelsUpdated, this,               &Core::onChannelsUpdated);
     QObject::connect(datasetPtr_, &Dataset::redrawEpochs,    this,               &Core::onRedrawEpochs);
-
-    // DataHorizon
-    QObject::connect(datasetPtr_, &Dataset::epochAdded,       dataHorizon_.get(), &DataHorizon::onAddedEpoch);
-    QObject::connect(datasetPtr_, &Dataset::positionAdded,    dataHorizon_.get(), &DataHorizon::onAddedPosition);
-    QObject::connect(datasetPtr_, &Dataset::chartAdded,       dataHorizon_.get(), &DataHorizon::onAddedChart);
-    QObject::connect(datasetPtr_, &Dataset::attitudeAdded,    dataHorizon_.get(), &DataHorizon::onAddedAttitude);
-    QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack);
 }
 
 int Core::getDataProcessorState() const
@@ -1737,6 +1751,24 @@ void Core::createScene3dConnections()
     QObject::connect(dataProcessor_, &DataProcessor::allProcessingCleared,          this, [](){ /*qDebug() << "TODO: allProcessingCleared";*/ },                                  connType); // TODO
 
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
+}
+
+void Core::createDataHorizonConnections()
+{
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::epochAdded,       dataHorizon_.get(), &DataHorizon::onAddedEpoch));
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::positionAdded,    dataHorizon_.get(), &DataHorizon::onAddedPosition));
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::chartAdded,       dataHorizon_.get(), &DataHorizon::onAddedChart));
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::attitudeAdded,    dataHorizon_.get(), &DataHorizon::onAddedAttitude));
+    dataHorizonConnections_.append(QObject::connect(datasetPtr_, &Dataset::bottomTrackAdded, dataHorizon_.get(), &DataHorizon::onAddedBottomTrack));
+}
+
+void Core::destroyDataHorizonConnections()
+{
+    for (auto& itm : dataHorizonConnections_) {
+        disconnect(itm);
+    }
+
+    dataHorizonConnections_.clear();
 }
 
 void Core::setDataProcessorConnections()

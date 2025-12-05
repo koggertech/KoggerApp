@@ -95,6 +95,8 @@ public slots:
     void openLogFile(const QString& filePath, bool isAppend = false, bool onCustomEvent = false);
     bool closeLogFile();
 #endif
+    void onRequestClearing();
+
     void onFileOpened();
     bool openXTF(const QByteArray& data);
     bool openCSV(QString name, int separatorType, int row = -1, int colTime = -1, bool isUtcTime = true, int colLat = -1, int colLon = -1, int colAltitude = -1, int colNorth = -1, int colEast = -1, int colUp = -1);
@@ -170,6 +172,9 @@ private:
     void createDataProcessor();
     void destroyDataProcessor();
     void createScene3dConnections();
+
+    void createDataHorizonConnections();
+    void destroyDataHorizonConnections();
 
     void setDataProcessorConnections();
     void resetDataProcessorConnections();
@@ -256,5 +261,7 @@ signals:
 #endif
 
     QVector<QMetaObject::Connection> dataProcessorConnections_;
+    QVector<QMetaObject::Connection> dataHorizonConnections_;
+
     DataProcessorType dataProcessorState_ = DataProcessorType::kUndefined;
 };
