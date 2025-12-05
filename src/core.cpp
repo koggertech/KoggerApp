@@ -1362,12 +1362,10 @@ void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint t
     tileManager_->getTileSetPtr()->setTextureIdByTileIndx(tileIndx, textureId);
 }
 
-#if defined(FAKE_COORDS)
 void Core::setPosZeroing(bool state)
 {
     datasetPtr_->setActiveZeroing(state);
 }
-#endif
 
 ConsoleListModel* Core::consoleList()
 {
