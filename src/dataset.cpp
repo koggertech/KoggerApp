@@ -544,6 +544,9 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
                 LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
                 setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
             }
+
+            tryResetDataset(pos.lla.latitude, pos.lla.longitude);
+
             lastEp->setPositionLLA(pos);
             lastEp->setPositionRef(&_llaRef);
             lastEp->setPositionDataType(DataType::kRaw);
@@ -611,6 +614,9 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
             LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
             setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
         }
+
+        tryResetDataset(pos.lla.latitude, pos.lla.longitude);
+
         lastEp->setPositionLLA(pos);
         lastEp->setPositionRef(&_llaRef);
         lastEp->setPositionDataType(DataType::kRaw);
@@ -1179,6 +1185,19 @@ void Dataset::setLastDepth(float val)
     lastDepth_ = val;
 
     emit lastDepthChanged();
+}
+
+void Dataset::tryResetDataset(float lat, float lon)
+{
+    if (!std::isfinite(lat) || !std::isfinite(lon)) {
+        return;
+    }
+
+    //qDebug() << pos.lla.latitude << pos.lla.longitude <<boatLatitute_ << boatLongitude_;
+    const double dist = distanceMetersLLA(lat, lon, boatLatitute_, boatLongitude_);
+    if (dist > 1e3) {
+        resetDataset();
+    }
 }
 
 std::tuple<ChannelId, uint8_t, QString>  Dataset::channelIdFromName(const QString& name) const

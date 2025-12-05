@@ -322,6 +322,7 @@ private:
     bool shouldAddNewEpoch(const ChannelId& channelId, uint8_t numSubChannels) const;
     void updateEpochWithChart(const ChannelId& channelId, const ChartParameters& chartParams, const QVector<QVector<uint8_t>>& data, float resolution, float offset);
     void setLastDepth(float val);
+    void tryResetDataset(float lat, float lon);
 
     /*data*/
     mutable QReadWriteLock lock_;
