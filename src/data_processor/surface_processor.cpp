@@ -380,8 +380,16 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             return;
         }
 
+        if (itm.second >= bTrData.size()) {
+            continue;
+        }
+
         const QVector3D& point = bTrData[itm.second];
-        if (!std::isfinite(point.z())) continue;
+
+        if (!std::isfinite(point.z())) {
+            continue;
+        }
+
         processOneCenter(point);
     }
 
@@ -431,6 +439,10 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     }
 
     for (const auto& itm : indxs) { // экстраполяция
+        if (itm.second >= bTrData.size()) {
+            continue;
+        }
+
         const QVector3D& point = bTrData[itm.second];
         QVector2D dirVecPix;
         const bool haveDir = dirForIndexPix(itm.second, dirVecPix);

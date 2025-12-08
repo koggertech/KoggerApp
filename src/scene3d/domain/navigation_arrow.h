@@ -30,6 +30,7 @@ public:
     explicit NavigationArrow(QObject *parent = nullptr);
     void setPositionAndAngle(const QVector3D& position, float degAngle);
     void resetPositionAndAngle();
+    void setIsDatasetExist(bool state);
 
 private:
     /*methods*/

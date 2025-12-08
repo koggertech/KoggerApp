@@ -5,7 +5,6 @@ CONFIG += c++23
 
 DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += SEPARATE_READING # data reception in a separate thread
-#DEFINES += FAKE_COORDS # for measurements at single location
 #DEFINES += SCENE_TESTING # testing 3d scene
 
 ### HEADERS

@@ -459,59 +459,72 @@ public:
 
     bool chartTo(const ChannelId& channelId, uint8_t subChannelId, float start, float end, int16_t* dst, int len, int imageType, bool reverse = false)
     {
-        if (dst == nullptr) {
+        if (!dst || len <= 0) {
             return false;
         }
 
-        ChannelId localChannelId = channelId;
-
-        //if (localChannelId == CHANNEL_NONE && charts_.size() > 0) {
-        //    localChannelId = charts_.firstKey();
-        //}
-        /*else*/ if (!charts_.contains(localChannelId)) {
-            memset(dst, 0, len * 2);
+        auto zeroOut = [&]{
+            std::fill(dst, dst + len, int16_t(0));
             return false;
+        };
+
+        auto it = charts_.find(channelId);
+        if (it == charts_.end()) {
+            return zeroOut();
         }
 
-        if (charts_[localChannelId][subChannelId].resolution == 0) {
-            memset(dst, 0, len * 2);
-            return false;
+        QVector<Echogram>& subs = it.value();
+        const int sub = int(subChannelId);
+        if (sub < 0 || sub >= subs.size()) {
+            return zeroOut();
         }
 
-        int rawSize = charts_[localChannelId][subChannelId].amplitude.size();
+        Echogram& eg = subs[sub];
 
-        if (rawSize == 0) {
-            memset(dst, 0, len * 2);
-            return false;
+        if (eg.resolution == 0) {
+            return zeroOut();
         }
 
-        uint8_t* src = charts_[localChannelId][subChannelId].amplitude.data();
+        const int rawSize = eg.amplitude.size();
+        if (rawSize <= 0) {
+            return zeroOut();
+        }
+
+        const float rawRangeF = eg.range();
+        if (!(rawRangeF > 0.0f)) {
+            return zeroOut();
+        }
+
+        const uint8_t* src = eg.amplitude.constData();
 
         if (imageType == 1) {
-            if (charts_[localChannelId][subChannelId].compensated.size() == 0) {
-                charts_[localChannelId][subChannelId].updateCompesated();
+            if (eg.compensated.isEmpty()) {
+                eg.updateCompesated();
             }
-            src = charts_[localChannelId][subChannelId].compensated.data();
+            if (eg.compensated.isEmpty()) {
+                return zeroOut();
+            }
+            src = eg.compensated.constData();
         }
 
-        if (rawSize == 0) {
-            for (int iTo = 0; iTo < len; iTo++) {
-                dst[iTo] = 0;
-            }
+        start -= eg.offset;
+        end   -= eg.offset;
+
+        const float targetRangeF = float(end - start);
+        if (!(targetRangeF > 0.0f)) {
+            return zeroOut();
         }
 
-        start -= charts_[localChannelId][subChannelId].offset;
-        end -= charts_[localChannelId][subChannelId].offset;
+        const float scaleFactor = (float(rawSize) / float(len)) * (targetRangeF / rawRangeF);
 
-        float rawRangeF = charts_[localChannelId][subChannelId].range();
-        float targetRangeF = static_cast<float>(end - start);
-        float scaleFactor = (static_cast<float>(rawSize) / static_cast<float>(len)) * (targetRangeF / rawRangeF);
-        int offset = start / charts_[localChannelId][subChannelId].resolution;
+        const int offset = int(start / eg.resolution);
 
-        int srcStart = offset;
         int dir = reverse ? -1 : 1;
         int off = reverse ? (len-1) : 0;
+
         if (scaleFactor >= 0.8f) {
+            int srcStart = offset;
+
             for (int iTo = 0; iTo < len; iTo++) {
                 int srcEnd = static_cast<float>(iTo + 1) * scaleFactor + offset;
 

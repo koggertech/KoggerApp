@@ -891,24 +891,19 @@ ColumnLayout {
 
     MenuRow {
         spacing: 4
-        CheckButton {
+        CheckButton { // FAKE_COORDS
             id: zeroingPosButton
             icon.source: "qrc:/icons/ui/propeller_off.svg"
             backColor: theme.controlSolidBackColor
             borderWidth: 0
             implicitWidth: theme.controlHeight
-            visible: theme.isFakeCoords
 
             onCheckedChanged: {
-                if (theme.isFakeCoords) {
-                    core.setPosZeroing(checked);
-                }
+                core.setPosZeroing(checked);
             }
 
-            Component.onCompleted: { // maybe need del
-                if (theme.isFakeCoords) {
-                    core.setPosZeroing(checked);
-                }
+            Component.onCompleted: {
+                core.setPosZeroing(checked);
             }
 
             Settings {

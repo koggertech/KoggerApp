@@ -510,6 +510,8 @@ void BottomTrack::clearCache()
     auto* r = RENDER_IMPL(BottomTrack);
 
     r->m_data.clear();
+    r->selectedVertexIndices_.clear();
+
     vertex2Epoch_.clear();
     epoch2Vertex_.clear();
 }

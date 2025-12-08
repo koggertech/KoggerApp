@@ -29,6 +29,10 @@ void BottomTrackProcessor::setDatasetPtr(Dataset *datasetPtr)
 
 void BottomTrackProcessor::bottomTrackProcessing(const DatasetChannel &channel1, const DatasetChannel &channel2, const BottomTrackParam& btP, bool manual, bool redrawAll)
 {
+    if (btP.indexFrom > btP.indexTo) {
+        return;
+    }
+
     auto size = btP.indexTo + btP.windowSize / 2;
 
     if (!datasetPtr_) {

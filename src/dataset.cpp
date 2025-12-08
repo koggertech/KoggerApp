@@ -30,12 +30,10 @@ void Dataset::setState(DatasetState state)
     state_ = state;
 }
 
-#if defined(FAKE_COORDS)
 void Dataset::setActiveZeroing(bool state)
 {
     activeZeroing_ = state;
 }
-#endif
 
 Dataset::DatasetState Dataset::getState() const
 {
@@ -543,6 +541,52 @@ void Dataset::addDVLSolution(IDBinDVL::DVLSolution dvlSolution) {
 
 void Dataset::addAtt(float yaw, float pitch, float roll)
 {
+    if (activeZeroing_) {
+        Epoch* lastEp = last();
+        if (!lastEp) {
+            return;
+        }
+
+        ++testTime_;
+
+        Position pos;
+
+        double lat = 40.1852f, lon = 44.5149f;
+        pos.lla = LLA(lat, lon);
+        pos.time = DateTime(testTime_, 100);
+
+        if (pos.lla.isCoordinatesValid()) {
+            if (lastEp->getPositionGNSS().lla.isCoordinatesValid()) {
+                //qDebug() << "pos add new epoch" << _pool.size();
+                lastEp = addNewEpoch();
+            }
+            uint64_t lastIndx = pool_.size() - 1;
+            if (!getLlaRef().isInit) {
+                LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
+                setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
+            }
+
+            tryResetDataset(pos.lla.latitude, pos.lla.longitude);
+
+            lastEp->setPositionLLA(pos);
+            lastEp->setPositionRef(&_llaRef);
+            lastEp->setPositionDataType(DataType::kRaw);
+            interpolator_.interpolatePos(false); //
+
+            {
+                speed_ =  0.0;
+                emit speedChanged();
+            }
+
+            boatLatitute_ = pos.lla.latitude;
+            boatLongitude_ = pos.lla.longitude;
+
+            emit positionAdded(lastIndx);
+            emit dataUpdate();
+            emit lastPositionChanged();
+        }
+    }
+
     uint64_t lastIndx = pool_.size() - 1;
 
     Epoch* last_epoch = last();
@@ -559,24 +603,6 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
     _lastPitch = pitch;
     _lastRoll = roll;
 
-#if defined(FAKE_COORDS)
-    if (state_ == DatasetState::kConnection && activeZeroing_) {
-        ++testTime_;
-        double lat = 40.203792, lon = 44.497496;
-        Position pos;
-        pos.lla = LLA(lat, lon);
-        pos.time = DateTime(testTime_, 100);
-        if(pos.lla.isCoordinatesValid()) {
-            if(last_epoch->getPositionGNSS().lla.isCoordinatesValid()) {
-                last_epoch = addNewEpoch();
-            }
-            setLlaRef(LLARef(pos.lla), getCurrentLlaRefState());
-            last_epoch->setPositionLLA(pos);
-            last_epoch->setPositionRef(&_llaRef);
-        }
-    }
-#endif
-
     interpolator_.interpolateAtt(false);
 
     emit attitudeAdded(lastIndx);
@@ -585,6 +611,10 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
 
 void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t nanosec)
 {
+    if (activeZeroing_) {
+        return;
+    }
+
     Epoch* lastEp = last();
     if (!lastEp) {
         return;
@@ -605,6 +635,9 @@ void Dataset::addPosition(double lat, double lon, uint32_t unix_time, int32_t na
             LlaRefState llaState = state_ == DatasetState::kUndefined ? LlaRefState::kFile : (state_ == DatasetState::kFile ?  LlaRefState::kFile :  LlaRefState::kConnection);
             setLlaRef(LLARef(pos.lla), llaState /*Dataset::LlaRefState::kConnection*/); // TODO
         }
+
+        tryResetDataset(pos.lla.latitude, pos.lla.longitude);
+
         lastEp->setPositionLLA(pos);
         lastEp->setPositionRef(&_llaRef);
         lastEp->setPositionDataType(DataType::kRaw);
@@ -717,6 +750,10 @@ void Dataset::addArtificalYaw()
 }
 
 void Dataset::addPositionRTK(Position position) {
+    if (activeZeroing_) {
+        return;
+    }
+
     Epoch* last_epoch = last();
     if (!last_epoch) {
         return;
@@ -834,11 +871,39 @@ void Dataset::resetDataset()
 
     resetDistProcessing();
     state_ = DatasetState::kUndefined;
-
-#if defined(FAKE_COORDS)
     testTime_ = 1740466541;
-#endif
+    usingRecordParameters_.clear();
+    lastAddChartEpochIndx_.clear();
+    channelsToResizeEthData_.clear();
 
+    activeContactIndx_    = -1;
+    boatLatitute_         = 0.0f;
+    boatLongitude_        = 0.0f;
+    distToActiveContact_  = 0.0f;
+    angleToActiveContact_ = 0.0f;
+    lastDepth_            = 0.0f;
+
+    sonarPosIndx_ = 0;
+
+    emit lastDepthChanged();
+    emit channelsUpdated();
+    emit dataUpdate();
+    emit lastPositionChanged();
+    emit activeContactChanged();
+}
+
+void Dataset::softResetDataset()
+{
+    {
+        QWriteLocker locker(&lock_);
+        channelsSetup_.clear();
+        firstChannelId_ = DatasetChannel();
+    }
+
+    resetRenderBuffers();
+
+    resetDistProcessing();
+    testTime_ = 1740466541;
     usingRecordParameters_.clear();
     lastAddChartEpochIndx_.clear();
     channelsToResizeEthData_.clear();
@@ -1373,6 +1438,19 @@ void Dataset::calcDimensionRects(uint64_t indx)
         }
 
         llPtr->setTraceTileIndxs(tilesByZoom); // от текущего к следующему
+    }
+}
+
+void Dataset::tryResetDataset(float lat, float lon)
+{
+    if (!std::isfinite(lat) || !std::isfinite(lon)) {
+        return;
+    }
+
+    //qDebug() << pos.lla.latitude << pos.lla.longitude <<boatLatitute_ << boatLongitude_;
+    const double dist = distanceMetersLLA(lat, lon, boatLatitute_, boatLongitude_);
+    if (dist > 1e3) {
+        core.onRequestClearing();
     }
 }
 
