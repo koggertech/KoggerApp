@@ -442,6 +442,14 @@ bool Core::closeLogFile()
     return true;
 }
 
+void Core::onFileOpened()
+{
+    qDebug() << "file opened!";
+
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+}
+#endif
+
 void Core::onRequestClearing()
 {
     if (isFileOpening_) {
@@ -464,14 +472,6 @@ void Core::onRequestClearing()
         setDataProcessorConnections();
     });
 }
-
-void Core::onFileOpened()
-{
-    qDebug() << "file opened!";
-
-    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
-}
-#endif
 
 bool Core::openXTF(const QByteArray& data)
 {
