@@ -1,9 +1,8 @@
 QT += core gui quick widgets network qml sql concurrent positioning quickcontrols2
 
 CONFIG += c++23
-#CONFIG += FLASHER
 
-DEFINES += QT_DEPRECATED_WARNINGS
+#CONFIG += FLASHER
 #DEFINES += SEPARATE_READING # data reception in a separate thread
 #DEFINES += SCENE_TESTING # testing 3d scene
 
@@ -59,10 +58,12 @@ SOURCES += \
 
 FLASHER {
     DEFINES += FLASHER
-    SOURCES += src/flasher/deviceflasher.cpp
-    HEADERS += src/flasher/deviceflasher.h
-    SOURCES += src/flasher/flasher.cpp
-    HEADERS += src/flasher/flasher.h
+    HEADERS += \
+        src/flasher/flasher.h \
+        src/flasher/deviceflasher.h
+    SOURCES += \
+        src/flasher/flasher.cpp \
+        src/flasher/deviceflasher.cpp
 }
 
 TRANSLATIONS += \
@@ -150,15 +151,13 @@ linux:!android {
         LIBS += -L$$PWD/third_party/freetype/lib/gcc/ -lfreetype
     }
 }
-
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/llvm-mingw-x64/ -lfreetype
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/third_party/freetype/lib/llvm-mingw-x64/ -lfreetype
-
 INCLUDEPATH += $$PWD/third_party/freetype/include
-INCLUDEPATH += $$PWD/src
 DEPENDPATH += $$PWD/third_party/freetype/include
 
 # Module includes
+INCLUDEPATH += $$PWD/src
 include($$PWD/src/data_processor/data_processor.pri)
 include($$PWD/src/scene2d/scene2d.pri)
 include($$PWD/src/scene3d/scene3d.pri)
