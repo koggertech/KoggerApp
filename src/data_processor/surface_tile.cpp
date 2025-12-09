@@ -11,7 +11,8 @@ SurfaceTile::SurfaceTile() :
     sidePixelSize_(defaultTileSidePixelSize),
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
     resolution_(defaultTileResolution),
-    updateHint_(UpdateHint::kUndefined)
+    updateHint_(UpdateHint::kUndefined),
+    headIndx_(-1)
 {}
 
 SurfaceTile::SurfaceTile(QVector3D origin) :
@@ -22,7 +23,8 @@ SurfaceTile::SurfaceTile(QVector3D origin) :
     sidePixelSize_(defaultTileSidePixelSize),
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
     resolution_(defaultTileResolution),
-    updateHint_(UpdateHint::kUndefined)
+    updateHint_(UpdateHint::kUndefined),
+    headIndx_(-1)
 {}
 
 SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
@@ -34,7 +36,8 @@ SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
     sidePixelSize_(defaultTileSidePixelSize),
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
     resolution_(defaultTileResolution),
-    updateHint_(UpdateHint::kUndefined)
+    updateHint_(UpdateHint::kUndefined),
+    headIndx_(-1)
 {}
 
 void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
@@ -118,6 +121,17 @@ void SurfaceTile::resetInitData()
     QVector<QVector2D>().swap(textureVertices_);
 
     isInited_ = false;
+    headIndx_ = -1;
+}
+
+void SurfaceTile::setOrigin(const QVector3D &val)
+{
+    origin_ = val;
+}
+
+void SurfaceTile::setHeadIndx(int indx)
+{
+    headIndx_ = indx;
 }
 
 void SurfaceTile::setUpdateHint(UpdateHint h)
@@ -203,6 +217,11 @@ const QVector<HeightType> &SurfaceTile::getHeightMarkVerticesCRef() const
 const QVector<int>& SurfaceTile::getHeightIndicesCRef() const
 {
     return heightIndices_;
+}
+
+int SurfaceTile::getHeadIndx() const
+{
+    return headIndx_;
 }
 
 int SurfaceTile::sidePixelSize() const

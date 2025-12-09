@@ -27,6 +27,7 @@ struct DbTile {
     bool        hasMarks    = false;
     int         marksFmt    = 0;  // 0=u8
     QByteArray  marksBlob;
+    int         headIndx    = -1;
 };
 
 class MosaicDB : public QObject

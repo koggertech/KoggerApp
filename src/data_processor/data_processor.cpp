@@ -589,6 +589,7 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
             auto& marks = tile.getHeightMarkVerticesRef();
             MosaicDB::unpackMarksU8(dt.marksBlob, marks);
         }
+        tile.setHeadIndx(dt.headIndx);
         tile.updateHeightIndices();
         tile.setIsUpdated(false);
 

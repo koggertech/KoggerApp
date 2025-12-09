@@ -40,6 +40,8 @@ public:
 
     void       resetInitData();
 
+    void       setOrigin(const QVector3D& val);
+    void       setHeadIndx(int indx);
     void       setUpdateHint(UpdateHint h);
     UpdateHint updateHint() const;
 
@@ -58,6 +60,7 @@ public:
     const QVector<QVector3D>&   getHeightVerticesCRef() const;
     const QVector<HeightType>&  getHeightMarkVerticesCRef() const;
     const QVector<int>&         getHeightIndicesCRef() const;
+    int                         getHeadIndx() const;
     // tile size
     int sidePixelSize() const;
     int heightMatrixRatio() const;
@@ -87,4 +90,5 @@ private:
     int   heightMatrixRatio_;
     float resolution_;
     UpdateHint updateHint_;
+    int headIndx_;
 };

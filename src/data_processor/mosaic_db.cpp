@@ -204,8 +204,9 @@ bool MosaicDB::ensureSchema()
             " y          INTEGER NOT NULL,"
             " tile_px    INTEGER NOT NULL,"
             " hm_ratio   INTEGER NOT NULL,"
-            " origin_x   REAL    NOT NULL,"   /* НОВОЕ */
-            " origin_y   REAL    NOT NULL,"   /* НОВОЕ */
+            " origin_x   REAL    NOT NULL,"
+            " origin_y   REAL    NOT NULL,"
+            " head_indx  INTEGER NOT NULL,"
             " has_mosaic INTEGER NOT NULL,"
             " mosaic_blob BLOB,"
             " has_height INTEGER NOT NULL,"
@@ -337,15 +338,16 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
     db_.transaction();
     q.prepare(
         "INSERT INTO tiles("
-        "zoom,x,y,tile_px,hm_ratio,origin_x,origin_y,"
+        "zoom,x,y,tile_px,hm_ratio,origin_x,origin_y,head_indx,"
         "has_mosaic,mosaic_blob,"
         "has_height,height_fmt,height_blob,"
         "has_marks,marks_fmt,marks_blob,"
         "updated_at,engine_ver)"
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         "ON CONFLICT(zoom,x,y) DO UPDATE SET "
         " tile_px=excluded.tile_px, hm_ratio=excluded.hm_ratio,"
         " origin_x=excluded.origin_x, origin_y=excluded.origin_y,"
+        " head_indx=excluded.head_indx,"
         " has_mosaic=excluded.has_mosaic, mosaic_blob=excluded.mosaic_blob,"
         " has_height=excluded.has_height, height_fmt=excluded.height_fmt, height_blob=excluded.height_blob,"
         " has_marks=excluded.has_marks, marks_fmt=excluded.marks_fmt, marks_blob=excluded.marks_blob,"
@@ -394,6 +396,7 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         q.addBindValue(hmRatio);
         q.addBindValue(double(org.x()));   // origin_x
         q.addBindValue(double(org.y()));   // origin_y
+        q.addBindValue(t.getHeadIndx());
         q.addBindValue(int(hasMosaic));
         q.addBindValue(mosaicBlob);
         q.addBindValue(int(hasHeight));
@@ -449,7 +452,7 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
 
             const QString sql =
                 QStringLiteral(
-                    "SELECT x,y,zoom,origin_x,origin_y,tile_px,hm_ratio,"
+                    "SELECT x,y,zoom,origin_x,origin_y,tile_px,hm_ratio,head_indx,"
                     "       mosaic_blob, height_blob, marks_blob,"
                     "       has_mosaic, has_height, has_marks "
                     "FROM tiles "
@@ -484,14 +487,15 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
                 t.originY  = q.value(4).toFloat();
                 t.tilePx   = q.value(5).toInt();
                 t.hmRatio  = q.value(6).toInt();
+                t.headIndx = q.value(7).toInt();
 
-                t.mosaicBlob = q.value(7).toByteArray();
-                t.heightBlob = q.value(8).toByteArray();
-                t.marksBlob  = q.value(9).toByteArray();
+                t.mosaicBlob = q.value(8).toByteArray();
+                t.heightBlob = q.value(9).toByteArray();
+                t.marksBlob  = q.value(10).toByteArray();
 
-                t.hasMosaic  = q.value(10).toInt() != 0;
-                t.hasHeight  = q.value(11).toInt() != 0;
-                t.hasMarks   = q.value(12).toInt() != 0;
+                t.hasMosaic  = q.value(11).toInt() != 0;
+                t.hasHeight  = q.value(12).toInt() != 0;
+                t.hasMarks   = q.value(13).toInt() != 0;
 
                 out.push_back(std::move(t));
             }
