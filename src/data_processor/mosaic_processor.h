@@ -9,13 +9,14 @@
 using namespace mosaic;
 
 
+class ComputeWorker;
 class Dataset;
 class DataProcessor;
 class SurfaceMesh;
 class MosaicProcessor
 {
 public:
-    explicit MosaicProcessor(DataProcessor* parent);
+    explicit MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWorker);
     ~MosaicProcessor();
 
     void clear();
@@ -26,7 +27,6 @@ public:
     // PROCESSING
     void setChannels(const ChannelId& firstChId, uint8_t firstSubChId, const ChannelId& secondChId, uint8_t secondSubChId);
     void updateDataWrapper(const QVector<int>& indxs);
-    void resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution);
     void setColorTableThemeById(int id);
     void setColorTableLevels(float lowVal, float highVal);
     void setColorTableLowLevel(float val);
@@ -52,10 +52,12 @@ private:
     QSet<TileKey> forecastTilesToTouch(const QVector<QVector3D>& meas, const QVector<char>& isOdds, const QVector<int>& epochIndxs, int marginTiles = 0) const;
     void putTilesIntoMesh(const TileMap& tiles);
     bool prefetchTiles(const QSet<TileKey>& keys);
+    QVector<QVector<int>> splitContinuousSegments(const QVector<int>& indxs, int minSegmentLen, int maxSegmentLen);
 
 private:
     const int expandMargin_ = 1;
     mosaic::PlotColorTable colorTable_;
+    ComputeWorker* computeWorker_;
     DataProcessor* dataProcessor_;
     Dataset* datasetPtr_;
     SurfaceMesh* surfaceMeshPtr_;
@@ -75,4 +77,6 @@ private:
     float lAngleOffset_;
     float rAngleOffset_;
     bool generateGridContour_;
+    int lastIndxF_ = -1;
+    int lastIndxS_ = -1;
 };

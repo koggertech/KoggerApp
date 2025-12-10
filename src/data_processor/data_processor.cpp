@@ -186,6 +186,8 @@ void DataProcessor::setUpdateMosaic(bool state)
 {
     updateMosaic_ = state;
 
+    return;
+
     if (updateMosaic_) {
         if (hotCache_.checkAnyTileForZoom(lastZoom_)) {
             pumpVisible();
@@ -196,7 +198,7 @@ void DataProcessor::setUpdateMosaic(bool state)
             }
         }
     }
-    else if (!updateMosaic_) {
+    else {
         pendingIsobathsWork_ = true; // мозаика могла изменить поверхность
         scheduleLatest(WorkSet(WF_Isobaths));
     }
@@ -219,7 +221,12 @@ void DataProcessor::onCameraMoved(const QVector<int> &epIndxs)
         pendingMosaicIndxs_.insert(itm);
     }
 
-    scheduleLatest(WorkSet(WF_All));
+    scheduleLatest(WorkSet(WF_All)); // all?
+}
+
+void DataProcessor::onSendVisibleTileKeys(const QSet<TileKey> &tileKeys)
+{
+    QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, tileKeys));
 }
 
 void DataProcessor::onChartsAdded(uint64_t indx)
@@ -263,6 +270,8 @@ void DataProcessor::onChartsAdded(uint64_t indx)
 
 void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual)
 {
+    return;
+
     if (epIndxs.isEmpty() || vertIndxs.isEmpty()) {
         return;
     }
@@ -372,6 +381,8 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
                               Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1),
                               Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
 
+    return;
+
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
         pendingMosaicIndxs_.insert(*it);
     }
@@ -401,6 +412,8 @@ void DataProcessor::setMosaicRAngleOffset(float val)
 
 void DataProcessor::setMosaicTileResolution(float val)
 {
+    return;
+
     //qDebug() << "DataProcessor::setMosaicTileResolution" << val;
     if (qFuzzyIsNull(val)) {
         return;
@@ -411,7 +424,7 @@ void DataProcessor::setMosaicTileResolution(float val)
         return;
     }
 
-    hotCache_.clear();
+    hotCache_.clear(); // db?
 
     tileResolution_ = convertedResolution;
 
@@ -1095,6 +1108,8 @@ void DataProcessor::requestCancel() noexcept
 
 void DataProcessor::onUpdateMosaic(int zoom) // calc or db
 {
+    //return;
+
     if (!isValidZoomIndx(zoom)) {
         return;
     }
@@ -1195,10 +1210,11 @@ void DataProcessor::tryCalcTiles()
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
 
-    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-        pendingMosaicIndxs_.insert(*it);
-        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
-    }
+    // замена на то что пришло с камеры?
+    //for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+    //    pendingMosaicIndxs_.insert(*it);
+    //    pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    //}
     pendingIsobathsWork_ = true;
 
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));

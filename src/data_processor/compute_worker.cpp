@@ -14,7 +14,7 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
       surfaceMesh_(defaultTileSidePixelSize, defaultTileHeightMatrixRatio, defaultTileResolution),
       surface_(ownerDp),
       isobaths_(ownerDp),
-      mosaic_(ownerDp),
+      mosaic_(ownerDp, this),
       bottom_(ownerDp)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
@@ -30,6 +30,11 @@ ComputeWorker::ComputeWorker(DataProcessor* ownerDp,
 }
 
 ComputeWorker::~ComputeWorker() = default;
+
+const QSet<TileKey> &ComputeWorker::getVisibleTileKeysCPtr()
+{
+    return visibleTileKeys_;
+}
 
 void ComputeWorker::clearAll()
 {
@@ -198,4 +203,9 @@ void ComputeWorker::processBundle(const WorkBundle& wb)
     }
 
     emit jobFinished();
+}
+
+void ComputeWorker::setVisibleTileKeys(const QSet<TileKey>& val)
+{
+    visibleTileKeys_ = val;
 }

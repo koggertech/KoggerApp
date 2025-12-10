@@ -1781,6 +1781,8 @@ void Core::createScene3dConnections()
     QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataRectRequest,   dataProcessor_, &DataProcessor::onSendDataRectRequest, connType); // отправляет запрос на рендер данных
     QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendDataZoom,          dataProcessor_, &DataProcessor::onUpdateMosaic,        connType); // отправляет зум и чекает в кеше/бд наличие (совместить?)
     QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendCameraEpIndxs,     dataProcessor_, &DataProcessor::onCameraMoved,         connType);
+    QObject::connect(scene3dViewPtr_,    &GraphicsScene3dView::sendVisibleTileKeys,   dataProcessor_, &DataProcessor::onSendVisibleTileKeys, connType);
+
     QMetaObject::invokeMethod(dataProcessor_, "askColorTableForMosaic", Qt::QueuedConnection);
 }
 

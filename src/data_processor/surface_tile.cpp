@@ -12,7 +12,8 @@ SurfaceTile::SurfaceTile() :
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
     resolution_(defaultTileResolution),
     updateHint_(UpdateHint::kUndefined),
-    headIndx_(-1)
+    headIndx_(-1),
+    inFov_(false)
 {}
 
 SurfaceTile::SurfaceTile(QVector3D origin) :
@@ -24,7 +25,8 @@ SurfaceTile::SurfaceTile(QVector3D origin) :
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
     resolution_(defaultTileResolution),
     updateHint_(UpdateHint::kUndefined),
-    headIndx_(-1)
+    headIndx_(-1),
+    inFov_(false)
 {}
 
 SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
@@ -37,7 +39,8 @@ SurfaceTile::SurfaceTile(const TileKey& key, QVector3D origin) :
     heightMatrixRatio_(defaultTileHeightMatrixRatio),
     resolution_(defaultTileResolution),
     updateHint_(UpdateHint::kUndefined),
-    headIndx_(-1)
+    headIndx_(-1),
+    inFov_(false)
 {}
 
 void SurfaceTile::init(int sidePixelSize, int heightMatrixRatio, float resolution)
@@ -139,6 +142,11 @@ void SurfaceTile::setUpdateHint(UpdateHint h)
     updateHint_ = h;
 }
 
+void SurfaceTile::setInFov(bool state)
+{
+    inFov_ = state;
+}
+
 UpdateHint SurfaceTile::updateHint() const
 {
     return updateHint_;
@@ -222,6 +230,11 @@ const QVector<int>& SurfaceTile::getHeightIndicesCRef() const
 int SurfaceTile::getHeadIndx() const
 {
     return headIndx_;
+}
+
+bool SurfaceTile::getInFov() const
+{
+    return inFov_;
 }
 
 int SurfaceTile::sidePixelSize() const

@@ -243,7 +243,7 @@ public Q_SLOTS:
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
     void updateSurfaceView();
-    void calcVisEpochIndxs();
+    void calcVisEpochIndxs(bool zoomIsChanged);
     void updateViews();
     void onCameraMoved();
 
@@ -258,6 +258,7 @@ signals:
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void sendCameraEpIndxs(const QVector<int>& epIndxs);
+    void sendVisibleTileKeys(const QSet<TileKey>& tileKeys);
 
 private:
     void updateBounds();
@@ -331,6 +332,8 @@ private:
     float lastMaxX_;
     float lastMinY_;
     float lastMaxY_;
+    QVector<int> lastContains_;
+    QSet<TileKey> lastVisTileKeys_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

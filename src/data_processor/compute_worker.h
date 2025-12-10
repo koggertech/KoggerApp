@@ -32,6 +32,8 @@ public:
                            QObject* parent = nullptr);
     ~ComputeWorker();
 
+    const QSet<TileKey>& getVisibleTileKeysCPtr();
+
 public slots:
     // service
     void clearAll();
@@ -63,6 +65,7 @@ public slots:
     // tasks
     void bottomTrackProcessing(const DatasetChannel& ch1, const DatasetChannel& ch2, const BottomTrackParam& p, bool manual, bool redrawAll);
     void processBundle(const WorkBundle& wb); // выполнить пачку задач последовательно
+    void setVisibleTileKeys(const QSet<TileKey>& val);
 
 signals:
     void jobFinished(); // для dataProcessor (нормально, отмена)
@@ -81,4 +84,6 @@ private:
     IsobathsProcessor    isobaths_;
     MosaicProcessor      mosaic_;
     BottomTrackProcessor bottom_;
+
+    QSet<TileKey> visibleTileKeys_;
 };

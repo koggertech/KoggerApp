@@ -208,6 +208,9 @@ void GraphicsScene3dView::clear(bool cleanMap)
     lastMinY_ = std::numeric_limits<float>::max();
     lastMaxY_ = std::numeric_limits<float>::lowest();
 
+    lastContains_.clear();
+    lastVisTileKeys_.clear();
+
     QQuickFramebufferObject::update();
 }
 
@@ -926,8 +929,11 @@ void GraphicsScene3dView::onCameraMoved()
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
     //currZoom = 2; // 1 - best, 7 (test)
+    bool zoomIsChanged = false;
 
     if (currZoom != dataZoomIndx_) {
+        qDebug() << "           CHANGED ZOOM" << currZoom;
+        zoomIsChanged = true;
         dataZoomIndx_ = currZoom;
         emit sendDataZoom(dataZoomIndx_);
     }
@@ -961,7 +967,7 @@ void GraphicsScene3dView::onCameraMoved()
 
     updateMapView();
     updateSurfaceView();
-    calcVisEpochIndxs();
+    calcVisEpochIndxs(zoomIsChanged);
     updateViews();
 }
 
@@ -1034,7 +1040,7 @@ void GraphicsScene3dView::updateSurfaceView()
     emit sendDataRectRequest(nedVerts, dataZoomIndx_, cameraIsMoveUp_ /*from upd map*/);
 }
 
-void GraphicsScene3dView::calcVisEpochIndxs()
+void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
 {
     if (!datasetPtr_) {
         return;
@@ -1046,6 +1052,11 @@ void GraphicsScene3dView::calcVisEpochIndxs()
 
     const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
     auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 0);
+
+    if (visTiles != lastVisTileKeys_) {
+        lastVisTileKeys_ = visTiles;
+        emit sendVisibleTileKeys(lastVisTileKeys_); // for processor
+    }
 
     QVector<int> contains;
 
@@ -1066,11 +1077,22 @@ void GraphicsScene3dView::calcVisEpochIndxs()
         }
     }
 
-    //qDebug() << "";
-    //qDebug() << contains.size();
-    //qDebug() << contains;
+    auto storeAndSendEpIndxs = [&]() {
+        lastContains_ = contains;
+        emit sendCameraEpIndxs(lastContains_);
+        //qDebug() << "";
+        //qDebug() << contains.size();
+        //qDebug() << contains;
+    };
 
-    emit sendCameraEpIndxs(contains);
+    if (zoomIsChanged) {
+        storeAndSendEpIndxs();
+    }
+    else {
+        if (lastContains_ != contains) {
+            storeAndSendEpIndxs();
+        }
+    }
 }
 
 void GraphicsScene3dView::updateViews()

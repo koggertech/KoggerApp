@@ -5,6 +5,7 @@
 #include <QThread>
 #include "data_processor.h"
 #include "dataset.h"
+#include "compute_worker.h"
 
 
 static constexpr int sampleLimiter    = 2;
@@ -43,8 +44,9 @@ static int sampleIndex(Epoch::Echogram *echogramPtr, float dist)
     return indx;
 }
 
-MosaicProcessor::MosaicProcessor(DataProcessor* parent)
-    : dataProcessor_(parent),
+MosaicProcessor::MosaicProcessor(DataProcessor* parent, ComputeWorker* computeWorker)
+    : computeWorker_(computeWorker),
+    dataProcessor_(parent),
     datasetPtr_(nullptr),
     surfaceMeshPtr_(nullptr),
     tileResolution_(defaultTileResolution),
@@ -110,75 +112,16 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
 
-    QVector<int> vec = indxs;
-    const int firstNow = vec.first();
+    constexpr int minSegmentLen = 2;
+    constexpr int maxSegmentLen = 100;
 
-    if (lastAcceptedEpoch_ >= 0 && lastAcceptedEpoch_ < firstNow) {
-        const int gap = firstNow - lastAcceptedEpoch_;
+    const auto segments = splitContinuousSegments(indxs, minSegmentLen, maxSegmentLen);
 
-        if (gap > 1) { // дыра слева [lastAcceptedEpoch_, firstNow)
-            QVector<int> left;
-            left.reserve(gap);
-            for (int i = lastAcceptedEpoch_; i < firstNow; ++i) {
-                left.push_back(i);
-            }
-
-            left += vec;
-            vec.swap(left);
-        }
-        else { // gap == 1
-             vec.prepend(lastAcceptedEpoch_); // стык одним элементом
-        }
-    }
-    else {
-        //
-    }
-
-    //qDebug() << "task";
-    //qDebug() << vec;
-    //for (int i = 1; i < vec.size(); ++i) {
-    //   if (vec[i] != vec[i - 1] + 1) {
-    //       qWarning() << "Hole in mosaic task" << vec[i - 1] << "and" << vec[i];
-    //   }
-    //}
-
-    const int kStep = 100; // почанково
-    QVector<int> chunk;
-
-    int start = 0;
-    const int last = vec.size() - 1;
-
-    while (start <= last) {
-        int end = qMin(start + kStep, last);
-
-        chunk.clear();
-        chunk.reserve(end - start + 1);
-        for (int i = start; i <= end; ++i) {
-            chunk.push_back(vec[i]);
-        }
-
-        updateData(chunk);
-
-        if (end == last) {
-            break;
-        }
-        start = end;
+    for (const auto& seg : segments) {
+        updateData(seg);
     }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
-}
-
-void MosaicProcessor::resetTileSettings(int tileSidePixelSize, int tileHeightMatrixRatio, float tileResolution)//
-{
-    clear();
-
-    tileSidePixelSize_ = tileSidePixelSize;
-    tileHeightMatrixRatio_ = tileHeightMatrixRatio;
-    tileResolution_ = tileResolution;
-    pixOnMeters_ = std::pow(tileResolution_, -1);
-    aliasWindow_ = 100 / pixOnMeters_;
-
-    surfaceMeshPtr_->reinit(tileSidePixelSize, tileHeightMatrixRatio, tileResolution);//
 }
 
 void MosaicProcessor::setColorTableThemeById(int id)
@@ -587,6 +530,11 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             }
         }
     }
+
+    if (measLinesVertices.empty()) {
+        return;
+    }
+
     const float tileSideMeters = tileSidePixelSize_ * tileResolution_;
     newMatrixParams = kmath::getMatrixParams(measLinesVertices, tileSideMeters);
     if (!newMatrixParams.isValid()) {
@@ -616,8 +564,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     }
     surfaceMeshPtr_->concatenate(expanded);
 
+    QSet<TileKey> visAndPrefTileKeys = computeWorker_->getVisibleTileKeysCPtr();
     { // prefetch tiles
         QSet<TileKey> toRestore = forecastTilesToTouch(measLinesVertices, isOdds, epochIndxs, expandMargin_/*for prefetch*/);
+        visAndPrefTileKeys.intersect(toRestore);
 
         if (!toRestore.isEmpty()) {
             QSet<TileKey> need;
@@ -645,27 +595,46 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         }
     }
 
+    { // mark tiles
+        for (auto it = visAndPrefTileKeys.cbegin(); it != visAndPrefTileKeys.cend(); ++it) {
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(*it); t) {
+                t->setInFov(true);
+            }
+        }
+    }
+
+    uint64_t traceCnt = 0;
+
     // after expand by martix
     const int numHeightTiles = surfaceMeshPtr_->getNumHeightTiles();
     const int stepSizeHeightMatrix = surfaceMeshPtr_->getStepSizeHeightMatrix();
 
     // helpers
-    auto putPixel = [&](int x, int y, uint8_t color) -> SurfaceTile* {
+    auto putPixel = [&](int x, int y, uint8_t color, int headIndx) -> SurfaceTile* {
         const int meshX = x / tileSidePixelSize_;
         const int meshY = (numHeightTiles - 1) - (y / tileSidePixelSize_);
         SurfaceTile* t  = surfaceMeshPtr_->getTileByXYIndxs(meshY, meshX);
         if (!t) {
             return nullptr;
         }
+        if (!t->getInFov()) {
+            return nullptr;
+        }
 
-        const int tileX = x % tileSidePixelSize_;
-        const int tileY = y % tileSidePixelSize_;
+        if (headIndx > t->getHeadIndx()) {
+            const int tileX = x % tileSidePixelSize_;
+            const int tileY = y % tileSidePixelSize_;
 
-        auto& img = t->getMosaicImageDataRef();
-        img.data()[tileY * tileSidePixelSize_ + tileX] = color;
-        t->setIsUpdated(true);
+            auto& img = t->getMosaicImageDataRef();
+            img.data()[tileY * tileSidePixelSize_ + tileX] = color;
+            t->setIsUpdated(true);
+            traceCnt++;
 
-        return t;
+            return t;
+        }
+        else {
+            return nullptr;
+        }
     };
 
     if (bench) {
@@ -673,6 +642,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         et.restart();
         et.start();
     }
+
+    QSet<SurfaceTile*> usedTiles;
 
     // ray tracing
     for (int i = 0; i < measLinesVertices.size(); i += 2) {
@@ -815,6 +786,8 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
             return false;
         };
 
+        const int freshEpIndx = epochIndxs[segSIndx];
+
         while (true) { // follow the biggest segment
             const float rem = std::sqrt(float((bigX2 - bigX1) * (bigX2 - bigX1) + (bigY2 - bigY1) * (bigY2 - bigY1))); // moving on longest line
             const float t   = std::clamp(rem / bigTot, 0.0f, 1.0f);
@@ -852,16 +825,22 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                     const auto  iClrIndx = static_cast<uint8_t>((1 - iP) * segFColorIndx + iP * segSColorIndx);
 
                     // рисуем текущий пиксель
-                    auto* t = putPixel(x0, y0, iClrIndx);
-                    if (!(stepsDone % tileHeightMatrixRatio_)) {
-                        const int tileX = x0 % tileSidePixelSize_;
-                        const int tileY = y0 % tileSidePixelSize_;
-                        const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
-                        const int hIdx = (tileY / stepSizeHeightMatrix) * numSteps + (tileX / stepSizeHeightMatrix);
-                        auto& hT = t->getHeightMarkVerticesRef()[hIdx];
-                        if (hT != HeightType::kTriangulation) {
-                            t->getHeightVerticesRef()[hIdx][2] = segFCurrPhPos[2];
-                            hT = HeightType::kMosaic;
+                    auto* t = putPixel(x0, y0, iClrIndx, freshEpIndx);
+
+                    if (t) {
+
+                        usedTiles.insert(t);
+
+                        if (!(stepsDone % tileHeightMatrixRatio_)) {
+                            const int tileX = x0 % tileSidePixelSize_;
+                            const int tileY = y0 % tileSidePixelSize_;
+                            const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
+                            const int hIdx = (tileY / stepSizeHeightMatrix) * numSteps + (tileX / stepSizeHeightMatrix);
+                            auto& hT = t->getHeightMarkVerticesRef()[hIdx];
+                            if (hT != HeightType::kTriangulation) {
+                                t->getHeightVerticesRef()[hIdx][2] = segFCurrPhPos[2];
+                                hT = HeightType::kMosaic;
+                            }
                         }
                     }
 
@@ -877,7 +856,34 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 break;
             }
         } // while interp line
+
+        //qDebug() << "       tr ep indx: " << epochIndxs[segFIndx] << epochIndxs[segSIndx];
+
+        int indxF = epochIndxs[segFIndx];
+        int indxS = epochIndxs[segSIndx];
+
+        if (lastIndxF_ == indxF &&
+            lastIndxS_ == indxS) {
+            // set head
+            for (auto it = usedTiles.cbegin(); it != usedTiles.cend(); ++it) {
+                auto* t = *it;
+                if (t->getHeadIndx() < freshEpIndx) {
+                    t->setHeadIndx(freshEpIndx);
+                }
+            }
+        }
+
+        lastIndxF_ = indxF;
+        lastIndxS_ = indxS;
     } // for rays
+
+    { // unmark tiles
+        for (auto it = visAndPrefTileKeys.cbegin(); it != visAndPrefTileKeys.cend(); ++it) {
+            if (auto* t = surfaceMeshPtr_->getTilePtrByKey(*it); t) {
+                t->setInFov(false);
+            }
+        }
+    }
 
     lastMatParams_ = actualMatParams;
 
@@ -889,6 +895,9 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
     // collect changed tiles
     QSet<SurfaceTile*> updTiles = surfaceMeshPtr_->getUpdatedTiles();
+    //qDebug() << "upd t" << updTiles.size();
+    //qDebug() << "   trace cnt" << traceCnt;
+
     QSet<SurfaceTile*> changedOut;
     postUpdate(updTiles, changedOut);
     updTiles.unite(changedOut);
@@ -1112,11 +1121,14 @@ void MosaicProcessor::putTilesIntoMesh(const TileMap &tiles) // может вы�
         if (!dst) {
             continue;
         }
+        const auto& src = it.value();
+
         if (!dst->getIsInited()) {
+            dst->setOrigin(src.getOrigin()); //
             dst->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
         }
 
-        const auto& src = it.value();
+        dst->setHeadIndx(src.getHeadIndx());
 
         // image
         auto& di = dst->getMosaicImageDataRef();
@@ -1220,4 +1232,58 @@ bool MosaicProcessor::prefetchTiles(const QSet<TileKey> &keys) // подгруз
 
     // выход
     return putAllGotTiles();
+}
+
+QVector<QVector<int> > MosaicProcessor::splitContinuousSegments(const QVector<int> &indxs, int minSegmentLen, int maxSegmentLen)
+{
+    QVector<QVector<int>> result;
+    if (indxs.isEmpty()) {
+        return result;
+    }
+
+    if (maxSegmentLen < minSegmentLen) {
+        maxSegmentLen = minSegmentLen;
+    }
+
+    const int n = indxs.size();
+    int startPos = 0;
+
+    while (startPos < n) {
+        int endPos = startPos;
+
+        while (endPos + 1 < n &&
+               indxs[endPos + 1] == indxs[endPos] + 1) {
+            ++endPos;
+        }
+
+        const int runLen = endPos - startPos + 1;
+
+        if (runLen >= minSegmentLen) {
+            int segStartPos = startPos;
+
+            while (segStartPos <= endPos) {
+                int segEndPos = std::min(segStartPos + maxSegmentLen - 1, endPos);
+                int segLen    = segEndPos - segStartPos + 1;
+
+                if (segLen >= minSegmentLen) {
+                    QVector<int> segment;
+                    segment.reserve(segLen);
+                    for (int i = segStartPos; i <= segEndPos; ++i) {
+                        segment.push_back(indxs[i]);
+                    }
+                    result.append(std::move(segment));
+                }
+
+                if (segEndPos >= endPos) {
+                    break;
+                }
+
+                segStartPos = segEndPos;
+            }
+        }
+
+        startPos = endPos + 1;
+    }
+
+    return result;
 }

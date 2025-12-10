@@ -53,6 +53,7 @@ public slots:
     void setIsOpeningFile (bool state);
     //
     void onCameraMoved(const QVector<int>& epIndxs);
+    void onSendVisibleTileKeys(const QSet<TileKey>& tileKeys);
 
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime

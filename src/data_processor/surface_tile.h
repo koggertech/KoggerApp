@@ -43,6 +43,8 @@ public:
     void       setOrigin(const QVector3D& val);
     void       setHeadIndx(int indx);
     void       setUpdateHint(UpdateHint h);
+    void       setInFov(bool state);
+
     UpdateHint updateHint() const;
 
     void                        setMosaicTextureId(GLuint val);
@@ -61,6 +63,8 @@ public:
     const QVector<HeightType>&  getHeightMarkVerticesCRef() const;
     const QVector<int>&         getHeightIndicesCRef() const;
     int                         getHeadIndx() const;
+    bool                        getInFov() const;
+
     // tile size
     int sidePixelSize() const;
     int heightMatrixRatio() const;
@@ -91,4 +95,5 @@ private:
     float resolution_;
     UpdateHint updateHint_;
     int headIndx_;
+    bool inFov_;
 };
