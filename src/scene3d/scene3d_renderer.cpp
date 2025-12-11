@@ -194,22 +194,45 @@ void GraphicsScene3dRenderer::drawObjects()
     contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 
-    //-----------Draw axes-------------
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
-    glViewport(viewport[2]-100,0,100,100);
 
-    QMatrix4x4 axesView;
-    QMatrix4x4 axesProjection;
-    QMatrix4x4 axesModel;
+    if (compass_) {
+        glEnable(GL_DEPTH_TEST);
 
-    // m_axesThumbnailCamera.setDistance(35);
-    axesView = m_axesThumbnailCamera.m_view;
-    axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 11000.0f);
+        int size = 100;
+        if (compassSize_ == 2) {
+            size = 125;
+        }
+        else if (compassSize_ == 3) {
+            size = 150;
+        }
 
-    m_coordAxesRenderImpl.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
+        int x = viewport[0] + viewport[2] - size;
+        int y = viewport[1];
+        if (compassPos_ == 2) {
+            x = viewport[0];
+            y = viewport[1];
+        }
+        else if (compassPos_ == 3) {
+            x = viewport[0] + viewport[2] - size;
+            y = viewport[1] + viewport[3] - size;
+        }
 
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glViewport(x, y, size, size);
+
+        QMatrix4x4 axesView;
+        QMatrix4x4 axesProjection;
+        QMatrix4x4 axesModel;
+        m_axesThumbnailCamera.setDistance(55);
+        axesView = m_axesThumbnailCamera.m_view;
+        axesProjection.perspective(m_camera.fov(), 100/100, 1.0f, 11000.0f);
+
+        compassRenderImpl_.render(this, axesModel, axesView, axesProjection, m_shaderProgramMap);
+
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glDisable(GL_DEPTH_TEST);
+    }
 
     //-----------Draw selection rect-------------
     if(!m_shaderProgramMap.contains("static_sec"))

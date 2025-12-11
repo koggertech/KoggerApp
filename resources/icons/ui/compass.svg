@@ -1,0 +1,10 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icons-tabler-outline icon-tabler-cone" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <ellipse stroke-width="2" stroke="null" ry="10" rx="10" id="svg_8" cy="12" cx="12"/>
+  <path transform="rotate(45 12 12)" stroke="null" id="svg_10" d="m9.89363,12l2.10636,-6.47936l2.10636,6.47936l-2.10636,6.47936l-2.10636,-6.47936z" fill="none"/>
+  <line transform="rotate(-45 12.875 11.375)" id="svg_13" y2="12.25888" x2="12.875" y1="10.49112" x1="12.875" stroke="null" fill="none"/>
+  <line id="svg_14" y2="10.4375" x2="13.75" y1="9.8125" x1="14.5" stroke="null" fill="none"/>
+ </g>
+</svg>

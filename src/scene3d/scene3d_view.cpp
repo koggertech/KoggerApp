@@ -38,7 +38,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     useAngleLocation_(false),
     navigatorViewLocation_(false),
     isNorth_(false),
-    testingTimer_(nullptr)
+    testingTimer_(nullptr),
+    compass_(false),
+    compassPos_(1),
+    compassSize_(1)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -440,6 +443,29 @@ void GraphicsScene3dView::setUseAngleLocation(bool state)
 void GraphicsScene3dView::setNavigatorViewLocation(bool state)
 {
     navigatorViewLocation_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setCompassState(bool state)
+{
+    compass_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setCompassPos(int val)
+{
+    compassPos_ = val;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setCompassSize(int val)
+{
+    compassSize_ = val;
+
+    QQuickFramebufferObject::update();
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -1069,7 +1095,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     view->contacts_->contactBounds_ = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
 
     // write to renderer
-    m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
+    m_renderer->compassRenderImpl_       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
@@ -1089,6 +1115,9 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
     m_renderer->gridVisibility_             = view->gridVisibility_;
+    m_renderer->compass_                    = view->compass_;
+    m_renderer->compassPos_                 = view->compassPos_;
+    m_renderer->compassSize_                = view->compassSize_;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)

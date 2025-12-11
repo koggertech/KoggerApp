@@ -111,7 +111,7 @@ MenuFrame {
             borderColor: theme.controlBackColor
             checkedBorderColor: theme.controlBorderColor
             iconSource: "qrc:/icons/ui/click.svg"
-            text: qsTr("Sync with echogram")
+            text: qsTr("Sync echogram")
             Layout.fillWidth: true
 
             onToggled: {
@@ -167,7 +167,7 @@ MenuFrame {
             checkedBorderColor: theme.controlBorderColor
             checked: true
             iconSource: "qrc:/icons/ui/grid_4x4.svg"
-            text: qsTr("Grid visibility")
+            text: qsTr("Grid")
             Layout.fillWidth: true
 
             onToggled: {
@@ -195,7 +195,7 @@ MenuFrame {
             checkedBorderColor: theme.controlBorderColor
             checked: true
             iconSource: "qrc:/icons/ui/speedboat.svg"
-            text: qsTr("Boat visibility")
+            text: qsTr("Boat")
             Layout.fillWidth: true
 
             onToggled: {
@@ -215,6 +215,92 @@ MenuFrame {
             }
         }
 
+        RowLayout {
+            CheckButton {
+                id: compassCheckButton
+                objectName: "compassCheckButton"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: true
+                iconSource: "qrc:/icons/ui/compass.svg"
+                text: qsTr("Compass")
+                Layout.fillWidth: true
+
+                onToggled: {
+                    Scene3dToolBarController.onCompassButtonChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onCompassButtonChanged(checked)
+                }
+
+                Settings {
+                    property alias compassCheckButton: compassCheckButton.checked
+                }
+            }
+
+            RowLayout {
+                visible: compassCheckButton.checked
+
+                ColumnLayout {
+                    CText {
+                        text: qsTr("Pos:")
+                    }
+                    CText {
+                        text: qsTr("Size:")
+                    }
+                }
+                ColumnLayout {
+                    SpinBoxCustom {
+                        id: compassPosSpinBox
+                        from: 1
+                        to: 3
+                        stepSize: 1
+                        value: 1
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onCompassPosChanged(value)
+                        }
+                        onFocusChanged: {
+                            settings3DSettings.focus = true
+                        }
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onCompassPosChanged(value)
+                        }
+                        Settings {
+                            property alias compassPosSpinBox: compassPosSpinBox.value
+                        }
+                    }
+
+                    SpinBoxCustom {
+                        id: compassSizeSpinBox
+                        from: 1
+                        to: 3
+                        stepSize: 1
+                        value: 1
+
+                        onValueChanged: {
+                            Scene3dToolBarController.onCompassSizeChanged(value)
+                        }
+                        onFocusChanged: {
+                            settings3DSettings.focus = true
+                        }
+                        Component.onCompleted: {
+                            Scene3dToolBarController.onCompassSizeChanged(value)
+                        }
+                        Settings {
+                            property alias compassSizeSpinBox: compassSizeSpinBox.value
+                        }
+                    }
+                }
+            }
+        }
+
         CheckButton {
             id: mapViewCheckButton
             objectName: "mapViewCheckButton"
@@ -223,7 +309,7 @@ MenuFrame {
             checkedBorderColor: theme.controlBorderColor
             checked: true
             iconSource: "qrc:/icons/ui/map.svg"
-            text: qsTr("Map visibility")
+            text: qsTr("Map")
             Layout.fillWidth: true
 
             implicitWidth: theme.controlHeight

@@ -220,6 +220,10 @@ public:
     void setUseAngleLocation(bool state);
     void setNavigatorViewLocation(bool state);
 
+    void setCompassState(bool state);
+    void setCompassPos(int val);
+    void setCompassSize(int val);
+
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
@@ -319,6 +323,10 @@ private:
     bool navigatorViewLocation_;
     bool isNorth_;
     QTimer* testingTimer_;
+
+    bool compass_;
+    int compassPos_;
+    int compassSize_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

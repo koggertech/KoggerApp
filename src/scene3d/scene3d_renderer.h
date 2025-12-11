@@ -61,7 +61,7 @@ private:
     QSizeF m_viewSize;
     GraphicsScene3dView::Camera m_camera;
     GraphicsScene3dView::Camera m_axesThumbnailCamera;
-    CoordinateAxes::CoordinateAxesRenderImplementation m_coordAxesRenderImpl;
+    CoordinateAxes::CoordinateAxesRenderImplementation compassRenderImpl_;
     PlaneGrid::PlaneGridRenderImplementation m_planeGridRenderImpl;
     IsobathsView::IsobathsViewRenderImplementation isobathsViewRenderImpl_;
     SurfaceView::SurfaceViewRenderImplementation surfaceViewRenderImpl_;
@@ -83,5 +83,9 @@ private:
     bool m_isSceneBoundingBoxVisible = true;
     GLuint VAO, VBO;
     float scaleFactor_;
-    float gridVisibility_ = true;
+    bool gridVisibility_ = true;
+
+    bool compass_ = false;
+    int compassPos_ = 1;
+    int compassSize_ = 1;
 };

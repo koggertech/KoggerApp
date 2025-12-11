@@ -13,7 +13,10 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       gridVisibility_(true),
       useAngleLocation_(false),
       navigatorViewLocation_(false),
-      isNorth_(false)
+      isNorth_(false),
+      compass_(true),
+      compassPos_(1),
+      compassSize_(1)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
@@ -135,6 +138,42 @@ void Scene3dToolBarController::onIsNorthLocationButtonChanged(bool state)
     }
 }
 
+void Scene3dToolBarController::onCompassButtonChanged(bool state)
+{
+    compass_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setCompassState(compass_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onCompassPosChanged(int pos)
+{
+    compassPos_ = pos;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setCompassPos(compassPos_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onCompassSizeChanged(int size)
+{
+    compassSize_ = size;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setCompassSize(compassSize_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
@@ -167,6 +206,9 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setNavigatorViewLocation(navigatorViewLocation_);
                 graphicsScene3dViewPtr_->setUseAngleLocation(useAngleLocation_);
                 graphicsScene3dViewPtr_->setIsNorth(isNorth_);
+                graphicsScene3dViewPtr_->setCompassState(compass_);
+                graphicsScene3dViewPtr_->setCompassPos(compassPos_);
+                graphicsScene3dViewPtr_->setCompassSize(compassSize_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));
