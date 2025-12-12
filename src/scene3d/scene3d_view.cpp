@@ -303,7 +303,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
             if (m_camera->getIsPerspective() && !isNorth_) {
                 m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
-                m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+                m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
                 m_startMousePos = { x, y };
                 cameraWasMoved = true;
             }
@@ -397,7 +397,7 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 
     if (!isNorth_) {
         m_camera->rotate(prevCenter, currCenter, angleDelta, height());
-        m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta , height());
+        m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
     }
 
     updatePlaneGrid();
@@ -721,6 +721,9 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
     }
 
     m_camera->focusOnPosition(focusPoint);
+
+    m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+
     updatePlaneGrid();
     QQuickFramebufferObject::update();
     emit cameraIsMoved();
@@ -1847,6 +1850,22 @@ map::CameraTilt GraphicsScene3dView::Camera::getCameraTilt() const
     else {
         return map::CameraTilt::Up;
     }
+}
+
+QVector2D GraphicsScene3dView::Camera::getRotAngle() const
+{
+    return m_rotAngle;
+}
+
+void GraphicsScene3dView::Camera::setRotAngle(const QVector2D &val)
+{
+    m_rotAngle = val;
+
+    // ?
+    tryResetRotateAngle();
+    checkRotateAngle();
+    updateCameraParams();
+    updateViewMatrix();
 }
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const

@@ -74,6 +74,9 @@ public:
         bool getIsFarAwayFromOriginLla() const;
         map::CameraTilt getCameraTilt() const;
 
+        QVector2D getRotAngle() const;
+        void setRotAngle(const QVector2D& val);
+
     private:
         void updateCameraParams();
         void tryToChangeViewLlaRef();
