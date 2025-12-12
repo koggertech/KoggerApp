@@ -29,7 +29,8 @@ Core::Core() :
     isUseGPS_(false),
     fixBlackStripesState_(false),
     fixBlackStripesForwardSteps_(0),
-    fixBlackStripesBackwardSteps_(0)
+    fixBlackStripesBackwardSteps_(0),
+    isActiveZeroing_(false)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
 
@@ -432,6 +433,14 @@ bool Core::closeLogFile()
     return true;
 }
 
+void Core::onFileOpened()
+{
+    qDebug() << "file opened!";
+
+    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
+}
+#endif
+
 void Core::onRequestClearing()
 {
     if (isFileOpening_) {
@@ -454,14 +463,6 @@ void Core::onRequestClearing()
         setDataProcessorConnections();
     });
 }
-
-void Core::onFileOpened()
-{
-    qDebug() << "file opened!";
-
-    QMetaObject::invokeMethod(dataProcessor_, "setIsOpeningFile", Qt::QueuedConnection, Q_ARG(bool, false));
-}
-#endif
 
 bool Core::openXTF(const QByteArray& data)
 {
@@ -1210,6 +1211,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
     usblViewControlMenuController_->setQmlEngine(object);
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
+    scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
+
     onChannelsUpdated();
 
     createMapTileManagerConnections();
@@ -1385,7 +1388,13 @@ void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint t
 
 void Core::setPosZeroing(bool state)
 {
-    datasetPtr_->setActiveZeroing(state);
+    isActiveZeroing_ = state;
+
+    datasetPtr_->setActiveZeroing(isActiveZeroing_);
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
+    }
 }
 
 ConsoleListModel* Core::consoleList()

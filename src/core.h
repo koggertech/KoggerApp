@@ -240,9 +240,11 @@ private:
     bool isGPSAlive_;
     bool isUseGPS_;
 
-    bool fixBlackStripesState_;;
+    bool fixBlackStripesState_;
     int  fixBlackStripesForwardSteps_;
     int  fixBlackStripesBackwardSteps_;
+
+    bool isActiveZeroing_;
 
 #ifdef FLASHER
     Q_PROPERTY(QString flasherTextInfo READ flasherTextInfo NOTIFY dev_flasher_changed)

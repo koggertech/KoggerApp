@@ -88,4 +88,5 @@ private:
     bool compass_ = false;
     int compassPos_ = 1;
     int compassSize_ = 1;
+    bool planeGridType_ = true;
 };

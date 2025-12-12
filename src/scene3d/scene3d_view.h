@@ -224,6 +224,15 @@ public:
     void setCompassPos(int val);
     void setCompassSize(int val);
 
+    void setPlaneGridType(bool def);
+
+    void setPlaneGridCircleSize(int val);
+    void setPlaneGridCircleStep(int val);
+    void setPlaneGridCircleAngle(int val);
+    void setPlaneGridCircleLabels(bool state);
+
+    void setActiveZeroing(bool state);
+
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
@@ -327,6 +336,8 @@ private:
     bool compass_;
     int compassPos_;
     int compassSize_;
+
+    bool planeGridType_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

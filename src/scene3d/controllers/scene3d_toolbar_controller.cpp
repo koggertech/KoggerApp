@@ -16,7 +16,12 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       isNorth_(false),
       compass_(true),
       compassPos_(1),
-      compassSize_(1)
+      compassSize_(1),
+      planeGridType_(false),
+      planeGridCircleSize_(1),
+      planeGridCircleStep_(1),
+      planeGridCircleAngle_(1),
+      planeGridCircleLabels_(true)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
@@ -174,6 +179,66 @@ void Scene3dToolBarController::onCompassSizeChanged(int size)
     }
 }
 
+void Scene3dToolBarController::onPlaneGridTypeChanged(bool val)
+{
+    planeGridType_ = val;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setPlaneGridType(planeGridType_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onPlaneGridCircleGridSizeChanged(int val)
+{
+    planeGridCircleSize_ = val;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setPlaneGridCircleSize(planeGridCircleSize_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onPlaneGridCircleGridStepChanged(int val)
+{
+    planeGridCircleStep_ = val;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setPlaneGridCircleStep(planeGridCircleStep_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onPlaneGridCircleGridAngleChanged(int val)
+{
+    planeGridCircleAngle_ = val;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setPlaneGridCircleAngle(planeGridCircleAngle_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
+void Scene3dToolBarController::onPlaneGridCircleGridLabelsChanged(bool state)
+{
+    planeGridCircleLabels_ = state;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setPlaneGridCircleLabels(planeGridCircleLabels_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
@@ -209,6 +274,11 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setCompassState(compass_);
                 graphicsScene3dViewPtr_->setCompassPos(compassPos_);
                 graphicsScene3dViewPtr_->setCompassSize(compassSize_);
+                graphicsScene3dViewPtr_->setPlaneGridType(planeGridType_);
+                graphicsScene3dViewPtr_->setPlaneGridCircleSize(planeGridCircleSize_);
+                graphicsScene3dViewPtr_->setPlaneGridCircleStep(planeGridCircleStep_);
+                graphicsScene3dViewPtr_->setPlaneGridCircleAngle(planeGridCircleAngle_);
+                graphicsScene3dViewPtr_->setPlaneGridCircleLabels(planeGridCircleLabels_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

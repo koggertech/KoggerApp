@@ -529,8 +529,7 @@ void Dataset::addAtt(float yaw, float pitch, float roll)
         ++testTime_;
 
         Position pos;
-
-        double lat = 40.1852f, lon = 44.5149f;
+        double lat = 55.0151f, lon = 21.1183f;
         pos.lla = LLA(lat, lon);
         pos.time = DateTime(testTime_, 100);
 

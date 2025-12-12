@@ -105,10 +105,10 @@ void CoordinateAxes::CoordinateAxesRenderImplementation::render(QOpenGLFunctions
     tris << A << E << D
          << E << C << D;
 
-    QVector3D Ar = s * QVector3D(-2.0f, 0.0f, 0.05f);
-    QVector3D Cr = s * QVector3D( 2.0f, 0.0f, 0.05f);
-    QVector3D Dr = s * QVector3D( 0.0f, 5.0f, 0.05f);
-    QVector3D Er = s * QVector3D( 0.0f, 0.0f, 1.05f);
+    QVector3D Ar = s * QVector3D(-2.0f, 0.0f, 0.02f);
+    QVector3D Cr = s * QVector3D( 2.0f, 0.0f, 0.02f);
+    QVector3D Dr = s * QVector3D( 0.0f, 5.0f, 0.02f);
+    QVector3D Er = s * QVector3D( 0.0f, 0.0f, 1.02f);
 
     QVector<QVector3D> ribs;
     ribs << Cr << Dr

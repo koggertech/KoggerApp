@@ -159,31 +159,174 @@ MenuFrame {
         //     }
         // }
 
-        CheckButton {
-            id: gridCheckButton
-            objectName: "gridCheckButton"
-            backColor: theme.controlBackColor
-            borderColor: theme.controlBackColor
-            checkedBorderColor: theme.controlBorderColor
-            checked: true
-            iconSource: "qrc:/icons/ui/grid_4x4.svg"
-            text: qsTr("Grid")
-            Layout.fillWidth: true
+        RowLayout {
+            CheckButton {
+                id: gridCheckButton
+                objectName: "gridCheckButton"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: true
+                iconSource: "qrc:/icons/ui/grid_4x4.svg"
+                text: qsTr("Grid")
+                Layout.fillWidth: true
 
-            onToggled: {
-                Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+                onToggled: {
+                    Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+                }
+
+                onFocusChanged: {
+                    settings3DSettings.focus = true
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
+                }
+
+                Settings {
+                    property alias gridCheckButton: gridCheckButton.checked
+                }
             }
 
-            onFocusChanged: {
-                settings3DSettings.focus = true
-            }
+            ColumnLayout {
+                visible: gridCheckButton.checked
 
-            Component.onCompleted: {
-                Scene3dToolBarController.onGridVisibilityCheckedChanged(checked)
-            }
+                CheckButton {
+                    id: gridTypeCheckButton
+                    objectName: "gridTypeCheckButton"
+                    backColor: theme.controlBackColor
+                    borderColor: theme.controlBackColor
+                    checkedBorderColor: theme.controlBorderColor
+                    checked: true
+                    //iconSource: "qrc:/icons/ui/gps.svg"
+                    text: qsTr("Circle")
+                    Layout.fillWidth: true
 
-            Settings {
-                property alias gridCheckButton: gridCheckButton.checked
+                    onToggled: {
+                        Scene3dToolBarController.onPlaneGridTypeChanged(!checked)
+                    }
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onPlaneGridTypeChanged(!checked)
+                    }
+                    Settings {
+                        property alias gridTypeCheckButton: gridTypeCheckButton.checked
+                    }
+                }
+
+                CheckButton {
+                    visible: gridTypeCheckButton.checked
+
+                    id: gridLabelsCheckButton
+                    objectName: "gridLabelsCheckButton"
+                    backColor: theme.controlBackColor
+                    borderColor: theme.controlBackColor
+                    checkedBorderColor: theme.controlBorderColor
+                    checked: true
+                    //iconSource: "qrc:/icons/ui/gps.svg"
+                    text: qsTr("Labels")
+                    Layout.fillWidth: true
+
+                    onToggled: {
+                        Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(checked)
+                    }
+                    onFocusChanged: {
+                        settings3DSettings.focus = true
+                    }
+                    Component.onCompleted: {
+                        Scene3dToolBarController.onPlaneGridCircleGridLabelsChanged(checked)
+                    }
+                    Settings {
+                        property alias gridLabelsCheckButton: gridLabelsCheckButton.checked
+                    }
+                }
+
+                RowLayout {
+                    visible: gridTypeCheckButton.checked
+
+                    ColumnLayout {
+                        CText {
+                            text: qsTr("Size:")
+                        }
+                        CText {
+                            text: qsTr("Step:")
+                        }
+                        CText {
+                            text: qsTr("Angle:")
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+
+                    ColumnLayout {
+                        SpinBoxCustom {
+                            id: circleGridSizeSpinBox
+                            from: 1
+                            to: 3
+                            stepSize: 1
+                            value: 1
+
+                            onValueChanged: {
+                                Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(value)
+                            }
+                            onFocusChanged: {
+                                settings3DSettings.focus = true
+                            }
+                            Component.onCompleted: {
+                                Scene3dToolBarController.onPlaneGridCircleGridSizeChanged(value)
+                            }
+                            Settings {
+                                property alias circleGridSizeSpinBox: circleGridSizeSpinBox.value
+                            }
+                        }
+
+                        SpinBoxCustom {
+                            id: circleGridStepSpinBox
+                            from: 1
+                            to: 20
+                            stepSize: 1
+                            value: 1
+
+                            onValueChanged: {
+                                Scene3dToolBarController.onPlaneGridCircleGridStepChanged(value)
+                            }
+                            onFocusChanged: {
+                                settings3DSettings.focus = true
+                            }
+                            Component.onCompleted: {
+                                Scene3dToolBarController.onPlaneGridCircleGridStepChanged(value)
+                            }
+                            Settings {
+                                property alias circleGridStepSpinBox: circleGridStepSpinBox.value
+                            }
+                        }
+
+                        SpinBoxCustom {
+                            id: circleGridAngleSpinBox
+                            from: 1
+                            to: 5
+                            stepSize: 1
+                            value: 1
+
+                            onValueChanged: {
+                                Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(value)
+                            }
+                            onFocusChanged: {
+                                settings3DSettings.focus = true
+                            }
+                            Component.onCompleted: {
+                                Scene3dToolBarController.onPlaneGridCircleGridAngleChanged(value)
+                            }
+                            Settings {
+                                property alias circleGridAngleSpinBox: circleGridAngleSpinBox.value
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -255,6 +398,11 @@ MenuFrame {
                         text: qsTr("Size:")
                     }
                 }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
                 ColumnLayout {
                     SpinBoxCustom {
                         id: compassPosSpinBox
@@ -280,7 +428,7 @@ MenuFrame {
                     SpinBoxCustom {
                         id: compassSizeSpinBox
                         from: 1
-                        to: 3
+                        to: 5
                         stepSize: 1
                         value: 1
 

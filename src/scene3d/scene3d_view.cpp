@@ -41,7 +41,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     testingTimer_(nullptr),
     compass_(false),
     compassPos_(1),
-    compassSize_(1)
+    compassSize_(1),
+    planeGridType_(true)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -194,6 +195,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_pointGroup->clearData();
     navigationArrow_->clearData();
     usblView_->clearTracks();
+    m_planeGrid->clear();
     m_bounds = Cube();
 
     //setMapView();
@@ -466,6 +468,48 @@ void GraphicsScene3dView::setCompassSize(int val)
     compassSize_ = val;
 
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridType(bool def)
+{
+    planeGridType_ = def;
+
+    m_planeGrid.get()->setType(def);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleSize(int val)
+{
+    m_planeGrid->setCircleSize(val);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleStep(int val)
+{
+    m_planeGrid->setCircleStep(val);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleAngle(int val)
+{
+    m_planeGrid->setCircleAngle(val);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleLabels(bool state)
+{
+    m_planeGrid->setCircleLabels(state);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setActiveZeroing(bool state)
+{
+    m_planeGrid->setActiveZeroing(state);
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -1027,8 +1071,13 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
 
     boatTrack_->onPositionAdded(indx); // сюда лодка
 
+    QVector3D boatPosVec3D = QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d);
     if (float lastYaw = datasetPtr_->getLastYaw(); std::isfinite(lastYaw)) {
-        navigationArrow_->setPositionAndAngle(QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d), lastYaw - 90.f); // сюда лодка
+        navigationArrow_->setPositionAndAngle(boatPosVec3D, lastYaw - 90.f); // сюда лодка
+    }
+
+    if (!planeGridType_) {
+        m_planeGrid->setCirclePosition(boatPosVec3D);
     }
 
     if (trackLastData_) {
@@ -1118,6 +1167,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->compass_                    = view->compass_;
     m_renderer->compassPos_                 = view->compassPos_;
     m_renderer->compassSize_                = view->compassSize_;
+    m_renderer->planeGridType_              = view->planeGridType_;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
