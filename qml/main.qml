@@ -813,14 +813,16 @@ ApplicationWindow  {
     Item {
         id: profilesFloatBtn
         z: 9999
-        width: profilesBtn.implicitWidth * 1.5
-        height: profilesBtn.implicitHeight * 1.5
         visible: menuBar.profilesBtnVis
 
         property int  margin: 12
         property real idleOpacity: 0.45
+        property real buttonWidth: theme.controlHeight * 4
+        property real buttonHeight: theme.controlHeight
 
         opacity: idleOpacity
+        width: profilesContainer.implicitWidth
+        height: profilesContainer.implicitHeight
 
         function clampToWindow() {
             x = Math.max(margin, Math.min(x, mainview.width  - width  - margin))
@@ -841,51 +843,64 @@ ApplicationWindow  {
 
         Behavior on opacity { NumberAnimation { duration: 120 } }
 
-        CheckButton {
-            id: profilesBtn
-            anchors.fill: parent
-            text: qsTr("Profiles…")
-            backColor: theme.controlBackColor
-            borderColor: "transparent"
+        Column {
+            id: profilesContainer
+            spacing: 6
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            CheckButton {
+                id: profilesBtn
+                width: profilesFloatBtn.buttonWidth
+                height: profilesFloatBtn.buttonHeight
+                text: qsTr("Profiles...")
+                backColor: theme.controlBackColor
+                borderColor: "transparent"
+                onClicked: profilesDialog.open()
+            }
+
+            Repeater {
+                id: quickButtonsRepeater
+                model: profilesModel
+
+                delegate: CButton {
+                    text: (index + 1).toString()
+                    enabled: path && path.length > 0
+                    width: profilesBtn.width
+                    height: profilesBtn.height
+                    onClicked: {
+                        if (path && path.length > 0) {
+                            menuBar.applyProfileToAllDevices(path)
+                        }
+                    }
+                }
+            }
         }
 
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-
-            drag.target: profilesFloatBtn
-            drag.axis: Drag.XAndYAxis
-            drag.minimumX: profilesFloatBtn.margin
-            drag.maximumX: mainview.width  - profilesFloatBtn.width  - profilesFloatBtn.margin
-            drag.minimumY: profilesFloatBtn.margin
-            drag.maximumY: mainview.height - profilesFloatBtn.height - profilesFloatBtn.margin
-
-            property point pressPos: Qt.point(0, 0)
-            property bool  moved: false
-
-            onEntered: profilesFloatBtn.opacity = 1.0
-            onExited:  if (!pressed) profilesFloatBtn.opacity = profilesFloatBtn.idleOpacity
-
-            onPressed: function(mouse) {
-                pressPos = Qt.point(mouse.x, mouse.y)
-                moved = false
-                profilesFloatBtn.opacity = 1.0
+        DragHandler {
+            id: profilesDrag
+            target: profilesFloatBtn
+            xAxis.minimum: profilesFloatBtn.margin
+            xAxis.maximum: Math.max(profilesFloatBtn.margin, mainview.width - profilesFloatBtn.width - profilesFloatBtn.margin)
+            yAxis.minimum: profilesFloatBtn.margin
+            yAxis.maximum: Math.max(profilesFloatBtn.margin, mainview.height - profilesFloatBtn.height - profilesFloatBtn.margin)
+            onActiveChanged: {
+                if (!active) {
+                    profilesFloatBtn.clampToWindow()
+                }
             }
+        }
 
-            onPositionChanged: function(mouse) {
-                if (!pressed) return
-                if (Math.abs(mouse.x - pressPos.x) + Math.abs(mouse.y - pressPos.y) > 6)
-                    moved = true
-            }
-
-            onReleased: {
-                if (!containsMouse)
+        HoverHandler {
+            id: profilesHover
+            target: profilesContainer
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onHoveredChanged: {
+                if (hovered) {
+                    profilesFloatBtn.opacity = 1.0
+                }
+                else {
                     profilesFloatBtn.opacity = profilesFloatBtn.idleOpacity
-            }
-
-            onClicked: {
-                if (!moved)
-                    profilesDialog.open()
+                }
             }
         }
     }
