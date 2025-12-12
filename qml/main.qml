@@ -948,7 +948,7 @@ ApplicationWindow  {
             id: profilePickDialog
             title: qsTr("Select profile XML")
             fileMode: FileDialog.OpenFile
-            nameFilters: ["XML files (*.xml)"]
+            nameFilters: Qt.platform.os === "android" ? ["*/*"] : ["XML files (*.xml)"]
 
             onAccepted: {
                 if (profilesDialog.browseRow < 0) return
