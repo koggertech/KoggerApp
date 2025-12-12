@@ -9,6 +9,17 @@ ColumnLayout {
     property var dev: null
     property var devList: deviceManagerWrapper.devs
     property string filePath: pathText.text
+    function importSettingsToAllDevices(path) {
+        if (!path || !path.length) {
+            return
+        }
+        for (var i = 0; i < devList.length; ++i) {
+            var device = devList[i]
+            if (device && device.importSettingsFromXML) {
+                device.importSettingsFromXML(path)
+            }
+        }
+    }
 
     Layout.margins: 0
     spacing: 10

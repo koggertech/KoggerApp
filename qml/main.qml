@@ -810,6 +810,244 @@ ApplicationWindow  {
         }
     }
 
+    Item {
+        id: profilesFloatBtn
+        z: 9999
+        width: profilesBtn.implicitWidth * 1.5
+        height: profilesBtn.implicitHeight * 1.5
+        visible: menuBar.profilesBtnVis
+
+        property int  margin: 12
+        property real idleOpacity: 0.45
+
+        opacity: idleOpacity
+
+        function clampToWindow() {
+            x = Math.max(margin, Math.min(x, mainview.width  - width  - margin))
+            y = Math.max(margin, Math.min(y, mainview.height - height - margin))
+        }
+
+        Component.onCompleted: {
+            x = mainview.width - width - margin
+            y = margin
+            clampToWindow()
+        }
+
+        Connections {
+            target: mainview
+            function onWidthChanged()  { profilesFloatBtn.clampToWindow() }
+            function onHeightChanged() { profilesFloatBtn.clampToWindow() }
+        }
+
+        Behavior on opacity { NumberAnimation { duration: 120 } }
+
+        CheckButton {
+            id: profilesBtn
+            anchors.fill: parent
+            text: qsTr("Profiles…")
+            backColor: theme.controlBackColor
+            borderColor: "transparent"
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+
+            drag.target: profilesFloatBtn
+            drag.axis: Drag.XAndYAxis
+            drag.minimumX: profilesFloatBtn.margin
+            drag.maximumX: mainview.width  - profilesFloatBtn.width  - profilesFloatBtn.margin
+            drag.minimumY: profilesFloatBtn.margin
+            drag.maximumY: mainview.height - profilesFloatBtn.height - profilesFloatBtn.margin
+
+            property point pressPos: Qt.point(0, 0)
+            property bool  moved: false
+
+            onEntered: profilesFloatBtn.opacity = 1.0
+            onExited:  if (!pressed) profilesFloatBtn.opacity = profilesFloatBtn.idleOpacity
+
+            onPressed: function(mouse) {
+                pressPos = Qt.point(mouse.x, mouse.y)
+                moved = false
+                profilesFloatBtn.opacity = 1.0
+            }
+
+            onPositionChanged: function(mouse) {
+                if (!pressed) return
+                if (Math.abs(mouse.x - pressPos.x) + Math.abs(mouse.y - pressPos.y) > 6)
+                    moved = true
+            }
+
+            onReleased: {
+                if (!containsMouse)
+                    profilesFloatBtn.opacity = profilesFloatBtn.idleOpacity
+            }
+
+            onClicked: {
+                if (!moved)
+                    profilesDialog.open()
+            }
+        }
+    }
+
+    Dialog {
+        id: profilesDialog
+        title: qsTr("Profiles")
+        modal: true
+        focus: true
+        width: Math.min(parent ? parent.width * 0.9 : 700, 700)
+        standardButtons: Dialog.Close
+
+        property int browseRow: -1
+
+        Settings {
+            id: profilesStorage
+            property var savedProfiles: []
+        }
+
+        function loadSavedProfiles() {
+            profilesModel.clear()
+            var stored = profilesStorage.savedProfiles
+            if (!stored || stored.length === 0) {
+                return
+            }
+            for (var i = 0; i < stored.length; ++i) {
+                profilesModel.append({ path: stored[i] })
+            }
+        }
+
+        function saveProfiles() {
+            var stored = []
+            for (var i = 0; i < profilesModel.count; ++i) {
+                var data = profilesModel.get(i)
+                stored.push(data.path ? data.path : "")
+            }
+            profilesStorage.savedProfiles = stored
+        }
+
+        Component.onCompleted: {
+            loadSavedProfiles()
+            standardButton(Dialog.Close).text = qsTr("Close")
+        }
+
+        function urlToPath(u) {
+            if (!u) return ""
+            if (u.toLocalFile) return u.toLocalFile()
+            var s = u.toString()
+            if (s.startsWith("file:///")) s = s.slice(8)
+            else if (s.startsWith("file://")) s = s.slice(7)
+            return s
+        }
+
+        ListModel {
+            id: profilesModel
+            //profilesModel.append({ path: "" })
+        }
+
+        FileDialog {
+            id: profilePickDialog
+            title: qsTr("Select profile XML")
+            fileMode: FileDialog.OpenFile
+            nameFilters: ["XML files (*.xml)"]
+
+            onAccepted: {
+                if (profilesDialog.browseRow < 0) return
+                const p = profilesDialog.urlToPath(profilePickDialog.selectedFile)
+                profilesModel.setProperty(profilesDialog.browseRow, "path", p)
+                profilesDialog.browseRow = -1
+                profilesDialog.saveProfiles()
+            }
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 10
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                Label {
+                    text: qsTr("Add profiles and apply them")
+                    Layout.fillWidth: true
+                    color: "white"
+                }
+
+                CButton {
+                    text: "+"
+                    onClicked: {
+                        profilesModel.append({ path: "" })
+                        profilesDialog.saveProfiles()
+                    }
+                }
+            }
+
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 320
+                clip: true
+
+                ListView {
+                    id: profilesList
+                    model: profilesModel
+                    spacing: 8
+
+                    delegate: Rectangle {
+                        width: ListView.view.width
+                        height: 52
+                        radius: 8
+                        color: "#202020"
+                        border.color: "#909090"
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                            spacing: 8
+
+                            CTextField {
+                                id: pathField
+                                Layout.fillWidth: true
+                                placeholderText: qsTr("Path to profile .xml")
+                                text: path
+                                color: "white"
+                                onEditingFinished: {
+                                    profilesModel.setProperty(index, "path", text)
+                                    profilesDialog.saveProfiles()
+                                }
+                            }
+
+                            CButton {
+                                text: qsTr("Browse")
+                                onClicked: {
+                                    profilesDialog.browseRow = index
+                                    profilePickDialog.open()
+                                }
+                            }
+
+                            CButton {
+                                text: qsTr("Apply")
+                                enabled: (pathField.text && pathField.text.length > 0)
+                                onClicked: {
+                                    menuBar.applyProfileToAllDevices(pathField.text)
+                                }
+                            }
+
+                            CButton {
+                                text: "✕"
+                                onClicked: {
+                                    profilesModel.remove(index)
+                                    profilesDialog.saveProfiles()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        background: Rectangle {
+            color: theme.controlBackColor
+            radius: 8
+        }
+    }
 
     MenuFrame {
         id: extraInfoPanel

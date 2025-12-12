@@ -21,6 +21,7 @@ Item {
     property string filePath: devSettings.filePath
     property bool extraInfoVis: appSettings.extraInfoVis
     property bool autopilotInfofVis: appSettings.autopilotInfofVis
+    property bool profilesBtnVis: appSettings.profilesButtonVis
 
     signal languageChanged(string langStr)
     signal menuBarSettingOpened()
@@ -28,6 +29,14 @@ Item {
 
     function updateBottomTrack() {
         appSettings.updateBottomTrack()
+    }
+    function applyProfileToAllDevices(path) {
+        if (!path || !path.length) {
+            return
+        }
+        if (devSettings && devSettings.importProfileForAllDevices) {
+            devSettings.importProfileForAllDevices(path)
+        }
     }
 
     function clickConnections() {

@@ -13,6 +13,7 @@ MenuScroll {
     property int menuWidth: 200
     property bool extraInfoVis: displaySettings.extraInfoVis
     property bool autopilotInfofVis: displaySettings.autopilotInfofVis
+    property bool profilesButtonVis: displaySettings.profilesButtonVis
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()
