@@ -412,7 +412,6 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
         shaderProgram->setUniformValue(
             colorLoc,
             DrawUtils::colorToVector4d(QColor(255, 255, 255, 255))
-
             );
 
         QVector<QVector3D> circleVertices;
@@ -510,7 +509,6 @@ void PlaneGrid::PlaneGridRenderImplementation::render(QOpenGLFunctions *ctx,
                 QString text = QString::number(static_cast<int>(qRound(r))) + " m";
                 tr.render(text, 0.7f, pScreen, true, ctx, textProjection, shaderProgramMap);
             }
-
 
             const float labelRadius = maxRadius + radiusStep * 0.7f;
 
