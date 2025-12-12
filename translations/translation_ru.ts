@@ -2121,7 +2121,7 @@
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="370"/>
         <source>Compass</source>
-        <translation>Компасс</translation>
+        <translation type="unfinished">Компас</translation>
     </message>
     <message>
         <location filename="../qml/Settings3DExtraSettings.qml" line="395"/>
