@@ -1,7 +1,9 @@
-#include "dataset.h"
+﻿#include "dataset.h"
 
 #include "core.h"
 extern Core core;
+#include <algorithm>
+#include <QBitArray>
 
 
 Dataset::Dataset() :
@@ -326,7 +328,7 @@ void Dataset::addChart(const ChannelId& channelId, const ChartParameters& chartP
         validateChannelList(channelId, i);
     }
 
-    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: не просто кол-во эпох - окно назад, а последняя неизменная эпоха по чартам
+    int lastIndx = std::max(0, (size() - 1) - (bSProc_->getState() ? bSProc_->getBackwardSteps() : 0)); // TODO: РЅРµ РїСЂРѕСЃС‚Рѕ РєРѕР»-РІРѕ СЌРїРѕС… - РѕРєРЅРѕ РЅР°Р·Р°Рґ, Р° РїРѕСЃР»РµРґРЅСЏСЏ РЅРµРёР·РјРµРЅРЅР°СЏ СЌРїРѕС…Р° РїРѕ С‡Р°СЂС‚Р°Рј
     emit dataUpdate();
     emit chartAdded(lastIndx);
 }
@@ -931,6 +933,7 @@ void Dataset::softResetDataset()
 
 void Dataset::resetRenderBuffers()
 {
+    clearTileEpochIndex();
     tracks.clear();
     pool_.clear();
     pool_.shrink_to_fit();//
@@ -1407,7 +1410,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
 
         // rect
         const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0); // должны всё покрывать padTiles==0-bugs
+        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0);
 
         //qDebug() << minN << maxN << minE << maxE;
 
@@ -1436,8 +1439,89 @@ void Dataset::calcDimensionRects(uint64_t indx)
             }
         }
 
-        llPtr->setTraceTileIndxs(tilesByZoom); // от текущего к следующему
+        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom);
     }
+}
+
+void Dataset::appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom)
+{
+    QWriteLocker locker(&tileEpochIdxMtx_);
+
+    const auto mip = core.getMosaicIndexProviderPtr();
+    if (!mip) {
+        return;
+    }
+
+    const int minZoom = mip->getMinZoom();
+    if (tileEpochIndxsByZoom_.size() <= minZoom) {
+        tileEpochIndxsByZoom_.resize(minZoom + 1);
+    }
+
+    for (auto it = tilesByZoom.cbegin(); it != tilesByZoom.cend(); ++it) {
+        const int zoom = it.key();
+        if (zoom < 0 || zoom >= tileEpochIndxsByZoom_.size()) {
+            continue;
+        }
+
+        auto& indexForZoom = tileEpochIndxsByZoom_[zoom];
+        const QSet<TileKey>& tileSet = it.value();
+        for (const TileKey& tk : tileSet) {
+            auto& epochList = indexForZoom[tk];
+            if (epochList.isEmpty() || epochList.back() != epochIndx) {
+                epochList.push_back(epochIndx);
+            }
+        }
+    }
+}
+
+void Dataset::clearTileEpochIndex()
+{
+    QWriteLocker locker(&tileEpochIdxMtx_);
+    tileEpochIndxsByZoom_.clear();
+}
+
+QVector<int> Dataset::collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const
+{
+    QReadLocker locker(&tileEpochIdxMtx_);
+
+    QVector<int> result;
+    if (tiles.isEmpty()) {
+        return result;
+    }
+
+    if (zoom < 0 || zoom >= tileEpochIndxsByZoom_.size()) {
+        return result;
+    }
+
+    const auto& indexForZoom = tileEpochIndxsByZoom_.at(zoom);
+    if (indexForZoom.isEmpty()) {
+        return result;
+    }
+
+    const int poolSize = pool_.size();
+    if (poolSize <= 0) {
+        return result;
+    }
+
+    QBitArray seen(poolSize);
+
+    for (const TileKey& tk : tiles) {
+        auto it = indexForZoom.constFind(tk);
+        if (it == indexForZoom.cend()) {
+            continue;
+        }
+
+        const QVector<int>& epochList = it.value();
+        for (int epochIndx : epochList) {
+            if (epochIndx >= 0 && epochIndx < poolSize && !seen.testBit(epochIndx)) {
+                seen.setBit(epochIndx);
+                result.push_back(epochIndx);
+            }
+        }
+    }
+
+    std::sort(result.begin(), result.end());
+    return result;
 }
 
 void Dataset::tryResetDataset(float lat, float lon)

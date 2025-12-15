@@ -1118,11 +1118,9 @@ void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
     if (!datasetPtr_) {
         return;
     }
-    int dSize = datasetPtr_->size();
-    if (!dSize) {
+    if (!datasetPtr_->size()) {
         return;
     }
-
     const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
     auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 1); // TILES
 
@@ -1131,24 +1129,7 @@ void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
         emit sendVisibleTileKeys(lastVisTileKeys_); // for processor
     }
 
-    QVector<int> contains;
-
-    for (int i = 0; i < dSize; ++i) {
-        if (auto* ep = datasetPtr_->fromIndex(i); ep) {
-            const auto& map = ep->getTraceTileIndxsPtr();
-
-            auto it = map.constFind(dataZoomIndx_);
-            if (it == map.cend()) {
-                continue;
-            }
-
-            const QSet<TileKey>& someSh = *it;
-
-            if (visTiles.intersects(someSh)) {
-                contains.push_back(i);
-            }
-        }
-    }
+    QVector<int> contains = datasetPtr_->collectEpochsForTiles(dataZoomIndx_, visTiles);
 
     auto storeAndSendEpIndxs = [&]() {
         lastContains_ = contains;

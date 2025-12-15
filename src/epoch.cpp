@@ -522,13 +522,3 @@ ChartParameters Epoch::getChartParameters(const ChannelId& channelId) const
 
     return {};
 }
-
-void Epoch::setTraceTileIndxs(const QMap<int, QSet<TileKey>>& val)
-{
-    tileKeysToNextEpochByZoom_ = val;
-}
-
-QMap<int, QSet<TileKey>>& Epoch::getTraceTileIndxsPtr()
-{
-    return tileKeysToNextEpochByZoom_;
-}

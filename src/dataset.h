@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <time.h>
 #include <QObject>
+#include <QMap>
+#include <QSet>
 #include <QVector>
 #include <QVector3D>
 #include <QReadWriteLock>
@@ -196,6 +198,7 @@ public:
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
+    QVector<int> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
 
 public slots:
     Q_INVOKABLE void onSetLAngleOffset(float val);
@@ -344,10 +347,13 @@ private:
     void setLastDepth(float val);
     void tryResetDataset(float lat, float lon);
     void calcDimensionRects(uint64_t indx);
+    void appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+    void clearTileEpochIndex();
 
     /*data*/
     mutable QReadWriteLock lock_;
     mutable QReadWriteLock poolMtx_;
+    mutable QReadWriteLock tileEpochIdxMtx_;
 
     LLARef _llaRef;
     LlaRefState llaRefState_ = LlaRefState::kUndefined;
@@ -381,4 +387,5 @@ private:
     uint64_t lastDimRectindx_;
     float lAngleOffset_;
     float rAngleOffset_;
+    QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
 };
