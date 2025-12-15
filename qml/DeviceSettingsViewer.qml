@@ -7,6 +7,9 @@ MenuScroll {
     id: scrollBar
     property int menuWidth: 200
     property string filePath: devConnection.filePath
+    function importProfileForAllDevices(path) {
+        devConnection.importSettingsToAllDevices(path)
+    }
 
     Column {
         // width: menuWidth

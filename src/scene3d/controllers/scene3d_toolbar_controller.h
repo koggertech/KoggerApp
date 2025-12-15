@@ -22,6 +22,14 @@ public:
     Q_INVOKABLE void onUseAngleLocationButtonChanged(bool state);
     Q_INVOKABLE void onNavigatorLocationButtonChanged(bool state);
     Q_INVOKABLE void onIsNorthLocationButtonChanged(bool state);
+    Q_INVOKABLE void onCompassButtonChanged(bool state);
+    Q_INVOKABLE void onCompassPosChanged(int pos);
+    Q_INVOKABLE void onCompassSizeChanged(int size);
+    Q_INVOKABLE void onPlaneGridTypeChanged(bool val);
+    Q_INVOKABLE void onPlaneGridCircleGridSizeChanged(int val);
+    Q_INVOKABLE void onPlaneGridCircleGridStepChanged(int val);
+    Q_INVOKABLE void onPlaneGridCircleGridAngleChanged(int val);
+    Q_INVOKABLE void onPlaneGridCircleGridLabelsChanged(bool state);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -42,6 +50,14 @@ private:
     bool useAngleLocation_;
     bool navigatorViewLocation_;
     bool isNorth_;
+    bool compass_;
+    int  compassPos_;
+    int  compassSize_;
+    bool planeGridType_;
+    int planeGridCircleSize_;
+    int planeGridCircleStep_;
+    int planeGridCircleAngle_;
+    bool planeGridCircleLabels_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

@@ -43,6 +43,10 @@ GraphicsScene3dView::GraphicsScene3dView() :
     navigatorViewLocation_(false),
     isNorth_(false),
     testingTimer_(nullptr),
+    compass_(false),
+    compassPos_(1),
+    compassSize_(1),
+    planeGridType_(true),
     dataZoomIndx_(-1),
     cameraIsMoveUp_(false),
     lastMinX_(std::numeric_limits<float>::max()),
@@ -198,6 +202,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     m_pointGroup->clearData();
     navigationArrow_->clearData();
     usblView_->clearTracks();
+    m_planeGrid->clear();
     m_bounds = Cube();
 
     //setMapView();
@@ -313,7 +318,7 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
         if (mouseButton.testFlag(Qt::LeftButton) && (keyboardKey == Qt::Key_Control)) {
             if (m_camera->getIsPerspective() && !isNorth_) {
                 m_camera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
-                m_axesThumbnailCamera->rotate(QVector2D(m_lastMousePos), QVector2D(x, y));
+                m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
                 m_startMousePos = { x, y };
                 cameraWasMoved = true;
             }
@@ -407,7 +412,7 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 
     if (!isNorth_) {
         m_camera->rotate(prevCenter, currCenter, angleDelta, height());
-        m_axesThumbnailCamera->rotate(prevCenter, currCenter, angleDelta , height());
+        m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
     }
 
     updatePlaneGrid();
@@ -455,6 +460,71 @@ void GraphicsScene3dView::setUseAngleLocation(bool state)
 void GraphicsScene3dView::setNavigatorViewLocation(bool state)
 {
     navigatorViewLocation_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setCompassState(bool state)
+{
+    compass_ = state;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setCompassPos(int val)
+{
+    compassPos_ = val;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setCompassSize(int val)
+{
+    compassSize_ = val;
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridType(bool def)
+{
+    planeGridType_ = def;
+
+    m_planeGrid.get()->setType(def);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleSize(int val)
+{
+    m_planeGrid->setCircleSize(val);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleStep(int val)
+{
+    m_planeGrid->setCircleStep(val);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleAngle(int val)
+{
+    m_planeGrid->setCircleAngle(val);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setPlaneGridCircleLabels(bool state)
+{
+    m_planeGrid->setCircleLabels(state);
+
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setActiveZeroing(bool state)
+{
+    m_planeGrid->setActiveZeroing(state);
 }
 
 void GraphicsScene3dView::updateProjection()
@@ -666,6 +736,9 @@ void GraphicsScene3dView::setLastEpochFocusView(bool useAngle, bool useNavigator
     }
 
     m_camera->focusOnPosition(focusPoint);
+
+    m_axesThumbnailCamera->setRotAngle(m_camera->getRotAngle());
+
     updatePlaneGrid();
     QQuickFramebufferObject::update();
     onCameraMoved();
@@ -1126,8 +1199,13 @@ void GraphicsScene3dView::onPositionAdded(uint64_t indx)
         lastYaw = datasetPtr_->getLastArtificalYaw();
     }
 
+    QVector3D boatPosVec3D = QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d);
     if (std::isfinite(lastYaw)) {
-        navigationArrow_->setPositionAndAngle(QVector3D(boatPos.ned.n, boatPos.ned.e, !isfinite(boatPos.ned.d) ? 0.f : boatPos.ned.d), lastYaw - 90.f); // сюда лодка
+        navigationArrow_->setPositionAndAngle(boatPosVec3D, lastYaw - 90.f); // сюда лодка
+    }
+
+    if (!planeGridType_) {
+        m_planeGrid->setCirclePosition(boatPosVec3D);
     }
 
     if (trackLastData_) {
@@ -1196,7 +1274,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     view->contacts_->contactBounds_ = std::move(m_renderer->contactsRenderImpl_.contactBounds_);
 
     // write to renderer
-    m_renderer->m_coordAxesRenderImpl       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
+    m_renderer->compassRenderImpl_       = *(dynamic_cast<CoordinateAxes::CoordinateAxesRenderImplementation*>(view->m_coordAxes->m_renderImpl));
     m_renderer->m_planeGridRenderImpl       = *(dynamic_cast<PlaneGrid::PlaneGridRenderImplementation*>(view->m_planeGrid->m_renderImpl));
     m_renderer->m_boatTrackRenderImpl       = *(dynamic_cast<BoatTrack::BoatTrackRenderImplementation*>(view->boatTrack_->m_renderImpl));
     m_renderer->m_bottomTrackRenderImpl     = *(dynamic_cast<BottomTrack::BottomTrackRenderImplementation*>(view->m_bottomTrack->m_renderImpl));
@@ -1216,6 +1294,10 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->m_boundingBox               = view->m_bounds;
     m_renderer->m_isSceneBoundingBoxVisible = view->m_isSceneBoundingBoxVisible;
     m_renderer->gridVisibility_             = view->gridVisibility_;
+    m_renderer->compass_                    = view->compass_;
+    m_renderer->compassPos_                 = view->compassPos_;
+    m_renderer->compassSize_                = view->compassSize_;
+    m_renderer->planeGridType_              = view->planeGridType_;
 }
 
 QOpenGLFramebufferObject *GraphicsScene3dView::InFboRenderer::createFramebufferObject(const QSize &size)
@@ -1898,6 +1980,22 @@ map::CameraTilt GraphicsScene3dView::Camera::getCameraTilt() const
     else {
         return map::CameraTilt::Up;
     }
+}
+
+QVector2D GraphicsScene3dView::Camera::getRotAngle() const
+{
+    return m_rotAngle;
+}
+
+void GraphicsScene3dView::Camera::setRotAngle(const QVector2D &val)
+{
+    m_rotAngle = val;
+
+    // ?
+    tryResetRotateAngle();
+    checkRotateAngle();
+    updateCameraParams();
+    updateViewMatrix();
 }
 
 qreal GraphicsScene3dView::Camera::distToFocusPoint() const

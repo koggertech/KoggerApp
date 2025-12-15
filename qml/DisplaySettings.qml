@@ -14,6 +14,7 @@ GridLayout {
     property var targetPlot: null
     property bool extraInfoVis: extraInfoPanelVisible.checked
     property bool autopilotInfofVis: autopilotInfoVisible.checked
+    property bool profilesButtonVis: profilesButtonCheck.checked
 
     signal languageChanged(string langStr)
     signal syncPlotEnabled()
@@ -876,6 +877,15 @@ GridLayout {
 
                 Settings {
                     property alias extraBoatInfoVisible: extraInfoPanelVisible.checked
+                }
+            }
+            CCheck {
+                id: profilesButtonCheck
+                text: qsTr("Profiles button")
+                checked: false
+
+                Settings {
+                    property alias profilesButtonCheck: profilesButtonCheck.checked
                 }
             }
             CCheck {

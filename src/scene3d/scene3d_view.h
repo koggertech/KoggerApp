@@ -74,6 +74,9 @@ public:
         bool getIsFarAwayFromOriginLla() const;
         map::CameraTilt getCameraTilt() const;
 
+        QVector2D getRotAngle() const;
+        void setRotAngle(const QVector2D& val);
+
     private:
         void updateCameraParams();
         void tryToChangeViewLlaRef();
@@ -220,6 +223,19 @@ public:
     void setUseAngleLocation(bool state);
     void setNavigatorViewLocation(bool state);
 
+    void setCompassState(bool state);
+    void setCompassPos(int val);
+    void setCompassSize(int val);
+
+    void setPlaneGridType(bool def);
+
+    void setPlaneGridCircleSize(int val);
+    void setPlaneGridCircleStep(int val);
+    void setPlaneGridCircleAngle(int val);
+    void setPlaneGridCircleLabels(bool state);
+
+    void setActiveZeroing(bool state);
+
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override final;
 
@@ -326,6 +342,14 @@ private:
     bool navigatorViewLocation_;
     bool isNorth_;
     QTimer* testingTimer_;
+
+    bool compass_;
+    int compassPos_;
+    int compassSize_;
+
+    bool planeGridType_;
+
+
     int dataZoomIndx_;
     bool cameraIsMoveUp_;
     float lastMinX_;
@@ -333,7 +357,6 @@ private:
     float lastMinY_;
     float lastMaxY_;
     QVector<int> lastContains_;
-    QSet<TileKey> lastVisTileKeys_;
-};
+    QSet<TileKey> lastVisTileKeys_;};
 
 #endif // GRAPHICSSCENE3DVIEW_H

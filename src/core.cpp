@@ -30,12 +30,12 @@ Core::Core() :
     fixBlackStripesState_(false),
     fixBlackStripesForwardSteps_(0),
     fixBlackStripesBackwardSteps_(0),
+    isActiveZeroing_(false),
     lastSub1_(0),
     lastSub2_(0),
     mosaicIndexProvider_(6200)
 {
     qRegisterMetaType<uint8_t>("uint8_t");
-
     logger_.setDatasetPtr(datasetPtr_);
     createDeviceManagerConnections();
     createLinkManagerConnections();
@@ -1220,6 +1220,8 @@ void Core::UILoad(QObject* object, const QUrl& url)
     usblViewControlMenuController_->setQmlEngine(object);
     usblViewControlMenuController_->setGraphicsSceneView(scene3dViewPtr_);
 
+    scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
+
     onChannelsUpdated();
 
     createMapTileManagerConnections();
@@ -1405,7 +1407,13 @@ void Core::onSendMapTextureIdByTileIndx(const map::TileIndex &tileIndx, GLuint t
 
 void Core::setPosZeroing(bool state)
 {
-    datasetPtr_->setActiveZeroing(state);
+    isActiveZeroing_ = state;
+
+    datasetPtr_->setActiveZeroing(isActiveZeroing_);
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->setActiveZeroing(isActiveZeroing_);
+    }
 }
 
 ConsoleListModel* Core::consoleList()
