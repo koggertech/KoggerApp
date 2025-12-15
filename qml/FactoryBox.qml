@@ -15,7 +15,7 @@ DevSettingsBox {
             currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
             nameFilters: ["Upgrade files (*.bin)"]
             onAccepted: {
-                pathText.text = fileDialog.fileUrl.toString()
+                pathText.text = fileDialog.selectedFile.toString()
             }
             onRejected: {
             }
@@ -131,7 +131,7 @@ DevSettingsBox {
             //                folder: shortcuts.home
             //                nameFilters: ["Factory file (*.kff)"]
             //                onAccepted: {
-            //                    pathFactory.text = factoryDialog.fileUrl.toString()
+            //                    pathFactory.text = factoryDialog.selectedFile.toString()
             //                }
             //                onRejected: {
             //                }
@@ -318,7 +318,7 @@ DevSettingsBox {
                     Layout.fillWidth: true
                     implicitHeight: 30
                     onClicked: {
-                        core.simpleFlash(fileDialog.fileUrl.toString())
+                        core.simpleFlash(fileDialog.selectedFile.toString())
                     }
                 }
 
