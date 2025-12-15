@@ -594,6 +594,9 @@ public:
         return 0;
     }
 
+    void setTraceTileIndxs(const QMap<int, QSet<TileKey>>& val);
+    QMap<int, QSet<TileKey>>& getTraceTileIndxsPtr();
+
 protected:
     QMap<ChannelId, QVector<Echogram>> charts_; // key - channelId, value - echograms for all addresses
     QMap<ChannelId, float> rangefinders_; // ???
@@ -669,4 +672,7 @@ protected:
     } flags;
 
     float depth_ = NAN;
+
+private:
+    QMap<int, QSet<TileKey>> tileKeysToNextEpochByZoom_;
 };

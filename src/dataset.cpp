@@ -1439,6 +1439,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
             }
         }
 
+        llPtr->setTraceTileIndxs(tilesByZoom); // от текущего к следующему
         appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom);
     }
 }
