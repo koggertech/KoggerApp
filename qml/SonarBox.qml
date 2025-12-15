@@ -87,7 +87,7 @@ DevSettingsBox {
                 nameFilters: ["XML files (*.xml)"]
 
                 onAccepted: {
-                    var selectedFile = importFileDialog.fileUrl
+                    var selectedFile = importFileDialog.selectedFile
                     if (selectedFile !== "") {
                         var filePath = selectedFile.toString();
                         if (Qt.platform.os === "windows")
@@ -104,7 +104,7 @@ DevSettingsBox {
                 nameFilters: ["XML files (*.xml)"]
 
                 onAccepted: {
-                    var selectedFile = exportFileDialog.fileUrl
+                    var selectedFile = exportFileDialog.selectedFile
                     if (selectedFile !== "") {
                         var filePath = selectedFile.toString();
                         if (Qt.platform.os === "windows")

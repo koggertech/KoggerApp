@@ -795,7 +795,7 @@ ColumnLayout {
                     }
 
                     onAccepted: {
-                        importPathText.text = importTrackFileDialog.fileUrl.toString()
+                        importPathText.text = importTrackFileDialog.selectedFile.toString()
 
                         openCSV();
                     }
@@ -994,9 +994,9 @@ ColumnLayout {
                 nameFilters: ["Logs (*.klf *.KLF *.ubx *.UBX *.xtf *.XTF)", "Kogger log files (*.klf *.KLF)", "U-blox (*.ubx *.UBX)"]
 
                 onAccepted: {
-                    pathText.text = appendFileDialog.fileUrl.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
+                    pathText.text = appendFileDialog.selectedFile.toString().replace("file:///", Qt.platform.os === "windows" ? "" : "/")
 
-                    var name_parts = appendFileDialog.fileUrl.toString().split('.')
+                    var name_parts = appendFileDialog.selectedFile.toString().split('.')
 
                     //deviceManagerWrapper.sendOpenFile(pathText.text, true)
                     core.openLogFile(pathText.text, true, false);

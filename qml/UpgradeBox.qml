@@ -16,7 +16,7 @@ DevSettingsBox {
         currentFolder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
         nameFilters: ["Upgrade files (*.ufw)"]
         onAccepted: {
-            pathText.text = fileDialog.fileUrl.toString()
+            pathText.text = fileDialog.selectedFile.toString()
         }
         onRejected: {
         }
