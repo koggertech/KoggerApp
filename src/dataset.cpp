@@ -1407,7 +1407,7 @@ void Dataset::calcDimensionRects(uint64_t indx)
 
         // rect
         const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/1); // должны всё покрывать padTiles==0-bugs
+        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0); // должны всё покрывать padTiles==0-bugs
 
         //qDebug() << minN << maxN << minE << maxE;
 

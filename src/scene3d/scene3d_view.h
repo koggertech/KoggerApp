@@ -357,6 +357,7 @@ private:
     float lastMinY_;
     float lastMaxY_;
     QVector<int> lastContains_;
-    QSet<TileKey> lastVisTileKeys_;};
+    QSet<TileKey> lastVisTileKeys_;
+};
 
 #endif // GRAPHICSSCENE3DVIEW_H

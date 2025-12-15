@@ -1124,7 +1124,7 @@ void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
     }
 
     const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
-    auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 0);
+    auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 1); // TILES
 
     if (visTiles != lastVisTileKeys_) {
         lastVisTileKeys_ = visTiles;
