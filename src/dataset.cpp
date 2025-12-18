@@ -1478,55 +1478,6 @@ void Dataset::clearTileEpochIndex()
     tileEpochIndxsByZoom_.clear();
 }
 
-QVector<QPair<int, QSet<TileKey>>> Dataset::collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const
-{
-    QReadLocker locker(&tileEpochIdxMtx_);
-
-    int cZoom = zoom - 1;
-
-    QVector<QPair<int, QSet<TileKey>>> result;
-    if (tiles.isEmpty()) {
-        return result;
-    }
-
-    if (cZoom < 0 || cZoom >= tileEpochIndxsByZoom_.size()) {
-        return result;
-    }
-
-    const auto& indexForZoom = tileEpochIndxsByZoom_.at(cZoom);
-    if (indexForZoom.isEmpty()) {
-        return result;
-    }
-
-    const int poolSize = pool_.size();
-    if (poolSize <= 0) {
-        return result;
-    }
-
-    QMap<int, QSet<TileKey>> tilesByEpoch;
-
-    for (const TileKey& tk : tiles) {
-        auto it = indexForZoom.constFind(tk);
-        if (it == indexForZoom.cend()) {
-            continue;
-        }
-
-        const QVector<int>& epochList = it.value();
-        for (int epochIndx : epochList) {
-            if (epochIndx >= 0 && epochIndx < poolSize) {
-                tilesByEpoch[epochIndx].insert(tk);
-            }
-        }
-    }
-
-    result.reserve(tilesByEpoch.size());
-    for (auto it = tilesByEpoch.cbegin(); it != tilesByEpoch.cend(); ++it) {
-        result.push_back(QPair<int, QSet<TileKey>>(it.key(), it.value()));
-    }
-
-    return result;
-}
-
 QMap<int, QSet<TileKey>> Dataset::traceTileKeysForEpoch(int epochIndx) const
 {
     QReadLocker locker(&poolMtx_);

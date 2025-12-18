@@ -199,7 +199,6 @@ public:
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
-    QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
     QMap<int, QSet<TileKey>> traceTileKeysForEpoch(int epochIndx) const;
 
 public slots:

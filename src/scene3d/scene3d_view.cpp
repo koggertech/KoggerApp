@@ -214,7 +214,6 @@ void GraphicsScene3dView::clear(bool cleanMap)
     lastMinY_ = std::numeric_limits<float>::max();
     lastMaxY_ = std::numeric_limits<float>::lowest();
 
-    lastContains_.clear();
     lastVisTileKeys_.clear();
 
     QQuickFramebufferObject::update();
@@ -1130,26 +1129,7 @@ void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
 
     if (visTiles != lastVisTileKeys_) {
         lastVisTileKeys_ = visTiles;
-        emit sendVisibleTileKeys(lastVisTileKeys_); // for processor
-    }
-
-    QVector<QPair<int/*epIndx*/, QSet<TileKey>/*tile keys for this indx on curr zoom*/>> contains = datasetPtr_->collectEpochsForTiles(dataZoomIndx_, visTiles);
-
-    auto storeAndSendEpIndxs = [&]() {
-        lastContains_ = contains;
-        emit sendCameraEpIndxs(lastContains_);
-        //qDebug() << "";
-        //qDebug() << contains.size();
-        //qDebug() << contains;
-    };
-
-    if (zoomIsChanged) {
-        storeAndSendEpIndxs();
-    }
-    else {
-        if (lastContains_ != contains) {
-            storeAndSendEpIndxs();
-        }
+        emit sendVisibleTileKeys(dataZoomIndx_, lastVisTileKeys_); // for processor
     }
 }
 

@@ -52,8 +52,9 @@ public slots:
 
     void setIsOpeningFile (bool state);
     //
+    void onCameraMovedSec();
     void onCameraMoved(const QVector<QPair<int, QSet<TileKey>>>& epTiles);
-    void onSendVisibleTileKeys(const QSet<TileKey>& tileKeys);
+    void onSendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& visTileKeys);
 
     // from DataHorizon
     void onChartsAdded(uint64_t indx); // external calling realtime
@@ -205,6 +206,8 @@ private:
     void notifyPrefetchProgress();
     void clearDbNotFoundCache();
 
+    QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
+
 private:
     friend class SurfaceProcessor;
     friend class BottomTrackProcessor;
@@ -280,4 +283,7 @@ private:
     std::atomic<quint64> prefetchTick_;
 
     QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
+
+    QSet<TileKey> lastVisTileKeys_;
+    int lastDataZoomIndx_;
 };

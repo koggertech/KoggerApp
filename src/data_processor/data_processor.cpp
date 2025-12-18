@@ -229,9 +229,16 @@ void DataProcessor::onCameraMoved(const QVector<QPair<int, QSet<TileKey>>> &epTi
     scheduleLatest(WorkSet(WF_All)); // all?
 }
 
-void DataProcessor::onSendVisibleTileKeys(const QSet<TileKey> &tileKeys)
+void DataProcessor::onSendVisibleTileKeys(int zoomIndx, const QSet<TileKey> &visTileKeys)
 {
-    QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, tileKeys));
+    QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, visTileKeys));
+
+    mosaicCounter_; // head?
+
+    lastDataZoomIndx_ = zoomIndx;
+    lastVisTileKeys_  = visTileKeys;
+
+    onCameraMovedSec();
 }
 
 void DataProcessor::onChartsAdded(uint64_t indx)
@@ -1327,6 +1334,46 @@ void DataProcessor::clearDbNotFoundCache()
     dbNotFoundIndxs_.clear();
     dbNotFoundOrder_.clear();
     dbNotFoundPos_.clear();
+}
+
+QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom, const QSet<TileKey> &tiles) const
+{
+    int cZoom = zoom - 1;
+
+    QVector<QPair<int, QSet<TileKey>>> result;
+    if (tiles.isEmpty()) {
+        return result;
+    }
+
+    if (cZoom < 0 || cZoom >= tileEpochIndxsByZoom_.size()) {
+        return result;
+    }
+
+    const auto& indexForZoom = tileEpochIndxsByZoom_.at(cZoom);
+    if (indexForZoom.isEmpty()) {
+        return result;
+    }
+
+    QMap<int, QSet<TileKey>> tilesByEpoch;
+
+    for (const TileKey& tk : tiles) {
+        auto it = indexForZoom.constFind(tk);
+        if (it == indexForZoom.cend()) {
+            continue;
+        }
+
+        const QVector<int>& epochList = it.value();
+        for (int epochIndx : epochList) {
+                tilesByEpoch[epochIndx].insert(tk);
+        }
+    }
+
+    result.reserve(tilesByEpoch.size());
+    for (auto it = tilesByEpoch.cbegin(); it != tilesByEpoch.cend(); ++it) {
+        result.push_back(QPair<int, QSet<TileKey>>(it.key(), it.value()));
+    }
+
+    return result;
 }
 
 void DataProcessor::onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles)

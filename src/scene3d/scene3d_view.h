@@ -275,7 +275,7 @@ signals:
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
     void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
-    void sendVisibleTileKeys(const QSet<TileKey>& tileKeys);
+    void sendVisibleTileKeys(int zoomIndx, const QSet<TileKey>& tileKeys);
 
 private:
     void updateBounds();
@@ -357,7 +357,6 @@ private:
     float lastMaxX_;
     float lastMinY_;
     float lastMaxY_;
-    QVector<QPair<int, QSet<TileKey>>> lastContains_;
     QSet<TileKey> lastVisTileKeys_;
 
     bool isUpdateMosaic_;
