@@ -209,16 +209,18 @@ void DataProcessor::setIsOpeningFile(bool state)
     isOpeningFile_ = state;
 }
 
-void DataProcessor::onCameraMoved(const QVector<int> &epIndxs)
+void DataProcessor::onCameraMoved(const QVector<QPair<int, QSet<TileKey>>> &epTiles)
 {
-    if (epIndxs.isEmpty()) {
+    //qDebug() << "DataProcessor::onCameraMoved" << epTiles;
+
+    if (!updateMosaic_ || epTiles.isEmpty()) {
         return;
     }
 
     //qDebug() << "add pending" << epIndxs.size();
 
-    for (int itm : epIndxs) {
-        pendingMosaicIndxs_.insert(itm);
+    for (const auto& itm : epTiles) {
+        pendingMosaicIndxs_.insert(itm.first);
     }
 
     scheduleLatest(WorkSet(WF_All)); // all?

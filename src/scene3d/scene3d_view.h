@@ -266,6 +266,7 @@ public Q_SLOTS:
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
     void setIsNorth(bool state);
+    void setIsUpdateMosaic(bool state);
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -273,7 +274,7 @@ signals:
     void sendLlaRef(LLARef viewLlaRef);
     void sendDataZoom(int zoom);
     void sendMapTextureIdByTileIndx(const map::TileIndex& tileIndx, GLuint textureId);
-    void sendCameraEpIndxs(const QVector<int>& epIndxs);
+    void sendCameraEpIndxs(const QVector<QPair<int, QSet<TileKey>>>& epIndxs);
     void sendVisibleTileKeys(const QSet<TileKey>& tileKeys);
 
 private:
@@ -356,8 +357,10 @@ private:
     float lastMaxX_;
     float lastMinY_;
     float lastMaxY_;
-    QVector<int> lastContains_;
+    QVector<QPair<int, QSet<TileKey>>> lastContains_;
     QSet<TileKey> lastVisTileKeys_;
+
+    bool isUpdateMosaic_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

@@ -532,3 +532,8 @@ QMap<int, QSet<TileKey>>& Epoch::getTraceTileIndxsPtr()
 {
     return tileKeysToNextEpochByZoom_;
 }
+
+QMap<int, QSet<TileKey>> Epoch::traceTileIndxs() const
+{
+    return tileKeysToNextEpochByZoom_;
+}

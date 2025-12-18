@@ -52,7 +52,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     lastMinX_(std::numeric_limits<float>::max()),
     lastMaxX_(std::numeric_limits<float>::lowest()),
     lastMinY_(std::numeric_limits<float>::max()),
-    lastMaxY_(std::numeric_limits<float>::lowest())
+    lastMaxY_(std::numeric_limits<float>::lowest()),
+    isUpdateMosaic_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -1115,6 +1116,9 @@ void GraphicsScene3dView::updateSurfaceView()
 
 void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
 {
+    if (!isUpdateMosaic_) {
+        return;
+    }
     if (!datasetPtr_) {
         return;
     }
@@ -1129,7 +1133,7 @@ void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
         emit sendVisibleTileKeys(lastVisTileKeys_); // for processor
     }
 
-    QVector<int> contains = datasetPtr_->collectEpochsForTiles(dataZoomIndx_, visTiles);
+    QVector<QPair<int/*epIndx*/, QSet<TileKey>/*tile keys for this indx on curr zoom*/>> contains = datasetPtr_->collectEpochsForTiles(dataZoomIndx_, visTiles);
 
     auto storeAndSendEpIndxs = [&]() {
         lastContains_ = contains;
@@ -1215,6 +1219,11 @@ void GraphicsScene3dView::setIsNorth(bool state)
     QQuickFramebufferObject::update();
 
     onCameraMoved();
+}
+
+void GraphicsScene3dView::setIsUpdateMosaic(bool state)
+{
+    isUpdateMosaic_ = state;
 }
 
 //---------------------Renderer---------------------------//

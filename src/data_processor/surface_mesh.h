@@ -29,6 +29,9 @@ public:
     inline SurfaceTile* getTileByXYIndxs(int ix, int iy) noexcept { return tileMatrix_[ix][iy]; }
 
     SurfaceTile*                            getTilePtrByKey(const TileKey& key);
+    const SurfaceTile*                      getTileCPtrByKey(const TileKey& key) const;
+    std::pair<bool, SurfaceTile>            getTileCopyByKey(const TileKey& key) const;
+
     int                                     getCurrentZoom() const;
     inline int getPixelWidth() const noexcept {
         return numWidthTiles_ * tileSidePixelSize_;

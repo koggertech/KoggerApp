@@ -3,7 +3,6 @@
 #include "core.h"
 extern Core core;
 #include <algorithm>
-#include <QBitArray>
 
 
 Dataset::Dataset() :
@@ -1439,8 +1438,10 @@ void Dataset::calcDimensionRects(uint64_t indx)
             }
         }
 
-        llPtr->setTraceTileIndxs(tilesByZoom); // от текущего к следующему
-        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom);
+        llPtr->setTraceTileIndxs(tilesByZoom); // в эпоху в датасете
+        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom); // в датасет
+
+        // TODO: в dataProcessor
     }
 }
 
@@ -1481,11 +1482,11 @@ void Dataset::clearTileEpochIndex()
     tileEpochIndxsByZoom_.clear();
 }
 
-QVector<int> Dataset::collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const
+QVector<QPair<int, QSet<TileKey>>> Dataset::collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const
 {
     QReadLocker locker(&tileEpochIdxMtx_);
 
-    QVector<int> result;
+    QVector<QPair<int, QSet<TileKey>>> result;
     if (tiles.isEmpty()) {
         return result;
     }
@@ -1504,7 +1505,7 @@ QVector<int> Dataset::collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles
         return result;
     }
 
-    QBitArray seen(poolSize);
+    QMap<int, QSet<TileKey>> tilesByEpoch;
 
     for (const TileKey& tk : tiles) {
         auto it = indexForZoom.constFind(tk);
@@ -1514,15 +1515,29 @@ QVector<int> Dataset::collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles
 
         const QVector<int>& epochList = it.value();
         for (int epochIndx : epochList) {
-            if (epochIndx >= 0 && epochIndx < poolSize && !seen.testBit(epochIndx)) {
-                seen.setBit(epochIndx);
-                result.push_back(epochIndx);
+            if (epochIndx >= 0 && epochIndx < poolSize) {
+                tilesByEpoch[epochIndx].insert(tk);
             }
         }
     }
 
-    std::sort(result.begin(), result.end());
+    result.reserve(tilesByEpoch.size());
+    for (auto it = tilesByEpoch.cbegin(); it != tilesByEpoch.cend(); ++it) {
+        result.push_back(QPair<int, QSet<TileKey>>(it.key(), it.value()));
+    }
+
     return result;
+}
+
+QMap<int, QSet<TileKey>> Dataset::traceTileKeysForEpoch(int epochIndx) const
+{
+    QReadLocker locker(&poolMtx_);
+
+    if (epochIndx < 0 || epochIndx >= pool_.size()) {
+        return {};
+    }
+
+    return pool_.at(epochIndx).traceTileIndxs();
 }
 
 void Dataset::tryResetDataset(float lat, float lon)

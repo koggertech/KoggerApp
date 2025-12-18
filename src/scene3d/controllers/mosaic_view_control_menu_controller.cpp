@@ -104,6 +104,8 @@ void MosaicViewControlMenuController::onUpdateStateChanged(bool state)
     updateState_ = state;
 
     if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->setIsUpdateMosaic(updateState_);
+
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic", Qt::QueuedConnection, Q_ARG(bool, updateState_));
         }
@@ -204,6 +206,8 @@ void MosaicViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this](){
             if (graphicsSceneViewPtr_) {
+                graphicsSceneViewPtr_->setIsUpdateMosaic(updateState_);
+
                 if (dataProcessorPtr_) {
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateMosaic",              Qt::QueuedConnection, Q_ARG(bool,  updateState_));
                    QMetaObject::invokeMethod(dataProcessorPtr_, "setMosaicTheme",               Qt::QueuedConnection, Q_ARG(int,   themeId_));

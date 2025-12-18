@@ -52,7 +52,7 @@ public slots:
 
     void setIsOpeningFile (bool state);
     //
-    void onCameraMoved(const QVector<int>& epIndxs);
+    void onCameraMoved(const QVector<QPair<int, QSet<TileKey>>>& epTiles);
     void onSendVisibleTileKeys(const QSet<TileKey>& tileKeys);
 
     // from DataHorizon

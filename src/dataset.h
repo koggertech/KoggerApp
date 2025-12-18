@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QMap>
 #include <QSet>
+#include <QPair>
 #include <QVector>
 #include <QVector3D>
 #include <QReadWriteLock>
@@ -198,7 +199,8 @@ public:
     void setActiveContactIndx(int64_t indx);
     int64_t getActiveContactIndx() const;
     void setMosaicChannels(const QString& firstChStr, const QString& secondChStr);
-    QVector<int> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
+    QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
+    QMap<int, QSet<TileKey>> traceTileKeysForEpoch(int epochIndx) const;
 
 public slots:
     Q_INVOKABLE void onSetLAngleOffset(float val);

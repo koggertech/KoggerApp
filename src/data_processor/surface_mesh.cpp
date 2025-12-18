@@ -208,6 +208,23 @@ SurfaceTile *SurfaceMesh::getTilePtrByKey(const TileKey &key)
     return it == tileByKey_.end() ? nullptr : it.value();
 }
 
+const SurfaceTile *SurfaceMesh::getTileCPtrByKey(const TileKey &key) const
+{
+    auto it = tileByKey_.constFind(key);
+    return it == tileByKey_.cend() ? nullptr : it.value();
+}
+
+std::pair<bool, SurfaceTile> SurfaceMesh::getTileCopyByKey(const TileKey &key) const
+{
+    SurfaceTile retVal;
+    auto it = tileByKey_.find(key);
+
+    if  (it != tileByKey_.end()) {
+        return std::make_pair(true, *it.value());
+    }
+    return std::make_pair(false, retVal);
+}
+
 int SurfaceMesh::getCurrentZoom() const
 {
     return zoomIndex_;
