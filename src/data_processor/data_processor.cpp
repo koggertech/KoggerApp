@@ -152,6 +152,9 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
     attitudeCounter_ = 0;
     mosaicCounter_ = 0;
 
+    tileEpochIndxsByZoom_.clear();
+    tileEpochIndxsByZoom_.shrink_to_fit();
+
     postState(DataProcessorType::kUndefined); //
 }
 
@@ -1274,6 +1277,32 @@ void DataProcessor::shutdown()
     dbIsReady_ = false;
 
     qDebug() << "DataProcessor::shutdown()";
+}
+
+void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey> > &tilesByZoom)
+{
+    //qDebug() << "DataProcessor::onSendDimRects" << epochIndx;
+
+    const int minZoom = 7;
+    if (tileEpochIndxsByZoom_.size() < minZoom) {
+        tileEpochIndxsByZoom_.resize(minZoom);
+    }
+
+    for (auto it = tilesByZoom.cbegin(); it != tilesByZoom.cend(); ++it) {
+        const int zoom = it.key() - 1;
+        if (zoom < 0 || zoom >= tileEpochIndxsByZoom_.size()) {
+            continue;
+        }
+
+        auto& indexForZoom = tileEpochIndxsByZoom_[zoom];
+        const QSet<TileKey>& tileSet = it.value();
+        for (const TileKey& tk : tileSet) {
+            auto& epochList = indexForZoom[tk];
+            if (epochList.isEmpty() || epochList.back() != epochIndx) {
+                epochList.push_back(epochIndx);
+            }
+        }
+    }
 }
 
 bool DataProcessor::isDbReady() const noexcept

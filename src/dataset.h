@@ -302,6 +302,8 @@ signals:
     void lastDepthChanged();
     void speedChanged();
 
+    void sendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+
 protected:
 
     int lastEventTimestamp = 0;

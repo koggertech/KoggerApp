@@ -1438,10 +1438,11 @@ void Dataset::calcDimensionRects(uint64_t indx)
             }
         }
 
-        llPtr->setTraceTileIndxs(tilesByZoom); // в эпоху в датасете
-        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom); // в датасет
+        llPtr->setTraceTileIndxs(tilesByZoom); // в эпоху в датасете //
+        appendTileEpochIndex(static_cast<int>(llIndx), tilesByZoom); // в датасет //
 
         // TODO: в dataProcessor
+        emit sendTilesByZoom(static_cast<int>(llIndx), tilesByZoom);
     }
 }
 
@@ -1449,18 +1450,13 @@ void Dataset::appendTileEpochIndex(int epochIndx, const QMap<int, QSet<TileKey>>
 {
     QWriteLocker locker(&tileEpochIdxMtx_);
 
-    const auto mip = core.getMosaicIndexProviderPtr();
-    if (!mip) {
-        return;
-    }
-
-    const int minZoom = mip->getMinZoom();
-    if (tileEpochIndxsByZoom_.size() <= minZoom) {
-        tileEpochIndxsByZoom_.resize(minZoom + 1);
+    const int minZoom = 7;
+    if (tileEpochIndxsByZoom_.size() < minZoom) {
+        tileEpochIndxsByZoom_.resize(minZoom);
     }
 
     for (auto it = tilesByZoom.cbegin(); it != tilesByZoom.cend(); ++it) {
-        const int zoom = it.key();
+        const int zoom = it.key() - 1;
         if (zoom < 0 || zoom >= tileEpochIndxsByZoom_.size()) {
             continue;
         }
@@ -1486,16 +1482,18 @@ QVector<QPair<int, QSet<TileKey>>> Dataset::collectEpochsForTiles(int zoom, cons
 {
     QReadLocker locker(&tileEpochIdxMtx_);
 
+    int cZoom = zoom - 1;
+
     QVector<QPair<int, QSet<TileKey>>> result;
     if (tiles.isEmpty()) {
         return result;
     }
 
-    if (zoom < 0 || zoom >= tileEpochIndxsByZoom_.size()) {
+    if (cZoom < 0 || cZoom >= tileEpochIndxsByZoom_.size()) {
         return result;
     }
 
-    const auto& indexForZoom = tileEpochIndxsByZoom_.at(zoom);
+    const auto& indexForZoom = tileEpochIndxsByZoom_.at(cZoom);
     if (indexForZoom.isEmpty()) {
         return result;
     }

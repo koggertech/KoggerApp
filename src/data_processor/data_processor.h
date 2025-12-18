@@ -103,6 +103,8 @@ public slots:
     void prefetchWait(quint64 lastTick);
     void shutdown(); // correct termination of processes
 
+    void onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+
 private slots:
     //db
     void onDbTilesLoadedForZoom(int zoom, const QList<DbTile>& dbTiles);
@@ -276,4 +278,6 @@ private:
     QMutex               prefetchMu_;
     QWaitCondition       prefetchCv_;
     std::atomic<quint64> prefetchTick_;
+
+    QVector<QHash<TileKey, QVector<int>>> tileEpochIndxsByZoom_;
 };
