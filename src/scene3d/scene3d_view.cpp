@@ -1002,11 +1002,9 @@ void GraphicsScene3dView::onCameraMoved()
     int currZoom = pickZoomByDistance(m_camera->distForMapView());
 
     //currZoom = 2; // 1 - best, 7 (test)
-    bool zoomIsChanged = false;
 
     if (currZoom != dataZoomIndx_) {
         qDebug() << "           CHANGED ZOOM" << currZoom;
-        zoomIsChanged = true;
         dataZoomIndx_ = currZoom;
         emit sendDataZoom(dataZoomIndx_);
     }
@@ -1040,7 +1038,7 @@ void GraphicsScene3dView::onCameraMoved()
 
     updateMapView();
     updateSurfaceView();
-    calcVisEpochIndxs(zoomIsChanged);
+    calcVisEpochIndxs();
     updateViews();
 }
 
@@ -1113,7 +1111,7 @@ void GraphicsScene3dView::updateSurfaceView()
     emit sendDataRectRequest(nedVerts, dataZoomIndx_, cameraIsMoveUp_ /*from upd map*/);
 }
 
-void GraphicsScene3dView::calcVisEpochIndxs(bool zoomIsChanged)
+void GraphicsScene3dView::calcVisEpochIndxs()
 {
     if (!isUpdateMosaic_) {
         return;

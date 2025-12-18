@@ -212,6 +212,32 @@ void DataProcessor::setIsOpeningFile(bool state)
     isOpeningFile_ = state;
 }
 
+void DataProcessor::onCameraMovedSec()
+{
+    if (!updateMosaic_) {
+        return;
+    }
+
+
+    //mosaicCounter_; // head?
+
+    auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
+
+    //qDebug() << "DataProcessor::onCameraMoved" << epTiles;
+
+    if (epTiles.isEmpty()) {
+        return;
+    }
+
+    //qDebug() << "add pending" << epIndxs.size();
+
+    for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
+        pendingMosaicIndxs_.insert((*it).first);
+    }
+
+    scheduleLatest(WorkSet(WF_All)); // all?
+}
+
 void DataProcessor::onCameraMoved(const QVector<QPair<int, QSet<TileKey>>> &epTiles)
 {
     //qDebug() << "DataProcessor::onCameraMoved" << epTiles;
@@ -233,7 +259,7 @@ void DataProcessor::onSendVisibleTileKeys(int zoomIndx, const QSet<TileKey> &vis
 {
     QMetaObject::invokeMethod(worker_, "setVisibleTileKeys", Qt::QueuedConnection, Q_ARG(QSet<TileKey>, visTileKeys));
 
-    mosaicCounter_; // head?
+    //mosaicCounter_; // head?
 
     lastDataZoomIndx_ = zoomIndx;
     lastVisTileKeys_  = visTileKeys;

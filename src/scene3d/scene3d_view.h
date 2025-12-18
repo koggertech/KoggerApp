@@ -259,7 +259,7 @@ public Q_SLOTS:
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
     void updateSurfaceView();
-    void calcVisEpochIndxs(bool zoomIsChanged);
+    void calcVisEpochIndxs();
     void updateViews();
     void onCameraMoved();
 
