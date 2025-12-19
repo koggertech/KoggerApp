@@ -1408,9 +1408,20 @@ void Dataset::calcDimensionRects(uint64_t indx)
         }
 
         // rect
-        const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
-        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0);
+        // been
+        //const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+        //const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInRectNed(currRaysRect, 1, /*padTiles*/0);
 
+        // now
+        const QRectF currRaysRect(QPointF(minN, minE), QPointF(maxN, maxE));
+        std::array<QPointF, 4> visQuad;
+        visQuad[0] = currRaysRect.topLeft();
+        visQuad[1] = currRaysRect.topRight();
+        visQuad[2] = currRaysRect.bottomRight();
+        visQuad[3] = currRaysRect.bottomLeft();
+        const auto lvl1 = core.getMosaicIndexProviderPtr()->tilesInQuadNed(visQuad, 1, /*padTiles*/0);
+
+        //qDebug() << lvl1.size();
         //qDebug() << minN << maxN << minE << maxE;
 
         QMap<int, QSet<TileKey>> tilesByZoom;

@@ -1122,8 +1122,31 @@ void GraphicsScene3dView::calcVisEpochIndxs()
     if (!datasetPtr_->size()) {
         return;
     }
-    const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
-    auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 1); // TILES
+
+    // been
+    //const QRectF visRect(QPointF(lastMinX_, lastMinY_), QPointF(lastMaxX_, lastMaxY_));
+    //auto visTiles = core.getMosaicIndexProviderPtr()->tilesInRectNed(visRect, dataZoomIndx_, 1); // TILES
+
+    // now
+    std::array<QPointF, 4> visQuad;
+    NED ltNed(lastMinX_, lastMinY_, 0.0);
+    NED lbNed(lastMinX_, lastMaxY_, 0.0);
+    NED rbNed(lastMaxX_, lastMaxY_, 0.0);
+    NED rtNed(lastMaxX_, lastMinY_, 0.0);
+    visQuad[0] = {ltNed.n, ltNed.e};
+    visQuad[1] = {rtNed.n, rtNed.e};
+    visQuad[2] = {rbNed.n, rbNed.e};
+    visQuad[3] = {lbNed.n, lbNed.e};
+
+    // qDebug() << zoomData_;
+    // qDebug() << minX << maxX << minY << maxY;
+    // qDebug() << "";
+
+    auto visTiles = core.getMosaicIndexProviderPtr()->tilesInQuadNed(visQuad, dataZoomIndx_, 1); // TILES
+
+//    qDebug() << "vt";
+//    qDebug() << visTiles.size();
+//    qDebug() << visTiles;
 
     if (visTiles != lastVisTileKeys_) {
         lastVisTileKeys_ = visTiles;

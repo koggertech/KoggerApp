@@ -655,7 +655,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         }
     }
 
-    return;
+    //return;
 
     // debug info
     // tile bounds
@@ -710,7 +710,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         const float padX     = 4.0f;
         const float padY     = 4.0f;
         const float keyDY    = 14.0f;
-        const float scaleStr = 0.4f;
+        const float scaleStr = 0.5f;
 
         for (auto it = tiles_.cbegin(); it != tiles_.cend(); ++it) {
             const TileKey& key   = it.key();

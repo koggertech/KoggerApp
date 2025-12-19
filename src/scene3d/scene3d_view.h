@@ -1,6 +1,7 @@
 #ifndef GRAPHICSSCENE3DVIEW_H
 #define GRAPHICSSCENE3DVIEW_H
 
+#include <array>
 #include <QQuickFramebufferObject>
 #include <QtMath>
 #include "coordinate_axes.h"
@@ -287,6 +288,7 @@ private:
     friend class BottomTrack;
     friend class BoatTrack;
 
+    bool getViewQuadNed(std::array<QPointF, 4>* quad) const;
     std::tuple<float, float, float, float> getFieldViewDim() const;
     std::shared_ptr<Camera> m_camera;
     std::shared_ptr<Camera> m_axesThumbnailCamera;

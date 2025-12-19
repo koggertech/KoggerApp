@@ -1219,11 +1219,22 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
     }
 
     // tiles
-    const auto tiles = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, /*padTiles*/1);
+    // been
+    //const auto tiles = mosaicIndexProvider_.tilesInRectNed(viewRect, zoomIndx, /*padTiles*/1);
+    //if (tiles == lastKeys_) {
+    //    return;
+    //}
+    // now
+    std::array<QPointF, 4> visQuad;
+    visQuad[0] = viewRect.topLeft();
+    visQuad[1] = viewRect.topRight();
+    visQuad[2] = viewRect.bottomRight();
+    visQuad[3] = viewRect.bottomLeft();
+
+    const auto tiles = mosaicIndexProvider_.tilesInQuadNed(visQuad, zoomIndx, 1); // TILES
     if (tiles == lastKeys_) {
         return;
     }
-
 
     // store new req
     lastViewRect_ = viewRect;

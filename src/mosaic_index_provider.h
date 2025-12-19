@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <QPointF>
 #include <QRectF>
 #include <QVector>
 #include <QSet>
@@ -18,6 +20,7 @@ public:
     void setZooms(QVector<ZoomInfo> zooms);
 
     QSet<TileKey> tilesInRectNed(const QRectF& rectNed, int z, int padTiles = 0) const;
+    QSet<TileKey> tilesInQuadNed(const std::array<QPointF, 4>& quadNed, int z, int padTiles = 0) const;
     bool tileRectNed(const TileKey& tid, QRectF* out) const;
 
     int getMaxZoom() const { return maxZoom_; };
