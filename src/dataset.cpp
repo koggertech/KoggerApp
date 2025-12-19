@@ -316,17 +316,18 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
     RawData::RawDataHeader header = raw_data.header;
     ComplexF* compelex_data = (ComplexF*)raw_data.data.data();
     int16_t* real16_data = (int16_t*)raw_data.data.data();
+    int16_t* complex16_data = (int16_t*)raw_data.data.data();
     int size = raw_data.samplesPerChannel();
 
     Epoch* last_epoch = last();
     if (!last_epoch) {
         return;
     }
-    ComplexSignals& compex_signals = last_epoch->complexSignals();
+    std::reference_wrapper<ComplexSignals> compex_signals = last_epoch->complexSignals();
 
     ChannelId dev_id(channelId.uuid, header.channelGroup); // channelId.uuid
 
-    if(compex_signals[dev_id].contains(header.channelGroup)) {
+    if(compex_signals.get()[dev_id].contains(header.channelGroup)) {
         float offset_m = 0;
         float offset_db = 0;
         offset_db = -20;
@@ -336,10 +337,12 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
 
         // last_epoch->moveComplexToEchogram(offset_m, offset_db);
         last_epoch = addNewEpoch();
-        compex_signals = last_epoch->complexSignals();
+
+        compex_signals = std::ref(last_epoch->complexSignals());
+
     }
 
-    QVector<ComplexSignal>& channels = compex_signals[dev_id][header.channelGroup];
+    QVector<ComplexSignal>& channels = compex_signals.get()[dev_id][header.channelGroup];
     channels.resize(header.channelCount);
 
     for(int ich = 0; ich < header.channelCount; ich++) {
@@ -362,6 +365,12 @@ void Dataset::rawDataRecieved(const ChannelId& channelId, RawData raw_data) {
 
             for(int i  = 0; i < size; i++) {
                 signal_data[i] = ComplexF(real16_data[i*header.channelCount + ich], 0);
+            }
+        } else if(header.dataType == 2) {
+            signal.isComplex = true;
+
+            for(int i  = 0; i < size; i++) {
+                signal_data[i] = ComplexF(complex16_data[(i*header.channelCount + ich)*2], complex16_data[(i*header.channelCount + ich)*2+1]);
             }
         }
     }

@@ -282,6 +282,10 @@ void Epoch::doBottomTrackSideScan(Echogram &chart, bool is_update_dist) {
 }
 
 void Epoch::moveComplexToEchogram(ChannelId channel_id, int group_id, float offset_m, float levels_offset_db) {
+    if( !_complex.contains(channel_id) || !_complex[channel_id].contains(group_id) ) {
+        return;
+    }
+
     QVector<ComplexSignal> chls = _complex[channel_id][group_id];
     float sample_rate = chls[0].sampleRate;
 
