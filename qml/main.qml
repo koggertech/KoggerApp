@@ -497,6 +497,7 @@ ApplicationWindow  {
                         hoverEnabled:         true
                         Keys.enabled:         true
                         Keys.onDeletePressed: renderer.keyPressTrigger(event.key)
+                        Keys.onEscapePressed: renderer.clearRuler()
 
                         property int lastMouseKeyPressed: Qt.NoButton // TODO: maybe this mouseArea should be outside pinchArea
                         property point startMousePos: Qt.point(-1, -1)

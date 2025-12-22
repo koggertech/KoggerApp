@@ -181,6 +181,13 @@ void GraphicsScene3dRenderer::drawObjects()
     contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 
+    //-----------Ruler tool (overlay)-------------
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    glDisable(GL_BLEND);
+
     //-----------Draw selection rect-------------
     if (!m_shaderProgramMap.contains("static_sec")) {
         return;

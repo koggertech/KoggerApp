@@ -30,6 +30,7 @@ public:
     Q_INVOKABLE void onPlaneGridCircleGridStepChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridAngleChanged(int val);
     Q_INVOKABLE void onPlaneGridCircleGridLabelsChanged(bool state);
+    Q_INVOKABLE void onRulerModeChanged(bool enabled);
 
     void setGraphicsSceneView(GraphicsScene3dView* sceneView);
     void setDataProcessorPtr(DataProcessor* dataProcessorPtr);
@@ -58,6 +59,7 @@ private:
     int planeGridCircleStep_;
     int planeGridCircleAngle_;
     bool planeGridCircleLabels_;
+    bool rulerEnabled_;
 };
 
 #endif // SCENE3DTOOLBARCONTROLLER_H

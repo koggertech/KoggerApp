@@ -21,7 +21,8 @@ Scene3dToolBarController::Scene3dToolBarController(QObject *parent)
       planeGridCircleSize_(1),
       planeGridCircleStep_(1),
       planeGridCircleAngle_(1),
-      planeGridCircleLabels_(true)
+      planeGridCircleLabels_(true),
+      rulerEnabled_(false)
 {}
 
 void Scene3dToolBarController::onFitAllInViewButtonClicked()
@@ -239,6 +240,18 @@ void Scene3dToolBarController::onPlaneGridCircleGridLabelsChanged(bool state)
     }
 }
 
+void Scene3dToolBarController::onRulerModeChanged(bool enabled)
+{
+    rulerEnabled_ = enabled;
+
+    if (graphicsScene3dViewPtr_) {
+        graphicsScene3dViewPtr_->setRulerEnabled(rulerEnabled_);
+    }
+    else {
+        tryInitPendingLambda();
+    }
+}
+
 void Scene3dToolBarController::setGraphicsSceneView(GraphicsScene3dView *sceneView)
 {
     graphicsScene3dViewPtr_ = sceneView;
@@ -279,6 +292,7 @@ void Scene3dToolBarController::tryInitPendingLambda()
                 graphicsScene3dViewPtr_->setPlaneGridCircleStep(planeGridCircleStep_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleAngle(planeGridCircleAngle_);
                 graphicsScene3dViewPtr_->setPlaneGridCircleLabels(planeGridCircleLabels_);
+                graphicsScene3dViewPtr_->setRulerEnabled(rulerEnabled_);
 
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateBottomTrack", Qt::QueuedConnection, Q_ARG(bool, updateBottomTrack_));

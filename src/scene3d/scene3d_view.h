@@ -18,6 +18,7 @@
 #include "navigation_arrow.h"
 #include "usbl_view.h"
 #include "isobaths_view.h"
+#include "ruler_tool.h"
 #include "data_processor.h"
 
 
@@ -194,6 +195,7 @@ public:
     std::shared_ptr<ImageView> getImageViewPtr() const;
     std::shared_ptr<MapView> getMapViewPtr() const;
     std::shared_ptr<Contacts> getContactsPtr() const;
+    std::shared_ptr<RulerTool> getRulerToolPtr() const;
     std::shared_ptr<PointGroup> pointGroup() const;
     std::shared_ptr<PolygonGroup> polygonGroup() const;
     std::shared_ptr<UsblView> getUsblViewPtr() const;
@@ -259,6 +261,8 @@ public Q_SLOTS:
     void setQmlAppEngine(QQmlApplicationEngine* engine);
     void updateMapView();
     void updateViews();
+    void setRulerEnabled(bool enabled);
+    Q_INVOKABLE void clearRuler();
 
     // from DataHorizon
     void onPositionAdded(uint64_t indx);
@@ -290,6 +294,7 @@ private:
     std::shared_ptr<ImageView> imageView_;
     std::shared_ptr<MapView> mapView_;
     std::shared_ptr<Contacts> contacts_;
+    std::shared_ptr<RulerTool> rulerTool_;
     std::shared_ptr<BoatTrack> boatTrack_;
     std::shared_ptr<BottomTrack> m_bottomTrack;
     std::shared_ptr<PolygonGroup> m_polygonGroup;
@@ -341,6 +346,7 @@ private:
     int compassSize_;
 
     bool planeGridType_;
+    bool rulerEnabled_{false};
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H

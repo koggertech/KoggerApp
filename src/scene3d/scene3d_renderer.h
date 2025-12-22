@@ -8,6 +8,7 @@
 #include "image_view.h"
 #include "map_view.h"
 #include "contacts.h"
+#include "ruler_tool.h"
 #include "point_group.h"
 #include "polygon_group.h"
 #include "scene3d_view.h"
@@ -68,6 +69,7 @@ private:
     ImageView::ImageViewRenderImplementation imageViewRenderImpl_;
     MapView::MapViewRenderImplementation mapViewRenderImpl_;
     Contacts::ContactsRenderImplementation contactsRenderImpl_;
+    RulerTool::RulerToolRenderImplementation rulerToolRenderImpl_;
     BottomTrack::BottomTrackRenderImplementation m_bottomTrackRenderImpl;
     PolygonGroup::PolygonGroupRenderImplementation m_polygonGroupRenderImpl;
     PointGroup::PointGroupRenderImplementation m_pointGroupRenderImpl;

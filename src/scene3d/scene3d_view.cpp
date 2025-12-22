@@ -19,6 +19,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     imageView_(std::make_shared<ImageView>()),
     mapView_(std::make_shared<MapView>(this)),
     contacts_(std::make_shared<Contacts>(this)),
+    rulerTool_(std::make_shared<RulerTool>(this)),
     boatTrack_(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -60,6 +61,7 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(imageView_.get(), &ImageView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(boatTrack_.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -140,6 +142,11 @@ std::shared_ptr<Contacts> GraphicsScene3dView::getContactsPtr() const
     return contacts_;
 }
 
+std::shared_ptr<RulerTool> GraphicsScene3dView::getRulerToolPtr() const
+{
+    return rulerTool_;
+}
+
 std::shared_ptr<PointGroup> GraphicsScene3dView::pointGroup() const
 {
     return m_pointGroup;
@@ -185,6 +192,7 @@ void GraphicsScene3dView::clear(bool cleanMap)
     isobathsView_->clear();
     surfaceView_->clear();
     contacts_->clear();
+    rulerTool_->clear();
     imageView_->clear();//
     if (cleanMap) {
         mapView_->clear();
@@ -241,6 +249,14 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
 
+    if (rulerEnabled_) {
+        if (mouseButton == Qt::MouseButton::RightButton) {
+            clearRuler();
+            QQuickFramebufferObject::update();
+            return;
+        }
+    }
+
     if (qmlRootObject_) { // maybe this will be removed
         if (auto selectionToolButton = qmlRootObject_->findChild<QObject*>("selectionToolButton"); selectionToolButton) {
             selectionToolButton->property("checked").toBool() ? m_mode = ActiveMode::BottomTrackVertexSelectionMode : m_mode = ActiveMode::Idle;
@@ -285,6 +301,12 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     auto to = calculateIntersectionPoint(toOrig, toDir, 0);
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
+
+    if (rulerEnabled_ && mouseButton == Qt::MouseButton::NoButton) {
+        if (rulerTool_->pointsCount() > 0) {
+            rulerTool_->setPreviewPoint(to);
+        }
+    }
 
     if (switchedToBottomTrackVertexComboSelectionMode_) {
         m_comboSelectionRect.setBottomRight({ static_cast<int>(x), static_cast<int>(height() - y) });
@@ -334,6 +356,23 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     clearComboSelectionRect();
 
     m_lastMousePos = { x, y };
+
+    if (rulerEnabled_) {
+        if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
+            auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
+            rulerTool_->addPoint(p);
+            rulerTool_->clearPreview();
+            QQuickFramebufferObject::update();
+        }
+
+        switchedToBottomTrackVertexComboSelectionMode_ = false;
+        wasMoved_ = false;
+        wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        return;
+    }
 
     if (switchedToBottomTrackVertexComboSelectionMode_) {
         m_mode = lastMode_;
@@ -410,6 +449,22 @@ void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
     m_bottomTrack->keyPressEvent(key);
 
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setRulerEnabled(bool enabled)
+{
+    rulerEnabled_ = enabled;
+    rulerTool_->setEnabled(rulerEnabled_);
+    if (!rulerEnabled_) {
+        rulerTool_->clear();
+    }
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::clearRuler()
+{
+    rulerTool_->clear();
     QQuickFramebufferObject::update();
 }
 
@@ -1155,6 +1210,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
+    m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));
     m_renderer->navigationArrowRenderImpl_  = *(dynamic_cast<NavigationArrow::NavigationArrowRenderImplementation*>(view->navigationArrow_->m_renderImpl));

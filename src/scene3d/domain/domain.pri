@@ -26,6 +26,7 @@ HEADERS += \
     $$PWD/polygon_group.h \
     $$PWD/polygon_object.h \
     $$PWD/quad.h \
+    $$PWD/ruler_tool.h \
     $$PWD/surface_view.h \
     $$PWD/isobaths_view.h \
     $$PWD/triangle.h \
@@ -48,6 +49,7 @@ SOURCES += \
     $$PWD/point_object.cpp \
     $$PWD/polygon_group.cpp \
     $$PWD/polygon_object.cpp \
+    $$PWD/ruler_tool.cpp \
     $$PWD/surface_view.cpp \
     $$PWD/isobaths_view.cpp \
     $$PWD/usbl_view.cpp
