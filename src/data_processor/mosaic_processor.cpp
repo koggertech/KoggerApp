@@ -965,14 +965,14 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
 
     // emit data
     QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
-    if (haveLastPair) {
-        QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
-            Q_ARG(QVector3D, lastLeftBeg),
-            Q_ARG(QVector3D, lastLeftEnd),
-            Q_ARG(QVector3D, lastRightBeg),
-            Q_ARG(QVector3D, lastRightEnd)
-            );
-    }
+    //if (haveLastPair) {
+    //    QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
+    //        Q_ARG(QVector3D, lastLeftBeg),
+    //        Q_ARG(QVector3D, lastLeftEnd),
+    //        Q_ARG(QVector3D, lastRightBeg),
+    //        Q_ARG(QVector3D, lastRightEnd)
+    //        );
+    //}
 }
 
 int MosaicProcessor::getColorIndx(Epoch::Echogram* charts, int ampIndx) const
