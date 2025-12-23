@@ -189,7 +189,7 @@ void DataProcessor::setUpdateMosaic(bool state)
 {
     updateMosaic_ = state;
 
-    return;
+    //return;
 
     if (updateMosaic_) {
         if (hotCache_.checkAnyTileForZoom(lastZoom_)) {
@@ -217,9 +217,6 @@ void DataProcessor::onCameraMovedSec()
     if (!updateMosaic_) {
         return;
     }
-
-
-    //mosaicCounter_; // head?
 
     auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
 
@@ -308,7 +305,7 @@ void DataProcessor::onChartsAdded(uint64_t indx)
 
 void DataProcessor::onBottomTrack3DAdded(const QVector<int>& epIndxs, const QVector<int>& vertIndxs, bool isManual)
 {
-    return;
+    //return;
 
     if (epIndxs.isEmpty() || vertIndxs.isEmpty()) {
         return;
@@ -419,7 +416,7 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
                               Q_ARG(ChannelId, ch1), Q_ARG(uint8_t, sub1),
                               Q_ARG(ChannelId, ch2), Q_ARG(uint8_t, sub2));
 
-    return;
+    //return;
 
     for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
         pendingMosaicIndxs_.insert(*it);
@@ -1255,15 +1252,17 @@ void DataProcessor::onSendDataRectRequest(QVector<NED> rect, int zoomIndx, bool 
 
 void DataProcessor::tryCalcTiles()
 {
+    //qDebug() << "DataProcessor::tryCalcTiles";
+
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
 
     // замена на то что пришло с камеры?
-    //for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
-    //    pendingMosaicIndxs_.insert(*it);
-    //    pendingSurfaceIndxs_.insert(qMakePair('0', *it));
-    //}
+    for (auto it = epIndxsFromBottomTrack_.cbegin(); it != epIndxsFromBottomTrack_.cend(); ++it) {
+        pendingMosaicIndxs_.insert(*it);
+        pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    }
     pendingIsobathsWork_ = true;
 
     QMetaObject::invokeMethod(worker_, "setMosaicTileResolution", Qt::QueuedConnection, Q_ARG(float, tileResolution_));
