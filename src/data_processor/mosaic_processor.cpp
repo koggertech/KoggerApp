@@ -112,14 +112,68 @@ void MosaicProcessor::updateDataWrapper(const QVector<int>& indxs)
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kMosaic));
 
-    constexpr int minSegmentLen = 2;
-    constexpr int maxSegmentLen = 100;
+    // stitched chunks
+    QVector<int> vec = indxs;
+    const int firstNow = vec.first();
 
-    const auto segments = splitContinuousSegments(indxs, minSegmentLen, maxSegmentLen);
+    if (lastAcceptedEpoch_ >= 0 && lastAcceptedEpoch_ < firstNow) {
+        const int gap = firstNow - lastAcceptedEpoch_;
 
-    for (const auto& seg : segments) {
-        updateData(seg);
+        if (gap > 1) { // дыра слева [lastAcceptedEpoch_, firstNow)
+            QVector<int> left;
+            left.reserve(gap);
+            for (int i = lastAcceptedEpoch_; i < firstNow; ++i) {
+                left.push_back(i);
+            }
+
+            left += vec;
+            vec.swap(left);
+        }
+        else { // gap == 1
+            vec.prepend(lastAcceptedEpoch_); // стык одним элементом
+        }
     }
+
+    //qDebug() << "task";
+    //qDebug() << vec;
+    //for (int i = 1; i < vec.size(); ++i) {
+    //   if (vec[i] != vec[i - 1] + 1) {
+    //       qWarning() << "Hole in mosaic task" << vec[i - 1] << "and" << vec[i];
+    //   }
+    //}
+
+    const int kStep = 10; // почанково
+    QVector<int> chunk;
+
+    int start = 0;
+    const int last = vec.size() - 1;
+
+    while (start <= last) {
+        int end = qMin(start + kStep, last);
+
+        chunk.clear();
+        chunk.reserve(end - start + 1);
+        for (int i = start; i <= end; ++i) {
+            chunk.push_back(vec[i]);
+        }
+
+        updateData(chunk);
+
+        if (end == last) {
+            break;
+        }
+        start = end;
+    }
+
+    // TODO
+    // constexpr int minSegmentLen = 2;
+    // constexpr int maxSegmentLen = 100;
+
+    // const auto segments = splitContinuousSegments(indxs, minSegmentLen, maxSegmentLen);
+
+    // for (const auto& seg : segments) {
+    //     updateData(seg);
+    // }
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
