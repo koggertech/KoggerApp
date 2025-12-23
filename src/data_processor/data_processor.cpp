@@ -93,7 +93,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
 
     pendingWorkTimer_.setParent(this);
     pendingWorkTimer_.setSingleShot(true);
-    pendingWorkTimer_.setInterval(10);
+    pendingWorkTimer_.setInterval(333);
     connect(&pendingWorkTimer_, &QTimer::timeout, this, &DataProcessor::runCoalescedWork);
 
     worker_ = new ComputeWorker(this, datasetPtr_);
@@ -589,13 +589,16 @@ void DataProcessor::runCoalescedWork()
 
 void DataProcessor::startTimerIfNeeded()
 {
+    auto startOrRestart = [this]() {
+        pendingWorkTimer_.stop();
+        pendingWorkTimer_.start();
+    };
+
     if (QThread::currentThread() == this->thread()) {
-        if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+        startOrRestart();
     }
     else {
-        QMetaObject::invokeMethod(this, [this](){
-            if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
-        }, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, startOrRestart, Qt::QueuedConnection);
     }
 }
 
