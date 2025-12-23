@@ -644,6 +644,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     }
 
     QSet<SurfaceTile*> usedTiles;
+    int lastHead = -1;
 
     // ray tracing
     for (int i = 0; i < measLinesVertices.size(); i += 2) {
@@ -828,10 +829,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                     auto* t = putPixel(x0, y0, iClrIndx, freshEpIndx);
 
                     if (t) {
-
-                        usedTiles.insert(t);
-
                         if (!(stepsDone % tileHeightMatrixRatio_)) {
+                            usedTiles.insert(t);
+                            lastHead = epochIndxs[segFIndx];
+
                             const int tileX = x0 % tileSidePixelSize_;
                             const int tileY = y0 % tileSidePixelSize_;
                             const int numSteps = tileSidePixelSize_ / stepSizeHeightMatrix + 1;
@@ -856,25 +857,6 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                 break;
             }
         } // while interp line
-
-        //qDebug() << "       tr ep indx: " << epochIndxs[segFIndx] << epochIndxs[segSIndx];
-
-        int indxF = epochIndxs[segFIndx];
-        int indxS = epochIndxs[segSIndx];
-
-        if (lastIndxF_ == indxF &&
-            lastIndxS_ == indxS) {
-            // set head
-            for (auto it = usedTiles.cbegin(); it != usedTiles.cend(); ++it) {
-                auto* t = *it;
-                if (t->getHeadIndx() < freshEpIndx) {
-                    t->setHeadIndx(freshEpIndx);
-                }
-            }
-        }
-
-        lastIndxF_ = indxF;
-        lastIndxS_ = indxS;
     } // for rays
 
     { // unmark tiles
@@ -893,11 +875,20 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
         et.start();
     }
 
+    //qDebug() << usedTiles.size();
+    if (usedTiles.isEmpty()) {
+        return;
+    }
+
+    if (lastHead != -1) {
+        for (auto it = usedTiles.cbegin(); it != usedTiles.cend(); ++it) {
+            auto* t = *it;
+            t->setHeadIndx(lastHead);
+        }
+    }
+
     // collect changed tiles
     QSet<SurfaceTile*> updTiles = surfaceMeshPtr_->getUpdatedTiles();
-    //qDebug() << "upd t" << updTiles.size();
-    //qDebug() << "   trace cnt" << traceCnt;
-
     QSet<SurfaceTile*> changedOut;
     postUpdate(updTiles, changedOut);
     updTiles.unite(changedOut);

@@ -77,6 +77,4 @@ private:
     float lAngleOffset_;
     float rAngleOffset_;
     bool generateGridContour_;
-    int lastIndxF_ = -1;
-    int lastIndxS_ = -1;
 };

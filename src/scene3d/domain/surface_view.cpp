@@ -655,7 +655,7 @@ void SurfaceView::SurfaceViewRenderImplementation::render(QOpenGLFunctions *ctx,
         }
     }
 
-    //return;
+    return;
 
     // debug info
     // tile bounds
