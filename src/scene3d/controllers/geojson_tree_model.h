@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QAbstractListModel>
+#include <QAbstractItemModel>
 #include <QVector>
+#include <memory>
+#include <vector>
 
 struct GeoJsonTreeNode
 {
@@ -16,7 +18,7 @@ struct GeoJsonTreeNode
     bool expanded{true};
 };
 
-class GeoJsonTreeModel : public QAbstractListModel
+class GeoJsonTreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 
@@ -35,14 +37,28 @@ public:
 
     explicit GeoJsonTreeModel(QObject* parent = nullptr);
 
+    QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex& index) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
+    bool hasChildren(const QModelIndex& parent = QModelIndex()) const override;
 
     const QVector<GeoJsonTreeNode>& nodes() const;
     void setNodes(QVector<GeoJsonTreeNode> nodes);
 
 private:
-    QVector<GeoJsonTreeNode> nodes_;
-};
+    struct Node {
+        GeoJsonTreeNode data;
+        Node* parent{nullptr};
+        QVector<Node*> children;
+    };
 
+    Node* nodeFromIndex(const QModelIndex& index) const;
+    int rowOfNode(const Node* node) const;
+
+    QVector<GeoJsonTreeNode> nodes_;
+    std::unique_ptr<Node> root_;
+    std::vector<std::unique_ptr<Node>> storage_;
+};

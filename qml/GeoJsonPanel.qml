@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 import QtQuick.Dialogs
 
 MenuFrame {
@@ -181,33 +181,97 @@ MenuFrame {
             }
         }
 
-        ListView {
-            id: list
+
+
+        TreeView {
+            id: tree
             Layout.fillWidth: true
-            height: count*theme.controlHeight
-            Layout.preferredHeight: count*(theme.controlHeight+4)
-            Layout.maximumHeight: 10*(theme.controlHeight+4)
+            Layout.preferredHeight: 10 * (theme.controlHeight + 4)
+            Layout.maximumHeight: 10 * (theme.controlHeight + 4)
             clip: true
-            spacing: 4
             model: geo ? geo.treeModel : null
+
+
+            selectionModel: ItemSelectionModel {}
+            // headerVisible: false
+
+            // TableViewColumn {
+            //     role: "display"
+            //     width: tree.width
+            // }
+
+            // delegate: TreeViewDelegate {}
 
             delegate: Rectangle {
                 id: nodeItem
-                width: list.width
-                height: row.implicitHeight
+                width: tree.width
+                height: theme.controlHeight
                 radius: 2
                 color: (geo && geo.selectedNodeId === model.id) ? "#2b4f7a" : "#2a2a2a"
                 border.color: "transparent"
                 border.width: 1
 
+                readonly property real indentation: 20
+                readonly property real padding: 5
+
+                // Assigned to by TreeView:
+                required property TreeView treeView
+                required property bool isTreeNode
+                required property bool expanded
+                required property bool hasChildren
+                required property int depth
+                required property int row
+                required property int column
+                required property bool current
+
+                // Rotate indicator when expanded by the user
+                // (requires TreeView to have a selectionModel)
+                // property Animation indicatorAnimation: NumberAnimation {
+                //     target: indicator
+                //     property: "rotation"
+                //     from: expanded ? 0 : 90
+                //     to: expanded ? 90 : 0
+                //     duration: 100
+                //     easing.type: Easing.OutQuart
+                // }
+                TableView.onPooled: indicatorAnimation.complete()
+                TableView.onReused: if (current) indicatorAnimation.start()
+                onExpandedChanged: indicator.rotation = expanded ? 90 : 0
+
+
+                Component.onCompleted: {
+                    if (model.isFolder && typeof tree.expand === "function" && typeof tree.collapse === "function") {
+                        if (model.expanded) {
+                            tree.expand(styleData.index)
+                        } else {
+                            tree.collapse(styleData.index)
+                        }
+                    }
+                }
+
                 RowLayout {
                     id: row
                     anchors.fill: parent
-                    // anchors.margins: 6
                     spacing: 6
 
+                    CButton {
+                        id: indicator
+                        x: padding + (depth * indentation)
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: isTreeNode // && hasChildren
+                        text: expanded ? "▾" : "▸"
+
+                        TapHandler {
+                            onSingleTapped: {
+                                let index = treeView.index(row, column)
+                                treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
+                                treeView.toggleExpanded(row)
+                            }
+                        }
+                    }
+
                     Item {
-                        width: model.depth * 14
+                        width: styleData.depth * 14
                         height: 1
                     }
 
@@ -215,10 +279,25 @@ MenuFrame {
                         id: toggleBtn
                         checkable: false
                         visible: model.isFolder
-                        iconSource: model.expanded ? "qrc:/icons/ui/toggle_left.svg" : "qrc:/icons/ui/toggle_right.svg"
+                        iconSource: rowExpanded ? "qrc:/icons/ui/toggle_left.svg" : "qrc:/icons/ui/toggle_right.svg"
                         implicitWidth: theme.controlHeight * 0.9
                         implicitHeight: theme.controlHeight * 0.9
-                        onClicked: if (geo) geo.toggleFolderExpanded(model.id)
+                        onClicked: {
+                            if (typeof tree.toggleExpanded === "function") {
+                                tree.toggleExpanded(styleData.index)
+                            } else if (typeof tree.isExpanded === "function") {
+                                if (tree.isExpanded(styleData.index)) {
+                                    tree.collapse(styleData.index)
+                                } else {
+                                    tree.expand(styleData.index)
+                                }
+                            }
+                            if (geo) geo.toggleFolderExpanded(model.id)
+                        }
+
+                        property bool rowExpanded: (typeof tree.isExpanded === "function")
+                                                   ? tree.isExpanded(styleData.index)
+                                                   : model.expanded
                     }
 
                     Item {
@@ -256,11 +335,14 @@ MenuFrame {
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    onClicked: if (geo) geo.selectNode(model.id, model.isFolder, model.parentId)
-                }
+                // MouseArea {
+                //     anchors.fill: parent
+                //     acceptedButtons: Qt.LeftButton
+                //     onClicked: {
+                //         tree.currentIndex = styleData.index
+                //         if (geo) geo.selectNode(model.id, model.isFolder, model.parentId)
+                //     }
+                // }
             }
         }
 

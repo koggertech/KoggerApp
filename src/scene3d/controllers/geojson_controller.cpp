@@ -945,10 +945,6 @@ void GeoJsonController::rebuildTreeNodes(Folder* folder, int depth, QVector<GeoJ
     node.expanded = folder->expanded;
     out.push_back(node);
 
-    if (!folder->expanded) {
-        return;
-    }
-
     for (const auto& f : folder->doc.features) {
         GeoJsonTreeNode fn;
         fn.id = f.id;
