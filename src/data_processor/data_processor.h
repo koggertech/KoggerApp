@@ -105,6 +105,7 @@ public slots:
     void shutdown(); // correct termination of processes
 
     void onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
+    void onDatasetStateChanged(int state);
 
 private slots:
     //db
@@ -286,4 +287,7 @@ private:
 
     QSet<TileKey> lastVisTileKeys_;
     int lastDataZoomIndx_;
+
+    int datasetState_ = -1;
+    bool defProcType_ = false;
 };

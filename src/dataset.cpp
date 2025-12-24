@@ -28,7 +28,13 @@ Dataset::~Dataset()
 
 void Dataset::setState(DatasetState state)
 {
+    if (state_ == state) {
+        return;
+    }
+
     state_ = state;
+
+    emit datasetStateChanged(static_cast<int>(state_)); // 0 -und, 1 -file, 2-conn
 }
 
 void Dataset::setActiveZeroing(bool state)
@@ -870,7 +876,9 @@ void Dataset::resetDataset()
     resetRenderBuffers();
 
     resetDistProcessing();
-    state_ = DatasetState::kUndefined;
+
+    setState(DatasetState::kUndefined);
+
     testTime_ = 1740466541;
     usingRecordParameters_.clear();
     lastAddChartEpochIndx_.clear();

@@ -1823,6 +1823,7 @@ void Core::setDataProcessorConnections()
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::dimRectsCanCalc,               datasetPtr_,    &Dataset::onDimensionRectCanCalc,        Qt::DirectConnection));
 
     dataProcessorConnections_.append(QObject::connect(datasetPtr_,        &Dataset::sendTilesByZoom,                   dataProcessor_, &DataProcessor::onSendTilesByZoom,       connType));
+    dataProcessorConnections_.append(QObject::connect(datasetPtr_,        &Dataset::datasetStateChanged,               dataProcessor_, &DataProcessor::onDatasetStateChanged,       connType));
 
     dataProcessorConnections_.append(QObject::connect(dataHorizon_.get(), &DataHorizon::mosaicCanCalc,                 dataProcessor_, &DataProcessor::onMosaicCanCalc,         connType));
 

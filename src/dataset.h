@@ -300,6 +300,7 @@ signals:
     void activeContactChanged();
     void lastDepthChanged();
     void speedChanged();
+    void datasetStateChanged(int state);
 
     void sendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKey>>& tilesByZoom);
 

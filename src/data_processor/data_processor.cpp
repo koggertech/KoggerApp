@@ -589,16 +589,28 @@ void DataProcessor::runCoalescedWork()
 
 void DataProcessor::startTimerIfNeeded()
 {
-    auto startOrRestart = [this]() {
-        pendingWorkTimer_.stop();
-        pendingWorkTimer_.start();
-    };
+    if (defProcType_) {
+        auto startOrRestart = [this]() {
+            pendingWorkTimer_.stop();
+            pendingWorkTimer_.start();
+        };
 
-    if (QThread::currentThread() == this->thread()) {
-        startOrRestart();
+        if (QThread::currentThread() == this->thread()) {
+            startOrRestart();
+        }
+        else {
+            QMetaObject::invokeMethod(this, startOrRestart, Qt::QueuedConnection);
+        }
     }
     else {
-        QMetaObject::invokeMethod(this, startOrRestart, Qt::QueuedConnection);
+        if (QThread::currentThread() == this->thread()) {
+            if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+        }
+        else {
+            QMetaObject::invokeMethod(this, [this](){
+                if (!pendingWorkTimer_.isActive()) pendingWorkTimer_.start();
+            }, Qt::QueuedConnection);
+        }
     }
 }
 
@@ -1360,6 +1372,29 @@ void DataProcessor::onSendTilesByZoom(int epochIndx, const QMap<int, QSet<TileKe
             }
         }
     }
+}
+
+void DataProcessor::onDatasetStateChanged(int state)
+{
+    if (datasetState_ == state) {
+        return;
+    }
+
+    datasetState_ = state;
+
+#ifdef SEPARATE_READING
+    defProcType_ = false;
+#elif
+
+    if (datasetState_ == 0 || datasetState_ == 1) {
+        defProcType_ = true;
+    }
+    if (datasetState_ == 2) {
+        defProcType_ = false;
+    }
+#endif
+
+    pendingWorkTimer_.setInterval(defProcType_ ? 333 : 10);
 }
 
 bool DataProcessor::isDbReady() const noexcept
