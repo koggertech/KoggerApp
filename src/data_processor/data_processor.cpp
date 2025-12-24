@@ -1384,8 +1384,7 @@ void DataProcessor::onDatasetStateChanged(int state)
 
 #ifdef SEPARATE_READING
     defProcType_ = false;
-#elif
-
+#else
     if (datasetState_ == 0 || datasetState_ == 1) {
         defProcType_ = true;
     }
