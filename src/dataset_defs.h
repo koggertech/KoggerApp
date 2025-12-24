@@ -245,6 +245,7 @@ typedef struct NED {
 
             n = k * (ref->refLatCos * sin_lat - ref->refLatSin * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
             e = k * cos_lat * sin(lon_rad - ref->refLonRad) * CONSTANTS_RADIUS_OF_EARTH;
+            d = -(lla->altitude - ref->refLla.altitude);
         }
         else { // merсator
             double R = CONSTANTS_RADIUS_OF_EARTH;

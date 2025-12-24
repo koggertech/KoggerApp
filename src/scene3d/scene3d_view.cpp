@@ -1,9 +1,12 @@
 #include "scene3d_view.h"
 #include <cmath>
+#include <algorithm>
 #include <memory.h>
 #include <math.h>
 #include <QOpenGLFramebufferObject>
 #include <QVector3D>
+#include <QLineF>
+#include <QDebug>
 #include "scene3d_renderer.h"
 #include "dataset.h"
 #include "map_defs.h"
@@ -20,6 +23,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     mapView_(std::make_shared<MapView>(this)),
     contacts_(std::make_shared<Contacts>(this)),
     rulerTool_(std::make_shared<RulerTool>(this)),
+    geoJsonLayer_(std::make_shared<GeoJsonLayer>(this)),
+    geoJsonController_(new GeoJsonController(this)),
     boatTrack_(std::make_shared<BoatTrack>(this, this)),
     m_bottomTrack(std::make_shared<BottomTrack>(this, this)),
     m_polygonGroup(std::make_shared<PolygonGroup>()),
@@ -62,6 +67,56 @@ GraphicsScene3dView::GraphicsScene3dView() :
     QObject::connect(mapView_.get(), &MapView::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(contacts_.get(), &Contacts::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(rulerTool_.get(), &RulerTool::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(geoJsonLayer_.get(), &GeoJsonLayer::changed, this, &QQuickFramebufferObject::update);
+    QObject::connect(geoJsonController_, &GeoJsonController::documentChanged, this, [this]() {
+        geoJsonRenderDirty_ = true;
+        rebuildGeoJsonLayerIfNeeded();
+        QQuickFramebufferObject::update();
+    });
+    QObject::connect(geoJsonController_, &GeoJsonController::selectionChanged, this, [this]() {
+        geoJsonRenderDirty_ = true;
+        rebuildGeoJsonLayerIfNeeded();
+        QQuickFramebufferObject::update();
+    });
+    QObject::connect(geoJsonController_, &GeoJsonController::fileLoaded, this, [this](const QString& path) {
+        const auto visible = geoJsonController_->visibleFeatures();
+        qDebug() << "[GeoJSON] file loaded:" << path << "features:" << visible.size();
+
+        if (!geoJsonEnabled_) {
+            return;
+        }
+
+        bool datasetHasRef = false;
+        if (datasetPtr_) {
+            const auto ref = datasetPtr_->getLlaRef();
+            datasetHasRef = ref.isInit;
+        }
+
+        // If there is no dataset LLARef, recenter camera reference to the file location so geometry isn't millions of meters away.
+        if (!datasetHasRef) {
+            for (const auto* f : visible) {
+                if (!f || f->coords.isEmpty()) {
+                    continue;
+                }
+                const auto& c = f->coords.first();
+                LLA lla(c.lat, c.lon, c.hasZ ? c.z : 0.0);
+                LLARef ref(lla);
+                m_camera->datasetLlaRef_ = ref;
+                m_camera->viewLlaRef_ = ref;
+                qDebug() << "[GeoJSON] set view/dataset LLARef to" << lla.latitude << lla.longitude;
+                break;
+            }
+        }
+
+        geoJsonRenderDirty_ = true;
+        rebuildGeoJsonLayerIfNeeded();
+        geojsonFitInView();
+    });
+    QObject::connect(this, &GraphicsScene3dView::cameraIsMoved, this, [this]() {
+        rebuildGeoJsonLayerIfNeeded();
+    });
+
+    geoJsonLayer_->setVisible(false);
     QObject::connect(boatTrack_.get(), &BoatTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_bottomTrack.get(), &BottomTrack::changed, this, &QQuickFramebufferObject::update);
     QObject::connect(m_polygonGroup.get(), &PolygonGroup::changed, this, &QQuickFramebufferObject::update);
@@ -145,6 +200,11 @@ std::shared_ptr<Contacts> GraphicsScene3dView::getContactsPtr() const
 std::shared_ptr<RulerTool> GraphicsScene3dView::getRulerToolPtr() const
 {
     return rulerTool_;
+}
+
+std::shared_ptr<GeoJsonLayer> GraphicsScene3dView::getGeoJsonLayerPtr() const
+{
+    return geoJsonLayer_;
 }
 
 std::shared_ptr<PointGroup> GraphicsScene3dView::pointGroup() const
@@ -249,6 +309,33 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
     wasMoved_ = false;
     clearComboSelectionRect();
 
+    if (geoJsonEnabled_) {
+        if (mouseButton == Qt::MouseButton::RightButton) {
+            // right-click menu is handled in QML
+            QQuickFramebufferObject::update();
+            return;
+        }
+
+        const auto tool = static_cast<GeoJsonController::Tool>(geoJsonController_->tool());
+        if (mouseButton.testFlag(Qt::MouseButton::LeftButton) && tool == GeoJsonController::Select) {
+            QString fid;
+            int vid = -1;
+            QVector3D world;
+            if (pickGeoJsonVertex(x, y, fid, vid, world)) {
+                geoJsonController_->selectVertex(fid, vid);
+                geoJsonDragging_ = true;
+                geoJsonDragFeatureId_ = fid;
+                geoJsonDragVertexIndex_ = vid;
+                geoJsonDragPlaneZ_ = world.z();
+                geoJsonRenderDirty_ = true;
+                QQuickFramebufferObject::update();
+                return;
+            } else {
+                geoJsonController_->selectVertex(QString(), -1);
+            }
+        }
+    }
+
     if (rulerEnabled_) {
         if (mouseButton == Qt::MouseButton::RightButton) {
             clearRuler();
@@ -301,6 +388,24 @@ void GraphicsScene3dView::mouseMoveTrigger(Qt::MouseButtons mouseButton, qreal x
     auto to = calculateIntersectionPoint(toOrig, toDir, 0);
     m_ray.setOrigin(toOrig);
     m_ray.setDirection(toDir);
+
+    if (geoJsonEnabled_) {
+        if (geoJsonDragging_ && mouseButton.testFlag(Qt::LeftButton)) {
+            const auto movedWorld = calculateIntersectionPoint(toOrig, toDir, geoJsonDragPlaneZ_);
+            geoJsonController_->updateVertex(geoJsonDragFeatureId_, geoJsonDragVertexIndex_, sceneToGeojson(movedWorld));
+            geoJsonRenderDirty_ = true;
+            QQuickFramebufferObject::update();
+            return;
+        }
+
+        const auto tool = static_cast<GeoJsonController::Tool>(geoJsonController_->tool());
+        if (mouseButton == Qt::MouseButton::NoButton && (tool == GeoJsonController::DrawLine || tool == GeoJsonController::DrawPolygon)) {
+            if (!geoJsonController_->draftCoords().isEmpty()) {
+                geoJsonController_->setPreview(sceneToGeojson(to));
+                geoJsonRenderDirty_ = true;
+            }
+        }
+    }
 
     if (rulerEnabled_ && mouseButton == Qt::MouseButton::NoButton) {
         if (rulerTool_->pointsCount() > 0) {
@@ -356,6 +461,65 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
     clearComboSelectionRect();
 
     m_lastMousePos = { x, y };
+
+    if (geoJsonEnabled_) {
+        if (geoJsonDragging_ && mouseButton.testFlag(Qt::LeftButton)) {
+            stopGeoJsonDrag();
+            geoJsonRenderDirty_ = true;
+            QQuickFramebufferObject::update();
+            return;
+        }
+
+        if (geoJsonIgnoreNextLeftRelease_ && mouseButton.testFlag(Qt::LeftButton)) {
+            geoJsonIgnoreNextLeftRelease_ = false;
+            QQuickFramebufferObject::update();
+            return;
+        }
+
+        if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
+            auto fromOrig = QVector3D(x, height() - y, -1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromEnd = QVector3D(x, height() - y, 1.0f).unproject(m_camera->m_view * m_model, m_projection, boundingRect().toRect());
+            auto fromDir = (fromEnd - fromOrig).normalized();
+            auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
+
+            qDebug() << "[GeoJSON] mouseRelease at scene pos:" << p;
+
+            const auto tool = static_cast<GeoJsonController::Tool>(geoJsonController_->tool());
+            if (tool == GeoJsonController::DrawPoint) {
+                geoJsonController_->setDraft({sceneToGeojson(p)});
+                geoJsonController_->finishDrawing();
+                geoJsonHasLastLeftClick_ = false;
+            } else if (tool == GeoJsonController::DrawLine || tool == GeoJsonController::DrawPolygon) {
+                const QPointF clickPos(x, y);
+                const bool isDoubleClick = geoJsonHasLastLeftClick_ &&
+                                           geoJsonLastLeftClickTimer_.isValid() &&
+                                           geoJsonLastLeftClickTimer_.elapsed() < 350 &&
+                                           (QLineF(clickPos, geoJsonLastLeftClickPos_).length() < 6.0);
+
+                geoJsonLastLeftClickPos_ = clickPos;
+                geoJsonHasLastLeftClick_ = true;
+                geoJsonLastLeftClickTimer_.restart();
+
+                const int need = (tool == GeoJsonController::DrawPolygon) ? 3 : 2;
+                if (isDoubleClick && geoJsonController_->draftCoords().size() >= need) {
+                    geoJsonController_->finishDrawing();
+                    geoJsonController_->clearPreview();
+                    geoJsonHasLastLeftClick_ = false;
+                } else {
+                    geoJsonController_->addDraftVertex(sceneToGeojson(p));
+                    geoJsonController_->clearPreview();
+                }
+            }
+
+            geoJsonRenderDirty_ = true;
+            QQuickFramebufferObject::update();
+        }
+
+        switchedToBottomTrackVertexComboSelectionMode_ = false;
+        wasMoved_ = false;
+        wasMovedMouseButton_ = Qt::MouseButton::NoButton;
+        return;
+    }
 
     if (rulerEnabled_) {
         if (!wasMoved_ && mouseButton.testFlag(Qt::LeftButton)) {
@@ -447,6 +611,17 @@ void GraphicsScene3dView::pinchTrigger(const QPointF& prevCenter, const QPointF&
 
 void GraphicsScene3dView::keyPressTrigger(Qt::Key key)
 {
+    if (geoJsonEnabled_) {
+        if (key == Qt::Key_Delete || key == Qt::Key_Backspace) {
+            geojsonDeleteSelectedFeature();
+            return;
+        }
+        if (key == Qt::Key_Escape) {
+            geojsonCancelDrawing();
+            return;
+        }
+    }
+
     m_bottomTrack->keyPressEvent(key);
 
     QQuickFramebufferObject::update();
@@ -466,6 +641,101 @@ void GraphicsScene3dView::clearRuler()
 {
     rulerTool_->clear();
     QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::setGeoJsonEnabled(bool enabled)
+{
+    if (geoJsonEnabled_ == enabled) {
+        return;
+    }
+
+    geoJsonEnabled_ = enabled;
+    geoJsonController_->setEnabled(geoJsonEnabled_);
+    geoJsonLayer_->setVisible(geoJsonEnabled_);
+
+    if (!geoJsonEnabled_) {
+        stopGeoJsonDrag();
+        geoJsonController_->cancelDrawing();
+        geoJsonHasLastLeftClick_ = false;
+    }
+
+    geoJsonRenderDirty_ = true;
+    rebuildGeoJsonLayerIfNeeded();
+    emit geoJsonEnabledChanged();
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::geojsonFinishDrawing()
+{
+    geoJsonController_->finishDrawing();
+    geoJsonRenderDirty_ = true;
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::geojsonFinishDrawingDoubleClick()
+{
+    geoJsonIgnoreNextLeftRelease_ = true;
+    geojsonFinishDrawing();
+}
+
+void GraphicsScene3dView::geojsonCancelDrawing()
+{
+    geoJsonController_->cancelDrawing();
+    geoJsonRenderDirty_ = true;
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::geojsonUndoLastVertex()
+{
+    geoJsonController_->undoLastVertex();
+    geoJsonRenderDirty_ = true;
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::geojsonDeleteSelectedFeature()
+{
+    geoJsonController_->deleteSelectedFeature();
+    geoJsonRenderDirty_ = true;
+    QQuickFramebufferObject::update();
+}
+
+void GraphicsScene3dView::geojsonFitInView()
+{
+    if (!geoJsonEnabled_) {
+        return;
+    }
+
+    if (!geoJsonBounds_.isValid() || geoJsonBounds_.isEmpty()) {
+        qDebug() << "[GeoJSON] fitInView skipped: bounds invalid/empty";
+        return;
+    }
+
+    const float maxSize = std::max(geoJsonBounds_.width(),
+                                   std::max(geoJsonBounds_.height(), geoJsonBounds_.length()));
+    if (!(maxSize > 0.0f) || !std::isfinite(maxSize)) {
+        qDebug() << "[GeoJSON] fitInView skipped: maxSize invalid" << maxSize;
+        return;
+    }
+
+    const float fov = static_cast<float>(m_camera->fov());
+    const float halfFovRad = qDegreesToRadians(fov * 0.5f);
+    const float tanHalf = std::tan(halfFovRad);
+    if (!(tanHalf > 0.0f) || !std::isfinite(tanHalf)) {
+        return;
+    }
+
+    const float d = (maxSize * 0.5f) / tanHalf * 2.0f;
+    if (d > 0.0f && std::isfinite(d)) {
+        m_camera->setDistance(d);
+    }
+    m_camera->focusOnPosition(geoJsonBounds_.center());
+
+    updatePlaneGrid();
+    updateProjection();
+    QQuickFramebufferObject::update();
+    emit cameraIsMoved();
+
+    qDebug() << "[GeoJSON] fitInView: center" << geoJsonBounds_.center() << "dist" << d;
 }
 
 void GraphicsScene3dView::bottomTrackActionEvent(BottomTrack::ActionEvent actionEvent)
@@ -602,6 +872,16 @@ void GraphicsScene3dView::forceUpdateDatasetLlaRef()
     m_camera->viewLlaRef_ = m_camera->datasetLlaRef_;
 
     QQuickFramebufferObject::update();
+}
+
+bool GraphicsScene3dView::geoJsonEnabled() const
+{
+    return geoJsonEnabled_;
+}
+
+QObject* GraphicsScene3dView::geoJsonController() const
+{
+    return geoJsonController_;
 }
 
 void GraphicsScene3dView::geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry)
@@ -991,6 +1271,254 @@ void GraphicsScene3dView::initAutoDistTimer()
     testingTimer_->start();
 }
 
+QVector3D GraphicsScene3dView::geojsonToScene(const GeoJsonCoord& c) const
+{
+    const double z = c.hasZ ? c.z : 0.0;
+    LLA lla(c.lat, c.lon, z);
+    NED ned(&lla, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+    if(!isfinite(ned.d)){
+        ned.d = 0.0;
+    }
+    return QVector3D(static_cast<float>(ned.n), static_cast<float>(ned.e), static_cast<float>(-ned.d));
+}
+
+GeoJsonCoord GraphicsScene3dView::sceneToGeojson(const QVector3D& p) const
+{
+    NED ned(static_cast<double>(p.x()), static_cast<double>(p.y()), static_cast<double>(-p.z()));
+    qDebug() << "sceneToGeojson NED:" << ned.n << ned.e << ned.d;
+    LLA lla(&ned, &m_camera->viewLlaRef_, m_camera->getIsPerspective());
+
+    GeoJsonCoord c;
+    c.lon = lla.longitude;
+    c.lat = lla.latitude;
+    c.z = std::isfinite(lla.altitude) ? lla.altitude : 0.0;
+    c.hasZ = std::isfinite(lla.altitude);
+
+    return c;
+}
+
+bool GraphicsScene3dView::pickGeoJsonVertex(qreal x, qreal y, QString& outFeatureId, int& outVertexIndex, QVector3D& outWorld) const
+{
+    const auto& doc = geoJsonController_->document();
+    if (doc.features.isEmpty()) {
+        return false;
+    }
+
+    const QRect viewport = boundingRect().toRect();
+    const QPointF target(x, height() - y);
+    const QMatrix4x4 mv = m_camera->m_view * m_model;
+
+    const float thresholdPx = 14.0f;
+    float best = thresholdPx;
+    bool found = false;
+
+    for (const auto& f : doc.features) {
+        for (int i = 0; i < f.coords.size(); ++i) {
+            const QVector3D world = geojsonToScene(f.coords.at(i));
+            const QVector3D win = world.project(mv, m_projection, viewport);
+            const QPointF p(win.x(), win.y());
+            const float dist = static_cast<float>(QLineF(p, target).length());
+            if (dist < best) {
+                best = dist;
+                outFeatureId = f.id;
+                outVertexIndex = i;
+                outWorld = world;
+                found = true;
+            }
+        }
+    }
+
+    return found;
+}
+
+void GraphicsScene3dView::stopGeoJsonDrag()
+{
+    geoJsonDragging_ = false;
+    geoJsonDragFeatureId_.clear();
+    geoJsonDragVertexIndex_ = -1;
+}
+
+void GraphicsScene3dView::rebuildGeoJsonLayerIfNeeded()
+{
+    if (!geoJsonEnabled_ || !geoJsonLayer_ || !geoJsonController_) {
+        return;
+    }
+
+    const bool persp = m_camera->getIsPerspective();
+    const bool viewRefChanged = (geoJsonLastViewRef_ != m_camera->viewLlaRef_);
+    const bool perspChanged = (geoJsonLastPerspective_ != persp);
+    if (!geoJsonRenderDirty_ && !viewRefChanged && !perspChanged) {
+        return;
+    }
+
+    geoJsonLastViewRef_ = m_camera->viewLlaRef_;
+    geoJsonLastPerspective_ = persp;
+    geoJsonRenderDirty_ = false;
+
+    GeoJsonLayer::RenderData rd;
+    rd.enabled = true;
+
+    bool boundsInit = false;
+    float minX = 0.0f, maxX = 0.0f, minY = 0.0f, maxY = 0.0f, minZ = 0.0f, maxZ = 0.0f;
+    auto consider = [&](const QVector3D& p) {
+        if (!std::isfinite(p.x()) || !std::isfinite(p.y()) || !std::isfinite(p.z())) {
+            return;
+        }
+        if (!boundsInit) {
+            boundsInit = true;
+            minX = maxX = p.x();
+            minY = maxY = p.y();
+            minZ = maxZ = p.z();
+            return;
+        }
+        minX = std::min(minX, p.x());
+        maxX = std::max(maxX, p.x());
+        minY = std::min(minY, p.y());
+        maxY = std::max(maxY, p.y());
+        minZ = std::min(minZ, p.z());
+        maxZ = std::max(maxZ, p.z());
+    };
+
+    auto withOpacity = [](QColor c, float opacity01) -> QColor {
+        const float o = std::max(0.0f, std::min(1.0f, opacity01));
+        c.setAlphaF(o);
+        return c;
+    };
+
+    const auto features = geoJsonController_->visibleFeatures();
+    for (const auto* fptr : features) {
+        if (!fptr) {
+            continue;
+        }
+        const auto& f = *fptr;
+        if (f.geomType == GeoJsonGeometryType::Point) {
+            if (f.coords.isEmpty()) {
+                continue;
+            }
+            GeoJsonLayer::Marker m;
+            m.featureId = f.id;
+            m.vertexIndex = 0;
+            m.world = geojsonToScene(f.coords.first());
+            consider(m.world);
+            m.color = f.style.markerColor;
+            m.color.setAlpha(230);
+            m.sizePx = (f.style.markerSizePx > 0.0) ? static_cast<float>(f.style.markerSizePx) : 11.0f;
+            rd.markers.push_back(std::move(m));
+            continue;
+        }
+
+        if (f.geomType == GeoJsonGeometryType::LineString) {
+            if (f.coords.size() < 2) {
+                continue;
+            }
+
+            GeoJsonLayer::Line line;
+            line.id = f.id;
+            line.points.reserve(f.coords.size());
+            for (const auto& c : f.coords) {
+                const auto p = geojsonToScene(c);
+                consider(p);
+                line.points.push_back(p);
+            }
+
+            const QColor stroke = withOpacity(f.style.stroke, static_cast<float>(f.style.strokeOpacity));
+            line.color = stroke;
+            line.widthPx = (f.style.strokeWidthPx > 0.0) ? static_cast<float>(f.style.strokeWidthPx) : 3.0f;
+            rd.lines.push_back(std::move(line));
+
+            for (int i = 0; i < f.coords.size(); ++i) {
+                GeoJsonLayer::Marker m;
+                m.featureId = f.id;
+                m.vertexIndex = i;
+                m.world = geojsonToScene(f.coords.at(i));
+                consider(m.world);
+                m.color = QColor(255, 255, 255, 230);
+                m.sizePx = 8.0f;
+                rd.markers.push_back(std::move(m));
+            }
+            continue;
+        }
+
+        if (f.geomType == GeoJsonGeometryType::Polygon) {
+            if (f.coords.size() < 3) {
+                continue;
+            }
+
+            QVector<QVector3D> ring;
+            ring.reserve(f.coords.size());
+            for (const auto& c : f.coords) {
+                const auto p = geojsonToScene(c);
+                consider(p);
+                ring.push_back(p);
+            }
+            if (ring.size() >= 4 && ring.first() == ring.last()) {
+                ring.removeLast();
+            }
+
+            GeoJsonLayer::Polygon poly;
+            poly.id = f.id;
+            poly.ring = ring;
+            poly.strokeColor = withOpacity(f.style.stroke, static_cast<float>(f.style.strokeOpacity));
+            poly.strokeWidthPx = (f.style.strokeWidthPx > 0.0) ? static_cast<float>(f.style.strokeWidthPx) : 2.0f;
+            poly.fillColor = withOpacity(f.style.fill, static_cast<float>(f.style.fillOpacity));
+            rd.polygons.push_back(std::move(poly));
+
+            for (int i = 0; i < f.coords.size(); ++i) {
+                GeoJsonLayer::Marker m;
+                m.featureId = f.id;
+                m.vertexIndex = i;
+                m.world = geojsonToScene(f.coords.at(i));
+                consider(m.world);
+                m.color = QColor(255, 255, 255, 230);
+                m.sizePx = 8.0f;
+                rd.markers.push_back(std::move(m));
+            }
+            continue;
+        }
+    }
+
+    const auto tool = static_cast<GeoJsonController::Tool>(geoJsonController_->tool());
+    const auto& draft = geoJsonController_->draftCoords();
+    if ((tool == GeoJsonController::DrawLine || tool == GeoJsonController::DrawPolygon) && !draft.isEmpty()) {
+        rd.draftActive = true;
+        rd.draftIsPolygon = (tool == GeoJsonController::DrawPolygon);
+        rd.draftPoints.reserve(draft.size());
+        for (const auto& c : draft) {
+            rd.draftPoints.push_back(geojsonToScene(c));
+        }
+        rd.draftPreviewActive = geoJsonController_->previewActive();
+        if (rd.draftPreviewActive) {
+            rd.draftPreviewPoint = geojsonToScene(geoJsonController_->previewCoord());
+        }
+    }
+
+    if (!geoJsonController_->selectedFeatureId().isEmpty() && geoJsonController_->selectedVertexIndex() >= 0) {
+        const QString fid = geoJsonController_->selectedFeatureId();
+        const int idx = geoJsonController_->selectedVertexIndex();
+        for (const auto* fptr : features) {
+            if (!fptr) {
+                continue;
+            }
+            const auto& f = *fptr;
+            if (f.id == fid && idx >= 0 && idx < f.coords.size()) {
+                rd.selectedActive = true;
+                rd.selectedWorld = geojsonToScene(f.coords.at(idx));
+                consider(rd.selectedWorld);
+                break;
+            }
+        }
+    }
+
+    if (boundsInit) {
+        geoJsonBounds_ = Cube(minX, maxX, minY, maxY, minZ, maxZ);
+    }
+    else {
+        geoJsonBounds_ = Cube();
+    }
+
+    geoJsonLayer_->setRenderData(std::move(rd));
+}
+
 void GraphicsScene3dView::updateMapView()
 {
     if (!m_camera || !mapView_) {
@@ -1210,6 +1738,7 @@ void GraphicsScene3dView::InFboRenderer::synchronize(QQuickFramebufferObject * f
     m_renderer->surfaceViewRenderImpl_      = *(dynamic_cast<SurfaceView::SurfaceViewRenderImplementation*>(view->surfaceView_->m_renderImpl));
     m_renderer->imageViewRenderImpl_        = *(dynamic_cast<ImageView::ImageViewRenderImplementation*>(view->imageView_->m_renderImpl));
     m_renderer->contactsRenderImpl_         = *(dynamic_cast<Contacts::ContactsRenderImplementation*>(view->contacts_->m_renderImpl));
+    m_renderer->geoJsonLayerRenderImpl_     = *(dynamic_cast<GeoJsonLayer::GeoJsonLayerRenderImplementation*>(view->geoJsonLayer_->m_renderImpl));
     m_renderer->rulerToolRenderImpl_        = *(dynamic_cast<RulerTool::RulerToolRenderImplementation*>(view->rulerTool_->m_renderImpl));
     m_renderer->m_polygonGroupRenderImpl    = *(dynamic_cast<PolygonGroup::PolygonGroupRenderImplementation*>(view->m_polygonGroup->m_renderImpl));
     m_renderer->m_pointGroupRenderImpl      = *(dynamic_cast<PointGroup::PointGroupRenderImplementation*>(view->m_pointGroup->m_renderImpl));

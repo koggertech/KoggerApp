@@ -1,7 +1,9 @@
 #include "core.h"
 
 #include <QSettings>
+#include <cmath>
 #include <ctime>
+#include <QDebug>
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
 #ifdef Q_OS_WINDOWS
@@ -1604,6 +1606,7 @@ void Core::saveLLARefToSettings()
         settings.setValue("refLonRad", ref.refLonRad);
         settings.setValue("refLlaLatitude", ref.refLla.latitude);
         settings.setValue("refLlaLongitude", ref.refLla.longitude);
+        settings.setValue("refLlaAltitude", ref.refLla.altitude);
         settings.setValue("isInit", ref.isInit);
         settings.endGroup();
 
@@ -1637,8 +1640,20 @@ void Core::loadLLARefFromSettings()
         ref.refLonRad = settings.value("refLonRad", NAN).toDouble();
         ref.refLla.latitude = settings.value("refLlaLatitude", NAN).toDouble();
         ref.refLla.longitude = settings.value("refLlaLongitude", NAN).toDouble();
+        ref.refLla.altitude = settings.value("refLlaAltitude", 0.0).toDouble();
+
         ref.isInit = settings.value("isInit", false).toBool();
         settings.endGroup();
+
+        if (!std::isfinite(ref.refLla.altitude)) {
+            qWarning() << "Core::loadLLARefFromSettings: refLla.altitude is NaN, forcing 0";
+            ref.refLla.altitude = 0.0;
+        }
+
+        if (!std::isfinite(ref.refLla.latitude) || !std::isfinite(ref.refLla.longitude)) {
+            qWarning() << "Core::loadLLARefFromSettings: invalid lat/lon, disabling isInit";
+            ref.isInit = false;
+        }
 
         datasetPtr_->setLlaRef(ref, Dataset::LlaRefState::kUndefined/*kSettings*/); // TODO!!!
 

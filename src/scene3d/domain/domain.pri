@@ -13,6 +13,7 @@ HEADERS += \
     $$PWD/delaunay_triangulation.h \
     $$PWD/edge.h \
     $$PWD/equals.h \
+    $$PWD/geojson_layer.h \
     $$PWD/grid_generator.h \
     $$PWD/image_view.h \
     $$PWD/map_view.h \
@@ -40,6 +41,7 @@ SOURCES += \
     $$PWD/contour.cpp \
     $$PWD/coordinate_axes.cpp \
     $$PWD/cube.cpp \
+    $$PWD/geojson_layer.cpp \
     $$PWD/image_view.cpp \
     $$PWD/map_view.cpp \
     $$PWD/navigation_arrow.cpp \

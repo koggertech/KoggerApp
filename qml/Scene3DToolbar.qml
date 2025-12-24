@@ -106,6 +106,34 @@ Item  {
                 }
             }
 
+            CheckButton {
+                id: geoJsonToolButton
+                iconSource: "qrc:/icons/ui/map_pin_cog.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checked: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("GeoJSON")
+                    popupPosition: "topRight"
+                }
+
+                onToggled: {
+                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                Component.onCompleted: {
+                    Scene3dToolBarController.onGeoJsonModeChanged(checked)
+                }
+
+                Settings {
+                    property alias geoJsonToolButton: geoJsonToolButton.checked
+                }
+            }
+
             Item {
                 //visible: false
                 id:     locationWrapper

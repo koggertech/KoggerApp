@@ -4,6 +4,8 @@ DEPENDPATH *= $$PWD
 HEADERS += \
     $$PWD/boat_track_control_menu_controller.h \
     $$PWD/bottom_track_control_menu_controller.h \
+    $$PWD/geojson_controller.h \
+    $$PWD/geojson_tree_model.h \
     $$PWD/image_view_control_menu_controller.h \
     $$PWD/map_view_control_menu_controller.h \
     $$PWD/mpc_filter_control_menu_controller.h \
@@ -21,6 +23,8 @@ HEADERS += \
 SOURCES += \
     $$PWD/boat_track_control_menu_controller.cpp \
     $$PWD/bottom_track_control_menu_controller.cpp \
+    $$PWD/geojson_controller.cpp \
+    $$PWD/geojson_tree_model.cpp \
     $$PWD/image_view_control_menu_controller.cpp \
     $$PWD/map_view_control_menu_controller.cpp \
     $$PWD/mpc_filter_control_menu_controller.cpp \

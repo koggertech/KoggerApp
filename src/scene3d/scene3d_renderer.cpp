@@ -155,6 +155,14 @@ void GraphicsScene3dRenderer::drawObjects()
 
     mapViewRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
 
+    //-----------Overlays that should work in any camera/reference state-------------
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    geoJsonLayerRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
+    glDisable(GL_BLEND);
+
     glEnable(GL_DEPTH_TEST);
     if (!isOut) {
         imageViewRenderImpl_.render(this, m_projection * view * m_model, m_shaderProgramMap);
@@ -179,13 +187,6 @@ void GraphicsScene3dRenderer::drawObjects()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     contactsRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
-    glDisable(GL_BLEND);
-
-    //-----------Ruler tool (overlay)-------------
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rulerToolRenderImpl_.render(this, m_model, view, m_projection, m_shaderProgramMap);
     glDisable(GL_BLEND);
 
     //-----------Draw selection rect-------------

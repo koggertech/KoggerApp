@@ -56,6 +56,7 @@
         <file>SmoothMethodUGINSettings.qml</file>
         <file>SmoothMethodTriDivideSettings.qml</file>
         <file>Scene3DToolbar.qml</file>
+        <file>GeoJsonPanel.qml</file>
         <file>one-finger.svg</file>
         <file>tool.svg</file>
         <file>KoggerCommon/MenuBlockEx.qml</file>
