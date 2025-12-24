@@ -482,8 +482,6 @@ void GraphicsScene3dView::mouseReleaseTrigger(Qt::MouseButtons mouseButton, qrea
             auto fromDir = (fromEnd - fromOrig).normalized();
             auto p = calculateIntersectionPoint(fromOrig, fromDir, 0);
 
-            qDebug() << "[GeoJSON] mouseRelease at scene pos:" << p;
-
             const auto tool = static_cast<GeoJsonController::Tool>(geoJsonController_->tool());
             if (tool == GeoJsonController::DrawPoint) {
                 geoJsonController_->setDraft({sceneToGeojson(p)});

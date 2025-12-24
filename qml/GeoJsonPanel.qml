@@ -3,13 +3,11 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Dialogs
 
-Item {
+MenuFrame {
     id: root
     property var geo: null
     property var view: null
 
-    implicitWidth: 380
-    implicitHeight: 460
 
     function toLocalPath(url) {
         var s = url.toString()
@@ -30,18 +28,7 @@ Item {
         return geo.currentFolderId
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: 8
-        color: "#1e1e1e"
-        border.color: "#3a3a3a"
-        border.width: 1
-        opacity: 0.92
-    }
-
     ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 10
         spacing: 8
 
         RowLayout {
@@ -86,7 +73,7 @@ Item {
                 }
             }
 
-            Item { Layout.fillWidth: true }
+            // Item { Layout.fillWidth: true }
 
             Label {
                 text: geo ? geo.currentFile : ""
@@ -126,15 +113,6 @@ Item {
                 text: "Add Child"
                 enabled: geo !== null
                 onClicked: if (geo) geo.addFolderToCurrent()
-            }
-
-            Item { Layout.fillWidth: true }
-
-            Label {
-                text: geo ? ("Folder: " + geo.currentFolderName) : "Folder: -"
-                color: "#cfcfcf"
-                elide: Label.ElideRight
-                Layout.fillWidth: true
             }
         }
 
@@ -191,7 +169,7 @@ Item {
                 onClicked: if (geo) geo.cancelDrawing()
             }
 
-            Item { Layout.fillWidth: true }
+            // Item { Layout.fillWidth: true }
 
             CheckButton {
                 checkable: false
@@ -206,7 +184,9 @@ Item {
         ListView {
             id: list
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            height: count*theme.controlHeight
+            Layout.preferredHeight: count*(theme.controlHeight+4)
+            Layout.maximumHeight: 10*(theme.controlHeight+4)
             clip: true
             spacing: 4
             model: geo ? geo.treeModel : null
@@ -214,16 +194,16 @@ Item {
             delegate: Rectangle {
                 id: nodeItem
                 width: list.width
-                height: row.implicitHeight + 10
-                radius: 6
+                height: row.implicitHeight
+                radius: 2
                 color: (geo && geo.selectedNodeId === model.id) ? "#2b4f7a" : "#2a2a2a"
-                border.color: "#3a3a3a"
+                border.color: "transparent"
                 border.width: 1
 
                 RowLayout {
                     id: row
                     anchors.fill: parent
-                    anchors.margins: 6
+                    // anchors.margins: 6
                     spacing: 6
 
                     Item {
@@ -284,61 +264,52 @@ Item {
             }
         }
 
-        Rectangle {
-            visible: geo ? geo.selectedFeatureId !== "" : false
-            color: "#262626"
-            radius: 6
-            border.color: "#3a3a3a"
-            border.width: 1
-            Layout.fillWidth: true
+        ColumnLayout {
+            // anchors.fill: parent
+            anchors.margins: 6
+            spacing: 4
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 6
-                spacing: 4
+            Label {
+                text: "Vertices"
+                color: "white"
+            }
 
-                Label {
-                    text: "Vertices"
-                    color: "white"
-                }
+            Repeater {
+                model: geo ? geo.featureModel : null
+                delegate: ColumnLayout {
+                    width: parent.width
+                    property string featureId: model.id
+                    property string featureGeomType: model.geomType
+                    property int featureVertexCount: model.vertexCount
+                    property var featureCoords: model.coords ? model.coords : []
+                    visible: geo && geo.selectedFeatureId === featureId
+                    spacing: 2
 
-                Repeater {
-                    model: geo ? geo.featureModel : null
-                    delegate: ColumnLayout {
-                        width: parent.width
-                        property string featureId: model.id
-                        property string featureGeomType: model.geomType
-                        property int featureVertexCount: model.vertexCount
-                        property var featureCoords: model.coords ? model.coords : []
-                        visible: geo && geo.selectedFeatureId === featureId
-                        spacing: 2
+                    Label {
+                        text: featureGeomType + " (" + featureVertexCount + ")"
+                        color: "#cfcfcf"
+                    }
 
-                        Label {
-                            text: featureGeomType + " (" + featureVertexCount + ")"
-                            color: "#cfcfcf"
-                        }
+                    Repeater {
+                        model: featureCoords
+                        delegate: Label {
+                            property var c: modelData
+                            property var firstCoord: (featureCoords && featureCoords.length > 0) ? featureCoords[0] : null
+                            property bool isClosing: (featureGeomType === "Polygon"
+                                                     && (index === (featureCoords.length - 1))
+                                                     && firstCoord
+                                                     && c
+                                                     && (c.lat === firstCoord.lat)
+                                                     && (c.lon === firstCoord.lon)
+                                                     && (c.z === firstCoord.z))
 
-                        Repeater {
-                            model: featureCoords
-                            delegate: Label {
-                                property var c: modelData
-                                property var firstCoord: (featureCoords && featureCoords.length > 0) ? featureCoords[0] : null
-                                property bool isClosing: (featureGeomType === "Polygon"
-                                                         && (index === (featureCoords.length - 1))
-                                                         && firstCoord
-                                                         && c
-                                                         && (c.lat === firstCoord.lat)
-                                                         && (c.lon === firstCoord.lon)
-                                                         && (c.z === firstCoord.z))
-
-                                visible: !isClosing
-                                text: "  Point #" + (index + 1)
-                                      + "  Lat: " + Number(c.lat).toFixed(6)
-                                      + ", Lon: " + Number(c.lon).toFixed(6)
-                                color: "#e6e6e6"
-                                elide: Label.ElideRight
-                                Layout.fillWidth: true
-                            }
+                            visible: !isClosing
+                            text: "  Point #" + (index + 1)
+                                  + "  Lat: " + Number(c.lat).toFixed(6)
+                                  + ", Lon: " + Number(c.lon).toFixed(6)
+                            color: "#e6e6e6"
+                            elide: Label.ElideRight
+                            Layout.fillWidth: true
                         }
                     }
                 }
