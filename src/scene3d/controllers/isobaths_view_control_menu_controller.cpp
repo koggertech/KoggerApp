@@ -48,6 +48,8 @@ void IsobathsViewControlMenuController::tryInitPendingLambda()
     if (!pendingLambda_) {
         pendingLambda_ = [this] () -> void {
             if (graphicsSceneViewPtr_) {
+                graphicsSceneViewPtr_->setIsUpdateSurface(processState_);
+
                 if (dataProcessorPtr_) {
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateSurface",                Qt::QueuedConnection, Q_ARG(bool,  processState_));
                     QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths",               Qt::QueuedConnection, Q_ARG(bool,  processState_));
@@ -184,6 +186,8 @@ void IsobathsViewControlMenuController::onProcessStateChanged(bool state)
     processState_ = state;
 
     if (graphicsSceneViewPtr_) {
+        graphicsSceneViewPtr_->setIsUpdateSurface(processState_);
+
         if (dataProcessorPtr_) {
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateSurface",  Qt::QueuedConnection, Q_ARG(bool, processState_));
             QMetaObject::invokeMethod(dataProcessorPtr_, "setUpdateIsobaths", Qt::QueuedConnection, Q_ARG(bool, processState_));

@@ -214,16 +214,19 @@ void DataProcessor::setIsOpeningFile(bool state)
 
 void DataProcessor::onCameraMovedSec()
 {
-    if (!updateMosaic_) {
+    if (!updateMosaic_ && !updateSurface_) {
         return;
     }
 
     auto epTiles =  collectEpochsForTiles(lastDataZoomIndx_, lastVisTileKeys_);
 
-    //qDebug() << "DataProcessor::onCameraMoved" << epTiles;
+    for (auto it = epTiles.cbegin(); it != epTiles.cend(); ++it) {
+        auto itm = (*it).first;
+        pendingSurfaceIndxs_.insert(qMakePair('0', itm));
+    }
 
-    if (epTiles.isEmpty()) {
-        return;
+    if (updateSurface_ && !updateMosaic_) {
+        pendingIsobathsWork_ = true;
     }
 
     //qDebug() << "add pending" << epIndxs.size();

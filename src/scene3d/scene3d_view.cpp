@@ -53,7 +53,8 @@ GraphicsScene3dView::GraphicsScene3dView() :
     lastMaxX_(std::numeric_limits<float>::lowest()),
     lastMinY_(std::numeric_limits<float>::max()),
     lastMaxY_(std::numeric_limits<float>::lowest()),
-    isUpdateMosaic_(false)
+    isUpdateMosaic_(false),
+    isUpdateSurface_(false)
 {
     setObjectName("GraphicsScene3dView");
     setMirrorVertically(true);
@@ -1113,9 +1114,10 @@ void GraphicsScene3dView::updateSurfaceView()
 
 void GraphicsScene3dView::calcVisEpochIndxs()
 {
-    if (!isUpdateMosaic_) {
+    if (!isUpdateMosaic_ && !isUpdateSurface_) {
         return;
     }
+
     if (!datasetPtr_) {
         return;
     }
@@ -1225,6 +1227,11 @@ void GraphicsScene3dView::setIsNorth(bool state)
 void GraphicsScene3dView::setIsUpdateMosaic(bool state)
 {
     isUpdateMosaic_ = state;
+}
+
+void GraphicsScene3dView::setIsUpdateSurface(bool state)
+{
+    isUpdateSurface_ = state;
 }
 
 //---------------------Renderer---------------------------//

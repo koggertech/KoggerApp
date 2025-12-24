@@ -268,6 +268,7 @@ public Q_SLOTS:
     void onPositionAdded(uint64_t indx);
     void setIsNorth(bool state);
     void setIsUpdateMosaic(bool state);
+    void setIsUpdateSurface(bool state);
 
 signals:
     void sendRectRequest(QVector<LLA> rect, bool isPerspective, LLARef viewLlaRef, bool moveUp, map::CameraTilt tiltCam);
@@ -362,6 +363,7 @@ private:
     QSet<TileKey> lastVisTileKeys_;
 
     bool isUpdateMosaic_;
+    bool isUpdateSurface_;
 };
 
 #endif // GRAPHICSSCENE3DVIEW_H
