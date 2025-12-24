@@ -975,7 +975,7 @@ void DataProcessor::openDB()
     }
 
     // writer
-    dbWriter_ = new MosaicDB(filePath_, DbRole::Writer, false /*deleting temp db files*/);
+    dbWriter_ = new MosaicDB(filePath_, DbRole::Writer, true /*delete temp db files*/);
     dbWriter_->moveToThread(&dbWriteThread_);
 
     connect(&dbWriteThread_, &QThread::finished, dbWriter_, &QObject::deleteLater);
@@ -1039,6 +1039,10 @@ void DataProcessor::closeDB()
 
     dbIsReady_.store(false, std::memory_order_relaxed);
     notifyPrefetchProgress(); // сообщить префетчерам
+
+    if (!filePath_.isEmpty() && !MosaicDB::removeDbFiles(filePath_)) {
+        qWarning() << "Failed to remove mosaic cache" << filePath_;
+    }
 
     qDebug() << "DB closed";
 }
@@ -1187,7 +1191,14 @@ void DataProcessor::onUpdateMosaic(int zoom) // calc or db
 
 void DataProcessor::setFilePath(QString filePath)
 {
-    filePath_ = filePath;
+    Q_UNUSED(filePath);
+
+    const QString dbPath = MosaicDB::surfaceDbPath();
+    if (!MosaicDB::removeDbFiles(dbPath)) {
+        qWarning() << "Failed to cleanup previous mosaic cache" << dbPath;
+    }
+
+    filePath_ = dbPath;
 
     openDB();
 }

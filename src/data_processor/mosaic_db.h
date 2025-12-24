@@ -37,6 +37,9 @@ public:
     explicit MosaicDB(const QString& klfPath, DbRole role, bool deleteOnClose = false, QObject* parent = nullptr);
     ~MosaicDB();
 
+    static QString surfaceDbPath();
+    static bool removeDbFiles(const QString& dbPath);
+
 public slots:
     bool open();
     void close();
@@ -71,13 +74,10 @@ private:
     static QByteArray packMarksU8(const QVector<HeightType>& marks);
     static void       unpackMarksU8(const QByteArray& blob, QVector<HeightType>& marks);
 
-    bool removeDbFiles();
-
 private:
     const int    kMaxPairsPerBatch_ = 128; // запись пачками
     const int    busyTimeoutMs_ = 2000;
     QSqlDatabase db_;
-    QString      klfPath_;
     QString      dbPath_;
     QString      connName_;
     DbRole       role_;
