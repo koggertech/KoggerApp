@@ -13,14 +13,12 @@
         <file>TabBackStyle.qml</file>
         <file>ComboBackStyle.qml</file>
         <file>BackStyle.qml</file>
-        <file>ButtonBackStyle.qml</file>
         <file>AdjBox.qml</file>
         <file>CSlider.qml</file>
         <file>UpgradeBox.qml</file>
         <file>AdjBoxBack.qml</file>
         <file>TitleMeasurement.qml</file>
         <file>CRButton.qml</file>
-        <file>CProgressButton.qml</file>
         <file>TitleSetup.qml</file>
         <file>MenuScroll.qml</file>
         <file>MenuBlock.qml</file>
@@ -59,22 +57,6 @@
         <file>GeoJsonPanel.qml</file>
         <file>one-finger.svg</file>
         <file>tool.svg</file>
-        <file>KoggerCommon/MenuBlockEx.qml</file>
-        <file>KoggerCommon/qmldir</file>
-        <file>KoggerCommon/KButton.qml</file>
-        <file>KoggerCommon/KCheck.qml</file>
-        <file>KoggerCommon/KCombo.qml</file>
-        <file>KoggerCommon/KComboBox.qml</file>
-        <file>KoggerCommon/KParamGroup.qml</file>
-        <file>KoggerCommon/KParamSetup.qml</file>
-        <file>KoggerCommon/KProgress.qml</file>
-        <file>KoggerCommon/KProgressButton.qml</file>
-        <file>KoggerCommon/KRadioDel.qml</file>
-        <file>KoggerCommon/KRButton.qml</file>
-        <file>KoggerCommon/KSlider.qml</file>
-        <file>KoggerCommon/KText.qml</file>
-        <file>KoggerCommon/KTextField.qml</file>
-        <file>KoggerCommon/KSpinBox.qml</file>
         <file>SceneControlMenu.qml</file>
         <file>BottomTrackControlMenu.qml</file>
         <file>MpcFilterControlMenu.qml</file>
@@ -83,7 +65,6 @@
         <file>PolygonGroupControlMenu.qml</file>
         <file>fit-in-view.svg</file>
         <file>Plot2D.qml</file>
-        <file>KoggerCommon/KWaitProgressBar.qml</file>
         <file>combo-selection.svg</file>
         <file>Scene3DControlMenu.qml</file>
         <file>MenuRow.qml</file>

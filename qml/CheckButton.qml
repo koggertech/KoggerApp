@@ -16,6 +16,7 @@ Button {
     property color borderColor: theme.controlSolidBorderColor
     property string iconSource: ""
     property real   iconScale: 0.80
+    readonly property bool hoverActive: control.hovered && control.enabled && !control.active
 
     implicitHeight: theme.controlHeight
     //implicitWidth: icon.width + textWidth + leftPadding + rightPadding
@@ -46,9 +47,16 @@ Button {
         radius: 2
         height: parent.height
         width: parent.width
-        color: control.active ? control.checkedBackColor : control.backColor
-        border.color: control.active ? control.checkedBorderColor : control.borderColor
+        color: control.active ? control.checkedBackColor
+                              : hoverActive ? theme.hoveredBackColor
+                                            : control.backColor
+        border.color: control.active ? control.checkedBorderColor
+                                     : hoverActive ? theme.controlSolidBorderColor
+                                                   : control.borderColor
         border.width: control.borderWidth
+
+        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on border.color { ColorAnimation { duration: 120 } }
     }
 
     onCheckableChanged: {
