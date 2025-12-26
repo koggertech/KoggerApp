@@ -632,6 +632,10 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
                     if (!t->getIsInited()) {
                         need.insert(cKey);
                     }
+                    // if before was surf proc on changing zoom
+                    //if (t->getHeadIndx() == -1) {
+                    //    need.insert(cKey);
+                    //}
                 }
             }
 
@@ -964,7 +968,7 @@ void MosaicProcessor::updateData(const QVector<int>& indxs)
     }
 
     // emit data
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, true));
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res));
     //if (haveLastPair) {
     //    QMetaObject::invokeMethod(dataProcessor_, "postTraceLines", Qt::QueuedConnection,
     //        Q_ARG(QVector3D, lastLeftBeg),

@@ -27,13 +27,13 @@ void HotTileCache::setCapacity(size_t maxCap, size_t minCap)
     evictIfNeeded();
 }
 
-void HotTileCache::putBatch(TileMap&& tiles, DataSource source, bool useTextures)
+void HotTileCache::putBatch(TileMap&& tiles, DataSource source)
 {
     for (auto it = tiles.begin(); it != tiles.end(); ++it) {
         TileKey     key = it.key();
         SurfaceTile val = std::move(it.value());
 
-        upsertMove(std::move(key), std::move(val), source, useTextures);
+        upsertMove(std::move(key), std::move(val), source);
     }
 
     tiles.clear();
@@ -49,16 +49,13 @@ TileMap HotTileCache::getForKeys(const QSet<TileKey>& keys, QSet<TileKey>* missi
     for (const auto& k : keys) {
         auto it = index_.find(k);
         if (it == index_.end()) {
-            if (missing) missing->insert(k);
+            if (missing) {
+                missing->insert(k);
+            }
             continue;
         }
 
         ListIt nodeIt = it.value();
-
-        if (!nodeIt->hasTextures) {
-            if (missing) missing->insert(k);
-            continue;
-        }
 
         touch(nodeIt);
         out.insert(k, nodeIt->tile);
@@ -115,7 +112,7 @@ void HotTileCache::touch(ListIt it)
     nodes_.splice(nodes_.begin(), nodes_, it);
 }
 
-void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source, bool useTextures)
+void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source)
 {
     auto it = index_.find(key);
     const bool incomingIsCalc = (source == DataSource::kCalculation);
@@ -131,10 +128,8 @@ void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source,
                 return;
             }
             else {
-                // узел заблокирован и пришёл новый расчёт - пишем и снимаем блок (чтобы ACK не удалил)
                 nodeIt->tile        = std::move(val);
                 nodeIt->source      = source;
-                nodeIt->hasTextures = useTextures;
                 nodeIt->blocked     = false; // снимаем блок
                 touch(nodeIt);
             }
@@ -143,15 +138,13 @@ void HotTileCache::upsertMove(TileKey key, SurfaceTile &&val, DataSource source,
             if (curIsCalc && !incomingIsCalc) { // в кеше расчёт (актуальнее), а пришло из БД - игнорируем
                 return;
             }
-
             nodeIt->tile        = std::move(val); // иначе принимаем обновление
             nodeIt->source      = source;
-            nodeIt->hasTextures = useTextures;
             touch(nodeIt);
         }
     }
     else {
-        nodes_.push_front(Node{ std::move(key), std::move(val), source, useTextures, /*blocked*/false }); // новый узел
+        nodes_.push_front(Node{ std::move(key), std::move(val), source, /*blocked*/false }); // новый узел
         index_.insert(nodes_.front().key, nodes_.begin());
     }
 }

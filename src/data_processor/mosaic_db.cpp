@@ -219,7 +219,6 @@ bool MosaicDB::ensureSchema()
             " origin_x   REAL    NOT NULL,"
             " origin_y   REAL    NOT NULL,"
             " head_indx  INTEGER NOT NULL,"
-            " has_mosaic INTEGER NOT NULL,"
             " mosaic_blob BLOB,"
             " has_height INTEGER NOT NULL,"
             " height_fmt INTEGER NOT NULL,"
@@ -351,16 +350,16 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
     q.prepare(
         "INSERT INTO tiles("
         "zoom,x,y,tile_px,hm_ratio,origin_x,origin_y,head_indx,"
-        "has_mosaic,mosaic_blob,"
+        "mosaic_blob,"
         "has_height,height_fmt,height_blob,"
         "has_marks,marks_fmt,marks_blob,"
         "updated_at,engine_ver)"
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
         "ON CONFLICT(zoom,x,y) DO UPDATE SET "
         " tile_px=excluded.tile_px, hm_ratio=excluded.hm_ratio,"
         " origin_x=excluded.origin_x, origin_y=excluded.origin_y,"
         " head_indx=excluded.head_indx,"
-        " has_mosaic=excluded.has_mosaic, mosaic_blob=excluded.mosaic_blob,"
+        " mosaic_blob=excluded.mosaic_blob,"
         " has_height=excluded.has_height, height_fmt=excluded.height_fmt, height_blob=excluded.height_blob,"
         " has_marks=excluded.has_marks, marks_fmt=excluded.marks_fmt, marks_blob=excluded.marks_blob,"
         " updated_at=excluded.updated_at, engine_ver=excluded.engine_ver"
@@ -409,7 +408,6 @@ void MosaicDB::saveTiles(int engineVer, const QHash<TileKey, SurfaceTile>& tiles
         q.addBindValue(double(org.x()));   // origin_x
         q.addBindValue(double(org.y()));   // origin_y
         q.addBindValue(t.getHeadIndx());
-        q.addBindValue(int(hasMosaic));
         q.addBindValue(mosaicBlob);
         q.addBindValue(int(hasHeight));
         q.addBindValue(0);                 // height_fmt = float32
@@ -466,7 +464,7 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
                 QStringLiteral(
                     "SELECT x,y,zoom,origin_x,origin_y,tile_px,hm_ratio,head_indx,"
                     "       mosaic_blob, height_blob, marks_blob,"
-                    "       has_mosaic, has_height, has_marks "
+                    "       has_height, has_marks "
                     "FROM tiles "
                     "WHERE zoom=? AND ( %1 );")
                     .arg(makeXYOrClause(count));
@@ -505,9 +503,8 @@ void MosaicDB::loadTilesForKeys(const QSet<TileKey> &keys)
                 t.heightBlob = q.value(9).toByteArray();
                 t.marksBlob  = q.value(10).toByteArray();
 
-                t.hasMosaic  = q.value(11).toInt() != 0;
-                t.hasHeight  = q.value(12).toInt() != 0;
-                t.hasMarks   = q.value(13).toInt() != 0;
+                t.hasHeight  = q.value(11).toInt() != 0;
+                t.hasMarks   = q.value(12).toInt() != 0;
 
                 out.push_back(std::move(t));
             }

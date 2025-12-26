@@ -355,6 +355,7 @@ void SurfaceView::setTiles(const QHash<TileKey, SurfaceTile> &tiles, bool useTex
 
 void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, const QSet<TileKey> &fullVisibleNow)
 {
+    //qDebug() << "SurfaceView::setTilesIncremental" << tiles.size() ;
     auto* r = RENDER_IMPL(SurfaceView);
     if (!r) {
         return;
@@ -406,9 +407,9 @@ void SurfaceView::setTilesIncremental(const QHash<TileKey, SurfaceTile> &tiles, 
                 curIt.value() = inTile;
                 curIt.value().setMosaicTextureId(texId);
 
-                if (inTile.updateHint() == UpdateHint::kUpdateTexture ||
-                    inTile.updateHint() == UpdateHint::kAddOrUpdateTexture)
-                {
+                if (!inTile.getMosaicImageDataCRef().empty() ||
+                    inTile.updateHint() == UpdateHint::kUpdateTexture ||
+                    inTile.updateHint() == UpdateHint::kAddOrUpdateTexture) {
                     mosaicTileTextureToAppend_.insert(key, curIt.value().getMosaicImageDataCRef());
                 }
             }

@@ -16,7 +16,7 @@ public:
 
     void setDataProcessorPtr(DataProcessor* ptr);;
     void setCapacity(size_t maxCap, size_t minCap = 0);
-    void putBatch(TileMap&& tiles, DataSource source, bool useTextures);
+    void putBatch(TileMap&& tiles, DataSource source);
     TileMap getForKeys(const QSet<TileKey>& keys, QSet<TileKey>* missing);
     bool contains(const TileKey& k) const;
     bool checkAnyTileForZoom(int targetZoom) const;
@@ -29,13 +29,12 @@ private:
         TileKey     key;
         SurfaceTile tile;
         DataSource  source      = DataSource::kUndefined;
-        bool        hasTextures = false;
         bool        blocked     = false;
     };
     using ListIt = std::list<Node>::iterator;
 
     void touch(ListIt it);
-    void upsertMove(TileKey key, SurfaceTile&& val, DataSource source, bool useTextures);
+    void upsertMove(TileKey key, SurfaceTile&& val, DataSource source);
     void evictIfNeeded();
 
 private:

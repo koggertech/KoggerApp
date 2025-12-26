@@ -17,7 +17,6 @@ struct DbTile {
     int         hmRatio     = defaultTileHeightMatrixRatio;
     double      originX     = 0.0;   // origin при расчёте, возможно ломается при переоткрытии
     double      originY     = 0.0;
-    bool        hasMosaic   = false;
     QByteArray  mosaicBlob;   // qCompress(256*256 RAW8)
     bool        hasHeight   = false;
     int         heightFmt   = 0; // 0=float32, 1=int16+scale

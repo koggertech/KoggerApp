@@ -90,6 +90,9 @@ inline float tileSideMetersFromZoom(int zoom, int tileSidePx = 256)
 
 
 struct TileKey {
+    TileKey() = default;
+    TileKey(int _x, int _y, int _zoom) : x(_x), y(_y), zoom(_zoom) {};
+
     int x{0};
     int y{0};
     int zoom{1}; // 0..6

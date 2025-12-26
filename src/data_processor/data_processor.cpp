@@ -541,7 +541,7 @@ void DataProcessor::runCoalescedWork()
 
     WorkBundle wb;
 
-    if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && updateSurface_) { // TODO: or     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (/*updateBottomTrack_ || */updateIsobaths_ || updateMosaic_)) { ???
+    if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (updateSurface_ /*|| updateMosaic_*/)) { // TODO: or     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (/*updateBottomTrack_ || */updateIsobaths_ || updateMosaic_)) { ???
         wb.surfaceVec.reserve(pendingSurfaceIndxs_.size());
 
         for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
@@ -580,6 +580,11 @@ void DataProcessor::runCoalescedWork()
     if (wb.surfaceVec.isEmpty() && wb.mosaicVec.isEmpty() && !wb.doIsobaths) {
         pendingIsobathsWork_ = false;
         return;
+    }
+
+    if (updateMosaic_) {
+        wb.doIsobaths = false;
+        pendingIsobathsWork_ = false;
     }
 
     nextRunPending_.store(false);
@@ -640,7 +645,7 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
     for (const DbTile& dt : dbTiles) {
         SurfaceTile tile(dt.key, QVector3D(dt.originX, dt.originY, 0.0f));
         tile.init(dt.tilePx, dt.hmRatio, mppFromZoom(dt.key.zoom));
-        if (dt.hasMosaic && !dt.mosaicBlob.isEmpty()) {
+        if (dt.headIndx != -1 &&!dt.mosaicBlob.isEmpty()) {
             auto bytes = MosaicDB::unpackRaw8(dt.mosaicBlob);
             auto& img = tile.getMosaicImageDataRef();
             if (static_cast<int>(bytes.size()) == int(img.size())) {
@@ -666,7 +671,7 @@ void DataProcessor::onDbTilesLoaded(const QList<DbTile> &dbTiles)
     }
 
     if (!outTiles.isEmpty()) {
-        hotCache_.putBatch(std::move(outTiles), DataSource::kDataBase, /*useTextures=*/true);
+        hotCache_.putBatch(std::move(outTiles), DataSource::kDataBase);
         notifyPrefetchProgress(); // сообщить префетчерам
     }
 
@@ -806,7 +811,7 @@ void DataProcessor::postIsobathsLabels(const QVector<IsobathUtils::LabelParamete
     emit sendIsobathsLabels(labels);
 }
 
-void DataProcessor::postSurfaceTiles(TileMap tiles, bool useTextures)
+void DataProcessor::postSurfaceTiles(TileMap tiles)
 {
     if (tiles.isEmpty()) {
         return;
@@ -825,10 +830,8 @@ void DataProcessor::postSurfaceTiles(TileMap tiles, bool useTextures)
         }
     }
 
-    if (useTextures) {
-        hotCache_.putBatch(std::move(tiles), DataSource::kCalculation, /*useTextures=*/true);
-        notifyPrefetchProgress(); // сообщить префетчерам
-    }
+    hotCache_.putBatch(std::move(tiles), DataSource::kCalculation);
+    notifyPrefetchProgress(); // сообщить префетчерам
 
     if (!prepaired.isEmpty()) {
         emitDelta(std::move(prepaired), DataSource::kCalculation);

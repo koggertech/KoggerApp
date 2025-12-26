@@ -1,6 +1,7 @@
 #include "isobaths_processor.h"
 
 #include <cmath>
+#include <cstring>
 #include <QDebug>
 #include "data_processor.h"
 #include "bottom_track.h"
@@ -55,8 +56,105 @@ void SurfaceProcessor::setSurfaceMeshPtr(SurfaceMesh *surfaceMeshPtr)
     surfaceMeshPtr_ = surfaceMeshPtr;
 }
 
+void SurfaceProcessor::ensureTileInited(SurfaceTile* tile, int tileSidePix)
+{
+    if (!tile || tile->getIsInited()) {
+        return;
+    }
+
+    auto applyTile = [&](const SurfaceTile& src) {
+        tile->setOrigin(src.getOrigin());
+        tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+        tile->setHeadIndx(src.getHeadIndx());
+
+        auto& di = tile->getMosaicImageDataRef();
+        const auto& si = src.getMosaicImageDataCRef();
+        if (di.size() == si.size() && !si.empty()) {
+            memcpy(di.data(), si.data(), size_t(di.size()));
+        }
+
+        const auto& srcHeights = src.getHeightVerticesCRef();
+        if (!srcHeights.isEmpty()) {
+            tile->getHeightVerticesRef() = srcHeights;
+        }
+
+        const auto& srcMarks = src.getHeightMarkVerticesCRef();
+        if (!srcMarks.isEmpty()) {
+            tile->getHeightMarkVerticesRef() = srcMarks;
+        }
+
+        tile->updateHeightIndices();
+        tile->setIsUpdated(false);
+    };
+
+    if (dataProcessor_) {
+        QSet<TileKey> keys;
+        keys.insert(tile->getKey());
+        QSet<TileKey> missing;
+        TileMap got;
+
+        if (QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection,
+                                      Q_RETURN_ARG(TileMap, got),
+                                      Q_ARG(QSet<TileKey>, keys),
+                                      Q_ARG(QSet<TileKey>*, &missing)) && !got.isEmpty()) {
+            applyTile(got.cbegin().value());
+            return;
+        }
+
+        QSet<TileKey> waiting;
+        if (QMetaObject::invokeMethod(dataProcessor_, "filterNotFoundOut", Qt::BlockingQueuedConnection,
+                                      Q_ARG(QSet<TileKey>, missing),
+                                      Q_ARG(QSet<TileKey>*, &waiting))) {
+            if (!waiting.isEmpty() && dataProcessor_->isDbReady()) {
+                while (!waiting.isEmpty()) {
+                    QMetaObject::invokeMethod(dataProcessor_, "requestTilesFromDB", Qt::QueuedConnection,
+                                              Q_ARG(QSet<TileKey>, waiting));
+
+                    quint64 t0 = 0;
+                    QMetaObject::invokeMethod(dataProcessor_, "prefetchProgressTick", Qt::BlockingQueuedConnection,
+                                              Q_RETURN_ARG(quint64, t0));
+                    dataProcessor_->prefetchWait(t0);
+
+                    if (canceled()) {
+                        break;
+                    }
+
+                    QSet<TileKey> stillMissing;
+                    TileMap newlyGot;
+                    if (!QMetaObject::invokeMethod(dataProcessor_, "fetchFromHotCache", Qt::BlockingQueuedConnection,
+                                                  Q_RETURN_ARG(TileMap, newlyGot),
+                                                  Q_ARG(QSet<TileKey>, waiting),
+                                                  Q_ARG(QSet<TileKey>*, &stillMissing))) {
+                        break;
+                    }
+
+                    if (!QMetaObject::invokeMethod(dataProcessor_, "filterNotFoundOut", Qt::BlockingQueuedConnection,
+                                                  Q_ARG(QSet<TileKey>, stillMissing),
+                                                  Q_ARG(QSet<TileKey>*, &stillMissing))) {
+                        break;
+                    }
+
+                    if (!newlyGot.isEmpty()) {
+                        auto it = newlyGot.constFind(tile->getKey());
+                        if (it != newlyGot.cend()) {
+                            applyTile(it.value());
+                            return;
+                        }
+                    }
+
+                    waiting.swap(stillMissing);
+                }
+            }
+        }
+    }
+
+    tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
+}
+
 void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> &indxs)
 {
+    //qDebug() << "SurfaceProcessor::onUpdatedBottomTrackData" << indxs.size();
+
     if (indxs.empty()) {
         return;
     }
@@ -220,9 +318,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
                 const int hvIdx = hy * hvSide + hx;
 
                 SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
-                if (!tile->getIsInited()) { // TODO PREFETCH!
-                    tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
-                }
+                ensureTileInited(tile, tileSidePix);
 
                 auto& mark = tile->getHeightMarkVerticesRef()[hvIdx];
 
@@ -278,9 +374,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
             const int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
 
             SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
-            if (!tile->getIsInited()) { // TODO PREFETCH!
-                tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
-            }
+            ensureTileInited(tile, tileSidePix);
 
             auto& mark = tile->getHeightMarkVerticesRef()[hvIdx];
             if (strongWrite) { // линия не трогает ни мозайку, ни триангуляцию
@@ -491,7 +585,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         res.insert((*it)->getKey(), (*(*it)));
     }
 
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res));
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
 }
 
@@ -615,9 +709,7 @@ void SurfaceProcessor::writeTriangleToMesh(const QVector3D &A, const QVector3D &
             int hvIdx = (locY / stepPix) * hvSide + (locX / stepPix);
 
             SurfaceTile* tile = surfaceMeshPtr_->getTileMatrixRef()[tileY][tileX];
-            if (!tile->getIsInited()) { // TODO PREFETCH!
-                tile->init(tileSidePix, tileHeightMatrixRatio_, tileResolution_);
-            }
+            ensureTileInited(tile, tileSidePix);
 
             tile->getHeightVerticesRef()[hvIdx][2]  = interpZ;
             tile->getHeightMarkVerticesRef()[hvIdx] = HeightType::kTriangulation;
@@ -723,9 +815,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
             if (ty + 1 < tilesY) { // вверх, строка 0 в последнюю верхнего тайла
                 SurfaceTile* top = matrix[ty + 1][tx];
-                if (!top->getIsInited()) { // TODO PREFETCH!
-                    top->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
+                ensureTileInited(top, tileSidePixelSize_);
                 copyRow(t, top, 0, hvSide - 1);
                 top->setIsUpdated(true);
                 changedTiles.insert(top);
@@ -733,9 +823,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
             if (tx > 0) { // влево, столбец 0 в правый столбец левого тайла
                 SurfaceTile* left = matrix[ty][tx - 1];
-                if (!left->getIsInited()) { // TODO PREFETCH!
-                    left->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
+                ensureTileInited(left, tileSidePixelSize_);
                 copyCol(t, left, 0, hvSide - 1);
                 left->setIsUpdated(true);
                 changedTiles.insert(left);
@@ -743,9 +831,7 @@ void SurfaceProcessor::propagateBorderHeights(QSet<SurfaceTile*>& changedTiles)
 
             if (ty + 1 < tilesY && tx > 0) { // диагональный узел
                 SurfaceTile* topLeft = matrix[ty + 1][tx - 1];
-                if (!topLeft->getIsInited()) { // TODO PREFETCH!
-                    topLeft->init(tileSidePixelSize_, tileHeightMatrixRatio_, tileResolution_);
-                }
+                ensureTileInited(topLeft, tileSidePixelSize_);
                 auto& vSrc = t->getHeightVerticesRef();
                 auto& vDst = topLeft->getHeightVerticesRef();
                 auto& mDst = topLeft->getHeightMarkVerticesRef();
@@ -830,7 +916,7 @@ void SurfaceProcessor::refreshAfterEdgeLimitChange()
         res.insert((*it)->getKey(), (*(*it)));
     }
 
-    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res), Q_ARG(bool, false));
+    QMetaObject::invokeMethod(dataProcessor_, "postSurfaceTiles", Qt::QueuedConnection, Q_ARG(TileMap, res));
 }
 
 bool SurfaceProcessor::canceled() const noexcept
