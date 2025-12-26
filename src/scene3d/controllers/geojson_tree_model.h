@@ -45,6 +45,7 @@ public:
 
     const QVector<GeoJsonTreeNode>& nodes() const;
     void setNodes(QVector<GeoJsonTreeNode> nodes);
+    Q_INVOKABLE QVariant roleData(const QModelIndex& index, int role) const;
 
 private:
     struct Node {

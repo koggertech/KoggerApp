@@ -75,6 +75,7 @@ public:
     Q_INVOKABLE bool exportFolder(const QString& path, const QString& folderId);
     Q_INVOKABLE void setCurrentFolder(const QString& folderId);
     Q_INVOKABLE void selectNode(const QString& nodeId, bool isFolder, const QString& parentId);
+    Q_INVOKABLE void selectIndex(const QModelIndex& index);
     Q_INVOKABLE void addFolderToRoot();
     Q_INVOKABLE void addFolderToCurrent();
     Q_INVOKABLE void toggleFolderExpanded(const QString& folderId);

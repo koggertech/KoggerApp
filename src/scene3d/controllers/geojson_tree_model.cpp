@@ -146,6 +146,11 @@ void GeoJsonTreeModel::setNodes(QVector<GeoJsonTreeNode> nodes)
     endResetModel();
 }
 
+QVariant GeoJsonTreeModel::roleData(const QModelIndex& index, int role) const
+{
+    return data(index, role);
+}
+
 GeoJsonTreeModel::Node* GeoJsonTreeModel::nodeFromIndex(const QModelIndex& index) const
 {
     if (!index.isValid()) {

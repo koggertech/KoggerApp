@@ -194,6 +194,13 @@ MenuFrame {
 
             selectionModel: ItemSelectionModel { model: tree.model }
 
+
+            onCurrentRowChanged: {
+                const idx = selectionModel.currentIndex
+                if (!idx.valid) return
+                if (geo) geo.selectIndex(idx)
+            }
+
             delegate: Item {
                 id: nodeItem
                 width: tree.width
@@ -245,7 +252,15 @@ MenuFrame {
 
                         Image {
                             id: name
-                            source: model.isFolder ? hasChildren ? "qrc:/icons/ui/folder_full.svg" : "qrc:/icons/ui/folder.svg" : "qrc:/icons/ui/file.svg"
+                            source: model.isFolder
+                                    ? (hasChildren ? "qrc:/icons/ui/folder_full.svg" : "qrc:/icons/ui/folder.svg")
+                                    : (model.geomType === "Point"
+                                       ? "qrc:/icons/ui/point.svg"
+                                       : (model.geomType === "LineString"
+                                          ? "qrc:/icons/ui/line.svg"
+                                          : (model.geomType === "Polygon"
+                                             ? "qrc:/icons/ui/polygon.svg"
+                                             : "qrc:/icons/ui/file.svg")))
 
                             TapHandler {
                                 onSingleTapped: {

@@ -470,6 +470,26 @@ void GeoJsonController::selectNode(const QString& nodeId, bool isFolder, const Q
     emit selectionChanged();
 }
 
+void GeoJsonController::selectIndex(const QModelIndex& index)
+{
+    if (!index.isValid()) {
+        return;
+    }
+
+    const QVariant idVar = treeModel_.roleData(index, GeoJsonTreeModel::IdRole);
+    const QVariant isFolderVar = treeModel_.roleData(index, GeoJsonTreeModel::IsFolderRole);
+    const QVariant parentVar = treeModel_.roleData(index, GeoJsonTreeModel::ParentIdRole);
+    if (!idVar.isValid() || !isFolderVar.isValid()) {
+        return;
+    }
+
+    const QString id = idVar.toString();
+    const bool isFolder = isFolderVar.toBool();
+    const QString parentId = parentVar.isValid() ? parentVar.toString() : QString();
+
+    selectNode(id, isFolder, parentId);
+}
+
 void GeoJsonController::addFolderToRoot()
 {
     Folder* f = addFolderInternal(root_.get(), autoFolderName(root_.get()));
