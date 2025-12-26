@@ -234,7 +234,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     for (const auto& itm : newIndxs) {
         epochIndxs.append(itm.second);
     }
-    qDebug() << "SurfaceProcessor work epoch indices (zoom" << zoom << "):" << epochIndxs;
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
 
