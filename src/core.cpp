@@ -6,6 +6,7 @@
 #include <QDebug>
 #include "bottom_track.h"
 #include "hotkeys_manager.h"
+#include "tile_provider_ids.h"
 #ifdef Q_OS_WINDOWS
 #include <Windows.h>
 #endif
@@ -1376,6 +1377,46 @@ void Core::setIsAttitudeExpected(bool state)
     dataHorizon_->setIsAttitudeExpected(state);
 }
 
+void Core::setMapTileProvider(int providerId)
+{
+    if (!tileManager_) {
+        return;
+    }
+
+    if (tileManager_->currentProviderId() == providerId) {
+        return;
+    }
+
+    tileManager_->setProvider(providerId);
+}
+
+void Core::toggleMapTileProvider()
+{
+    if (!tileManager_) {
+        return;
+    }
+
+    tileManager_->toggleProvider();
+}
+
+int Core::getMapTileProviderId() const
+{
+    if (tileManager_) {
+        return tileManager_->currentProviderId();
+    }
+
+    return map::kGoogleProviderId;
+}
+
+QString Core::getMapTileProviderName() const
+{
+    if (tileManager_) {
+        return tileManager_->currentProviderName();
+    }
+
+    return QStringLiteral("Google Satellite");
+}
+
 void Core::onFileStopsOpening()
 {
     isFileOpening_ = false;
@@ -1683,6 +1724,7 @@ void Core::createMapTileManagerConnections()
     QObject::connect(scene3dViewPtr_->getMapViewPtr().get(), &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(),    &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendMapTextureIdByTileIndx, this, &Core::onSendMapTextureIdByTileIndx, Qt::DirectConnection);
+    QObject::connect(tileManager_.get(), &map::TileManager::providerChanged, this, &Core::mapTileProviderChanged, Qt::DirectConnection);
 }
 
 void Core::onDataProcesstorStateChanged(const DataProcessorType& state)

@@ -134,6 +134,27 @@ Item  {
                 }
             }
 
+            CheckButton {
+                id: mapProviderButton
+                iconSource: "qrc:/icons/ui/map.svg"
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                checkable: false
+                checked: false
+                implicitHeight: theme.controlHeight * 1.3
+                implicitWidth: theme.controlHeight * 1.3
+
+                CMouseOpacityArea {
+                    toolTipText: qsTr("Map provider: ") + core.mapTileProviderName + qsTr(" (tap to switch)")
+                    popupPosition: "topRight"
+                }
+
+                onClicked: {
+                    core.toggleMapTileProvider()
+                }
+            }
+
             Item {
                 //visible: false
                 id:     locationWrapper

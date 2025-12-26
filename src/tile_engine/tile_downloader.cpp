@@ -4,6 +4,8 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 
+#include "tile_provider_ids.h"
+
 #ifdef Q_OS_WINDOWS
 #include <QTcpSocket>
 #include <QNetworkProxy>
@@ -112,6 +114,11 @@ void TileDownloader::deleteRequest(const TileIndex& tileIndx)
     }
 }
 
+void TileDownloader::setProvider(std::weak_ptr<TileProvider> provider)
+{
+    tileProvider_ = provider;
+}
+
 void TileDownloader::startNextDownload()
 {
     if (downloadQueue_.isEmpty()) {
@@ -132,6 +139,11 @@ void TileDownloader::startNextDownload()
     }
 
     QNetworkRequest request(url);
+    if (auto sharedProvider = tileProvider_.lock(); sharedProvider) {
+        if (sharedProvider->getProviderId() == kOsmProviderId) {
+            request.setHeader(QNetworkRequest::UserAgentHeader, "KoggerApp/1.0 (contact: support@kogger.tech)");
+        }
+    }
     QNetworkReply* reply = networkManager_->get(request);
     reply->setProperty("tileIndex", QVariant::fromValue(index));
 

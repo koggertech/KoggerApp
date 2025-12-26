@@ -59,6 +59,8 @@ public:
     Q_PROPERTY(QString           ch1Name                      READ getChannel1Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(QString           ch2Name                      READ getChannel2Name                 NOTIFY channelListUpdated FINAL)
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
+    Q_PROPERTY(int               mapTileProviderId            READ getMapTileProviderId            NOTIFY mapTileProviderChanged)
+    Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -145,6 +147,10 @@ public slots:
     Q_INVOKABLE QVariant getConvertedMousePos(int indx, int mouseX, int mouseY);
 
     Q_INVOKABLE void setIsAttitudeExpected(bool state);
+    Q_INVOKABLE void setMapTileProvider(int providerId);
+    Q_INVOKABLE void toggleMapTileProvider();
+    Q_INVOKABLE int getMapTileProviderId() const;
+    Q_INVOKABLE QString getMapTileProviderName() const;
 
 signals:
     void connectionChanged(bool duplex = false);
@@ -154,6 +160,7 @@ signals:
     void dataProcessorStateChanged();
     void isGPSAliveChanged();
     void loggingKlfChanged();
+    void mapTileProviderChanged();
 
 #ifdef SEPARATE_READING
     void sendCloseLogFile(bool onOpen = false);
