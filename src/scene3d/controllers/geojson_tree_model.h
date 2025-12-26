@@ -15,7 +15,6 @@ struct GeoJsonTreeNode
     int depth{0};
     bool isFolder{false};
     bool visible{true};
-    bool expanded{true};
 };
 
 class GeoJsonTreeModel : public QAbstractItemModel
@@ -32,7 +31,6 @@ public:
         DepthRole,
         IsFolderRole,
         VisibleRole,
-        ExpandedRole
     };
 
     explicit GeoJsonTreeModel(QObject* parent = nullptr);

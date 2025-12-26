@@ -79,7 +79,6 @@ QVariant GeoJsonTreeModel::data(const QModelIndex& index, int role) const
     case DepthRole:       return n.depth;
     case IsFolderRole:    return n.isFolder;
     case VisibleRole:     return n.visible;
-    case ExpandedRole:    return n.expanded;
     default:              return {};
     }
 }
@@ -96,7 +95,6 @@ QHash<int, QByteArray> GeoJsonTreeModel::roleNames() const
         {DepthRole, "depth"},
         {IsFolderRole, "isFolder"},
         {VisibleRole, "visible"},
-        {ExpandedRole, "expanded"}
     };
 }
 

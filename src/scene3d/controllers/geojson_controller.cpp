@@ -15,7 +15,6 @@ struct GeoJsonController::Folder
     QString id;
     QString name;
     bool visible{true};
-    bool expanded{true};
     GeoJsonDocument doc;
     std::vector<std::unique_ptr<Folder>> children;
     Folder* parent{nullptr};
@@ -37,7 +36,6 @@ GeoJsonController::GeoJsonController(QObject* parent)
     root_->id = makeFolderId();
     root_->name = QStringLiteral("Root");
     root_->visible = true;
-    root_->expanded = true;
 
     currentFolder_ = addFolderInternal(root_.get(), QStringLiteral("Folder 1"));
     syncModelFromDocument();
@@ -234,7 +232,6 @@ bool GeoJsonController::loadKgt(const QString& path)
     auto parseFolder = [&](const QJsonObject& fo, Folder* parent, auto&& selfRef) -> Folder* {
         Folder* folder = addFolderInternal(parent, fo.value(QStringLiteral("name")).toString(QStringLiteral("Folder")));
         folder->visible = fo.value(QStringLiteral("visible")).toBool(true);
-        folder->expanded = true;
 
         const QJsonValue geoVal = fo.value(QStringLiteral("geojson"));
         if (geoVal.isObject()) {
@@ -498,7 +495,7 @@ void GeoJsonController::toggleFolderExpanded(const QString& folderId)
     if (!folder) {
         return;
     }
-    folder->expanded = !folder->expanded;
+    // folder->expanded = !folder->expanded;
     rebuildTreeModel();
 }
 
@@ -942,7 +939,6 @@ void GeoJsonController::rebuildTreeNodes(Folder* folder, int depth, QVector<GeoJ
     node.depth = depth;
     node.isFolder = true;
     node.visible = folder->visible;
-    node.expanded = folder->expanded;
     out.push_back(node);
 
     for (const auto& f : folder->doc.features) {
@@ -955,7 +951,6 @@ void GeoJsonController::rebuildTreeNodes(Folder* folder, int depth, QVector<GeoJ
         fn.depth = depth + 1;
         fn.isFolder = false;
         fn.visible = f.visible;
-        fn.expanded = false;
         out.push_back(fn);
     }
 
@@ -973,7 +968,7 @@ GeoJsonController::Folder* GeoJsonController::addFolderInternal(Folder* parent, 
     f->id = makeFolderId();
     f->name = name;
     f->visible = true;
-    f->expanded = true;
+    // f->expanded = true;
     f->parent = parent;
     Folder* raw = f.get();
     parent->children.push_back(std::move(f));

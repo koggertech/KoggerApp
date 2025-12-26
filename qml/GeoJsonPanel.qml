@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtQml.Models
 
 MenuFrame {
     id: root
@@ -169,8 +170,6 @@ MenuFrame {
                 onClicked: if (geo) geo.cancelDrawing()
             }
 
-            // Item { Layout.fillWidth: true }
-
             CheckButton {
                 checkable: false
                 iconSource: "qrc:/icons/ui/x.svg"
@@ -188,30 +187,21 @@ MenuFrame {
             Layout.fillWidth: true
             Layout.preferredHeight: 10 * (theme.controlHeight + 4)
             Layout.maximumHeight: 10 * (theme.controlHeight + 4)
+            implicitWidth: 100
+            width: 100
             clip: true
-            model: geo ? geo.treeModel : null
+            model: geo.treeModel
 
+            selectionModel: ItemSelectionModel { model: tree.model }
 
-            selectionModel: ItemSelectionModel {}
-            // headerVisible: false
-
-            // TableViewColumn {
-            //     role: "display"
-            //     width: tree.width
-            // }
-
-            // delegate: TreeViewDelegate {}
-
-            delegate: Rectangle {
+            delegate: Item {
                 id: nodeItem
                 width: tree.width
                 height: theme.controlHeight
-                radius: 2
-                color: (geo && geo.selectedNodeId === model.id) ? "#2b4f7a" : "#2a2a2a"
-                border.color: "transparent"
-                border.width: 1
+                implicitWidth: parent.width
+                implicitHeight: theme.controlHeight
 
-                readonly property real indentation: 20
+                readonly property real indentation: theme.controlHeight+10
                 readonly property real padding: 5
 
                 // Assigned to by TreeView:
@@ -224,125 +214,70 @@ MenuFrame {
                 required property int column
                 required property bool current
 
-                // Rotate indicator when expanded by the user
-                // (requires TreeView to have a selectionModel)
-                // property Animation indicatorAnimation: NumberAnimation {
-                //     target: indicator
-                //     property: "rotation"
-                //     from: expanded ? 0 : 90
-                //     to: expanded ? 90 : 0
-                //     duration: 100
-                //     easing.type: Easing.OutQuart
-                // }
-                TableView.onPooled: indicatorAnimation.complete()
-                TableView.onReused: if (current) indicatorAnimation.start()
-                onExpandedChanged: indicator.rotation = expanded ? 90 : 0
 
 
-                Component.onCompleted: {
-                    if (model.isFolder && typeof tree.expand === "function" && typeof tree.collapse === "function") {
-                        if (model.expanded) {
-                            tree.expand(styleData.index)
-                        } else {
-                            tree.collapse(styleData.index)
-                        }
-                    }
-                }
+                Item {
+                    x: padding + (isTreeNode ? (depth ) * indentation : 0)
+                    width: parent.width - x
+                    height: parent.height
 
-                RowLayout {
-                    id: row
-                    anchors.fill: parent
-                    spacing: 6
 
-                    CButton {
-                        id: indicator
-                        x: padding + (depth * indentation)
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: isTreeNode // && hasChildren
-                        text: expanded ? "▾" : "▸"
 
-                        TapHandler {
-                            onSingleTapped: {
-                                let index = treeView.index(row, column)
-                                treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
-                                treeView.toggleExpanded(row)
-                            }
-                        }
-                    }
+                    RowLayout {
+                    //     CheckButton {
+                    //         id: indicator
+                    //         x: padding + (depth * indentation)
+                    //         // anchors.verticalCenter: parent.verticalCenter
+                    //         visible: isTreeNode && hasChildren
+                    //         iconSource: expanded ? "qrc:/icons/ui/chevron-down.svg"
+                    //                                 : "qrc:/icons/ui/chevron-right.svg"
+                    //         color: nodeItem.expanded ? "white" : "red"
+                    //         checkable: false
 
-                    Item {
-                        width: styleData.depth * 14
-                        height: 1
-                    }
+                    //         TapHandler {
+                    //             onSingleTapped: {
+                    //                 let index = treeView.index(row, column)
+                    //                 treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
+                    //                 treeView.toggleExpanded(row)
+                    //             }
+                    //         }
+                    //     }
 
-                    CheckButton {
-                        id: toggleBtn
-                        checkable: false
-                        visible: model.isFolder
-                        iconSource: rowExpanded ? "qrc:/icons/ui/toggle_left.svg" : "qrc:/icons/ui/toggle_right.svg"
-                        implicitWidth: theme.controlHeight * 0.9
-                        implicitHeight: theme.controlHeight * 0.9
-                        onClicked: {
-                            if (typeof tree.toggleExpanded === "function") {
-                                tree.toggleExpanded(styleData.index)
-                            } else if (typeof tree.isExpanded === "function") {
-                                if (tree.isExpanded(styleData.index)) {
-                                    tree.collapse(styleData.index)
-                                } else {
-                                    tree.expand(styleData.index)
+                        Image {
+                            id: name
+                            source: model.isFolder ? hasChildren ? "qrc:/icons/ui/folder_full.svg" : "qrc:/icons/ui/folder.svg" : "qrc:/icons/ui/file.svg"
+
+                            TapHandler {
+                                onSingleTapped: {
+                                    let index = treeView.index(row, column)
+                                    treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
+                                    treeView.toggleExpanded(row)
+                                    // if (geo) geo.selectNode(model.id, model.isFolder, model.parentId)
                                 }
                             }
-                            if (geo) geo.toggleFolderExpanded(model.id)
                         }
 
-                        property bool rowExpanded: (typeof tree.isExpanded === "function")
-                                                   ? tree.isExpanded(styleData.index)
-                                                   : model.expanded
+                        Label {
+                            id: label
+                            Layout.fillWidth: true
+                            width: parent.width - padding - x
+                            clip: true
+                            text: model.name
+                            color: nodeItem.expanded && hasChildren ? "white" : "red"
+                        }
                     }
 
-                    Item {
-                        width: toggleBtn.visible ? 0 : (theme.controlHeight * 0.9)
-                        height: 1
-                        visible: !toggleBtn.visible
-                    }
-
-                    Label {
-                        text: model.isFolder ? model.name : model.geomType
-                        color: "white"
-                        elide: Label.ElideRight
-                        Layout.preferredWidth: 140
-                    }
-
-                    Label {
-                        text: "(" + model.vertexCount + ")"
-                        color: "#cfcfcf"
-                        Layout.preferredWidth: 48
-                        horizontalAlignment: Text.AlignRight
-                    }
-
-                    Label {
-                        text: model.id
-                        color: "#9a9a9a"
-                        elide: Label.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    CheckButton {
-                        checkable: true
-                        text: "V"
-                        checked: model.visible
-                        onClicked: if (geo) geo.setNodeVisible(model.id, model.isFolder, checked)
-                    }
+                    // MouseArea {
+                    //     anchors.fill: parent
+                    //     propagateComposedEvents: true
+                    //     onClicked: {
+                    //         // let index = treeView.index(row, column)
+                    //         // treeView.selectionModel.select(index, ItemSelectionModel.SelectCurrent)
+                    //         // if (geo) geo.selectNode(model.id, model.isFolder, model.parentId)
+                    //     }
+                    // }
                 }
 
-                // MouseArea {
-                //     anchors.fill: parent
-                //     acceptedButtons: Qt.LeftButton
-                //     onClicked: {
-                //         tree.currentIndex = styleData.index
-                //         if (geo) geo.selectNode(model.id, model.isFolder, model.parentId)
-                //     }
-                // }
             }
         }
 
@@ -378,12 +313,12 @@ MenuFrame {
                             property var c: modelData
                             property var firstCoord: (featureCoords && featureCoords.length > 0) ? featureCoords[0] : null
                             property bool isClosing: (featureGeomType === "Polygon"
-                                                     && (index === (featureCoords.length - 1))
-                                                     && firstCoord
-                                                     && c
-                                                     && (c.lat === firstCoord.lat)
-                                                     && (c.lon === firstCoord.lon)
-                                                     && (c.z === firstCoord.z))
+                                                      && (index === (featureCoords.length - 1))
+                                                      && firstCoord
+                                                      && c
+                                                      && (c.lat === firstCoord.lat)
+                                                      && (c.lon === firstCoord.lon)
+                                                      && (c.z === firstCoord.z))
 
                             visible: !isClosing
                             text: "  Point #" + (index + 1)
