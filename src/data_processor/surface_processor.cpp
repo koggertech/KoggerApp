@@ -4,6 +4,7 @@
 #include <cstring>
 #include <QDebug>
 #include "data_processor.h"
+#include "data_processor_defs.h"
 #include "bottom_track.h"
 #include "surface_mesh.h"
 #include "surface_tile.h"
@@ -40,6 +41,8 @@ void SurfaceProcessor::clear()
     pointToTris_.clear();
     cellPoints_.clear();
     cellPointsInTri_.clear();
+    taskEpochIndxsByZoom_.clear();
+    manualEpochIndxsByZoom_.clear();
     origin_ = QPointF(0.0f, 0.0f);
     minZ_ = std::numeric_limits<float>::max();
     maxZ_ = std::numeric_limits<float>::lowest();
@@ -159,6 +162,15 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         return;
     }
 
+    for (const auto& itm : indxs) {
+        if (itm.first != '1') {
+            continue;
+        }
+        for (const auto& z : ZL) {
+            manualEpochIndxsByZoom_[z.zoom].insert(itm.second);
+        }
+    }
+
     // Delaunay processing
     QVector<QVector3D> bTrData; // работает по кешу рендера трека дна!!!
     {
@@ -168,6 +180,61 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
     if (bTrData.empty()) {
         return;
     }
+
+    int zoom = -1;
+    QSet<QPair<char, int>> addedPairs;
+    QVector<QPair<char, int>> newIndxs;
+    newIndxs.reserve(indxs.size());
+    if (surfaceMeshPtr_) {
+        zoom = surfaceMeshPtr_->getCurrentZoom();
+        auto& epochIndxs = taskEpochIndxsByZoom_[zoom];
+        auto& manualPending = manualEpochIndxsByZoom_[zoom];
+
+        if (!manualPending.isEmpty()) {
+            for (int idx : std::as_const(manualPending)) {
+                epochIndxs.insert(idx);
+                const QPair<char, int> manualPair('1', idx);
+                if (!addedPairs.contains(manualPair)) {
+                    addedPairs.insert(manualPair);
+                    newIndxs.append(manualPair);
+                }
+            }
+            manualPending.clear();
+        }
+
+        for (const auto& itm : indxs) {
+            if (itm.first == '1') {
+                continue;
+            }
+            if (epochIndxs.contains(itm.second)) {
+                continue;
+            }
+            epochIndxs.insert(itm.second);
+            if (!addedPairs.contains(itm)) {
+                addedPairs.insert(itm);
+                newIndxs.append(itm);
+            }
+        }
+    }
+    else {
+        for (const auto& itm : indxs) {
+            if (!addedPairs.contains(itm)) {
+                addedPairs.insert(itm);
+                newIndxs.append(itm);
+            }
+        }
+    }
+
+    if (newIndxs.isEmpty()) {
+        return;
+    }
+
+    QVector<int> epochIndxs;
+    epochIndxs.reserve(newIndxs.size());
+    for (const auto& itm : newIndxs) {
+        epochIndxs.append(itm.second);
+    }
+    qDebug() << "SurfaceProcessor work epoch indices (zoom" << zoom << "):" << epochIndxs;
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kSurface));
 
@@ -468,7 +535,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         }
     };
 
-    for (const auto& itm : indxs) { // добавление в триангуляцию
+    for (const auto& itm : newIndxs) { // добавление в триангуляцию
         if (canceled()) {
             QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
             return;
@@ -532,7 +599,7 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         maxZ_ = std::max(static_cast<double>(maxZ_), std::max({ pt[t.a].z, pt[t.b].z, pt[t.c].z }));
     }
 
-    for (const auto& itm : indxs) { // экстраполяция
+    for (const auto& itm : newIndxs) { // экстраполяция
         if (itm.second >= bTrData.size()) {
             continue;
         }
