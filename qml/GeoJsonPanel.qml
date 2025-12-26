@@ -228,32 +228,31 @@ MenuFrame {
                     width: parent.width - x
                     height: parent.height
 
-
-
                     RowLayout {
-                    //     CheckButton {
-                    //         id: indicator
-                    //         x: padding + (depth * indentation)
-                    //         // anchors.verticalCenter: parent.verticalCenter
-                    //         visible: isTreeNode && hasChildren
-                    //         iconSource: expanded ? "qrc:/icons/ui/chevron-down.svg"
-                    //                                 : "qrc:/icons/ui/chevron-right.svg"
-                    //         color: nodeItem.expanded ? "white" : "red"
-                    //         checkable: false
+                        spacing: 2
 
-                    //         TapHandler {
-                    //             onSingleTapped: {
-                    //                 let index = treeView.index(row, column)
-                    //                 treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
-                    //                 treeView.toggleExpanded(row)
-                    //             }
-                    //         }
-                    //     }
 
-                        Image {
+                        CheckButton {
+                            id: item_visible_button
+                            checkable: true
+                            checked: model.visible
+                            iconSource: checked ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
+                            borderColor: "transparent"
+                            backColor: "transparent"
+                            checkedBorderColor: "transparent"
+                            checkedBackColor: "transparent"
+                            color: theme.textColor
+                            checkedColor: theme.textColor
+                            text: ""
+                            onCheckedChanged: {
+                                if (geo) geo.setNodeVisible(model.id, model.isFolder, checked)
+                            }
+                        }
+
+                        CheckButton {
                             id: name
-                            source: model.isFolder
-                                    ? (hasChildren ? "qrc:/icons/ui/folder_full.svg" : "qrc:/icons/ui/folder.svg")
+                            iconSource: model.isFolder
+                                    ? (expanded ? "qrc:/icons/ui/chevron-down.svg" : "qrc:/icons/ui/chevron-right.svg")
                                     : (model.geomType === "Point"
                                        ? "qrc:/icons/ui/point.svg"
                                        : (model.geomType === "LineString"
@@ -262,23 +261,29 @@ MenuFrame {
                                              ? "qrc:/icons/ui/polygon.svg"
                                              : "qrc:/icons/ui/file.svg")))
 
+                            checkable: false
+                            borderColor: "transparent"
+                            backColor: "transparent"
+                            checkedBorderColor: "transparent"
+                            checkedBackColor: "transparent"
+                            color: theme.textColor
+                            checkedColor: theme.textColor
+
                             TapHandler {
                                 onSingleTapped: {
                                     let index = treeView.index(row, column)
-                                    treeView.selectionModel.setCurrentIndex(index, ItemSelectionModel.NoUpdate)
                                     treeView.toggleExpanded(row)
-                                    // if (geo) geo.selectNode(model.id, model.isFolder, model.parentId)
                                 }
                             }
                         }
 
-                        Label {
-                            id: label
-                            Layout.fillWidth: true
-                            width: parent.width - padding - x
-                            clip: true
-                            text: model.name
-                            color: nodeItem.expanded && hasChildren ? "white" : "red"
+                        CText {
+                            text: model.geomType
+                            small: true
+                        }
+
+                        CTextField {
+                            text: "asca"
                         }
                     }
 

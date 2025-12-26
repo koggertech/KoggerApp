@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QModelIndex>
 #include <QString>
 #include <QVector>
 #include <memory>

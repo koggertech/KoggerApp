@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractItemModel>
+#include <QHash>
 #include <QVector>
 #include <memory>
 #include <vector>
@@ -46,6 +47,10 @@ public:
     const QVector<GeoJsonTreeNode>& nodes() const;
     void setNodes(QVector<GeoJsonTreeNode> nodes);
     Q_INVOKABLE QVariant roleData(const QModelIndex& index, int role) const;
+    bool insertNode(const GeoJsonTreeNode& node);
+    bool removeNode(const QString& id);
+    bool updateNodeVisible(const QString& id, bool visible);
+    bool updateNodeVertexCount(const QString& id, int vertexCount);
 
 private:
     struct Node {
@@ -56,8 +61,11 @@ private:
 
     Node* nodeFromIndex(const QModelIndex& index) const;
     int rowOfNode(const Node* node) const;
+    QModelIndex indexForNode(const Node* node) const;
+    void collectIds(Node* node, QVector<QString>& ids) const;
 
     QVector<GeoJsonTreeNode> nodes_;
     std::unique_ptr<Node> root_;
     std::vector<std::unique_ptr<Node>> storage_;
+    QHash<QString, Node*> idMap_;
 };

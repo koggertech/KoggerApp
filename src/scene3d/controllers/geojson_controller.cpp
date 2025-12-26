@@ -42,6 +42,8 @@ GeoJsonController::GeoJsonController(QObject* parent)
     rebuildTreeModel();
 }
 
+
+
 QAbstractItemModel* GeoJsonController::featureModel()
 {
     return &model_;
@@ -365,7 +367,32 @@ bool GeoJsonController::importGeoJsonToFolder(const QString& path, const QString
         syncModelFromDocument();
     }
 
-    rebuildTreeModel();
+    auto folderDepth = [&](const Folder* f) -> int {
+        int depth = 0;
+        const Folder* p = f ? f->parent : nullptr;
+        while (p && p != root_.get()) {
+            ++depth;
+            p = p->parent;
+        }
+        return depth;
+    };
+
+    const int depth = folderDepth(folder);
+    const int startIndex = folder->doc.features.size() - res.doc.features.size();
+    for (int i = 0; i < res.doc.features.size(); ++i) {
+        const auto& f = folder->doc.features.at(startIndex + i);
+        GeoJsonTreeNode fn;
+        fn.id = f.id;
+        fn.parentId = folder->id;
+        fn.name = QStringLiteral("Feature");
+        fn.geomType = GeoJsonFeatureModel::typeToString(f.geomType);
+        fn.vertexCount = f.coords.size();
+        fn.depth = depth + 1;
+        fn.isFolder = false;
+        fn.visible = f.visible;
+        treeModel_.insertNode(fn);
+    }
+    treeModel_.updateNodeVertexCount(folder->id, folder->doc.features.size());
     emit documentChanged();
     emit fileLoaded(path);
     return true;
@@ -496,7 +523,18 @@ void GeoJsonController::addFolderToRoot()
     if (f) {
         selectNode(f->id, true, QString());
     }
-    rebuildTreeModel();
+    if (f) {
+        GeoJsonTreeNode node;
+        node.id = f->id;
+        node.parentId = QString();
+        node.name = f->name;
+        node.geomType = QStringLiteral("Folder");
+        node.vertexCount = f->doc.features.size();
+        node.depth = 0;
+        node.isFolder = true;
+        node.visible = f->visible;
+        treeModel_.insertNode(node);
+    }
 }
 
 void GeoJsonController::addFolderToCurrent()
@@ -506,7 +544,25 @@ void GeoJsonController::addFolderToCurrent()
     if (f) {
         selectNode(f->id, true, QString());
     }
-    rebuildTreeModel();
+    if (f) {
+        int depth = 0;
+        Folder* p = f->parent;
+        while (p && p != root_.get()) {
+            ++depth;
+            p = p->parent;
+        }
+
+        GeoJsonTreeNode node;
+        node.id = f->id;
+        node.parentId = (f->parent && f->parent != root_.get()) ? f->parent->id : QString();
+        node.name = f->name;
+        node.geomType = QStringLiteral("Folder");
+        node.vertexCount = f->doc.features.size();
+        node.depth = depth;
+        node.isFolder = true;
+        node.visible = f->visible;
+        treeModel_.insertNode(node);
+    }
 }
 
 void GeoJsonController::toggleFolderExpanded(const QString& folderId)
@@ -515,8 +571,6 @@ void GeoJsonController::toggleFolderExpanded(const QString& folderId)
     if (!folder) {
         return;
     }
-    // folder->expanded = !folder->expanded;
-    rebuildTreeModel();
 }
 
 void GeoJsonController::setNodeVisible(const QString& nodeId, bool isFolder, bool visible)
@@ -534,7 +588,7 @@ void GeoJsonController::setNodeVisible(const QString& nodeId, bool isFolder, boo
         }
         f->visible = visible;
     }
-    rebuildTreeModel();
+    treeModel_.updateNodeVisible(nodeId, visible);
     emit documentChanged();
 }
 
@@ -574,7 +628,24 @@ void GeoJsonController::finishDrawing()
 
     cancelDrawing();
     clearSelection();
-    rebuildTreeModel();
+    int depth = 0;
+    Folder* p = currentFolder_->parent;
+    while (p && p != root_.get()) {
+        ++depth;
+        p = p->parent;
+    }
+
+    GeoJsonTreeNode fn;
+    fn.id = f.id;
+    fn.parentId = currentFolder_->id;
+    fn.name = QStringLiteral("Feature");
+    fn.geomType = GeoJsonFeatureModel::typeToString(f.geomType);
+    fn.vertexCount = f.coords.size();
+    fn.depth = depth + 1;
+    fn.isFolder = false;
+    fn.visible = f.visible;
+    treeModel_.insertNode(fn);
+    treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
     emit documentChanged();
 }
 
@@ -608,9 +679,13 @@ void GeoJsonController::deleteSelectedFeature()
     if (!removeFeatureById(selectedFeatureId_)) {
         return;
     }
+    const QString removedId = selectedFeatureId_;
     clearSelection();
     syncModelFromDocument();
-    rebuildTreeModel();
+    treeModel_.removeNode(removedId);
+    if (currentFolder_) {
+        treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
+    }
     emit documentChanged();
 }
 
