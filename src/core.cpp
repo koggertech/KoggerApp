@@ -1388,6 +1388,10 @@ void Core::setMapTileProvider(int providerId)
     }
 
     tileManager_->setProvider(providerId);
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->updateMapView();
+    }
 }
 
 void Core::toggleMapTileProvider()
@@ -1397,6 +1401,10 @@ void Core::toggleMapTileProvider()
     }
 
     tileManager_->toggleProvider();
+
+    if (scene3dViewPtr_) {
+        scene3dViewPtr_->updateMapView();
+    }
 }
 
 int Core::getMapTileProviderId() const
