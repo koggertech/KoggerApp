@@ -6,6 +6,7 @@
 #include <QStandardItemModel>
 #include <QQmlContext>
 #include <QThread>
+#include <QVariantList>
 #ifdef FLASHER
 #include "flasher/deviceflasher.h"
 #endif
@@ -61,6 +62,7 @@ public:
     Q_PROPERTY(int               dataProcessorState           READ getDataProcessorState           NOTIFY dataProcessorStateChanged)
     Q_PROPERTY(int               mapTileProviderId            READ getMapTileProviderId            NOTIFY mapTileProviderChanged)
     Q_PROPERTY(QString           mapTileProviderName          READ getMapTileProviderName          NOTIFY mapTileProviderChanged)
+    Q_PROPERTY(QVariantList      mapTileProviders             READ getMapTileProviders             CONSTANT)
 
     void setEngine(QQmlApplicationEngine *engine);
     Console* getConsolePtr();
@@ -151,6 +153,7 @@ public slots:
     Q_INVOKABLE void toggleMapTileProvider();
     Q_INVOKABLE int getMapTileProviderId() const;
     Q_INVOKABLE QString getMapTileProviderName() const;
+    Q_INVOKABLE QVariantList getMapTileProviders() const;
 
 signals:
     void connectionChanged(bool duplex = false);
@@ -196,6 +199,7 @@ private:
     QString getFilePath() const;
     void fixFilePathString(QString& filePath) const;
     void loadLLARefFromSettings();
+    int loadSavedMapTileProviderId() const;
 
     /*data*/
     Console* consolePtr_;

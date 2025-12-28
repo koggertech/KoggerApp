@@ -598,6 +598,14 @@ ApplicationWindow  {
                     Keys.forwardTo:           [mousearea3D]
                 }
 
+                Scene3DLayerPanel {
+                    id: scene3DLayerPanel
+                    anchors.right: renderer.right
+                    anchors.top: renderer.top
+                    anchors.bottom: renderer.bottom
+                    z: 3
+                }
+
                 GeoJsonPanel {
                     id: geoJsonPanel
                     anchors.left: renderer.left

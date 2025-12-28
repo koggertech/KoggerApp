@@ -1392,6 +1392,9 @@ void Core::setMapTileProvider(int providerId)
     if (scene3dViewPtr_) {
         scene3dViewPtr_->updateMapView();
     }
+
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.setValue("Map/TileProviderId", providerId);
 }
 
 void Core::toggleMapTileProvider()
@@ -1405,6 +1408,9 @@ void Core::toggleMapTileProvider()
     if (scene3dViewPtr_) {
         scene3dViewPtr_->updateMapView();
     }
+
+    QSettings settings("KOGGER", "KoggerApp");
+    settings.setValue("Map/TileProviderId", tileManager_->currentProviderId());
 }
 
 int Core::getMapTileProviderId() const
@@ -1413,7 +1419,7 @@ int Core::getMapTileProviderId() const
         return tileManager_->currentProviderId();
     }
 
-    return map::kGoogleProviderId;
+    return loadSavedMapTileProviderId();
 }
 
 QString Core::getMapTileProviderName() const
@@ -1422,7 +1428,37 @@ QString Core::getMapTileProviderName() const
         return tileManager_->currentProviderName();
     }
 
+    const int savedProvider = loadSavedMapTileProviderId();
+    if (savedProvider == map::kOsmProviderId) {
+        return QStringLiteral("OpenStreetMap");
+    }
+
     return QStringLiteral("Google Satellite");
+}
+
+QVariantList Core::getMapTileProviders() const
+{
+    QVariantList providers;
+
+    QVariantMap osm;
+    osm["id"] = map::kOsmProviderId;
+    osm["name"] = QStringLiteral("OpenStreetMap");
+    osm["layer_type"] = QStringLiteral("street");
+    providers.append(osm);
+
+    QVariantMap google;
+    google["id"] = map::kGoogleProviderId;
+    google["name"] = QStringLiteral("Google Satellite");
+    google["layer_type"] = QStringLiteral("satellite");
+    providers.append(google);
+
+    return providers;
+}
+
+int Core::loadSavedMapTileProviderId() const
+{
+    QSettings settings("KOGGER", "KoggerApp");
+    return settings.value("Map/TileProviderId", map::kOsmProviderId).toInt();
 }
 
 void Core::onFileStopsOpening()
@@ -1722,6 +1758,7 @@ void Core::createMapTileManagerConnections()
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendRectRequest, tileManager_.get(), &map::TileManager::getRectRequest, Qt::DirectConnection);
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendLlaRef, tileManager_.get(), &map::TileManager::getLlaRef, Qt::DirectConnection);
+    QObject::connect(tileManager_.get(), &map::TileManager::providerChanged, this, &Core::mapTileProviderChanged, Qt::DirectConnection);
 
     auto connType = Qt::DirectConnection;
     QObject::connect(tileManager_->getTileSetPtr().get(),    &map::TileSet::mvAppendTile,         scene3dViewPtr_->getMapViewPtr().get(), &MapView::onTileAppend,             connType);
@@ -1732,7 +1769,14 @@ void Core::createMapTileManagerConnections()
     QObject::connect(scene3dViewPtr_->getMapViewPtr().get(), &MapView::deletedFromAppend,         tileManager_->getTileSetPtr().get(),    &map::TileSet::onDeletedFromAppend, connType);
 
     QObject::connect(scene3dViewPtr_, &GraphicsScene3dView::sendMapTextureIdByTileIndx, this, &Core::onSendMapTextureIdByTileIndx, Qt::DirectConnection);
-    QObject::connect(tileManager_.get(), &map::TileManager::providerChanged, this, &Core::mapTileProviderChanged, Qt::DirectConnection);
+
+    const int savedProvider = loadSavedMapTileProviderId();
+    if (savedProvider != tileManager_->currentProviderId()) {
+        tileManager_->setProvider(savedProvider);
+        if (scene3dViewPtr_) {
+            scene3dViewPtr_->updateMapView();
+        }
+    }
 }
 
 void Core::onDataProcesstorStateChanged(const DataProcessorType& state)
