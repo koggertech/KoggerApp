@@ -11,8 +11,9 @@ Item {
     property bool expanded: false
     property real panelWidth: theme.controlHeight * 6
     property real panelPadding: 10
+    property bool showToggleButton: true
 
-    width: toggleButton.implicitWidth + panel.width + panelPadding
+    width: (showToggleButton ? toggleButton.implicitWidth : 0) + panel.width + panelPadding
 
     function formatSectionLabel(text) {
         if (!text || text.length === 0) {
@@ -36,6 +37,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: 8
         anchors.rightMargin: 8
+        visible: showToggleButton
 
         CMouseOpacityArea {
             toolTipText: qsTr("Map layers")
@@ -43,17 +45,19 @@ Item {
         }
 
         onClicked: {
-            root.expanded = !root.expanded
+            if (showToggleButton) {
+                root.expanded = !root.expanded
+            }
         }
     }
 
     Rectangle {
         id: panel
         width: root.expanded ? root.panelWidth : 0
-        anchors.right: toggleButton.left
+        anchors.right: showToggleButton ? toggleButton.left : parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.rightMargin: 6
+        anchors.rightMargin: showToggleButton ? 6 : 0
         color: theme.menuBackColor
         border.color: theme.controlBorderColor
         border.width: 1

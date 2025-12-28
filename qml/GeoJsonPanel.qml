@@ -281,10 +281,6 @@ MenuFrame {
                             text: model.geomType
                             small: true
                         }
-
-                        CTextField {
-                            text: "asca"
-                        }
                     }
 
                     // MouseArea {

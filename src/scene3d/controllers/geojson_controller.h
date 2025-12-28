@@ -81,6 +81,7 @@ public:
     Q_INVOKABLE void addFolderToCurrent();
     Q_INVOKABLE void toggleFolderExpanded(const QString& folderId);
     Q_INVOKABLE void setNodeVisible(const QString& nodeId, bool isFolder, bool visible);
+    Q_INVOKABLE void deleteNode(const QString& nodeId, bool isFolder);
 
     Q_INVOKABLE void finishDrawing();
     Q_INVOKABLE void cancelDrawing();
@@ -132,6 +133,9 @@ private:
     Folder* addFolderInternal(Folder* parent, const QString& name);
     QString autoFolderName(Folder* parent) const;
     bool folderHasChildren(const Folder* folder) const;
+    bool removeFolderById(const QString& id);
+    Folder* findFolderParentById(const QString& id, Folder** outParent) const;
+    bool folderContains(const Folder* folder, const Folder* target) const;
 
 private:
     std::unique_ptr<Folder> root_;

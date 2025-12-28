@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QUuid>
+#include <functional>
 #include <vector>
 
 #include "geojson_io.h"
@@ -647,6 +648,11 @@ void GeoJsonController::finishDrawing()
     treeModel_.insertNode(fn);
     treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
     emit documentChanged();
+
+    if (tool_ != Select) {
+        tool_ = Select;
+        emit toolChanged();
+    }
 }
 
 void GeoJsonController::cancelDrawing()
@@ -686,6 +692,38 @@ void GeoJsonController::deleteSelectedFeature()
     if (currentFolder_) {
         treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
     }
+    emit documentChanged();
+}
+
+void GeoJsonController::deleteNode(const QString& nodeId, bool isFolder)
+{
+    if (nodeId.isEmpty()) {
+        return;
+    }
+
+    if (!isFolder) {
+        selectNode(nodeId, false, currentFolderId());
+        if (!removeFeatureById(nodeId)) {
+            return;
+        }
+        treeModel_.removeNode(nodeId);
+        if (currentFolder_) {
+            treeModel_.updateNodeVertexCount(currentFolder_->id, currentFolder_->doc.features.size());
+        }
+        clearSelection();
+        syncModelFromDocument();
+        emit documentChanged();
+        return;
+    }
+
+    if (!removeFolderById(nodeId)) {
+        return;
+    }
+
+    clearSelection();
+    syncModelFromDocument();
+    rebuildTreeModel();
+    emit currentFolderChanged();
     emit documentChanged();
 }
 
@@ -1094,4 +1132,90 @@ QString GeoJsonController::autoFolderName(Folder* parent) const
 bool GeoJsonController::folderHasChildren(const Folder* folder) const
 {
     return folder && !folder->children.empty();
+}
+
+bool GeoJsonController::removeFolderById(const QString& id)
+{
+    if (!root_) {
+        return false;
+    }
+
+    Folder* parent = nullptr;
+    Folder* folder = findFolderParentById(id, &parent);
+    if (!folder || !parent) {
+        return false;
+    }
+
+    const bool currentInside = folderContains(folder, currentFolder_);
+
+    auto& children = parent->children;
+    for (auto it = children.begin(); it != children.end(); ++it) {
+        if ((*it)->id == id) {
+            children.erase(it);
+            break;
+        }
+    }
+
+    if (currentInside) {
+        if (!root_->children.empty()) {
+            currentFolder_ = root_->children.front().get();
+        } else {
+            currentFolder_ = addFolderInternal(root_.get(), QStringLiteral("Folder 1"));
+        }
+    }
+
+    return true;
+}
+
+GeoJsonController::Folder* GeoJsonController::findFolderParentById(const QString& id, Folder** outParent) const
+{
+    if (outParent) {
+        *outParent = nullptr;
+    }
+    if (!root_) {
+        return nullptr;
+    }
+
+    Folder* found = nullptr;
+    Folder* parent = nullptr;
+
+    std::function<void(Folder*)> walk = [&](Folder* f) {
+        if (!f || found) {
+            return;
+        }
+        for (auto& child : f->children) {
+            if (child->id == id) {
+                found = child.get();
+                parent = f;
+                return;
+            }
+            walk(child.get());
+            if (found) {
+                return;
+            }
+        }
+    };
+
+    walk(root_.get());
+
+    if (outParent) {
+        *outParent = parent;
+    }
+    return found;
+}
+
+bool GeoJsonController::folderContains(const Folder* folder, const Folder* target) const
+{
+    if (!folder || !target) {
+        return false;
+    }
+    if (folder == target) {
+        return true;
+    }
+    for (const auto& child : folder->children) {
+        if (folderContains(child.get(), target)) {
+            return true;
+        }
+    }
+    return false;
 }
