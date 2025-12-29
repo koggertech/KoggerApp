@@ -76,9 +76,9 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     dbWriter_(nullptr),
     engineVer_(1),
     lastZoom_(0),
-    lastDataZoomIndx_(0),
     dbIsReady_(false),
-    prefetchTick_(0)
+    prefetchTick_(0),
+    lastDataZoomIndx_(0)
 {
     qRegisterMetaType<WorkBundle>("WorkBundle");
     qRegisterMetaType<DatasetChannel>("DatasetChannel");
@@ -388,6 +388,9 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 {
     QMetaObject::invokeMethod(worker_, "setSurfaceEdgeLimit", Qt::QueuedConnection, Q_ARG(float, float(val)));
 
+    surfaceTaskEpochIndxsByZoom_.clear();
+    surfaceManualEpochIndxsByZoom_.clear();
+    pendingSurfaceIndxs_.clear();
     pendingIsobathsWork_ = true;
 
     for (auto it = vertIndxsFromBottomTrack_.cbegin(); it != vertIndxsFromBottomTrack_.cend(); ++it) {
@@ -400,6 +403,18 @@ void DataProcessor::setSurfaceEdgeLimit(int val)
 void DataProcessor::setExtraWidth(int val)
 {
     QMetaObject::invokeMethod(worker_, "setSurfaceExtraWidth", Qt::QueuedConnection, Q_ARG(int, val));
+
+    // REBUILD?
+    //surfaceTaskEpochIndxsByZoom_.clear();
+    //surfaceManualEpochIndxsByZoom_.clear();
+    //pendingSurfaceIndxs_.clear();
+    //pendingIsobathsWork_ = true;
+
+    //for (auto it = vertIndxsFromBottomTrack_.cbegin(); it != vertIndxsFromBottomTrack_.cend(); ++it) {
+    //    pendingSurfaceIndxs_.insert(qMakePair('0', *it));
+    //}
+
+    //scheduleLatest(WorkSet(WF_All), /*replace*/true);
 }
 
 void DataProcessor::setIsobathsLabelStepSize(float val)
@@ -411,6 +426,9 @@ void DataProcessor::setSurfaceIsobathsStepSize(float val)
 {
     QMetaObject::invokeMethod(worker_, "setSurfaceIsobathsStepSize", Qt::QueuedConnection, Q_ARG(float, val));
 
+    surfaceTaskEpochIndxsByZoom_.clear();
+    surfaceManualEpochIndxsByZoom_.clear();
+    pendingSurfaceIndxs_.clear();
     pendingIsobathsWork_ = true;
 
     for (auto it = vertIndxsFromBottomTrack_.cbegin(); it != vertIndxsFromBottomTrack_.cend(); ++it) {
