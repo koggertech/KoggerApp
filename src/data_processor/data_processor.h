@@ -207,6 +207,7 @@ private:
     void notifyPrefetchProgress();
     void clearDbNotFoundCache();
 
+    void enqueueSurfaceMissingForZoom(int zoom);
     QVector<QPair<int, QSet<TileKey>>> collectEpochsForTiles(int zoom, const QSet<TileKey>& tiles) const;
 
 private:

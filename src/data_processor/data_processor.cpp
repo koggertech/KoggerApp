@@ -172,10 +172,17 @@ void DataProcessor::setUpdateBottomTrack(bool state)
 
 void DataProcessor::setUpdateSurface(bool state)
 {
+    const bool wasSurface = updateSurface_;
     updateSurface_ = state;
 
-    if (updateSurface_ && !pendingSurfaceIndxs_.isEmpty()) {
-        scheduleLatest(WorkSet(WF_Surface));
+    if (updateSurface_ && !wasSurface) {
+        int zoom = (lastDataZoomIndx_ > 0) ? lastDataZoomIndx_ : lastZoom_;
+        if (zoom <= 0) {
+            zoom = zoomFromMpp(tileResolution_);
+        }
+
+        enqueueSurfaceMissingForZoom(zoom);
+        onCameraMovedSec();
     }
 }
 
@@ -264,8 +271,13 @@ void DataProcessor::onSendVisibleTileKeys(int zoomIndx, const QSet<TileKey> &vis
 
     //mosaicCounter_; // head?
 
+    const int prevZoom = lastDataZoomIndx_;
     lastDataZoomIndx_ = zoomIndx;
     lastVisTileKeys_  = visTileKeys;
+
+    if (updateSurface_ && zoomIndx != prevZoom) {
+        enqueueSurfaceMissingForZoom(zoomIndx);
+    }
 
     onCameraMovedSec();
 }
@@ -547,50 +559,56 @@ void DataProcessor::runCoalescedWork()
 
     WorkBundle wb;
 
-    if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (updateSurface_ /*|| updateMosaic_*/)) { // TODO: or     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (/*updateBottomTrack_ || */updateIsobaths_ || updateMosaic_)) { ???
-        int zoom = lastZoom_;
+    if (wantSurface && (updateSurface_ /*|| updateMosaic_*/)) { // TODO: or     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (/*updateBottomTrack_ || */updateIsobaths_ || updateMosaic_)) { ???
+        int zoom = (lastDataZoomIndx_ > 0) ? lastDataZoomIndx_ : lastZoom_;
         if (zoom <= 0) {
-            zoom = (lastDataZoomIndx_ > 0) ? lastDataZoomIndx_ : zoomFromMpp(tileResolution_);
+            zoom = zoomFromMpp(tileResolution_);
         }
 
-        for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
-            if (it->first != '1') {
-                continue;
-            }
-            for (const auto& z : ZL) {
-                surfaceManualEpochIndxsByZoom_[z.zoom].insert(it->second);
+        if (!pendingSurfaceIndxs_.isEmpty()) {
+            for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
+                if (it->first != '1') {
+                    continue;
+                }
+                for (const auto& z : ZL) {
+                    surfaceManualEpochIndxsByZoom_[z.zoom].insert(it->second);
+                }
             }
         }
 
         auto& processed = surfaceTaskEpochIndxsByZoom_[zoom];
         auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
 
-        wb.surfaceVec.reserve(pendingSurfaceIndxs_.size() + manualPending.size());
+        if (!pendingSurfaceIndxs_.isEmpty() || !manualPending.isEmpty()) {
+            wb.surfaceVec.reserve(pendingSurfaceIndxs_.size() + manualPending.size());
 
-        if (!manualPending.isEmpty()) {
-            for (int idx : std::as_const(manualPending)) {
-                processed.insert(idx);
-                wb.surfaceVec.append(qMakePair('1', idx));
+            if (!manualPending.isEmpty()) {
+                for (int idx : std::as_const(manualPending)) {
+                    processed.insert(idx);
+                    wb.surfaceVec.append(qMakePair('1', idx));
+                }
+                manualPending.clear();
             }
-            manualPending.clear();
-        }
 
-        for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
-            if (it->first == '1') {
-                continue;
+            if (!pendingSurfaceIndxs_.isEmpty()) {
+                for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
+                    if (it->first == '1') {
+                        continue;
+                    }
+                    if (processed.contains(it->second)) {
+                        continue;
+                    }
+                    processed.insert(it->second);
+                    wb.surfaceVec.append(*it);
+                }
+
+                pendingSurfaceIndxs_.clear();
             }
-            if (processed.contains(it->second)) {
-                continue;
+
+            if (!wb.surfaceVec.isEmpty()) {
+                std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(), [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
             }
-            processed.insert(it->second);
-            wb.surfaceVec.append(*it);
         }
-
-        if (!wb.surfaceVec.isEmpty()) {
-            std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(), [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
-        }
-
-        pendingSurfaceIndxs_.clear();
     }
 
     if (wantMosaic && !pendingMosaicIndxs_.isEmpty() && updateMosaic_) {
@@ -1472,6 +1490,23 @@ void DataProcessor::clearDbNotFoundCache()
     dbNotFoundIndxs_.clear();
     dbNotFoundOrder_.clear();
     dbNotFoundPos_.clear();
+}
+
+void DataProcessor::enqueueSurfaceMissingForZoom(int zoom)
+{
+    if (!updateSurface_ || zoom <= 0) {
+        return;
+    }
+
+    auto& processed = surfaceTaskEpochIndxsByZoom_[zoom];
+    const auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
+
+    for (int idx : std::as_const(vertIndxsFromBottomTrack_)) {
+        if (processed.contains(idx) || manualPending.contains(idx)) {
+            continue;
+        }
+        pendingSurfaceIndxs_.insert(qMakePair('0', idx));
+    }
 }
 
 QVector<QPair<int, QSet<TileKey>>> DataProcessor::collectEpochsForTiles(int zoom, const QSet<TileKey> &tiles) const
