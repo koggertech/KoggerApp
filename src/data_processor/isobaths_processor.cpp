@@ -1,5 +1,6 @@
 #include "isobaths_processor.h"
 
+#include <algorithm>
 #include <unordered_map>
 #include <QtMath>
 #include "data_processor.h"
@@ -131,7 +132,18 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         return;
     }
 
+    if (!std::isfinite(minZ_) || !std::isfinite(maxZ_) || !std::isfinite(lineStepSize_) || lineStepSize_ <= kmath::fltEps) {
+        return;
+    }
+
+    const float lineStep = lineStepSize_;
+    const float labelStep = labelStepSize_;
+    const bool labelsEnabled = std::isfinite(labelStep) && labelStep > kmath::fltEps;
+
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kIsobaths));
+    auto postUndefined = [&]() {
+        QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
+    };
 
     lineSegments_.clear();
     labels_.clear();
@@ -153,10 +165,15 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         }
 
         if (canceled()) {
+            postUndefined();
             return;
         }
 
         for (int y = 0; y < N - 1; ++y) {
+            if (canceled()) {
+                postUndefined();
+                return;
+            }
             for (int x = 0; x < N - 1; ++x) {
                 const int tl = y * N + x;
                 const int tr = tl + 1;
@@ -175,10 +192,16 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     }
 
     if (vertPool_.empty()) {
+        postUndefined();
         return;
     }
 
-    const int levelCnt = static_cast<int>((maxZ_ - minZ_) / lineStepSize_) + 1;
+    const int levelCnt = static_cast<int>((maxZ_ - minZ_) / lineStep) + 1;
+    if (levelCnt <= 0) {
+        postUndefined();
+        return;
+    }
+    const float invLineStep = 1.0f / lineStep;
 
     QHash<int, IsobathsSegVec> segsByLvl;
 
@@ -191,6 +214,7 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         const HeightType mC = vertMark_[t.c];
 
         if (canceled()) {
+            postUndefined();
             return;
         }
 
@@ -200,8 +224,24 @@ void IsobathsProcessor::fullRebuildLinesLabels()
             continue;
         }
 
-        for (int lvl = 0; lvl < levelCnt; ++lvl) {
-            const float L = minZ_ + lvl * lineStepSize_;
+        const float triMin = std::min(A.z(), std::min(B.z(), C.z()));
+        const float triMax = std::max(A.z(), std::max(B.z(), C.z()));
+        if (triMax < minZ_ - kmath::fltEps || triMin > maxZ_ + kmath::fltEps) {
+            continue;
+        }
+
+        int lvlStart = static_cast<int>(std::floor((triMin - minZ_) * invLineStep));
+        int lvlEnd   = static_cast<int>(std::ceil((triMax - minZ_) * invLineStep));
+        lvlStart = std::clamp(lvlStart, 0, levelCnt - 1);
+        lvlEnd   = std::clamp(lvlEnd,   0, levelCnt - 1);
+
+        for (int lvl = lvlStart; lvl <= lvlEnd; ++lvl) {
+            if (canceled()) {
+                postUndefined();
+                return;
+            }
+
+            const float L = minZ_ + lvl * lineStep;
             QVector<QVector3D> ip;
             edgeIntersection(A, B, L, ip);
             edgeIntersection(B, C, L, ip);
@@ -224,6 +264,10 @@ void IsobathsProcessor::fullRebuildLinesLabels()
     QHash<int, IsobathsPolylines> polysByLvl; // полилинии и лейбы
     for (auto it = segsByLvl.begin(); it != segsByLvl.end(); ++it) {
         buildPolylines(it.value(), polysByLvl[it.key()]);
+        if (canceled()) {
+            postUndefined();
+            return;
+        }
     }
 
     QVector<QVector3D> resLines;
@@ -231,7 +275,7 @@ void IsobathsProcessor::fullRebuildLinesLabels()
 
     for (auto it = polysByLvl.begin(); it != polysByLvl.end(); ++it) {
         const int lvl = it.key();
-        const float depth = minZ_ + lvl * lineStepSize_;
+        const float depth = minZ_ + lvl * lineStep;
         const auto& polys = it.value();
 
         // линии
@@ -242,46 +286,58 @@ void IsobathsProcessor::fullRebuildLinesLabels()
         }
 
         // лейбы
-        float distNext = 0.0f;
-        for (const auto& p : polys) {
-            if (canceled()) {
-                return;
-            }
-
-            QVector<float> segLen(p.size() - 1);
-            float polyLen = 0.0f;
-
-            for (int i = 0; i + 1 < p.size(); ++i) {
-                segLen[i] = (p[i + 1] - p[i]).length();
-                polyLen += segLen[i];
-            }
-
-            int cur = 0;
-            float off = 0.0f;
-
-            while(distNext < polyLen - kmath::fltEps) {
-                while(cur < segLen.size() && (off + segLen[cur]) < (distNext - kmath::fltEps)) {
-                    off += segLen[cur];
-                    ++cur;
+        if (labelsEnabled) {
+            float distNext = 0.0f;
+            for (const auto& p : polys) {
+                if (canceled()) {
+                    postUndefined();
+                    return;
                 }
 
-                if (cur >= segLen.size()) {
-                    break;
+                QVector<float> segLen(p.size() - 1);
+                float polyLen = 0.0f;
+
+                for (int i = 0; i + 1 < p.size(); ++i) {
+                    segLen[i] = (p[i + 1] - p[i]).length();
+                    polyLen += segLen[i];
                 }
 
-                float t = (distNext  - off) / segLen[cur];
-                QVector3D pos = p[cur] + t * (p[cur + 1] - p[cur]);
-                QVector3D dir = (p[cur + 1] - p[cur]).normalized();
-                dir.setZ(0.0f);
-                resLabels << LabelParameters{ pos, dir, fabsf(depth) };
-                distNext += labelStepSize_;
-            }
+                int cur = 0;
+                float off = 0.0f;
 
-            distNext -= polyLen;
+                while(distNext < polyLen - kmath::fltEps) {
+                    if (canceled()) {
+                        postUndefined();
+                        return;
+                    }
+
+                    while(cur < segLen.size() && (off + segLen[cur]) < (distNext - kmath::fltEps)) {
+                        off += segLen[cur];
+                        ++cur;
+                    }
+
+                    if (cur >= segLen.size()) {
+                        break;
+                    }
+
+                    float t = (distNext  - off) / segLen[cur];
+                    QVector3D pos = p[cur] + t * (p[cur + 1] - p[cur]);
+                    QVector3D dir = (p[cur + 1] - p[cur]).normalized();
+                    dir.setZ(0.0f);
+                    resLabels << LabelParameters{ pos, dir, fabsf(depth) };
+                    distNext += labelStep;
+                }
+
+                distNext -= polyLen;
+            }
         }
     }
 
     filterNearbyLabels(resLabels, labels_);
+    if (canceled()) {
+        postUndefined();
+        return;
+    }
     lineSegments_ = std::move(resLines);
 
     QMetaObject::invokeMethod(dataProcessor_, "postState", Qt::QueuedConnection, Q_ARG(DataProcessorType, DataProcessorType::kUndefined));
@@ -300,6 +356,10 @@ void IsobathsProcessor::buildPolylines(const IsobathsSegVec& segs, IsobathsPolyl
     QVector<char> used(segs.size(), 0);
 
     for (int i = 0; i < segs.size(); ++i) {
+        if (canceled()) {
+            return;
+        }
+
         if (used[i]) {
             continue;
         }
@@ -309,6 +369,9 @@ void IsobathsProcessor::buildPolylines(const IsobathsSegVec& segs, IsobathsPolyl
         bool again = true;
         while (again) {
             again = false;
+            if (canceled()) {
+                return;
+            }
             for (int j = 0; j < segs.size(); ++j) {
                 if (used[j]) {
                     continue;
@@ -351,6 +414,10 @@ void IsobathsProcessor::filterNearbyLabels(const QVector<LabelParameters>& in, Q
 
     QHash<QPair<int,int>,QVector<QVector3D>> grid;
     for (const auto& lbl : in) {
+        if (canceled()) {
+            return;
+        }
+
         int cx = int(std::floor(lbl.pos.x() * inv));
         int cy = int(std::floor(lbl.pos.y() * inv));
         bool isNear = false;

@@ -587,6 +587,9 @@ void DataProcessor::runCoalescedWork()
         pendingIsobathsWork_ = false;
     }
 
+    //wb.doIsobaths = false;
+    //pendingIsobathsWork_ = false;
+
     nextRunPending_.store(false);
     cancelRequested_.store(false);
     jobRunning_.store(true);
