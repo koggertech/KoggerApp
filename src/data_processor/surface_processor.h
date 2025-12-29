@@ -71,6 +71,4 @@ private:
     int cellPx_;
     int extraWidth_;
     bool originSet_;
-    QHash<int, QSet<int>> taskEpochIndxsByZoom_;
-    QHash<int, QSet<int>> manualEpochIndxsByZoom_;
 };

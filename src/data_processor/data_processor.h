@@ -248,6 +248,8 @@ private:
     QSet<int>              epIndxsFromBottomTrack_;
     QSet<int> vertIndxsFromBottomTrack_;
     QSet<QPair<char, int>> pendingSurfaceIndxs_;
+    QHash<int, QSet<int>>  surfaceTaskEpochIndxsByZoom_;
+    QHash<int, QSet<int>>  surfaceManualEpochIndxsByZoom_;
     QSet<int>              pendingMosaicIndxs_;
     bool                   pendingIsobathsWork_;
     QTimer                 pendingWorkTimer_;

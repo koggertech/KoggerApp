@@ -76,6 +76,7 @@ DataProcessor::DataProcessor(QObject *parent, Dataset* datasetPtr)
     dbWriter_(nullptr),
     engineVer_(1),
     lastZoom_(0),
+    lastDataZoomIndx_(0),
     dbIsReady_(false),
     prefetchTick_(0)
 {
@@ -154,6 +155,8 @@ void DataProcessor::clearProcessing(DataProcessorType procType)
 
     tileEpochIndxsByZoom_.clear();
     tileEpochIndxsByZoom_.shrink_to_fit();
+    surfaceTaskEpochIndxsByZoom_.clear();
+    surfaceManualEpochIndxsByZoom_.clear();
 
     postState(DataProcessorType::kUndefined); //
 }
@@ -411,6 +414,9 @@ void DataProcessor::setMosaicChannels(const ChannelId &ch1, uint8_t sub1, const 
 
     QMetaObject::invokeMethod(worker_, "clearAll", Qt::QueuedConnection);
 
+    surfaceTaskEpochIndxsByZoom_.clear();
+    surfaceManualEpochIndxsByZoom_.clear();
+
     emit isobathsProcessingCleared();
     emit surfaceProcessingCleared();
     emit mosaicProcessingCleared();
@@ -542,13 +548,47 @@ void DataProcessor::runCoalescedWork()
     WorkBundle wb;
 
     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (updateSurface_ /*|| updateMosaic_*/)) { // TODO: or     if (wantSurface && !pendingSurfaceIndxs_.isEmpty() && (/*updateBottomTrack_ || */updateIsobaths_ || updateMosaic_)) { ???
-        wb.surfaceVec.reserve(pendingSurfaceIndxs_.size());
+        int zoom = lastZoom_;
+        if (zoom <= 0) {
+            zoom = (lastDataZoomIndx_ > 0) ? lastDataZoomIndx_ : zoomFromMpp(tileResolution_);
+        }
 
         for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
+            if (it->first != '1') {
+                continue;
+            }
+            for (const auto& z : ZL) {
+                surfaceManualEpochIndxsByZoom_[z.zoom].insert(it->second);
+            }
+        }
+
+        auto& processed = surfaceTaskEpochIndxsByZoom_[zoom];
+        auto& manualPending = surfaceManualEpochIndxsByZoom_[zoom];
+
+        wb.surfaceVec.reserve(pendingSurfaceIndxs_.size() + manualPending.size());
+
+        if (!manualPending.isEmpty()) {
+            for (int idx : std::as_const(manualPending)) {
+                processed.insert(idx);
+                wb.surfaceVec.append(qMakePair('1', idx));
+            }
+            manualPending.clear();
+        }
+
+        for (auto it = pendingSurfaceIndxs_.cbegin(); it != pendingSurfaceIndxs_.cend(); ++it) {
+            if (it->first == '1') {
+                continue;
+            }
+            if (processed.contains(it->second)) {
+                continue;
+            }
+            processed.insert(it->second);
             wb.surfaceVec.append(*it);
         }
 
-        std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(), [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
+        if (!wb.surfaceVec.isEmpty()) {
+            std::sort(wb.surfaceVec.begin(), wb.surfaceVec.end(), [](const QPair<char,int>& a, const QPair<char,int>& b){ return a.second < b.second; });
+        }
 
         pendingSurfaceIndxs_.clear();
     }
@@ -908,6 +948,8 @@ void DataProcessor::clearMosaicProcessing()
 void DataProcessor::clearSurfaceProcessing()
 {
     pendingSurfaceIndxs_.clear();
+    surfaceTaskEpochIndxsByZoom_.clear();
+    surfaceManualEpochIndxsByZoom_.clear();
 
     QMetaObject::invokeMethod(worker_, "clearSurface", Qt::QueuedConnection);
 }
@@ -919,6 +961,8 @@ void DataProcessor::clearAllProcessings()
     pendingIsobathsWork_ = false;
     pendingMosaicIndxs_.clear();
     pendingSurfaceIndxs_.clear();
+    surfaceTaskEpochIndxsByZoom_.clear();
+    surfaceManualEpochIndxsByZoom_.clear();
     epIndxsFromBottomTrack_.clear();
     vertIndxsFromBottomTrack_.clear();
     bottomTrackWindowCounter_ = 0;
@@ -944,6 +988,7 @@ void DataProcessor::clearAllProcessings()
     dbReaderInWork_ = false;
     lastViewRect_ = QRectF();
     lastZoom_ = 0;
+    lastDataZoomIndx_ = 0;
     lastKeys_.clear();
     dbPendingKeys_.clear();
     dbInWorkKeys_.clear();

@@ -41,8 +41,6 @@ void SurfaceProcessor::clear()
     pointToTris_.clear();
     cellPoints_.clear();
     cellPointsInTri_.clear();
-    taskEpochIndxsByZoom_.clear();
-    manualEpochIndxsByZoom_.clear();
     origin_ = QPointF(0.0f, 0.0f);
     minZ_ = std::numeric_limits<float>::max();
     maxZ_ = std::numeric_limits<float>::lowest();
@@ -162,15 +160,6 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         return;
     }
 
-    for (const auto& itm : indxs) {
-        if (itm.first != '1') {
-            continue;
-        }
-        for (const auto& z : ZL) {
-            manualEpochIndxsByZoom_[z.zoom].insert(itm.second);
-        }
-    }
-
     // Delaunay processing
     QVector<QVector3D> bTrData; // работает по кешу рендера трека дна!!!
     {
@@ -181,47 +170,13 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         return;
     }
 
-    int zoom = -1;
     QSet<QPair<char, int>> addedPairs;
     QVector<QPair<char, int>> newIndxs;
     newIndxs.reserve(indxs.size());
-    if (surfaceMeshPtr_) {
-        zoom = surfaceMeshPtr_->getCurrentZoom();
-        auto& epochIndxs = taskEpochIndxsByZoom_[zoom];
-        auto& manualPending = manualEpochIndxsByZoom_[zoom];
-
-        if (!manualPending.isEmpty()) {
-            for (int idx : std::as_const(manualPending)) {
-                epochIndxs.insert(idx);
-                const QPair<char, int> manualPair('1', idx);
-                if (!addedPairs.contains(manualPair)) {
-                    addedPairs.insert(manualPair);
-                    newIndxs.append(manualPair);
-                }
-            }
-            manualPending.clear();
-        }
-
-        for (const auto& itm : indxs) {
-            if (itm.first == '1') {
-                continue;
-            }
-            if (epochIndxs.contains(itm.second)) {
-                continue;
-            }
-            epochIndxs.insert(itm.second);
-            if (!addedPairs.contains(itm)) {
-                addedPairs.insert(itm);
-                newIndxs.append(itm);
-            }
-        }
-    }
-    else {
-        for (const auto& itm : indxs) {
-            if (!addedPairs.contains(itm)) {
-                addedPairs.insert(itm);
-                newIndxs.append(itm);
-            }
+    for (const auto& itm : indxs) {
+        if (!addedPairs.contains(itm)) {
+            addedPairs.insert(itm);
+            newIndxs.append(itm);
         }
     }
 
