@@ -135,5 +135,31 @@
         <file>icons/ui/eye.svg</file>
         <file>icons/ui/caret-down_.svg</file>
         <file>icons/ui/caret-down_full.svg</file>
+        <file>icons/ui/line-off.svg</file>
+        <file>icons/ui/map-off.svg</file>
+        <file>icons/ui/line-height.svg</file>
+        <file>icons/ui/polygon-off.svg</file>
+        <file>icons/ui/point-off.svg</file>
+        <file>icons/ui/folder-star.svg</file>
+        <file>icons/ui/folder-heart.svg</file>
+        <file>icons/ui/folder-off.svg</file>
+        <file>icons/ui/folder-open.svg</file>
+        <file>icons/ui/folders.svg</file>
+        <file>icons/ui/folder-plus.svg</file>
+        <file>icons/ui/map-pin-plus.svg</file>
+        <file>icons/ui/circle-plus.svg</file>
+        <file>icons/ui/layout.svg</file>
+        <file>icons/ui/layout-board.svg</file>
+        <file>icons/ui/layers-selected.svg</file>
+        <file>icons/ui/layers-intersect.svg</file>
+        <file>icons/ui/angle.svg</file>
+        <file>icons/ui/map-down.svg</file>
+        <file>icons/ui/map-check.svg</file>
+        <file>icons/ui/route-x.svg</file>
+        <file>icons/ui/zoom-out.svg</file>
+        <file>icons/ui/zoom-in.svg</file>
+        <file>icons/ui/current-location-full.svg</file>
+        <file>icons/ui/current-location.svg</file>
+        <file>icons/ui/navigation-north.svg</file>
     </qresource>
 </RCC>

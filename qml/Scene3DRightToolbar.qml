@@ -52,6 +52,53 @@ Item {
             checkedBorderColor: theme.controlBorderColor
             onClicked: root.toggleGeometry()
         }
+
+        ColumnLayout {
+            spacing: 6
+            visible: root.geometryOpen || (geo && geo.tool !== 0)
+
+            CheckButton {
+                checkable: true
+                checked: geo ? geo.tool === 1 : false
+                iconSource: "qrc:/icons/ui/point.svg"
+                implicitWidth: buttonSize
+                implicitHeight: buttonSize
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                onClicked: {
+                    if (geo) geo.tool = (geo.tool === 1 ? 0 : 1)
+                }
+            }
+
+            CheckButton {
+                checkable: true
+                checked: geo ? geo.tool === 2 : false
+                iconSource: "qrc:/icons/ui/line.svg"
+                implicitWidth: buttonSize
+                implicitHeight: buttonSize
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                onClicked: {
+                    if (geo) geo.tool = (geo.tool === 2 ? 0 : 2)
+                }
+            }
+
+            CheckButton {
+                checkable: true
+                checked: geo ? geo.tool === 3 : false
+                iconSource: "qrc:/icons/ui/polygon.svg"
+                implicitWidth: buttonSize
+                implicitHeight: buttonSize
+                backColor: theme.controlBackColor
+                borderColor: theme.controlBackColor
+                checkedBorderColor: theme.controlBorderColor
+                onClicked: {
+                    if (geo) geo.tool = (geo.tool === 3 ? 0 : 3)
+                }
+            }
+        }
     }
 
     Scene3DLayerPanel {

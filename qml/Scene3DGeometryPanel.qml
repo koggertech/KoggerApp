@@ -10,7 +10,7 @@ Item {
     property var geo: null
     property var view: null
     property bool expanded: false
-    property real panelWidth: theme.controlHeight * 10
+    property real panelWidth: theme.controlHeight * 12
     property real panelPadding: 10
 
     function toLocalPath(url) {
@@ -42,7 +42,7 @@ Item {
         border.color: theme.controlBorderColor
         border.width: 1
         radius: 4
-        clip: true
+        // clip: true
         opacity: root.expanded ? 1.0 : 0.0
 
         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutQuad } }
@@ -60,48 +60,25 @@ Item {
                 CheckButton {
                     checkable: false
                     iconSource: "qrc:/icons/ui/file_import.svg"
-                    implicitWidth: theme.controlHeight * 1.2
-                    implicitHeight: theme.controlHeight * 1.2
+                    text: "Import"
                     onClicked: openKgtDialog.open()
                 }
 
                 CheckButton {
                     checkable: false
                     iconSource: "qrc:/icons/ui/file_export.svg"
-                    implicitWidth: theme.controlHeight * 1.2
-                    implicitHeight: theme.controlHeight * 1.2
+                    text: "Export"
                     enabled: geo !== null
                     onClicked: saveKgtDialog.open()
                 }
 
                 CheckButton {
                     checkable: false
-                    iconSource: "qrc:/icons/ui/file_plus.svg"
-                    implicitWidth: theme.controlHeight * 1.2
-                    implicitHeight: theme.controlHeight * 1.2
+                    iconSource: "qrc:/icons/ui/x.svg"
+                    text: "Clear All"
                     onClicked: {
                         if (geo) geo.newDocument()
                     }
-                }
-
-                CheckButton {
-                    checkable: false
-                    iconSource: "qrc:/icons/ui/focus_2.svg"
-                    implicitWidth: theme.controlHeight * 1.2
-                    implicitHeight: theme.controlHeight * 1.2
-                    enabled: view !== null
-                    onClicked: {
-                        if (view) view.geojsonFitInView()
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Label {
-                    text: geo ? geo.currentFile : ""
-                    color: theme.textColor
-                    elide: Label.ElideLeft
-                    Layout.fillWidth: true
                 }
             }
 
@@ -110,19 +87,51 @@ Item {
                 spacing: 6
 
                 CheckButton {
+                    checkable: true
+                    iconSource: "qrc:/icons/ui/focus_2.svg"
+                    text: "Folow"
+                    enabled: view !== null
+                    onClicked: {
+                        if (checked && view) view.geojsonFitInView()
+                    }
+                }
+
+
+                CheckButton {
                     checkable: false
-                    text: "Import"
-                    enabled: geo !== null
-                    onClicked: importDialog.open()
+                    iconSource: "qrc:/icons/ui/plus.svg"
+                    text: "Folder"
+                    onClicked: if (geo) geo.addFolderToRoot()
                 }
 
                 CheckButton {
                     checkable: false
-                    text: "Export"
-                    enabled: geo !== null
-                    onClicked: exportDialog.open()
+                    iconSource: "qrc:/icons/ui/edit.svg"
+                    text: "Edit"
+                    onClicked: {
+
+                    }
                 }
             }
+
+            // RowLayout {
+            //     Layout.fillWidth: true
+            //     spacing: 6
+
+            //     CheckButton {
+            //         checkable: false
+            //         text: "Import"
+            //         enabled: geo !== null
+            //         onClicked: importDialog.open()
+            //     }
+
+            //     CheckButton {
+            //         checkable: false
+            //         text: "Export"
+            //         enabled: geo !== null
+            //         onClicked: exportDialog.open()
+            //     }
+            // }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -140,13 +149,53 @@ Item {
                         Layout.fillHeight: true
                         clip: true
                         model: geo ? geo.treeModel : null
-                        selectionModel: ItemSelectionModel { model: tree.model }
+                        selectionModel: ItemSelectionModel { model: tree.model} //  model: tree.model
 
                         onCurrentRowChanged: {
                             const idx = selectionModel.currentIndex
                             if (!idx.valid) return
                             if (geo) geo.selectIndex(idx)
                         }
+
+                        // delegate: Item {
+                        //     required property bool current
+                        //     required property bool selected
+                        //     required property int row
+                        //     required property int column
+                        //     required property var index
+
+                        //     width: tree.width
+                        //     height: theme.controlHeight
+                        //     implicitWidth: parent.width
+                        //     implicitHeight: theme.controlHeight
+
+
+                        //     Rectangle {
+                        //         anchors.fill: parent
+                        //         border.width: current ? 1 : 0
+                        //         color:  current ? "red" : "white"
+
+                        //         RowLayout {
+                        //             id: rowItem
+                        //             anchors.fill: parent
+                        //             spacing: 2
+
+                        //             Button {
+                        //                 text: display
+                        //                 implicitWidth: 20
+                        //                 onPressed: {
+                        //                     // tree.currentIndex = index
+                        //                     // tree.currentIndex = tree.index(row, column)
+                        //                     // tree.selectionModel.currentIndex = index
+                        //                     // tree.selectionMode
+                        //                     // tree.currentRow = row
+                        //                     let index = tree.index(row, column)
+                        //                     tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
+                        //                 }
+                        //             }
+                        //         }
+                        //     }
+                        // }
 
                         delegate: Item {
                             id: nodeItem
@@ -166,43 +215,40 @@ Item {
                             required property int row
                             required property int column
                             required property bool current
+                            required property bool selected
+                            required property bool editing
 
                             Item {
                                 x: padding + (isTreeNode ? depth * indentation : 0)
                                 width: parent.width - x
                                 height: parent.height
 
-                                RowLayout {
-                                    spacing: 2
+                                // border.width: nodeItem.current ? 1 : 0
+                                // color: nodeItem.current ? "red" : "white"
 
-                                    CheckButton {
-                                        id: item_visible_button
-                                        checkable: true
-                                        checked: model.visible
-                                        iconSource: checked ? "qrc:/icons/ui/eye.svg" : "qrc:/icons/ui/eye-off.svg"
-                                        borderColor: "transparent"
-                                        backColor: "transparent"
-                                        checkedBorderColor: "transparent"
-                                        checkedBackColor: "transparent"
-                                        color: theme.textColor
-                                        checkedColor: theme.textColor
-                                        text: ""
-                                        onCheckedChanged: {
-                                            if (geo) geo.setNodeVisible(model.id, model.isFolder, checked)
-                                        }
+                                Rectangle {
+                                    id: backgroundRect
+                                    color: current ? "red" : "white"
+                                    border.color: "transparent"
+                                    border.width: 0
+                                    anchors.fill: rowItem
+                                    opacity: 0.5
+                                    radius: 2
+
+                                    gradient: Gradient {
+                                        GradientStop { position: 0.0; color: current ?  theme.controlSolidBackColor : "transparent"; }
+                                        GradientStop { position: 0.85; color: current ?  theme.controlSolidBackColor : "transparent"; }
+                                        GradientStop { position: 1.0; color: current ?  "red" : "transparent" }
                                     }
+                                }
+
+                                RowLayout {
+                                    id: rowItem
+                                    spacing: 0
 
                                     CheckButton {
                                         id: expandButton
-                                        iconSource: model.isFolder
-                                                ? (expanded ? "qrc:/icons/ui/chevron-down.svg" : "qrc:/icons/ui/chevron-right.svg")
-                                                : (model.geomType === "Point"
-                                                   ? "qrc:/icons/ui/point.svg"
-                                                   : (model.geomType === "LineString"
-                                                      ? "qrc:/icons/ui/line.svg"
-                                                      : (model.geomType === "Polygon"
-                                                         ? "qrc:/icons/ui/polygon.svg"
-                                                         : "qrc:/icons/ui/file.svg")))
+                                        iconSource: expanded ? "qrc:/icons/ui/chevron-down.svg" : "qrc:/icons/ui/chevron-right.svg"
                                         checkable: false
                                         borderColor: "transparent"
                                         backColor: "transparent"
@@ -210,25 +256,79 @@ Item {
                                         checkedBackColor: "transparent"
                                         color: theme.textColor
                                         checkedColor: theme.textColor
+                                        visible: model.isFolder
 
                                         TapHandler {
                                             onSingleTapped: {
                                                 if (model.isFolder) {
-                                                    treeView.toggleExpanded(row)
+                                                    tree.toggleExpanded(row)
+                                                    let index = treeView.index(row, column)
+                                                    tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
                                                 }
                                             }
+                                        }
+                                    }
+
+                                    CheckButton {
+                                        id: item_visible_button
+                                        checkable: true
+                                        checked: model.visible
+                                        iconSource: model.isFolder ? (checked ? "qrc:/icons/ui/folder.svg" : "qrc:/icons/ui/folder-off.svg") :
+                                                    (model.geomType === "Point"
+                                                     ? (checked ? "qrc:/icons/ui/point.svg" : "qrc:/icons/ui/point-off.svg")
+                                                     : (model.geomType === "LineString"
+                                                        ? (checked ? "qrc:/icons/ui/line.svg" : "qrc:/icons/ui/line-off.svg")
+                                                        : (model.geomType === "Polygon"
+                                                           ? (checked ? "qrc:/icons/ui/polygon.svg" : "qrc:/icons/ui/polygon-off.svg")
+                                                           : (checked ? "qrc:/icons/ui/file.svg" : "qrc:/icons/ui/file-off.svg"))))
+                                        borderColor: "transparent"
+                                        backColor: "transparent"
+                                        checkedBorderColor: "transparent"
+                                        checkedBackColor: "transparent"
+                                        color: theme.textColor
+                                        checkedColor: theme.textColor
+                                        onCheckedChanged: {
+                                            if (geo) geo.setNodeVisible(model.id, model.isFolder, checked)
                                         }
                                     }
 
                                     CText {
                                         text: model.isFolder ? model.name : model.geomType
                                         small: true
+
+                                        TapHandler {
+                                            onSingleTapped: {
+                                                let index = treeView.index(row, column)
+                                                tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
+                                            }
+
+                                            onDoubleTapped: {
+                                                tree.toggleExpanded(row)
+                                                let index = treeView.index(row, column)
+                                                tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
+                                            }
+                                        }
                                     }
 
                                     CText {
                                         text: model.isFolder ? ("(" + model.vertexCount + ")") : ""
                                         small: true
                                         color: theme.disabledTextColor
+
+
+
+                                        TapHandler {
+                                            onSingleTapped: {
+                                                let index = treeView.index(row, column)
+                                                tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
+                                            }
+
+                                            onDoubleTapped: {
+                                                tree.toggleExpanded(row)
+                                                let index = treeView.index(row, column)
+                                                tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
+                                            }
+                                        }
                                     }
 
                                     Item { Layout.fillWidth: true }
@@ -244,7 +344,8 @@ Item {
                                         checkedBorderColor: "transparent"
                                         onClicked: {
                                             if (geo) {
-                                                geo.selectNode(model.id, true, model.parentId)
+                                                let index = treeView.index(row, column)
+                                                tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
                                                 geo.addFolderToCurrent()
                                             }
                                         }
@@ -275,22 +376,11 @@ Item {
                                 }
                             }
                         }
+
+
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
 
-                        Item { Layout.fillWidth: true }
-
-                        CheckButton {
-                            checkable: false
-                            iconSource: "qrc:/icons/ui/plus.svg"
-                            implicitWidth: theme.controlHeight * 1.1
-                            implicitHeight: theme.controlHeight * 1.1
-                            onClicked: if (geo) geo.addFolderToRoot()
-                        }
-                    }
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -326,43 +416,8 @@ Item {
                     }
                 }
 
-                ColumnLayout {
-                    Layout.preferredWidth: theme.controlHeight * 1.5
-                    Layout.alignment: Qt.AlignTop
-                    spacing: 6
-
-                    CheckButton {
-                        checkable: true
-                        checked: geo ? geo.tool === 1 : false
-                        iconSource: "qrc:/icons/ui/point.svg"
-                        implicitWidth: theme.controlHeight * 1.3
-                        implicitHeight: theme.controlHeight * 1.3
-                        onClicked: {
-                            if (geo) geo.tool = (geo.tool === 1 ? 0 : 1)
-                        }
-                    }
-
-                    CheckButton {
-                        checkable: true
-                        checked: geo ? geo.tool === 2 : false
-                        iconSource: "qrc:/icons/ui/line.svg"
-                        implicitWidth: theme.controlHeight * 1.3
-                        implicitHeight: theme.controlHeight * 1.3
-                        onClicked: {
-                            if (geo) geo.tool = (geo.tool === 2 ? 0 : 2)
-                        }
-                    }
-
-                    CheckButton {
-                        checkable: true
-                        checked: geo ? geo.tool === 3 : false
-                        iconSource: "qrc:/icons/ui/polygon.svg"
-                        implicitWidth: theme.controlHeight * 1.3
-                        implicitHeight: theme.controlHeight * 1.3
-                        onClicked: {
-                            if (geo) geo.tool = (geo.tool === 3 ? 0 : 3)
-                        }
-                    }
+                Item {
+                    Layout.preferredWidth: 1
                 }
             }
 
@@ -398,27 +453,27 @@ Item {
         }
     }
 
-    FileDialog {
-        id: importDialog
-        title: "Import GeoJSON"
-        fileMode: FileDialog.OpenFile
-        nameFilters: ["GeoJSON (*.geojson *.json)", "All Files (*)"]
-        onAccepted: {
-            const path = root.toLocalPath(importDialog.selectedFile)
-            const folderId = root.targetFolderId()
-            if (geo && folderId !== "") geo.importGeoJsonToFolder(path, folderId)
-        }
-    }
+    // FileDialog {
+    //     id: importDialog
+    //     title: "Import GeoJSON"
+    //     fileMode: FileDialog.OpenFile
+    //     nameFilters: ["GeoJSON (*.geojson *.json)", "All Files (*)"]
+    //     onAccepted: {
+    //         const path = root.toLocalPath(importDialog.selectedFile)
+    //         const folderId = root.targetFolderId()
+    //         if (geo && folderId !== "") geo.importGeoJsonToFolder(path, folderId)
+    //     }
+    // }
 
-    FileDialog {
-        id: exportDialog
-        title: "Export Folder"
-        fileMode: FileDialog.SaveFile
-        nameFilters: ["Kogger Geometry Tree (*.kgt)", "GeoJSON (*.geojson *.json)", "All Files (*)"]
-        onAccepted: {
-            const path = root.toLocalPath(exportDialog.selectedFile)
-            const folderId = root.targetFolderId()
-            if (geo && folderId !== "") geo.exportFolder(path, folderId)
-        }
-    }
+    // FileDialog {
+    //     id: exportDialog
+    //     title: "Export Folder"
+    //     fileMode: FileDialog.SaveFile
+    //     nameFilters: ["Kogger Geometry Tree (*.kgt)", "GeoJSON (*.geojson *.json)", "All Files (*)"]
+    //     onAccepted: {
+    //         const path = root.toLocalPath(exportDialog.selectedFile)
+    //         const folderId = root.targetFolderId()
+    //         if (geo && folderId !== "") geo.exportFolder(path, folderId)
+    //     }
+    // }
 }
