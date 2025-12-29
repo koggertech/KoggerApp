@@ -184,6 +184,20 @@ void SurfaceProcessor::onUpdatedBottomTrackData(const QVector<QPair<char, int>> 
         return;
     }
 
+    const int btSize = bTrData.size();
+    QVector<QPair<char, int>> filteredIndxs;
+    filteredIndxs.reserve(newIndxs.size());
+    for (const auto& itm : newIndxs) {
+        if (itm.second < 0 || itm.second >= btSize) {
+            continue;
+        }
+        filteredIndxs.append(itm);
+    }
+    if (filteredIndxs.isEmpty()) {
+        return;
+    }
+    newIndxs.swap(filteredIndxs);
+
     QVector<int> epochIndxs;
     epochIndxs.reserve(newIndxs.size());
     for (const auto& itm : newIndxs) {

@@ -414,6 +414,11 @@ void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool m
         return;
     }
 
+    const int datasetSize = datasetPtr_->size();
+    if (datasetSize <= 0) {
+        return;
+    }
+
     bool redrawAll = redraw;
     if ((!lEpIndx && !rEpIndx) || (lEpIndx == 0 && rEpIndx == datasetPtr_->size())) {
         redrawAll = true;
@@ -423,9 +428,21 @@ void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool m
         clearCache();
     }
 
-    const int toIndx   = redrawAll ? datasetPtr_->getLastBottomTrackEpoch() : rEpIndx;
-    const int fromIndx = redrawAll ?                                      0 : lEpIndx;
-    if (!redrawAll && fromIndx >= toIndx) {
+    int toIndx   = redrawAll ? datasetPtr_->getLastBottomTrackEpoch() : rEpIndx;
+    int fromIndx = redrawAll ?                                      0 : lEpIndx;
+    if (fromIndx < 0) {
+        fromIndx = 0;
+    }
+    if (toIndx < 0) {
+        toIndx = 0;
+    }
+    if (fromIndx > datasetSize) {
+        fromIndx = datasetSize;
+    }
+    if (toIndx > datasetSize) {
+        toIndx = datasetSize;
+    }
+    if (fromIndx >= toIndx) {
         return;
     }
 
@@ -443,36 +460,41 @@ void BottomTrack::updateRenderData(int lEpIndx, int rEpIndx, bool redraw, bool m
     vertIndxUpdated.reserve(need);
 
     for (int epIndx = fromIndx; epIndx < toIndx; ++epIndx) {
+        auto* ep = datasetPtr_->fromIndex(epIndx);
+        if (!ep) {
+            continue;
+        }
+        auto pos = ep->getSonarPosition().ned;
+        if (!pos.isCoordinatesValid()) {
+            continue;
+        }
 
         auto vIt = epoch2Vertex_.find(epIndx);
         if (vIt != epoch2Vertex_.end()) {
-            if (auto* ep = datasetPtr_->fromIndex(epIndx); ep) {
-                if (auto pos = ep->getSonarPosition().ned; pos.isCoordinatesValid()) {
-                    auto vIndx = *vIt;
-                    const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
-                    r->m_data[vIndx].setZ(dist);
+            const int vIndx = *vIt;
+            if (vIndx >= 0 && vIndx < r->m_data.size()) {
+                const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
+                r->m_data[vIndx].setZ(dist);
 
-                    epIndxUpdated.push_back(epIndx);
-                    vertIndxUpdated.push_back(vIndx);
-                }
+                epIndxUpdated.push_back(epIndx);
+                vertIndxUpdated.push_back(vIndx);
+                continue;
             }
+
+            vertex2Epoch_.remove(vIndx);
+            epoch2Vertex_.erase(vIt);
         }
-        else {
-            if (auto* ep = datasetPtr_->fromIndex(epIndx); ep) {
-                if (auto pos = ep->getSonarPosition().ned; pos.isCoordinatesValid()) {
-                    const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
-                    prepData.push_back(QVector3D(pos.n, pos.e, dist));
 
-                    epIndxUpdated.push_back(epIndx);
-                    vertIndxUpdated.push_back(rSize);
+        const float dist = -1.f * static_cast<float>(ep->distProccesing(visibleChannel_.channelId_));
+        prepData.push_back(QVector3D(pos.n, pos.e, dist));
 
-                    vertex2Epoch_.insert(rSize, epIndx);
-                    epoch2Vertex_.insert(epIndx, rSize);
+        epIndxUpdated.push_back(epIndx);
+        vertIndxUpdated.push_back(rSize);
 
-                    rSize++;
-                }
-            }
-        }
+        vertex2Epoch_.insert(rSize, epIndx);
+        epoch2Vertex_.insert(epIndx, rSize);
+
+        rSize++;
     }
 
     emit updatedPoints(epIndxUpdated, vertIndxUpdated, manually); // for dataHorizon -> dataProcessor
