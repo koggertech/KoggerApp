@@ -83,16 +83,12 @@ void GeoJsonLayer::GeoJsonLayerRenderImplementation::render(
             for (const auto& poly : data_.polygons) {
                 const auto& ring = poly.ring;
                 if (ring.size() >= 3) {
-                    // Fill (triangle fan)
+                    // Fill (triangulated)
                     sp->setUniformValue(colorLoc, DrawUtils::colorToVector4d(poly.fillColor));
-                    for (int i = 1; i < ring.size() - 1; ++i) {
-                        QVector<QVector3D> tri;
-                        tri.reserve(3);
-                        tri.push_back(ring[0]);
-                        tri.push_back(ring[i]);
-                        tri.push_back(ring[i + 1]);
-                        sp->setAttributeArray(posLoc, tri.constData());
-                        ctx->glDrawArrays(GL_TRIANGLES, 0, tri.size());
+                    const auto tris = DrawUtils::triangulatePolygonXY(ring);
+                    if (!tris.isEmpty()) {
+                        sp->setAttributeArray(posLoc, tris.constData());
+                        ctx->glDrawArrays(GL_TRIANGLES, 0, tris.size());
                     }
 
                     // Stroke
