@@ -801,15 +801,38 @@ bool GeoJsonController::updateVertex(const QString& featureId, int vertexIndex, 
         return false;
     }
 
+    const bool isPolygon = (f->geomType == GeoJsonGeometryType::Polygon);
+    const int lastIndex = f->coords.size() - 1;
+    bool wasClosed = false;
+    if (isPolygon && f->coords.size() >= 4) {
+        const auto& first = f->coords.first();
+        const auto& last = f->coords.last();
+        const bool sameLon = qFuzzyCompare(1.0 + first.lon, 1.0 + last.lon);
+        const bool sameLat = qFuzzyCompare(1.0 + first.lat, 1.0 + last.lat);
+        const bool sameZ = (!first.hasZ && !last.hasZ) ||
+                           (first.hasZ && last.hasZ && qFuzzyCompare(1.0 + first.z, 1.0 + last.z));
+        wasClosed = sameLon && sameLat && sameZ;
+    }
+
     const bool keepHasZ = f->coords[vertexIndex].hasZ;
     f->coords[vertexIndex] = c;
     if (!keepHasZ) {
         f->coords[vertexIndex].hasZ = false;
         f->coords[vertexIndex].z = 0.0;
     }
-    if (f->geomType == GeoJsonGeometryType::Polygon) {
-        ensurePolygonClosed(*f);
+
+    if (isPolygon) {
+        if (wasClosed && (vertexIndex == 0 || vertexIndex == lastIndex)) {
+            if (vertexIndex == 0) {
+                f->coords[lastIndex] = f->coords.first();
+            } else {
+                f->coords[0] = f->coords.last();
+            }
+        } else {
+            ensurePolygonClosed(*f);
+        }
     }
+
     model_.upsertFeature(*f);
     emit documentChanged();
     return true;
