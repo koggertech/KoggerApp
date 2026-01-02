@@ -8,6 +8,8 @@ Item {
     anchors.top: parent.top
     anchors.bottom: parent.bottom
 
+    signal requestClose()
+
     property bool expanded: false
     property real panelWidth: theme.controlHeight * 6
     property real panelPadding: 10
@@ -63,6 +65,8 @@ Item {
         border.width: 1
         radius: 4
         clip: true
+        enabled: root.expanded
+        visible: root.expanded || width > 0
         opacity: root.expanded ? 1.0 : 0.0
 
         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutQuad } }
@@ -108,7 +112,11 @@ Item {
 
                     onClicked: {
                         core.setMapTileProvider(modelData.id)
-                        root.expanded = false
+                        if (showToggleButton) {
+                            root.expanded = false
+                        } else {
+                            root.requestClose()
+                        }
                     }
                 }
             }

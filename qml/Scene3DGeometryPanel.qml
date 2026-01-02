@@ -42,7 +42,9 @@ Item {
         border.color: theme.controlBorderColor
         border.width: 1
         radius: 4
-        // clip: true
+        clip: true
+        enabled: root.expanded
+        visible: root.expanded || width > 0
         opacity: root.expanded ? 1.0 : 0.0
 
         Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutQuad } }
@@ -114,25 +116,6 @@ Item {
                 }
             }
 
-            // RowLayout {
-            //     Layout.fillWidth: true
-            //     spacing: 6
-
-            //     CheckButton {
-            //         checkable: false
-            //         text: "Import"
-            //         enabled: geo !== null
-            //         onClicked: importDialog.open()
-            //     }
-
-            //     CheckButton {
-            //         checkable: false
-            //         text: "Export"
-            //         enabled: geo !== null
-            //         onClicked: exportDialog.open()
-            //     }
-            // }
-
             RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -149,53 +132,13 @@ Item {
                         Layout.fillHeight: true
                         clip: true
                         model: geo ? geo.treeModel : null
-                        selectionModel: ItemSelectionModel { model: tree.model} //  model: tree.model
+                        selectionModel: ItemSelectionModel { model: tree.model}
 
                         onCurrentRowChanged: {
                             const idx = selectionModel.currentIndex
                             if (!idx.valid) return
                             if (geo) geo.selectIndex(idx)
                         }
-
-                        // delegate: Item {
-                        //     required property bool current
-                        //     required property bool selected
-                        //     required property int row
-                        //     required property int column
-                        //     required property var index
-
-                        //     width: tree.width
-                        //     height: theme.controlHeight
-                        //     implicitWidth: parent.width
-                        //     implicitHeight: theme.controlHeight
-
-
-                        //     Rectangle {
-                        //         anchors.fill: parent
-                        //         border.width: current ? 1 : 0
-                        //         color:  current ? "red" : "white"
-
-                        //         RowLayout {
-                        //             id: rowItem
-                        //             anchors.fill: parent
-                        //             spacing: 2
-
-                        //             Button {
-                        //                 text: display
-                        //                 implicitWidth: 20
-                        //                 onPressed: {
-                        //                     // tree.currentIndex = index
-                        //                     // tree.currentIndex = tree.index(row, column)
-                        //                     // tree.selectionModel.currentIndex = index
-                        //                     // tree.selectionMode
-                        //                     // tree.currentRow = row
-                        //                     let index = tree.index(row, column)
-                        //                     tree.selectionModel.setCurrentIndex(index, ItemSelectionModel.Current)
-                        //                 }
-                        //             }
-                        //         }
-                        //     }
-                        // }
 
                         delegate: Item {
                             id: nodeItem
@@ -222,9 +165,6 @@ Item {
                                 x: padding + (isTreeNode ? depth * indentation : 0)
                                 width: parent.width - x
                                 height: parent.height
-
-                                // border.width: nodeItem.current ? 1 : 0
-                                // color: nodeItem.current ? "red" : "white"
 
                                 Rectangle {
                                     id: backgroundRect
@@ -315,8 +255,6 @@ Item {
                                         small: true
                                         color: theme.disabledTextColor
 
-
-
                                         TapHandler {
                                             onSingleTapped: {
                                                 let index = treeView.index(row, column)
@@ -376,11 +314,7 @@ Item {
                                 }
                             }
                         }
-
-
                     }
-
-
 
                     RowLayout {
                         Layout.fillWidth: true

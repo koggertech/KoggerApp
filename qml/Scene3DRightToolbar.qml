@@ -30,6 +30,7 @@ Item {
         anchors.topMargin: 12
         anchors.rightMargin: 12
         spacing: 6
+        z: 3
 
         CheckButton {
             checkable: false
@@ -108,6 +109,11 @@ Item {
         anchors.right: buttonColumn.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
+        z: 2
+
+        onRequestClose: {
+            root.layersOpen = false
+        }
     }
 
     Scene3DGeometryPanel {
@@ -118,5 +124,6 @@ Item {
         anchors.right: buttonColumn.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
+        z: 2
     }
 }
