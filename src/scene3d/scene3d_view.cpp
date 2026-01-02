@@ -349,6 +349,14 @@ void GraphicsScene3dView::mousePressTrigger(Qt::MouseButtons mouseButton, qreal 
                 }
             }
 
+            QString hitFid;
+            if (pickGeoJsonFeature(x, y, hitFid)) {
+                geoJsonController_->selectFeature(hitFid);
+                geoJsonRenderDirty_ = true;
+                QQuickFramebufferObject::update();
+                return;
+            }
+
             geoJsonController_->selectVertex(QString(), -1);
         }
     }
@@ -1413,6 +1421,108 @@ bool GraphicsScene3dView::pickGeoJsonSegmentMidpoint(qreal x, qreal y, QString& 
                     const int insertIndex = (i + 1 == count) ? count : (i + 1);
                     considerMid(f.id, insertIndex, (pts[i] + pts[next]) * 0.5f);
                 }
+            }
+        }
+    }
+
+    return found;
+}
+
+bool GraphicsScene3dView::pickGeoJsonFeature(qreal x, qreal y, QString& outFeatureId) const
+{
+    const auto features = geoJsonController_->visibleFeatures();
+    if (features.isEmpty()) {
+        return false;
+    }
+
+    const QRect viewport = boundingRect().toRect();
+    const QPointF target(x, height() - y);
+    const QMatrix4x4 mv = m_camera->m_view * m_model;
+
+    const float thresholdPx = 6.0f;
+    float best = thresholdPx;
+    bool found = false;
+
+    auto distPointSegment = [](const QPointF& p, const QPointF& a, const QPointF& b) -> float {
+        const QPointF ab = b - a;
+        const double ab2 = ab.x() * ab.x() + ab.y() * ab.y();
+        if (ab2 <= 1e-6) {
+            const QPointF d = p - a;
+            return static_cast<float>(std::sqrt(d.x() * d.x() + d.y() * d.y()));
+        }
+        const QPointF ap = p - a;
+        double t = (ap.x() * ab.x() + ap.y() * ab.y()) / ab2;
+        t = std::max(0.0, std::min(1.0, t));
+        const QPointF proj(a.x() + ab.x() * t, a.y() + ab.y() * t);
+        const QPointF d = p - proj;
+        return static_cast<float>(std::sqrt(d.x() * d.x() + d.y() * d.y()));
+    };
+
+    auto pointInPolygon = [](const QPointF& p, const QVector<QPointF>& poly) -> bool {
+        bool inside = false;
+        for (int i = 0, j = poly.size() - 1; i < poly.size(); j = i++) {
+            const QPointF& pi = poly[i];
+            const QPointF& pj = poly[j];
+            const bool intersect = ((pi.y() > p.y()) != (pj.y() > p.y())) &&
+                                   (p.x() < (pj.x() - pi.x()) * (p.y() - pi.y()) / (pj.y() - pi.y() + 1e-9) + pi.x());
+            if (intersect) {
+                inside = !inside;
+            }
+        }
+        return inside;
+    };
+
+    for (const auto* fptr : features) {
+        if (!fptr) {
+            continue;
+        }
+        const auto& f = *fptr;
+        if (f.geomType == GeoJsonGeometryType::LineString) {
+            if (f.coords.size() < 2) {
+                continue;
+            }
+            QVector<QPointF> pts;
+            pts.reserve(f.coords.size());
+            for (const auto& c : f.coords) {
+                const QVector3D win = geojsonToScene(c).project(mv, m_projection, viewport);
+                pts.push_back(QPointF(win.x(), win.y()));
+            }
+            for (int i = 0; i + 1 < pts.size(); ++i) {
+                const float d = distPointSegment(target, pts[i], pts[i + 1]);
+                if (d < best) {
+                    best = d;
+                    outFeatureId = f.id;
+                    found = true;
+                }
+            }
+        } else if (f.geomType == GeoJsonGeometryType::Polygon) {
+            if (f.coords.size() < 3) {
+                continue;
+            }
+            QVector<QPointF> pts;
+            pts.reserve(f.coords.size());
+            for (const auto& c : f.coords) {
+                const QVector3D win = geojsonToScene(c).project(mv, m_projection, viewport);
+                pts.push_back(QPointF(win.x(), win.y()));
+            }
+            if (pts.size() >= 2 && pts.first() == pts.last()) {
+                pts.removeLast();
+            }
+            if (pts.size() >= 3 && pointInPolygon(target, pts)) {
+                outFeatureId = f.id;
+                return true;
+            }
+        } else if (f.geomType == GeoJsonGeometryType::Point) {
+            if (f.coords.isEmpty()) {
+                continue;
+            }
+            const QVector3D win = geojsonToScene(f.coords.first()).project(mv, m_projection, viewport);
+            const QPointF p(win.x(), win.y());
+            const float d = static_cast<float>(QLineF(p, target).length());
+            if (d < best) {
+                best = d;
+                outFeatureId = f.id;
+                found = true;
             }
         }
     }

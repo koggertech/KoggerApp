@@ -151,6 +151,12 @@ QVariant GeoJsonTreeModel::roleData(const QModelIndex& index, int role) const
     return data(index, role);
 }
 
+QModelIndex GeoJsonTreeModel::indexForId(const QString& id) const
+{
+    Node* node = idMap_.value(id, nullptr);
+    return indexForNode(node);
+}
+
 bool GeoJsonTreeModel::insertNode(const GeoJsonTreeNode& node)
 {
     if (idMap_.contains(node.id)) {

@@ -134,6 +134,23 @@ Item {
                         model: geo ? geo.treeModel : null
                         selectionModel: ItemSelectionModel { model: tree.model}
 
+                        Connections {
+                            target: geo
+                            function onSelectionChanged() {
+                                if (!geo || !tree.model) {
+                                    return;
+                                }
+                                const id = geo.selectedNodeId;
+                                if (!id || id === "") {
+                                    return;
+                                }
+                                const idx = tree.model.indexForId(id);
+                                if (idx && idx.valid) {
+                                    tree.selectionModel.setCurrentIndex(idx, ItemSelectionModel.Current);
+                                }
+                            }
+                        }
+
                         onCurrentRowChanged: {
                             const idx = selectionModel.currentIndex
                             if (!idx.valid) return

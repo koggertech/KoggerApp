@@ -47,6 +47,7 @@ public:
     const QVector<GeoJsonTreeNode>& nodes() const;
     void setNodes(QVector<GeoJsonTreeNode> nodes);
     Q_INVOKABLE QVariant roleData(const QModelIndex& index, int role) const;
+    Q_INVOKABLE QModelIndex indexForId(const QString& id) const;
     bool insertNode(const GeoJsonTreeNode& node);
     bool removeNode(const QString& id);
     bool updateNodeVisible(const QString& id, bool visible);

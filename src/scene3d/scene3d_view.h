@@ -301,6 +301,7 @@ private:
     GeoJsonCoord sceneToGeojson(const QVector3D& p) const;
     bool pickGeoJsonVertex(qreal x, qreal y, QString& outFeatureId, int& outVertexIndex, QVector3D& outWorld) const;
     bool pickGeoJsonSegmentMidpoint(qreal x, qreal y, QString& outFeatureId, int& outInsertIndex, QVector3D& outWorld) const;
+    bool pickGeoJsonFeature(qreal x, qreal y, QString& outFeatureId) const;
     void stopGeoJsonDrag();
 
 private:
